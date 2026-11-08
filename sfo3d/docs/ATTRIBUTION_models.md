@@ -132,11 +132,14 @@ and every other object are unchanged) and moves the nacelle pieces whose names t
 `ductinner*`, `engcore*`, `tailpipe*`) into the engine zone; the 737 MAX nacelles are scaled and raised and the 737NG
 blended winglets are made taller at run time (`stretch.engScale`, `stretch.tipScale`). These are modifications of the GPL model and are covered by the same corresponding-source statement. The FlightAirMap sources of the CRJ700 and A380 models are committed as a plain
 export of Ysurac/FlightAirMap-3dmodels @0906d9b in `refs/cache/src/fam3d` (with their COPYING / LICENSE files and blob
-hashes in its SOURCES.json); since close-out round 4, fix round 2 (8 Nov 2026) the same holds for every other FlightAirMap
-model of §1 (the `glTF2/*.glb` files `tools/convert_models.py` reads and each directory's licence file; the A220 directory
-has none, its licence is that of the FlightGear origin, §1), and `refs/cache/src/fg/777_export` is a plain export of
-FGMEMBERS/777 @371a354 (the `777-300ER.ac` / `777-200ER.ac` files and the textures they reference). The pre-atlas
-conversions of every model are in `refs/cache/models_orig/` (SOURCES.json there). The corresponding source is committed with the repo:
+hashes in its SOURCES.json); since close-out round 4, fix round 2 (8 Nov 2026) `refs/cache/src/fam3d` holds the same kind
+of export for every other FlightAirMap model of §1 (the `glTF2/*.glb` files `tools/convert_models.py` reads and each
+directory's licence file; the A220 directory has none, its licence is that of the FlightGear origin, §1), and
+`refs/cache/src/fg/777_export` a plain export of FGMEMBERS/777 @371a354 (the `777-300ER.ac` / `777-200ER.ac` files and the
+textures they reference). Since 8 Nov 2026 `tools/cache/sync.py` keeps these source trees local (bulk; re-fetchable from
+the pinned commits, each file's blob hash in the SOURCES.json files) and commits the pre-atlas conversions of every model,
+`refs/cache/models_orig/` (SOURCES.json there). A re-atlas after a container loss needs the source trees again for the
+original textures (`tools/liveries/atlas.py source_images`: the ghost-title mask of the detail layer). The corresponding source is committed with the repo:
 `refs/cache/src/fg/737-800` is a plain export of FGMEMBERS/737-800 @9126249 (LICENSE, README.md, the `Models/*.ac|*.png|*.xml`
 files the converter reads and the `Models/Liveries-800/N563AS` livery; each file's git blob hash is in
 `refs/cache/src/fg/SOURCES.json`, so the export can be checked against the upstream commit).

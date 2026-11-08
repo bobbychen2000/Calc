@@ -11,7 +11,7 @@
   {
    "brand": "AAL",
    "model": "a319",
-   "pxm": 35.4,
+   "pxm": 35.5,
    "variants": [],
    "types": [
     "a319"
@@ -24,15 +24,15 @@
    "file": "AAL/a319-mid.webp",
    "painted_as": "a319",
    "bytes": {
-    "hi": 74494,
-    "mid": 38422,
-    "lo": 20538
+    "hi": 68536,
+    "mid": 35574,
+    "lo": 18944
    }
   },
   {
    "brand": "AAL",
    "model": "a320",
-   "pxm": 35.3,
+   "pxm": 35.9,
    "variants": [],
    "types": [
     "a320"
@@ -45,15 +45,15 @@
    "file": "AAL/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 68470,
-    "mid": 35360,
-    "lo": 18974
+    "hi": 67090,
+    "mid": 34122,
+    "lo": 18312
    }
   },
   {
    "brand": "AAL",
    "model": "a321",
-   "pxm": 32.6,
+   "pxm": 32.7,
    "variants": [
     {
      "types": [
@@ -67,9 +67,9 @@
      "file": "AAL/a321@a21n-mid.webp",
      "painted_as": "a21n",
      "bytes": {
-      "hi": 77194,
-      "mid": 38966,
-      "lo": 19464
+      "hi": 70268,
+      "mid": 35438,
+      "lo": 18234
      }
     }
    ],
@@ -84,9 +84,9 @@
    "file": "AAL/a321-mid.webp",
    "painted_as": "a321",
    "bytes": {
-    "hi": 77554,
-    "mid": 38910,
-    "lo": 19364
+    "hi": 70586,
+    "mid": 35688,
+    "lo": 18076
    }
   },
   {
@@ -106,8 +106,8 @@
      "file": "AAL/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 72136,
-      "mid": 35900,
+      "hi": 71708,
+      "mid": 35962,
       "lo": 18532
      }
     }
@@ -123,15 +123,15 @@
    "file": "AAL/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 71538,
-    "mid": 36274,
-    "lo": 18600
+    "hi": 71604,
+    "mid": 36368,
+    "lo": 18594
    }
   },
   {
    "brand": "AAL",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [
     {
      "types": [
@@ -145,9 +145,9 @@
      "file": "AAL/b788@b789-mid.webp",
      "painted_as": "b789",
      "bytes": {
-      "hi": 73466,
-      "mid": 37526,
-      "lo": 19956
+      "hi": 70036,
+      "mid": 35732,
+      "lo": 18854
      }
     }
    ],
@@ -162,15 +162,15 @@
    "file": "AAL/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 71548,
-    "mid": 36750,
-    "lo": 19436
+    "hi": 68634,
+    "mid": 35302,
+    "lo": 18762
    }
   },
   {
    "brand": "AAL-E",
    "model": "e75l",
-   "pxm": 41.4,
+   "pxm": 45.1,
    "variants": [],
    "types": [
     "e75l"
@@ -183,15 +183,15 @@
    "file": "AAL-E/e75l-mid.webp",
    "painted_as": "e75l",
    "bytes": {
-    "hi": 71208,
-    "mid": 37990,
-    "lo": 19978
+    "hi": 73072,
+    "mid": 37966,
+    "lo": 19880
    }
   },
   {
    "brand": "AAR",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -204,15 +204,15 @@
    "file": "AAR/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 86070,
-    "mid": 43360,
-    "lo": 21138
+    "hi": 86462,
+    "mid": 43732,
+    "lo": 21482
    }
   },
   {
    "brand": "ACA",
    "model": "a320",
-   "pxm": 35.3,
+   "pxm": 35.9,
    "variants": [],
    "types": [
     "a320"
@@ -225,15 +225,15 @@
    "file": "ACA/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 64896,
-    "mid": 35646,
-    "lo": 20140
+    "hi": 64282,
+    "mid": 34622,
+    "lo": 19378
    }
   },
   {
    "brand": "ACA",
    "model": "a321",
-   "pxm": 32.6,
+   "pxm": 32.7,
    "variants": [],
    "types": [
     "a321"
@@ -246,9 +246,9 @@
    "file": "ACA/a321-mid.webp",
    "painted_as": "a321",
    "bytes": {
-    "hi": 65964,
-    "mid": 35288,
-    "lo": 18724
+    "hi": 65476,
+    "mid": 35130,
+    "lo": 19070
    }
   },
   {
@@ -267,15 +267,15 @@
    "file": "ACA/b738@b38m-mid.webp",
    "painted_as": "b38m",
    "bytes": {
-    "hi": 65614,
-    "mid": 34548,
-    "lo": 18582
+    "hi": 65320,
+    "mid": 34596,
+    "lo": 18570
    }
   },
   {
    "brand": "ACA",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [
     {
      "types": [
@@ -289,9 +289,9 @@
      "file": "ACA/b77w@b77l-mid.webp",
      "painted_as": "b77l",
      "bytes": {
-      "hi": 67096,
-      "mid": 35040,
-      "lo": 20116
+      "hi": 61480,
+      "mid": 33366,
+      "lo": 18498
      }
     }
    ],
@@ -306,15 +306,15 @@
    "file": "ACA/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 66272,
-    "mid": 34428,
-    "lo": 19348
+    "hi": 63632,
+    "mid": 34064,
+    "lo": 18552
    }
   },
   {
    "brand": "ACA",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b789"
@@ -327,15 +327,15 @@
    "file": "ACA/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 64360,
-    "mid": 35738,
-    "lo": 20560
+    "hi": 64878,
+    "mid": 35218,
+    "lo": 20106
    }
   },
   {
    "brand": "ACA",
    "model": "bcs3",
-   "pxm": 39.1,
+   "pxm": 39.5,
    "variants": [],
    "types": [
     "bcs3"
@@ -348,9 +348,9 @@
    "file": "ACA/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 73732,
-    "mid": 40084,
-    "lo": 22404
+    "hi": 73380,
+    "mid": 40410,
+    "lo": 22388
    }
   },
   {
@@ -398,7 +398,7 @@
   {
    "brand": "AFR",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -411,15 +411,15 @@
    "file": "AFR/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 86134,
-    "mid": 44238,
-    "lo": 21422
+    "hi": 86090,
+    "mid": 44166,
+    "lo": 21834
    }
   },
   {
    "brand": "AFR",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -432,15 +432,15 @@
    "file": "AFR/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 73834,
-    "mid": 35822,
-    "lo": 18884
+    "hi": 70840,
+    "mid": 35586,
+    "lo": 18152
    }
   },
   {
    "brand": "AIC",
    "model": "b772",
-   "pxm": 20.0,
+   "pxm": 20.3,
    "variants": [],
    "types": [
     "b772"
@@ -453,15 +453,15 @@
    "file": "AIC/b772-mid.webp",
    "painted_as": "b772",
    "bytes": {
-    "hi": 54840,
-    "mid": 29456,
-    "lo": 16204
+    "hi": 52396,
+    "mid": 29048,
+    "lo": 15874
    }
   },
   {
    "brand": "AIC",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -474,9 +474,9 @@
    "file": "AIC/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 59534,
-    "mid": 30592,
-    "lo": 17176
+    "hi": 57096,
+    "mid": 30570,
+    "lo": 16526
    }
   },
   {
@@ -496,9 +496,9 @@
      "file": "AMX/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 77332,
-      "mid": 37940,
-      "lo": 18858
+      "hi": 77124,
+      "mid": 37914,
+      "lo": 18874
      }
     },
     {
@@ -513,9 +513,9 @@
      "file": "AMX/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 79100,
-      "mid": 39182,
-      "lo": 19536
+      "hi": 79174,
+      "mid": 39084,
+      "lo": 19470
      }
     }
    ],
@@ -530,15 +530,15 @@
    "file": "AMX/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 77368,
-    "mid": 38134,
-    "lo": 18906
+    "hi": 77338,
+    "mid": 37734,
+    "lo": 18910
    }
   },
   {
    "brand": "AMX",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b789"
@@ -551,15 +551,15 @@
    "file": "AMX/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 82792,
-    "mid": 41272,
-    "lo": 22010
+    "hi": 79836,
+    "mid": 39884,
+    "lo": 20412
    }
   },
   {
    "brand": "ANA",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -572,15 +572,15 @@
    "file": "ANA/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 92204,
-    "mid": 44734,
-    "lo": 23534
+    "hi": 89906,
+    "mid": 44482,
+    "lo": 22586
    }
   },
   {
    "brand": "ANA",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [
     {
      "types": [
@@ -594,9 +594,9 @@
      "file": "ANA/b788@b789-mid.webp",
      "painted_as": "b789",
      "bytes": {
-      "hi": 89804,
-      "mid": 45262,
-      "lo": 23742
+      "hi": 91262,
+      "mid": 45054,
+      "lo": 23464
      }
     }
    ],
@@ -611,15 +611,15 @@
    "file": "ANA/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 85638,
-    "mid": 42990,
-    "lo": 22718
+    "hi": 87230,
+    "mid": 43648,
+    "lo": 22720
    }
   },
   {
    "brand": "ANZ",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b789"
@@ -632,15 +632,15 @@
    "file": "ANZ/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 55180,
-    "mid": 31902,
-    "lo": 18860
+    "hi": 55844,
+    "mid": 30898,
+    "lo": 17626
    }
   },
   {
    "brand": "APZ",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b789"
@@ -653,15 +653,15 @@
    "file": "APZ/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 52704,
-    "mid": 29562,
-    "lo": 16746
+    "hi": 52210,
+    "mid": 28364,
+    "lo": 15972
    }
   },
   {
    "brand": "ASA",
    "model": "a321",
-   "pxm": 32.6,
+   "pxm": 32.7,
    "variants": [],
    "types": [
     "a21n"
@@ -674,9 +674,9 @@
    "file": "ASA/a321@a21n-mid.webp",
    "painted_as": "a21n",
    "bytes": {
-    "hi": 91364,
-    "mid": 43974,
-    "lo": 21244
+    "hi": 87834,
+    "mid": 41728,
+    "lo": 20564
    }
   },
   {
@@ -696,9 +696,9 @@
      "file": "ASA/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 96256,
-      "mid": 46054,
-      "lo": 22654
+      "hi": 96144,
+      "mid": 45952,
+      "lo": 22652
      }
     },
     {
@@ -714,9 +714,9 @@
      "file": "ASA/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 97962,
-      "mid": 47352,
-      "lo": 23144
+      "hi": 97940,
+      "mid": 47354,
+      "lo": 23130
      }
     },
     {
@@ -731,9 +731,9 @@
      "file": "ASA/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 95418,
-      "mid": 46018,
-      "lo": 22438
+      "hi": 95400,
+      "mid": 46076,
+      "lo": 22452
      }
     }
    ],
@@ -748,15 +748,15 @@
    "file": "ASA/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 96442,
-    "mid": 46634,
-    "lo": 22716
+    "hi": 96450,
+    "mid": 46582,
+    "lo": 22742
    }
   },
   {
    "brand": "ASA",
    "model": "e75l",
-   "pxm": 41.4,
+   "pxm": 45.1,
    "variants": [],
    "types": [
     "e75l"
@@ -769,15 +769,15 @@
    "file": "ASA/e75l-mid.webp",
    "painted_as": "e75l",
    "bytes": {
-    "hi": 90474,
-    "mid": 44930,
-    "lo": 22090
+    "hi": 91356,
+    "mid": 44866,
+    "lo": 22294
    }
   },
   {
    "brand": "AVA",
    "model": "a320",
-   "pxm": 35.3,
+   "pxm": 35.9,
    "variants": [
     {
      "types": [
@@ -791,9 +791,9 @@
      "file": "AVA/a320@a20n-mid.webp",
      "painted_as": "a20n",
      "bytes": {
-      "hi": 78036,
-      "mid": 40022,
-      "lo": 20742
+      "hi": 76676,
+      "mid": 38820,
+      "lo": 20546
      }
     }
    ],
@@ -808,15 +808,15 @@
    "file": "AVA/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 78172,
-    "mid": 40000,
-    "lo": 20736
+    "hi": 76896,
+    "mid": 39002,
+    "lo": 20480
    }
   },
   {
    "brand": "BAW",
    "model": "a388",
-   "pxm": 15.3,
+   "pxm": 16.1,
    "variants": [],
    "types": [
     "a388"
@@ -829,15 +829,15 @@
    "file": "BAW/a388-mid.webp",
    "painted_as": "a388",
    "bytes": {
-    "hi": 94584,
-    "mid": 48474,
-    "lo": 24808
+    "hi": 94322,
+    "mid": 47690,
+    "lo": 24192
    }
   },
   {
    "brand": "BAW",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -850,15 +850,15 @@
    "file": "BAW/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 81958,
-    "mid": 41232,
-    "lo": 21800
+    "hi": 77486,
+    "mid": 39376,
+    "lo": 20666
    }
   },
   {
    "brand": "CAL",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -871,15 +871,15 @@
    "file": "CAL/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 94646,
-    "mid": 48540,
-    "lo": 23762
+    "hi": 96124,
+    "mid": 48468,
+    "lo": 24478
    }
   },
   {
    "brand": "CCA",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -892,15 +892,15 @@
    "file": "CCA/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 44288,
-    "mid": 23438,
-    "lo": 14014
+    "hi": 41688,
+    "mid": 23676,
+    "lo": 13222
    }
   },
   {
    "brand": "CES",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -913,15 +913,15 @@
    "file": "CES/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 44288,
-    "mid": 23438,
-    "lo": 14014
+    "hi": 41688,
+    "mid": 23676,
+    "lo": 13222
    }
   },
   {
    "brand": "CFG",
    "model": "a333",
-   "pxm": 20.0,
+   "pxm": 20.1,
    "variants": [],
    "types": [
     "a339"
@@ -934,9 +934,9 @@
    "file": "CFG/a333@a339-mid.webp",
    "painted_as": "a339",
    "bytes": {
-    "hi": 136502,
-    "mid": 66656,
-    "lo": 33596
+    "hi": 141022,
+    "mid": 68982,
+    "lo": 34234
    }
   },
   {
@@ -955,15 +955,15 @@
    "file": "CMP/b738@b39m-mid.webp",
    "painted_as": "b39m",
    "bytes": {
-    "hi": 74366,
-    "mid": 36834,
+    "hi": 74390,
+    "mid": 36840,
     "lo": 17948
    }
   },
   {
    "brand": "CPA",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -976,15 +976,15 @@
    "file": "CPA/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 93600,
-    "mid": 45744,
-    "lo": 22454
+    "hi": 94072,
+    "mid": 46766,
+    "lo": 22830
    }
   },
   {
    "brand": "CPA",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -997,15 +997,15 @@
    "file": "CPA/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 73132,
-    "mid": 34328,
-    "lo": 18736
+    "hi": 68968,
+    "mid": 35152,
+    "lo": 18002
    }
   },
   {
    "brand": "CSN",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b789"
@@ -1018,15 +1018,15 @@
    "file": "CSN/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 80424,
-    "mid": 41044,
-    "lo": 21334
+    "hi": 82458,
+    "mid": 40950,
+    "lo": 21230
    }
   },
   {
    "brand": "DAL",
    "model": "a319",
-   "pxm": 35.4,
+   "pxm": 35.5,
    "variants": [],
    "types": [
     "a319"
@@ -1039,15 +1039,15 @@
    "file": "DAL/a319-mid.webp",
    "painted_as": "a319",
    "bytes": {
-    "hi": 77846,
-    "mid": 41818,
-    "lo": 22532
+    "hi": 76200,
+    "mid": 40264,
+    "lo": 21184
    }
   },
   {
    "brand": "DAL",
    "model": "a320",
-   "pxm": 35.3,
+   "pxm": 35.9,
    "variants": [],
    "types": [
     "a320"
@@ -1060,15 +1060,15 @@
    "file": "DAL/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 77962,
-    "mid": 41284,
-    "lo": 21738
+    "hi": 76378,
+    "mid": 39958,
+    "lo": 20910
    }
   },
   {
    "brand": "DAL",
    "model": "a321",
-   "pxm": 32.6,
+   "pxm": 32.7,
    "variants": [
     {
      "types": [
@@ -1082,9 +1082,9 @@
      "file": "DAL/a321@a21n-mid.webp",
      "painted_as": "a21n",
      "bytes": {
-      "hi": 75856,
-      "mid": 39638,
-      "lo": 20164
+      "hi": 76556,
+      "mid": 40166,
+      "lo": 20846
      }
     }
    ],
@@ -1099,15 +1099,15 @@
    "file": "DAL/a321-mid.webp",
    "painted_as": "a321",
    "bytes": {
-    "hi": 76192,
-    "mid": 39310,
-    "lo": 20072
+    "hi": 76840,
+    "mid": 40478,
+    "lo": 20660
    }
   },
   {
    "brand": "DAL",
    "model": "a333",
-   "pxm": 20.0,
+   "pxm": 20.1,
    "variants": [
     {
      "types": [
@@ -1121,9 +1121,9 @@
      "file": "DAL/a333@a332-mid.webp",
      "painted_as": "a332",
      "bytes": {
-      "hi": 83084,
-      "mid": 43676,
-      "lo": 22888
+      "hi": 79044,
+      "mid": 41174,
+      "lo": 22640
      }
     },
     {
@@ -1138,9 +1138,9 @@
      "file": "DAL/a333@a339-mid.webp",
      "painted_as": "a339",
      "bytes": {
-      "hi": 82748,
-      "mid": 43398,
-      "lo": 22726
+      "hi": 80064,
+      "mid": 42036,
+      "lo": 22508
      }
     }
    ],
@@ -1155,9 +1155,9 @@
    "file": "DAL/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 82874,
-    "mid": 43610,
-    "lo": 22810
+    "hi": 80660,
+    "mid": 42638,
+    "lo": 22644
    }
   },
   {
@@ -1178,9 +1178,9 @@
      "file": "DAL/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 83642,
-      "mid": 42696,
-      "lo": 21808
+      "hi": 83588,
+      "mid": 42706,
+      "lo": 21790
      }
     }
    ],
@@ -1195,15 +1195,15 @@
    "file": "DAL/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 82302,
-    "mid": 41990,
-    "lo": 21380
+    "hi": 82326,
+    "mid": 42000,
+    "lo": 21342
    }
   },
   {
    "brand": "DAL",
    "model": "b752",
-   "pxm": 31.7,
+   "pxm": 30.7,
    "variants": [
     {
      "types": [
@@ -1217,9 +1217,9 @@
      "file": "DAL/b752@b753-mid.webp",
      "painted_as": "b753",
      "bytes": {
-      "hi": 74970,
-      "mid": 38984,
-      "lo": 20676
+      "hi": 70654,
+      "mid": 36438,
+      "lo": 19648
      }
     }
    ],
@@ -1234,15 +1234,15 @@
    "file": "DAL/b752-mid.webp",
    "painted_as": "b752",
    "bytes": {
-    "hi": 72144,
-    "mid": 37414,
-    "lo": 19820
+    "hi": 67930,
+    "mid": 34978,
+    "lo": 18782
    }
   },
   {
    "brand": "DAL",
    "model": "b763",
-   "pxm": 25.9,
+   "pxm": 27.6,
    "variants": [
     {
      "types": [
@@ -1256,9 +1256,9 @@
      "file": "DAL/b763@b764-mid.webp",
      "painted_as": "b764",
      "bytes": {
-      "hi": 79980,
-      "mid": 40714,
-      "lo": 21004
+      "hi": 79630,
+      "mid": 40692,
+      "lo": 20466
      }
     }
    ],
@@ -1273,15 +1273,15 @@
    "file": "DAL/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 76220,
-    "mid": 39014,
-    "lo": 20396
+    "hi": 76074,
+    "mid": 39008,
+    "lo": 20002
    }
   },
   {
    "brand": "DAL",
    "model": "bcs1",
-   "pxm": 39.0,
+   "pxm": 38.6,
    "variants": [],
    "types": [
     "bcs1"
@@ -1294,15 +1294,15 @@
    "file": "DAL/bcs1-mid.webp",
    "painted_as": "bcs1",
    "bytes": {
-    "hi": 86334,
-    "mid": 45246,
-    "lo": 24376
+    "hi": 78910,
+    "mid": 41382,
+    "lo": 22004
    }
   },
   {
    "brand": "DAL",
    "model": "bcs3",
-   "pxm": 39.1,
+   "pxm": 39.5,
    "variants": [],
    "types": [
     "bcs3"
@@ -1315,15 +1315,15 @@
    "file": "DAL/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 85686,
-    "mid": 45160,
-    "lo": 24086
+    "hi": 84322,
+    "mid": 44456,
+    "lo": 23828
    }
   },
   {
    "brand": "DAL-C",
    "model": "e75l",
-   "pxm": 41.4,
+   "pxm": 45.1,
    "variants": [],
    "types": [
     "e75l"
@@ -1336,15 +1336,15 @@
    "file": "DAL-C/e75l-mid.webp",
    "painted_as": "e75l",
    "bytes": {
-    "hi": 81796,
-    "mid": 43190,
-    "lo": 22752
+    "hi": 81450,
+    "mid": 42778,
+    "lo": 22598
    }
   },
   {
    "brand": "DLH",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -1357,15 +1357,15 @@
    "file": "DLH/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 93428,
-    "mid": 48042,
-    "lo": 24350
+    "hi": 89436,
+    "mid": 46330,
+    "lo": 23346
    }
   },
   {
    "brand": "DLH",
    "model": "a388",
-   "pxm": 15.3,
+   "pxm": 16.1,
    "variants": [],
    "types": [
     "a388"
@@ -1378,9 +1378,9 @@
    "file": "DLH/a388-mid.webp",
    "painted_as": "a388",
    "bytes": {
-    "hi": 86934,
-    "mid": 45320,
-    "lo": 24136
+    "hi": 82218,
+    "mid": 43158,
+    "lo": 21752
    }
   },
   {
@@ -1399,15 +1399,15 @@
    "file": "DLH/b744-mid.webp",
    "painted_as": "b744",
    "bytes": {
-    "hi": 85424,
-    "mid": 41830,
-    "lo": 20910
+    "hi": 78842,
+    "mid": 37788,
+    "lo": 19002
    }
   },
   {
    "brand": "DLH",
    "model": "b748",
-   "pxm": 14.0,
+   "pxm": 13.9,
    "variants": [],
    "types": [
     "b748"
@@ -1420,15 +1420,15 @@
    "file": "DLH/b748-mid.webp",
    "painted_as": "b748",
    "bytes": {
-    "hi": 57778,
-    "mid": 28914,
-    "lo": 15644
+    "hi": 53800,
+    "mid": 27020,
+    "lo": 14542
    }
   },
   {
    "brand": "EIN",
    "model": "a333",
-   "pxm": 20.0,
+   "pxm": 20.1,
    "variants": [
     {
      "types": [
@@ -1442,9 +1442,9 @@
      "file": "EIN/a333@a332-mid.webp",
      "painted_as": "a332",
      "bytes": {
-      "hi": 61274,
-      "mid": 32830,
-      "lo": 17646
+      "hi": 60150,
+      "mid": 32158,
+      "lo": 17662
      }
     }
    ],
@@ -1459,15 +1459,15 @@
    "file": "EIN/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 60582,
-    "mid": 32808,
-    "lo": 17562
+    "hi": 61062,
+    "mid": 32762,
+    "lo": 17556
    }
   },
   {
    "brand": "EVA",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -1480,15 +1480,15 @@
    "file": "EVA/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 86146,
-    "mid": 41704,
-    "lo": 22274
+    "hi": 84078,
+    "mid": 41926,
+    "lo": 21340
    }
   },
   {
    "brand": "EVA",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b789"
@@ -1501,15 +1501,15 @@
    "file": "EVA/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 82802,
-    "mid": 42444,
-    "lo": 22594
+    "hi": 83222,
+    "mid": 41708,
+    "lo": 21994
    }
   },
   {
    "brand": "FBU",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -1522,15 +1522,15 @@
    "file": "FBU/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 108024,
-    "mid": 54004,
-    "lo": 26696
+    "hi": 111118,
+    "mid": 55800,
+    "lo": 27198
    }
   },
   {
    "brand": "FDX",
    "model": "b752",
-   "pxm": 31.7,
+   "pxm": 30.7,
    "variants": [],
    "types": [
     "b752"
@@ -1543,15 +1543,15 @@
    "file": "FDX/b752-mid.webp",
    "painted_as": "b752",
    "bytes": {
-    "hi": 66122,
-    "mid": 35074,
-    "lo": 18256
+    "hi": 63314,
+    "mid": 33178,
+    "lo": 17052
    }
   },
   {
    "brand": "FDX",
    "model": "b763",
-   "pxm": 25.9,
+   "pxm": 27.6,
    "variants": [],
    "types": [
     "b763"
@@ -1564,15 +1564,15 @@
    "file": "FDX/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 64168,
-    "mid": 33436,
-    "lo": 17378
+    "hi": 65568,
+    "mid": 33826,
+    "lo": 17392
    }
   },
   {
    "brand": "FDX",
    "model": "md11",
-   "pxm": 17.2,
+   "pxm": 17.4,
    "variants": [],
    "types": [
     "md11"
@@ -1585,15 +1585,15 @@
    "file": "FDX/md11-mid.webp",
    "painted_as": "md11",
    "bytes": {
-    "hi": 75928,
-    "mid": 39150,
-    "lo": 20850
+    "hi": 69708,
+    "mid": 36048,
+    "lo": 18586
    }
   },
   {
    "brand": "FFT",
    "model": "a320",
-   "pxm": 35.3,
+   "pxm": 35.9,
    "variants": [
     {
      "types": [
@@ -1607,9 +1607,9 @@
      "file": "FFT/a320@a20n-mid.webp",
      "painted_as": "a20n",
      "bytes": {
-      "hi": 65984,
-      "mid": 34382,
-      "lo": 18588
+      "hi": 64244,
+      "mid": 33334,
+      "lo": 17926
      }
     }
    ],
@@ -1624,15 +1624,15 @@
    "file": "FFT/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 66206,
-    "mid": 34490,
-    "lo": 18596
+    "hi": 64508,
+    "mid": 33522,
+    "lo": 17958
    }
   },
   {
    "brand": "FFT",
    "model": "a321",
-   "pxm": 32.6,
+   "pxm": 32.7,
    "variants": [
     {
      "types": [
@@ -1646,9 +1646,9 @@
      "file": "FFT/a321@a21n-mid.webp",
      "painted_as": "a21n",
      "bytes": {
-      "hi": 63896,
-      "mid": 33132,
-      "lo": 17122
+      "hi": 62768,
+      "mid": 32574,
+      "lo": 17132
      }
     }
    ],
@@ -1663,15 +1663,15 @@
    "file": "FFT/a321-mid.webp",
    "painted_as": "a321",
    "bytes": {
-    "hi": 64200,
-    "mid": 33056,
-    "lo": 16998
+    "hi": 63128,
+    "mid": 32862,
+    "lo": 16970
    }
   },
   {
    "brand": "FJI",
    "model": "a333",
-   "pxm": 20.0,
+   "pxm": 20.1,
    "variants": [
     {
      "types": [
@@ -1685,9 +1685,9 @@
      "file": "FJI/a333@a332-mid.webp",
      "painted_as": "a332",
      "bytes": {
-      "hi": 69472,
-      "mid": 36332,
-      "lo": 19240
+      "hi": 69046,
+      "mid": 35700,
+      "lo": 19482
      }
     }
    ],
@@ -1702,15 +1702,15 @@
    "file": "FJI/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 69638,
-    "mid": 36384,
-    "lo": 19184
+    "hi": 70304,
+    "mid": 36342,
+    "lo": 19324
    }
   },
   {
    "brand": "FJI",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -1723,9 +1723,9 @@
    "file": "FJI/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 82882,
-    "mid": 43494,
-    "lo": 22042
+    "hi": 83930,
+    "mid": 44384,
+    "lo": 22434
    }
   },
   {
@@ -1744,15 +1744,15 @@
    "file": "FLE/b738@b38m-mid.webp",
    "painted_as": "b38m",
    "bytes": {
-    "hi": 55562,
-    "mid": 29070,
-    "lo": 15550
+    "hi": 55240,
+    "mid": 29028,
+    "lo": 15516
    }
   },
   {
    "brand": "HAL",
    "model": "a321",
-   "pxm": 32.6,
+   "pxm": 32.7,
    "variants": [],
    "types": [
     "a21n"
@@ -1765,15 +1765,15 @@
    "file": "HAL/a321@a21n-mid.webp",
    "painted_as": "a21n",
    "bytes": {
-    "hi": 73326,
-    "mid": 37198,
-    "lo": 18784
+    "hi": 68732,
+    "mid": 34940,
+    "lo": 18562
    }
   },
   {
    "brand": "HAL",
    "model": "a333",
-   "pxm": 20.0,
+   "pxm": 20.1,
    "variants": [],
    "types": [
     "a332"
@@ -1786,15 +1786,15 @@
    "file": "HAL/a333@a332-mid.webp",
    "painted_as": "a332",
    "bytes": {
-    "hi": 67926,
-    "mid": 35960,
-    "lo": 19108
+    "hi": 65976,
+    "mid": 35080,
+    "lo": 18990
    }
   },
   {
    "brand": "HVN",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -1807,15 +1807,15 @@
    "file": "HVN/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 105032,
-    "mid": 53516,
-    "lo": 26914
+    "hi": 106586,
+    "mid": 55004,
+    "lo": 27818
    }
   },
   {
    "brand": "IBE",
    "model": "a333",
-   "pxm": 20.0,
+   "pxm": 20.1,
    "variants": [],
    "types": [
     "a332"
@@ -1828,15 +1828,15 @@
    "file": "IBE/a333@a332-mid.webp",
    "painted_as": "a332",
    "bytes": {
-    "hi": 58376,
-    "mid": 31870,
-    "lo": 17280
+    "hi": 57522,
+    "mid": 31518,
+    "lo": 17666
    }
   },
   {
    "brand": "ITY",
    "model": "a333",
-   "pxm": 20.0,
+   "pxm": 20.1,
    "variants": [],
    "types": [
     "a339"
@@ -1849,15 +1849,15 @@
    "file": "ITY/a333@a339-mid.webp",
    "painted_as": "a339",
    "bytes": {
-    "hi": 93958,
-    "mid": 46390,
-    "lo": 23712
+    "hi": 92314,
+    "mid": 46190,
+    "lo": 23616
    }
   },
   {
    "brand": "ITY",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -1870,15 +1870,15 @@
    "file": "ITY/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 115632,
-    "mid": 55796,
-    "lo": 26284
+    "hi": 113416,
+    "mid": 55442,
+    "lo": 26622
    }
   },
   {
    "brand": "JAL",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -1891,15 +1891,15 @@
    "file": "JAL/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 61160,
-    "mid": 30592,
-    "lo": 16670
+    "hi": 57980,
+    "mid": 30788,
+    "lo": 15894
    }
   },
   {
    "brand": "JAL",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [
     {
      "types": [
@@ -1913,9 +1913,9 @@
      "file": "JAL/b788@b789-mid.webp",
      "painted_as": "b789",
      "bytes": {
-      "hi": 59400,
-      "mid": 31574,
-      "lo": 17106
+      "hi": 58504,
+      "mid": 30618,
+      "lo": 16542
      }
     }
    ],
@@ -1930,15 +1930,15 @@
    "file": "JAL/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 57708,
-    "mid": 30600,
-    "lo": 16610
+    "hi": 57262,
+    "mid": 30158,
+    "lo": 16322
    }
   },
   {
    "brand": "JBU",
    "model": "a320",
-   "pxm": 35.3,
+   "pxm": 35.9,
    "variants": [],
    "types": [
     "a320"
@@ -1951,15 +1951,15 @@
    "file": "JBU/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 102734,
-    "mid": 49532,
-    "lo": 24908
+    "hi": 99008,
+    "mid": 48438,
+    "lo": 24092
    }
   },
   {
    "brand": "JBU",
    "model": "a321",
-   "pxm": 32.6,
+   "pxm": 32.7,
    "variants": [
     {
      "types": [
@@ -1973,9 +1973,9 @@
      "file": "JBU/a321@a21n-mid.webp",
      "painted_as": "a21n",
      "bytes": {
-      "hi": 105036,
-      "mid": 50378,
-      "lo": 24144
+      "hi": 100196,
+      "mid": 48726,
+      "lo": 23930
      }
     }
    ],
@@ -1990,15 +1990,15 @@
    "file": "JBU/a321-mid.webp",
    "painted_as": "a321",
    "bytes": {
-    "hi": 105102,
-    "mid": 50390,
-    "lo": 24040
+    "hi": 100472,
+    "mid": 48954,
+    "lo": 23820
    }
   },
   {
    "brand": "JBU",
    "model": "bcs3",
-   "pxm": 39.1,
+   "pxm": 39.5,
    "variants": [],
    "types": [
     "bcs3"
@@ -2011,15 +2011,15 @@
    "file": "JBU/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 124738,
-    "mid": 60748,
-    "lo": 29880
+    "hi": 122294,
+    "mid": 61112,
+    "lo": 29506
    }
   },
   {
    "brand": "KAL",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -2032,15 +2032,15 @@
    "file": "KAL/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 89316,
-    "mid": 43492,
-    "lo": 22680
+    "hi": 89658,
+    "mid": 43772,
+    "lo": 22074
    }
   },
   {
    "brand": "KAL",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [
     {
      "types": [
@@ -2054,9 +2054,9 @@
      "file": "KAL/b788@b78x-mid.webp",
      "painted_as": "b78x",
      "bytes": {
-      "hi": 89040,
-      "mid": 45206,
-      "lo": 23046
+      "hi": 89550,
+      "mid": 45616,
+      "lo": 22470
      }
     }
    ],
@@ -2071,15 +2071,15 @@
    "file": "KAL/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 88318,
-    "mid": 44452,
-    "lo": 23150
+    "hi": 89434,
+    "mid": 44406,
+    "lo": 22770
    }
   },
   {
    "brand": "KLM",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [
     {
      "types": [
@@ -2093,9 +2093,9 @@
      "file": "KLM/b788@b78x-mid.webp",
      "painted_as": "b78x",
      "bytes": {
-      "hi": 79686,
-      "mid": 40806,
-      "lo": 21302
+      "hi": 78140,
+      "mid": 39436,
+      "lo": 19944
      }
     }
    ],
@@ -2110,15 +2110,15 @@
    "file": "KLM/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 77860,
-    "mid": 40524,
-    "lo": 21284
+    "hi": 75992,
+    "mid": 38700,
+    "lo": 20202
    }
   },
   {
    "brand": "LOT",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [
     {
      "types": [
@@ -2132,9 +2132,9 @@
      "file": "LOT/b788@b789-mid.webp",
      "painted_as": "b789",
      "bytes": {
-      "hi": 58236,
-      "mid": 31868,
-      "lo": 17636
+      "hi": 57940,
+      "mid": 31276,
+      "lo": 17336
      }
     }
    ],
@@ -2149,15 +2149,15 @@
    "file": "LOT/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 56730,
-    "mid": 31164,
-    "lo": 17346
+    "hi": 56722,
+    "mid": 30774,
+    "lo": 17156
    }
   },
   {
    "brand": "MXY",
    "model": "bcs3",
-   "pxm": 39.1,
+   "pxm": 39.5,
    "variants": [],
    "types": [
     "bcs3"
@@ -2170,15 +2170,15 @@
    "file": "MXY/bcs3-mid.webp",
    "painted_as": "bcs3",
    "bytes": {
-    "hi": 98720,
-    "mid": 49036,
-    "lo": 23936
+    "hi": 96912,
+    "mid": 48082,
+    "lo": 23456
    }
   },
   {
    "brand": "PAL",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -2191,15 +2191,15 @@
    "file": "PAL/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 74830,
-    "mid": 39706,
-    "lo": 19654
+    "hi": 74666,
+    "mid": 39502,
+    "lo": 19920
    }
   },
   {
    "brand": "PAL",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -2212,15 +2212,15 @@
    "file": "PAL/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 60552,
-    "mid": 30852,
-    "lo": 17298
+    "hi": 57096,
+    "mid": 30634,
+    "lo": 16378
    }
   },
   {
    "brand": "QFA",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b789"
@@ -2233,15 +2233,15 @@
    "file": "QFA/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 68152,
-    "mid": 37092,
-    "lo": 20154
+    "hi": 67382,
+    "mid": 35876,
+    "lo": 19568
    }
   },
   {
    "brand": "QTR",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -2254,15 +2254,15 @@
    "file": "QTR/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 80136,
-    "mid": 41180,
-    "lo": 20256
+    "hi": 80672,
+    "mid": 41508,
+    "lo": 20652
    }
   },
   {
    "brand": "SAS",
    "model": "a333",
-   "pxm": 20.0,
+   "pxm": 20.1,
    "variants": [],
    "types": [
     "a333"
@@ -2275,15 +2275,15 @@
    "file": "SAS/a333-mid.webp",
    "painted_as": "a333",
    "bytes": {
-    "hi": 71490,
-    "mid": 37516,
-    "lo": 19518
+    "hi": 70706,
+    "mid": 37484,
+    "lo": 19642
    }
   },
   {
    "brand": "SAS",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -2296,9 +2296,9 @@
    "file": "SAS/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 89358,
-    "mid": 45446,
-    "lo": 22788
+    "hi": 90626,
+    "mid": 46906,
+    "lo": 23106
    }
   },
   {
@@ -2317,15 +2317,15 @@
    "file": "SCX/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 104634,
-    "mid": 50522,
-    "lo": 23976
+    "hi": 104748,
+    "mid": 50666,
+    "lo": 24042
    }
   },
   {
    "brand": "SIA",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -2338,15 +2338,15 @@
    "file": "SIA/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 107940,
-    "mid": 50810,
-    "lo": 24406
+    "hi": 111348,
+    "mid": 52804,
+    "lo": 25082
    }
   },
   {
    "brand": "SJX",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -2359,9 +2359,9 @@
    "file": "SJX/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 113948,
-    "mid": 56758,
-    "lo": 28016
+    "hi": 114378,
+    "mid": 57806,
+    "lo": 28088
    }
   },
   {
@@ -2381,9 +2381,9 @@
      "file": "SWA/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 99546,
-      "mid": 47084,
-      "lo": 23010
+      "hi": 99428,
+      "mid": 47128,
+      "lo": 23014
      }
     },
     {
@@ -2398,9 +2398,9 @@
      "file": "SWA/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 99374,
-      "mid": 47108,
-      "lo": 22874
+      "hi": 99900,
+      "mid": 47262,
+      "lo": 22892
      }
     }
    ],
@@ -2415,15 +2415,15 @@
    "file": "SWA/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 100654,
-    "mid": 47990,
-    "lo": 23044
+    "hi": 100864,
+    "mid": 48038,
+    "lo": 23078
    }
   },
   {
    "brand": "SWR",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -2436,15 +2436,15 @@
    "file": "SWR/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 62818,
-    "mid": 32354,
-    "lo": 18246
+    "hi": 61172,
+    "mid": 32660,
+    "lo": 17340
    }
   },
   {
    "brand": "TAP",
    "model": "a333",
-   "pxm": 20.0,
+   "pxm": 20.1,
    "variants": [],
    "types": [
     "a339"
@@ -2457,15 +2457,15 @@
    "file": "TAP/a333@a339-mid.webp",
    "painted_as": "a339",
    "bytes": {
-    "hi": 58570,
-    "mid": 31686,
-    "lo": 17232
+    "hi": 58640,
+    "mid": 31710,
+    "lo": 17482
    }
   },
   {
    "brand": "THY",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a359"
@@ -2478,15 +2478,15 @@
    "file": "THY/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 92172,
-    "mid": 47592,
-    "lo": 23416
+    "hi": 94096,
+    "mid": 48618,
+    "lo": 24196
    }
   },
   {
    "brand": "THY",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b789"
@@ -2499,15 +2499,15 @@
    "file": "THY/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 72884,
-    "mid": 38390,
-    "lo": 20396
+    "hi": 71210,
+    "mid": 37374,
+    "lo": 20138
    }
   },
   {
    "brand": "TZP",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b788"
@@ -2520,15 +2520,15 @@
    "file": "TZP/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 65362,
-    "mid": 34536,
-    "lo": 18692
+    "hi": 63558,
+    "mid": 33418,
+    "lo": 17990
    }
   },
   {
    "brand": "UAE",
    "model": "a388",
-   "pxm": 15.3,
+   "pxm": 16.1,
    "variants": [],
    "types": [
     "a388"
@@ -2541,15 +2541,15 @@
    "file": "UAE/a388-mid.webp",
    "painted_as": "a388",
    "bytes": {
-    "hi": 72448,
-    "mid": 37996,
-    "lo": 19952
+    "hi": 72114,
+    "mid": 37708,
+    "lo": 19082
    }
   },
   {
    "brand": "UAL",
    "model": "a319",
-   "pxm": 35.4,
+   "pxm": 35.5,
    "variants": [],
    "types": [
     "a319"
@@ -2562,15 +2562,15 @@
    "file": "UAL/a319-mid.webp",
    "painted_as": "a319",
    "bytes": {
-    "hi": 107370,
-    "mid": 52264,
-    "lo": 26228
+    "hi": 102348,
+    "mid": 49368,
+    "lo": 24052
    }
   },
   {
    "brand": "UAL",
    "model": "a320",
-   "pxm": 35.3,
+   "pxm": 35.9,
    "variants": [],
    "types": [
     "a320"
@@ -2583,15 +2583,15 @@
    "file": "UAL/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 104470,
-    "mid": 50632,
-    "lo": 24994
+    "hi": 103754,
+    "mid": 50002,
+    "lo": 24366
    }
   },
   {
    "brand": "UAL",
    "model": "a321",
-   "pxm": 32.6,
+   "pxm": 32.7,
    "variants": [],
    "types": [
     "a21n"
@@ -2604,9 +2604,9 @@
    "file": "UAL/a321@a21n-mid.webp",
    "painted_as": "a21n",
    "bytes": {
-    "hi": 99950,
-    "mid": 47268,
-    "lo": 22550
+    "hi": 100456,
+    "mid": 47524,
+    "lo": 23014
    }
   },
   {
@@ -2626,9 +2626,9 @@
      "file": "UAL/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 109382,
-      "mid": 51548,
-      "lo": 24404
+      "hi": 109032,
+      "mid": 51504,
+      "lo": 24412
      }
     },
     {
@@ -2644,9 +2644,9 @@
      "file": "UAL/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 111870,
-      "mid": 53248,
-      "lo": 25186
+      "hi": 111718,
+      "mid": 53236,
+      "lo": 25194
      }
     }
    ],
@@ -2661,15 +2661,15 @@
    "file": "UAL/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 109440,
-    "mid": 52168,
-    "lo": 24450
+    "hi": 109340,
+    "mid": 52110,
+    "lo": 24496
    }
   },
   {
    "brand": "UAL",
    "model": "b752",
-   "pxm": 31.7,
+   "pxm": 30.7,
    "variants": [
     {
      "types": [
@@ -2683,9 +2683,9 @@
      "file": "UAL/b752@b753-mid.webp",
      "painted_as": "b753",
      "bytes": {
-      "hi": 108004,
-      "mid": 51960,
-      "lo": 25356
+      "hi": 102532,
+      "mid": 48850,
+      "lo": 23752
      }
     }
    ],
@@ -2700,15 +2700,15 @@
    "file": "UAL/b752-mid.webp",
    "painted_as": "b752",
    "bytes": {
-    "hi": 105058,
-    "mid": 50330,
-    "lo": 24468
+    "hi": 100042,
+    "mid": 47392,
+    "lo": 23052
    }
   },
   {
    "brand": "UAL",
    "model": "b763",
-   "pxm": 25.9,
+   "pxm": 27.6,
    "variants": [
     {
      "types": [
@@ -2722,9 +2722,9 @@
      "file": "UAL/b763@b764-mid.webp",
      "painted_as": "b764",
      "bytes": {
-      "hi": 111052,
-      "mid": 53028,
-      "lo": 25384
+      "hi": 110944,
+      "mid": 52998,
+      "lo": 25014
      }
     }
    ],
@@ -2739,15 +2739,15 @@
    "file": "UAL/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 108920,
-    "mid": 51636,
-    "lo": 24686
+    "hi": 109468,
+    "mid": 51684,
+    "lo": 24508
    }
   },
   {
    "brand": "UAL",
    "model": "b772",
-   "pxm": 20.0,
+   "pxm": 20.3,
    "variants": [],
    "types": [
     "b772"
@@ -2760,15 +2760,15 @@
    "file": "UAL/b772-mid.webp",
    "painted_as": "b772",
    "bytes": {
-    "hi": 96522,
-    "mid": 47768,
-    "lo": 24104
+    "hi": 92074,
+    "mid": 45228,
+    "lo": 22440
    }
   },
   {
    "brand": "UAL",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [],
    "types": [
     "b77w"
@@ -2781,15 +2781,15 @@
    "file": "UAL/b77w-mid.webp",
    "painted_as": "b77w",
    "bytes": {
-    "hi": 103506,
-    "mid": 49616,
-    "lo": 25154
+    "hi": 98402,
+    "mid": 47930,
+    "lo": 23300
    }
   },
   {
    "brand": "UAL",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [
     {
      "types": [
@@ -2803,9 +2803,9 @@
      "file": "UAL/b788@b789-mid.webp",
      "painted_as": "b789",
      "bytes": {
-      "hi": 109632,
-      "mid": 54238,
-      "lo": 27306
+      "hi": 106340,
+      "mid": 51438,
+      "lo": 25806
      }
     },
     {
@@ -2820,9 +2820,9 @@
      "file": "UAL/b788@b78x-mid.webp",
      "painted_as": "b78x",
      "bytes": {
-      "hi": 108626,
-      "mid": 54010,
-      "lo": 26884
+      "hi": 105490,
+      "mid": 51630,
+      "lo": 25234
      }
     }
    ],
@@ -2837,15 +2837,15 @@
    "file": "UAL/b788-mid.webp",
    "painted_as": "b788",
    "bytes": {
-    "hi": 107160,
-    "mid": 52722,
-    "lo": 26610
+    "hi": 104006,
+    "mid": 50790,
+    "lo": 25314
    }
   },
   {
    "brand": "UAL-G",
    "model": "a319",
-   "pxm": 35.4,
+   "pxm": 35.5,
    "variants": [],
    "types": [
     "a319"
@@ -2858,15 +2858,15 @@
    "file": "UAL-G/a319-mid.webp",
    "painted_as": "a319",
    "bytes": {
-    "hi": 105116,
-    "mid": 48754,
-    "lo": 23834
+    "hi": 104460,
+    "mid": 47618,
+    "lo": 22524
    }
   },
   {
    "brand": "UAL-G",
    "model": "a320",
-   "pxm": 35.3,
+   "pxm": 35.9,
    "variants": [],
    "types": [
     "a320"
@@ -2879,9 +2879,9 @@
    "file": "UAL-G/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 99348,
-    "mid": 46282,
-    "lo": 22254
+    "hi": 98410,
+    "mid": 45170,
+    "lo": 21568
    }
   },
   {
@@ -2902,9 +2902,9 @@
      "file": "UAL-G/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 110060,
-      "mid": 50006,
-      "lo": 23034
+      "hi": 109900,
+      "mid": 49914,
+      "lo": 23020
      }
     }
    ],
@@ -2919,9 +2919,9 @@
    "file": "UAL-G/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 108638,
-    "mid": 49000,
-    "lo": 22432
+    "hi": 108568,
+    "mid": 48956,
+    "lo": 22380
    }
   },
   {
@@ -2969,7 +2969,7 @@
   {
    "brand": "UAL-X",
    "model": "e170",
-   "pxm": 43.7,
+   "pxm": 46.3,
    "variants": [],
    "types": [
     "e170"
@@ -2982,15 +2982,15 @@
    "file": "UAL-X/e170-mid.webp",
    "painted_as": "e170",
    "bytes": {
-    "hi": 112636,
-    "mid": 53674,
-    "lo": 25858
+    "hi": 113290,
+    "mid": 54296,
+    "lo": 25772
    }
   },
   {
    "brand": "UAL-X",
    "model": "e75l",
-   "pxm": 41.4,
+   "pxm": 45.1,
    "variants": [],
    "types": [
     "e75l"
@@ -3003,9 +3003,9 @@
    "file": "UAL-X/e75l-mid.webp",
    "painted_as": "e75l",
    "bytes": {
-    "hi": 109100,
-    "mid": 53028,
-    "lo": 26044
+    "hi": 110710,
+    "mid": 53282,
+    "lo": 26054
    }
   },
   {
@@ -3024,15 +3024,15 @@
    "file": "UPS/b744-mid.webp",
    "painted_as": "b744",
    "bytes": {
-    "hi": 78208,
-    "mid": 37772,
-    "lo": 18862
+    "hi": 72092,
+    "mid": 34758,
+    "lo": 17116
    }
   },
   {
    "brand": "UPS",
    "model": "b748",
-   "pxm": 14.0,
+   "pxm": 13.9,
    "variants": [],
    "types": [
     "b748"
@@ -3045,15 +3045,15 @@
    "file": "UPS/b748-mid.webp",
    "painted_as": "b748",
    "bytes": {
-    "hi": 66102,
-    "mid": 32062,
-    "lo": 16290
+    "hi": 63676,
+    "mid": 30602,
+    "lo": 15208
    }
   },
   {
    "brand": "UPS",
    "model": "b752",
-   "pxm": 31.7,
+   "pxm": 30.7,
    "variants": [],
    "types": [
     "b752"
@@ -3066,15 +3066,15 @@
    "file": "UPS/b752-mid.webp",
    "painted_as": "b752",
    "bytes": {
-    "hi": 64640,
-    "mid": 32434,
-    "lo": 16780
+    "hi": 61272,
+    "mid": 30688,
+    "lo": 15834
    }
   },
   {
    "brand": "UPS",
    "model": "b763",
-   "pxm": 25.9,
+   "pxm": 27.6,
    "variants": [],
    "types": [
     "b763"
@@ -3087,15 +3087,15 @@
    "file": "UPS/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 63978,
-    "mid": 31076,
-    "lo": 16250
+    "hi": 64264,
+    "mid": 31646,
+    "lo": 16304
    }
   },
   {
    "brand": "UPS",
    "model": "md11",
-   "pxm": 17.2,
+   "pxm": 17.4,
    "variants": [],
    "types": [
     "md11"
@@ -3108,15 +3108,15 @@
    "file": "UPS/md11-mid.webp",
    "painted_as": "md11",
    "bytes": {
-    "hi": 63356,
-    "mid": 32690,
-    "lo": 17532
+    "hi": 58182,
+    "mid": 29478,
+    "lo": 15344
    }
   },
   {
    "brand": "VIR",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a35k"
@@ -3129,15 +3129,15 @@
    "file": "VIR/a359@a35k-mid.webp",
    "painted_as": "a35k",
    "bytes": {
-    "hi": 106332,
-    "mid": 52214,
-    "lo": 26342
+    "hi": 100618,
+    "mid": 51220,
+    "lo": 24416
    }
   },
   {
    "brand": "VIR",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b789"
@@ -3150,15 +3150,15 @@
    "file": "VIR/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 88568,
-    "mid": 45420,
-    "lo": 23082
+    "hi": 83658,
+    "mid": 41768,
+    "lo": 21328
    }
   },
   {
    "brand": "VOI",
    "model": "a320",
-   "pxm": 35.3,
+   "pxm": 35.9,
    "variants": [
     {
      "types": [
@@ -3172,9 +3172,9 @@
      "file": "VOI/a320@a20n-mid.webp",
      "painted_as": "a20n",
      "bytes": {
-      "hi": 64476,
-      "mid": 34212,
-      "lo": 18806
+      "hi": 63380,
+      "mid": 33182,
+      "lo": 18154
      }
     }
    ],
@@ -3189,15 +3189,15 @@
    "file": "VOI/a320-mid.webp",
    "painted_as": "a320",
    "bytes": {
-    "hi": 64640,
-    "mid": 34260,
-    "lo": 18804
+    "hi": 63536,
+    "mid": 33146,
+    "lo": 18040
    }
   },
   {
    "brand": "VOI",
    "model": "a321",
-   "pxm": 32.6,
+   "pxm": 32.7,
    "variants": [],
    "types": [
     "a21n"
@@ -3210,9 +3210,9 @@
    "file": "VOI/a321@a21n-mid.webp",
    "painted_as": "a21n",
    "bytes": {
-    "hi": 64878,
-    "mid": 33732,
-    "lo": 17574
+    "hi": 63470,
+    "mid": 33032,
+    "lo": 17696
    }
   },
   {
@@ -3232,9 +3232,9 @@
      "file": "WJA/b738@b38m-mid.webp",
      "painted_as": "b38m",
      "bytes": {
-      "hi": 74854,
-      "mid": 37616,
-      "lo": 19340
+      "hi": 74620,
+      "mid": 37576,
+      "lo": 19342
      }
     },
     {
@@ -3249,9 +3249,9 @@
      "file": "WJA/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 73012,
-      "mid": 37256,
-      "lo": 19008
+      "hi": 72876,
+      "mid": 37284,
+      "lo": 19010
      }
     }
    ],
@@ -3266,15 +3266,15 @@
    "file": "WJA/b738-mid.webp",
    "painted_as": "b738",
    "bytes": {
-    "hi": 75306,
-    "mid": 38540,
-    "lo": 19510
+    "hi": 75294,
+    "mid": 38472,
+    "lo": 19520
    }
   },
   {
    "brand": "WJA",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [],
    "types": [
     "b789"
@@ -3287,15 +3287,15 @@
    "file": "WJA/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 72460,
-    "mid": 38772,
-    "lo": 20882
+    "hi": 71470,
+    "mid": 37504,
+    "lo": 19830
    }
   },
   {
    "brand": "_N",
    "model": "a319",
-   "pxm": 35.4,
+   "pxm": 35.5,
    "variants": [],
    "types": [
     "a19n"
@@ -3308,15 +3308,15 @@
    "file": "_N/a319@a19n-mid.webp",
    "painted_as": "a19n",
    "bytes": {
-    "hi": 34700,
-    "mid": 20554,
-    "lo": 12878
+    "hi": 33918,
+    "mid": 19856,
+    "lo": 12010
    }
   },
   {
    "brand": "_N",
    "model": "a320",
-   "pxm": 35.3,
+   "pxm": 35.9,
    "variants": [],
    "types": [
     "a20n"
@@ -3329,15 +3329,15 @@
    "file": "_N/a320@a20n-mid.webp",
    "painted_as": "a20n",
    "bytes": {
-    "hi": 34270,
-    "mid": 20028,
-    "lo": 12228
+    "hi": 33630,
+    "mid": 19548,
+    "lo": 11560
    }
   },
   {
    "brand": "_N",
    "model": "a321",
-   "pxm": 32.6,
+   "pxm": 32.7,
    "variants": [],
    "types": [
     "a21n"
@@ -3350,15 +3350,15 @@
    "file": "_N/a321@a21n-mid.webp",
    "painted_as": "a21n",
    "bytes": {
-    "hi": 37212,
-    "mid": 20710,
-    "lo": 11596
+    "hi": 35010,
+    "mid": 19918,
+    "lo": 11364
    }
   },
   {
    "brand": "_N",
    "model": "a333",
-   "pxm": 20.0,
+   "pxm": 20.1,
    "variants": [
     {
      "types": [
@@ -3372,9 +3372,9 @@
      "file": "_N/a333@a339-mid.webp",
      "painted_as": "a339",
      "bytes": {
-      "hi": 40432,
-      "mid": 23286,
-      "lo": 13356
+      "hi": 39854,
+      "mid": 23276,
+      "lo": 13684
      }
     },
     {
@@ -3389,9 +3389,9 @@
      "file": "_N/a333@a338-mid.webp",
      "painted_as": "a338",
      "bytes": {
-      "hi": 40090,
-      "mid": 23184,
-      "lo": 13444
+      "hi": 39412,
+      "mid": 23120,
+      "lo": 13852
      }
     }
    ],
@@ -3406,15 +3406,15 @@
    "file": "_N/a333@a332-mid.webp",
    "painted_as": "a332",
    "bytes": {
-    "hi": 40138,
-    "mid": 23282,
-    "lo": 13462
+    "hi": 38620,
+    "mid": 22640,
+    "lo": 13814
    }
   },
   {
    "brand": "_N",
    "model": "a359",
-   "pxm": 19.2,
+   "pxm": 20.5,
    "variants": [],
    "types": [
     "a35k"
@@ -3427,9 +3427,9 @@
    "file": "_N/a359@a35k-mid.webp",
    "painted_as": "a35k",
    "bytes": {
-    "hi": 55676,
-    "mid": 30694,
-    "lo": 16564
+    "hi": 55450,
+    "mid": 31024,
+    "lo": 16142
    }
   },
   {
@@ -3450,9 +3450,9 @@
      "file": "_N/b738@b39m-mid.webp",
      "painted_as": "b39m",
      "bytes": {
-      "hi": 37352,
-      "mid": 21132,
-      "lo": 11768
+      "hi": 37360,
+      "mid": 21098,
+      "lo": 11764
      }
     },
     {
@@ -3467,9 +3467,9 @@
      "file": "_N/b738@b737-mid.webp",
      "painted_as": "b737",
      "bytes": {
-      "hi": 35266,
-      "mid": 19978,
-      "lo": 11252
+      "hi": 35128,
+      "mid": 19984,
+      "lo": 11220
      }
     },
     {
@@ -3484,9 +3484,9 @@
      "file": "_N/b738@b736-mid.webp",
      "painted_as": "b736",
      "bytes": {
-      "hi": 33834,
-      "mid": 19258,
-      "lo": 10968
+      "hi": 33896,
+      "mid": 19310,
+      "lo": 10952
      }
     },
     {
@@ -3501,9 +3501,9 @@
      "file": "_N/b738@b37m-mid.webp",
      "painted_as": "b37m",
      "bytes": {
-      "hi": 35602,
-      "mid": 19596,
-      "lo": 11186
+      "hi": 35722,
+      "mid": 19540,
+      "lo": 11170
      }
     },
     {
@@ -3518,9 +3518,9 @@
      "file": "_N/b738@b3xm-mid.webp",
      "painted_as": "b3xm",
      "bytes": {
-      "hi": 37664,
-      "mid": 21294,
-      "lo": 11844
+      "hi": 37646,
+      "mid": 21310,
+      "lo": 11836
      }
     }
    ],
@@ -3535,15 +3535,15 @@
    "file": "_N/b738@b38m-mid.webp",
    "painted_as": "b38m",
    "bytes": {
-    "hi": 36150,
-    "mid": 19938,
-    "lo": 11174
+    "hi": 35974,
+    "mid": 19910,
+    "lo": 11160
    }
   },
   {
    "brand": "_N",
    "model": "b752",
-   "pxm": 31.7,
+   "pxm": 30.7,
    "variants": [],
    "types": [
     "b753"
@@ -3556,15 +3556,15 @@
    "file": "_N/b752@b753-mid.webp",
    "painted_as": "b753",
    "bytes": {
-    "hi": 28714,
-    "mid": 17126,
-    "lo": 10582
+    "hi": 27576,
+    "mid": 16400,
+    "lo": 10144
    }
   },
   {
    "brand": "_N",
    "model": "b763",
-   "pxm": 25.9,
+   "pxm": 27.6,
    "variants": [
     {
      "types": [
@@ -3578,9 +3578,9 @@
      "file": "_N/b763@b762-mid.webp",
      "painted_as": "b762",
      "bytes": {
-      "hi": 35784,
-      "mid": 19942,
-      "lo": 11648
+      "hi": 36080,
+      "mid": 20188,
+      "lo": 11730
      }
     }
    ],
@@ -3595,15 +3595,15 @@
    "file": "_N/b763@b764-mid.webp",
    "painted_as": "b764",
    "bytes": {
-    "hi": 39802,
-    "mid": 22140,
-    "lo": 12402
+    "hi": 40164,
+    "mid": 22468,
+    "lo": 12188
    }
   },
   {
    "brand": "_N",
    "model": "b772",
-   "pxm": 20.0,
+   "pxm": 20.3,
    "variants": [],
    "types": [
     "b773"
@@ -3616,15 +3616,15 @@
    "file": "_N/b772@b773-mid.webp",
    "painted_as": "b773",
    "bytes": {
-    "hi": 39054,
-    "mid": 22254,
-    "lo": 12820
+    "hi": 39026,
+    "mid": 22144,
+    "lo": 13018
    }
   },
   {
    "brand": "_N",
    "model": "b77w",
-   "pxm": 21.8,
+   "pxm": 22.1,
    "variants": [
     {
      "types": [
@@ -3638,9 +3638,9 @@
      "file": "_N/b77w@b779-mid.webp",
      "painted_as": "b779",
      "bytes": {
-      "hi": 38796,
-      "mid": 21620,
-      "lo": 13164
+      "hi": 37080,
+      "mid": 21374,
+      "lo": 12352
      }
     }
    ],
@@ -3655,15 +3655,15 @@
    "file": "_N/b77w@b77l-mid.webp",
    "painted_as": "b77l",
    "bytes": {
-    "hi": 40522,
-    "mid": 21694,
-    "lo": 13656
+    "hi": 38208,
+    "mid": 22220,
+    "lo": 12862
    }
   },
   {
    "brand": "_N",
    "model": "b788",
-   "pxm": 22.7,
+   "pxm": 24.5,
    "variants": [
     {
      "types": [
@@ -3677,9 +3677,9 @@
      "file": "_N/b788@b78x-mid.webp",
      "painted_as": "b78x",
      "bytes": {
-      "hi": 39948,
-      "mid": 23140,
-      "lo": 13646
+      "hi": 38094,
+      "mid": 22070,
+      "lo": 12574
      }
     }
    ],
@@ -3694,15 +3694,15 @@
    "file": "_N/b788@b789-mid.webp",
    "painted_as": "b789",
    "bytes": {
-    "hi": 38652,
-    "mid": 22616,
-    "lo": 13628
+    "hi": 36798,
+    "mid": 21214,
+    "lo": 12730
    }
   },
   {
    "brand": "_N",
    "model": "e190",
-   "pxm": 38.0,
+   "pxm": 41.8,
    "variants": [],
    "types": [
     "e195"
@@ -3715,9 +3715,9 @@
    "file": "_N/e190@e195-mid.webp",
    "painted_as": "e195",
    "bytes": {
-    "hi": 29154,
-    "mid": 16928,
-    "lo": 10358
+    "hi": 28734,
+    "mid": 16476,
+    "lo": 10082
    }
   }
  ],
@@ -6175,32 +6175,32 @@
    "ycM": -0.0
   },
   "a333": {
-   "H": 5.619,
+   "H": 5.667,
    "L": 63.05,
    "winH": 0.446,
-   "winY": 1.143,
-   "ycM": 0.28
+   "winY": 1.101,
+   "ycM": 0.256
   },
   "a333@a332": {
-   "H": 5.562,
+   "H": 5.638,
    "L": 58.247,
    "winH": 0.46,
-   "winY": 1.111,
-   "ycM": 0.309
+   "winY": 1.069,
+   "ycM": 0.27
   },
   "a333@a338": {
-   "H": 5.614,
+   "H": 5.69,
    "L": 58.247,
    "winH": 0.454,
-   "winY": 1.162,
-   "ycM": 0.283
+   "winY": 1.124,
+   "ycM": 0.245
   },
   "a333@a339": {
-   "H": 5.71,
+   "H": 5.766,
    "L": 63.05,
    "winH": 0.448,
-   "winY": 1.155,
-   "ycM": 0.235
+   "winY": 1.119,
+   "ycM": 0.206
   },
   "a359": {
    "H": 6.506,
