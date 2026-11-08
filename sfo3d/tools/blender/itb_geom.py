@@ -1268,6 +1268,145 @@ def core_block(lod=0):
     return mb
 
 
+# ------------------------------------------------------------------------------------------------ bridge heads
+# Close-out round 4 (buildings, verifier finding "ITB walkway ends"): the app's fixed jet-bridge walkway starts at the data's
+# attach point (js/live/gates.js walk[0], tools/blender/app_bridges.json), which lies up to 0.96 m OUTSIDE the SFO Museum
+# outline the piers are extruded from (24 of 48 A / G walkway ends 0.2-0.9 m in front of the facade: a strip of daylight
+# between the bridge and the terminal), up to 1.0 m inside it, or - at the BA-G bump-out corners - with one edge past the
+# bump-out's side wall. As tools/blender/dom_geom.py does for the domestic piers, every such A / G bridge head gets a closing
+# box from the facade to the walkway's end face (tools/blender/bridge_head.py: a VESTIBULE of the walkway section + 0.3 m each
+# side, VEST_DZ around the walkway floor, reaching VEST_IN into the facade across its width; a NUB where the end is inside the
+# facade but its edge passes a corner), at every LOD (LOD2 against the simplified LOD2 outline), and a door surround on the
+# vestibule end at LOD0 [inf: form; the walkway start is the data's]. The boxes are clipped clear (VEST_CLEAR) of the other
+# bridges' fixed walkway solids and drums and of the bridge's own drum in overlapping height bands; stacked walkways at one
+# attach point (upper deck) share one vestibule spanning both bands.
+import bridge_head as BH  # noqa: E402
+VEST_W = BH.VEST_W
+VEST_DZ = (-0.5, 3.3)        # underside / top above the walkway floor (walkway solid: floor - 0.3 .. floor + 3.0) (dom_geom)
+VEST_IN = BH.VEST_IN
+DOOR_DZ = (-0.2, 3.2)        # door surround foot / head above the walkway floor (dom_geom DOOR_DZ)
+WALK_W_APP = 2.6             # js/live/gates.js WALK_W
+
+
+def bridge_hosts(lod):
+    """the apron-standing solids of this LOD that a bridge head can abut: [(name, world polygon, top)] - the pier bodies as
+    pier_body() extrudes them (LOD2: the simplified outline), the BA-G bump-outs (BUMP_H_G) and the core blocks."""
+    out = []
+    for key in ('A', 'G'):
+        h = float(PIERS[key]['h_main_roof'])
+        poly = largest(PIER_A if key == 'A' else PIER_G)
+        if lod == 2: poly = largest(poly.simplify(1.0).intersection(poly))
+        if key == 'A':
+            out.append(('ba_a_body', poly, h)); continue
+        bo = bumpouts('G')
+        body = largest(poly.difference(unary_union([b[3] for b in bo]).buffer(0.01)))
+        if lod < 2: body = largest(body.buffer(0.01, join_style=2).buffer(-0.01, join_style=2).intersection(poly))
+        out.append(('ba_g_body', body, h))
+        for i, b in enumerate(bo):
+            g = b[3].intersection(poly).buffer(-0.02, join_style=2) if lod == 2 else b[3]
+            out.append(('ba_g_bump%d' % i, largest(g), BUMP_H_G))
+    for kind, g in core_parts():
+        if kind != 'block': continue
+        if lod == 2: g = largest(g.simplify(1.0).intersection(g))
+        out.append(('itb_core', g, H_CORE))
+    return out
+
+
+def bridge_heads(lod):
+    """closing boxes of the A / G bridge heads at this LOD: [dict(stands, kind, E, u, gap_max, dmin, overhang, host, host_top,
+    poly (world, clipped), z0, z1, parts [dict(E, u, fl, wtop, kind)], clipped_m2, low_host)] - see the comment above. Only
+    bridges whose drawn walkway starts at walk[0] (walkFrom 0)."""
+    import app_bridges as AB
+    hosts = bridge_hosts(lod)
+    U = unary_union([h[1] for h in hosts])
+    allb = AB.bridges('ABCDEFG')
+    recs = []
+    for b in AB.bridges('AG'):
+        if b.get('walkFrom') or len(b['walk']) < 2: continue
+        E, u, v = BH.frame(b)
+        hb = BH.head_box(BH.depths(U, E, u, v))
+        if hb['kind'] is None: continue
+        Xf = E - u * max(0.0, hb['dmin'])
+        host = min(hosts, key=lambda h: h[1].distance(Point(*Xf)))
+        fl0 = float(AB.floor_at(b, *Xf)); fl1 = float(b['walk'][0][1])
+        f_lo, f_hi = min(fl0, fl1), max(fl0, fl1)
+        part = dict(E=E, u=u, fl=fl1, wtop=f_hi + 3.0, kind=hb['kind'])
+        recs.append(dict(stands=[(b['stand'], b['door'], b['upper'])], kind=hb['kind'], E=E, u=u, gap_max=hb['gap_max'], dmin=hb['dmin'],
+                         overhang=hb['overhang'], host=host[0], host_top=host[2], poly=BH.rect(E, u, hb['a0'], hb['a1'], VEST_W / 2),
+                         z0=f_lo + VEST_DZ[0], z1=f_hi + VEST_DZ[1], parts=[part], bridges=[b]))
+    # stacked / adjoining walkways at one head: one box over both bands (plan overlap and bands within 0.6 m)
+    merged = True
+    while merged:
+        merged = False
+        for i in range(len(recs)):
+            for k in range(i + 1, len(recs)):
+                a, c = recs[i], recs[k]
+                if a['poly'].intersection(c['poly']).area < 0.1 or a['z0'] > c['z1'] + 0.6 or c['z0'] > a['z1'] + 0.6: continue
+                a['stands'] += c['stands']; a['poly'] = a['poly'].union(c['poly']); a['parts'] += c['parts']; a['bridges'] += c['bridges']
+                a['z0'] = min(a['z0'], c['z0']); a['z1'] = max(a['z1'], c['z1']); a['gap_max'] = max(a['gap_max'], c['gap_max'])
+                a['overhang'] = a['overhang'] or c['overhang']
+                if c['kind'] == 'vestibule': a['kind'] = 'vestibule'
+                del recs[k]; merged = True; break
+            if merged: break
+    # clear of the OTHER bridges' fixed solids (walkway segments, drums) and the own drums whose band meets the box's
+    for r in recs:
+        mine = set(r['stands'])
+        cut = [BH.other_solids_cut(allb, mine, r['E'], r['z0'], r['z1'])] + [BH.own_drum_cut(b, r['z0'], r['z1']) for b in r['bridges']]
+        cut = [c for c in cut if c is not None]
+        a0 = r['poly'].area
+        if cut: r['poly'] = r['poly'].difference(unary_union(cut))
+        r['poly'] = r['poly'].buffer(0)
+        r['clipped_m2'] = round(a0 - r['poly'].area, 3)
+        r['low_host'] = r['z1'] + 0.4 > r['host_top']
+        del r['bridges']
+    return [r for r in recs if not r['poly'].is_empty and r['poly'].area > 0.05]
+
+
+def _prism(mb, poly_world, z0, z1, side, top, bottom, tile=PANEL_TILE):
+    P = to_blender_poly(poly_world)
+    for Pi in (P.geoms if hasattr(P, 'geoms') else [P]):
+        if Pi.area < 0.02: continue
+        for ring in rings_of(Pi):
+            s = 0.0
+            for i in range(len(ring)):
+                a, b = ring[i], ring[(i + 1) % len(ring)]
+                L = math.hypot(b[0] - a[0], b[1] - a[1])
+                if L < 1e-4: continue
+                mb.quad_wall(a, b, z0, z1, z0, z1, side, s, tile); s += L
+        cap(mb, Pi, z1, top, 3.0)
+        cap(mb, Pi, z0, bottom, 6.0, down=True)
+
+
+def bridge_head_parts(lod):
+    """(closing-box shell mesh, door-surround detail mesh (LOD0) or None, records)."""
+    recs = bridge_heads(lod)
+    sh = MB('ba_bridge_heads')
+    for r in recs:
+        _prism(sh, r['poly'], r['z0'], r['z1'], 'alu_panel', 'coping', 'alu_panel')
+    det = None
+    if lod == 0:
+        det = MB('ba_bridge_doors')
+        # door surround on the vestibule end AROUND each walkway section (gates.js WALK_W 2.6 x WALK_H 3.0 at its floor): two
+        # jambs and a head 0.12 m proud, clear of the walkway, and a dark leaf 0.02 m proud inside it (the closed door behind
+        # the docked bridge's end) [inf] - as dom_geom.door_geom; only on vestibule ends (a nub lies behind the walkway end), and
+        # a member is left out where the clipped box does not back it (another bridge's solid there)
+        for r in recs:
+            for p in r['parts']:
+                if p['kind'] != 'vestibule': continue
+                E, u = np.asarray(p['E']), np.asarray(p['u'])
+                n = np.array([-u[1], u[0]])
+                wj = 0.25; off = WALK_W_APP / 2 + 0.05 + wj / 2
+                for c, w_, h_, z, mat in [(E + u * 0.06 + n * off, wj, 0.12, (p['fl'] + DOOR_DZ[0], p['wtop'] + 0.4), 'mullion'),
+                                          (E + u * 0.06 - n * off, wj, 0.12, (p['fl'] + DOOR_DZ[0], p['wtop'] + 0.4), 'mullion'),
+                                          (E + u * 0.06, WALK_W_APP + 0.1 + 2 * wj, 0.12, (p['wtop'] + 0.08, p['wtop'] + 0.4), 'mullion'),
+                                          (E + u * 0.01, WALK_W_APP + 0.1, 0.02, (p['fl'], p['wtop'] + 0.08), 'service_dark')]:
+                    foot = BH.rect(E - u * 0.05, n, float((c - E) @ n) - w_ / 2, float((c - E) @ n) + w_ / 2, 0.01)
+                    if not r['poly'].buffer(0.02).contains(foot): continue
+                    x, y, _ = B(c[0], c[1], 0); dx, dy, _ = B(c[0] + n[0], c[1] + n[1], 0)
+                    boxm(det, (x, y), (dx - x, dy - y), w_, h_, z, mat, (3.0, 3.0), top=True, bottom=(mat == 'mullion' and w_ > 1.0))
+    return sh, det, recs
+
+
 # ------------------------------------------------------------------------------------------------ assembly
 SPEC_ROOF = ['roof.corners_obs', 'roof.length_obs', 'roof.width_obs', 'roof.axis_obs', 'roof.profile', 'roof.truss_lines_obs',
              'roof.truss_spacing_obs', 'roof.lenses_obs', 'roof.glazed_tips_obs', 'roof.dof_06-035315', 'roof.dof_06-035316']
@@ -1382,6 +1521,20 @@ def build(lod):
                                    dict(outline=dim('itb_pods.json ring_true_xz', 'obs', 'NAIP 2024 trace, relief-corrected'),
                                         tops=dim([p['top_m'] for p, _ in pod_polys(key)], 'obs', 'NAIP WNW band (low)'),
                                         **({'dof_conflict': dim(85 * FT, 'pub', 'DOF 06-035352 pod-1 top 25.91 m: NAIP 22.1-25.0 (drawn 23.6)')} if key == 'A' else {})))
+    # close-out round 4: vestibules from the facade to the app walkway's end face, at every LOD (bridge_heads)
+    vsh, vdet, vrecs = bridge_head_parts(lod)
+    if vsh.F:
+        P['ba_bridge_heads'] = Part('ba_bridge_heads', vsh, 'shell', 'inf', 'jet-bridge vestibules: facade -> app walkway end face (A / G)',
+                                    ['ba_a.footprint', 'ba_g.footprint'],
+                                    dict(count=dim(len(vrecs), 'inf', 'A / G walkway ends outside this LOD\'s facade (app_bridges.json walk[0])'),
+                                         width=dim(VEST_W, 'inf', 'gates.js WALK_W 2.6 + 0.3 each side (as dom_geom)'),
+                                         band=dim(list(VEST_DZ), 'inf', 'around the app walkway floor (walkway solid -0.3 .. +3.0)'),
+                                         reach=dim([round(min(r['gap_max'] for r in vrecs), 2), round(max(r['gap_max'] for r in vrecs), 2)],
+                                                   'obs', 'facade -> walkway end (data attach points vs the SFO Museum outline); + %.2f into the facade' % VEST_IN),
+                                         stands=dim(sorted({'%s L%d%s' % (s, d, 'U' if up else '') for r in vrecs for s, d, up in r['stands']}), 'inf', '')))
+    if vdet is not None and vdet.F:
+        P['ba_bridge_doors'] = Part('ba_bridge_doors', vdet, 'detail', 'inf', 'door surrounds on the vestibule ends (jambs, head, closed leaf)',
+                                    ['ba_a.footprint', 'ba_g.footprint'])
     P['ba_g_box'] = Part('ba_g_box', g3_box(lod), 'shell', 'obs', 'BA-G pod-3 end box (probable ramp-control cab)', ['ba_g.pod3_end_box'],
                          dict(top=dim(POD['G3-box']['top_m'], 'obs', 'NAIP band (30.5-33.4, low)'), function=dim('ramp-control cab', 'inf', 'photo d2 + LiveATC; unconfirmed'),
                               window_band=dim('top-2.6..top-1.2', 'inf', 'photo d2 schematic')))

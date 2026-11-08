@@ -377,7 +377,8 @@ def entry(build, ver, parts, mats, roof_rgb, info):
         deviations_from_sheets=DEVIATIONS_FROM_SHEETS,
         deviations_note='the 2-D set BD-01..03 is owned by the drawings group (tools/buildings/draw_domestic.py); these 3-D-only items are '
                         'recorded here instead of redrawing (review r2 finding 7)',
-        bridges=dict(doors=len(doors), vestibules=sum(1 for d in doors if d['gap'] > 0.12), bulkheads=sum(1 for d in doors if d['low']),
+        bridges=dict(doors=len(doors), vestibules=sum(1 for d in doors if (d.get('head') or {}).get('kind') == 'vestibule'),
+                     nubs=sum(1 for d in doors if (d.get('head') or {}).get('kind') == 'nub'), bulkheads=sum(1 for d in doors if d['low']),
                      notched=sum(1 for d in doors if d.get('notched')),
                      levels={k: dict(h=G.PIER_LEVEL[k], tag=G.PIER_LEVEL_TAG[k],
                                      doors=sum(1 for d in doors if d['stand'][0] == k),
@@ -387,7 +388,10 @@ def entry(build, ver, parts, mats, roof_rgb, info):
                      levels_source='js/live/gates.js DEPARTURE_LEVELS via tools/blender/app_bridges.json (node tools/blender/app_bridges.mjs, '
                                    'generated %s; stale inputs: %s)' % (G.AB.load()['generated'], ', '.join(G.APP_BRIDGES_STALE) or 'none'),
                      note='every bridge of data/sfo_stands.json (B-F) gets a door surround where its walkway meets the 3-D facade; where the '
-                          'app\'s walkway (js/live/gates.js) starts outside the facade a vestibule closes the gap'),
+                          'app\'s walkway (js/live/gates.js) starts outside the facade a vestibule closes the gap over the walkway\'s whole width '
+                          '(close-out round 4: tools/blender/bridge_head.py; a nub where the end lies inside the facade but its edge passes a '
+                          'corner); the walkway-end gap check (tools/blender/walkend_check.py, verify_domestic.py) holds every end <= 0.1 m',
+                     walkway_end_gaps=(ver or {}).get('plausibility', {}).get('walkway_end_gaps_summary')),
         integration=dict(replaces='js/live/terminals.js extrusions of the domestic parts of data/sfo_buildings.json (T1 / T2 / T3 halls, '
                                   'Boarding Areas B-F, their walkways)',
                          keep='the courtyard links and guideway-crossing connectors (not modelled here), the app\'s ramp-level complex outline '

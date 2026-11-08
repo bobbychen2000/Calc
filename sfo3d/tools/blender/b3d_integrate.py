@@ -721,7 +721,30 @@ def plausibility(F, TR, rep, log):
     for k in kept:
         res['notes'].append(dict(check='kept first-pass part vs asset', **k))
     deck_checks(F, TR, res, log)
+    stacked_cut_checks(res, log)
     return res
+
+
+def stacked_cut_checks(res, log):
+    """close-out round 4 (the round-3 verifier: four stacked cuts that leave a carriageway under lanes x 3.0 m stood only in
+    the build record): build_roadways' stacked cuts that were made although they narrow the lower deck below lanes x
+    MIN_LANE_W (the decks would clash if it were kept whole: the clearance kept < KEEP_CLEAR) are listed as conflicts with
+    their way ids; the refused ones (kept whole, a low clearance) are the deck-over-deck clearance conflict above, and
+    each refused pair is listed as a note with its ids (out/buildings3d/roadways_build.json#stats.stacked.cuts)"""
+    try: cuts = json.load(open(os.path.join(ROOT, 'out', 'buildings3d', 'roadways_build.json')))['stats']['stacked']['cuts']
+    except (OSError, ValueError, KeyError): return
+    nar = [c for c in cuts if c.get('narrowed')]; ref = [c for c in cuts if c.get('refused')]
+    res['stats']['stacked_cuts'] = dict(made=sum(1 for c in cuts if not c.get('refused')), narrowed=len(nar), refused=len(ref))
+    for c in nar:
+        res['conflicts'].append(dict(check='stacked roadway cut narrows the lower carriageway below lanes x 3.0 m (the decks would clash if kept whole)',
+                                     lower=c['lower'], upper=c['upper'], min_width_m=c['min_width_m'], need_m=c['need_m'], clearance_if_kept_m=c['clearance_if_kept_m'],
+                                     at=c['at'], why=c['narrowed'], note='a diverge / merge whose branch the level solve takes off the main deck\'s level while their ribbons '
+                                     'still overlap (median step >= 1 m): the branch is cut back to where it leaves the main deck'))
+    for c in ref:
+        res['notes'].append(dict(check='stacked roadway cut refused (lower deck kept whole under the upper one; its clearance is in the deck-over-deck check)',
+                                 lower=c['lower'], upper=c['upper'], clearance_if_kept_m=c['clearance_if_kept_m'], at=c['at'], why=c['refused']))
+    log('stacked roadway cuts (roadways_build.json): %d made, %d of them narrow the lower carriageway (conflicts: %s); %d refused (notes: %s)'
+        % (res['stats']['stacked_cuts']['made'], len(nar), [(c['lower'], c['upper']) for c in nar], len(ref), [(c['lower'], c['upper']) for c in ref]))
 
 
 ROAD_CLEAR = 4.6   # m, vertical clearance over a road deck (Caltrans HDM 309.2, 15 ft; roadways_net.CLEAR_MIN) [inf]
@@ -729,7 +752,10 @@ ROAD_CLEAR = 4.6   # m, vertical clearance over a road deck (Caltrans HDM 309.2,
 
 def deck_points(step=1.0):
     """the roadways' LOD0 road surfaces (materials deck_* / island / kerb_red / paint_*: not parapets, fascia or columns)
-    sampled on a ~step-m barycentric grid: (points (n, 3) world, unit name per point, area per point)"""
+    sampled on a ~step-m barycentric grid: (points (n, 3) world, unit name per point, area per point). Close-out r4 (the
+    round-3 verifier: the refused stacked pair's area read 88.6 m2 here against 161 m2 on the mesh): the k x k subdivision
+    of a triangle has k(k+1)/2 upright and k(k-1)/2 inverted cells; only the upright ones were sampled, so every area
+    summed from these points covered ~half of each large triangle. Both kinds are sampled now (each point a / k^2)."""
     p = os.path.join(D3, 'roadways.glb')
     if not os.path.exists(p): return np.zeros((0, 3)), np.array([]), np.zeros(0)
     pts, units, area = [], [], []
@@ -738,8 +764,8 @@ def deck_points(step=1.0):
         sel = np.array([m.startswith('deck') or m in ('island', 'kerb_red') or m.startswith('paint') for m in r['mats']], bool)
         for t in r['tris'][sel]:
             k = int(max(1, math.ceil(max(np.linalg.norm(t[1] - t[0]), np.linalg.norm(t[2] - t[1]), np.linalg.norm(t[0] - t[2])) / step)))
-            ij = np.array([(i, j) for i in range(k) for j in range(k - i)], float)
-            q = t[0] + ((ij[:, :1] + 1 / 3) / k) * (t[1] - t[0]) + ((ij[:, 1:] + 1 / 3) / k) * (t[2] - t[0])   # cell centroids (upright cells)
+            ij = np.array([(i + 1 / 3, j + 1 / 3) for i in range(k) for j in range(k - i)] + [(i + 2 / 3, j + 2 / 3) for i in range(k - 1) for j in range(k - 1 - i)], float)
+            q = t[0] + (ij[:, :1] / k) * (t[1] - t[0]) + (ij[:, 1:] / k) * (t[2] - t[0])   # cell centroids (upright + inverted cells: k^2)
             a = 0.5 * np.linalg.norm(np.cross(t[1] - t[0], t[2] - t[0]))
             pts.append(q); units += [r['extras'].get('building', '?')] * len(q); area.append(np.full(len(q), a / max(1, k * k)))
     if not pts: return np.zeros((0, 3)), np.array([]), np.zeros(0)

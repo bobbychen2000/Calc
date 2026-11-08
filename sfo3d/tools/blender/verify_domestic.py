@@ -577,12 +577,31 @@ def run(path):
     C.add('AirTrain guideway (SFO Museum "AirTrain Rail") inside the 3-D footprint', rail.intersection(fp0).area, 0.0, 1.0,
           'cut out of the T1 hall / canopy (+1 m)', 'm2', group='plausibility')
     # vestibules abut the app walkway start
-    gaps = []
-    for d in info['doors']:
-        if d['gap'] > 0.12:
-            gaps.append(d['gap'])
+    gaps = [d['head']['gap_max'] for d in info['doors'] if (d.get('head') or {}).get('kind') == 'vestibule']
     plaus['doors'] = dict(n=len(info['doors']), vestibules=len(gaps), max_gap_bridged_m=round(max(gaps), 2) if gaps else 0.0,
+                          nubs=sum(1 for d in info['doors'] if (d.get('head') or {}).get('kind') == 'nub'),
                           bulkheads=sum(1 for d in info['doors'] if d['low']))
+    # close-out round 4: walkway-end gap check (tools/blender/walkend_check.py) - every app walkway that starts at a domestic
+    # facade is closed by the asset (facade / vestibule / nub, or its own drum) over its full width at floor + 0.3 / 1.5 / 2.7 m,
+    # at every LOD of this file and of the phone-tier domestic_lod2.glb; F22 L2 starts 17.6 m from any building (fed from F22
+    # L1's rotunda: a bridges-data matter, listed as exempt)
+    import walkend_check as WK
+    exempt = {('F22', 2, False): 'walkway starts 17.6 m from BA-F, 1.5 m from F22 L1\'s drum (bridge data: L2 fed from L1\'s rotunda), not at a building'}
+    Tl = {l: WK.tris_from_scene(S, l) for l in sorted({m['lod'] for m in S.values() if m['lod'] is not None})}
+    l2p = os.path.join(os.path.dirname(path), os.path.basename(path).replace('.glb', '_lod2.glb'))
+    if os.path.exists(l2p) and l2p != path:
+        j2_, b2_, _ = load_glb(l2p); S2_ = scene_meshes(j2_, b2_)
+        Tl['lod2_glb'] = WK.tris_from_scene(S2_, 2)
+    we = WK.run(Tl, 'BCDEF', exempt)
+    plaus['walkway_end_gaps'] = {str(k): v for k, v in we.items()}
+    plaus['walkway_end_gaps_summary'] = {str(k): dict(n=v['n'], n_fail=v['n_fail'], max_gap=v['max_gap'], exempt=[e['stand'] + ' L%d' % e['door'] for e in v['exempt']])
+                                         for k, v in we.items()}
+    for k, v in we.items():
+        C.add('walkway ends closed by the asset (gap <= %.2f m over the full width at floor + 0.3 / 1.5 / 2.7) - %s: %d of %d open%s' %
+              (WK.GAP_MAX, 'LOD%d' % k if isinstance(k, int) else 'domestic_lod2.glb', v['n_fail'], v['n'],
+               (': ' + ', '.join('%s L%d' % (f['stand'], f['door']) for f in v['fails'][:8])) if v['fails'] else ''),
+              v['n_fail'], 0, ok=v['n_fail'] == 0, src='app_bridges.json walk[0] (gates.js); max gap %s m; exempt: %s' %
+              (v['max_gap'], ', '.join(e['stand'] + ' L%d' % e['door'] for e in v['exempt']) or 'none'), unit='', group='plausibility')
 
     # ---------------- budget
     tris, calls = {}, {}

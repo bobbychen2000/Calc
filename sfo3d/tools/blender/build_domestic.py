@@ -710,7 +710,8 @@ def main():
     build = dict(built=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'), git=git_rev(),
                  bpy=bpy.app.version_string, glb=st, ao=ao_info, naip_colours=nc, roof_rgb={k: list(v) for k, v in ROOF_RGB.items()},
                  parts_tris=stats_parts, lod2_glb=dict(path=os.path.relpath(out_l2, ROOT), bytes=os.path.getsize(out_l2)),
-                 doors=dict(n=len(doors), vestibules=sum(1 for d in doors if d['gap'] > 0.12 or d['low']),
+                 doors=dict(n=len(doors), vestibules=sum(1 for d in doors if (d.get('head') or {}).get('kind') == 'vestibule' or d['low']),
+                            nubs=sum(1 for d in doors if (d.get('head') or {}).get('kind') == 'nub'),
                             bulkheads_over_low_roofs=sum(1 for d in doors if d['low']),
                             notched=sum(1 for d in doors if d.get('notched'))),
                  seconds=round(time.time() - T0, 1), final=args.final)

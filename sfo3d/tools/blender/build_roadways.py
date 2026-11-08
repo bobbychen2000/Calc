@@ -34,7 +34,7 @@ Frame ltp-nad83-2011 as the other assets: root at [cx, GROUND_Y, cz], y up, metr
 import hashlib, io, json, math, os, struct, sys, time
 import numpy as np
 import shapely
-from shapely.geometry import LineString, Polygon, MultiPolygon, Point, box
+from shapely.geometry import LineString, Polygon, MultiPolygon, MultiPoint, Point, box
 from shapely.ops import unary_union, substring
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
@@ -243,7 +243,77 @@ def stacked_cut(lo, up, geo, up_geo, X, bad, sep_min, rule):
         if keep >= KEEP_CLEAR:
             rec['refused'] = why; return None, rec
         rec['narrowed'] = why + ' (kept: the decks would clash, %.2f m)' % keep
+    lo.setdefault('stack_cut_R', []).append(R)   # close-out r4: the joint wedges never re-fill a stacked cut
     return new, rec
+
+
+def prio_key(p):
+    """which of two pieces keeps a shared place: anchored > deck (not ramp) > wider > OSM id order"""
+    return (p['anchor'] is None, p['src'] == 'ramp', -p['w'], isinstance(p['id'], str), p['id'] if not isinstance(p['id'], str) else 0, str(p['id']))
+
+
+JOINT_TOL = 0.5       # m: two pieces' centreline ends this close (and level within 0.1 m) are an end-to-end joint (a shared OSM node)
+
+
+def joint_wedges(P, occ, log):
+    """close-out round 4 (verifier's major on fix 2: parapet 'fingers' 0.4 m wide, 0.85 m tall, 1-2.7 m long standing in
+    the driving lane). Root cause: every ribbon ends in a flat cap square to its own centreline, so where two ways continue
+    each other at a shared OSM node with a bend, the two caps leave a wedge open to grade on the outside of the bend (r22:
+    100 of 105 joints, up to 4.9 m2, mouths of ~0.05-1.4 m; the inside of the bend overlaps and goes to one piece). The
+    wedge's sides run along the caps, ACROSS the lanes; since fix 2's 0.5-m edge sampling they were outer edges and got
+    parapets (r18 broke the parapet there instead: an opening). The wedge is deck: the convex hull of the two caps, less
+    both decks, less any other piece within the stacking band (same level: itself + 0.02 m; less than deck + clearance
+    apart: + STACK_GAP, as a stacked cut), less what the trim took from either (stacked cuts) and less the assets'
+    occupancy in its band (occ: as trim(), ASSET_BUF / ASSET_BUF_DOM). It joins the piece of higher priority; its level is
+    the joint's (both caps are square to their centrelines at the shared node, so hp() clamps to the node's level there).
+    Its outer side is the chord between the two decks' outer corners, which carries the parapet across the joint."""
+    SEP = RN.DECK_DEPTH + RN.CLEAR_MIN
+    ends = []
+    for p in P:
+        if p['src'] not in ('deck', 'ramp') or p['geom'].is_empty: continue
+        c = np.array(p['line'].coords)
+        for a, b in ((c[1], c[0]), (c[-2], c[-1])):
+            t = b - a; t = t / max(np.linalg.norm(t), 1e-9); nrm = np.array([-t[1], t[0]]) * p['half']
+            ends.append((p, b, t, [tuple(b - nrm), tuple(b + nrm)]))
+    tree = shapely.STRtree([q['geom'] for q in P])
+    n_j = 0; added = []
+    for i in range(len(ends)):
+        p, Np, tp, Cp = ends[i]
+        for j in range(i + 1, len(ends)):
+            q, Nq, tq, Cq = ends[j]
+            # a continuation: the two outward directions at the node roughly opposite (a bend < 60 deg; not a diverge)
+            if q is p or np.linalg.norm(Np - Nq) > JOINT_TOL or float(np.dot(tp, tq)) > -0.5: continue
+            h0 = float(hp(p, Np[None])[0])
+            if abs(float(hp(q, Nq[None])[0]) - h0) > 0.1: continue
+            n_j += 1
+            H = MultiPoint(Cp + Cq).convex_hull
+            if H.area < 1e-3: continue
+            Wd = H.difference(p['geom']).difference(q['geom'])
+            if Wd.is_empty or Wd.area < 1e-3: continue
+            cut = [g for g in p.get('stack_cut_R', []) + q.get('stack_cut_R', [])]
+            pts = np.concatenate([shapely.get_coordinates(Wd), np.array([[Np[0], Np[1]]])])
+            for k in tree.query(H.buffer(STACK_GAP)):
+                r = P[k]
+                if r is p or r is q or r['geom'].is_empty: continue
+                dh = float(np.abs(hp(r, pts) - h0).min())
+                if dh < 1.0: cut.append(r['geom'].buffer(0.02))
+                elif dh < SEP: cut.append(r['geom'].buffer(STACK_GAP))
+            y0 = GROUND_Y + h0 - (RN.DECK_DEPTH if h0 >= FILL_H else h0) - 0.1; y1 = GROUND_Y + h0 + PARAPET_H + 0.2
+            o = occ(H, y0, y1)
+            if not o.is_empty: cut.append(o)
+            if cut: Wd = Wd.difference(unary_union(cut))
+            keep = [c for c in (getattr(Wd, 'geoms', None) or [Wd]) if isinstance(c, Polygon) and c.area > 2e-3
+                    and c.distance(p['geom']) < 0.03 and c.distance(q['geom']) < 0.03]
+            if not keep: continue
+            Wd = unary_union(keep); own, oth = (p, q) if prio_key(p) <= prio_key(q) else (q, p)
+            own['geom'] = unary_union([own['geom'], Wd])
+            own.setdefault('joint_wedge_m2', 0.0); own['joint_wedge_m2'] += Wd.area
+            added.append(dict(owner=own['id'], other=oth['id'], at=[round(float(Np[0]), 1), round(float(Np[1]), 1)], area_m2=round(Wd.area, 2),
+                              bend_deg=round(float(np.degrees(np.arccos(np.clip(-np.dot(tp, tq), -1, 1)))), 1), level_m=round(h0, 2)))
+    log('joint wedges (close-out r4: the flat caps of two ways that continue each other at a shared node leave a wedge on the outside of a bend; '
+        'filled as deck so no parapet runs across the lanes): %d joints, %d wedges filled (%.1f m2; largest %s)'
+        % (n_j, len(added), sum(a['area_m2'] for a in added), max(added, key=lambda a: a['area_m2']) if added else None))
+    return dict(joints=n_j, filled=len(added), area_m2=round(sum(a['area_m2'] for a in added), 1), largest=sorted(added, key=lambda a: -a['area_m2'])[:10])
 
 
 def stack_trim(P, log):
@@ -251,7 +321,7 @@ def stack_trim(P, log):
     clearance are cut from the lower deck (stacked_cut) or refused and reported. Sets p['geom'] for every piece; returns
     the stacked cut records"""
     SEP = RN.DECK_DEPTH + RN.CLEAR_MIN; recs = []
-    order = sorted(range(len(P)), key=lambda i: (P[i]['anchor'] is None, P[i]['src'] == 'ramp', -P[i]['w'], isinstance(P[i]['id'], str), P[i]['id'] if not isinstance(P[i]['id'], str) else 0, str(P[i]['id'])))
+    order = sorted(range(len(P)), key=lambda i: prio_key(P[i]))
     kept = []
     for r, i in enumerate(order):
         p = P[i]; g = p['rib']
@@ -353,7 +423,20 @@ def trim(P, TR, log, BODY=None):
     for p in P:
         for g, a in p['cut_by'].items(): tot[g] = tot.get(g, 0) + a
     log('trimmed: %d pieces lost area to an asset (%.0f m2 in all; by group %s)' % (nt, sum(p['asset_cut_m2'] for p in P), {g: round(a) for g, a in tot.items()}))
-    return recs
+
+    def occ(region, y0, y1):
+        """the assets' occupancy in band y0..y1 near a plan region, buffered as above (for the joint wedges)"""
+        ch = region.buffer(0.5); rest, dom = [], []
+        for g in BI.GROUPS:
+            if g not in TR: continue
+            o = BI.occupancy(TRN, g, ch.bounds, y0, y1, pad=0.5, tri_only=True)
+            if not o.is_empty: (dom if g == 'domestic' else rest).append(o.intersection(ch))
+        if 'landside' in TR and not TR['landside']['solid'].is_empty: rest.append(TR['landside']['solid'].intersection(ch))
+        rest += [bd.intersection(ch) for bd in (BODY or {}).values()]
+        rest = [r for r in rest if not r.is_empty]
+        return unary_union([unary_union(rest).buffer(ASSET_BUF) if rest else Polygon(), unary_union(dom).buffer(ASSET_BUF_DOM) if dom else Polygon()])
+    jw = joint_wedges(P, occ, log)
+    return recs, jw
 
 
 # the terminal-core landside the roadways are built in (the ITB / domestic curbs, the garages and the interchange west of
@@ -458,30 +541,61 @@ def bottom_of(h):
     return np.where(h >= FILL_H, h - RN.DECK_DEPTH, 0.0)
 
 
-def edge_runs(A, B, same, against, step=0.5):
-    """a deck ring's segments (A -> B) split where their class changes: against a same-level neighbour (inner: no fascia /
-    parapet), against an asset, or outer. Close-out round 3 fix 2 (verifier v4): each segment used to take the class of its
-    midpoint, so a segment spanning a corner where the ITB lower level's sidewalk meets its roadway was 'inner' over its
-    whole length and left a ~1 m opening in the parapet 5.95 m above grade; now sampled every `step` m. Returns
-    (A, B, outer flags, against flags) of the runs (fix 2, buildings R3.12: an edge against an asset gets its fascia - the
-    deck's edge face - but no parapet; it had neither, so the T2 curb seam was open down to grade)."""
+STEP_TOL = 0.30       # m: two decks whose tops are within this of each other where they meet are one carriageway (no barrier
+                      # between them; the higher one's step face closes the joint); a larger step is an edge of each, with a
+                      # parapet on both (a median barrier). Close-out r4: the pair used to count as one carriageway when the
+                      # median step over their whole contact was < 1 m, so steps of 0.3-5.9 m were left open over ~880 m of
+                      # edge (the verifier's unguarded 0.44-0.63 m step in interchange_2_2) [inf: the verifier's +-0.3 m rule]
+INNER_GAP = {0: 0.08, 1: 0.40, 2: 1.05}   # m per LOD: a neighbour this close continues the deck (the LOD's simplification + 0.05)
+RUN_MIN, ACROSS = 2.0, 0.6   # m: an outer chain shorter than RUN_MIN with a same-level deck ACROSS m beyond it at its middle
+                             # and both ends is a slit side, not a deck edge: its face only (no parapet) [inf]
+
+
+def edge_runs(A, B, nbrs, h_self, against, gap=0.08, step=0.5):
+    """a deck ring's segments (A -> B) split where their class changes: inner (a neighbouring deck within `gap` whose top is
+    within STEP_TOL there: the deck continues, no fascia / parapet), against an asset (the edge face only), or outer.
+    Close-out round 3 fix 2 (verifier v4): sampled every `step` m (a segment's midpoint class left a ~1 m parapet opening at
+    the ITB lower level's sidewalk corner). Fix 2, buildings R3.12: an edge against an asset gets its fascia - the deck's edge
+    face - but no parapet. Close-out round 4: the neighbour test is local (the step at each sample, any neighbour that
+    qualifies), not a per-pair median. Returns (A, B, outer flags, against flags, neighbour index per run or -1)."""
     L = np.linalg.norm(B - A, axis=1); n = np.maximum(1, np.ceil(L / step).astype(int))
     seg = np.repeat(np.arange(len(A)), n); k = np.concatenate([np.arange(m) for m in n])
     t = (k + 0.5) / n[seg]; Mp = A[seg] + t[:, None] * (B - A)[seg]
-    mp = shapely.points(Mp)
-    inner = (shapely.distance(mp, same) < 0.08) if not same.is_empty else np.zeros(len(Mp), bool)
+    mp = shapely.points(Mp); hs = h_self(Mp)
+    nbi = np.full(len(Mp), -1)
+    for qi, q in enumerate(nbrs):
+        m = (nbi < 0) & (shapely.distance(q['geom'], mp) < gap)
+        if not m.any(): continue
+        ii = np.nonzero(m)[0]; ok = np.abs(hp(q, Mp[ii]) - hs[ii]) < STEP_TOL
+        nbi[ii[ok]] = qi
+    inner = nbi >= 0
     ag = (shapely.distance(mp, against) < 0.12) if not against.is_empty else np.zeros(len(Mp), bool)
     cls = np.where(inner, 0, np.where(ag, 2, 1))   # 0 inner, 1 outer, 2 against an asset
-    oa, ob, oc = [], [], []
+    oa, ob, oc, on = [], [], [], []
     i0 = 0
     for j in range(len(A)):
-        cj = cls[i0:i0 + n[j]]; i0 += n[j]
+        cj = cls[i0:i0 + n[j]]; nj = nbi[i0:i0 + n[j]]; i0 += n[j]
         cut = np.nonzero(np.diff(cj))[0] + 1   # sample indices where the class changes
         edges = np.concatenate([[0], cut, [n[j]]]) / n[j]
         for ta, tb in zip(edges[:-1], edges[1:]):
-            oa.append(A[j] + ta * (B[j] - A[j])); ob.append(A[j] + tb * (B[j] - A[j])); oc.append(int(cj[min(int(round(ta * n[j])), n[j] - 1)]))
+            i = min(int(round(ta * n[j])), n[j] - 1)
+            oa.append(A[j] + ta * (B[j] - A[j])); ob.append(A[j] + tb * (B[j] - A[j])); oc.append(int(cj[i])); on.append(int(nj[i]))
     oc = np.array(oc)
-    return np.array(oa), np.array(ob), oc == 1, oc == 2
+    return np.array(oa), np.array(ob), oc == 1, oc == 2, np.array(on)
+
+
+def chain_len(flag, L):
+    """per run: the length of the maximal cyclic chain of consecutive runs with the same flag value"""
+    n = len(flag); out = np.zeros(n)
+    if not n: return out
+    if flag.all() or not flag.any(): out[:] = L.sum(); return out
+    k0 = int(np.nonzero(flag != np.roll(flag, 1))[0][0])   # a chain start
+    idx = np.roll(np.arange(n), -k0); i = 0
+    while i < n:
+        j = i
+        while j + 1 < n and flag[idx[j + 1]] == flag[idx[i]]: j += 1
+        out[idx[i:j + 1]] = L[idx[i:j + 1]].sum(); i = j + 1
+    return out
 
 
 def build_piece(mb, p, P_all, lod, mat_deck, top=True):
@@ -502,56 +616,76 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
         if len(Ib):
             Pb = np.c_[V[:, 0], GROUND_Y + hb, V[:, 1]]; Ib2 = Ib[:, [0, 2, 1]]
             mb.tris(p['unit'], lod, 'concrete', Pb, vnormals(Pb, Ib2), np.c_[V[:, 0] / 4, V[:, 1] / 4], Ib2)
-    # outer edges: fascia (top -> soffit or grade) and parapets
-    # neighbours of the same level (they continue the deck: no fascia / parapet against them)
-    nb = []
-    for q in P_all:
-        if q is p or q['geom'].is_empty or q['geom'].distance(geom) > 0.2: continue
-        touch = q['geom'].intersection(geom.buffer(0.3))
-        pts = shapely.get_coordinates(touch.boundary if not touch.is_empty else touch)
-        if len(pts) and np.median(np.abs(hp(q, pts) - hp(p, pts))) < 1.0: nb.append(q['geom'])
-    same = unary_union(nb) if nb else Polygon()
+    # edges: fascia (top -> soffit or grade) and parapets on the outer ones; close-out r4: the neighbours within reach (any
+    # level: edge_runs decides per sample whether the deck continues into one of them)
+    nbrs = [q for q in P_all if q is not p and not q['geom'].is_empty and q['geom'].distance(geom) < max(INNER_GAP[lod], ACROSS) + 0.2]
     against = p.get('against', Polygon())
+    st = p.setdefault('edge_stats', {})
+    def quad(q4, nrm, L, y0a, y0b, y1a, y1b):
+        f = np.cross(q4[1] - q4[0], q4[2] - q4[0])
+        if f @ nrm < 0 or (abs(f @ nrm) < 1e-9 and np.cross(q4[2] - q4[0], q4[3] - q4[0]) @ nrm < 0): q4 = q4[[1, 0, 3, 2]]
+        mb.tris(p['unit'], lod, 'concrete', q4, np.repeat(nrm[None], 4, 0), np.array([[0, y0a / 4], [L / 4, y0b / 4], [L / 4, y1b / 4], [0, y1a / 4]]), np.array([[0, 1, 2], [0, 2, 3]]))
     for poly in (getattr(geom, 'geoms', None) or [geom]):
         if not isinstance(poly, Polygon): continue
         for ring in [poly.exterior] + list(poly.interiors):
             R = np.array(shapely.segmentize(ring, {0: 8.0, 1: 20.0, 2: 40.0}[lod]).coords)
             if len(R) < 3: continue
-            A, B, outer, agf = edge_runs(R[:-1], R[1:], same, against)
-            if not (outer.any() or agf.any()): continue
+            A, B, outer, agf, nbr = edge_runs(R[:-1], R[1:], nbrs, lambda X: hp(p, X), against, gap=INNER_GAP[lod])
             ha, hb_ = hp(p, A), hp(p, B)
             ba, bb = bottom_of(ha), bottom_of(hb_)
-            # quads facing outward: polygon exterior is ccw in shapely's (x, z) = clockwise seen from above with z south
-            # (y up, x east, z south is left-handed in plan): pick the winding from the outward test below
-            for k in np.nonzero(outer | agf)[0]:
-                a, b = A[k], B[k]
-                q = np.array([[a[0], GROUND_Y + ba[k], a[1]], [b[0], GROUND_Y + bb[k], b[1]], [b[0], GROUND_Y + hb_[k], b[1]], [a[0], GROUND_Y + ha[k], a[1]]])
-                e = b - a; nrm = np.array([e[1], 0.0, -e[0]]); nrm /= max(np.linalg.norm(nrm), 1e-9)
-                c = 0.5 * (a + b) + 0.05 * nrm[[0, 2]]
-                if poly.contains(Point(c)): nrm = -nrm
-                f = np.cross(q[1] - q[0], q[2] - q[0])
-                if f @ nrm < 0 or (abs(f @ nrm) < 1e-9 and np.cross(q[2] - q[0], q[3] - q[0]) @ nrm < 0): q = q[[1, 0, 3, 2]]
-                L = float(np.linalg.norm(e)); top = max(ha[k], hb_[k])
-                mb.tris(p['unit'], lod, 'concrete', q, np.repeat(nrm[None], 4, 0), np.array([[0, ba[k] / 4], [L / 4, bb[k] / 4], [L / 4, hb_[k] / 4], [0, ha[k] / 4]]), np.array([[0, 1, 2], [0, 2, 3]]))
-                if agf[k]: continue   # against an asset: the edge face only (no parapet against a kerb / facade)
+            Ls = np.linalg.norm(B - A, axis=1)
+            # outward normals (plan): polygon exterior is ccw in shapely's (x, z) = clockwise seen from above with z south
+            # (y up, x east, z south is left-handed in plan): pick the side by the containment test
+            e2 = B - A; N2 = np.c_[e2[:, 1], -e2[:, 0]] / np.maximum(Ls, 1e-9)[:, None]
+            flip = shapely.contains_xy(poly, *(0.5 * (A + B) + 0.05 * N2).T); N2[flip] *= -1
+            # close-out r4: a short outer chain (< RUN_MIN) with a same-level deck ACROSS beyond its middle and both ends is
+            # the side of a slit between decks (the r22 'fingers'): the edge face only
+            cl = chain_len(outer, Ls)
+            for k in np.nonzero(outer & (cl < RUN_MIN))[0]:
+                pr = np.array([A[k] + 0.1 * (B[k] - A[k]) / max(Ls[k], 1e-9), 0.5 * (A[k] + B[k]), B[k] - 0.1 * (B[k] - A[k]) / max(Ls[k], 1e-9)]) + ACROSS * N2[k]
+                hk = hp(p, pr)
+                if all(any(q['geom'].contains(Point(*x)) and abs(float(hp(q, x[None])[0]) - hx) < STEP_TOL for q in nbrs) for x, hx in zip(pr, hk)):
+                    outer[k] = False; agf[k] = True; st['slit_runs_dropped_m'] = st.get('slit_runs_dropped_m', 0.0) + float(Ls[k]) if lod == 0 else st.get('slit_runs_dropped_m', 0.0)
+            for k in range(len(A)):
+                a, b = A[k], B[k]; L = float(Ls[k]); nrm = np.array([N2[k, 0], 0.0, N2[k, 1]])
+                if not (outer[k] or agf[k]):
+                    # inner: the higher deck's step face down to the neighbour's top (steps up to STEP_TOL; close-out r4)
+                    if nbr[k] < 0 or lod == 2: continue
+                    qa, qb = hp(nbrs[nbr[k]], np.array([a, b]))
+                    da, db = ha[k] - qa, hb_[k] - qb
+                    if max(da, db) > 0.02:
+                        da, db = max(da, 0.0), max(db, 0.0)
+                        quad(np.array([[a[0], GROUND_Y + ha[k] - da, a[1]], [b[0], GROUND_Y + hb_[k] - db, b[1]], [b[0], GROUND_Y + hb_[k], b[1]], [a[0], GROUND_Y + ha[k], a[1]]]),
+                             nrm, L, ha[k] - da, hb_[k] - db, ha[k], hb_[k])
+                        if lod == 0: st['step_face_m'] = st.get('step_face_m', 0.0) + L
+                    continue
+                quad(np.array([[a[0], GROUND_Y + ba[k], a[1]], [b[0], GROUND_Y + bb[k], b[1]], [b[0], GROUND_Y + hb_[k], b[1]], [a[0], GROUND_Y + ha[k], a[1]]]), nrm, L, ba[k], bb[k], ha[k], hb_[k])
+                top = max(ha[k], hb_[k])
+                if agf[k]: continue   # against an asset (or a slit side): the edge face only
+                if lod == 0: st['parapet_m'] = st.get('parapet_m', 0.0) + L
                 if lod == 1 and top > 0.4:
                     # LOD1 parapet: the outer face only (the fascia carried up by PARAPET_H)
-                    qq = np.array([[a[0], GROUND_Y + ha[k], a[1]], [b[0], GROUND_Y + hb_[k], b[1]], [b[0], GROUND_Y + hb_[k] + PARAPET_H, b[1]], [a[0], GROUND_Y + ha[k] + PARAPET_H, a[1]]])
-                    if np.cross(qq[1] - qq[0], qq[2] - qq[0]) @ nrm < 0: qq = qq[[1, 0, 3, 2]]
-                    mb.tris(p['unit'], lod, 'concrete', qq, np.repeat(nrm[None], 4, 0), np.array([[0, 0], [L / 4, 0], [L / 4, 0.2], [0, 0.2]]), np.array([[0, 1, 2], [0, 2, 3]]))
+                    quad(np.array([[a[0], GROUND_Y + ha[k], a[1]], [b[0], GROUND_Y + hb_[k], b[1]], [b[0], GROUND_Y + hb_[k] + PARAPET_H, b[1]], [a[0], GROUND_Y + ha[k] + PARAPET_H, a[1]]]),
+                         nrm, L, 0, 0, 0.8, 0.8)
                 if lod == 0 and top > 0.4:
-                    # parapet: a box on the edge, PARAPET_W inward
+                    # parapet: a box on the edge, PARAPET_W inward; closed at the end of a chain (a barrier end / gore nose)
                     inn = -nrm[[0, 2]] * PARAPET_W
                     a2, b2 = a + inn, b + inn; H = PARAPET_H
                     box_p = [
                         (np.array([[a[0], GROUND_Y + ha[k], a[1]], [b[0], GROUND_Y + hb_[k], b[1]], [b[0], GROUND_Y + hb_[k] + H, b[1]], [a[0], GROUND_Y + ha[k] + H, a[1]]]), nrm),
                         (np.array([[b2[0], GROUND_Y + hb_[k], b2[1]], [a2[0], GROUND_Y + ha[k], a2[1]], [a2[0], GROUND_Y + ha[k] + H, a2[1]], [b2[0], GROUND_Y + hb_[k] + H, b2[1]]]), -nrm),
                         (np.array([[a[0], GROUND_Y + ha[k] + H, a[1]], [b[0], GROUND_Y + hb_[k] + H, b[1]], [b2[0], GROUND_Y + hb_[k] + H, b2[1]], [a2[0], GROUND_Y + ha[k] + H, a2[1]]]), np.array([0, 1.0, 0]))]
+                    ed = np.array([b[0] - a[0], 0.0, b[1] - a[1]]) / max(L, 1e-9)
+                    if not outer[k - 1]:
+                        box_p.append((np.array([[a[0], GROUND_Y + ha[k], a[1]], [a2[0], GROUND_Y + ha[k], a2[1]], [a2[0], GROUND_Y + ha[k] + H, a2[1]], [a[0], GROUND_Y + ha[k] + H, a[1]]]), -ed))
+                    if not outer[(k + 1) % len(A)]:
+                        box_p.append((np.array([[b[0], GROUND_Y + hb_[k], b[1]], [b2[0], GROUND_Y + hb_[k], b2[1]], [b2[0], GROUND_Y + hb_[k] + H, b2[1]], [b[0], GROUND_Y + hb_[k] + H, b[1]]]), ed))
                     for qq, nn in box_p:
                         # winding: make the face normal agree with nn
                         f = np.cross(qq[1] - qq[0], qq[2] - qq[0])
                         if f @ nn < 0: qq = qq[[1, 0, 3, 2]]
-                        mb.tris(p['unit'], lod, 'concrete', qq, np.repeat(nn[None], 4, 0), np.array([[0, 0], [L / 4, 0], [L / 4, H / 4], [0, H / 4]]), np.array([[0, 1, 2], [0, 2, 3]]))
+                        Lq = float(np.linalg.norm(qq[1] - qq[0]))
+                        mb.tris(p['unit'], lod, 'concrete', qq, np.repeat(nn[None], 4, 0), np.array([[0, 0], [Lq / 4, 0], [Lq / 4, H / 4], [0, H / 4]]), np.array([[0, 1, 2], [0, 2, 3]]))
 
 
 # ------------------------------------------------------------------------------------------------ ITB deck plate (review r2)
@@ -776,6 +910,63 @@ def t2_curb_gap_check(P, TR, curb_h, h_dom, log, step=0.25, near=2.0):
                over_0_05m=int((d[m] > 0.05).sum()), over_0_3m=int((d[m] > 0.3).sum()), overlap_m2=round(float(side.intersection(deck).area), 2), limit_m=0.05)
     log('T2 curb to domestic departures deck (R3.12): %d sidewalk edge points within %.0f m of the deck, void median %.3f / max %.3f m (at %s), %d over 0.05 m, %d over 0.3 m; plan overlap %.2f m2'
         % (res['points'], near, res['median_void_m'], res['max_void_m'], res['at'], res['over_0_05m'], res['over_0_3m'], res['overlap_m2']))
+    return res
+
+
+def parapet_check(mb, log, cs=5.0):
+    """close-out round 4 self-check (the round-3 verifier's 'in-carriageway parapet' rule, stubs4): the LOD0 parapet tops
+    (concrete triangles facing up, n.y > 0.9) sampled on a 0.25-m barycentric grid and deduplicated on a 0.2-m plan grid;
+    a sample stands IN a carriageway when a road surface (deck_* / sidewalk tops) at its deck level (top - PARAPET_H,
+    +-0.3 m) lies 0.6 m away in at least 7 of 8 directions - a barrier with the same deck on both sides. Reported as
+    samples, ~metres (samples x 0.04 m2 / PARAPET_W) and 4-m clusters of >= 6 samples (~0.6 m)"""
+    S, C = [], []
+    for (u, l, mat), b in mb.d.items():
+        if l != 0 or not b['P']: continue
+        off = 0; deck = mat.startswith('deck') or mat == 'sidewalk'
+        for P, I in zip(b['P'], b['I']):
+            T = P[I - off]; off += len(P)
+            if not (deck or mat == 'concrete') or not len(T): continue
+            nn = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); a = np.linalg.norm(nn, axis=1) / 2; up = nn[:, 1] / (2 * a + 1e-12)
+            if deck: S.append(T[(up > 0.5) & (a > 1e-5)])
+            else: C.append(T[(up > 0.9) & (a > 1e-4)])
+    if not S or not C: return dict(samples=0)
+    S = np.concatenate(S); C = np.concatenate(C)
+    Q = []
+    for t in C:
+        e = max(np.linalg.norm(t[1] - t[0]), np.linalg.norm(t[2] - t[0])); n = max(1, int(e / 0.25))
+        ij = np.array([(i, j) for i in range(n + 1) for j in range(n + 1 - i)], float) / n
+        Q.append(t[0] + ij[:, :1] * (t[1] - t[0]) + ij[:, 1:] * (t[2] - t[0]))
+    Q = np.concatenate(Q); _, ix = np.unique(np.round(Q[:, [0, 2]] / 0.2).astype(np.int64), axis=0, return_index=True); Q = Q[ix]
+    G = {}; mn = S[:, :, [0, 2]].min(1); mx = S[:, :, [0, 2]].max(1)
+    for i in range(len(S)):
+        for gx in range(int(mn[i, 0] // cs), int(mx[i, 0] // cs) + 1):
+            for gz in range(int(mn[i, 1] // cs), int(mx[i, 1] // cs) + 1): G.setdefault((gx, gz), []).append(i)
+    ang = np.linspace(0, 2 * np.pi, 8, endpoint=False); D = 0.6 * np.c_[np.cos(ang), np.sin(ang)]
+    X = (Q[:, None, [0, 2]] + D[None]).reshape(-1, 2); lvl = np.repeat(Q[:, 1] - PARAPET_H, 8); hit = np.zeros(len(X), bool)
+    byc = {}
+    for i, c in enumerate(map(tuple, np.floor(X / cs).astype(np.int64))): byc.setdefault(c, []).append(i)
+    for c, idx in byc.items():
+        tl = G.get(c)
+        if not tl: continue
+        T = S[tl]; q = T[:, :, [0, 2]]; a0 = q[:, 0]; v0 = q[:, 1] - a0; v1 = q[:, 2] - a0
+        d_ = v0[:, 0] * v1[:, 1] - v0[:, 1] * v1[:, 0]; ok = np.abs(d_) > 1e-9; dd = np.where(ok, d_, 1)
+        idx = np.array(idx); px = X[idx, None, 0] - a0[None, :, 0]; pz = X[idx, None, 1] - a0[None, :, 1]
+        uu = (px * v1[None, :, 1] - pz * v1[None, :, 0]) / dd; vv = (v0[None, :, 0] * pz - v0[None, :, 1] * px) / dd
+        m = ok[None] & (uu >= 0) & (vv >= 0) & (uu + vv <= 1)
+        Hh = T[None, :, 0, 1] + uu * (T[None, :, 1, 1] - T[None, :, 0, 1]) + vv * (T[None, :, 2, 1] - T[None, :, 0, 1])
+        hit[idx] = (m & (np.abs(Hh - lvl[idx, None]) < 0.3)).any(1)
+    A = Q[hit.reshape(-1, 8).sum(1) >= 7]
+    cl = []
+    for r in A:
+        for c in cl:
+            if math.hypot(c[0] - r[0], c[1] - r[2]) < 4: c[3] += 1; break
+        else: cl.append([r[0], r[2], r[1] - GROUND_Y - PARAPET_H, 1])
+    cl = sorted([c for c in cl if c[3] >= 6], key=lambda c: -c[3])
+    res = dict(samples=int(len(A)), of=int(len(Q)), approx_m=round(len(A) * 0.04 / PARAPET_W, 1), clusters=len(cl),
+               top=[dict(at=[round(c[0], 1), round(c[1], 1)], deck_m=round(c[2], 2), approx_m=round(c[3] * 0.04 / PARAPET_W, 1)) for c in cl[:25]],
+               rule='parapet-top samples (0.2 m) with the same deck level (+-0.3 m) 0.6 m away in >= 7 of 8 directions (the round-3 verifier\'s stubs4)')
+    log('in-carriageway parapet (self-check, close-out r4): %d of %d parapet-top samples (~%.1f m), %d clusters >= 0.6 m; largest %s'
+        % (res['samples'], res['of'], res['approx_m'], res['clusters'], res['top'][:5]))
     return res
 
 
@@ -1087,7 +1278,7 @@ def main(argv):
     units = units_of(P)
     log('pieces %d (decks %d, ramp parts %d, plate 1), units %s' % (len(P), sum(1 for p in P if p['src'] == 'deck'), sum(1 for p in P if p['src'] == 'ramp'), units))
     BODY = enclosure_cuts(P, TR, F0, log)
-    stk_recs = trim(P, TR, log, BODY)
+    stk_recs, jw = trim(P, TR, log, BODY)
     body_cut = {}
     for p in P:
         for k, a in p['cut_by'].items():
@@ -1138,6 +1329,9 @@ def main(argv):
     gapchk = curb_gap_check(P, TR, M, LV['itb']['curb'], log)
     gapchk_t2 = t2_curb_gap_check(P, TR, LV['domestic']['curb'], sol['h_dom'], log)
     clr = clearance_check(mb, TR, log); clr_p = clearance_check(mb, TR, log, piers=True)
+    pchk = parapet_check(mb, log)
+    edge = {k: round(sum(p.get('edge_stats', {}).get(k, 0.0) for p in P), 1) for k in ('parapet_m', 'step_face_m', 'slit_runs_dropped_m')}
+    log('LOD0 edges: parapet %.0f m, step faces %.0f m (inner joints with a step of 0.02-%.2f m), slit sides given the edge face only %.1f m' % (edge['parapet_m'], edge['step_face_m'], STEP_TOL, edge['slit_runs_dropped_m']))
     allxz = np.concatenate([p['pts'] for p in P]); rc = [round(float(v), 1) for v in allxz.mean(0)]
     ntri = {l: sum(int(sum(len(i) for i in b['I'])) for (u, ll, m), b in mb.d.items() if ll == l) for l in (0, 1, 2)}
     log('triangles per LOD: %s' % ntri)
@@ -1163,6 +1357,7 @@ def main(argv):
                                                          level_m=LOWER_H, walk=dict(under_plate_m=WALK_UNDER, level_m=round(LOWER_H + WALK_KERB, 2), area_m2=round(walk['geom'].area, 1) if walk else 0),
                                                          note='the lower level (photo i1, close-out round 3): held level at LOWER_H on the straight; OSM layer 1, passes under the anchored departures leg past the straight')),
                  stacked=dict(solve=sol.get('stacked', []), cuts=stk_recs),
+                 joint_wedges=jw, in_carriageway_parapet=pchk, edges_lod0=dict(edge, step_tol_m=STEP_TOL, inner_gap_m=INNER_GAP),
                  curb_gap=gapchk, curb_gap_t2=gapchk_t2, guideway_clearance=clr, guideway_pier_caps_over_decks=clr_p, deck_cut_inside_buildings_m2=body_cut, deck_left_inside_buildings_m2=body_left)
     sheet(P, cols, os.path.join(OUTD, 'roadways_plan.png'), LV, dict(pieces=len(P), columns=cst, low=len(chk['low'])))
     log('check sheet out/buildings3d/roadways_plan.png')
