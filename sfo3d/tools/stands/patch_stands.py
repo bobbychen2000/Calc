@@ -806,12 +806,20 @@ def _arc(angs, back, margin=25.0):
 
 
 _WING = {}
-# fix round 2 (verifier v7): re-choose rest poses for ACCEPTED-not-observed types too? Tried and switched OFF after three
-# all-hours replays (frozen r3v code, this round's data): every variant (+-120 deg; no aft move; +-30 deg) changed the real
-# pushback of UAL917 B772 along the G pier (5 Nov 06:53-06:54Z) - its hits on G4 L2's rest cab grew from 47 to 291-378
-# points and on G7 L2's walkway from 17 to 134-452 - because the engine's tow / ground-physics reacts to the G5-G7 rests.
-# A data rest pose chosen for a hypothetical occupant is not worth a change to real traffic: the accepted-type test stays in
-# check_stands (reported, 24 bridges) and gates.js is asked to choose the rest per occupant (static_closeout.md R5.2).
+# fix round 2 (verifier v7): re-choose rest poses for ACCEPTED-not-observed types too (+-30 deg, never further aft)?
+# Decided OFF in close-out round 5 (2026-11-08) on SAME-HARNESS evidence. (The fix-round-2 reason - "UAL917's hits on G4
+# L2's cab grew from 47 to 291-378 points" - compared two versions of tools/live/invariants.mjs: commit da29bab added
+# the acHit box sampling, engine pieces and 3-D footprints after the fix-1 replay; on one harness UAL917's G4 L2 cab
+# (317 points) and G4 L1 stair contact are identical with either setting and with the fix-1 data. Withdrawn.) All-hours
+# replay on the frozen harness (invariants.mjs 2f6c5d9b, build_stream.py 93da6fe0, stream SP/r3/all f6ff7ceb, frozen r3v
+# code), this data with P10_ACCEPTED False vs True (19 rests re-chosen): bridge.hit_at_rest 852 -> 756 frames (KLM373
+# B772 A2 L2 tunnel, 33 frames, gone; UAL59 B772 G1 L2 107 -> 39 points), but overlap.gnd 902 -> 1115 (the stale-parked
+# / arriving pairs at G13 and G10 last 77 / 136 frames longer), a new bridge contact (ANZ7 B789 G10 L1 cab, 10 frames),
+# UAL917's G7 L2 walkway contact 113 -> 134 points, bridge.orphan 5,389 -> 5,797, lag.gnd_30m 40,820 -> 41,408:
+# collision frames (bridge.hit.* + overlap.gnd) 2,970 -> 3,162. By the owner's rule (no collisions / clipping first) the
+# re-choice is worse in sum, and it would replace mapped (OSM / build) rest poses by inferred ones for types never seen
+# there. So the data rests stay; check_stands keeps reporting the accepted-type cases (WARN) and the rest per occupant
+# is gates.js's (static_closeout.md R5.2 / Round 5).
 P10_ACCEPTED = False
 
 

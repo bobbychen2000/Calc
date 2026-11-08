@@ -302,15 +302,16 @@ export class GroundPhysics {
         if (tr.physL.ok && newKey && this.mask && this.mask !== this.paved && (tr.maskUnlocks || 0) < 2 && !this.valid(base, placed, true, this.mask)
           && this.seek(base, placed, this.mask, 3)) { tr.physL.ok = false; tr.maskUnlocks = (tr.maskUnlocks || 0) + 1; traffic.counters.physMaskUnlocks = (traffic.counters.physMaskUnlocks || 0) + 1; }
         if (tr.physL.ok) { placed.push(base); continue; }
-        // (close-out round 5, the round-3 verifier's minor: released only when the placement below has a valid pose to move it to.
-        // With none -- LXJ569 CL35 parked off-stand 0.46 m from N453FD, 8 Nov 00:41-08:29Z -- the unlock found nothing, the body
-        // came to rest where it was and traffic.js locked it again on the next frame: 278,875 lock / unlock pairs in 8 h
-        // [obs, replay]. Now the lock is kept and the pair is logged once as a conflict (event 'phys-conflict': the neighbour,
-        // or the building / bridge / pavement test that fails), instead of toggling every frame)
-        // (the search runs when the lock test does: on a new lock pose and every 30 frames)
+        // (close-out round 5, the round-3 verifier's minor: an invalid lock is released only when that moves something -- when the
+        // placement below has a valid pose to go to, and this very lock pose was not released before. LXJ569 CL35, parked off-stand
+        // 0.46 m from N453FD (valid() asks 1 m), 8 Nov 00:41-08:29Z: the placement found a pose, the unlock released it, but the
+        // body stood within the off-stand rest tolerance of that pose (traffic.js syncBridge, 8 m) and was locked again where it
+        // stood on the next frame -- 278,875 lock / unlock pairs in 8 h [obs, replay]. Now the lock is kept and the pair is logged
+        // once as a conflict (event 'phys-conflict': the neighbour, or the building / bridge test that fails), instead of toggling
+        // every frame. The search runs when the lock test does: on a new lock pose and every 30 frames)
         if (tr.physL.alt === undefined) tr.physL.alt = this.place(B, tr, placed, 2).ok;
-        if (!tr.physL.alt) { if (tr._physConfKey !== key) { tr._physConfKey = key; this.logConflict(traffic, tr, base, placed); } traffic.counters.physLockKept = (traffic.counters.physLockKept || 0) + 1; placed.push(base); continue; }
-        tr.lock = null; traffic.counters.physUnlocks = (traffic.counters.physUnlocks || 0) + 1;
+        if (!tr.physL.alt || tr._physUnlockKey === key) { if (tr._physConfKey !== key) { tr._physConfKey = key; this.logConflict(traffic, tr, base, placed); } traffic.counters.physLockKept = (traffic.counters.physLockKept || 0) + 1; placed.push(base); continue; }
+        tr.lock = null; tr._physUnlockKey = key; traffic.counters.physUnlocks = (traffic.counters.physUnlocks || 0) + 1;
       }
       const ph = this.place(B, tr, placed, this.frame % 30 === 0);
       tr.physOff = ph.off[0] || ph.off[1] ? ph.off : null;

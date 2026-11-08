@@ -104,10 +104,11 @@ const TOW_MS = 90000;
 // AHEAD_HOLD_MS after the arrival was last seen heading in (retractAhead) [design values: 200 m at 2-5 m/s taxi-in is 40-100 s,
 // the hurried retraction takes 16-91 s from docked, bridges_closeout.md Round 2]
 const AHEAD_HOLD_MS = 90000, AHEAD_M = 200;
-// ...and with SFO's evidence that the OCCUPANT has left -- its own departure from that stand has an ACTUAL block-out
-// (stalePlanGone 'blockout') -- from this far out: the hurried retraction (16-91 s) is over before a 3-5 m/s taxi-in covers it
-// (close-out round 3, realtime-10) [design value]. (Close-out round 5: SFO's plan for the ARRIVAL -- its own arrival record for
-// that stand, 'alloc' -- no longer starts it from here; see groundLogic)
+// ...and with SFO's evidence that the OCCUPANT has left -- its own departure from that stand has an actual block-out, or every
+// stand window SFO lists for it there has ended (stalePlanGone 'blockout' / 'window') -- from this far out: the hurried
+// retraction (16-91 s) is over before a 3-5 m/s taxi-in covers it (close-out round 3, realtime-10) [design value]. (Close-out
+// round 5: SFO's plan for the ARRIVAL -- its own arrival record for that stand, 'alloc' -- no longer starts it from here; see
+// groundLogic)
 const AHEAD_EV_M = 400;
 // standRealloc: another arrival's ACTUAL block-in at a silent occupant's stand counts only this long after the occupant was last
 // heard -- its own arrival record, when its callsign does not map to it (planFor), carries an actual block-in within minutes of
@@ -1280,16 +1281,28 @@ export class Traffic {
       // retractions came back -- UAL34 G6 twice ('alloc', 6 and 25 min after its 19:18Z in-block, re-docked 'arrival gone'),
       // UAL2855 F17 twice, AAL3049 B27; segment D (8 Nov) ASA1838 B13, ASA41 B6, UAL2862 E7, UAL1726 D6, UAL2400 F14, DAL545 C6,
       // UAL1852 F16, all 'alloc' from 386-400 m, re-docked 145-348 s later at occupants that stayed [obs, replay]. A gate change
-      // makes SFO's plan for the ARRIVAL wrong whatever its age. So the far retraction (AHEAD_EV_M) now needs positive evidence
-      // about the OCCUPANT itself -- its own departure from that stand has an actual block-out ('blockout'); SFO's plan for the
-      // arrival (its arrival record for that stand, aEv / 'alloc') and the occupant's ended windows ('window') count only once
-      // the arrival is on that stand's lead-in, close (onLeadInClose: <= max(60 m, 1.5 L) short of the stop, on the line, heading
-      // in) -- where the geometry alone retracts the bridge anyway, and where the removal above needs them)
-      const far = ev === 'blockout';
+      // makes SFO's plan for the ARRIVAL wrong whatever its age. So the far retraction (AHEAD_EV_M) now needs evidence about the
+      // OCCUPANT itself -- its own departure from that stand has an actual block-out ('blockout'), or every window SFO lists for it
+      // there has ended, as seen by SFO, and it has not been heard since ('window'); SFO's plan for the arrival (its arrival record
+      // for that stand, aEv / 'alloc') counts only once the arrival is on that stand's lead-in, close (onLeadInClose: <= max(60 m,
+      // 1.5 L) short of the stop, on the line, heading in) -- where the geometry alone retracts the bridge anyway, and where the
+      // removal above needs it. With the live plan cadence, before this change: 'window' far retractions D 13 (12 followed by the
+      // arrival driving in; UAL1726 D6 re-docked and retracted again for the same arrival 4 min later), A 3 (AAL701 B26: another
+      // arrival took the stand 17 min later) -- every occupant was a ghost; 'alloc' D 11 / A 12, of which 6 / 6 re-docked
+      // 'arrival gone' [obs, replay, harness e52f3dfd])
+      const far = ev === 'blockout' || ev === 'window';
       // (agent 3, after the 7 Nov 14:41Z restart: the realtime-6 evidence gate had been lost when this line was rewritten for
       // realtime-10 -- without SFO's plan (7 Nov) bridge-ahead fired on geometry alone again: 8 of 28 re-docked, B3 three times
       // for ASA arrivals going on to B6 along B3's lead-in, 01:58-05:31Z)
       if (!far && !close) { if (ev || aEv) this.counters.aheadPlanNotClose = (this.counters.aheadPlanNotClose || 0) + 1; else this.counters.aheadNoEvidence = (this.counters.aheadNoEvidence || 0) + 1; continue; }
+      // (close-out round 5: ...and on geometry alone not when SFO contradicts it on BOTH counts -- it puts this arrival at another
+      // stand (its own arrival record) AND lists the occupant at this stand around now (planAt): the round-3 veto, lost for the
+      // geometric case in the realtime-10 rewrite. A-window 5 Nov 07:09:09Z: DAL545 61.5 m out on C1's lead-in retracted the
+      // bridge of SKW3493, which SFO listed at C1 (DAL545: C4); it went to C4, SKW3493 was heard at C1 466 min later. Either
+      // signal alone is not enough: UAL292 drove into E5 although SFO had it at E10, UAL1272 into G6 where SFO still listed UAL927
+      // [obs, replay, harness e52f3dfd])
+      const veto = !far && !!(aS && !sameSt(aS, g) && this.planAt(o, g, t));
+      if (veto) { this.counters.aheadVetoSFO = (this.counters.aheadVetoSFO || 0) + 1; continue; }
       const S = this.stopRef(tr, g), dS = Math.hypot(r.x - S[0], r.z - S[1]);
       if (far ? dS <= AHEAD_EV_M : (dS <= AHEAD_M && this.intoStand(tr, g, r.x, r.z, r.dir))) { this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; this.retractAhead(o, t, tr); } }
   }
