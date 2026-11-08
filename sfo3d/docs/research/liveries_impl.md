@@ -62,9 +62,13 @@ The source models' UV layouts are unusable for painting (overlapping, mirrored, 
 
 - **Parts** (per triangle): fuselage (inside the measured section envelope incl. nose, tail cone, wing-root fillets; every body-zone triangle in the first 10 % of the length),
   fin (+ dorsal), tailplane, engine nacelle skins (outermost surface per station and angle; inlet cowls modelled in
-  the body zone are captured; E175 / MD-11 nacelles merged into the wing mesh are found as connected components at
+  the body zone are captured where they form a shell around the nacelle axis, >= 180 deg, so the wing's flap-track
+  fairings and panels beside the nacelle stay wing; E175 / MD-11 nacelles merged into the wing mesh are found as connected components at
   the type's engine stations; the radome, APU exhaust cones and long strips are rejected), pylons, wing tips / winglets,
-  gear doors. Wings, glass, lights, gear and interior keep their source textures.
+  gear doors. Wings, glass, lights, gear and interior keep their source textures. The section envelope
+  (`tools/liveries/common.py Envelope`, also the painter's frame) leaves the tailplane halves out of the half width and
+  measures the tail-cone top on the body itself where the cone is narrower than the fin-side band (close-out round 4:
+  after the 737's tailplane re-fit the 737 tail cone's upper skin had fallen outside the envelope and was painted as fin).
 - **Charts**: box projection by dominant normal (fuselage sides up to 55°), occlusion layer peeling, long charts
   split, shelf-packed at one texel density per model (`kpm`, px per m at 2048 px), 6 px padding.
 - **Detail layer**: the source texture's panel lines, door outlines and window frames (black top-hat, lines at least

@@ -429,8 +429,8 @@ def classify(m, env, feat, seeds=None):
         # ahead of it, kept only where they belong to a surface around the nacelle axis: a welded connected component of
         # the candidates that covers >= 180 deg around the axis (a cowl ring or half shell). Close-out round 4: once the
         # 737's tail pipes were zone 2 (round 3) the window reached the wing's flap-track fairings beside and behind the
-        # nacelle (408 zone-0 triangles, 12.2 m2, baked in the engine colour), which also stole the outermost-skin test
-        # below from the cowl; a fairing or the wing underside covers one sector above the nacelle (<= 120 deg)
+        # nacelle (612 zone-0 triangles, 21.8 m2, baked in the engine colour; 408 of them new in round 3), which also
+        # stole the outermost-skin test below from 50 cowl triangles; a fairing or the wing underside covers one sector above the nacelle (<= 120 deg)
         rr = np.hypot(C[z0p, 1] - e['yc'], C[z0p, 2] - e['zc'])
         cand = z0p[(rr < 1.4 * e["r"]) & (C[z0p, 1] - e['yc'] < 1.05 * e['r']) & (C[z0p, 0] > e["x0"] - 3.0 * e['r']) & (C[z0p, 0] < e['x1'] + 3.2 * e['r'])]
         # the station grid of the outermost-skin test below stays anchored at the aft end of the whole window's

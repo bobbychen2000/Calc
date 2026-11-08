@@ -1247,7 +1247,9 @@ now lists any such piece). Self-check `roadways_build.json#stats.in_carriageway_
 | glTF validator errors roadways / roadways_lod2 | 0 / 29 | 0 / 0 |
 | conflicts / notes; LOD2; check.py; verify_landside | 3 / 11; 47 / 0; 0 / 0 / 17; 198 / 0 | 7 / 14 (+ narrowed / refused stacked cuts, now reported); 47 / 0; 0 / 0 / 41 (stands data); 199 / 0 |
 
-Sizes: `roadways.glb` 4.58 -> 4.69 MB, `roadways_lod2.glb` 0.47 -> 0.45 MB, `integration.js` 229 -> 236 kB. Corrections to the
+Sizes: `roadways.glb` 4.58 -> 4.69 MB, `roadways_lod2.glb` 0.47 -> 0.45 MB, `integration.js` 229 -> 236 kB. Low tier (verifier minor): one
+near-mode page under the heavy2 lock loaded the rebuilt `roadways_lod2.glb` (6,971 tris, `failed` empty) and swapped in the full file near
+the T2 curb (view rendered; the second view ran out of the 45-min budget while landside units streamed on llvmpipe). Corrections to the
 fix-2 rows above: the stacked solve held 163 lowered nodes (not 167); the tier self-check's "max 0.00 m" is the largest distance
 *beyond* the 0.3-m tolerance - the largest distance is 0.124 m (`manifest.json#integration.footprints_js.self_check.max_m`).
 
