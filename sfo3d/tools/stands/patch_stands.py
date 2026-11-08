@@ -752,7 +752,8 @@ def p10_rest(D, log):
     (<= 0.3 m2), of its own fixed walkway (<= 0.5 m2), not crossed by another bridge docked to a type its stand accepts
     (> 0.5 m2; as P7), and the rest + docked directions still in one 175 deg rotunda swing arc that does not hold the way
     back along the walkway, and (fix round 2) no further aft along the own stand's axis than the present rest (the
-    pushback tail swing). The nearest such direction is taken (stow_src says so, inferred); else `stow_icao` records the
+    pushback tail swing) and, when only accepted-not-observed types are too close, within +-30 deg of the present direction
+    (the all-hours replay). The nearest such direction is taken (stow_src says so, inferred); else `stow_icao` records the
     best clearance reachable and why the rest stays."""
     A = json.load(open(os.path.join(ROOT, 'data', 'sfo_airport.json')))
     bld = unary_union([Polygon(p[0], p[1:]).buffer(0) for p in list(A['terminalComplex']) + [q for b in A['boardingAreas'] for q in b['polys']]])
@@ -832,8 +833,14 @@ def p10_rest(D, log):
             cs = [c for gg in getattr(g, 'geoms', [g]) for c in gg.exterior.coords]
             return min(local(c, st['nose'], st['hdg'])[0] for c in cs) if cs else 0.0
         aft0 = aft(restgeom(b['stow']))
+        # fix round 2 (all-hours replay): when only ACCEPTED-not-observed types are inside the clearance, the rest stays near
+        # its present (OSM / build) direction: turns up to +-30 deg only. With +-120 the replay's G4 L2 swung 75 deg along the
+        # facade and UAL917 B772's real pushback (5 Nov 06:54Z) then took a path into G7 L2's walkway (452 hit points)
+        rb0 = restgeom(b['stow'])
+        obs_viol = any(ob and w.distance(rb0) < need for w, need, t, on, ob in wingsl)
+        max_turn = 120 if obs_viol else 30
         best = None; best_m = m0
-        for da in sorted(range(-120, 121), key=abs):
+        for da in sorted(range(-max_turn, max_turn + 1), key=abs):
             ang = a0 + da
             for L in np.arange(e0, e0 + 4.01, 1.0):
                 c = (pv[0] + L * math.cos(math.radians(ang)), pv[1] + L * math.sin(math.radians(ang)))
