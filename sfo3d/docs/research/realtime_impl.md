@@ -950,7 +950,8 @@ round 2). Numbers and dispositions: `docs/requests/realtime_closeout.md`, "Round
    direction but backward is noise (`fwdWanderHeld`); the body is a unicycle and drives forward to any target that is not
    behind it. Not applied off a stand: the verifier's case, UAL875 B772 'by B11S', was parked on fixes 25-30 m off B11S's lead-in
    and pushed from that lead-in; holding its wander made the push cross 30 m diagonally (window: `building` 102 → 790 frames,
-   `overlap.gnd` 0 → 1,421), so it was left to the data. A geometric guard needs the bridges' current solids (request C3F2.2).
+   `overlap.gnd` 0 → 1,421), so it was left to the data. The geometric guard the verifier asked for is item 12 (it needs no
+   bridges-track change: gates.js already exports `solids(g, b, k)`, `extension(g)` and `boxHitsAc`).
 5. **Silent docking into an alternate stand ends at its stop** (v7). `updatePark` gave a stand without its own bridge record
    (B5S shares B5's bridges) the data pose — the last report, up to 60 m back — and silentDock's drive ran its last segment
    back to it (EIN961 A333, UAL892 B772 reversing 2-2.7 m/s at B5S). Such a docking now parks at the stand's stop pose; and no
@@ -962,7 +963,7 @@ round 2). Numbers and dispositions: `docs/requests/realtime_closeout.md`, "Round
 7. **The building veto samples the fuselage sides** (v8, partly): `planPts` adds both sides every ≤ 3 m (as ground.js
    `body().fus`). It does not change SWA496 (segment C): its body was dead-reckoned 63 m straight on after its last report and
    the tapered nose's side entered the C-pier footprint between the nose tip and the first side sample before the veto stopped it
-   (trace scratch `c3/realtime/fx2/w/s2_swa496`); dead reckoning that follows the taxi graph is not done.
+   (trace scratch `c3/realtime/fx2/w/s2_swa496`); dead reckoning that follows the taxi graph is not done. Item 14 fixes it.
 8. **A ghost at a contact stand is kept at most 24 h** (v11): `PARK_KEEP_STAND_MS`; after 8 h it also goes on SFO's
    reallocation of the stand to a flight whose window began after it was last heard (`standRealloc`, plan newer than that).
 9. **Harness = app for freighters** (v9): `applyGate` passes `{freighter}` (lookup.js `isFreighter`).
@@ -974,5 +975,29 @@ round 2). Numbers and dispositions: `docs/requests/realtime_closeout.md`, "Round
 11. **renderer3's fatal path** (v10): app.js's `R.onFatal` is in place; `renderer3.fatal()` does not call it yet — an engine-track
     request (realtime_closeout.md C3F2.1).
 
-Scratch (this round): `c3/realtime/fx2/` — `root_base` / `root_f2` (before / after trees), `run_seg.sh`, `win.sh`,
+After the session restart (8 Nov ~15:37Z):
+
+12. **No moving body enters another stand's docked or moving jet bridge** (v4, second half). `js/live/ground.js liveBridges(gates,
+    gsys, boxHitsAc)` returns, for a point and a reach, the bridges that are docked or moving (each at its own extension, as the
+    harness's `bridgeK`) with their current `gates.js solids(g, b, k)`, and a test of an aircraft against them (`boxHitsAc`: the
+    solid the bridges plan against, with heights). app.js and the harness set it as `traffic.liveBridgeAt`. traffic.js
+    `ctlGround` stops a body whose step would put it into such a bridge (as the building veto; counter `bridgeVeto`, event
+    `bridge-veto`); `GroundPhysics.valid` rejects such a pose for an aircraft placed off a stand, so a parked estimate is moved
+    clear within the report scatter (`liveHit`, re-checked every 30 frames). Left out (`ownBridge`): the body's own stand, the
+    bridge that docks it or retracts from it, its silent docking, the stand it drives into, a removed occupant's bridge and one
+    retracting ahead of this arrival. A silent occupant's docked bridge is an obstacle like any other (most parked aircraft have
+    the transponder off). UAL875 (segment C, 18:54–19:01Z window): `bridge.hit.wing` 1,136 → 0 frames for it.
+13. **An arrival driving into a stand removes the silent occupant even when SFO's (old) plan lists it there** (ground.js, the
+    `into` rule beats `keeps`). Found by the G8 bisect: UAL1243 B738 drove into G8 through UAL2313's B38M, silent there since
+    22:18Z and still in SFO's 18:01Z plan, until its own in-block replaced it (5 Nov 00:16:46–00:17:20Z). Its overlap was 191
+    frames with the old 737 tailplane and 978 with the aircraft track's corrected one (`js/aircraft/types.js` alone, window
+    bisect); window: `overlap.gnd` 1,367/2 → 3/1, `bridge.orphan` +117 frames (the retracting bridges of the two removed ghosts).
+14. **Dead reckoning brakes for a building** (v8). A body more than `DR_BRAKE_S` (5 s) past its newest report, not driving to a
+    stop or into a stand, brakes at 2 m/s² when its planform moved on by the stopping distance v²/4 + 1.5 m would enter a footprint,
+    and holds there until its next report. SWA496 (segment C window): `building` 208 → 0 frames, `lag.gnd_30m` +4.
+15. **The veto's planform has the engine inlets** (`planPts`): UAL875's nacelle reached 7 samples into the B-pier footprint
+    after item 12 stopped its wing at B15's tunnel (window); now 0.
+
+Scratch (this round): `c3/realtime/fx2/` — `root_base` / `root_f2` / `root_f3` (before / after before the restart / after),
+`freeze3.sh`, `chain_f3.sh`, `bis/` (the G8 bisect trees), `run_seg.sh`, `win.sh`,
 `an_f2.py` (an_c3.py + early-retraction durations), `cmp_f2.py`, trace hooks `hook_tgt.mjs` / `hook_step.mjs` / `hook_pni.mjs`.

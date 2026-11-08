@@ -64,6 +64,46 @@ export function bridgeGrid(boxes, groundY = 0, res = 1) {
   }
   return (x, z) => { const i = Math.floor((x - x0) / res), j = Math.floor((z - z0) / res); return i >= 0 && j >= 0 && i < W && j < H && m[j * W + i] === 1; };
 }
+// (close-out round 3 fix round 2, verifier v4: the jet bridges that are docked or moving, with their CURRENT solids, for the
+// motion veto of a moving body (traffic.js ctlGround -- the rest bridges are bridgeGrid's). gsys: the gates.js system (solids,
+// docks, anims: each bridge at its own extension, as tools/live/invariants.mjs bridgeK draws and tests it); hitAc: gates.js
+// boxHitsAc (the aircraft solid the bridges plan against: tapered nose, wings, engines, tailplane, with heights).
+// Returns (x, z, reach, skip) -> null when no such bridge lies within reach of (x, z) (skip(g): stands to leave out), else
+// (T, nose, f) -> { part, g } of the first bridge box the aircraft T (nose [x, z], forward f) is in, or null.
+// Replay 7 Nov 18:57Z: UAL875 B772, parked by B11S on wandering fixes, was driven 13 m forward through B15 L1's docked
+// tunnel -- bridge.hit.wing 1,067 frames on segment C, the case the verifier named)
+export function liveBridges(gates, gsys, hitAc) {
+  if (!gsys || !gsys.solids || !gsys.docks || !gsys.anims || !hitAc) return null;
+  const E = []; for (const g of gates) if (g.bridges && g.bridges.length) for (const b of g.bridges) E.push({ g, b, c: null, R: 0, key: null, boxes: null });
+  const kOf = (g, b) => { const a = gsys.anims.get(g.id); return a ? (gsys.docks(g, b) ? a.k : 0) : (g.acType && gsys.docks(g, b) ? 1 : 0); };
+  const prep = (e) => {   // static bound: the rotunda and the furthest rest part, + 55 m for any extension
+    const S = gsys.solids(e.g, e.b, 0); const rot = S.find(s => s.part === 'rotunda'); e.c = rot ? rot.c : S[0].c; let r = 0;
+    for (const s of S) r = Math.max(r, Math.hypot(s.c[0] - e.c[0], s.c[1] - e.c[1]) + (s.round || Math.hypot(s.hl, s.hw))); e.R = Math.max(55, r);
+  };
+  return (x, z, reach, skip) => {
+    let out = null;
+    for (const e of E) {
+      const g = e.g; if (!g.acType && !gsys.anims.has(g.id)) continue;   // (k is 0: no occupant, nothing moving)
+      if (!e.c) { try { prep(e); } catch (err) { e.c = [1e9, 1e9]; } }
+      if (Math.hypot(x - e.c[0], z - e.c[1]) > e.R + reach || (skip && skip(g))) continue;
+      const k = kOf(g, e.b); if (!(k > 0.02)) continue;
+      const key = k.toFixed(3) + '|' + (g.acType || '') + '|' + JSON.stringify(g.dock || null);
+      if (e.key !== key) { e.key = key; try { e.boxes = gsys.solids(g, e.b, k).map(s => ({ ...s, rr: s.round || Math.hypot(s.hl, s.hw) })); } catch (err) { e.boxes = []; } }   // (never break the frame loop)
+      (out || (out = [])).push(e);
+    }
+    if (!out) return null;
+    return (T, nose, f) => {
+      const r = [-f[1], f[0]], half = T.wing ? T.wing.span / 2 : (T.hstab ? T.hstab.span / 2 : T.R + 1);
+      for (const e of out) for (const bx of e.boxes) {
+        // (the box's circle against the airframe's rectangle -- nose .. tail, +-half span -- before the sampled 3-D test)
+        const dx = bx.c[0] - nose[0], dz = bx.c[1] - nose[1], ax = -(dx * f[0] + dz * f[1]), ay = Math.abs(dx * r[0] + dz * r[1]);
+        if (ax < -bx.rr || ax > T.L + bx.rr || ay > half + bx.rr) continue;
+        if (hitAc(bx, T, nose, f, 0)) return { part: bx.part, g: e.g };
+      }
+      return null;
+    };
+  };
+}
 // pavement test: rendered mask OR the OSM taxi net (aprons + taxiway strips); cached on a 1 m grid
 export function pavedUnion(mask, net) {
   if (!net || !net.ok) return mask;
@@ -148,6 +188,7 @@ export class GroundPhysics {
     for (const p of S.outline) if (this.building && this.building(p[0], p[1])) return false;
     for (const p of S.fus) if ((this.building && this.building(p[0], p[1])) || (this.bridges && this.bridges(p[0], p[1]))) return false;
     if (this.bridges) for (const k of [0, 8, 9, 10]) { const p = S.outline[k]; if (this.bridges(p[0], p[1])) return false; }   // (nose, tail cone, centreline)
+    if (B.tr && this.liveHit(B)) return false;
     for (const o of others) {
       if (Math.hypot(o.nose[0] - B.nose[0], o.nose[1] - B.nose[1]) > (o.T.L + B.T.L) * 0.5 + 45) continue;
       for (const p of S.outline) if (inside(o, p, 1.0)) return false;
@@ -155,8 +196,19 @@ export class GroundPhysics {
     }
     return true;
   }
+  // (close-out round 3 fix round 2, verifier v4: a pose with any part of the airframe in another stand's docked or moving jet bridge
+  // -- its current solids, traffic.liveBridgeAt (liveBridges above) -- is not valid either. Replay 7 Nov 18:55-18:57Z: UAL875 B772,
+  // parked by B11S on fixes wandering 9-13 m, stood with its wing in B15 L1's docked tunnel 3 (bridge.hit.wing) before its fixes
+  // were driven forward through the tunnel [obs, replay]; the off-stand placement now moves it within the report scatter clear of
+  // it, as of a building or a neighbour. Its own stands' bridges are left out (traffic.js ownBridge))
+  liveHit(B) {
+    const L = this._live; if (!L) return false; const T = B.T, tr = B.tr;
+    const LB = L(B.nose[0], B.nose[1], T.L + (T.wing ? T.wing.span / 2 : 10) + 5, this._own ? (G) => this._own(tr, G) : null);
+    return !!(LB && LB(T, B.nose, B.f));
+  }
   // run after traffic.update(): sets tr.physOff (target offsets) for the next frame; checks data-pose stand parking
   resolve(traffic, dt) {
+    this._live = traffic.liveBridgeAt || null; this._own = traffic.ownBridge ? (tr, G) => traffic.ownBridge(tr, G) : null;
     const fixed = [], free = [], moving = [], silent = [], waiting = []; let conflicts = 0;
     for (const tr of traffic.tracks.values()) {
       // (a body being removed that still waits for its jet bridge -- traffic.js fadeRemove: it fades once the bridge is <= 30 %
@@ -208,7 +260,7 @@ export class GroundPhysics {
     for (const B of free) {
       const tr = B.tr;
       if (tr.lock) {
-        const L = tr.lock; const base = bodyOf(B.T, L.x, L.z, L.hdg); const key = 'L' + Math.round(L.x * 4) + ',' + Math.round(L.z * 4) + ',' + Math.round(L.hdg * 100);
+        const L = tr.lock; const base = bodyOf(B.T, L.x, L.z, L.hdg); base.tr = tr; const key = 'L' + Math.round(L.x * 4) + ',' + Math.round(L.z * 4) + ',' + Math.round(L.hdg * 100);
         // (buildings and neighbours only: a gear point a few decimetres outside the traced pavement is not worth moving a
         // parked aircraft for; the pavement test applies when it is placed)
         // (close-out round 3, static R4.1.5: a NEW lock pose with a gear point off the rendered mask -- N199TH GLF5, 0.15 m over
@@ -223,8 +275,9 @@ export class GroundPhysics {
       }
       const P0 = tr.parkPos || tr.stillPos || [tr.disp.x, tr.disp.z]; const h = tr.parkPos ? tr.parkHdg : (tr.stillHdg ?? tr.disp.hdg);
       const key = Math.round(P0[0]) + ',' + Math.round(P0[1]) + ',' + Math.round((h || 0) * 20);
-      const base = bodyOf(B.T, P0[0], P0[1], h);
-      if (!tr.phys || tr.phys.key !== key || (this.frame % 30 === 0 && !tr.phys.ok)) {
+      const base = bodyOf(B.T, P0[0], P0[1], h); base.tr = tr;
+      // (fix round 2, v4: and again when a jet bridge has since docked into the pose it was given -- liveHit)
+      if (!tr.phys || tr.phys.key !== key || (this.frame % 30 === 0 && (!tr.phys.ok || (this._live && this.liveHit({ ...base, nose: [base.nose[0] + tr.phys.off[0], base.nose[1] + tr.phys.off[1]] }))))) {
         // (close-out round 3, static R4.1.5: all gear on the rendered mask first -- where it is, else within the 6 m scatter --
         // then the mask OR OSM-net union where it is, else within 15 m)
         const mk = !!(this.mask && this.mask !== this.paved);
@@ -270,7 +323,12 @@ export class GroundPhysics {
         // lead-in, close, heading in -- is driving INTO the stand, not past it: first contact is enough there, as before. With the
         // fuselage rule alone the arrivals at E12 / G2 / D16 on 7 Nov 03:46-04:00Z drew 13-67 frames over the ghost first)
         const into = !!(S.tr.earlyUndock && S.tr.earlyUndock.why === 'ahead' && S.tr.earlyUndock.by === tr.hex);
-        const hit = S.tr.gate ? (overlaps(B, S, 0) && !keeps(S) && (!live || into || fusIn(B, S) >= GHOST_FUS_PTS)) : (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5)));
+        // (close-out round 3 fix round 2: ...and for that arrival SFO's plan listing the silent occupant there now does not keep it --
+        // two aircraft cannot both be at the stand, and the arrival's own reports are driving in. Replay 5 Nov 00:16:46-00:17:20Z:
+        // UAL1243 B738 drove into G8 through UAL2313's B38M, silent there since its 22:18Z in-block and still in SFO's plan of 18:01Z,
+        // until its own in-block replaced it -- overlap.gnd 191 frames, 978 with the aircraft track's 737 tailplane of fix round 2
+        // (window bisect: js/aircraft/types.js alone) [obs, replay]. The KLM373 / JAL2 case that `keeps` is for was not 'into')
+        const hit = S.tr.gate ? (overlaps(B, S, 0) && (into || !keeps(S)) && (!live || into || fusIn(B, S) >= GHOST_FUS_PTS)) : (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5)));
         if (hit) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true, quiet: S.tr.stale ? 0 : 1 }); if (traffic.fadeRemove) traffic.fadeRemove(S.tr, 'ghost'); else traffic.remove(S.tr); ghosts++; }
       }
       for (const S of waiting) {

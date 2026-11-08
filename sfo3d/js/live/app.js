@@ -21,14 +21,14 @@ import { LIGHTING_SPEC, LIGHTING_FIXTURES } from '../../data/sfo_lighting.js';
 import { aircraftLightStates, setLightViewer, setLightFrame, setLightEnv } from '../env/aircraft_lights.js';
 import { renderSlabs, fogTransmittance } from '../env/atmo/sky_model.js';   // old renderer: fog on non-photometric sprites (look1-6)
 import { LiveAircraft, TYPE_MODELS } from './aircraft.js';
-import { footprint } from './gates.js';
+import { footprint, boxHitsAc } from './gates.js';   // (boxHitsAc: the moving-body bridge veto, ground.js liveBridges)
 import { MODEL_SOURCES } from './models.js';
 import { isFreighter } from './lookup.js';   // (freighters: no L2 bridge, realtime-14)
 import { buildLiveWorld, releaseAirportMap } from './world.js';
 import { LiveGateSystem } from './gates.js';
 import { buildLiveLights, buildPierGeometry, alsPlacement, buildMountGeometry } from './lights.js';
 import { Traffic, category, hdgVec, RWY, phaseLabel, antOf, DELAY_MS } from './traffic.js';
-import { GroundPhysics, buildingGrid, bridgeGrid } from './ground.js';
+import { GroundPhysics, buildingGrid, bridgeGrid, liveBridges } from './ground.js';
 import { B3D_INTEGRATION } from '../../data/buildings3d/integration.js'; // 3-D building footprints for the ground physics (buildingGrid)
 import { Feed, StreamFeed, Routes, fetchMetar, fetchTaf, fetchGates, parsePayload, SOURCES } from './feed.js';
 import { runwayStats, statsLine, statsHtml, runwayQueue, runwayConfig } from './stats.js';
@@ -324,6 +324,9 @@ export async function startApp(cfg) {
   const restBridges = (() => { if (!gateSys.solids) return null; const boxes = []; try { for (const g of world.gates) for (const b of g.bridges || []) boxes.push(...gateSys.solids(g, b, 0)); } catch (e) { console.warn('bridge solids', e); return null; } return bridgeGrid(boxes, GROUND_Y); })();
   const physics = new GroundPhysics({ paved: pavedMask, building: buildingAt, net: traffic.net, bridges: restBridges });
   traffic.restBridgeAt = restBridges;   // (traffic.js fusInRestBridge: no rest pose accepted past a stop inside a bridge)
+  // (close-out round 3 fix round 2, verifier v4: the docked / moving bridges' CURRENT solids, for traffic.js ctlGround's bridge
+  // veto -- a moving body never enters another stand's docked tunnel; ground.js liveBridges, the harness sets the same)
+  try { traffic.liveBridgeAt = liveBridges(world.gates, gateSys, boxHitsAc); } catch (e) { console.warn('live bridges', e); }
   // can the stand's L1 bridge dock this aircraft at that drawn pose (gates.js makePlan; traffic.js restDockOk keeps a rest
   // pose off the parked pose only where it can -- round 3)
   if (gateSys.makePlan && gateSys.bridgesOf) traffic.canDock = (g, tr, P) => { const G = bridgeGate(g); const ty = tr.model && TYPES[tr.model.t] ? tr.model.t : null; if (!ty) return true;

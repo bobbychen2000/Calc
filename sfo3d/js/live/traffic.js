@@ -62,6 +62,9 @@ const CUT_S = 0.4;               // fade out / fade in (s) of a re-placement (da
 // an aircraft heard parked where a silent one was drawn waits hidden at most this long for that one's jet bridge to retract (the
 // hurried retraction takes 16-91 s from docked, bridges_closeout.md Round 2; fix round 2, verifier v3) [design bound]
 const HIDE_MAX_MS = 90000;
+// (fix round 2, verifier v8) a body this far (s) past its newest report brakes for a building in its stopping distance (ctlGround;
+// the reports come every 1-5 s while taxiing [obs], as ground.js GHOST_EX_S)
+const DR_BRAKE_S = 5;
 // an arrival's jet bridge starts docking this long after the drawn aircraft came to rest (+ gates.js DOCK_DELAY 12 s):
 // engines are shut down and the beacon is off before a bridge approaches [inferred design value; see syncBridge]
 const DOCK_WAIT_MS = 20000;
@@ -163,6 +166,10 @@ function planPts(T, x, z, psi) {
   // root point touched the C-pier footprint at (-698, 303), 4 fuselage samples already inside it for 208 frames [obs, replay])
   const n = Math.max(4, Math.ceil(T.L / 3)), R = (T.R || 2) * 0.9;
   for (let i = 1; i < n; i++) { const a = T.L * i / n; out.push(P(a, R), P(a, -R)); }
+  // (fix round 2, verifier v4: and the engine inlets, the outer corners -- as gates.js acHit places them: ahead of the wing's
+  // leading edge at the engine's span station. UAL875 B772, driven on its wandering fixes, came to rest with 7 samples of its
+  // engine nacelle in the B-pier footprint, 7 Nov 18:57:24Z, window replay: no outline point reaches that far out ahead of the wing)
+  if (w) for (const e of T.eng || []) { const ez = Math.abs(e.z), ex = le + ez * sw - (e.fwd || 3), er = e.r || 1; out.push(P(ex, ez + er), P(ex, -ez - er), P(ex, ez - er), P(ex, -ez + er)); }
   return out;
 }
 
@@ -2295,6 +2302,17 @@ export class Traffic {
   }
   // the pose a parked aircraft is drawn in (GroundPhysics): its lock, else the parked pose
   shownPark(tr) { return tr.lock ? { x: tr.lock.x, z: tr.lock.z, hdg: tr.lock.hdg } : tr.parkPos ? { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg } : null; }
+  // (fix round 2, verifier v4) the bridge-owning stand G is one whose bridges a moving body may touch (ctlGround's bridge veto
+  // leaves it out): the body's own stand, the stand whose bridge docks it or retracts from it, its silent docking, the stand it
+  // drives into -- and a stand whose occupant is going (removed: its bridge retracts from an empty stand) or whose bridge retracts
+  // ahead of this very arrival (retractAhead). A SILENT occupant's docked bridge stays an obstacle to everyone else: most parked
+  // aircraft switch the transponder off (UAL875 drove past B15, whose occupant a1d368 was silent, 7 Nov 18:57Z)
+  ownBridge(tr, G) {
+    const same = (a) => !!a && (a === G || a.sharesBridgesOf === G.name);
+    if (same(tr.gate) || same(tr.bridgeGate) || same(tr.silentDockG) || same(tr.dock && tr.dock.g)) return true;
+    const o = G.occupant && this.tracks.get(G.occupant);
+    return !!(o && (o === tr || o.removed || o.dropping || (o.earlyUndock && o.earlyUndock.by === tr.hex)));
+  }
   // target state at display time (reports + phase knowledge), then the kinematic body follows it
   target(tr, t, o) {
     sampleReps(tr.reps, t, o);
@@ -2744,8 +2762,20 @@ export class Traffic {
     const slowAside = !o.stop && !push && tsp < 0.7 && dist < 25 && Math.abs(wrapPi(vecHdg(ex, ez) - c.psi)) > 60 * DEG;
     if (slowAside) sStar = 0;
     let aCmd = clamp((o.stop ? 0 : o.acc || 0) * (c.v >= 0 ? 1 : -1) + 0.9 * (sStar - c.v), -aDec, aAcc);
-    c.a += clamp(aCmd - c.a, -J * dt, J * dt); c.v += c.a * dt;
+    const vPrev = c.v; c.a += clamp(aCmd - c.a, -J * dt, J * dt); c.v += c.a * dt;
     if (Math.abs(c.v) < 0.05 && Math.abs(sStar) < 0.05) { c.v = 0; c.a = 0; }
+    // (close-out round 3 fix round 2, verifier v8: a body dead-reckoned more than DR_BRAKE_S past its newest report brakes at
+    // 2 m/s^2 (the taxi braking cap) for a building in its way -- its planform moved on by the stopping distance v^2 / 4 + 1.5 m
+    // would enter a footprint it is clear of now -- instead of driving on at taxi speed until the veto below stops it dead with
+    // the nose over the face. Replay 7 Nov 17:16:37-58Z: SWA496 B737, dead-reckoned 21 s / 63 m straight on at 4.7 m/s after
+    // its last report, came to rest with 4 fuselage samples in the C-pier footprint at (-698, 303), 208 frames [obs, replay].
+    // It holds 1.5 m short until its next report (the veto's samples are 3 m apart; the harness finds points between them).
+    // Not for a drive to a stop or into a stand (the stop logic brakes those))
+    if (T && this.buildingAt && c.v > 0.01 && !veh && !o.stop && !o.dockDrive && !tr.gate && (tr.disp.extrap || 0) > DR_BRAKE_S) {
+      const d = c.v * c.v / 4 + 1.5, fb = hdgVec(c.psi), A = planPts(T, c.x + fb[0] * d, c.z + fb[1] * d, c.psi), B = planPts(T, c.x, c.z, c.psi);
+      let ahead = false; for (let i = 0; i < A.length && !ahead; i++) ahead = this.buildingAt(A[i][0], A[i][1]) && !this.buildingAt(B[i][0], B[i][1]);
+      if (ahead) { c.v = Math.max(0, Math.min(c.v, vPrev - 2.0 * dt)); c.a = Math.min(c.a, 0); this.counters.drBrake = (this.counters.drBrake || 0) + 1; }
+    }
     // steering toward a look-ahead point of the target trajectory
     const sp = Math.abs(c.v); const dirSign = c.v < -0.05 || (Math.abs(c.v) <= 0.05 && sStar < 0) ? -1 : 1;
     const tla = clamp((Math.max(sp, 1) * 1.2 + 4) / Math.max(1, Math.hypot(o.vx, o.vz)), 0.6, 3);
@@ -2784,6 +2814,19 @@ export class Traffic {
       let hit = this.buildingAt(qx, qz) && !this.buildingAt(px, pz);
       if (!hit) { const A = planPts(T, c.x, c.z, c.psi), B = planPts(T, x0, z0, psi0); for (let i = 0; i < A.length && !hit; i++) hit = this.buildingAt(A[i][0], A[i][1]) && !this.buildingAt(B[i][0], B[i][1]); }
       if (hit) { c.x = x0; c.z = z0; c.psi = psi0; c.v = 0; c.a = 0; this.counters.buildingVeto = (this.counters.buildingVeto || 0) + 1; }
+    }
+    // (close-out round 3 fix round 2, verifier v4: ...nor into a docked or moving jet bridge of another stand -- its CURRENT solids
+    // (js/live/ground.js liveBridges, set by app.js and the harness as traffic.liveBridgeAt: the bridge boxes and the aircraft
+    // solid of the harness's bridge.hit test). Replay 7 Nov 18:57:17Z: UAL875 B772, parked by B11S with fixes wandering 9-13 m,
+    // was driven 'taxi' 13 m forward at 3.4-4.2 m/s through B15 L1's docked tunnel, 1,067 frames [obs, replay]. The body stops
+    // at the bridge instead, as at a building face; if its data runs on, the lag rules re-place it. Left out (ownBridge): its own
+    // stands, a removed occupant's and one retracting ahead of this arrival. A body already in a bridge may move.)
+    if (T && this.liveBridgeAt && Math.abs(c.v) > 0.01 && !veh && (c.x !== x0 || c.z !== z0)) {
+      const LB = this.liveBridgeAt(c.x, c.z, T.L + (T.wing ? T.wing.span / 2 : 10), (G) => this.ownBridge(tr, G));
+      const B1 = LB && bodyOf(T, c.x, c.z, c.psi), h1 = LB && LB(T, B1.nose, B1.f);
+      if (h1) { const B0 = bodyOf(T, x0, z0, psi0);
+        if (!LB(T, B0.nose, B0.f)) { c.x = x0; c.z = z0; c.psi = psi0; c.v = 0; c.a = 0; this.counters.bridgeVeto = (this.counters.bridgeVeto || 0) + 1;
+          if (!c._bvT || t - c._bvT > 10000) { c._bvT = t; this.event(tr, t, 'bridge-veto', { stand: h1.g.name, part: h1.part }); } } }
     }
   }
   // air: the same body with a bank-angle-limited turn radius, speed PD and a vertical channel (<= 0.25 g)
