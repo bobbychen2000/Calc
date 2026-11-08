@@ -72,6 +72,17 @@ page = tmpl.replace('/*LIVE_CSS*/', open(f'{S}/live.css').read()).replace('/*APP
 k_row = '<div class="row"><span class="k">GPU</span><span id="pt-gpu">–</span></div>'; k_js = '<script type="module">'
 assert page.count(k_row) == 1 and page.count(k_js) >= 1
 page = page.replace(k_row, k_row + PROBE_ROWS, 1).replace(k_js, PROBE_JS + k_js, 1)
+# Owner request 8 Nov 2026 ("an artifact with the backend being your host's running server"): REPLAY=<replay.json.gz from
+# tools/build3/replay_pack.py> ships a recent window of the cloud relay's own merged stream as data/replay.wasm (renamed
+# like the models: artifacts serve standard web types only) and inlines tools/build3/replay_shim.js, which answers the
+# relay endpoints in the page, so the app runs its live code path on that real traffic (the artifact CSP blocks any
+# fetch to the relay itself). Without REPLAY the page stays in snapshot mode.
+REPLAY = os.environ.get('REPLAY')
+if REPLAY:
+    os.makedirs(f'{O}/data', exist_ok=True); shutil.copy(REPLAY, f'{O}/data/replay.wasm')
+    shim = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'replay_shim.js')).read()
+    assert '</script' not in shim
+    page = page.replace(k_js, "<script>window.SFO_REPLAY = {url: 'data/replay.wasm'};\n" + shim + '</script>\n' + k_js, 1)
 open(f'{O}/sfo_phone_test.html', 'w').write(page)
 for f in glob.glob(f'{S}/out/build3/assets/*'):
     os.makedirs(f'{O}/assets', exist_ok=True); shutil.copy(f, f'{O}/assets/')
