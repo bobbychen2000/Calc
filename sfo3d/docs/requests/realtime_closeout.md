@@ -418,7 +418,7 @@ realtime-N" comment. Evidence:
 | realtime-14 API hooks | fixed | parseCallsign(flight, {vehicle, category, icao}), re-parsed when tr.vehicle flips. The ui headline shows `tr.cs.label`. liveryForAirline(al, reg, hex, icao). modelNote: generic airframe label and the three-engine note. b772 / b77w are in MODEL_KEYS. setOccupant gets {freighter}. gatecheck.py takes bizjet length / span from fit.js BIZ. | node check (scratch `c3/realtime/scripts/hooks_check.mjs`): OPS12 / N312QX → vehicle, label "Airfield vehicle"; isFreighter FDX B763 true, UAL B763 false; gatecheck types table regenerated |
 | realtime-15 marker / onFatal | fixed | markerSprites records carry `marker: true`. `R.onFatal = (html) => ui.fail(html)`. ui.fail shows a #fatal overlay after load (live.css). | grep of js/live/app.js, ui.js, live.css |
 | realtime-16 extract2d stale | fixed | dispBar is [0, 3.05] and the shader's paintCheck string `band(xt, 0.0, 3.05` is used. Bridges come from gateSys.bridgesOf(g), the three upper-deck A380 bridges included, with per-pose `solids()`. Each bridge exports rotR / Hr / Hb / HrPinned / ownClip. Retired taxiway polygons are left out (`taxiwaysRetired`), and stands carry their typeStops. | SOFTGL=1 livetest run of jobs/extract2d.mjs, exit 0 in 250 s: out/draw/scene2d.json 9.4 MB, 110 stands, 131 bridges (3 upper), 524 poses all with solids, paintCheck all true |
-| realtime-17 snapshot licence (needs owner) | deferred | Documented default kept [inf]: data/snapshot.js unchanged (LICENCE CONFLICT row, docs/ATTRIBUTION.md). The new `tools/live/build_snapshot.py` writes an adsb.lol-only candidate (ODbL, provider on every record, METARs) to out/live/. | `--at 2026-11-04T19:30:00Z`: 115 aircraft, 3 METARs; owner question in C3.6 |
+| realtime-17 snapshot licence (owner decided 2026-11-08: keep as is) | closed (owner) | Documented default kept [inf]: data/snapshot.js unchanged (LICENCE CONFLICT row, docs/ATTRIBUTION.md). The new `tools/live/build_snapshot.py` writes an adsb.lol-only candidate (ODbL, provider on every record, METARs) to out/live/. | `--at 2026-11-04T19:30:00Z`: 115 aircraft, 3 METARs; owner question in C3.6 |
 
 ## Classes (all hours, before → after; frames / keys)
 
@@ -613,6 +613,7 @@ docs/ATTRIBUTION.md [inf]. A candidate is ready: `python3 tools/live/build_snaps
 snapshot to `out/live/snapshot_adsblol.js`, with ODbL, the provider on every record, attribution and the KSFO METARs of
 that time. For example, `--at 2026-11-04T19:30:00Z` gives 115 aircraft within 60 km and 3 METARs. **Question:** keep the
 file, replace it with an adsb.lol-only candidate (which hour?), or remove it from the public repository?
+**Owner decision (2026-11-08): keep as is.** data/snapshot.js stays unchanged; the candidate builder stays available.
 
 ### C3.7 Lead
 

@@ -84,7 +84,7 @@ unreviewed round; its remaining part (the outer roadway band's level) is `integr
 - `OD-8` Rewrite git history to drop the 27 MB OSM pages and the 16 MB libvips binary (ee3822b)? Default: Left in history.
 - `OD-9` Start the scored 7/10 visual QA loop? Default: Not run; this round is fix / verify only.
 - `OD-10` flysfo-derived stand fields (names, classes, types; P1 / P2): keep, keep with attribution, or ADS-B only (keeps 3 of the 66 P1 types)? Default: Committed values kept; the flysfo snapshot stays local; refs/cache/stands/flysfo_provenance.json lists them.
-- `OD-11` data/snapshot.js contains adsb.fi records whose terms forbid licensing: keep, rebuild from adsb.lol-only records, or remove from the public repo? Default: Published as is.
+- `OD-11` data/snapshot.js contains adsb.fi records whose terms forbid licensing: keep, rebuild from adsb.lol-only records, or remove from the public repo? Default: Published as is. **Owner decision (2026-11-08): keep as is.**
 - `OD-12` Approve liveries for CAL / EVA cargo titles, CSG and JSX (photo references needed). Default: No brand drawn for these.
 - `OD-13` Openly licensed reference photos of Boarding Areas B and A (facades). Default: BA-B materials unverified (published descriptions); BA-A bays are placeholders with BA-G band heights [inf].
 - `OD-14` Which jet-bridge manufacturers / models does SFO use (A2 L2 needs 43.0 m for an A35K, beyond every Oshkosh unit)? Default: Oshkosh AeroTech datasheet ranges with <= 0.3 m over-travel (inferred); 158 dockings beyond the operational extension.

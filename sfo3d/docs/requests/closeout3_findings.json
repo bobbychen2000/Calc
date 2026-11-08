@@ -1261,7 +1261,8 @@
    "id": "OD-11",
    "question": "data/snapshot.js contains adsb.fi records whose terms forbid licensing: keep, rebuild from adsb.lol-only records, or remove from the public repo?",
    "why_only_owner": "Licence decision (the September adsb.lol records were lost).",
-   "default_used": "Published as is."
+   "default_used": "Published as is.",
+   "owner_decision": "Keep as is (owner, 2026-11-08)."
   },
   {
    "id": "OD-12",
