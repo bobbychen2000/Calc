@@ -922,3 +922,57 @@ dispositions: `docs/requests/realtime_closeout.md`, "Round 3". Every change carr
     the fuselage in the E-pier footprint for 16 s (164 frames). Before, the 8-h expiry had made it a new track, in-blocked at E7
     at once. Now a track heard again on the ground and stationary somewhere else after its transponder was off (> XPDR_OFF_MS)
     is treated like an aircraft heard for the first time there (`seenMoving` reset).
+
+# Step 10 — close-out round 3, fix round 2 (8 Nov 2026): verifier findings v1 – v11
+
+Findings: the round-1 independent verifier's list for the realtime group (`docs/requests/closeout3_findings.json`, fix
+round 2). Numbers and dispositions: `docs/requests/realtime_closeout.md`, "Round 3, fix round 2". Every change carries a
+"fix round 2" comment naming the finding (v1 … v11).
+
+1. **The early retraction is bounded itself** (v1, a regression of realtime-7). The 'no push' cancel no longer waits for the
+   transponder to stop reporting at the stand: after `EARLY_MAX_MS` (60 min) the bridge docks again whatever the transponder
+   does, unless SFO lists the departure's own off-block (estimated / scheduled, no actual yet) at most `OFFBLK_NEAR_MS`
+   (15 min) ahead; never after more than 75 min. Before, DAL2635's bridge at C10 stayed retracted for 6 h 44 min while the
+   aircraft reported continuously at the stand. A departure that comes later pushes from a docked stand (hurried retraction,
+   the body held until `pushClearEta` = 0). New harness class `bridge.signalled_long` (parked at a contact stand, bridge
+   retracted on a departure signal for > 76 min) — `bridge.parked_undocked` leaves signalled aircraft out.
+2. **SFO's allocation is evidence only when it is newer than what we heard** (v2, realtime-6 / -10). `planKnows(o)`: the
+   plan was fetched more than a minute after the occupant's newest position or in-block. 'alloc' (stalePlanGone) and SFO's
+   arrival stand for the arrival (arrStand) count only then, and arrStand only when SFO lists no window of the occupant
+   there now (the round-3 `planAt` veto, lost in the realtime-10 rewrite). All 6 false retractions of the verifier's window
+   (UAL34 G6 ×2, UAL2855 F17 ×3, AAL3049 B27) had occupants in-blocked after SFO's 18:01Z fetch.
+3. **No retraction through a newcomer** (v3, realtime-3). An aircraft heard parked where a silent one is drawn with its bridge
+   still out, and not drawn itself yet, waits hidden (`replacedBy` → `tr.hideFor`, ≤ `HIDE_MAX_MS` 90 s): the silent one stays
+   while its bridge retracts from its own door and fades at ≤ 30 % extension; the newcomer fades in once the bridge is at rest
+   (≤ 5 %). ground.js no longer lets a hidden body force the waiting ghost out (`dropWaitFixed`).
+4. **At a contact stand, 'motion' that is not backward is wander until it leaves the parking** (v4, realtime-11, partly):
+   `parkedNoseIn()` — in-blocked at a contact stand for > 10 min, a report less than `PUSH_UNDO_L` × L from the parking in any
+   direction but backward is noise (`fwdWanderHeld`); the body is a unicycle and drives forward to any target that is not
+   behind it. Not applied off a stand: the verifier's case, UAL875 B772 'by B11S', was parked on fixes 25-30 m off B11S's lead-in
+   and pushed from that lead-in; holding its wander made the push cross 30 m diagonally (window: `building` 102 → 790 frames,
+   `overlap.gnd` 0 → 1,421), so it was left to the data. A geometric guard needs the bridges' current solids (request C3F2.2).
+5. **Silent docking into an alternate stand ends at its stop** (v7). `updatePark` gave a stand without its own bridge record
+   (B5S shares B5's bridges) the data pose — the last report, up to 60 m back — and silentDock's drive ran its last segment
+   back to it (EIN961 A333, UAL892 B772 reversing 2-2.7 m/s at B5S). Such a docking now parks at the stand's stop pose; and no
+   inferred push-back during a silent docking.
+6. **A lock at the stop mark moves the parked pose there** (v6, realtime-1): a body at rest with its nose −3 … +2 m from the
+   type's stop on the lead-in (lateral < 1.5 m, heading < 3°) while the estimate lies > 2 m further out sets `dockComplete`;
+   the parked pose and the lock's reference become the stop pose (`lockAtStop`). The realtime-1 bound then works on a
+   residual of ≤ 3 m.
+7. **The building veto samples the fuselage sides** (v8, partly): `planPts` adds both sides every ≤ 3 m (as ground.js
+   `body().fus`). It does not change SWA496 (segment C): its body was dead-reckoned 63 m straight on after its last report and
+   the tapered nose's side entered the C-pier footprint between the nose tip and the first side sample before the veto stopped it
+   (trace scratch `c3/realtime/fx2/w/s2_swa496`); dead reckoning that follows the taxi graph is not done.
+8. **A ghost at a contact stand is kept at most 24 h** (v11): `PARK_KEEP_STAND_MS`; after 8 h it also goes on SFO's
+   reallocation of the stand to a flight whose window began after it was last heard (`standRealloc`, plan newer than that).
+9. **Harness = app for freighters** (v9): `applyGate` passes `{freighter}` (lookup.js `isFreighter`).
+10. **The SFO block-out removal is documented as what it is** (v5, realtime-10): it never fired — 0 `stale-blockout` events on
+    segments A, B and C — because SFO publishes the actual block-out once the aircraft has pushed, when it is usually heard
+    again. The code stays (harmless); the evidence that comes before an arrival's contact is item 2 ('alloc' from a plan newer
+    than the occupant's last report) and, for a ghost > 8 h old, item 8. Orphaned bridges after a contact removal remain the
+    trade-off (numbers in realtime_closeout.md).
+11. **renderer3's fatal path** (v10): app.js's `R.onFatal` is in place; `renderer3.fatal()` does not call it yet — an engine-track
+    request (realtime_closeout.md C3F2.1).
+
+Scratch (this round): `c3/realtime/fx2/` — `root_base` / `root_f2` (before / after trees), `run_seg.sh`, `win.sh`,
+`an_f2.py` (an_c3.py + early-retraction durations), `cmp_f2.py`, trace hooks `hook_tgt.mjs` / `hook_step.mjs` / `hook_pni.mjs`.
