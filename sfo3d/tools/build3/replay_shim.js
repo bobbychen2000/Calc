@@ -11,10 +11,12 @@
 // (as the relay's own --replay re-times records to wall time); `dataNow` keeps the recording's clock, so the Sun, the
 // lights and the METAR clock show the recorded time of day (environment_spec.md 3.2). At the end of the window the page
 // reloads and the replay starts again.
+// Pack v2 (replay_pack.py step 4) stores each event's aircraft as field deltas p.d = [[hex, changed, removed?], ...];
+// expand() rebuilds the full records event by event as the replay reaches them (v1 packs carry p.ac and pass through).
 (function () {
   var R = window.SFO_REPLAY; if (!R || !R.url) return;
   window.SFO_MODE = 'live';
-  var pack = null, off = 0, idx = 0, latest = null, sources = [];
+  var pack = null, off = 0, idx = 0, latest = null, sources = [], st = {};
   var ready = (async function () {
     var r = await window.fetch(R.url); if (!r.ok) throw new Error('replay data HTTP ' + r.status);
     var txt = await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text();
@@ -23,6 +25,16 @@
     return pack;
   })();
   ready.catch(function (e) { window.__sfoError = 'replay: ' + (e && e.message || e); });
+  function expand(p) {
+    if (p.ac) return p;
+    var ac = p.d.map(function (r) {
+      var a = st[r[0]] || (st[r[0]] = { hex: r[0] }), ch = r[1], k;
+      for (k in ch) a[k] = ch[k];
+      if (r[2]) r[2].forEach(function (k) { delete a[k]; });
+      return a;
+    });
+    return { now: p.now, dataNow: p.dataNow, seq: p.seq, _source: p._source, ac: ac };
+  }
   function shifted(p) {
     var ac = p.ac.map(function (a) { var b = Object.assign({}, a); if (typeof b._pt === 'number') b._pt += off; return b; });
     return { now: p.now + off * 1000, dataNow: p.dataNow, seq: p.seq, _source: p._source, ac: ac };
@@ -31,7 +43,7 @@
     if (!pack) return;
     var t = Date.now() / 1000 - off, ev = pack.events;
     while (idx < ev.length && ev[idx].T <= t) {
-      latest = shifted(ev[idx].p); var data = JSON.stringify(latest); idx++;
+      latest = shifted(expand(ev[idx].p)); var data = JSON.stringify(latest); idx++;
       sources.forEach(function (s) { s._fire('adsb', data); });
     }
     if (idx >= ev.length && t > pack.until + 20) location.reload();

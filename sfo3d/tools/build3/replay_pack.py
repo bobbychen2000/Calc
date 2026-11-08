@@ -12,7 +12,11 @@ Steps:
   2. Keep only the aircraft fields js/live/feed.js normalizeAircraft() reads (smaller file, same app behaviour).
   3. METARs (aviationweather.gov, US Government work) and routes (adsb.lol routeset, ODbL; VRS standing data, CC0) for the
      window's callsigns, asked from the running relay at pack time.
-  4. Write <out>/replay.json.gz: {from, until, events: [{T, p}], metar: [...], routes: [...], attribution}.
+  4. Write <out>/replay.json.gz: {v: 2, from, until, events: [{T, p}], metar: [...], routes: [...], attribution}.
+     v2 stores the aircraft list of each event as field deltas (lossless; replay_shim.js rebuilds the full records):
+     p.d = [[hex, {fields that changed since this hex's previous record}, [fields removed]?], ...] in the event's
+     aircraft order. Midday traffic (157 aircraft per event, 8 Nov 2026 20:38-21:18Z) packed 109 MB of JSON / 16.4 MB
+     gzipped as full snapshots; as deltas 24.9 MB / 4.5 MB, which a phone parses without a memory spike.
      No SFO gate plan: flysfo.com data has no licence to embed (docs/research/gate_truth.md, 'Snapshot / artifact mode').
 
 Usage: python3 tools/build3/replay_pack.py --minutes 35 [--end-ago 1] [--relay http://localhost:8000] --out DIR
@@ -43,19 +47,23 @@ def main():
     raw = os.path.join(a.out, 'stream_raw.jsonl.gz')
     subprocess.run([sys.executable, os.path.join(ROOT, 'tools/live/build_stream.py'), '--from', iso(t0), '--until', iso(t1),
                     '--rec', a.rec, '--gates-every', '0', '--out', raw], check=True)
-    ev = []
+    ev = []; state = {}; last = {}   # last: each callsign's latest position, for the routeset request
     for line in gzip.open(raw, 'rt'):
-        e = json.loads(line); p = e['p']
-        p['ac'] = [{k: x[k] for k in KEEP if k in x} for x in p.get('ac', [])]
-        ev.append({'T': round(e['T'], 3), 'p': {k: p[k] for k in ('now', 'dataNow', 'seq', '_source', 'ac') if k in p}})
+        e = json.loads(line); p = e['p']; rows = []
+        for x in p.get('ac', []):
+            r = {k: x[k] for k in KEEP if k in x}; h = r.get('hex')
+            if h is None: continue
+            o = state.get(h, {}); miss = object()
+            ch = {k: v for k, v in r.items() if k != 'hex' and o.get(k, miss) != v}
+            rm = [k for k in o if k not in r]
+            rows.append([h, ch, rm] if rm else [h, ch]); state[h] = r
+            cs = (r.get('flight') or '').strip()
+            if cs and r.get('lat') is not None: last[cs] = {'callsign': cs, 'lat': r['lat'], 'lng': r['lon']}
+        q = {k: p[k] for k in ('now', 'dataNow', 'seq', '_source') if k in p}; q['d'] = rows
+        ev.append({'T': round(e['T'], 3), 'p': q})
     if not ev: sys.exit('no events in the window')
     metar = json.load(urllib.request.urlopen(a.relay + '/api/metar?ids=KSFO&format=json', timeout=20))
     metar = [m for m in metar if (m.get('obsTime') or 0) <= ev[-1]['T']] or metar
-    last = {}
-    for e in ev:
-        for x in e['p']['ac']:
-            cs = (x.get('flight') or '').strip()
-            if cs and x.get('lat') is not None: last[cs] = {'callsign': cs, 'lat': x['lat'], 'lng': x['lon']}
     routes = []; planes = list(last.values())
     for i in range(0, len(planes), 100):
         req = urllib.request.Request(a.relay + '/api/routeset', data=json.dumps({'planes': planes[i:i + 100]}).encode(),
@@ -66,7 +74,7 @@ def main():
         except Exception as e:  # routes are optional, as in the app
             print('routes:', e, file=sys.stderr)
     ping = json.load(urllib.request.urlopen(a.relay + '/api/ping', timeout=20))
-    pack = {'from': ev[0]['T'], 'until': ev[-1]['T'], 'events': ev, 'metar': metar, 'routes': routes,
+    pack = {'v': 2, 'from': ev[0]['T'], 'until': ev[-1]['T'], 'events': ev, 'metar': metar, 'routes': routes,
             'attribution': ping.get('attribution'), 'packed': time.time()}
     out = os.path.join(a.out, 'replay.json.gz')
     with gzip.open(out, 'wt', compresslevel=9) as f: json.dump(pack, f, separators=(',', ':'))
