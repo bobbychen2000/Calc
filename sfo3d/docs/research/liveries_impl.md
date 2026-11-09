@@ -64,7 +64,9 @@ The source models' UV layouts are unusable for painting (overlapping, mirrored, 
   fin (+ dorsal), tailplane, engine nacelle skins (outermost surface per station and angle; inlet cowls modelled in
   the body zone are captured where they form a shell around the nacelle axis, >= 180 deg, so the wing's flap-track
   fairings and panels beside the nacelle stay wing; E175 / MD-11 nacelles merged into the wing mesh are found as connected components at
-  the type's engine stations; the radome, APU exhaust cones and long strips are rejected), pylons, wing tips / winglets,
+  the type's engine stations; the radome, APU exhaust cones and long strips are rejected), pylons (the zone-7 pylon
+  objects, and - close-out round 5 - a wing-textured strip of the engine part within 30 deg of the nacelle top that runs
+  more than 0.5 m aft of the cowl: the pylon fairing the FAM A350 / 767 and the MD-11 model in the engine node), wing tips / winglets,
   gear doors. Wings, glass, lights, gear and interior keep their source textures. The section envelope
   (`tools/liveries/common.py Envelope`, also the painter's frame) leaves the tailplane halves out of the half width and
   measures the tail-cone top on the body itself where the cone is narrower than the fin-side band (close-out round 4:

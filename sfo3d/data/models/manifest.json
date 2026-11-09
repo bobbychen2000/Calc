@@ -182,10 +182,10 @@
    "belly": -3.4270660281181335,
    "hasGear": false
   },
-  "nv": 50737,
+  "nv": 50721,
   "ni": 133239,
   "file": "a359.sfom",
-  "size": 1428831,
+  "size": 1428055,
   "atlas": true
  },
  "a388": {
@@ -287,10 +287,10 @@
    "belly": -2.8635300174355507,
    "hasGear": false
   },
-  "nv": 15406,
+  "nv": 15366,
   "ni": 44958,
   "file": "b763.sfom",
-  "size": 491571,
+  "size": 491462,
   "atlas": true
  },
  "bcs1": {
@@ -434,10 +434,10 @@
    "belly": -3.0460950136184692,
    "hasGear": false
   },
-  "nv": 51365,
+  "nv": 51337,
   "ni": 153738,
   "file": "md11.sfom",
-  "size": 643337,
+  "size": 642706,
   "atlas": true
  },
  "b77w": {

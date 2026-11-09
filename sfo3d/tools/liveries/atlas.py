@@ -10,7 +10,8 @@ our own, and the livery is baked into that:
   1. Parts. Each paint triangle (material kind 'paint', zones base / fin / engine / gear door / pylon) is assigned a part:
      fuselage (inside the model's fuselage section envelope, data/models/features.json `sec`, incl. nose, tail cone,
      belly fairing, dorsal fillet), fin (+ rudder), horizontal tail, engine nacelle skin (per engine; fan faces, inlet
-     insides and exhausts keep their own texture), pylon, wing-tip device, gear door. The wing keeps its original
+     insides and exhausts keep their own texture), pylon (zone 7, and the wing-textured pylon strip of an engine part,
+     classify()), wing-tip device, gear door. The wing keeps its original
      texture and UVs (its panel detail is finer there than an atlas could hold).
   2. Charts. Per part, triangles are grouped by the dominant axis of their face normal (box projection: sides x-y,
      top/bottom x-z, front/back z-y) and projected orthographically; charts longer than the atlas are cut along the
@@ -57,6 +58,7 @@ DIRS = ['+x', '-x', '+y', '-y', '+z', '-z']
 # textures that are never livery skin (cockpit / cabin interiors, gear, glazing, fan faces, chrome)
 NONSKIN_TEX = re.compile(r'interior|carpet|seat|landing|gear|windshield|inside|chrome|^lights?\.', re.I)
 FAN_TEX = re.compile(r'fan', re.I)
+WING_TEX = re.compile(r'wing', re.I)     # the wing skin texture of a source model (FAM wings.png, FG Wings.png)
 BAND_EPS = 0.02          # width of the plug band in the unstretched model (model units)
 WHITE = 0.925            # sRGB level of the neutral skin in the default atlas
 PAD = 6                  # chart padding at 2048 px (1.5 px at 512)
@@ -322,6 +324,16 @@ def engine_clusters(C):
     return cl, out
 
 
+def welded_components(P, idx, tris, weld=0.002):
+    """connected-component label per triangle of `tris` (indices into idx), vertices welded at `weld` model units"""
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+    T = idx[tris]; vs, inv = np.unique(np.round(P[T.ravel()] / weld).astype(np.int64), axis=0, return_inverse=True)
+    Tq = inv.reshape(-1, 3); nv = len(vs)
+    g = coo_matrix((np.ones(3 * len(Tq)), (Tq.ravel(), np.roll(Tq, 1, 1).ravel())), shape=(nv, nv))
+    return connected_components(g, directed=False)[1][Tq[:, 0]]
+
+
 def nacelle_shells(P, idx, C, cand, yc, zc, min_cover=0.5):
     """bool per candidate triangle: part of a welded (2 mm) connected component of the candidates whose triangle centroids
     cover at least `min_cover` of the 18 x 20 deg sectors around the nacelle axis (yc, zc): a cowl ring / half shell, not
@@ -453,6 +465,30 @@ def classify(m, env, feat, seeds=None):
             q = key == k_; rmax[q] = rl[q].max()
         ok = (np.abs(Nf[sel][:, 0]) < 0.8) & (rl > 0.9 * rmax) & (rl > 0.45 * e['r'])
         part[sel[ok]] = PID['eng']; eng_of[sel[ok]] = j
+    # pylon strips (close-out round 5, aircraft verifier c4-2 finding 1): the engine node of the FAM A350 and 767 (zone 2)
+    # and the seed-found nacelle of the MD-11 (zone 0) carry the pylon's lower fairing, textured with the WING texture: one
+    # welded strip on top of the nacelle (within 26 deg of the top) running back along the pylon aft fairing to 4.7-5.0 m
+    # behind the cowl (A350 11.5, 767 15.3, MD-11 6.5 m2 per engine). It passed the outermost-skin test above and took the
+    # engine colour as a jagged band under the wing (DLH / ITY / SJX / VIR A350 bakes). A wing-textured component of an
+    # engine's 'eng' triangles that lies within 30 deg of the nacelle top, covers at most 100 deg around the axis and reaches
+    # more than 0.5 m aft of the engine's other (cowl-textured) 'eng' triangles is the pylon. The 767's wing-textured cowl
+    # pieces (200-220 deg around the axis, or ending at the cowl) keep the engine colour (the round-4 'atlasW' attempt, the
+    # shell test on every wing-textured engine triangle, took 32 m2 of real cowl per engine). The engine record then ends
+    # at the cowl (x0: the inlet-lip band is 7 % of x1 - x0)
+    wtex = np.array([bool(WING_TEX.search(t)) for t in texn])
+    for j, e in enumerate(eng):
+        q = np.where((part == PID['eng']) & (eng_of == j))[0]
+        w = q[wtex[q]]; cowl = q[~wtex[q]]
+        if not len(w) or not len(cowl): continue
+        xc0 = P[idx[cowl]][:, :, 0].min()
+        dy, dz = C[w, 1] - e['yc'], C[w, 2] - e['zc']
+        ang = np.degrees(np.arctan2(np.abs(dz), dy)); sec = np.floor((np.arctan2(dz, dy) + np.pi) / (np.pi / 9)).astype(int) % 18
+        lab = welded_components(P, idx, w)
+        mv = [w[lab == c] for c in np.unique(lab) if ang[lab == c].max() <= 30 and len(np.unique(sec[lab == c])) <= 5
+              and P[idx[w[lab == c]]][:, :, 0].min() < xc0 - 0.5]
+        if mv:
+            mv = np.concatenate(mv); part[mv] = PID['pylon']; eng_of[mv] = -1
+            rest = q[part[q] == PID['eng']]; e['x0'] = round(float(max(e['x0'], P[idx[rest]][:, :, 0].min())), 3)
     # degenerate triangles stay where they are
     part[area < 1e-10] = 0
     return part, eng_of, eng, Nf, area

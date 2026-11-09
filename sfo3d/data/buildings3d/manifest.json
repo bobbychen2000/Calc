@@ -14287,9 +14287,9 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 22485036,
-  "built": "2026-11-09T03:56:09+00:00",
-  "git": "8041253+dirty",
+  "bytes": 22519648,
+  "built": "2026-11-09T04:26:20+00:00",
+  "git": "7a571c8+dirty",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -14309,23 +14309,23 @@
   "lods": {
    "0": {
     "switch_m": 0.0,
-    "tris": 171012,
+    "tris": 171079,
     "instanced_car_tris": 166010,
-    "verts": 404910,
+    "verts": 405103,
     "draw_calls": 398
    },
    "1": {
     "switch_m": 450.0,
-    "tris": 96956,
+    "tris": 97025,
     "instanced_car_tris": 70642,
-    "verts": 243150,
+    "verts": 243349,
     "draw_calls": 358
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 24096,
+    "tris": 24386,
     "instanced_car_tris": 0,
-    "verts": 58692,
+    "verts": 59562,
     "draw_calls": 125
    }
   },
@@ -14335,14 +14335,14 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 3129688
+   "bytes": 3165512
   },
   "textures": [
    {
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1162778,
+    "bytes": 1155219,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -14370,7 +14370,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 318170,
+    "bytes": 317467,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -14405,7 +14405,7 @@
     "name": "landside_ao_A",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1343594,
+    "bytes": 1341829,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -15374,8 +15374,8 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 52.6,
-    "mean": 0.41,
+    "bake_s": 81.3,
+    "mean": 0.408,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -15385,8 +15385,8 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 65.8,
-    "mean": 0.584,
+    "bake_s": 81.4,
+    "mean": 0.587,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -15396,8 +15396,8 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 25.8,
-    "mean": 0.646,
+    "bake_s": 27.5,
+    "mean": 0.645,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -15951,17 +15951,17 @@
     ],
     "tris": {
      "0": {
-      "tris": 23771,
+      "tris": 23608,
       "instanced_tris": 30712,
       "draws": 37
      },
      "1": {
-      "tris": 19273,
+      "tris": 19110,
       "instanced_tris": 13016,
       "draws": 36
      },
      "2": {
-      "tris": 4228,
+      "tris": 4263,
       "instanced_tris": 0,
       "draws": 8
      }
@@ -16629,17 +16629,17 @@
     ],
     "tris": {
      "0": {
-      "tris": 20996,
+      "tris": 21022,
       "instanced_tris": 9220,
       "draws": 55
      },
      "1": {
-      "tris": 7558,
+      "tris": 7586,
       "instanced_tris": 3956,
       "draws": 51
      },
      "2": {
-      "tris": 801,
+      "tris": 860,
       "instanced_tris": 0,
       "draws": 9
      }
@@ -17464,17 +17464,17 @@
     ],
     "tris": {
      "0": {
-      "tris": 6643,
+      "tris": 6817,
       "instanced_tris": 30948,
       "draws": 29
      },
      "1": {
-      "tris": 3095,
+      "tris": 3269,
       "instanced_tris": 13140,
       "draws": 28
      },
      "2": {
-      "tris": 850,
+      "tris": 1016,
       "instanced_tris": 0,
       "draws": 5
      }
@@ -17895,17 +17895,17 @@
     ],
     "tris": {
      "0": {
-      "tris": 1134,
+      "tris": 1174,
       "instanced_tris": 0,
       "draws": 15
      },
      "1": {
-      "tris": 1134,
+      "tris": 1174,
       "instanced_tris": 0,
       "draws": 15
      },
      "2": {
-      "tris": 332,
+      "tris": 372,
       "instanced_tris": 0,
       "draws": 4
      }
@@ -18574,17 +18574,17 @@
     ],
     "tris": {
      "0": {
-      "tris": 1243,
+      "tris": 1233,
       "instanced_tris": 0,
       "draws": 7
      },
      "1": {
-      "tris": 163,
+      "tris": 153,
       "instanced_tris": 0,
       "draws": 6
      },
      "2": {
-      "tris": 130,
+      "tris": 120,
       "instanced_tris": 0,
       "draws": 4
      }
@@ -19698,7 +19698,7 @@
     },
     {
      "check": "central_garage: drawn outline not covered by the roof footprint",
-     "model": 189.055,
+     "model": 165.453,
      "drawing": 0.0,
      "tol": 1287.835,
      "ok": true,
@@ -19761,7 +19761,7 @@
     },
     {
      "check": "garage_a: core diameter",
-     "model": 12.551,
+     "model": 12.629,
      "drawing": 13.0,
      "tol": 0.5,
      "ok": true,
@@ -19770,7 +19770,7 @@
     },
     {
      "check": "garage_a: core centre on the drum centre",
-     "model": 0.081,
+     "model": 0.12,
      "drawing": 0.0,
      "tol": 0.5,
      "ok": true,
@@ -20323,7 +20323,7 @@
      "drawing": 0.0,
      "tol": 0.0,
      "ok": true,
-     "src": "edge-triangle crossings; landside_geom.airtrain_keepout (keepout.py) clips the facades; over: none; exempt points 4; contact-band points 1054",
+     "src": "edge-triangle crossings; landside_geom.airtrain_keepout (keepout.py) clips the facades; over: none; exempt points 4; contact-band points 1427",
      "unit": "pts"
     },
     {
@@ -21004,10 +21004,10 @@
    ],
    "plans": {
     "central_garage": {
-     "model_area": 64166.4,
+     "model_area": 64194.0,
      "outline_area": 64391.8,
      "outside": 0.0,
-     "missing": 189.1
+     "missing": 165.5
     },
     "ltp_garage_1": {
      "model_area": 14436.7,
@@ -21067,26 +21067,26 @@
       "L0_cg_plinth x L0_airtrain_-3_0_deck": {
        "points": 0,
        "y": [
-        17.56,
+        17.55,
         19.45
        ],
        "at": [
-        -968.8,
-        317.4
+        -968.7,
+        330.1
        ],
-       "contact_points": 718
+       "contact_points": 961
       },
       "L0_cg_plinth x L0_airtrain_-3_1_deck": {
        "points": 0,
        "y": [
-        18.0,
+        17.92,
         19.45
        ],
        "at": [
-        -941.5,
-        421.1
+        -945.6,
+        420.4
        ],
-       "contact_points": 68
+       "contact_points": 198
       },
       "L0_garage_a_portal x L0_airtrain_-4_1_deck": {
        "points": 4,
@@ -22832,7 +22832,7 @@
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
   "owner": "integration (review round 1, finding 1)",
   "generator": "tools/blender/build_roadways.py + roadways_net.py",
-  "built": "2026-11-08T20:31:57Z",
+  "built": "2026-11-09T04:02:49Z",
   "files": {
    "full": "data/buildings3d/roadways.glb",
    "lod2": "data/buildings3d/roadways_lod2.glb"
@@ -22919,7 +22919,7 @@
   ],
   "deviations": [
    "decks over at-grade roads with less than 4.6 m clearance: the anchored domestic loop (soffit 3.53 m) - the curb placeholder, kept as the domestic asset has it",
-   "decks trimmed at the buildings' bodies (review r2, finding 3): {'domestic/T3E': 312.5, 'domestic/T3W': 309.4, 'domestic/T1': 390.6} m2 (T1 / T3 only: their curb-side shells; the T2 cut lifted after the domestic group moved the T2 landside face, close-out round 3)",
+   "decks trimmed at the buildings' bodies (review r2, finding 3): {'domestic/T3E': 312.6, 'domestic/T3W': 309.4, 'domestic/T1': 390.6} m2 (T1 / T3 only: their curb-side shells; the T2 cut lifted after the domestic group moved the T2 landside face, close-out round 3)",
    "stacked pairs kept whole under an upper deck with less than 4.6 m (a cut would split the lower deck or leave < lanes x 3.0 m; fix 2, verifier v1): 41015123 under 38853045, 3.90 m; 41015123 under 38853121, 3.81 m; 394222196 under 35157016, 4.58 m",
    "stacked cuts made although they narrow the lower deck (the decks would clash, < 3.5 m): 38853121 under 38854581: carriageway 2.24 m < 2 x 3.0 m (+ shoulders) over 2 m (kept: the decks would clash, 0.43 m); 1185654144 under 38854581: carriageway 0.00 m < 2 x 3.0 m (+ shoulders) over 5 m (kept: the decks would clash, 0.38 m); 370279626 under 35157100: carriageway 0.00 m < 1 x 3.0 m (+ shoulders) over 51 m (kept: the decks would clash, -1.20 m); 370279626 under 41015036: carriageway 2.11 m < 1 x 3.0 m (+ shoulders) over 13 m (kept: the decks would clash, 0.34 m)"
   ],
@@ -22945,6 +22945,9 @@
     "step_face_m": 454.2,
     "slit_runs_dropped_m": 5.8,
     "abutment_m": 142.5,
+    "under_joint_m": 432.5,
+    "under_joint_to_grade_m": 14.1,
+    "under_joint_unresolved_m": 366.0,
     "step_face_by_height_m": {
      "0.02-0.05": 105.3,
      "0.05-0.10": 65.8,
@@ -22992,6 +22995,36 @@
      "itb_departures": 0.0
     },
     "columns_meeting_soffit": "300 of 300"
+   },
+   "closeout_r5": {
+    "soffit_closure": {
+     "boundary_m": 22243.6,
+     "face_m": 19587.1,
+     "soffit_continues_m": 2592.4,
+     "open_into_hollow_m": 7.2,
+     "open_other_m": 56.9
+    },
+    "under_joint_m": 432.5,
+    "under_joint_to_grade_m": 14.1,
+    "under_joint_unresolved_m": 366.0,
+    "mesh_folds": {
+     ">1_deg": {
+      "n": 226,
+      "edge_m": 1430.1
+     },
+     ">2_deg": {
+      "n": 84,
+      "edge_m": 517.5
+     },
+     ">4_deg": {
+      "n": 10,
+      "edge_m": 28.9
+     },
+     ">6_deg": {
+      "n": 6,
+      "edge_m": 23.3
+     }
+    }
    }
   },
   "verification": {
@@ -23029,9 +23062,9 @@
     "plate": 13
    },
    "tris": {
-    "0": 57753,
-    "1": 16243,
-    "2": 7338
+    "0": 57967,
+    "1": 16383,
+    "2": 7340
    },
    "grade_max": {
     "id": 41015033,
@@ -23226,10 +23259,10 @@
    ],
    "low_crossings": [],
    "crossings": 33,
-   "asset_cut_m2": 1670.9,
+   "asset_cut_m2": 1671.0,
    "bytes": {
-    "full": 5266908,
-    "lod2": 476072
+    "full": 5291956,
+    "lod2": 476212
    },
    "itb_plate": {
     "area_m2": 8069.3,
@@ -24052,7 +24085,7 @@
    },
    "in_carriageway_parapet": {
     "samples": 544,
-    "of": 276538,
+    "of": 276540,
     "approx_m": 54.4,
     "clusters": 33,
     "top": [
@@ -24275,6 +24308,9 @@
     "step_face_m": 454.2,
     "slit_runs_dropped_m": 5.8,
     "abutment_m": 142.5,
+    "under_joint_m": 432.5,
+    "under_joint_to_grade_m": 14.1,
+    "under_joint_unresolved_m": 366.0,
     "step_face_by_height_m": {
      "0.02-0.05": 105.3,
      "0.05-0.10": 65.8,
@@ -24458,8 +24494,8 @@
    },
    "mesh_grades": {
     "rule": "LOD0 deck-top triangles (deck_* materials, n.y > 0.7, > 0.001 m2): |gradient| %, area-weighted; folds = angle between welded neighbours",
-    "triangles": 6449,
-    "area_m2": 91905.9,
+    "triangles": 6447,
+    "area_m2": 91905.8,
     "max_pct": 13.37,
     "top": [
      {
@@ -24562,7 +24598,7 @@
     },
     "by_unit": {
      "domestic_departures": {
-      "area_m2": 19958.8,
+      "area_m2": 19958.7,
       "max_pct": 5.1,
       "over_8_pct_m2": 0.0,
       "over_10_pct_m2": 0.0,
@@ -24637,6 +24673,10 @@
      ">4_deg": {
       "n": 10,
       "edge_m": 28.9
+     },
+     ">6_deg": {
+      "n": 6,
+      "edge_m": 23.3
      }
     },
     "fold_top": [
@@ -24721,6 +24761,72 @@
     "max_soffit_offset_m": 0.063,
     "bad": []
    },
+   "soffit_closure": {
+    "rule": "LOD0 soffit boundary edges every 0.5 m: closed by a vertical concrete face within 0.04 m spanning the soffit height, or a soffit continuing 0.15 m outward within 0.15 m; open into a hollow when a deck / walk top lies 0.3 m outward above (close-out r5)",
+    "boundary_m": 22243.6,
+    "face_m": 19587.1,
+    "soffit_continues_m": 2592.4,
+    "open_into_hollow_m": 7.2,
+    "open_other_m": 56.9,
+    "open_into_hollow_top": [
+     {
+      "at": [
+       -1607.7,
+       459.1
+      ],
+      "soffit_m": 1.5,
+      "len_m": 4.4
+     },
+     {
+      "at": [
+       -1545.6,
+       469.7
+      ],
+      "soffit_m": 3.19,
+      "len_m": 1.0
+     },
+     {
+      "at": [
+       -1642.7,
+       418.5
+      ],
+      "soffit_m": 14.44,
+      "len_m": 0.5
+     },
+     {
+      "at": [
+       -1955.8,
+       546.0
+      ],
+      "soffit_m": 9.47,
+      "len_m": 0.5
+     },
+     {
+      "at": [
+       -1609.7,
+       545.0
+      ],
+      "soffit_m": 13.6,
+      "len_m": 0.5
+     },
+     {
+      "at": [
+       -1099.3,
+       327.5
+      ],
+      "soffit_m": 4.61,
+      "len_m": 0.2
+     },
+     {
+      "at": [
+       -1061.8,
+       406.6
+      ],
+      "soffit_m": 3.53,
+      "len_m": 0.2
+     }
+    ]
+   },
    "curb_gap": {
     "stations": 426,
     "max_void_m": 0.143,
@@ -24766,7 +24872,7 @@
     "where": []
    },
    "deck_cut_inside_buildings_m2": {
-    "domestic/T3E": 312.5,
+    "domestic/T3E": 312.6,
     "domestic/T3W": 309.4,
     "domestic/T1": 390.6
    },

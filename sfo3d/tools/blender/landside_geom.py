@@ -2423,7 +2423,7 @@ def airtrain_keepout(buildings, tiles):
     if not T: return {}
     T = np.concatenate(T)
     cols = KO.Columns(T, clear=KEEP_CLEAR, clear_z=0.05)
-    cols_c = None
+    cols_c = cols_ch = None
     rec = {}
     for b in buildings:
         parts = [(0, p) for p in b.shells] + [(0, p) for p in b.details[0]] + [(1, p) for p in b.details[1]] + [(2, p) for p in b.coarse]
@@ -2431,10 +2431,17 @@ def airtrain_keepout(buildings, tiles):
             if any(e in part.name for e in KEEP_EXEMPT): continue
             st = {}
             if any(e in part.name for e in KEEP_CONTACT):
-                if cols_c is None: cols_c = KO.Columns(T, clear=KO.DS_V / 2 + 0.005, clear_z=0.0, inset=KEEP_CONTACT_INSET)
-                # LOD2 (the SFO_LITE phone path shows only LOD2): the cut lies inside the closed deck box, so a 0.5-m step
-                # (fewer re-triangulated stairs; 0.05 m added 1,497 triangles to L2_central_garage) [model]
-                KO.clip_mb(part.mb, b.F.W, cols_c, st, ds_v=KO.DS_V if lod < 2 else 0.5, ds_h=KO.DS_H if lod < 2 else 0.5); st['contact'] = True
+                if lod == 2:
+                    # LOD2 (the only file the SFO_LITE phone path loads): the contact part's clash lies inside the closed deck box
+                    # (hidden at any distance); clipping it re-triangulated the shell, +1,532 triangles on L2_central_garage
+                    # (2,095 -> 3,627) for no visible change - left as built, listed in the record [model]
+                    rec.setdefault(b.key, {})['%s@%d' % (part.name, lod)] = dict(faces=0, m2=0.0, rule='contact, not clipped at LOD2 (inside the deck box)')
+                    continue
+                if cols_c is None:   # vertical faces: each triangle's footprint buffered by half a sample step (see keepout.Columns);
+                    # other faces: unbuffered (their cut is intersected with the footprint itself)
+                    cols_c = KO.Columns(T, clear=KO.DS_V / 2 + 0.005, clear_z=0.0, inset=KEEP_CONTACT_INSET)
+                    cols_ch = KO.Columns(T, clear=0.0, clear_z=0.0, inset=KEEP_CONTACT_INSET)
+                KO.clip_mb(part.mb, b.F.W, cols_c, st, cols_h=cols_ch); st['contact'] = True
             else:
                 KO.clip_mb(part.mb, b.F.W, cols, st)
             if st.get('faces_cut'):

@@ -191,7 +191,7 @@
   {
    "brand": "AAR",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -204,9 +204,9 @@
    "file": "AAR/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 86462,
-    "mid": 43732,
-    "lo": 21482
+    "hi": 84618,
+    "mid": 40522,
+    "lo": 19432
    }
   },
   {
@@ -398,7 +398,7 @@
   {
    "brand": "AFR",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -411,9 +411,9 @@
    "file": "AFR/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 86090,
-    "mid": 44166,
-    "lo": 21834
+    "hi": 84584,
+    "mid": 41354,
+    "lo": 19716
    }
   },
   {
@@ -858,7 +858,7 @@
   {
    "brand": "CAL",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -871,9 +871,9 @@
    "file": "CAL/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 96124,
-    "mid": 48468,
-    "lo": 24478
+    "hi": 93268,
+    "mid": 45040,
+    "lo": 22440
    }
   },
   {
@@ -963,7 +963,7 @@
   {
    "brand": "CPA",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -976,9 +976,9 @@
    "file": "CPA/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 94072,
-    "mid": 46766,
-    "lo": 22830
+    "hi": 92242,
+    "mid": 43238,
+    "lo": 20516
    }
   },
   {
@@ -1242,7 +1242,7 @@
   {
    "brand": "DAL",
    "model": "b763",
-   "pxm": 27.6,
+   "pxm": 27.8,
    "variants": [
     {
      "types": [
@@ -1256,9 +1256,9 @@
      "file": "DAL/b763@b764-mid.webp",
      "painted_as": "b764",
      "bytes": {
-      "hi": 79630,
-      "mid": 40692,
-      "lo": 20466
+      "hi": 79002,
+      "mid": 40112,
+      "lo": 20618
      }
     }
    ],
@@ -1273,9 +1273,9 @@
    "file": "DAL/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 76074,
-    "mid": 39008,
-    "lo": 20002
+    "hi": 75704,
+    "mid": 38944,
+    "lo": 20110
    }
   },
   {
@@ -1344,7 +1344,7 @@
   {
    "brand": "DLH",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -1357,9 +1357,9 @@
    "file": "DLH/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 89436,
-    "mid": 46330,
-    "lo": 23346
+    "hi": 87680,
+    "mid": 43420,
+    "lo": 21224
    }
   },
   {
@@ -1509,7 +1509,7 @@
   {
    "brand": "FBU",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -1522,9 +1522,9 @@
    "file": "FBU/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 111118,
-    "mid": 55800,
-    "lo": 27198
+    "hi": 106918,
+    "mid": 50926,
+    "lo": 24724
    }
   },
   {
@@ -1551,7 +1551,7 @@
   {
    "brand": "FDX",
    "model": "b763",
-   "pxm": 27.6,
+   "pxm": 27.8,
    "variants": [],
    "types": [
     "b763"
@@ -1564,15 +1564,15 @@
    "file": "FDX/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 65568,
-    "mid": 33826,
-    "lo": 17392
+    "hi": 66490,
+    "mid": 34146,
+    "lo": 17794
    }
   },
   {
    "brand": "FDX",
    "model": "md11",
-   "pxm": 17.4,
+   "pxm": 17.5,
    "variants": [],
    "types": [
     "md11"
@@ -1585,9 +1585,9 @@
    "file": "FDX/md11-mid.webp",
    "painted_as": "md11",
    "bytes": {
-    "hi": 69708,
-    "mid": 36048,
-    "lo": 18586
+    "hi": 69516,
+    "mid": 36128,
+    "lo": 18450
    }
   },
   {
@@ -1710,7 +1710,7 @@
   {
    "brand": "FJI",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -1723,9 +1723,9 @@
    "file": "FJI/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 83930,
-    "mid": 44384,
-    "lo": 22434
+    "hi": 81706,
+    "mid": 41248,
+    "lo": 20502
    }
   },
   {
@@ -1794,7 +1794,7 @@
   {
    "brand": "HVN",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -1807,9 +1807,9 @@
    "file": "HVN/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 106586,
-    "mid": 55004,
-    "lo": 27818
+    "hi": 104036,
+    "mid": 52024,
+    "lo": 25812
    }
   },
   {
@@ -1857,7 +1857,7 @@
   {
    "brand": "ITY",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -1870,9 +1870,9 @@
    "file": "ITY/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 113416,
-    "mid": 55442,
-    "lo": 26622
+    "hi": 106822,
+    "mid": 50546,
+    "lo": 24064
    }
   },
   {
@@ -2178,7 +2178,7 @@
   {
    "brand": "PAL",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -2191,9 +2191,9 @@
    "file": "PAL/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 74666,
-    "mid": 39502,
-    "lo": 19920
+    "hi": 74662,
+    "mid": 37238,
+    "lo": 18230
    }
   },
   {
@@ -2241,7 +2241,7 @@
   {
    "brand": "QTR",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -2254,9 +2254,9 @@
    "file": "QTR/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 80672,
-    "mid": 41508,
-    "lo": 20652
+    "hi": 79020,
+    "mid": 38216,
+    "lo": 18708
    }
   },
   {
@@ -2283,7 +2283,7 @@
   {
    "brand": "SAS",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -2296,9 +2296,9 @@
    "file": "SAS/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 90626,
-    "mid": 46906,
-    "lo": 23106
+    "hi": 86538,
+    "mid": 42462,
+    "lo": 21062
    }
   },
   {
@@ -2325,7 +2325,7 @@
   {
    "brand": "SIA",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -2338,15 +2338,15 @@
    "file": "SIA/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 111348,
-    "mid": 52804,
-    "lo": 25082
+    "hi": 106644,
+    "mid": 48494,
+    "lo": 22386
    }
   },
   {
    "brand": "SJX",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -2359,9 +2359,9 @@
    "file": "SJX/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 114378,
-    "mid": 57806,
-    "lo": 28088
+    "hi": 111798,
+    "mid": 53580,
+    "lo": 25758
    }
   },
   {
@@ -2465,7 +2465,7 @@
   {
    "brand": "THY",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a359"
@@ -2478,9 +2478,9 @@
    "file": "THY/a359-mid.webp",
    "painted_as": "a359",
    "bytes": {
-    "hi": 94096,
-    "mid": 48618,
-    "lo": 24196
+    "hi": 90792,
+    "mid": 45150,
+    "lo": 21840
    }
   },
   {
@@ -2708,7 +2708,7 @@
   {
    "brand": "UAL",
    "model": "b763",
-   "pxm": 27.6,
+   "pxm": 27.8,
    "variants": [
     {
      "types": [
@@ -2722,9 +2722,9 @@
      "file": "UAL/b763@b764-mid.webp",
      "painted_as": "b764",
      "bytes": {
-      "hi": 110944,
-      "mid": 52998,
-      "lo": 25014
+      "hi": 110436,
+      "mid": 51812,
+      "lo": 24710
      }
     }
    ],
@@ -2739,9 +2739,9 @@
    "file": "UAL/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 109468,
-    "mid": 51684,
-    "lo": 24508
+    "hi": 109016,
+    "mid": 51254,
+    "lo": 24226
    }
   },
   {
@@ -3074,7 +3074,7 @@
   {
    "brand": "UPS",
    "model": "b763",
-   "pxm": 27.6,
+   "pxm": 27.8,
    "variants": [],
    "types": [
     "b763"
@@ -3087,15 +3087,15 @@
    "file": "UPS/b763-mid.webp",
    "painted_as": "b763",
    "bytes": {
-    "hi": 64264,
-    "mid": 31646,
-    "lo": 16304
+    "hi": 66208,
+    "mid": 32064,
+    "lo": 16382
    }
   },
   {
    "brand": "UPS",
    "model": "md11",
-   "pxm": 17.4,
+   "pxm": 17.5,
    "variants": [],
    "types": [
     "md11"
@@ -3108,15 +3108,15 @@
    "file": "UPS/md11-mid.webp",
    "painted_as": "md11",
    "bytes": {
-    "hi": 58182,
-    "mid": 29478,
-    "lo": 15344
+    "hi": 59512,
+    "mid": 29280,
+    "lo": 15240
    }
   },
   {
    "brand": "VIR",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a35k"
@@ -3129,9 +3129,9 @@
    "file": "VIR/a359@a35k-mid.webp",
    "painted_as": "a35k",
    "bytes": {
-    "hi": 100618,
-    "mid": 51220,
-    "lo": 24416
+    "hi": 95758,
+    "mid": 47572,
+    "lo": 22024
    }
   },
   {
@@ -3414,7 +3414,7 @@
   {
    "brand": "_N",
    "model": "a359",
-   "pxm": 20.5,
+   "pxm": 19.8,
    "variants": [],
    "types": [
     "a35k"
@@ -3427,9 +3427,9 @@
    "file": "_N/a359@a35k-mid.webp",
    "painted_as": "a35k",
    "bytes": {
-    "hi": 55450,
-    "mid": 31024,
-    "lo": 16142
+    "hi": 51796,
+    "mid": 28804,
+    "lo": 14170
    }
   },
   {
@@ -3564,7 +3564,7 @@
   {
    "brand": "_N",
    "model": "b763",
-   "pxm": 27.6,
+   "pxm": 27.8,
    "variants": [
     {
      "types": [
@@ -3578,9 +3578,9 @@
      "file": "_N/b763@b762-mid.webp",
      "painted_as": "b762",
      "bytes": {
-      "hi": 36080,
-      "mid": 20188,
-      "lo": 11730
+      "hi": 36358,
+      "mid": 19938,
+      "lo": 11618
      }
     }
    ],
@@ -3595,9 +3595,9 @@
    "file": "_N/b763@b764-mid.webp",
    "painted_as": "b764",
    "bytes": {
-    "hi": 40164,
-    "mid": 22468,
-    "lo": 12188
+    "hi": 40294,
+    "mid": 21950,
+    "lo": 12338
    }
   },
   {

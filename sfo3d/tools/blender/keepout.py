@@ -63,6 +63,17 @@ class Columns:
         self.fp = fps
         self.lo = T[:, :, 1].min(1)          # raw heights: vertical faces add clear_z, other faces must lie strictly inside
         self.hi = T[:, :, 1].max(1)
+        # close-out r5: a non-vertical triangle contributes its own PLANE height at the query point (clamped to its band), not
+        # its whole band - a sloping deck soffit triangle (17.56 .. 18.15 m) had made the solid reach down to 17.56 m over its
+        # whole footprint (the CG plinth top at 18.13 m read as inside over 381 m2); vertical triangles keep their band
+        P_ = T[:, :, [0, 2]]; d1 = P_[:, 1] - P_[:, 0]; d2 = P_[:, 2] - P_[:, 0]
+        det = d1[:, 0] * d2[:, 1] - d1[:, 1] * d2[:, 0]
+        self.planar = np.abs(det) > 1e-4
+        dt = np.where(self.planar, det, 1.0); h0 = T[:, 0, 1]; e1h = T[:, 1, 1] - h0; e2h = T[:, 2, 1] - h0
+        # h(x, z) = h0 + gx (x - x0) + gz (z - z0)
+        self.gx = np.where(self.planar, (e1h * d2[:, 1] - e2h * d1[:, 1]) / dt, 0.0)
+        self.gz = np.where(self.planar, (e2h * d1[:, 0] - e1h * d2[:, 0]) / dt, 0.0)
+        self.x0, self.z0, self.h0 = P_[:, 0, 0], P_[:, 0, 1], h0
         self.tree = STRtree(fps) if fps else None
         self.bounds = unary_union([f.envelope for f in fps]).bounds if fps else None
         self.core = None
@@ -77,11 +88,14 @@ class Columns:
         if self.core is not None:
             pa = np.asarray(pts, float); inc = shapely.contains_xy(self.core, pa[:, 0], pa[:, 1]); keep = inc[ip]
             ip, it = ip[keep], it[keep]
-        order = np.lexsort((self.lo[it], ip))
-        ip, it = ip[order], it[order]
-        for p, t in zip(ip, it):
+        pa = np.asarray(pts, float)
+        hp = self.h0[it] + self.gx[it] * (pa[ip, 0] - self.x0[it]) + self.gz[it] * (pa[ip, 1] - self.z0[it])
+        hp = np.clip(hp, self.lo[it], self.hi[it]); pl = self.planar[it]
+        A_ = np.where(pl, hp, self.lo[it]); B_ = np.where(pl, hp, self.hi[it])
+        order = np.lexsort((A_, ip))
+        ip, it, A_, B_ = ip[order], it[order], A_[order], B_[order]
+        for p, t, a, b in zip(ip, it, A_, B_):
             lst = out[p]
-            a, b = self.lo[t], self.hi[t]
             if lst and a <= lst[-1][1] + self.gap:
                 if b > lst[-1][1]: lst[-1] = (lst[-1][0], b)
             else:
@@ -132,9 +146,11 @@ def _triangulate(g):
     return [t for t in shapely.delaunay_triangles(g).geoms if g.contains(t.centroid)]
 
 
-def clip_mb(mb, to_world, cols, stats=None, ds_v=DS_V, ds_h=DS_H):
+def clip_mb(mb, to_world, cols, stats=None, ds_v=DS_V, ds_h=DS_H, cols_h=None):
     """clear the faces of mb (a landside_mesh.MB in a building's local frame; to_world(X, Y) -> world (x, z), Z = height)
-    out of the column hull `cols`. Returns the cut area (m2)."""
+    out of the column hull `cols` (non-vertical faces: `cols_h` when given - a contact hull without the per-triangle buffer,
+    whose cut is intersected with the exact footprint anyway). Returns the cut area (m2)."""
+    ch = cols_h if cols_h is not None else cols
     if cols.tree is None or not mb.F: return 0.0
     bx = cols.bounds
     V = np.asarray(mb.V, float)
@@ -198,7 +214,7 @@ def clip_mb(mb, to_world, cols, stats=None, ds_v=DS_V, ds_h=DS_H):
                     fp_f = unary_union(bands) if bands else Polygon()
         else:
             rects, fp_f = [], None
-            fp_w = cols.footprint(hull, z.min(), z.max())
+            fp_w = ch.footprint(hull, z.min(), z.max())
             if fp_w is not None:
                 # face frame (s, t) -> world plan: w = p0 + M [s, t] (affine; invertible for a non-vertical face)
                 p0 = np.array(to_world(*o[:2]), float)
@@ -219,7 +235,7 @@ def clip_mb(mb, to_world, cols, stats=None, ds_v=DS_V, ds_h=DS_H):
                     S5 = (G[:, None, :] + offs[None]).reshape(-1, 2)
                     P3 = o[None, :] + S5[:, :1] * e1[None, :] + S5[:, 1:] * e2[None, :]
                     pw = np.array([to_world(x, y) for x, y in P3[:, :2]])
-                    ivs = cols.intervals(pw)
+                    ivs = ch.intervals(pw)
                     hit = np.array([any(a + Z_TOL < p3[2] < b - Z_TOL for a, b in iv) for p3, iv in zip(P3, ivs)]).reshape(-1, 5).any(1)
                     rects = [shapely.box(g[0] - du / 2, g[1] - dv / 2, g[0] + du / 2, g[1] + dv / 2) for g in G[hit]]
         if not rects:
