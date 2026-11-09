@@ -514,7 +514,9 @@ e52f3dfd, build_stream.py 93da6fe0).
   AirTrain bridge to the Grand Hyatt station that the Museum outline includes ('incl. podium / connector') [inf], not the 44-m slab.
   `hyatt()` takes it out of the slab / podium / LOD2 plan (opening of radius GH_CONN_W / 2 = 1.6 m, components touching the deck);
   the body now stands 5.11 m off the deck, so no tunnel and no keep-out cut is left in the hotel. The bridge itself is NOT modelled
-  (span, level, enclosure: owner; manifest `unknown`).
+  (span, level, enclosure: owner; manifest `unknown`). *(Round 6, R6.1: the bridge is now modelled from the [pub] level / enclosure and
+  the [obs] finger, hotel face to the guideway edge; the 'south track' here is the guideway south of the hotel, i.e. the hotel-side one
+  of the two single-track guideways at the station.)*
 - **Garage A LOD2 station shell.** The LOD2 portal holes were the deck - 0.4 m with a 6-m dark recess whose back panel stood across
   both tracks at (-1397, 541) / (-1396, 527) inside the station block. Now as LOD0: the deck + PORTAL_CLEAR, and where the track runs
   on through the block (the east face of a garage with a station block) the recess reaches through it to the LOD0 tunnel's end
@@ -529,11 +531,14 @@ survived inside the deck edge, and so did facade remnants ~0.1 m wide inside the
 read as a closed solid - walking up the sorted plane heights, a DOWN-facing face (soffit) opens it and the next UP-facing face
 (deck / parapet / walkway top) closes it (PAIR_MAX 3.0 m guards against an unclosed mesh) - united with the old reading; `near()`
 tests the candidates' joint band. New verify_landside gate: LOD0 building surface more than 0.05 m inside the closed deck box (the
-cgdepth2 rule), ceiling `KEEP_INSIDE_MAX_M2` 2.0 m2 (now 0.85, all on vertical plinth faces, max 0.23 m). Record corrected: R5.1's
+cgdepth2 rule), ceiling `KEEP_INSIDE_MAX_M2` 2.0 m2 (now 0.85; *corrected in Round 6, R6.2: not all on vertical faces - 259 of the 496
+deep samples, incl. the 0.232-m maximum, were on the plinth TOP cap at 18.13 m where the deck runs below h5, (-956, 408) 177 samples /
+0.232 m and (-1022, 154) 82 / 0.050 m; the vertical faces <= 0.053 m*). Record corrected: R5.1's
 "82.8 m2 -> 0.03 m2 inside the solid" was measured with the same merged-interval hull that had the hole; by the closed-solid rule the
 fix-1 plinth kept 43.4 m2 (area-weighted; the verifier's 71,063 samples / ~711 m2 count the slender triangles' samples) more than
 0.05 m inside, max 1.22 m. The optional lowering of the plinth top to the local deck soffit was not needed (the contact clip now
-removes the cap inside the box).
+removes the cap inside the box). *(Round 6, R6.2: wrong - the contact clip left the cap where it lay inside the box above a lower deck;
+the plinth top now follows the local deck soffit.)*
 
 ### R5f2.3 Domestic ITB-junction walls: plain only where the ITB 3-D core covers them (bldg-6; R5.4 record)
 
@@ -570,7 +575,9 @@ build 12.04 m, fix 1 0.85 m, now 0.00 m. Rebuilt 09:00Z; `landside_lod2.glb` unc
 
 F22 L2 (walkLen 1.641 < rotR 1.74; one-key exemption in verify_domestic), the BL-02 / BL-03 / BI-03 / BI-04 drawings, the ITB L3 level,
 the domestic loop's posted clearance, interchange_2_2 / narrowed cuts - as R5.7 / integration R5.5. New: the Grand Hyatt's enclosed
-AirTrain bridge (the outline's connector finger, not modelled) - its span, level and enclosure need a source.
+AirTrain bridge (the outline's connector finger, not modelled) - its span, level and enclosure need a source. *(Round 6, R6.1 / R6.4:
+level and enclosure were already [pub] in the spec; the bridge is modelled; the question is narrowed to the cross-section / roof form
+and the crossing of the hotel-side track.)*
 
 ### R5f2.7 Integration re-run
 
@@ -599,3 +606,82 @@ records (`out/buildings3d/c5/c5_manifest.json` -> `tools/blender/c5_manifest.py`
 | CG LOD2 shell vs the coarse guideway | deferred | R5f2.4: 149 (= fix 1), ceiling 160 |
 | owner items (F22 L2, drawings, ITB L3, clearance, ic_2_2 / narrowed cuts) | needs owner | R5f2.6 (+ the GH AirTrain bridge) |
 | (found this round) Grand Hyatt roof masts off the roof | fixed | R5f2.5: 12.04 / 0.85 -> 0.00 m; gate |
+
+## Round 6 (follow-up on close-out round 5 verifier 2) - 9 Nov 2026
+
+Input: SP/c5_r5verify2_buildings.json (5 minors; (a), (b), (e) are this doc's, (c) / (d) in integration_closeout Round 6). Work log
+SP/c6/buildings/NOTES.md. Before / after on the same scripts: the new verify_landside (md5 5a791814) ran on the r5 files (landside.glb
+md5 9bb0389f / landside_lod2 c2ad24a3, SP/c6/buildings/vbefore) and in-build on the round-6 files (aca13820 / 642b0760). No tools/live
+replays; no renders.
+
+### R6.1 Grand Hyatt: the enclosed AirTrain bridge is modelled (r5 verifier 2, (a)): fixed, cross-section / crossing to the owner
+
+R5f2.1 took the outline's connector finger out of the slab and left nothing: the hotel stood 5.11 m from its own station. The repo
+already sources the bridge's level and enclosure: spec_landside `gh_lobby_level` [pub, CONFIRMED] "AirTrain station connects at the
+fourth floor"; the station entry and landside_airtrain `STATIONS['HYATT']` "hotel 4th floor via an enclosed bridge [pub]"; its plan is
+the SFO Museum finger [obs]. Measured first (SP/c6/buildings/t/gh_geo.py, gh_sec.py; along the finger, s = 0 at its station end, 8.87
+at the slab): the HYATT station polygon is an ISLAND platform between the two single-track guideways (s -10.2 .. 0); the hotel-side
+guideway (R5's "south track") spans s -1.26 .. 3.79 and its vehicle envelope s -0.36 .. 2.89; the level field there is 19.751 m
+(= the network level). So at the [pub] level the finger's station half lies in the train path.
+
+`hyatt()` now builds `gh_bridge` (LOD0 / LOD1 shell; the same box inside `L2_grand_hyatt`): plan = the finger (+0.03 m, into the slab
+face) minus the guideway polygon + `GH_BR_GAP` 0.15 m (LOD2: 0.40 m, the coarse LOD2 guideway), i.e. from the hotel face to the guideway
+edge (15.8 m2, ~5 m); floor at the platform level 19.751 m [inf: network level; 4th-floor connection pub]; section [inf]: floor structure
+0.4 m (dark metal edge, soffit), glazed sides and end 3.5 m clear, 0.5 m dark roof fascia, membrane roof (`GH_BR_*`). Triangles +54 at
+LOD0 and LOD1, +10 at LOD2 (LOD0 / LOD1 / LOD2 170,430 / 96,386 / 22,700 -> 170,484 / 96,440 / 22,710). The keep-out cuts nothing on
+it. Measured on the installed glb (t/gh_glb.py): bridge to every AirTrain triangle (deck, track, station steel) 0.146 m in plan at LOD0
+/ LOD1, 0.396 m at LOD2, overlap 0; bridge to the hotel body 0.000 m; verify_landside: AirTrain x building crossings LOD0 / LOD2 0,
+vehicle envelope LOD0 / LOD1 / LOD2 0 / 0 / 0, Hyatt masts on the roof 0.00 m, all Hyatt rows unchanged.
+
+The record (manifest `landside.buildings.grand_hyatt`): `unknown` is narrowed to the bridge's cross-section (width beyond the 3.1-m
+finger, clear height, glazing) and roof form, and to HOW it crosses the hotel-side track (over the vehicle envelope, under the deck, or
+a hotel-side platform our island-platform reading misses); a new `conflicts` line states the [pub]-level vs [obs]-plan clash; the
+crossing is in `not_modelled`. Not guessed: a bridge across the running track at the platform level would stand in the train path, and
+a level over the envelope (>= 23.95 m) or under the deck (<= 18.15 m) contradicts the fourth-floor [pub] connection.
+
+### R6.2 CG plinth record corrected; the plinth top follows the local deck soffit (r5 verifier 2, (b)): fixed
+
+The R5f2.2 record and the `KEEP_INSIDE_MAX_M2` comment said the 0.85-m2 residual was all on vertical plinth faces; the verifier showed
+259 of its 496 deep samples, incl. the 0.232-m maximum, on the plinth TOP cap (zt - 0.02 = 18.13 m) where the deck runs below h5:
+(-956, 408) 177 samples / 0.232 m, (-1022, 154) 82 / 0.050 m. Both records are corrected (R5f2.2 above, landside_geom comment). Root
+cause: the cap was at h5 - DECK_T everywhere. It now follows the local soffit: the cap polygon is segmentized to 2 m and each vertex
+at min(h5, deck level) - DECK_T - 0.02 (`_at_levels()`: the AirTrain level field, built from the same region as
+`landside_airtrain.build`). Emulation (t/cg_test.py): every cap vertex 0.020 m under the soffit, triangle centroids <= -0.011 m (at
+(-956, 408) the soffit is 17.80-17.97 m; the cap was at 18.13). verify_landside deck box, LOD0: 0.85 m2 / max 0.232 m at (-954.6,
+408.7) -> 0.85 m2 / max 0.053 m at (-837.2, 373.2) (> 0.30 m: 0 / 0). The area is unchanged at two decimals: the cap's area share
+was < 0.005 m2 (large triangles, few deep samples); the 0.85 m2 are the vertical faces at <= 0.053 m. Ceiling 2.0 -> 1.0 m2.
+
+### R6.3 Deck-box and envelope gates at every LOD; the Central Garage LOD2 depth is reported (r5 verifier 2, (e)): partly (reported + ceiling; clip deferred)
+
+verify_landside runs the cgdepth2 deck-box rule per LOD against the guideway of the SAME LOD (LOD1 vs the L1_*_deck nodes, LOD2 vs the
+coarse L2_airtrain_* nodes) and adds the area deeper than 0.30 m; the vehicle-envelope gate also runs on LOD1. Before (r5 files) ->
+after (round 6): envelope LOD0 / LOD1 / LOD2 0 / 0 / 0 -> 0 / 0 / 0; deck box LOD1 0.85 m2 (max 0.232) -> 0.85 (max 0.053), ceiling
+1.0; LOD2 311.18 m2 -> 311.18 m2, only `L2_central_garage` (> 0.30 m: 76.11 m2; max 0.686 m at (-796.6, 261.4) = the verifier's
+0.686 m), ceiling `KEEP_INSIDE_L2_MAX_M2` 327.0 (+5 %) - a regression bound next to the 149 crossings (ceiling 160). The fix (a
+less-simplified LOD2 deck along the CG, simplify ~0.2 m on its tiles, then the contact clip on cg_L2) was not cheap enough this round:
+it changes the coarse guideway of three LOD2 tiles and re-triangulates the CG shell (+1,546 phone triangles in the R5.1 trial); the
+clash stays inside the closed coarse deck box (hidden). Deferred.
+
+### R6.4 Owner items
+
+As R5f2.6, with the Grand Hyatt item narrowed (R6.1): the bridge's cross-section and roof form, and how it crosses the hotel-side
+AirTrain track (the [pub] fourth-floor connection vs the [obs] finger over the running track from the island platform). F22 L2, the
+drawings, ITB L3, the posted clearance, interchange_2_2 / narrowed cuts unchanged.
+
+### R6.5 Re-run (heavy lock, one job at a time; SP/c6/buildings/fin)
+
+landside rebuild + b3d_split 0 (11:57Z; landside.glb 22,291,188 B), in-build verify_landside 209 checks / 0 failed (the before arm:
+209 / 1 = only the new LOD2 deck-box gate at its provisional ceiling); roadways rebuild 0 (byte-identical glbs); b3d_integrate 7 conflicts
+/ 15 notes (lines identical to round 5); b3d_lod2_check 47 / 0; check.py 0 / 0 / 41 warnings; verify_itb 138 / 0; verify_domestic
+69 / 0. Manifest `landside` and `roadways` entries rewritten by their builds (under the manifest flock).
+
+### Round 6 dispositions (`c5_r5verify2_buildings.json`)
+
+| Finding | Status | Evidence |
+|---|---|---|
+| (a) Grand Hyatt: no connection to its AirTrain station | fixed (section / crossing: needs owner) | R6.1: gh_bridge LOD0/1/2 from the [pub] level + [obs] finger, hotel face to the guideway edge; 0 crossings / envelope; owner question narrowed |
+| (b) R5f2.2 record + KEEP_INSIDE comment wrong (plinth top cap) | fixed | R6.2: records corrected; plinth top on the local soffit: max depth 0.232 -> 0.053 m; ceiling 2.0 -> 1.0 m2 |
+| (c) LOD1 creases | partly | integration_closeout R6.2: LOD1 fold report + ceiling (17 / 8 folds over 4 / 6 deg); creases deferred |
+| (d) dump currency misses the generator | fixed | integration_closeout R6.1: generator hash + schema + per-bridge parts -> CONFLICT |
+| (e) CG LOD2 depth not reported; LOD1 gates | partly | R6.3: deck box + envelope at LOD0/1/2; LOD2 311.18 m2 / 0.686 m with ceiling 327; the clip deferred |
+

@@ -497,7 +497,9 @@ soffits (no vertical face closes a plan gap). LOD1 now keeps the LOD0 outline (`
 0.08); it still saves on the 16-m triangulation, the single-quad parapets and the 6-sided columns. Cost: LOD1 16,421 -> 22,151 tris
 (+5,730; LOD1 is the desktop 400-1,400 m band and the phone near mode once the full file loads; the phone far file
 `roadways_lod2.glb` is unchanged). New gate: soffit open into a hollow <= `SOFFIT_GATE_M` 5 m (LOD0) / 12 m (LOD1); this build 2.8 /
-7.8 m.
+7.8 m. *(Round 6, R6.2: the trade-off's other side - LOD1 inherits the LOD0 wedge creases and gains long LOD1-only creases where the
+LOD0 outline vertices fan into the 16-m interior triangles: LOD1 folds > 2 / 4 / 6 deg 34 / 9 / 6 -> 86 / 17 / 8 (LOD0 84 / 10 / 6).
+Now reported with a regression ceiling.)*
 
 ### R5f2.3 `b3d_integrate`: a stale bridge dump fails loudly; the pedestal is tested again (integ-4): fixed
 
@@ -538,3 +540,52 @@ through-deck ceiling.
 | integ-1 / integ-2 at LOD1 (soffit open into a hollow) | fixed | R5f2.2: 174.6 -> 7.8 m (open other 269.5 -> 55.2 m); LOD1 gate |
 | integ-4 stale bridge dump; pedestal dropped | fixed | R5f2.3: stale -> CONFLICT + exit 2; pedestal test restored (0 contacts) |
 | deferred ledges / creases, owner conflicts | deferred / needs owner | R5f2.5 (unchanged: 239.2 m, folds as r4, 7 conflicts) |
+
+## Round 6 (follow-up on close-out round 5 verifier 2) - 9 Nov 2026
+
+Input: SP/c5_r5verify2_buildings.json (5 minors; (c) and (d) are this doc's). Work log SP/c6/buildings/NOTES.md. Same script on both
+arms for every before / after pair; no tools/live replays (harness md5s for the record: invariants.mjs e52f3dfd, build_stream.py
+93da6fe0 - not run).
+
+### R6.1 `app_bridges.json`: the generator and the schema are part of the currency check (r5 verifier 2, (d)): fixed
+
+`app_bridges.mjs` decides with its part filter which solids the dump carries, but it was not among the hashed inputs: a dump from an
+older generator (e.g. one from before the r5 pedestal) passed `_dump_current()` silently. Now:
+- `app_bridges.mjs` hashes ITSELF with the five data inputs and writes `schema: {version: 2, parts: ['walkway', 'rotunda', 'pedestal']}`
+  (one list, `REST_PARTS`, is both the part filter and the schema); it warns when a bridge lacks a part.
+- `b3d_integrate._dump_current()` (`DUMP_GENERATOR`, `DUMP_SCHEMA`) emits CONFLICT 'input stale' (exit 2 under `--check`, the full run
+  refuses to write) when the generator's hash is not recorded or differs, when the schema differs, or when any bridge lacks any schema
+  part ('3 of 131 bridges have no pedestal part (e.g. A1/A1/1, ...)').
+- Unit test (SP/c6/buildings/integ/t_dump.py, `_dump_current` on variants of the new dump): current 0 conflicts; the r5 dump 3 (gates.js
+  stale - the runtime track has edited it since -, generator unrecorded, schema {}); pedestals removed on 3 bridges 1; schema v1 1;
+  generator hash changed 1; generator unrecorded 1.
+- The dump was regenerated (11:31Z): bridges and departure levels identical to the r5 dump (131 bridges, 131 x walkway / rotunda /
+  pedestal); only the gates.js hash moved and the generator hash / schema are new. The check stays hash-based: a dump edited by hand
+  with current hashes still passes (acceptable for a generated file; recorded).
+
+### R6.2 LOD1 deck folds: reported with a regression ceiling (r5 verifier 2, (c)): partly (gated, creases deferred)
+
+`grade_check(mb, log, lod)` now also runs on LOD1 (`gchk1`; manifest `roadways.closeout_r5.closeout_r6`: `lod1_mesh_folds`,
+`lod1_fold_gate`, `lod1_fold_top`). Ceiling `FOLD1_GATE`: folds over 4 / 6 deg at most 17 / 8 and 95.2 / 53.0 m of edge (the r5
+fix-2 build as measured + 5 % on the length; WARNING + `ok` false in the record, like the LOD0 fold gate). Measured with the same
+function on a dev build of this code (SP/c6/buildings/rw/d1, glb byte-identical to the installed e2869621 / 3b031edf): LOD1 folds
+> 1 / 2 / 4 / 6 deg 209 (1,405 m) / 86 (541 m) / 17 (90.7 m) / 8 (50.5 m) = the verifier's 86 / 17 / 8; LOD0 226 / 84 / 10 / 6
+unchanged; worst LOD1 folds 8.0 deg (8.4-m edge) at (-1558.6, 478.8), 7.1 deg along 15.6 m at (-1579.8, 447.0) - all in
+interchange_2_2. The trade-off (R5f2.2: +5,730 LOD1 triangles for the slit / soffit fix; the creases its cost) is recorded there.
+Not done: Steiner points from the LOD0 height field or a shorter LOD1 SEG on warped pieces (more LOD1 triangles; deferred with the
+LOD0 crease item). The installed roadways rebuild (12:01Z, build 0, no gate fail) is byte-identical (sha1 e2869621 / 3b031edf).
+
+### R6.3 Re-run (12:05-12:13Z, after the landside rebuild; buildings_closeout R6)
+
+- `b3d_integrate` (full): exit 1 = 7 conflicts / 15 notes, the conflict and note lines identical to round 5's final run (md5 of the
+  lines be8a0d44 both); bridge solids inputs: 6 checked (incl. the generator), stale [], schema v2, schema problems [].
+- `b3d_lod2_check`: 47 units, 0 flagged. `tools/sat/check.py`: 0 issues, 0 app issues, 41 warnings (as round 5).
+- verify_itb 138 / 0, verify_domestic 69 / 0 (writes redirected; they read the regenerated dump: current).
+
+### Round 6 dispositions (`c5_r5verify2_buildings.json`, this doc's items)
+
+| Finding | Status | Evidence |
+|---|---|---|
+| (d) dump currency misses generator changes | fixed | R6.1: generator hashed + schema; CONFLICT on generator / schema / missing part (6 variants tested) |
+| (c) LOD1 creases (side effect of the LOD1 soffit fix) | partly | R6.2: LOD1 fold report + ceiling 17 / 8 folds (95.2 / 53.0 m) over 4 / 6 deg; trade-off recorded; creases deferred |
+

@@ -1663,7 +1663,9 @@ def grade_check(mb, log, lod=0):
 
 
 FOLD_GATE_M = {4: 30.4, 6: 24.5}   # m of fold edge over 4 / 6 deg allowed: the r4 fix-2 build's 28.9 / 23.3 m + 5 % [our gate]
-FOLD1_GATE = dict(n={4: 999, 6: 999}, edge_m={4: 9999.0, 6: 9999.0})   # LOD1 (close-out round 6): PROVISIONAL until measured [our gate]
+FOLD1_GATE = dict(n={4: 17, 6: 8}, edge_m={4: 95.2, 6: 53.0})   # LOD1 (close-out round 6): the r5 fix-2 build (e2869621) measured by
+#   grade_check(lod=1) in a dev build of this code (byte-identical glb): folds > 4 / 6 deg 17 (90.7 m) / 8 (50.5 m) = the round-5
+#   verifier's 17 / 8; counts as measured, edge length + 5 % [our gate]
 
 
 COL_TOP = 0.15   # m: a column runs this far up into the deck box above its soffit (fix round 2: 0.05 left 0.01-0.06 m of the

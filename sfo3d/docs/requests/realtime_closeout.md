@@ -914,3 +914,72 @@ flag only). Please commit this section.
 - The relay change takes effect only on a restart.
 - `--plan-cadence live` is the harness default now. Older numbers in this document come from the replay cadence and are not
   comparable with this section's numbers.
+
+# Round 6 (close-out round 6, 9 Nov 2026): round-5 verifier residuals + the F16 overlap regression
+
+Inputs: the round-5 realtime verifier (6 minors, `SP/c5_r5verify1_realtime.json`) and finding 6 of the round-5 static verifier
+(`SP/c5_r5verify1_static.json`: a stale-parked B39M overlapping another at F16). Work log: `SP/c6/realtime/NOTES.md`.
+
+## Harness, roots, runs
+
+- Harness **H6** = `SP/c6/realtime/h6/`: `tools/live/invariants.mjs` **`e52f3dfd`** (= the round-5 H5, unchanged this round),
+  `tools/live/build_stream.py` **`93da6fe0`**, `--plan-cadence live`. Runner `SP/c6/realtime/scripts/run6.sh` with the round-5 hooks
+  (`hook5.mjs` `62521f06`, `hook_c3.mjs` `2f430f0e`); summaries `scripts/cmp6.py` (classes / counters) and `scripts/an6.py` (events).
+- *before*: the code at the start of the round = the repo HEAD `714401a` (traffic.js `51bc9e1f`, ground.js `d3353067`, gates.js
+  `11af0f1d`). For A-w and D the before arms are the round-5 verifier's `Acur` / `Dcur` runs, made on the same harness md5, runner
+  and hooks, on `SP/c5/realtime_ver1/root_cur`; the after root `SP/c6/realtime/root_newv` is a copy of that root with only
+  traffic.js / ground.js replaced, so both arms read the same data (stands `50bf3003`, pavement `bf561974`, integration `0847e940`).
+- *after* (final): traffic.js **`15c462a2`**, ground.js **`58a0ed55`**; app.js, gates.js, harness and data unchanged.
+- *47af104*: `SP/c6/realtime/root_b47` = root_cur with the 47af104 traffic.js `42937590` / ground.js `cd2b4965` / gates.js `a93cce58`
+  (the code of the static verifier's 550-frame arm), for the F16 bisect.
+- Streams: **F16** = the static verifier's `SP/r3/all` (`f6ff7ceb`), window 5 Nov 00:05–00:20Z, warm 8,400 s (UAL1835's 22:12Z
+  arrival is inside the warm-up); **A-w** 5 Nov 03:00–13:45Z (387,000 frames) and **D** 8 Nov 00:30–08:30Z (287,985 frames) as in
+  Round 5; **Dw** = D 00:50–01:00Z, warm 1,500 s.
+
+## Per finding
+
+| # | finding | status | what changed, and the evidence |
+|---|---|---|---|
+| S6 | F16 overlap (static verifier finding 6) | fixed | **Root cause** (bisect on the F16 window): with the 47af104 code the arrival UAL1811 (a12a7f) retracted the bridge of the silent UAL1835 (a12ac5) on geometry at 00:15:38Z (on F16's lead-in, 41.8 m from the stop) and so removed it at first contact 0.6 s later (`into`). Round 5 re-applied the round-3 two-signal veto to that geometric retraction, and here SFO's plan was wrong on both counts: it had UAL1811 at E6 and still listed UAL1835 at F16 (it had pushed unseen; heard taxiing as UAL765 at 00:16:56Z, raw reports). No retraction, so no `into`; and `keeps` (SFO lists the ghost there) blocked the contact removal, so the ghost stayed until UAL1811's in-block replaced it. gates.js / ground.js round-5 changes are not involved. **Fix** (ground.js): an arrival whose own newest report is on the ghost's stand lead-in, close and heading in (`traffic.onLeadInClose`, the retraction's own test) counts as driving into it (`intoLead`), whatever the plan says; and for an `into` arrival the ghost goes when its newest report lies on the ghost (as off the stands), before the drawn contact. The veto still holds the bridge for an arrival that may turn off. F16 window overlap.gnd: 47af104 **3** / round-5 code **389 frames (488 m²)** / after **0** (F1b / F1c / F1f; F1m with the intermediate traffic.js is identical). |
+| 1 | repos-parked clears departures that only paused | fixed | traffic.js: a repositioned aircraft (pushed, > `REPOS_M` from its off-block, off the taxiways) stays drawn where it stopped with its departure state (`tr.reposHold`); the state is cleared, as by an in-block, only after `REPOS_HOLD_MS` = 20 min of silence there (design value: > 2× the longest departure pause the verifier found, 9 min; < ½ the shortest genuine reposition silence, 48 min). Heard again first, it keeps `pushed` / `offBlock` and taxis on without a second off-block. A-w: repos-parked **12 → 9** (CAL003, EVA629, AAL2569 now resume as departures); EVA629's second off-block gone (off-block events 168 → 167; aircraft with > 1 off-block 8 → 7). D: 8 → 7 (the one gone resumed). The 9 / 7 left were silent ≥ 20 min where they stopped (SWA2974's D6 rest-tunnel case: bridge.hit.wing on D 216/2 before and after, unchanged). |
+| 2 | re-signal after 'no push' far ahead of the push | fixed | traffic.js `departureSignal`: the squawk / callsign re-signal also needs SFO's own off-block (estimated / scheduled, no actual yet) within `OFFBLK_NEAR_MS` (15 min); the syncBridge nodock branch now marks `noPush.used` too. A-w re-signals **4 → 2**, leads to the push **39.7 / 43.4 min → 6.0 min (JBU134 B21) / 10.4 min (AAL402 B16)**, inside the transponder-on p90 (19.2 min); the two at the window end (DAL2721, FFT1230) no longer fire. lag.gnd_30m on A-w is unchanged (19,791 / 61 frames / keys) (AAL402 stays low). Unit check `scripts/unit6.mjs`: the AAL402 case re-signals 43.4 min ahead / with no plan before, not after; at 13.4 min ahead it does. |
+| 3 | orphan bridges / ghost contacts without the far retraction | partly | Accepted trade-off of round 5, unchanged in principle. The S6 fix removes ghosts earlier for arrivals on the lead-in (D 'stale-replaced' via `lead` 9 of 34), which also cuts contacts with waiting ghosts: D overlap.gnd 251/16 → 239/12 and clear.taxi 164/24 → 146/19; bridge.orphan 3,955/29 → 4,056/29 / A-w 2,225/14 → 2,264/14 (the ghost's bridge now retracts from an empty stand instead). Re-admitting 'alloc' / 'window' within AHEAD_M needs fresh SFO snapshots (C5.2) to validate — deferred. |
+| 4 | data gaps (ASA503 off the mask, CFJNX near ring 82) | needs other tracks | No realtime change: C5.3 (static) and C5.1 (buildings) are still open; A-w offpave.mask 431,976 → 431,923 frames (ASA503 still parked off the rendered mask, C5.3), building 5/1 → 5/1 (CFJNX, C5.1). |
+| 5 | logConflict without 'mask'; the released lock never reaches its placement | fixed | ground.js: `logConflict` reports `why: 'mask'` for the pavement-mask release. Root cause of the kept lock: after the release the controller's 8-m off-stand rest acceptance (report scatter) left the body where it stood, so `syncBridge` locked it again in place. Now the release sets `tr.physMove` (≤ 2 per aircraft): the controller re-places the body with a fade onto the data pose + `tr.physOff` (never a creep — an intermediate build that crept drove LXJ614 through XLJ411 for 139 frames on A-w, replaced), and syncBridge locks it only there (0.6 m). LXJ569 ~ N453FD clearance **0.46 → 1.46 m** (Dw window, same harness); lock-kept frames D 278,953 → 0; phys-conflict events D 7 → 0, A-w 2 → 0 (all placements reached); offpave.mask D 34,303 → 24,406 frames (the static R4.1.5 mask releases now reach their placement; Dw window 2,964 → 475). |
+| 6 | closeout text (C5.2, 'repo files') | fixed | Round 5 text corrected in place: root_a6's **code** files equal the repo, its data files do not; C5.2: the relay was restarted on 9 Nov 04:35:53Z (pid 6641, `--record refs/cache/rec --quiet`, no `--record-sfo-gates`) and runs the round-5 relay code `d741a25f` (checked with `ps` and `/api/ping`, 10:12Z). |
+| v11 | realloc trade-off | deferred | No change (needs C5.2 snapshots). |
+
+## Classes (frames / keys, before → after)
+
+Same harness, same data, before = the code at the round start, after = the final code. A-w and D: verifier `Acur` / `Dcur` → `Anew2` / `Dnew2`.
+F16: `F1c` → `F1f` (the 47af104 code, `F1b`, in brackets). Classes not listed are identical in both arms.
+
+| class | F16 window (9,000 frames) | A-w (387,000) | D (287,985) |
+|---|---|---|---|
+| overlap.gnd | 389/1 → **0** (3/1) | 117/7 → **95/5** | 251/16 → **239/12** |
+| clear.taxi | 9/3 → 4/1 | 38/9 → 28/7 | 164/24 → 146/19 |
+| clear.stand | = | 369,644/4 → 369,661/5 ¹ | 633,600/9 → 633,598/9 ² |
+| bridge.orphan | 191/3 → 327/4 (295/4) | 2,225/14 → 2,264/14 | 3,955/29 → 4,056/29 |
+| offpave.mask | = | 431,976/132 → 431,923/132 | 34,303/149 → 24,406/149 |
+| cut.gnd_sfo | = | 133/69 → 135/70 | 101/67 → 107/72 ³ |
+| lag.gnd_30m | = | = | 14,120/63 → 14,126/63 |
+| gnd.acc.taxi | 15/2 → 17/3 | = | = |
+| bridge.hit.wing / building | = | = (building 5/1, CFJNX) | = (216/2) |
+
+¹ LXJ614 ~ XLJ411 (XLJ411 taxiing past): 39 frames of overlap → 20 frames of overlap then 17 frames at 1.41 m.
+² LXJ569 ~ N453FD: 0.46 m → 1.46 m after its placement move at 00:45:15Z (`Dw_b` → `Dw_a`, 00:50–01:00Z); the pair stays in
+clear.stand because ICAO code-B stands ask 3 m. ³ The 7 placement moves are fades (cut 'repark').
+
+Counters / events (before → after): A-w repos-parked 12 → 9 (held 16, resumed 7), off-block events 168 → 167, squawk / callsign
+re-signals 4 → 2, phys-conflict 2 → 0, physLockKept frames 41 → 0; D repos-parked 8 → 7 (held 9, resumed 2), phys-conflict 7 → 0,
+physLockKept 278,953 → 0, 'stale-replaced' through `lead` 9 of 34. Intermediate build (creeping placement moves, traffic.js
+`25f7cd36`): A-w overlap.gnd 214/5 (LXJ614 ~ XLJ411 139 frames) — the reason the move is now always a fade.
+
+Runs (all exit 0, ≤ 1.5 GB each, `nice`, at most 2 at a time): F1b / F1c / F1m / F1f (≈ 11 min each), Anew2 (48 min), Dnew2 (39 min),
+Dw_b / Dw_a (2 min each); the intermediate Anew / Dnew and the killed `*_killed` runs are kept under `SP/c6/realtime/runs/`.
+
+## Requests (Round 6)
+
+- C5.1 (buildings: ring 82 provenance) and C5.3 (static: pavement at the west maintenance area) stay open; C5.2 stays with the owner.
+- C6.1 Lead: please commit `js/live/traffic.js` (`15c462a2`), `js/live/ground.js` (`58a0ed55`) and this document. No relay or
+  harness change this round (`sfo_live_server.py` `d741a25f`, `invariants.mjs` `e52f3dfd`); the running relay needs no restart for it.
