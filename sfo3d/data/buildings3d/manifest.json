@@ -14287,8 +14287,8 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 22519648,
-  "built": "2026-11-09T04:26:20+00:00",
+  "bytes": 22328396,
+  "built": "2026-11-09T04:36:15+00:00",
   "git": "7a571c8+dirty",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
@@ -14323,9 +14323,9 @@
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 24386,
+    "tris": 22854,
     "instanced_car_tris": 0,
-    "verts": 59562,
+    "verts": 54930,
     "draw_calls": 125
    }
   },
@@ -14335,7 +14335,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 3165512
+   "bytes": 2974260
   },
   "textures": [
    {
@@ -14370,7 +14370,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 317467,
+    "bytes": 320689,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -15374,7 +15374,7 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 81.3,
+    "bake_s": 65.0,
     "mean": 0.408,
     "p2": 0.0,
     "samples": 40,
@@ -15385,7 +15385,7 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 81.4,
+    "bake_s": 84.0,
     "mean": 0.587,
     "p2": 0.0,
     "samples": 40,
@@ -15396,8 +15396,8 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 27.5,
-    "mean": 0.645,
+    "bake_s": 30.1,
+    "mean": 0.647,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -15961,7 +15961,7 @@
       "draws": 36
      },
      "2": {
-      "tris": 4263,
+      "tris": 2731,
       "instanced_tris": 0,
       "draws": 8
      }
