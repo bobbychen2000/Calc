@@ -6431,9 +6431,9 @@
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 11196072,
-  "built": "2026-11-09T02:53:08+00:00",
-  "git": "2b323d9+dirty",
+  "bytes": 11198584,
+  "built": "2026-11-09T08:30:57+00:00",
+  "git": "81dcac7+dirty",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
   "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
@@ -6496,8 +6496,8 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 79040,
-    "verts": 164690,
+    "tris": 79120,
+    "verts": 164850,
     "draw_calls": 155,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -6505,8 +6505,8 @@
     "lod": 1,
     "node": "LOD1",
     "switch_m": 380.0,
-    "tris": 23368,
-    "verts": 55284,
+    "tris": 23406,
+    "verts": 55360,
     "draw_calls": 121,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
@@ -6514,8 +6514,8 @@
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1300.0,
-    "tris": 23208,
-    "verts": 54932,
+    "tris": 23246,
+    "verts": 55008,
     "draw_calls": 21,
     "ao_atlas": "dom_ao_L2"
    }
@@ -6527,7 +6527,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/domestic_lod2.glb",
-   "bytes": 2849948
+   "bytes": 2854668
   },
   "textures": [
    {
@@ -6567,7 +6567,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1395222,
+    "bytes": 1385894,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -6637,7 +6637,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1339314,
+    "bytes": 1340760,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -6747,7 +6747,7 @@
      1024
     ],
     "mime": "image/png",
-    "bytes": 479336,
+    "bytes": 480786,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -7253,7 +7253,7 @@
      "T2",
      "C3C"
     ],
-    "bake_s": 61.4,
+    "bake_s": 38.2,
     "mean": 0.644,
     "p2": 0.002,
     "samples": 48,
@@ -7273,8 +7273,8 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 57.6,
-    "mean": 0.702,
+    "bake_s": 37.7,
+    "mean": 0.7,
     "p2": 0.007,
     "samples": 48,
     "distance_m": 10.0,
@@ -7288,9 +7288,9 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 5.3,
-    "mean": 0.693,
-    "p2": 0.062,
+    "bake_s": 3.8,
+    "mean": 0.694,
+    "p2": 0.065,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -8897,7 +8897,7 @@
      ]
     }
    },
-   "levels_source": "js/live/gates.js DEPARTURE_LEVELS via tools/blender/app_bridges.json (node tools/blender/app_bridges.mjs, generated 2026-11-09T02:36:15.292Z; stale inputs: js/live/gates.js)",
+   "levels_source": "js/live/gates.js DEPARTURE_LEVELS via tools/blender/app_bridges.json (node tools/blender/app_bridges.mjs, generated 2026-11-09T08:13:40.089Z; stale inputs: none)",
    "note": "every bridge of data/sfo_stands.json (B-F) gets a door surround where its walkway meets the 3-D facade; where the app's walkway (js/live/gates.js) starts outside the facade a vestibule closes the gap over the walkway's whole width (close-out round 4: tools/blender/bridge_head.py; a nub where the end lies inside the facade but its edge passes a corner); the walkway-end gap check (tools/blender/walkend_check.py, verify_domestic.py) holds every end <= 0.1 m",
    "walkway_end_gaps": {
     "0": {
@@ -9540,9 +9540,9 @@
     {
      "group": "plausibility",
      "check": "ITB outline (the ITB asset) inside the 3-D footprint",
-     "model": 0.214,
+     "model": 0.338,
      "drawing": 0.0,
-     "dev": 0.214,
+     "dev": 0.338,
      "tol": 0.5,
      "ok": true,
      "src": "SFO Museum ITB + BA-A / BA-G"
@@ -14347,9 +14347,9 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 22339248,
-  "built": "2026-11-09T05:06:07+00:00",
-  "git": "d035f59+dirty",
+  "bytes": 22245648,
+  "built": "2026-11-09T08:24:55+00:00",
+  "git": "81dcac7+dirty",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -14369,23 +14369,23 @@
   "lods": {
    "0": {
     "switch_m": 0.0,
-    "tris": 171079,
+    "tris": 170430,
     "instanced_car_tris": 166010,
-    "verts": 405103,
+    "verts": 403180,
     "draw_calls": 398
    },
    "1": {
     "switch_m": 450.0,
-    "tris": 97025,
+    "tris": 96386,
     "instanced_car_tris": 70642,
-    "verts": 243349,
+    "verts": 241456,
     "draw_calls": 358
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 22937,
+    "tris": 22700,
     "instanced_car_tris": 0,
-    "verts": 55173,
+    "verts": 54454,
     "draw_calls": 125
    }
   },
@@ -14395,14 +14395,14 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 2984552
+   "bytes": 2951776
   },
   "textures": [
    {
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1155219,
+    "bytes": 1161631,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -14430,7 +14430,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 321154,
+    "bytes": 318758,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -14465,7 +14465,7 @@
     "name": "landside_ao_A",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1341829,
+    "bytes": 1355187,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -15434,8 +15434,8 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 73.3,
-    "mean": 0.408,
+    "bake_s": 54.3,
+    "mean": 0.409,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -15445,8 +15445,8 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 79.1,
-    "mean": 0.587,
+    "bake_s": 67.1,
+    "mean": 0.589,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -15456,8 +15456,8 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 40.9,
-    "mean": 0.642,
+    "bake_s": 26.1,
+    "mean": 0.643,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -15698,13 +15698,13 @@
    },
    "roof.grand_hyatt": {
     "rgb": [
-     219,
      220,
-     219
+     220,
+     220
     ],
     "n": 528,
     "shift": [
-     13.326100801398448,
+     13.326049288136854,
      0.0
     ]
    },
@@ -16011,12 +16011,12 @@
     ],
     "tris": {
      "0": {
-      "tris": 23608,
+      "tris": 23101,
       "instanced_tris": 30712,
       "draws": 37
      },
      "1": {
-      "tris": 19110,
+      "tris": 18603,
       "instanced_tris": 13016,
       "draws": 36
      },
@@ -16689,17 +16689,17 @@
     ],
     "tris": {
      "0": {
-      "tris": 21022,
+      "tris": 21024,
       "instanced_tris": 9220,
       "draws": 55
      },
      "1": {
-      "tris": 7586,
+      "tris": 7588,
       "instanced_tris": 3956,
       "draws": 51
      },
      "2": {
-      "tris": 842,
+      "tris": 708,
       "instanced_tris": 0,
       "draws": 9
      }
@@ -17756,7 +17756,7 @@
     ],
     "tris": {
      "0": {
-      "tris": 2843,
+      "tris": 2833,
       "instanced_tris": 61292,
       "draws": 35
      },
@@ -17806,9 +17806,9 @@
     ],
     "dims": {
      "footprint": {
-      "v": "SFO Museum outline (crescent incl. podium / connector)",
+      "v": "SFO Museum outline (crescent incl. podium / connector) minus the connector finger over the AirTrain south track (27.8 m2, close-out r5 fix 2)",
       "tag": "obs",
-      "source": "BL-02 B"
+      "source": "BL-02 B; the finger read as the AirTrain bridge [inf]"
      },
      "parapet_top": {
       "v": 44.0,
@@ -17868,7 +17868,8 @@
     ],
     "unknown": [
      "height (40-48)",
-     "slab vs podium plan (the outline includes both)"
+     "slab vs podium plan (the outline includes both)",
+     "the enclosed AirTrain bridge (the outline's 27.8-m2 finger over the south track): span, level, enclosure - not modelled (owner)"
     ],
     "conflicts": [
      "spec \"taller straight block at the north end\" vs photo l4 (one parapet level): drawn at the common parapet (BL-03)"
@@ -17955,17 +17956,17 @@
     ],
     "tris": {
      "0": {
-      "tris": 1174,
+      "tris": 1040,
       "instanced_tris": 0,
       "draws": 15
      },
      "1": {
-      "tris": 1174,
+      "tris": 1040,
       "instanced_tris": 0,
       "draws": 15
      },
      "2": {
-      "tris": 349,
+      "tris": 246,
       "instanced_tris": 0,
       "draws": 4
      }
@@ -19130,9 +19131,10 @@
    "building_keepout": {
     "central_garage": {
      "cg_plinth@0": {
-      "faces": 119,
-      "m2": 429.81,
-      "rule": "contact"
+      "faces": 127,
+      "m2": 478.5,
+      "rule": "contact",
+      "envelope_m2": 0.04
      },
      "cg_L2@2": {
       "faces": 0,
@@ -19142,20 +19144,22 @@
     },
     "garage_a": {
      "garage_a_body@0": {
-      "faces": 22,
-      "m2": 2.29
+      "faces": 26,
+      "m2": 14.3
      },
      "garage_a_station_block@0": {
-      "faces": 11,
-      "m2": 21.17
+      "faces": 12,
+      "m2": 21.71,
+      "envelope_m2": 0.06
      },
      "garage_a_station_block_det@0": {
       "faces": 6,
       "m2": 1.98
      },
      "garage_a_L2@2": {
-      "faces": 17,
-      "m2": 66.36
+      "faces": 8,
+      "m2": 75.59,
+      "envelope_m2": 0.06
      }
     },
     "ltp_garage_2": {
@@ -19175,17 +19179,7 @@
      },
      "rcc_louvres@0": {
       "faces": 13,
-      "m2": 5.51
-     }
-    },
-    "grand_hyatt": {
-     "gh_body@0": {
-      "faces": 3,
-      "m2": 22.32
-     },
-     "gh_L2@2": {
-      "faces": 3,
-      "m2": 21.26
+      "m2": 6.07
      }
     },
     "bart_station": {
@@ -19328,9 +19322,11 @@
   "verification": {
    "tool": "tools/blender/verify_landside.py",
    "report": "out/buildings3d/landside_verify.json (local)",
-   "n_checks": 202,
-   "n_fail": 0,
-   "failed": [],
+   "n_checks": 204,
+   "n_fail": 1,
+   "failed": [
+    "AirTrain vehicle envelope"
+   ],
    "tolerance": "0.5 m or 2 % unless stated",
    "checks": [
     {
@@ -19830,7 +19826,7 @@
     },
     {
      "check": "central_garage: drawn outline not covered by the roof footprint",
-     "model": 165.453,
+     "model": 187.081,
      "drawing": 0.0,
      "tol": 1287.835,
      "ok": true,
@@ -19893,7 +19889,7 @@
     },
     {
      "check": "garage_a: core diameter",
-     "model": 12.629,
+     "model": 12.551,
      "drawing": 13.0,
      "tol": 0.5,
      "ok": true,
@@ -19902,7 +19898,7 @@
     },
     {
      "check": "garage_a: core centre on the drum centre",
-     "model": 0.12,
+     "model": 0.081,
      "drawing": 0.0,
      "tol": 0.5,
      "ok": true,
@@ -20455,7 +20451,7 @@
      "drawing": 0.0,
      "tol": 0.0,
      "ok": true,
-     "src": "edge-triangle crossings; landside_geom.airtrain_keepout (keepout.py) clips the facades; over: none; exempt points 4; contact-band points 1427",
+     "src": "edge-triangle crossings; landside_geom.airtrain_keepout (keepout.py) clips the facades; over: none; exempt points 4; contact-band points 1325",
      "unit": "pts"
     },
     {
@@ -20475,6 +20471,24 @@
      "ok": true,
      "src": "max-type: <= the ceiling; the CG LOD2 shell keeps the plinth / parapet walls the LOD0 contact rule trims (the coarse deck runs up to 0.6 m off the LOD0 outline)",
      "unit": "pts"
+    },
+    {
+     "check": "AirTrain vehicle envelope",
+     "model": "cannot access free variable 'MultiPoint' where it is not associated with a value in enclosing scope",
+     "drawing": "error",
+     "tol": null,
+     "ok": false,
+     "src": "",
+     "unit": "m"
+    },
+    {
+     "check": "LOD0 building surface inside the closed AirTrain deck box > 0.05 m deep (close-out r5 fix 2; ceiling)",
+     "model": 0.85,
+     "drawing": 2.0,
+     "tol": null,
+     "ok": true,
+     "src": "the round-5 verifier's cgdepth2 rule (0.10-m samples; first deck surface above faces up, below faces down); per node: {'L0_cg_plinth': {'m2': 0.85, 'max_depth_m': 0.232, 'at': [-954.6, 408.7]}}",
+     "unit": "m2"
     },
     {
      "check": "LTP1: parapet top",
@@ -20667,7 +20681,7 @@
     },
     {
      "check": "grand_hyatt: drawn outline not covered by the roof footprint",
-     "model": 0.0,
+     "model": 26.919,
      "drawing": 0.0,
      "tol": 66.227,
      "ok": true,
@@ -21154,10 +21168,10 @@
    ],
    "plans": {
     "central_garage": {
-     "model_area": 64194.0,
+     "model_area": 64175.4,
      "outline_area": 64391.8,
      "outside": 0.0,
-     "missing": 165.5
+     "missing": 187.1
     },
     "ltp_garage_1": {
      "model_area": 14436.7,
@@ -21178,10 +21192,10 @@
      "missing": 0.0
     },
     "grand_hyatt": {
-     "model_area": 3319.8,
+     "model_area": 3291.3,
      "outline_area": 3311.3,
      "outside": 4.9,
-     "missing": 0.0
+     "missing": 26.9
     },
     "cac": {
      "model_area": 4756.1,
@@ -21209,10 +21223,10 @@
         19.45
        ],
        "at": [
-        -819.7,
-        284.5
+        -820.3,
+        285.1
        ],
-       "contact_points": 268
+       "contact_points": 269
       },
       "L0_cg_plinth x L0_airtrain_-3_0_deck": {
        "points": 0,
@@ -21221,10 +21235,10 @@
         19.45
        ],
        "at": [
-        -968.7,
-        330.1
+        -974.0,
+        317.0
        ],
-       "contact_points": 961
+       "contact_points": 986
       },
       "L0_cg_plinth x L0_airtrain_-3_1_deck": {
        "points": 0,
@@ -21233,10 +21247,10 @@
         19.45
        ],
        "at": [
-        -945.6,
-        420.4
+        -943.5,
+        420.9
        ],
-       "contact_points": 198
+       "contact_points": 70
       },
       "L0_garage_a_portal x L0_airtrain_-4_1_deck": {
        "points": 4,
@@ -21315,6 +21329,16 @@
       "ceiling": 160
      }
     },
+    "airtrain_inside_deck_box": {
+     "L0_cg_plinth": {
+      "m2": 0.85,
+      "max_depth_m": 0.232,
+      "at": [
+       -954.6,
+       408.7
+      ]
+     }
+    },
     "stand_min_m": 26.3,
     "stand_worst": "G3",
     "bridge_min_m": 55.85,
@@ -21326,7 +21350,7 @@
      "central_garage": 331.6,
      "garage_a": 639.7,
      "garage_g": 460.1,
-     "grand_hyatt": 760.8,
+     "grand_hyatt": 761.7,
      "ltp_garage_1": 703.0,
      "ltp_garage_2": 674.6,
      "rental_car_center": 203.8,
@@ -23082,7 +23106,7 @@
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
   "owner": "integration (review round 1, finding 1)",
   "generator": "tools/blender/build_roadways.py + roadways_net.py",
-  "built": "2026-11-09T05:12:45Z",
+  "built": "2026-11-09T08:36:40Z",
   "files": {
    "full": "data/buildings3d/roadways.glb",
    "lod2": "data/buildings3d/roadways_lod2.glb"
@@ -23169,12 +23193,12 @@
   ],
   "deviations": [
    "decks over at-grade roads with less than 4.6 m clearance: the anchored domestic loop (soffit 3.53 m) - the curb placeholder, kept as the domestic asset has it",
-   "decks trimmed at the buildings' bodies (review r2, finding 3): {'domestic/T3E': 312.6, 'domestic/T3W': 309.4, 'domestic/T1': 390.6} m2 (T1 / T3 only: their curb-side shells; the T2 cut lifted after the domestic group moved the T2 landside face, close-out round 3)",
+   "decks trimmed at the buildings' bodies (review r2, finding 3): {'domestic/T3E': 312.6, 'domestic/T3W': 309.5, 'domestic/T1': 390.6} m2 (T1 / T3 only: their curb-side shells; the T2 cut lifted after the domestic group moved the T2 landside face, close-out round 3)",
    "stacked pairs kept whole under an upper deck with less than 4.6 m (a cut would split the lower deck or leave < lanes x 3.0 m; fix 2, verifier v1): 41015123 under 38853045, 3.90 m; 41015123 under 38853121, 3.81 m; 394222196 under 35157016, 4.58 m",
    "stacked cuts made although they narrow the lower deck (the decks would clash, < 3.5 m): 38853121 under 38854581: carriageway 2.24 m < 2 x 3.0 m (+ shoulders) over 2 m (kept: the decks would clash, 0.43 m); 1185654144 under 38854581: carriageway 0.00 m < 2 x 3.0 m (+ shoulders) over 5 m (kept: the decks would clash, 0.38 m); 370279626 under 35157100: carriageway 0.00 m < 1 x 3.0 m (+ shoulders) over 51 m (kept: the decks would clash, -1.20 m); 370279626 under 41015036: carriageway 2.11 m < 1 x 3.0 m (+ shoulders) over 13 m (kept: the decks would clash, 0.34 m)"
   ],
   "closeout_r4": {
-   "rule": "deck edges: inner where a neighbour within [0.08, 0.4, 1.05] m (LOD0/1/2) has its top within 0.30 m there (else fascia + parapet on both: a median barrier); joint wedges, slit / gore fill, junction voids, width tapers and the connected-deck blend close the slits whose sides r22 built as parapets across the lanes (the round-3 verifier's major)",
+   "rule": "deck edges: inner where a neighbour within [0.08, 0.08, 1.05] m (LOD0/1/2) has its top within 0.30 m there (else fascia + parapet on both: a median barrier); joint wedges, slit / gore fill, junction voids, width tapers and the connected-deck blend close the slits whose sides r22 built as parapets across the lanes (the round-3 verifier's major)",
    "in_carriageway_parapet_m": 54.4,
    "in_carriageway_clusters": 33,
    "joint_wedges": {
@@ -23195,9 +23219,12 @@
     "step_face_m": 454.2,
     "slit_runs_dropped_m": 5.8,
     "abutment_m": 142.5,
-    "under_joint_m": 448.1,
+    "under_joint_m": 444.8,
     "under_joint_to_grade_m": 18.5,
-    "under_joint_unresolved_m": 269.9,
+    "under_joint_unresolved_m": 273.2,
+    "under_joint_capped_m": 0.0,
+    "under_joint_lod1_m": 513.8,
+    "under_joint_unresolved_lod1_m": 216.5,
     "step_face_by_height_m": {
      "0.02-0.05": 105.3,
      "0.05-0.10": 65.8,
@@ -23249,14 +23276,14 @@
    "closeout_r5": {
     "soffit_closure": {
      "boundary_m": 22243.6,
-     "face_m": 19612.6,
-     "soffit_continues_m": 2573.6,
+     "face_m": 19606.8,
+     "soffit_continues_m": 2577.1,
      "open_into_hollow_m": 2.8,
-     "open_other_m": 54.5
+     "open_other_m": 56.9
     },
-    "under_joint_m": 448.1,
+    "under_joint_m": 444.8,
     "under_joint_to_grade_m": 18.5,
-    "under_joint_unresolved_m": 269.9,
+    "under_joint_unresolved_m": 273.2,
     "mesh_folds": {
      ">1_deg": {
       "n": 226,
@@ -23281,6 +23308,37 @@
       ">6_deg": 24.5
      },
      "ok": true
+    },
+    "fix_round_2": {
+     "rule": "under-joint closures only against a piece that abuts at deck level (top within 0.30 m; underside within the deck depth + 0.30 m, or grade under an all-fill deck); LOD1 deck outlines = LOD0 (joints meet); gates: through-deck walls 0 (LOD0 / LOD1), soffit open into a hollow <= [5.0, 12.0] m (LOD0 / LOD1)",
+     "soffit_closure_lod1": {
+      "boundary_m": 22399.0,
+      "face_m": 19784.3,
+      "soffit_continues_m": 2551.7,
+      "open_into_hollow_m": 7.8,
+      "open_other_m": 55.2
+     },
+     "under_joint_capped_m": 0.0,
+     "under_joint_lod1_m": 513.8,
+     "under_joint_unresolved_lod1_m": 216.5,
+     "through_deck": {
+      "lod0": {
+       "faces_through": 1839,
+       "walls": 0,
+       "wall_area_m2": 0.0,
+       "ledge_family": 1839,
+       "ledge_ceiling": 1950,
+       "gate": "ok"
+      },
+      "lod1": {
+       "faces_through": 3,
+       "walls": 0,
+       "wall_area_m2": 0.0,
+       "ledge_family": 3,
+       "ledge_ceiling": 10,
+       "gate": "ok"
+      }
+     }
     }
    }
   },
@@ -23319,8 +23377,8 @@
     "plate": 13
    },
    "tris": {
-    "0": 57987,
-    "1": 16421,
+    "0": 57971,
+    "1": 22151,
     "2": 7340
    },
    "grade_max": {
@@ -23518,7 +23576,7 @@
    "crossings": 33,
    "asset_cut_m2": 1671.0,
    "bytes": {
-    "full": 5296016,
+    "full": 5603480,
     "lod2": 476212
    },
    "itb_plate": {
@@ -24565,9 +24623,12 @@
     "step_face_m": 454.2,
     "slit_runs_dropped_m": 5.8,
     "abutment_m": 142.5,
-    "under_joint_m": 448.1,
+    "under_joint_m": 444.8,
     "under_joint_to_grade_m": 18.5,
-    "under_joint_unresolved_m": 269.9,
+    "under_joint_unresolved_m": 273.2,
+    "under_joint_capped_m": 0.0,
+    "under_joint_lod1_m": 513.8,
+    "under_joint_unresolved_lod1_m": 216.5,
     "step_face_by_height_m": {
      "0.02-0.05": 105.3,
      "0.05-0.10": 65.8,
@@ -24739,7 +24800,7 @@
     "step_tol_m": 0.3,
     "inner_gap_m": {
      "0": 0.08,
-     "1": 0.4,
+     "1": 0.08,
      "2": 1.05
     }
    },
@@ -24751,8 +24812,8 @@
    },
    "mesh_grades": {
     "rule": "LOD0 deck-top triangles (deck_* materials, n.y > 0.7, > 0.001 m2): |gradient| %, area-weighted; folds = angle between welded neighbours",
-    "triangles": 6447,
-    "area_m2": 91905.8,
+    "triangles": 6446,
+    "area_m2": 91905.7,
     "max_pct": 13.37,
     "top": [
      {
@@ -25028,10 +25089,10 @@
    "soffit_closure": {
     "rule": "LOD0 soffit boundary edges every 0.5 m: closed by a vertical concrete face within 0.04 m spanning the soffit height, or a soffit continuing 0.15 m outward within 0.15 m; open into a hollow when a deck / walk top lies 0.3 m outward above (close-out r5)",
     "boundary_m": 22243.6,
-    "face_m": 19612.6,
-    "soffit_continues_m": 2573.6,
+    "face_m": 19606.8,
+    "soffit_continues_m": 2577.1,
     "open_into_hollow_m": 2.8,
-    "open_other_m": 54.5,
+    "open_other_m": 56.9,
     "open_into_hollow_top": [
      {
       "at": [
@@ -25081,7 +25142,113 @@
       "soffit_m": 3.53,
       "len_m": 0.2
      }
-    ]
+    ],
+    "gate_m": 5.0
+   },
+   "soffit_closure_lod1": {
+    "rule": "LOD1 soffit boundary edges every 0.5 m: closed by a vertical concrete face within 0.04 m spanning the soffit height, or a soffit continuing 0.15 m outward within 0.15 m; open into a hollow when a deck / walk top lies 0.3 m outward above (close-out r5)",
+    "boundary_m": 22399.0,
+    "face_m": 19784.3,
+    "soffit_continues_m": 2551.7,
+    "open_into_hollow_m": 7.8,
+    "open_other_m": 55.2,
+    "open_into_hollow_top": [
+     {
+      "at": [
+       -1545.6,
+       469.7
+      ],
+      "soffit_m": 3.19,
+      "len_m": 2.5
+     },
+     {
+      "at": [
+       -1566.1,
+       477.0
+      ],
+      "soffit_m": 5.08,
+      "len_m": 2.0
+     },
+     {
+      "at": [
+       -1560.0,
+       474.9
+      ],
+      "soffit_m": 5.03,
+      "len_m": 1.0
+     },
+     {
+      "at": [
+       -1642.7,
+       418.5
+      ],
+      "soffit_m": 14.44,
+      "len_m": 0.5
+     },
+     {
+      "at": [
+       -1571.1,
+       487.8
+      ],
+      "soffit_m": 4.38,
+      "len_m": 0.5
+     },
+     {
+      "at": [
+       -1955.8,
+       546.0
+      ],
+      "soffit_m": 9.47,
+      "len_m": 0.5
+     },
+     {
+      "at": [
+       -1609.7,
+       545.0
+      ],
+      "soffit_m": 13.6,
+      "len_m": 0.5
+     },
+     {
+      "at": [
+       -1099.3,
+       327.5
+      ],
+      "soffit_m": 4.61,
+      "len_m": 0.2
+     },
+     {
+      "at": [
+       -1061.8,
+       406.6
+      ],
+      "soffit_m": 3.53,
+      "len_m": 0.2
+     }
+    ],
+    "gate_m": 12.0
+   },
+   "through_deck": {
+    "lod0": {
+     "rule": "LOD0 vertical concrete faces (>= 0.25 m tall, 6 x 6 barycentric samples) that a deck / walk top passes through (> 0.1 m above the face bottom and > 0.1 m below its top; the round-5 verifier's thrudeck rule); walls = the face rises > 2.05 m above that top",
+     "faces_through": 1839,
+     "walls": 0,
+     "wall_area_m2": 0.0,
+     "wall_sites": [],
+     "ledge_family": 1839,
+     "ledge_ceiling": 1950,
+     "gate": "ok"
+    },
+    "lod1": {
+     "rule": "LOD1 vertical concrete faces (>= 0.25 m tall, 6 x 6 barycentric samples) that a deck / walk top passes through (> 0.1 m above the face bottom and > 0.1 m below its top; the round-5 verifier's thrudeck rule); walls = the face rises > 2.05 m above that top",
+     "faces_through": 3,
+     "walls": 0,
+     "wall_area_m2": 0.0,
+     "wall_sites": [],
+     "ledge_family": 3,
+     "ledge_ceiling": 10,
+     "gate": "ok"
+    }
    },
    "curb_gap": {
     "stations": 426,
@@ -25129,36 +25296,10 @@
    },
    "deck_cut_inside_buildings_m2": {
     "domestic/T3E": 312.6,
-    "domestic/T3W": 309.4,
+    "domestic/T3W": 309.5,
     "domestic/T1": 390.6
    },
    "deck_left_inside_buildings_m2": 0
-  },
-  "closeout_r5": [
-   {
-    "id": "r5-under-joint",
-    "severity": "minor",
-    "item": "f3 residual 1 (step joints open underneath) + f6 residual 2 (cross-piece fill joints without an abutment)",
-    "disposition": "fixed",
-    "change": "build_piece under-joint faces on every inner run (neighbour underside -> this soffit), probes 5 % in, 0.06 / INNER_GAP + 0.06 m, an unresolved probe takes another neighbour's underside; self-check soffit_check()",
-    "evidence": "verifier soffit_close.py LOD0 (r4 950d31fa -> d33aa2a0): open into a hollow 330.4 -> 2.8 m, face 18,773.2 -> 19,612.6 m; cross-piece sites 16.5 -> 0 m; LOD1 544.8 -> 174.6 m; under-joint faces 448.1 m"
-   },
-   {
-    "id": "r5-ledges",
-    "severity": "minor",
-    "item": "f3 residual: 0.02-0.31 m ledges on the deck tops inside carriageways",
-    "disposition": "deferred",
-    "change": "none (both quick remedies rejected in R4f2.3; needs a warped junction surface, integration track)",
-    "evidence": "ledges.py deck-to-deck 239.2 m (r4 239.2), 0.10-0.31 m 87.5 m"
-   },
-   {
-    "id": "r5-creases",
-    "severity": "minor",
-    "item": "residual 3: creases at the flat joint wedges (folds twice r22)",
-    "disposition": "deferred",
-    "change": "trial (hp_ext interpolation across the wedge) reverted: max grade 13.4 -> 79.4 %, folds >3/4/6 deg 31/10/6 -> 50/26/17; fold regression gate added (stats.mesh_grades.fold_gate, FOLD_GATE_M 30.4 / 24.5 m)",
-    "evidence": "folds >1/2/4/6 deg 226/84/10/6 = r4; fold_gate ok"
-   }
-  ]
+  }
  }
 }

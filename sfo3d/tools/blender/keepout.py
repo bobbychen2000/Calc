@@ -11,6 +11,13 @@ close-out round 4).
 Column hull: at a plan point p, the z-intervals [lo - clear, hi + clear] of the AirTrain triangles whose plan footprint
 (buffered by `clear`) covers p, intervals closer than `gap` merged - a closed deck box (soffit, sides, top, parapets, rails)
 becomes one solid interval from its soffit to its parapet top; a station roof 3-4 m above it stays a separate interval.
+Close-out r5 fix 2 (the round-5 verifier: the Central Garage plinth's top slab survived inside the deck box under each
+parapet): a non-vertical triangle contributes its plane height (a point), and under a parapet the soffit and the parapet top
+are DECK_T + WALL_H = 2.5 m apart - more than `gap` - so they never merged and only the +-clear bands of the vertical faces
+were solid there. Now the column is also read as a CLOSED SOLID: walking up the sorted plane heights, a DOWN-facing face
+(outward normal down: a soffit) opens the solid and the next UP-facing face (a deck / parapet / walkway top) closes it (an
+up-facing face with no opener below extends the interval below it within `gap`, as before); an opened interval longer than
+`pair_max` is not trusted (an unclosed mesh) and falls back to the old points. The two readings are united.
 
 Clipping (per planar face of a building mesh, in the face's own 2-D frame):
   vertical faces   the face's horizontal extent split into equal steps <= DS_V (the whole extent: an uneven last strip
@@ -38,8 +45,10 @@ CLEAR_Z = 0.05        # vertical faces: cut this far below / above the solid (a 
                       # top); horizontal and sloped faces are cut only where they lie INSIDE the solid (+-Z_TOL): a roof that
                       # merely meets the deck soffit from below (the BART station) is contact, not a clash [inf]
 Z_TOL = 0.02
-GAP = 2.0             # column intervals closer than this merge: the 1.6-m deck box (soffit .. top .. parapet) is one solid;
-                      # a station roof 3.5-4.5 m above the deck stays separate [inf]
+GAP = 2.0             # column intervals closer than this merge: the 1.6-m deck box (soffit .. top) is one solid; a station roof
+                      # 3.5-4.5 m above the deck stays separate [inf]; under a parapet (soffit .. parapet top 2.5 m) the closed-
+                      # solid reading below makes it one solid (close-out r5 fix 2)
+PAIR_MAX = 3.0        # m: a soffit .. top pairing longer than this is not trusted (the deck box with its parapet is 2.5 m) [model]
 DS_V = 0.05           # vertical faces: sample step along the face [m]
 DS_H = 0.10           # other faces: sample grid [m]
 
@@ -47,13 +56,13 @@ DS_H = 0.10           # other faces: sample grid [m]
 class Columns:
     """column hull of a triangle soup T (n, 3, 3) in WORLD coordinates (x, height above the apron, z)."""
 
-    def __init__(self, T, clear=CLEAR, gap=GAP, clear_z=CLEAR_Z, inset=0.0):
+    def __init__(self, T, clear=CLEAR, gap=GAP, clear_z=CLEAR_Z, inset=0.0, pair_max=PAIR_MAX):
         """inset > 0: a CONTACT hull - only plan points at least `inset` inside the (unbuffered) footprint union have intervals
         (a structure built to abut the guideway keeps its touching faces; what lies inside the solid beyond the contact band is
         cut). `clear` still buffers each triangle's own footprint, so a change of interval INSIDE the solid (a parapet, the
         track) is cut from clear before it: clear >= DS_V / 2 keeps the sampled cut ahead of it"""
         T = np.asarray(T, float)
-        self.clear, self.gap, self.clear_z, self.inset = clear, gap, clear_z, inset
+        self.clear, self.gap, self.clear_z, self.inset, self.pair_max = clear, gap, clear_z, inset, pair_max
         fps = []
         for t in T:
             q = Polygon(t[:, [0, 2]])
@@ -74,6 +83,11 @@ class Columns:
         self.gx = np.where(self.planar, (e1h * d2[:, 1] - e2h * d1[:, 1]) / dt, 0.0)
         self.gz = np.where(self.planar, (e2h * d1[:, 0] - e1h * d2[:, 0]) / dt, 0.0)
         self.x0, self.z0, self.h0 = P_[:, 0, 0], P_[:, 0, 1], h0
+        # facing of the non-vertical triangles in WORLD (x, height, z): + up, - down (landside_mesh winds faces outward in the
+        # building frame (X, Y, Z up); Frame.W maps (X, Y, Z) -> (x, Z, z = oz - Y), a proper rotation, so the height component
+        # of the world cross product keeps the sign)
+        ny = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0])[:, 1]
+        self.face = np.where(self.planar, np.sign(ny), 0.0)
         self.tree = STRtree(fps) if fps else None
         self.bounds = unary_union([f.envelope for f in fps]).bounds if fps else None
         self.core = None
@@ -92,14 +106,26 @@ class Columns:
         hp = self.h0[it] + self.gx[it] * (pa[ip, 0] - self.x0[it]) + self.gz[it] * (pa[ip, 1] - self.z0[it])
         hp = np.clip(hp, self.lo[it], self.hi[it]); pl = self.planar[it]
         A_ = np.where(pl, hp, self.lo[it]); B_ = np.where(pl, hp, self.hi[it])
-        order = np.lexsort((A_, ip))
-        ip, it, A_, B_ = ip[order], it[order], A_[order], B_[order]
-        for p, t, a, b in zip(ip, it, A_, B_):
+        fc = np.where(pl, self.face[it], 0.0)
+        order = np.lexsort((-fc, A_, ip))      # by point, height; at one height a down-facing face (opener) before an up-facing one
+        ip, it, A_, B_, fc = ip[order], it[order], A_[order], B_[order], fc[order]
+        raw = [[] for _ in range(len(pts))]
+        opened = {}
+        for p, a, b, f in zip(ip, A_, B_, fc):
+            raw[p].append((a, b))
+            # closed-solid reading (fix 2): a down-facing plane opens, the next up-facing plane closes
+            if f < 0 and p not in opened:
+                opened[p] = a
+            elif f > 0 and p in opened:
+                a0 = opened.pop(p)
+                if a - a0 <= self.pair_max: raw[p].append((a0, a))
+        for p in range(len(pts)):
             lst = out[p]
-            if lst and a <= lst[-1][1] + self.gap:
-                if b > lst[-1][1]: lst[-1] = (lst[-1][0], b)
-            else:
-                lst.append((a, b))
+            for a, b in sorted(raw[p]):
+                if lst and a <= lst[-1][1] + self.gap:
+                    if b > lst[-1][1]: lst[-1] = (lst[-1][0], b)
+                else:
+                    lst.append((a, b))
         return out
 
     def footprint(self, poly_w, z0, z1):
@@ -113,10 +139,12 @@ class Columns:
         return u.intersection(self.core) if self.core is not None else u
 
     def near(self, poly_w, z0, z1):
-        """any triangle column whose footprint meets the world plan polygon and whose band meets [z0, z1]."""
+        """a triangle column whose footprint meets the world plan polygon and whose band meets [z0, z1] - conservatively the
+        candidates' joint band (fix 2: a closed solid spans from its lowest to its highest face; a face wholly between a soffit
+        and a top met neither triangle's own band and was skipped)."""
         if self.tree is None: return False
         idx = self.tree.query(poly_w, predicate='intersects')
-        return bool(len(idx)) and bool(((self.lo[idx] - self.clear_z <= z1) & (self.hi[idx] + self.clear_z >= z0)).any())
+        return bool(len(idx)) and bool(self.lo[idx].min() - self.clear_z <= z1) and bool(self.hi[idx].max() + self.clear_z >= z0)
 
 
 def _frame(P):

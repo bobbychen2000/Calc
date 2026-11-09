@@ -85,6 +85,31 @@ APP_BRIDGES = os.path.join(HERE, 'app_bridges.json')   # the fresh bridge dump (
 # checks it against the current js/live/gates.js / stands inputs)
 
 
+def _dump_current(path, res, label='tools/blender/app_bridges.json'):
+    """close-out r5 fix 2 (the round-5 verifier, integ-4: a STALE dump ran silently with old bridge solids - its gates.js hash zeroed
+    and three bridges moved 1.2 m gave line-for-line the same report): recompute the SHA-256 of every file the dump records in
+    'inputs' and compare. A mismatch (or an unreadable / input-less dump) is a CONFLICT 'input stale: app_bridges.json predates
+    <file>': like a missing input it makes --check exit 2 and the full run refuse to write. Regenerate: node tools/blender/app_bridges.mjs.
+    -> True when current"""
+    try:
+        J = json.load(open(path)); inp = J.get('inputs') or {}
+    except (OSError, ValueError) as ex:
+        res['conflicts'].append(dict(check='input unreadable: ' + label, error=str(ex))); return False
+    if not inp:
+        res['conflicts'].append(dict(check='input stale: %s records no input hashes' % os.path.basename(label), note='regenerate: node tools/blender/app_bridges.mjs'))
+        return False
+    stale = []
+    for rel, h in sorted(inp.items()):
+        fp = os.path.join(ROOT, rel)
+        cur = hashlib.sha256(open(fp, 'rb').read()).hexdigest() if os.path.exists(fp) else None
+        if cur != h: stale.append(rel)
+    INPUTS_SEEN['bridge solids inputs'] = dict(generated=J.get('generated'), checked=sorted(inp), stale=stale)
+    for rel in stale:
+        res['conflicts'].append(dict(check='input stale: %s predates %s' % (os.path.basename(label), rel), generated=J.get('generated'),
+                                     note='the walkway / drum / pedestal tests were NOT run on it - regenerate: node tools/blender/app_bridges.mjs'))
+    return not stale
+
+
 def _scene_currency(SC, res, tol=0.05, as_note=False):
     """close-out round 5: a PRESENT but stale scene2d.json is as silent as a missing one. Its js/live/gates.js hash against the
     current file, and every bridge's attach point, rotunda centre, rotR and Hr against tools/blender/app_bridges.json: a geometry
@@ -596,6 +621,7 @@ def plausibility(F, TR, rep, log):
     # fixed parts are the same in every pose, so the rest pose is enough: walkway segments (oriented boxes c / u / hl / hw) and the
     # rotunda drum (circle r), heights above grade lo..hi (+ GROUND_Y). The pedestal column under the drum is not in the dump.
     ab = _input('bridge solids (tools/blender/app_bridges.json, node tools/blender/app_bridges.mjs)', APP_BRIDGES, res)
+    if ab and not _dump_current(ab, res): ab = None     # fix 2: a stale dump is not used (CONFLICT 'input stale', exit 2)
     scene = ab
     parts_of = {}
     if ab:
@@ -609,13 +635,16 @@ def plausibility(F, TR, rep, log):
                     L.append(('rest', 'walkway', Polygon([c + s1 * pr['hl'] * u + s2 * pr['hw'] * v for s1, s2 in ((-1, -1), (1, -1), (1, 1), (-1, 1))]), y01))
                 elif pr['part'] == 'rotunda':
                     L.append(('rest', 'drum', Point(pr['c']).buffer(float(pr.get('round') or pr['hl']), 16), y01))
+                elif pr['part'] == 'pedestal':   # fix 2 (the round-5 verifier, integ-4): the rotunda column (scene2d.json carried it)
+                    L.append(('rest', 'pedestal', Point(pr['c']).buffer(float(pr.get('round') or pr['hl']), 16), y01))
             parts_of[(b['stand'], b['gate'], str(b['door']))] = (L, [b['walk'][0][0], b['walk'][0][2]] if b.get('walk') else None)
-        res['stats']['bridge_solids'] = '%s (generated %s; %d bridges, rest-pose fixed walkway segments + rotunda drums)' % (os.path.relpath(ab, ROOT), AB.get('generated'), len(AB['bridges']))
+        res['stats']['bridge_solids'] = '%s (generated %s; %d bridges, rest-pose fixed walkway segments + rotunda drums + pedestals (%d))' % (
+            os.path.relpath(ab, ROOT), AB.get('generated'), len(AB['bridges']), sum(1 for b in AB['bridges'] for pr in b.get('rest', []) if pr['part'] == 'pedestal'))
         sc2 = os.path.join(ROOT, 'out', 'draw', 'scene2d.json')
         if os.path.exists(sc2):   # informational: how far the old scene2d.json solids are from the current ones
             try: _scene_currency(json.load(open(sc2)), res, as_note=True)
             except (OSError, ValueError, KeyError) as ex: INPUTS_SEEN['bridge solids currency'] = dict(error=str(ex))
-    else: res['stats']['bridge_solids'] = 'MISSING tools/blender/app_bridges.json - walkway / drum tests not run (input-missing CONFLICT)'
+    else: res['stats']['bridge_solids'] = 'MISSING or STALE tools/blender/app_bridges.json - walkway / drum / pedestal tests not run (input CONFLICT)'
     def clip_plan(T, y0, y1):
         """plan polygons of the triangles T clipped to y0 <= y <= y1 (vertical pieces as 5-cm strips)"""
         out = []
@@ -659,7 +688,7 @@ def plausibility(F, TR, rep, log):
                     T = TR['_lods'].get((g, u, l))
                     if T is None or not len(T): continue
                     lo, hi = T[:, :, [0, 2]].min(1), T[:, :, [0, 2]].max(1); ylo, yhi = T[:, :, 1].min(1), T[:, :, 1].max(1)
-                    worst = {'walkway': (0.0, None, 0.0), 'drum': (0.0, None, 0.0)}
+                    worst = {'walkway': (0.0, None, 0.0), 'drum': (0.0, None, 0.0), 'pedestal': (0.0, None, 0.0)}
                     for pk, kind, hull, (y0, y1) in PL:
                         x0, z0, x1, z1 = hull.bounds
                         m = (hi[:, 0] > x0) & (lo[:, 0] < x1) & (hi[:, 1] > z0) & (lo[:, 1] < z1) & (yhi > y0 + 0.02) & (ylo < y1 - 0.02)
@@ -673,14 +702,17 @@ def plausibility(F, TR, rep, log):
                         else: dep = 0.0
                         if a > worst[kind][0]: worst[kind] = (a, pk, dep)
                     rec = dict(stand=s['name'], gate=b['gate'], door=b['door'], group=g, unit=u, lod=l, walkway_m2=round(worst['walkway'][0], 2), walkway_pose=worst['walkway'][1], walkway_depth_m=round(worst['walkway'][2], 2),
-                               drum_m2=round(worst['drum'][0], 2), drum_pose=worst['drum'][1], drum_depth_m=round(worst['drum'][2], 2))
+                               drum_m2=round(worst['drum'][0], 2), drum_pose=worst['drum'][1], drum_depth_m=round(worst['drum'][2], 2),
+                               pedestal_m2=round(worst['pedestal'][0], 2), pedestal_depth_m=round(worst['pedestal'][2], 2))
                     wd.append(rec)
                     # CONFLICT: > 0.3 m2 of surface inside and deeper than 0.10 m (a wall that only touches the outline is a
                     # contact, e.g. the domestic door surrounds meet the drums by design); NOTE: > 0.3 m2 at <= 0.10 m
-                    for kind, lab in (('walkway', 'fixed walkway: host building surfaces inside it (beyond the facade crossing)'), ('drum', 'rotunda drum: host building surfaces inside it')):
+                    for kind, lab in (('walkway', 'fixed walkway: host building surfaces inside it (beyond the facade crossing)'), ('drum', 'rotunda drum: host building surfaces inside it'),
+                                      ('pedestal', 'rotunda pedestal: host building surfaces inside it')):
                         a, pk, dep = worst[kind]
                         if a > 0.3: res['conflicts' if dep > 0.10 else 'notes'].append(dict(check=lab, stand=s['name'], gate=b['gate'], door=b['door'], group=g, unit=u, lod=l, pose=pk, overlap_m2=round(a, 2), depth_m=round(dep, 2)))
-    res['stats']['walkway_drum_vs_host'] = sorted([w for w in wd if w['walkway_m2'] > 0.05 or w['drum_m2'] > 0.05], key=lambda w: -(w['walkway_m2'] + w['drum_m2']))[:60]
+    res['stats']['walkway_drum_vs_host'] = sorted([w for w in wd if w['walkway_m2'] > 0.05 or w['drum_m2'] > 0.05 or w['pedestal_m2'] > 0.05],
+                                                  key=lambda w: -(w['walkway_m2'] + w['drum_m2'] + w['pedestal_m2']))[:60]
     res['stats']['walkway_drum_tests'] = len(wd)
     res['stats']['walkway_drum_geom_py_fallback'] = n_fallback   # bridges not in the dump (tools/stands/geom.py bridge_parts)
     # c. taxiways
@@ -1254,7 +1286,7 @@ def main(argv):
     for n in res['notes']: log('  note ' + json.dumps(n))
     log('  nearest aircraft envelopes: ' + json.dumps(res['stats']['nearest_envelopes']))
     log('  nearest taxiway centrelines: ' + json.dumps(dict(list(res['stats']['taxiway_centreline_min_m'].items())[:8])))
-    missing = [c for c in res['conflicts'] if c['check'].startswith('input missing') or c['check'].startswith('input unreadable')]
+    missing = [c for c in res['conflicts'] if c['check'].startswith('input missing') or c['check'].startswith('input unreadable') or c['check'].startswith('input stale: app_bridges')]
     if check_only:
         open(os.path.join(OUTD, 'integration_check.txt'), 'w').write('\n'.join(lines) + '\n')
         return 2 if missing else (1 if res['conflicts'] else 0)

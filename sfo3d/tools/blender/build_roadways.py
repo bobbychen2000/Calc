@@ -870,7 +870,18 @@ STEP_TOL = 0.30       # m: two decks whose tops are within this of each other wh
                       # parapet on both (a median barrier). Close-out r4: the pair used to count as one carriageway when the
                       # median step over their whole contact was < 1 m, so steps of 0.3-5.9 m were left open over ~880 m of
                       # edge (the verifier's unguarded 0.44-0.63 m step in interchange_2_2) [inf: the verifier's +-0.3 m rule]
-INNER_GAP = {0: 0.08, 1: 0.40, 2: 1.05}   # m per LOD: a neighbour this close continues the deck (the LOD's simplification + 0.05)
+LOD_SIMPLIFY = {0: 0.05, 1: 0.05, 2: 1.0}  # m per LOD: the deck outlines' simplification [model]. Close-out r5 fix 2 (the round-5
+                             # verifier, integ-1/2 at LOD1: 174.6 m of LOD1 soffit edge open into a hollow): LOD1 was simplified by
+                             # 0.35 m PER PIECE, so neighbouring decks no longer met - see-through slits up to ~0.4 m at the joints, in
+                             # the tops as in the soffits (the under-joint probes cannot close a plan gap). LOD1 now keeps the LOD0
+                             # outline (it still saves on the 16-m triangulation, the single-quad parapets and the 6-sided columns):
+                             # offline on the fix-2 pieces open into a hollow 172.1 -> 7.8 m, LOD1 tris +5.8k (f2/rw uj_l1x)
+INNER_GAP = {0: 0.08, 1: 0.08, 2: 1.05}   # m per LOD: a neighbour this close continues the deck (the LOD's simplification + 0.05)
+UJ_TOP_TOL = STEP_TOL + 0.1   # m: an under-joint abutter's top at the probe point is within this of this deck's top (a deck passing
+                              # underneath is >= DECK_DEPTH + CLEAR_MIN ~ 5.8 m off) [model]
+UJ_PROBE = {0: (0.06, INNER_GAP[0] + 0.06), 1: (0.06, INNER_GAP[1] + 0.06)}   # m: the under-joint probes into the neighbour per LOD
+                             # (only pieces that really abut at deck level are taken, see build_piece; with the LOD0 outline at LOD1
+                             # the LOD1 joints are the LOD0 ones) [model]
 RUN_MIN, ACROSS, SHORT_DH = 2.0, 0.6, 1.0   # m: an outer chain shorter than RUN_MIN with a deck within SHORT_DH of its level
                              # ACROSS m beyond its middle and both ends is the side of a slit, or where the step between two
                              # decks crosses STEP_TOL: its face only (no parapet 'finger' in the lane) [inf]
@@ -930,7 +941,7 @@ def _bottoms(p, lod):
     cached (close-out round 5: the joint closures under the decks)"""
     c = p.setdefault('_bot', {})
     if lod in c: return c[lod]
-    geom = p['geom'].simplify({0: 0.05, 1: 0.35, 2: 1.0}[lod])
+    geom = p['geom'].simplify(LOD_SIMPLIFY[lod])
     V, I = tri_polys(geom, {0: 6.0, 1: 16.0, 2: 30.0}[lod]) if not geom.is_empty else (np.zeros((0, 2)), np.zeros((0, 3), int))
     if not len(I): c[lod] = None; return None
     h = hb(p, V); sof = (h >= FILL_H)[I].any(1)
@@ -939,7 +950,7 @@ def _bottoms(p, lod):
 
 
 def build_piece(mb, p, P_all, lod, mat_deck, top=True):
-    geom = p['geom'].simplify({0: 0.05, 1: 0.35, 2: 1.0}[lod])
+    geom = p['geom'].simplify(LOD_SIMPLIFY[lod])
     if geom.is_empty: return
     SEG = {0: 6.0, 1: 16.0, 2: 30.0}[lod]
     V, I = tri_polys(geom, SEG)
@@ -1046,38 +1057,53 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
                     if q_['id'] != p['id'] and lod < 2:
                         # probes 5 % in from the run's ends (at the ends themselves a polygon corner puts the probe outside both
                         # decks: c5 dev g2, 1,368 m unresolved), 0.06 m into this deck and 0.06 / INNER_GAP + 0.06 m into the
-                        # neighbour (it may stand off by up to INNER_GAP: c5 dev g1 closed only 9.2 of the 16.5 m)
+                        # neighbour (it may stand off by up to INNER_GAP: c5 dev g1 closed only 9.2 of the 16.5 m); UJ_PROBE
                         Xe = np.array([a + 0.05 * (b - a), b - 0.05 * (b - a)])
                         X2 = Xe - 0.06 * N2[k]
-                        Tp, Tq = _bottoms(p, lod), _bottoms(q_, lod)
-                        if Tp is not None and Tq is not None:
-                            bp_ = tri_lookup(Tp[0], Tp[1], X2); bq_ = np.full(2, np.nan)
-                            for off in (0.06, INNER_GAP[lod] + 0.06):
-                                bq_ = np.where(np.isnan(bq_), tri_lookup(Tq[0], Tq[1], Xe + off * N2[k]), bq_)
+                        Tp = _bottoms(p, lod)
+                        if Tp is not None:
+                            bp_ = tri_lookup(Tp[0], Tp[1], X2); hp_ = hb(p, Xe); bq_ = np.full(2, np.nan)
+                            # c5 fix round 2 (the round-5 verifier's MAJOR: under-joint 'closures' 6-14 m tall standing in and through
+                            # the carriageways under interchange_2_2 / itb_departures). The fix-1 fallback took, for a probe the run's
+                            # neighbour left unresolved, the underside of ANY other piece near the deck at the probe point - a deck
+                            # passing underneath, or an at-grade road under a flyover - and built a wall from it up to this soffit.
+                            # Now a piece (the run's neighbour first, then the other pieces whose edge the run's far end can abut)
+                            # closes the joint only where it REALLY abuts at deck level: at the probe point its TOP is within
+                            # UJ_TOP_TOL of this deck's top (STEP_TOL + 0.1: the probes sit 5 % in from the run ends, where a step
+                            # that edge_runs found < STEP_TOL may have grown a little), and its underside is within DECK_DEPTH + STEP_TOL below this deck's soffit
+                            # (a deck of the same carriageway) or it is grade under an all-fill deck whose top is below FILL_H (the
+                            # cross-piece fill joint). A probe nothing qualifies for stays unresolved (counted) - no face
+                            for cand in [q_] + [q2 for q2 in nbrs + own if q2 is not q_ and q2['id'] != p['id']]:
                                 if not np.isnan(bq_).any(): break
-                            if np.isnan(bq_).any():
-                                # c5 fix-round check (the last cross-piece fill joint, (-1607.7, 459.1), 4.4 m still open): edge_runs
-                                # gives one neighbour per run, but a run's far end can abut ANOTHER piece (deck 35157100's 4.4-m run
-                                # against ramp 735035451 ends on ramp 735035452, 0.92 m from the first): an unresolved probe takes
-                                # the underside of the first other neighbour that has one at the probe point
-                                for q2 in nbrs + own:
-                                    if q2 is q_ or q2['id'] == p['id'] or not np.isnan(bq_).any(): continue
-                                    T2_ = _bottoms(q2, lod)
-                                    if T2_ is None: continue
-                                    for off in (0.06, INNER_GAP[lod] + 0.06):
-                                        b2 = tri_lookup(T2_[0], T2_[1], Xe + off * N2[k])
-                                        bq_ = np.where(np.isnan(bq_), b2, bq_)
+                                Tc = _bottoms(cand, lod)
+                                if Tc is None: continue
+                                for off in UJ_PROBE[lod]:
+                                    X3 = Xe + off * N2[k]
+                                    b3 = tri_lookup(Tc[0], Tc[1], X3)
+                                    if np.isnan(b3).all(): continue
+                                    h3 = hb(cand, X3)
+                                    ok = (~np.isnan(b3)) & (np.abs(h3 - hp_) <= UJ_TOP_TOL) & (
+                                        (bp_ - b3 <= RN.DECK_DEPTH + STEP_TOL) | ((b3 < 0.05) & (h3 < FILL_H)))
+                                    bq_ = np.where(np.isnan(bq_) & ok, b3, bq_)
+                                    if not np.isnan(bq_).any(): break
                             if (np.isnan(bp_).any() or np.isnan(bq_).any()) and lod == 0:
                                 st['under_joint_unresolved_m'] = st.get('under_joint_unresolved_m', 0.0) + L
                             elif not (np.isnan(bp_).any() or np.isnan(bq_).any()) and (bp_ > 0.05).all() and (bp_ - bq_ > 0.02).any():
                                 ya, yb = min(bq_[0], bp_[0]), min(bq_[1], bp_[1])
-                                quad(np.array([[a[0], GROUND_Y + ya, a[1]], [b[0], GROUND_Y + yb, b[1]], [b[0], GROUND_Y + bp_[1], b[1]], [a[0], GROUND_Y + bp_[0], a[1]]]),
-                                     -nrm, L, ya, yb, bp_[0], bp_[1])
-                                if lod == 0:
-                                    st['under_joint_m'] = st.get('under_joint_m', 0.0) + L
-                                    if (bq_ < 0.05).any(): st['under_joint_to_grade_m'] = st.get('under_joint_to_grade_m', 0.0) + L
-                        elif lod == 0 and Tp is not None:
-                            st['under_joint_unresolved_m'] = st.get('under_joint_unresolved_m', 0.0) + L
+                                # the cap (fix round 2): a closure is at most DECK_DEPTH + STEP_TOL tall unless it goes to grade
+                                # under a fill deck (the acceptance rule above already bounds it; this is the hard stop)
+                                if max(bp_[0] - ya, bp_[1] - yb) > RN.DECK_DEPTH + STEP_TOL + 1e-6 and not (min(ya, yb) < 0.05 and max(bp_) < FILL_H + STEP_TOL):
+                                    if lod == 0: st['under_joint_capped_m'] = st.get('under_joint_capped_m', 0.0) + L
+                                else:
+                                    quad(np.array([[a[0], GROUND_Y + ya, a[1]], [b[0], GROUND_Y + yb, b[1]], [b[0], GROUND_Y + bp_[1], b[1]], [a[0], GROUND_Y + bp_[0], a[1]]]),
+                                         -nrm, L, ya, yb, bp_[0], bp_[1])
+                                    if lod == 0:
+                                        st['under_joint_m'] = st.get('under_joint_m', 0.0) + L
+                                        if (bq_ < 0.05).any(): st['under_joint_to_grade_m'] = st.get('under_joint_to_grade_m', 0.0) + L
+                                    else:
+                                        st['under_joint_lod1_m'] = st.get('under_joint_lod1_m', 0.0) + L
+                            elif lod == 1 and (np.isnan(bp_).any() or np.isnan(bq_).any()):
+                                st['under_joint_unresolved_lod1_m'] = st.get('under_joint_unresolved_lod1_m', 0.0) + L
                     if max(da, db) > 0.02:
                         if lod == 0:   # fix round 2: the step faces by height (the verifier's ledges inside a carriageway; the ITB lower sidewalk's kerb apart)
                             hk = max(da, db); bn = '0.02-0.05' if hk <= 0.05 else '0.05-0.10' if hk < 0.1 else '0.10-0.20' if hk < 0.2 else '0.20-0.30' if hk <= STEP_TOL + 0.01 else '>0.30'
@@ -1223,7 +1249,7 @@ def build_plate_top(mb, p, lod, mats):
     the curb ramps) and plain asphalt on the rest of the plate; travel is towards -u on all three roadways (OSM node
     order of 38853045 / 38853121 / 41015123), so the right of travel is +v (the kerb side)"""
     M = p['M']; C, du, dv = np.array(M['frame']['centre']), np.array(M['frame']['du']), np.array(M['frame']['dv'])
-    geom = p['geom'].simplify({0: 0.05, 1: 0.35, 2: 1.0}[lod])
+    geom = p['geom'].simplify(LOD_SIMPLIFY[lod])
     if geom.is_empty: return
     s0, s1 = M['straight']; seg = {0: 6.0, 1: 16.0, 2: 30.0}[lod]
     def W(uv): return Polygon(RP.xz_of(np.asarray(uv), C, du, dv))
@@ -1512,6 +1538,66 @@ def soffit_check(mb, log, lod=0):
     log('soffit closure (self-check, close-out r5; LOD%d): boundary %.0f m - closed by a face %.1f m, soffit continues %.1f m, open into a hollow %.1f m, '
         'open other %.1f m; largest open-into-hollow %s' % (lod, res['boundary_m'], R['face'], R['soffit_continues'], R['open_into_hollow'], R['open_other'],
                                                              res['open_into_hollow_top'][:3]))
+    return res
+
+
+SOFFIT_GATE_M = {0: 5.0, 1: 12.0}   # m of LOD0 / LOD1 soffit edge open into a hollow allowed (close-out r5 fix 2: offline LOD0 2.8 m,
+                                    # LOD1 7.8 m with the LOD0 outlines at LOD1 - r4 / fix 1 LOD1 544.8 / 174.6 m) [our gate]
+THRU_RISE = RN.DECK_DEPTH + PARAPET_H   # m: the most a roadway edge element (a fascia + its parapet) can rise above a neighbouring deck
+                             # top; a vertical face that a deck / walk top passes through AND that rises more than this above that top is
+                             # a WALL standing in the carriageway (gate 0; the round-5 verifier's major: under-joint 'closures' 6-14 m
+                             # tall). Faces up to it are the deferred ledge family (a fascia / parapet / step face that a neighbouring
+                             # deck's top cuts near its foot at a joint: r4 LOD0 1,839 faces rising <= 1.4 m, LOD1 34 <= 1.6 m) [our gate]
+THRU_LEDGE_MAX = {0: 1950, 1: 10}   # faces: the ledge family's regression ceiling per LOD (by this rule: r4 / fix 1 LOD0 1,839 / 1,850,
+                                    # LOD1 34 / 51; fix 2 offline 1,839 / 3, the LOD1 outlines as LOD0) [our gate]
+
+
+def thru_check(mb, log, lod=0):
+    """close-out r5 fix-2 self-check (the round-5 verifier's major, its thrudeck.py rule): every vertical concrete face (|n.y| <
+    0.15, > 1e-5 m2, >= 0.25 m tall) sampled on a 6 x 6 barycentric grid; a deck / walk top (deck_*, sidewalk, planter, island,
+    facing up) passes THROUGH it when its height at a sample strictly inside the top triangle lies > 0.1 m above the face's
+    bottom and > 0.1 m below its top. WALLS (the face rises more than THRU_RISE above such a top): gate 0 at LOD0 and LOD1; the
+    rest is the deferred ledge family, reported with a regression ceiling (THRU_LEDGE_MAX)"""
+    VER, U, TOP = [], [], []
+    for (u, mat), T in _mesh_tris(mb, lod, lambda m: True).items():
+        n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); a = np.linalg.norm(n, axis=1) / 2; up = n[:, 1] / (2 * a + 1e-12)
+        if mat == 'concrete':
+            s = (np.abs(up) < 0.15) & (a > 1e-5); VER.append(T[s]); U += [u] * int(s.sum())
+        if mat.startswith('deck') or mat in ('sidewalk', 'planter', 'island'): TOP.append(T[(up > 0.5) & (a > 1e-5)])
+    if not VER or not TOP: return dict(faces_through=0, walls=0)
+    VER, TOP, U = np.concatenate(VER), np.concatenate(TOP), np.array(U)
+    lo, hi = VER[:, :, 1].min(1), VER[:, :, 1].max(1); k = np.nonzero(hi - lo >= 0.25)[0]
+    bc = np.array([(a_, b_) for a_ in np.linspace(0.05, 0.9, 6) for b_ in np.linspace(0.05, 0.9, 6) if a_ + b_ < 0.95])
+    Vk = VER[k]
+    S = (bc[None, :, 0, None] * Vk[:, None, 0] + bc[None, :, 1, None] * Vk[:, None, 1] + (1 - bc.sum(1))[None, :, None] * Vk[:, None, 2])   # (n, m, 3)
+    m = S.shape[1]; Sf = S.reshape(-1, 3)
+    tree = shapely.STRtree([Polygon(t[:, [0, 2]]) for t in TOP])
+    ip, it = tree.query(shapely.points(Sf[:, [0, 2]]), predicate='intersects')
+    q = TOP[it]; v0 = q[:, 0, [0, 2]]; d1 = q[:, 1, [0, 2]] - v0; d2 = q[:, 2, [0, 2]] - v0; w = Sf[ip][:, [0, 2]] - v0
+    det = d1[:, 0] * d2[:, 1] - d1[:, 1] * d2[:, 0]; okd = np.abs(det) > 1e-12; det = np.where(okd, det, 1.0)
+    uu = (w[:, 0] * d2[:, 1] - w[:, 1] * d2[:, 0]) / det; vv = (d1[:, 0] * w[:, 1] - d1[:, 1] * w[:, 0]) / det
+    h = q[:, 0, 1] + uu * (q[:, 1, 1] - q[:, 0, 1]) + vv * (q[:, 2, 1] - q[:, 0, 1])
+    fi = k[ip // m]
+    hit = okd & (uu > 0.01) & (vv > 0.01) & (uu + vv < 0.99) & (h > lo[fi] + 0.1) & (h < hi[fi] - 0.1)
+    rise = np.full(len(VER), -1.0); np.maximum.at(rise, fi[hit], hi[fi[hit]] - h[hit])
+    foot = np.zeros(len(VER)); np.maximum.at(foot, fi[hit], h[hit] - lo[fi[hit]])
+    bad = np.nonzero(rise >= 0)[0]; walls = bad[rise[bad] > THRU_RISE]
+    sites = []
+    for i in walls[np.argsort(-(hi[walls] - lo[walls]))]:
+        c = VER[i].mean(0)
+        if any(math.hypot(c[0] - s['at'][0], c[2] - s['at'][1]) < 3 for s in sites): continue
+        sites.append(dict(unit=str(U[i]), at=[round(float(c[0]), 1), round(float(c[2]), 1)], face_m=[round(float(lo[i]) - GROUND_Y, 2), round(float(hi[i]) - GROUND_Y, 2)],
+                          top_above_foot_m=round(float(foot[i]), 2), rise_above_top_m=round(float(rise[i]), 2)))
+        if len(sites) >= 12: break
+    ledge = int(len(bad) - len(walls))
+    res = dict(rule='LOD%d vertical concrete faces (>= 0.25 m tall, 6 x 6 barycentric samples) that a deck / walk top passes through (> 0.1 m above the '
+                    'face bottom and > 0.1 m below its top; the round-5 verifier\'s thrudeck rule); walls = the face rises > %.2f m above that top' % (lod, THRU_RISE),
+               faces_through=int(len(bad)), walls=int(len(walls)), wall_area_m2=round(float(sum(0.5 * np.linalg.norm(np.cross(VER[i, 1] - VER[i, 0], VER[i, 2] - VER[i, 0])) for i in walls)), 1),
+               wall_sites=sites, ledge_family=ledge, ledge_ceiling=THRU_LEDGE_MAX.get(lod),
+               gate='ok' if (len(walls) == 0 and ledge <= THRU_LEDGE_MAX.get(lod, 1e9)) else 'FAIL')
+    log('%sthrough-deck faces (self-check, close-out r5 fix 2; LOD%d): %d faces a deck / walk top passes through - walls (rising > %.2f m above the top) %d '
+        '(%.1f m2; gate 0) %s, ledge family %d (ceiling %s)' % ('' if res['gate'] == 'ok' else 'WARNING GATE FAIL ', lod, len(bad), THRU_RISE, len(walls),
+                                                                res['wall_area_m2'], sites[:3], ledge, THRU_LEDGE_MAX.get(lod)))
     return res
 
 
@@ -1962,13 +2048,20 @@ def main(argv):
     gchk = grade_check(mb, log)
     cchk = column_soffit_check(mb, cols, log)
     schk = soffit_check(mb, log)
+    schk1 = soffit_check(mb, log, lod=1)        # close-out r5 fix 2: LOD1 too (shown 400-1,400 m; the verifier's integ-1/2 LOD1 residual)
+    if schk1.get('open_into_hollow_m', 0.0) > SOFFIT_GATE_M[1] or schk.get('open_into_hollow_m', 0.0) > SOFFIT_GATE_M[0]:
+        log('WARNING GATE FAIL soffit closure: open into a hollow LOD0 %.1f m (gate %.1f), LOD1 %.1f m (gate %.1f)' % (schk.get('open_into_hollow_m', 0.0), SOFFIT_GATE_M[0],
+                                                                                                      schk1.get('open_into_hollow_m', 0.0), SOFFIT_GATE_M[1]))
+    schk['gate_m'] = SOFFIT_GATE_M[0]; schk1['gate_m'] = SOFFIT_GATE_M[1]
+    tchk = {l: thru_check(mb, log, l) for l in (0, 1)}
     # close-out r4 self-check (dev build d9 lost two whole decks in a failed merge): pieces without deck although their
     # ribbon is large - every one is listed with the reason the trim gave it (asset / enclosure / stacked cuts)
     empty = [dict(id=p['id'], src=p['src'], rib_m2=round(p['rib'].area, 1), cut_by=p.get('cut_by'), stacked_cut_by=p.get('stacked_cut_by')) for p in P
              if p['src'] in ('deck', 'ramp') and p['geom'].area < 1.0 and p['rib'].area > 20.0]
     log('pieces with no deck left (ribbon > 20 m2): %s' % (empty or 'none'))
     edge = {k: round(sum(p.get('edge_stats', {}).get(k, 0.0) for p in P), 1) for k in ('parapet_m', 'step_face_m', 'slit_runs_dropped_m', 'abutment_m',
-                                                                                     'under_joint_m', 'under_joint_to_grade_m', 'under_joint_unresolved_m')}
+                                                                                     'under_joint_m', 'under_joint_to_grade_m', 'under_joint_unresolved_m',
+                                                                                     'under_joint_capped_m', 'under_joint_lod1_m', 'under_joint_unresolved_lod1_m')}
     edge['step_face_by_height_m'] = {b: round(sum(p.get('edge_stats', {}).get('step_face_bins_m', {}).get(b, 0.0) for p in P), 1) for b in ('0.02-0.05', '0.05-0.10', '0.10-0.20', '0.20-0.30', 'walk_kerb')}
     sites = sorted([x for p in P if p['src'] != 'walk' for x in p.get('edge_stats', {}).get('step_face_sites', []) if x[3] != 'itb_lower_walk'], key=lambda x: -x[0] * x[1])
     edge['step_face_top'] = [dict(h_m=x[0], len_m=x[1], at=x[2], neighbour=x[3], connected=x[4]) for x in sites[:15]]
@@ -1987,6 +2080,16 @@ def main(argv):
                 domestic_level='%s %s' % (LV['domestic']['tag'], LV['domestic']['source']), other_levels='inf (roadways_net.py solve)', structure='inf (deck depth, parapets, columns, fill)')
     ux = {u: dict(src='inf', levels=sorted({p['anchor'] or 'solved' for p in P if p['unit'] == u}), osm_ways=sorted({p['id'] for p in P if p['unit'] == u and isinstance(p['id'], int)})[:60], plate=any(p['src'] == 'plate' for p in P if p['unit'] == u)) for u in units}
     extras = dict(asset='roadways', frame='ltp-nad83-2011', ground_y=GROUND_Y, generator='tools/blender/build_roadways.py', tags=tags)
+    # close-out r5 fix 2: the zero gates stop the build BEFORE anything is written (the fix-1 walls passed every gate then in place)
+    gfail = ['through-deck walls LOD%d: %d' % (l, tchk[l]['walls']) for l in (0, 1) if tchk[l]['walls']] + \
+            ['through-deck ledge family LOD%d: %d > %d' % (l, tchk[l]['ledge_family'], THRU_LEDGE_MAX[l]) for l in (0, 1) if tchk[l]['ledge_family'] > THRU_LEDGE_MAX[l]] + \
+            ['soffit open into a hollow LOD%d: %.1f m > %.1f' % (l, c.get('open_into_hollow_m', 0.0), SOFFIT_GATE_M[l]) for l, c in ((0, schk), (1, schk1))
+             if c.get('open_into_hollow_m', 0.0) > SOFFIT_GATE_M[l]]
+    if gfail:
+        log('GATE FAIL (nothing written%s): %s' % (' - RW_GATE_WRITE set: writing anyway' if os.environ.get('RW_GATE_WRITE') else '', '; '.join(gfail)))
+        if not os.environ.get('RW_GATE_WRITE'):
+            open(os.path.join(OUTD, 'roadways_build.log'), 'w').write('\n'.join(lines) + '\n')
+            return 3
     full = os.path.join(D3, 'roadways.glb'); l2 = os.path.join(D3, 'roadways_lod2.glb')
     nb = export(full, mb, units, (0, 1, 2), mats, rc, extras, ux)
     used2 = {m for (u, l, m), b in mb.d.items() if l == 2 and b['P']}
@@ -2006,7 +2109,8 @@ def main(argv):
                                                          note='the lower level (photo i1, close-out round 3): held level at LOWER_H on the straight; OSM layer 1, passes under the anchored departures leg past the straight')),
                  stacked=dict(solve=sol.get('stacked', []), cuts=stk_recs),
                  joint_wedges=jw, in_carriageway_parapet=pchk, pieces_without_deck=empty, edges_lod0=dict(edge, step_tol_m=STEP_TOL, inner_gap_m=INNER_GAP),
-                 blend=blend, mesh_grades=gchk, columns_vs_soffit=cchk, soffit_closure=schk,
+                 blend=blend, mesh_grades=gchk, columns_vs_soffit=cchk, soffit_closure=schk, soffit_closure_lod1=schk1,
+                 through_deck=dict(lod0=tchk[0], lod1=tchk[1]),
                  curb_gap=gapchk, curb_gap_t2=gapchk_t2, guideway_clearance=clr, guideway_pier_caps_over_decks=clr_p, deck_cut_inside_buildings_m2=body_cut, deck_left_inside_buildings_m2=body_left)
     sheet(P, cols, os.path.join(OUTD, 'roadways_plan.png'), LV, dict(pieces=len(P), columns=cst, low=len(chk['low'])))
     log('check sheet out/buildings3d/roadways_plan.png')
@@ -2084,7 +2188,16 @@ def main(argv):
                                   closeout_r5=dict(soffit_closure={k: schk.get(k) for k in ('boundary_m', 'face_m', 'soffit_continues_m', 'open_into_hollow_m', 'open_other_m')},
                                                    under_joint_m=edge.get('under_joint_m'), under_joint_to_grade_m=edge.get('under_joint_to_grade_m'),
                                                    under_joint_unresolved_m=edge.get('under_joint_unresolved_m'),
-                                                   mesh_folds=gchk.get('folds'), fold_gate=gchk.get('fold_gate'))),
+                                                   mesh_folds=gchk.get('folds'), fold_gate=gchk.get('fold_gate'),
+                                                   fix_round_2=dict(rule='under-joint closures only against a piece that abuts at deck level (top within %.2f m; underside '
+                                                                         'within the deck depth + %.2f m, or grade under an all-fill deck); LOD1 deck outlines = LOD0 (joints meet); '
+                                                                         'gates: through-deck walls 0 (LOD0 / LOD1), soffit open into a hollow <= %s m (LOD0 / LOD1)'
+                                                                         % (STEP_TOL, STEP_TOL, list(SOFFIT_GATE_M.values())),
+                                                                    soffit_closure_lod1={k: schk1.get(k) for k in ('boundary_m', 'face_m', 'soffit_continues_m', 'open_into_hollow_m', 'open_other_m')},
+                                                                    under_joint_capped_m=edge.get('under_joint_capped_m'), under_joint_lod1_m=edge.get('under_joint_lod1_m'),
+                                                                    under_joint_unresolved_lod1_m=edge.get('under_joint_unresolved_lod1_m'),
+                                                                    through_deck={'lod%d' % l: {kk: tchk[l].get(kk) for kk in ('faces_through', 'walls', 'wall_area_m2', 'ledge_family', 'ledge_ceiling', 'gate')}
+                                                                                  for l in (0, 1)}))),
                  verification=stats)
     BI.merge_manifest(entry, key='roadways')
     open(os.path.join(OUTD, 'roadways_build.log'), 'w').write('\n'.join(lines) + '\n')

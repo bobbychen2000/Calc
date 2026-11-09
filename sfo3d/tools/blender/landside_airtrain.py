@@ -48,6 +48,11 @@ PAD_W, PAD_H, PAD_OFF = 0.60, 0.12, 0.95   # concrete running pads under the rub
 #                                            track centre [obs l1 / l5 two pads + a centre guide rail; sizes inf]
 PORTAL_H = 4.2        # clear height of the AirTrain portal into Garage A above the deck: CX-100 car ~3.4 m + headroom; photo l1
 #                       shows a low opening at the track level [obs shape; height inf]
+ENV_HW = PAD_OFF + PAD_W / 2 + 0.25   # = 1.5 m: the VEHICLE envelope's half-width about a track centre line (close-out r5 fix 2, the
+#                       round-5 verifier: the keep-out cleared building faces out of the guideway STRUCTURE only - the Grand Hyatt
+#                       corner and the Garage A LOD2 station shell still stood across the running track). The car body over its
+#                       tyres on the running pads (outer pad edge PAD_OFF + PAD_W / 2 = 1.25 m) + 0.25 m body overhang and clearance
+#                       [inf: the CX-100 car width is not sourced here]; from the running surface (deck + PAD_H) to deck + PORTAL_H
 PIER_DX = 30.0        # pier spacing along the guideway [inf]; "single-column T-piers along the extension" [obs at_section]
 PIER_D = 1.8          # pier column diameter (single track) [inf]; twin decks (width > 8 m): 2.4 m [inf]
 CAP_D = 1.4           # pier cap depth below the deck [inf]
@@ -320,6 +325,35 @@ def _strip(mb, F, lev, strip_w, z_off, h, mat, top_mat=None, seg=4.0, sides=True
                 ha, hb = H(*a), H(*b)
                 mb.face([(a[0], a[1], ha + z_off), (b[0], b[1], hb + z_off), (b[0], b[1], hb + z_off + h), (a[0], a[1], ha + z_off + h)], mat,
                         [(0, 0), (1, 0), (1, 0.2), (0, 0.2)])
+
+
+def vehicle_envelope(rail_w, lev, seg=4.0):
+    """close-out r5 fix 2: the AirTrain VEHICLE envelope as a closed prism soup (n, 3, 3) in world (x, height, z): over each
+    track (the deck polygon offset BEAM_IN inwards = the track centre lines, as guide_beams) +-ENV_HW in plan - i.e. the deck
+    minus a BEAM_IN - ENV_HW edge band and minus the zone between twin tracks - from the running surface (deck + PAD_H, faces
+    down) to deck + PORTAL_H (faces up), vertical sides. The deck's clipped ends (portals into a body / the ITB) stay
+    BEAM_IN - ENV_HW short of the cut: the designed portal openings are not touched."""
+    from landside_mesh import tri_poly
+    e0 = BEAM_IN - ENV_HW
+    env = rail_w.buffer(-e0, join_style=2).difference(rail_w.buffer(-(2 * BEAM_IN - e0), join_style=2))
+    env = orient_all(shapely.segmentize(env.buffer(0), seg))
+    T = []
+    H = lambda x, z: float(lev.h(x, z))
+    for p in polys(env):
+        if p.area < 0.5: continue
+        for t in tri_poly(p):
+            hb = [H(*q) + PAD_H for q in t]; ht = [H(*q) + PORTAL_H for q in t]
+            bot = np.array([[q[0], h, q[1]] for q, h in zip(t, hb)]); top = np.array([[q[0], h, q[1]] for q, h in zip(t, ht)])
+            if np.cross(bot[1] - bot[0], bot[2] - bot[0])[1] > 0: bot = bot[::-1]
+            if np.cross(top[1] - top[0], top[2] - top[0])[1] < 0: top = top[::-1]
+            T += [bot, top]
+        for ring in rings_of(p):
+            for i in range(len(ring)):
+                a, b = ring[i], ring[(i + 1) % len(ring)]
+                if math.hypot(b[0] - a[0], b[1] - a[1]) < 1e-3: continue
+                A0 = [a[0], H(*a) + PAD_H, a[1]]; B0 = [b[0], H(*b) + PAD_H, b[1]]; A1 = [a[0], H(*a) + PORTAL_H, a[1]]; B1 = [b[0], H(*b) + PORTAL_H, b[1]]
+                T += [np.array([A0, B0, B1]), np.array([A0, B1, A1])]
+    return np.array(T) if T else np.zeros((0, 3, 3))
 
 
 def guide_beams(mb, F, poly_w, lev, seg=4.0, lod=0, rails=None):
@@ -921,6 +955,7 @@ def build(clip_world, building_outlines, Bldg, Part, dim, station_exclude=None, 
             B.anchors = dict(piers=n_p, stations=mine_st)
             tiles.append(B)
     info['tiles'] = len(tiles)
+    info['_rail_b'] = rail_b      # (close-out r5 fix 2) the built deck polygon, for the vehicle envelope; popped by landside_geom.build_all
     info['rcc_tower'] = dict(D=RCC_TOWER['D'], top=RCC_TOWER['top'], oas=RCC_TOWER['oas'], world=RCC_TOWER['world'])
     return tiles, info, lev
 

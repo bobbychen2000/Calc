@@ -8,7 +8,8 @@
 //   stand, gate, door, upper, Hb / HbTag / HbSrc (the pier level), Hr (rotunda floor), rotR, rot [x, z],
 //   walk = the app's fixed-walkway polyline [x, floor above the apron, z] (gates.js walkY: Hb at the building, Hr at
 //   the rotunda), walkLen, and the rest-pose solids of the fixed parts (gates.js solidsQ(..., fixed=true): walkway
-//   segments and the rotunda drum; lo / hi above the APRON, i.e. GROUND_Y subtracted).
+//   segments, the rotunda drum and (close-out r5 fix 2) its pedestal column; lo / hi above the APRON, i.e. GROUND_Y subtracted).
+//   Consumers that only want walkways / drums filter on `part` (dom_geom, bridge_head, verify_*, app_bridges.py).
 // It records the SHA-256 of every input so the Python side can refuse a stale dump (tools/blender/app_bridges.py).
 //
 // Usage: node tools/blender/app_bridges.mjs            -> tools/blender/app_bridges.json  (committed: the build input)
@@ -40,7 +41,7 @@ for (const g of gates) {
   for (const b of gsys.bridgesOf(g)) {
     const walk = (b.walk || []).map((p, i) => [r3(p[0]), r3(gsys.walkY(b, i)), r3(p[2])]);
     const rest = gsys.solidsQ(b, { a: b.a0, e: b.e0, t: 0, h: b.h0 }, 0, true)
-      .filter(s => s.part === 'walkway' || s.part === 'rotunda')
+      .filter(s => s.part === 'walkway' || s.part === 'rotunda' || s.part === 'pedestal')   // c5 fix 2: + the pedestal (b3d_integrate host test)
       .map(s => ({ part: s.part, seg: s.seg, c: [r3(s.c[0]), r3(s.c[1])], u: [r3(s.u[0]), r3(s.u[1])], hl: r3(s.hl), hw: r3(s.hw),
                    lo: r3(s.lo - G), hi: r3(s.hi - G), round: s.round != null ? r3(s.round) : undefined }));
     out.push({ stand: g.name, letter: (g.pier || g.letter || g.name[0]), gate: b.gate, door: b.door, upper: !!b.upper,

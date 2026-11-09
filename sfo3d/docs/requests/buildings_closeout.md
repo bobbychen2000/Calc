@@ -347,7 +347,9 @@ points, found on the b_ls4 file and fixed in b_ls5). KEEP_CLEAR 0.08 m in plan, 
 tunnels (the guideway's own lining). CONTACT rule for the Central Garage plinth (the garage structure built up to the guideway; its
 walls stand on the deck outline): no clearance, cut only beyond 0.03 m inside the footprint - its walls stood up to 2.6 m deep
 inside the deck box where the deck runs below h5 (82.8 m2 of faces inside the solid) -> 0.03 m2, all within 0.05 m of the
-outline. Also: the station block's hall back wall is holed over each block portal (deck +- PORTAL_CLEAR, the far-face lintel),
+outline [corrected in fix round 2, R5f2.2: both figures were measured with the merged-interval hull that missed the deck box under
+each parapet; by the closed-solid rule (the round-5 verifier's cgdepth2) the fix-1 plinth kept 43.4 m2 more than 0.05 m inside, up
+to 1.22 m deep]. Also: the station block's hall back wall is holed over each block portal (deck +- PORTAL_CLEAR, the far-face lintel),
 and the Garage G station vault is pulled in off its host's spandrels (`VAULT_REACH` 0.65 m, `VAULT_HOST_CLEAR` 0.33 m).
 
 | AirTrain x building, edge-triangle crossing points (the verifier's `xtri.py` rule) | round 4 | round 5 |
@@ -409,7 +411,8 @@ coarse `simplify(0.6)`), an open item.
 Traced with `bf_rays` ray dumps: every T1 / T3W / T3E first hit came from a ray entering through the ITB core block (context) into
 the halls' open junction - the walls there were hidden by the ITB occupancy (`exposed_pieces`), so the halls had no wall at the
 ITB. `World.finish` tags that occupancy; `exposed_pieces(closure=)` returns the stretches hidden ONLY by the ITB and `emit_walls`
-closes them with plain `panel_light` walls (no fins): 507.9 m2. Near-context hits LOD0 1,155 -> 87 (worst T1 37), LOD2 1,162 ->
+closes them with plain `panel_light` walls (no fins): 507.9 m2 [corrected in fix round 2, R5f2.3: ~30 % of them faced open air -
+the 2-D occupancy is larger than the itb.glb core; now plain only where the ITB 3-D core covers them]. Near-context hits LOD0 1,155 -> 87 (worst T1 37), LOD2 1,162 ->
 86. The per-node residuals are dropped; one merged-node residual stays (`L2_domestic` 88 = 83 x 1.05), per-node limit 60.
 verify_domestic 67 -> 69 checks, 0 failed; verify_domestic_r2 n_fail 0.
 
@@ -424,7 +427,7 @@ tests re-dump the bridges first (`node tools/blender/app_bridges.mjs <out>`).
 ### R5.6 Integration: re-run after the round-5 rebuilds
 
 Order as R4.4, final run after b_ls5 (`c5/buildings/final2/chain2.sh`). Plan changes for the integration: landside faces cut back
-from the guideway (no footprint change beyond 0.1 m); domestic junction walls inside the ITB core outline; ITB door members fewer
+from the guideway (no footprint change beyond 0.1 m); domestic junction walls inside the ITB core outline [2-D outline: see R5f2.3]; ITB door members fewer
 (no footprint change). Results (final run 05:12-05:22Z; before = the round-4
 chain): `b3d_integrate` 7 conflicts / 15 notes - the conflict and note lines identical to round 4's report plus one informational
 note (the old scene2d.json is stale; the walkway / drum tests now read the tracked `tools/blender/app_bridges.json`, see

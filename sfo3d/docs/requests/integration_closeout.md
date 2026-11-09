@@ -357,7 +357,8 @@ or grade under an all-fill neighbour - the cross-piece fill case) up to this dec
 The undersides come from `_bottoms()` (each piece's own plan triangulation and per-corner soffit / grade, cached per LOD), probed
 5 % in from the run ends, 0.06 m into this deck and 0.06 / INNER_GAP + 0.06 m into the neighbour (a neighbour may stand off by up
 to INNER_GAP: the first dev build closed only 9.2 of the 16.5 m of cross-piece joints). A probe that still finds no underside takes
-the first OTHER neighbour's at that point (edge_runs gives one neighbour per run; deck 35157100's 4.4-m run at (-1607.7, 459.1)
+the first OTHER neighbour's at that point [superseded in fix round 2, R5f2.1: without an abutment test this fallback took decks
+passing underneath and at-grade roads under flyovers - 6-14 m walls through the carriageways; now only pieces that abut at deck level] (edge_runs gives one neighbour per run; deck 35157100's 4.4-m run at (-1607.7, 459.1)
 starts on ramp 735035451 and ends on ramp 735035452, 0.92 m from the first: the last cross-piece fill joint the 04:47 build left
 open). New build self-check `soffit_check()` (the verifier's soffit_close rule: every LOD0 soffit boundary edge every 0.5 m,
 closed by a vertical face spanning it or a continuing soffit) -> `roadways_build.json#stats.soffit_closure` and
@@ -436,7 +437,7 @@ the main deck's level (`roadways_net`) stays deferred, now with the mesh-grade a
 | residual | status | evidence |
 |---|---|---|
 | 1 f3 ledges + their soffits open underneath | partly | R5.1: underneath closed (see-through soffit edge 330.4 -> 2.8 m); the deck-top ledges (239.2 m) deferred to a junction surface |
-| 2 cross-piece fill joints without an abutment | fixed | R5.1: 16.5 -> 0 m at the verifier's sites; self-check `soffit_closure` |
+| 2 cross-piece fill joints without an abutment | fixed | R5.1: 16.5 -> 0 m at the verifier's sites; self-check `soffit_closure` [LOD0 only - LOD1 174.6 m stayed open; closed in fix round 2, R5f2.2] |
 | 3 creases at the wedges | deferred | R5.2: trial reverted with evidence (79 % slivers); fold gate added |
 | 4 b3d_integrate silent on missing out/ files | fixed | R5.3: input-missing CONFLICT + exit 2 + refuse to write; bridge solids from the tracked dump |
 | 5 R4.1 bullet pointer | fixed | R5.4 |

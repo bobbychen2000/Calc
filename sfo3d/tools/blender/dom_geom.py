@@ -728,6 +728,55 @@ def exposed_pieces(W, s, a, b, lo, hi, closure=None):
 
 IBF_L = loc(TOWER_EXCL)   # the tower base building outline (local)
 JUNCTION_M2 = [0.0]       # build counter: closing wall area at the ITB junction (close-out round 5)
+JUNCTION_EXPOSED_M2 = [0.0]   # fix 2: of it, the stretches the ITB 3-D core does NOT cover (given the hall's facade bands)
+# close-out r5 fix 2 (the round-5 verifier, bldg-6: ~30 % of the r5 junction walls, 152 m2, faced open air - the 2-D ITB occupancy
+# that hid them is larger than the itb.glb core at those heights - as plain panel walls without the hall's fins / glazing): a junction
+# stretch is CLOSED with a plain wall only where the ITB's own LOD0 geometry HIDES it from outside: a horizontal ray along the wall's
+# outward normal meets an itb.glb LOD0 triangle that FACES a viewer out there (normal along the ray; a back-to-back ITB wall facing
+# into the hall is culled from outside and hides nothing - the T1 stretches the first fix-2 rule (any triangle within 1 m) kept
+# plain) within ITB_COVER_D (the round-5 verifier's 120-m rays); elsewhere it is EXPOSED and gets the hall's facade bands (glazing;
+# the mullion fins only where no ITB triangle stands within ITB_FIN_CLEAR in front, so a fin does not pierce a back-to-back ITB
+# wall). Sampled on JUNCTION_DS cells. itb.glb is an input of the domestic build (built before it, R4.4 order); its sha1 goes into
+# the build record (ITB_INPUT) [model]
+ITB_COVER_D = 120.0
+ITB_FIN_CLEAR = 0.3
+JUNCTION_DS = 0.5
+ITB_INPUT = {}
+_ITB_T = []
+
+
+def _itb_local():
+    """itb.glb LOD0 triangles in the domestic local frame (X east from OX, Y north from OZ, Z above grade), cached"""
+    if _ITB_T: return _ITB_T[0]
+    import hashlib
+    import verify_domestic as V
+    path = os.path.join(ROOT, 'data', 'buildings3d', 'itb.glb')
+    j, b, _ = V.load_glb(path); S = V.scene_meshes(j, b)
+    T = np.concatenate([p['P'][p['T']] for n, m in S.items() if m['lod'] == 0 for p in m['prims']])
+    TL = np.stack([T[..., 0] - OX, OZ - T[..., 2], T[..., 1] - 3.0], -1)
+    ITB_INPUT.update(path='data/buildings3d/itb.glb', sha1=hashlib.sha1(open(path, 'rb').read()).hexdigest(), lod0_tris=int(len(TL)))
+    _ITB_T.append(TL)
+    return TL
+
+
+def _itb_covered(Q, d, dist=ITB_COVER_D, facing=True):
+    """per local point Q (k, 3): does a ray from Q along d (unit, horizontal) meet an itb.glb LOD0 triangle within dist - with
+    facing=True only triangles whose normal points along d (seen from a viewer beyond them, i.e. rendered: they hide Q)"""
+    T = _itb_local(); Q = np.asarray(Q, float); d = np.asarray(d, float)
+    if not len(Q): return np.zeros(0, bool)
+    lo = np.minimum(Q.min(0), (Q + d * dist).min(0)) - 0.05; hi = np.maximum(Q.max(0), (Q + d * dist).max(0)) + 0.05
+    m = ((T.max(1) >= lo) & (T.min(1) <= hi)).all(1)
+    Tc = T[m]
+    if facing and len(Tc):
+        nT = np.cross(Tc[:, 1] - Tc[:, 0], Tc[:, 2] - Tc[:, 0]); lT = np.linalg.norm(nT, axis=1)
+        Tc = Tc[(nT @ d) > 0.05 * np.maximum(lT, 1e-12)]
+    if not len(Tc): return np.zeros(len(Q), bool)
+    v0 = Tc[:, 0]; e1 = Tc[:, 1] - v0; e2 = Tc[:, 2] - v0
+    p_ = np.cross(d, e2); det = (e1 * p_).sum(1); ok = np.abs(det) > 1e-12; inv = np.where(ok, 1.0 / np.where(ok, det, 1.0), 0.0)
+    s_ = Q[:, None, :] - v0[None]; u = (s_ * p_[None]).sum(-1) * inv[None]
+    q_ = np.cross(s_, e1[None]); v = (q_ * d).sum(-1) * inv[None]; t = (q_ * e2[None]).sum(-1) * inv[None]
+    hit = ok[None] & (u >= -1e-6) & (v >= -1e-6) & (u + v <= 1 + 1e-6) & (t >= -0.01) & (t <= dist)
+    return hit.any(1)
 
 
 def emit_walls(mb, det, W, s, lod, mull_geom=True):
@@ -768,13 +817,54 @@ def emit_walls(mb, det, W, s, lod, mull_geom=True):
                 # where they abut the ITB core (its occupancy hid those walls), relying on the ITB asset's wall 0.02 m away -
                 # rays through the ITB core met the halls' far walls from inside. The junction now gets a plain panel wall (no
                 # glazing, no fins: the ITB core wall stands 0.02 m in front of it), so the domestic asset is closed on its own
+                nrm_ = ((b[1] - a[1]) / L, -(b[0] - a[0]) / L, 0.0)
                 for t0, t1, iv in junction:
-                    pa = (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0)
-                    pb = (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1)
-                    for v0, v1 in iv:
-                        if v1 - v0 < 0.02: continue
-                        mb.quad_wall(pa, pb, v0, v1, v0, v1, 'panel_light', s_acc + t0 * L, tl('panel_light'), v0=s.z0)
-                        JUNCTION_M2[0] += (t1 - t0) * L * (v1 - v0)
+                    # fix 2: per JUNCTION_DS cell along the stretch, the heights the ITB 3-D core covers (plain wall) and the rest
+                    # (the hall's bands); runs of cells with the same split are merged
+                    ncell = max(1, int(math.ceil((t1 - t0) * L / JUNCTION_DS - 1e-9)))
+                    tc = np.linspace(t0, t1, ncell + 1)
+                    runs = []
+                    for c_ in range(ncell):
+                        tm = 0.5 * (tc[c_] + tc[c_ + 1]); x_ = a[0] + (b[0] - a[0]) * tm; y_ = a[1] + (b[1] - a[1]) * tm
+                        cov = []
+                        for v0, v1 in iv:
+                            nz = max(1, int(math.ceil((v1 - v0) / JUNCTION_DS - 1e-9))); zc = np.linspace(v0, v1, nz + 1)
+                            Q = np.array([(x_ + nrm_[0] * 0.01, y_ + nrm_[1] * 0.01, 0.5 * (zc[k_] + zc[k_ + 1])) for k_ in range(nz)])
+                            hit = _itb_covered(Q, nrm_)
+                            for k_ in range(nz):
+                                if hit[k_]:
+                                    if cov and abs(cov[-1][1] - zc[k_]) < 1e-9: cov[-1] = (cov[-1][0], zc[k_ + 1])
+                                    else: cov.append((zc[k_], zc[k_ + 1]))
+                        key = tuple((round(p_, 4), round(q_, 4)) for p_, q_ in cov)
+                        if runs and runs[-1][2] == key: runs[-1][1] = tc[c_ + 1]
+                        else: runs.append([tc[c_], tc[c_ + 1], key])
+                    for r0, r1, key in runs:
+                        pa = (a[0] + (b[0] - a[0]) * r0, a[1] + (b[1] - a[1]) * r0)
+                        pb = (a[0] + (b[0] - a[0]) * r1, a[1] + (b[1] - a[1]) * r1)
+                        sa = s_acc + r0 * L
+                        for v0, v1 in key:
+                            if v1 - v0 < 0.02: continue
+                            mb.quad_wall(pa, pb, v0, v1, v0, v1, 'panel_light', sa, tl('panel_light'), v0=s.z0)
+                            JUNCTION_M2[0] += (r1 - r0) * L * (v1 - v0)
+                        exp_ = list(iv)
+                        for c in key: exp_ = _sub(exp_, c)
+                        for e0, e1 in exp_:
+                            if e1 - e0 < 0.02: continue
+                            JUNCTION_M2[0] += (r1 - r0) * L * (e1 - e0); JUNCTION_EXPOSED_M2[0] += (r1 - r0) * L * (e1 - e0)
+                            for z0, z1, mat, mod in bands:          # the hall's facade, as the main loop above
+                                z1 = head if z1 is None else min(z1, head)
+                                z0 = max(z0, s.z0)
+                                rel = s.style in ('clere_B', 'clere_E', 'drum', 'lantern', 'monitor', 'penthouse', 'vest') or st in ('clere_B', 'clere_E', 'drum', 'lantern', 'monitor', 'penthouse', 'vest')
+                                z0b, z1b = ((s.z0 if z0 <= 0.0 else z0), z1) if rel else (z0, z1)
+                                za, zb = max(z0b, e0), min(z1b, e1)
+                                if zb - za < 0.02: continue
+                                mb.quad_wall(pa, pb, za, zb, za, zb, mat, sa, tl(mat), v0=z0b)
+                                if lod == 0 and mull_geom and mat in GLASS and det is not None:
+                                    # no fin where an ITB triangle (any facing) stands within ITB_FIN_CLEAR in front
+                                    xm_, ym_ = 0.5 * (pa[0] + pb[0]), 0.5 * (pa[1] + pb[1])
+                                    Qf = np.array([(xm_ + nrm_[0] * 0.01, ym_ + nrm_[1] * 0.01, zq) for zq in np.linspace(za, zb, 4)[1:-1]])
+                                    if not _itb_covered(Qf, nrm_, ITB_FIN_CLEAR, facing=False).any():
+                                        fins(det, pa, pb, sa, za, zb, mod, s, st)
                 s_acc += L
 
 

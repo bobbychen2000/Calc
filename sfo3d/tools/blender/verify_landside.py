@@ -486,6 +486,99 @@ def run(path):
                       'runs up to 0.6 m off the LOD0 outline)', 'pts', ok=sum(xt[k]['points'] for k in ctl2) <= LG.KEEP_CONTACT_L2_MAX)
         except Exception as e:  # noqa: BLE001
             C.add('LOD%d AirTrain x building crossings' % LODX, str(e), 'error', ok=False)
+    # ---------------- close-out r5 fix 2 (the round-5 verifier: bldg-1 'partly' and the CG plinth record). (a) the AirTrain VEHICLE
+    # envelope - the verifier's trainenv2 rule, independent of the build's own envelope: the LOD0 _track nodes' footprints buffered
+    # +0.35 then -0.10 m (~ +-1.5 m about each track), from the nearest up-facing track vertex (<= 2 m away) + 0.15 to + 3.5 m (CX-100
+    # ~3.4 m); building triangles (not airtrain, not cars) sampled every 0.15 m: 0 allowed at LOD0 and LOD2. (b) building surface
+    # INSIDE the closed deck box - the verifier's cgdepth2 rule: a 0.10-m sample is inside when the first LOD0 deck surface straight
+    # above faces up and the first straight below faces down; depth = min(those two distances, plan distance to the deck outline);
+    # the area deeper than 0.05 m, every LOD0 building node, with a ceiling (LG.KEEP_INSIDE_MAX_M2) - the contact rule leaves the
+    # plinth's faces ON the deck faces (depth ~0)
+    import shapely as _sh
+    from shapely.strtree import STRtree as _STR
+
+    def _fps(T):
+        out = []
+        for t in T:
+            q = Polygon(t[:, [0, 2]])
+            if not q.is_valid or q.area < 1e-8: q = _sh.MultiPoint([tuple(p_) for p_ in t[:, [0, 2]]]).convex_hull   # (run() imports MultiPoint locally further down)
+            out.append(q)
+        return out
+
+    def _grid(t, step, kmax):
+        e1 = t[1] - t[0]; e2 = t[2] - t[0]
+        k = min(int(max(np.linalg.norm(e1), np.linalg.norm(e2), np.linalg.norm(t[2] - t[1])) / step) + 1, kmax)
+        a_, c_ = np.meshgrid(np.arange(k + 1), np.arange(k + 1)); m_ = (a_ + c_) <= k
+        return t[0] + (a_[m_] / k)[:, None] * e1 + (c_[m_] / k)[:, None] * e2
+    try:
+        from scipy.spatial import cKDTree
+        TT = np.concatenate([np.concatenate([p_['P'][p_['T']] for p_ in m['prims']]) for nm, m in S.items()
+                             if (m['bldg'] or '').startswith('airtrain') and m['lod'] == 0 and nm.endswith('_track') and m['prims']])
+        nT = np.cross(TT[:, 1] - TT[:, 0], TT[:, 2] - TT[:, 0]); lT = np.linalg.norm(nT, axis=1); upT = (nT[:, 1] / np.maximum(lT, 1e-12) > 0.9) & (lT > 1e-9)
+        EV = unary_union([g.buffer(0.35, quad_segs=2) for g in _fps(TT[lT > 1e-9])]).buffer(-0.10); _sh.prepare(EV)
+        UV = TT[upT].reshape(-1, 3); kd = cKDTree(UV[:, [0, 2]]); ex0, ez0, ex1, ez1 = EV.bounds
+        for LODX in (0, 2):
+            hits = {}
+            for nm, m in S.items():
+                if m['lod'] != LODX or (m['bldg'] or '').startswith('airtrain') or '_cars' in nm or not m['prims'] or m['inst'] is not None: continue
+                T = np.concatenate([p_['P'][p_['T']] for p_ in m['prims']]); lo_, hi_ = T.min(1), T.max(1)
+                n_ = 0; at_ = []
+                for t in T[(hi_[:, 0] >= ex0) & (lo_[:, 0] <= ex1) & (hi_[:, 2] >= ez0) & (lo_[:, 2] <= ez1)]:
+                    pts = _grid(t, 0.15, 400); ins = _sh.contains_xy(EV, pts[:, 0], pts[:, 2])
+                    if not ins.any(): continue
+                    pp = pts[ins]; d_, i_ = kd.query(pp[:, [0, 2]]); h_ = UV[i_, 1]
+                    ok_ = (d_ < 2.0) & (pp[:, 1] > h_ + 0.15) & (pp[:, 1] < h_ + 3.5)
+                    if ok_.any(): n_ += int(ok_.sum()); at_ += [(float(q_[0]), float(q_[2])) for q_ in pp[ok_][:3]]
+                if n_: hits[nm] = dict(pts=n_, at=[round(float(np.mean([a[0] for a in at_])), 1), round(float(np.mean([a[1] for a in at_])), 1)])
+            AT_X.setdefault('vehicle_envelope', {})['lod%d' % LODX] = hits
+            C.add('LOD%d buildings inside the AirTrain vehicle envelope (track +-1.5 m, running surface + 0.15 .. + 3.5 m; close-out r5 fix 2)' % LODX,
+                  float(sum(v['pts'] for v in hits.values())), 0.0, 0.0, 'the round-5 verifier\'s trainenv2 rule, 0.15-m samples; landside_airtrain.vehicle_envelope '
+                  'clips them (keep-out); over: %s' % (hits or 'none'), 'pts')
+    except Exception as e:  # noqa: BLE001
+        C.add('AirTrain vehicle envelope', str(e), 'error', ok=False)
+    try:
+        DK = np.concatenate([np.concatenate([p_['P'][p_['T']] for p_ in m['prims']]) for nm, m in S.items()
+                             if (m['bldg'] or '').startswith('airtrain') and m['lod'] == 0 and nm.endswith('_deck') and m['prims']])
+        nD = np.cross(DK[:, 1] - DK[:, 0], DK[:, 2] - DK[:, 0]); lD = np.linalg.norm(nD, axis=1); nyD = nD[:, 1] / np.maximum(lD, 1e-12)
+        kD = np.abs(nyD) > 0.05; Dn = DK[kD]; NY = nyD[kD]
+        fpsD = [Polygon(t[:, [0, 2]]) for t in Dn]; trD = _STR(fpsD)
+        FOOT = unary_union([g.buffer(0.001) for g in fpsD if g.is_valid]); _sh.prepare(FOOT); BND = FOOT.boundary; fb = FOOT.bounds
+        inside = {}
+        for nm, m in S.items():
+            if m['lod'] != 0 or (m['bldg'] or '').startswith('airtrain') or '_cars' in nm or not m['prims'] or m['inst'] is not None: continue
+            T = np.concatenate([p_['P'][p_['T']] for p_ in m['prims']])
+            T = T[(T[:, :, 0].max(1) > fb[0]) & (T[:, :, 0].min(1) < fb[2]) & (T[:, :, 2].max(1) > fb[1]) & (T[:, :, 2].min(1) < fb[3])]
+            if not len(T): continue
+            bx = _sh.box(T[:, :, 0].min(1), T[:, :, 2].min(1), T[:, :, 0].max(1), T[:, :, 2].max(1)); T = T[_sh.intersects(FOOT, bx)]
+            a5, dmax, at_ = 0.0, 0.0, None
+            for t in T:
+                A_ = 0.5 * np.linalg.norm(np.cross(t[1] - t[0], t[2] - t[0]))
+                if A_ < 1e-8: continue
+                P_ = _grid(t, 0.10, 200); nP = len(P_); P_ = P_[_sh.contains_xy(FOOT, P_[:, 0], P_[:, 2])]
+                if not len(P_): continue
+                ip, it = trD.query(_sh.points(P_[:, [0, 2]]), predicate='intersects')
+                q_ = Dn[it]; pq = P_[ip]; v0 = q_[:, 0, [0, 2]]; d1 = q_[:, 1, [0, 2]] - v0; d2 = q_[:, 2, [0, 2]] - v0; w_ = pq[:, [0, 2]] - v0
+                det = d1[:, 0] * d2[:, 1] - d1[:, 1] * d2[:, 0]; det = np.where(np.abs(det) < 1e-12, 1e-12, det)
+                u_ = (w_[:, 0] * d2[:, 1] - w_[:, 1] * d2[:, 0]) / det; vv = (d1[:, 0] * w_[:, 1] - d1[:, 1] * w_[:, 0]) / det
+                dz = q_[:, 0, 1] + u_ * (q_[:, 1, 1] - q_[:, 0, 1]) + vv * (q_[:, 2, 1] - q_[:, 0, 1]) - pq[:, 1]
+                up_d = np.full(len(P_), np.inf); up_n = np.zeros(len(P_)); dn_d = np.full(len(P_), np.inf); dn_n = np.zeros(len(P_))
+                for i_, dd, ny_ in zip(ip, dz, NY[it]):
+                    if 0 < dd < up_d[i_]: up_d[i_] = dd; up_n[i_] = ny_
+                    if dd <= 0 and -dd < dn_d[i_]: dn_d[i_] = -dd; dn_n[i_] = ny_
+                ins = (up_n > 0) & (dn_n < 0)
+                if not ins.any(): continue
+                dep = np.minimum(np.minimum(up_d[ins], dn_d[ins]), _sh.distance(BND, _sh.points(P_[ins][:, [0, 2]])))
+                k5 = dep > 0.05
+                if k5.any():
+                    a5 += A_ * float(k5.sum()) / nP
+                    if dep.max() > dmax: dmax = float(dep.max()); at_ = [round(float(P_[ins][int(dep.argmax()), 0]), 1), round(float(P_[ins][int(dep.argmax()), 2]), 1)]
+            if a5 > 0: inside[nm] = dict(m2=round(a5, 2), max_depth_m=round(dmax, 3), at=at_)
+        AT_X['inside_deck_box'] = inside
+        C.add('LOD0 building surface inside the closed AirTrain deck box > 0.05 m deep (close-out r5 fix 2; ceiling)', round(sum(v['m2'] for v in inside.values()), 2),
+              float(LG.KEEP_INSIDE_MAX_M2), None, 'the round-5 verifier\'s cgdepth2 rule (0.10-m samples; first deck surface above faces up, below faces down); '
+              'per node: %s' % (inside or 'none'), 'm2', ok=sum(v['m2'] for v in inside.values()) <= LG.KEEP_INSIDE_MAX_M2)
+    except Exception as e:  # noqa: BLE001
+        C.add('AirTrain deck box: building surface inside', str(e), 'error', ok=False)
     # ---------------- LTP 1 / 2
     k = 'ltp_garage_1'
     if k in by:
@@ -732,6 +825,8 @@ def run(path):
     plaus = {'cars': plaus_cars}
     if 0 in AT_X: plaus['airtrain_vs_buildings_lod0'] = AT_X[0]
     if 2 in AT_X: plaus['airtrain_vs_buildings_lod2'] = AT_X[2]
+    if 'vehicle_envelope' in AT_X: plaus['airtrain_vehicle_envelope'] = AT_X['vehicle_envelope']
+    if 'inside_deck_box' in AT_X: plaus['airtrain_inside_deck_box'] = AT_X['inside_deck_box']
     sys.path.insert(0, os.path.join(ROOT, 'tools', 'stands'))
     fps = {}
     for k in by:

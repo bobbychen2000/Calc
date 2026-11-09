@@ -64,6 +64,8 @@ MODULE = 2 * STALL_L + AISLE              # 18.6 m
 LANE_W, LANE_PITCH = 3.0, 5.6             # RCC ready-return lanes: 3.0 m lanes, cars nose-to-tail every 5.6 m [inf]
 TOWER_SIDE = 7.0           # stair / elevator tower at a DOF roof point: 7 x 7 m [inf]
 STATION_BLOCK_W = 12.0     # Garage A station block: solid precast faces within 12 m of the guideway strips (photo l1) [inf]
+GH_CONN_W = 3.2            # Grand Hyatt (close-out r5 fix 2): outline parts narrower than this that touch the AirTrain deck are the
+#                            connector finger (3.1 m wide in the SFO Museum outline), not the slab [model]
 GH_PODIUM_D = 17.0         # Grand Hyatt: podium depth in front of the slab along the south part (NAIP slab roof with the 13.4-m
 #                            relief shift vs the outline's east edge, ~17-20 m) [obs NAIP, approx]; r1: the slab face behind the
 #                            podium follows R1['hyatt_slab_east'] (continuous with the north part of the face, photo l4)
@@ -1298,11 +1300,17 @@ def garage_ag(k):
                         all(tw_b.distance(Point(*F.W(*seg.interpolate(f_, normalized=True).coords[0]))) < 0.6 for f_ in (0.1, 0.5, 0.9))):
                     s += Ls; continue
                 z0w = blk_top if (blk_b is not None and blk_b.distance(mid_w) < 0.6 and not on_out2) else 0.0
-                holes = []
+                holes = []; rdepth = []
                 for pa_, pb_, kind in portal2:
                     if seg.distance(pa_) < 1.0 and seg.distance(pb_) < 1.0:
                         sa_, sb_ = sorted((seg.project(pa_), seg.project(pb_)))
-                        holes.append((sa_ + 0.6, sb_ - 0.6, zt - AT.DECK_T - 0.3, zt + AT.PORTAL_H))
+                        # close-out r5 fix 2 (the round-5 verifier: the LOD2 station shell closed both tracks above the deck): the
+                        # opening as at LOD0 - the deck + PORTAL_CLEAR (pa / pb are the deck crossings + 0.2; it was the deck - 0.4) -
+                        # and where the track runs on through the station block (the east face of a garage with a block) the recess
+                        # reaches through the block to the LOD0 tunnel's end (block depth + 10 m), not 6 m (its back panel stood
+                        # across both tracks at (-1397, 541) / (-1396, 527))
+                        holes.append((max(0.05, sa_ + 0.2 - PORTAL_CLEAR), min(Ls - 0.05, sb_ - 0.2 + PORTAL_CLEAR), zt - AT.DECK_T - 0.3, zt + AT.PORTAL_H))
+                        rdepth.append(STATION_BLOCK_D + 10.0 if (kind == 'east' and blk_b is not None) else 6.0)
                 mat = 'drum_metal' if on_circle(a_, b_, F, circ, tol=2.0) else 'precast'
                 holed_wall(cm2, a_, b_, z0w, hr if mat == 'drum_metal' else hd, holes, mat, s, (6.0, 6.0))
                 if mat == 'drum_metal' and hr > hd + 0.05:
@@ -1315,9 +1323,9 @@ def garage_ag(k):
                     for z0_, z1_ in slots_z + [top_open]:
                         p0_, p1_ = np.array(a_) + nn_ * 0.05, np.array(b_) + nn_ * 0.05
                         cm2.quad_wall(tuple(p0_), tuple(p1_), z0_, z1_, z0_, z1_, 'interior', 0.0, (4.0, 4.0))
-                for (h0, h1, z0h, z1h) in holes:
+                for (h0, h1, z0h, z1h), rd_ in zip(holes, rdepth):
                     dd_ = (np.array(b_) - np.array(a_)) / Ls; nn_, _ = edge_normal(a_, b_)
-                    pa2_, pb2_ = np.array(a_) + dd_ * h0 - nn_ * 6.0, np.array(a_) + dd_ * h1 - nn_ * 6.0
+                    pa2_, pb2_ = np.array(a_) + dd_ * h0 - nn_ * rd_, np.array(a_) + dd_ * h1 - nn_ * rd_
                     cm2.quad_wall(tuple(pa2_), tuple(pb2_), z0h, z1h, z0h, z1h, 'interior', 0.0, (4.0, 4.0))
                     # close-out r3 fix 2 (back-face rays, LOD2 context: 433 hits on garage A): the 6-m portal recess had only its back
                     # panel - rays entering the portal at an angle ran into the hollow body and met the backs of the far walls. Jambs,
@@ -1694,18 +1702,32 @@ def hyatt():
     0.615-0.842, stepped dark penthouse 0.518-0.692 / 0.615-0.742, four masts; glass curtain wall with one spandrel per floor."""
     k = 'grand_hyatt'
     full = clean(sfom_union('Grand Hyatt Hotel'), 0.05)
+    # close-out r5 fix 2 (the round-5 verifier, bldg-1: the slab stood on the south AirTrain track from the deck top up; the r5
+    # keep-out had cut a deck-shaped tunnel through the hotel corner). The SFO Museum outline ('crescent incl. podium / connector')
+    # carries a 3.1-m wide, 9-m long FINGER at its NE corner, (-1614.6 .. -1609.0, 606.1 .. 615.5), reaching 4.5 m onto the south
+    # track (11.9 m2 over the deck polygon, touching the HYATT station polygon): the enclosed AirTrain bridge to the Grand Hyatt
+    # station, not the 44-m slab. It is the outline's only part narrower than GH_CONN_W (opening of radius GH_CONN_W / 2) that
+    # touches the guideway; it is taken out of the slab / podium / LOD2 plan (the body then stands 5.1 m off the deck). The
+    # bridge itself is not modelled: its span, level and enclosure need a source [unk -> owner]
+    _op = full.buffer(-GH_CONN_W / 2, join_style=2).buffer(GH_CONN_W / 2, join_style=2)
+    _fing = [g for g in polys(full.difference(_op)) if g.area > 0.01 and g.intersects(AT.RAIL.buffer(0.5, join_style=2))]
+    conn = unary_union(_fing) if _fing else Polygon()
+    if not conn.is_empty:
+        full = largest(full.difference(conn.buffer(0.01, join_style=2)))
     mr = LB[k]['footprint']['min_rect']
     W = mr['length_m']; p = DL.GH_P; H = 13.2 * p; hp = DL.GH_POD * p; hc = (DL.GH_POD + DL.GH_COL) * p
     B = Bldg(k, 'Grand Hyatt at SFO (Bldg 55)', mr['centre'][0], mr['centre'][1], 'inf',
              ['gh_identity', 'gh_stories', 'gh_height', 'gh_plan_shape', 'gh_facade', 'gh_footprint', 'gh_lobby_level'],
-             dict(footprint=dim('SFO Museum outline (crescent incl. podium / connector)', 'obs', 'BL-02 B'),
+             dict(footprint=dim('SFO Museum outline (crescent incl. podium / connector) minus the connector finger over the AirTrain south track '
+                                '(%.1f m2, close-out r5 fix 2)' % conn.area, 'obs', 'BL-02 B; the finger read as the AirTrain bridge [inf]'),
                   parapet_top=dim(round(H, 2), 'inf', '13.2 pitches x 3.33 m (photo l4); 40-48 m; NOT published'),
                   podium=dim(round(hp, 2), 'inf', '3.2 pitches'), colonnade_top=dim(round(hc, 2), 'inf', '4.2 pitches'),
                   face_fractions=dim(dict(podium=0.47, colonnade=[0.02, 0.10], end_bay=0.049, framed=[0.615, 0.842], penthouse=[[0.518, 0.692], [0.615, 0.742]],
                                           masts=[-0.008, 0.027, 0.905, 0.961]), 'obs', 'photo l4 fractions (BL-03 hyatt_elev)')),
              inferred=['height 44 m', 'floor pitch 3.33 m', 'mullion module 1.5 m (BL-03 schematic 3 m with an intermediate)', 'west (convex) face: same curtain wall',
                        'penthouse depth: the slab minus 4 m each side', 'podium / colonnade wrap on the south-facing faces of the podium zone'],
-             unknown=['height (40-48)', 'slab vs podium plan (the outline includes both)'],
+             unknown=['height (40-48)', 'slab vs podium plan (the outline includes both)',
+                      'the enclosed AirTrain bridge (the outline\'s %.1f-m2 finger over the south track): span, level, enclosure - not modelled (owner)' % conn.area],
              conflicts=['spec "taller straight block at the north end" vs photo l4 (one parapet level): drawn at the common parapet (BL-03)'],
              not_modelled=['roof PV (NAIP shows arrays; layout not measured)', 'porte-cochere, enclosed AirTrain bridge'])
     F = B.F
@@ -2390,12 +2412,13 @@ def build_all(only=None):
     tiles, info, lev = ([], {}, None)
     if not only or 'airtrain' in only:
         tiles, info, lev = AT.build(clip, outlines, Bldg, Part, dim, station_exclude={'GAR_G': gG.body_w}, walks_world=[ga_tail_walk()])
+    rail_b = info.pop('_rail_b', None) if info else None
     if lev is not None and (not only or 'bart_station' in only):
         out.append(bart(gG, lev, bart_fp))
     if only:
         out = [b for b in out if b.key in only]
     if tiles:
-        info['keepout'] = airtrain_keepout(out, tiles)
+        info['keepout'] = airtrain_keepout(out, tiles, rail_b, lev)
     return out, tiles, info, lev
 
 
@@ -2413,9 +2436,13 @@ KEEP_CONTACT = ('cg_plinth', 'cg_L2')   # (cg_L2: the Central Garage LOD2 shell 
 KEEP_CONTACT_INSET = 0.03  # m [model]
 KEEP_CONTACT_BLDG = ('central_garage',)   # buildings whose LOD2 node carries a contact part (cg_L2, left unclipped at LOD2)
 KEEP_CONTACT_L2_MAX = 160  # verify_landside ceiling: LOD2 crossings of the unclipped CG shell (149 measured c5, b_ls4) [our gate]
+KEEP_INSIDE_MAX_M2 = 2.0   # verify_landside ceiling (close-out r5 fix 2): LOD0 building surface > 0.05 m inside the closed deck box
+#                            (the verifier's cgdepth2 rule; fix 1: cg_plinth 43.4 m2 area-weighted (71,063 samples), max 1.22 m - the
+#                            merged-interval hull missed the box under each parapet; fix-2 emulation 0.85 m2, max 0.23 m, all on
+#                            vertical plinth faces) [our gate]
 
 
-def airtrain_keepout(buildings, tiles):
+def airtrain_keepout(buildings, tiles, rail_b=None, lev=None):
     import keepout as KO
     T = []
     for t in tiles:
@@ -2433,6 +2460,13 @@ def airtrain_keepout(buildings, tiles):
     T2 = [KO.tris_world(part.mb, t.F.W) for t in tiles for part in t.coarse]
     T2 = [x for x in T2 if len(x)]
     cols2 = KO.Columns(np.concatenate(T2), clear=KEEP_CLEAR, clear_z=0.05) if T2 else cols
+    # close-out r5 fix 2 (the round-5 verifier, bldg-1 'partly'): the hull above is the guideway STRUCTURE; the VEHICLE envelope
+    # above the running surface was not kept clear (the Grand Hyatt slab stood on the south track from the deck top up; the Garage A
+    # LOD2 station shell closed both tracks). Every non-exempt part at every LOD is now also cleared out of the envelope prism
+    # (landside_airtrain.vehicle_envelope: +-ENV_HW about each track centre line, deck + PAD_H .. deck + PORTAL_H); its own
+    # +-ENV_HW already holds the clearance (clear 0.01 m only gives the vertical sides a footprint) [model]
+    Tenv = AT.vehicle_envelope(rail_b, lev) if (rail_b is not None and lev is not None) else np.zeros((0, 3, 3))
+    cols_env = KO.Columns(Tenv, clear=0.01, gap=AT.PORTAL_H, clear_z=0.05, pair_max=AT.PORTAL_H + 1.0) if len(Tenv) else None
     cols_c = cols_ch = None
     rec = {}
     for b in buildings:
@@ -2454,6 +2488,13 @@ def airtrain_keepout(buildings, tiles):
                 KO.clip_mb(part.mb, b.F.W, cols_c, st, cols_h=cols_ch); st['contact'] = True
             else:
                 KO.clip_mb(part.mb, b.F.W, cols2 if lod == 2 else cols, st)
+            if cols_env is not None:
+                se = {}
+                KO.clip_mb(part.mb, b.F.W, cols_env, se)
+                if se.get('faces_cut'):
+                    st['envelope_faces'] = se['faces_cut']; st['envelope_m2'] = round(se['area_m2'], 2)
+                    st['faces_cut'] = st.get('faces_cut', 0) + se['faces_cut']; st['area_m2'] = st.get('area_m2', 0.0) + se['area_m2']
             if st.get('faces_cut'):
-                rec.setdefault(b.key, {})['%s@%d' % (part.name, lod)] = dict(faces=st['faces_cut'], m2=round(st['area_m2'], 2), **({'rule': 'contact'} if st.get('contact') else {}))
+                rec.setdefault(b.key, {})['%s@%d' % (part.name, lod)] = dict(faces=st['faces_cut'], m2=round(st['area_m2'], 2), **({'rule': 'contact'} if st.get('contact') else {}),
+                                                                              **({'envelope_m2': st['envelope_m2']} if st.get('envelope_m2') else {}))
     return rec
