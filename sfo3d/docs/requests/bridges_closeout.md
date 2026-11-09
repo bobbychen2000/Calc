@@ -465,7 +465,7 @@ No renders of the bridges (the two Chromium slots of this track went to the env 
 
 | Check | Before | After |
 |---|---|---|
-| rotunda / walkway / corridor junction, DRAWN mesh (neckcheck.mjs: plan coverage of the full 2.4 m corridor from the drum edge by the drum disc + the drawn walkway and corridor roofs; rest, every docked pose, every path sample k/5; 10,772 poses) | worst open notch **0.92 m2** (432 trimmed poses; narrowest covered width at the drum edge 1.2 m) | **0** (444 trimmed poses; 2.4 m); drawn corridor inside the own walkway <= 0.018 m2 (G12, tilted box); tested parts clip 0; `fixedHit` corridor x own walkway 0 |
+| rotunda / walkway / corridor junction, DRAWN mesh (neckcheck.mjs: plan coverage of the full 2.4 m corridor from the drum edge by the drum disc + the drawn walkway and corridor roofs; rest, every docked pose, every path sample k/5; 10,772 poses) | worst open notch **0.92 m2** (432 trimmed poses; narrowest covered width at the drum edge 1.2 m) | **0** (444 trimmed poses; 2.4 m); drawn corridor inside the own walkway <= 0.018 m2 (G12, tilted box); tested parts clip 0; `fixedHit` corridor x own walkway 0. **Correction (round 6):** this check counts any corridor-coloured triangle in plan, the bottom caps included, so it missed a roof-only V-groove at the full-width start s (0.05-0.11 m wide, A12 / F21 / F17 L1, c5 verifier); with roof triangles only (ROOFONLY=1) the worst was 0.36 m2 - fixed in round 6 |
 | the verifier's neckgap.mjs / neckgap_path.mjs (coverage by the TESTED `neckParts` boxes) | 0.76-0.93 / 0.96 m2 | 0.28 / 0.34 m2 (the tested bands are inner boxes 0.06 m clear of the walkway; the drawn outline closes the rest: row above) |
 | ownclip / ownneck | 0 / 0 | 0 / 0 |
 | old scene, animated bridges (legacy_dyn2.mjs: GateSystem.items, consecutive frames k 0.84-1.0, b738 then a320 at one gate) | **7 of 11 frames flat block + fitted closure**; the a320 frames drew the cached b738 closure | **0 of 11**; one closure per (gate, type, 0.05 k step), drawn at the cab (offset 0.000 m); flat only before deployment (k < 0.85, by design) |
@@ -528,3 +528,61 @@ No renders of the bridges (the two Chromium slots of this track went to the env 
 - The neck coverage check the verifier asked for "next to ownclip" lives in the scratchpad (`c5/runtime/bscripts/
   neckcheck.mjs`); `tools/bridges/` does not exist and is not this track's to create. If a committed gate is wanted,
   please say where (e.g. `tools/bridges/check_neck.mjs`, run with `PATHS=1`: pass = worst notch 0, tested clip 0).
+
+# Round 6 (close-out round 6, the c5 runtime verifier's finding 1: the neck roof V-groove; 9 Nov 2026)
+
+Before = the files at the start of round 6, frozen with a data snapshot (scratchpad `c6/runtime/root_before`: `js/live/gates.js`
+11af0f1d, data `integration.js` cc520dc0 / `sfo_stands.js` 50bf3003 copied at 10:09Z); after = the same tree with only
+`js/live/gates.js` replaced (`root_after4` 9cc426c9 for the plan suite + bcheck2, `root_after5` fb6ff196 for the drawn-mesh
+checks - the two differ only inside `neckSlab`'s up-slope branch, which no plan / test reads; the repo file **21557c7d**
+(`root_after6`) only guards the F5 piece so it can never double a full-width part: `pieceq.mjs` finds the piece at the same 16
+of 25,041 poses as fb6ff196, and slitgeo / vslit / vneck / neckcheck / ownclip / ownneck / neckgap / signs are byte-identical to
+after5). Both arms ran the SAME
+script copies (scratchpad `c6/runtime/bscripts`, md5s in `bscripts_md5.txt`; the c5 verifier's `slitgeo` / `vslit` / `vneck` /
+`vplans`, the round-5 `neckcheck` and suite, plus two new ones: `roofscan.mjs` 7797199c - the drawn mesh's top-surface profile
+along the corridor axis from the drum to F + 0.8 m at 11 laterals, 2 mm steps: a groove is a run more than 0.15 m below the
+surfaces within 0.25 m either side, rest + docked poses of every bridge and every path sample of the bridges with an own walkway
+outside the drum, 16,153 poses; `endpoke.mjs` ef7cce4e - the corridor roof's end analytically in tunnel A's frame, every pose and
+path sample, 17,911 parts). No tools/live replays, no renders of the bridges, no asset rebuilt.
+
+| Check | Before | After |
+|---|---|---|
+| roof gap at the full-width start s, steepest docked pose (verifier's slitgeo.mjs) A12 / F21 / F17 L1 | 0.110 / 0.062 / 0.051 m (slab start face tilted, normal.y 0.038 / 0.021 / 0.018) | **0 / 0 / 0** (vertical start face) |
+| verifier's vslit.mjs (1-mm scan +-6 cm about s, 312 trimmed poses incl. paths) | widest slit 0.058 m, 0.139 m2 | **0**, 0 m2 |
+| verifier's vneck.mjs (roof + floor sandwich, drum -> F, 312 trimmed poses) | worst 0.123 m2 (G12 L1 path), narrowest covered run at the drum 0 m | 0.003 m2, 2.05 m: one 5-cm sample at G12 L1's drum edge, identical in both arms (see note 3) |
+| neckcheck.mjs, any corridor triangle / ROOFONLY=1 (10,772 poses, 444 trimmed) | 0 / **0.36 m2** (A12 0.36, F14 0.24, F21 0.24, F17 / F19 / G12 0.12) | 0 / **0** |
+| roofscan.mjs, grooves at s (631 trimmed poses) | 338 poses (> 0.05 m wide 99, > 0.1 m 12; worst F5 L1 rest 0.19 m x 2.4 m deep) | **0** |
+| roofscan.mjs, slot between the corridor roof and tunnel A's end frame (all 16,153 poses) | 1,582 poses (> 0.05 m 837, > 0.1 m 500; worst A5 L1 docked 0.25 m x 0.98 m deep) | **0** |
+| roofscan.mjs, corridor roof on top past tunnel A's end frame | 161 poses | **0** |
+| endpoke.mjs: roof end behind tunnel A's frame > 5 mm / through tunnel A's roof / over its roof at the frame (up-slopes) | 1,970 (max 0.97 m) / 0 / 167 (max 0.047 m, G8 L1 docked, slope +0.257) | 18 (all F5 L1 targets of refused types, slope -0.39 .. -0.60, never drawn docked; max 0.33 m) / 0 (held 0.02 m under) / 0 |
+| ownclip / ownneck / neckgap / neckgap_path (tested boxes) / signs.mjs | (round-5 values) | outputs identical |
+| plans (slopes.mjs; verifier's vplans.mjs on the frozen data) | 3,331 made / 78 refused; 3,331 ok / 916 no, asset hits 0 | identical |
+| suite (slopes .. fuelmesh, 17 scripts) + bcheck2 (131 bridges) | 0 issues | identical except wall time; bcheck.json / bcheck_extra.json / bgeom.json / log byte-identical, 0 issues |
+
+## R6.0 What changed (js/live/gates.js only)
+
+| Item | Change |
+|---|---|
+| neck roof V-groove at s (verifier finding 1) | `neckSlab(g, a, b, T, w, h)` replaces `slab()` for the full-width rotunda corridor (same floor line fl - 0.1, 2.4 x 2.9 m section): its start face is **vertical**, flush with the vertical ends of the `neckShape` prisms (slab()'s start face was square to the sloping floor line, so its roof edge stood up to 2.9 sin(th) forward of s). The verifier's alternative (prisms +0.15 m past s) does not bound the lean; the other (a flat slab to F) moves the groove to F. |
+| slot behind tunnel A's end frame (same junction, found by roofscan) | the same piece's END face turns towards square to tunnel A (parallel to its end frame, `tube()`'s frame 0.05 +- 0.08 m, top h + 0.06) where tunnel A slopes down more steeply than the corridor floor line, but no further than keeps the roof edge 0.02 m under tunnel A's roof (endpoke: through-roof 0); where tunnel A rises and the roof would stand above tunnel A's roof past the frame (pre-existing, up to 0.047 m), the end leans back so the roof ends inside the frame. Only for the part that runs into tunnel A; merged near / far bands drawn as slabs (G12 L1) keep a square end. |
+| F5 L1 at rest (no full-width start clears the walkway) | the prisms run to F with a vertical end against tunnel A's forward-leaning frame (a 0.19-0.21 m slot over the -0.083 slope): a 0.2 m full-width `neckSlab` piece from F inside tunnel A carries their roof under the frame (9 mm step). |
+
+Notes:
+1. All three pieces are drawing only: `neckParts` / `solidsQ` / `fixedHit` (what is tested) are unchanged, hence the identical plans
+   and bcheck2. Cost: 6 quads per corridor as before (+6 at F5 L1 rest).
+2. The verifier's request "a roof-only coverage mode in neckcheck.mjs" exists (`ROOFONLY=1`, scratchpad `c6/runtime/bscripts`);
+   with it, before 0.36 m2 -> after 0. It counts only corridor / walkway / drum colours, so a pose where tunnel A covers the
+   corridor's end reads as open; `roofscan.mjs` (all colours) is the stronger check. The lead's question from round 5 (commit
+   these as a gate, and where) stands (R5.3).
+3. Open, not this finding (identical before and after): at G12 L1's docked poses one 5-cm sample at the drum edge (l = -0.925 m)
+   sees down to the walkway tube's end frame at Hr + 1.0..1.7 m - a sliver where the drum's 24-gon, the sloped walkway tube's
+   shifted roof and the far prism meet (the round-5 "G12 tilted box"). <= 0.06 m along the axis; left for the coordinated
+   walkway-start round (R5.1 item 3), which moves that junction anyway.
+4. The 18 remaining roof-end slots are F5 L1's docking targets for the types refused there (B738 / B38M / E75L at the published
+   T3 level, R3.1 / R5.2): steeper than 1:4, so never drawn docked.
+
+## R6.1 Lead
+
+- Files changed by this track for bridges this round: `js/live/gates.js` (neckSlab + its two call sites), this file.
+- Requests R5.1 item 3 (buildings + bridges, coordinated walkway starts), R5.2 (owner: DEPARTURE_LEVELS A / B / C) and R5.3 (neck
+  gate location) are unchanged.

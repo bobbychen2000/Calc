@@ -478,7 +478,7 @@ moved, A320 family X 2-5.5 m, the rows are at different heights):
 |---|---|---|
 | round 4 fix 2 (the stored baseline before this round, now `skin_check_baseline_r4f2.json.gz`) | 0 (0) -> **26 (5)** | 0 -> **1076** |
 | round 4 fix 1 (`skin_check_baseline_r4f1.json.gz`, new) | 281 (99) -> **48 (17)** | 1226 -> **2176** |
-| round 3 | 59 (20) -> 64 (20) | 1691 -> 2733 |
+| round 3 | 60 (20) -> 65 (20) | 1691 -> 2734 |
 
 Every height off by > 0.15 / 0.5 m 2614 / 1127 -> **1638 / 623**; keel + <= 0.3 m 673 / 263 -> 678 / 192 (A320 family 86 / 72 ->
 104 / 6, the nose-gear-bay keel; 737 family 77 / 24 unchanged). Of the verifier's 280 rows 256 are no longer worse than round 4
@@ -502,7 +502,7 @@ the current run (`skin_check_baseline.json.gz`, this round), round 4 fix 2 and r
 'eng' triangles textured with the wing texture (`WING_TEX`, /wing/i) that lies within 30 deg of the nacelle top, covers at
 most 100 deg around the axis and reaches more than 0.5 m aft of the engine's cowl-textured 'eng' triangles is the pylon
 ('pylon' part, the brand's pylon colour); the engine record then ends at the cowl (its x0 sets the 7 % inlet-lip band).
-Label diff, HEAD `atlas.py` vs now, on all 22 sources (`pylon/labdiff.py`): only the A350 (409 triangles, 23.0 m2), the 767
+Label diff, HEAD `atlas.py` vs now, on all 23 sources (b738 included) (`pylon/labdiff.py`): only the A350 (409 triangles, 23.0 m2), the 767
 (119, 31.4 m2) and the MD-11 (726, 12.9 m2) change, all 'eng' -> 'pylon'; the 767's `Wings.png` cowl pieces (200-220 deg
 around the axis, 7.2-7.8 m2 per engine; the reason the round-4 `atlasW` variant was rejected) keep the engine colour, as do
 the small wing-textured pieces at the cowl itself (0.1-1.0 m2 each, none reaching 0.5 m aft of it). Engine x0 A350 -33.258 -> -28.476, 767 -28.523 -> -26.203, MD-11 -33.824 -> -29.163.
@@ -512,9 +512,14 @@ and zones, windows / bands / dims unchanged; charts 107 / 74 / 93 -> 115 / 84 / 
 bytes and `pxm` only; brands, types, frames unchanged; 552 files listed, 0 size mismatches, `manifest.js` = `manifest.json`,
 no bake older than its model; `data/models/manifest.json` nv / size of the 3 models). Colour on the strip, mid bakes
 (`pylon/bandcol2.py`), before -> after: DLH rgb 6/22/78, ITY 24/102/197, SJX 44/38/34, VIR (A350-1000) 219/5/47, DAL 767 0/51/102
-(and its 767-400ER variant), UAL 767 0/50/161 (and -400ER) -> 228/230/231 (the default pylon grey `#E4E6E8`, inferred as on every
-other model's pylons); QTR, UPS unchanged (their pylon colour equals the strip's), the light-grey engines of the other brands
--> the pylon grey. `data/models/features.json` is unaffected by the re-atlas (regenerated in scratch: 0 differences).
+(and its 767-400ER variant), UAL 767 0/50/161 (and -400ER) -> 228/230/231 (the default pylon grey `#E4E6E8` that these six brands' scheme functions pass, inferred,
+not sourced); QTR, UPS unchanged (they set their own pylon colour, which the strip already had), the light-grey engines of
+the other brands -> the pylon grey. Side effect, not stated in round 5 (round-5 verifier finding 2, corrected in round 6):
+moving x0 to the cowl end narrowed the painted inlet-lip band (7 % of the engine record, `paint.py engines(lip_len=0.07)`; the
+depth is inferred, a convention, not a sourced dimension) on every painted bake of these three models - A350 0.79 -> 0.45 m,
+767 0.62 -> 0.45 m, MD-11 0.75 -> 0.42 m (x1 -21.993 / -19.732 / -23.150) - which is the convention the round-4 re-atlas
+already gave the 737 (0.36 m); the verifier measured 3.7-7.6 % of the cowl area changing colour (the lip end only) and the QTR
+A350 oryx nacelle decal moving (1 % of the cowl area). `data/models/features.json` is unaffected by the re-atlas (regenerated in scratch: 0 differences).
 Software previews (tools/liveries/preview.py renderer): scratch `c5/aircraft/pylon/pylon_before_after.png` (DLH A350, UAL 767,
 side and below-aft, before / after: the navy sawtooth along the A350 pylon and the blue 767 pylon wedge are gone),
 `parts_{a359,b763,md11}_before.png` (part-coded, before).
@@ -569,5 +574,99 @@ cargo doors unchanged (conveyor ends identical above).
 ### 4. Open (aircraft track)
 
 Unchanged from round 4 fix 2 (737NG / MAX tailplane dihedral source, 737-600 aftermarket winglets per registration, CAL / EVA
-B77L titles, CSG, JSX, the inferred items). New: the brands' pylon colours are the default light grey (inferred) on every model;
-no brand's pylon colour is sourced.
+B77L titles, CSG, JSX, the inferred items). New (wording corrected in round 6): on the six brands whose pylon strip changed
+from the engine colour to the default `#E4E6E8` - DLH, ITY, SJX, VIR (A350) and DAL, UAL (767, incl. the -400ER variants) - the
+pylon colour is inferred; QTR (`#C4C9CA`), UPS (UP grey), AAL and SWA (silver), JBU (blue), SY and BZ (navy) set their own,
+also unsourced. Owner: sourced pylon colours for those six brands (needs_owner).
+
+## Round 6 (residuals; 9 Nov 2026: the round-5 verifier's findings, SP/c5_r5verify1_aircraft.json, 1 .. 5)
+
+Scratch `c6/aircraft/` (NOTES.md there: every job, marker and md5). No live-harness replays (the harness calls `acHit`
+without the skin option, so `fit.js` / `features.json` do not reach a replay; for the record `tools/live/invariants.mjs`
+e52f3dfd, `build_stream.py` 93da6fe0). Both arms of every check ran on the same scripts in two scratch trees: `tB` = HEAD
+09e79db (`git archive`; `features.json` 20345fc5, `fit.js` 35b827a2, `model_features.py` 1c2b561b) and `tA` = `tB` with this
+round's `model_features.py` (2cf448e3) and the `features.json` / `manifest.js` it regenerated; `skin_check.mjs` 31c95d2f and
+`dock_foot.mjs` 3897f5d6 in both, round-5 verifier `belt_w2.mjs` 67d23fe4 and `gse.mjs` 8533c9cf frozen in `c6/aircraft/harness/`.
+
+**Finding 1 (A350 / 787 wing-box rows at keel + 1.4 m under-read by up to 1.2 m), fixed at the source.** Root cause
+(`scripts/cutdbg.py`, the cut by zone): at the wing-root junction the fuselage skin ends under the wing's lower surface, so
+the plane cut at the section bottom + 1.5 model m has no outer crossing within `zmax` (the next one out is the wing, a359
+X 33 5.47 / X 32 5.04 m) and the table took an inner wall: a359 X 33 0.86 (gear-bay wall) under 3.08 at + 1.25, X 32 2.80
+under 3.09, b788 X 26 2.38 under 3.10. It is not the gear-door zone: cutting the rows above 1.0 with zone 4 included
+(`scripts/zone4.py`) changes only the 777 bay rows at + 1.25 (0.28 -> 3.08, sections `hwLow` already skips) and none of
+these. Fix: `tools/models/model_features.py hwl_guard()`, a continuity guard on the rows above 1.0 - a row that falls by more
+than 0.2 model m while the three rows beneath it rise smoothly (each step -0.02 .. +0.15: a lower lobe below its maximum
+breadth, which cannot narrow with height) reads the row beneath. It changes exactly those 3 table values on the 23 models
+(`scripts/guardsim2.py`: drop 0.2-0.3 / rise limit 0.1-0.3 give the same 3; the verifier's simpler rule, any drop > 0.3,
+would also have copied tailplane-root spikes upwards on the A320 X 34 and E190 X 32 tail cones; a drop of 0.15 would copy
+wing-body-fairing spikes at + 1.25 on the A319 / A320). `js/aircraft/fit.js hwLow` is unchanged (comment only).
+`data/models/features.json` 20345fc5 -> 43238a26 and `manifest.js` cd9a5386 -> 96616499, regenerated by the tool in the repo
+(identical to the scratch regeneration; the 3 values above are the only difference from HEAD). `skin_check.mjs` per row:
+
+| against | worse by > 0.15 m (> 0.5 m), before -> after | better by > 0.15 m, before -> after |
+|---|---|---|
+| this round's before arm (= round 5, now `skin_check_baseline_r5.json.gz`) | - | **0 (0) worse, 18 better** |
+| round 4 fix 2 (`_r4f2`) | 26 (5) -> **16 (2)** | 1076 -> **1082** |
+| round 4 fix 1 (`_r4f1`) | 48 (17) -> **38 (14)** | 2176 -> **2182** |
+| round 3 (c4 verifier-1 `rows_r3.json`) | 65 (20) -> **55 (17)** | 2734 -> **2740** |
+
+Every height off by > 0.15 / 0.5 m 1638 / 623 -> **1630 / 616**; keel + <= 0.3 m unchanged (678 / 192; 737 family 77 / 24,
+A320 family 104 / 6). The 18 rows (all keel + 1.4 m): A350-900 X 32-33.5 (X 33 1.850 -> 3.070 against the mesh's 3.088),
+A350-1000 X 36.5-38 (X 37.5 1.934 -> 3.071, mesh 3.088), 787-8 X 26.5-28, 787-9 X 30.5-31.5 (X 30.5 2.801 -> 3.178, mesh 3.660:
+the mesh row there is the wing-body fairing), 787-10 X 33-34. The 16 rows still worse than round 4 fix 2 are not under-reads
+of the skin: 777 X 31-37.5 bay (7 rows: the API's 3.05 m is the fuselage envelope, the mesh's 0.27 m the keel beam of the open
+bay), A380 X 33.5-34.5 (3 rows: the API's 4.75-4.95 m is the wing-body fairing, 4.83 m in the cut, which the check's 1.3 R
+cut-off of 4.64 m leaves out; the mesh row 4.12-4.18 m is the fuselage behind it) and the 6 A320-family nose rows that
+compare different heights since round 5 moved the keel. Consumers, before -> after on the matched trees: conveyor ends
+(`belt_w2.mjs`, 23 types incl. A350 / 787 / 777 / A330 / A380) identical, GSE scene with `GSE_SKIN=1` identical (A 106 /
+B 100 stands, issues {}, 0 vehicle-vehicle), `dock_foot.mjs --check` identical (67 doors, none stale), `check_dims.py` 35 flagged / 35 explained
+/ 0 unexplained (repo, after). Stored baselines: `skin_check_baseline.json.gz` = this round (354d9bd1), the round-5 run kept
+as `skin_check_baseline_r5.json.gz` (d7feadbe, equal to the before arm), `_r4f2`, `_r4f1` unchanged; `--baseline` without a
+file compares against all four.
+
+**Finding 2 (inlet-lip band side effect undocumented), documented.** Round 5 F1 paragraph above: the lip-band change with
+numbers (A350 0.79 -> 0.45 m, 767 0.62 -> 0.45 m, MD-11 0.75 -> 0.42 m; 7 % of the engine record, recomputed from the shipped
+`head.atlas.eng` x0 / x1), the verifier's 3.7-7.6 % of cowl area and the QTR decal shift; the lip depth is tagged inferred.
+No code change (an explicit per-model `lip_len` would need a source and re-bakes).
+
+**Finding 3 (cowl-top / pylon sawtooth on dark-engine A350 / MD-11 bakes), documented, not fixed this round.** The junction
+follows the source mesh's tessellation: over the aft ~4 m of the A350 cowl, within ~10 deg of the nacelle top, 'pylon',
+'eng' and wing-textured 'keep' triangles alternate (verifier `teeth.py`: 0-10 deg pylon 58 % / eng 31 % / keep 12 %; MD-11
+44 / 35 / 17 %), so a dark cowl (DLH, ITY, SJX, VIR) shows small light teeth at close range; part of it (the white 'keep'
+teeth) predates round 5. The fix the verifier suggests - paint the over-cowl strip by angle around the nacelle axis
+(`eng_angle`, a straight boundary at about +-10 deg) instead of by triangle label in `tools/liveries/paint.py` - changes
+pixels on every A350 / 767 / MD-11 bake (81 files) and needs a re-bake under the heavy lock, which this round excludes
+(owner budget: no livery re-bakes). Deferred; see section 4.
+
+**Finding 4 (phone artifacts stale against round 5)** is the lead's (the lead rebuilds the Full artifact after this round;
+the Lite artifact is frozen). **Finding 5 (wording)**, corrected in place: the round-5 section 4 pylon item now names the
+six brands whose strip went to the inferred default `#E4E6E8` (DLH, ITY, SJX, VIR A350; DAL, UAL 767) and the seven that
+set their own (QTR `#C4C9CA`, UPS UP grey, AAL / SWA silver, JBU blue, SY / BZ navy: `tools/liveries/liveries.py`
+`pylons()` calls); the label diff ran over 23 sources (b738 included), not 22; the round-3 per-row counts are 60 -> 65
+worse and 1691 -> 2734 better (the round-5 verifier's re-run; also in the `fit.js` comment).
+
+### 1. What changed for everybody who reads `TYPES` or draws the models
+
+| Field / API | Change |
+|---|---|
+| `T.fit.skinHW` / `skinHalfWidth` (A350-900 / -1000, 787-8 / -9 / -10, keel + 1.25-1.5 m at the wing root, X 32-34 model m) | Reads the fuselage (3.07-3.23 m) instead of a gear-bay wall (1.85-2.90 m). `data/models/features.json` 3 values; nothing else moves (belt ends, GSE scene, dock feet identical). |
+
+### 2. Requests
+
+| File (owner) | Request |
+|---|---|
+| commit (lead) | Commit `tools/models/model_features.py`, `data/models/features.json` + `manifest.js` (MODEL_FEATURES), `tools/models/skin_check.mjs` + `skin_check_baseline.json.gz` + the new `skin_check_baseline_r5.json.gz`, `js/aircraft/fit.js` (comments only) and this file together. |
+| `out/phone_artifact` (Full, lead) | The rebuild after this round should carry `data/models/manifest.js` 96616499 (the 3 table values) besides the round-5 items (verifier finding 4). Lite: frozen, no request. |
+
+### 3. Rejected / deferred in this round
+
+- **Gear-door zone in the table cut** (rows above 1.0 cut through zones 0 / 1 / 4): not the cause of these rows (above); not applied.
+- **The verifier's in-`hwLow` variant** (any row above 1.0 that drops > 0.3 reads the row beneath): it would also copy
+  tailplane-root and fairing spikes upwards (A320 X 34 0.89 -> 1.90, E190 X 17 / X 32, the A330 / A380 / 747 tail cones read
+  through `at()`), and the guard belongs with the data it repairs; the table guard above takes only the 3 lower-lobe rows.
+- **Cowl-top sawtooth (finding 3)**: needs a paint-by-angle rule and 81 re-bakes; deferred (no re-bakes this round).
+
+### 4. Open (aircraft track)
+
+Unchanged from round 5 (as corrected above: sourced pylon colours for DLH, ITY, SJX, VIR, DAL, UAL - needs_owner), plus the
+cowl-top / pylon junction rule (finding 3) for the next round that may re-bake, and the inferred 7 % inlet-lip depth.

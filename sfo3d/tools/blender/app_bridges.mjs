@@ -35,13 +35,14 @@ for (const g of gates) for (const b of gsys.bridgesOf(g)) gsys.prepBridge(g, b);
 gsys.finishPrep();
 
 const r3 = (v) => Math.round(v * 1000) / 1000;
+const REST_PARTS = ['walkway', 'rotunda', 'pedestal'];   // the fixed parts dumped per bridge (= SCHEMA.parts)
 const out = [];
 for (const g of gates) {
   if (!g.bridge) continue;
   for (const b of gsys.bridgesOf(g)) {
     const walk = (b.walk || []).map((p, i) => [r3(p[0]), r3(gsys.walkY(b, i)), r3(p[2])]);
     const rest = gsys.solidsQ(b, { a: b.a0, e: b.e0, t: 0, h: b.h0 }, 0, true)
-      .filter(s => s.part === 'walkway' || s.part === 'rotunda' || s.part === 'pedestal')   // c5 fix 2: + the pedestal (b3d_integrate host test)
+      .filter(s => REST_PARTS.includes(s.part))   // c5 fix 2: + the pedestal (b3d_integrate host test); r6: one list = the schema
       .map(s => ({ part: s.part, seg: s.seg, c: [r3(s.c[0]), r3(s.c[1])], u: [r3(s.u[0]), r3(s.u[1])], hl: r3(s.hl), hw: r3(s.hw),
                    lo: r3(s.lo - G), hi: r3(s.hi - G), round: s.round != null ? r3(s.round) : undefined }));
     out.push({ stand: g.name, letter: (g.pier || g.letter || g.name[0]), gate: b.gate, door: b.door, upper: !!b.upper,
@@ -51,9 +52,19 @@ for (const g of gates) {
 }
 const sha = (p) => crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT, p))).digest('hex');
 const inputs = {};
-for (const p of ['js/live/gates.js', 'data/sfo_stands.js', 'data/sfo_buildings.js', 'js/live/airport.js', 'js/geo.js']) inputs[p] = sha(p);
+// close-out round 6 (r5 verifier 2, (d)): the GENERATOR is an input too (its part filter decides which solids the dump carries:
+// a dump from an older generator, e.g. before the r5 pedestal, passed the hash check silently), and the dump states its
+// SCHEMA: the fixed parts every bridge must carry. b3d_integrate._dump_current refuses (CONFLICT 'input stale', --check exit 2)
+// a dump whose generator hash or schema differs, or with a bridge missing one of the parts.
+for (const p of ['js/live/gates.js', 'data/sfo_stands.js', 'data/sfo_buildings.js', 'js/live/airport.js', 'js/geo.js',
+                 'tools/blender/app_bridges.mjs']) inputs[p] = sha(p);
+const SCHEMA = { version: 2, parts: REST_PARTS };
+for (const b of out) {
+  const miss = REST_PARTS.filter(k => !b.rest.some(s => s.part === k));
+  if (miss.length) console.warn('app_bridges: WARNING', b.stand, b.gate, b.door, 'has no', miss.join(' / '));
+}
 const J = { about: 'js/live/gates.js bridge levels + fixed rest solids (heights above the apron, m); tools/blender/app_bridges.mjs',
-            generated: new Date().toISOString(), groundY: G, departure_levels: DEPARTURE_LEVELS, inputs, bridges: out };
+            generated: new Date().toISOString(), groundY: G, departure_levels: DEPARTURE_LEVELS, schema: SCHEMA, inputs, bridges: out };
 fs.writeFileSync(OUT, JSON.stringify(J));
 const by = {}; for (const b of out) { const k = b.letter; by[k] = by[k] || new Set(); by[k].add(b.Hb); }
 console.log('app_bridges:', out.length, 'bridges ->', path.relative(ROOT, OUT), Object.entries(by).map(([k, v]) => k + ' ' + [...v].join('/')).join(', '));

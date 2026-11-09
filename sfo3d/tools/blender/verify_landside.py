@@ -517,7 +517,7 @@ def run(path):
         nT = np.cross(TT[:, 1] - TT[:, 0], TT[:, 2] - TT[:, 0]); lT = np.linalg.norm(nT, axis=1); upT = (nT[:, 1] / np.maximum(lT, 1e-12) > 0.9) & (lT > 1e-9)
         EV = unary_union([g.buffer(0.35, quad_segs=2) for g in _fps(TT[lT > 1e-9])]).buffer(-0.10); _sh.prepare(EV)
         UV = TT[upT].reshape(-1, 3); kd = cKDTree(UV[:, [0, 2]]); ex0, ez0, ex1, ez1 = EV.bounds
-        for LODX in (0, 2):
+        for LODX in (0, 1, 2):     # close-out round 6 (r5 verifier 2, (e)): LOD1 too (shown 400-1,400 m and in phone near mode)
             hits = {}
             for nm, m in S.items():
                 if m['lod'] != LODX or (m['bldg'] or '').startswith('airtrain') or '_cars' in nm or not m['prims'] or m['inst'] is not None: continue
@@ -536,21 +536,25 @@ def run(path):
                   'clips them (keep-out); over: %s' % (hits or 'none'), 'pts')
     except Exception as e:  # noqa: BLE001
         C.add('AirTrain vehicle envelope', str(e), 'error', ok=False)
-    try:
+    # close-out round 6 (r5 verifier 2, (e)): the same rule per LOD, each against the guideway of its own LOD - LOD1 buildings vs the
+    # L1_*_deck nodes, LOD2 buildings vs the coarse L2_airtrain_* nodes (one node per tile: every non-vertical face, so the deck box
+    # = deck top facing up over deck soffit facing down). The unclipped Central Garage LOD2 shell (KEEP_CONTACT, 'contact, not clipped
+    # at LOD2') lies inside the coarse box: reported with a regression ceiling (LG.KEEP_INSIDE_L2_MAX_M2), not 0
+    def _deck_box(LODX, deck_sel):
         DK = np.concatenate([np.concatenate([p_['P'][p_['T']] for p_ in m['prims']]) for nm, m in S.items()
-                             if (m['bldg'] or '').startswith('airtrain') and m['lod'] == 0 and nm.endswith('_deck') and m['prims']])
+                             if (m['bldg'] or '').startswith('airtrain') and m['lod'] == LODX and deck_sel(nm) and m['prims']])
         nD = np.cross(DK[:, 1] - DK[:, 0], DK[:, 2] - DK[:, 0]); lD = np.linalg.norm(nD, axis=1); nyD = nD[:, 1] / np.maximum(lD, 1e-12)
         kD = np.abs(nyD) > 0.05; Dn = DK[kD]; NY = nyD[kD]
         fpsD = [Polygon(t[:, [0, 2]]) for t in Dn]; trD = _STR(fpsD)
         FOOT = unary_union([g.buffer(0.001) for g in fpsD if g.is_valid]); _sh.prepare(FOOT); BND = FOOT.boundary; fb = FOOT.bounds
         inside = {}
         for nm, m in S.items():
-            if m['lod'] != 0 or (m['bldg'] or '').startswith('airtrain') or '_cars' in nm or not m['prims'] or m['inst'] is not None: continue
+            if m['lod'] != LODX or (m['bldg'] or '').startswith('airtrain') or '_cars' in nm or not m['prims'] or m['inst'] is not None: continue
             T = np.concatenate([p_['P'][p_['T']] for p_ in m['prims']])
             T = T[(T[:, :, 0].max(1) > fb[0]) & (T[:, :, 0].min(1) < fb[2]) & (T[:, :, 2].max(1) > fb[1]) & (T[:, :, 2].min(1) < fb[3])]
             if not len(T): continue
             bx = _sh.box(T[:, :, 0].min(1), T[:, :, 2].min(1), T[:, :, 0].max(1), T[:, :, 2].max(1)); T = T[_sh.intersects(FOOT, bx)]
-            a5, dmax, at_ = 0.0, 0.0, None
+            a5, a30, dmax, at_ = 0.0, 0.0, 0.0, None
             for t in T:
                 A_ = 0.5 * np.linalg.norm(np.cross(t[1] - t[0], t[2] - t[0]))
                 if A_ < 1e-8: continue
@@ -570,15 +574,22 @@ def run(path):
                 dep = np.minimum(np.minimum(up_d[ins], dn_d[ins]), _sh.distance(BND, _sh.points(P_[ins][:, [0, 2]])))
                 k5 = dep > 0.05
                 if k5.any():
-                    a5 += A_ * float(k5.sum()) / nP
+                    a5 += A_ * float(k5.sum()) / nP; a30 += A_ * float((dep > 0.30).sum()) / nP
                     if dep.max() > dmax: dmax = float(dep.max()); at_ = [round(float(P_[ins][int(dep.argmax()), 0]), 1), round(float(P_[ins][int(dep.argmax()), 2]), 1)]
-            if a5 > 0: inside[nm] = dict(m2=round(a5, 2), max_depth_m=round(dmax, 3), at=at_)
-        AT_X['inside_deck_box'] = inside
-        C.add('LOD0 building surface inside the closed AirTrain deck box > 0.05 m deep (close-out r5 fix 2; ceiling)', round(sum(v['m2'] for v in inside.values()), 2),
-              float(LG.KEEP_INSIDE_MAX_M2), None, 'the round-5 verifier\'s cgdepth2 rule (0.10-m samples; first deck surface above faces up, below faces down); '
-              'per node: %s' % (inside or 'none'), 'm2', ok=sum(v['m2'] for v in inside.values()) <= LG.KEEP_INSIDE_MAX_M2)
-    except Exception as e:  # noqa: BLE001
-        C.add('AirTrain deck box: building surface inside', str(e), 'error', ok=False)
+            if a5 > 0: inside[nm] = dict(m2=round(a5, 2), m2_over_030=round(a30, 2), max_depth_m=round(dmax, 3), at=at_)
+        return inside
+    for LODX, sel, ceil_ in ((0, lambda nm: nm.endswith('_deck'), LG.KEEP_INSIDE_MAX_M2), (1, lambda nm: nm.endswith('_deck'), LG.KEEP_INSIDE_MAX_M2),
+                             (2, lambda nm: True, LG.KEEP_INSIDE_L2_MAX_M2)):
+        try:
+            inside = _deck_box(LODX, sel)
+            AT_X['inside_deck_box' if LODX == 0 else 'inside_deck_box_lod%d' % LODX] = inside
+            tot = round(sum(v['m2'] for v in inside.values()), 2)
+            C.add('LOD%d building surface inside the closed AirTrain deck box > 0.05 m deep (%s; ceiling)'
+                  % (LODX, 'close-out r5 fix 2' if LODX == 0 else 'close-out round 6, own-LOD guideway'), tot,
+                  float(ceil_), None, 'the round-5 verifier\'s cgdepth2 rule (0.10-m samples; first deck surface above faces up, below faces down); '
+                  'per node: %s' % (inside or 'none'), 'm2', ok=tot <= ceil_)
+        except Exception as e:  # noqa: BLE001
+            C.add('LOD%d AirTrain deck box: building surface inside' % LODX, str(e), 'error', ok=False)
     # ---------------- LTP 1 / 2
     k = 'ltp_garage_1'
     if k in by:

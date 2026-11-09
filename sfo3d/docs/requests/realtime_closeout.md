@@ -770,8 +770,8 @@ Every change in `js/live/traffic.js`, `js/live/ground.js`, `tools/live/invariant
 - `tools/live/build_stream.py` **`93da6fe0`** (unchanged): the streams are the earlier ones.
 - *before* = `SP/c5/realtime/root_b`: the repo at the start of this round, which is the verifier's `root_now`. traffic.js
   `42937590`, ground.js `cd2b4965`.
-- *after* = `SP/c5/realtime/root_a6`: the final code. traffic.js **`51bc9e1f`**, ground.js **`d3353067`**. These are also the
-  repo's files.
+- *after* = `SP/c5/realtime/root_a6`: the final code. traffic.js **`51bc9e1f`**, ground.js **`d3353067`**. These two code files
+  equal the repo's (WIP commit `2b323d9`); the roots' data files do not (round-6 correction, see Round 6 below).
 - Shared by both roots: app.js `89696504`, gates.js `a93cce58`, sfo_stands.js `3614cdb9`, integration.js `d0a3ac6f`,
   types.js `d03d7ef4`, sfo_taxigraph.js `20d25128`. Each root has a `md5.txt`.
 - Runner `SP/c5/realtime/scripts/run5.sh`, through the hook `scripts/hook5.mjs`, which logs the evidence behind every fresh
@@ -878,7 +878,7 @@ which.
   - Does the outline really reach to within ~18 m of that taxi path? If not, should the landside 3-D asset's footprint
     replace it in the grid?
 
-### C5.2 Lead / owner: the relay's opt-in `--record-sfo-gates` (needs_owner; not enabled, relay not restarted)
+### C5.2 Lead / owner: the relay's opt-in `--record-sfo-gates` (needs_owner; flag not enabled — relay since restarted without it, see Round 6)
 
 `sfo_live_server.py` has a new flag, `--record-sfo-gates`, OFF by default. With `--record`, it also calls `Gates.want()`
 every `MIN_INTERVAL` + 5 s. This is the same path a client's `/api/gates` poll takes: at least 10 min between fetches
@@ -894,7 +894,9 @@ fresh snapshots, no replay can show how the plan-gated rules behave live, for ex
 Terms (`docs/research/gate_truth.md` §7): flysfo publishes no terms of use, and robots.txt does not exclude the path.
 Whether SFO permits a continuous relay is **not verified**, and the document says to ask SFO before building a live
 dependency. The flag fetches at the same rate as an open app, but it does so all day. Enabling it is the owner's decision.
-The running relay was not restarted, and the code change takes effect only at the lead's next restart, with the flag.
+When this was written the running relay had not been restarted. (Round-6 correction: it was restarted on 9 Nov at 04:35:53Z,
+pid 6641, `--port 8000 --host 0.0.0.0 --record refs/cache/rec --quiet`. So it runs the round-5 relay code `d741a25f` with the
+flag OFF; `/api/ping` answers. The flag takes effect only if the owner enables it at a restart.)
 
 ### C5.3 Static track: pavement at the west maintenance area
 
@@ -905,7 +907,8 @@ and parked there it is off the mask for 8 h: `offpave.mask` 289,121 frames, A-w 
 
 ### C5.4 Lead
 
-The final code is already in the lead's WIP commit `2b323d9` (9 Nov 01:59Z): `js/live/traffic.js` (`51bc9e1f`),
+The final code files are already in the lead's WIP commit `2b323d9` (9 Nov 01:59Z; the code files equal the repo's, not the
+replay roots' data files): `js/live/traffic.js` (`51bc9e1f`),
 `js/live/ground.js` (`d3353067`), `tools/live/invariants.mjs` (`e52f3dfd`) and `sfo_live_server.py` (`d741a25f`: the opt-in
 flag only). Please commit this section.
 - The relay change takes effect only on a restart.

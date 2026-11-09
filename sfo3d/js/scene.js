@@ -60,7 +60,7 @@ export class Scene {
     for (const fn of this.extraItemFns) items.push(...fn(t));
     // sprites
     let n = 0; const B = this.spriteBuf;
-    const put = (s) => { if (n >= 20000) return; const o = n * 16; B[o] = s.p[0]; B[o + 1] = s.p[1]; B[o + 2] = s.p[2]; B[o + 3] = s.s; B[o + 4] = s.c[0]; B[o + 5] = s.c[1]; B[o + 6] = s.c[2]; B[o + 7] = s.i; const d = s.dir || [0, 1, 0]; B[o + 8] = d[0]; B[o + 9] = d[1]; B[o + 10] = d[2]; B[o + 11] = s.dir ? (s.k || 4) : 0; n++; };
+    const put = (s) => { if (n >= 20000) return; const o = n * 16; B[o] = s.p[0]; B[o + 1] = s.p[1]; B[o + 2] = s.p[2]; B[o + 3] = s.s; B[o + 4] = s.c[0]; B[o + 5] = s.c[1]; B[o + 6] = s.c[2]; B[o + 7] = s.i; const d = s.dir || [0, 1, 0]; B[o + 8] = d[0]; B[o + 9] = d[1]; B[o + 10] = d[2]; B[o + 11] = s.dir ? (s.k || 4) : 0; B[o + 12] = s.lens ? 1 : 0; n++; };
     for (const ac of this.aircraft) ac.lightSprites(t).forEach(put);
     for (const L of this.staticLights) { if (typeof L === 'function') L(t).forEach(put); else put(L); }
     this.spriteMesh.setInstances(B.subarray(0, n * 16), n);

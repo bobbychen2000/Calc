@@ -22,6 +22,11 @@
 // baseline) and skin_check_baseline_r4f1.json.gz (round 4 fix 1, the verifier's rows). This round per row: against r4f2
 // 26 worse by > 0.15 m (5 by > 0.5 m), 1076 better; against r4f1 48 worse (17), 2176 better. A row is (type, X, keel + h)
 // with each run's own keel: where keelAt moved (A320 family X 2-5.5 m, round 5) the rows compare different heights.
+// Close-out round 6 (aircraft verifier c5-1 finding 1: A350 / 787 wing-root rows at keel + 1.4 m under-read by up to
+// 1.2 m): continuity guard on the table rows above 1.0 (tools/models/model_features.py hwl_guard). The round-5 run is kept
+// as skin_check_baseline_r5.json.gz and the stored baseline is this round's run. Per row against r5: 0 worse, 18 better;
+// against r4f2 16 worse (2 by > 0.5 m), 1082 better; against r4f1 38 worse (14), 2182 better; every height > 0.15 / 0.5 m
+// 1638 / 623 -> 1630 / 616, keel + <= 0.3 m unchanged (678 / 192).
 // Exit code 0 either way (a report).
 // Usage: node tools/models/skin_check.mjs [types,comma,separated] [--baseline [file]] [--save [file]]
 //        (default: every type with a fitted model; --baseline without a file: every stored

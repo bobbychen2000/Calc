@@ -126,7 +126,7 @@ filtering and the mips of the paint texture (created with `mips: true`) blend th
 reading a partial G as near-black asphalt (c3 verifier: a dark outline along every path). Today both channels are 0 and the
 shader branch is a no-op (`pc.y > 0.004`). Check as R3.1.
 
-### R5.2 Owner of `js/scene.js` (old renderer core; realtime / lead): pack the lens flag (env-6, live.html)
+### R5.2 Owner of `js/scene.js` (old renderer core; realtime / lead): pack the lens flag (env-6, live.html) - DONE in round 6 (R6.1)
 
 `js/scene.js` line 63, the sprite record packer `put(s)`: add `B[o + 12] = s.lens ? 1 : 0;` (the 13th float = `iData.x` of
 `js/shaders/sprites.js`, unused today and always 0). With it, live.html draws a position light's lens by day without the
@@ -147,7 +147,7 @@ upload = this request): peak (213, 100, 112) -> (205, 100, 112) on the wing's (1
 `jobs/extract2d.mjs` (commit 904dcfe) leaves `DETAILS.pavementRetired` out of `pave.taxiways` and exports `retiredParts`
 for subtraction by its consumers (they are not subtracted there; tools/drawing reads them).
 
-### R5.4 Spec owner (`docs/research/environment_spec.md`): FAA 8400.9 paragraph and the wet rule
+### R5.4 Spec owner (`docs/research/environment_spec.md`): FAA 8400.9 paragraph and the wet rule - DONE in round 6 (R6.2)
 
 Lines ~226 and ~911 cite "FAA Order 8400.9 §4b"; in the cached order the wind criteria are **¶7d** ("7. Operational
 safety criteria ... d. Winds": (1) clear and dry, (2) not clear or not dry). Please change the citation to ¶7d and the
@@ -166,3 +166,47 @@ is geometrically hidden is the intended veil (core occluded, aureole kept); on a
 (ssrAO uniform, fatal -> onFatal), `js/shaders/ground.js`, `js/shaders/sprites.js`, `js/world/terrain.js`,
 `tools/env/test_c3.mjs`, `docs/research/environment_impl.md`, `docs/research/engine_impl.md` (§4.8), this file,
 `docs/requests/engine_closeout.md`.
+
+## Round 6 (close-out round 6, residuals of the round-5 verifier and this track's own round-5 requests; 9 Nov 2026)
+
+Inputs: scratchpad `c5_r5verify1_runtime.json` (finding 2: lakes on the lite path), `c5_r5fix1_runtime.json` (open requests
+R5.2, R5.4). Work log: scratchpad `c6/runtime/NOTES.md`. No asset rebuilt; no tools/live replays (no harness involved).
+
+| Item | Status | Evidence |
+|---|---|---|
+| R5.2 live.html lens halo (env-6) | **fixed** | `js/scene.js` `put(s)`: `B[o + 12] = s.lens ? 1 : 0` (the only change in that file); `js/shaders/sprites.js` comment updated |
+| R5.4 FAA 8400.9 citation + wet rule in the spec | **fixed** | `environment_spec.md` §3.5 item 3 and the §12.1 table row (R6.2) |
+| verifier finding 2: lakes on the lite phone path (`SFO_LITE`, terrainStep 40) | not done - owner directive | the LITE artifact is frozen (9 Nov): no lite-only work. Recorded for a later round: at step 40 San Andreas Lake is 94.9 % visible (gate 95 %), +33 % terrain vertices / +35 chunks (verifier's vlake.mjs) |
+| R5.1 (static, paint G/B), R5.3 (OD-7 GPU cost), R5.5 (strobe re-shot) | open, unchanged | not in this round's scope |
+
+### R6.1 live.html lens flag (R5.2): one render, numeric pixel check
+
+live.html (old WebGL 2 renderer) noon preset, snapshot mode, 640 x 360 (SwiftShader), the red position light of a taxiing
+aircraft 14.4 m from the camera (scratchpad `c6/runtime/render/job_c6o.mjs`, `c6o_check.json`). One page session, two shots:
+A = the lens flag forced to 0 on the sprite upload by a page hook (= `put()` before this change), B = as shipped now (no hook).
+
+- Upload buffer (native, B): the one record with the day-lens signature (s 0.08 m, k 0) carries flag 1, every other record 0
+  (8 uploaded records at the shot: flag 1 on 1, signature on 1, flag without signature 0, signature without flag 0).
+- Pixels at the lens (320, 180): peak (216, 111, 115) -> **(209, 110, 115)**; ring 2.5-4.6 px R 147.8 -> **139.8** (G / B 114.2 /
+  119.8 unchanged); ring 4.5-7 px R 116.6 -> 112.8. Pixels changed by > 2 levels: 125 within 8 px of the lens (max 15), 22
+  elsewhere (max 4, sky at the top edge). The same direction and size as the round-5 hook A/B (`c5o`: ring R 151.7 -> 143.9
+  measured the same way). PNGs `c6o_A_flag0.png` (md5 d9162766), `c6o_B_native.png` (6ceea228), crop `c6o_crop_AB.png`.
+- The page served the working tree (other tracks' edits included); 0 page errors, ready in 177 s.
+
+### R6.2 environment_spec.md (R5.4): what changed
+
+Re-read in the cached order (`refs/cache/env_src/faa_order_8400-9.pdf`, md5 54499cd2, pdftotext): "7. OPERATIONAL SAFETY
+CRITERIA ... d. Winds. (1) Clear and Dry Runways. (a) ... crosswind component ... (including gust values) must not be greater
+than 20 knots ... (b) ... the tailwind component must not be greater than 5 knots ... (c) ... 7 knots [touchdown-zone
+anemometers] ... (2) Runways Not Clear or Not Dry. (a) The crosswind component (including gust values) must not exceed 15
+knots ... (b) No tailwind component may be present except the nominal range of winds reported as calm (0-3 knots) may be
+considered to have no tailwind component." The spec now cites ¶7d (¶7d(1), ¶7d(2), ¶7d(2)(b) quoted; the old "§4b" noted as
+wrong), states the wet rule as "no tailwind component unless the reported wind is calm, 0-3 kt" (**V**) with the two
+inferences tagged **I** (precipitation in the METAR = not dry; the gust counts toward the 3 kt), adds the round-5 effect
+(58 recorded METARs, non-West 7 -> 8, environment_impl.md R5.3), and the §12.1 table row matches (`WET_CALM_KT` 3). Only those
+citation lines were edited.
+
+### R6.3 Lead: files changed by this track for env this round
+
+`js/scene.js` (line 63, `put()` only), `js/shaders/sprites.js` (comment), `docs/research/environment_spec.md` (8400.9 lines
+~226-234 and the §12.1 row), this file.

@@ -104,6 +104,26 @@ HWF_TO = 0.45
 # js/aircraft/fit.js hwLow reads the rows above 1.0 only at stations without `hwf` (forward of HWF_TO the hwf table is
 # the better answer there: nose taper, wing-body fairing)
 HWL = (0.05, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1.0, 1.25, 1.5)
+# Close-out round 6 (aircraft verifier c5-1 finding 1): continuity guard on the rows above 1.0. At the wing-root junction
+# of the A350 / 787 (aft of HWF_TO, over the main-gear bays) the fuselage skin ends under the wing's lower surface: the cut
+# at bottom + 1.5 has no outer crossing within zmax (the wing lies beyond it) and found an inner wall instead - a359 X 33
+# 0.86 (gear-bay wall) under a row of 3.08 at 1.25, X 32 2.80 under 3.09, b788 X 26 2.38 under 3.10; fit.js hwLow then
+# read keel + 1.4 m as 1.85 against the mesh's 3.09 m. Below its maximum breadth a lower lobe does not narrow with height,
+# so a row above 1.0 that falls by more than HWL_DROP while the three rows beneath it rise smoothly (each step -0.02 ..
+# HWL_RISE: a lower lobe, not a fairing / tailplane spike or a tail cone above its maximum breadth) reads the row beneath.
+# Over the 23 models it changes exactly those three rows (thresholds 0.2-0.3 / 0.1-0.3 give the same set; scratch
+# c6/aircraft/scripts/guardsim2.py); a smaller drop (0.15) would also catch fairing spikes at 1.25 (A319 / A320 X 17-18).
+HWL_DROP, HWL_RISE = 0.2, 0.15
+
+
+def hwl_guard(row):
+    r = list(row)
+    for k in range(3, len(HWL)):
+        if HWL[k] <= 1.0: continue
+        w = r[k - 3:k + 1]
+        if any(v is None for v in w): continue
+        if w[3] < w[2] - HWL_DROP and all(-0.02 <= w[i + 1] - w[i] <= HWL_RISE for i in range(2)): r[k] = w[2]
+    return r
 
 
 def sections(pos, zone, idx, L, dx, hwf=False, zmax=None):
@@ -132,7 +152,7 @@ def sections(pos, zone, idx, L, dx, hwf=False, zmax=None):
             for h in HWL:                       # starboard (z > 0: the cargo doors' side); zmax keeps a low wing / fairing out
                 zz = [z for z in crossings(segs, 0, b + h) if z > 0 and (zmax is None or z <= zmax)]
                 row.append(round(float(max(zz)), 2) if zz and b + h < t else None)
-            hl.append(row)
+            hl.append(hwl_guard(row))
     out = dict(dx=dx, top=top, bot=bot, hw=hw)
     if hwf: out.update(f=list(HWF), hwf=hf, lo=list(HWL), hwl=hl)
     return out

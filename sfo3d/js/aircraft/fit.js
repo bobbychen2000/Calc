@@ -329,9 +329,16 @@ function botAt(F, st) {
 //     0.19 against 0.82 m), and a single-crossing cut (top = bottom, botAt) is skipped. tools/models/skin_check.mjs, per row
 //     (same mesh rows except where the keel moved, below): against the stored round-4 fix-2 baseline 26 rows worse by >
 //     0.15 m (5 by > 0.5 m), 1076 better; against round 4 fix 1 281 -> 48 worse (> 0.5 m: 99 -> 17), 1226 -> 2176 better;
-//     against round 3 59 -> 64 worse (20 -> 20), 1691 -> 2733 better; every height > 0.15 / 0.5 m 2614 / 1127 -> 1638 / 623;
+//     against round 3 60 -> 65 worse (20 -> 20), 1691 -> 2734 better; every height > 0.15 / 0.5 m 2614 / 1127 -> 1638 / 623;
 //     keel + <= 0.3 m 673 / 263 -> 678 / 192 (A320 family 86 / 72 -> 104 / 6: the nose-gear-bay keel). Still outside the
 //     API's validity: the wing box / main-gear bays at keel + 1.4 m (20 rows: A350, 787, A380 wing-body fairing, 777 bay).
+//     Close-out round 6 (verifier c5-1 finding 1): 10 of those 20 were a data artefact, not the API: at the A350 / 787
+//     wing-root junction the cut at keel + 1.5 found the gear-bay wall (a359 X 33 0.86 under 3.08), and the table now
+//     carries a continuity guard (tools/models/model_features.py hwl_guard; this function is unchanged): A350 X 33 keel +
+//     1.4 m 1.85 -> 3.07 against the mesh's 3.09 m. skin_check per row, same script on both arms: 0 rows worse, 18 better;
+//     against the round-4 fix-2 baseline 26 (5) -> 16 (2) worse. The 10 left are not under-reads: 777 bay (the mesh's 0.27 m
+//     is the keel beam of the open bay) and A380 X 33.5-34.5 (the API's 4.75-4.95 m is the wing-body fairing, which the
+//     check's 1.3 R cut-off leaves out); 6 A320-family nose rows compare different heights (keel moved in round 5).
 const LO_FWD = 1.0;
 function hwLow(F, st, y) {
   const S = F && F.sec; if (!S || !S.hwl) return null; const lo = S.lo;

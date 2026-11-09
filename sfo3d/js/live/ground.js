@@ -22,6 +22,9 @@ const GHOST_EX_S = 5;
 const GHOST_FUS_PTS = 6;
 // an extrapolated (dead-reckoning) body stops this far (m, planform margin) short of a parked aircraft until its next report
 const DR_HOLD_M = 3;
+// a released invalid lock moves its body to the placement (tr.physMove) at most this often per aircraft: a pose that is invalid
+// again after two moves is kept and logged (phys-conflict) instead (close-out round 6) [design value]
+const PHYS_MOVES_MAX = 2;
 
 // building occupancy grid (2 m) from the airport's building footprints; extra (optional): more footprints as polygons
 // [[ring, hole...], ...] - the Blender building assets' measured footprints (data/buildings3d/integration.js physics,
@@ -228,12 +231,13 @@ export class GroundPhysics {
   // what makes the pose B invalid among the placed poses (for the conflict log), in valid()'s own order and tests (no gear test:
   // the lock test leaves it out): 'building', 'bridge' (a rest bridge under the fuselage, nose, tail cone or centre line),
   // 'live bridge', else the first aircraft it overlaps with the 1 m margin ('aircraft')
-  logConflict(traffic, tr, B, placed) {
+  // ('mask': released by the rendered-pavement-mask test above, which valid() without the gear test does not repeat -- close-out round 6)
+  logConflict(traffic, tr, B, placed, hint = null) {
     const S = samples(B.T, B.nose, B.h), bt = (p) => !!(this.building && this.building(p[0], p[1])), br = (p) => !!(this.bridges && this.bridges(p[0], p[1]));
     let w = null, why = S.outline.some(bt) || S.fus.some(bt) ? 'building' : S.fus.some(br) || [0, 8, 9, 10].some(k => br(S.outline[k])) ? 'bridge' : B.tr && this.liveHit(B) ? 'live bridge' : null;
     if (!why) for (const o of placed) { if (Math.hypot(o.nose[0] - B.nose[0], o.nose[1] - B.nose[1]) > (o.T.L + B.T.L) * 0.5 + 45) continue;
       const So = samples(o.T, o.nose, o.h); if (S.outline.some(p => inside(o, p, 1.0)) || So.outline.some(p => inside(B, p, 1.0))) { w = o; why = 'aircraft'; break; } }
-    const ot = w && w.tr; const rec = { why: why || 'other', with: ot ? ot.hex : null, withFlight: ot && ot.info ? ot.info.flight || null : null, withType: ot && ot.info ? ot.info.icao || null : null,
+    const ot = w && w.tr; const rec = { why: why || hint || 'other', with: ot ? ot.hex : null, withFlight: ot && ot.info ? ot.info.flight || null : null, withType: ot && ot.info ? ot.info.icao || null : null,
       d: w ? +Math.hypot(w.nose[0] - B.nose[0], w.nose[1] - B.nose[1]).toFixed(1) : null, at: [+B.nose[0].toFixed(1), +B.nose[1].toFixed(1)] };
     traffic.counters.physLockConflicts = (traffic.counters.physLockConflicts || 0) + 1;
     if (traffic.event) traffic.event(tr, traffic._lastRecv || 0, 'phys-conflict', rec);
@@ -301,7 +305,7 @@ export class GroundPhysics {
         const newKey = !tr.physL || tr.physL.key !== key;
         if (newKey || this.frame % 30 === 0) tr.physL = { key, ok: this.valid(base, placed, false) };
         if (tr.physL.ok && newKey && this.mask && this.mask !== this.paved && (tr.maskUnlocks || 0) < 2 && !this.valid(base, placed, true, this.mask)
-          && this.seek(base, placed, this.mask, 3)) { tr.physL.ok = false; tr.maskUnlocks = (tr.maskUnlocks || 0) + 1; traffic.counters.physMaskUnlocks = (traffic.counters.physMaskUnlocks || 0) + 1; }
+          && this.seek(base, placed, this.mask, 3)) { tr.physL.ok = false; tr.physL.mask = true; tr.maskUnlocks = (tr.maskUnlocks || 0) + 1; traffic.counters.physMaskUnlocks = (traffic.counters.physMaskUnlocks || 0) + 1; }
         if (tr.physL.ok) { placed.push(base); continue; }
         // (close-out round 5, the round-3 verifier's minor: an invalid lock is released only when that moves something -- when the
         // placement below has a valid pose to go to, and this very lock pose was not released before. LXJ569 CL35, parked off-stand
@@ -311,11 +315,18 @@ export class GroundPhysics {
         // once as a conflict (event 'phys-conflict': the neighbour, or the building / bridge test that fails), instead of toggling
         // every frame. The search runs when the lock test does: on a new lock pose and every 30 frames)
         if (tr.physL.alt === undefined) tr.physL.alt = this.place(B, tr, placed, 2).ok;
-        if (!tr.physL.alt || tr._physUnlockKey === key) { if (tr._physConfKey !== key) { tr._physConfKey = key; this.logConflict(traffic, tr, base, placed); } traffic.counters.physLockKept = (traffic.counters.physLockKept || 0) + 1; placed.push(base); continue; }
+        if (!tr.physL.alt || tr._physUnlockKey === key) { if (tr._physConfKey !== key) { tr._physConfKey = key; this.logConflict(traffic, tr, base, placed, tr.physL.mask ? 'mask' : null); } traffic.counters.physLockKept = (traffic.counters.physLockKept || 0) + 1; placed.push(base); continue; }
+        // (close-out round 6, the round-5 verifier's minor 5: the release now MOVES the body to the placement -- tr.physMove: the
+        // controller (traffic.js ctlGround) does not take the < 8 m off-stand rest it otherwise accepts as report scatter, and creeps
+        // along its axis or is re-placed with a fade onto the data pose + tr.physOff; syncBridge locks it again only there (0.6 m).
+        // Before, the released body stood within that 8-m acceptance, was locked again where it stood and the placement was never
+        // reached: LXJ569 CL35 0.46 m from N453FD for 8 h, 8 Nov; the pavement-mask releases (static R4.1.5) the same [obs, replay].
+        // At most PHYS_MOVES_MAX per aircraft)
         tr.lock = null; tr._physUnlockKey = key; traffic.counters.physUnlocks = (traffic.counters.physUnlocks || 0) + 1;
+        if ((tr.physMoves || 0) < PHYS_MOVES_MAX) { tr.physMove = true; tr.physMoves = (tr.physMoves || 0) + 1; traffic.counters.physMoves = (traffic.counters.physMoves || 0) + 1; }
       }
       const ph = this.place(B, tr, placed, this.frame % 30 === 0);
-      tr.physOff = ph.off[0] || ph.off[1] ? ph.off : null;
+      tr.physOff = ph.off[0] || ph.off[1] ? ph.off : null; if (!tr.physOff) tr.physMove = false;
       if (tr.physOff) moved++; if (!ph.ok) unresolved++;
       const base = ph.base; placed.push({ ...base, nose: [base.nose[0] + ph.off[0], base.nose[1] + ph.off[1]] });
     }
@@ -350,14 +361,26 @@ export class GroundPhysics {
         // (...but the arrival whose approach already retracted that occupant's bridge -- traffic.js retractAhead: on that stand's
         // lead-in, close, heading in -- is driving INTO the stand, not past it: first contact is enough there, as before. With the
         // fuselage rule alone the arrivals at E12 / G2 / D16 on 7 Nov 03:46-04:00Z drew 13-67 frames over the ghost first)
-        const into = !!(S.tr.earlyUndock && S.tr.earlyUndock.why === 'ahead' && S.tr.earlyUndock.by === tr.hex);
+        // (close-out round 6, static verifier finding 6: ...or an arrival whose own newest report is on that stand's lead-in, close and
+        // heading in -- traffic.onLeadInClose, the test of the retraction ahead -- even when SFO's plan vetoed that retraction (its
+        // arrival record names another stand AND it lists the occupant there now: the round-3 two-signal veto, re-applied to the
+        // geometric retraction in close-out round 5). Both plan signals can be wrong at once: UAL1811 B39M (SFO: E6) drove into F16
+        // through UAL1835's B39M, silent there since its 22:17Z in-block and still in SFO's plan, which had pushed unseen (heard
+        // taxiing as UAL765 at 00:16:56Z); 5 Nov 00:16:18Z, overlap.gnd 389 frames / 488 m2 until UAL1811's in-block replaced it
+        // [obs, replay; harness e52f3dfd, stream f6ff7ceb]. The veto still holds the bridge (no retraction for an arrival that may
+        // turn off -- DAL545 / SKW3493 at C1); the body that actually reaches the ghost on that lead-in removes it at first contact)
+        const intoLead = !!(S.tr.gate && tr.last && !tr.pushed && (tr.landedAt || tr.dirSFO === 'arr') && traffic.onLeadInClose && traffic.onLeadInClose(tr, S.tr.gate, tr.last));
+        const into = !!(S.tr.earlyUndock && S.tr.earlyUndock.why === 'ahead' && S.tr.earlyUndock.by === tr.hex) || intoLead;
         // (close-out round 3 fix round 2: ...and for that arrival SFO's plan listing the silent occupant there now does not keep it --
         // two aircraft cannot both be at the stand, and the arrival's own reports are driving in. Replay 5 Nov 00:16:46-00:17:20Z:
         // UAL1243 B738 drove into G8 through UAL2313's B38M, silent there since its 22:18Z in-block and still in SFO's plan of 18:01Z,
         // until its own in-block replaced it -- overlap.gnd 191 frames, 978 with the aircraft track's 737 tailplane of fix round 2
         // (window bisect: js/aircraft/types.js alone) [obs, replay]. The KLM373 / JAL2 case that `keeps` is for was not 'into')
-        const hit = S.tr.gate ? (overlaps(B, S, 0) && (into || !keeps(S)) && (!live || into || fusIn(B, S) >= GHOST_FUS_PTS)) : (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5)));
-        if (hit) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true, quiet: S.tr.stale ? 0 : 1 }); if (traffic.fadeRemove) traffic.fadeRemove(S.tr, 'ghost'); else traffic.remove(S.tr); ghosts++; }
+        // (close-out round 6: ...and for the arrival driving INTO that stand already when its newest report lies on the ghost -- as off
+        // the stands -- not only at the drawn contact: the F16 case above, and the 47af104 code, still drew 3 frames of overlap while
+        // the ghost faded [obs, replay])
+        const hit = S.tr.gate ? (((overlaps(B, S, 0) && (into || !keeps(S)) && (!live || into || fusIn(B, S) >= GHOST_FUS_PTS))) || (into && ahead && overlaps(ahead, S, 0.5))) : (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5)));
+        if (hit) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true, quiet: S.tr.stale ? 0 : 1, into: into ? (intoLead ? 'lead' : 'ahead') : 0 }); if (traffic.fadeRemove) traffic.fadeRemove(S.tr, 'ghost'); else traffic.remove(S.tr); ghosts++; }
       }
       for (const S of waiting) {
         if (S.tr.dropNow || S.tr.removed || S.tr === tr) continue;

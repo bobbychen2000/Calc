@@ -10,7 +10,7 @@ out vec2 vQ; out vec3 vCol; out float vI; out float vLens;
 void main(){
   vec3 p = iM0.xyz; float size = iM0.w;
   // iData.x: a position light drawn over its lens by day (js/env/aircraft_lights.js lens: true; close-out round 5, env-6 -
-  // packed by js/scene.js put() as B[o + 12] once the request in docs/requests/env_closeout.md R5.2 lands; 0 until then):
+  // packed by js/scene.js put() as B[o + 12] = s.lens ? 1 : 0 since close-out round 6, env_closeout.md R5.2 / R6.2):
   // a lit lens by day has no glare halo, as js/three/lights.js draws it
   vLens = iData.x;
   vec3 toCam = uCamPos - p; float d = length(toCam); toCam /= d;

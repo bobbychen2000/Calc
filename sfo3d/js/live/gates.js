@@ -383,6 +383,34 @@ function slab(g, a, b, w, h, col, ext) {
   const d = v3.sub(b, a); const L = v3.len(d); if (L < 0.05) return;
   g.box([0, 0, -w / 2], [L, h, w / 2], col, ext, m4.basis(d, [0, 1, 0], a));
 }
+// the full-width rotunda corridor a -> b (floor on the line a -> b, width w, height h square to that line, as slab()) with
+// a VERTICAL start face - flush with the vertical ends of the neckShape prisms and the drum (slab()'s start face is square
+// to the sloping floor, so where the tunnel slopes down its roof edge stood forward of the start: a V-groove across the
+// 2.4 m roof, 0.11 m wide at A12 L1 - c5 runtime verifier). Its roof runs on into tunnel A (T = {o: tunnel A's floor origin
+// at F, f: its axis, h: its height}): where tunnel A slopes down more steeply than this floor line, slab()'s end face
+// (square to the floor line) left the roof edge BEHIND tunnel A's end frame - a slot across the roof (0.02-0.03 m x
+// 0.3-0.4 m deep at A12 / F17 / F21 L1 docked, up to 0.25 m wide at A5 L1); the end face is turned towards square to
+// tunnel A (parallel to its end frame) but no further than keeps the roof edge 0.02 m under tunnel A's roof (at the 1:4
+// limit the edge stops at the frame's back face). Where tunnel A rises, the end stays square to the floor line (the frame
+// leans back over the roof there) unless the roof would stand above tunnel A's roof past the frame (tube()'s end frame:
+// 0.05 +- 0.08 m along the axis, top h + 0.06; up to 0.047 m at the steepest up-slopes, G8 L1): then it ends inside the
+// frame. T null - a part that ends short of tunnel A: square to the floor line
+function neckSlab(g, a, b, T, w, h, col, ext) {
+  const d = v3.sub(b, a); const L = v3.len(d); if (L < 0.05) return;
+  const f = v3.mul(d, 1 / L), r = v3.norm(v3.cross(f, [0, 1, 0])), n = v3.cross(r, f); // n: square to the floor line (up)
+  let t = 0; if (T) { const fa = v3.norm(T.f), ua = v3.cross(r, fa); const fx = v3.dot(f, fa), fu = v3.dot(f, ua);
+    const P0 = v3.sub(v3.add(b, v3.mul(n, h)), T.o), xs = v3.dot(P0, fa), ys = v3.dot(P0, ua), yMax = T.h - 0.02; // (roof edge at t = 0, tunnel A frame)
+    if (fx > 0.5 && fu > 1e-6) t = clampN(Math.min(-h * v3.dot(n, fa) / fx, (yMax - ys) / fu), 0, h); // down: towards square to tunnel A, under its roof
+    else if (fx > 0.5 && fu < -1e-6 && xs > 0.13 && ys + (0.13 - xs) / fx * fu > yMax) t = Math.max(-h, (0.12 - xs) / fx); } // up: ends inside the frame
+  const hw = v3.mul(r, w / 2), up = [0, h / Math.max(0.5, n[1]), 0], top = v3.add(v3.add(b, v3.mul(n, h)), v3.mul(f, t));
+  const S0 = [v3.sub(a, hw), v3.add(a, hw)], S1 = S0.map(p => v3.add(p, up)), E0 = [v3.sub(b, hw), v3.add(b, hw)], E1 = [v3.sub(top, hw), v3.add(top, hw)];
+  const C0 = v3.add(v3.mul(v3.add(a, b), 0.5), v3.mul(v3.add(up, v3.mul(n, h)), 0.25)); // (inside: mid-length, mid-height)
+  const face = (p0, p1, p2, p3) => { const nn = v3.cross(v3.sub(p1, p0), v3.sub(p3, p0)); const fc = v3.mul(v3.add(v3.add(p0, p1), v3.add(p2, p3)), 0.25);
+    if (v3.dot(nn, v3.sub(fc, C0)) >= 0) g.quad(p0, p1, p2, p3, col, ext); else g.quad(p0, p3, p2, p1, col, ext); };
+  face(S0[0], S0[1], S1[1], S1[0]); face(E0[0], E0[1], E1[1], E1[0]); // start (vertical), end
+  face(S0[0], E0[0], E0[1], S0[1]); face(S1[0], E1[0], E1[1], S1[1]); // floor, roof
+  face(S0[0], E0[0], E1[0], S1[0]); face(S0[1], E0[1], E1[1], S1[1]); // sides
+}
 
 // representative (largest common) aircraft of a stand class (only used for a stand without stand data)
 const REF_TYPE = { B: 'crj9', C: 'b38m', CL: 'a21n', D: 'b763', E: 'b789', EL: 'b77w', F: 'a388' };
@@ -1238,7 +1266,13 @@ export class LiveGateSystem {
     // (where that start moved out: the outline between the drum and the walkway, neckShape - drawn as prisms, the tested
     // boxes lie inside them)
     { const K = this.neckShape(b, q.a), Fm = m.F;
-      for (const N of this.neckParts(b, q.a)) if (N.hw > 1) { const e1 = N.s1 + 0.2; slab(geo, at(N.s0, fl(N.s0) - 0.1), at(e1, fl(e1) - 0.1), 2.4, 2.9, C.neck, C.panelE); }
+      // (full width: neckSlab - vertical start face at s; its roof runs on under tunnel A, whose axis is the sections' floor line)
+      const tunA = { o: at(Fm, fl(Fm)), f: v3.sub(at(Fm + m.s, fl(Fm + m.s)), at(Fm, fl(Fm))), h: m.wh[0][1] };
+      let toA = false; // (a full-width part runs into tunnel A)
+      for (const N of this.neckParts(b, q.a)) if (N.hw > 1) { const e1 = N.s1 + 0.2, A = N.s1 >= Fm - 1e-6; toA = toA || A; neckSlab(geo, at(N.s0, fl(N.s0) - 0.1), at(e1, fl(e1) - 0.1), A ? tunA : null, 2.4, 2.9, C.neck, C.panelE); }
+      // (none - every full-width start meets the walkway, F5 L1 at rest: the prisms run to F, where tunnel A's frame leans
+      // forward over a downward slope; a 0.2 m full-width piece inside tunnel A carries their roof under it)
+      if (K.near && !toA) { const s1 = Math.min(K.s, Fm), e1 = Fm + 0.2; neckSlab(geo, at(s1, fl(s1) - 0.1), at(e1, fl(e1) - 0.1), tunA, 2.4, 2.9, C.neck, C.panelE); }
       if (K.near) { const y0 = G + b.Hr - 0.1, s0 = b.rotR * 0.8, top = Math.min(K.s, Fm); const P = (s, l) => [rot[0] + u[0] * s + side[0] * l, rot[2] + u[2] * s + side[2] * l];
         const prism = (pts) => { if (pts.length < 3) return; let A2 = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], n = pts[(i + 1) % pts.length]; A2 += p[0] * n[1] - n[0] * p[1]; } if (Math.abs(A2) < 2e-3) return;
           if (A2 < 0) pts.reverse(); geo.extrude(pts, y0, y0 + 2.9, C.neck, C.panelE, C.neck, C.panelE); geo.cap(pts, y0, C.neck, C.panelE, false); };

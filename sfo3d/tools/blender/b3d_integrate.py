@@ -85,6 +85,10 @@ APP_BRIDGES = os.path.join(HERE, 'app_bridges.json')   # the fresh bridge dump (
 # checks it against the current js/live/gates.js / stands inputs)
 
 
+DUMP_GENERATOR = 'tools/blender/app_bridges.mjs'
+DUMP_SCHEMA = dict(version=2, parts=['walkway', 'rotunda', 'pedestal'])   # = app_bridges.mjs SCHEMA (close-out round 6)
+
+
 def _dump_current(path, res, label='tools/blender/app_bridges.json'):
     """close-out r5 fix 2 (the round-5 verifier, integ-4: a STALE dump ran silently with old bridge solids - its gates.js hash zeroed
     and three bridges moved 1.2 m gave line-for-line the same report): recompute the SHA-256 of every file the dump records in
@@ -103,11 +107,30 @@ def _dump_current(path, res, label='tools/blender/app_bridges.json'):
         fp = os.path.join(ROOT, rel)
         cur = hashlib.sha256(open(fp, 'rb').read()).hexdigest() if os.path.exists(fp) else None
         if cur != h: stale.append(rel)
-    INPUTS_SEEN['bridge solids inputs'] = dict(generated=J.get('generated'), checked=sorted(inp), stale=stale)
+    # close-out round 6 (r5 verifier 2, (d)): the GENERATOR's hash must be recorded and current (a dump from an older generator -
+    # e.g. before the r5 pedestal - passed the data-input check silently), the dump's schema must be the one this check expects,
+    # and every bridge must carry every schema part (0 pedestals is not a silent stats line)
+    bad = []
+    if DUMP_GENERATOR not in inp:
+        bad.append('records no hash of its generator %s (made by an older generator)' % DUMP_GENERATOR)
+    sch = J.get('schema') or {}
+    if sch.get('version') != DUMP_SCHEMA['version'] or list(sch.get('parts') or []) != DUMP_SCHEMA['parts']:
+        bad.append('schema %s, expected %s' % (json.dumps(sch, sort_keys=True), json.dumps(DUMP_SCHEMA, sort_keys=True)))
+    lack = {}
+    for b in J.get('bridges') or []:
+        have = {s_.get('part') for s_ in b.get('rest') or []}
+        for k in DUMP_SCHEMA['parts']:
+            if k not in have: lack.setdefault(k, []).append('%s/%s/%s' % (b.get('stand'), b.get('gate'), b.get('door')))
+    for k, v in sorted(lack.items()):
+        bad.append('%d of %d bridges have no %s part (e.g. %s)' % (len(v), len(J.get('bridges') or []), k, ', '.join(v[:5])))
+    INPUTS_SEEN['bridge solids inputs'] = dict(generated=J.get('generated'), checked=sorted(inp), stale=stale, schema=sch, schema_problems=bad)
     for rel in stale:
         res['conflicts'].append(dict(check='input stale: %s predates %s' % (os.path.basename(label), rel), generated=J.get('generated'),
                                      note='the walkway / drum / pedestal tests were NOT run on it - regenerate: node tools/blender/app_bridges.mjs'))
-    return not stale
+    for why in bad:
+        res['conflicts'].append(dict(check='input stale: %s %s' % (os.path.basename(label), why), generated=J.get('generated'),
+                                     note='the walkway / drum / pedestal tests were NOT run on it - regenerate: node tools/blender/app_bridges.mjs'))
+    return not stale and not bad
 
 
 def _scene_currency(SC, res, tol=0.05, as_note=False):

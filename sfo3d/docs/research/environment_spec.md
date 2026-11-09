@@ -223,11 +223,15 @@ Priority (weather §4.5, **I** built on **V** facts):
    instrument arrivals to 1L/1R (no IAP), while the 4 Nov ADS-B recording shows the West Plan in those winds; the
    fallback is now the West Plan unless the 28-tailwind is ≥ 5 kt (or the 28-crosswind ≥ 20 kt with a 19 headwind),
    then the Southeast Plan (**I**; implementation and evidence: environment_impl.md R2.1). **Revised 2026-11-07
-   (close-out round 3, env-5):** the limits are FAA Order 8400.9 §4b (**V**, PDF cached in `refs/cache/env_src/`): a plan
-   is acceptable when its arrival runway has, dry, a crosswind INCLUDING GUSTS ≤ 20 kt and a tailwind ≤ 5 kt (7 kt with
-   touchdown-zone anemometers, SFO's NV), and, not clear / not dry (precipitation in the METAR, **I**), a crosswind incl.
-   gusts ≤ 15 kt and no tailwind beyond calm (0-3 kt); West unless it fails and Southeast does not (both fail: the smaller
-   excess, **I**). 58 fixture reports: non-West 3 → 7 (environment_impl.md R3.2).
+   (close-out round 3, env-5):** the limits are FAA Order 8400.9 ¶7d "Winds" (**V**, PDF cached in `refs/cache/env_src/`;
+   cited "§4b" until close-out round 6 - wrong paragraph, same text): a plan
+   is acceptable when its arrival runway has, dry (¶7d(1)), a crosswind INCLUDING GUSTS ≤ 20 kt and a tailwind ≤ 5 kt (7 kt with
+   touchdown-zone anemometers, SFO's NV), and, not clear / not dry (¶7d(2); precipitation in the METAR, **I**), a crosswind incl.
+   gusts ≤ 15 kt and no tailwind component unless the reported wind is calm, 0-3 kt (¶7d(2)(b): "No tailwind component may
+   be present except the nominal range of winds reported as calm (0-3 knots) may be considered to have no tailwind
+   component", **V**; the gust counted in the 3 kt, **I**); West unless it fails and Southeast does not (both fail: the smaller
+   excess, **I**). 58 fixture reports: non-West 3 → 7 (environment_impl.md R3.2); with the calm rule read as the wind speed
+   (close-out round 5, not a 3 kt tailwind component) 7 → 8 (environment_impl.md R5.3).
 4. Approach type per arrival end: instrument whenever the METAR is below the charted visual-approach minima "SFO
    2500'/5" (Quiet Bridge / Tipp Toe charts, d-TPP 2609, **V**); otherwise unknown (visual or ILS; the D-ATIS showed ILS
    at night in VFR, **M**). The controller only needs "instrument approaches are being made" for the flasher rule, and
@@ -908,7 +912,7 @@ Each is tagged on the `?qa=env` HUD / in the code header where it is used; a pri
 
 | Constant | Value | Where | Basis | Tag |
 |---|---|---|---|---|
-| Runway-use limits | dry: crosswind incl. gusts ≤ 20 kt, tailwind ≤ 5 kt; wet: ≤ 15 kt, calm | `js/env/state.js` | FAA Order 8400.9 §4b (cached PDF) | **V** (SFO anemometer case for 7 kt: NV; "wet" = precipitation in the METAR: I) |
+| Runway-use limits | dry: crosswind incl. gusts ≤ 20 kt, tailwind ≤ 5 kt; wet: crosswind incl. gusts ≤ 15 kt, no tailwind component unless the reported wind is calm, 0-3 kt (¶7d(2)(b)) | `js/env/state.js` (`WET_CALM_KT` 3) | FAA Order 8400.9 ¶7d (cached PDF) | **V** (SFO anemometer case for 7 kt: NV; "wet" = precipitation in the METAR: I; gust counted in the 3 kt: I) |
 | Plan choice when both fail | smaller excess | `js/env/state.js` | none | I |
 | Apron flood spot share | 0.5 of a mast's field in its shadow-casting spot | `js/three/flood.js SPOT_SHARE` | "an aircraft stand receives light from two or more directions to minimise shadows": EASA CS ADR-DSN.M.750(c) (Issue 2, cached `refs/cache/env_src/easa/`), the EU transposition of ICAO Annex 14 Vol I 5.3.24 (sold by ICAO) | rule V; 0.5 I |
 | Flood spot PCF radius | 5 texels | `js/three/flood.js` | penumbra of a ~2.5 m luminaire cluster | I |
