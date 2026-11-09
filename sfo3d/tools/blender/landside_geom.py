@@ -2432,7 +2432,9 @@ def airtrain_keepout(buildings, tiles):
             st = {}
             if any(e in part.name for e in KEEP_CONTACT):
                 if cols_c is None: cols_c = KO.Columns(T, clear=KO.DS_V / 2 + 0.005, clear_z=0.0, inset=KEEP_CONTACT_INSET)
-                KO.clip_mb(part.mb, b.F.W, cols_c, st); st['contact'] = True
+                # LOD2 (the SFO_LITE phone path shows only LOD2): the cut lies inside the closed deck box, so a 0.5-m step
+                # (fewer re-triangulated stairs; 0.05 m added 1,497 triangles to L2_central_garage) [model]
+                KO.clip_mb(part.mb, b.F.W, cols_c, st, ds_v=KO.DS_V if lod < 2 else 0.5, ds_h=KO.DS_H if lod < 2 else 0.5); st['contact'] = True
             else:
                 KO.clip_mb(part.mb, b.F.W, cols, st)
             if st.get('faces_cut'):

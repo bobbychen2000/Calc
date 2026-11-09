@@ -280,8 +280,8 @@ function underAt(F, st, z) {
 // complete sections (each within 2 m). A cut through a gear well finds the well's roof on the centre plane, not the belly:
 // a section whose bottom is more than 0.3 above the lower of its neighbours is skipped. A cut that crosses the centre plane
 // only once (top = bottom) is skipped too (close-out round 5: on the A319 / A320 / A321 FAM models the belly at X 3-5 m is
-// the nose-gear doors, a zone the section table leaves out, so the cut found only the crown and X 2.5-5 m read a keel
-// 0.4-0.9 m too high: X 2.5 keel + 0.15 m 0.01-0.09 against the mesh's 1.54-1.57 m at that height)
+// the nose-gear doors, a zone the section table leaves out, so the cut found only the crown and keelAt at X 2.5-5.5 m
+// interpolated towards it: 0.8-3.8 m too high, X 4 m 5.53-5.72 m against 1.94-1.96 m now; the bottom of the closed doors)
 function botAt(F, st) {
   const S = F && F.sec; if (!S) return null;
   const nb = (j) => Math.min(...[j - 1, j + 1].filter(i => i >= 0 && i < S.bot.length && S.bot[i] != null).map(i => S.bot[i]).concat([1e9]));
@@ -632,7 +632,7 @@ export function fitType(t, m) {
   //   fit.keelAt(X)       lowest skin on the centre plane at station X (the section table's bottom, posed)
   //   fit.skinHW(X, y, w) half width of the fuselage skin at station X and height y (w > 0: the widest over X +- w/2, for a
 //                       conveyor end, close-out round 3 fix round 2): lower lobe (to 1 model m above the
-  //                       keel) the starboard side, sec.hwl; above it the larger side, sec.hwf; else (or where a wing / fairing
+  //                       keel, aft of 0.45 L to 1.5 m: close-out round 5) the starboard side, sec.hwl; above it the larger side, sec.hwf; else (or where a wing / fairing
   //                       is cut: wider than 1.1 Rz) the ellipse through the section's top and bottom with Rz; null where no
   //                       skin (below the keel / above the crown). Checked against planar cuts of the placed mesh: see
   //                       docs/requests/aircraft_closeout.md close-out round 3 (scratch hwcmp.mjs numbers)
