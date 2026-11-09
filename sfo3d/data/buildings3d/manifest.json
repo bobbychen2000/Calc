@@ -2914,7 +2914,7 @@
      "dev": null,
      "tol": null,
      "ok": true,
-     "src": "gates.js DEPARTURE_LEVELS G 2.7 [obs, low] / A 5.4 [inf] + WALK_H 3.0 (tools/blender/app_bridges.json, generated 2026-11-09T02:36:15.292Z, stale inputs: none); BA-G bump-out roofs 6.5-7.1 m [obs a2]; BA-A failures are not counted (no photo of its bump-outs, A level inferred)"
+     "src": "gates.js DEPARTURE_LEVELS G 2.7 [obs, low] / A 5.4 [inf] + WALK_H 3.0 (tools/blender/app_bridges.json, generated 2026-11-09T03:31:05.641Z, stale inputs: none); BA-G bump-out roofs 6.5-7.1 m [obs a2]; BA-A failures are not counted (no photo of its bump-outs, A level inferred)"
     },
     {
      "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - LOD0: 0 of 46 open",
@@ -5546,6 +5546,32 @@
     "disposition": "fixed",
     "change": "verify_itb: walkway-end gate (tools/blender/walkend_check.py, every LOD + itb_lod2.glb), vestibule reach check, near-context bf_rays LOD0 / LOD2 (bf_rays near mode 10 m, per-node limit 60)",
     "evidence": "near-context back-face hits: LOD0 55 (L0_hall_hangers, identical on the r3 fix-2 file), LOD2 0"
+   }
+  ],
+  "closeout_r5": [
+   {
+    "id": "r5-door-surrounds",
+    "severity": "minor",
+    "item": "door surrounds through the head's other walkways / drums (A6 / A11 stacked heads, A6 L1, A2 drum)",
+    "disposition": "fixed",
+    "change": "bridge_head.clip_member + fixed_solids_near: every door member (jambs, head, leaf) capped VEST_CLEAR below an obstacle starting > 0.1 m above its foot, else trimmed along its length (1-cm bisection), dropped below half its length; verify_itb gate door surrounds vs app solids (0 allowed)",
+    "evidence": "door triangles in app walkway / drum solids: A11 U 16, A6 U 6, A6 L1 seg 2 4 -> 0; A2 door to its drum 0.0026 -> 0.0535 m; 100 members: 85 kept / 3 capped / 2 trimmed / 15 dropped; walkway ends 0 / 46 open every LOD"
+   },
+   {
+    "id": "r5-lod2-heads",
+    "severity": "minor",
+    "item": "LOD2 bridge heads carried the LOD0 geometry (64-segment drum cuts): itb_lod2.glb +1/3 on the SFO_LITE phone path",
+    "disposition": "fixed",
+    "change": "bridge_head.drum_disc: 8-segment circumscribed polygon for the LOD2 cuts; verify_itb budgets LOD2 head tris <= 600, itb_lod2.glb <= 6,500",
+    "evidence": "LOD2 head tris 1,756 -> 548; itb_lod2.glb 7,092 -> 5,884 tris, 772,664 -> 645,984 B; verify_itb 135 -> 138 checks, 0 failed"
+   },
+   {
+    "id": "r5-records-itb",
+    "severity": "minor",
+    "item": "verify_itb overlap NOTE counted the asset's own head boxes as data contacts",
+    "disposition": "fixed",
+    "change": "plausibility.walkway_overlap_m2 = {data_contacts, bridge_head_boxes}; the NOTE text names the data contacts only",
+    "evidence": "data contacts 8.679 m2 (+ head boxes)"
    }
   ]
  },
@@ -14283,13 +14309,47 @@
     "disposition": "partly",
     "evidence": "verify_domestic bf_rays near 10 m: LOD0 1,155 (T3W 574, T1 453, T3E 74), LOD2 1,162 - identical on the r3 fix-2 file (pre-existing see-through hidden by far context, not near the ITB); recorded as residuals (regression above 1.05 x fails); to trace next round"
    }
+  ],
+  "closeout_r5": [
+   {
+    "id": "r5-fins",
+    "severity": "minor",
+    "item": "fins through the app walkways / drums where short walkways leave the facade (regression of R4.1: drawn drum radius)",
+    "disposition": "fixed",
+    "change": "dom_geom APP_SOLIDS (app walkways + drums with height bands) and set_door_keepouts (door frames): fins emitted only in fin_spans FIN_CLEAR 0.05 m off them; verify_domestic gate (0 allowed)",
+    "evidence": "fin contact sets with app walkway / drum solids (SAT) 27 -> 0"
+   },
+   {
+    "id": "r5-coplanar",
+    "severity": "minor",
+    "item": "same-facing coplanar door heads on vestibule / bulkhead roofs (BA_C 6.6 m, BA_B)",
+    "disposition": "fixed",
+    "change": "door_geom: member top steps 0.04 m below any roof top / deck / soffit within 0.03 m (tops_near); verify_domestic gate (0 allowed)",
+    "evidence": "same-facing coplanar detail faces BA_C 5 / BA_B 2 -> 0 / 0"
+   },
+   {
+    "id": "r5-bf-junction",
+    "severity": "minor",
+    "item": "1,155 near-context back-face hits on T1 / T3W / T3E (untraced residuals)",
+    "disposition": "fixed",
+    "change": "traced: rays through the ITB core into the halls' open ITB junction (walls hidden by the ITB occupancy); World.finish tags the ITB occupancy, exposed_pieces(closure=) returns stretches hidden only by it, emit_walls closes them (panel_light, no fins, 507.9 m2); per-node residuals dropped (L2_domestic 88 merged, per-node limit 60)",
+    "evidence": "near-context hits LOD0 1,155 -> 87 (worst T1 37), LOD2 1,162 -> 86; verify_domestic 67 -> 69 checks"
+   },
+   {
+    "id": "r5-f22",
+    "severity": "minor",
+    "item": "F22 L2 walkway end at no building (bridges data)",
+    "disposition": "needs_owner",
+    "change": "none (stand / bridge data, not the buildings track); verify_domestic exemption kept (one key)",
+    "evidence": "R4.5 unchanged"
+   }
   ]
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 22328396,
-  "built": "2026-11-09T04:36:15+00:00",
-  "git": "7a571c8+dirty",
+  "bytes": 22339248,
+  "built": "2026-11-09T05:06:07+00:00",
+  "git": "d035f59+dirty",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -14323,9 +14383,9 @@
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 22854,
+    "tris": 22937,
     "instanced_car_tris": 0,
-    "verts": 54930,
+    "verts": 55173,
     "draw_calls": 125
    }
   },
@@ -14335,7 +14395,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 2974260
+   "bytes": 2984552
   },
   "textures": [
    {
@@ -14370,7 +14430,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 320689,
+    "bytes": 321154,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -15374,7 +15434,7 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 65.0,
+    "bake_s": 73.3,
     "mean": 0.408,
     "p2": 0.0,
     "samples": 40,
@@ -15385,7 +15445,7 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 84.0,
+    "bake_s": 79.1,
     "mean": 0.587,
     "p2": 0.0,
     "samples": 40,
@@ -15396,8 +15456,8 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 30.1,
-    "mean": 0.647,
+    "bake_s": 40.9,
+    "mean": 0.642,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -16639,7 +16699,7 @@
       "draws": 51
      },
      "2": {
-      "tris": 860,
+      "tris": 842,
       "instanced_tris": 0,
       "draws": 9
      }
@@ -17706,7 +17766,7 @@
       "draws": 32
      },
      "2": {
-      "tris": 1397,
+      "tris": 1379,
       "instanced_tris": 0,
       "draws": 4
      }
@@ -17905,7 +17965,7 @@
       "draws": 15
      },
      "2": {
-      "tris": 372,
+      "tris": 349,
       "instanced_tris": 0,
       "draws": 4
      }
@@ -18584,7 +18644,7 @@
       "draws": 6
      },
      "2": {
-      "tris": 120,
+      "tris": 262,
       "instanced_tris": 0,
       "draws": 4
      }
@@ -19067,6 +19127,78 @@
      -1073.7
     ]
    },
+   "building_keepout": {
+    "central_garage": {
+     "cg_plinth@0": {
+      "faces": 119,
+      "m2": 429.81,
+      "rule": "contact"
+     },
+     "cg_L2@2": {
+      "faces": 0,
+      "m2": 0.0,
+      "rule": "contact, not clipped at LOD2 (inside the deck box)"
+     }
+    },
+    "garage_a": {
+     "garage_a_body@0": {
+      "faces": 22,
+      "m2": 2.29
+     },
+     "garage_a_station_block@0": {
+      "faces": 11,
+      "m2": 21.17
+     },
+     "garage_a_station_block_det@0": {
+      "faces": 6,
+      "m2": 1.98
+     },
+     "garage_a_L2@2": {
+      "faces": 17,
+      "m2": 66.36
+     }
+    },
+    "ltp_garage_2": {
+     "ltp2_body@0": {
+      "faces": 10,
+      "m2": 26.33
+     },
+     "ltp2_L2@2": {
+      "faces": 6,
+      "m2": 17.47
+     }
+    },
+    "rental_car_center": {
+     "rcc_body@0": {
+      "faces": 4,
+      "m2": 25.82
+     },
+     "rcc_louvres@0": {
+      "faces": 13,
+      "m2": 5.51
+     }
+    },
+    "grand_hyatt": {
+     "gh_body@0": {
+      "faces": 3,
+      "m2": 22.32
+     },
+     "gh_L2@2": {
+      "faces": 3,
+      "m2": 21.26
+     }
+    },
+    "bart_station": {
+     "bart_body@0": {
+      "faces": 4,
+      "m2": 0.95
+     },
+     "bart_L2@2": {
+      "faces": 5,
+      "m2": 5.97
+     }
+    }
+   },
    "level_method": "deck top = harmonic (Laplace) interpolation on the 1-m cells of the guideway polygon between the station platforms fixed at their levels: linear between stations, continuous through junctions",
    "clip": "not built inside the ITB outline (itb.glb core block holds it, ITB L4 placeholder 16.5 m keeps it inside) and inside the Garage A body (portals at both faces)",
    "deviations": [
@@ -19196,7 +19328,7 @@
   "verification": {
    "tool": "tools/blender/verify_landside.py",
    "report": "out/buildings3d/landside_verify.json (local)",
-   "n_checks": 200,
+   "n_checks": 202,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % unless stated",
@@ -20327,6 +20459,24 @@
      "unit": "pts"
     },
     {
+     "check": "LOD2 AirTrain x building triangle crossings (outside the exempt _portal portal linings; the unclipped contact shells of central_garage apart)",
+     "model": 0.0,
+     "drawing": 0.0,
+     "tol": 0.0,
+     "ok": true,
+     "src": "edge-triangle crossings; landside_geom.airtrain_keepout (keepout.py) clips the facades; over: none; exempt points 0; contact-band points 0",
+     "unit": "pts"
+    },
+    {
+     "check": "LOD2 AirTrain x the unclipped contact shells (central_garage; residual ceiling, close-out r5)",
+     "model": 149.0,
+     "drawing": 160.0,
+     "tol": null,
+     "ok": true,
+     "src": "max-type: <= the ceiling; the CG LOD2 shell keeps the plinth / parapet walls the LOD0 contact rule trims (the coarse deck runs up to 0.6 m off the LOD0 outline)",
+     "unit": "pts"
+    },
+    {
      "check": "LTP1: parapet top",
      "model": 16.5,
      "drawing": 16.5,
@@ -21106,6 +21256,7 @@
      "exempt_rule": [
       "_portal"
      ],
+     "keepout_clip": 0.08,
      "contact_rule": {
       "parts": [
        "cg_plinth",
@@ -21113,8 +21264,56 @@
       ],
       "band_m": 0.05,
       "z_tol_m": 0.03
+     }
+    },
+    "airtrain_vs_buildings_lod2": {
+     "pairs": {
+      "L2_central_garage x L2_airtrain_-2_0": {
+       "points": 6,
+       "y": [
+        18.15,
+        19.55
+       ],
+       "at": [
+        -796.6,
+        261.7
+       ]
+      },
+      "L2_central_garage x L2_airtrain_-3_0": {
+       "points": 129,
+       "y": [
+        17.53,
+        20.62
+       ],
+       "at": [
+        -967.1,
+        337.7
+       ]
+      },
+      "L2_central_garage x L2_airtrain_-3_1": {
+       "points": 14,
+       "y": [
+        17.89,
+        18.15
+       ],
+       "at": [
+        -945.8,
+        420.8
+       ]
+      }
      },
-     "keepout_clip": 0.08
+     "exempt": [],
+     "exempt_rule": [
+      "_portal"
+     ],
+     "keepout_clip": 0.08,
+     "contact_unclipped": {
+      "buildings": [
+       "central_garage"
+      ],
+      "points": 149,
+      "ceiling": 160
+     }
     },
     "stand_min_m": 26.3,
     "stand_worst": "G3",
@@ -21135,11 +21334,10 @@
      "united_moc": 211.9
     },
     "lod2_backface": {
-     "total": 70,
+     "total": 62,
      "per_node": {
       "L2_bart_station": 26,
       "L2_garage_a": 14,
-      "L2_rental_car_center": 8,
       "L2_airtrain_-3_0": 7,
       "L2_airtrain_-4_0": 7,
       "L2_airtrain_-4_1": 3,
@@ -21966,6 +22164,32 @@
     "change": "MATS ribbon glazing=True; one rule in all four builders: no glTF occlusion when MATS[key].glazing (else 'glass' in the key)",
     "evidence": "glazing materials with occlusion across all 33 asset files: 5 -> 0"
    }
+  ],
+  "closeout_r5": [
+   {
+    "id": "r5-airtrain-keepout",
+    "severity": "minor",
+    "item": "Garage A station block deck-1 opening / far wall, Garage G, LTP garage 2, Grand Hyatt, RCC, CG plinth faces crossing the AirTrain",
+    "disposition": "fixed",
+    "change": "tools/blender/keepout.py (AirTrain column hull + clip_mb), landside_geom.airtrain_keepout at every LOD (KEEP_CLEAR 0.08 m; CG plinth contact rule, inset 0.03 m); station block hall back wall holed over the block portals; Garage G vault pulled off the host spandrels; verify_landside LOD0 AirTrain x building crossing gate",
+    "evidence": "verifier xtri.py (md5 d44f6b44; re-run on the r4 file = its r4 log): LOD0 r4 1,118 points in 17 pairs -> every non-exempt pair 0 (station block x deck / track 75 / 10 -> 0, _det 32 -> 0, garage_g_body x station steel 83 -> 0, _piers 39 / 34 -> 0, ltp2 41 -> 0, gh 41 / 38 -> 0, rcc 44 / 12 / 7 -> 0); left: cg_plinth contact band 1,427 (beyond the band 0) + the exempt portal lining 4; LOD1 the same; keep-out cut LOD0 536.2 m2 (cg_plinth 429.8 contact); verify_landside 199 -> 202 checks, 0 failed"
+   },
+   {
+    "id": "r5-airtrain-keepout-lod2",
+    "severity": "minor",
+    "item": "LOD2 (phone file landside_lod2.glb) building faces vs the coarse LOD2 guideway (found on the b_ls4 file: the LOD2 jambs cut against the LOD0 hull still crossed the simplified deck)",
+    "disposition": "fixed",
+    "change": "landside_geom.airtrain_keepout: LOD2 parts cleared out of the LOD2 guideway hull (cols2 from the tiles' coarse parts); verify_landside LOD2 AirTrain x building gate (0 for non-contact buildings)",
+    "evidence": "LOD2 crossings garage_a / grand_hyatt / ltp_garage_2 / garage_g 101 / 40 / 32 / 24 (r4) -> 13 / 0 / 0 / 0 (b_ls4) -> 0 / 0 / 0 / 0 (b_ls5); LOD2 cut 111.1 m2; landside_lod2.glb 2,892,136 -> 2,984,552 B, LOD2 tris 22,258 -> 22,937"
+   },
+   {
+    "id": "r5-cg-lod2",
+    "severity": "minor",
+    "item": "Central Garage LOD2 shell (cg_L2, contact part) vs the coarse LOD2 guideway: 149 crossings, 28 where its parapet wall (top 20.65 m) rises <= 0.16 m above the simplified deck top at (-946.7, 416.9) - (-938.6, 414.2)",
+    "disposition": "deferred",
+    "change": "none: clipping cg_L2 with the contact rule against the LOD2 hull was tried (t/emu_ls_l2b.py): L2_central_garage 2,095 -> 3,641 tris on the phone file - rejected; verify_landside reports it with a ceiling (KEEP_CONTACT_L2_MAX 160)",
+    "evidence": "149 points (r4 149); remedy: a less simplified LOD2 guideway deck along the CG (landside_airtrain coarse simplify(0.6))"
+   }
   ]
  },
  "integration": {
@@ -21999,7 +22223,7 @@
   },
   "plausibility": {
    "conflicts": 7,
-   "notes": 14,
+   "notes": 15,
    "nearest_envelopes": [
     {
      "stand": "F12",
@@ -22148,7 +22372,7 @@
     }
    ],
    "walkway_drum_tests": 486,
-   "bridge_solids": "out/draw/scene2d.json (generated 2026-11-07T10:35:11.482Z, e87c2d2)",
+   "bridge_solids": "tools/blender/app_bridges.json (generated 2026-11-09T03:31:05.641Z; 131 bridges, rest-pose fixed walkway segments + rotunda drums)",
    "taxilane": [
     [
      "domestic/BA_F",
@@ -22790,13 +23014,13 @@
   },
   "footprints_js": {
    "units": 14,
-   "bytes_js": 236218,
+   "bytes_js": 236585,
    "note": "B3D_INTEGRATION.footprints (close-out round 3, integration-5)",
    "tier_tol_m": 0.1,
    "tier_min_m2": 0.02,
    "self_check": {
     "rule": "every LOD0 / LOD1 vertex above y0 + 0.5 within 0.3 m of an admissible tier of its own unit (fix 2, verifier v3)",
-    "vertices": 156818,
+    "vertices": 156636,
     "outside": 0,
     "max_beyond_tol_m": 0.0,
     "max_m": 0.124,
@@ -22815,7 +23039,7 @@
      "domestic/T1": 0.124,
      "domestic/T2": 0.103,
      "domestic/T3E": 0.099,
-     "domestic/T3W": 0.063
+     "domestic/T3W": 0.11
     },
     "per_unit": {}
    }
@@ -22824,15 +23048,41 @@
    "domestic: BA_C LOD2 top +9.08 m (review r1) - a checker artefact: the joined LOD2 mesh was split by plan distance and C3C triangles went to BA_C; split by LOD0-footprint containment (+1 m) since review r2: top 0.0 m (lod2_check.json)",
    "landside: rental car center LOD2 roof median 4.58 m (review r1) - a checker artefact: the roof cells sampled the open deck beyond the roof edge; one roof-cell definition for both LODs since review r2 (1-m cells inside the LOD0 footprint - 0.5 m): 0.00 m"
   ],
-  "generated": "2026-11-08T20:37:29Z",
+  "generated": "2026-11-09T05:17:16Z",
   "tool": "tools/blender/b3d_integrate.py",
-  "doc": "docs/research/buildings3d.md (integration section)"
+  "doc": "docs/research/buildings3d.md (integration section)",
+  "closeout_r5": [
+   {
+    "id": "r5-fail-loud",
+    "severity": "minor",
+    "item": "residual 4: b3d_integrate silently depended on gitignored out/ files",
+    "disposition": "fixed",
+    "change": "required inputs recorded (sha1, mtime) in plausibility.stats.inputs; missing -> CONFLICT input missing, --check exit 2, full run refuses to write; bridge solids from the TRACKED tools/blender/app_bridges.json (the on-disk scene2d.json was also stale: 10 attach points 0.02-1.18 m off)",
+    "evidence": "--check real inputs: 7 conflicts (= r4) / 15 notes (r4 14 + the stale-scene2d note), exit 1 as r4; both inputs missing: 3 input-missing conflicts, exit 2; walkway / drum tests 486 (= r4), 0 overlaps"
+   },
+   {
+    "id": "r5-records",
+    "severity": "minor",
+    "item": "residual 5: the R4.1 blend bullet had no pointer to R4f2.1",
+    "disposition": "fixed",
+    "change": "inline [superseded in fix round 2, R4f2.1: ...] note",
+    "evidence": "integration_closeout.md R4.1"
+   },
+   {
+    "id": "r5-conflicts",
+    "severity": "minor",
+    "item": "residual 6: deferred conflicts (ITB lower roadway 3.88 m / ITB L3 level, domestic loop 3.53 m, interchange_2_2 4.60 m, four narrowed stacked cuts)",
+    "disposition": "needs_owner",
+    "change": "none (not guessed)",
+    "evidence": "b3d_integrate conflict lines identical to r4"
+   }
+  ]
  },
  "roadways": {
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
   "owner": "integration (review round 1, finding 1)",
   "generator": "tools/blender/build_roadways.py + roadways_net.py",
-  "built": "2026-11-09T04:02:49Z",
+  "built": "2026-11-09T05:12:45Z",
   "files": {
    "full": "data/buildings3d/roadways.glb",
    "lod2": "data/buildings3d/roadways_lod2.glb"
@@ -22945,9 +23195,9 @@
     "step_face_m": 454.2,
     "slit_runs_dropped_m": 5.8,
     "abutment_m": 142.5,
-    "under_joint_m": 432.5,
-    "under_joint_to_grade_m": 14.1,
-    "under_joint_unresolved_m": 366.0,
+    "under_joint_m": 448.1,
+    "under_joint_to_grade_m": 18.5,
+    "under_joint_unresolved_m": 269.9,
     "step_face_by_height_m": {
      "0.02-0.05": 105.3,
      "0.05-0.10": 65.8,
@@ -22999,14 +23249,14 @@
    "closeout_r5": {
     "soffit_closure": {
      "boundary_m": 22243.6,
-     "face_m": 19587.1,
-     "soffit_continues_m": 2592.4,
-     "open_into_hollow_m": 7.2,
-     "open_other_m": 56.9
+     "face_m": 19612.6,
+     "soffit_continues_m": 2573.6,
+     "open_into_hollow_m": 2.8,
+     "open_other_m": 54.5
     },
-    "under_joint_m": 432.5,
-    "under_joint_to_grade_m": 14.1,
-    "under_joint_unresolved_m": 366.0,
+    "under_joint_m": 448.1,
+    "under_joint_to_grade_m": 18.5,
+    "under_joint_unresolved_m": 269.9,
     "mesh_folds": {
      ">1_deg": {
       "n": 226,
@@ -23024,6 +23274,13 @@
       "n": 6,
       "edge_m": 23.3
      }
+    },
+    "fold_gate": {
+     "limit_edge_m": {
+      ">4_deg": 30.4,
+      ">6_deg": 24.5
+     },
+     "ok": true
     }
    }
   },
@@ -23062,8 +23319,8 @@
     "plate": 13
    },
    "tris": {
-    "0": 57967,
-    "1": 16383,
+    "0": 57987,
+    "1": 16421,
     "2": 7340
    },
    "grade_max": {
@@ -23261,7 +23518,7 @@
    "crossings": 33,
    "asset_cut_m2": 1671.0,
    "bytes": {
-    "full": 5291956,
+    "full": 5296016,
     "lod2": 476212
    },
    "itb_plate": {
@@ -24308,9 +24565,9 @@
     "step_face_m": 454.2,
     "slit_runs_dropped_m": 5.8,
     "abutment_m": 142.5,
-    "under_joint_m": 432.5,
-    "under_joint_to_grade_m": 14.1,
-    "under_joint_unresolved_m": 366.0,
+    "under_joint_m": 448.1,
+    "under_joint_to_grade_m": 18.5,
+    "under_joint_unresolved_m": 269.9,
     "step_face_by_height_m": {
      "0.02-0.05": 105.3,
      "0.05-0.10": 65.8,
@@ -24752,7 +25009,14 @@
       ],
       "edge_m": 0.2
      }
-    ]
+    ],
+    "fold_gate": {
+     "limit_edge_m": {
+      ">4_deg": 30.4,
+      ">6_deg": 24.5
+     },
+     "ok": true
+    }
    },
    "columns_vs_soffit": {
     "columns": 300,
@@ -24764,19 +25028,11 @@
    "soffit_closure": {
     "rule": "LOD0 soffit boundary edges every 0.5 m: closed by a vertical concrete face within 0.04 m spanning the soffit height, or a soffit continuing 0.15 m outward within 0.15 m; open into a hollow when a deck / walk top lies 0.3 m outward above (close-out r5)",
     "boundary_m": 22243.6,
-    "face_m": 19587.1,
-    "soffit_continues_m": 2592.4,
-    "open_into_hollow_m": 7.2,
-    "open_other_m": 56.9,
+    "face_m": 19612.6,
+    "soffit_continues_m": 2573.6,
+    "open_into_hollow_m": 2.8,
+    "open_other_m": 54.5,
     "open_into_hollow_top": [
-     {
-      "at": [
-       -1607.7,
-       459.1
-      ],
-      "soffit_m": 1.5,
-      "len_m": 4.4
-     },
      {
       "at": [
        -1545.6,
@@ -24877,6 +25133,32 @@
     "domestic/T1": 390.6
    },
    "deck_left_inside_buildings_m2": 0
-  }
+  },
+  "closeout_r5": [
+   {
+    "id": "r5-under-joint",
+    "severity": "minor",
+    "item": "f3 residual 1 (step joints open underneath) + f6 residual 2 (cross-piece fill joints without an abutment)",
+    "disposition": "fixed",
+    "change": "build_piece under-joint faces on every inner run (neighbour underside -> this soffit), probes 5 % in, 0.06 / INNER_GAP + 0.06 m, an unresolved probe takes another neighbour's underside; self-check soffit_check()",
+    "evidence": "verifier soffit_close.py LOD0 (r4 950d31fa -> d33aa2a0): open into a hollow 330.4 -> 2.8 m, face 18,773.2 -> 19,612.6 m; cross-piece sites 16.5 -> 0 m; LOD1 544.8 -> 174.6 m; under-joint faces 448.1 m"
+   },
+   {
+    "id": "r5-ledges",
+    "severity": "minor",
+    "item": "f3 residual: 0.02-0.31 m ledges on the deck tops inside carriageways",
+    "disposition": "deferred",
+    "change": "none (both quick remedies rejected in R4f2.3; needs a warped junction surface, integration track)",
+    "evidence": "ledges.py deck-to-deck 239.2 m (r4 239.2), 0.10-0.31 m 87.5 m"
+   },
+   {
+    "id": "r5-creases",
+    "severity": "minor",
+    "item": "residual 3: creases at the flat joint wedges (folds twice r22)",
+    "disposition": "deferred",
+    "change": "trial (hp_ext interpolation across the wedge) reverted: max grade 13.4 -> 79.4 %, folds >3/4/6 deg 31/10/6 -> 50/26/17; fold regression gate added (stats.mesh_grades.fold_gate, FOLD_GATE_M 30.4 / 24.5 m)",
+    "evidence": "folds >1/2/4/6 deg 226/84/10/6 = r4; fold_gate ok"
+   }
+  ]
  }
 }

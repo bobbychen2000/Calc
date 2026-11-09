@@ -2411,6 +2411,8 @@ KEEP_CLEAR = 0.08          # < PORTAL_CLEAR 0.10: the designed portal openings a
 KEEP_EXEMPT = ('_portal',)
 KEEP_CONTACT = ('cg_plinth', 'cg_L2')   # (cg_L2: the Central Garage LOD2 shell carries the plinth massing too)
 KEEP_CONTACT_INSET = 0.03  # m [model]
+KEEP_CONTACT_BLDG = ('central_garage',)   # buildings whose LOD2 node carries a contact part (cg_L2, left unclipped at LOD2)
+KEEP_CONTACT_L2_MAX = 160  # verify_landside ceiling: LOD2 crossings of the unclipped CG shell (149 measured c5, b_ls4) [our gate]
 
 
 def airtrain_keepout(buildings, tiles):
@@ -2423,6 +2425,14 @@ def airtrain_keepout(buildings, tiles):
     if not T: return {}
     T = np.concatenate(T)
     cols = KO.Columns(T, clear=KEEP_CLEAR, clear_z=0.05)
+    # LOD2 parts against the LOD2 guideway (close-out r5, fix-round check on the shipped b_ls4 file): the coarse deck is the
+    # outline simplified by 0.6 m with 12-m segments, so it runs up to ~0.2 m outside the LOD0 hull at the Garage A station
+    # block - the LOD2 jambs cut against the LOD0 hull still crossed it (13 points, L2_garage_a x L2_airtrain_-4_1, the
+    # verifier's xtri rule on landside_lod2.glb, the only file the SFO_LITE phone path loads). Each LOD is shown with the
+    # guideway of its own LOD, so LOD2 faces are cleared out of the LOD2 hull (same KEEP_CLEAR) [model]
+    T2 = [KO.tris_world(part.mb, t.F.W) for t in tiles for part in t.coarse]
+    T2 = [x for x in T2 if len(x)]
+    cols2 = KO.Columns(np.concatenate(T2), clear=KEEP_CLEAR, clear_z=0.05) if T2 else cols
     cols_c = cols_ch = None
     rec = {}
     for b in buildings:
@@ -2443,7 +2453,7 @@ def airtrain_keepout(buildings, tiles):
                     cols_ch = KO.Columns(T, clear=0.0, clear_z=0.0, inset=KEEP_CONTACT_INSET)
                 KO.clip_mb(part.mb, b.F.W, cols_c, st, cols_h=cols_ch); st['contact'] = True
             else:
-                KO.clip_mb(part.mb, b.F.W, cols, st)
+                KO.clip_mb(part.mb, b.F.W, cols2 if lod == 2 else cols, st)
             if st.get('faces_cut'):
                 rec.setdefault(b.key, {})['%s@%d' % (part.name, lod)] = dict(faces=st['faces_cut'], m2=round(st['area_m2'], 2), **({'rule': 'contact'} if st.get('contact') else {}))
     return rec

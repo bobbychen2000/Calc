@@ -310,3 +310,149 @@ to the buildings track. `js/live/gates.js` was not edited.
 | v6 scene2d / records | confirmed fixed | - |
 | v7 T2 curb slot | integration | 0.045-0.10 m with an edge face (their side) |
 | v5 / v10 drawings | owner | redraw BL-02 / BL-03 / BI-03 / BI-04 or keep the NOT DRAWN notes (open question) |
+
+## Round 5 (residuals) - close-out round 5, fix round 1 (9 Nov 2026; the round-4 verifier's findings, scratchpad `c4_r4verify1_buildings.json`)
+
+Rebuilt one at a time under `out/.heavy.lock`: `itb.glb` / `itb_lod2.glb` 02:39Z, `domestic.glb` / `domestic_lod2.glb` 02:54Z,
+`landside.glb` / `landside_lod2.glb` 05:08Z (b_ls5; four earlier landside builds b_ls .. b_ls4 were test builds of the keep-out
+rule, each superseded) with the `lsu_*` units re-split (`b3d_split.py`, run, not edited); then the roadways and the integration
+re-run (R5.6). `tools/blender/app_bridges.json` was re-dumped three times (the runtime track keeps editing `js/live/gates.js`): every
+dump had the same 131 bridges, max difference 0 m; only the input hash moved (verify_domestic: dump current). Records:
+`manifest.json#<group>.closeout_r5` (`tools/blender/c5_manifest.py`); work log, every before / after file and the emulation
+scripts: scratchpad `c5/buildings/` (NOTES.md). Before = the round-4 files (commit a5ecf67, copies in `c5/buildings/before/`);
+every before / after pair below was measured with the same script on both files (the verifier's `xtri.py` md5 d44f6b44, re-run on
+the round-4 file: identical to its round-4 log). No replays were run by this track (no tools/live harness numbers).
+
+| file | round 4 | round 5 |
+|---|---|---|
+| itb.glb (LOD0 / LOD1 / LOD2 tris) | 6,934,336 B (71,939 / 38,683 / 7,092) | 6,807,008 B (71,929 / 38,683 / 5,884) |
+| itb_lod2.glb (phone) | 772,664 B | 645,984 B (-16 %) |
+| domestic.glb | 11,174,120 B (79,070 / 23,334 / 23,174) | 11,196,072 B (79,040 / 23,368 / 23,208) |
+| domestic_lod2.glb (phone) | 2,848,024 B | 2,849,948 B |
+| landside.glb | 21,966,188 B (168,815 / 94,789 / 22,258) | 22,339,248 B (171,079 / 97,025 / 22,937) |
+| landside_lod2.glb (phone) | 2,892,136 B | 2,984,552 B (+3.2 %: the keep-out re-triangulation, R5.1) |
+
+### R5.1 Buildings vs the AirTrain: one keep-out rule at every LOD (Garage A station block, Garage G, LTP garage 2, Grand Hyatt, RCC, BART, CG plinth)
+
+Root cause. Every facade style (precast spandrels, slab-edge bands, screens, glazing, louvres) was built from its own outline with
+no knowledge of where the guideway passes; round 4 fixed one face of the station block by hand (the east-face jambs). New module
+`tools/blender/keepout.py`: the AirTrain's COLUMN HULL (at a plan point, the merged height intervals of the guideway triangles
+over it; a non-vertical triangle contributes its plane height there, a vertical one its band) and `clip_mb`, which clears every
+planar face of a building mesh out of it in the face's own frame (vertical faces: exact height intervals on equal steps <= 0.05 m
+over the whole face; other faces: cells <= 0.10 m with a 5-point test, the cut intersected with the hull outline itself;
+constrained-Delaunay re-triangulation, UVs by an affine fit). `landside_geom.airtrain_keepout` runs it on every building part:
+LOD0 shells + details and LOD1 details against the LOD0 guideway, and the LOD2 parts against the LOD2 guideway (the coarse deck
+is the outline simplified by 0.6 m: cut against the LOD0 hull, the LOD2 station-block jambs still crossed it by <= 0.14 m, 13
+points, found on the b_ls4 file and fixed in b_ls5). KEEP_CLEAR 0.08 m in plan, 0.05 m above / below. Exempt by design: the portal
+tunnels (the guideway's own lining). CONTACT rule for the Central Garage plinth (the garage structure built up to the guideway; its
+walls stand on the deck outline): no clearance, cut only beyond 0.03 m inside the footprint - its walls stood up to 2.6 m deep
+inside the deck box where the deck runs below h5 (82.8 m2 of faces inside the solid) -> 0.03 m2, all within 0.05 m of the
+outline. Also: the station block's hall back wall is holed over each block portal (deck +- PORTAL_CLEAR, the far-face lintel),
+and the Garage G station vault is pulled in off its host's spandrels (`VAULT_REACH` 0.65 m, `VAULT_HOST_CLEAR` 0.33 m).
+
+| AirTrain x building, edge-triangle crossing points (the verifier's `xtri.py` rule) | round 4 | round 5 |
+|---|---|---|
+| LOD0 garage_a_station_block x deck / track; _det x deck | 75 / 10; 32 | 0 / 0; 0 |
+| LOD0 garage_g_body x station steel; _piers x deck / station steel | 83; 39 / 34 | 0; 0 / 0 |
+| LOD0 ltp2_body x deck | 41 | 0 |
+| LOD0 gh_body x track / deck | 41 / 38 | 0 / 0 |
+| LOD0 rcc_louvres x deck; rcc_body x deck / piers | 44; 12 / 7 | 0; 0 / 0 |
+| LOD0 garage_a_portal x deck (exempt lining) | 3 | 4 |
+| LOD0 cg_plinth x decks / track (contact part) | 657 / 2 | 1,427 / 0, all within the contact band; beyond it 0 (verify_landside) |
+| LOD1 (same rule, L1_ nodes) | 938 in 13 pairs | 1,431 in 4 pairs = the CG contact band + the exempt portal |
+| LOD2 phone file `landside_lod2.glb`: garage_a / grand_hyatt / ltp_garage_2 / garage_g | 101 / 40 / 32 / 24 | 0 / 0 / 0 / 0 |
+| LOD2: L2_central_garage (unclipped contact shell) | 149 | 149 (residual, below) |
+
+The CG plinth's raw crossing count rose because its walls now END on the guideway's faces (coincident contact edges) instead of
+running through them; the contact gate counts only crossings > 0.05 m inside the footprint and > 0.03 m inside the height
+interval: 0. Cut by the keep-out (m2): LOD0 536.2 (cg_plinth 429.8 contact - walls and the plinth top cap where the deck soffit
+runs below it, inside the closed deck box; station block 21.2 + det 2.0, garage_a_body 2.3, ltp2_body 26.3, rcc_body 25.8 +
+louvres 5.5, gh_body 22.3, bart_body 0.95); LOD2 111.1 (garage_a_L2 66.4, gh_L2 21.3, ltp2_L2 17.5, bart_L2 6.0). The record is
+`manifest.json#landside.airtrain.building_keepout` (from the next build; `out/buildings3d/landside_build.json#airtrain.keepout` now).
+
+New gates in `verify_landside` (199 -> 202 checks, 0 failed): every LOD0 AirTrain triangle edge against every LOD0 building
+triangle and back, 0 crossings outside the exempt portal linings and the CG contact band; the same at LOD2 (L2_ nodes), 0 for every
+building but the Central Garage, whose LOD2 shell is reported with a ceiling (`KEEP_CONTACT_L2_MAX` 160).
+
+Residual (documented, not fixed): `L2_central_garage` keeps 149 crossings with the coarse guideway, 28 of them where its parapet wall
+(top 20.65 m) rises <= 0.16 m above the simplified deck top (20.49-20.62 m) over two short runs at (-946.7, 416.9) - (-938.6, 414.2).
+Clipping that shell with the contact rule against the LOD2 hull was tried (module emulation, `t/emu_ls_l2b.py`): 2,095 -> 3,641
+triangles on the phone file (+1,546) - rejected. The remedy is a less-simplified LOD2 guideway deck along the CG (landside_airtrain
+coarse `simplify(0.6)`), an open item.
+
+### R5.2 Domestic fins through the app walkways (regression of R4.1) and door heads on roof planes (z-fight)
+
+- **Fins.** `dom_geom` builds `APP_SOLIDS` (the app's fixed walkways and drums from `app_bridges.json`, each with its height band)
+  and `set_door_keepouts` (every door surround's frame); a fin is emitted only in the spans of its height that stay FIN_CLEAR
+  0.05 m off them (`fin_spans`, capped top and bottom). Fin contacts with app walkway / drum solids (the verifier's SAT test):
+  27 sets -> 0 (B10, D4, D5, D11, D14, D15, D16, E6, E11 all clear). New verify_domestic gate (0 allowed).
+- **Coplanar door heads.** The door surround's member top steps 0.04 m below any roof top / deck / soffit plane it would meet
+  within 0.03 m (`tops_near`: host roof, the deck under a parapet, the slab soffit). Same-facing coplanar detail faces BA_C 5 /
+  BA_B 2 -> 0 / 0 (C4 / C9 at 6.6 m, B10 / B16); new verify_domestic gate (0 allowed).
+
+### R5.3 The ITB door surrounds clip the walkways / drums; LOD2 bridge heads lighter (phone path)
+
+- `bridge_head.clip_member`: every door member (jambs, head, leaf) is tested against the other walkways and drums of its head
+  (`fixed_solids_near`, the own seg-1 walkway excluded, the upper-deck walkway included), on its real footprint. A member whose
+  top meets an obstacle starting > 0.1 m above its foot is capped VEST_CLEAR below it; otherwise the obstacle's stretch is cut out
+  along the member (1-cm bisection); a member keeping less than half its length is dropped. 100 members: 85 kept, 3 capped, 2
+  trimmed, 15 dropped (the dropped ones lay inside another walkway). Door surrounds vs app solids: A11 U 16 / A6 U 6 / A6 L1 seg 2 4
+  triangles -> 0; A2 door to its drum 0.0026 -> 0.0535 m. New verify_itb gate (0 allowed).
+- LOD2: the drum and other-bridge cuts use an 8-segment circumscribed polygon (`drum_disc`): LOD2 head triangles 1,756 -> 548;
+  `itb_lod2.glb` 7,092 -> 5,884 triangles, 772,664 -> 645,984 B (below the round-3 size plus the 25 boxes). Gates: LOD2 heads <= 600,
+  itb_lod2.glb <= 6,500.
+- Walkway ends 0 / 46 open at every LOD (max gap 0.058 / 0.067 m LOD2); near-context back-face rays 55 / 0 (unchanged).
+- verify_itb 135 -> 138 checks, 0 failed.
+
+### R5.4 Domestic near-context back-face rays (T1 / T3W / T3E): traced and closed
+
+Traced with `bf_rays` ray dumps: every T1 / T3W / T3E first hit came from a ray entering through the ITB core block (context) into
+the halls' open junction - the walls there were hidden by the ITB occupancy (`exposed_pieces`), so the halls had no wall at the
+ITB. `World.finish` tags that occupancy; `exposed_pieces(closure=)` returns the stretches hidden ONLY by the ITB and `emit_walls`
+closes them with plain `panel_light` walls (no fins): 507.9 m2. Near-context hits LOD0 1,155 -> 87 (worst T1 37), LOD2 1,162 ->
+86. The per-node residuals are dropped; one merged-node residual stays (`L2_domestic` 88 = 83 x 1.05), per-node limit 60.
+verify_domestic 67 -> 69 checks, 0 failed; verify_domestic_r2 n_fail 0.
+
+### R5.5 Records (round 4)
+
+Corrected in place with markers: the G7 envelope figure (5.31 m to the BA-G LOD0 triangles, integration.json; 5.35 m is the old
+outline), the station-block disposition (fixed -> partly; closed in R5.1), and a note that the docked-pose plausibility used the
+7 Nov 06:21Z bridge dump (before gates.js fe78e17; the round-4 verifier's fresh run gave the same result). verify_itb's overlap
+NOTE now separates the data contacts (8.679 m2) from the asset's own head boxes (`plausibility.walkway_overlap_m2`). Future pose
+tests re-dump the bridges first (`node tools/blender/app_bridges.mjs <out>`).
+
+### R5.6 Integration: re-run after the round-5 rebuilds
+
+Order as R4.4, final run after b_ls5 (`c5/buildings/final2/chain2.sh`). Plan changes for the integration: landside faces cut back
+from the guideway (no footprint change beyond 0.1 m); domestic junction walls inside the ITB core outline; ITB door members fewer
+(no footprint change). Results (final run 05:12-05:22Z; before = the round-4
+chain): `b3d_integrate` 7 conflicts / 15 notes - the conflict and note lines identical to round 4's report plus one informational
+note (the old scene2d.json is stale; the walkway / drum tests now read the tracked `tools/blender/app_bridges.json`, see
+integration_closeout R5.3); walkway / drum vs host: no conflict (as r4); nearest stand envelopes F12 2.91 m, F17 3.15 m, G7 5.31 m
+(unchanged); footprint tiers 156,636 vertices, 0 outside; `b3d_lod2_check` 47 units / 0 flagged (r4 47 / 0); `tools/sat/check.py`
+0 issues / 0 app issues / 41 warnings (r4 the same); verify_itb 138 / 0, verify_domestic 69 / 0, verify_domestic_r2 n_fail 0,
+verify_landside 202 / 0 (all re-run after the last build, with the 03:31Z bridge dump, current). Lite (phone) path, the five
+`*_lod2.glb` files: 62,323 -> 61,830 triangles (itb -1,208, domestic +34, landside +679, roadways +2), 7,317,568 -> 7,285,368 B.
+
+### R5.7 Bridges data and drawings (owner; unchanged)
+
+F22 L2 (R4.5) stays exempt in verify_domestic, one key only; the fix belongs to the stand / bridge data (feed L2 from L1's rotunda
+with walkFrom, or correct its attach point to BA-F). Drawings BL-02 / BL-03 / BI-03 / BI-04: the tagged NOT DRAWN notes stand;
+the round-4/5 bridge-head vestibules and door surrounds and the round-5 keep-out cuts are not on the sheets either. Both need the
+owner (redraw, or keep the notes).
+
+### Round 5 dispositions (verifier findings in scratchpad `c4_r4verify1_buildings.json`)
+
+| finding | status | evidence |
+|---|---|---|
+| Garage A station block (deck-1 opening, far wall) + Garage G / LTP2 family vs AirTrain; no LOD0 test | fixed | R5.1: every non-exempt LOD0 / LOD1 / LOD2 pair 0 crossings (r4 1,118 points in 17 LOD0 pairs); CG plinth contact band only; gates at LOD0 + LOD2 |
+| domestic fins through short walkways (drum-notch regression) | fixed | R5.2: 27 -> 0 contact sets; gate |
+| ITB door surrounds vs other walkways / drums (A6, A11, A2) | fixed | R5.3: 26 -> 0 triangles, A2 0.0026 -> 0.0535 m; gate |
+| ITB LOD2 head bloat (phone path) | fixed | R5.3: 1,756 -> 548 head tris; itb_lod2.glb 772,664 -> 645,984 B; budget gates |
+| new coplanar z-fight pairs (BA_C / BA_B) | fixed | R5.2: 5 / 2 -> 0 / 0; gate |
+| 1,155 near-context back-face hits T1 / T3 | fixed | R5.4: traced (open ITB junction), closed: 1,155 -> 87 LOD0, 1,162 -> 86 LOD2 |
+| F22 L2 | needs owner | R5.7 (stand / bridge data) |
+| record accuracy | fixed | R5.5 |
+| drawings BL / BI | needs owner | R5.7 |
+| (found this round) LOD2 jambs vs the coarse guideway | fixed | R5.1: 13 -> 0 (LOD2 hull) |
+| (found this round) CG LOD2 shell vs the coarse guideway | deferred | R5.1 residual: 149 points (28 above the deck top, <= 0.16 m); the clip costs +1,546 phone tris |

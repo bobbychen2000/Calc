@@ -408,65 +408,84 @@ def run(path):
     # LOD0 AirTrain triangle edge against every LOD0 building triangle and vice versa (strict crossings, as the verifier's
     # xtri.py) - 0 allowed outside the listed exemptions (the parts landside_geom.KEEP_EXEMPT leaves out of the keep-out clip by
     # design: the portal tunnels, the guideway's own lining; the Central Garage plinth, the trough the guideway runs in)
-    AT_X = None
-    try:
-        def _tris(nodes):
-            return [(nm, np.concatenate([p_['P'][p_['T']] for p_ in m['prims']])) for nm, m in nodes if m['prims'] and m['inst'] is None]
-        AT0 = _tris([(nm, m) for nm, m in S.items() if (m['bldg'] or '').startswith('airtrain') and m['lod'] == 0])
-        BD0 = _tris([(nm, m) for nm, m in S.items() if not (m['bldg'] or '').startswith('airtrain') and m['lod'] == 0])
+    AT_X = {}
 
-        def _seg_tri(E0, E1, T):
-            D_ = E1 - E0; v0 = T[:, 0]; e1 = T[:, 1] - v0; e2 = T[:, 2] - v0
-            p_ = np.cross(D_[:, None], e2[None]); det = (e1[None] * p_).sum(-1)
-            okd = np.abs(det) > 1e-12; inv = np.where(okd, 1 / np.where(okd, det, 1), 0)
-            s_ = E0[:, None] - v0[None]; u_ = (s_ * p_).sum(-1) * inv
-            q_ = np.cross(s_, e1[None]); v_ = (D_[:, None] * q_).sum(-1) * inv; t_ = (e2[None] * q_).sum(-1) * inv
-            m_ = okd & (u_ > 1e-6) & (v_ > 1e-6) & (u_ + v_ < 1 - 1e-6) & (t_ > 1e-6) & (t_ < 1 - 1e-6)
-            i_, k_ = np.nonzero(m_); return E0[i_] + D_[i_] * t_[i_, k_][:, None]
-        xt = {}
-        for na, TA in BD0:
-            loA, hiA = TA.min(1), TA.max(1); g0, g1 = loA.min(0), hiA.max(0)
-            for nb, TB in AT0:
-                loB, hiB = TB.min(1), TB.max(1)
-                if (g1 < loB.min(0)).any() or (hiB.max(0) < g0).any(): continue
-                Ta = TA[((loA <= hiB.max(0)) & (hiA >= loB.min(0))).all(1)]; Tb = TB[((loB <= g1) & (hiB >= g0)).all(1)]
-                if not len(Ta) or not len(Tb): continue
-                pts = []
-                for Ts, Tt in ((Ta, Tb), (Tb, Ta)):
-                    E0 = np.concatenate([Ts[:, 0], Ts[:, 1], Ts[:, 2]]); E1 = np.concatenate([Ts[:, 1], Ts[:, 2], Ts[:, 0]])
-                    for c0 in range(0, len(E0), 1500):
-                        for c1 in range(0, len(Tt), 1500):
-                            Pp = _seg_tri(E0[c0:c0 + 1500], E1[c0:c0 + 1500], Tt[c1:c1 + 1500])
-                            if len(Pp): pts.append(Pp)
-                if pts:
-                    Pp = np.unique(np.round(np.concatenate(pts), 2), axis=0)
-                    xt[(na, nb)] = dict(points=int(len(Pp)), y=[round(float(Pp[:, 1].min()) - GROUND_Y, 2), round(float(Pp[:, 1].max()) - GROUND_Y, 2)],
-                                        at=[round(float(Pp[:, 0].mean()), 1), round(float(Pp[:, 2].mean()), 1)], _P=Pp)
-        ex_ = [k for k in xt if any(e in k[0] for e in LG.KEEP_EXEMPT)]
-        # contact parts (LG.KEEP_CONTACT, the CG plinth): a crossing counts only beyond the contact band - more than
-        # KEEP_CONTACT_INSET + 0.02 m inside the guideway's plan footprint AND more than 0.03 m inside its height interval
-        ct_ = [k for k in xt if k not in ex_ and any(e in k[0] for e in LG.KEEP_CONTACT)]
-        if ct_:
-            import keepout as KO
-            colsV = KO.Columns(np.concatenate([np.c_[T_[:, :, 0].reshape(-1, 1), T_[:, :, 1].reshape(-1, 1) - GROUND_Y, T_[:, :, 2].reshape(-1, 1)].reshape(-1, 3, 3)
-                                               for _, T_ in AT0]), clear=0.0, clear_z=0.0, inset=LG.KEEP_CONTACT_INSET + 0.02)
-            for k in ct_:
-                Pp = xt[k].pop('_P')
-                iv = colsV.intervals(Pp[:, [0, 2]])
-                deep = sum(1 for p_, v_ in zip(Pp, iv) if any(a_ + 0.03 < p_[1] - GROUND_Y < b_ - 0.03 for a_, b_ in v_))
-                xt[k]['contact_points'] = xt[k]['points'] - deep; xt[k]['points'] = deep
-        for v_ in xt.values(): v_.pop('_P', None)
-        bad = {'%s x %s' % k: v for k, v in xt.items() if k not in ex_ and v['points'] > 0}
-        AT_X = dict(pairs={'%s x %s' % k: v for k, v in xt.items()}, exempt=sorted('%s x %s' % k for k in ex_),
-                    exempt_rule=list(LG.KEEP_EXEMPT), contact_rule=dict(parts=list(LG.KEEP_CONTACT), band_m=LG.KEEP_CONTACT_INSET + 0.02, z_tol_m=0.03),
-                    keepout_clip=LG.KEEP_CLEAR)
-        C.add('LOD0 AirTrain x building triangle crossings (outside the exempt %s portal linings; %s: beyond the contact band only)'
-              % ('/'.join(LG.KEEP_EXEMPT), '/'.join(LG.KEEP_CONTACT)),
-              float(sum(v['points'] for v in bad.values())), 0.0, 0.0, 'edge-triangle crossings; landside_geom.airtrain_keepout (keepout.py) clips '
-              'the facades; over: %s; exempt points %d; contact-band points %d' % (bad or 'none', sum(xt[k]['points'] for k in ex_),
-                                                                                 sum(xt[k].get('contact_points', 0) for k in xt)), 'pts')
-    except Exception as e:  # noqa: BLE001
-        C.add('LOD0 AirTrain x building crossings', str(e), 'error', ok=False)
+    def _tris(nodes):
+        return [(nm, np.concatenate([p_['P'][p_['T']] for p_ in m['prims']])) for nm, m in nodes if m['prims'] and m['inst'] is None]
+
+    def _seg_tri(E0, E1, T):
+        D_ = E1 - E0; v0 = T[:, 0]; e1 = T[:, 1] - v0; e2 = T[:, 2] - v0
+        p_ = np.cross(D_[:, None], e2[None]); det = (e1[None] * p_).sum(-1)
+        okd = np.abs(det) > 1e-12; inv = np.where(okd, 1 / np.where(okd, det, 1), 0)
+        s_ = E0[:, None] - v0[None]; u_ = (s_ * p_).sum(-1) * inv
+        q_ = np.cross(s_, e1[None]); v_ = (D_[:, None] * q_).sum(-1) * inv; t_ = (e2[None] * q_).sum(-1) * inv
+        m_ = okd & (u_ > 1e-6) & (v_ > 1e-6) & (u_ + v_ < 1 - 1e-6) & (t_ > 1e-6) & (t_ < 1 - 1e-6)
+        i_, k_ = np.nonzero(m_); return E0[i_] + D_[i_] * t_[i_, k_][:, None]
+    # LOD2 too (fix-round check on the shipped file: the SFO_LITE phone path loads only landside_lod2.glb, and its coarse deck is
+    # simplified by 0.6 m): LOD2 building nodes against the LOD2 AirTrain nodes, 0 allowed for every building except the
+    # contact ones (LG.KEEP_CONTACT_BLDG), whose LOD2 shell is left unclipped by design (landside_geom.airtrain_keepout:
+    # clipping cg_L2 cost +1,546 phone triangles) - their crossings are reported with a regression ceiling (KEEP_CONTACT_L2_MAX)
+    for LODX in (0, 2):
+        try:
+            ATn = _tris([(nm, m) for nm, m in S.items() if (m['bldg'] or '').startswith('airtrain') and m['lod'] == LODX])
+            BDn = _tris([(nm, m) for nm, m in S.items() if not (m['bldg'] or '').startswith('airtrain') and m['lod'] == LODX])
+            bld_of = {nm: (m['bldg'] or '') for nm, m in S.items()}
+            xt = {}
+            for na, TA in BDn:
+                loA, hiA = TA.min(1), TA.max(1); g0, g1 = loA.min(0), hiA.max(0)
+                for nb, TB in ATn:
+                    loB, hiB = TB.min(1), TB.max(1)
+                    if (g1 < loB.min(0)).any() or (hiB.max(0) < g0).any(): continue
+                    Ta = TA[((loA <= hiB.max(0)) & (hiA >= loB.min(0))).all(1)]; Tb = TB[((loB <= g1) & (hiB >= g0)).all(1)]
+                    if not len(Ta) or not len(Tb): continue
+                    pts = []
+                    for Ts, Tt in ((Ta, Tb), (Tb, Ta)):
+                        E0 = np.concatenate([Ts[:, 0], Ts[:, 1], Ts[:, 2]]); E1 = np.concatenate([Ts[:, 1], Ts[:, 2], Ts[:, 0]])
+                        for c0 in range(0, len(E0), 1500):
+                            for c1 in range(0, len(Tt), 1500):
+                                Pp = _seg_tri(E0[c0:c0 + 1500], E1[c0:c0 + 1500], Tt[c1:c1 + 1500])
+                                if len(Pp): pts.append(Pp)
+                    if pts:
+                        Pp = np.unique(np.round(np.concatenate(pts), 2), axis=0)
+                        xt[(na, nb)] = dict(points=int(len(Pp)), y=[round(float(Pp[:, 1].min()) - GROUND_Y, 2), round(float(Pp[:, 1].max()) - GROUND_Y, 2)],
+                                            at=[round(float(Pp[:, 0].mean()), 1), round(float(Pp[:, 2].mean()), 1)], _P=Pp)
+            ex_ = [k for k in xt if any(e in k[0] for e in LG.KEEP_EXEMPT)]
+            if LODX == 0:
+                # contact parts (LG.KEEP_CONTACT, the CG plinth): a crossing counts only beyond the contact band - more than
+                # KEEP_CONTACT_INSET + 0.02 m inside the guideway's plan footprint AND more than 0.03 m inside its height interval
+                ct_ = [k for k in xt if k not in ex_ and any(e in k[0] for e in LG.KEEP_CONTACT)]
+                if ct_:
+                    import keepout as KO
+                    colsV = KO.Columns(np.concatenate([np.c_[T_[:, :, 0].reshape(-1, 1), T_[:, :, 1].reshape(-1, 1) - GROUND_Y, T_[:, :, 2].reshape(-1, 1)].reshape(-1, 3, 3)
+                                                       for _, T_ in ATn]), clear=0.0, clear_z=0.0, inset=LG.KEEP_CONTACT_INSET + 0.02)
+                    for k in ct_:
+                        Pp = xt[k].pop('_P')
+                        iv = colsV.intervals(Pp[:, [0, 2]])
+                        deep = sum(1 for p_, v_ in zip(Pp, iv) if any(a_ + 0.03 < p_[1] - GROUND_Y < b_ - 0.03 for a_, b_ in v_))
+                        xt[k]['contact_points'] = xt[k]['points'] - deep; xt[k]['points'] = deep
+                ctl2 = []
+            else:
+                ctl2 = [k for k in xt if k not in ex_ and bld_of.get(k[0]) in LG.KEEP_CONTACT_BLDG]
+            for v_ in xt.values(): v_.pop('_P', None)
+            bad = {'%s x %s' % k: v for k, v in xt.items() if k not in ex_ and k not in ctl2 and v['points'] > 0}
+            AT_X[LODX] = dict(pairs={'%s x %s' % k: v for k, v in xt.items()}, exempt=sorted('%s x %s' % k for k in ex_),
+                              exempt_rule=list(LG.KEEP_EXEMPT), keepout_clip=LG.KEEP_CLEAR,
+                              **(dict(contact_rule=dict(parts=list(LG.KEEP_CONTACT), band_m=LG.KEEP_CONTACT_INSET + 0.02, z_tol_m=0.03)) if LODX == 0 else
+                                 dict(contact_unclipped=dict(buildings=list(LG.KEEP_CONTACT_BLDG), points=sum(xt[k]['points'] for k in ctl2),
+                                                             ceiling=LG.KEEP_CONTACT_L2_MAX))))
+            C.add('LOD%d AirTrain x building triangle crossings (outside the exempt %s portal linings; %s)'
+                  % (LODX, '/'.join(LG.KEEP_EXEMPT), '%s: beyond the contact band only' % '/'.join(LG.KEEP_CONTACT) if LODX == 0 else
+                     'the unclipped contact shells of %s apart' % '/'.join(LG.KEEP_CONTACT_BLDG)),
+                  float(sum(v['points'] for v in bad.values())), 0.0, 0.0, 'edge-triangle crossings; landside_geom.airtrain_keepout (keepout.py) clips '
+                  'the facades; over: %s; exempt points %d; contact-band points %d' % (bad or 'none', sum(xt[k]['points'] for k in ex_),
+                                                                                     sum(xt[k].get('contact_points', 0) for k in xt)), 'pts')
+            if LODX == 2:
+                C.add('LOD2 AirTrain x the unclipped contact shells (%s; residual ceiling, close-out r5)' % '/'.join(LG.KEEP_CONTACT_BLDG),
+                      float(sum(xt[k]['points'] for k in ctl2)), float(LG.KEEP_CONTACT_L2_MAX), None,
+                      'max-type: <= the ceiling; the CG LOD2 shell keeps the plinth / parapet walls the LOD0 contact rule trims (the coarse deck '
+                      'runs up to 0.6 m off the LOD0 outline)', 'pts', ok=sum(xt[k]['points'] for k in ctl2) <= LG.KEEP_CONTACT_L2_MAX)
+        except Exception as e:  # noqa: BLE001
+            C.add('LOD%d AirTrain x building crossings' % LODX, str(e), 'error', ok=False)
     # ---------------- LTP 1 / 2
     k = 'ltp_garage_1'
     if k in by:
@@ -711,7 +730,8 @@ def run(path):
         cars[k] = len(X)
     # ---------------- plausibility
     plaus = {'cars': plaus_cars}
-    if AT_X is not None: plaus['airtrain_vs_buildings_lod0'] = AT_X
+    if 0 in AT_X: plaus['airtrain_vs_buildings_lod0'] = AT_X[0]
+    if 2 in AT_X: plaus['airtrain_vs_buildings_lod2'] = AT_X[2]
     sys.path.insert(0, os.path.join(ROOT, 'tools', 'stands'))
     fps = {}
     for k in by:

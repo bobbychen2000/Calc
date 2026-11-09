@@ -338,3 +338,106 @@ at LOD0); columns run 0.15 m (COL_TOP) up into the 1.2-m deck box. Self-check `s
 soffit triangle at the centre and 0.3 m round it (largest soffit offset 0.063 m; round 4: 298 of 300 by the verifier's test,
 35157016 at (-1796.4, 753.6) and 186398851 at (-1592.6, 500.0) without one). `b3d_integrate` finds no new clearance conflict from
 the added soffits.
+
+## Round 5 (residuals) - close-out round 5, fix round 1 (9 Nov 2026; the round-4 fix-2 verifier's residuals, scratchpad `c4_r4verify2_integration.json`)
+
+Rebuilt after the round-5 building rebuilds (R5 of `buildings_closeout.md`; the landside asset changed, and the roadway trims read
+its triangles): `roadways.glb` 5,266,908 -> 5,296,016 B (sha1 950d31fa -> d33aa2a0; LOD0 / LOD1 / LOD2 tris 57,753 / 16,243 /
+7,338 -> 57,987 / 16,421 / 7,340), `roadways_lod2.glb` 476,072 -> 476,212 B, `integration.json` / `integration.js`,
+`manifest.json#roadways` / `#integration` (final run 05:12-05:22Z, scratchpad `c5/buildings/final2/chain2.sh`). Dev builds g1 / g2
+(`c5/buildings/rw/`, outputs redirected) and the round-4 verifier's own scripts (`grades`, `soffit_close`, `ledges`, `pfloat`,
+`incarr`, byte-identical copies in `c5/buildings/rw/rv/`, run on the installed files: "r4" = sha1 950d31fa, "now" = d33aa2a0) give
+the numbers below. No replays were run.
+
+### R5.1 Joints open underneath (f3 residual 1 + f6 residual 2): closed
+
+`build_piece` now builds, on every inner run (a joint with a neighbouring piece, LOD0 / LOD1), an UNDER-JOINT face where this
+deck's underside at the joint is higher than the neighbour's: from the neighbour's underside (its soffit after a 0.02-0.30 m step,
+or grade under an all-fill neighbour - the cross-piece fill case) up to this deck's soffit, facing into this deck's under-space.
+The undersides come from `_bottoms()` (each piece's own plan triangulation and per-corner soffit / grade, cached per LOD), probed
+5 % in from the run ends, 0.06 m into this deck and 0.06 / INNER_GAP + 0.06 m into the neighbour (a neighbour may stand off by up
+to INNER_GAP: the first dev build closed only 9.2 of the 16.5 m of cross-piece joints). A probe that still finds no underside takes
+the first OTHER neighbour's at that point (edge_runs gives one neighbour per run; deck 35157100's 4.4-m run at (-1607.7, 459.1)
+starts on ramp 735035451 and ends on ramp 735035452, 0.92 m from the first: the last cross-piece fill joint the 04:47 build left
+open). New build self-check `soffit_check()` (the verifier's soffit_close rule: every LOD0 soffit boundary edge every 0.5 m,
+closed by a vertical face spanning it or a continuing soffit) -> `roadways_build.json#stats.soffit_closure` and
+`manifest.json#roadways.closeout_r4.closeout_r5`.
+
+| LOD0 soffit boundary 22,244 m (verifier's `soffit_close.py`) | r4 | now |
+|---|---|---|
+| closed by a face | 18,773.2 m | 19,612.6 m |
+| soffit continues | 3,083.3 m | 2,573.6 m |
+| open into a hollow (see-through) | 330.4 m | 2.8 m (largest 1.0 m at (-1545.6, 469.7)) |
+| open, nothing above | 56.9 m | 54.5 m |
+| the verifier's cross-piece fill joints (-1607.7, 459.1) / (-2024.4, 444.4) / (-1493.7, 470.7) / (-1609.4, 453.0) | 6.4 / 4.1 / 3.5 / 2.5 m | 0 / 0 / 0 / 0 |
+| the ITB lower-sidewalk kerb (-1316.2, 353.4), walk soffit 4.75 m over roadway soffit 4.60 m | ~190 m open | closed |
+
+Under-joint faces 448.1 m at LOD0 (18.5 m of them down to grade under an all-fill neighbour); probes left unresolved 269.9 m
+(04:47 build 366.0 m; the soffit check leaves at most 2.8 m of see-through edge, so all but that are closed by another face or a
+continuing soffit).
+LOD1 (same script, `soffit_close.py 1`): open into a hollow 544.8 -> 174.6 m, open other 284.8 -> 269.5 m (the LOD1 soffits are
+simplified by 0.35 m, so more of their joints stand off beyond the probes); LOD2 builds no under-joint faces (`roadways_lod2.glb`
+LOD2 subtree unchanged by R5.1).
+The 0.02-0.30 m LEDGES on the deck tops themselves are unchanged (`ledges.py` deck-to-deck 239.2 m, 87.5 m of them 0.10-0.31 m;
+r4 239.2 / 87.5 m): two decks that meet with a small step are still one carriageway with a drivable ledge and no barrier. Both
+quick remedies were rejected in R4f2.3; the fix is one warped junction surface (a joint level solve over the touching pieces) - an
+open item for the integration track, with the ledge length by height kept in `stats.edges_lod0.step_face_by_height_m`
+(0.02-0.05 105.3 / 0.05-0.10 65.8 / 0.10-0.20 99.7 / 0.20-0.30 88.0 m, walk kerbs 95.5 m).
+
+Unchanged by these faces (same scripts, r4 -> now): max grade 13.37 % -> 13.37 %, area > 10 / 12 / 13.5 % 784.3 / 36.5 / 0 m2 ->
+the same; barrier feet floating > 0.02 m 0.8 m2 -> 0.8 m2, buried > 0.02 m 1.6 -> 1.6 m2; in-carriageway parapet 36.9 m -> 36.9 m;
+columns 300 / 300 on a soffit (largest offset 0.063 m).
+
+### R5.2 Creases at the joint wedges (residual 3): analysed, trial reverted, deferred; a fold regression gate added
+
+The wedge's level IS the exact C0 fill: `hp()` depends on the station only, so the caps of both decks a wedge closes are at the
+node level over their whole width, and a flat wedge at that level meets both without a step. The fold where it meets a graded deck
+(6.4 deg beside the 11.2 % ramp at (-1610.4, 449.1)) is that deck's own grade. Dev build g1 tried the verifier's option (each
+deck's end-slope extrapolation `hp_ext`, distance-weighted across the wedge): mesh max grade 13.4 -> 79.4 % (0.0015-m2 slivers at
+the ITB L3 joint (-1370.3, 301.2) and the domestic joint (-806.2, 333.3)), folds > 3 / 4 / 6 deg 31 / 10 / 6 -> 50 / 26 / 17 - the
+caps still pin both edges at the node level, so the extrapolation only adds a bulge. Reverted (the `hb()` docstring records the
+trial). Removing the fold needs the same warped junction surface as R5.1's ledges. Folds now (= r4 fix 2): > 1 / 2 / 4 / 6 deg 226
+(1,430 m) / 84 (518 m) / 10 (28.9 m) / 6 (23.3 m) (r22: 107 / 56 / 5 / 2). New `stats.mesh_grades.fold_gate` (also in
+`closeout_r5.fold_gate`): the fold edge over 4 / 6 deg may not exceed the r4 fix-2 build's 28.9 / 23.3 m + 5 % (`FOLD_GATE_M`
+30.4 / 24.5 m; a WARNING line otherwise): ok.
+
+### R5.3 `b3d_integrate` silently depended on gitignored out/ files (residual 4): fails loudly; the bridge solids moved to a tracked input
+
+- `_input()` records each required input with its sha1 and mtime in `integration.json#plausibility.stats.inputs`; a missing or
+  unreadable one is a CONFLICT 'input missing: ...' and the checks that need it are not run (the `tools/stands/geom.py`
+  whole-file fallback for the bridge solids is gone; the at-grade clearance and stacked-cut checks no longer return behind a log
+  line). `--check` exits 2 when an input is missing; a full run REFUSES to write integration.json / .js / the manifest (exit 2).
+- The bridge solids now come from `tools/blender/app_bridges.json` (TRACKED; the dump of the current `js/live/gates.js` + stands by
+  `node tools/blender/app_bridges.mjs`, whose currency verify_domestic gates): the fixed walkway segments and rotunda drums of the
+  rest pose (the fixed parts are the same in every pose). The gitignored `out/draw/scene2d.json` the round-4 check read was not only
+  missable but stale: generated 7 Nov 10:35Z (git e87c2d2), before later `data/sfo_stands.js` changes - 10 walkway attach points
+  0.02-1.18 m off the current ones (B2 1.18, A15 0.54, E8 0.52 m; `_scene_currency`, now an informational note). The pedestal
+  column under a drum is not in the dump, so it is not tested here (scene2d.json carried it).
+- Tests (`c5/buildings/integ2/t_check.py`, --check, OUTD redirected): real inputs -> 7 conflicts (line-for-line round 4's) / 15
+  notes (round 4's 14 + the stale-scene2d note), exit 1 as round 4; both required inputs pointed at missing paths -> 3 'input
+  missing' conflicts (bridge solids; at-grade clearance inputs; roadways build record), exit 2.
+- The full run of the chain: 7 conflicts / 15 notes, the conflict and note lines identical to round 4's report apart from that one
+  note; integration.json 992 kB / integration.js 237 kB; `b3d_lod2_check` 47 units / 0 flagged (r4 47 / 0); `tools/sat/check.py`
+  0 issues / 0 app issues / 41 warnings (r4 the same).
+
+### R5.4 Records (residual 5): fixed
+
+The R4.1 "Connected decks meet halfway" bullet carries "[superseded in fix round 2, R4f2.1: ...]".
+
+### R5.5 Conflicts left with their owners (residual 6): unchanged
+
+As R4f2.5: roads over roads 3.88 m at (-1307.8, 483.4), 160.3 m2 (ITB L3 level: ITB group / owner, +0.8 m on `level3.floor`), the
+domestic departures loop 3.53 m over 26 at-grade roads, 758 m (owner: posted clearance photo or sign), interchange_2_2 4.60 m over
+1.0 m (numerical), the four narrowed stacked cuts (370279626 cut to 0.00 m under 35157100). Not guessed; holding diverge branches at
+the main deck's level (`roadways_net`) stays deferred, now with the mesh-grade and fold gates in place for when it is done.
+
+### Round 5 dispositions (`c4_r4verify2_integration.json`)
+
+| residual | status | evidence |
+|---|---|---|
+| 1 f3 ledges + their soffits open underneath | partly | R5.1: underneath closed (see-through soffit edge 330.4 -> 2.8 m); the deck-top ledges (239.2 m) deferred to a junction surface |
+| 2 cross-piece fill joints without an abutment | fixed | R5.1: 16.5 -> 0 m at the verifier's sites; self-check `soffit_closure` |
+| 3 creases at the wedges | deferred | R5.2: trial reverted with evidence (79 % slivers); fold gate added |
+| 4 b3d_integrate silent on missing out/ files | fixed | R5.3: input-missing CONFLICT + exit 2 + refuse to write; bridge solids from the tracked dump |
+| 5 R4.1 bullet pointer | fixed | R5.4 |
+| 6 deferred conflicts | needs owner | R5.5 |

@@ -278,6 +278,7 @@ def entry(build, ver, bldgs, tiles, mats):
         buildings=comps,
         airtrain=dict(tiles=tiles_tris, levels=at.get('anchors'), max_grade=at.get('max_grade'), piers=at.get('piers'), stations=at.get('stations'),
                       clipped_m2=at.get('clip_area_m2'), rcc_tower=at.get('rcc_tower'),
+                      building_keepout=at.get('keepout'),   # close-out r5: building faces cut by landside_geom.airtrain_keepout, per part@lod
                       level_method='deck top = harmonic (Laplace) interpolation on the 1-m cells of the guideway polygon between the station '
                                    'platforms fixed at their levels: linear between stations, continuous through junctions',
                       clip='not built inside the ITB outline (itb.glb core block holds it, ITB L4 placeholder 16.5 m keeps it inside) and '

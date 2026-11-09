@@ -61,10 +61,12 @@ D3 = os.path.join(ROOT, 'data', 'buildings3d')
 OUTD = os.path.join(ROOT, 'out', 'buildings3d', 'integ')
 # close-out round 5 (integration verifier: with these two gitignored out/ files missing - as after the 2026-11-04 container loss -
 # the check exited normally with a different list: 71 false rotunda-drum conflicts from the geom.py fallback, and the at-grade
-# clearance and narrowed-stacked-cut conflicts silently gone): both are REQUIRED inputs now. A missing one is a CONFLICT
-# 'input missing' (the dependent checks are not run), the full run refuses to write integration.json / .js / the manifest
-# (exit 2), and their sha1 / mtime are recorded in integration.json#plausibility.stats.inputs. Regenerate: out/draw/scene2d.json
-# = the bridges harness (jobs/extract2d.mjs, see tools/blender/app_bridges.mjs); roadways_build.json = build_roadways.py.
+# clearance and narrowed-stacked-cut conflicts silently gone): the bridge solids now come from the TRACKED, current dump
+# tools/blender/app_bridges.json (the scene2d.json on disk was stale as well: plausibility() comment), and the roadways build
+# record is a REQUIRED input. A missing one is a CONFLICT 'input missing' (the dependent checks are not run), the full run
+# refuses to write integration.json / .js / the manifest (exit 2), and their sha1 / mtime are recorded in
+# integration.json#plausibility.stats.inputs. Regenerate: app_bridges.json = node tools/blender/app_bridges.mjs <out>;
+# out/buildings3d/roadways_build.json = build_roadways.py.
 ROADWAYS_BUILD = os.path.join(ROOT, 'out', 'buildings3d', 'roadways_build.json')
 INPUTS_SEEN = {}
 
@@ -77,8 +79,42 @@ def _input(label, path, res):
         return path
     INPUTS_SEEN[label] = dict(path=path and os.path.relpath(path, ROOT), missing=True)
     res['conflicts'].append(dict(check='input missing: ' + label, path=path and os.path.relpath(path, ROOT),
-                                 note='required input (gitignored out/ file); the checks that need it were NOT run - regenerate it (b3d_integrate.py header)'))
+                                 note='required input; the checks that need it were NOT run - regenerate it (b3d_integrate.py header)'))
     return None
+APP_BRIDGES = os.path.join(HERE, 'app_bridges.json')   # the fresh bridge dump (node tools/blender/app_bridges.mjs; verify_domestic
+# checks it against the current js/live/gates.js / stands inputs)
+
+
+def _scene_currency(SC, res, tol=0.05, as_note=False):
+    """close-out round 5: a PRESENT but stale scene2d.json is as silent as a missing one. Its js/live/gates.js hash against the
+    current file, and every bridge's attach point, rotunda centre, rotR and Hr against tools/blender/app_bridges.json: a geometry
+    difference > tol is a CONFLICT 'input stale' (the walkway / drum tests ran on old solids), a hash-only difference a note"""
+    h = (SC['meta'].get('inputs') or {}).get('js/live/gates.js')
+    cur = hashlib.sha256(open(os.path.join(ROOT, 'js', 'live', 'gates.js'), 'rb').read()).hexdigest()
+    rec = dict(generated=SC['meta'].get('generated'), git=SC['meta'].get('git'), gates_js_current=bool(h) and cur.startswith(h))
+    try: A = {(b['stand'], b['gate'], str(b['door'])): b for b in json.load(open(APP_BRIDGES))['bridges']}
+    except (OSError, ValueError, KeyError) as ex: A = None; rec['app_bridges'] = 'unreadable: %s' % ex
+    if A is not None:
+        worst, miss = 0.0, []
+        for b in SC['bridges']:
+            a = A.get((b['stand'], b['gate'], str(b['door'])))
+            if a is None: miss.append('%s/%s/%s' % (b['stand'], b['gate'], b['door'])); continue
+            d = [math.dist(b['attach'], [a['walk'][0][0], a['walk'][0][2]]) if a.get('walk') else 0.0,
+                 math.dist(b['rc'], a['rot']) if b.get('rc') and a.get('rot') else 0.0,
+                 abs(float(b.get('rotR') or 0) - float(a.get('rotR') or 0)), abs(float(b.get('Hr') or 0) - float(a.get('Hr') or 0))]
+            worst = max(worst, max(d))
+        rec.update(app_bridges=os.path.relpath(APP_BRIDGES, ROOT), app_bridges_generated=json.load(open(APP_BRIDGES)).get('generated'),
+                   max_geometry_diff_m=round(worst, 3), bridges_not_in_dump=miss[:10], n_bridges=len(SC['bridges']), n_dump=len(A))
+        if worst > tol or miss or len(A) != len(SC['bridges']):
+            res['notes' if as_note else 'conflicts'].append(dict(check='input stale: out/draw/scene2d.json bridge solids differ from the current bridges (tools/blender/app_bridges.json)'
+                                         + (' - not used here (the walkway / drum tests read the dump)' if as_note else ''),
+                                         max_diff_m=round(worst, 3), missing=miss[:10], note='regenerate scene2d.json (jobs/extract2d.mjs) for the tools that still read it'))
+        elif not rec['gates_js_current']:
+            res['notes'].append(dict(check='bridge solids input (out/draw/scene2d.json) predates the current js/live/gates.js; its bridges match the current dump '
+                                           '(attach / rotunda / rotR / Hr within %.2f m, max %.3f m)' % (tol, worst), generated=rec['generated']))
+    INPUTS_SEEN.setdefault('bridge solids currency', rec)
+
+
 GROUND_Y = 3.0
 GROUPS = ['tower', 'itb', 'domestic', 'roadways', 'landside']
 FILES = {'tower': ['tower.glb', 'tower_f1.glb', 'tower_lod2.glb'], 'itb': ['itb.glb', 'itb_lod2.glb'],  # tower.glb = F2 (default), tower_f1.glb = F1
@@ -553,25 +589,33 @@ def plausibility(F, TR, rep, log):
     #     around the attach point (vestibules / door surrounds). Parts: the app's own bridge solids at every pose
     #     (out/buildings3d/integ/draw/scene2d.json, jobs/extract2d.mjs: walkway tube and slabs, pedestal and rotunda drum),
     #     else tools/stands/geom.py bridge_parts (walkway 2.6 m wide, drum r 2.45 m) in WALK_BAND / DRUM_BAND
-    scene = None
-    for cand in (os.environ.get('SCENE2D'), os.path.join(ROOT, 'out', 'draw', 'scene2d.json'), os.path.join(OUTD, 'draw', 'scene2d.json')):
-        if cand and os.path.exists(cand): scene = cand; break
-    scene = _input('bridge solids (out/draw/scene2d.json, the bridges harness jobs/extract2d.mjs)', scene or os.path.join(ROOT, 'out', 'draw', 'scene2d.json'), res)
+    # close-out round 5 (fix-round check): the fixed walkway / drum solids now come from tools/blender/app_bridges.json - TRACKED,
+    # the dump of the CURRENT js/live/gates.js + stands (node tools/blender/app_bridges.mjs; verify_domestic gates its currency).
+    # Round 4 read the gitignored out/draw/scene2d.json; the one on disk (7 Nov 10:35, git e87c2d2) predates data/sfo_stands.js
+    # changes: 10 walkway attach points 0.02-1.18 m off the current ones (B2 1.18, A15 0.54, E8 0.52 m; _scene_currency). The
+    # fixed parts are the same in every pose, so the rest pose is enough: walkway segments (oriented boxes c / u / hl / hw) and the
+    # rotunda drum (circle r), heights above grade lo..hi (+ GROUND_Y). The pedestal column under the drum is not in the dump.
+    ab = _input('bridge solids (tools/blender/app_bridges.json, node tools/blender/app_bridges.mjs)', APP_BRIDGES, res)
+    scene = ab
     parts_of = {}
-    if scene:
-        SC = json.load(open(scene))
-        for b in SC['bridges']:
+    if ab:
+        AB = json.load(open(ab))
+        for b in AB['bridges']:
             L = []
-            for pk, P_ in b['poses'].items():
-                rc = P_['pose'].get('rc') or b.get('rc'); att = P_['pose'].get('attach') or b['attach']
-                wline = LineString([att, rc]) if rc and math.dist(att, rc) > 0.5 else None
-                for pr in P_['parts']:
-                    hull = Polygon(pr['hull']); c = hull.centroid
-                    if pr['part'] in ('walkway', 'box') and wline is not None and wline.distance(c) < 2.5: L.append((pk, 'walkway', hull, pr['y']))
-                    elif pr['part'] == 'pedestal' or (pr['part'] == 'cyl' and rc and math.dist([c.x, c.y], rc) < 0.6): L.append((pk, 'drum', hull, pr['y']))
-            parts_of[(b['stand'], b['gate'], str(b['door']))] = (L, b['attach'])
-        res['stats']['bridge_solids'] = os.path.relpath(scene, ROOT) + ' (generated %s, %s)' % (SC['meta'].get('generated'), SC['meta'].get('git'))
-    else: res['stats']['bridge_solids'] = 'MISSING out/draw/scene2d.json - walkway / drum tests not run (input-missing CONFLICT)'
+            for pr in b.get('rest', []):
+                y01 = [GROUND_Y + float(pr['lo']), GROUND_Y + float(pr['hi'])]
+                if pr['part'] == 'walkway':
+                    c = np.asarray(pr['c'], float); u = np.asarray(pr['u'], float); u = u / max(np.linalg.norm(u), 1e-9); v = np.array([-u[1], u[0]])
+                    L.append(('rest', 'walkway', Polygon([c + s1 * pr['hl'] * u + s2 * pr['hw'] * v for s1, s2 in ((-1, -1), (1, -1), (1, 1), (-1, 1))]), y01))
+                elif pr['part'] == 'rotunda':
+                    L.append(('rest', 'drum', Point(pr['c']).buffer(float(pr.get('round') or pr['hl']), 16), y01))
+            parts_of[(b['stand'], b['gate'], str(b['door']))] = (L, [b['walk'][0][0], b['walk'][0][2]] if b.get('walk') else None)
+        res['stats']['bridge_solids'] = '%s (generated %s; %d bridges, rest-pose fixed walkway segments + rotunda drums)' % (os.path.relpath(ab, ROOT), AB.get('generated'), len(AB['bridges']))
+        sc2 = os.path.join(ROOT, 'out', 'draw', 'scene2d.json')
+        if os.path.exists(sc2):   # informational: how far the old scene2d.json solids are from the current ones
+            try: _scene_currency(json.load(open(sc2)), res, as_note=True)
+            except (OSError, ValueError, KeyError) as ex: INPUTS_SEEN['bridge solids currency'] = dict(error=str(ex))
+    else: res['stats']['bridge_solids'] = 'MISSING tools/blender/app_bridges.json - walkway / drum tests not run (input-missing CONFLICT)'
     def clip_plan(T, y0, y1):
         """plan polygons of the triangles T clipped to y0 <= y <= y1 (vertical pieces as 5-cm strips)"""
         out = []
@@ -598,11 +642,14 @@ def plausibility(F, TR, rep, log):
     for g, u, l, fp, y in units:
         if g in REPL_GROUPS: hosts_of.setdefault((g, u), {})[l] = fp
     wd = []
-    for s in (S if scene else []):          # (close-out round 5: no geom.py fallback - a missing scene2d.json is a CONFLICT above)
+    n_fallback = 0
+    for s in (S if scene else []):          # (close-out round 5: no whole-file fallback - a missing bridge dump is a CONFLICT above)
         for b in s['bridges'] + s.get('bridges_upper', []):
             key = (s['name'], b['gate'], str(b['door']))
-            if key in parts_of: PL, att = parts_of[key]
+            if key in parts_of:
+                PL, att = parts_of[key]; att = att or b['attach']
             else:
+                n_fallback += 1
                 wl, rot, tc = GM.bridge_parts(b, b['cab']); att = b['attach']
                 PL = [('model', 'walkway', wl, [GROUND_Y + WALK_BAND[0], GROUND_Y + WALK_BAND[1]])] + ([('model', 'drum', rot, [GROUND_Y + DRUM_BAND[0], GROUND_Y + DRUM_BAND[1]])] if b.get('rotunda') else [])
             at = Point(att); allow = at.buffer(WALK_ENTRY_M)
@@ -635,6 +682,7 @@ def plausibility(F, TR, rep, log):
                         if a > 0.3: res['conflicts' if dep > 0.10 else 'notes'].append(dict(check=lab, stand=s['name'], gate=b['gate'], door=b['door'], group=g, unit=u, lod=l, pose=pk, overlap_m2=round(a, 2), depth_m=round(dep, 2)))
     res['stats']['walkway_drum_vs_host'] = sorted([w for w in wd if w['walkway_m2'] > 0.05 or w['drum_m2'] > 0.05], key=lambda w: -(w['walkway_m2'] + w['drum_m2']))[:60]
     res['stats']['walkway_drum_tests'] = len(wd)
+    res['stats']['walkway_drum_geom_py_fallback'] = n_fallback   # bridges not in the dump (tools/stands/geom.py bridge_parts)
     # c. taxiways
     tw = unary_union([ring_poly(pp) for t in A['taxiways'] for pp in t['polys']]); shapely.prepare(tw)
     for g, u, l, fp, y in units:

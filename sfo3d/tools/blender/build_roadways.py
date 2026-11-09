@@ -1055,6 +1055,18 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
                             for off in (0.06, INNER_GAP[lod] + 0.06):
                                 bq_ = np.where(np.isnan(bq_), tri_lookup(Tq[0], Tq[1], Xe + off * N2[k]), bq_)
                                 if not np.isnan(bq_).any(): break
+                            if np.isnan(bq_).any():
+                                # c5 fix-round check (the last cross-piece fill joint, (-1607.7, 459.1), 4.4 m still open): edge_runs
+                                # gives one neighbour per run, but a run's far end can abut ANOTHER piece (deck 35157100's 4.4-m run
+                                # against ramp 735035451 ends on ramp 735035452, 0.92 m from the first): an unresolved probe takes
+                                # the underside of the first other neighbour that has one at the probe point
+                                for q2 in nbrs + own:
+                                    if q2 is q_ or q2['id'] == p['id'] or not np.isnan(bq_).any(): continue
+                                    T2_ = _bottoms(q2, lod)
+                                    if T2_ is None: continue
+                                    for off in (0.06, INNER_GAP[lod] + 0.06):
+                                        b2 = tri_lookup(T2_[0], T2_[1], Xe + off * N2[k])
+                                        bq_ = np.where(np.isnan(bq_), b2, bq_)
                             if (np.isnan(bp_).any() or np.isnan(bq_).any()) and lod == 0:
                                 st['under_joint_unresolved_m'] = st.get('under_joint_unresolved_m', 0.0) + L
                             elif not (np.isnan(bp_).any() or np.isnan(bq_).any()) and (bp_ > 0.05).all() and (bp_ - bq_ > 0.02).any():
@@ -1543,11 +1555,19 @@ def grade_check(mb, log):
                over_pct_m2={'%g' % t: round(float(A[G > t].sum()), 1) for t in th}, by_unit=by,
                folds={'>%d_deg' % t: dict(n=int((fa > t).sum()), edge_m=round(float(fl[fa > t].sum()), 1)) for t in (1, 2, 4, 6)},
                fold_top=[dict(deg=round(f[0], 1), unit=f[1], at=[round(float(f[3][0]), 1), round(float(f[3][2]), 1)], edge_m=round(f[2], 1)) for f in sorted(folds, key=lambda f: -f[0])[:8]])
+    # close-out r5 (integration verifier, residual 3): a fold REGRESSION gate - the folds' edge length over 4 / 6 deg against the
+    # round-4 fix-2 build (28.9 / 23.3 m; r22 had 5 / 2 folds); the creases themselves are deferred (the warped junction surface)
+    lim = {'>4_deg': FOLD_GATE_M[4], '>6_deg': FOLD_GATE_M[6]}
+    res['fold_gate'] = dict(limit_edge_m=lim, ok=all(res['folds'][k]['edge_m'] <= v for k, v in lim.items()))
+    if not res['fold_gate']['ok']: log('WARNING fold gate: %s over %s' % ({k: res['folds'][k]['edge_m'] for k in lim}, lim))
     log('mesh grades (self-check, close-out r4 fix round 2; LOD0 deck tops): max %.2f %% at %s, area > 8 / 10 / 12 / 13.5 %%: %s m2; folds > 1 / 2 / 4 deg: %s; '
         'units > 10 %%: %s' % (res['max_pct'], top[0], ' / '.join(str(res['over_pct_m2'][k]) for k in ('8', '10', '12', '13.5')),
                               ' / '.join('%d (%.0f m)' % (v['n'], v['edge_m']) for v in res['folds'].values()),
                               {u: d['over_10_pct_m2'] for u, d in by.items() if d['over_10_pct_m2'] > 0}))
     return res
+
+
+FOLD_GATE_M = {4: 30.4, 6: 24.5}   # m of fold edge over 4 / 6 deg allowed: the r4 fix-2 build's 28.9 / 23.3 m + 5 % [our gate]
 
 
 COL_TOP = 0.15   # m: a column runs this far up into the deck box above its soffit (fix round 2: 0.05 left 0.01-0.06 m of the
@@ -2064,7 +2084,7 @@ def main(argv):
                                   closeout_r5=dict(soffit_closure={k: schk.get(k) for k in ('boundary_m', 'face_m', 'soffit_continues_m', 'open_into_hollow_m', 'open_other_m')},
                                                    under_joint_m=edge.get('under_joint_m'), under_joint_to_grade_m=edge.get('under_joint_to_grade_m'),
                                                    under_joint_unresolved_m=edge.get('under_joint_unresolved_m'),
-                                                   mesh_folds=gchk.get('folds'))),
+                                                   mesh_folds=gchk.get('folds'), fold_gate=gchk.get('fold_gate'))),
                  verification=stats)
     BI.merge_manifest(entry, key='roadways')
     open(os.path.join(OUTD, 'roadways_build.log'), 'w').write('\n'.join(lines) + '\n')

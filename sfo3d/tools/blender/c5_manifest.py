@@ -5,8 +5,9 @@
   - #itb / #domestic .verification: re-read from out/buildings3d/{itb,domestic}_verify.json (verify_itb / verify_domestic were
     re-run after the builds against a fresh tools/blender/app_bridges.json dump - the runtime track keeps editing
     js/live/gates.js, so the dump's input hash moves although its content does not);
-  - #landside .verification.plausibility.airtrain_vs_buildings_lod0: re-read from out/buildings3d/landside_verify.json when
-    verify_landside was re-run after the roadways rebuild.
+  - #landside .verification (incl. plausibility.airtrain_vs_buildings_lod0 / _lod2): re-read from out/buildings3d/landside_verify.json;
+  - #roadways / #integration .closeout_r5: the per-finding records of the integration residuals (those two entries are written
+    whole by build_roadways.py / b3d_integrate.py, so this runs after their last run).
 All under the manifest's flock (dom_manifest.merge). Run AFTER the builds and the verify re-runs:
     python3 tools/blender/c5_manifest.py
 """
@@ -27,7 +28,8 @@ C5 = os.path.join(OUT, 'c5', 'c5_manifest.json')
 
 def main():
     rec = json.load(open(C5)) if os.path.exists(C5) else {}
-    for key in ('domestic', 'itb', 'landside'):
+    for key in ('domestic', 'itb', 'landside', 'roadways', 'integration'):
+        if key in ('roadways', 'integration') and key not in rec: continue   # (written whole by build_roadways / b3d_integrate: run after them)
         def upd(old, key=key):
             old = old or {}
             if key in rec:
