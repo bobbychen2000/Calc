@@ -41,6 +41,11 @@ pavement file's note / provenance / .js header name its ODbL inputs (OSM, adsb.l
 Close-out round 5 (2026-11-08, verifier of close-out 3 fix 2): the forecourt of a vehicle stay's building (within PAD_R of
 the stay and FC_R of a mapped building: the ARFF apron's striped tan bays) is pavement without the texture / pixel-colour
 tests, when its 25 m window is clean (<= 5 % soil, <= 3 % vegetation) and it connects to the pavement (inferred).
+Close-out round 7 (2026-11-09, realtime request C5.3): (h) a 25 m parking footprint round every adsb.lol SIGNAL-END point
+(tools/imagery/adsb_ground_cells.py `signal_end`: the last ground fix at < 3 kt, then >= 30 min without a position fix - where
+the app keeps a silent aircraft parked; ASA503 B39M, 11 h at the west maintenance hangar apron) is pavement where NAIP shows
+no vegetation / soil / water and no mapped building, when connected to the pavement and the added piece is <= 5 % soil +
+vegetation and >= 60 % grey on NAIP (inferred; `src` m2).
 
     python3 tools/imagery/paint_pave_naip.py          # writes data/sfo_paint.* and data/sfo_pavement.*
     python3 tools/imagery/paint_pave_naip.py --preview   # + refs/cache/naip/paint_pave_preview.jpg (NAIP pixels; stays local)
@@ -331,6 +336,37 @@ def main(preview=False, dump=None):
         if add_.any(): fcadd[sl_] |= add_; N_FC += 1
     print('vehicle-stay forecourts (close-out round 5): +%.0f m2 at %d stays' % (fcadd.sum() * RES * RES, N_FC))
     p |= fcadd; del obd, wsoil_, wveg_
+    # (h) close-out round 7 (2026-11-09, realtime request C5.3): ADS-B SIGNAL-END parking footprints. Where an aircraft's
+    # position signal ended on the ground (refs/cache/stands/adsb_ground_cells.json `signal_end`: last ground fix at < 3 kt,
+    # then >= 30 min without a position fix - the transponder goes off at the stop, so the ground cells hold one or two fixes
+    # there) the app keeps the aircraft parked for hours: ASA503 B39M stood 11 h on the light concrete hangar apron at
+    # (-2090.5, -687.3) (west maintenance area), off the rendered mask (NAIP there: 98 % grey, S median 24, R - B 18, no
+    # soil, but only 54 % 'smooth' - joints / stains - and the 2024 aircraft on it break the 25 m windows). A SE_R disc round
+    # each such point is pavement where NAIP shows no vegetation / soil / water and no mapped building (the parking-footprint
+    # tests above), when it connects to the pavement and the added piece is clean (<= 5 % soil + vegetation, >= 60 % grey).
+    # Inferred; `src` gives the m2.
+    try:
+        se_ = json.load(open(os.path.join(ROOT, 'refs', 'cache', 'stands', 'adsb_ground_cells.json'))).get('signal_end') or []
+    except (OSError, ValueError):
+        se_ = []
+    sed = np.zeros((H, W), np.uint8); N_SE = 0
+    for q in se_:
+        c_ = P([[q[0], q[1]]])[0]
+        if 0 <= c_[0] < W and 0 <= c_[1] < H: cv2.circle(sed, (int(c_[0]), int(c_[1])), int(SE_R / RES), 1, -1); N_SE += 1
+    Bw, Gw, Rw = img[..., 0].astype(np.int16), img[..., 1].astype(np.int16), img[..., 2].astype(np.int16)
+    sew_ = (Bw > Rw + 10) & ((Bw + Gw + Rw) // 3 < 120); del Bw, Gw, Rw
+    secand = (sed > 0) & ~vegc & ~soilc & ~sew_ & (bld == 0) & (pav == 0) & ~excl & (V > 40) & ~p; del sed, sew_
+    lse_, nse_ = ndi.label(secand | p | (pav > 0))
+    seadd = secand & np.isin(lse_, np.unique(lse_[p | (pav > 0)])); del lse_, secand
+    # each added piece must itself be clean pavement on NAIP (the (f) shares): <= 5 % soil + vegetation (unopened reviewer
+    # classes) and >= 60 % grey (incl. bright unsaturated concrete) - the first version also paved dusty verges (20-30 % soil)
+    lpe_, npe_ = ndi.label(seadd, np.ones((3, 3), bool)); ipe_ = np.arange(1, npe_ + 1); ape_ = np.maximum(ndi.sum(seadd, lpe_, ipe_), 1)
+    sve_ = ndi.sum(gsoil | gveg, lpe_, ipe_) / ape_; gre_ = ndi.sum(ggrey | ((V >= 245) & (S < 32)), lpe_, ipe_) / ape_
+    oke_ = (sve_ <= 0.05) & (gre_ >= 0.6)
+    print('(h) ADS-B signal-end parking footprints (close-out round 7): %d points, %d of %d pieces clean, +%.0f m2 (dropped %.0f m2)' % (
+        N_SE, int(oke_.sum()), npe_, float(ape_[oke_].sum()) * RES * RES, float(ape_[~oke_].sum()) * RES * RES))
+    seadd = np.isin(lpe_, ipe_[oke_]); del lpe_
+    p |= seadd
     # (f) fix round 2 (2026-11-08, verifier finding v3): holes ENCLOSED by the paved union (this pavement, SFO Museum
     # pavement / the inferred apron, buildings, OSM buildings, the end zones) where aircraft were on the ground (an ADS-B
     # aircraft ground cell with >= 2 fixes inside, rule (a)'s cells) or a vehicle stayed (the ARFF apron), NAIP <= 5 % soil
@@ -365,7 +401,8 @@ def main(preview=False, dump=None):
     p |= isladd
     # the exclusion of fix round 2: OSM buildings / end zones keep exactly what the pre-round-3 rules gave them
     p = (p & ~excl) | (p_old & excl)
-    new_rule = p & ~p_old & ~holeadd & ~isladd & ~fcadd     # round 3 additions (for src)
+    new_rule = p & ~p_old & ~holeadd & ~isladd & ~fcadd & ~seadd     # round 3 additions (for src)
+    r7_rule = p & seadd & ~p_old                      # close-out round 7: signal-end parking footprints (for src)
     r5_rule = p & fcadd & ~p_old                      # close-out round 5: vehicle-stay forecourts (for src)
     f2_rule = p & (holeadd | isladd) & ~p_old       # fix-round-2 additions (for src)
     del p_old
@@ -381,6 +418,7 @@ def main(preview=False, dump=None):
         polys = contours(sub, 0.5 / RES, 4 if onhold else 300, lambda q, ox=xs.min(), oy=ys.min(): world((q[0] + ox, q[1] + oy)))
         vmed = float(np.median(V[m]))
         nr = float(new_rule[m].mean()); n2 = float(f2_rule[m].mean()); a5 = float(r5_rule[m].sum()) * RES * RES
+        a7 = float(r7_rule[m].sum()) * RES * RES
         for poly in polys:
             pave_polys.append(poly); conc.append(bool(vmed >= 150))
             s_ = 'naip'
@@ -389,6 +427,7 @@ def main(preview=False, dump=None):
             if n2 >= 0.01: s_ += ('; %.0f %% from the fix-round-2 rules (holes enclosed by pavement with ADS-B aircraft / vehicle evidence, '
                                   'the old-J chart island interior: inferred)' % (100 * n2))
             if a5 > 0: s_ += ('; %.0f m2 from the close-out round 5 rule (vehicle-stay forecourt beside a mapped building: inferred)' % a5)
+            if a7 > 0: s_ += ('; %.0f m2 from the close-out round 7 rule (h) (ADS-B signal-end parking footprint, adsb.lol: inferred)' % a7)
             SRC_C.append(s_)
         big.append((round(len(ys) * RES * RES), world((xs.mean(), ys.mean())), round(vmed)))
     big.sort(reverse=True)
@@ -408,7 +447,8 @@ def main(preview=False, dump=None):
             '(refs/cache/stands/adsb_ground_cells.json, ODbL), cluttered-apron / any-window / bright-concrete envelopes, vehicle-stay '
             'pads (adsb.lol stays, ODbL); fix round 2 2026-11-08: (f) holes enclosed by pavement with ADS-B aircraft / vehicle '
             'evidence, (g) the interior of the old-J island of FAA AL-375 cycle 2611 (public domain); close-out round 5 2026-11-08: '
-            'vehicle-stay forecourts beside a mapped building (the ARFF bays); OSM building footprints '
+            'vehicle-stay forecourts beside a mapped building (the ARFF bays); close-out round 7 2026-11-09: (h) parking footprints '
+            'round the adsb.lol signal-end points (refs/cache/stands/adsb_ground_cells.json signal_end, ODbL); OSM building footprints '
             '(not building=roof; OSM, ODbL) and the runway end zones of js/live/airport.js END_ZONES keep exactly the pre-round-3 '
             'pavement after every step (no round-3 / fix-2 addition there). Per-polygon `src` gives the inferred share')
     # close-out round 3 (2026-11-06, finding static-3): the western remainder of the old taxiway J (deleted in OSM changeset
@@ -451,7 +491,8 @@ def main(preview=False, dump=None):
             '(d) bright concrete next to cells with >= 2 aircraft; (e) near-neutral pixels inside any qualifying window; fix round 2: '
             '(f) holes enclosed by pavement that held ADS-B aircraft (or a vehicle stay), NAIP <= 5 % soil / vegetation, >= 60 % grey, '
             '< 12000 m2; (g) the old-J island interior of FAA AL-375 2611; close-out round 5: vehicle-stay forecourts (<= 15 m from a mapped building, '
-            'no texture test: the ARFF bays). OSM building footprints (not building=roof) and the app\'s '
+            'no texture test: the ARFF bays); close-out round 7: (h) 25 m parking footprints round adsb.lol signal-end points (last ground '
+            'fix < 3 kt, then >= 30 min silent; no vegetation / soil / water / building, connected, each piece <= 5 % soil + vegetation and >= 60 % grey). OSM building footprints (not building=roof) and the app\'s '
             'runway end zones (END_ZONES) take none of these additions. The relocated W: OSM centreline buffered by its inferred width '
             '(src osm_update). conc = concrete (median V >= 150). Unmapped grey roofs can be included (inferred). Contains information '
             'from OpenStreetMap (c) OpenStreetMap contributors and from adsb.lol, made available under the ODbL 1.0 (docs/ATTRIBUTION.md).',
@@ -486,6 +527,7 @@ ENV_WIN = 50              # px (25 m at 0.5 m): the cluttered-apron window (clos
 ENV_GREY, ENV_SOIL, ENV_SMOOTH = 0.88, 0.03, 0.5
 PAD_R, PAD_LAP, PAD_SMAX = 25.0, 3.0, 45   # vehicle-stay pads: radius (m), texture and HSV saturation limits
 PAD_GREY, PAD_SOIL = 0.6, 0.05             # ... or a 25 m window this grey with at most this much soil
+SE_R = 25.0               # m: close-out round 7 (h) signal-end parking footprint radius (= the ADS-B parked-stay disc)
 FC_R = 15.0               # m: close-out round 5 vehicle-stay forecourt - pad pixels this close to a mapped building (the ARFF bays: <= 12 m)
 AC_R = 10.0               # m: (d) bright-concrete envelope only this close to a cell with >= 2 aircraft (2 ADS-B cells' width)
 ENV_EXT_SPR, ENV_EXT_RB, ENV_EXT_SMW = 30, 25, 10   # (e) any-window envelope: channel spread, R - B, local smooth window (px = 5 m)

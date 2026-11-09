@@ -59,7 +59,8 @@ Patches (static review 2026-11-04):
   P10 (close-out round 3, static-9) rest poses within the ICAO clearance of an observed type are re-chosen where a pose
      passes check_stands' rest tests and keeps the clearance (else `stow_icao` says why not).
   P13 (close-out round 5, 2026-11-08) `stop_open` at F19 / F20: families whose observed final stops (pinned adsb.lol hours)
-     lie > 3 m off the drawn stop - evidence only, src inf, nothing moved (F19 B777: one airframe ~12 m short).
+     lie > 3 m off the drawn stop - evidence only, src inf, nothing moved. Close-out round 7: only still groups >= 60 s are
+     confirmed stops; each aircraft keeps still_s / fixes / kind (shorter groups = last still reports, never counted).
   Close-out round 5 also: P8 tests every neighbour TYPE with the larger code's ICAO clearance (capped by the listed
      dominating type's distance to that type); P10_ACCEPTED decided on same-harness all-hours replays (see its comment).
   Close-out round 3 also: P1 / P2 read the 5 Nov 02:49Z flysfo snapshot too (SFO allocated D5 to a B772, F19 to B38M,
@@ -81,7 +82,7 @@ values derive from flysfo (base, replay, adsb_parked.json): tools/stands/flysfo_
 refs/cache/stands/flysfo_provenance.json (round 3).
 Usage: python3 tools/stands/patch_stands.py [--replay | --check]   (then python3 tools/stands/check_stands.py)
 """
-import datetime as dt, gzip, json, math, os, sys
+import bisect, datetime as dt, gzip, json, math, os, sys
 from collections import Counter, defaultdict
 import numpy as np
 from shapely.geometry import Point, Polygon, LineString
@@ -214,6 +215,7 @@ def p1_aodb(D, log):
 
 
 _STILL = []
+_GNDPOS = defaultdict(list)   # hex -> times of its fresh on-ground position fixes (seen_pos <= 5 s, any speed) in the pinned hours (P13)
 
 
 def adsb_still():
@@ -229,11 +231,14 @@ def adsb_still():
                 try: r = json.loads(line)
                 except ValueError: continue
                 for a in (r.get('d') or {}).get('ac') or []:
+                    if a.get('hex') and a.get('alt_baro') == 'ground' and 'lat' in a and (a.get('seen_pos') or 0) <= 5:
+                        _GNDPOS[a['hex']].append(r['t'] - (a.get('seen_pos') or 0))
                     if a.get('alt_baro') != 'ground' or 'lat' not in a or (a.get('seen_pos') or 0) > 5: continue
                     if (a.get('gs') or 0) >= 1.0 or (a.get('nac_p') or 0) < 8: continue
                     x, z = _w84(a['lat'], a['lon'])
                     _STILL.append((r['t'] - (a.get('seen_pos') or 0), x, z, a['hex'], (a.get('flight') or '').strip(), a.get('t'), a.get('true_heading', a.get('track'))))
     _STILL.sort(key=lambda q: (q[0], q[3]))
+    for v in _GNDPOS.values(): v.sort()
     return _STILL
 
 
@@ -740,6 +745,16 @@ def p9_antenna_ref(D, log):
 STAMP5 = 'fix-up 2026-11-08 (close-out round 5)'
 STOP_OPEN_STANDS = ('F19', 'F20')   # the pair the close-out-3 verifier flagged (F19 wide-body stop vs F20)
 STOP_OPEN_MIN = 3.0                 # m: |offset of the observed final stop from the drawn stop| recorded
+STOP_OPEN_MIN_S = 60.0              # s: close-out round 7 - a still group shorter than this is not a confirmed stop
+SIGNAL_END_S = 600.0                # s: no newer on-ground position fix (any speed) within this after the still group = signal ended
+                                    #    (the same gap that ends a still group)
+STAMP7 = 'fix-up 2026-11-09 (close-out round 7)'
+
+
+def _next_pos(hx, t):
+    """time of the aircraft's first fresh on-ground position fix after t (pinned hours), inf if none"""
+    v = _GNDPOS.get(hx) or []; i = bisect.bisect_right(v, t + 0.5)
+    return v[i] if i < len(v) else math.inf
 
 
 def p13_stop_open(D, log):
@@ -748,10 +763,16 @@ def p13_stop_open(D, log):
     For the stands in STOP_OPEN_STANDS, every arrival in the pinned hours (REC_HOURS, adsb_still) whose LAST still group there
     lies on the stand axis (|lateral| <= 1.5 m, heading within 10 deg, -45 m < along < +10 m of the model nose) gives the nose
     offset from the drawn stop = antenna along - the family's antenna reference (P9 antenna_ref, n >= 5 only) - the type stop
-    (type_stops[family].along, else 0). Families whose median offset exceeds STOP_OPEN_MIN are written to `stop_open`
-    {family: {offset_m, n, aircraft, src: 'inf', why}}: an open item - too few airframes (and the antenna offset of one
-    airframe is of the same order) to move the stop; the static pair checks still use the drawn stops, so for these
-    families the drawn pair clearance is TIGHTER than observed (F19 B777 n = 1)."""
+    (type_stops[family].along, else 0).
+    Close-out round 7 (round-5 verifier finding 1: groups of 0-11 s were counted as "final stops"): each aircraft entry keeps
+    its still duration (still_s = last - first still fix) and fix count; only a group still for >= STOP_OPEN_MIN_S (60 s) is a
+    confirmed stop and enters `offset_m` / `n`. A shorter group is listed with its kind - 'last still report before the signal
+    ended' (no newer on-ground position fix of that aircraft, at any speed, within SIGNAL_END_S; in the round-7 sample the
+    aircraft is still heard for ~1 min at gs 0 with a stale position, then not at all) or 'short still group, newer position
+    fixes follow' - and is never counted as a stop; a family with no confirmed stop is recorded only as
+    `last_report_offset_m` / `n_last` when those reports lie > STOP_OPEN_MIN off. Families whose confirmed median offset exceeds
+    STOP_OPEN_MIN are written to `stop_open` {family: {offset_m, n, aircraft, src: 'inf', why}}: an open item - too few
+    airframes (and the antenna offset of one airframe is of the same order) to move the stop."""
     AR = {f: v['along_m'] for f, v in (D.get('antenna_ref') or {}).get('families', {}).items() if v.get('n', 0) >= 5}
     st = adsb_still(); by = defaultdict(list)
     for q in st: by[q[3]].append(q)
@@ -770,25 +791,47 @@ def p13_stop_open(D, log):
             if not f_ or not hd or f_ not in AR: continue
             x, z, h = float(np.median([q[1] for q in g])), float(np.median([q[2] for q in g])), float(np.median(hd))
             if any(G[0][0] - g[-1][0] < 1800 and math.dist(G[0][1:3], (x, z)) < 60 for G in groups[gi + 1:]): continue   # moved on: not the stop
+            dur = g[-1][0] - g[0][0]
+            if dur >= STOP_OPEN_MIN_S: kind = 'stop'
+            elif _next_pos(hx, g[-1][0]) - g[-1][0] > SIGNAL_END_S: kind = 'last still report before the signal ended (not a confirmed stop)'
+            else: kind = 'short still group, newer position fixes follow (not a confirmed stop)'
             for n in STOP_OPEN_STANDS:
                 s = S[n]; a, c = local((x, z), s['nose'], s['hdg'])
                 if abs(c) <= 1.5 and -45.0 < a < 10.0 and abs(hdiff(h, s['hdg'])) <= 10:
                     ts = (((s.get('type_stops') or {}).get(f_) or {}).get('along')) or 0.0
-                    rows[n][f_].append((a - AR[f_] - ts, '%s %s %s' % ((g[0][4] or hx), ty, dt.datetime.fromtimestamp(g[0][0], dt.timezone.utc).strftime('%d %b %H:%MZ'))))
+                    rows[n][f_].append({'who': '%s %s %s' % ((g[0][4] or hx), ty, dt.datetime.fromtimestamp(g[0][0], dt.timezone.utc).strftime('%d %b %H:%MZ')),
+                                        'offset_m': round(a - AR[f_] - ts, 1), 'still_s': int(round(dur)), 'fixes': len(g), 'kind': kind, '_off': a - AR[f_] - ts})
     for n in STOP_OPEN_STANDS:
         rec = {}
         for f_, r in sorted(rows[n].items()):
-            off = float(np.median([v for v, _ in r]))
-            if abs(off) <= STOP_OPEN_MIN: continue
-            rec[f_] = {'offset_m': round(off, 1), 'n': len(r), 'aircraft': [w for _, w in sorted(r, key=lambda q: q[1])], 'src': 'inf',
-                       'why': ('ADS-B (adsb.lol, pinned REC_HOURS): the %s final stop%s lie%s %.1f m %s the drawn stop (antenna reference %.1f m, '
-                               'P9); open item, not applied: %s' % (f_, 's' if len(r) > 1 else '', '' if len(r) > 1 else 's', abs(off),
-                                                                    'short of' if off < 0 else 'beyond', -AR[f_],
-                                                                    'n = %d airframe%s, per-airframe antenna offsets of the same order' % (len(r), 's' if len(r) > 1 else '')))}
-            log.append('P13 %s %s final stop %+.1f m from the drawn stop (n %d: %s) - stop_open (inf), not applied' % (n, f_, off, len(r), '; '.join(w for _, w in r)))
+            raw = {q['who']: q.pop('_off') for q in r}; r = sorted(r, key=lambda q: q['who'])
+            conf = [q for q in r if q['kind'] == 'stop']; short = [q for q in r if q['kind'] != 'stop']
+            ref = 'antenna reference %.1f m, P9' % -AR[f_]
+            if conf:
+                off = float(np.median([raw[q['who']] for q in conf]))
+                if abs(off) <= STOP_OPEN_MIN: continue
+                rec[f_] = {'offset_m': round(off, 1), 'n': len(conf), 'aircraft': conf + short, 'src': 'inf',
+                           'why': ('ADS-B (adsb.lol, pinned REC_HOURS): the %s confirmed stop%s (still >= %d s) lie%s %.1f m %s the drawn stop (%s); '
+                                   'open item, not applied: n = %d airframe%s, per-airframe antenna offsets of the same order%s'
+                                   % (f_, 's' if len(conf) > 1 else '', STOP_OPEN_MIN_S, '' if len(conf) > 1 else 's', abs(off), 'short of' if off < 0 else 'beyond',
+                                      ref, len(conf), 's' if len(conf) > 1 else '',
+                                      ('; %d shorter still group%s listed, not counted' % (len(short), 's' if len(short) > 1 else '')) if short else ''))}
+                log.append('P13 %s %s confirmed stop %+.1f m from the drawn stop (n %d: %s) - stop_open (inf), not applied'
+                           % (n, f_, off, len(conf), '; '.join('%s %d s / %d fixes' % (q['who'], q['still_s'], q['fixes']) for q in conf)))
+            elif short:
+                off = float(np.median([raw[q['who']] for q in short]))
+                if abs(off) <= STOP_OPEN_MIN: continue
+                rec[f_] = {'last_report_offset_m': round(off, 1), 'n': 0, 'n_last': len(short), 'aircraft': short, 'src': 'inf',
+                           'why': ('ADS-B (adsb.lol, pinned REC_HOURS): no confirmed %s stop (still >= %d s); the last still report%s %.1f m %s the drawn '
+                                   'stop (%s) - %s, not a stop; recorded only, not applied'
+                                   % (f_, STOP_OPEN_MIN_S, 's lie' if len(short) > 1 else ' lies', abs(off), 'short of' if off < 0 else 'beyond', ref,
+                                      '; '.join('%s: %d s still, %d fixes' % (q['who'], q['still_s'], q['fixes']) for q in short)))}
+                log.append('P13 %s %s no confirmed stop; last still report(s) %+.1f m (%s) - recorded only' % (n, f_, off, '; '.join('%s %d s' % (q['who'], q['still_s']) for q in short)))
         if rec:
             S[n]['stop_open'] = rec
-            note(S[n], 'stop_open: %s (ADS-B final stops off the drawn stop; evidence only, inferred)' % ', '.join('%s %+.1f m n %d' % (f_, v['offset_m'], v['n']) for f_, v in rec.items()), STAMP5)
+            note(S[n], 'stop_open: %s (ADS-B stops off the drawn stop; evidence only, inferred)' % ', '.join(
+                ('%s %+.1f m n %d' % (f_, v['offset_m'], v['n'])) if 'offset_m' in v else ('%s last still report(s) %+.1f m, n_last %d, no confirmed stop' % (f_, v['last_report_offset_m'], v['n_last']))
+                for f_, v in rec.items()), STAMP7)
 
 
 # ------------------------------------------------------------------------------------------------ P10
@@ -816,9 +859,14 @@ _WING = {}
 # (KLM373 B772 A2 L2 tunnel, 33 frames, gone; UAL59 B772 G1 L2 107 -> 39 points), but overlap.gnd 902 -> 1115 (the
 # stale-parked / arriving pairs at G13 and G10 last 77 / 136 frames longer), a new bridge contact (ANZ7 B789 G10 L1 cab,
 # 10 frames), UAL917's G7 L2 walkway contact 113 -> 134 points, bridge.orphan 5,389 -> 5,797, lag.gnd_30m 40,820 ->
-# 41,408: collision frames (bridge.hit.* + overlap.gnd) 2,970 -> 3,162. Shipping code (HEAD 47af104): every collision /
+# 41,408: collision frames (bridge.hit.* + overlap.gnd) 2,970 -> 3,162. Code of HEAD 47af104: every collision /
 # clearance class identical (hit_at_rest 22 frames either way), bridge.orphan 5,549 -> 6,011, lag.gnd_30m 43,322 ->
-# 43,923. By the owner's rule (no collisions / clipping first) the re-choice gains nothing on the shipping code and is
+# 43,923. Code of HEAD d035f59 (round-5 gates.js 11af0f1d / traffic.js 51bc9e1f / ground.js d3353067; the round-5 static
+# verifier's all-hours pair on the same frozen harness and stream, stands 60c523c6 vs P10-on 11cc54d9; SP/c5/static_ver1/
+# rp/cmp_cur.txt): again every collision / clearance class identical - overlap.gnd 945 frames / 38 keys, bridge.hit.fus =
+# hit_at_rest 22 frames (DAL672 B763 C9 L1 cab 14, SWA375 B38M D3 L1 cab 8), clear.taxi 278, clear.stand 526,750 - and
+# only bridge.orphan 6,342 -> 6,804 and lag.gnd_30m 43,450 -> 44,051 grow. By the owner's rule (no collisions / clipping
+# first) the re-choice gains nothing on either newer code and is
 # worse in sum on the older one, and it would replace mapped (OSM / build) rest poses by inferred ones for types never
 # seen there. So the data rests stay; check_stands keeps reporting the accepted-type cases (WARN) and the rest per
 # occupant is gates.js's (static_closeout.md R5.2 / R6.2).

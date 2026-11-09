@@ -39,7 +39,7 @@ profiles is kept when the band they measured has <= 15 % of its footprint soil-c
 Frame: tools/geo_frame.py (= js/geo.js) world x east / z south.
 Usage: python3 tools/build_landside.py
 """
-import json, os, sys
+import json, os, re, sys
 import numpy as np
 from shapely.geometry import LineString, Polygon, MultiLineString
 from shapely.ops import unary_union
@@ -228,6 +228,15 @@ def footprint_fix(paths):
         w = r['w']
         while w - 0.25 >= PATH_W_MIN - 1e-9 and footprint_soil(r['pts'], w) > FOOT_MAX: w -= 0.25
         f1 = footprint_soil(r['pts'], w)
+        # close-out round 7 (round-5 verifier finding 3): a piece holding core-colour runs kept by the run-level test (their
+        # own band <= FOOT_MAX soil) can fail here at piece level (the merged piece at its median width): say so instead of
+        # "kept ... <= 15 %" followed by "not drawn: 22 %"
+        km_ = re.search(r'; (\d+) profiles kept although the band core is soil-coloured \(per-pixel spread >= [0-9.]+\): the band they '
+                        r'measured is <= ([0-9.]+) % soil-coloured in its footprint \(close-out round 5; inferred\)', r['w_src'])
+        if km_:
+            r['w_src'] = r['w_src'].replace(km_.group(0), "; %s profile%s own band was <= %s %% soil-coloured (core-colour runs kept, close-out round 5; "
+                                            "inferred), but the merged piece is %.0f %% soil-coloured at %.2f m" % (km_.group(1), "'s" if km_.group(1) == '1' else "s'",
+                                                                                                    km_.group(2), 100 * f0, r['w']))
         if f1 <= FOOT_MAX:
             r['w_src'] += ('; narrowed %.2f -> %.2f m: %.0f %% of the drawn footprint was soil-coloured (per-pixel channel spread > %.0f), '
                            'now %.0f %% (fix round 2)' % (r['w'], w, 100 * f0, FOOT_SAT, 100 * f1)); r['w'] = round(w, 2); n_n += 1
