@@ -14355,9 +14355,9 @@
  },
  "landside": {
   "asset": "data/buildings3d/landside.glb",
-  "bytes": 22291188,
-  "built": "2026-11-09T11:49:10+00:00",
-  "git": "dd9da55+dirty",
+  "bytes": 22502376,
+  "built": "2026-11-09T17:34:44+00:00",
+  "git": "47bdb01+dirty",
   "generator": "tools/blender/build_landside.py (bpy 5.0.1, Cycles CPU AO bake); geometry landside_geom.py / landside_airtrain.py / landside_cars.py; textures landside_tex.py",
   "reference": "2-D sheets BL-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_landside.py, imported by landside_geom.py",
   "spec": "tools/buildings/spec_landside.json (+ landside_naip_measurements.json)",
@@ -14391,9 +14391,9 @@
    },
    "2": {
     "switch_m": 1500.0,
-    "tris": 22710,
+    "tris": 24762,
     "instanced_car_tris": 0,
-    "verts": 54480,
+    "verts": 59268,
     "draw_calls": 127
    }
   },
@@ -14403,14 +14403,14 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/landside_lod2.glb",
-   "bytes": 2958392
+   "bytes": 3174496
   },
   "textures": [
    {
     "name": "landside_ao_B",
     "px": 2048,
     "mime": "image/jpeg",
-    "bytes": 1165446,
+    "bytes": 1160026,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -14438,7 +14438,7 @@
     "name": "landside_ao_C",
     "px": 1024,
     "mime": "image/jpeg",
-    "bytes": 320347,
+    "bytes": 332096,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -15442,7 +15442,7 @@
   "ao": {
    "A": {
     "res": 2048,
-    "bake_s": 54.9,
+    "bake_s": 43.4,
     "mean": 0.404,
     "p2": 0.0,
     "samples": 40,
@@ -15453,7 +15453,7 @@
    },
    "B": {
     "res": 2048,
-    "bake_s": 69.4,
+    "bake_s": 55.5,
     "mean": 0.584,
     "p2": 0.0,
     "samples": 40,
@@ -15464,8 +15464,8 @@
    },
    "C": {
     "res": 1024,
-    "bake_s": 26.9,
-    "mean": 0.641,
+    "bake_s": 19.3,
+    "mean": 0.626,
     "p2": 0.0,
     "samples": 40,
     "distance_m": 8.0,
@@ -16029,7 +16029,7 @@
       "draws": 36
      },
      "2": {
-      "tris": 2731,
+      "tris": 4783,
       "instanced_tris": 0,
       "draws": 8
      }
@@ -17833,6 +17833,16 @@
       "tag": "inf",
       "source": "4.2 pitches"
      },
+     "storeys": {
+      "v": "12 [pub]: 2 podium (3.2 pitches) + 1 recessed colonnade level + 9 tower floors (9 pitches to the parapet)",
+      "tag": "inf",
+      "source": "photo l4 bands read as storeys (round 7)"
+     },
+     "fourth_floor": {
+      "v": 14.0,
+      "tag": "inf",
+      "source": "the colonnade top = the 4th-floor lobby / AirTrain bridge level [pub gh_lobby_level]; pitch 3.33 m [inf]"
+     },
      "face_fractions": {
       "v": {
        "podium": 0.47,
@@ -17877,16 +17887,18 @@
     "unknown": [
      "height (40-48)",
      "slab vs podium plan (the outline includes both)",
-     "the enclosed AirTrain bridge: its cross-section (width beyond the 3.1-m outline finger, clear height, glazing) and roof form; and how it crosses the north running track between the island platform and the hotel (over the vehicle envelope / under the deck / a hotel-side platform) - the [pub] level (the station connects at the hotel 4th floor) and the [obs] plan (the finger) put that crossing in the train path (owner)"
+     "the enclosed AirTrain bridge: its cross-section (width beyond the 3.1-m outline finger, clear height, glazing) and roof form; the station's lower (stained-glass) level under the platform that it joins: extent and the stairs / lifts to the island platform (not modelled)",
+     "absolute storey heights: the 4th-floor line rests on the inferred 3.33-m pitch (an SFO drawing or the FAA OE/AAA filing would settle the height)"
     ],
     "conflicts": [
      "spec \"taller straight block at the north end\" vs photo l4 (one parapet level): drawn at the common parapet (BL-03)",
-     "AirTrain bridge: [pub] \"connects at the fourth floor\" (= the platform level) vs [obs] plan: the finger crosses the north track's vehicle envelope (2.9 m of its 8.9 m) from the island platform - modelled only from the hotel to the guideway edge"
+     "AirTrain level: the platform at the network level 19.75 m [inf] is 5.75 m above the hotel 4th-floor line 14.0 m [inf, photo l4 storeys]; resolved (round 7) by the station's lower level under the deck [obs ref photo NW, Dec 2019]: the bridge runs there, not at the platform level",
+     "NAIP roof-shift scan 36-40 m [obs, low] vs the 44-m parapet [inf]"
     ],
     "not_modelled": [
      "roof PV (NAIP shows arrays; layout not measured)",
      "porte-cochere",
-     "the AirTrain bridge over the north track (the finger's station half, see conflicts)"
+     "the station's lower concourse level and its vertical circulation to the platform (the bridge ends at the station footprint)"
     ],
     "deviations_from_sheets": [],
     "anchors": {
@@ -17914,23 +17926,17 @@
      "axis_heading": 25.7,
      "mast_top": 46.667,
      "end_pier_top": 42.416,
+     "fourth_floor": 14.0,
      "bridge": {
-      "floor": 19.751,
-      "soffit": 19.351,
-      "roof": 23.751,
-      "plan_m2": 15.84,
+      "floor": 14.0,
+      "soffit": 13.6,
+      "roof": 18.0,
+      "deck_soffit": 18.151,
+      "plan_m2": 28.5,
       "plan_world": [
        [
-        -1612.02,
-        615.54
-       ],
-       [
-        -1613.47,
-        610.79
-       ],
-       [
-        -1610.42,
-        609.84
+        -1611.58,
+        606.06
        ],
        [
         -1608.97,
@@ -17939,6 +17945,14 @@
        [
         -1612.02,
         615.54
+       ],
+       [
+        -1614.64,
+        606.98
+       ],
+       [
+        -1611.58,
+        606.06
        ]
       ]
      }
@@ -17983,18 +17997,19 @@
      },
      {
       "node": "L0_gh_bridge",
-      "feature": "enclosed AirTrain bridge at the 4th floor / platform level [pub], plan = the outline finger [obs], hotel face to the guideway edge; section [inf]",
+      "feature": "enclosed AirTrain bridge at the hotel 4th-floor line [pub connection], under the guideway deck to the station footprint (station lower level [obs ref photo]); plan = the outline finger [obs]; section [inf]",
       "src": "inf",
       "spec": [
        "gh_lobby_level",
-       "gh_plan_shape"
+       "gh_plan_shape",
+       "gh_identity"
       ],
       "kind": "shell",
       "dims": {
        "level": {
-        "v": 19.751,
+        "v": 14.0,
         "tag": "inf",
-        "source": "AirTrain platform = network level (STATIONS HYATT); 4th-floor connection [pub]"
+        "source": "hotel 4th-floor line = colonnade top (photo l4 storeys 2 + 1 + 9 = 12 [pub]); under the deck: the station level below the platform [obs ref photo NW Dec 2019]"
        },
        "section": {
         "v": [
@@ -18005,10 +18020,15 @@
         "tag": "inf",
         "source": "floor / clear / roof (m)"
        },
+       "deck_soffit": {
+        "v": 18.151,
+        "tag": "model",
+        "source": "min AirTrain deck soffit over the bridge (level field - DECK_T)"
+       },
        "plan": {
-        "v": 15.84,
+        "v": 28.5,
         "tag": "obs",
-        "source": "outline finger 27.8 m2 minus the guideway + 0.15 m"
+        "source": "the outline finger 27.8 m2 (hotel face to the station footprint)"
        }
       }
      },
@@ -20532,7 +20552,7 @@
     },
     {
      "check": "LOD2 AirTrain x the unclipped contact shells (central_garage; residual ceiling, close-out r5)",
-     "model": 149.0,
+     "model": 40.0,
      "drawing": 160.0,
      "tol": null,
      "ok": true,
@@ -20586,11 +20606,11 @@
     },
     {
      "check": "LOD2 building surface inside the closed AirTrain deck box > 0.05 m deep (close-out round 6, own-LOD guideway; ceiling)",
-     "model": 311.18,
+     "model": 9.78,
      "drawing": 327.0,
      "tol": null,
      "ok": true,
-     "src": "the round-5 verifier's cgdepth2 rule (0.10-m samples; first deck surface above faces up, below faces down); per node: {'L2_central_garage': {'m2': 311.18, 'm2_over_030': 76.11, 'max_depth_m': 0.686, 'at': [-796.6, 261.4]}}",
+     "src": "the round-5 verifier's cgdepth2 rule (0.10-m samples; first deck surface above faces up, below faces down); per node: {'L2_central_garage': {'m2': 9.78, 'm2_over_030': 1.74, 'max_depth_m': 0.686, 'at': [-796.6, 261.4]}}",
      "unit": "m2"
     },
     {
@@ -21406,25 +21426,14 @@
        ]
       },
       "L2_central_garage x L2_airtrain_-3_0": {
-       "points": 129,
+       "points": 34,
        "y": [
-        17.53,
+        17.78,
         20.62
        ],
        "at": [
-        -967.1,
-        337.7
-       ]
-      },
-      "L2_central_garage x L2_airtrain_-3_1": {
-       "points": 14,
-       "y": [
-        17.89,
-        18.15
-       ],
-       "at": [
-        -945.8,
-        420.8
+        -949.7,
+        364.0
        ]
       }
      },
@@ -21437,7 +21446,7 @@
       "buildings": [
        "central_garage"
       ],
-      "points": 149,
+      "points": 40,
       "ceiling": 160
      }
     },
@@ -21468,7 +21477,7 @@
      "central_garage": 331.6,
      "garage_a": 639.7,
      "garage_g": 460.1,
-     "grand_hyatt": 764.3,
+     "grand_hyatt": 760.8,
      "ltp_garage_1": 703.0,
      "ltp_garage_2": 674.6,
      "rental_car_center": 203.8,
@@ -23188,7 +23197,7 @@
   },
   "footprints_js": {
    "units": 14,
-   "bytes_js": 235864,
+   "bytes_js": 362528,
    "note": "B3D_INTEGRATION.footprints (close-out round 3, integration-5)",
    "tier_tol_m": 0.1,
    "tier_min_m2": 0.02,
@@ -23222,7 +23231,7 @@
    "domestic: BA_C LOD2 top +9.08 m (review r1) - a checker artefact: the joined LOD2 mesh was split by plan distance and C3C triangles went to BA_C; split by LOD0-footprint containment (+1 m) since review r2: top 0.0 m (lod2_check.json)",
    "landside: rental car center LOD2 roof median 4.58 m (review r1) - a checker artefact: the roof cells sampled the open deck beyond the roof edge; one roof-cell definition for both LODs since review r2 (1-m cells inside the LOD0 footprint - 0.5 m): 0.00 m"
   ],
-  "generated": "2026-11-09T12:05:43Z",
+  "generated": "2026-11-09T17:55:38Z",
   "tool": "tools/blender/b3d_integrate.py",
   "doc": "docs/research/buildings3d.md (integration section)"
  },

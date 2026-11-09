@@ -25,6 +25,17 @@ from common import srgb_to_lin, lin_to_srgb, hex_rgb
 
 
 WING_SKIN_LIN = 0.9      # linear albedo of an untextured whiteish wing panel in js/shaders/aircraft_real.js (no brand livery)
+# cowl-top / pylon junction (Canvas._junction, close-out round 7): range of the fitted boundary angle (deg from the top of
+# the nacelle; fitted values A350 15, MD-11 11.5-12.5, 767 22.5-24) and the height (units of the nacelle radius) above the
+# local cowl surface beyond which a pylon texel is the pylon proper
+JCT_ANG = (6.0, 30.0)
+JCT_DR = 0.05
+# models whose atlas carries the pylon's base strip on the cowl (tools/liveries/atlas.py, close-out round 5: the FAM A350 and
+# 767 engine nodes and the MD-11 seed nacelle), where the alternating labels were reported. The same window exists on other
+# models' pylons (a319 / a320 / a321, a333, a388, b738, b752, b788, e170, e190: scratch c7/aircraft/cowl/junction_all.json;
+# on b738 / b788 the fitted angle sits at the 6 deg limit, i.e. a narrower pylon foot than this rule assumes); they keep
+# the atlas labels until reviewed (docs/requests/aircraft_closeout.md, round 7)
+JCT_MODELS = ('a359', 'b763', 'md11')
 
 
 def lin(c):
@@ -104,7 +115,47 @@ class Canvas:
         self._one_overwing_exit()
         self._fin()
         self.eng = A['eng']
+        self._junction((m['pos'][V] * b[..., None]).sum(1))      # (texel points of the unstretched model: the engine records' frame)
         self.reset()
+
+    def _junction(self, pos0):
+        """Close-out round 7 (aircraft verifier c5-1 finding 3 / c6-1 finding 4): the cowl-top / pylon junction is painted by
+        angle around the nacelle axis, not by triangle label. Where the pylon sits on the aft cowl (the pylon's base strip,
+        relabelled from 'eng' in close-out round 5, tools/liveries/atlas.py), the source mesh's tessellation alternates
+        'pylon' and 'eng' triangles along the top of the cowl (scratch c5 verifier teeth.py, A350 0-10 deg from the top:
+        pylon 58 % / eng 31 %; MD-11 44 / 35 %), so a cowl painted darker than its pylon (DLH, ITY, SJX, VIR A350, DAL / UAL
+        767) showed light and dark teeth along the junction. Per engine, over the stations where >= 20 pylon texels lie on
+        the cowl (cowl x0..x1, < 1.3 r from the axis, < 45 deg from the top): texels of this engine or the pylon within
+        `ang` of the top paint as pylon, the others as engine - a straight boundary (models JCT_MODELS). `ang` is fitted per engine to the atlas
+        labels (the angle that relabels the fewest texels, within JCT_ANG), so the strip keeps the source model's own width
+        (no assumed pylon width) and only its edge is straightened. A pylon texel more than JCT_DR above the local cowl
+        surface (the median radius of this engine's texels 20-45 deg from the top, per 0.25 m) is the pylon proper and
+        stays pylon. engines() and pylons() paint by these labels (part_paint / sub_paint); decals, the inlet lip station
+        and eng_angle() keep the atlas labels. The window, angle and radius are taken on the unstretched model (pos0), whose
+        frame the engine records are in (a fuselage plug or wing-span fit moves the engines of a stretched type, e.g. the
+        A350-1000 bake 4.4 m aft). self.junction records each window (build.py prints it)."""
+        self.part_paint = self.part.copy(); self.sub_paint = self.sub.copy(); self.junction = []
+        if self.key not in JCT_MODELS: return
+        x, y, z = pos0[:, 0], pos0[:, 1], pos0[:, 2]
+        for j, E in enumerate(self.eng):
+            dz = z - E['zc']; dy = y - E['yc']; out = np.sign(E['zc']) if abs(E['zc']) > 0.5 else 1.0
+            a = np.abs(np.degrees(np.arctan2(dz * out, dy))); rr = np.hypot(dz, dy) / E['r']
+            cw = (x >= E['x0']) & (x <= E['x1']) & (rr < 1.3) & (a < 45)
+            py = cw & (self.part == 'pylon'); en = cw & (self.part == 'eng') & (self.sub == j)
+            if py.sum() < 20 or en.sum() < 20: continue
+            xa, xb = np.percentile(x[py], [0.5, 99.5]); w = cw & (x >= xa) & (x <= xb)
+            P, Q = a[py & w], a[en & w]
+            th = np.arange(JCT_ANG[0], JCT_ANG[1] + 0.01, 0.5)
+            mis = np.array([(Q < t).sum() + (P > t).sum() for t in th]); t = float(th[mis.argmin()])
+            cs, cr = [], []                                     # local cowl surface radius (units of r) per 0.25 m
+            for s0 in np.arange(xa, xb, 0.25):
+                qb = w & en & (a > 20) & (x >= s0) & (x < s0 + 0.25)
+                if qb.sum() >= 3: cs.append(s0 + 0.125); cr.append(float(np.median(rr[qb])))
+            rl = np.interp(x, cs, cr) if cs else np.full(len(x), -np.inf)
+            e2p = en & w & (a <= t); p2e = py & w & (a > t) & (rr <= rl + JCT_DR)
+            self.part_paint[e2p] = 'pylon'; self.part_paint[p2e] = 'eng'; self.sub_paint[p2e] = j
+            self.junction.append(dict(eng=j, x=[round(float(xa), 2), round(float(xb), 2)], ang=t, eng_to_pylon=int(e2p.sum()),
+                                      pylon_to_eng=int(p2e.sum()), texels=int(len(P) + len(Q))))
 
     def reset(self):
         """start a new livery on the same airframe: bare white"""
@@ -307,12 +358,12 @@ class Canvas:
 
     # ------------------------------------------------------------------ parts
     def engines(self, color, lip='#B9BDC2', lip_len=0.07, where=None):
-        e = self.part == 'eng'
+        e = self.part_paint == 'eng'                       # (cowl-top junction by angle: _junction)
         if where is not None: e = e & where
         self.paint(e.astype(float), color)
         if lip and len(self.eng):
             for j, E in enumerate(self.eng):
-                q = e & (self.sub == j)
+                q = e & (self.sub_paint == j)
                 x1 = self.pos[q, 0].max() if q.any() else 0
                 L = max(E['x1'] - E['x0'], 1.0)
                 a = np.zeros(len(self.col)); a[q] = self.aa(-(self.pos[q, 0] - (x1 - lip_len * L)), q)
@@ -335,7 +386,7 @@ class Canvas:
         self.paint((self.part == 'hstab').astype(float), color)
 
     def pylons(self, color):
-        self.paint((self.part == 'pylon').astype(float), color)
+        self.paint((self.part_paint == 'pylon').astype(float), color)     # (cowl-top junction by angle: _junction)
 
     def gear_doors(self, color):
         self.paint((self.part == 'gdoor').astype(float), color)

@@ -567,7 +567,9 @@ older generator (e.g. one from before the r5 pedestal) passed `_dump_current()` 
 
 `grade_check(mb, log, lod)` now also runs on LOD1 (`gchk1`; manifest `roadways.closeout_r5.closeout_r6`: `lod1_mesh_folds`,
 `lod1_fold_gate`, `lod1_fold_top`). Ceiling `FOLD1_GATE`: folds over 4 / 6 deg at most 17 / 8 and 95.2 / 53.0 m of edge (the r5
-fix-2 build as measured + 5 % on the length; WARNING + `ok` false in the record, like the LOD0 fold gate). Measured with the same
+fix-2 build as measured + 5 % on the length; WARNING + `ok` false in the record, like the LOD0 fold gate). **[Corrected in round 7
+(r6 verifier (c)):** in round 6 neither ceiling was enforced: no gfail entry, exit 0, and no tool read the flag. Round 7 enforces both
+(R7.1).**]** Measured with the same
 function on a dev build of this code (SP/c6/buildings/rw/d1, glb byte-identical to the installed e2869621 / 3b031edf): LOD1 folds
 > 1 / 2 / 4 / 6 deg 209 (1,405 m) / 86 (541 m) / 17 (90.7 m) / 8 (50.5 m) = the verifier's 86 / 17 / 8; LOD0 226 / 84 / 10 / 6
 unchanged; worst LOD1 folds 8.0 deg (8.4-m edge) at (-1558.6, 478.8), 7.1 deg along 15.6 m at (-1579.8, 447.0) - all in
@@ -589,3 +591,134 @@ LOD0 crease item). The installed roadways rebuild (12:01Z, build 0, no gate fail
 | (d) dump currency misses generator changes | fixed | R6.1: generator hashed + schema; CONFLICT on generator / schema / missing part (6 variants tested) |
 | (c) LOD1 creases (side effect of the LOD1 soffit fix) | partly | R6.2: LOD1 fold report + ceiling 17 / 8 folds (95.2 / 53.0 m) over 4 / 6 deg; trade-off recorded; creases deferred |
 
+
+## Round 7 (follow-up on the round-6 verifier + realtime request C5.1) - 9 Nov 2026
+
+Work log: `SP/c7/buildings/NOTES.md`.
+
+### R7.1 Fold gates are enforced (r6 verifier (c))
+
+**What changed**
+- `build_roadways.py`: `gfail` now includes the LOD0 fold gate (`FOLD_GATE_M`) and the LOD1 fold gate (`FOLD1_GATE`). A ceiling
+  breach stops the build before anything is written (exit 3), like the through-deck and soffit gates. `RW_GATE_WRITE` still forces a
+  write.
+- `b3d_integrate._roadway_gates`: every `*fold_gate` record under `manifest.json#roadways` must say `ok`. If one does not (e.g. a
+  forced build), that is a CONFLICT; the checked paths are listed in `inputs`.
+
+**Tests**
+- `SP/c7/buildings/rw/t_gfail.py` (`808947c3`) evaluates the gfail expression, extracted with ast, on synthetic gate records:
+
+  | case | before | after |
+  |---|---|---|
+  | as installed (17 / 8 and 10 / 6) | 0 | 0 |
+  | LOD1 over the ceiling | 0 | 1 |
+  | LOD0 over the ceiling | 0 | 1 |
+  | no fold record | 0 | 0 |
+
+- `SP/c7/buildings/integ/t_gate.py` (`ebb1de20`): installed manifest 0 conflicts (3 gate paths checked); LOD1 gate flipped to false:
+  1 CONFLICT.
+- The roadways glb is not rebuilt: its geometry is unchanged, and the installed record (17 / 8 and 10 / 6) passes the new gate.
+
+### R7.2 An empty or short bridge dump is stale (r6 verifier (d))
+
+`_dump_current` now gives CONFLICT 'input stale' (exit 2 under `--check`) in two cases:
+- an empty `bridges` list;
+- fewer bridges than `out/draw/scene2d.json` has, when that file exists (it has 131).
+
+Test: the verifier's `t.py` (`11651e64`) plus a "short by 10" variant, with ROOT patched so the backup module reads the repo inputs
+(`SP/c7/buildings/integ/t7.py`, `1ad7f2b1`). Before -> after:
+- zero bridges: 0 -> 1;
+- short by 10: 0 -> 1;
+- the other 8 variants unchanged (current 0, generator changed 1, generator unrecorded 1, no schema 1, schema reordered 1, one
+  bridge without a pedestal 1, extra part 0, geometry-only edit 0).
+
+### R7.3 Request C5.1: provenance and height band of the footprints under the reported wings
+
+**`physics.rings[82]` (old index) is the landside unit `bart_station`.** That is the SFO BART station complex, Building 497.
+- Plan: OpenStreetMap way 221663595 'train_station' (ODbL), cross-checked within ~1.5 m against the NAIP 2024 north wall line
+  [obs]. The Garage G body and the ITB outline are subtracted. Code: `landside_geom.bart_footprint`.
+- Heights: [inf], from photo-a2 proportions. The ground storey is open on columns.
+- Its tiers (world y, grade 3.0):
+  - `body`, from grade to 21.13: 200 m2. These are the columns and walls that stand on the ground.
+  - `over`, from 8.9 (5.9 m above grade) to the top: 1,526 m2.
+  - `over`, from 18.48 (15.5 m above grade): 4,868 m2. This is the deck under the AirTrain.
+  - smaller pieces higher up.
+- Within half-span + 6 m of the reported points:
+  - UAL1757: body 10 m2, over 5.9 m 94 m2, over 15.5 m 27 m2;
+  - CFJNX: body 4.6 m2, over 5.9 m 45 m2.
+
+**The SFO Museum 'Garage A' outline** (`data/sfo_airport.js` structure, kind garage):
+- It reaches to 16.2 m of the AMX664 point. Its east part extends to x -1252.
+- The 3-D asset `garage_a` (x -1533..-1383) is 58.5 m away. It replaces the outline (replace table cover 0.849).
+- The grid should use the asset footprints (`physics`) and not this outline.
+
+**The real problem is the positions, not the footprints.** All three reference points lie on the LANDSIDE. In the same frame
+(`data/sfo_airport.js`: x east, z south, origin ARP; the outline and the asset rings coincide):
+
+| aircraft | point | outside the International Terminal outline | nearest taxiway polygon |
+|---|---|---|---|
+| UAL1757 | (-1421.5, 239.2) | 90.6 m west | 390 m (B5) |
+| AMX664 | (-1328, 535) | 86.2 m west | 692 m (A/H) |
+| CFJNX | (-1611.6, 324.2) | 258.8 m west | 485 m (B5) |
+
+They sit beside the BART station, Garage G, the ITB departures roadway and the AirTrain. No airliner can be there. Neither footprint
+is wrong. See the realtime request below.
+
+**Height bands (done in `b3d_integrate`).** Each physics ring now carries:
+- `y[i]`: its world-y band [underside, top];
+- `unit[i]`: an index into `units` (group/unit/band).
+
+How the rings are built:
+- A unit's tiers are grouped into underside bands `PHYS_BANDS` = 0 / 3 / 6 / 10 / 15 m above grade. Each group sits at its lowest
+  underside.
+- An `over` tier below 3 m joins the body.
+- Each plan point goes to its lowest band only.
+- Any footprint no tier covers blocks from grade.
+
+The BART station now reads as:
+- body [3.0, 21.13]: 55 + 88 m2;
+- over >= 3 m [8.9, 21.13]: 504 + 851 m2;
+- over >= 15 m [18.48, 21.13]: 6,465 m2.
+
+A consumer that ignores `y` blocks the same area as before. The union is 385,918 -> 385,781 m2. The differences (387 m2 lost,
+251 m2 gained) come from the 0.1-m simplification of the tier rings.
+
+**Cost**
+- Rings 91 -> 741, vertices 2,284 -> 9,055.
+- `integration.js` 235,864 -> 362,528 B (+127 kB); `integration.json` 1,007,167 -> 1,146,105 B.
+- `PHYS_BANDS = [0.0]` restores one ring set per unit if the lead prefers the smaller file.
+
+**Request to the realtime track** (their files; not edited here):
+1. `js/live/ground.js` buildingGrid (and the harness `building` rule): read `physics.y`. A body part whose top is below a ring's
+   underside (`y[i][0] - GROUND_Y` above grade) does not collide with that ring. Use a wing at 4-6 m, and the fin / tail for the
+   tall types.
+2. Find out why bodies sit on the landside:
+   - UAL1757 "taxiing", 5 Nov 04:10:56Z;
+   - CFJNX "kept parked by repos", 5 Nov 09:44:26Z;
+   - AMX664, 7 Nov 03:48:51Z.
+
+   Each is 390-692 m from any taxiway and 86-259 m west of the ITB, on roads that the rendered pavement mask may include. Either
+   the ADS-B surface positions there are spurious (multipath near the ITB / garages) and should be rejected, or the harness frame /
+   repos placement is off. A parking repos must stay on airside pavement (owner rule).
+
+### R7.4 Re-run after the landside rebuild
+
+All results are on the files built this round (landside `845ea564` / lod2 `f47a0e3f`; roadways unchanged, `5d742b38` / `9e6f5802`).
+
+- **b3d_integrate** (run twice; the second run after the band grouping): exit 1, 7 conflicts / 15 notes.
+  - The conflict and note lines, keys stripped, md5 `55e2b851`, equal round 6's.
+  - Bridge inputs current. Fold gates: 3 paths checked, 0 failed.
+  - Footprint tiers self-check: 156,717 vertices, 0 outside.
+- **b3d_lod2_check:** 47 units, 0 flagged.
+- **tools/sat/check.py:** 0 app issues / 0 issues.
+- **verify_itb and verify_domestic:** exit 0 (writes redirected).
+- **Output md5s:** `integration.js` `1be9d0fb`, `integration.json` `e8e95c8e`.
+
+### Round 7 dispositions
+
+| finding | status | evidence |
+|---|---|---|
+| r6 (c) fold ceiling only warns | fixed | R7.1 |
+| r6 (d) zero-bridge dump passes | fixed | R7.2 |
+| R6.2 wording | fixed | corrected in place |
+| C5.1 ring 82 / Garage A provenance + height band | fixed (provenance + bands); positions -> realtime | R7.3 |

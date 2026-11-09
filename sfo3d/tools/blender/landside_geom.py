@@ -67,9 +67,10 @@ STATION_BLOCK_W = 12.0     # Garage A station block: solid precast faces within 
 GH_CONN_W = 3.2            # Grand Hyatt (close-out r5 fix 2): outline parts narrower than this that touch the AirTrain deck are the
 #                            connector finger (3.1 m wide in the SFO Museum outline), not the slab [model]
 GH_BR_CLEAR_H = 3.5        # Grand Hyatt AirTrain bridge (close-out round 6): clear height of the enclosed section [inf: no section source]
-GH_BR_SLAB, GH_BR_ROOF = 0.4, 0.5   # its floor structure below the platform level / roof build-up above the ceiling [inf]
-GH_BR_GAP = 0.15           # its end stops this far off the guideway polygon (RAIL): > KEEP_CLEAR 0.08 of the structure hull [model]
-GH_BR_GAP_L2 = 0.40        # LOD2: the coarse LOD2 guideway runs up to ~0.2 m outside the LOD0 hull (see airtrain_keepout) [model]
+GH_BR_SLAB, GH_BR_ROOF = 0.4, 0.5   # its floor structure below the 4th-floor line / roof build-up above the ceiling [inf]
+GH_BR_GAP = 0.15           # round 7: its roof stays this far under the guideway deck soffit (> KEEP_CLEAR 0.08 of the structure hull) [model]
+GH_BR_GAP_L2 = 0.40        # LOD2: the same under the coarse LOD2 deck (it deviates up to ~0.2 m from the LOD0 hull, see airtrain_keepout) [model]
+CG_L2_SOFFIT = 0.25        # round 7 (r6 verifier (e)): the LOD2 Central Garage plinth top stays this far under the local deck soffit [model]
 GH_PODIUM_D = 17.0         # Grand Hyatt: podium depth in front of the slab along the south part (NAIP slab roof with the 13.4-m
 #                            relief shift vs the outline's east edge, ~17-20 m) [obs NAIP, approx]; r1: the slab face behind the
 #                            podium follows R1['hyatt_slab_east'] (continuous with the north part of the face, photo l4)
@@ -750,8 +751,19 @@ def central_garage():
         cap(cm2, q, deck + 0.15, 'deck_rim', 12.0)
     for b_ in boxes:
         walls(cm2, b_['poly'].simplify(0.3), deck, b_['top'], 'concrete', (6.0, 6.0)); cap(cm2, b_['poly'].simplify(0.3), b_['top'], 'coping', 6.0)
+    # close-out round 7 (r6 verifier (e)): the LOD2 plinth top was a constant zt = h5 - DECK_T, so where the deck dips below h5 it
+    # stood inside the coarse deck box ((-955, 408) 0.60 m, (-1025, 155) 0.30 m: 94 % of the 311-m2 LOD2 residual) - the round-6
+    # LOD0 fix applied at LOD2: walls and top follow min(zt, local deck level - DECK_T) - CG_L2_SOFFIT, vertices every 2 m
+    zf2 = lambda X, Y: min(zt, float(_at_levels().h(*F.W(X, Y))) - AT.DECK_T) - CG_L2_SOFFIT
     for q in polys(under):
-        stack_coarse(cm2, F.poly(q).simplify(0.8), zt, 'concrete', 'concrete')
+        Q2 = orient_all(shapely.segmentize(F.poly(q).simplify(0.8), 2.0))
+        for r in rings_of(Q2):
+            s_ = 0.0
+            for i in range(len(r)):
+                a_, b_ = r[i], r[(i + 1) % len(r)]
+                cm2.quad_wall(a_, b_, 0.0, zf2(*a_), 0.0, zf2(*b_), 'concrete', s_, (6.0, 6.0))
+                s_ += math.hypot(b_[0] - a_[0], b_[1] - a_[1])
+        cap(cm2, Q2, zt, 'concrete', 12.0, zf=zf2)
     # r2 (finding 9): the LOD2 keeps the void floor at grade, the garage edge beside the guideway (to the trough-wall top, the
     # Level-5 parts) and the two DOF roof poles (the LOD2 top was 28.1 m without them)
     for q in polys(P):
@@ -1726,7 +1738,7 @@ def hyatt():
     # track (11.9 m2 over the deck polygon, touching the HYATT station polygon): the enclosed AirTrain bridge to the Grand Hyatt
     # station, not the 44-m slab. It is the outline's only part narrower than GH_CONN_W (opening of radius GH_CONN_W / 2) that
     # touches the guideway; it is taken out of the slab / podium / LOD2 plan (the body then stands 5.1 m off the deck). The
-    # bridge itself is not modelled: its span, level and enclosure need a source [unk -> owner]
+    # bridge is gh_bridge below (close-out rounds 6 / 7: under the guideway deck at the hotel 4th floor)
     _op = full.buffer(-GH_CONN_W / 2, join_style=2).buffer(GH_CONN_W / 2, join_style=2)
     _fing = [g for g in polys(full.difference(_op)) if g.area > 0.01 and g.intersects(AT.RAIL.buffer(0.5, join_style=2))]
     conn = unary_union(_fing) if _fing else Polygon()
@@ -1741,20 +1753,27 @@ def hyatt():
                                 'BL-02 B; the finger read as the AirTrain bridge [inf]'),
                   parapet_top=dim(round(H, 2), 'inf', '13.2 pitches x 3.33 m (photo l4); 40-48 m; NOT published'),
                   podium=dim(round(hp, 2), 'inf', '3.2 pitches'), colonnade_top=dim(round(hc, 2), 'inf', '4.2 pitches'),
+                  storeys=dim('12 [pub]: 2 podium (3.2 pitches) + 1 recessed colonnade level + 9 tower floors (9 pitches to the parapet)', 'inf',
+                              'photo l4 bands read as storeys (round 7)'),
+                  fourth_floor=dim(round(hc, 2), 'inf', 'the colonnade top = the 4th-floor lobby / AirTrain bridge level [pub gh_lobby_level]; '
+                                   'pitch 3.33 m [inf]'),
                   face_fractions=dim(dict(podium=0.47, colonnade=[0.02, 0.10], end_bay=0.049, framed=[0.615, 0.842], penthouse=[[0.518, 0.692], [0.615, 0.742]],
                                           masts=[-0.008, 0.027, 0.905, 0.961]), 'obs', 'photo l4 fractions (BL-03 hyatt_elev)')),
              inferred=['height 44 m', 'floor pitch 3.33 m', 'mullion module 1.5 m (BL-03 schematic 3 m with an intermediate)', 'west (convex) face: same curtain wall',
                        'penthouse depth: the slab minus 4 m each side', 'podium / colonnade wrap on the south-facing faces of the podium zone'],
              unknown=['height (40-48)', 'slab vs podium plan (the outline includes both)',
                       'the enclosed AirTrain bridge: its cross-section (width beyond the 3.1-m outline finger, clear height, glazing) and roof form; '
-                      'and how it crosses the north running track between the island platform and the hotel (over the vehicle envelope / '
-                      'under the deck / a hotel-side platform) - the [pub] level (the station connects at the hotel 4th floor) and the '
-                      '[obs] plan (the finger) put that crossing in the train path (owner)'],
+                      'the station\'s lower (stained-glass) level under the platform that it joins: extent and the stairs / lifts to the island '
+                      'platform (not modelled)',
+                      'absolute storey heights: the 4th-floor line rests on the inferred 3.33-m pitch (an SFO drawing or the FAA OE/AAA filing would '
+                      'settle the height)'],
              conflicts=['spec "taller straight block at the north end" vs photo l4 (one parapet level): drawn at the common parapet (BL-03)',
-                        'AirTrain bridge: [pub] "connects at the fourth floor" (= the platform level) vs [obs] plan: the finger crosses the north '
-                        'track\'s vehicle envelope (2.9 m of its 8.9 m) from the island platform - modelled only from the hotel to the guideway edge'],
+                        'AirTrain level: the platform at the network level 19.75 m [inf] is 5.75 m above the hotel 4th-floor line 14.0 m [inf, photo l4 '
+                        'storeys]; resolved (round 7) by the station\'s lower level under the deck [obs ref photo NW, Dec 2019]: the bridge runs there, '
+                        'not at the platform level',
+                        'NAIP roof-shift scan 36-40 m [obs, low] vs the 44-m parapet [inf]'],
              not_modelled=['roof PV (NAIP shows arrays; layout not measured)', 'porte-cochere',
-                           'the AirTrain bridge over the north track (the finger\'s station half, see conflicts)'])
+                           'the station\'s lower concourse level and its vertical circulation to the platform (the bridge ends at the station footprint)'])
     F = B.F
     Pfull = F.poly(full)
     ax = loc_dir(mr['long_side_heading_deg']); east = np.array([ax[1], -ax[0]])      # right of NNE = ESE
@@ -1919,53 +1938,58 @@ def hyatt():
     B.details[1].append(Part('gh_detail', det, 'detail', 'obs', 'colonnade columns, masts, framed bay, sign', ['gh_facade']))
     B.shells.insert(0, Part('gh_body', sh, 'shell', 'obs', 'curtain wall slab, podium, colonnade recess, roof, end pier', ['gh_plan_shape', 'gh_facade'],
                             dict(height=dim(round(H, 2), 'inf', 'BL-03'))))
-    # close-out round 6 (round-5 verifier 2, (a): after the finger left the slab plan the hotel stood 5.1 m off its own station with no
-    # connection). The enclosed AirTrain bridge from the sources the repo has: plan = the outline's connector finger [obs SFO Museum];
-    # level = the station platform (= the network level at the finger, AT.STATIONS['HYATT']) at the hotel 4th floor [pub spec
-    # gh_lobby_level: "AirTrain station connects at the fourth floor"; spec gh_identity / STATIONS['HYATT']: "enclosed bridge" [pub]];
-    # a minimal enclosed section (GH_BR_* [inf]: floor structure, glazed sides, solid roof). Measured (c6 t/gh_sec.py): along the
-    # finger (s = 0 at its station end) the island platform polygon is s -10.2..0, the NORTH single-track guideway s -1.26..3.79 and
-    # its vehicle envelope s -0.36..2.89 - so at the platform level the finger's station half lies in the train path. The bridge is
-    # built from the hotel face to GH_BR_GAP off the guideway polygon (the keep-out then cuts nothing); how it crosses the track is
-    # the owner question (unknown / conflicts) [inf]
-    br = Polygon()
+    # close-out round 6 / 7 (round-5 verifier 2 (a), round-6 verifier (a)-(b)): the enclosed AirTrain bridge. Sources: plan = the
+    # outline's connector finger [obs SFO Museum]; "Guests step out of the hotel's new AirTrain station, which features a ...
+    # stained-glass art installation, and after crossing an enclosed bridge, they enter the hotel's ... lobby" [pub hyatt_pr_2019];
+    # "elevators up to the fourth floor lobby" / "a fourth-floor light rail station" [pub gh_lobby_level]; the Commons photo 'Grand
+    # Hyatt at SFO station from the northwest, December 2019' (reference only) shows the station's glazed, stained-glass level
+    # directly UNDER the guideway deck (the platform with the train above it) [obs ref photo]. Round 6 had put the bridge at the
+    # platform level (19.75 m): mid-storey on the hotel (its 4th floor is ~14 m) and stopped by the hotel-side running track. Round
+    # 7: the bridge runs at the hotel's 4th-floor line (GH 4th floor = the colonnade top hc: photo l4 storeys 2 podium + 1 colonnade
+    # + 9 tower = 12 [pub gh_stories]) UNDER the deck, the whole finger to the station footprint; its roof stays GH_BR_GAP under the
+    # local deck soffit (the AirTrain level field). The station's lower concourse itself (extent, vertical circulation) is not
+    # modelled [unk]
+    br = Polygon(); Zb = hc
     if not conn.is_empty:
-        Zb = float(AT.STATIONS['HYATT'][1])
-        cand = conn.buffer(0.03, join_style=2).difference(AT.RAIL.buffer(GH_BR_GAP, join_style=2))
-        cand = [g for g in polys(cand) if g.area > 1.0 and g.distance(full) < 0.05]
+        cand = [g for g in polys(conn.buffer(0.03, join_style=2)) if g.area > 1.0 and g.distance(full) < 0.05]
         if cand:
             br = orient_all(largest(unary_union(cand)).simplify(0.01))
     if not br.is_empty:
         bm = MB('gh_bridge')
         Pb = orient_all(F.poly(br))
+        _dk = unary_union([AT.RAIL] + [AT.ST_POLY[k_] for k_ in AT.STATIONS]).buffer(1.0, join_style=2).intersection(br)
+        _bx = br.bounds; _pts = [(x_, y_) for x_ in np.arange(_bx[0], _bx[2] + 0.25, 0.25) for y_ in np.arange(_bx[1], _bx[3] + 0.25, 0.25)
+                                 if _dk.contains(Point(x_, y_))] + [tuple(c_) for c_ in shapely.segmentize(br, 0.5).exterior.coords if _dk.buffer(1e-6).contains(Point(*c_))]
+        soff = min(float(_at_levels().h(x_, y_)) for x_, y_ in _pts) - AT.DECK_T if _pts else Zb + 10.0     # deck soffit over the bridge
         on_face = lambda a_, b_: Pfull.exterior.distance(Point(0.5 * (a_[0] + b_[0]), 0.5 * (a_[1] + b_[1]))) > 0.06   # not the end in the facade
-        z0b, z1b, z2b, z3b = Zb - GH_BR_SLAB, Zb, Zb + GH_BR_CLEAR_H, Zb + GH_BR_CLEAR_H + GH_BR_ROOF
+        z0b, z1b = Zb - GH_BR_SLAB, Zb
+        z3b = min(Zb + GH_BR_CLEAR_H + GH_BR_ROOF, soff - GH_BR_GAP); z2b = z3b - GH_BR_ROOF
         walls(bm, Pb, z0b, z1b, 'metal_dark', TILES['metal_dark'], edge_filter=on_face)          # floor edge
-        walls(bm, Pb, z1b, z2b, 'glass_band', TILES['glass_band'], edge_filter=on_face)          # glazed sides + end
+        walls(bm, Pb, z1b, z2b, 'glass_band', TILES['glass_band'], edge_filter=on_face)          # glazed sides + station end
         walls(bm, Pb, z2b, z3b, 'metal_dark', TILES['metal_dark'], edge_filter=on_face)          # roof fascia
         cap(bm, Pb, z3b, 'roof_membrane', 4.0)
         cap(bm, Pb, z0b, 'soffit_lt', 4.0, down=True)
-        B.shells.append(Part('gh_bridge', bm, 'shell', 'inf', 'enclosed AirTrain bridge at the 4th floor / platform level [pub], plan = the outline '
-                             'finger [obs], hotel face to the guideway edge; section [inf]', ['gh_lobby_level', 'gh_plan_shape'],
-                             dict(level=dim(round(Zb, 3), 'inf', 'AirTrain platform = network level (STATIONS HYATT); 4th-floor connection [pub]'),
-                                  section=dim([round(GH_BR_SLAB, 2), round(GH_BR_CLEAR_H, 2), round(GH_BR_ROOF, 2)], 'inf', 'floor / clear / roof (m)'),
-                                  plan=dim(round(br.area, 2), 'obs', 'outline finger %.1f m2 minus the guideway + %.2f m' % (conn.area, GH_BR_GAP)))))
+        B.shells.append(Part('gh_bridge', bm, 'shell', 'inf', 'enclosed AirTrain bridge at the hotel 4th-floor line [pub connection], under the '
+                             'guideway deck to the station footprint (station lower level [obs ref photo]); plan = the outline finger [obs]; section [inf]',
+                             ['gh_lobby_level', 'gh_plan_shape', 'gh_identity'],
+                             dict(level=dim(round(Zb, 3), 'inf', 'hotel 4th-floor line = colonnade top (photo l4 storeys 2 + 1 + 9 = 12 [pub]); '
+                                            'under the deck: the station level below the platform [obs ref photo NW Dec 2019]'),
+                                  section=dim([round(GH_BR_SLAB, 2), round(z2b - z1b, 2), round(GH_BR_ROOF, 2)], 'inf', 'floor / clear / roof (m)'),
+                                  deck_soffit=dim(round(soff, 3), 'model', 'min AirTrain deck soffit over the bridge (level field - DECK_T)'),
+                                  plan=dim(round(br.area, 2), 'obs', 'the outline finger %.1f m2 (hotel face to the station footprint)' % conn.area))))
     cm2 = MB('gh_L2'); stack_coarse(cm2, P.simplify(0.6), H, 'glass_hyatt', 'roof_membrane', deck=H - 1.0)
     for q in podium: stack_coarse(cm2, q.simplify(0.6), hp, 'metal_dark', 'roof_membrane')
     for q, zt_ in pent_q:                                   # the stepped penthouse in LOD2 too (review r1)
         walls(cm2, q.simplify(0.5), H, zt_, 'metal_dark', (3.0, 3.0)); cap(cm2, q.simplify(0.5), zt_, 'coping', 6.0)
-    if not br.is_empty:                                     # the AirTrain bridge (close-out round 6), off the coarser LOD2 guideway
-        b2 = br.difference(AT.RAIL.buffer(GH_BR_GAP_L2, join_style=2))
-        b2 = [g for g in polys(b2) if g.area > 1.0]
-        if b2:
-            Pb2 = orient_all(F.poly(largest(unary_union(b2)).simplify(0.05)))
-            walls(cm2, Pb2, z0b, z3b, 'glass_band', TILES['glass_band'], edge_filter=on_face)
-            cap(cm2, Pb2, z3b, 'roof_membrane', 6.0); cap(cm2, Pb2, z0b, 'soffit_lt', 6.0, down=True)
+    if not br.is_empty:                                     # the AirTrain bridge (round 6 / 7), under the coarser LOD2 deck
+        Pb2 = orient_all(F.poly(br.simplify(0.05))); z3b2 = min(z3b, soff - GH_BR_GAP_L2)
+        walls(cm2, Pb2, z0b, z3b2, 'glass_band', TILES['glass_band'], edge_filter=on_face)
+        cap(cm2, Pb2, z3b2, 'roof_membrane', 6.0); cap(cm2, Pb2, z0b, 'soffit_lt', 6.0, down=True)
     B.coarse.append(Part('gh_L2', cm2, 'coarse', 'inf', 'Grand Hyatt (coarse)', ['gh_footprint']))
     B.footprint_w = full; B.top = H + 1.4 * p
     B.anchors = dict(parapet_top=round(H, 3), podium=round(hp, 3), colonnade_top=round(hc, 3), pitch=round(p, 4), penthouse=pent, W=W,
                      axis_heading=mr['long_side_heading_deg'], mast_top=round(H + 0.8 * p, 3), end_pier_top=round(0.964 * H, 3),
-                     bridge=(dict(floor=round(z1b, 3), soffit=round(z0b, 3), roof=round(z3b, 3), plan_m2=round(br.area, 2),
+                     fourth_floor=round(hc, 3), bridge=(dict(floor=round(z1b, 3), soffit=round(z0b, 3), roof=round(z3b, 3), deck_soffit=round(soff, 3), plan_m2=round(br.area, 2),
                                   plan_world=[[round(x, 2), round(y, 2)] for x, y in br.exterior.coords]) if not br.is_empty else None))
     return B
 
@@ -2518,7 +2542,8 @@ KEEP_INSIDE_MAX_M2 = 1.0   # (round 6: 2.0 -> 1.0 with the plinth top on the loc
 #                            TOP cap (zt - 0.02 = 18.13 m) where the deck runs below h5: (-956, 408) 177 samples / 0.232 m, (-1022, 154)
 #                            82 / 0.050 m; the other 237 on vertical plinth faces, <= 0.053 m) [our gate]
 
-KEEP_INSIDE_L2_MAX_M2 = 327.0  # verify_landside ceiling (close-out round 6, r5 verifier 2 (e)): LOD2 building surface > 0.05 m inside the
+KEEP_INSIDE_L2_MAX_M2 = 10.3   # round 7: 327.0 -> 10.3 (the LOD2 plinth top on the local soffit, CG_L2_SOFFIT: 311.18 -> 9.78 m2, > 0.30 m
+#                            76.11 -> 1.74 m2; the rest is vertical faces, max 0.686 m at (-796.6, 261.4); + 5 %). verify_landside ceiling (close-out round 6, r5 verifier 2 (e)): LOD2 building surface > 0.05 m inside the
 #                            coarse LOD2 deck box (same rule, own-LOD guideway). Measured on the r5 file (landside_lod2 c2ad24a3, c6
 #                            vbefore): only L2_central_garage (the unclipped KEEP_CONTACT shell): 311.18 m2 (> 0.30 m: 76.11 m2), max
 #                            0.686 m at (-796.6, 261.4) = the verifier's 0.686 m; ceiling = measured + 5 %, a regression bound, not 0:

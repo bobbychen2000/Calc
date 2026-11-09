@@ -339,10 +339,31 @@ function botAt(F, st) {
 //     against the round-4 fix-2 baseline 26 (5) -> 16 (2) worse. The 10 left are not under-reads: 777 bay (the mesh's 0.27 m
 //     is the keel beam of the open bay) and A380 X 33.5-34.5 (the API's 4.75-4.95 m is the wing-body fairing, which the
 //     check's 1.3 R cut-off leaves out); 6 A320-family nose rows compare different heights (keel moved in round 5).
+//     Close-out round 7 (verifier c6-1 finding 3: wide-bodies under-read at keel + 1.4 m ahead of 0.45 L, A350-900 X 23-30.5
+//     2.41-2.47 against the mesh's 2.94-3.08 m, now 2.93-3.08, 777 2.62-2.67 / 3.05, 747 about 0.4 m under). Root cause: there the rows above
+//     LO_FWD are not read (`hwf` exists), and the answer came from hwAt, whose lowest fraction (0.2 of the section height) lies
+//     above keel + 1.4 m on a section 6-8 m tall (747), or whose row at the wing root reads the wing (a359 X 24-28 11.1 m,
+//     rejected as > 1.1 Rz), and then from the ellipse through the section's top and bottom - narrower than a wide-body's
+//     lower lobe. The table's own rows at 1.25 / 1.5 read the skin there (a359 X 24-30 2.95-3.10). Fix: hwLow(.., ext) also
+//     reads the rows above LO_FWD at a section with `hwf` as far as they continue the 1.0 row smoothly (each step within
+//     LO_EXT_STEP: a lower lobe, not the wing-body fairing's jump, A380 X 20-34 +0.6 per row, or a tailplane spike), and
+//     skinAt takes that answer where the standard one is narrower by more than LO_EXT_GAIN. tools/models/skin_check.mjs per
+//     row, same script on both arms: 266 rows better, 0 worse; keel + 1.4 m rows under-read by > 0.3 m 249 -> 98 (A350
+//     19 -> 3 each, 747-400 42 -> 9, 747-8 45 -> 5, 777s 7-13 -> 1-6, MD-11 11 -> 4, A380 27 -> 24), over-read rows unchanged
+//     (134). Sensitivity (scratch c7/aircraft): a gain of 0.24-0.30 gives 0 worse rows (0.23: the A321 wing-body fairing at
+//     X 17.5, 1.83 -> 2.06 against the mesh's 1.80; 0.40 loses the 777 / 747-8 rows); steps -0.08 .. +0.2 also 0 worse
+//     (257 better), -0.05 .. +0.15 2 worse (A330 keel + 1.0 m), -0.15 .. +0.4 1 worse (CS300 nose).
 const LO_FWD = 1.0;
-function hwLow(F, st, y) {
+const LO_EXT_STEP = [-0.1, 0.3], LO_EXT_GAIN = 0.25;     // model units (round 7, above)
+// highest lower-lobe row of section j that the rows above LO_FWD reach by smooth steps from the LO_FWD row
+function smoothTop(S, j) {
+  const r = S.hwl[j], lo = S.lo; let k = lo.indexOf(LO_FWD); if (k < 0 || r[k] == null) return Math.min(LO_FWD, lo[lo.length - 1]);
+  while (k + 1 < lo.length && r[k + 1] != null && r[k + 1] - r[k] >= LO_EXT_STEP[0] && r[k + 1] - r[k] <= LO_EXT_STEP[1]) k++;
+  return lo[k];
+}
+function hwLow(F, st, y, ext = false) {
   const S = F && F.sec; if (!S || !S.hwl) return null; const lo = S.lo;
-  const top = (j) => S.hwf && S.hwf[j] ? Math.min(LO_FWD, lo[lo.length - 1]) : lo[lo.length - 1];   // (table top at section j)
+  const top = (j) => S.hwf && S.hwf[j] ? (ext ? smoothTop(S, j) : Math.min(LO_FWD, lo[lo.length - 1])) : lo[lo.length - 1];   // (table top at section j)
   const at = (j, dy) => {                                  // section j at dy above its own bottom
     const r = S.hwl[j], t = top(j); if (dy < 0) return 0; if (dy > t + 0.1) return null; dy = Math.min(dy, t);
     if (dy <= lo[0]) return r[0] != null ? r[0] * dy / lo[0] : null;
@@ -639,7 +660,8 @@ export function fitType(t, m) {
   //   fit.keelAt(X)       lowest skin on the centre plane at station X (the section table's bottom, posed)
   //   fit.skinHW(X, y, w) half width of the fuselage skin at station X and height y (w > 0: the widest over X +- w/2, for a
 //                       conveyor end, close-out round 3 fix round 2): lower lobe (to 1 model m above the
-  //                       keel, aft of 0.45 L to 1.5 m: close-out round 5) the starboard side, sec.hwl; above it the larger side, sec.hwf; else (or where a wing / fairing
+  //                       keel, aft of 0.45 L to 1.5 m: close-out round 5; ahead of it to 1.5 m where those rows continue
+  //                       smoothly and the answer below is narrower: round 7) the starboard side, sec.hwl; above it the larger side, sec.hwf; else (or where a wing / fairing
   //                       is cut: wider than 1.1 Rz) the ellipse through the section's top and bottom with Rz; null where no
   //                       skin (below the keel / above the crown). Checked against planar cuts of the placed mesh: see
   //                       docs/requests/aircraft_closeout.md close-out round 3 (scratch hwcmp.mjs numbers)
@@ -656,6 +678,8 @@ export function fitType(t, m) {
       const yc = (sec.top + b) / 2, R = (sec.top - b) / 2, q = (v - yc) / R; if (Math.abs(q) >= 1) return null;
       h = d.Rz * Math.sqrt(1 - q * q);
     }
+    const hx = hwLow(F, st, v, true);                      // the lower-lobe rows above LO_FWD ahead of 0.45 L (round 7, hwLow)
+    if (hx != null && hx > h + LO_EXT_GAIN) h = hx;
     return +(h * s).toFixed(3);
   };
   // w > 0: the widest skin over [X - w/2, X + w/2] (ends and middle; close-out round 3, fix round 2, v3: a 0.9 m conveyor

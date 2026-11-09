@@ -95,6 +95,11 @@ const EARLY_MAX_MS = 60 * 60000;
 // longer than EARLY_MAX_MS + OFFBLK_NEAR_MS. A departure that comes later pushes from a docked stand: the bridge is hurried
 // back (gates.js hurryUndock) and the body is held until it is clear (pushClearEta, p50 1 s from docked) [design value]
 const OFFBLK_NEAR_MS = 15 * 60000;
+// ...and the one re-signal after a 'no push' cancel (departureSignal) also for a LATE departure: SFO's estimated / scheduled
+// off-block already passed by at most this much with no actual block-out yet -- the push is due by SFO's own latest time
+// (close-out round 7, the round-6 verifier's minor 3; no such case observed on segments A / D) [design value: one EARLY_MAX_MS --
+// the bound the early retraction itself is held to before it is taken back]
+const OFFBLK_LATE_MS = EARLY_MAX_MS;
 // a parked aircraft silent this long and heard again where it is parked has switched its transponder on (departureSignal)
 const XPDR_OFF_MS = 10 * 60000;
 // the tug of a push-back is assumed connected this long after the push stopped (towOn: the pivot about the main gear onto
@@ -104,6 +109,11 @@ const TOW_MS = 90000;
 // AHEAD_HOLD_MS after the arrival was last seen heading in (retractAhead) [design values: 200 m at 2-5 m/s taxi-in is 40-100 s,
 // the hurried retraction takes 16-91 s from docked, bridges_closeout.md Round 2]
 const AHEAD_HOLD_MS = 90000, AHEAD_M = 200;
+// an arrival on a silent occupant's lead-in, close and heading in (onLeadInClose), whose nose is at most this far from the occupant's
+// tail (dS - L of the occupant) is committed to that stand: its bridge retracts even when SFO's plan vetoes it (groundLogic; close-out
+// round 7) [design value: < the 25-30 m gap of the vetoed DAL545 at C1, 5 Nov 07:09:09Z, 61.5 m out on C1's lead-in behind a
+// 32-36 m regional occupant; > the gap closed in the ~5-10 s the occupant's hurried bridge needs to pass 50 % (16-91 s in all)]
+const AHEAD_COMMIT_M = 20;
 // ...and with SFO's POSITIVE evidence that the OCCUPANT has left -- its own departure from that stand has an actual block-out
 // (stalePlanGone 'blockout') -- from this far out: the hurried retraction (16-91 s) is over before a 3-5 m/s taxi-in covers it
 // (close-out round 3, realtime-10) [design value]. (Close-out round 5: SFO's plan for the ARRIVAL ('alloc', its own arrival
@@ -601,8 +611,8 @@ export class Traffic {
           for (const k of ['landedAt', 'arrRunway', 'dirSFO', 'offBlock', 'pushbackFrom', 'pushEnd', 'inBlockAt', 'lastInBlock', 'fwdSeen']) if (mm[k] != null) tr[k] = mm[k]; tr.pushed = mm.pushed; tr.seenMoving = true; } }
       else if (tr.stale) { // transmitting again (a remembered aircraft, or after a data gap)
         const gap = recvNow - tr.lastRecv; tr.stale = false;
-        // (a repositioning held for REPOS_HOLD_MS and heard again first: a departure that paused -- it keeps its departure state)
-        if (tr.reposHold) { tr.reposHold = null; this.counters.reposResumed = (this.counters.reposResumed || 0) + 1; }
+        // (a repositioning held for REPOS_HOLD_MS and heard again first: a departure that paused keeps its departure state -- the hold
+        // is dropped once a report shows it moving away, below (close-out round 7); heard again standing where it stopped it stays held)
         // a parked aircraft heard again where it was parked, not moving: the same parking (keeps its gate, pose and
         // docked bridge; review round 1: every silent minute at a gate had released the gate and re-placed the body)
         const P = tr.stillPos || tr.parkRep || (tr.lock ? [tr.lock.x, tr.lock.z] : null);
@@ -648,6 +658,14 @@ export class Traffic {
         (tr.disp.extrap || 0) > 0 && !tr.pushback && tr.m.phase !== 'pushback' && tr.m.phase !== 'still' && !tr.lock && !tr.bridgeOn) { const c = tr.ctl, dx = r.x - c.x, dz = r.z - c.z;
         if (Math.hypot(dx, dz) > 25 && Math.abs(wrapPi(vecHdg(dx, dz) - c.psi)) > 90 * DEG) { tr.reacquire = true; this.counters.drOvershoot = (this.counters.drOvershoot || 0) + 1; } }
       if (tr.fadeOut || tr.dropping) { tr.fadeOut = false; tr.dropping = null; tr.dropNow = false; tr.reacquire = true; }   // heard again while fading out: re-placed where it is
+      // (close-out round 7, the round-6 verifier's minor 1: a reposition hold (tr.reposHold, update()) is dropped -- the aircraft keeps
+      // its departure state and taxis on, counter reposResumed -- only when a report shows it moving away: more than REACQ_PARK_M from
+      // where it stopped, at taxi speed (>= 3 kt, as the stationary re-acquisition test above), or airborne. Being heard again standing
+      // there is no departure: a11b00, a tow out of B23 (squawk 1200, no callsign) off-blocked 8 Nov 07:05:15Z, stopped and silent at
+      // 07:25:25Z, heard again from 07:34Z at the same spot, stationary to >= 08:30Z [obs, raw reports] -- the round-6 code dropped the
+      // hold at 07:34Z and kept it a departure with its B23 off-block to the window end [obs, replay V3_r6, harness e52f3dfd])
+      if (tr.reposHold) { const H = tr.reposHold, away = !r.ground || (a.gs ?? 0) >= 3 || !H.P || Math.hypot(r.x - H.P[0], r.z - H.P[1]) > REACQ_PARK_M;
+        if (away) { tr.reposHold = null; this.counters.reposResumed = (this.counters.reposResumed || 0) + 1; } else H.heard = 1; }
       tr.reps.push(r); while (tr.reps.length > 60 || (tr.reps.length > 4 && r.t - tr.reps[0].t > 120000)) tr.reps.shift();
       { const OB = tr.offBlock; if (OB && OB.P && r.ground && r.t - OB.t < 600000) OB.maxD = Math.max(OB.maxD || 0, Math.hypot(r.x - OB.P[0], r.z - OB.P[1])); }   // (push-undo, realtime-11)
       tr.lastFixT = tf; tr.lastRecv = recvNow;
@@ -1317,9 +1335,16 @@ export class Traffic {
       // signal alone is not enough: UAL292 drove into E5 although SFO had it at E10, UAL1272 into G6 where SFO still listed UAL927
       // [obs, replay, harness e52f3dfd])
       const veto = !far && !!(aS && !sameSt(aS, g) && this.planAt(o, g, t));
-      if (veto) { this.counters.aheadVetoSFO = (this.counters.aheadVetoSFO || 0) + 1; continue; }
       const S = this.stopRef(tr, g), dS = Math.hypot(r.x - S[0], r.z - S[1]);
-      if (far ? dS <= AHEAD_EV_M : (dS <= AHEAD_M && this.intoStand(tr, g, r.x, r.z, r.dir))) { this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; this.retractAhead(o, t, tr); } }
+      // (close-out round 7, the round-6 verifier's minor 2: ...except for an arrival already committed to the stand -- close on its
+      // lead-in, heading in, its nose within AHEAD_COMMIT_M of the occupant's tail. The veto then only held the bridge until that
+      // arrival reached the ghost: the round-6 'lead' contact removal (js/live/ground.js) took the ghost away with its bridge still
+      // docked and the bridge retracted from an empty stand -- bridge.orphan F16 window 191 -> 327 frames, D +101, A-w +39 [obs,
+      // replay, harness e52f3dfd]. Now the hurried retraction starts that much earlier, with the ghost still drawn at the door; the
+      // ghost is removed at contact as before, and if the arrival stops short or turns off the bridge docks again (AHEAD_HOLD_MS))
+      const To = typeOf(o), commit = veto && close && dS - (To ? To.L : 38) <= AHEAD_COMMIT_M;
+      if (veto && !commit) { this.counters.aheadVetoSFO = (this.counters.aheadVetoSFO || 0) + 1; continue; }
+      if (far ? dS <= AHEAD_EV_M : (dS <= AHEAD_M && this.intoStand(tr, g, r.x, r.z, r.dir))) { this.counters.ghostAheadKept = (this.counters.ghostAheadKept || 0) + 1; if (commit) this.counters.aheadVetoCommit = (this.counters.aheadVetoCommit || 0) + 1; o._aheadCommit = commit; this.retractAhead(o, t, tr, commit); o._aheadCommit = false; } }
   }
   // SFO's plan lists track o at stand g with a window around t (+-10 min) (round 3)
   planAt(o, g, t) {
@@ -1327,11 +1352,11 @@ export class Traffic {
     return !!(po && (po.cands || []).some(c => !!c.stand && g.names.includes(c.stand) && c.from != null && c.to != null && t >= c.from - 600e3 && t <= c.to + 600e3));
   }
   // the bridge of a silent occupant o retracts ahead of arrival tr (see groundLogic); refreshed while tr stays on the lead-in
-  retractAhead(o, t, tr) {
+  retractAhead(o, t, tr, commit = !!o._aheadCommit) {
     const E = o.earlyUndock; if (E) { if (E.why === 'ahead') E.t = t; return; }
     if (!o.bridgeOn || !o.bridgeGate || o.leaving) return;
     o.bridgeOn = false; o.earlyUndock = { t, why: 'ahead', g: o.bridgeGate, hurried: true, by: tr.hex };
-    this.counters.bridgeAhead = (this.counters.bridgeAhead || 0) + 1; this.event(o, t, 'bridge-ahead', { stand: o.gate ? o.gate.name : null, by: tr.hex });
+    this.counters.bridgeAhead = (this.counters.bridgeAhead || 0) + 1; this.event(o, t, 'bridge-ahead', commit ? { stand: o.gate ? o.gate.name : null, by: tr.hex, commit: 1 } : { stand: o.gate ? o.gate.name : null, by: tr.hex });
     if (this.onGateChange) { this.onGateChange(o.bridgeGate, null, { early: true, why: 'ahead' }); this.onGateChange(o.bridgeGate, null, { fast: true, s: FAST_UNDOCK_S }); }
   }
   // SFO's stand for this aircraft's own ARRIVAL record, its window around now (+-10 min) -- not the callsign's planStand(),
@@ -1886,7 +1911,10 @@ export class Traffic {
     // and 43.4 min (AAL446 -> AAL402 B16, callsign 12:46:55Z, push 13:30:22Z) before the push, 5 Nov [obs, replay], longer than
     // any transponder-on signal there (p90 19.2 min). The change is the signal; SFO's near off-block times it. Without it the
     // bridge stays docked and the push hurries the retraction, as before the re-signal existed)
-    const C = tr.noPush; if (!C || C.used || tr.stale || C.g !== tr.gate || (tr.lastInBlock && tr.lastInBlock.t > C.t) || !this.offBlockAhead(tr, t, OFFBLK_NEAR_MS)) return null;
+    // (close-out round 7, the round-6 verifier's minor 3: ...or with the push overdue -- SFO's estimate passed at most OFFBLK_LATE_MS
+    // ago, no actual block-out yet (offBlockNear). offBlockAhead alone never re-signalled a late departure: its bridge stayed docked
+    // until the push hurried it)
+    const C = tr.noPush; if (!C || C.used || tr.stale || C.g !== tr.gate || (tr.lastInBlock && tr.lastInBlock.t > C.t) || !this.offBlockNear(tr, t, OFFBLK_NEAR_MS, OFFBLK_LATE_MS)) return null;
     const sq = tr.info ? tr.info.squawk : null, cs = tr.cs ? tr.cs.callsign : null;
     if (sq != null && C.sq != null && String(sq) !== String(C.sq)) return 'squawk';
     if (cs && C.cs && cs !== C.cs) return 'callsign';
@@ -1898,6 +1926,12 @@ export class Traffic {
   offBlockAhead(tr, t, within = Infinity) {
     const pf = this.planFor(tr); const f = pf && pf.dep; if (!f || !f.blk) return false; const ms = (v) => v == null ? null : v > 1e12 ? v : v * 1000;
     if (ms(f.blk[2]) != null) return false; const tb = ms(f.blk[1] ?? f.blk[0]); return tb != null && tb > t && tb - t <= within;
+  }
+  // SFO lists this aircraft's departure off-block (estimated, else scheduled) at most `ahead` ms ahead of t or at most `late` ms
+  // past, and no actual block-out yet (close-out round 7: the 'no push' re-signal, departureSignal)
+  offBlockNear(tr, t, ahead, late) {
+    const pf = this.planFor(tr); const f = pf && pf.dep; if (!f || !f.blk) return false; const ms = (v) => v == null ? null : v > 1e12 ? v : v * 1000;
+    if (ms(f.blk[2]) != null) return false; const tb = ms(f.blk[1] ?? f.blk[0]); return tb != null && tb - t <= ahead && t - tb <= late;
   }
   // the stand's bridges are not yet clear of this aircraft: docked to it, in its push path, or > 50 % extended
   bridgeBusy(tr) { const g = tr.bridgeGate; if (!g || tr.vehicle) return false; return !!(tr.bridgeOn || (this.pushClearEta && this.pushClearEta(g) > 0) || (this.bridgeK && this.bridgeK(g) > 0.5)); }
@@ -2148,6 +2182,16 @@ export class Traffic {
         M.lo = { t: tl, synthetic: true }; tr.liftoffAt = tl; this.setGround(tr, tl, false); this.setPhase(tr, 'climb', tl); tr.depRunway = M.rwy; tr.dirSFO = 'dep';
         this.event(tr, tl, 'liftoff', { rwy: M.rwy, gs: Math.round(vlo / KT), unseen: true, late: true }); this.counters.liftoffUnseen = (this.counters.liftoffUnseen || 0) + 1;
       }
+      if (tr.reposHold && !tr.dropping && !tr.removed && now - tr.reposHold.t >= REPOS_HOLD_MS) {
+        // (close-out round 6: a repositioned aircraft silent REPOS_HOLD_MS where it stopped is parked there: its departure state is
+        // cleared as by an in-block -- heard again later and driving to a stand it is an aircraft leaving a parking (SWA2974, 8 Nov:
+        // silent 03:41-08:02Z at the west remote apron, then docked silently at D6 -- see the stale branch below))
+        // (close-out round 7: ...REPOS_HOLD_MS after it stopped there (H.t, its last report before the silence), silent or heard again
+        // standing there -- a tow that transmits again stays parked; the hold ends early only on a report moving away, see ingest)
+        const H = tr.reposHold; tr.reposHold = null; this.counters.reposParked = (this.counters.reposParked || 0) + 1;
+        this.event(tr, H.t, 'repos-parked', { from: H.from, d: H.d, held: Math.round((now - H.t) / 60000), heard: H.heard ? 1 : 0 });
+        tr.pushed = false; tr.offBlock = null; tr.pushEnd = null; tr.pushbackFrom = null; tr.pushG = null; tr.pushOk = true; tr.inBlockAt = H.t;
+      }
       if (!tr.stale && !tr.fadeOut) {
         // age of the newest POSITION (not of the last response that listed the aircraft: a provider can repeat a position
         // for up to 60 s -- review round 2, SWA3361 stood on a taxiway 97 s after its last position at 6 kt and DAL672
@@ -2210,18 +2254,13 @@ export class Traffic {
           // (close-out round 6, the round-5 verifier's minor 1: ...but only after REPOS_HOLD_MS of silence there -- tr.reposHold, cleared
           // below in update() or dropped when it is heard again first. A departure pausing on an apron taxilane, off the taxiway
           // polygons, is drawn where it stopped and keeps its departure state: heard again, it taxis on with no second off-block)
-          if (repos && parked && !tr.gate) { this.counters.reposHeld = (this.counters.reposHeld || 0) + 1; tr.reposHold = { t: lf.t, from: tr.offBlock.stand || null, d: Math.round(Math.hypot(P[0] - tr.offBlock.P[0], P[1] - tr.offBlock.P[1])) }; }
+          // (close-out round 7, the round-6 verifier's minor 1: a hold already running -- heard again standing at the same spot, silent
+          // again -- keeps its start: the clock runs from where it stopped, not from the latest silence)
+          if (repos && parked && !tr.gate && !tr.reposHold) { this.counters.reposHeld = (this.counters.reposHeld || 0) + 1; tr.reposHold = { t: lf.t, P: [P[0], P[1]], from: tr.offBlock.stand || null, d: Math.round(Math.hypot(P[0] - tr.offBlock.P[0], P[1] - tr.offBlock.P[1])), heard: 0 }; }
           if (!parked) { gone(tr); this.counters.silentDropped = (this.counters.silentDropped || 0) + 1; }
           // (silent at its stand after a creep / re-position: it is parked there, its bridge may dock)
           else { tr.stale = true; tr.staleSince = now; if (tr.gate && !tr.pushed) tr.leaving = false; this.saveParkedSoon(); }
         }
-      } else if (tr.stale && tr.reposHold && !tr.dropping && now - tr.lastRecv >= REPOS_HOLD_MS) {
-        // (close-out round 6: a repositioned aircraft silent REPOS_HOLD_MS where it stopped is parked there: its departure state is
-        // cleared as by an in-block -- heard again later and driving to a stand it is an aircraft leaving a parking (SWA2974, 8 Nov:
-        // silent 03:41-08:02Z at the west remote apron, then docked silently at D6 -- see the stale branch above))
-        const H = tr.reposHold; tr.reposHold = null; this.counters.reposParked = (this.counters.reposParked || 0) + 1;
-        this.event(tr, H.t, 'repos-parked', { from: H.from, d: H.d, held: Math.round((now - tr.lastRecv) / 60000) });
-        tr.pushed = false; tr.offBlock = null; tr.pushEnd = null; tr.pushbackFrom = null; tr.pushG = null; tr.pushOk = true; tr.inBlockAt = H.t;
       } else if (tr.stale && !tr.dropping && tr.gate && (tr.gate.bridge || tr.gate.sharesBridgesOf) && now - tr.lastRecv <= PARK_KEEP_MS && (!tr._boChkT || now - tr._boChkT > 60000) && (tr._boChkT = now) && this.stalePlanGone(tr, null, tr.gate, tDisp) === 'blockout') {
         // (close-out round 3, realtime-10: a silent occupant whose departure SFO reports as blocked out (actual block-out past) has
         // left: removed now -- its bridge retracts first, then it fades (fadeRemove) -- instead of when the next arrival drives into

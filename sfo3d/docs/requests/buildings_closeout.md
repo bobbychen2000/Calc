@@ -637,7 +637,10 @@ The record (manifest `landside.buildings.grand_hyatt`): `unknown` is narrowed to
 finger, clear height, glazing) and roof form, and to HOW it crosses the hotel-side track (over the vehicle envelope, under the deck, or
 a hotel-side platform our island-platform reading misses); a new `conflicts` line states the [pub]-level vs [obs]-plan clash; the
 crossing is in `not_modelled`. Not guessed: a bridge across the running track at the platform level would stand in the train path, and
-a level over the envelope (>= 23.95 m) or under the deck (<= 18.15 m) contradicts the fourth-floor [pub] connection.
+a level over the envelope (>= 23.95 m) or under the deck (<= 18.15 m) contradicts the fourth-floor [pub] connection. **[Corrected in
+round 7 (r6 verifier (a)-(b)):** the last clause was wrong. By the model's own storeys the hotel 4th floor is ~14 m (colonnade top),
+UNDER the deck, and the platform level put the round-6 bridge mid-storey, 5.75 m above it. The 19.75-m level was the [inf] network
+level, not a [pub] fact. Round 7 moves the bridge under the deck (R7.1).**]**
 
 ### R6.2 CG plinth record corrected; the plinth top follows the local deck soffit (r5 verifier 2, (b)): fixed
 
@@ -660,7 +663,9 @@ after (round 6): envelope LOD0 / LOD1 / LOD2 0 / 0 / 0 -> 0 / 0 / 0; deck box LO
 0.686 m), ceiling `KEEP_INSIDE_L2_MAX_M2` 327.0 (+5 %) - a regression bound next to the 149 crossings (ceiling 160). The fix (a
 less-simplified LOD2 deck along the CG, simplify ~0.2 m on its tiles, then the contact clip on cg_L2) was not cheap enough this round:
 it changes the coarse guideway of three LOD2 tiles and re-triangulates the CG shell (+1,546 phone triangles in the R5.1 trial); the
-clash stays inside the closed coarse deck box (hidden). Deferred.
+clash stays inside the closed coarse deck box (hidden). Deferred. **[Corrected in round 7 (r6 verifier (e)):** the deferral reason was
+wrong. 94 % of the residual (72,679 of 77,356 samples) was the LOD2 plinth top at the constant 18.15 m, at the two sites R6.2 fixed at
+LOD0. The same soffit-following top at LOD2 needs no change to the coarse deck (R7.2).**]**
 
 ### R6.4 Owner items
 
@@ -679,9 +684,81 @@ landside rebuild + b3d_split 0 (11:57Z; landside.glb 22,291,188 B), in-build ver
 
 | Finding | Status | Evidence |
 |---|---|---|
-| (a) Grand Hyatt: no connection to its AirTrain station | fixed (section / crossing: needs owner) | R6.1: gh_bridge LOD0/1/2 from the [pub] level + [obs] finger, hotel face to the guideway edge; 0 crossings / envelope; owner question narrowed |
+| (a) Grand Hyatt: no connection to its AirTrain station | partly (corrected round 7: the round-6 stub ended at the guideway edge, mid-storey; see R7.1) | R6.1: gh_bridge LOD0/1/2 from the [pub] level + [obs] finger, hotel face to the guideway edge; 0 crossings / envelope; owner question narrowed |
 | (b) R5f2.2 record + KEEP_INSIDE comment wrong (plinth top cap) | fixed | R6.2: records corrected; plinth top on the local soffit: max depth 0.232 -> 0.053 m; ceiling 2.0 -> 1.0 m2 |
 | (c) LOD1 creases | partly | integration_closeout R6.2: LOD1 fold report + ceiling (17 / 8 folds over 4 / 6 deg); creases deferred |
 | (d) dump currency misses the generator | fixed | integration_closeout R6.1: generator hash + schema + per-bridge parts -> CONFLICT |
 | (e) CG LOD2 depth not reported; LOD1 gates | partly | R6.3: deck box + envelope at LOD0/1/2; LOD2 311.18 m2 / 0.686 m with ceiling 327; the clip deferred |
 
+
+## Round 7 (follow-up on the round-6 verifier, `SP/c6_r6verify_buildings.json`) - 9 Nov 2026
+
+Work log: `SP/c7/buildings/NOTES.md`. Rebuilt: landside only (one heavy-lock job, 17:29-17:41Z, build exit 0, split exit 0), then
+b3d_integrate, b3d_lod2_check, tools/sat/check.py, verify_itb and verify_domestic. verify_landside is unchanged (md5 5a791814),
+so its before numbers are the round-6 run on the installed r6 files (landside `aca13820`, lod2 `642b0760`). No replays, no renders.
+
+### R7.1 Grand Hyatt: the bridge runs under the deck at the hotel's 4th floor, to the station footprint (r6 verifier (a), (b))
+
+**What the sources say**
+- [pub] hyatt_pr_2019: "Guests step out of the hotel's new AirTrain station, which features a dramatic kaleidoscopic stained-glass art
+  installation, and after crossing an enclosed bridge, they enter the hotel's ... lobby".
+- [pub] gh_lobby_level: guests arriving by road take elevators "up to the fourth floor lobby"; Webcor: "a fourth-floor light rail station".
+- [obs, reference photo only] Commons "Grand Hyatt at SFO station from the northwest, December 2019" (already listed in the spec's
+  photos; fetched this round to `SP/c7/buildings/dl/`, not used as a texture). It shows the station's glazed level with the stained
+  glass directly UNDER the guideway deck, and the train on the deck above it.
+
+**What changes in the model**
+- The bridge level is the hotel's 4th-floor line, not the platform. The 19.75-m platform level is the [inf] network level, not a
+  [pub] fact.
+- 4th-floor line = the colonnade top hc = 14.0 m. It comes from the photo-l4 bands read as storeys: 2 podium + 1 recessed colonnade
+  level + 9 tower pitches = 12 [pub gh_stories]. The pitch stays 3.33 m [inf].
+- The bridge runs under the deck along the whole outline finger (28.5 m2) to the station footprint. Before, it was a 15.7-m2 stub
+  that stopped 0.15 m short of the guideway parapet.
+- Section: floor 14.0 m, roof `min(floor + 4.0, deck soffit - GH_BR_GAP)` = 18.0 m. The deck soffit over the bridge is 18.151 m (the
+  AirTrain level field minus DECK_T). The LOD2 roof is `soffit - 0.40` = 17.75 m.
+- Hotel storey heights: unchanged. No source moves them, and they now agree with the [pub] 4th-floor connection. The record gains
+  `storeys` and `fourth_floor` dims. `conflicts` replaces the old platform-level clash with the resolved level note and adds
+  "NAIP roof-shift 36-40 m vs the 44-m parapet". `unknown` now holds the bridge section, the station's lower concourse (extent,
+  stairs / lifts to the island platform) and the absolute storey heights (an SFO drawing or the FAA OE/AAA filing would settle them).
+  The concourse is in `not_modelled`.
+
+**Measured** with `SP/c7/buildings/t/ghbr7.py` (`a3047316`), the same script on both arms:
+
+| | before (r6 `aca13820` / `642b0760`) | after (`845ea564` / `f47a0e3f`) |
+|---|---|---|
+| L0 / L1 bridge, local y | 19.351..23.751 (mid-storey on the hotel) | 13.600..18.000 (floor on the 4th-floor line) |
+| plan | 15.71 m2, ends at the guideway edge | 28.31 m2, to the station footprint |
+| AirTrain triangles over the plan / penetrating | 0 / 0 | 565 / 0 (deck soffit 0.151 m above the roof) |
+| LOD2 | inside L2_grand_hyatt, 0.40 m off the deck in plan | 10 triangles, y 13.60..17.75, 0 penetrating, 0.400 m under the coarse deck |
+| roadways / other landside parts over the plan | 0 | 0 |
+
+- verify_landside: 209 checks, 0 failed. Envelope LOD0 / 1 / 2: 0 / 0 / 0. AirTrain crossings L0 / L2: 0 / 0. Hyatt masts: 0.
+- The keep-out cut no bridge face: 22 triangles at LOD0, as built.
+
+### R7.2 Central Garage LOD2 plinth top on the local soffit (r6 verifier (e))
+
+The round-6 LOD0 fix now also applies at LOD2. The `cg_L2` under-guideway stack's walls and top follow
+`min(zt, AirTrain level - DECK_T) - CG_L2_SOFFIT` (0.25 m), with vertices every 2 m. The coarse deck tiles are unchanged.
+
+**Before -> after**
+- verify_landside LOD2 deck box: 311.18 m2 -> 9.78 m2. Deeper than 0.30 m: 76.11 -> 1.74 m2. Max 0.686 m at (-796.6, 261.4), on
+  vertical faces, unchanged.
+- The verifier's site split (cgdepth2 `b2eb1ca6` via `SP/c7/buildings/t/cgl2_sites_g.py` `ae31bd86`, a crash guard for empty sites):
+  - deep samples: 77,356 -> 2,393;
+  - non-vertical: 72,679 -> 0;
+  - at (-955, 408): 53,460 -> 0; at (-1025, 155): 19,219 -> 0;
+  - deeper than 0.30 m: 18,400 -> 506.
+- `KEEP_INSIDE_L2_MAX_M2` 327.0 -> 10.3 (measured + 5 %).
+
+**Wording corrected in place:** R6.3 "not cheap" and R6.1 "Not guessed". The Round 6 table row (a) now reads 'partly'.
+
+### Round 7 dispositions (`c6_r6verify_buildings.json`)
+
+| finding | status | evidence |
+|---|---|---|
+| (a)+(b) GH bridge stub, 9 m above the 4th floor | fixed (section and concourse: owner) | R7.1 |
+| (e) CG LOD2 deck-box residual | fixed | R7.2: 311.18 -> 9.78 m2, non-vertical deep samples 72,679 -> 0 |
+| (c) LOD1 fold gate not enforced | fixed | integration_closeout R7.1 |
+| (d) zero-bridge dump passes | fixed | integration_closeout R7.2 |
+| wording / records | fixed | R6.1, R6.3 and the Round 6 table corrected in place; integration R6.2 likewise |
+| request C5.1 (realtime) | answered + height bands | integration_closeout R7.3 |

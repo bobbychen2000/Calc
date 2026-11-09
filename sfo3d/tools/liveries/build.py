@@ -120,6 +120,8 @@ def bake_jobs(codes, only, preview_dir=None, frames_only=False):
             save_frame(variant_name(A, m, sig, rep), c)
             if frames_only: continue
             print(f'== {m} as {rep} (plugs {sig[0]}, windows {c.plan["mode"]} {len(c.plan["win"])}): {len(set(b for b, _ in lst))} brands, canvas {time.time() - t0:.0f} s', flush=True)
+            for jn in c.junction:          # cowl-top / pylon junction painted by angle (paint.py Canvas._junction, close-out round 7)
+                print(f'   junction eng {jn["eng"]}: x {jn["x"][0]}..{jn["x"][1]}, boundary {jn["ang"]} deg from the top, eng->pylon {jn["eng_to_pylon"]} / pylon->eng {jn["pylon_to_eng"]} of {jn["texels"]} texels', flush=True)
             for code in sorted({b for b, _ in lst}):
                 t1 = time.time()
                 c.reset()

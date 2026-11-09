@@ -267,6 +267,17 @@ const CW = (STANDS.cab_convention && /^clockwise/.test(STANDS.cab_convention.cw_
 const A388_U1 = { x: 20.94, sill: 7.88 };
 const DOCK_DELAY = 12;                                    // s after the engine reports the aircraft at rest
 const DOCK_TIME = 22, UNDOCK_TIME = 16;                   // s, fallback only (paths are timed from the sheet's rates)
+// rest pose per occupant (close-out round 7; static closeout R5.2 / R6.2): a bridge that does not dock the aircraft parked
+// at its stand (an L2 beside a narrow body, a freighter, a refused type) or at a stand within PARK_NEAR m keeps the data's
+// rest only where that rest holds the ICAO stand clearance to the aircraft's wing, engines and tailplane (Annex 14 3.13.6:
+// code A/B 3.0, C 4.5, D-F 7.5 m - tools/stands/geom.py icao_clear) and is clear of its straight push-back; else it parks
+// retracted along its rest line and / or swung up to PARK_SWING deg, the smallest move that holds the clearance (else the
+// largest clearance gained, >= 0.5 m), clear of the building, the fixed walkways, the other bridges' rest and docked poses,
+// every accepted type of the stands around it (0.5 m) and their push-backs. It returns to the data rest PARK_RETURN_S after
+// the last departure signal (the push-back and taxi-out; PARK_EARLY_S after an early undock, the engine's EARLY_MAX_MS
+// bound + PARK_RETURN_S) unless another aircraft keeps it parked. [inferred: PARK_SWING, PARK_RETURN_S, PARK_NEAR]
+const PARK_SWING = 30, PARK_RETURN_S = 180, PARK_EARLY_S = 3600 + 180, PARK_NEAR = 110;
+const icaoClear = (span) => span < 24 ? 3.0 : span < 36 ? 4.5 : 7.5;
 // exterior cross-sections (width, height) of tunnel sections A (rotunda) .. C (cab): AC 150/5220-21C §3.5.a(1) minimum
 // interior 50 in corridor / 80 in height; sheet minimum A tunnel interior 1.47 x 2.13 m; exterior inferred
 const SEC_WH = { 2: [[2.55, 2.85], [2.82, 3.12]], 3: [[2.55, 2.85], [2.68, 2.98], [2.82, 3.12]] };
@@ -394,14 +405,21 @@ function slab(g, a, b, w, h, col, ext) {
 // limit the edge stops at the frame's back face). Where tunnel A rises, the end stays square to the floor line (the frame
 // leans back over the roof there) unless the roof would stand above tunnel A's roof past the frame (tube()'s end frame:
 // 0.05 +- 0.08 m along the axis, top h + 0.06; up to 0.047 m at the steepest up-slopes, G8 L1): then it ends inside the
-// frame. T null - a part that ends short of tunnel A: square to the floor line
+// frame - unless the flat roof would then stand above the frame's sloped top at its back face (up to 0.012 m over a
+// 4-8 cm strip at G8 / G7 L1, 1:4.0-1:4.3 - c6 runtime verifier): then it ends flush with that back face, a closed step of
+// at most that height down onto the frame (close-out round 7). T null - a part that ends short of tunnel A: square to the
+// floor line
 function neckSlab(g, a, b, T, w, h, col, ext) {
   const d = v3.sub(b, a); const L = v3.len(d); if (L < 0.05) return;
   const f = v3.mul(d, 1 / L), r = v3.norm(v3.cross(f, [0, 1, 0])), n = v3.cross(r, f); // n: square to the floor line (up)
   let t = 0; if (T) { const fa = v3.norm(T.f), ua = v3.cross(r, fa); const fx = v3.dot(f, fa), fu = v3.dot(f, ua);
     const P0 = v3.sub(v3.add(b, v3.mul(n, h)), T.o), xs = v3.dot(P0, fa), ys = v3.dot(P0, ua), yMax = T.h - 0.02; // (roof edge at t = 0, tunnel A frame)
     if (fx > 0.5 && fu > 1e-6) t = clampN(Math.min(-h * v3.dot(n, fa) / fx, (yMax - ys) / fu), 0, h); // down: towards square to tunnel A, under its roof
-    else if (fx > 0.5 && fu < -1e-6 && xs > 0.13 && ys + (0.13 - xs) / fx * fu > yMax) t = Math.max(-h, (0.12 - xs) / fx); } // up: ends inside the frame
+    else if (fx > 0.5 && fu < -1e-6) { // up: ends inside the frame where it would stand above tunnel A's roof past it, and
+      // behind the frame's back face (x = -0.03) where it would stand above the frame's sloped top (h + 0.06) there
+      let xe = xs > 0.13 && ys + (0.13 - xs) / fx * fu > yMax ? 0.12 : xs;
+      if (xe > -0.03 && ys + (-0.03 - xs) / fx * fu > T.h + 0.055) xe = -0.0305;
+      if (xe !== xs) t = Math.max(-h, (xe - xs) / fx); } }
   const hw = v3.mul(r, w / 2), up = [0, h / Math.max(0.5, n[1]), 0], top = v3.add(v3.add(b, v3.mul(n, h)), v3.mul(f, t));
   const S0 = [v3.sub(a, hw), v3.add(a, hw)], S1 = S0.map(p => v3.add(p, up)), E0 = [v3.sub(b, hw), v3.add(b, hw)], E1 = [v3.sub(top, hw), v3.add(top, hw)];
   const C0 = v3.add(v3.mul(v3.add(a, b), 0.5), v3.mul(v3.add(up, v3.mul(n, h)), 0.25)); // (inside: mid-length, mid-height)
@@ -459,9 +477,10 @@ function fusSkinHit(T, x, y, lo, hi, mg) {
   for (let i = 0; i <= n; i++) { const w = T.fit.skinHW(x, y0 + (y1 - y0) * i / n); if (w != null && ay < w + mg) return true; }
   return false;
 }
-function acHit(T, x, y, lo, hi, mg, ell = false) {
+function acHit(T, x, y, lo, hi, mg, ell = false, noFus = false) { // (noFus: wing / engines / tailplane only - the parts
+  // the ICAO stand clearance is measured to, tools/stands/check_stands.py GM.wings; parkFor())
   const R = T.R, L = T.L, Hc = T.Hc;
-  if (x > -mg && x < L + mg) {
+  if (!noFus && x > -mg && x < L + mg) {
     const Ln = T.Ln || 4; const xx = clampN(x, 0, Ln); let hw = x < Ln ? R * Math.sqrt(Math.max(0, 1 - (1 - xx / Ln) ** 2)) : R;
     const crown = (T.fit && T.fit.renderedCrown) || Hc + R;
     const skin = ell && ell !== true && T.fit && T.fit.skinHW && T.fit.keelAt;
@@ -495,7 +514,7 @@ function acHit(T, x, y, lo, hi, mg, ell = false) {
   return null;
 }
 // any sample point of an oriented box {c:[x,z], u, hl, hw, lo, hi} inside the aircraft (nose [x,z], f [x,z] forward)
-function boxHitsAc(bx, T, nose, f, mg) {
+function boxHitsAc(bx, T, nose, f, mg, noFus = false) {
   const reach = T.L + (T.wing ? T.wing.span / 2 : T.R) + bx.hl + bx.hw + mg; // cheap reject: out of reach of the airframe
   if (Math.abs(bx.c[0] - nose[0]) > reach || Math.abs(bx.c[1] - nose[1]) > reach) return null;
   const r = [-f[1], f[0]]; const nx = Math.max(1, Math.ceil(bx.hl / 0.7)), ny = Math.max(1, Math.ceil(bx.hw / 0.7));
@@ -504,7 +523,7 @@ function boxHitsAc(bx, T, nose, f, mg) {
     const px = bx.c[0] + bx.u[0] * bx.hl * i / nx + v[0] * bx.hw * j / ny, pz = bx.c[1] + bx.u[1] * bx.hl * i / nx + v[1] * bx.hw * j / ny;
     const dx = px - nose[0], dz = pz - nose[1];
     const x = -(dx * f[0] + dz * f[1]), y = dx * r[0] + dz * r[1];
-    const k = acHit(T, x, y, bx.lo - G, bx.hi - G, mg); if (k) return k;
+    const k = acHit(T, x, y, bx.lo - G, bx.hi - G, mg, false, noFus); if (k) return k;
   }
   return null;
 }
@@ -532,7 +551,7 @@ function samePose(p, q) {
 
 export class LiveGateSystem {
   constructor(gates, { atlasExtra = [] } = {}) {
-    this.gates = gates; this.anims = new Map(); this.settles = new Map(); this.dirty = true; this.live = true;
+    this.gates = gates; this.anims = new Map(); this.settles = new Map(); this.parks = new Map(); this.dirty = true; this.live = true;
     this.vehicleMeshes = buildVehicleMeshes();
     this.attachUpper();
     const faces = []; const seen = new Set();
@@ -1046,7 +1065,7 @@ export class LiveGateSystem {
     const a = this.anims && this.anims.get(g.id);
     let P = (a && a.plans && a.plans.get(b)) || null;
     if (!P) P = this.planFor(g, b);
-    const q = k <= 0 && !(a && a.plans) ? { a: b.a0, e: b.e0, t: 0, h: b.hRest ?? b.h0 } : this.qAt(b, P, k);
+    const q = !P.ok || (k <= 0 && !(a && a.plans)) ? this.restNow(b) : this.qAt(b, P, k); // (a bridge that does not dock: its rest per occupant)
     const T = P.T || TYPES[g.acType] || TYPES[g._lastType] || TYPES[REF_TYPE[g.cls] || 'b38m'];
     let door = P.door;
     if (!door) { const dn = g.dock ? g.dock.nose : g.nose, dd = g.dock ? g.dock.dir : g.dir; door = doorOf(stW(dn, G), stD(dd), T, b.door).door; }
@@ -1500,7 +1519,7 @@ export class LiveGateSystem {
     if (typeKey && this.settles) for (const b of this.bridgesOf(g)) if (this.settles.delete(b)) b._plans.clear();
     g.acType = typeKey || null; g.empty = !typeKey;
     if (typeKey) g._lastType = typeKey;
-    if (g.bridge && animate && L && [...L.values()].some(l => l.post)) this.dockFrom(g, L, now, same && !was);
+    if (g.bridge && animate && L && [...L].some(([b, l]) => l.post && (!l.park || this.docks(g, b)))) this.dockFrom(g, L, now, same && !was);
     else if (g.bridge && animate && was !== !!typeKey) {
       const cur = this.anims.get(g.id); const k0 = cur ? this.animK(cur, now) : (was ? 1 : 0);
       // the plans of this docking (arrival) or of the docking being undone (departure): the same path both ways
@@ -1515,6 +1534,10 @@ export class LiveGateSystem {
       const span = Math.abs((typeKey ? 1 : 0) - k0) || 1;
       this.anims.set(g.id, { from: k0, to: typeKey ? 1 : 0, t0: now + (typeKey ? DOCK_DELAY : 0) * 1000, dur: total * span * 1000, k: k0, plans });
     }
+    // rest poses per occupant: the departing aircraft holds the bridges it parked for PARK_RETURN_S (an early undock: PARK_EARLY_S)
+    if (typeKey) g._parkHold = null;
+    else if (prev.type) { g._parkHold = { type: prev.type, pose: prev.pose, until: now + (opts.early ? PARK_EARLY_S : PARK_RETURN_S) * 1000 }; (this._holdG || (this._holdG = new Set())).add(g); }
+    this._now = now; this.parkNear(g, now, !animate);
     this.dirty = true;
   }
   // bridge b now: its joint state q, the way it came from rest (pre: [rest .. q]) and the way on to the door it is
@@ -1529,7 +1552,9 @@ export class LiveGateSystem {
       return { q, pre: P.path.slice(0, i + 1).concat([q]), post, toRest: !!P.toRest };
     }
     if (!a && g.acType && this.docks(g, b)) { const Q = this.planFor(g, b); return { q: Q.q1, pre: Q.path.slice(), post: [Q.q1] }; }
-    const q = { a: b.a0, e: b.e0, t: 0, h: b.hRest ?? b.h0 }; return { q, pre: [q], post: null };
+    const r = { a: b.a0, e: b.e0, t: 0, h: b.hRest ?? b.h0 };
+    if (this.parks && (this.parks.has(b) || b._parkQ)) { const q = this.restNow(b); return { q, pre: [r, q], post: [q, r], toRest: true, park: true }; } // (parked per occupant)
+    return { q: r, pre: [r], post: null };
   }
   // a docking requested while bridges are not at rest (L: legsNow of every bridge before the occupant changed): every
   // bridge goes on from where it is - the same occupant back along the way it came (its post); another pose / aircraft
@@ -1560,6 +1585,7 @@ export class LiveGateSystem {
     const inNow = (b, q) => this.solidsQ(b, q, 0).some(bx => boxHitsAc(bx, T, n2, f2, 0));
     for (const b of this.bridgesOf(g)) {
       const l = L.get(b); const Pn = this.docks(g, b) ? this.planFor(g, b) : null;
+      if (l.park) { if (!Pn) continue; this.parks.delete(b); b._parkQ = null; } // (parked per occupant: stays so unless it docks)
       if (!l.post) { if (Pn) parts.push({ b, pre: [l.q], post: Pn.path.slice(), Pn }); continue; }  // at rest: the normal docking
       // the way back to rest: the way it came (reversed), or straight back - retract at its angle (cab straightened), swing
       // at the operational retraction, extend to the rest pose (all within 1:4)
@@ -1601,6 +1627,105 @@ export class LiveGateSystem {
     this.anims.set(g.id, { from: k0, to: 1, t0: now + (same || inside ? 0 : DOCK_DELAY) * 1000, dur: D * 1000, k: k0, plans });
   }
   // undocking plans of the current occupant from the docked state (levelPlan of each docking bridge's plan; cached)
+  // ------------------------------------------------------------ rest pose per occupant (close-out round 7, PARK_* above)
+  // where a bridge that is not docking / docked rests now: on its way to / back from a parked pose (this.parks: {pts, dur,
+  // total, t0}), parked (b._parkQ) or the data rest (cab height: b.hRest, the undocking settle)
+  restNow(b) {
+    const p = this.parks && this.parks.get(b);
+    if (p) { let t = ((this._now ?? Date.now()) - p.t0) / 1000; if (t <= 0) return p.pts[0];
+      for (let i = 0; i < p.dur.length; i++) { if (t <= p.dur[i]) return this.qLerp(b, p.pts[i], p.pts[i + 1], p.dur[i] ? t / p.dur[i] : 1); t -= p.dur[i]; }
+      return p.pts[p.pts.length - 1]; }
+    return b._parkQ || { a: b.a0, e: b.e0, t: 0, h: b.hRest ?? b.h0 };
+  }
+  // the stands whose aircraft can reach the bridges of stand g (nose within PARK_NEAR m)
+  nearStands(g) {
+    if (g._nearS) return g._nearS; const n = stW(g.nose, G);
+    return (g._nearS = (this.gates || []).filter(o => { if (o === g || !o.nose) return false; const m = stW(o.nose, G); return Math.hypot(m[0] - n[0], m[2] - n[2]) < PARK_NEAR; }));
+  }
+  // the aircraft bridge b of stand g must keep its stand clearance to: the one parked at g when b does not dock it, those
+  // parked at the stands around, and - while b is parked - a departing one for its hold (o._parkHold)
+  parkOcc(g, b, holds = !!b._parkQ) {
+    const out = []; const now = this._now ?? Date.now();
+    const add = (o, tk, pose) => { const T = TYPES[tk]; if (!T || !T.wing) return; const f = stD(pose ? pose.dir : o.dir), n = stW(pose ? pose.nose : o.nose, G);
+      out.push({ tk, T, nose: [n[0], n[2]], f: [f[0], f[2]], need: icaoClear(T.wing.span) }); };
+    for (const o of [g].concat(this.nearStands(g))) {
+      if (o.acType) { if (o !== g || !this.docks(g, b)) add(o, o.acType, o.dock); }
+      else if (holds && o._parkHold && o._parkHold.until > now) add(o, o._parkHold.type, o._parkHold.pose);
+    }
+    return out;
+  }
+  // the rest pose for the aircraft around (null: the data rest), cached per set of aircraft and poses
+  parkTarget(g, b) {
+    if (b.upper || !b.m) return null; const occ = this.parkOcc(g, b); if (!occ.length) return null;
+    const key = occ.map(o => o.tk + '@' + o.nose[0].toFixed(1) + ',' + o.nose[1].toFixed(1) + ',' + o.f[0].toFixed(3) + ',' + o.f[1].toFixed(3)).sort().join('|');
+    if (b._parkC && b._parkC.key === key) return b._parkC.q;
+    const q = this.parkChoose(g, b, occ); b._parkC = { key, q }; return q;
+  }
+  // the other stands' bridges' solids a parked pose must not overlap (0.05 m, as fixedHit): at rest (fixed parts too) and in
+  // every docked pose (their docking does not test the other bridges' moving parts); the own stand's other bridges: below
+  parkObs(g, b) {
+    if (b._parkObs) return b._parkObs; const out = []; const sib = new Set(this.bridgesOf(g));
+    for (const o of [g].concat(this.nearStands(g))) { if (!o.bridge) continue; for (const ob of this.bridgesOf(o)) {
+      if (ob === b || sib.has(ob)) continue; if (!ob.m) this.prepBridge(o, ob); if (Math.hypot(ob.rot[0] - b.rot[0], ob.rot[2] - b.rot[2]) > b.e0 + ob.e0 + 12) continue;
+      for (const s of this.solidsQ(ob, { a: ob.a0, e: ob.e0, t: 0, h: ob.h0 }, 0, true)) out.push(s);
+      for (const t of ob._tg || []) for (const s of this.solidsQ(ob, { a: t.a, e: t.e, t: 0, h: t.sill }, 1)) out.push(s); } }
+    for (const s of out) s.rr = s.round || Math.hypot(s.hl, s.hw);
+    return (b._parkObs = out);
+  }
+  // the way from pose A to pose B at rest: retract (or extend last), swing at the shorter length - each sample clear of the
+  // fixed walkways, the building and (0.3 m) every aircraft in occ; null if none is
+  parkPath(b, A, B, occ) {
+    const e = Math.min(A.e, B.e), hm = this.bandH(b, e, A.e <= B.e ? A.h : B.h, SLOPE_MAX);
+    const near = (p, q) => Math.abs(wrap(p.a - q.a)) < 1e-4 && Math.abs(p.e - q.e) < 1e-3 && Math.abs(p.h - q.h) < 1e-3;
+    const pts = [A, { a: A.a, e, t: 0, h: hm }, { a: B.a, e, t: 0, h: hm }, B].filter((q, i, P) => i === 0 || !near(q, P[i - 1]));
+    const fx0 = !!this.fixedHit(b, A), bl0 = !!this.bldHit(b, A); // (a data rest already in a fixed walkway / outline - A12, F5, F14, F17, F19, F21 L1: only new contacts count)
+    for (let i = 1; i < pts.length; i++) for (let k = 1; k <= 8; k++) { const q = this.qLerp(b, pts[i - 1], pts[i], k / 8);
+      if ((!fx0 && this.fixedHit(b, q)) || (!bl0 && this.bldHit(b, q))) return null;
+      if (this.solidsQ(b, q, 0).some(bx => occ.some(O => boxHitsAc(bx, O.T, O.nose, O.f, 0.3)))) return null; }
+    return pts;
+  }
+  parkChoose(g, b, occ) {
+    const M = { a: b.a0, e: b.e0, t: 0, h: b.h0 }; const S = (q) => this.solidsQ(b, q, 0);
+    const touch = (q) => S(q).some(bx => occ.some(O => boxHitsAc(bx, O.T, O.nose, O.f, 0.5) || boxHitsSwept(bx, O.T, O.nose, O.f, 0.3, O.T.L + 15)));
+    const short = (q, d = 0) => S(q).some(bx => occ.some(O => boxHitsAc(bx, O.T, O.nose, O.f, Math.max(0.5, O.need - d), true))); // inside the clearance
+    if (!short(M) && !touch(M)) return null; // the data rest holds the clearance: it stays
+    const obs = this.parkObs(g, b); const sibs = this.bridgesOf(g).filter(o => o !== b && g.acType && this.docks(g, o));
+    const live = []; // (0.3 m: the own stand's bridges docking the occupant now - their path and door - and the bridges parked now)
+    for (const o of sibs) { const P = this.planFor(g, o); for (let i = 1; i < P.path.length; i++) for (let k = 0; k <= 6; k++) live.push(...this.solidsQ(o, this.qLerp(o, P.path[i - 1], P.path[i], k / 6), 0)); }
+    for (const o of [g].concat(this.nearStands(g))) if (o.bridge) for (const ob of this.bridgesOf(o)) if (ob !== b && ob._parkQ) live.push(...this.solidsQ(ob, ob._parkQ, 0));
+    for (const s of live) s.rr = s.round || Math.hypot(s.hl, s.hw);
+    const accs = []; for (const o of [g].concat(this.nearStands(g))) for (const A of this.standAircraft(o)) if (Math.hypot(A.nose[0] - b.rot[0], A.nose[1] - b.rot[2]) < 95) accs.push(A);
+    const free = (q, swung) => { if (!this.jointOk(b, q, null).ok) return false;
+      for (const bx of S(q)) { const r = Math.hypot(bx.hl, bx.hw) + 0.3;
+        for (const [L, cl] of [[obs, 0.05], [live, 0.3]]) for (const o of L) if (Math.abs(o.c[0] - bx.c[0]) < o.rr + r && Math.abs(o.c[1] - bx.c[1]) < o.rr + r && o.hi > bx.lo && bx.hi > o.lo && solidOverlap(bx, o, cl)) return false;
+        if (swung && accs.some(A => boxHitsAc(bx, A.T, A.nose, A.f, 0.5))) return false; } // (a swung pose leaves the data rest's footprint)
+      return true; };
+    const C = [];
+    for (let e = b.e0; e >= b.m.opR - 0.25; e -= 0.5) for (let da = 0; da <= PARK_SWING; da += 5) for (const sg of da ? [1, -1] : [1]) {
+      const q = { a: b.a0 + sg * da * DEG, e: Math.max(e, b.m.opR), t: 0 }; q.h = this.bandH(b, q.e, b.h0, SLOPE_TARGET); C.push({ q, da, cost: da * DEG * q.e + (b.e0 - q.e) }); }
+    C.sort((x, y) => x.cost - y.cost);
+    for (const c of C) if (!short(c.q) && !touch(c.q) && free(c.q, c.da > 0) && this.parkPath(b, M, c.q, occ)) return c.q;
+    // none holds the full clearance: the largest gain (>= 0.5 m) among the full retraction and the swings at it
+    const gap = (q) => { let d = 0; while (d < 7.5 && short(q, d)) d += 0.25; return d; }; const g0 = gap(M); let best = null;
+    for (const c of C) if (c.da === 0 || c.q.e <= b.m.opR + 1e-6) { if (touch(c.q) || !free(c.q, c.da > 0)) continue; const d = gap(c.q); if (d <= g0 - 0.5 && (!best || d < best.d) && this.parkPath(b, M, c.q, occ)) best = { q: c.q, d }; }
+    return best ? best.q : null;
+  }
+  // start (or snap) the bridges of stand g - and of the stands around it - towards their rest poses for the aircraft around
+  parkNear(g, now, snap = false) { this.parkUpdate(g, now, snap); for (const o of this.nearStands(g)) if (o.bridge) this.parkUpdate(o, now, snap); }
+  parkUpdate(g, now, snap = false) {
+    if (!g.bridge) return; const PK = this.parks || (this.parks = new Map()); const a = this.anims.get(g.id);
+    const near = (p, q) => Math.abs(wrap(p.a - q.a)) < 1e-4 && Math.abs(p.e - q.e) < 1e-3 && Math.abs(p.h - q.h) < 1e-3;
+    for (const b of this.bridgesOf(g)) {
+      if (b.upper || !b.m || (a && a.plans && a.plans.has(b)) || (g.acType && this.docks(g, b))) continue; // (the stand's animation moves it)
+      const T = this.parkTarget(g, b), to = T || { a: b.a0, e: b.e0, t: 0, h: b.hRest ?? b.h0 };
+      const P0 = PK.get(b), end = P0 ? P0.pts[P0.pts.length - 1] : (b._parkQ || { a: b.a0, e: b.e0, t: 0, h: b.hRest ?? b.h0 });
+      if (near(end, to)) { if (!P0) b._parkQ = T; continue; }
+      if (snap) { PK.delete(b); b._parkQ = T; this.dirty = true; continue; }
+      const pts = this.parkPath(b, this.restNow(b), to, this.parkOcc(g, b, true)); if (!pts) continue; // (no clear way: stays; re-checked at the next change)
+      const dur = []; for (let i = 1; i < pts.length; i++) dur.push(this.segTime(b, pts[i - 1], pts[i], false));
+      PK.set(b, { pts, dur, total: dur.reduce((x, y) => x + y, 0), t0: now }); b._parkQ = T; this.dirty = true;
+    }
+  }
   undockPlans(g) {
     const plans = new Map(); if (!g.acType && !g._lastType) return plans;
     for (const b of this.bridgesOf(g)) { if (!this.docks(g, b)) continue; const P = this.planFor(g, b); plans.set(b, P._level || (P._level = this.levelPlan(b, P))); }
@@ -1621,7 +1746,7 @@ export class LiveGateSystem {
   undockEarly(g, now = Date.now()) {
     if (!g.bridge || !g.acType) return this.undockEta(g, now);
     const e = { type: g.acType, pose: g.dock, icao: g.dockType, freighter: g.dockCargo, t: now };
-    this.setOccupant(g, null, true, now); g._early = e;
+    this.setOccupant(g, null, true, now, null, null, { early: true }); g._early = e;
     const a = this.anims.get(g.id); if (a) a.early = true;
     return this.undockEta(g, now);
   }
@@ -1731,14 +1856,14 @@ export class LiveGateSystem {
     }
     if (this.dynMesh) { this.dynMesh.dispose(); this.dynMesh = null; } if (this.dynSign) { this.dynSign.dispose(); this.dynSign = null; }
     this.dynSprites = []; this.sprites = this.dynSprites;
-    if (this.anims.size || (this.settles && this.settles.size)) {
+    if (this.anims.size || (this.settles && this.settles.size) || (this.parks && this.parks.size)) {
       const dyn = new Geo(), dsgn = newSignGeo();
       for (const g of this.gates) { if (!g.bridge) continue; const a = this.anims.get(g.id); if (a) { for (const b of this.bridgesOf(g)) this.bridgeGeo(g, b, a.plans && a.plans.has(b) ? a.k : 0, dyn, dsgn); } else if (this.settling(g)) for (const b of this.bridgesOf(g)) this.bridgeGeo(g, b, 0, dyn, dsgn); }
       this.dynMesh = dyn.nv ? meshOf(dyn) : null; this.dynSign = dsgn.pos.length ? meshOfSign(dsgn) : null;
     }
     this.sprites = (this.staticSprites || []).concat(this.dynSprites);
   }
-  settling(g) { return !!(this.settles && this.settles.size && this.bridgesOf(g).some(b => this.settles.has(b))); }
+  settling(g) { return !!((this.settles && this.settles.size && this.bridgesOf(g).some(b => this.settles.has(b))) || (this.parks && this.parks.size && this.bridgesOf(g).some(b => this.parks.has(b)))); }
   // advance the docking animations to `now` (called by items(); a checker without the renderer may call it directly)
   step(now) {
     let moving = false; const S = this.settles || (this.settles = new Map());
@@ -1746,7 +1871,7 @@ export class LiveGateSystem {
       const u = Math.min(1, Math.max(0, (now - a.t0) / a.dur)); a.k = a.from + (a.to - a.from) * u; moving = true;
       if (u >= 1 && a.next) { this.anims.set(id, { ...a.next, t0: now, k: a.next.from }); continue; } // (redock(): chained leg)
       if (u >= 1) {
-        this.anims.delete(id); this.dirty = true;
+        this.anims.delete(id); this.dirty = true; (this._parkG || (this._parkG = [])).push(id); // (rest per occupant: re-checked below)
         // a retracted bridge ends at the height its undocking plan left it (the door's, within 1:4) and then settles to
         // its rest height h0 (rest tunnel <= 1:12) at the sheet's lift rate (1.09 m/min); the engine does not wait for it
         if (a.to === 0) for (const [b, P] of a.plans || []) { if (P.ok) { b.hRest = P.path[0].h; b._plans.clear(); if (Math.abs(b.hRest - b.h0) > 0.005) S.set(b, { from: b.hRest, t0: now, dur: Math.abs(b.h0 - b.hRest) / LIFT_RATE * 1000 }); } }
@@ -1756,6 +1881,10 @@ export class LiveGateSystem {
       const u = Math.min(1, Math.max(0, (now - st.t0) / st.dur)); b.hRest = st.from + (b.h0 - st.from) * u; moving = true;
       if (u >= 1) { S.delete(b); b.hRest = b.h0; b._plans.clear(); this.dirty = true; }
     }
+    this._now = now;
+    if (this.parks) for (const [b, p] of this.parks) { if (now - p.t0 >= p.total * 1000) { this.parks.delete(b); this.dirty = true; } else moving = true; }
+    if (this._parkG && this._parkG.length) { const ids = new Set(this._parkG); this._parkG = []; for (const g of this.gates) if (ids.has(g.id)) this.parkNear(g, now); }
+    if (this._holdG && this._holdG.size) for (const g of [...this._holdG]) if (!g._parkHold || g._parkHold.until <= now) { this._holdG.delete(g); g._parkHold = null; this.parkNear(g, now); }
     return moving;
   }
   items(now = Date.now()) {

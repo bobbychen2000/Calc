@@ -27,6 +27,12 @@
 // as skin_check_baseline_r5.json.gz and the stored baseline is this round's run. Per row against r5: 0 worse, 18 better;
 // against r4f2 16 worse (2 by > 0.5 m), 1082 better; against r4f1 38 worse (14), 2182 better; every height > 0.15 / 0.5 m
 // 1638 / 623 -> 1630 / 616, keel + <= 0.3 m unchanged (678 / 192).
+// Close-out round 7 (aircraft verifier c6-1 finding 3: wide-bodies under-read at keel + 1.4 m ahead of 0.45 L): hwLow reads
+// the lower-lobe rows above 1.0 model m there too where they continue smoothly and the other answer is narrower
+// (js/aircraft/fit.js). The round-6 run is kept as skin_check_baseline_r6.json.gz and the stored baseline is this round's
+// run. Per row against r6: 0 worse, 266 better; r5 0 / 284; r4f2 16 (2) / 1082 -> 16 (2) / 1348; r4f1 38 (14) / 2182 -> 26 (6)
+// / 2427; every height > 0.15 / 0.5 m 1630 / 616 -> 1384 / 489, keel + <= 0.3 m unchanged (678 / 192); keel + 1.4 m rows
+// under-read by > 0.3 m 249 -> 98.
 // Exit code 0 either way (a report).
 // Usage: node tools/models/skin_check.mjs [types,comma,separated] [--baseline [file]] [--save [file]]
 //        (default: every type with a fitted model; --baseline without a file: every stored

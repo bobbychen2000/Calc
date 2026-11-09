@@ -25,6 +25,19 @@ const DR_HOLD_M = 3;
 // a released invalid lock moves its body to the placement (tr.physMove) at most this often per aircraft: a pose that is invalid
 // again after two moves is kept and logged (phys-conflict) instead (close-out round 6) [design value]
 const PHYS_MOVES_MAX = 2;
+// stationary aircraft off the surveyed stands are placed with the ICAO stand clearance to the stationary aircraft already placed,
+// by the larger aerodrome code letter of the pair (wingspan < 24 m A/B 3 m, < 36 m C 4.5 m, else D-F 7.5 m: ICAO Annex 14 Vol I
+// 3.13.6 -- the clear.stand test of tools/live/invariants.mjs) where such a pose lies within the report scatter (6 m); else with
+// the 1-m margin as before (close-out round 7, the round-6 verifier's minor 4)
+const ICAO_SCATTER_M = 6;
+// (+ ICAO_SAFE_M: valid() tests outline samples against the other planform -- a pose passing at exactly 3 m measured 2.99 m in the
+// harness's exact clearance, EJA527 / EJA745 CL35, D replay Da)
+const ICAO_SAFE_M = 0.25;
+const icaoNeed = (Ta, Tb) => { const s = Math.max(Ta && Ta.wing ? Ta.wing.span : 36, Tb && Tb.wing ? Tb.wing.span : 36); return (s < 24 ? 3 : s < 36 ? 4.5 : 7.5) + ICAO_SAFE_M; };
+// a body being removed that waits for its jet bridge (fadeRemove) is drawn until its fade passes 50 % (CUT_S / 2 = 0.2 s, + one
+// update step): a moving aircraft makes it fade this long (s) of its own travel BEFORE their planforms touch (close-out round 7, the
+// round-6 verifier's minor 5) [design value: 2.5x that]
+const WAIT_LEAD_S = 0.5;
 
 // building occupancy grid (2 m) from the airport's building footprints; extra (optional): more footprints as polygons
 // [[ring, hole...], ...] - the Blender building assets' measured footprints (data/buildings3d/integration.js physics,
@@ -175,17 +188,18 @@ export class GroundPhysics {
     const D = pose || tr.disp; const B = bodyOf(T, D.x, D.z, D.hdg); B.tr = tr; return B;
   }
   // nearest offset (rings of 1 m to 6 m, then 1.5 m) of the body's pose within rMax that is valid with the pavement test pv
-  seek(base, placed, pv, rMax) {
+  seek(base, placed, pv, rMax, clr = false) {
     for (let rad = 1; rad <= rMax; rad += rad < 6 ? 1 : 1.5) {
       const n = Math.max(8, Math.round(rad * 3));
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2; const o = [Math.cos(a) * rad, Math.sin(a) * rad];
-        if (this.valid({ ...base, nose: [base.nose[0] + o[0], base.nose[1] + o[1]] }, placed, true, pv)) return o;
+        if (this.valid({ ...base, nose: [base.nose[0] + o[0], base.nose[1] + o[1]] }, placed, true, pv, clr)) return o;
       }
     }
     return null;
   }
-  valid(B, others, gear = true, pv = this.paved) {
+  // (clr: the other aircraft are kept the ICAO stand clearance of the pair away (icaoNeed) instead of 1 m -- close-out round 7)
+  valid(B, others, gear = true, pv = this.paved, clr = false) {
     const S = samples(B.T, B.nose, B.h);
     if (gear && pv) for (const g of S.gear) if (!pv(g[0], g[1])) return false;
     for (const p of S.outline) if (this.building && this.building(p[0], p[1])) return false;
@@ -194,8 +208,9 @@ export class GroundPhysics {
     if (B.tr && this.liveHit(B)) return false;
     for (const o of others) {
       if (Math.hypot(o.nose[0] - B.nose[0], o.nose[1] - B.nose[1]) > (o.T.L + B.T.L) * 0.5 + 45) continue;
-      for (const p of S.outline) if (inside(o, p, 1.0)) return false;
-      const So = samples(o.T, o.nose, o.h); for (const p of So.outline) if (inside(B, p, 1.0)) return false;
+      const m = clr ? icaoNeed(B.T, o.T) : 1.0;
+      for (const p of S.outline) if (inside(o, p, m)) return false;
+      const So = samples(o.T, o.nose, o.h); for (const p of So.outline) if (inside(B, p, m)) return false;
     }
     return true;
   }
@@ -219,12 +234,17 @@ export class GroundPhysics {
     if (recheck === 2 || !tr.phys || tr.phys.key !== key || (recheck && (!tr.phys.ok || (this._live && this.liveHit({ ...base, nose: [base.nose[0] + tr.phys.off[0], base.nose[1] + tr.phys.off[1]] }))))) {
       // (close-out round 3, static R4.1.5: all gear on the rendered mask first -- where it is, else within the 6 m scatter --
       // then the mask OR OSM-net union where it is, else within 15 m)
-      const mk = !!(this.mask && this.mask !== this.paved);
-      let o = mk && this.valid(base, placed, true, this.mask) ? [0, 0] : null;
-      if (!o && mk) o = this.seek(base, placed, this.mask, 6);
+      // (close-out round 7, the round-6 verifier's minor 4: each with the ICAO stand clearance to the stationary aircraft already
+      // placed first, within the 6-m scatter -- icao -- then with the 1-m margin. LXJ569 CL30, moved off N453FD's CL35 by the round-6
+      // lock release, stood 1.46 m from it, 8 Nov 00:45-08:29Z (clear.stand asks 3 m) [obs, replay Dw_a, harness e52f3dfd])
+      const mk = !!(this.mask && this.mask !== this.paved), at0 = (pv, clr) => this.valid(base, placed, true, pv, clr) ? [0, 0] : null;
+      let o = null, icao = false;
+      if (mk) { o = at0(this.mask, true) || this.seek(base, placed, this.mask, ICAO_SCATTER_M, true); icao = !!o;
+        if (!o) o = at0(this.mask, false) || this.seek(base, placed, this.mask, 6); }
+      if (!o) { o = at0(this.paved, true) || this.seek(base, placed, this.paved, ICAO_SCATTER_M, true); icao = !!o; }
       if (!o && this.valid(base, placed)) o = [0, 0];
       if (!o) o = this.seek(base, placed, this.paved, 15);
-      tr.phys = { key, off: o || [0, 0], ok: !!o };
+      tr.phys = { key, off: o || [0, 0], ok: !!o, icao };
     }
     tr.phys.base = base; return tr.phys;
   }
@@ -306,6 +326,12 @@ export class GroundPhysics {
         if (newKey || this.frame % 30 === 0) tr.physL = { key, ok: this.valid(base, placed, false) };
         if (tr.physL.ok && newKey && this.mask && this.mask !== this.paved && (tr.maskUnlocks || 0) < 2 && !this.valid(base, placed, true, this.mask)
           && this.seek(base, placed, this.mask, 3)) { tr.physL.ok = false; tr.physL.mask = true; tr.maskUnlocks = (tr.maskUnlocks || 0) + 1; traffic.counters.physMaskUnlocks = (traffic.counters.physMaskUnlocks || 0) + 1; }
+        // (close-out round 7, the round-6 verifier's minor 4: ...and a NEW lock pose closer to a placed stationary aircraft than the
+        // ICAO stand clearance of the pair (icaoNeed) is released once per pose, within PHYS_MOVES_MAX, when the placement has a pose
+        // with that clearance (place: icao) at least 0.6 m from where it stands -- EJA745 / EJA754 CL35 2.34 m apart, D 03:41-08:29Z)
+        if (tr.physL.ok && newKey && tr._physIcaoKey !== key && (tr.physMoves || 0) < PHYS_MOVES_MAX && !this.valid(base, placed, false, this.paved, true)) {
+          tr._physIcaoKey = key; const ph = this.place(B, tr, placed, 2);
+          if (ph.ok && ph.icao && Math.hypot(ph.base.nose[0] + ph.off[0] - base.nose[0], ph.base.nose[1] + ph.off[1] - base.nose[1]) > 0.6) { tr.physL.ok = false; tr.physL.icao = true; traffic.counters.physIcaoUnlocks = (traffic.counters.physIcaoUnlocks || 0) + 1; } }
         if (tr.physL.ok) { placed.push(base); continue; }
         // (close-out round 5, the round-3 verifier's minor: an invalid lock is released only when that moves something -- when the
         // placement below has a valid pose to go to, and this very lock pose was not released before. LXJ569 CL35, parked off-stand
@@ -315,7 +341,7 @@ export class GroundPhysics {
         // once as a conflict (event 'phys-conflict': the neighbour, or the building / bridge test that fails), instead of toggling
         // every frame. The search runs when the lock test does: on a new lock pose and every 30 frames)
         if (tr.physL.alt === undefined) tr.physL.alt = this.place(B, tr, placed, 2).ok;
-        if (!tr.physL.alt || tr._physUnlockKey === key) { if (tr._physConfKey !== key) { tr._physConfKey = key; this.logConflict(traffic, tr, base, placed, tr.physL.mask ? 'mask' : null); } traffic.counters.physLockKept = (traffic.counters.physLockKept || 0) + 1; placed.push(base); continue; }
+        if (!tr.physL.alt || tr._physUnlockKey === key) { if (tr._physConfKey !== key) { tr._physConfKey = key; this.logConflict(traffic, tr, base, placed, tr.physL.mask ? 'mask' : tr.physL.icao ? 'icao' : null); } traffic.counters.physLockKept = (traffic.counters.physLockKept || 0) + 1; placed.push(base); continue; }
         // (close-out round 6, the round-5 verifier's minor 5: the release now MOVES the body to the placement -- tr.physMove: the
         // controller (traffic.js ctlGround) does not take the < 8 m off-stand rest it otherwise accepts as report scatter, and creeps
         // along its axis or is re-placed with a fade onto the data pose + tr.physOff; syncBridge locks it again only there (0.6 m).
@@ -353,6 +379,7 @@ export class GroundPhysics {
       // piers -- still removes a ghost at first contact, as before: UAL649 A21N into D9 through UAL1722's B39M (silent 45 min),
       // UAL2179 into B11, 7 Nov (asking a fuselage overlap of it left them overlapped for 9-40 s).
       const live = !tr.stale && (tr.disp.extrap || 0) <= GHOST_EX_S;
+      const mW = 0.5 + Math.max(0, tr.disp.gs || 0) * WAIT_LEAD_S;   // (the lead margin of this moving body, see WAIT_LEAD_S)
       const keeps = (S) => !!(S.tr.gate && traffic.planHere && traffic.planHere(S.tr, traffic._lastRecv || 0));
       if (!live && !tr.drHold && !tr.silentDockG && tr.reps && tr.reps.length) { for (const S of fixed.concat(free)) { if (S.tr === tr || S.tr.dropping || S.tr.removed) continue;
         if (((!S.tr.stale && !S.tr.quiet) || keeps(S)) && overlaps(B, S, DR_HOLD_M)) { tr.drHold = { x: tr.disp.x, z: tr.disp.z, lt: tr.reps[tr.reps.length - 1].t }; if (traffic.counters) traffic.counters.drHold = (traffic.counters.drHold || 0) + 1; break; } } }
@@ -370,7 +397,7 @@ export class GroundPhysics {
         // [obs, replay; harness e52f3dfd, stream f6ff7ceb]. The veto still holds the bridge (no retraction for an arrival that may
         // turn off -- DAL545 / SKW3493 at C1); the body that actually reaches the ghost on that lead-in removes it at first contact)
         const intoLead = !!(S.tr.gate && tr.last && !tr.pushed && (tr.landedAt || tr.dirSFO === 'arr') && traffic.onLeadInClose && traffic.onLeadInClose(tr, S.tr.gate, tr.last));
-        const into = !!(S.tr.earlyUndock && S.tr.earlyUndock.why === 'ahead' && S.tr.earlyUndock.by === tr.hex) || intoLead;
+        const viaAhead = !!(S.tr.earlyUndock && S.tr.earlyUndock.why === 'ahead' && S.tr.earlyUndock.by === tr.hex), into = viaAhead || intoLead;
         // (close-out round 3 fix round 2: ...and for that arrival SFO's plan listing the silent occupant there now does not keep it --
         // two aircraft cannot both be at the stand, and the arrival's own reports are driving in. Replay 5 Nov 00:16:46-00:17:20Z:
         // UAL1243 B738 drove into G8 through UAL2313's B38M, silent there since its 22:18Z in-block and still in SFO's plan of 18:01Z,
@@ -379,12 +406,26 @@ export class GroundPhysics {
         // (close-out round 6: ...and for the arrival driving INTO that stand already when its newest report lies on the ghost -- as off
         // the stands -- not only at the drawn contact: the F16 case above, and the 47af104 code, still drew 3 frames of overlap while
         // the ghost faded [obs, replay])
-        const hit = S.tr.gate ? (((overlaps(B, S, 0) && (into || !keeps(S)) && (!live || into || fusIn(B, S) >= GHOST_FUS_PTS))) || (into && ahead && overlaps(ahead, S, 0.5))) : (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5)));
-        if (hit) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true, quiet: S.tr.stale ? 0 : 1, into: into ? (intoLead ? 'lead' : 'ahead') : 0 }); if (traffic.fadeRemove) traffic.fadeRemove(S.tr, 'ghost'); else traffic.remove(S.tr); ghosts++; }
+        // (close-out round 7, the round-6 verifier's minor 2: at a stand, an `into` arrival whose newest report lies on the ghost while its
+        // drawn body is still more than the lead margin mW away removes the ghost WAITING for its bridge (fadeRemove without dropNow): it
+        // stays drawn at the door while the bridge retracts -- before, it faded at once and the bridge retracted from an empty stand
+        // (bridge.orphan) -- and fades when the bridge is <= 30 % out or when the drawn arrival comes within mW (the waiting loop below),
+        // before any contact. The label `into` is now 'ahead' when this arrival's retraction ahead was running, 'lead' only without it
+        // (round 6 labelled every lead-in case 'lead': on D all 9 had a geometric retraction 1-7 s before, none was vetoed))
+        const near = S.tr.gate && into ? overlaps(B, S, mW) : false;
+        const hit = S.tr.gate ? (((overlaps(B, S, 0) && (into || !keeps(S)) && (!live || into || fusIn(B, S) >= GHOST_FUS_PTS))) || near || (into && ahead && overlaps(ahead, S, 0.5))) : (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5)));
+        const wait = !!(hit && S.tr.gate && into && !near && traffic.fadeRemove);
+        if (hit) { traffic.event && traffic.event(S.tr, traffic._lastRecv || 0, 'stale-replaced', { by: tr.hex, moving: true, quiet: S.tr.stale ? 0 : 1, into: into ? (viaAhead ? 'ahead' : 'lead') : 0, wait: wait ? 1 : 0 }); if (traffic.fadeRemove) traffic.fadeRemove(S.tr, wait ? 'ghostWait' : 'ghost'); else traffic.remove(S.tr); ghosts++; }
       }
+      // (close-out round 7, the round-6 verifier's minor 5: the drawn body with a lead margin of WAIT_LEAD_S of its own travel, not the
+      // contact -- the waiting body faded from the frame of contact on and was drawn 1-3 frames over the arriving one: UAL1320 under
+      // UAL1971 03:22:02Z, UAL1272 / UAL705 04:53:02Z, AAL1430 / AAL2234 05:43:51Z, 8 Nov, each removed 1-16 s before ('window' /
+      // 'alloc') and waiting for its bridge [obs, replay Dnew2, harness e52f3dfd]; the newest report (ahead) lags a dead-reckoning body)
       for (const S of waiting) {
         if (S.tr.dropNow || S.tr.removed || S.tr === tr) continue;
-        if (overlaps(B, S, 0) || (ahead && overlaps(ahead, S, 0.5))) { S.tr.dropNow = true; ghosts++; if (traffic.counters) traffic.counters.dropWaitCut = (traffic.counters.dropWaitCut || 0) + 1; }
+        // (a 'ghostWait' body -- removed for this arrival because its newest report lies on it, above -- waits for the drawn body: the
+        // newest-report test would drop it on the next frame)
+        if (overlaps(B, S, mW) || (S.tr.dropping !== 'ghostWait' && ahead && overlaps(ahead, S, 0.5))) { S.tr.dropNow = true; ghosts++; if (traffic.counters) traffic.counters.dropWaitCut = (traffic.counters.dropWaitCut || 0) + 1; }
       }
       for (const o of placed) {
         if (o.tr && (o.tr.removed || o.tr.dropping)) continue;

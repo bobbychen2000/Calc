@@ -2097,7 +2097,10 @@ def main(argv):
     gfail = ['through-deck walls LOD%d: %d' % (l, tchk[l]['walls']) for l in (0, 1) if tchk[l]['walls']] + \
             ['through-deck ledge family LOD%d: %d > %d' % (l, tchk[l]['ledge_family'], THRU_LEDGE_MAX[l]) for l in (0, 1) if tchk[l]['ledge_family'] > THRU_LEDGE_MAX[l]] + \
             ['soffit open into a hollow LOD%d: %.1f m > %.1f' % (l, c.get('open_into_hollow_m', 0.0), SOFFIT_GATE_M[l]) for l, c in ((0, schk), (1, schk1))
-             if c.get('open_into_hollow_m', 0.0) > SOFFIT_GATE_M[l]]
+             if c.get('open_into_hollow_m', 0.0) > SOFFIT_GATE_M[l]] + \
+            ['fold gate LOD%d: folds %s over the ceiling n %s / edge %s m' % (l, {k: (v['n'], v['edge_m']) for k, v in c['folds'].items() if k in ('>4_deg', '>6_deg')},
+                                                                              c['fold_gate'].get('limit_n', '-'), c['fold_gate'].get('limit_edge_m'))
+             for l, c in ((0, gchk), (1, gchk1)) if c.get('fold_gate') and not c['fold_gate'].get('ok', True)]   # close-out round 7 (r6 verifier (c)): enforced
     if gfail:
         log('GATE FAIL (nothing written%s): %s' % (' - RW_GATE_WRITE set: writing anyway' if os.environ.get('RW_GATE_WRITE') else '', '; '.join(gfail)))
         if not os.environ.get('RW_GATE_WRITE'):

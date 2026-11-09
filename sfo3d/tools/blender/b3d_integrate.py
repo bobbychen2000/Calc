@@ -123,6 +123,16 @@ def _dump_current(path, res, label='tools/blender/app_bridges.json'):
             if k not in have: lack.setdefault(k, []).append('%s/%s/%s' % (b.get('stand'), b.get('gate'), b.get('door')))
     for k, v in sorted(lack.items()):
         bad.append('%d of %d bridges have no %s part (e.g. %s)' % (len(v), len(J.get('bridges') or []), k, ', '.join(v[:5])))
+    # close-out round 7 (r6 verifier (d)): an EMPTY bridge list (a generator / filter fault with every hash current) passed with 0
+    # conflicts, and so would a partial one: no bridges, or fewer than the scene's (out/draw/scene2d.json, when present), is stale
+    nb = len(J.get('bridges') or [])
+    if not nb:
+        bad.append('has no bridges (an empty bridge list: a generator / filter fault - SFO has contact stands)')
+    sc2 = os.path.join(ROOT, 'out', 'draw', 'scene2d.json')
+    if nb and os.path.exists(sc2):
+        try: ns = len(json.load(open(sc2)).get('bridges') or [])
+        except (OSError, ValueError): ns = 0
+        if ns > nb: bad.append('has %d bridges, fewer than the %d of out/draw/scene2d.json' % (nb, ns))
     INPUTS_SEEN['bridge solids inputs'] = dict(generated=J.get('generated'), checked=sorted(inp), stale=stale, schema=sch, schema_problems=bad)
     for rel in stale:
         res['conflicts'].append(dict(check='input stale: %s predates %s' % (os.path.basename(label), rel), generated=J.get('generated'),
@@ -164,6 +174,7 @@ def _scene_currency(SC, res, tol=0.05, as_note=False):
 
 
 GROUND_Y = 3.0
+PHYS_BANDS = [0.0, 3.0, 6.0, 10.0, 15.0]   # physics ring underside bands, m above grade (close-out round 7, request C5.1) [our choice]
 GROUPS = ['tower', 'itb', 'domestic', 'roadways', 'landside']
 FILES = {'tower': ['tower.glb', 'tower_f1.glb', 'tower_lod2.glb'], 'itb': ['itb.glb', 'itb_lod2.glb'],  # tower.glb = F2 (default), tower_f1.glb = F1
          'domestic': ['domestic.glb', 'domestic_lod2.glb'], 'roadways': ['roadways.glb', 'roadways_lod2.glb'],  # roadways: tools/blender/build_roadways.py (review r1)
@@ -1293,6 +1304,31 @@ def merge_manifest(entry, key='integration'):
     except OSError: pass
 
 
+def _roadway_gates(res):
+    """close-out round 7 (r6 verifier (c)): build_roadways' fold gates (LOD0 fold edge, LOD1 fold count / edge) now fail that build,
+    and an installed roadways entry whose recorded gate is not ok (e.g. a build forced with RW_GATE_WRITE) is a CONFLICT here:
+    every '*fold_gate' record under manifest.json#roadways must say ok"""
+    try:
+        R = json.load(open(os.path.join(D3, 'manifest.json'))).get('roadways') or {}
+    except (OSError, ValueError) as ex:
+        res['conflicts'].append(dict(check='input unreadable: data/buildings3d/manifest.json (roadways fold gates)', error=str(ex))); return
+    seen = []
+
+    def walk(o, p):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if k.endswith('fold_gate') and isinstance(v, dict):
+                    seen.append(p + k)
+                    if not v.get('ok', False):
+                        res['conflicts'].append(dict(check='roadway fold gate failed in the installed build (manifest.json#roadways %s%s)' % (p, k),
+                                                     gate=v, note='rebuild tools/blender/build_roadways.py without RW_GATE_WRITE; see integration_closeout R6.2 / R7'))
+                walk(v, p + k + '.')
+    walk(R, '')
+    INPUTS_SEEN['roadway fold gates'] = dict(checked=seen, failed=[c['check'] for c in res['conflicts'] if c['check'].startswith('roadway fold gate')])
+    if not seen:
+        res['notes'].append(dict(check='manifest.json#roadways records no fold gate (an older roadways build)'))
+
+
 def main(argv):
     check_only = '--check' in argv
     os.makedirs(OUTD, exist_ok=True); lines = []
@@ -1302,6 +1338,7 @@ def main(argv):
     F, TR, files = footprints(log)
     rep, table = replacement(F, TR, log)
     res = plausibility(F, TR, rep, log)
+    _roadway_gates(res)
     res['stats']['inputs'] = dict(INPUTS_SEEN)
     log('plausibility: %d conflicts, %d notes' % (len(res['conflicts']), len(res['notes'])))
     log('  inputs: ' + json.dumps(INPUTS_SEEN))
@@ -1321,7 +1358,7 @@ def main(argv):
     T = man['tower']; an = T.get('anchors', {})
     tw = T.get('integration', {}).get('tower_camera', {})
     # footprints per unit (max extent over the LODs) with height ranges, and the physics set
-    fps = {}; phys = []; tcov = {}
+    fps = {}; phys = []; phys_y = []; phys_u = []; phys_units = []; tcov = {}
     for g in GROUPS:
         fps[g] = {}
         for u, L in F[g].items():
@@ -1339,7 +1376,32 @@ def main(argv):
             if g == 'landside' and u in HANGARS: continue
             if g == 'landside' and u.startswith('airtrain'): continue  # elevated guideway: aircraft never reach it (landside)
             if g == 'roadways': continue  # landside roadways: aircraft never reach them
-            phys += rings_of(geo, 0.25)
+            # close-out round 7 (realtime request C5.1): each ring carries its height band (world y) and its unit. A unit with
+            # tiers goes in per tier - `body` from grade, `over` (eaves, canopies, an elevated station on columns) from its
+            # lowest underside - so a consumer can let a wing pass under an over tier; the union of the rings is the unit's
+            # footprint as before (a consumer that ignores `y` blocks the same area)
+            # (the tiers are grouped into underside bands PHYS_BANDS m above grade, each at its lowest underside - an 'over' tier
+            # below 3 m joins the body - to keep integration.js small: per-tier rings were 4.3x the vertices)
+            tl = fps[g][u].get('tiers')
+            if not tl:
+                grp = {0: [geo, list(y)]}
+            else:
+                grp = {}
+                for t in tl:
+                    h = t['y'][0] - y[0]; k = max([i for i, b in enumerate(PHYS_BANDS) if h >= b] or [0])
+                    tg = unary_union([Polygon(r[0], r[1:]).buffer(0) for r in t['rings']])
+                    if k in grp: grp[k][0] = unary_union([grp[k][0], tg]); grp[k][1][0] = min(grp[k][1][0], t['y'][0] if k else y[0]); grp[k][1][1] = max(grp[k][1][1], t['y'][1])
+                    else: grp[k] = [tg, [t['y'][0] if k else y[0], t['y'][1]]]
+                rest = geo.difference(unary_union([v[0] for v in grp.values()]))   # footprint no tier covers: blocks from grade
+                if rest.area > 0.5:
+                    if 0 in grp: grp[0][0] = unary_union([grp[0][0], rest])
+                    else: grp[0] = [rest, list(y)]
+            for k in sorted(grp):
+                tg = grp[k][0].intersection(geo)
+                for j in [j for j in grp if j < k]: tg = tg.difference(grp[j][0])      # each plan point in its lowest band only
+                rr = rings_of(tg, 0.25)
+                phys += rr; phys_y += [[round(grp[k][1][0], 2), round(grp[k][1][1], 2)]] * len(rr); phys_u += [len(phys_units)] * len(rr)
+                phys_units.append('%s/%s/%s' % (g, u, 'body' if k == 0 else 'over>=%gm' % PHYS_BANDS[k]))
     out = dict(
         about='Integration of data/buildings3d/*.glb into the app (tools/blender/b3d_integrate.py; docs/research/buildings3d.md, integration section)',
         generated=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), files=files,
@@ -1350,7 +1412,9 @@ def main(argv):
                    note='fallback (default family); the loader takes the eye and the in-cab bounds from the loaded tower file\'s root extras.anchors and sets world.towerPos (x, z) and towerPos.eyeY (js/live/app.js tower view)'),
         table=[dict(el=t[0], i=t[1], kind=t[2], name=t[3], group=t[4], cover=t[5], by=t[6], rest=t[7]) for t in table],
         footprints=fps, plausibility=res)
-    out['physics'] = dict(rings=phys, note='blocking footprints for js/live/ground.js buildingGrid (not wired: the realtime tools import ground.js; hangars and the elevated guideway excluded as the app excludes hangars and rail)')
+    PHYS_NOTE = ('; y[i] = world-y band [underside, top] of rings[i] (GROUND_Y %.1f = grade; per unit tier: body from grade, over from its '
+                 'lowest underside, bands %s m above grade), units[unit[i]] = group/unit/band (close-out round 7, request C5.1)' % (GROUND_Y, PHYS_BANDS))
+    out['physics'] = dict(rings=phys, y=phys_y, unit=phys_u, units=phys_units, note='blocking footprints for js/live/ground.js buildingGrid (not wired: the realtime tools import ground.js; hangars and the elevated guideway excluded as the app excludes hangars and rail)' + PHYS_NOTE)
     # physics (review round 1, finding 8): the blocking footprints also go to the app (js/live/app.js buildingGrid extra),
     # simplified to 0.25 m and rounded to 0.1 m (the grid is 2 m)
     phys_js = [[[[round(x, 1), round(z, 1)] for x, z in r] for r in poly] for poly in phys]
@@ -1388,7 +1452,7 @@ def main(argv):
         for u, e in fps.get(g, {}).items():
             if u in ('*', 'all') or not e.get('tiers'): continue
             fps_js.setdefault(g, {})[u] = dict(y=e['y'], lods=e['lods'], tiers=[dict(part=t['part'], y=t['y'], rings=t['rings']) for t in e['tiers']], **({'hangar': True} if g == 'landside' and u in HANGARS else {}))
-    js = dict(replace=rep, tower=out['tower'], units=units, physics=dict(rings=phys_js, note='3-D asset footprints for js/live/ground.js buildingGrid (hangars, guideway, roadways excluded)'),
+    js = dict(replace=rep, tower=out['tower'], units=units, physics=dict(rings=phys_js, y=phys_y, unit=phys_u, units=phys_units, note='3-D asset footprints for js/live/ground.js buildingGrid (hangars, guideway, roadways excluded)' + PHYS_NOTE),
               footprints=dict(units=fps_js, ground_y=GROUND_Y, note='per asset unit (LOD0 / LOD1 max extent): tiers body (grade to top) and over (underside to top), world y, rings [x, z] (b3d_integrate.py tiers)'))
     with open(os.path.join(D3, 'integration.js'), 'w') as f:
         f.write('// Generated by tools/blender/b3d_integrate.py from data/buildings3d/*.glb + manifest.json (do not edit). The\n'

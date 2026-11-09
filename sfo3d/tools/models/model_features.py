@@ -111,9 +111,15 @@ HWL = (0.05, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1.0, 1.25, 1.5)
 # read keel + 1.4 m as 1.85 against the mesh's 3.09 m. Below its maximum breadth a lower lobe does not narrow with height,
 # so a row above 1.0 that falls by more than HWL_DROP while the three rows beneath it rise smoothly (each step -0.02 ..
 # HWL_RISE: a lower lobe, not a fairing / tailplane spike or a tail cone above its maximum breadth) reads the row beneath.
-# Over the 23 models it changes exactly those three rows (thresholds 0.2-0.3 / 0.1-0.3 give the same set; scratch
-# c6/aircraft/scripts/guardsim2.py); a smaller drop (0.15) would also catch fairing spikes at 1.25 (A319 / A320 X 17-18).
+# Over the 23 models it changes exactly those three rows. The range that gives the same 3 rows is narrow (close-out round
+# 7, correcting round 6, which claimed 0.2-0.3 / 0.1-0.3; verifier c6-1 scratch c6/aircraft_ver/guardsens.py): a drop
+# threshold of 0.2-0.28 with a rise limit of 0.1-0.19. a359 X 32 drops by only 0.29 (3.09 -> 2.80), so a threshold of 0.29
+# or more misses it; a rise limit of 0.2 or more starts copying tail-cone spikes upwards (0.2-0.25: E190 X 31 0.87 -> 1.08;
+# 0.3: also A350 X 60 1.16 -> 1.41); a smaller drop (0.15) would also catch fairing spikes at 1.25 (A319 / A320 X 17-18).
+# Self-check (main): the guard may not change a row aft of HWL_AFT x L (tail cones), else the run fails.
 HWL_DROP, HWL_RISE = 0.2, 0.15
+HWL_AFT = 0.85
+HWL_CHANGED = []            # (station, L) of every row the guard changed in this run (main reports them)
 
 
 def hwl_guard(row):
@@ -152,7 +158,8 @@ def sections(pos, zone, idx, L, dx, hwf=False, zmax=None):
             for h in HWL:                       # starboard (z > 0: the cargo doors' side); zmax keeps a low wing / fairing out
                 zz = [z for z in crossings(segs, 0, b + h) if z > 0 and (zmax is None or z <= zmax)]
                 row.append(round(float(max(zz)), 2) if zz and b + h < t else None)
-            hl.append(hwl_guard(row))
+            g = hwl_guard(row); hl.append(g)
+            if g != row: HWL_CHANGED.append((round(i * dx, 2), round(float(L), 2)))
     out = dict(dx=dx, top=top, bot=bot, hw=hw)
     if hwf: out.update(f=list(HWF), hwf=hf, lo=list(HWL), hwl=hl)
     return out
@@ -321,8 +328,11 @@ def main():
     except Exception: pass
     feats = {}
     for k, m in models.items():
-        L = m['head']['dims']['L']
+        L = m['head']['dims']['L']; HWL_CHANGED.clear()
         sec = sections(m['pos'], m['zone'], m['idx'], L, a.dx, hwf=True, zmax=1.1 * float(m['head']['dims'].get('Rz') or m['head']['dims']['R']))
+        if HWL_CHANGED: print(f"{k:5s} hwl_guard changed the rows at stations {[st for st, _ in HWL_CHANGED]} (L {L:.2f})")
+        bad = [st for st, LL in HWL_CHANGED if st > HWL_AFT * LL]
+        if bad: raise SystemExit(f'{k}: hwl_guard changed rows aft of {HWL_AFT} L (stations {bad}): a tail-cone spike copied upwards; check HWL_DROP / HWL_RISE')
         hwm = float(np.median([h for h in sec['hw'][int(0.3 * L / a.dx):int(0.5 * L / a.dx)] if h is not None] or [2.0]))
         f = dict(sec=sec, wing=wing(m['pos'], m['zone'], L, hwm), under=underside(m['pos'], m['zone'], m['idx'], L))
         if m['head']['dims'].get('hasGear'):
