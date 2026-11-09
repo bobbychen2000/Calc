@@ -104,16 +104,19 @@ const TOW_MS = 90000;
 // AHEAD_HOLD_MS after the arrival was last seen heading in (retractAhead) [design values: 200 m at 2-5 m/s taxi-in is 40-100 s,
 // the hurried retraction takes 16-91 s from docked, bridges_closeout.md Round 2]
 const AHEAD_HOLD_MS = 90000, AHEAD_M = 200;
-// ...and with SFO's evidence that the OCCUPANT has left -- its own departure from that stand has an actual block-out, or every
-// stand window SFO lists for it there has ended (stalePlanGone 'blockout' / 'window') -- from this far out: the hurried
-// retraction (16-91 s) is over before a 3-5 m/s taxi-in covers it (close-out round 3, realtime-10) [design value]. (Close-out
-// round 5: SFO's plan for the ARRIVAL -- its own arrival record for that stand, 'alloc' -- no longer starts it from here; see
-// groundLogic)
+// ...and with SFO's POSITIVE evidence that the OCCUPANT has left -- its own departure from that stand has an actual block-out
+// (stalePlanGone 'blockout') -- from this far out: the hurried retraction (16-91 s) is over before a 3-5 m/s taxi-in covers it
+// (close-out round 3, realtime-10) [design value]. (Close-out round 5: SFO's plan for the ARRIVAL ('alloc', its own arrival
+// record for that stand) and the occupant's ended windows ('window') no longer start it from here; see groundLogic)
 const AHEAD_EV_M = 400;
 // standRealloc: another arrival's ACTUAL block-in at a silent occupant's stand counts only this long after the occupant was last
 // heard -- its own arrival record, when its callsign does not map to it (planFor), carries an actual block-in within minutes of
 // its own in-block / last report (close-out round 5) [design value]
 const REALLOC_MARGIN_MS = 10 * 60000;
+// a pushed / off-blocked aircraft that stops silent this far from where it left was repositioned (tow or taxi to a remote parking),
+// not a departure holding near its stand: it stays parked where it stopped (close-out round 5, update()) [design value: > 4
+// stand pitches]
+const REPOS_M = 200;
 const LEAD_GHOST_M = 90;   // an arrival this close on an occupied stand's lead-in retracts the (silent) occupant's bridge (leadInOccupied)
 const REACQ_PARK_M = 15;         // a parked aircraft heard again within this distance of its parked pose has not moved
 const PUSH_UNDO_L = 0.6;          // a 'push' whose reports never left the parking by more than this x the length is undone (stationary(); a real push-back ends >= ~1 L out -- close-out round 3, realtime-11)
@@ -1281,16 +1284,18 @@ export class Traffic {
       // retractions came back -- UAL34 G6 twice ('alloc', 6 and 25 min after its 19:18Z in-block, re-docked 'arrival gone'),
       // UAL2855 F17 twice, AAL3049 B27; segment D (8 Nov) ASA1838 B13, ASA41 B6, UAL2862 E7, UAL1726 D6, UAL2400 F14, DAL545 C6,
       // UAL1852 F16, all 'alloc' from 386-400 m, re-docked 145-348 s later at occupants that stayed [obs, replay]. A gate change
-      // makes SFO's plan for the ARRIVAL wrong whatever its age. So the far retraction (AHEAD_EV_M) now needs evidence about the
-      // OCCUPANT itself -- its own departure from that stand has an actual block-out ('blockout'), or every window SFO lists for it
-      // there has ended, as seen by SFO, and it has not been heard since ('window'); SFO's plan for the arrival (its arrival record
-      // for that stand, aEv / 'alloc') counts only once the arrival is on that stand's lead-in, close (onLeadInClose: <= max(60 m,
-      // 1.5 L) short of the stop, on the line, heading in) -- where the geometry alone retracts the bridge anyway, and where the
-      // removal above needs it. With the live plan cadence, before this change: 'window' far retractions D 13 (12 followed by the
-      // arrival driving in; UAL1726 D6 re-docked and retracted again for the same arrival 4 min later), A 3 (AAL701 B26: another
-      // arrival took the stand 17 min later) -- every occupant was a ghost; 'alloc' D 11 / A 12, of which 6 / 6 re-docked
-      // 'arrival gone' [obs, replay, harness e52f3dfd])
-      const far = ev === 'blockout' || ev === 'window';
+      // makes SFO's plan for the ARRIVAL wrong whatever its age. So the far retraction (AHEAD_EV_M) now needs POSITIVE evidence
+      // about the OCCUPANT itself: its own departure from that stand has an actual block-out ('blockout'). SFO's plan for the
+      // arrival (its arrival record for that stand, aEv / 'alloc') and the occupant's ended windows ('window': it rests on plan
+      // freshness too -- a window end SFO has 'seen' is one before fetched_at) count only once the arrival is on that stand's
+      // lead-in, close (onLeadInClose: <= max(60 m, 1.5 L) short of the stop, on the line, heading in) -- where the geometry alone
+      // retracts the bridge anyway, and where the removal above needs them. With the live plan cadence, before this change:
+      // 'alloc' far retractions D 11 / A 12 / G6 3, of which 6 / 6 / 3 re-docked 'arrival gone', 2 / 3 / 3 at occupants heard
+      // there again later (ASA1838 B13, UAL2400 F14; ASA41 B7, UAL2038 E10, AAL1430 B27; UAL34 G6 x2); 'window' D 13 / A 3 / G6 2:
+      // mostly ghosts the arrival then drove into, but UAL2855 at F17 was retracted twice (21:01 and 21:04Z, 4 Nov, re-docked
+      // 'arrival gone') past the end of SFO's 18:01Z window for it and was heard there again 10 min later [obs, replay, harness
+      // e52f3dfd]. Whether SFO extends a window when a departure is late cannot be checked on 3 snapshots: not assumed)
+      const far = ev === 'blockout';
       // (agent 3, after the 7 Nov 14:41Z restart: the realtime-6 evidence gate had been lost when this line was rewritten for
       // realtime-10 -- without SFO's plan (7 Nov) bridge-ahead fired on geometry alone again: 8 of 28 re-docked, B3 three times
       // for ASA arrivals going on to B6 along B3's lead-in, 01:58-05:31Z)
@@ -2173,7 +2178,16 @@ export class Traffic {
           // kept. Review 4 Nov: SIA31 B77W, silent for 98 s at the end of its push from G9, was dropped, re-created when heard
           // again and logged a second, 'forward' off-block; a live aircraft that drives into it removes it, GroundPhysics)
           const atPushEnd = !!(tr.pushed && tr.m.phase === 'still' && tr.pushEnd && Math.hypot(P[0] - tr.pushEnd[0], P[1] - tr.pushEnd[1]) < 30 && !runwayAt(P[0], P[1]));
-          const parked = !!tr.gate || atPushEnd || (tr.m.phase === 'still' && !tr.pushback && !tr.pushed && !inPolys(this.taxiways, P[0], P[1]) && !runwayAt(P[0], P[1]));
+          // (close-out round 5: ...and one REPOSITIONED -- off-blocked earlier, then moved more than REPOS_M from where it left -- that
+          // stopped off the taxiways and runways is parked where it stopped. SWA2974 B737 left D1 at 03:23Z, taxied 16 min to the
+          // west remote apron, stood there at 0 kt for 21 s and went silent at (-1488.8, 643.3), 8 Nov 03:41Z; the aircraft was next
+          // heard 110 m from there at 08:02Z, moving off [obs, raw reports]. The 40-m 2-2A disc had kept it as 'gate 2-2A' (wrongly
+          // labelled, drawn 37 m from the stand); without that label tr.pushed dropped it 75 s after its last report. A departure
+          // stopped there is heard again within minutes, and an aircraft driving into a silent body off the stands removes it at
+          // first contact -- js/live/ground.js)
+          const repos = !!(tr.pushed && tr.m.phase === 'still' && !tr.pushback && tr.offBlock && tr.offBlock.P && Math.hypot(P[0] - tr.offBlock.P[0], P[1] - tr.offBlock.P[1]) > REPOS_M);
+          const parked = !!tr.gate || atPushEnd || ((repos || (tr.m.phase === 'still' && !tr.pushback && !tr.pushed)) && !inPolys(this.taxiways, P[0], P[1]) && !runwayAt(P[0], P[1]));
+          if (repos && parked && !tr.gate) this.counters.reposParked = (this.counters.reposParked || 0) + 1;
           if (!parked) { gone(tr); this.counters.silentDropped = (this.counters.silentDropped || 0) + 1; }
           // (silent at its stand after a creep / re-position: it is parked there, its bridge may dock)
           else { tr.stale = true; tr.staleSince = now; if (tr.gate && !tr.pushed) tr.leaving = false; this.saveParkedSoon(); }

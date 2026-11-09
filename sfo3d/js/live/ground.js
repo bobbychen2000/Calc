@@ -225,14 +225,15 @@ export class GroundPhysics {
     }
     tr.phys.base = base; return tr.phys;
   }
-  // what makes the pose B invalid among the placed poses (for the conflict log): the first aircraft it overlaps (1 m margin, as
-  // valid()), else 'building' / 'bridge' / 'live bridge'
+  // what makes the pose B invalid among the placed poses (for the conflict log), in valid()'s own order and tests (no gear test:
+  // the lock test leaves it out): 'building', 'bridge' (a rest bridge under the fuselage, nose, tail cone or centre line),
+  // 'live bridge', else the first aircraft it overlaps with the 1 m margin ('aircraft')
   logConflict(traffic, tr, B, placed) {
-    const S = samples(B.T, B.nose, B.h); let w = null;
-    for (const o of placed) { if (Math.hypot(o.nose[0] - B.nose[0], o.nose[1] - B.nose[1]) > (o.T.L + B.T.L) * 0.5 + 45) continue;
-      const So = samples(o.T, o.nose, o.h); if (S.outline.some(p => inside(o, p, 1.0)) || So.outline.some(p => inside(B, p, 1.0))) { w = o; break; } }
-    const why = w ? 'aircraft' : S.outline.concat(S.fus).some(p => this.building && this.building(p[0], p[1])) ? 'building' : S.fus.some(p => this.bridges && this.bridges(p[0], p[1])) ? 'bridge' : this.liveHit(B) ? 'live bridge' : 'other';
-    const ot = w && w.tr; const rec = { why, with: ot ? ot.hex : null, flight: ot && ot.info ? ot.info.flight || null : null, type: ot && ot.info ? ot.info.icao || null : null,
+    const S = samples(B.T, B.nose, B.h), bt = (p) => !!(this.building && this.building(p[0], p[1])), br = (p) => !!(this.bridges && this.bridges(p[0], p[1]));
+    let w = null, why = S.outline.some(bt) || S.fus.some(bt) ? 'building' : S.fus.some(br) || [0, 8, 9, 10].some(k => br(S.outline[k])) ? 'bridge' : B.tr && this.liveHit(B) ? 'live bridge' : null;
+    if (!why) for (const o of placed) { if (Math.hypot(o.nose[0] - B.nose[0], o.nose[1] - B.nose[1]) > (o.T.L + B.T.L) * 0.5 + 45) continue;
+      const So = samples(o.T, o.nose, o.h); if (S.outline.some(p => inside(o, p, 1.0)) || So.outline.some(p => inside(B, p, 1.0))) { w = o; why = 'aircraft'; break; } }
+    const ot = w && w.tr; const rec = { why: why || 'other', with: ot ? ot.hex : null, withFlight: ot && ot.info ? ot.info.flight || null : null, withType: ot && ot.info ? ot.info.icao || null : null,
       d: w ? +Math.hypot(w.nose[0] - B.nose[0], w.nose[1] - B.nose[1]).toFixed(1) : null, at: [+B.nose[0].toFixed(1), +B.nose[1].toFixed(1)] };
     traffic.counters.physLockConflicts = (traffic.counters.physLockConflicts || 0) + 1;
     if (traffic.event) traffic.event(tr, traffic._lastRecv || 0, 'phys-conflict', rec);

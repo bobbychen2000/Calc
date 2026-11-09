@@ -428,7 +428,7 @@ removed P8 types), refusals identical (78), rotShifted 0, walkNudge [].
 | v4 landside pieces on soil | `tools/build_landside.py`: (1) a light band on a non-asphalt way whose CORE is soil-coloured (median per-pixel channel spread >= 22 over its central 1 m) is not a path (light segments broken by soil / grass: 1157838876 core medians 28-33, b* 12-14); (2) the asphalt wide-run test also needs per-pixel spread < 34 (soil verge 37-65); (3) `footprint_fix`: a drawn piece with > 15 % of its footprint at per-pixel spread > 34 (the verifier's measure) is narrowed in 0.25 m steps (>= 1.75 m) or not drawn | pathfoot: 7 pieces / 335 m2 with >= 15 % footprint at spread > 34 (1157838876 /1 /3 /8 /11, 1182574227 /28 /48, 1182574212 /1); drawn 344 pieces, 28.58 km | 0 pieces (drawn footprint 1.0 % at spread > 34, was 1.2 %); drawn 337 pieces, 28.13 km: not drawn 1157838876 /3 /4 /6, 1182574211 /1, 1182574227 /23 /50 (soil-coloured band / footprint); narrowed 1182574212 /1 2.50 -> 2.00 m, 1182574227 /30 (the old /28 box) 6.62 -> 4.37 m. Perimeter road 112508632 widths unchanged. The flank criterion "flank b* > 12" is NOT met and is rejected as a test for this road: on the same NAIP profiles the dusty asphalt itself (o -5..0 m, parts 20 / 21 / 23 / 26) has per-pixel spread 23-32 and b* 10-14, so a flank test outside the 1.5-2 m light strip flags the asphalt lanes (crops f2/land/c_p23s.png, c_p26.png). What is left: on parts 21 / 23 the run extends 3-4 m beyond the light edge strip on the water side over a grey-brown fringe (spread 13-27, b* 8-11, grey 160-185 - not separable from the dusty asphalt by colour or 3 m texture at 0.6 m) - open (residual, inferred widths). PARTLY |
 | v5 old-J island interior | rule (g): the part of the FAA AL-375 2611 chart island (`white_polys`) that is neither SFO Museum taxiway pavement, paint nor pavement is paved (concrete, inferred; NAIP 2024 predates the rebuild: the pale interiors inside the painted rings, median RGB 199/207/183, unpainted - so paved, not painted) | chart island 5,575 m2: 4,653 paved / 922 unpaved (17 %), largest 361 m2 at (-328,102) | 5,449 paved / 126 unpaved (2 %: polygon simplification; the raster covers it), +1,526 m2 of raster. FIXED (inferred) |
 | v6 F19 / F20, C9 / C11 clearances | P8 threshold: an added (family-dominated) type must clear every stand within 120 m by the ICAO stand clearance of ITS code, or - where a listed type of the same family that dominates it already sits closer to that neighbour - by that listed type's clearance (never < 3 m); tested against the neighbours' FINAL envelopes until nothing more drops (order-free). ADS-B / NAIP re-check of the poses below | P8 at 3 m: F19 + B77L (3.02 m from F20's A320), C11 + B737 (4.44 m from C9's B762, < code C 4.5); pair notes F19\|F20 3.0 m, C9\|C11 4.4 m | F19 B77L (6.1 m from F18, ICAO 7.5) and C11 B737 (4.4 < 4.5) now `types_ok_dominated_unsafe`; F19\|F20 4.3 m (B77W / B752, both observed), C9\|C11 5.1 m (B762 / B736). Re-check (adsb.lol, pinned hours, f2/copark.py): the axes hold - F19 stays lateral -0.2..-0.7 m, heading +0.3 deg (UAL1020 / UAL626 / UAL589); F20 lateral -0.1..+0.5 m, +0.4 deg (UAL2467 / UAL1372 B752, UAL216 A320); C9 / C11 lateral <= 1.1 m, heading <= 2.6 deg. The co-parked pair (UAL2358 B772 at F19 20:16Z + UAL2467 B752 at F20 20:48Z, 4 Nov) is 7.28 m apart in the model at the stops; the B772's last fix sits 27.1 m behind F19's model nose (B777 reference 15.0 m, IQR 11.9-21.1) and the B737-family stays 6.6 m behind their (inferred) type stop - both further from the terminal, which INCREASES the separation from F20 (B772 / B752 7.28 -> 8.35 m, B77W / B752 4.31 -> 12.18 m with a 12 m shift) [corrected in close-out round 5: so the DRAWN F19 wide-body poses are TIGHTER to F20 than the one observed stay - 4.3 m drawn vs ~12 m observed; the offset (n = 1) is recorded as the open item `stop_open` (src inf) on F19, not applied]; the stops are not moved (n 1-3 stays, per-airframe antenna offsets of the same order). NAIP 2024 does not resolve the F19 / F20 lead-ins from the stained concrete (b* crop f2/yel_f19.png); the 26 Sep build's F19 paint residual (lateral -4.25 m, -16.4 deg) matches F18's line (20 deg off F19's axis), not F19's (inferred). FIXED (P8) / re-check recorded |
-| v7 rest poses vs observed types only | `check_stands` tests every rest pose against every type a stand within 150 m ACCEPTS that stays parked while the bridge rests (neighbours; own-stand types the bridge does not dock, e.g. an L2 beside a narrow-body) - WARN "accepted, parked while the bridge rests", besides the observed ones. P10 can re-choose such rests too (`P10_ACCEPTED`; candidates also clear of the other bridges' rests / fixed parts, never further aft, accepted-only turns <= 30 deg) but is switched OFF: three all-hours replays (frozen r3v code + this round's data) with 18-24 re-chosen rests each changed the real pushback of UAL917 B772 along the G pier (5 Nov 06:53-06:54Z) - hits on G4 L2's rest cab 47 -> 291 / 317 / 378 points, on G7 L2's walkway 17 -> 134 / 452, a new engine hit on G4 L1's stair - even when G4 L2 itself was unchanged (the engine reacts to the G5-G7 rests); a rest chosen for a hypothetical occupant is not worth a change to real traffic. So the data rests stay as in round 1 and the choice per occupant goes to gates.js (verifier's alternative) | WARN 17: observed types only; G3 L2's case (1.8 m from an accepted B738) not reported | WARN 41 = the 17 + 24 bridges at rest closer than ICAO to an accepted type parked beside them (G3 L2 2.8 m from a B752 / 1.8 m from a B738, G12 L2 1.0 m from a B736, A6 / A9 / A10 L2 1.1-1.4 m ...; list in `check_stands`) - reported, not hidden; rest poses unchanged (P10 as round 1: B11S L1, G8 L2). The +-92.5 deg optional-cab source stays an open question. PARTLY (test fixed; per-occupant rest = request R5.2) |
+| v7 rest poses vs observed types only | `check_stands` tests every rest pose against every type a stand within 150 m ACCEPTS that stays parked while the bridge rests (neighbours; own-stand types the bridge does not dock, e.g. an L2 beside a narrow-body) - WARN "accepted, parked while the bridge rests", besides the observed ones. P10 can re-choose such rests too (`P10_ACCEPTED`; candidates also clear of the other bridges' rests / fixed parts, never further aft, accepted-only turns <= 30 deg) but is switched OFF [reason corrected in close-out round 5: the fix-round-2 replays compared against a fix-1 run made with an older invariants.mjs (commit da29bab came between), so "UAL917 47 -> 291 / 317 / 378 points" measured the harness, not P10 - on one harness UAL917's G4 L2 cab scores 317 points with the fix-1 data, with P10 off and with P10 on (+-30 deg). Decided OFF on same-harness evidence instead: -96 at-rest hit frames against +213 aircraft-overlap frames (G13 / G10), a new G10 L1 cab contact and +408 orphan frames - see Round 5]. So the data rests stay as in round 1 and the choice per occupant goes to gates.js (verifier's alternative) | WARN 17: observed types only; G3 L2's case (1.8 m from an accepted B738) not reported | WARN 41 = the 17 + 24 bridges at rest closer than ICAO to an accepted type parked beside them (G3 L2 2.8 m from a B752 / 1.8 m from a B738, G12 L2 1.0 m from a B736, A6 / A9 / A10 L2 1.1-1.4 m ...; list in `check_stands`) - reported, not hidden; rest poses unchanged (P10 as round 1: B11S L1, G8 L2). The +-92.5 deg optional-cab source stays an open question. PARTLY (test fixed; per-occupant rest = request R5.2) |
 | v8 refused (bridge, type) pairs | no static change: F15 L1 neck x walkway (9 types), F11 L2 rest per occupant (B772 / B788 / A332), A6U / A11U A388 extension, dock_types_out are the bridges track's and the owner's (OD-14); B2 / F9 drum positions need the owner's screenshots. NAIP shows two tunnels per walkway end at F15 / G12 (twin drums kept) | 78 refusals | 78 refusals, identical list (3,333 / 3,411 planned: the two P8 types fewer). DEFERRED (bridges / owner) |
 | v9 pavement provenance | `note`, `provenance`, new `licence` and the `.js` header of `data/sfo_pavement.*` name rules (a)-(g), the OSM-building / END_ZONES exclusion and the ODbL inputs (OSM, adsb.lol: "Contains information from OpenStreetMap and adsb.lol, made available under the ODbL"); paint gets its own provenance and a header naming FAA AL-375 / SFO Museum (CDLA, change notice); ATTRIBUTION rows (ADS-B hours, landside, pavement) updated | provenance ended at "static close-out 2026-11-04"; .js header "from USDA NAIP 2024 (public domain)" | FIXED |
 
@@ -447,27 +447,30 @@ removed P8 types), refusals identical (78), rotShifted 0, walkNudge [].
    terminal than F19's drawn stops (antenna references 9.2 / 15.0 m); `antPark()` places parked aircraft from their own
    reports, so this affects the static checks only.
 5. Pavement changed slightly vs fix 1 (+0.65 / -0.28 ha; the north cargo taxilane hole at (-405,-967) is paved; OSM
-   buildings / end zones are back at their pre-round-3 pavement). All-hours replay (your harness, stream SP/r3/all, frozen
-   r3v code; before = the fix-1 run on the committed fix-1 data, after = this round's final data, scratch f2/replay4):
-   offpave.mask 412,453 -> 402,809 frames (328 aircraft), offpave.union 5,678 -> 5,609 (153 -> 151), clear.taxi 209 -> 186
-   (36 -> 35), overlap.gnd 948 -> 902 (35 -> 30), bridge.hit.fus 1,717 -> 1,626 (7 -> 6), hit_at_rest 873 -> 852 (7 -> 6);
-   bridge.orphan / refused / lag unchanged. Worse, with no static input changed near them (rest poses identical to fix 1,
-   no pavement change within 80 m, G4 / G7 / B19 / B20 data untouched) - please look: (a) UAL917 B772's pushback along the
-   G pier (5 Nov 06:53-06:54Z, same positions and frame counts) now scores 317 hit points on G4 L2's rest cab (was 47),
-   113 on G7 L2's walkway (17) and a new 25-frame engine contact with G4 L1's stair (sev 8); (b) clear.stand +1 key: AAL491
-   A321 at B19 vs a6c4d7 (AAL2651 A321, stale-parked at B20 after 'stale-replaced') 4.16 m < 4.5 m, 15,370 frames.
-   Identical event logs (3,616 events) in both runs.
+   buildings / end zones are back at their pre-round-3 pavement). [CORRECTED / WITHDRAWN in close-out round 5: the replay
+   numbers first given here compared two versions of tools/live/invariants.mjs - the fix-1 run (7 Nov 02:08-03:12Z) predates
+   commit da29bab (acHit box sampling, engine pieces, 3-D footprints in the building grid) - so the "worse" items (a) UAL917
+   B772 47 -> 317 points on G4 L2's rest cab / 17 -> 113 on G7 L2's walkway / a new G4 L1 stair engine contact and (b)
+   clear.stand AAL491 at B19 vs a6c4d7, and the "better" ones (clear.taxi, overlap.gnd, hit.fus, hit_at_rest), were
+   harness changes, not data. Same-harness all-hours replay (frozen tools/live of HEAD 47af104: invariants.mjs 2f6c5d9b,
+   build_stream.py 93da6fe0; stream SP/r3/all f6ff7ceb; frozen r3v code): fix-1 data -> final data differ ONLY in
+   offpave.mask 412,453 -> 402,809 frames (328 aircraft) and offpave.union 5,678 -> 5,609 (153 -> 151); every other class
+   and key is identical (UAL917 G4 L2 cab 317 points / 63 frames at rest, G7 L2 walkway 113 / 382, G4 L1 stair hit.eng 25
+   frames, AAL491 / a6c4d7 15,370 frames - present with the fix-1 data too). Nothing to look at for realtime from this item;
+   see Round 5.]
 
 ## R5.2 Bridges (js/live/gates.js)
 
 1. The rest poses are unchanged (round 1). `check_stands` now reports 24 bridges whose rest lies closer than ICAO to an
    ACCEPTED type parked beside it (WARN "accepted, parked while the bridge rests"): A2 / A5 / A6 / A8 / A9 / A10 / A11 / F15 /
-   F22 / G1-G10 / G12 / G13 L2, B4 / B15 / F12 L1 ... A static re-choice was tried (patch_stands `P10_ACCEPTED`) and switched
-   off: it changed UAL917's real pushback along the G pier in the all-hours replay (see the v7 row). Please choose the rest
+   F22 / G1-G10 / G12 / G13 L2, B4 / B15 / F12 L1 ... A static re-choice was tried (patch_stands `P10_ACCEPTED`) and is
+   off [reason corrected in close-out round 5: on one harness it trades -96 at-rest hit frames for +213 aircraft-overlap
+   frames, a new cab contact and +408 orphan frames - Round 5]. Please choose the rest
    per occupant in gates.js (retract an L2 when the occupant does not use it), checked against the pushback tail swing.
 2. No compliant STATIC rest exists either for F14 / F17 / F19 / F21 L1 (observed B752 at the own stand, arrival
-   transient). UAL917 B772's pushback along the G pier (5 Nov 06:53-06:54Z) already hits G4 L2's rest cab (47 points) and
-   G7 L2's walkway (17) with the round-1 data (realtime: its tow is drawn along the facade) (e.g. retract an L2 fully when the occupant does not use it)
+   transient). UAL917 B772's pushback along the G pier (5 Nov 06:53-06:54Z) hits G4 L2's rest cab [corrected in close-out round 5,
+   same harness: 317 points / 63 frames at rest, G7 L2's walkway 113 points / 382 frames, G4 L1's stair 25 frames (hit.eng) -
+   identical with the fix-1, the fix-2 and the round-5 data; the 47 / 17 points came from the older harness] (realtime: its tow is drawn along the facade) (e.g. retract an L2 fully when the occupant does not use it)
    - also F11 L2 for B772 / B788 / A332 (every docking path from its rest passes through the aircraft) and the F15 L1 neck
    (verifier v8).
 3. The +-92.5 deg optional-cab split still has no source (open question to the owner, unchanged).
@@ -484,3 +487,97 @@ removed P8 types), refusals identical (78), rotShifted 0, walkNudge [].
    `docs/ATTRIBUTION.md`, this file. No `refs/cache` file changed (`patch_p1p2_replay.json`, `adsb_ground_cells.json`
    md5-identical).
 2. Owner questions unchanged: OD-14 (bridge makers / upper-deck units), the B2 / F9 screenshots, the 185 deg optional cab.
+
+# Round 5 (residuals): close-out round 5, static fix round 1 (2026-11-08 / 09) - verifier findings of close-out 3 fix round 2
+
+Answers the second verifier of close-out 3 fix round 2 (1 major + 4 minors). Nothing hand-edited; every data file comes from
+its generator and reruns byte-identically: stands live run and `--replay` both md5 60c523c6 (`.js` 50bf3003),
+`refs/cache/stands/patch_p1p2_replay.json` unchanged (aa18c64e), `--check` MATCH (55 stands); pavement two runs under the heavy
+lock md5-identical 163dc97e (`.js` bf561974), paint unchanged 68471e21 (`.js` 924be74f); landside two runs 3482c207 (`.js`
+f6551fb4). Before = the data at the start of this round (= HEAD 47af104: stands f5bf6327, pavement 78705958, landside
+1216ca2d). Checks before -> after: `tools/stands/check_stands.py` / `tools/sat/check.py` ISSUES 0 -> 0, WARNINGS 41 -> 41
+(identical WARN lines), APP ISSUES 0 -> 0; notes: C9|C11 5.1 -> 5.3 m (P8 below), F17 envelope 3.4 -> 3.2 m from the building
+(NOT ours: the same with the before stands - `data/buildings3d/integration.json` of the buildings track changed); bridges summary
+(`summ.mjs` on HEAD's gates.js) 3,333 / 3,411 planned -> 3,331 / 3,409 (the two P8 types), refusal list identical (78),
+rotShifted 0, walkNudge [].
+
+**Replay evidence (EVIDENCE RULE).** Every replay number of this section ran on ONE frozen harness: a copy of tools/live taken
+2026-11-08 22:03Z (= HEAD 47af104; `invariants.mjs` md5 2f6c5d9b, `build_stream.py` 93da6fe0 - the realtime track edits the
+repo copy this round), stream SP/r3/all `stream.jsonl.gz` f6ff7ceb + `gates_full.jsonl.gz` c985fc2e, all hours (4 Nov 17:48Z -
+5 Nov 08:53Z, warm 300 s, 550,142 frames), frozen r3v code (gates.js 6a0aef2d, traffic.js 4ff3753c, ground.js 0a5d8f0b,
+integration.js d728292e). The arms differ only in their data files: **fix1** (stands d89d5e85, pavement f134ff2b, paint
+a5270c15), **final** = round start (f5bf6327 / 78705958 / 68471e21), **p10on** = final with `P10_ACCEPTED = True` (stands
+7e6201d3, 19 rests re-chosen), **r5** = this round (60c523c6 / 163dc97e / 68471e21). Scripts, roots and outputs:
+SP/c5/static (`rp/`, `roots/`, `s/cmp.py`, NOTES.md).
+
+| class (frames / keys) | fix1 | final | p10on | r5 |
+|---|---|---|---|---|
+| offpave.mask | 412,453 / 328 | 402,809 / 328 | 402,809 / 328 | 402,809 / 328 |
+| offpave.union | 5,678 / 153 | 5,609 / 151 | 5,609 / 151 | 5,609 / 151 |
+| overlap.gnd | 902 / 30 | 902 / 30 | **1,115** / 30 | 902 / 30 |
+| bridge.hit.fus | 1,626 / 6 | 1,626 / 6 | 1,600 / 6 | 1,626 / 6 |
+| bridge.hit.wing / .eng / .tail | 35 / 25 / 382 | 35 / 25 / 382 | 34 / 25 / 388 | 35 / 25 / 382 |
+| bridge.hit_at_rest | 852 / 6 | 852 / 6 | **756** / 5 | 852 / 6 |
+| bridge.orphan | 5,389 / 31 | 5,389 / 31 | **5,797** / 31 | 5,389 / 31 |
+| lag.gnd_30m | 40,820 / 170 | 40,820 / 170 | 41,408 / 171 | 40,820 / 170 |
+| clear.taxi / clear.stand / building | 186 / 429,994 / 803 | same | same | same |
+
+| Finding | Change | Before | After |
+|---|---|---|---|
+| MAJOR: fix-2 before/after replay mixed two harness versions; P10 judged on it | Rebuilt on one frozen harness (above). fix1 -> final: ONLY offpave.mask / .union change; every bridge / overlap / clearance class and key is identical - UAL917 B772 (5 Nov 06:54Z) scores G4 L2 cab 317 points / 63 frames at rest, G7 L2 walkway 113 / 382, G4 L1 stair hit.eng 25 frames with the fix-1 data too; AAL491 / a6c4d7 clear.stand (15,370 frames) is in the fix-1 run too. So R5.1.5 is WITHDRAWN (both (a) and (b), and the "better" clear.taxi / overlap.gnd / hit.fus / hit_at_rest numbers), and the v7 row, R5.2.1 / R5.2.2 and the `P10_ACCEPTED` comment are corrected in place. **P10_ACCEPTED decided on same-harness data: stays OFF.** p10on vs final: bridge.hit_at_rest -96 frames (KLM373 B772 A2 L2 tunnel 33 frames gone; UAL59 B772 G1 L2 tunnel 107 -> 39 points) and hit.fus -26, but overlap.gnd +213 frames (the stale-parked / arriving pairs UAL1227~UAL29D at G13 and ANA108~ANZ7 at G10 last 77 / 136 frames longer: the re-chosen rests change the dock / undock timing those overlaps depend on), a NEW bridge contact (ANZ7 B789 G10 L1 cab, 10 frames), UAL917's G7 L2 walkway 113 -> 134 points, bridge.orphan +408, lag.gnd_30m +588. Owner's rule, collisions first: bridge.hit.* + overlap.gnd = 2,970 -> 3,162 frames (+192) with P10 on - worse in sum; and P10 would replace mapped (OSM / build) rest poses by inferred ones for types never seen there. Decision check on the SHIPPING code (HEAD 47af104 roots, same harness): see the line below the table | fix-2 text: "UAL917 47 -> 317 points, new hit.eng" (two harnesses); P10 off "because of UAL917" | same-harness record; P10 OFF for collision frames +192 (not UAL917: identical in both arms); R5.1.5 withdrawn; corrected texts. FIXED |
+| minor: ARFF striped bays unpaved, wrong reason given | `paint_pave_naip.py`: vehicle-stay FORECOURT rule - within PAD_R (25 m) of a vehicle stay and FC_R (15 m) of a mapped building (SFO Museum / OSM footprint), a pixel that is not part of a soil / vegetation patch (opened classes: thin paint stripes and vehicles do not count) and whose 25 m window holds <= 5 % soil / <= 3 % vegetation is pavement, no texture or pixel-colour test, when connected to the pavement; a 1 m closing inside the forecourt; `src` names the round-5 m2 (inferred). Why (c) had left it: the stripes / trucks fail the 3 m texture test (lap < 3 on 23 % of the strip) and the 25 m window is 36-39 % grey (the white roof in it) - not "tan reads as soil" (soil class 9 %, R - B 30; v3 text corrected). Variants measured on the fix-2 masks for all 18 vehicle stays (SP/c5/static/s/pad_variants*.py): no texture test without the building condition would also pave 101 m2 of dusty verge at OPS15 (874,-842) (NAIP crop c_ops15.png) - rejected | R41 disc (verifier's arff.py): 494 m2 paved, 482 m2 unpaved outside every footprint, the 426 m2 striped strip at (-1563,-598) | +371 m2 at R41 only (0 at the other 17 stays); disc 876 m2 paved / 101 m2 unpaved: the strip is paved; left 66 m2 white roof edge outside the OSM footprint (RGB 235 / 225 / 207) + a 33 m2 west sliver; pavement +399 / -1 m2 overall, 285 polygons. FIXED |
+| minor: P8 compared only the added type's own code | `patch_stands.py` P8 per NEIGHBOUR TYPE: the added type t at its stop against every type u the neighbour accepts (final lists, u at its stop; excl_types pairs skipped both ways), need = max(ICAO(t), ICAO(u)), capped by the dominating listed type(s)' distance to that same u (max over them), never < 3 m; fix-point loop as before. New P13 `stop_open` on F19 / F20 (evidence only, `src` inf): families whose observed final stops (pinned REC_HOURS; last still group on the axis) lie > 3 m off the drawn stop. The v6 text ("the poses are not drawn too close") is corrected in place | verifier p8pairs.py: 4 pairs below the larger-code ICAO and tighter than the dominating listed type (C11 B736 vs C9 B762 5.11 / B752 6.80 / B753 7.48 m, F20 E75L vs F19 B772 6.02 m); C9\|C11 note 5.1 m | p8pairs 0; C11 drops B736 (B752 at C9 6.8 < 7.5 m) - unsafe list B736 / B737, F20 drops E75L (B772 at F19 6.0 < 6.8 m, capped at the listed E-Jets' 6.8 m); C9\|C11 5.3 m. `stop_open`: F19 B777 -12.2 m (n 1: UAL2358 B772 4 Nov 20:16Z - decelerated to gs 0.0 at antenna 27.1 m behind the drawn nose, then silent; B777 reference 15.0 m), B737 -6.7 m (n 5), A320 -10.7 m (n 2); F20 A320 -4.5 m (n 1), B757 **+13.9 m beyond** (n 2: UAL2467 / UAL1372 B752 at antenna 3.1 m behind the drawn nose) - open items, not applied. FIXED (P8) / F19 offset recorded (inf) |
+| minor: rest poses vs accepted types (v7) | re-evaluated after the P10 decision: with P10 off the rest poses stay (same-harness evidence above); check_stands keeps the 24 accepted-type WARNs | WARN 41 (17 + 24) | WARN 41, identical lines. The +-92.5 deg optional-cab source stays an owner question; per-occupant rest = bridges (R6.2). PARTLY (data side decided; app side requested) |
+| minor: landside core-colour rejections | `build_landside.py`: the core colour only flags; a run of core-rejected profiles is kept when the band they measured is <= 15 % soil-coloured in its footprint (the pathfoot criterion; the piece is still narrowed / dropped by `footprint_fix` above 15 %), `w_src` says "N profiles kept although the band core is soil-coloured ... (inferred)"; an undrawn stretch names core-colour rejections at any share ("NAIP shows no paved band here ... N % of the profiles saw a light band whose core is soil-coloured ..., not kept by the footprint test") | 1157838876 (fix-1 part 12, 81 m x 2.25 m, 8 %) and 1182574224 part 1 (17 m x 3.12 m, 8 %) undrawn, w_src "NAIP shows no band here"; drawn 337 pieces, 28.1 km | 1182574224 part 1 drawn again (17 m x 3.12 m); 1157838876: 45 m of the crisp band drawn again (part 13, +101 m2; its 20 m west end was drawn already), the 30 m between (no band in most profiles) labelled; 5 small rescues elsewhere (+3 to +105 m2 per way); drawn 338 pieces, 28.2 km, 17.61 ha; pathfoot: 0 pieces >= 15 % (max 14.6 %, 1182574212/1); 2 rescued runs still dropped by footprint_fix at piece level (1157838876 /1 /3: 22 / 35 %; undrawn before too). Overlays SP/c5/static/ov_1157.png / ov_1224.png. FIXED |
+
+**Decision check on the shipping code** (HEAD 47af104 js/ + data/ via `git archive`: gates.js a93cce58, traffic.js
+42937590, ground.js cd2b4965, integration.js d0a3ac6f; same frozen harness and stream; final stands vs the P10-on stands):
+HEADCHECK_PLACEHOLDER
+
+## R6.1 Realtime (traffic.js, ground.js, tools/live/**)
+
+1. **R5.1.5 is withdrawn** (both (a) UAL917 / G4 hit.eng and (b) the B19 clear.stand pair): on one harness the fix-1 and the
+   fix-2 data give identical bridge / overlap / clearance results; only offpave.mask 412,453 -> 402,809 and offpave.union
+   5,678 -> 5,609 (153 -> 151 aircraft) change. The round-5 data give the same numbers as the fix-2 data in every class.
+   Please quote replay deltas only between runs of one `invariants.mjs` / `build_stream.py` (md5) - this round's harness copy
+   and arm roots are in SP/c5/static (`harness_live/`, `roots/`, `rp/`).
+2. FYI from the same runs (engine-side, not static): the stale-parked / arriving overlaps UAL1227 ~ UAL29D at G13 (303 frames)
+   and ANA108 ~ ANZ7 at G10 (203 frames, 4-5 Nov 04:18 / 04:33Z) are the two largest overlap.gnd keys; their length depends on
+   the bridges' dock timing (P10-on rest poses lengthen them by 77 / 136 frames) - the stale aircraft is removed only after the
+   arrival's in-block / dock, so the two bodies overlap meanwhile.
+3. `stop_open` (new, evidence only, `src` inf) on F19 / F20: F19 B777 -12.2 m (n 1), B737 -6.7 m (n 5), A320 -10.7 m (n 2);
+   F20 A320 -4.5 m (n 1), B757 **+13.9 m** (n 2: UAL2467 / UAL1372 B752 stood with the antenna 3.1 m behind the drawn nose).
+   `antPark()` places parked aircraft from their own reports, so the app follows the observation; the static checks use the
+   drawn stops. Nothing to change unless you snap these types to the drawn stop.
+4. `types_ok` changes (P8 per neighbour type): C11 no longer lists B736 (`types_ok_dominated_unsafe`: B736, B737), F20 no
+   longer lists E75L (unsafe: A19N / A20N / A319 / B37M / B736 / B737 / E75L). `typesOkHas` already honours `typesOkUnsafe`.
+
+## R6.2 Bridges (js/live/gates.js)
+
+1. The data rest poses stay (P10_ACCEPTED off, same-harness decision above); the 24 accepted-type rest WARNs of check_stands
+   remain the gates.js per-occupant job (R5.2.1), now with real numbers: at-rest contacts on one harness with the shipped
+   rests - KLM373 B772 A2 L2 tunnel 33 frames / 28 points (20:23Z 4 Nov), UAL59 B772 G1 L2 tunnel 35 / 107 (00:19Z 5 Nov),
+   UAL917 B772 G4 L2 cab 63 / 317 (06:54Z 5 Nov, pushback), DAL545 B739 C4 L1 tunnel 69 / 188, DAL672 B763 C9 L1 cab
+   14 / 2, SWA375 B38M D3 L1 cab 8 / 1 (hit_at_rest 852 frames in all); UAL917 also touches G4 L1's stair (engine, 25 frames,
+   not at rest) and G7 L2's fixed walkway (tail, 382 frames / 113 points). A static re-choice of A2 L2 /
+   G1 L2 alone was not made: per-bridge picks from one recording would be fitted to it, and the replay shows that rest-pose
+   changes move other bridges' dock timing (orphans, overlaps).
+2. Unchanged: F14 / F17 / F19 / F21 L1 and G2 / G3 / G4 L2 have no compliant static rest; F11 L2 per occupant; F15 L1 neck.
+3. The +-92.5 deg optional-cab split still has no source (owner question).
+
+## R6.3 Engine / extracts
+
+1. `data/sfo_pavement.*`: +371 m2 at the ARFF station (Rescue 41, (-1563,-598); `src` names the round-5 m2), 285 polygons;
+   `data/sfo_landside.*`: airside paths 337 -> 338 drawn pieces (1182574224 part 1, 1157838876 part 13 and five small
+   rescues). Re-bake / re-extract when convenient (the changes are small and away from the aircraft areas).
+
+## R6.4 Lead
+
+1. Commit: `tools/stands/patch_stands.py` (P8 per neighbour type, P13 `stop_open`, the corrected P10 comment),
+   `tools/imagery/paint_pave_naip.py` (forecourt rule), `tools/build_landside.py` (core-colour flag + keep), the regenerated
+   `data/sfo_stands|pavement|landside.*` (paint unchanged), `docs/ATTRIBUTION.md` (ADS-B / landside / pavement rows), this file.
+   No `refs/cache` file changed (`patch_p1p2_replay.json` aa18c64e as before). All but this file are already in 36e179a /
+   17f033d (22:56Z / 23:59Z).
+2. Owner questions unchanged: OD-14 (bridge makers / upper-deck units), the B2 / F9 screenshots, the 185 deg optional cab;
+   new evidence item for the owner: F20's two B752 stays 13.9 m beyond the drawn stop (is F20's stop line for the 757 further
+   in than the OSM position? - not applied, `stop_open`).
