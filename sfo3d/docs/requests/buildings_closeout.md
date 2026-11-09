@@ -459,3 +459,143 @@ owner (redraw, or keep the notes).
 | drawings BL / BI | needs owner | R5.7 |
 | (found this round) LOD2 jambs vs the coarse guideway | fixed | R5.1: 13 -> 0 (LOD2 hull) |
 | (found this round) CG LOD2 shell vs the coarse guideway | deferred | R5.1 residual: 149 points (28 above the deck top, <= 0.16 m); the clip costs +1,546 phone tris |
+
+## Round 5 (residuals) - close-out round 5, fix round 2 (9 Nov 2026; the round-5 verifier's findings, scratchpad `c5/buildings_ver1`)
+
+Rebuilt one at a time under `out/.heavy.lock`: `domestic.glb` / `domestic_lod2.glb` 08:32Z (the ITB-coverage rule, R5f2.3; a first
+build at 08:18Z used a rule that was then refined and is superseded), `landside.glb` / `landside_lod2.glb` 08:28Z and again 09:00Z
+(R5f2.5: the Grand Hyatt mast fix found after the first build; `landside_lod2.glb` came out byte-identical) with the `lsu_*` units
+re-split, then the roadways and the integration (integration_closeout "Round 5, fix round 2"); `itb.glb` unchanged.
+`tools/blender/app_bridges.json` re-dumped with the rotunda pedestals (integration R5f2.3). Before = the fix-1 files (commit d1883bb /
+HEAD 710babe, copies in scratchpad `c5/buildings/f2/before/`). Every before / after pair below ran on the same script on both files:
+the round-5 verifier's `trainenv2` / `cgdepth2` rules (`f2/ls/lsck.py` md5 e92daa68, whose fix-1 arm reproduces the verifier's
+numbers exactly: envelope LOD0 gh_body 9,039 samples, LOD2 GH 8,667 / Garage A 1,010; CG plinth 71,063 samples > 0.05 m deep, 1,012
+> 0.30 m, max 1.218 m), its `xtri.py` (md5 d44f6b44) and `xtri_lod.py`, its `closure2.py` rule split by material
+(`f2/eval/closure3.py`, md5 ceabcc87; fix-1 arm 152.2 m2 = the verifier's), and two own scripts (`f2/an/gate_mast.py`,
+`f2/an/ghdist.py`). Work log: scratchpad `c5/buildings/NOTES.md`. No replays were run (harness for the record: invariants.mjs
+e52f3dfd, build_stream.py 93da6fe0).
+
+| file (LOD0 / LOD1 / LOD2 tris) | fix 1 | fix 2 |
+|---|---|---|
+| itb.glb / itb_lod2.glb | 6,807,008 B (71,929 / 38,683 / 5,884) / 645,984 B | unchanged |
+| domestic.glb | 11,196,072 B (79,040 / 23,368 / 23,208) | 11,198,584 B (79,120 / 23,406 / 23,246) |
+| domestic_lod2.glb (phone) | 2,849,948 B | 2,854,668 B |
+| landside.glb | 22,339,248 B (171,079 / 97,025 / 22,937) | 22,245,560 B (170,430 / 96,386 / 22,700) |
+| landside_lod2.glb (phone) | 2,984,552 B | 2,951,776 B (-1.1 %) |
+| the five `*_lod2.glb` (phone path) | 61,830 tris, 7,285,368 B | 61,631 tris, 7,257,312 B |
+
+| check (same script both arms) | fix 1 | fix 2 |
+|---|---|---|
+| buildings inside the AirTrain vehicle envelope, LOD0 (trainenv2 rule) | gh_body 9,039 samples | 0 |
+| the same, LOD2 (phone file) | L2_grand_hyatt 8,667, L2_garage_a 1,010 | 0 |
+| Grand Hyatt body: plan distance to the guideway deck (`ghdist`) | 0 m (323 vertices over the deck, 0-44 m) | 5.11 m (0 over it) |
+| CG plinth > 0.05 m inside the CLOSED deck box (cgdepth2 rule) | 71,063 samples, 43.4 m2 (area-weighted), max 1.218 m | 496 samples, 0.85 m2, max 0.232 m |
+| the same, > 0.30 m deep | 1,012 samples | 0 |
+| other buildings > 0.05 m inside the deck box | station block 0.47, gh_body 0.46, rcc louvres 0.56 m2 | 0 |
+| AirTrain x building crossings LOD0 (`xtri`) | 4 pairs / 1,431 points (CG contact + exempt portal) | 4 pairs / 1,329 points (the same two kinds; verify_landside: 0 beyond the contact band) |
+| the same, LOD2 (`xtri_lod`) | 3 pairs / 149 (Central Garage, deferred) | 3 / 149 (unchanged, R5f2.4) |
+| domestic plain junction walls facing open air (`closure3`) | 152.2 m2 (T1 27.1, T3W 125.1) | 6.0 m2 (T1, coverage-cell edges); the exposed stretches carry the hall's bands (158.0 m2) |
+| Grand Hyatt roof steel outside the roof (`gate_mast`) | 0.85 m | 0.00 m (the first fix-2 build: 12.04 m, R5f2.5) |
+| verify_itb / verify_domestic / verify_domestic_r2 / verify_landside | 138 / 0, 69 / 0, n_fail 0, 202 / 0 | 138 / 0, 69 / 0, n_fail 0, 206 / 0 (+ envelope LOD0 / LOD2, deck box, mast gates) |
+
+### R5f2.1 Buildings vs the AirTrain VEHICLE (bldg-1 'partly'): the envelope is part of the keep-out; the Grand Hyatt connector; Garage A LOD2 portals
+
+- **Envelope.** R5.1 cleared faces out of the guideway STRUCTURE only. `landside_airtrain.vehicle_envelope` builds the car envelope
+  as a closed prism: over each track (the deck offset BEAM_IN = 2.4 m inwards, the track centre lines guide_beams uses) +-ENV_HW
+  1.5 m [inf: the running pads' outer edge 1.25 m + 0.25 m body overhang / clearance; the CX-100 car width is not sourced here], from
+  the running surface (deck + PAD_H) to deck + PORTAL_H (4.2 m); the deck's clipped ends (portals into a body / the ITB) stay 0.9 m
+  short, so the designed portal openings are untouched. `airtrain_keepout` clears every non-exempt part at every LOD out of it as well
+  (keepout.clip_mb, the same face-frame clip; cut 0.04-0.06 m2 per part once the two items below were fixed). New verify_landside
+  gates (0 allowed, LOD0 and LOD2): building triangles inside the envelope by the verifier's trainenv2 rule (track footprints +0.35 /
+  -0.10 m, running surface + 0.15 .. + 3.5 m).
+- **Grand Hyatt.** Checked against the source outline (SFO Museum 'Grand Hyatt Hotel', `sfom_union`): its only part narrower than
+  3.2 m that touches the guideway is a 3.1 x 9 m FINGER at the NE corner, (-1614.6 .. -1609.0, 606.1 .. 615.5), 27.8 m2, reaching
+  4.5 m onto the south track (11.9 m2 over the deck polygon) and touching the HYATT station polygon. We read it as the enclosed
+  AirTrain bridge to the Grand Hyatt station that the Museum outline includes ('incl. podium / connector') [inf], not the 44-m slab.
+  `hyatt()` takes it out of the slab / podium / LOD2 plan (opening of radius GH_CONN_W / 2 = 1.6 m, components touching the deck);
+  the body now stands 5.11 m off the deck, so no tunnel and no keep-out cut is left in the hotel. The bridge itself is NOT modelled
+  (span, level, enclosure: owner; manifest `unknown`).
+- **Garage A LOD2 station shell.** The LOD2 portal holes were the deck - 0.4 m with a 6-m dark recess whose back panel stood across
+  both tracks at (-1397, 541) / (-1396, 527) inside the station block. Now as LOD0: the deck + PORTAL_CLEAR, and where the track runs
+  on through the block (the east face of a garage with a station block) the recess reaches through it to the LOD0 tunnel's end
+  (STATION_BLOCK_D + 10 m).
+
+### R5f2.2 The keep-out hull is read as a CLOSED solid (CG plinth inside the deck box; the R5.1 record)
+
+Root cause (as the verifier found): `keepout.Columns` merged plan-point intervals closer than GAP 2.0 m, and a non-vertical triangle
+contributes a point (its plane height). Under a parapet the soffit and the parapet top are DECK_T + WALL_H = 2.5 m apart, so they
+never merged and only the +-clear bands of the vertical faces were solid there: the plinth's top cap / slab soffit (18.13 / 18.15 m)
+survived inside the deck edge, and so did facade remnants ~0.1 m wide inside the parapets of other buildings. Now each column is also
+read as a closed solid - walking up the sorted plane heights, a DOWN-facing face (soffit) opens it and the next UP-facing face
+(deck / parapet / walkway top) closes it (PAIR_MAX 3.0 m guards against an unclosed mesh) - united with the old reading; `near()`
+tests the candidates' joint band. New verify_landside gate: LOD0 building surface more than 0.05 m inside the closed deck box (the
+cgdepth2 rule), ceiling `KEEP_INSIDE_MAX_M2` 2.0 m2 (now 0.85, all on vertical plinth faces, max 0.23 m). Record corrected: R5.1's
+"82.8 m2 -> 0.03 m2 inside the solid" was measured with the same merged-interval hull that had the hole; by the closed-solid rule the
+fix-1 plinth kept 43.4 m2 (area-weighted; the verifier's 71,063 samples / ~711 m2 count the slender triangles' samples) more than
+0.05 m inside, max 1.22 m. The optional lowering of the plinth top to the local deck soffit was not needed (the contact clip now
+removes the cap inside the box).
+
+### R5f2.3 Domestic ITB-junction walls: plain only where the ITB 3-D core covers them (bldg-6; R5.4 record)
+
+R5.4's junction walls were hidden by the 2-D ITB occupancy, which is larger than the itb.glb core at those heights: ~30 % faced open
+air as plain panel walls (152.2 m2). `emit_walls` now closes a junction stretch with a plain `panel_light` wall only where the ITB's
+own LOD0 geometry stands in front of it: on 0.5-m cells (JUNCTION_DS) a horizontal ray along the outward normal meets a FRONT-facing
+itb.glb LOD0 triangle (normal against the ray) within ITB_COVER_D 120 m (the verifier's ray length). The rest is EXPOSED and gets the
+hall's facade bands (its band materials, the glazing among them) like any other stretch of that wall; a mullion fin only where no
+ITB triangle of either facing stands within ITB_FIN_CLEAR 0.3 m in front (no fin through a back-to-back ITB wall). A first build of
+this fix used 'any ITB triangle within 1 m' and left T1's 27.1 m2: a back-to-back ITB wall within 1 m faces into the ITB hall and is
+culled from outside, so it hides nothing - hence front-facing only. Of the 507.9 m2 of junction walls 187.0 m2 are exposed (the
+build's rule); by the verifier's rule 6.0 m2 of plain wall still faces open air (T1: the edges of the 0.5-m cells), 158.0 m2 of the
+new faces now carry the bands. itb.glb is an input of the domestic build (built before it, the R4.4 order; this build read itb.glb
+sha1 671d1ba4). The 87 m2 back-to-back coplanar with L0_itb_core stay (opposite-facing, single-sided: no z-fight).
+
+### R5f2.4 Central Garage LOD2 shell vs the coarse guideway (deferred, unchanged)
+
+As R5.1's residual: 149 crossings, ceiling 160 (verify_landside). The verifier's remedy (a less-simplified LOD2 deck along the CG,
+then the contact clip) was not done this round: the R5.1 trial of the clip alone cost +1,546 phone triangles, and the
+less-simplified deck adds its own. The clash is inside the closed deck box at LOD2 (the shell's parapet up to 0.16 m above the
+coarse deck top at (-946.7, 416.9)); open item.
+
+### R5f2.5 Grand Hyatt roof masts (found this round: a regression of R5f2.1, plus an r1 one)
+
+After the connector finger left the slab plan, the f = 0.961 roof mast (photo l4 fractions of the outline's min-rect length) no
+longer met the slab: `hyatt().east_pt` fell back to the outline axis and the mast (tube + 1.8-m crossbar, `gh_detail` steel, LOD0
+and LOD1) stood at (-1620.6, 606.3), 44.0-46.7 m, 11.4 m off the hotel over the AirTrain (first fix-2 build, 08:28Z). The f = -0.008
+mast stood 0.8 m beyond the curved south end since round 1 (the fix-1 file: 0.85 m). A mast is now kept 0.8 m inside the roof edge
+with both crossbar ends 0.1 m inside it, else it goes to the nearest point 1.0 m inside [inf: positions; the masts are obs l4].
+New verify_landside gate 'Hyatt: roof masts on the roof' (steel above the parapet outside the body plan, tol 0.05 m): first fix-2
+build 12.04 m, fix 1 0.85 m, now 0.00 m. Rebuilt 09:00Z; `landside_lod2.glb` unchanged (the masts are LOD0 / LOD1 details).
+
+### R5f2.6 Owner items (unchanged, not guessed)
+
+F22 L2 (walkLen 1.641 < rotR 1.74; one-key exemption in verify_domestic), the BL-02 / BL-03 / BI-03 / BI-04 drawings, the ITB L3 level,
+the domestic loop's posted clearance, interchange_2_2 / narrowed cuts - as R5.7 / integration R5.5. New: the Grand Hyatt's enclosed
+AirTrain bridge (the outline's connector finger, not modelled) - its span, level and enclosure need a source.
+
+### R5f2.7 Integration re-run
+
+Final run after the 09:00Z landside build (`c5/buildings/f2/fin3/chain.sh`, 09:06-09:23Z): `b3d_integrate` 7 conflicts / 15 notes - the
+conflict and note lines identical to fix 1's report and to the first fix-2 run's (md5 of the lines f9f333a5); the bridge dump current
+(stale inputs: none); walkway / drum / pedestal vs host: no contact above 0.05 m2 (131 pedestals now tested); nearest stand envelopes
+F12 2.91 m, F17 3.15 m, G7 5.31 m (unchanged); footprint tiers 156,717 vertices, 0 outside; `b3d_lod2_check` 47 units / 0 flagged;
+`tools/sat/check.py` 0 issues / 0 app issues / 41 warnings (= fix 1); verify_itb 138 / 0, verify_domestic 69 / 0, verify_domestic_r2
+n_fail 0, verify_landside 206 / 0. The first fix-2 landside build's in-build verify_landside crashed in the new envelope gate (a local
+import shadowed `MultiPoint`; fixed) and wrote 204 / 1 to `manifest.json#landside.verification`; the standalone re-run gave 205 / 0 and
+the final build 206 / 0, which `c5_manifest.py` recorded. Roadways: two redirected dev builds after the last landside build (`f2/rw/gfin`,
+`gfin3`) reproduce the installed `roadways.glb` / `roadways_lod2.glb` byte for byte (sha1 e2869621 / 3b031edf), so the roadway trims
+do not depend on the mast fix or on the domestic rebuild order. Records: `manifest.json#<group>.closeout_r5` gained the `r5f2-*`
+records (`out/buildings3d/c5/c5_manifest.json` -> `tools/blender/c5_manifest.py`, under the manifest flock).
+
+### Round 5 fix round 2 dispositions (`c5/buildings_ver1` findings)
+
+| finding | status | evidence |
+|---|---|---|
+| (major) roadways under-joint fallback walls | fixed | integration_closeout R5f2.1: through-deck walls LOD0 / LOD1 12.5 / 143.6 m2 -> 0 / 0; gates stop the build |
+| bldg-1 'partly': AirTrain vehicle envelope (Grand Hyatt, Garage A LOD2) | fixed | R5f2.1: envelope LOD0 9,039 -> 0, LOD2 9,677 -> 0 samples; GH 5.11 m off the deck; gates LOD0 + LOD2; the GH bridge not modelled (owner) |
+| keepout.Columns GAP: CG plinth inside the deck box; R5.1 record | fixed | R5f2.2: 43.4 -> 0.85 m2 (> 0.30 m: 1,012 -> 0); other buildings 1.49 -> 0 m2; gate (ceiling 2.0); R5.1 annotated |
+| integ-1 / integ-2 LOD0-only (LOD1 soffits) | fixed | integration_closeout R5f2.2: LOD1 open into a hollow 174.6 -> 7.8 m; gate |
+| integ-4 stale bridge dump + pedestal | fixed | integration_closeout R5f2.3: stale dump -> CONFLICT + exit 2; pedestals tested (0 contacts) |
+| domestic closure walls facing open air; R5.4 record | fixed | R5f2.3: plain walls facing open air 152.2 -> 6.0 m2; R5.4 annotated |
+| CG LOD2 shell vs the coarse guideway | deferred | R5f2.4: 149 (= fix 1), ceiling 160 |
+| owner items (F22 L2, drawings, ITB L3, clearance, ic_2_2 / narrowed cuts) | needs owner | R5f2.6 (+ the GH AirTrain bridge) |
+| (found this round) Grand Hyatt roof masts off the roof | fixed | R5f2.5: 12.04 / 0.85 -> 0.00 m; gate |

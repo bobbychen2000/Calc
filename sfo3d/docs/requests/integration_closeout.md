@@ -442,3 +442,99 @@ the main deck's level (`roadways_net`) stays deferred, now with the mesh-grade a
 | 4 b3d_integrate silent on missing out/ files | fixed | R5.3: input-missing CONFLICT + exit 2 + refuse to write; bridge solids from the tracked dump |
 | 5 R4.1 bullet pointer | fixed | R5.4 |
 | 6 deferred conflicts | needs owner | R5.5 |
+
+## Round 5 (residuals) - close-out round 5, fix round 2 (9 Nov 2026; the round-5 verifier's findings, scratchpad `c5/buildings_ver1`)
+
+Rebuilt after the fix-2 building rebuilds (buildings_closeout "Round 5, fix round 2"): `roadways.glb` 5,296,016 -> 5,603,480 B (sha1
+d33aa2a0 -> e2869621; LOD0 / LOD1 / LOD2 tris 57,987 / 16,421 / 7,340 -> 57,971 / 22,151 / 7,340: LOD1 keeps the LOD0 outlines,
+R5f2.2), `roadways_lod2.glb` 476,212 B (same size and triangles; 193 vertices of `L2_domestic_departures` moved <= 0.014 m with the
+domestic rebuild the trims read), `integration.json` / `integration.js`, `manifest.json#roadways` / `#integration`; roadways build
+08:32-08:36Z (`c5/buildings/f2/final/chain.sh`), integration final run after the last landside build (`f2/fin3/chain.sh`).
+Every before / after number below ran on the SAME script on both files: the round-5 verifier's own `thrudeck.py` (input paths from
+the environment, rule unchanged), `soffit_close.py` (md5 6f4d60ee), `grades.py` (92b06d39), `ledges.py` (a4ad7156), `pfloat.py`
+(69fdbe99) on the fix-1 file (`rw_fix1.pkl`, sha1 d33aa2a0) and the installed one (`rw_f2.pkl`, e2869621); the same rules are now
+build self-checks. An offline harness (`c5/buildings/f2/rw/uj.py`: `build_piece` from the fix-1 copy vs the current module on the
+same trimmed pieces) reproduced the verifier's fix-1 figures exactly before the build (LOD0 / LOD1 open into a hollow 2.8 / 174.6 m,
+through-deck faces 1,850 / 51, wall area 12.5 / 143.6 m2). No replays were run (harness for the record: invariants.mjs e52f3dfd,
+build_stream.py 93da6fe0).
+
+| check (same script both arms) | fix 1 (d33aa2a0) | fix 2 (e2869621) |
+|---|---|---|
+| vertical concrete faces a deck / walk top passes through, LOD0 (`thrudeck`) | 1,850, of them walls 12.5 m2 at 3 new sites (5.0-13.8 m tall) | 1,839 - none new vs fix 1; tallest 1.53 m, <= 1.38 m above the top (the r4 ledge family); walls 0 |
+| the same, LOD1 | 51, walls 143.6 m2 at 7 sites (up to 0-14.3 m) | 3 (<= 1.43 m tall, <= 1.01 m above the top); walls 0 |
+| soffit edge open into a hollow / open other, LOD0 (`soffit_close`) | 2.8 / 54.5 m (face 19,612.6 m) | 2.8 / 56.9 m (face 19,606.8 m) |
+| the same, LOD1 | 174.6 / 269.5 m (face 19,547.2 m) | 7.8 / 55.2 m (face 19,784.3 m) |
+| mesh grades (`grades`) | max 13.4 %; folds > 1 / 2 / 3 / 4 / 6 deg 226 / 84 / 31 / 10 / 6 | identical |
+| deck-top ledges deck > deck (`ledges`) | 239.2 m | 239.2 m (deferred, R5.1) |
+| parapet floats / buried > 0.02 m (`pfloat`) | 0.8 / 1.6 m2 | 0.8 / 1.6 m2 |
+| `b3d_integrate --check` with a stale dump (the verifier's test: gates.js hash zeroed, A2 / B2 / E8 moved 1.2 m) | 7 conflicts / 14 notes, exit 1 - identical to the current dump | CONFLICT 'input stale: app_bridges.json predates js/live/gates.js' + the 7, exit 2 (full run refuses to write) |
+
+### R5f2.1 Under-joint 'closures' standing in the carriageways (major, regression of R5.1): fixed at the root, gated
+
+Root cause: R5.1's fallback took, for an under-joint probe the run's neighbour left unresolved, the underside of ANY other piece near
+the deck at the probe point - a deck passing underneath (interchange_2_2 at (-1618.9, 544.3): 5.01 .. 13.57 m through deck_1o at
+6.21 m) or an at-grade road under a flyover (LOD1 (-1688.1, 540.4): 0 .. 14.19 m) - and built a wall from it up to this soffit.
+`build_piece` now accepts a piece (the run's neighbour first, then the others) only where it REALLY abuts at deck level: at the probe
+point its top is within `UJ_TOP_TOL` (STEP_TOL + 0.1 = 0.40 m: the probes sit 5 % in from the run ends, where a step that edge_runs
+found below STEP_TOL may have grown a little) of this deck's top, and its underside is within DECK_DEPTH + STEP_TOL below this
+soffit, or it is grade under an all-fill deck (top below FILL_H). A probe nothing qualifies for stays unresolved (counted: LOD0
+273.2 m, LOD1 216.5 m); a hard cap stops any closure taller than DECK_DEPTH + STEP_TOL unless it goes to grade under a fill deck
+(capped this build: 0 m). New build self-check `thru_check()` (the verifier's thrudeck rule, LOD0 and LOD1): a vertical concrete face
+that a deck / walk top passes through AND that rises more than `THRU_RISE` (DECK_DEPTH + PARAPET_H = 2.05 m: the most a fascia +
+parapet can rise above a neighbouring deck) above that top is a WALL - gate 0 at both LODs; the rest (fascias / parapets a
+neighbouring deck's top cuts near their foot at a joint) is the deferred ledge family with a regression ceiling (`THRU_LEDGE_MAX`
+1,950 / 10). The gates stop the build BEFORE anything is written (exit 3; `RW_GATE_WRITE=1` writes anyway, dev builds only).
+Build self-check: LOD0 1,839 faces / 0 walls, LOD1 3 / 0. (The manifest record string of this rule said 'top within 0.30 m' - the
+code uses 0.40 m; corrected in the code and in `manifest.json#roadways` by `c5_manifest.py`.)
+
+### R5f2.2 LOD1 soffits open into a hollow (integ-1 / integ-2 at LOD1): fixed at the root, gated
+
+The verifier's LOD-aware probes were tried first (UJ_PROBE to INNER_GAP + 0.35 m at LOD1, abutters only): 174.6 -> 172.1 m - the LOD1
+residual is not a height step. Diagnosis (`f2/rw/dbg_site.py` at (-1527.8, 472.6), (-1790.9, 441.5), (-1519.2, 513.0)): equal soffit
+levels on both sides of the joint, the neighbour's underside found only 0.46 m into it - LOD1 simplified every piece's outline by
+0.35 m ON ITS OWN, so neighbouring decks no longer met: see-through slits up to ~0.4 m at the LOD1 joints, in the tops as in the
+soffits (no vertical face closes a plan gap). LOD1 now keeps the LOD0 outline (`LOD_SIMPLIFY[1]` 0.35 -> 0.05, `INNER_GAP[1]` 0.40 ->
+0.08); it still saves on the 16-m triangulation, the single-quad parapets and the 6-sided columns. Cost: LOD1 16,421 -> 22,151 tris
+(+5,730; LOD1 is the desktop 400-1,400 m band and the phone near mode once the full file loads; the phone far file
+`roadways_lod2.glb` is unchanged). New gate: soffit open into a hollow <= `SOFFIT_GATE_M` 5 m (LOD0) / 12 m (LOD1); this build 2.8 /
+7.8 m.
+
+### R5f2.3 `b3d_integrate`: a stale bridge dump fails loudly; the pedestal is tested again (integ-4): fixed
+
+`_dump_current()` recomputes the SHA-256 of every file `tools/blender/app_bridges.json` records in `inputs` (js/live/gates.js,
+data/sfo_stands.js, data/sfo_buildings.js, js/live/airport.js, js/geo.js); a mismatch is a CONFLICT 'input stale: app_bridges.json
+predates <file>', the walkway / drum / pedestal tests are not run on it, `--check` exits 2 and the full run refuses to write (as for
+a missing input). `app_bridges.mjs` now dumps the rotunda PEDESTAL with the walkway segments and drums (gates.js solidsQ part
+'pedestal'); `b3d_integrate` tests host surfaces inside it ('rotunda pedestal: host building surfaces inside it'): 131 pedestals,
+0 contacts above 0.05 m2. The dump was regenerated 08:13Z (131 bridges + 131 pedestals; every other value identical to the 03:31Z
+dump, inputs unchanged); the other consumers filter on `part` (dom_geom, bridge_head door-member obstacles, app_bridges.py,
+verify_domestic / verify_itb).
+
+### R5f2.4 Re-run and records
+
+Final run after the last landside build (`c5/buildings/f2/fin3/chain.sh`): `b3d_integrate` 7 conflicts / 15 notes, the conflict and
+note lines identical to fix 1's (md5 of the lines f9f333a5; exit 1 = conflicts present, as before); bridge dump current; 131
+pedestals tested, 0 contacts; footprint tiers 156,717 vertices, 0 outside; `b3d_lod2_check` 47 units / 0 flagged; `tools/sat/check.py`
+0 / 0 / 41 warnings. Two redirected roadways dev builds after it (`f2/rw/gfin`, `gfin3`) give the installed `roadways.glb` /
+`roadways_lod2.glb` byte for byte (e2869621 / 3b031edf). `manifest.json#roadways` / `#integration`: `closeout_r5` restored after their
+rebuilds dropped it, plus `r5f2-under-joint-walls`, `r5f2-lod1-soffit`, `r5f2-stale-dump` (`tools/blender/c5_manifest.py`).
+
+R5.1's integ-2 'fixed' was LOD0-only (the verifier: LOD1 174.6 m still open) - R5f2.2 closes it at LOD1. The R5.1 sentence "A probe
+that still finds no underside takes the first OTHER neighbour's" is the cause of the major (R5f2.1) and carries a "[superseded in
+fix round 2]" note.
+
+### R5f2.5 Owner items and deferred (unchanged, not guessed)
+
+As R5.5: roads over roads 3.88 m (ITB L3 level), the domestic departures loop 3.53 m over 26 at-grade roads (posted clearance),
+interchange_2_2 4.60 m over 1.0 m, the four narrowed stacked cuts. Deferred: the deck-top ledges (239.2 m; 87.5 m of 0.10-0.31 m)
+and the wedge creases (folds 226 / 84 / 31 / 10 / 6) need a warped junction surface, gated by `fold_gate`, `mesh_grades` and now the
+through-deck ceiling.
+
+### Round 5 fix round 2 dispositions (`c5/buildings_ver1` findings)
+
+| finding | status | evidence |
+|---|---|---|
+| (major) under-joint fallback walls through lower carriageways | fixed | R5f2.1: walls LOD0 / LOD1 12.5 / 143.6 m2 -> 0 / 0 (verifier's thrudeck, same script); build gates 0 |
+| integ-1 / integ-2 at LOD1 (soffit open into a hollow) | fixed | R5f2.2: 174.6 -> 7.8 m (open other 269.5 -> 55.2 m); LOD1 gate |
+| integ-4 stale bridge dump; pedestal dropped | fixed | R5f2.3: stale -> CONFLICT + exit 2; pedestal test restored (0 contacts) |
+| deferred ledges / creases, owner conflicts | deferred / needs owner | R5f2.5 (unchanged: 239.2 m, folds as r4, 7 conflicts) |

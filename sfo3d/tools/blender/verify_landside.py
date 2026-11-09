@@ -632,6 +632,13 @@ def run(path):
         C.add('Hyatt: penthouse upper step top', float(H(ph).max()), H_ + 1.4 * DL.GH_P, src='BL-03 (1.4 pitches)')
         fp = footprint(L0n(k, 'gh_body') + L0n(k, 'gh_podium'))
         outline_check(k, 'Grand Hyatt Hotel', fp, sfom('Grand Hyatt Hotel'))
+        # close-out r5 fix 2: the roof masts stand on the roof (after the connector finger left the slab plan one mast fell back to the
+        # outline axis and stood 11.4 m off the hotel at 44-46.7 m; a crossbar reached 0.93 m past the curved south end)
+        bfp = footprint(L0n(k, 'gh_body'), up_only=False)
+        St = allP(L0n(k, 'gh_detail'), 'steel'); St = St[H(St) > H_ - 0.05]
+        out_m = max([bfp.exterior.distance(Point(x, z)) for x, z in St[:, [0, 2]] if not bfp.contains(Point(x, z))], default=0.0)
+        C.add('Hyatt: roof masts on the roof (steel above the parapet: max distance outside the body plan; close-out r5 fix 2)', float(out_m), 0.0, 0.05,
+              src='landside_geom.hyatt (masts [obs l4], positions [inf])')
     # ---------------- CAC
     k = 'cac'
     if k in by:

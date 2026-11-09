@@ -2192,7 +2192,7 @@ def main(argv):
                                                    fix_round_2=dict(rule='under-joint closures only against a piece that abuts at deck level (top within %.2f m; underside '
                                                                          'within the deck depth + %.2f m, or grade under an all-fill deck); LOD1 deck outlines = LOD0 (joints meet); '
                                                                          'gates: through-deck walls 0 (LOD0 / LOD1), soffit open into a hollow <= %s m (LOD0 / LOD1)'
-                                                                         % (STEP_TOL, STEP_TOL, list(SOFFIT_GATE_M.values())),
+                                                                         % (UJ_TOP_TOL, STEP_TOL, list(SOFFIT_GATE_M.values())),
                                                                     soffit_closure_lod1={k: schk1.get(k) for k in ('boundary_m', 'face_m', 'soffit_continues_m', 'open_into_hollow_m', 'open_other_m')},
                                                                     under_joint_capped_m=edge.get('under_joint_capped_m'), under_joint_lod1_m=edge.get('under_joint_lod1_m'),
                                                                     under_joint_unresolved_lod1_m=edge.get('under_joint_unresolved_lod1_m'),

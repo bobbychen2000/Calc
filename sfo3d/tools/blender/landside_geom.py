@@ -1858,8 +1858,18 @@ def hyatt():
         pts = [np.array(g.coords[0]) for g in getattr(ln, 'geoms', [ln]) if not g.is_empty]
         return max(pts, key=lambda q: float(q @ east)) if pts else a0
     # masts (0.8 pitch, crossbar) [obs l4]
+    # close-out r5 fix 2 (found after the connector finger left the slab plan): the fractions are of the min-rect length W of the
+    # OUTLINE (finger included); at f = 0.961 the cross line now misses the slab and east_pt fell back to the axis point - a mast
+    # stood 11.4 m off the hotel at 44-46.7 m over the AirTrain (and the f = -0.008 mast 0.8 m beyond the curved south end, since
+    # r1). A mast is now kept 0.8 m inside the roof edge with both ends of its 1.8-m crossbar 0.1 m inside it (at the curved south
+    # end the crossbar along the axis reached 0.93 m past the edge): otherwise it goes to the nearest point 1.0 m inside the roof
+    # edge [inf: positions]
+    roof_in, roof_bar, roof_e = P.buffer(-0.8, join_style=2), P.buffer(-1.0, join_style=2), P.buffer(-0.1, join_style=2).buffer(1e-6)
     for f in (-0.008, 0.027, 0.905, 0.961):
         q = east_pt(min(max(f, 0.001), 0.999)) - east * 0.8
+        on_roof = roof_in.buffer(1e-6).contains(Point(*q)) and all(roof_e.contains(Point(*(q + s_ * 0.9 * ax))) for s_ in (-1.0, 1.0))
+        if not roof_bar.is_empty and not on_roof:
+            q_ = shapely.ops.nearest_points(roof_bar, Point(*q))[0]; q = np.array([q_.x, q_.y])
         tube(det, [(q[0], q[1], H), (q[0], q[1], H + 0.8 * p)], 0.09, 6, 'steel', cap_ends=True)
         boxm(det, q, ax, 1.8, 0.12, (H + 0.8 * p - 0.1, H + 0.8 * p), 'steel', (1, 1))
     # framed bay 0.615-0.842 up to H - p: a 0.35-m frame 0.25 m proud of the glass

@@ -34,6 +34,12 @@ def main():
             old = old or {}
             if key in rec:
                 old['closeout_r5'] = rec[key]
+            if key == 'roadways':
+                # fix round 2: the 08:36Z build wrote its fix_round_2 rule with STEP_TOL (0.30) for the top tolerance; the code uses
+                # UJ_TOP_TOL = STEP_TOL + 0.1 (0.40) - the string is corrected in build_roadways for the next build, and here
+                fr = ((old.get('closeout_r4') or {}).get('closeout_r5') or {}).get('fix_round_2') or {}
+                if isinstance(fr.get('rule'), str):
+                    fr['rule'] = fr['rule'].replace('abuts at deck level (top within 0.30 m;', 'abuts at deck level (top within 0.40 m;')
             if key == 'itb':
                 v = c4_manifest.itb_verification()
                 if v is not None: old['verification'] = v
