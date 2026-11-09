@@ -2402,10 +2402,15 @@ def build_all(only=None):
 # close-out round 5 (verifier: the Garage A station block's deck-1 opening and far wall, Garage G, LTP garage 2, Grand Hyatt and
 # RCC faces crossing the guideway / stations): every building face is cleared out of the AirTrain's column hull + KEEP_CLEAR
 # (tools/blender/keepout.py) at every LOD. Exempt by design (verify_landside lists them): the portal tunnels (the guideway's own
-# lining inside a garage body, where the deck is clipped) and the Central Garage plinth (the trough the guideway runs in: its
-# walls stand on the SFO Museum AirTrain Rail outline the deck is built from)
+# lining inside a garage body, where the deck is clipped). CONTACT parts: the Central Garage plinth is the garage structure built
+# up to the guideway (its walls stand on the SFO Museum AirTrain Rail outline the deck is built from, its top at h5 - DECK_T),
+# so it keeps the faces that touch the deck; but where the deck runs lower than h5 its walls stood up to 2.6 m deep inside the
+# deck box (76 m2 of concrete + 6 m2 of lining at 17.6-18.0 m, measured c5 t/cg_depth.py): it is clipped against the hull with
+# no clearance, only beyond a KEEP_CONTACT_INSET contact band inside the footprint, heights exact
 KEEP_CLEAR = 0.08          # < PORTAL_CLEAR 0.10: the designed portal openings are left as they are [model]
-KEEP_EXEMPT = ('_portal', 'cg_plinth')
+KEEP_EXEMPT = ('_portal',)
+KEEP_CONTACT = ('cg_plinth', 'cg_L2')   # (cg_L2: the Central Garage LOD2 shell carries the plinth massing too)
+KEEP_CONTACT_INSET = 0.03  # m [model]
 
 
 def airtrain_keepout(buildings, tiles):
@@ -2416,14 +2421,20 @@ def airtrain_keepout(buildings, tiles):
             T.append(KO.tris_world(part.mb, t.F.W))
     T = [x for x in T if len(x)]
     if not T: return {}
-    cols = KO.Columns(np.concatenate(T), clear=KEEP_CLEAR)
+    T = np.concatenate(T)
+    cols = KO.Columns(T, clear=KEEP_CLEAR, clear_z=0.05)
+    cols_c = None
     rec = {}
     for b in buildings:
         parts = [(0, p) for p in b.shells] + [(0, p) for p in b.details[0]] + [(1, p) for p in b.details[1]] + [(2, p) for p in b.coarse]
         for lod, part in parts:
             if any(e in part.name for e in KEEP_EXEMPT): continue
             st = {}
-            KO.clip_mb(part.mb, b.F.W, cols, st)
+            if any(e in part.name for e in KEEP_CONTACT):
+                if cols_c is None: cols_c = KO.Columns(T, clear=KO.DS_V / 2 + 0.005, clear_z=0.0, inset=KEEP_CONTACT_INSET)
+                KO.clip_mb(part.mb, b.F.W, cols_c, st); st['contact'] = True
+            else:
+                KO.clip_mb(part.mb, b.F.W, cols, st)
             if st.get('faces_cut'):
-                rec.setdefault(b.key, {})['%s@%d' % (part.name, lod)] = dict(faces=st['faces_cut'], m2=round(st['area_m2'], 2))
+                rec.setdefault(b.key, {})['%s@%d' % (part.name, lod)] = dict(faces=st['faces_cut'], m2=round(st['area_m2'], 2), **({'rule': 'contact'} if st.get('contact') else {}))
     return rec

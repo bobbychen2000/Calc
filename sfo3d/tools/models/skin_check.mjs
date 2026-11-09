@@ -10,14 +10,22 @@
 // > 0.5 m 1587 (2237)). The cut ignores crossings wider than 1.3 R (the wing).
 // Per-row baseline (close-out round 4, fix round 2, verifier finding 2: net counts hid 545 rows that got worse by > 0.15 m
 // while others improved): --baseline compares every row (type, X, keel + h) with a stored run and lists the rows whose
-// error grew by > 0.15 m (and > 0.5 m) and those that improved; --save stores this run. The stored baseline,
-// tools/models/skin_check_baseline.json.gz, is the run after close-out round 4 fix round 2 (hwLow: absolute fallback
+// error grew by > 0.15 m (and > 0.5 m) and those that improved; --save stores this run. The baseline of that round, now
+// tools/models/skin_check_baseline_r4f2.json.gz, is the run after close-out round 4 fix round 2 (hwLow: absolute fallback
 // limited to the local keel's table range, table-edge rows, gear-bay keel-beam sections skipped): keel + <= 0.3 m off by
 // > 0.15 / 0.5 m 673 / 263, every height > 0.15 m 2614; per row against the round-3 rule 59 rows worse by > 0.15 m (20 by
 // > 0.5 m: gear wells, nose-gear bays, the A220-300 tail-cone end), 1691 better (docs/requests/aircraft_closeout.md).
+// Close-out round 5 (aircraft verifier c4-2 finding 5: against round 4 fix 1, 280 rows got worse by > 0.15 m, 221 of them
+// tail-cone rows at keel + 1.4 m, and the stored baseline had adopted them): the lower-lobe table reaches 1.5 model m aft of
+// 0.45 L (js/aircraft/fit.js hwLow). The stored baseline is now this round's run, and the earlier runs are kept beside it
+// so that a change is checked against each: skin_check_baseline_r4f2.json.gz (round 4 fix 2, the previous stored
+// baseline) and skin_check_baseline_r4f1.json.gz (round 4 fix 1, the verifier's rows). This round per row: against r4f2
+// 26 worse by > 0.15 m (5 by > 0.5 m), 1076 better; against r4f1 48 worse (17), 2176 better. A row is (type, X, keel + h)
+// with each run's own keel: where keelAt moved (A320 family X 2-5.5 m, round 5) the rows compare different heights.
 // Exit code 0 either way (a report).
 // Usage: node tools/models/skin_check.mjs [types,comma,separated] [--baseline [file]] [--save [file]]
-//        (default: every type with a fitted model; file default tools/models/skin_check_baseline.json.gz)
+//        (default: every type with a fitted model; --baseline without a file: every stored
+//        tools/models/skin_check_baseline*.json.gz; --save default tools/models/skin_check_baseline.json.gz)
 import path from 'path';
 import fs from 'fs';
 import zlib from 'zlib';
@@ -41,7 +49,9 @@ const cross = (segs, val) => { const r = []; for (const [p, q] of segs) if ((p[0
 const BASE = path.join(ROOT, 'tools/models/skin_check_baseline.json.gz');
 const argv = process.argv.slice(2), opt = {}; const pos = [];
 for (let i = 0; i < argv.length; i++) { const a = argv[i];
-  if (a === '--baseline' || a === '--save') { const f = argv[i + 1] && !argv[i + 1].startsWith('--') && /\.json(\.gz)?$/.test(argv[i + 1]) ? argv[++i] : BASE; opt[a.slice(2)] = f; }
+  if (a === '--baseline' || a === '--save') { const f = argv[i + 1] && !argv[i + 1].startsWith('--') && /\.json(\.gz)?$/.test(argv[i + 1]) ? argv[++i] : null;
+    if (a === '--save') opt.save = f || BASE;
+    else opt.baseline = f ? [f] : fs.readdirSync(path.dirname(BASE)).filter(n => /^skin_check_baseline.*\.json\.gz$/.test(n)).sort().map(n => path.join(path.dirname(BASE), n)); }
   else pos.push(a); }
 const types = pos[0] ? pos[0].split(',') : Object.keys(TYPES).filter(t => TYPES[t].key === t && fit.TYPE_MODEL[t] && TYPES[t].fit && TYPES[t].fit.skinHW);
 const rows = {};
@@ -65,17 +75,17 @@ for (const t of all) { const w = rows[t].filter(r => r.e != null).sort((a, b) =>
   if (w) console.log(`  ${t.padEnd(5)} worst X ${w.X} keel + ${w.h}: api ${w.api} mesh ${w.mesh.toFixed(3)} (${w.e > 0 ? '+' : ''}${w.e.toFixed(3)})`); }
 // ---- per-row baseline
 const readRows = (f) => JSON.parse((f.endsWith('.gz') ? zlib.gunzipSync(fs.readFileSync(f)) : fs.readFileSync(f)).toString());
-if (opt.baseline) {
-  if (!fs.existsSync(opt.baseline)) console.log(`baseline ${path.relative(ROOT, opt.baseline)} not found`);
+for (const bf of opt.baseline || []) {
+  if (!fs.existsSync(bf)) console.log(`baseline ${path.relative(ROOT, bf)} not found`);
   else {
-    const B = readRows(opt.baseline).rows; let n = 0, w15 = 0, w50 = 0, b15 = 0, gone = 0; const W = [];
+    const B = readRows(bf).rows; let n = 0, w15 = 0, w50 = 0, b15 = 0, gone = 0; const W = [];
     const err = (api, mesh) => api == null ? Infinity : Math.abs(api - mesh);
     for (const t of all) { const m = new Map((B[t] || []).map(r => [r[0] + ':' + r[1], r]));
       for (const r of rows[t]) { const o = m.get(r.X + ':' + r.h); if (!o) continue; n++;
         const e0 = err(o[3], o[2]), e1 = err(r.api, r.mesh), d = e1 === e0 ? 0 : e1 - e0;
         if (d > 0.15) { w15++; if (d > 0.5) w50++; W.push({ t, X: r.X, h: r.h, mesh: r.mesh, was: o[3], now: r.api, d }); } else if (d < -0.15) b15++; }
       for (const o of B[t] || []) if (!rows[t].some(r => r.X === o[0] && r.h === o[1])) gone++; }
-    console.log(`per-row vs ${path.relative(ROOT, opt.baseline)}: ${n} rows compared, worse by > 0.15 m ${w15} (> 0.5 m ${w50}), better by > 0.15 m ${b15}; rows no longer measured ${gone}`);
+    console.log(`per-row vs ${path.relative(ROOT, bf)}: ${n} rows compared, worse by > 0.15 m ${w15} (> 0.5 m ${w50}), better by > 0.15 m ${b15}; rows no longer measured ${gone}`);
     W.sort((a, b) => b.d - a.d);
     for (const w of W.slice(0, 20)) console.log(`  WORSE ${w.t.padEnd(5)} X ${w.X} keel + ${w.h}: api ${w.was} -> ${w.now} (mesh ${w.mesh.toFixed(3)})`);
   }

@@ -186,7 +186,13 @@ def blend_neighbours(P, log):
 def hb(p, xz):
     """deck-top level of piece p at plan points xz as built: hp, met halfway by each blended neighbour q within BLEND m:
     + w x phi(raw) / 2 with raw = hp_ext(q) - hp(p), w = 1 - distance to q's deck / BLEND, phi(r) = r for |r| <= BLEND_DH,
-    sign(r) (2 BLEND_DH - |r|) up to 2 BLEND_DH, 0 beyond"""
+    sign(r) (2 BLEND_DH - |r|) up to 2 BLEND_DH, 0 beyond.
+    Close-out round 5 note (integration verifier, wedge creases): a joint wedge keeps this level, the clamped node level
+    beyond its owner's centreline end. Both caps it fills between are at the node level along their whole width (hp depends
+    on the station only), so the flat wedge is the exact C0 fill; the 6.4-deg fold where it meets an 11.2 % ramp is the
+    ramp's own grade. Dev build c5/g1 tried the two decks' end-slope extrapolations, weighted by distance (no step at
+    either cap): folds > 6 deg 6 -> 17 and 0.002-m2 slivers at 79 % - reverted; removing the fold needs a warped junction
+    surface (open item)"""
     xz = np.asarray(xz, float); h = hp(p, xz)
     if not p.get('blend_nbrs') or not len(xz): return h
     pts = shapely.points(xz); dh = np.zeros(len(xz))
@@ -918,6 +924,20 @@ def chain_len(flag, L):
     return out
 
 
+def _bottoms(p, lod):
+    """(plan triangles (n, 3, 2), per-corner underside heights above grade (n, 3)) of piece p at this LOD as build_piece
+    builds it: the soffit (deck depth below the top) on triangles with a vertex at or above FILL_H, grade (0) under fill;
+    cached (close-out round 5: the joint closures under the decks)"""
+    c = p.setdefault('_bot', {})
+    if lod in c: return c[lod]
+    geom = p['geom'].simplify({0: 0.05, 1: 0.35, 2: 1.0}[lod])
+    V, I = tri_polys(geom, {0: 6.0, 1: 16.0, 2: 30.0}[lod]) if not geom.is_empty else (np.zeros((0, 2)), np.zeros((0, 3), int))
+    if not len(I): c[lod] = None; return None
+    h = hb(p, V); sof = (h >= FILL_H)[I].any(1)
+    c[lod] = (V[I], np.where(sof[:, None], np.maximum(h - RN.DECK_DEPTH, 0.0)[I], 0.0))
+    return c[lod]
+
+
 def build_piece(mb, p, P_all, lod, mat_deck, top=True):
     geom = p['geom'].simplify({0: 0.05, 1: 0.35, 2: 1.0}[lod])
     if geom.is_empty: return
@@ -1016,6 +1036,36 @@ def build_piece(mb, p, P_all, lod, mat_deck, top=True):
                     if nbr[k] < 0 or lod == 2: continue
                     qa, qb = hb((nbrs + own)[nbr[k]], np.array([a, b]))
                     da, db = ha[k] - qa, hb_[k] - qb
+                    # close-out round 5 (integration verifier, f3 / f6 residuals): the joint UNDER the decks. Where this deck's
+                    # underside at the joint (its soffit, or its own abutment) is higher than the neighbour's (the neighbour's
+                    # soffit after a 0.02-0.30 m step: a see-through slit; or grade under an all-fill neighbour: the hollow fill
+                    # deck seen from under the span, 16.5 m at cross-piece fill joints), a vertical face from the neighbour's
+                    # underside up to this one's closes it, facing into this deck's under-space (r4 built abutments only
+                    # between triangles of ONE piece)
+                    q_ = (nbrs + own)[nbr[k]]
+                    if q_['id'] != p['id'] and lod < 2:
+                        # probes 5 % in from the run's ends (at the ends themselves a polygon corner puts the probe outside both
+                        # decks: c5 dev g2, 1,368 m unresolved), 0.06 m into this deck and 0.06 / INNER_GAP + 0.06 m into the
+                        # neighbour (it may stand off by up to INNER_GAP: c5 dev g1 closed only 9.2 of the 16.5 m)
+                        Xe = np.array([a + 0.05 * (b - a), b - 0.05 * (b - a)])
+                        X2 = Xe - 0.06 * N2[k]
+                        Tp, Tq = _bottoms(p, lod), _bottoms(q_, lod)
+                        if Tp is not None and Tq is not None:
+                            bp_ = tri_lookup(Tp[0], Tp[1], X2); bq_ = np.full(2, np.nan)
+                            for off in (0.06, INNER_GAP[lod] + 0.06):
+                                bq_ = np.where(np.isnan(bq_), tri_lookup(Tq[0], Tq[1], Xe + off * N2[k]), bq_)
+                                if not np.isnan(bq_).any(): break
+                            if (np.isnan(bp_).any() or np.isnan(bq_).any()) and lod == 0:
+                                st['under_joint_unresolved_m'] = st.get('under_joint_unresolved_m', 0.0) + L
+                            elif not (np.isnan(bp_).any() or np.isnan(bq_).any()) and (bp_ > 0.05).all() and (bp_ - bq_ > 0.02).any():
+                                ya, yb = min(bq_[0], bp_[0]), min(bq_[1], bp_[1])
+                                quad(np.array([[a[0], GROUND_Y + ya, a[1]], [b[0], GROUND_Y + yb, b[1]], [b[0], GROUND_Y + bp_[1], b[1]], [a[0], GROUND_Y + bp_[0], a[1]]]),
+                                     -nrm, L, ya, yb, bp_[0], bp_[1])
+                                if lod == 0:
+                                    st['under_joint_m'] = st.get('under_joint_m', 0.0) + L
+                                    if (bq_ < 0.05).any(): st['under_joint_to_grade_m'] = st.get('under_joint_to_grade_m', 0.0) + L
+                        elif lod == 0 and Tp is not None:
+                            st['under_joint_unresolved_m'] = st.get('under_joint_unresolved_m', 0.0) + L
                     if max(da, db) > 0.02:
                         if lod == 0:   # fix round 2: the step faces by height (the verifier's ledges inside a carriageway; the ITB lower sidewalk's kerb apart)
                             hk = max(da, db); bn = '0.02-0.05' if hk <= 0.05 else '0.05-0.10' if hk < 0.1 else '0.10-0.20' if hk < 0.2 else '0.20-0.30' if hk <= STEP_TOL + 0.01 else '>0.30'
@@ -1351,6 +1401,108 @@ def _mesh_tris(mb, lod, keep):
     return out
 
 
+class _PlanGrid:
+    """plan bucket grid over triangles (n, 3, 3) (x, y up, z): candidates near a point; heights of the triangles covering it"""
+
+    def __init__(self, T, cs=4.0):
+        self.T, self.cs = T, cs; Q = T[:, :, [0, 2]]; self.mn, self.mx = Q.min(1), Q.max(1); G = {}
+        for i in range(len(T)):
+            for gx in range(int(self.mn[i, 0] // cs), int(self.mx[i, 0] // cs) + 1):
+                for gz in range(int(self.mn[i, 1] // cs), int(self.mx[i, 1] // cs) + 1): G.setdefault((gx, gz), []).append(i)
+        self.G = {k: np.array(v) for k, v in G.items()}
+
+    def cand(self, x, z, r=0.0):
+        ids = set()
+        for gx in range(int((x - r) // self.cs), int((x + r) // self.cs) + 1):
+            for gz in range(int((z - r) // self.cs), int((z + r) // self.cs) + 1):
+                if (gx, gz) in self.G: ids.update(self.G[(gx, gz)].tolist())
+        if not ids: return np.zeros(0, int)
+        ids = np.array(sorted(ids))
+        m = (self.mn[ids, 0] <= x + r) & (self.mx[ids, 0] >= x - r) & (self.mn[ids, 1] <= z + r) & (self.mx[ids, 1] >= z - r)
+        return ids[m]
+
+    def heights(self, x, z):
+        ids = self.cand(x, z); T = self.T[ids]; q = T[:, :, [0, 2]]
+        a, b, c = q[:, 0], q[:, 1], q[:, 2]; v0 = b - a; v1 = c - a; d = v0[:, 0] * v1[:, 1] - v0[:, 1] * v1[:, 0]; ok = np.abs(d) > 1e-9; dd = np.where(ok, d, 1)
+        px = x - a[:, 0]; pz = z - a[:, 1]; u = (px * v1[:, 1] - pz * v1[:, 0]) / dd; v = (v0[:, 0] * pz - v0[:, 1] * px) / dd
+        mm = ok & (u >= -1e-6) & (v >= -1e-6) & (u + v <= 1 + 1e-6)
+        return T[mm, 0, 1] + u[mm] * (T[mm, 1, 1] - T[mm, 0, 1]) + v[mm] * (T[mm, 2, 1] - T[mm, 0, 1])
+
+
+def _vert_spans(T, x, z, tol=0.04):
+    """height ranges of the vertical triangles T at the plan point (x, z) (those whose plan segment passes within tol)"""
+    out = []
+    for t in T:
+        q = t[:, [0, 2]]; d = q.max(0) - q.min(0); ax = 0 if d[0] >= d[1] else 1
+        lo, hi = q[:, ax].min(), q[:, ax].max(); pp = (x, z)[ax]
+        if pp < lo - tol or pp > hi + tol: continue
+        A = q[np.argmin(q[:, ax])]; B = q[np.argmax(q[:, ax])]; AB = B - A
+        tt = float(np.clip(((np.array([x, z]) - A) @ AB) / (AB @ AB + 1e-12), 0, 1))
+        if np.hypot(*(A + tt * AB - np.array([x, z]))) > tol: continue
+        sv = (q[:, ax] - lo) / max(hi - lo, 1e-9); ys = []
+        for i, j in ((0, 1), (1, 2), (2, 0)):
+            if (sv[i] - tt) * (sv[j] - tt) <= 0 and abs(sv[j] - sv[i]) > 1e-9:
+                f = (tt - sv[i]) / (sv[j] - sv[i]); ys.append(t[i, 1] + f * (t[j, 1] - t[i, 1]))
+            elif abs(sv[j] - sv[i]) <= 1e-9 and abs(sv[i] - tt) < 1e-3: ys += [t[i, 1], t[j, 1]]
+        if ys: out.append((min(ys), max(ys)))
+    return out
+
+
+def soffit_check(mb, log, lod=0):
+    """close-out round 5 self-check (integration verifier, f3 / f6 residuals: see-through slits under 0.02-0.30-m steps and no
+    face where a soffit meets a neighbouring piece's fill deck): every boundary edge of the LOD's soffits (down-facing
+    concrete, welded at 1 cm), sampled every 0.5 m, is CLOSED when a vertical concrete face passes within 0.04 m in plan and
+    spans the soffit height (+-0.03 m), or another soffit continues 0.15 m outward within 0.15 m in height; else OPEN - 'into
+    a hollow' when a deck / walk top lies 0.3 m outward above it (one looks from under the span into the hollow under a deck),
+    else 'other' (e.g. the deck end over an at-grade road). The same rule as the round-4 verifier's soffit_close.py"""
+    SOF, VER, TOP = [], [], []
+    for (u, mat), T in _mesh_tris(mb, lod, lambda m: True).items():
+        n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); a = np.linalg.norm(n, axis=1) / 2; up = n[:, 1] / (2 * a + 1e-12)
+        if mat == 'concrete':
+            SOF.append(T[(up < -0.9) & (a > 1e-5)]); VER.append(T[(np.abs(up) < 0.15) & (a > 1e-5)])
+        if mat.startswith('deck') or mat in ('sidewalk', 'planter', 'island'): TOP.append(T[(up > 0.5) & (a > 1e-5)])
+    if not SOF: return {}
+    SOF, VER, TOP = np.concatenate(SOF), np.concatenate(VER), np.concatenate(TOP)
+    GS, GV, GT = _PlanGrid(SOF), _PlanGrid(VER, 3.0), _PlanGrid(TOP)
+    K = np.round(SOF / 0.01).astype(np.int64); E = {}
+    for i in range(len(SOF)):
+        for e in ((0, 1), (1, 2), (2, 0)):
+            ka, kb = tuple(K[i, e[0]]), tuple(K[i, e[1]]); E.setdefault((min(ka, kb), max(ka, kb)), []).append((i, e))
+    R = dict(face=0.0, soffit_continues=0.0, open_into_hollow=0.0, open_other=0.0); opens = []
+    for key, l in E.items():
+        if len(l) != 1: continue
+        i, e = l[0]; t = SOF[i]; A, B = t[e[0]], t[e[1]]; Ln = float(np.hypot(B[0] - A[0], B[2] - A[2]))
+        if Ln < 1e-3: continue
+        c = t.mean(0); d = np.array([B[0] - A[0], B[2] - A[2]]) / Ln; nrm = np.array([-d[1], d[0]])
+        mid = (np.array([A[0], A[2]]) + np.array([B[0], B[2]])) / 2
+        if np.dot(np.array([c[0], c[2]]) - mid, nrm) > 0: nrm = -nrm
+        ns = max(1, int(round(Ln / 0.5))); w = Ln / ns
+        for j in range(ns):
+            Pq = A + (B - A) * ((j + 0.5) / ns); x, z, y = Pq[0], Pq[2], Pq[1]
+            ids = GV.cand(x, z, 0.05)
+            if len(ids) and any(lo - 0.03 <= y <= hi + 0.03 for lo, hi in _vert_spans(VER[ids], x, z)): R['face'] += w; continue
+            hs = GS.heights(x + nrm[0] * 0.15, z + nrm[1] * 0.15)
+            if len(hs) and np.min(np.abs(hs - y)) < 0.15: R['soffit_continues'] += w; continue
+            ht = GT.heights(x + nrm[0] * 0.3, z + nrm[1] * 0.3)
+            kind = 'open_into_hollow' if len(ht) and ((ht > y) & (ht < y + 3.0)).any() else 'open_other'
+            R[kind] += w
+            if kind == 'open_into_hollow': opens.append([x, z, y - GROUND_Y, w])
+    cl = []
+    for o in opens:
+        for c in cl:
+            if np.hypot(c[0] - o[0], c[1] - o[1]) < 6: c[3] += o[3]; break
+        else: cl.append(list(o))
+    res = dict(rule='LOD%d soffit boundary edges every 0.5 m: closed by a vertical concrete face within 0.04 m spanning the soffit height, or a soffit '
+                    'continuing 0.15 m outward within 0.15 m; open into a hollow when a deck / walk top lies 0.3 m outward above (close-out r5)' % lod,
+               boundary_m=round(sum(R.values()), 1), **{k + '_m': round(v, 1) for k, v in R.items()},
+               open_into_hollow_top=[dict(at=[round(float(c[0]), 1), round(float(c[1]), 1)], soffit_m=round(float(c[2]), 2), len_m=round(float(c[3]), 1))
+                                     for c in sorted(cl, key=lambda c: -c[3])[:10]])
+    log('soffit closure (self-check, close-out r5; LOD%d): boundary %.0f m - closed by a face %.1f m, soffit continues %.1f m, open into a hollow %.1f m, '
+        'open other %.1f m; largest open-into-hollow %s' % (lod, res['boundary_m'], R['face'], R['soffit_continues'], R['open_into_hollow'], R['open_other'],
+                                                             res['open_into_hollow_top'][:3]))
+    return res
+
+
 def grade_check(mb, log):
     """close-out r4 fix round 2 self-check (verifier ver1, major: the round-4 blend's grade waves were measured on the way
     profiles, not on the mesh): the AS-BUILT grade of every LOD0 deck-top triangle (deck_* materials, facing up, > 0.001
@@ -1389,7 +1541,7 @@ def grade_check(mb, log):
     res = dict(rule='LOD0 deck-top triangles (deck_* materials, n.y > 0.7, > 0.001 m2): |gradient| %, area-weighted; folds = angle between welded neighbours',
                triangles=len(rows), area_m2=round(float(A.sum()), 1), max_pct=round(float(G.max()), 2), top=top,
                over_pct_m2={'%g' % t: round(float(A[G > t].sum()), 1) for t in th}, by_unit=by,
-               folds={'>%d_deg' % t: dict(n=int((fa > t).sum()), edge_m=round(float(fl[fa > t].sum()), 1)) for t in (1, 2, 4)},
+               folds={'>%d_deg' % t: dict(n=int((fa > t).sum()), edge_m=round(float(fl[fa > t].sum()), 1)) for t in (1, 2, 4, 6)},
                fold_top=[dict(deg=round(f[0], 1), unit=f[1], at=[round(float(f[3][0]), 1), round(float(f[3][2]), 1)], edge_m=round(f[2], 1)) for f in sorted(folds, key=lambda f: -f[0])[:8]])
     log('mesh grades (self-check, close-out r4 fix round 2; LOD0 deck tops): max %.2f %% at %s, area > 8 / 10 / 12 / 13.5 %%: %s m2; folds > 1 / 2 / 4 deg: %s; '
         'units > 10 %%: %s' % (res['max_pct'], top[0], ' / '.join(str(res['over_pct_m2'][k]) for k in ('8', '10', '12', '13.5')),
@@ -1789,12 +1941,14 @@ def main(argv):
     pchk = parapet_check(mb, log)
     gchk = grade_check(mb, log)
     cchk = column_soffit_check(mb, cols, log)
+    schk = soffit_check(mb, log)
     # close-out r4 self-check (dev build d9 lost two whole decks in a failed merge): pieces without deck although their
     # ribbon is large - every one is listed with the reason the trim gave it (asset / enclosure / stacked cuts)
     empty = [dict(id=p['id'], src=p['src'], rib_m2=round(p['rib'].area, 1), cut_by=p.get('cut_by'), stacked_cut_by=p.get('stacked_cut_by')) for p in P
              if p['src'] in ('deck', 'ramp') and p['geom'].area < 1.0 and p['rib'].area > 20.0]
     log('pieces with no deck left (ribbon > 20 m2): %s' % (empty or 'none'))
-    edge = {k: round(sum(p.get('edge_stats', {}).get(k, 0.0) for p in P), 1) for k in ('parapet_m', 'step_face_m', 'slit_runs_dropped_m', 'abutment_m')}
+    edge = {k: round(sum(p.get('edge_stats', {}).get(k, 0.0) for p in P), 1) for k in ('parapet_m', 'step_face_m', 'slit_runs_dropped_m', 'abutment_m',
+                                                                                     'under_joint_m', 'under_joint_to_grade_m', 'under_joint_unresolved_m')}
     edge['step_face_by_height_m'] = {b: round(sum(p.get('edge_stats', {}).get('step_face_bins_m', {}).get(b, 0.0) for p in P), 1) for b in ('0.02-0.05', '0.05-0.10', '0.10-0.20', '0.20-0.30', 'walk_kerb')}
     sites = sorted([x for p in P if p['src'] != 'walk' for x in p.get('edge_stats', {}).get('step_face_sites', []) if x[3] != 'itb_lower_walk'], key=lambda x: -x[0] * x[1])
     edge['step_face_top'] = [dict(h_m=x[0], len_m=x[1], at=x[2], neighbour=x[3], connected=x[4]) for x in sites[:15]]
@@ -1832,7 +1986,7 @@ def main(argv):
                                                          note='the lower level (photo i1, close-out round 3): held level at LOWER_H on the straight; OSM layer 1, passes under the anchored departures leg past the straight')),
                  stacked=dict(solve=sol.get('stacked', []), cuts=stk_recs),
                  joint_wedges=jw, in_carriageway_parapet=pchk, pieces_without_deck=empty, edges_lod0=dict(edge, step_tol_m=STEP_TOL, inner_gap_m=INNER_GAP),
-                 blend=blend, mesh_grades=gchk, columns_vs_soffit=cchk,
+                 blend=blend, mesh_grades=gchk, columns_vs_soffit=cchk, soffit_closure=schk,
                  curb_gap=gapchk, curb_gap_t2=gapchk_t2, guideway_clearance=clr, guideway_pier_caps_over_decks=clr_p, deck_cut_inside_buildings_m2=body_cut, deck_left_inside_buildings_m2=body_left)
     sheet(P, cols, os.path.join(OUTD, 'roadways_plan.png'), LV, dict(pieces=len(P), columns=cst, low=len(chk['low'])))
     log('check sheet out/buildings3d/roadways_plan.png')
@@ -1906,7 +2060,11 @@ def main(argv):
                                   pieces_without_deck=[e['id'] for e in empty],
                                   fix_round_2=dict(blend=blend, mesh_grade_max_pct=gchk.get('max_pct'), mesh_grade_over_pct_m2=gchk.get('over_pct_m2'),
                                                    mesh_grade_over_10_pct_by_unit={u: d['over_10_pct_m2'] for u, d in gchk.get('by_unit', {}).items()},
-                                                   columns_meeting_soffit='%d of %d' % (cchk['meeting_soffit'], cchk['columns']))),
+                                                   columns_meeting_soffit='%d of %d' % (cchk['meeting_soffit'], cchk['columns'])),
+                                  closeout_r5=dict(soffit_closure={k: schk.get(k) for k in ('boundary_m', 'face_m', 'soffit_continues_m', 'open_into_hollow_m', 'open_other_m')},
+                                                   under_joint_m=edge.get('under_joint_m'), under_joint_to_grade_m=edge.get('under_joint_to_grade_m'),
+                                                   under_joint_unresolved_m=edge.get('under_joint_unresolved_m'),
+                                                   mesh_folds=gchk.get('folds'))),
                  verification=stats)
     BI.merge_manifest(entry, key='roadways')
     open(os.path.join(OUTD, 'roadways_build.log'), 'w').write('\n'.join(lines) + '\n')

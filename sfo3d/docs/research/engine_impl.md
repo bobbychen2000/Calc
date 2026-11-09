@@ -409,6 +409,21 @@ peak Chromium RSS 4.0 GB on llvmpipe (GPU memory = system RAM here). Headless DP
 **Documentation (engine-v4)**: `docs/requests/engine_closeout.md` §0 corrected (everything of round 3 is in 0e92158 +
 40a32e3), §4.7 row 6 marked open after round 3; this section is the high-tier and ultra evidence for the final lights.js.
 
+### 4.9 Close-out round 5 (9 Nov 2026, runtime track): fatal hook, SSR occlusion, aureole footprint
+
+- **`renderer3.fatal()` -> `R.onFatal`** (realtime C3F2.1): the message goes to the app's hook (`ui.fail`, which works
+  after load) when one is set; the renderer's own `#loading` / `#r3fatal` text stays the fallback (no hook, or the hook
+  throws). Stub-DOM check of the method's own source: before 0 hook calls, after 1 (`engine_closeout.md` R5.1).
+- **SSR on wet pavement**: the IBL term it replaces is now subtracted with three's specular occlusion from the pre-pass
+  GTAO (`engine.js aoScreen`, `ssr.js specularOcclusion`); E9 render: SSR darkening > 20 levels 186 -> 42 px, confined
+  to the contact zones under bridges / aircraft / GSE (`environment_impl.md` close-out round 5, R5.1).
+- **Fog aureoles**: phone core quad 2 radii again; the energy the rim, the tan-mapped billboard and the quad cut lose is
+  folded back (`lights.js aurCoreGain / aurLobeGain`); test_c3 mirrors the shader (0.15 %). R5.2 there.
+- **Old renderer**: `js/shaders/sprites.js` draws no halo for lens records (needs `js/scene.js` to pack `s.lens`: request
+  `env_closeout.md` R5.2); `js/shaders/ground.js` path tone mixed by coverage (R5.4 there).
+- **Terrain**: lake-box grid lines (`terrain.js buildMeshes lakeCell` 80 m): +14 % / +25 % vertices on high / low, built
+  faster than before (R5.6 there). GPU cost of all of these: owner item OD-7.
+
 ## 5. Quality tiers (`engine.js QUALITY3`)
 
 | Tier | Chosen for | Shadows | AO | AA | Bloom | Bakes (m/texel) | Max image texture |

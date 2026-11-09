@@ -93,10 +93,10 @@ export function selectReport(indexed, tEnv, live = false) {
  *  10L / 10R RNAV; 1L/1R "no IAP") when the METAR is below the charted visual minima "SFO 2500'/5" (V). The whole
  *  fallback is tagged I and shown on the ?qa=env HUD. */
 // FAA Order 8400.9 "National Safety and Operational Criteria for Runway Use Programs" (1981, active; PDF cached
-// refs/cache/env_src/faa_order_8400-9.pdf, read 2026-11-07, close-out round 3 env-5: V) §4b: clear and dry runways - the
+// refs/cache/env_src/faa_order_8400-9.pdf, read 2026-11-07, close-out round 3 env-5: V) ¶7d(1): clear and dry runways - the
 // crosswind component INCLUDING GUSTS must not be greater than 20 kt (unless Flight Standards approves more), the
 // tailwind component not greater than 5 kt (7 kt where anemometers are installed near the touchdown zone / departure
-// end: SFO's NV, the 5-kt value also reproduces SFO's climatology, above); runways not clear or not dry - §4b(2): crosswind
+// end: SFO's NV, the 5-kt value also reproduces SFO's climatology, above); runways not clear or not dry - ¶7d(2): crosswind
 // incl. gusts <= 15 kt and "(b) No tailwind component may be present except the nominal range of winds reported as calm
 // (0-3 knots) may be considered to have no tailwind component" (pdftotext of the cached PDF, re-read 2026-11-09): the
 // 3 kt bound applies to the REPORTED WIND SPEED (gusts included), not to the tailwind component - a wet runway with any
@@ -118,7 +118,7 @@ export function runwayConfigFrom(d, observed, override) {
   const comp = (rw) => (kt != null && dir != null) ? { tail: -kt * Math.cos((dir - RWY_HDG[rw]) * DEG), cross: Math.abs(kX * Math.sin((dir - RWY_HDG[rw]) * DEG)) } : { tail: 0, cross: 0 };
   const c28 = comp('28'), c19 = comp('19'); const tail28 = c28.tail, cross28 = c28.cross;
   const wet = !!(d && (d.weather || []).some(x => (x.precip || []).length));
-  // (wet: any tailwind component counts unless the wind is reported calm, 0-3 kt incl. gusts - §4b(2)(b))
+  // (wet: any tailwind component counts unless the wind is reported calm, 0-3 kt incl. gusts - ¶7d(2)(b))
   const calm = kX <= WET_CALM_KT;
   const lim = wet ? { tail: calm ? Infinity : 0, cross: WET_CROSSWIND_KT } : { tail: TAILWIND_SE_KT, cross: CROSSWIND_SE_KT };
   const excess = (c) => (wet ? (calm ? 0 : Math.max(0, c.tail)) : Math.max(0, c.tail - lim.tail)) + Math.max(0, c.cross - lim.cross);
@@ -132,7 +132,7 @@ export function runwayConfigFrom(d, observed, override) {
   const cond = wet ? `wet (precip): no tailwind unless the wind is calm (${kX.toFixed(0)} kt ${calm ? '<=' : '>'} ${WET_CALM_KT}) / cross ${lim.cross} kt` : `dry: limits tail ${lim.tail} / cross ${lim.cross} kt`;
   const why = (okW ? `28 tail ${tail28.toFixed(1)} / cross ${cross28.toFixed(0)} kt within 8400.9 (${cond}): SFO West Plan`
     : `28 tail ${tail28.toFixed(1)} / cross ${cross28.toFixed(0)} kt beyond 8400.9 (${cond}), 19 tail ${c19.tail.toFixed(1)} / cross ${c19.cross.toFixed(0)}: SFO ${plan === 'southeast' ? 'Southeast' : 'West'} Plan`);
-  return { arr, dep: P[1], plan, tail28, cross28, wet, source: 'METAR fallback, ' + why, tag: 'I (SFO plans V; limits FAA Order 8400.9 §4b V; plan choice I)' };
+  return { arr, dep: P[1], plan, tail28, cross28, wet, source: 'METAR fallback, ' + why, tag: 'I (SFO plans V; limits FAA Order 8400.9 ¶7d V; plan choice I)' };
 }
 
 // ---------------------------------------------------------------------------------------------- vertical structure

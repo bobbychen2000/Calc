@@ -17,7 +17,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 let n = 0, fails = 0;
 const check = (name, ok, info = '') => { n++; if (!ok) fails++; console.log(`${ok ? 'PASS' : 'FAIL'} | ${name}${info !== '' ? ' | ' + info : ''}`); };
 
-// ---------------------------------------------------------------- env-5: FAA Order 8400.9 §4b limits in the fallback
+// ---------------------------------------------------------------- env-5: FAA Order 8400.9 ¶7d limits in the fallback
 {
   const P = (raw) => runwayConfigFrom(decodeMetar(raw), null, null);
   check('8400.9 dry: 28 crosswind incl. gust 21.8 kt > 20 (20015G22KT, VCTS only) -> Southeast', P('METAR KSFO 260022Z 20015G22KT 5SM VCTS SCT020 BKN030 14/12 A2990').plan === 'southeast');
@@ -27,7 +27,7 @@ const check = (name, ok, info = '') => { n++; if (!ok) fails++; console.log(`${o
   const sq = P('METAR KSFO 251056Z 22036G63KT 2SM +RA BR SQ BKN012 OVC020 12/11 A2970');
   check('8400.9 both plans fail (22036G63KT +RA): the smaller excess (Southeast)', sq.plan === 'southeast', sq.source);
   check('8400.9 constants (V): dry crosswind 20, wet 15', CROSSWIND_SE_KT === 20 && WET_CROSSWIND_KT === 15);
-  // close-out round 5: §4b(2)(b) "No tailwind component may be present except the nominal range of winds reported as calm
+  // close-out round 5: ¶7d(2)(b) "No tailwind component may be present except the nominal range of winds reported as calm
   // (0-3 knots)" - the 3 kt is the reported wind speed (gusts included), not a tailwind-component allowance
   check('8400.9 wet: 18004KT -RA (28 tail 1.9 kt, wind 4 kt not calm) -> Southeast', P('METAR KSFO 301456Z 18004KT 10SM -RA OVC010 14/13 A2995').plan === 'southeast', P('METAR KSFO 301456Z 18004KT 10SM -RA OVC010 14/13 A2995').source);
   check('8400.9 wet: 18003KT -RA (wind reported in the calm range 0-3 kt) -> West', P('METAR KSFO 301456Z 18003KT 10SM -RA OVC010 14/13 A2995').plan === 'west');
@@ -95,16 +95,25 @@ const check = (name, ok, info = '') => { n++; if (!ok) fails++; console.log(`${o
       inN++; if (T.height(mx - nx * 30, mz - nz * 30) < L.level_y) inB++; outN++; if (T.height(mx + nx * 100, mz + nz * 100) > L.level_y) outA++; }
     check(`terrain carved for ${L.name} (level y ${L.level_y}): bed below the water 30 m inside, ground above it 100 m outside (>= 85 %; narrow arms excepted)`, inB / inN >= 0.85 && outA / outN >= 0.85, `inside ${inB}/${inN}, outside ${outA}/${outN}`);
   }
-  // close-out round 5 (c3 verifier env-14): what the terrain MESH shows - Terrain.buildMeshes' grid (step 15 to +-4.2 km,
-  // then x1.052 per cell: 100-550 m at the lakes) interpolated between its samples; the water is visible where that
-  // surface lies below the level (round 3: 94 / 73 / 69 %, the bed only 3 m deep against a bank rising 0.12 m/m)
-  const co = []; for (let x = -4200; x <= 4200 + 1e-6; x += 15) co.push(x); { let x = 4200, s = 15; while (x < 60000) { s *= 1.052; x += s; co.unshift(-x); co.push(x); } }
-  const ix = (v) => { let lo = 0, hi = co.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (co[m] <= v) lo = m; else hi = m; } return lo; };
-  const meshH = (x, z) => { const i = ix(x), j = ix(z); const u = (x - co[i]) / (co[i + 1] - co[i]), v = (z - co[j]) / (co[j + 1] - co[j]); return (T.height(co[i], co[j]) * (1 - u) + T.height(co[i + 1], co[j]) * u) * (1 - v) + (T.height(co[i], co[j + 1]) * (1 - u) + T.height(co[i + 1], co[j + 1]) * u) * v; };
+  // close-out round 5 (c3 verifier env-14): what the terrain MESH shows - the triangles Terrain.buildMeshes builds (its
+  // grid: step to +-4.2 km, then x1.052 per cell, + the lake-box lines of lakeCell 80 m), interpolated as drawn; the water
+  // is visible where that surface lies below the level (round 3: 94 / 73 / 69 %, the bed only 3 m deep against a bank
+  // rising 0.12 m/m; round 5 bed alone: 95.3 / 86.4 / 85.9 %, the far cells 100-550 m long)
   const inR = (R, x, z) => { let c = false; for (let i = 0, j = R.length - 1; i < R.length; j = i++) { const [xa, za] = R[j], [xb, zb] = R[i]; if ((za > z) !== (zb > z) && x < (xb - xa) * (z - za) / (zb - za) + xa) c = !c; } return c; };
-  const vis = []; for (const L of RESERVOIRS.lakes) { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const [x, z] of L.ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
-    let n = 0, b = 0; for (let x = x0; x <= x1; x += 50) for (let z = z0; z <= z1; z += 50) { if (!inR(L.ring, x, z)) continue; n++; if (meshH(x, z) < L.level_y) b++; } vis.push(b / n); }
-  check('lakes over the terrain MESH (step-15 grid): water visible >= 85 % of each lake (residual: shore bends finer than the far cells)', vis.every(v => v >= 0.85), vis.map(v => (100 * v).toFixed(1) + ' %').join(' / '));
+  for (const step of [15, 30]) {
+    const ch = T.buildMeshes([0, 0], step); const X = new Set(), Z = new Set();
+    for (const c of ch) for (let k = 0; k < c.pos.length; k += 3) { X.add(c.pos[k]); Z.add(c.pos[k + 2]); }
+    const xs = Float64Array.from(X).sort(), zs = Float64Array.from(Z).sort(), nx = xs.length, Hm = new Float32Array(nx * zs.length);
+    const bs = (C, v) => { let lo = 0, hi = C.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (C[m] <= v) lo = m; else hi = m; } return lo; };
+    for (const c of ch) for (let k = 0; k < c.pos.length; k += 3) Hm[bs(zs, c.pos[k + 2] + 1e-3) * nx + bs(xs, c.pos[k] + 1e-3)] = c.pos[k + 1];
+    const meshH = (x, z) => { const i = bs(xs, x), j = bs(zs, z); const u = (x - xs[i]) / (xs[i + 1] - xs[i]), v = (z - zs[j]) / (zs[j + 1] - zs[j]);
+      const a = Hm[j * nx + i], b = Hm[j * nx + i + 1], c = Hm[(j + 1) * nx + i], d = Hm[(j + 1) * nx + i + 1];   // the chunk's diagonals (chunks start on even indices)
+      if ((i + j) & 1) return u + v <= 1 ? a + (b - a) * u + (c - a) * v : d + (c - d) * (1 - u) + (b - d) * (1 - v);
+      return u >= v ? a + (b - a) * u + (d - b) * v : a + (c - a) * v + (d - c) * u; };
+    const vis = []; for (const L of RESERVOIRS.lakes) { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const [x, z] of L.ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+      let n = 0, b = 0; for (let x = x0; x <= x1; x += 25) for (let z = z0; z <= z1; z += 25) { if (!inR(L.ring, x, z)) continue; n++; if (meshH(x, z) < L.level_y) b++; } vis.push(b / n); }
+    check(`lakes over the built terrain MESH (step ${step}${step === 30 ? ', low / phone' : ', high'}): water visible >= 95 % of each lake`, vis.every(v => v >= 0.95), vis.map(v => (100 * v).toFixed(1) + ' %').join(' / ') + `; ${nx} x ${zs.length} vertices`);
+  }
 }
 // ---------------------------------------------------------------- env-3: fog aureole profile (js/three/lights.js, CPU mirror)
 {

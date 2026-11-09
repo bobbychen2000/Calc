@@ -278,11 +278,14 @@ function underAt(F, st, z) {
 }
 // fuselage bottom on the centre plane (model units) at model station st (positive aft): linear between the two nearest
 // complete sections (each within 2 m). A cut through a gear well finds the well's roof on the centre plane, not the belly:
-// a section whose bottom is more than 0.3 above the lower of its neighbours is skipped
+// a section whose bottom is more than 0.3 above the lower of its neighbours is skipped. A cut that crosses the centre plane
+// only once (top = bottom) is skipped too (close-out round 5: on the A319 / A320 / A321 FAM models the belly at X 3-5 m is
+// the nose-gear doors, a zone the section table leaves out, so the cut found only the crown and X 2.5-5 m read a keel
+// 0.4-0.9 m too high: X 2.5 keel + 0.15 m 0.01-0.09 against the mesh's 1.54-1.57 m at that height)
 function botAt(F, st) {
   const S = F && F.sec; if (!S) return null;
   const nb = (j) => Math.min(...[j - 1, j + 1].filter(i => i >= 0 && i < S.bot.length && S.bot[i] != null).map(i => S.bot[i]).concat([1e9]));
-  const ok = (j) => j >= 0 && j < S.bot.length && S.bot[j] != null && S.top[j] != null && S.hw[j] != null && S.hw[j] >= 0.3 * (S.top[j] - S.bot[j]) / 2 && S.bot[j] <= nb(j) + 0.3;
+  const ok = (j) => j >= 0 && j < S.bot.length && S.bot[j] != null && S.top[j] != null && S.top[j] - S.bot[j] > 0.05 && S.hw[j] != null && S.hw[j] >= 0.3 * (S.top[j] - S.bot[j]) / 2 && S.bot[j] <= nb(j) + 0.3;
   const j0 = Math.floor(st / S.dx), w = Math.round(2 / S.dx); let a = null, b = null;
   for (let j = j0; j >= j0 - w; j--) if (ok(j)) { a = j; break; }
   for (let j = j0 + 1; j <= j0 + 1 + w; j++) if (ok(j)) { b = j; break; }
@@ -314,19 +317,37 @@ function botAt(F, st) {
 //     --baseline, per row against round 3 (same mesh rows): worse by > 0.15 m 545 -> 59 (> 0.5 m: 152 -> 20), 1691
 //     better; against round 4 (fix 1): 281 worse, 1226 better; keel + <= 0.3 m off by > 0.15 / 0.5 m 854 / 428 -> 673 /
 //     263, every height > 0.15 m 3421 -> 2614 (scratch c4/aircraft/fix2: hwvar.mjs variants A .. K, this is K1).
+//     Close-out round 5 (verifier c4-2 finding 5: against round 4 fix 1, 280 rows worse by > 0.15 m, 221 of them tail-cone
+//     rows at keel + 1.4 m). Root cause: above the table, aft of the hwf table (0.45 L), hwAt has only the ellipse through
+//     the tallest section within 2 m (secAt), which at a tail cone is a section carrying the fin (A330 X 54 keel + 1.4 m
+//     0.76 against the mesh's 1.90 m, 747-400 X 55.5 0.97 / 2.45, A380 X 57 0.93 / 2.48, MD-11 X 45.5 1.02 / 2.24); round 4
+//     fix 1 had answered those rows from far sections' tables (1.5-2.0, also short) until the round-4 guard (kept) stopped
+//     it. Fix: the table now reaches 1.5 model m (tools/models/model_features.py HWL), and its rows above LO_FWD are read
+//     only at sections without the hwf table (ahead of 0.45 L hwf is the better answer: nose taper, wing-body fairing). The
+//     gear-bay keel-beam test is limited to stations ahead of 0.75 L (main-gear bays lie at 0.4-0.6 L on every model): at
+//     a tail cone the section height includes the fin and the test skipped real skin (A220-300 X 35.5-37.5 keel + 0.05 m
+//     0.19 against 0.82 m), and a single-crossing cut (top = bottom, botAt) is skipped. tools/models/skin_check.mjs, per row
+//     (same mesh rows except where the keel moved, below): against the stored round-4 fix-2 baseline 26 rows worse by >
+//     0.15 m (5 by > 0.5 m), 1076 better; against round 4 fix 1 281 -> 48 worse (> 0.5 m: 99 -> 17), 1226 -> 2176 better;
+//     against round 3 59 -> 64 worse (20 -> 20), 1691 -> 2733 better; every height > 0.15 / 0.5 m 2614 / 1127 -> 1638 / 623;
+//     keel + <= 0.3 m 673 / 263 -> 678 / 192 (A320 family 86 / 72 -> 104 / 6: the nose-gear-bay keel). Still outside the
+//     API's validity: the wing box / main-gear bays at keel + 1.4 m (20 rows: A350, 787, A380 wing-body fairing, 777 bay).
+const LO_FWD = 1.0;
 function hwLow(F, st, y) {
   const S = F && F.sec; if (!S || !S.hwl) return null; const lo = S.lo;
+  const top = (j) => S.hwf && S.hwf[j] ? Math.min(LO_FWD, lo[lo.length - 1]) : lo[lo.length - 1];   // (table top at section j)
   const at = (j, dy) => {                                  // section j at dy above its own bottom
-    const r = S.hwl[j]; if (dy < 0) return 0; if (dy > lo[lo.length - 1] + 0.1) return null; dy = Math.min(dy, lo[lo.length - 1]);
+    const r = S.hwl[j], t = top(j); if (dy < 0) return 0; if (dy > t + 0.1) return null; dy = Math.min(dy, t);
     if (dy <= lo[0]) return r[0] != null ? r[0] * dy / lo[0] : null;
     let k = 0; while (k < lo.length - 2 && dy > lo[k + 1]) k++;
     if (r[k] == null || r[k + 1] == null) return null;
     return r[k] + (r[k + 1] - r[k]) * (dy - lo[k]) / (lo[k + 1] - lo[k]);
   };
   // (a section whose lower lobe is nowhere wider than 0.2 x its half height is not skin: the cut found the keel beam of a
-  // main-gear bay, 777 X 35-39 m: 0.28 m against the mesh's 3.0 m)
-  const ok = (j) => j >= 0 && j < S.bot.length && S.bot[j] != null && !!S.hwl[j] &&
-    !(S.top[j] != null && Math.max(...S.hwl[j].map(v => v ?? 0)) < 0.2 * (S.top[j] - S.bot[j]) / 2);
+  // main-gear bay, 777 X 35-39 m: 0.28 m against the mesh's 3.0 m; tested ahead of 0.75 L on the rows up to LO_FWD only, and
+  // a cut that crosses the centre plane once, top = bottom, is not a section either)
+  const ok = (j) => j >= 0 && j < S.bot.length && S.bot[j] != null && !!S.hwl[j] && !(S.top[j] != null && S.top[j] - S.bot[j] <= 0.05) &&
+    !(j < 0.75 * S.top.length && S.top[j] != null && Math.max(...S.hwl[j].filter((v, k) => lo[k] <= LO_FWD).map(v => v ?? 0)) < 0.2 * (S.top[j] - S.bot[j]) / 2);
   const j0 = Math.floor(st / S.dx), w = Math.round(2 / S.dx); let a = null, b = null;
   for (let j = j0; j >= j0 - w; j--) if (ok(j)) { a = j; break; }
   for (let j = j0 + 1; j <= j0 + 1 + w; j++) if (ok(j)) { b = j; break; }
@@ -335,7 +356,7 @@ function hwLow(F, st, y) {
     const va = at(a, dy), vb = at(b, dy);
     if (va != null && vb != null) return va + u * (vb - va);
   }
-  const kb = botAt(F, st); if (kb == null || y - kb > lo[lo.length - 1] + 0.25) return null;
+  const kb = botAt(F, st); if (kb == null || y - kb > top(Math.max(0, j0)) + 0.25) return null;
   const abs = (j) => ok(j) && y >= S.bot[j] && Math.abs(S.bot[j] - kb) < 0.5 ? at(j, y - S.bot[j]) : null;
   let A = null, B = null;
   for (let j = j0; j >= j0 - w; j--) { const v = abs(j); if (v != null) { A = { j, v }; break; } }

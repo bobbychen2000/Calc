@@ -890,10 +890,10 @@ SSR on/off difference only in the reflection column (mean |Δ| 0.24 DN, max 24.7
 
 ### R3.2 Runway-use limits from the primary source (env-5)
 
-FAA Order 8400.9 (PDF cached, `refs/cache/env_src/faa_order_8400-9.pdf`, public domain, SOURCES.json) §4b:
+FAA Order 8400.9 (PDF cached, `refs/cache/env_src/faa_order_8400-9.pdf`, public domain, SOURCES.json) ¶7d:
 dry runway crosswind INCLUDING GUSTS ≤ 20 kt, tailwind ≤ 5 kt (7 kt with touchdown-zone anemometers — SFO's
 installation NV, so 5 is used); not clear / not dry: crosswind incl. gusts ≤ 15 kt and "no tailwind component may be
-present except the nominal range of winds reported as calm (0-3 knots)" (§4b(2)(b): the 3 kt bounds the REPORTED WIND
+present except the nominal range of winds reported as calm (0-3 knots)" (¶7d(2)(b): the 3 kt bounds the REPORTED WIND
 SPEED, gusts included, not the tailwind component - corrected in close-out round 5, see there; until then a wet light
 tailwind above calm, e.g. 18004KT -RA, kept the West plan).
 `js/env/state.js runwayConfigFrom` (constants `TAILWIND_SE_KT`, `CROSSWIND_SE_KT`, `WET_CROSSWIND_KT`, `WET_CALM_KT`)
@@ -1100,3 +1100,88 @@ relay, 37/37, 74/74, 178/178, 23/23, 29/29) and the round-3 renders (R3.13). Ver
 | look2-11 ozone | own 10-40 km layer | `sky.js` OZ_H / OZ_W tent; A-SUN / A-CLD unit gates | confirmed |
 | look2-12 old-renderer cover | 0 with no reported layer | `app.js` cover rule (no default 0.12) | confirmed |
 | look2-13 photo tag | dusk-fog photo re-tagged | `refs/cache/env_ref/SOURCES.json` "not a clear-dusk colour reference" | confirmed (clear civil-twilight photo still an owner item) |
+
+## Close-out round 5 (residuals: c3 verify-1 env findings 1-10), 2026-11-09, runtime track
+
+Before = the files at the start of round 5 (frozen, scratchpad `c5/runtime/root_before`), after = the working tree, the
+same scripts for both arms. Gates (`tools/env/run_gates.sh`): all pass before and after; `test_c3.mjs` 29 -> 37 checks.
+Requests: `docs/requests/env_closeout.md` Round 5.
+
+### R5.1 Wet-pavement SSR: the subtracted sky reflection is specular-occluded (env-2 residual)
+
+The SSR term replaces the IBL reflection three already drew: `dL = w x specW x (L_hit - L_env)`. three r186 scales that
+IBL term by its specular occlusion from the GTAO (`computeSpecularOcclusion`: `saturate(pow(NoV + AO, exp2(-16 r - 1))
+- 1 + AO)`, Lagarde & de Rousiers 2014), so where AO < 1 - under bridges, aircraft and GSE, exactly where the rays hit -
+the full `L_env` subtracted too much. `js/three/ssr.js` now subtracts `specOcc x L_env` with the same formula
+(`specularOcclusion`, CPU twin `specularOcclusionCPU`) read from the pre-pass AO (`engine.js aoScreen` = the screen AO
+texture `flood.aoNode` samples; 1 without a pre-pass); `R.ssrAO.value` 0 / 1 is the A/B. Render (live3, E9 rain_day
+gate B26, fixed EV 13.9, 640 x 360, 3 x 3 median luminance, apron rows 170-359; scratchpad `c5/runtime/render/
+c5r_E9_ssr0|ssr1_r3|ssr1_ao.png`): pixels darker than the SSR-off frame by > 12 levels 1,967 (round-3 subtraction) ->
+1,352, by > 20 186 -> 42, their mean -15.4 -> -12.4; the change is confined to the contact zones under the bridges,
+aircraft and GSE (diff map `x_e9_diff_ao_r3.png`); the mean over the apron is unchanged (-1.43 -> -1.40), i.e. the
+reflections of dark undersides stay darker than the sky they replace (physical), only the over-subtraction went.
+
+### R5.2 Fog aureole: phone quad back to 2 radii; the test mirrors the shader (env-3 residuals)
+
+The phone tier (`aurTail: false`) sizes the core quad at `AUR_K_CORE_LOW` = 2 core radii (round 3: up to 3; the round-2
+fill rate). Energy the quad cuts off - and what the shader's soft rim (`1 - smoothstep(0.7, 1, r)`) and the tan-mapped
+billboard (solid angle cos^3(atan x) per quad area) lose - is folded back by two gains fitted to the numerical integral of
+the drawn profile: `aurCoreGain(kc) = 1 / (1 - 0.866 exp(-0.666 kc^2))` on the core and `aurLobeGain(kq)` (a cubic in the
+lobe's quad size) on the broad lobe (`js/three/lights.js`, TSL twins in the vertex shader). `tools/env/test_c3.mjs` now
+integrates the profile the way the shader draws it (rim, tan mapping, cos^3, gains): desktop drawn / photometric energy
+within 0.15 % (the round-3 shader read 12.0 % low through this mirror; the plane model without rim still 0.79 %), phone
+quad 2.00 radii within 0.15 % (round 3: 3 radii, 3.6 % low). Spec §12.1 is unaffected (energy conserved; only the
+footprint on the phone changed).
+
+### R5.3 Wet runways: FAA 8400.9 calm rule (finding 4)
+
+Re-read in the cached order (`refs/cache/env_src/faa_order_8400-9.pdf`, pdftotext): the wind criteria are ¶7d (the
+earlier "§4b" citation was wrong; corrected in state.js / test_c3 / R3.2 here): ¶7d(2)(b) "No tailwind component may be
+present except the nominal range of winds reported as calm (0-3 knots) may be considered to have no tailwind component."
+`js/env/state.js`: wet = the arrival runway fails on any tail component unless the reported wind incl. gusts is 0-3 kt
+(`WET_CALM_KT`; `WET_TAILWIND_KT` kept as a deprecated alias). test_c3 +4: 18004KT -RA -> Southeast, 18003KT -RA -> West,
+18003G12KT -RA -> Southeast, 30008KT -RA -> West. 58 recorded METARs: non-West plans 7 -> 8 (101915Z 18005KT +RA).
+
+### R5.4 Old renderer: path tone with coverage (finding 5) and the lens halo (env-6, finding 6)
+
+`js/shaders/ground.js BAKE_APT_FS`: the airside-path tone is read as G = albedo / 0.5 x coverage (premultiplied) and
+B = coverage, un-premultiplied and mixed by the coverage, so the paint texture's filtering and mips no longer turn a
+partial G into near-black asphalt (no-op until static writes it: env_closeout R5.1 replaces the R3.1 encoding).
+`js/shaders/sprites.js`: no halo for a lens record (`iData.x`, once `js/scene.js` packs `s.lens`: env_closeout R5.2).
+live.html noon render (E75L red position light, 14.4 m, 640 x 360; `c5o_day_navlens*.png`): a red dot, peak
+(213, 100, 112) on the wing's (129, 126, 123); with the flag packed (page-side hook = the request) (205, 100, 112) and
+the halo ring 2.5-4.6 px R 148.6 -> 141.1. live3 (R3.4): pink-on-white 0.85 x paint in R.
+
+### R5.5 Fog veil evidence on unclipped pixels (finding 7)
+
+No code change; the evidence re-taken on unclipped pixels (live3, night_fog, UAL323 frozen on short final 28R 56 m above the ground,
+camera in the landing beams 8.6 deg off the nose at 45 m; `c5r_E7a_inbeam.png` at the metered EV 5.57 and
+`c5r_E7a_inbeam_ev25.png` at EV 8.07 = 2.5 EV darker; scratchpad `c5/runtime/render/e7a_measure.py`). At the metered EV
+the body and the adjacent air both clip (251-255), as the verifier found. 2.5 EV darker, every pixel outside the two
+lamp cores is unclipped, and each aircraft point is compared with the air at the same distances from both lamps (its
+mirror point about the lamp axis): fuselage 158 vs 168 (0.94), nose 87 vs 88 (0.99), fin 118 vs 111 (1.06); air-vs-air
+controls 8 m above the fuselage 1.00-1.01. In the beams the aircraft is veiled like the fog around it - no black
+cut-out, about 6 % darker on the fuselage where the body hides the lit fog behind it (physical; spec §12.1 veil model).
+Quarter view (34 deg, `c5r_E7a_quarter.png` / `_depth0.png`): the wing-tip strobes were dark at both shot instants
+(flash phase; the frozen traffic does not freeze the flash clock), so the round-3 centre hole (left wing-tip strobe) could
+not be re-checked; the red position light (unoccluded) shows no hole (centre 200 vs ring 29). Still open, with a reason:
+the hole sits on the far-wing strobe, consistent with a lamp genuinely hidden (its core occluded, the aureole formed in
+front of the occluder kept) but not proven; a strobe-forced quarter shot with depthOn 0 / 1 decides it.
+
+### R5.6 Lakes over the terrain mesh (env-14 residual, finding 8)
+
+Two steps in `js/world/terrain.js`: the bed mirrors the bank slope (`LAKE_BED_MAX` 60 m), and `buildMeshes` adds grid
+lines across each lake's box (+400 m) wherever the grid is coarser than `lakeCell` 80 m (the far grid is 100-550 m long in
+z there). `lakeShape` is bucketed (250-m cells listing the segments within 497 m, 50-m bands for the crossing test;
+bit-identical to the whole-ring version on 210k points and both meshes, scratchpad `env/lake_exact.mjs`). Water visible
+over the BUILT mesh (San Andreas / Lower / Upper Crystal Springs; test_c3 now measures the mesh buildMeshes returns):
+step 15 (high) round 3 94.3 / 73.2 / 68.6 %, bed only 95.3 / 86.4 / 85.9 % -> **96.7 / 95.7 / 98.7 %**; step 30 (low)
+94.5 / 83.3 / 84.7 -> **95.9 / 95.1 / 98.3 %**. Cost: vertices +14 % (611,524 -> 699,244) / +25 % (220,900 -> 275,613);
+build time (node) 4.89 -> 3.81 s / 1.69 -> 1.47 s. The bank raise within 400 m of the shores stays (inferred: the
+procedural valley floor is 30-80 m below the levels, a water sheet there would float). Not rendered this round (both renders loaded
+the page before the grid change); the checks are the Node ones above (same chunk format, 256 -> 323 chunks on high).
+
+### R5.7 Docs (findings 9, 10)
+
+R3.5: at night own = 0 (no facade shadow) - corrected in place. R3.2 request (env-12) closed: `jobs/extract2d.mjs` (commit
+904dcfe) drops the retired taxiway polygons and exports `retiredParts`.

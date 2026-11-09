@@ -402,7 +402,8 @@ quad), `walktop.mjs` (walkway tops per pier), `legacy.mjs` (old-scene closures),
 
 ## R3.2 Buildings workflow (3-D assets) / integration
 
-1. **Bridge levels per pier** (js/live/gates.js `DEPARTURE_LEVELS`, exported): BA-C 3.2 [inf], BA-D 3.65 [obs, low],
+1. **[Done by buildings, close-out r3 fix 2 - Round 5 R5.1; the interim-mismatch paragraph below no longer applies.]**
+   **Bridge levels per pier** (js/live/gates.js `DEPARTURE_LEVELS`, exported): BA-C 3.2 [inf], BA-D 3.65 [obs, low],
    BA-E / BA-F 4.88 [pub], BA-G 2.7 [obs, low], BA-A / BA-B 5.4 [inf]. Domestic: the 23 BA-C / BA-D bulkheads can go
    (walkway tops now 6.20-6.26 / 6.65 m under the 7.20 / 8.49 m roof edges), the BA-C / BA-D concourse glazing / door
    surrounds can follow the photo ratios, `tools/blender/dom_geom.py` (concourse floor 5.4), `b3d_integrate.py` (walkway
@@ -416,7 +417,8 @@ quad), `walktop.mjs` (walkway tops per pier), `legacy.mjs` (old-scene closures),
    vestibules sit 0.3-2.3 m above the walkway ends, and where a vestibule bridges a gap to the walkway start the walkway's
    lower part meets open air under the vestibule floor. Nothing intersects (no bridge part in an asset, below), but it is
    visibly wrong: please take these from `DEPARTURE_LEVELS[pier]` (per pier, not one constant) in the rebuild.
-2. **integration-5 is needed for bridges-6**: `B3D_INTEGRATION.physics.rings` are plan-only; testing drums / walkway starts
+2. **[Withdrawn in Round 5: delivered (r18 / r22) and read by gates.js `solidInAsset`; walkway starts / drums: R5.1 item 3.]**
+   **integration-5 is needed for bridges-6**: `B3D_INTEGRATION.physics.rings` are plan-only; testing drums / walkway starts
    / moving parts against them would read the BA-F overhang (soffit 9.69 m over the F7 / F8 drums, which now top at about
    7-8 m) as a wall and move those drums 1.05 m. Please export the per-building footprints WITH height bands (wall vs roof
    overhang); gates.js then takes walkway starts, drum limits and `bldHit` from them and drops the own-strip heuristic, and
@@ -451,3 +453,78 @@ quad), `walktop.mjs` (walkway tops per pier), `legacy.mjs` (old-scene closures),
   tools/drawing uses `tools/liveries/common.apply_stretch` with no second pitch. Note for `skinHW`: it under-reads the
   A319 / A320 lower lobe by up to 0.04 m at 0.66 L (beltend.mjs: a319 aft end 0.038 m inside the mesh's side; inferred
   station, no cargo-door object) - harmless here, listed in case the table is used elsewhere.
+
+# Round 5 (close-out round 5, residuals: c3 verify-1 bridges findings 1-5 + aircraft c4 F3; 9 Nov 2026)
+
+Before = the files at the start of round 5, frozen (scratchpad `c5/runtime/root_before`: `js/live/gates.js` a93cce58,
+`js/world/gates.js` da0cb32a; data, models and assets shared with the repo); after = the working tree (`js/live/gates.js`
+11af0f1d, `js/world/gates.js` 51fc0924). Both arms ran the SAME copy of the scripts (scratchpad `c5/runtime/bscripts`: the
+round-3 set + the verifier's `neckgap*.mjs` / `legacy_dyn.mjs` + new `neckcheck.mjs` bbd40737, `legacy_dyn2.mjs` 478c3f8c,
+`assetpose2.mjs` 224daf66, `fixedtiers.mjs` 7be04f9e, `vestgap.mjs` 81d7ff64, `preptime.mjs` 89b100d8; bcheck2 7f845f5b).
+No renders of the bridges (the two Chromium slots of this track went to the env items).
+
+| Check | Before | After |
+|---|---|---|
+| rotunda / walkway / corridor junction, DRAWN mesh (neckcheck.mjs: plan coverage of the full 2.4 m corridor from the drum edge by the drum disc + the drawn walkway and corridor roofs; rest, every docked pose, every path sample k/5; 10,772 poses) | worst open notch **0.92 m2** (432 trimmed poses; narrowest covered width at the drum edge 1.2 m) | **0** (444 trimmed poses; 2.4 m); drawn corridor inside the own walkway <= 0.018 m2 (G12, tilted box); tested parts clip 0; `fixedHit` corridor x own walkway 0 |
+| the verifier's neckgap.mjs / neckgap_path.mjs (coverage by the TESTED `neckParts` boxes) | 0.76-0.93 / 0.96 m2 | 0.28 / 0.34 m2 (the tested bands are inner boxes 0.06 m clear of the walkway; the drawn outline closes the rest: row above) |
+| ownclip / ownneck | 0 / 0 | 0 / 0 |
+| old scene, animated bridges (legacy_dyn2.mjs: GateSystem.items, consecutive frames k 0.84-1.0, b738 then a320 at one gate) | **7 of 11 frames flat block + fitted closure**; the a320 frames drew the cached b738 closure | **0 of 11**; one closure per (gate, type, 0.05 k step), drawn at the cab (offset 0.000 m); flat only before deployment (k < 0.85, by design) |
+| old scene, static (legacy.mjs) | 50 fitted / 0 flat | 50 / 0 |
+| conveyor end face vs the rendered skin (beltmesh.mjs, SKIP=0: every mesh sample) A / B | **64 of 79 / 138 of 138** belts with the end face inside the skin (max 0.054 m) | **0 / 0** |
+| aircraft verifier `belt_w2.mjs` (c4: end inside the skin by) | NG aft 0.055-0.058, MAX 0.041, A319 0.119 m | all clear (<= -0.008 m) |
+| beltend.mjs: lateral gap end face - skin (28 type x door rows) | -0.005 .. +0.033 m (the centre clear, the corners inside) | 0 .. +0.132 m (the whole top edge clear; the binding point is the outer corner) |
+| gse.mjs (GSE_SKIN=1) A / B | 0 / 0 issues, belts 79 / 138, catering 26 / 28, fuel 37 / 36 | identical |
+| moving parts in a 3-D asset footprint tier (assetpose2.mjs, height bands, 44,776 docked / path poses) | 0 (not tested by gates.js) | 0, and now tested (`bldHit`) |
+| docking plans (slopes.mjs; preptime.mjs staticPlans) | 3,331 made / 78 refused | identical (same plan set); prep + plans 0.88 + 1.24 + 6.23 s -> 0.74 + 0.97 + 5.90 s |
+| slopes, hurry_peak, stair, restsweep, bldpose, vdgs, vdgsarm, vdgsac, signs, upper, walktop, census, dockcol, jump, swap, api, fuelmesh | (suite s0) | output identical except wall time (suite s2) |
+| bcheck2 (131 bridges) | 0 issues | 0 issues; bcheck.json / bcheck_extra.json / log identical (bgeom.json differs: the drawn corridor) |
+
+## R5.0 What changed
+
+| Finding | Change |
+|---|---|
+| bridges-2 residual (neck notch) | `neckShape(b, a)` (js/live/gates.js): the corridor's plan outline per lateral (every 0.05 m + the walkway corners +-1e-4 m): near part from the drum to the own walkway's near edge, far part from the walkway to the full-width start (ray vs the drawn walkway boxes, inclusive). `bridgeGeo` draws it as extruded prisms over the full-width slab, so drum + walkway + corridor is one closed union, 2.4 m wide everywhere (sell-sheet minimum 1.32 m). `neckParts` tests it as 0.3-m lateral bands, each bisected to 0.06 m clear of the own walkway (`obbOverlap`), adjacent equal bands merged. Cached per bridge and angle (reset when the own walkway changes). |
+| bridges-9 regression (old scene cache) | js/world/gates.js `bridgeInstances(g, k, out, fit, opt)` -> `{M, fitted}`; `items()` caches per `gate:type:kq`, builds the closure in the cab frame (`opt.local`) and draws it with the cab's matrix (`prevModel` = last M); on a cache hit (`opt.cached`) neither the closure nor the flat block is rebuilt. Static path unchanged. |
+| bridges-6 (asset footprints) | **partly**: `solidInAsset(bx)` (exported) tests a solid against `B3D_INTEGRATION.footprints.units[*][*].tiers` with their height bands (`TIER_TOL` 0.15 m for the r22 ring growth, indexed by 40-m cells + 8-m edge cells + 4-m height bands so the start-up time stays as before); `bldHit` = museum strip OR asset tier. Walkway starts, drum limits and the own-strip heuristic still come from the SFO Museum outline: R5.1 item 3 says why, and what a coordinated switch needs. The gates.js comment at the ASSET block no longer says "no height bands yet". |
+| aircraft c4 F3 (`beltEndY`) | js/world/gates.js `beltEndY(T, X, S, face)`: the conveyor's end face is kept 0.03 m off `T.fit.skinHW` along its whole top edge (5 samples over the face's lateral / fore-aft extent, `BELT_W` 0.9 m) instead of at its centre line; js/live/gates.js passes the per-yaw corner offsets and rejects a pose whose end face (3 heights x 5 laterals) is in the skin (`no('own fus (conveyor end)')`). |
+| R3.2.1 stale paragraph | marked done below (R5.1 item 1). |
+| DEPARTURE_LEVELS A / B / C | unchanged (A / B 5.4, C 3.2 [inf]); owner question in R5.2. |
+
+## R5.1 Buildings workflow (3-D assets) / integration
+
+1. **R3.2.1 is done by buildings** (close-out r3 fix 2, domestic.glb 2026-11-07 13:10Z from `tools/blender/app_bridges.json`,
+   `dom_geom.py PIER_LEVEL`; manifest: domestic conflict "BA-C / BA-D roofs vs the app concourse floor" resolved, ITB
+   `walkway_vs_host_roof` 0 of 24 BA-G / 0 of 21 BA-A). The interim-mismatch paragraph of R3.2.1 no longer applies.
+2. **R3.2.2 (integration-5) is withdrawn**: `B3D_INTEGRATION.footprints` with `tiers[].y` bands was delivered (r18 / r22)
+   and gates.js now reads it (`solidInAsset`, `bldHit`).
+3. **Request R5.3 (coordinated, buildings + bridges in one round): walkway starts and drum limits from the asset tiers.**
+   gates.js still starts each fixed walkway at the SFO Museum outline (`prepGeom`, own-strip heuristic) and limits the
+   drums against it; `app_bridges.json` (`walk[0]`) carries those starts into the assets, whose vestibules and door
+   surrounds close the gap to the facade (buildings' walkway-end check: LOD0 0 of 46 open). Moving the starts to the tier
+   faces changes the walkway lengths, hence `Hr` over the 1:12 band, the docked slopes and every vestibule at once, in
+   both renderers - so it needs one round where buildings re-extracts `app_bridges.json` right after the gates.js change.
+   Data for that round (scratchpad `c5/runtime/a2x/`): fixed parts at rest vs the tiers (`fixedtiers.mjs`): walkway
+   segment 1 joins the facade at 162 bridges (by design); A6 L1 walkway segment 2 0.13 m2 into `itb/hall` 'over'
+   (underside 4.9-6.0 m vs walkway top 8.26 m: the BA-A 5.4 m level, R5.2); 18 drums 0.008-0.39 m2 into a tier
+   (`itb/hall` body G1 0.23, G2 0.26, G5 0.39, G6 0.36, G10 0.12; `itb/hall` over A2 0.38, A11 0.18; BA_D over D3 / D4 / D5 /
+   D7 / D10 / D15 / D16 0.008-0.13; T3E over E3 0.14; BA_E over E9 0.34; BA_F over F7 0.16, F8 0.37) - the drums abut
+   the facade (walkway 1.3-2.2 m), they are fixed (no moving part in a tier in any pose, table). Walkway start vs the tier
+   face at walkway height (`vestgap.mjs`, 126 first segments): 97 start inside the asset by 0.15-2.0 m, 9 short of it
+   (A2 L1 0.40, G1 0.15, G2 0.20, G5 0.25, G6 0.35, E9 0.30, F8 0.25, **E6 L1 4.25, E11 L1 4.05 m**), 15 with no tier
+   within 8 m behind them (B5, C8, D3-D5, D15, D16, F12, F14, F16, F17, F19-F21 L1, F22 L2). The tiers are the plan
+   prisms of the shells, not the vestibules, so a "short" start may be closed by a vestibule in the mesh (buildings'
+   check is the authority); please confirm E6 / E11, then list the vestibules that can go once the starts move.
+
+## R5.2 Owner
+
+- **DEPARTURE_LEVELS A / B / C stay inferred** (5.4 / 5.4 / 3.2 m). BA-A's sister pier BA-G is 2.7 m [obs, low]; if the
+  two ITB piers share a section, BA-A's walkways are ~2.7 m high (tops 8.26-8.40 m; no conflict with the BA-A asset). A BA-A
+  walkway / facade photo, the ITB sections, or an instruction to apply the BA-G level to BA-A by analogy (tag inf, as
+  `itb_geom.py` treats the BA-A facade) decides it. F5 L1 (B738 / B38M / E75L refused at the published T3 level) as in R3.1.
+
+## R5.3 Lead
+
+- Files changed by this track for bridges this round: `js/live/gates.js`, `js/world/gates.js`, this file.
+- The neck coverage check the verifier asked for "next to ownclip" lives in the scratchpad (`c5/runtime/bscripts/
+  neckcheck.mjs`); `tools/bridges/` does not exist and is not this track's to create. If a committed gate is wanted,
+  please say where (e.g. `tools/bridges/check_neck.mjs`, run with `PATHS=1`: pass = worst notch 0, tested clip 0).

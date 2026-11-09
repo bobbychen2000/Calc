@@ -59,6 +59,26 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 D3 = os.path.join(ROOT, 'data', 'buildings3d')
 OUTD = os.path.join(ROOT, 'out', 'buildings3d', 'integ')
+# close-out round 5 (integration verifier: with these two gitignored out/ files missing - as after the 2026-11-04 container loss -
+# the check exited normally with a different list: 71 false rotunda-drum conflicts from the geom.py fallback, and the at-grade
+# clearance and narrowed-stacked-cut conflicts silently gone): both are REQUIRED inputs now. A missing one is a CONFLICT
+# 'input missing' (the dependent checks are not run), the full run refuses to write integration.json / .js / the manifest
+# (exit 2), and their sha1 / mtime are recorded in integration.json#plausibility.stats.inputs. Regenerate: out/draw/scene2d.json
+# = the bridges harness (jobs/extract2d.mjs, see tools/blender/app_bridges.mjs); roadways_build.json = build_roadways.py.
+ROADWAYS_BUILD = os.path.join(ROOT, 'out', 'buildings3d', 'roadways_build.json')
+INPUTS_SEEN = {}
+
+
+def _input(label, path, res):
+    """record a required input (sha1, mtime) or a CONFLICT when it is missing; -> path or None"""
+    if path and os.path.exists(path):
+        h = hashlib.sha1(open(path, 'rb').read()).hexdigest()
+        INPUTS_SEEN[label] = dict(path=os.path.relpath(path, ROOT), sha1=h, mtime=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(os.path.getmtime(path))))
+        return path
+    INPUTS_SEEN[label] = dict(path=path and os.path.relpath(path, ROOT), missing=True)
+    res['conflicts'].append(dict(check='input missing: ' + label, path=path and os.path.relpath(path, ROOT),
+                                 note='required input (gitignored out/ file); the checks that need it were NOT run - regenerate it (b3d_integrate.py header)'))
+    return None
 GROUND_Y = 3.0
 GROUPS = ['tower', 'itb', 'domestic', 'roadways', 'landside']
 FILES = {'tower': ['tower.glb', 'tower_f1.glb', 'tower_lod2.glb'], 'itb': ['itb.glb', 'itb_lod2.glb'],  # tower.glb = F2 (default), tower_f1.glb = F1
@@ -536,6 +556,7 @@ def plausibility(F, TR, rep, log):
     scene = None
     for cand in (os.environ.get('SCENE2D'), os.path.join(ROOT, 'out', 'draw', 'scene2d.json'), os.path.join(OUTD, 'draw', 'scene2d.json')):
         if cand and os.path.exists(cand): scene = cand; break
+    scene = _input('bridge solids (out/draw/scene2d.json, the bridges harness jobs/extract2d.mjs)', scene or os.path.join(ROOT, 'out', 'draw', 'scene2d.json'), res)
     parts_of = {}
     if scene:
         SC = json.load(open(scene))
@@ -550,7 +571,7 @@ def plausibility(F, TR, rep, log):
                     elif pr['part'] == 'pedestal' or (pr['part'] == 'cyl' and rc and math.dist([c.x, c.y], rc) < 0.6): L.append((pk, 'drum', hull, pr['y']))
             parts_of[(b['stand'], b['gate'], str(b['door']))] = (L, b['attach'])
         res['stats']['bridge_solids'] = os.path.relpath(scene, ROOT) + ' (generated %s, %s)' % (SC['meta'].get('generated'), SC['meta'].get('git'))
-    else: res['stats']['bridge_solids'] = 'tools/stands/geom.py bridge_parts (no scene2d.json)'
+    else: res['stats']['bridge_solids'] = 'MISSING out/draw/scene2d.json - walkway / drum tests not run (input-missing CONFLICT)'
     def clip_plan(T, y0, y1):
         """plan polygons of the triangles T clipped to y0 <= y <= y1 (vertical pieces as 5-cm strips)"""
         out = []
@@ -577,7 +598,7 @@ def plausibility(F, TR, rep, log):
     for g, u, l, fp, y in units:
         if g in REPL_GROUPS: hosts_of.setdefault((g, u), {})[l] = fp
     wd = []
-    for s in S:
+    for s in (S if scene else []):          # (close-out round 5: no geom.py fallback - a missing scene2d.json is a CONFLICT above)
         for b in s['bridges'] + s.get('bridges_upper', []):
             key = (s['name'], b['gate'], str(b['door']))
             if key in parts_of: PL, att = parts_of[key]
@@ -731,8 +752,10 @@ def stacked_cut_checks(res, log):
     MIN_LANE_W (the decks would clash if it were kept whole: the clearance kept < KEEP_CLEAR) are listed as conflicts with
     their way ids; the refused ones (kept whole, a low clearance) are the deck-over-deck clearance conflict above, and
     each refused pair is listed as a note with its ids (out/buildings3d/roadways_build.json#stats.stacked.cuts)"""
-    try: cuts = json.load(open(os.path.join(ROOT, 'out', 'buildings3d', 'roadways_build.json')))['stats']['stacked']['cuts']
-    except (OSError, ValueError, KeyError): return
+    if not _input('roadways build record (out/buildings3d/roadways_build.json, build_roadways.py)', ROADWAYS_BUILD, res): return
+    try: cuts = json.load(open(ROADWAYS_BUILD))['stats']['stacked']['cuts']
+    except (ValueError, KeyError) as ex:
+        res['conflicts'].append(dict(check='input unreadable: out/buildings3d/roadways_build.json stats.stacked.cuts', why=str(ex))); return
     nar = [c for c in cuts if c.get('narrowed')]; ref = [c for c in cuts if c.get('refused')]
     res['stats']['stacked_cuts'] = dict(made=sum(1 for c in cuts if not c.get('refused')), narrowed=len(nar), refused=len(ref))
     for c in nar:
@@ -892,6 +915,9 @@ def deck_checks(F, TR, res, log):
         if near: res['notes'].append(dict(check='guideway pier column beside a road deck (< 0.6 m from its edge, outside it)', count=len(near), at=st['guideway_piers_beside_road_decks'][:10]))
     # close-out round 3 (buildings R3.2): the road decks over the app's at-grade roads (deck soffit above grade)
     st['at_grade_clearance'] = at_grade_clearance(TR, log)
+    if st['at_grade_clearance'].get('missing'):
+        res['conflicts'].append(dict(check='input missing: at-grade clearance inputs (data/sfo_landside.json, out/buildings3d/roadways_build.json)',
+                                     why=st['at_grade_clearance']['missing'], note='the at-grade clearance check was NOT run'))
     byu = {}
     for v in st['at_grade_clearance'].get('below', []): byu.setdefault(v['over'], []).append(v)
     for u, L in sorted(byu.items(), key=lambda kv: min(v['min_m'] for v in kv[1])):
@@ -919,9 +945,10 @@ def at_grade_clearance(TR, log, step=1.0):
     out = dict(checked=0, ways=0, below=[])
     try:
         L = json.load(open(os.path.join(ROOT, 'data', 'sfo_landside.json')))
-        ramps = {p['id'] for p in json.load(open(os.path.join(ROOT, 'out', 'buildings3d', 'roadways_build.json')))['pieces'] if p['src'] == 'ramp'}
+        ramps = {p['id'] for p in json.load(open(ROADWAYS_BUILD))['pieces'] if p['src'] == 'ramp'}
     except (OSError, ValueError, KeyError) as ex:
-        log('at-grade clearance: inputs missing (%s)' % ex); return out
+        # close-out round 5: not silent any more - the caller turns this into a CONFLICT (input missing)
+        log('at-grade clearance: inputs missing (%s)' % ex); out['missing'] = str(ex); return out
     units = {u: T for (g, u, l), T in TR['_lods'].items() if g == 'roadways' and l == 0 and u not in ('*', 'all') and T is not None and len(T)}
     soff = {}
     for u, T in units.items():
@@ -1172,14 +1199,21 @@ def main(argv):
     F, TR, files = footprints(log)
     rep, table = replacement(F, TR, log)
     res = plausibility(F, TR, rep, log)
+    res['stats']['inputs'] = dict(INPUTS_SEEN)
     log('plausibility: %d conflicts, %d notes' % (len(res['conflicts']), len(res['notes'])))
+    log('  inputs: ' + json.dumps(INPUTS_SEEN))
     for c in res['conflicts']: log('  CONFLICT ' + json.dumps(c))
     for n in res['notes']: log('  note ' + json.dumps(n))
     log('  nearest aircraft envelopes: ' + json.dumps(res['stats']['nearest_envelopes']))
     log('  nearest taxiway centrelines: ' + json.dumps(dict(list(res['stats']['taxiway_centreline_min_m'].items())[:8])))
+    missing = [c for c in res['conflicts'] if c['check'].startswith('input missing') or c['check'].startswith('input unreadable')]
     if check_only:
         open(os.path.join(OUTD, 'integration_check.txt'), 'w').write('\n'.join(lines) + '\n')
-        return 1 if res['conflicts'] else 0
+        return 2 if missing else (1 if res['conflicts'] else 0)
+    if missing:
+        log('REFUSED: required inputs missing (%s) - integration.json / integration.js / the manifest were NOT written' % '; '.join(c['check'] for c in missing))
+        open(os.path.join(OUTD, 'integration_report.txt'), 'w').write('\n'.join(lines) + '\n')
+        return 2
     man = json.load(open(os.path.join(D3, 'manifest.json')))
     T = man['tower']; an = T.get('anchors', {})
     tw = T.get('integration', {}).get('tower_camera', {})

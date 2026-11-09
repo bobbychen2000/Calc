@@ -231,9 +231,11 @@ and skips walkways drawn from a sibling's (walkFrom > 0: F11 / F13 / F15 L2 had 
 | ITB A / G walkway ends open, LOD0 / LOD1 / LOD2 / itb_lod2.glb | 27 / 27 / 27 / 27 of 46 (max 10.08 m) | 0 / 0 / 0 / 0 (max <= 0.0 m) |
 | domestic B-F walkway ends open, LOD0 / LOD1 / LOD2 / domestic_lod2.glb | 6 / 10 / 10 / 10 of 80 | 0 / 0 / 0 / 0 |
 
-Plausibility: every closing box against every bridge solid of the bridges track's bc_after2 geometry in the rest AND all docked
-poses: own walkway only (nubs G4 / G8 / G9 L1, D14 / F5 L1, the A11 shared head); ITB vestibules reach <= 0.97 m beyond the
-outline; A / G stand envelopes >= 5.35 m from the 3-D footprint; verify_domestic_r2 drums 0 contacts of 415 hulls, drum_overhead
+Plausibility: every closing box against every bridge solid of the bridges track's bc_after2 geometry [note, close-out r5: that dump
+was of 7 Nov 06:21Z, before the gates.js commit fe78e17 of 07:16Z; the round-4 verifier's fresh bcheck2 run gave the same result] in
+the rest AND all docked poses: own walkway only (nubs G4 / G8 / G9 L1, D14 / F5 L1, the A11 shared head); ITB vestibules reach <= 0.97 m beyond the
+outline; A / G stand envelopes >= 5.35 m from the 3-D footprint [corrected in close-out r5: 5.31 m (G7) to the ITB BA-G LOD0
+triangles in integration.json, whose old_outline_dist is 5.35 m; verify_itb's own plan-footprint check reads 5.354 m]; verify_domestic_r2 drums 0 contacts of 415 hulls, drum_overhead
 min 0.92 m. The verifier's `brsolids.py`: ITB 23 -> 40, domestic 73 -> 74 contacts - all at the bridge's own building end (door
 leaf 0.064 m2, the rest walkway solid's 0.12 m past `walk[0]`, nubs F5 1.13 / D14 0.46 m2, D15 0.27 m2 where the shrunk drum notch
 puts the facade back at the walkway crossing). Budget: itb L0 69,287 -> 71,939 tris, 6.46 -> 6.93 MB; domestic L0 79,913 -> 79,070
@@ -301,7 +303,7 @@ to the buildings track. `js/live/gates.js` was not edited.
 | v3 cars | confirmed fixed | 0 overlapping pairs (1,703 instances) |
 | CG roof cars vs coping / rim | fixed | R4.2: 13 -> 0 |
 | v4 station block lining | confirmed fixed | 12 -> 9 hits with context |
-| station block opening vs AirTrain deck | fixed | R4.2: 0.41 / 0.31 m -> 0.09-0.10 m clear |
+| station block opening vs AirTrain deck | fixed [corrected in close-out r5: partly - the east-face jambs were fixed, the deck-1 opening on the stepped face 5.3 m out (a spandrel through the girder) and the far wall across both decks' parapets were not; closed in R5.1] | R4.2: 0.41 / 0.31 m -> 0.09-0.10 m clear |
 | v9 back-face coverage + CG spandrels | fixed (CG) / partly (gates) | R4.2 / R4.3: cg_body 2,164 -> 20; near mode in verify_itb / verify_domestic; domestic residuals open |
 | v8 glazing AO by name | fixed | R4.2: 5 -> 0 |
 | v9 swalk / walkend in verify scripts | partly | walkend gate added; the slope-exact swalk stays a QA tool (domestic r2 box probe kept) |

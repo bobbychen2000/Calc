@@ -168,7 +168,8 @@ interchange_2_2 is one of these. Changes (`tools/blender/build_roadways.py`):
   own other parts count as a neighbour; parapet chains get end caps.
 - **Connected decks meet halfway** (`blend_neighbours` / `hb`): pieces that share an OSM node and touch move towards each other
   over 8 m (in full below a 0.6-m step, none above 1.0 m), so their tops agree on the common edge (the verifier's "equalise the
-  two profiles where the ribbons touch"): 140 pairs; columns use the same levels.
+  two profiles where the ribbons touch"): 140 pairs; columns use the same levels. [superseded in fix round 2, R4f2.1: side-by-side
+  pairs only (50), end-to-end continuations not blended (90), phi fall-off to 1.2 m, the neighbour extrapolated beyond its ends (hp_ext)]
 - **Merges** (`merge_into`): a fill joins its owner with a 2-cm round close, validated (dev build d9: GEOS' mitre negative
   buffer returned an empty polygon and two whole decks, 41015044 and 905752945, vanished - caught before the final build by the
   piece-area comparison; `merge_into` now raises if a piece would lose area, and `stats.pieces_without_deck` lists any piece with

@@ -10,32 +10,56 @@ import { SHORE } from '../../data/sfo_shore.js';
 // below carved nothing). js/env/reservoirs_data.js (tools/env/build_reservoirs.py: OSM ways 33449157 / 815759758 /
 // 23782143 and relation 3944756, ODbL; San Andreas Lake level from USGS 3DEP, Crystal Springs from the OSM ele tags):
 // the watershed (94 km², SFPUC, undeveloped) is excluded from the urban mask like NATURE_KM, and each lake is carved into
-// the procedural terrain: bed LAKE_DEPTH below its level inside the shore line, and around it the ground raised to at
+// the procedural terrain: a bed below its level inside the shore line (LAKE_BED_MAX below), and around it the ground raised to at
 // least the level + a bank rising LAKE_BANK_SLOPE per metre over LAKE_BANK_M (the procedural valley floor lies 30-50 m
 // below the Crystal Springs levels and 0-80 m below San Andreas Lake: a water surface there would float; I). The water
 // surfaces themselves are items of their own (js/live/app.js, both renderers).
 import { RESERVOIRS } from '../env/reservoirs_data.js';
-export const LAKE_DEPTH = 3.0, LAKE_BANK_M = 400, LAKE_BANK_SLOPE = 0.12;
-// The terrain MESH samples height() on its grid (js/world/terrain.js buildMeshes: 15 m cells to +-4.2 km, then x1.052 per
-// cell - 100-300 m across at the lakes, 5-14 km out) and interpolates linearly between the samples, so the drawn shore lies
-// where the interpolated ground crosses the water level. With a bed only LAKE_DEPTH below the level inside the shore and
-// the bank rising LAKE_BANK_SLOPE per metre outside, that crossing fell up to ~0.9 cell INTO the lake and the land covered
-// 6-31 % of each lake (c3 verifier env-14, lake_mesh.mjs: 69-94 % of the water visible). The bed now falls with the bank's
+export const LAKE_DEPTH = 3.0, LAKE_BANK_M = 400, LAKE_BANK_SLOPE = 0.12;   // (LAKE_DEPTH: the round-3 bed depth, unused since round 5)
+// The terrain MESH samples height() on its grid (buildMeshes below: 15 m cells to +-4.2 km, then x1.052 per cell - up to
+// 550 m long at the lakes, 5-14 km out) and interpolates linearly between the samples, so the drawn shore lies where the
+// interpolated ground crosses the water level. With a bed only LAKE_DEPTH below the level inside the shore and the bank
+// rising LAKE_BANK_SLOPE per metre outside, that crossing fell up to ~0.9 cell INTO the lake and the land covered 6-31 %
+// of each lake (c3 verifier env-14: 69-94 % of the water visible). Close-out round 5: (1) the bed falls with the bank's
 // slope mirrored (0.5 m + LAKE_BANK_SLOPE x distance below the level, to LAKE_BED_MAX), so a cell spanning the shore
-// interpolates to the level at the shore itself (close-out round 5; the depth is not drawn: the water surface hides it, I)
+// interpolates to the level near the shore itself (the depth is not drawn: the water surface hides it, I); (2) buildMeshes
+// adds grid lines across the lake boxes (lakeCell 80 m). Built mesh, step 15 / 30: 95.3-98.7 % of each lake visible
+// (tools/env/test_c3.mjs, >= 95 %).
 export const LAKE_BED_MAX = 60;
-const LAKES = (RESERVOIRS.lakes || []).map(L => { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const [x, z] of L.ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return { ...L, box: [x0 - LAKE_BANK_M, z0 - LAKE_BANK_M, x1 + LAKE_BANK_M, z1 + LAKE_BANK_M] }; });
+// Per lake: the ring's segments, bucketed (uniform LAKE_GRID cells; a segment is listed in every cell within LAKE_DMAX of
+// its bounding box) for the distance, and per LAKE_BAND z-band for the even-odd crossing test, so height() near a lake
+// costs a few dozen segments instead of the whole 269-510-point ring (the round-5 mesh lines put ~90k grid vertices in
+// the lake boxes). Exact for every distance below LAKE_DMAX, which covers both uses: the bed reaches LAKE_BED_MAX at
+// (LAKE_BED_MAX - 0.5) / LAKE_BANK_SLOPE = 496 m and the bank ends at LAKE_BANK_M.
+const LAKE_DMAX = Math.max(LAKE_BANK_M, (LAKE_BED_MAX - 0.5) / LAKE_BANK_SLOPE) + 1, LAKE_GRID = 250, LAKE_BAND = 50;
+const LAKES = (RESERVOIRS.lakes || []).map(L => {
+  let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const [x, z] of L.ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+  const box = [x0 - LAKE_BANK_M, z0 - LAKE_BANK_M, x1 + LAKE_BANK_M, z1 + LAKE_BANK_M];
+  const R = L.ring, n = R.length, S = new Float64Array(n * 4);
+  for (let i = 0, j = n - 1; i < n; j = i++) { S[i * 4] = R[j][0]; S[i * 4 + 1] = R[j][1]; S[i * 4 + 2] = R[i][0]; S[i * 4 + 3] = R[i][1]; }
+  const gx0 = box[0] - LAKE_DMAX, gz0 = box[1] - LAKE_DMAX, gw = Math.ceil((box[2] - box[0] + 2 * LAKE_DMAX) / LAKE_GRID) + 1, gh = Math.ceil((box[3] - box[1] + 2 * LAKE_DMAX) / LAKE_GRID) + 1;
+  const cells = Array.from({ length: gw * gh }, () => []);
+  const bz0 = z0, bands = Array.from({ length: Math.ceil((z1 - z0) / LAKE_BAND) + 1 }, () => []);
+  for (let i = 0; i < n; i++) { const xa = S[i * 4], za = S[i * 4 + 1], xb = S[i * 4 + 2], zb = S[i * 4 + 3];
+    const ci0 = Math.max(0, Math.floor((Math.min(xa, xb) - LAKE_DMAX - gx0) / LAKE_GRID)), ci1 = Math.min(gw - 1, Math.floor((Math.max(xa, xb) + LAKE_DMAX - gx0) / LAKE_GRID));
+    const cj0 = Math.max(0, Math.floor((Math.min(za, zb) - LAKE_DMAX - gz0) / LAKE_GRID)), cj1 = Math.min(gh - 1, Math.floor((Math.max(za, zb) + LAKE_DMAX - gz0) / LAKE_GRID));
+    for (let cj = cj0; cj <= cj1; cj++) for (let ci = ci0; ci <= ci1; ci++) cells[cj * gw + ci].push(i);
+    const b0 = Math.max(0, Math.floor((Math.min(za, zb) - bz0) / LAKE_BAND)), b1 = Math.min(bands.length - 1, Math.floor((Math.max(za, zb) - bz0) / LAKE_BAND));
+    for (let b = b0; b <= b1; b++) bands[b].push(i); }
+  return { ...L, box, S, cells, gx0, gz0, gw, gh, bands, bz0, zr: [z0, z1] };
+});
 function lakeShape(x, z, h) {   // inside a lake: its bed; near one or more: the highest bank requirement (Upper / Lower Crystal Springs adjoin)
   let out = h;
   for (const L of LAKES) {
     const b = L.box; if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) continue;
-    const R = L.ring; let inside = false, d = 1e9;
-    for (let i = 0, j = R.length - 1; i < R.length; j = i++) {
-      const [xa, za] = R[j], [xb, zb] = R[i];
-      if ((za > z) !== (zb > z) && x < (xb - xa) * (z - za) / (zb - za) + xa) inside = !inside;
-      const dx = xb - xa, dz = zb - za, l2 = dx * dx + dz * dz || 1; const t = Math.max(0, Math.min(1, ((x - xa) * dx + (z - za) * dz) / l2));
-      d = Math.min(d, Math.hypot(x - xa - t * dx, z - za - t * dz));
-    }
+    const S = L.S; let inside = false, d = 1e9;
+    if (z >= L.zr[0] && z <= L.zr[1]) for (const i of L.bands[Math.min(L.bands.length - 1, Math.floor((z - L.bz0) / LAKE_BAND))]) {   // even-odd rule
+      const xa = S[i * 4], za = S[i * 4 + 1], xb = S[i * 4 + 2], zb = S[i * 4 + 3];
+      if ((za > z) !== (zb > z) && x < (xb - xa) * (z - za) / (zb - za) + xa) inside = !inside; }
+    const ci = Math.floor((x - L.gx0) / LAKE_GRID), cj = Math.floor((z - L.gz0) / LAKE_GRID);
+    if (ci >= 0 && cj >= 0 && ci < L.gw && cj < L.gh) for (const i of L.cells[cj * L.gw + ci]) {
+      const xa = S[i * 4], za = S[i * 4 + 1], dx = S[i * 4 + 2] - xa, dz = S[i * 4 + 3] - za, l2 = dx * dx + dz * dz || 1;
+      const t = Math.max(0, Math.min(1, ((x - xa) * dx + (z - za) * dz) / l2)); d = Math.min(d, Math.hypot(x - xa - t * dx, z - za - t * dz)); }
     if (inside) return L.level_y - Math.min(LAKE_BED_MAX, 0.5 + d * LAKE_BANK_SLOPE);   // (the bank's slope mirrored: see LAKE_BED_MAX)
     if (d < LAKE_BANK_M) { const bank = L.level_y + 0.5 + d * LAKE_BANK_SLOPE; const k = smooth(LAKE_BANK_M * 0.5, LAKE_BANK_M, d); out = Math.max(out, Math.max(h, bank) * (1 - k) + h * k); }   // at least the bank near the shore, the terrain beyond
   }
@@ -270,30 +294,43 @@ export class Terrain {
     return h;
   }
 
-  // Build chunked non-uniform grid mesh data
-  buildMeshes(center = [0, 0], step = 15, inner = 4200) {
+  // Build chunked non-uniform grid mesh data. lakeCell: across each reservoir's box (+ LAKE_BANK_M) the grid lines are
+  // no further apart than this (extra lines, per axis), so the drawn shore follows the ring (0 = off). Without them the
+  // cells there are 100-550 m along z and the interpolated land covered 5-17 % of the water (close-out round 5, env-14;
+  // scratch lake_mesh2.mjs, San Andreas / Lower / Upper Crystal Springs visible: step 15 (high) 95.3 / 86.4 / 85.9 % ->
+  // 96.7 / 95.7 / 98.7 % at 80 m, +14 % vertices; step 30 (low / phone) 94.5 / 83.3 / 84.7 -> 95.9 / 95.1 / 98.3 %, +25 %
+  // = +53k vertices; tools/env/test_c3.mjs checks the built mesh). GPU cost unmeasured (owner item OD-7).
+  buildMeshes(center = [0, 0], step = 15, inner = 4200, lakeCell = 80) {
     const coords = []; // 1D grid coords (fine region +-inner)
     for (let x = -inner; x <= inner + 1e-6; x += step) coords.push(x);
     let x = inner, s = step; const rr = 1.052;
     while (x < 60000) { s *= rr; x += s; coords.unshift(-x); coords.push(x); }
-    const n = coords.length;
-    const H = new Float32Array(n * n);
-    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) H[j * n + i] = this.height(coords[i] + center[0], coords[j] + center[1]);
-    this.gridN = n;
+    const refine = (C, ranges) => {   // split the cells that overlap a range into equal parts <= lakeCell
+      if (!(lakeCell > 0) || !ranges.length) return C; const out = [C[0]];
+      for (let i = 1; i < C.length; i++) { const a = C[i - 1], b = C[i];
+        if (b - a > lakeCell && ranges.some(([r0, r1]) => b > r0 && a < r1)) { const k = Math.ceil((b - a) / lakeCell); for (let q = 1; q < k; q++) out.push(a + (b - a) * q / k); }
+        out.push(b); }
+      return out; };
+    const LB = LAKES.map(L => L.box);   // (already grown by LAKE_BANK_M)
+    const xs = refine(coords, LB.map(b => [b[0] - center[0], b[2] - center[0]])), zs = refine(coords, LB.map(b => [b[1] - center[1], b[3] - center[1]]));
+    const nx = xs.length, nz = zs.length;
+    const H = new Float32Array(nx * nz);
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) H[j * nx + i] = this.height(xs[i] + center[0], zs[j] + center[1]);
+    this.gridN = nx; this.gridNz = nz;
     // chunks
     const CH = 48; const chunks = [];
-    for (let cj = 0; cj < n - 1; cj += CH) for (let ci = 0; ci < n - 1; ci += CH) {
-      const i1 = Math.min(ci + CH, n - 1), j1 = Math.min(cj + CH, n - 1);
+    for (let cj = 0; cj < nz - 1; cj += CH) for (let ci = 0; ci < nx - 1; ci += CH) {
+      const i1 = Math.min(ci + CH, nx - 1), j1 = Math.min(cj + CH, nz - 1);
       const w = i1 - ci + 1, h = j1 - cj + 1;
       const pos = new Float32Array(w * h * 3), nrm = new Float32Array(w * h * 3);
       let minY = 1e9, maxY = -1e9;
       for (let j = cj; j <= j1; j++) for (let i = ci; i <= i1; i++) {
-        const k = ((j - cj) * w + (i - ci)) * 3; const y = H[j * n + i];
-        pos[k] = coords[i] + center[0]; pos[k + 1] = y; pos[k + 2] = coords[j] + center[1];
+        const k = ((j - cj) * w + (i - ci)) * 3; const y = H[j * nx + i];
+        pos[k] = xs[i] + center[0]; pos[k + 1] = y; pos[k + 2] = zs[j] + center[1];
         minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-        const il = Math.max(0, i - 1), ir = Math.min(n - 1, i + 1), jl = Math.max(0, j - 1), jr = Math.min(n - 1, j + 1);
-        const dx = coords[ir] - coords[il], dz = coords[jr] - coords[jl];
-        const gx = (H[j * n + ir] - H[j * n + il]) / dx, gz = (H[jr * n + i] - H[jl * n + i]) / dz;
+        const il = Math.max(0, i - 1), ir = Math.min(nx - 1, i + 1), jl = Math.max(0, j - 1), jr = Math.min(nz - 1, j + 1);
+        const dx = xs[ir] - xs[il], dz = zs[jr] - zs[jl];
+        const gx = (H[j * nx + ir] - H[j * nx + il]) / dx, gz = (H[jr * nx + i] - H[jl * nx + i]) / dz;
         const l = Math.hypot(gx, 1, gz); nrm[k] = -gx / l; nrm[k + 1] = 1 / l; nrm[k + 2] = -gz / l;
       }
       const idx = new Uint32Array((w - 1) * (h - 1) * 6); let q = 0;
@@ -303,7 +340,7 @@ export class Terrain {
         if ((i + j) & 1) { idx[q++] = a; idx[q++] = c; idx[q++] = b; idx[q++] = b; idx[q++] = c; idx[q++] = d; }
         else { idx[q++] = a; idx[q++] = c; idx[q++] = d; idx[q++] = a; idx[q++] = d; idx[q++] = b; }
       }
-      chunks.push({ pos, nrm, idx, bbox: [coords[ci] + center[0], minY, coords[cj] + center[1], coords[i1] + center[0], maxY, coords[j1] + center[1]] });
+      chunks.push({ pos, nrm, idx, bbox: [xs[ci] + center[0], minY, zs[cj] + center[1], xs[i1] + center[0], maxY, zs[j1] + center[1]] });
     }
     return chunks;
   }

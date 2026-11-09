@@ -16,7 +16,8 @@ Per model:
          over the forward 45 % also `hwf`, the half widths at the fractions `f` of the section height (bridge cab vs skin);
          at every station `hwl`, the STARBOARD half widths (z > 0: the side of the 737 / A320 cargo doors; the source
          models are not symmetric to a few cm: FG 737-800 lower lobe 2.5 cm narrower to starboard) at the heights `lo`
-         (model units) above the section bottom (lower lobe: belt loaders, js/aircraft/fit.js skinHalfWidth)
+         (model units) above the section bottom (lower lobe: belt loaders, js/aircraft/fit.js skinHalfWidth; up to 1.5,
+         close-out round 5)
   doors  passenger-door objects of the SOURCE model (FlightAirMap .glb node names, e.g. A320 `DoorL1`, CRJ `LeftDoor`,
          E-Jet `door.l1`, A220 `doorFL`): station of the centre and of both edges, sill (lowest y) and top, side (L/R).
          Only some source models have door objects; for the others the doors exist only in the texture.
@@ -97,7 +98,12 @@ HWF_TO = 0.45
 # heights (model units above the section's bottom) of the lower-lobe half-width table `hwl`, every station: where belt
 # loaders and other ground equipment meet the lower fuselage (js/aircraft/fit.js skinHalfWidth / T.fit.cargo; close-out
 # round 3, aircraft-1: the consumers had only an unpitched ellipse through T.Hc and the crown)
-HWL = (0.05, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1.0)
+# Close-out round 5 (aircraft verifier c4-2 finding 5): 1.25 and 1.5 added. Aft of HWF_TO the only other answer above the
+# table was the ellipse through the tallest section within +-2 m (fit.js hwAt -> secAt), which at a tail cone is a section
+# carrying the fin: at keel + 1.4 m it read 0.76-1.01 m against the mesh's 1.81-2.48 m (A330 / 747 / A380 / MD-11 tails).
+# js/aircraft/fit.js hwLow reads the rows above 1.0 only at stations without `hwf` (forward of HWF_TO the hwf table is
+# the better answer there: nose taper, wing-body fairing)
+HWL = (0.05, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1.0, 1.25, 1.5)
 
 
 def sections(pos, zone, idx, L, dx, hwf=False, zmax=None):

@@ -130,3 +130,22 @@ in the building spec; the material will follow. Not changed on a single photo of
 ### R2.5 Bridges / GSE track: tank truck under the UAL B39M's starboard wingtip at D10 (§7, still present)
 
 Still in the round-2 renders of the snapshot (`out/engine_r3/close2/c2_day_ac8.png`, `out/engine_r3/ultra/u_day_ac8.png`).
+
+## Round 5 (close-out round 5, residuals; runtime track, 9 Nov 2026)
+
+### R5.1 Realtime C3F2.1 (`renderer3.fatal()` never called `R.onFatal`): done
+
+`js/three/renderer3.js fatal(html, detail)` sets `window.__sfoError`, then hands the message to the app's hook when one is
+set (`R.onFatal = (html) => ui.fail(html)`, js/live/app.js, realtime-15) and returns; the renderer's own `#loading` text and
+`#r3fatal` overlay remain the fallback when no hook is set or the hook throws (logged). Check (scratchpad
+`c5/runtime/eng/fatal_hook.mjs`: the method's source run on a stub DOM; before = round-5 start a06cebd3, same script):
+with a hook 0 -> 1 hook call and no second overlay; without a hook / hook throws: own overlay before and after. §5.2 above
+is therefore closed on both sides.
+
+### R5.2 Wet-pavement SSR: specular occlusion (env verifier finding, see env_closeout.md Round 5)
+
+`js/three/engine.js` exposes the pre-pass GTAO node as `E.aoScreen` (the node `flood.aoNode` already samples) and
+`js/three/ssr.js` scales the IBL term it replaces by three's own specular occlusion (`computeSpecularOcclusion`, r186:
+`saturate(pow(NoV + AO, exp2(-16 r - 1)) - 1 + AO)`), so the reflection is no longer over-subtracted where AO < 1. One
+extra texture read per SSR fragment (wet pavement only, prepass tiers); `R.ssrAO.value = 0 / 1` A/B. GPU cost: with the
+SSR item under OD-7.
