@@ -2187,7 +2187,11 @@ export class Traffic {
           // first contact -- js/live/ground.js)
           const repos = !!(tr.pushed && tr.m.phase === 'still' && !tr.pushback && tr.offBlock && tr.offBlock.P && Math.hypot(P[0] - tr.offBlock.P[0], P[1] - tr.offBlock.P[1]) > REPOS_M);
           const parked = !!tr.gate || atPushEnd || ((repos || (tr.m.phase === 'still' && !tr.pushback && !tr.pushed)) && !inPolys(this.taxiways, P[0], P[1]) && !runwayAt(P[0], P[1]));
-          if (repos && parked && !tr.gate) this.counters.reposParked = (this.counters.reposParked || 0) + 1;
+          // (...and it is parked again: its departure state is cleared, as by an in-block -- a repositioned aircraft heard again later
+          // and driving to a stand is an aircraft leaving a parking, not one still pushing: with tr.pushed kept, SWA2974, heard again
+          // at 08:02Z and silent again at 08:15:54Z 30 m short of D6, was not docked there (silentDock skips pushed tracks) but
+          // dead-reckoned 10 m past the stop into D6's rest tunnel, bridge.hit.wing 267 frames, 8 Nov replay [obs, replay])
+          if (repos && parked && !tr.gate) { this.counters.reposParked = (this.counters.reposParked || 0) + 1; this.event(tr, lf.t, 'repos-parked', { from: tr.offBlock.stand || null, d: Math.round(Math.hypot(P[0] - tr.offBlock.P[0], P[1] - tr.offBlock.P[1])) }); tr.pushed = false; tr.offBlock = null; tr.pushEnd = null; tr.pushbackFrom = null; tr.pushG = null; tr.pushOk = true; tr.inBlockAt = lf.t; }
           if (!parked) { gone(tr); this.counters.silentDropped = (this.counters.silentDropped || 0) + 1; }
           // (silent at its stand after a creep / re-position: it is parked there, its bridge may dock)
           else { tr.stale = true; tr.staleSince = now; if (tr.gate && !tr.pushed) tr.leaving = false; this.saveParkedSoon(); }
