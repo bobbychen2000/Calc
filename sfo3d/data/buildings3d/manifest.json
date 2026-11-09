@@ -22396,7 +22396,7 @@
     }
    ],
    "walkway_drum_tests": 486,
-   "bridge_solids": "tools/blender/app_bridges.json (generated 2026-11-09T03:31:05.641Z; 131 bridges, rest-pose fixed walkway segments + rotunda drums)",
+   "bridge_solids": "tools/blender/app_bridges.json (generated 2026-11-09T08:13:40.089Z; 131 bridges, rest-pose fixed walkway segments + rotunda drums + pedestals (131))",
    "taxilane": [
     [
      "domestic/BA_F",
@@ -23038,16 +23038,16 @@
   },
   "footprints_js": {
    "units": 14,
-   "bytes_js": 236585,
+   "bytes_js": 236435,
    "note": "B3D_INTEGRATION.footprints (close-out round 3, integration-5)",
    "tier_tol_m": 0.1,
    "tier_min_m2": 0.02,
    "self_check": {
     "rule": "every LOD0 / LOD1 vertex above y0 + 0.5 within 0.3 m of an admissible tier of its own unit (fix 2, verifier v3)",
-    "vertices": 156636,
+    "vertices": 156717,
     "outside": 0,
     "max_beyond_tol_m": 0.0,
-    "max_m": 0.124,
+    "max_m": 0.127,
     "tol_m": 0.3,
     "max_by_unit": {
      "tower/tower": 0.0,
@@ -23063,7 +23063,7 @@
      "domestic/T1": 0.124,
      "domestic/T2": 0.103,
      "domestic/T3E": 0.099,
-     "domestic/T3W": 0.11
+     "domestic/T3W": 0.127
     },
     "per_unit": {}
    }
@@ -23072,35 +23072,9 @@
    "domestic: BA_C LOD2 top +9.08 m (review r1) - a checker artefact: the joined LOD2 mesh was split by plan distance and C3C triangles went to BA_C; split by LOD0-footprint containment (+1 m) since review r2: top 0.0 m (lod2_check.json)",
    "landside: rental car center LOD2 roof median 4.58 m (review r1) - a checker artefact: the roof cells sampled the open deck beyond the roof edge; one roof-cell definition for both LODs since review r2 (1-m cells inside the LOD0 footprint - 0.5 m): 0.00 m"
   ],
-  "generated": "2026-11-09T05:17:16Z",
+  "generated": "2026-11-09T08:44:16Z",
   "tool": "tools/blender/b3d_integrate.py",
-  "doc": "docs/research/buildings3d.md (integration section)",
-  "closeout_r5": [
-   {
-    "id": "r5-fail-loud",
-    "severity": "minor",
-    "item": "residual 4: b3d_integrate silently depended on gitignored out/ files",
-    "disposition": "fixed",
-    "change": "required inputs recorded (sha1, mtime) in plausibility.stats.inputs; missing -> CONFLICT input missing, --check exit 2, full run refuses to write; bridge solids from the TRACKED tools/blender/app_bridges.json (the on-disk scene2d.json was also stale: 10 attach points 0.02-1.18 m off)",
-    "evidence": "--check real inputs: 7 conflicts (= r4) / 15 notes (r4 14 + the stale-scene2d note), exit 1 as r4; both inputs missing: 3 input-missing conflicts, exit 2; walkway / drum tests 486 (= r4), 0 overlaps"
-   },
-   {
-    "id": "r5-records",
-    "severity": "minor",
-    "item": "residual 5: the R4.1 blend bullet had no pointer to R4f2.1",
-    "disposition": "fixed",
-    "change": "inline [superseded in fix round 2, R4f2.1: ...] note",
-    "evidence": "integration_closeout.md R4.1"
-   },
-   {
-    "id": "r5-conflicts",
-    "severity": "minor",
-    "item": "residual 6: deferred conflicts (ITB lower roadway 3.88 m / ITB L3 level, domestic loop 3.53 m, interchange_2_2 4.60 m, four narrowed stacked cuts)",
-    "disposition": "needs_owner",
-    "change": "none (not guessed)",
-    "evidence": "b3d_integrate conflict lines identical to r4"
-   }
-  ]
+  "doc": "docs/research/buildings3d.md (integration section)"
  },
  "roadways": {
   "asset": "roadways (elevated landside roadways: departures decks, viaducts, approach ramps)",
