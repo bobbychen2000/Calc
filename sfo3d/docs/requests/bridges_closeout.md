@@ -586,3 +586,102 @@ Notes:
 - Files changed by this track for bridges this round: `js/live/gates.js` (neckSlab + its two call sites), this file.
 - Requests R5.1 item 3 (buildings + bridges, coordinated walkway starts), R5.2 (owner: DEPARTURE_LEVELS A / B / C) and R5.3 (neck
   gate location) are unchanged.
+
+## Round 7 (9 Nov 2026, js/live/gates.js only)
+
+Evidence: SP = the session scratchpad, work log `SP/c7/runtime/NOTES.md`. Static checks run on frozen roots: `root_before` is a
+copy of the c6 verifier's root_A (gates.js 21557c7d = round-6 repo; integration.js cc520dc0, sfo_stands.js 50bf3003). The after
+roots differ only in gates.js. Script copies are in `SP/c7/runtime/scripts` (md5s in `scripts_md5.txt`), and the same copies ran
+on both arms.
+
+### R7.1 Corridor roof over tunnel A's end frame (c6 runtime verifier, minor) - FIXED
+
+- Defect: at the steepest up-slope docks, `neckSlab()` ended the flat corridor roof inside tunnel A's end frame
+  (x = 0.12 in tunnel-A coordinates). At the frame's back face the roof then stood up to 0.012 m above the frame's sloped top
+  (h + 0.06), over a 4-8 cm strip (G8 L1 md11 / a35k / a359, G7 L1 paths).
+- Root cause: the up-slope branch tested the roof only against tunnel A's roof height past the frame (x = 0.13), not against
+  the frame's own top at its back face (x = -0.03), where the flat roof is highest over the frame.
+- Fix: if the roof plane at x = -0.03 would stand above h + 0.055, the roof ends flush with the back face (x = -0.0305). The
+  roof is then a closed step of at most 12 mm down onto the frame (the end face closes it), and no corridor roof lies over the
+  frame.
+- c6 verifier's junction.mjs (de745202; PK=-0.8 LIST=1; drawn mesh), before -> after:
+  - all 131 bridges, rest + docked targets (3,495 poses): poke 3 (max 0.012 m, G8 L1 md11) -> 0;
+  - path samples on the 9 steep L1s (PATHS=1, 1,261 poses): poke 16 (max 0.012) -> 0;
+  - roof slots stay 0 (S zone) and 0 (F zone) in both runs.
+- Plans: unchanged. neckSlab is drawing only, and vplans gives the same result in both arms (below).
+
+### R7.2 Rest pose per occupant (static closeout R5.2.1 / R6.2) - FIXED in the app (data rests unchanged)
+
+- What it does now (`PARK_*`, `restNow` .. `parkUpdate`). A bridge rests at the data's stow unless an aircraft that it does
+  not dock is parked near it. That aircraft is either at its own stand (an L2 beside a narrow body, a freighter, a refused
+  type) or at a stand within 110 m (B4 L1 beside B5S, B15 L1 beside B16S). The bridge then parks only if the data rest is inside
+  that aircraft's ICAO stand clearance or its straight push-back. The clearance is measured to the wing, engines and tailplane,
+  as check_stands GM.wings does: A/B 3.0 m, C 4.5 m, D-F 7.5 m (Annex 14 3.13.6, tools/stands/geom.py).
+- How the parked pose is chosen. It is the smallest move that holds that clearance: a retraction along the rest line (>= the
+  model's opR), and a swing of up to 30 deg only where retraction alone does not hold it. If no pose holds the full clearance,
+  the bridge takes the largest gain (>= 0.5 m) among the full retraction and the swings at it.
+- Every candidate must also be:
+  - inside jointOk (range, rotunda swing, fixed walkways, building);
+  - clear of the other stands' bridges at rest and in every docked pose (0.05 m);
+  - clear of the own stand's bridges docking now, along their path (0.3 m), and of bridges parked now;
+  - at least 0.5 m clear of every part of the occupant (fuselage included) and of its push-back sweep (0.3 m, T.L + 15 m);
+  - when swung, at least 0.5 m clear of every accepted type at the stands around it.
+- The way there is checked too: retract, then swing, sampled against fixed parts, the building and the aircraft.
+- Timing. The move starts at setOccupant(), when the aircraft is at rest, at the sheet's rates (segTime). The departing
+  aircraft holds the parked bridges for PARK_RETURN_S = 180 s after the last departure signal. After undockEarly() the hold is
+  PARK_EARLY_S = 3,780 s (the engine's EARLY_MAX_MS bound plus 180 s), re-armed to 180 s by the push's own null signal. Then
+  the bridge returns: swing at the shorter length, then extend.
+- How it fits the existing code. A parked bridge that the next occupant docks is taken over by dockFrom(): legsNow() reports
+  it as a {park} leg from the parked pose, so there is no jump. A parked bridge that does not dock stays under the park logic.
+  A hurried undock and pushClearEta() are unchanged, because parked bridges never carry a plan.
+- [inferred: PARK_SWING 30 deg, PARK_RETURN_S 180 s, PARK_NEAR 110 m.]
+- `park_eval.mjs`, through the engine API: setOccupant(animate=false) for every accepted type at every stand and sharer pose,
+  reading the drawn rest pose (pose(g, b, 0) -> solids). One fixed measurement copy (root_meas) serves both arms.
+  - 808 (bridge, type) pairs where the bridge does not dock.
+  - Rest inside the ICAO clearance: 200 -> 35.
+  - Contact with the airframe: 0 -> 0. Push-back sweep hits: 0 -> 0.
+  - Bridges moved: 0 -> 185.
+  - Choice time: average 20 ms, maximum 84 ms (cached per set of aircraft).
+- The 24 check_stands WARN pairs, app clearance before -> after (`warn24.txt`):
+  - A2 4.90 -> 7.59, A6 2.20 -> 4.85, A8 3.19 -> 7.69, A9 2.18 -> 4.66, A10 2.25 -> 4.64;
+  - F15 6.12 -> 7.50, F22 6.35 -> 7.80;
+  - G1 4.97 -> 7.73, G2 4.95 -> 7.50, G3 4.20 -> 7.80, G4 4.52 -> 8.70, G5 3.21 -> 4.78, G7 3.73 -> 4.69, G8 3.68 -> 5.02,
+    G9 3.96 -> 7.85, G10 3.70 -> 7.52, G12 2.18 -> 4.73, G13 4.64 -> 7.73;
+  - B4 L1 / B5S B762 6.23 -> 7.76, B15 L1 / B16S B762 6.77 -> 8.20;
+  - G6 L2 B736 5.30 in the app already: it holds without a move (check_stands measures 3.8 m on the data geometry).
+  - That is 21 of the 24 holding.
+  - Short after: A5 L2 B752 4.13 (no candidate passes: the retraction keeps the cab within 4.1 m), A11 L2 B752 5.79 -> 6.61,
+    F12 L1 BCS1 1.52 -> 3.26.
+- The other 35 pairs that stay short: F5 / F17 / F19 / F21 L1 for the narrow bodies those L1s refuse (no compliant rest exists,
+  static R5.2.2; these data rests already lie in their fixed walkways), F12 L1, A5 / A11 L2 and G4 L2 B736 (3.61). They are
+  reported, not hidden.
+- Same-occupant sequence, `park_dyn.mjs`: G12 b736, then empty, then b763 / b789.
+  - L2 parks from 19.22 to 16.72 m within 30 s, holds 180 s after the departure, and returns.
+  - A b789 that arrives during the hold is docked from the parked pose.
+  - The largest cab move per 0.25 s is 0.074 m (G3 b738: L2 swings +15 deg, max 0.10 m). No jumps.
+- Plans, c6 verifier's vplans (b93a108c): 3,331 ok / 916 not before; identical output body after. The 78 refusals are unchanged
+  (makePlan and planFor are untouched; their q0 stays the data rest).
+- check_stands is unchanged by construction (data rests, 24 WARNs). Its WARN text "gates.js could rest it elsewhere per occupant"
+  is now what the app does. The static track may say so in its WARN text or closeout.
+- What is not done:
+  - The park starts when the aircraft is at rest (setOccupant). An arrival still taxies in past the data rest, as before. A
+    pre-arrival signal would let the bridge park first (request R7.4).
+  - The ground physics' static bridge grid (app.js / invariants.mjs `restBridges`, built once from the data rests) does not see
+    a swung parked pose. Retracted poses lie in the data rest's footprint (the cab overhangs the tunnel line by <= 0.2 m).
+
+### R7.3 G12 L1 drum-edge sliver - DEFERRED (unchanged)
+
+The 0.003 m² / 5-cm sample is where the drum's 24-gon, the sloped walkway tube's shifted roof and the far prism meet (Round 6
+note 3). It belongs to the coordinated walkway-start change (R5.1 item 3, buildings + bridges), which moves that junction, so a
+local patch now would be redone. Not cheap within this round's budget.
+
+### R7.4 Requests
+
+1. Realtime (js/live/traffic.js, app.js): optionally call a pre-arrival hook when a stand is allocated (lead-in close), so that
+   a bridge that will not dock can park before the aircraft taxies in. gates.js would add `expect(g, typeKey, pose, icao)`
+   computing the same parkTarget; it is not added yet because nothing calls it.
+2. Realtime / ground (app.js:327, invariants.mjs:172): rebuild the static `restBridges` grid when `gateSys.dirty` follows a park
+   move. Alternatively, have ground.js `kOf` include parked bridges (gates.js `b._parkQ` / `gateSys.parks`), so that vehicle
+   physics sees swung parked poses.
+3. Static (tools/stands/check_stands.py): optionally evaluate the 24 WARN rest poses with the app's per-occupant park (or
+   reword the WARN) - the data rests themselves are unchanged and still WARN.

@@ -983,3 +983,64 @@ Dw_b / Dw_a (2 min each); the intermediate Anew / Dnew and the killed `*_killed`
 - C5.1 (buildings: ring 82 provenance) and C5.3 (static: pavement at the west maintenance area) stay open; C5.2 stays with the owner.
 - C6.1 Lead: please commit `js/live/traffic.js` (`15c462a2`), `js/live/ground.js` (`58a0ed55`) and this document. No relay or
   harness change this round (`sfo_live_server.py` `d741a25f`, `invariants.mjs` `e52f3dfd`); the running relay needs no restart for it.
+
+# Round 7 (close-out round 7, 9 Nov 2026): the round-6 verifier's five residuals
+
+Inputs: `SP/c6_r6verify_realtime.json` (5 minors), the round-6 fixer's report and `SP/c6/realtime/NOTES.md`. Work log:
+`SP/c7/realtime/NOTES.md`. Final code: traffic.js **`cd924c19`**, ground.js **`b053a72e`**. The lead's WIP commit `eab2b71`
+already contains both files. app.js, `invariants.mjs` and `build_stream.py` are unchanged.
+
+## Harness, roots, runs
+
+- Harness **h7** = `SP/c7/realtime/h7/`, a frozen copy of the round-6 verifier's `hv`: invariants.mjs `e52f3dfd` (= H6),
+  build_stream.py `93da6fe0`, hooks hook5 `62521f06`, hook_c3 `2f430f0e`, hook_st `ca7b29b5` (logs the state of the STHEX hexes
+  every 60 s). `--plan-cadence live`. Runner `scripts/run7.sh`, comparison `scripts/cmp7.py`. Each root's `md5.txt` lists every
+  input.
+- **before** = `root_b`, a hard-link copy of the verifier's `root_r6`: the repo code at the start of the round (traffic
+  `15c462a2`, ground `58a0ed55`, gates `21557c7d`, fit `65e8ffe8`) with that root's data (stands `50bf3003`, pavement `bf561974`,
+  integration `cc520dc0`).
+- **after** = `root_a3`: root_b with only traffic.js / ground.js replaced by the final files. An intermediate `root_a` (ground
+  `c287930e`) was run on the same windows (Fa / Da); its numbers appear below where they explain a change.
+- Streams:
+  - **D** = `SP/c3/realtime_ver2/allD` (`0a3b478f`), 8 Nov 00:30–08:30Z, warm 300 s, 287,985 frames (covers a11b00, LXJ569 and
+    the three waiting-ghost keys).
+  - **F16** = `SP/r3/all` (`f6ff7ceb`), 5 Nov 00:05–00:20Z, warm 8,400 s, 9,000 frames (the vetoed retraction).
+- Runs, all exit 0: Db / Da3 (D, ≈ 19–37 min) and Fb / Fa3 (F16, ≈ 10 min). Intermediates: Fa, Da, Fa2, and Da2 (killed by me,
+  `runs/Da2_killed`). That is 8 replays against a budget of ~4. The extra ones were needed to measure the follow-up code, and they
+  cost little.
+- Db reproduces the round-6 fixer's Dnew2 in every class. A-w was not replayed. For item 1 the three A-w departures were checked
+  on the raw reports instead (below).
+
+## Per finding
+
+| # | finding | status | what changed, and the evidence (before → after, same harness / root) |
+|---|---|---|---|
+| 1 | reposition hold dropped when heard again standing still; the 20-min clock only ran while silent | fixed | **Root cause:** the reacquire branch cleared `tr.reposHold` on any new report, and `update()` parked only stale tracks (`now − lastRecv`). **Now:** the hold stays while the reports stay within `REACQ_PARK_M` (15 m) of where the aircraft stopped and below 3 kt on the ground. It is dropped (`reposResumed`) only on a report that moves away, is at taxi speed, or is airborne. Parking is due `REPOS_HOLD_MS` after the stop (`H.t`), silent or heard. A hold already running keeps its start when the aircraft goes silent again. **a11b00** (AAL2294 → tow out of B23, squawk 1200): before, the hold was set 07:25:25Z and dropped at the 07:34Z re-hear, so the aircraft kept `pushed` and its B23 off-block to the window end. After, the hold is kept through the re-hear and the aircraft is `repos-parked` 07:45:25Z (`held 20, heard 1`), with `pushed` false and no off-block from 07:46Z. D: reposParked 7 → 8, reposResumed 2 → 1, off-block events 180 = 180. The A-w departures that must still resume move more than 15 m long before 20 min (raw reports, `SP/c3/realtime/allA`): CAL003 creeps away from 07:44Z and taxis 07:54Z; EVA629 stops 12:37:04Z and moves 12:43:30Z; AAL2569 stops 02:33Z and moves 02:38:26Z. Not re-replayed. Scope: a tow that never goes silent is still never held, as in rounds 5 and 6. |
+| 2 | veto + 'lead' removal leaves the bridge retracting from an empty stand | partly | **Two changes:** (a) traffic.js: the plan veto is lifted for an arrival committed to the stand — close on the lead-in, heading in, nose within `AHEAD_COMMIT_M` (20 m) of the occupant's tail (dS − L). Its bridge then retracts ahead (`bridge-ahead commit:1`, counter `aheadVetoCommit`). DAL545's vetoed C1 case had a 25–30 m gap, so it stays vetoed. (b) ground.js: at a stand, when an `into` arrival's newest report lies on the ghost but its drawn body is still more than the lead margin (item 5) away, the ghost is removed **waiting** for its bridge (`ghostWait`). It stays drawn at the door and fades at ≤ 30 % extension, or when the drawn arrival comes within the margin. The label `into` is now 'ahead' when a retraction ahead was running, and 'lead' only without one. **Evidence:** F16 window: the commit fires for UAL1811 → UAL1835 at 00:15:38.05Z, but only 0.6 s before the removal, because UAL1811 turned onto F16's lead-in at the ghost. No earlier evidence exists in that geometry. Orphan F16/1 116 → 110 frames (the wait); G1 99 → 97 ×2; G8/1 13 → 24 (UAL2313 now goes ~1 s earlier by the margin, which removes its 4 `clear.taxi` frames with UAL1243). Total 327/4 → 328/4, overlap.gnd 0 = 0. **D:** the veto never fired in either arm (`aheadVetoSFO` 0). All 9 'lead' removals had a non-vetoed geometric retraction 1–7 s before. So the round-6 D orphan rise was the earlier removal, not the veto. The verifier's reading of 'lead' as 'vetoed' came from the old label. The ghost wait cuts D9 66 → 55, E13 77 → 73, E3 117 → 105, F21 72 → 46 and E7 54 → 53. The item-5 early drops add 5–8 frames at B24, B3, D6, E10, E11 and F19. bridge.orphan D **4,056 → 4,048**. **Residual:** a hurried retraction needs 16–91 s (½ to pass 50 %). The evidence rules (round 5) start it only 1–7 s before contact, so most orphan frames at removed ghosts remain. Only an earlier retraction on weaker evidence would cut them, and that is the round-5 trade-off: deferred with C5.2. |
+| 3 | overdue departure (SFO's estimate passed, no block-out) never re-signals | fixed | traffic.js `offBlockNear`: the one 'no push' re-signal now also accepts SFO's estimated / scheduled off-block up to `OFFBLK_LATE_MS` (= EARLY_MAX_MS, 60 min; design value) **past**, with no actual block-out. The round-6 gate (≤ 15 min ahead) is unchanged. `cancelEarly` still uses `offBlockAhead`. Unit check `scripts/unit7.mjs` (the verifier's unit6v plus 3 cases), root_b → repo: far ahead (43 min) null → null; near (13 min) 'callsign' → 'callsign'; no plan null → null; 5 min overdue null → **'callsign'**; 50 min overdue null → **'callsign'**; 70 min overdue null → null; actual block-out published null → null; used null → null. No such case occurs in A-w or D (inferred, as the verifier noted). |
+| 4 | LXJ569 1.46 m from N453FD: below the code-B stand clearance | partly | ground.js: off-stand placements first look for a pose with the ICAO stand clearance of the larger code of each pair (wingspan < 24 m → 3 m, < 36 m → 4.5 m, else 7.5 m; ICAO Annex 14 Vol I 3.13.6, as in `clear.stand`), plus `ICAO_SAFE_M` 0.25 m for the sampled test. The search covers 6 m on the mask, then 6 m on the union, and only then falls back to the old 1-m chain. A NEW lock pose valid at 1 m but not at the ICAO clearance is released once (within `PHYS_MOVES_MAX`, counter `physIcaoUnlocks`) when the placement has an ICAO pose ≥ 0.6 m away. D clear.stand **633,598/9 → 610,024/9**: EJA374 ~ EJA422 (E55P, 2.52 m) 21,363 → 12 frames; UAL2397 ~ UAL2478 139 → 0; EJA745 ~ EJA754 (2.34 m) 172,969 → 14, but EJA745 now stands at 3.00 m (to 2 decimals) from EJA527 for 170,871 frames. That is the 0.6-m lock tolerance at the placement, below the 3.0 test by < 0.01 m. physMoves 7 → 9 (two fades, cut.gnd_sfo 107/72 → 111/75). **LXJ569 ~ N453FD stays at 278,905 frames:** the placement found no pose with 3 m within the 6-m scatter, so it fell back to the 1-m pose (inferred from the code path; the pair's frames are unchanged). Moving a parked aircraft further than the report scatter is not done. |
+| 5 | 1–3-frame overlaps of waiting ghosts with the arriving body | fixed | ground.js: a moving body drops a waiting ghost with a lead margin of 0.5 m + `WAIT_LEAD_S` (0.5 s) of its own travel, not at the drawn contact. The fade passes 50 % only 0.2 s plus one step after the drop. The same margin also removes `into` stand ghosts (`near`). D: UAL1272 ~ UAL705 2 → **0**, UAL1320 ~ UAL1971 1 → **0**, AAL1430 ~ AAL2234 3 → **0**; also ASA1386 ~ ASA788 3 → 0 and UAL2364 ~ UAL650 3 → 0. overlap.gnd **239/12 → 227/7**, clear.taxi 146/19 → 129/14. Cost: 5–8 more bridge.orphan frames at each of those stands (in the item-2 total above). |
+
+## Classes (frames / keys, before → after; Db → Da3, Fb → Fa3; classes not listed are identical)
+
+| class | D (287,985 frames) | F16 window (9,000) |
+|---|---|---|
+| overlap.gnd | 239/12 → **227/7** | 0 → 0 |
+| clear.taxi | 146/19 → 129/14 | 4/1 → 0 |
+| clear.stand | 633,598/9 → 610,024/9 | = |
+| bridge.orphan | 4,056/29 → 4,048/29 | 327/4 → 328/4 |
+| cut.gnd_sfo | 107/72 → 111/75 | = |
+| offpave.mask, lag.gnd_30m, bridge.hit.*, building, gnd.* | = | = |
+
+Counters, D: repos-parked 7 → 8 (heard 1: a11b00), reposResumed 2 → 1, physMoves 7 → 9, physIcaoUnlocks 0 → 2, drop_ghostWait 0 → 5,
+dropWaitCut 16 → 21, aheadVetoCommit 0 → 0. F16: aheadVetoCommit 0 → 1 (aheadVetoSFO 1 → 0), drop_ghostWait 0 → 3.
+
+## Requests (Round 7)
+
+- C7.1 Lead: please commit the closeout doc. traffic.js `cd924c19` and ground.js `b053a72e` are already in `eab2b71`. No relay or
+  harness change: `sfo_live_server.py` is not touched. The relay I found stopped after the ~16:38Z machine restart is running
+  again (pid 8012 since 18:17Z, not restarted by me).
+- C7.2 Next realtime round, optional: raise `ICAO_SAFE_M` to cover the 0.6-m lock tolerance, or lock at the placement pose, so that
+  ICAO placements measure ≥ 3.0 m (EJA527 ~ EJA745). This needs one D replay to verify; it was not done this round because of the
+  usage limit.
+- C5.1, C5.2 and C5.3 stay open as before.

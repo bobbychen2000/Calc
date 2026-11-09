@@ -54,7 +54,11 @@
 //    occupant (close-out round 3); send setOccupant(g, null) before a different occupant (the real bridge retracts first).
 //  * Rest pose: the data's `stowW` (tunnel end = cab pivot at rest, clear of every accepted type's envelope + 1 m, of
 //    the other bridges at rest and docked, of the building; cab straight on the tunnel). After an undocking the cab
-//    settles from the door's height to the rest height (rest tunnel <= 1:12) at the sheet's lift rate.
+//    settles from the door's height to the rest height (rest tunnel <= 1:12) at the sheet's lift rate. Per occupant
+//    (close-out round 7, PARK_*): a bridge that does not dock the aircraft at its stand or at a stand around it parks
+//    retracted / swung where its data rest is inside that aircraft's ICAO stand clearance (wing, engines, tailplane) or
+//    its straight push-back, and returns PARK_RETURN_S after the departure. The engine sees the parked pose through
+//    pose() / solids(g, b, 0); the setOccupant() contract is unchanged (the park starts with it: the aircraft is at rest).
 //  * Solid-body rules (review 2026-11-04): the drum is at least DRUM_MIN (1.5 m) - the corridor it carries is 2.4 m wide -
 //    with the rotunda moved off a neighbour's walkway / drum / the outline (the drawn terminal AND the SFO Museum
 //    footprints the 3-D building assets are built from, except the bridge's own walkway strip in them: ownStrip) by the

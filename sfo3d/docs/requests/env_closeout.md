@@ -210,3 +210,10 @@ citation lines were edited.
 
 `js/scene.js` (line 63, `put()` only), `js/shaders/sprites.js` (comment), `docs/research/environment_spec.md` (8400.9 lines
 ~226-234 and the §12.1 row), this file.
+
+## Round 7 (9 Nov 2026)
+
+No env items were assigned to this track in round 7, and no env file changed (js/env/**, js/shaders/sprites.js and
+js/scene.js are untouched since round 6: scene.js 8417e2ce, sprites.js fd418713). The open owner item is unchanged: lakes
+on the lite path (step 40), which waits for Lite to be unfrozen. The bridge work of this round is in bridges_closeout.md
+Round 7.
