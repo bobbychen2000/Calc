@@ -27,6 +27,12 @@ const check = (name, ok, info = '') => { n++; if (!ok) fails++; console.log(`${o
   const sq = P('METAR KSFO 251056Z 22036G63KT 2SM +RA BR SQ BKN012 OVC020 12/11 A2970');
   check('8400.9 both plans fail (22036G63KT +RA): the smaller excess (Southeast)', sq.plan === 'southeast', sq.source);
   check('8400.9 constants (V): dry crosswind 20, wet 15', CROSSWIND_SE_KT === 20 && WET_CROSSWIND_KT === 15);
+  // close-out round 5: §4b(2)(b) "No tailwind component may be present except the nominal range of winds reported as calm
+  // (0-3 knots)" - the 3 kt is the reported wind speed (gusts included), not a tailwind-component allowance
+  check('8400.9 wet: 18004KT -RA (28 tail 1.9 kt, wind 4 kt not calm) -> Southeast', P('METAR KSFO 301456Z 18004KT 10SM -RA OVC010 14/13 A2995').plan === 'southeast', P('METAR KSFO 301456Z 18004KT 10SM -RA OVC010 14/13 A2995').source);
+  check('8400.9 wet: 18003KT -RA (wind reported in the calm range 0-3 kt) -> West', P('METAR KSFO 301456Z 18003KT 10SM -RA OVC010 14/13 A2995').plan === 'west');
+  check('8400.9 wet: 18003G12KT -RA (gusts: not calm, 28 tail 1.4 kt) -> Southeast', P('METAR KSFO 301456Z 18003G12KT 10SM -RA OVC010 14/13 A2995').plan === 'southeast');
+  check('8400.9 wet: 30008KT -RA (headwind on 28) -> West', P('METAR KSFO 301456Z 30008KT 10SM -RA OVC010 14/13 A2995').plan === 'west');
 }
 // ---------------------------------------------------------------- env-4 / env-16: day exposure within ±1 EV of the incident reading
 {
@@ -89,6 +95,16 @@ const check = (name, ok, info = '') => { n++; if (!ok) fails++; console.log(`${o
       inN++; if (T.height(mx - nx * 30, mz - nz * 30) < L.level_y) inB++; outN++; if (T.height(mx + nx * 100, mz + nz * 100) > L.level_y) outA++; }
     check(`terrain carved for ${L.name} (level y ${L.level_y}): bed below the water 30 m inside, ground above it 100 m outside (>= 85 %; narrow arms excepted)`, inB / inN >= 0.85 && outA / outN >= 0.85, `inside ${inB}/${inN}, outside ${outA}/${outN}`);
   }
+  // close-out round 5 (c3 verifier env-14): what the terrain MESH shows - Terrain.buildMeshes' grid (step 15 to +-4.2 km,
+  // then x1.052 per cell: 100-550 m at the lakes) interpolated between its samples; the water is visible where that
+  // surface lies below the level (round 3: 94 / 73 / 69 %, the bed only 3 m deep against a bank rising 0.12 m/m)
+  const co = []; for (let x = -4200; x <= 4200 + 1e-6; x += 15) co.push(x); { let x = 4200, s = 15; while (x < 60000) { s *= 1.052; x += s; co.unshift(-x); co.push(x); } }
+  const ix = (v) => { let lo = 0, hi = co.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (co[m] <= v) lo = m; else hi = m; } return lo; };
+  const meshH = (x, z) => { const i = ix(x), j = ix(z); const u = (x - co[i]) / (co[i + 1] - co[i]), v = (z - co[j]) / (co[j + 1] - co[j]); return (T.height(co[i], co[j]) * (1 - u) + T.height(co[i + 1], co[j]) * u) * (1 - v) + (T.height(co[i], co[j + 1]) * (1 - u) + T.height(co[i + 1], co[j + 1]) * u) * v; };
+  const inR = (R, x, z) => { let c = false; for (let i = 0, j = R.length - 1; i < R.length; j = i++) { const [xa, za] = R[j], [xb, zb] = R[i]; if ((za > z) !== (zb > z) && x < (xb - xa) * (z - za) / (zb - za) + xa) c = !c; } return c; };
+  const vis = []; for (const L of RESERVOIRS.lakes) { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const [x, z] of L.ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+    let n = 0, b = 0; for (let x = x0; x <= x1; x += 50) for (let z = z0; z <= z1; z += 50) { if (!inR(L.ring, x, z)) continue; n++; if (meshH(x, z) < L.level_y) b++; } vis.push(b / n); }
+  check('lakes over the terrain MESH (step-15 grid): water visible >= 85 % of each lake (residual: shore bends finer than the far cells)', vis.every(v => v >= 0.85), vis.map(v => (100 * v).toFixed(1) + ' %').join(' / '));
 }
 // ---------------------------------------------------------------- env-3: fog aureole profile (js/three/lights.js, CPU mirror)
 {
@@ -121,7 +137,33 @@ const check = (name, ok, info = '') => { n++; if (!ok) fails++; console.log(`${o
     const drawn = Lc * Math.PI * thA * thA * (1 - Math.exp(-kc * kc)) + Lt * 2 * Math.PI * th * th * (1 - 1 / Math.sqrt(1 + kt * kt));
     worstE = Math.max(worstE, Math.abs(drawn / E - 1));
   }
-  check('aureole energy drawn = aureole energy (lobe beyond its quad folded into the core), dim to bright lamps', worstE < 0.02, `worst ${(100 * worstE).toFixed(2)} %`);
+  check('aureole energy drawn = aureole energy (lobe beyond its quad folded into the core), dim to bright lamps', worstE < 0.02, `worst ${(100 * worstE).toFixed(2)} % (plane model, no rim)`);
+  // close-out round 5: the same, integrating what the SHADER draws - the quad's soft rim 1 - smoothstep(0.7, 1, r) and
+  // the billboard's tan mapping (a plane offset x = ρ/d subtends cos³(atan x) dA/d²), the quad's actual extents kq / kcq,
+  // and the fold-back gains (lights.js aurCoreGain / aurLobeGain); the round-3 shader (no gains, kq = kt, kcq = kc) for
+  // comparison. Desktop (lobe on, core <= 5 radii) and phone tier (no lobe, core 2 radii)
+  const sm = (x) => { const t = Math.min(1, Math.max(0, (x - 0.7) / 0.3)); return t * t * (3 - 2 * t); };
+  const shaderE = (peak, tail, kMax, fold) => {
+    const E = 1, wT = tail ? 1 - L.AUR_CORE_SHARE : 0, LtN = E * (1 - L.AUR_CORE_SHARE) / (2 * Math.PI * th * th); const expo = peak * L.AUR_EPS / LtN;
+    const Lt = E * wT / (2 * Math.PI * th * th);
+    const kt = Math.min(L.AUR_K_TAIL_MAX, Math.sqrt(Math.max(Math.pow(Math.max(Lt * expo / L.AUR_EPS, 1), 2 / 3) - 1, 0)));
+    const Lc0 = E * (1 - wT + wT / Math.sqrt(kt * kt + 1)) / (Math.PI * thA * thA);
+    const kc = Math.min(kMax, Math.max(2, Math.sqrt(Math.log(Math.max(Lc0 * expo / L.AUR_EPS, 1)))));
+    const q = Math.max(thA * kc, kt * th);   // quad half size / d (the core sprite itself is smaller)
+    const kq = Math.min(q / th, L.AUR_K_TAIL_MAX), kcq = q / thA;
+    const LcD = fold ? E * (1 - wT + wT / Math.sqrt(kq * kq + 1)) / (Math.PI * thA * thA) * L.aurCoreGain(kcq) : Lc0, LtD = fold ? Lt * L.aurLobeGain(kq) : Lt;
+    let e = 0; const n = 20000, dx = q / n;
+    for (let i = 0; i < n; i++) { const x = (i + 0.5) * dx; e += (LcD * Math.exp(-((x / thA) ** 2)) + LtD * Math.pow(1 + (x / th) ** 2, -1.5)) * (1 - sm(x / q)) * 2 * Math.PI * x * dx * Math.pow(Math.cos(Math.atan(x)), 3); }
+    return { e, kc, q: q / thA };
+  };
+  let wNew = 0, wOld = 0, wPh = 0, wPhOld = 0, kcPh = 0;
+  for (const peak of [0.3, 3, 30, 3e3, 3e6]) {
+    wNew = Math.max(wNew, Math.abs(shaderE(peak, true, L.AUR_K_CORE_MAX, true).e - 1)); wOld = Math.max(wOld, Math.abs(shaderE(peak, true, L.AUR_K_CORE_MAX, false).e - 1));
+    const ph = shaderE(peak, false, L.AUR_K_CORE_LOW, true); wPh = Math.max(wPh, Math.abs(ph.e - 1)); kcPh = Math.max(kcPh, ph.q);
+    wPhOld = Math.max(wPhOld, Math.abs(shaderE(peak, false, 3, false).e - 1));
+  }
+  check('aureole energy as the SHADER draws it (soft rim, tan-mapped billboard, fold-back gains), desktop: within 2 %', wNew < 0.02, `worst ${(100 * wNew).toFixed(2)} % (round-3 shader: ${(100 * wOld).toFixed(1)} %)`);
+  check('phone tier: aureole quad <= 2 core radii (round 2 fill rate) and its energy within 2 %', kcPh <= 2 + 1e-9 && wPh < 0.02, `quad ${kcPh.toFixed(2)} radii, worst ${(100 * wPh).toFixed(2)} % (round-3 phone shader: 3 radii, ${(100 * wPhOld).toFixed(1)} %)`);
   check('quad edge values = AUR_EPS (core, lobe) for a lamp 1e4 x above it', Math.abs(Lx * Math.exp(-kc * kc) / L.AUR_EPS - 1) < 1e-9 && Math.abs(Lx * Math.pow(1 + kt * kt, -1.5) / L.AUR_EPS - 1) < 1e-9, `kc ${kc.toFixed(2)} (cap ${L.AUR_K_CORE_MAX}), kt ${kt.toFixed(2)} (cap ${L.AUR_K_TAIL_MAX})`);
 }
 console.log(`close-out round 3 (env): ${n - fails}/${n} checks passed`);

@@ -557,6 +557,11 @@ def run(path):
               src='check_stands.py criterion: >= 2.0 m (app planforms, all accepted types)')
         plaus['stand_min_m'] = round(dmin, 2)
         walk_ov = 0.0; nb = 0
+        # close-out round 5 (verifier: the 7.27 m2 rise of this NOTE in round 4 is the asset's own bridge heads): the data
+        # contacts are measured against the footprint WITHOUT the closing boxes, the boxes' share is reported on its own
+        hv0 = unary_union([r['poly'] for r in heads[0]] or [Polygon()])
+        fa_nh = fa.difference(hv0.buffer(0.01, join_style=2))
+        walk_hv = 0.0
         for s in st:
             if s['letter'] not in ('A', 'G'): continue
             for br in s['bridges'] + s.get('bridges_upper', []):
@@ -567,10 +572,14 @@ def run(path):
                     if ln.length > 2:
                         from shapely.ops import substring
                         seg = substring(ln, 1.5, ln.length)
-                        walk_ov += seg.buffer(GM.WALK_W / 2, cap_style=2).intersection(fa).area
+                        sb_ = seg.buffer(GM.WALK_W / 2, cap_style=2)
+                        walk_ov += sb_.intersection(fa_nh).area
+                        walk_hv += sb_.intersection(fa).area - sb_.intersection(fa_nh).area
                     nb += 1
                 if br.get('rotunda'):
-                    walk_ov += Point(br['rotunda']).buffer(GM.ROT_R * 0.9).intersection(fa).area
+                    rb_ = Point(br['rotunda']).buffer(GM.ROT_R * 0.9)
+                    walk_ov += rb_.intersection(fa_nh).area
+                    walk_hv += rb_.intersection(fa).area - rb_.intersection(fa_nh).area
         # rotundas set directly at the facade (walkway <= 2.3 m) graze the outline by design; report the penetration depth
         pen = []
         for s in st:
@@ -582,10 +591,13 @@ def run(path):
                     dpen = r - c.distance(fa.exterior if hasattr(fa, 'exterior') else fa.boundary) if not fa.contains(c) else r + c.distance(fa.boundary)
                     pen.append((s['name'] + '/' + br['gate'] + 'L%d' % br['door'], round(float(dpen), 2)))
         plaus['rotunda_contacts'] = pen
-        C.add('bridge walkways (beyond 1.5 m) + rotundas overlapping the 3-D footprint (%d bridges)' % nb, walk_ov, 0.0,
-              ok=True, src='NOTE, not introduced by the asset - pre-existing contact in the data (rotundas at the facade, outline +-5 m): max '
-              'penetration %.2f m (%d rotundas); the 3-D footprint = the SFO Museum outline the app and check_stands.py use' %
-              (max([p[1] for p in pen] + [0]), len(pen)), unit='m2')
+        plaus['walkway_overlap_m2'] = dict(data_contacts=round(walk_ov, 3), bridge_head_boxes=round(walk_hv, 3))
+        C.add('bridge walkways (beyond 1.5 m) + rotundas overlapping the 3-D footprint less the bridge-head boxes (%d bridges)' % nb, walk_ov, 0.0,
+              ok=True, src='NOTE, data contacts, not introduced by the asset (rotundas at the facade, outline +-5 m): max '
+              'penetration %.2f m (%d rotundas); footprint = the SFO Museum outline the app and check_stands.py use. The asset\'s own '
+              'bridge-head boxes add %.2f m2 more (stands-data walkway / rotunda shapes over the closing boxes at their own walkway '
+              'ends, by design; the app solids are tested in the door-surround and walkway-end checks)' %
+              (max([p[1] for p in pen] + [0]), len(pen), walk_hv), unit='m2')
     except Exception as e:  # noqa: BLE001
         C.add('stand / bridge clearance', str(e), 'error', ok=False)
     # review r2 (cross-asset): the app's fixed walkways against the host roof where they dock: the first roof of the ITB pier mesh
@@ -656,6 +668,60 @@ def run(path):
                   v['n_fail'], 0, ok=v['n_fail'] == 0, src='app_bridges.json walk[0] (gates.js); max gap %s m' % v['max_gap'], unit='')
     except Exception as e:  # noqa: BLE001
         C.add('walkway-end gap check', str(e), 'error', ok=False)
+    # close-out round 5 (verifier: the A6 / A11 lower door heads 0.10 m into the upper deck's walkway floor, the A6 L1 jamb in its
+    # own walkway's second segment, the A2 door 0.003 m from a drum): the LOD0 door-surround triangles against every app fixed
+    # solid (app_bridges.json rest walkway segments and drums, heights above the apron) - none inside a walkway solid except the
+    # first segment of the walkway the door surrounds (the closed leaf in front of its end face, by design), none closer than
+    # VEST_CLEAR - 1 mm to a drum
+    try:
+        import app_bridges as AB
+        import bridge_head as BH_
+        nd = [n for n in S if n.startswith('L0_') and n.endswith('ba_bridge_doors')]
+        Td = np.concatenate([p['P'][p['T']] for n in nd for p in S[n]['prims']]) if nd else np.zeros((0, 3, 3))
+        Td = Td.copy(); Td[:, :, 1] -= GROUND_Y
+        dparts = [pp for r in heads[0] for pp in r['parts'] if pp['kind'] == 'vestibule']
+        allb_ = AB.bridges('ABCDEFG')
+        hits, dmin = {}, 9.0
+        cen = Td.mean(1)
+        for b_ in allb_:
+            key_ = (b_['stand'], b_['door'], b_['upper'])
+            for so in b_['rest']:
+                c_ = np.array(so['c'], float)
+                m_ = np.hypot(cen[:, 0] - c_[0], cen[:, 2] - c_[1]) < so['hl'] + so['hw'] + 2.0
+                for t_, ce in zip(Td[m_], cen[m_]):
+                    if t_[:, 1].max() <= so['lo'] + 1e-6 or t_[:, 1].min() >= so['hi'] - 1e-6: continue
+                    pg = Polygon(t_[:, [0, 2]])
+                    if pg.area < 1e-8: pg = pg.buffer(1e-4)
+                    if so['part'] == 'rotunda':
+                        d_ = Point(*c_).distance(pg) - float(so.get('round') or so['hl'])
+                        dmin = min(dmin, d_)
+                        if d_ < BH_.VEST_CLEAR - 0.001: hits.setdefault('%s L%d%s drum' % (key_[0], key_[1], ' U' if key_[2] else ''), []).append(d_)
+                        continue
+                    own = [pp for pp in dparts if pp['key'] == key_ and pp['fl'] - 0.25 <= ce[1] <= pp['wtop'] + 0.45
+                           and np.hypot(ce[0] - pp['E'][0], ce[2] - pp['E'][1]) < 2.0]
+                    if so.get('seg') == 1 and own: continue
+                    if BH_.rect(c_, np.array(so['u'], float), -so['hl'], so['hl'], so['hw']).intersection(pg).area > 1e-5:
+                        hits.setdefault('%s L%d%s seg %s' % (key_[0], key_[1], ' U' if key_[2] else '', so.get('seg')), []).append(0)
+        plaus['door_surrounds_vs_app_solids'] = dict(tris=int(len(Td)), hits={k: len(v) for k, v in hits.items()}, min_drum_m=round(dmin, 4))
+        C.add('LOD0 door surrounds vs the app fixed walkway / drum solids (%d triangles; min to a drum %.3f m)' % (len(Td), dmin),
+              sum(len(v) for v in hits.values()), 0, ok=not hits, unit='tris',
+              src='app_bridges.json rest solids; own first segment excluded (leaf); drums >= VEST_CLEAR %.2f m: %s' % (BH_.VEST_CLEAR, hits and {k: len(v) for k, v in hits.items()} or 'none'))
+    except Exception as e:  # noqa: BLE001
+        C.add('door surrounds vs app solids', str(e), 'error', ok=False)
+    # close-out round 5 (verifier: itb_lod2.glb 5,336 -> 7,092 tris (+34 % bytes) from full-detail heads on the phone path):
+    # LOD2 head budget and the phone file's total
+    try:
+        n2 = G.bridge_head_parts(2)[0].tris()
+        C.add('LOD2 bridge-head triangles (itb_geom.bridge_head_parts(2): 32-gon drum cuts)', n2, 600, ok=n2 <= 600, unit='tris',
+              src='budget: plain boxes on the phone path (round 4: 1,756 = the LOD0 heads)')
+        l2p_b = os.path.join(os.path.dirname(path), os.path.basename(path).replace('.glb', '_lod2.glb'))
+        if os.path.exists(l2p_b) and l2p_b != path:
+            jb_, bb_, _ = load_glb(l2p_b)
+            nt2 = sum(len(p_['T']) for m_ in scene_meshes(jb_, bb_).values() for p_ in m_['prims'])
+            C.add('itb_lod2.glb triangles (SFO_LITE phone path)', nt2, 6500, ok=nt2 <= 6500, unit='tris',
+                  src='budget: round 3 5,336 (no heads) + <= 600 heads + margin; round 4 7,092')
+    except Exception as e:  # noqa: BLE001
+        C.add('LOD2 head budget', str(e), 'error', ok=False)
     # close-out round 4 (verifier r3 v9): back-face first hits (tools/blender/bf_rays.py) at LOD0 and LOD2 in NEAR mode (context
     # faces occlude only within 10 m in front of the asset: a camera that close), with the neighbours that abut the ITB; the
     # per-node limit is the landside gate's (60 hits) [INFO + gate]

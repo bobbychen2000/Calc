@@ -83,9 +83,17 @@ def rect(c, u, a0, a1, hw):
     return Polygon([tuple(c + u * a0 - v * hw), tuple(c + u * a1 - v * hw), tuple(c + u * a1 + v * hw), tuple(c + u * a0 + v * hw)])
 
 
-def other_solids_cut(all_bridges, mine, E, z0, z1, reach=8.0, drums=True):
+def drum_disc(c, r, segs=64):
+    """plan disc of a drum keep-out (centre c, radius r = rotR + clearance). segs = shapely quad_segs; below the full 64 the
+    polygon CIRCUMSCRIBES the circle (vertices at r / cos(pi / (4 segs))), so a coarse cut never reaches inside the clearance
+    (close-out round 5: the LOD2 bridge heads use 8 - a 32-gon, at most r x 0.5 % beyond the circle)."""
+    if segs >= 64: return Point(*c).buffer(r, 64)
+    return Point(*c).buffer(r / math.cos(math.pi / (4 * segs)), segs)
+
+
+def other_solids_cut(all_bridges, mine, E, z0, z1, reach=8.0, drums=True, segs=64):
     """union of the OTHER bridges' fixed solids (app_bridges rest walkway segments, + VEST_CLEAR; rotunda drums, rotR +
-    VEST_CLEAR) whose height band meets [z0, z1] (above the apron) near E (world x, z), or None."""
+    VEST_CLEAR) whose height band meets [z0, z1] (above the apron) near E (world x, z), or None. segs: drum_disc."""
     cut = []
     for b in all_bridges:
         if (b['stand'], b['door'], b['upper']) in mine: continue
@@ -95,14 +103,74 @@ def other_solids_cut(all_bridges, mine, E, z0, z1, reach=8.0, drums=True):
             c = np.array(so['c'], float)
             if np.hypot(*(c - E)) > so['hl'] + so['hw'] + reach: continue
             if so['part'] == 'rotunda':
-                cut.append(Point(*c).buffer(float(so.get('round') or so['hl']) + VEST_CLEAR, 64))
+                cut.append(drum_disc(c, float(so.get('round') or so['hl']) + VEST_CLEAR, segs))
             else:
                 cut.append(rect(c, np.array(so['u'], float), -so['hl'], so['hl'], so['hw']).buffer(VEST_CLEAR, join_style=2))
     return unary_union(cut) if cut else None
 
 
-def own_drum_cut(b, z0, z1):
-    """the bridge's own rotunda drum (rotR + VEST_CLEAR) if its band meets [z0, z1], or None (world x, z)."""
+def own_drum_cut(b, z0, z1, segs=64):
+    """the bridge's own rotunda drum (rotR + VEST_CLEAR) if its band meets [z0, z1], or None (world x, z). segs: drum_disc."""
     lo, hi = b['Hr'] - 0.3, b['Hr'] + 3.3
     if lo > z1 or hi < z0: return None
-    return Point(*b['rot']).buffer(float(b['rotR']) + VEST_CLEAR, 64)
+    return drum_disc(b['rot'], float(b['rotR']) + VEST_CLEAR, segs)
+
+
+def fixed_solids_near(all_bridges, E, reach=8.0):
+    """every bridge's fixed rest solids near E (world x, z): [(key (stand, door, upper), seg or None, part, plan polygon,
+    lo, hi)] - walkway segments as their rectangles, drums as full-resolution discs (no clearance added; heights above the
+    apron, app_bridges.json)."""
+    out = []
+    for b in all_bridges:
+        key = (b['stand'], b['door'], b['upper'])
+        for so in b['rest']:
+            c = np.array(so['c'], float)
+            if np.hypot(*(c - E)) > so['hl'] + so['hw'] + reach: continue
+            if so['part'] == 'rotunda':
+                g = Point(*c).buffer(float(so.get('round') or so['hl']), 64)
+            elif so['part'] == 'walkway':
+                g = rect(c, np.array(so['u'], float), -so['hl'], so['hl'], so['hw'])
+            else:
+                continue
+            out.append((key, so.get('seg'), so['part'], g, float(so['lo']), float(so['hi'])))
+    return out
+
+
+def clip_member(n_lo, n_hi, z0, z1, foot_fn, obstacles, keep_frac=0.5, min_h=0.1):
+    """clip a door-surround member against the app's fixed solids (close-out round 5, verifier finding 'ITB door surrounds').
+    The member spans n_lo..n_hi along the door line and z0..z1 (above the apron); foot_fn(a, b) is its REAL plan footprint
+    between a and b along that line. obstacles: [(plan polygon, lo, hi)]. An obstacle closer than VEST_CLEAR in plan whose
+    band starts > min_h above the member's foot caps the member's top VEST_CLEAR below it (stacked walkways: the lower
+    door's head stops under the upper deck's walkway floor); any other one removes its stretch of the member (+ VEST_CLEAR).
+    -> (n_lo, n_hi, z0, z1) of the piece kept (the stretch containing the member's middle, else the longest), or None when
+    less than keep_frac of the length or less than min_h of the height is left."""
+    ivs = [(n_lo, n_hi)]
+    L0 = n_hi - n_lo
+    for g, lo, hi in obstacles:
+        if lo >= z1 + VEST_CLEAR or hi <= z0 - VEST_CLEAR: continue
+        gb = g.buffer(VEST_CLEAR - 1e-3)
+        x = foot_fn(n_lo, n_hi).intersection(gb)
+        if x.is_empty or x.area < 1e-6: continue
+        if lo > z0 + min_h:
+            z1 = min(z1, lo - VEST_CLEAR); continue
+        # the stretch along the member line that meets the obstacle (projected by bisection on sub-footprints, 1 cm)
+        pts = np.arange(n_lo, n_hi + 1e-9, 0.01)
+        hit = [foot_fn(a, min(a + 0.01, n_hi)).intersects(gb) for a in pts[:-1]]
+        new = []
+        for a, b_ in ivs:
+            cur = None
+            for k, h in enumerate(hit):
+                s0, s1 = pts[k], pts[k + 1]
+                if s1 <= a or s0 >= b_: continue
+                if not h:
+                    cur = [max(s0, a), min(s1, b_)] if cur is None else [cur[0], min(s1, b_)]
+                elif cur is not None:
+                    new.append(tuple(cur)); cur = None
+            if cur is not None: new.append(tuple(cur))
+        ivs = [iv for iv in new if iv[1] - iv[0] > 1e-6]
+        if not ivs: return None
+    if z1 - z0 < min_h: return None
+    mid = 0.5 * (n_lo + n_hi)
+    best = next((iv for iv in ivs if iv[0] <= mid <= iv[1]), max(ivs, key=lambda iv: iv[1] - iv[0]))
+    if best[1] - best[0] < keep_frac * L0 - 1e-6: return None
+    return best[0], best[1], z0, z1

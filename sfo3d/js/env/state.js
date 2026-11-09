@@ -96,11 +96,17 @@ export function selectReport(indexed, tEnv, live = false) {
 // refs/cache/env_src/faa_order_8400-9.pdf, read 2026-11-07, close-out round 3 env-5: V) §4b: clear and dry runways - the
 // crosswind component INCLUDING GUSTS must not be greater than 20 kt (unless Flight Standards approves more), the
 // tailwind component not greater than 5 kt (7 kt where anemometers are installed near the touchdown zone / departure
-// end: SFO's NV, the 5-kt value also reproduces SFO's climatology, above); runways not clear or not dry - crosswind
-// incl. gusts <= 15 kt and no tailwind except winds reported calm (0-3 kt). A plan is acceptable when its arrival runway
-// meets them; the West Plan unless it fails and the Southeast Plan does not (both fail: the smaller excess). "Not dry" =
-// precipitation in the METAR's present weather (I: the runway condition itself is not reported in the METAR).
-export const TAILWIND_SE_KT = 5, CROSSWIND_SE_KT = 20, WET_CROSSWIND_KT = 15, WET_TAILWIND_KT = 3;
+// end: SFO's NV, the 5-kt value also reproduces SFO's climatology, above); runways not clear or not dry - §4b(2): crosswind
+// incl. gusts <= 15 kt and "(b) No tailwind component may be present except the nominal range of winds reported as calm
+// (0-3 knots) may be considered to have no tailwind component" (pdftotext of the cached PDF, re-read 2026-11-09): the
+// 3 kt bound applies to the REPORTED WIND SPEED (gusts included), not to the tailwind component - a wet runway with any
+// tailwind component fails unless the reported wind is 0-3 kt (close-out round 5: the code had accepted wet tailwind
+// COMPONENTS up to 3 kt, so '18004KT -RA' kept the West Plan with 1.9 kt on 28). A plan is acceptable when its arrival
+// runway meets them; the West Plan unless it fails and the Southeast Plan does not (both fail: the smaller excess). "Not
+// dry" = precipitation in the METAR's present weather (I: the runway condition itself is not reported in the METAR).
+export const TAILWIND_SE_KT = 5, CROSSWIND_SE_KT = 20, WET_CROSSWIND_KT = 15, WET_CALM_KT = 3;
+/** @deprecated the wet rule's 3 kt is the calm wind speed (WET_CALM_KT), not a tailwind-component limit */
+export const WET_TAILWIND_KT = WET_CALM_KT;
 export const IAP_ENDS = new Set(['28L', '28R', '19L', '19R', '10L', '10R']);   // spec §5.2 (d-TPP 2609, V)
 export function runwayConfigFrom(d, observed, override) {
   if (override) return override;
@@ -112,8 +118,10 @@ export function runwayConfigFrom(d, observed, override) {
   const comp = (rw) => (kt != null && dir != null) ? { tail: -kt * Math.cos((dir - RWY_HDG[rw]) * DEG), cross: Math.abs(kX * Math.sin((dir - RWY_HDG[rw]) * DEG)) } : { tail: 0, cross: 0 };
   const c28 = comp('28'), c19 = comp('19'); const tail28 = c28.tail, cross28 = c28.cross;
   const wet = !!(d && (d.weather || []).some(x => (x.precip || []).length));
-  const lim = wet ? { tail: WET_TAILWIND_KT, cross: WET_CROSSWIND_KT } : { tail: TAILWIND_SE_KT, cross: CROSSWIND_SE_KT };
-  const excess = (c) => Math.max(0, c.tail - lim.tail) + Math.max(0, c.cross - lim.cross);
+  // (wet: any tailwind component counts unless the wind is reported calm, 0-3 kt incl. gusts - §4b(2)(b))
+  const calm = kX <= WET_CALM_KT;
+  const lim = wet ? { tail: calm ? Infinity : 0, cross: WET_CROSSWIND_KT } : { tail: TAILWIND_SE_KT, cross: CROSSWIND_SE_KT };
+  const excess = (c) => (wet ? (calm ? 0 : Math.max(0, c.tail)) : Math.max(0, c.tail - lim.tail)) + Math.max(0, c.cross - lim.cross);
   const okW = excess(c28) === 0, okS = excess(c19) === 0;
   const plan = okW ? 'west' : okS ? 'southeast' : (excess(c19) < excess(c28) ? 'southeast' : 'west');
   const P = { west: [['28L', '28R'], ['1L', '1R']], southeast: [['19L', '19R'], ['10L', '10R']] }[plan];
@@ -121,7 +129,7 @@ export function runwayConfigFrom(d, observed, override) {
   const vis = d && d.visibility ? d.visibility.sm : null, ceil = d ? d.ceiling_ft : null;
   const instr = (vis != null && vis < 5) || (ceil != null && ceil < 2500);
   const arr = {}; for (const e of P[0]) arr[e] = instr && IAP_ENDS.has(e) ? 'instrument' : 'unknown';
-  const cond = wet ? `wet (precip): limits tail ${lim.tail} / cross ${lim.cross} kt` : `dry: limits tail ${lim.tail} / cross ${lim.cross} kt`;
+  const cond = wet ? `wet (precip): no tailwind unless the wind is calm (${kX.toFixed(0)} kt ${calm ? '<=' : '>'} ${WET_CALM_KT}) / cross ${lim.cross} kt` : `dry: limits tail ${lim.tail} / cross ${lim.cross} kt`;
   const why = (okW ? `28 tail ${tail28.toFixed(1)} / cross ${cross28.toFixed(0)} kt within 8400.9 (${cond}): SFO West Plan`
     : `28 tail ${tail28.toFixed(1)} / cross ${cross28.toFixed(0)} kt beyond 8400.9 (${cond}), 19 tail ${c19.tail.toFixed(1)} / cross ${c19.cross.toFixed(0)}: SFO ${plan === 'southeast' ? 'Southeast' : 'West'} Plan`);
   return { arr, dep: P[1], plan, tail28, cross28, wet, source: 'METAR fallback, ' + why, tag: 'I (SFO plans V; limits FAA Order 8400.9 §4b V; plan choice I)' };

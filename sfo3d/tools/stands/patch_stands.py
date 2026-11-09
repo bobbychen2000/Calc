@@ -811,15 +811,17 @@ _WING = {}
 # L2's cab grew from 47 to 291-378 points" - compared two versions of tools/live/invariants.mjs: commit da29bab added
 # the acHit box sampling, engine pieces and 3-D footprints after the fix-1 replay; on one harness UAL917's G4 L2 cab
 # (317 points) and G4 L1 stair contact are identical with either setting and with the fix-1 data. Withdrawn.) All-hours
-# replay on the frozen harness (invariants.mjs 2f6c5d9b, build_stream.py 93da6fe0, stream SP/r3/all f6ff7ceb, frozen r3v
-# code), this data with P10_ACCEPTED False vs True (19 rests re-chosen): bridge.hit_at_rest 852 -> 756 frames (KLM373
-# B772 A2 L2 tunnel, 33 frames, gone; UAL59 B772 G1 L2 107 -> 39 points), but overlap.gnd 902 -> 1115 (the stale-parked
-# / arriving pairs at G13 and G10 last 77 / 136 frames longer), a new bridge contact (ANZ7 B789 G10 L1 cab, 10 frames),
-# UAL917's G7 L2 walkway contact 113 -> 134 points, bridge.orphan 5,389 -> 5,797, lag.gnd_30m 40,820 -> 41,408:
-# collision frames (bridge.hit.* + overlap.gnd) 2,970 -> 3,162. By the owner's rule (no collisions / clipping first) the
-# re-choice is worse in sum, and it would replace mapped (OSM / build) rest poses by inferred ones for types never seen
-# there. So the data rests stay; check_stands keeps reporting the accepted-type cases (WARN) and the rest per occupant
-# is gates.js's (static_closeout.md R5.2 / Round 5).
+# replays on one frozen harness (invariants.mjs 2f6c5d9b, build_stream.py 93da6fe0, stream SP/r3/all f6ff7ceb), this
+# data with P10_ACCEPTED False vs True (19 rests re-chosen). Frozen r3v code: bridge.hit_at_rest 852 -> 756 frames
+# (KLM373 B772 A2 L2 tunnel, 33 frames, gone; UAL59 B772 G1 L2 107 -> 39 points), but overlap.gnd 902 -> 1115 (the
+# stale-parked / arriving pairs at G13 and G10 last 77 / 136 frames longer), a new bridge contact (ANZ7 B789 G10 L1 cab,
+# 10 frames), UAL917's G7 L2 walkway contact 113 -> 134 points, bridge.orphan 5,389 -> 5,797, lag.gnd_30m 40,820 ->
+# 41,408: collision frames (bridge.hit.* + overlap.gnd) 2,970 -> 3,162. Shipping code (HEAD 47af104): every collision /
+# clearance class identical (hit_at_rest 22 frames either way), bridge.orphan 5,549 -> 6,011, lag.gnd_30m 43,322 ->
+# 43,923. By the owner's rule (no collisions / clipping first) the re-choice gains nothing on the shipping code and is
+# worse in sum on the older one, and it would replace mapped (OSM / build) rest poses by inferred ones for types never
+# seen there. So the data rests stay; check_stands keeps reporting the accepted-type cases (WARN) and the rest per
+# occupant is gates.js's (static_closeout.md R5.2 / R6.2).
 P10_ACCEPTED = False
 
 

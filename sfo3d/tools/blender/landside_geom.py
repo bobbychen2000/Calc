@@ -1191,8 +1191,13 @@ def garage_ag(k):
             seg = LineString([a_, b_]); mid_w = Point(*F.W(*seg.interpolate(0.5, normalized=True).coords[0]))
             n_, L_ = edge_normal(a_, b_)
             if main_b.distance(mid_w) < 0.3 and not on_outline(seg):
-                # the hall's back / north walls (the main body behind): dark interior seen through the openings
-                bsh.quad_wall(b_, a_, zh0, zh1, zh0, zh1, 'interior', 0.0, (4.0, 4.0))
+                # the hall's back / north walls (the main body behind): dark interior seen through the openings.
+                # close-out round 5 (verifier: the far wall ran across both decks' parapets, 19.75-23.9 m over the whole block):
+                # the tracks continue into the body here - the wall is open over each track (the block portal: the deck +
+                # PORTAL_CLEAR, the hall's height), the portal tunnel behind it spans that opening
+                hb_ = [(L_ - (s1_ + PORTAL_CLEAR - 0.01), L_ - (s0_ - PORTAL_CLEAR + 0.01), zh0 - 0.01, zh1 + 0.01)
+                       for s0_, s1_, k_ in face_portals(seg) if k_ == 'block']
+                holed_wall(bsh, b_, a_, zh0, zh1, hb_, 'interior', 0.0, (4.0, 4.0))
             elif face_portals(seg):
                 # close-out r3 fix 2 (verifier v4): the east (portal) face is a single-sided precast wall; with the Garage A body's
                 # screened bands gone from this stretch (close-out r3), rays entering the hall from the open south side met its back
@@ -1234,7 +1239,11 @@ def garage_ag(k):
         if np.cross(np.r_[pb - pa, 0], np.r_[n, 0])[2] > 0: pa, pb = pb, pa
         z0, z1 = zt - AT.DECK_T - 0.3, zt + AT.PORTAL_H
         d = (pb - pa) / Le
-        pa2, pb2 = pa + d * 0.6, pb - d * 0.6
+        # close-out round 5: the tunnel spans the portal hole (the deck + PORTAL_CLEAR; pa / pb are the crossings of the deck
+        # polygon buffered 0.2 m - 0.01 m for the block's back wall). It was inset 0.6 m: since the round-4 holes widened to the
+        # deck + 0.1 m, a 0.7-m strip beside each tunnel looked into the empty garage body
+        off_ = (0.01 if kind == 'block' else 0.2) - PORTAL_CLEAR
+        pa2, pb2 = pa + d * off_, pb - d * off_
         zf = z0 + AT.DECK_T + 0.3
         cen = np.r_[0.5 * (pa2 + pb2) + din * 0.5, 0.5 * (zf + z1)]
         uvq = [(0, 0), (1, 0), (1, 1), (0, 1)]
@@ -2385,4 +2394,36 @@ def build_all(only=None):
         out.append(bart(gG, lev, bart_fp))
     if only:
         out = [b for b in out if b.key in only]
+    if tiles:
+        info['keepout'] = airtrain_keepout(out, tiles)
     return out, tiles, info, lev
+
+
+# close-out round 5 (verifier: the Garage A station block's deck-1 opening and far wall, Garage G, LTP garage 2, Grand Hyatt and
+# RCC faces crossing the guideway / stations): every building face is cleared out of the AirTrain's column hull + KEEP_CLEAR
+# (tools/blender/keepout.py) at every LOD. Exempt by design (verify_landside lists them): the portal tunnels (the guideway's own
+# lining inside a garage body, where the deck is clipped) and the Central Garage plinth (the trough the guideway runs in: its
+# walls stand on the SFO Museum AirTrain Rail outline the deck is built from)
+KEEP_CLEAR = 0.08          # < PORTAL_CLEAR 0.10: the designed portal openings are left as they are [model]
+KEEP_EXEMPT = ('_portal', 'cg_plinth')
+
+
+def airtrain_keepout(buildings, tiles):
+    import keepout as KO
+    T = []
+    for t in tiles:
+        for part in t.shells + t.details[0]:
+            T.append(KO.tris_world(part.mb, t.F.W))
+    T = [x for x in T if len(x)]
+    if not T: return {}
+    cols = KO.Columns(np.concatenate(T), clear=KEEP_CLEAR)
+    rec = {}
+    for b in buildings:
+        parts = [(0, p) for p in b.shells] + [(0, p) for p in b.details[0]] + [(1, p) for p in b.details[1]] + [(2, p) for p in b.coarse]
+        for lod, part in parts:
+            if any(e in part.name for e in KEEP_EXEMPT): continue
+            st = {}
+            KO.clip_mb(part.mb, b.F.W, cols, st)
+            if st.get('faces_cut'):
+                rec.setdefault(b.key, {})['%s@%d' % (part.name, lod)] = dict(faces=st['faces_cut'], m2=round(st['area_m2'], 2))
+    return rec

@@ -156,10 +156,13 @@ export class Renderer3 {
     try { const c = document.createElement('canvas'); const g = c.getContext('webgl2'); if (g) { const x = g.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); return false; } } catch (e) { }
     return true;
   }
-  // fatal error: the app's loading overlay if it is still there, and an overlay of our own (the app has no hook yet:
-  // docs/requests/engine_exports.md); also window.__sfoError for the QA harness
+  // fatal error: window.__sfoError for the QA harness, then the app's hook `R.onFatal(html)` when it has set one
+  // (js/live/app.js -> ui.fail: the loading overlay while it is up, else its own #fatal alert; engine_exports.md s.5.2,
+  // close-out request C3F2.1 - until round 5 this hook was assigned but never called); without a hook (dev pages) or if
+  // it throws, the loading overlay if it is still there and an overlay of our own
   fatal(html, detail) {
     window.__sfoError = detail || html;
+    if (typeof this.onFatal === 'function') { try { this.onFatal(html); return; } catch (e) { console.error('[r3] onFatal hook failed', e); } }
     const L = document.getElementById('loading'); if (L) { const m = L.querySelector('.msg'); if (m) m.innerHTML = html; L.classList.add('err'); L.classList.remove('done'); }
     let o = document.getElementById('r3fatal');
     if (!o) { o = document.createElement('div'); o.id = 'r3fatal'; o.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);max-width:min(90vw,420px);padding:16px 20px;background:rgba(12,14,18,0.92);color:#eee;font:15px/1.4 system-ui,sans-serif;border-radius:10px;z-index:9999;text-align:center'; document.body.appendChild(o); }
@@ -398,7 +401,8 @@ export class Renderer3 {
     // medium) and TRAA (its history = the previous resolved frame); ?ssr=0 turns it off (A/B)
     const hist = E.traaNode && E.traaNode._historyRenderTarget && E.traaNode._historyRenderTarget.texture;
     this.ssrOn = uniform(0); this.ssrPrevVP = uniform(new THREE.Matrix4()); this._ssrOk = 0;
-    const ssr = Q.ao === 'prepass' && hist && E.depthNode && new URLSearchParams(location.search).get('ssr') !== '0' ? makeSSR({ depth: E.depthNode, history: hist, prevVP: this.ssrPrevVP, on: this.ssrOn, sky }) : null;
+    this.ssrAO = uniform(1);   // QA A/B (close-out round 5): 0 = subtract the unoccluded sky reflection as before (R.ssrAO.value)
+    const ssr = Q.ao === 'prepass' && hist && E.depthNode && new URLSearchParams(location.search).get('ssr') !== '0' ? makeSSR({ depth: E.depthNode, history: hist, prevVP: this.ssrPrevVP, on: this.ssrOn, sky, ao: E.aoScreen || null, aoOn: this.ssrAO }) : null;
     this.ssrBuilt = !!ssr;
     this.gMat = groundMaterial(W, this.bakes, sky, Q, { ssr }); this.wMat = waterMaterial(W, this.bakes, sky);
     // the light objects get from below: the local airfield bake instead of the IBL's whole-field mean (tsl/ground_bounce.js,

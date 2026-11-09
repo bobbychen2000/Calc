@@ -76,8 +76,12 @@ export class GateSystem {
   }
   // fit: a Geo collecting the fitted closure (js/aircraft/dock.js bellowsGeo, as js/live/gates.js draws it) - close-out
   // round 3 bridges-9: the old flat block reached 0.4 m past the cab stop (0.25 m into the skin at the door) and stood off
-  // or cut into the tapering skin elsewhere; this scene has one bridge per gate, at door 1 (no second-bridge door)
-  bridgeInstances(g, k, out, fit = null) {
+  // or cut into the tapering skin elsewhere; this scene has one bridge per gate, at door 1 (no second-bridge door).
+  // opt (animated bridges, items()): kFit - the k the closure is deployed for (the cache step; default k); local - build
+  // the closure in the cab frame (drawn with the returned model matrix M); cached - the fitted closure for this
+  // (gate, type, kFit) is already built: neither build it again nor push the flat block (close-out round 5: on every
+  // cache hit fit was null, so the flat block came back on top of the cached fitted mesh). Returns {M, fitted}.
+  bridgeInstances(g, k, out, fit = null, opt = {}) {
     const P = this.bridgePose(g, k); const M = this.meshes;
     const rc = P.rc; const rot = [rc[0], P.floorY - 0.2, rc[2]];
     // rotunda + column
@@ -102,10 +106,11 @@ export class GateSystem {
     out.cab.push(inst(segBox(cA, cB, 3.3, 3.4).M, [3.2, 0, 0, 0]));
     // bellows closure at the aircraft side, deployed over the last 15 % of the docking: fitted to the drawn skin where the
     // type has a measured door-1 footprint (data/models/dock_foot.js), else flat with its front at the cab stop
-    const kk = Math.max(0, Math.min(1, (k - 0.85) / 0.15)), bell = BELLOWS.rest + BELLOWS.ext * kk;
-    const shp = fit && kk > 0 ? bellowsShape(P.T, 1, kk) : null;
-    if (shp) bellowsGeo(fit, m4.basis(P.cabFacing, [0, 1, 0], [cabB[0], P.cab[1], cabB[2]]), 0, bell, shp, [0.08, 0.08, 0.09, 1], [0.9, 0, 0, 0]);
-    else { const bA = [cabB[0], P.cab[1] + 1.525, cabB[2]], bB = v3.add(bA, v3.mul(P.cabFacing, bell)); out.bellows.push(inst(segBox(bA, bB, 2.95, 3.1).M)); }
+    const dep = (kx) => Math.max(0, Math.min(1, (kx - 0.85) / 0.15)); const kk = dep(k), kf = dep(opt.kFit ?? k);
+    const Mc = m4.basis(P.cabFacing, [0, 1, 0], [cabB[0], P.cab[1], cabB[2]]);
+    const shp = (fit || opt.cached) && kf > 0 ? bellowsShape(P.T, 1, kf) : null;
+    if (shp) { if (fit) bellowsGeo(fit, opt.local ? m4.ident() : Mc, 0, BELLOWS.rest + BELLOWS.ext * kf, shp, [0.08, 0.08, 0.09, 1], [0.9, 0, 0, 0]); }
+    else { const bA = [cabB[0], P.cab[1] + 1.525, cabB[2]], bB = v3.add(bA, v3.mul(P.cabFacing, BELLOWS.rest + BELLOWS.ext * kk)); out.bellows.push(inst(segBox(bA, bB, 2.95, 3.1).M)); }
     // drive unit: legs + wheels under the outer tunnel near cab
     const du = v3.add(s0, v3.mul(dir, Lt * 0.84)); const yb = du[1] - 1.5;
     const side = v3.norm(v3.cross(dir, [0, 1, 0]));
@@ -116,6 +121,7 @@ export class GateSystem {
     }
     const beamA = v3.add(du, v3.mul(side, -1.4)), beamB = v3.add(du, v3.mul(side, 1.4));
     out.beam.push(inst(segBox([beamA[0], G + 0.5, beamA[2]], [beamB[0], G + 0.5, beamB[2]], 0.4, 0.5).M));
+    return { M: Mc, fitted: !!shp };
   }
   buildStatic() {
     const R = rng(99);
@@ -139,14 +145,19 @@ export class GateSystem {
   items(dyn = [], extraVehicles = {}) {
     const out = [];
     const buckets = {}; for (const k in this.staticBuckets) buckets[k] = this.staticBuckets[k].slice();
-    // (fitted closures of the animated bridges: one mesh per gate and 0.05 step of k, cached - the offline renderer
-    // animates one bridge per shot)
-    const fits = []; this._fitDyn = this._fitDyn || new Map();
-    for (const d of dyn) { const kq = Math.round(Math.max(0, Math.min(1, d.k)) * 20) / 20, key = (d.gate.id ?? d.gate.name) + ':' + kq;
-      let fm = this._fitDyn.get(key); const geo = fm === undefined ? new Geo() : null; this.bridgeInstances(d.gate, d.k, buckets, geo);
-      if (geo) { fm = geo.nv ? new Mesh(geo.data()) : null; this._fitDyn.set(key, fm); } if (fm) fits.push(fm); }
+    // (fitted closures of the animated bridges: one mesh per gate, type and 0.05 step of k, cached - the offline renderer
+    // animates one bridge per shot; built in the cab frame and drawn at this frame's cab pose (before round 5 it was built
+    // in world space at the first frame of each step and stayed there while the cab moved on), deployed for the cached step,
+    // and on a cache hit the flat block is not pushed as well - close-out round 5)
+    const fits = []; this._fitDyn = this._fitDyn || new Map(); this._fitPrev = this._fitPrev || new Map();
+    for (const d of dyn) { const kq = Math.round(Math.max(0, Math.min(1, d.k)) * 20) / 20, gid = d.gate.id ?? d.gate.name, key = gid + ':' + (d.gate.acType || (d.gate.wide ? 'wide' : 'narrow')) + ':' + kq;
+      let fm = this._fitDyn.get(key); const geo = fm === undefined ? new Geo() : null;
+      const r = this.bridgeInstances(d.gate, d.k, buckets, geo, { kFit: kq, local: true, cached: !!fm });
+      if (geo) { fm = geo.nv ? new Mesh(geo.data()) : null; this._fitDyn.set(key, fm); }
+      if (fm && r.fitted) { fits.push({ m: fm, M: r.M, P: this._fitPrev.get(gid) || r.M }); this._fitPrev.set(gid, r.M); } }
     const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    for (const m of [this.fitStaticMesh, ...fits]) if (m) out.push({ mesh: m, prog: 'obj', model: I4, bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
+    if (this.fitStaticMesh) out.push({ mesh: this.fitStaticMesh, prog: 'obj', model: I4, bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
+    for (const f of fits) out.push({ mesh: f.m, prog: 'obj', model: f.M, prevModel: f.P, bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
     for (const k in buckets) { const m = this.meshes[k]; m.setInstances(new Float32Array(buckets[k].flat()), buckets[k].length); out.push({ mesh: m, prog: 'objI', bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } }); }
     for (const k in this.vehicleBuckets) { const list = this.vehicleBuckets[k].concat(extraVehicles[k] || []); const m = this.vehicleMeshes[k]; m.setInstances(new Float32Array(list.flat()), list.length); out.push({ mesh: m, prog: 'objI', bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 }, shadowMaxCascade: 2 }); }
     return out;
@@ -218,11 +229,19 @@ export function beltDoor(T, fam, door) {
   S = keel != null ? Math.max(S, keel + 0.05) : Math.max(S, lowSkin(T) + BELT_THICK);
   return { X, S: Math.round(S * 100) / 100, pub, keel, drawn: !!(c && c.sill != null) };
 }
-// the conveyor end's distance from the centre line at station X for conveyor top S: the rendered starboard skin + 0.03 m
-// (T.fit.skinHW; procedural airframes: the elliptical section + 0.05 m)
-export function beltEndY(T, X, S) {
-  const v = T.fit && T.fit.skinHW ? T.fit.skinHW(X, S) : null; if (v != null) return v + 0.03;
-  const a = Math.max(0.5, ((T.fit && T.fit.renderedCrown) || T.Hc + T.R) - T.Hc); return T.R * Math.sqrt(Math.max(0, 1 - ((S - T.Hc) / a) ** 2)) + 0.05;
+// the conveyor end's distance from the centre line at station X for conveyor top S: every point of the end face's top
+// edge 0.03 m outside the rendered starboard skin (T.fit.skinHW; procedural airframes: the elliptical section + 0.05 m).
+// face = [aX, aY]: the top edge's half extent from its centre to one corner, aX along the fuselage (m aft), aY outboard
+// (js/live/gates.js passes the conveyor's yaw: at 72 deg off the axis the corners are 0.43 m fore / aft and 0.14 m in /
+// out of the centre); default the conveyor's half width along the axis. Before close-out round 5 the end was placed by
+// its centre line only and its forward (737 NG / MAX aft doors) or aft corner (A319 aft door) went 0.04-0.12 m into the
+// closed cargo-door skin where the keel rises aft (aircraft verifier c4 F3, belt_w2.mjs)
+export const BELT_W = 0.9;
+export function beltEndY(T, X, S, face = null) {
+  const [aX, aY] = face || [BELT_W / 2, 0]; let y = null;
+  if (T.fit && T.fit.skinHW) for (const t of [-1, -0.5, 0, 0.5, 1]) { const v = T.fit.skinHW(X + aX * t, S); if (v != null && (y == null || v - aY * t > y)) y = v - aY * t; }
+  if (y != null) return y + 0.03;
+  const a = Math.max(0.5, ((T.fit && T.fit.renderedCrown) || T.Hc + T.R) - T.Hc); return T.R * Math.sqrt(Math.max(0, 1 - ((S - T.Hc) / a) ** 2)) + Math.abs(aY) + 0.05;
 }
 // (old API, kept for the checkers: the conveyor top of that door)
 export function beltSill(T, fam, door) { const D = beltDoor(T, fam, door); return D ? D.S : null; }
@@ -257,7 +276,7 @@ const LEGACY_SET = { belts: { beltLoader: 1.55 }, caterings: { catering: 3.6 } }
 // local shape (x forward to the aircraft end, y up, z right): conveyor box from (x0, y0) tilted by th about z; its top
 // surface ends at (xe, S); chassis -2.5..2.4 m up to chassisTop; cab on the left (-z) side up to 2.05 m
 export function beltShape(S) {
-  const x0 = -2.9, y0 = 0.75, len = 8.0, thick = BELT_THICK, w = 0.9;
+  const x0 = -2.9, y0 = 0.75, len = 8.0, thick = BELT_THICK, w = BELT_W;
   let th = 0; for (let i = 0; i < 40; i++) th = Math.asin(Math.max(-0.5, Math.min(0.9, (S - y0 - thick * Math.cos(th)) / len)));
   return { x0, y0, len, thick, w, th, xe: x0 + len * Math.cos(th) - thick * Math.sin(th), S, chassisTop: 0.75, cabTop: 2.05 };
 }

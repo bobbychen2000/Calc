@@ -637,8 +637,8 @@ class World:
         # family's IBF roof less a tuck, TOWER_Z1) reaches only TOWER_JOINT - 0.02 m out, so the T2 / BA-D / T1 walls 0.3 m off
         # the IBF are emitted full height (before: clipped up to 14.07 m, the F1 roof, leaving a 0.24-m slot above the default F2
         # parapet and an open view into T2); the gap between them is covered by a flashing, tower_flashing())
-        for g, z1 in ((ITB.buffer(0.05, join_style=2), 17.0), (TOWER_EXCL.buffer(TOWER_JOINT - 0.02, join_style=2), TOWER_Z1)):
-            self.occ.append((loc(g), 0.0, z1, None))
+        for g, z1, tag in ((ITB.buffer(0.05, join_style=2), 17.0, ITB_NEIGHBOUR), (TOWER_EXCL.buffer(TOWER_JOINT - 0.02, join_style=2), TOWER_Z1, None)):
+            self.occ.append((loc(g), 0.0, z1, tag))
         for s in self.S:
             # a solid with a parapet occupies up to its DECK: along a taller neighbour its coping ring is cut away (emit_roof), so
             # the neighbour's wall must come down to the deck there (review r1: a 0.6-m slot showed between the T2 deck and the C3C)
@@ -648,12 +648,12 @@ class World:
         self.tree = STRtree([o[0] for o in self.occ])
         self.prep = [shapely.prepared.prep(o[0]) for o in self.occ]
 
-    def occupied(self, p, me):
+    def occupied(self, p, me, skip=None):
         out = []
         pt = Point(p)
         for i in self.tree.query(pt):
             g, z0, z1, s = self.occ[i]
-            if s is me: continue
+            if s is me or (skip is not None and s is skip): continue
             if self.prep[i].contains(pt): out.append((z0, z1))
         return out
 
@@ -692,12 +692,17 @@ def _sub(iv, cut):
     return [(a, b) for a, b in out if b - a > 0.02]
 
 
-def exposed_pieces(W, s, a, b, lo, hi):
-    """[(t0, t1, [(z0, z1) visible])] along a->b for a wall from lo to hi; the outside is sampled 0.12 m out."""
+ITB_NEIGHBOUR = 'ITB'      # occupancy tag of the neighbouring ITB asset (World.finish)
+
+
+def exposed_pieces(W, s, a, b, lo, hi, closure=None):
+    """[(t0, t1, [(z0, z1) visible])] along a->b for a wall from lo to hi; the outside is sampled 0.12 m out.
+    closure (a list, optional; close-out round 5): receives (t0, t1, [(z0, z1)]) of the stretches hidden ONLY by the ITB's
+    occupancy - the domestic halls' junction with the ITB core (emit_walls closes them with a plain wall)."""
     L = math.hypot(b[0] - a[0], b[1] - a[1])
     n = ((b[1] - a[1]) / L, -(b[0] - a[0]) / L)
     ts = W.splits(a, b, s)
-    out = []
+    out, cl = [], []
     for t0, t1 in zip(ts[:-1], ts[1:]):
         if (t1 - t0) * L < 0.02: continue
         tm = 0.5 * (t0 + t1)
@@ -705,15 +710,24 @@ def exposed_pieces(W, s, a, b, lo, hi):
         iv = [(lo, hi)]
         for c in W.occupied(p, s): iv = _sub(iv, c)
         if iv: out.append((t0, t1, iv))
+        if closure is not None:
+            ivn = [(lo, hi)]
+            for c in W.occupied(p, s, skip=ITB_NEIGHBOUR): ivn = _sub(ivn, c)
+            for c in iv: ivn = _sub(ivn, c)
+            if ivn: cl.append((t0, t1, ivn))
     # merge consecutive pieces with the same visibility
-    m = []
-    for p in out:
-        if m and abs(m[-1][1] - p[0]) < 1e-9 and m[-1][2] == p[2]: m[-1] = (m[-1][0], p[1], p[2])
-        else: m.append(p)
-    return m
+    def _merge(src):
+        m = []
+        for p in src:
+            if m and abs(m[-1][1] - p[0]) < 1e-9 and m[-1][2] == p[2]: m[-1] = (m[-1][0], p[1], p[2])
+            else: m.append(p)
+        return m
+    if closure is not None: closure.extend(_merge(cl))
+    return _merge(out)
 
 
 IBF_L = loc(TOWER_EXCL)   # the tower base building outline (local)
+JUNCTION_M2 = [0.0]       # build counter: closing wall area at the ITB junction (close-out round 5)
 
 
 def emit_walls(mb, det, W, s, lod, mull_geom=True):
@@ -732,7 +746,8 @@ def emit_walls(mb, det, W, s, lod, mull_geom=True):
                 # panel wall - no glazing, no fins (they would reach the IBF mullions)
                 if IBF_L.distance(Point((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)) < TOWER_GAP + 0.1:
                     bands, st = [(0.0, None, 'panel_light', 0)], 'ibf_side'
-                for t0, t1, iv in exposed_pieces(W, s, a, b, s.z0, head):
+                junction = []
+                for t0, t1, iv in exposed_pieces(W, s, a, b, s.z0, head, closure=junction):
                     pa = (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0)
                     pb = (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1)
                     sa = s_acc + t0 * L
@@ -749,12 +764,83 @@ def emit_walls(mb, det, W, s, lod, mull_geom=True):
                             mb.quad_wall(pa, pb, za, zb, za, zb, mat, sa, tl(mat), v0=z0b)
                             if lod == 0 and mull_geom and mat in GLASS and det is not None:
                                 fins(det, pa, pb, sa, za, zb, mod, s, st)
+                # close-out round 5 (verifier: 1,155 near-context back-face hits on T1 / T3W / T3E): the halls were left open
+                # where they abut the ITB core (its occupancy hid those walls), relying on the ITB asset's wall 0.02 m away -
+                # rays through the ITB core met the halls' far walls from inside. The junction now gets a plain panel wall (no
+                # glazing, no fins: the ITB core wall stands 0.02 m in front of it), so the domestic asset is closed on its own
+                for t0, t1, iv in junction:
+                    pa = (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0)
+                    pb = (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1)
+                    for v0, v1 in iv:
+                        if v1 - v0 < 0.02: continue
+                        mb.quad_wall(pa, pb, v0, v1, v0, v1, 'panel_light', s_acc + t0 * L, tl('panel_light'), v0=s.z0)
+                        JUNCTION_M2[0] += (t1 - t0) * L * (v1 - v0)
                 s_acc += L
+
+
+# close-out round 5 (verifier: the round-4 drum notches follow the drawn drum, so short walkways whose end lies 0.3-1.9 m inside
+# the facade cross it again - B10 / D4 / D5 / D11 / D14 / D15 / D16 / E6 / E11 - and the 0.18-m fins pierced the app walkway
+# tube's roof, floor and sides there): the app's fixed solids (tools/blender/app_bridges.json rest walkway segments and drums,
+# every bridge; heights above the apron) as plan polygons in the local frame; a fin is cut out of each solid's height band
+# (+ FIN_CLEAR) wherever its footprint comes within FIN_CLEAR of the solid in plan - it stops above and below the walkway
+FIN_CLEAR = 0.05             # = bridge_head.VEST_CLEAR [our choice]
+
+
+def _app_solids_local():
+    from shapely.strtree import STRtree
+    G, Z = [], []
+    for b in AB.bridges('ABCDEFG'):
+        for so in b['rest']:
+            c = np.array(so['c'], float)
+            if so['part'] == 'rotunda':
+                g = Point(*Lp(*c)).buffer(float(so.get('round') or so['hl']), 32)
+            elif so['part'] == 'walkway':
+                u = np.array(so['u'], float); v = np.array([-u[1], u[0]])
+                g = Polygon([Lp(*(c + u * su * so['hl'] + v * sv * so['hw'])) for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1))])
+            else:
+                continue
+            G.append(g.buffer(FIN_CLEAR - 1e-3, join_style=2)); Z.append((float(so['lo']) - FIN_CLEAR, float(so['hi']) + FIN_CLEAR))
+    return STRtree(G), G, Z
+
+
+APP_SOLIDS = _app_solids_local()
+FIN_CUTS = dict(fins=0, cut=0, removed=0)      # (build counters: fins emitted / fins cut around an app solid / removed whole)
+FIN_EXTRA = [None]           # per build: the bridge door surrounds as fin keep-outs (set_door_keepouts)
+
+
+def set_door_keepouts(doors):
+    """close-out round 5 (verifier: same-facing coplanar BA-B door-jamb / fin faces at B10 / B16, where a jamb stood on a fin
+    of the facade it is set on): the door surround's whole frame (both jambs, head and leaf, + FIN_CLEAR) is a fin keep-out
+    in its height band - the frame replaces the fins there."""
+    from shapely.strtree import STRtree
+    G_, Z_ = [], []
+    for d in doors:
+        hb = d.get('head') or {}
+        P = np.array(d['E']) if hb.get('kind') == 'vestibule' else np.array(d['X'])
+        dd = np.array(d['d']); n = np.array([dd[1], -dd[0]])
+        hw = WALK_W_APP / 2 + 0.05 + 0.25 + FIN_CLEAR
+        a0, a1 = -0.25, 0.12 + FIN_CLEAR           # behind the facade point (fins stand on the facade) .. the frame's front
+        G_.append(Polygon([tuple(P + dd * a0 - n * hw), tuple(P + dd * a1 - n * hw), tuple(P + dd * a1 + n * hw), tuple(P + dd * a0 + n * hw)]))
+        Z_.append((d['dz0'] - FIN_CLEAR, d['wtop'] + 0.4 + FIN_CLEAR))
+    FIN_EXTRA[0] = (STRtree(G_), G_, Z_) if G_ else None
+
+
+def fin_spans(foot, z0, z1):
+    """the height spans of a fin with plan footprint `foot` (local) on a band z0..z1 left after the app solids (and the door
+    surrounds) it meets."""
+    iv = [(z0, z1)]
+    for src in (APP_SOLIDS, FIN_EXTRA[0]):
+        if src is None: continue
+        tree, G, Z = src
+        for k in tree.query(foot):
+            if not G[k].intersects(foot): continue
+            iv = _sub(iv, Z[k])
+    return [(a, b) for a, b in iv if b - a > 0.05]
 
 
 def fins(det, a, b, s0, z0, z1, mod, s, st):
     """vertical aluminium fins on a glazed band: every `mod` m of the ring's running length (aligned with the curtain
-    texture), or the irregular T1 rhythm (mod -1)."""
+    texture), or the irregular T1 rhythm (mod -1); cut around the app's fixed walkway / drum solids (close-out round 5)."""
     L = math.hypot(b[0] - a[0], b[1] - a[1])
     if L < 0.6 or mod == 0: return
     d = ((b[0] - a[0]) / L, (b[1] - a[1]) / L); n = (d[1], -d[0])
@@ -769,9 +855,19 @@ def fins(det, a, b, s0, z0, z1, mod, s, st):
         c = (a[0] + d[0] * x, a[1] + d[1] * x)
         p0 = (c[0] - d[0] * w / 2, c[1] - d[1] * w / 2); p1 = (c[0] + d[0] * w / 2, c[1] + d[1] * w / 2)
         q0 = (p0[0] + n[0] * pr, p0[1] + n[1] * pr); q1 = (p1[0] + n[0] * pr, p1[1] + n[1] * pr)
-        det.quad_wall(p0, q0, z0, z1, z0, z1, fm, 0, (3.0, 3.0))
-        det.quad_wall(q0, q1, z0, z1, z0, z1, fm, 0, (3.0, 3.0))
-        det.quad_wall(q1, p1, z0, z1, z0, z1, fm, 0, (3.0, 3.0))
+        spans = fin_spans(Polygon([p0, q0, q1, p1]), z0, z1)
+        FIN_CUTS['fins'] += 1
+        if spans != [(z0, z1)]: FIN_CUTS['cut' if spans else 'removed'] += 1
+        for za, zb in spans:
+            det.quad_wall(p0, q0, za, zb, za, zb, fm, 0, (3.0, 3.0))
+            det.quad_wall(q0, q1, za, zb, za, zb, fm, 0, (3.0, 3.0))
+            det.quad_wall(q1, p1, za, zb, za, zb, fm, 0, (3.0, 3.0))
+            if zb < z1 - 1e-6:      # cut under an app solid: a cap closes the fin's top there (facing up)
+                det.face([(p0[0], p0[1], zb), (q0[0], q0[1], zb), (q1[0], q1[1], zb), (p1[0], p1[1], zb)], fm,
+                         [(0, 0), (0.06, 0), (0.06, 0.02), (0, 0.02)])
+            if za > z0 + 1e-6:      # cut above one: its underside (facing down)
+                det.face([(p0[0], p0[1], za), (p1[0], p1[1], za), (q1[0], q1[1], za), (q0[0], q0[1], za)], fm,
+                         [(0, 0), (0.02, 0), (0.02, 0.06), (0, 0.06)])
         # (no top cap: 6 x 18 cm, seen only from above; the band head / slab closes it in most views) [budget]
 
 
@@ -1705,7 +1801,12 @@ def bridge_doors(W):
                   if math.dist(dr['c'], tuple(X)) < dr['rc'] + 8.0 and not (dr['band'][0] > z1v or dr['band'][1] < vz0)]
             oc = BHD.other_solids_cut(allb, {(s['name'], br.get('door'), False)}, Ew, vz0, z1v, drums=False)
             if oc is not None: dc.append(loc(oc))
-            out.append(dict(stand=s['name'], gate=br.get('gate'), door=br.get('door'), X=tuple(X), E=tuple(El), d=tuple(d), gap=round(gap, 3),
+            # close-out round 5: roof top / deck / slab underside of the solids within 4 m of the door (the door members' top must
+            # not share one: BA-C's roof deck at 7.2 - 0.6 = 6.6 m = its door heads' fl + 3.4)
+            near_ = Point(X).buffer(4.0)
+            tops_near = sorted({round(float(z_), 3) for o in W.S if o.roof.intersects(near_) or o.poly.intersects(near_)
+                                for z_ in (o.h, o.deck, o.h - o.thk)})
+            out.append(dict(stand=s['name'], gate=br.get('gate'), door=br.get('door'), X=tuple(X), E=tuple(El), d=tuple(d), gap=round(gap, 3), tops_near=tops_near,
                             penetration=round(max(0.0, pen), 3), host=host.key, bld=host.bld, low=low, h_host=host.h, notch=notch,
                             drum_cut=unary_union(dc) if dc else None, head=head,
                             level=lvl, level_tag=lvl_tag, fl0=round(fl0, 3), fl1=round(fl1, 3), vz0=round(vz0, 3), vz1=round(vz1, 3),
@@ -1758,9 +1859,11 @@ def door_geom(mb, det, lod, d):
     n = np.array([dd[1], -dd[0]])
     dcut = d.get('drum_cut')
     hb = d.get('head') or {}
+    tops = [d['h_host']] + list(d.get('tops_near', []))   # horizontal faces the door members must not share (close-out round 5: z-fight)
     if hb.get('kind') or d['low']:
         z1 = d['vz1'] if not d['low'] else max(d['vz1'], d['h_host'] + 1.0)
         vp = vest_poly(d)
+        tops.append(z1)
         if not vp.is_empty and vp.area > 0.05:
             # (review r2: clipped around the app's rotunda drum, the drum closes the walkway end there; close-out round 4:
             # the closing extent over the walkway's whole width, clipped clear of the other bridges' walkway solids too)
@@ -1771,6 +1874,12 @@ def door_geom(mb, det, lod, d):
         # walkway, and a dark leaf 0.02 m proud inside it (the closed door behind the docked bridge's end) [inf]
         P = np.array(d['E']) if hb.get('kind') == 'vestibule' else X
         wj = 0.25; off = WALK_W_APP / 2 + 0.05 + wj / 2
+        # close-out round 5 (verifier: BA-C door head tops at fl + 3.4 = 6.6 m coplanar with the bulkhead / roof top at the
+        # same height near C4 / C9 - same-facing pairs that can flicker): the members' top steps 0.04 m below any box or roof
+        # top within 0.03 m of it [our choice]
+        ztop = d['wtop'] + 0.4
+        for t_ in tops:
+            if abs(ztop - t_) < 0.03: ztop = t_ - 0.04
 
         def clear(c, w, h):
             """review r2: a surround member is left out where it would stand inside an app rotunda drum (+0.1 m)."""
@@ -1780,9 +1889,9 @@ def door_geom(mb, det, lod, d):
         for sg in (-1, 1):
             cj = P + dd * 0.06 + n * sg * off
             if clear(cj, wj, 0.12):
-                M.boxm(det, tuple(cj), tuple(n), wj, 0.12, (d['dz0'], d['wtop'] + 0.4), 'mullion', (3.0, 3.0), top=True)
+                M.boxm(det, tuple(cj), tuple(n), wj, 0.12, (d['dz0'], ztop), 'mullion', (3.0, 3.0), top=True)
         if clear(P + dd * 0.06, WALK_W_APP + 0.1 + 2 * wj, 0.12):
-            M.boxm(det, tuple(P + dd * 0.06), tuple(n), WALK_W_APP + 0.1 + 2 * wj, 0.12, (d['wtop'] + 0.08, d['wtop'] + 0.4), 'mullion', (3.0, 3.0), top=True,
+            M.boxm(det, tuple(P + dd * 0.06), tuple(n), WALK_W_APP + 0.1 + 2 * wj, 0.12, (d['wtop'] + 0.08, ztop), 'mullion', (3.0, 3.0), top=True,
                    bottom=True)
         if clear(P + dd * 0.01, WALK_W_APP + 0.1, 0.02):
             M.boxm(det, tuple(P + dd * 0.01), tuple(n), WALK_W_APP + 0.1, 0.02, (d['fl0'], d['wtop'] + 0.08), 'door_dark', (3.0, 3.0), top=False)
@@ -1799,6 +1908,7 @@ BLD_INFO = {
 def build(lod):
     """{building: [Part]} for one LOD; shells (AO) and details."""
     W, feats, info = build_world(lod)
+    set_door_keepouts(info.get('doors', []) if lod == 0 else [])
     out = {}
     for bld in BLD_INFO:
         sh = MB(f'{bld}_shell'); det = MB(f'{bld}_detail'); pvm = MB(f'{bld}_pv'); fin = MB(f'{bld}_fins')

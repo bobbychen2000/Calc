@@ -6,9 +6,13 @@ layout(location=0) in vec3 aPos; // quad corner in [-1,1]
 layout(location=5) in vec4 iM0; layout(location=6) in vec4 iM1; layout(location=7) in vec4 iM2; layout(location=8) in vec4 iData;
 uniform vec2 uViewport; uniform float uFovScale; // 2*tan(fov/2)/H  (world size per pixel at distance 1)
 uniform vec3 uCamRight; uniform vec3 uCamUp;
-out vec2 vQ; out vec3 vCol; out float vI;
+out vec2 vQ; out vec3 vCol; out float vI; out float vLens;
 void main(){
   vec3 p = iM0.xyz; float size = iM0.w;
+  // iData.x: a position light drawn over its lens by day (js/env/aircraft_lights.js lens: true; close-out round 5, env-6 -
+  // packed by js/scene.js put() as B[o + 12] once the request in docs/requests/env_closeout.md R5.2 lands; 0 until then):
+  // a lit lens by day has no glare halo, as js/three/lights.js draws it
+  vLens = iData.x;
   vec3 toCam = uCamPos - p; float d = length(toCam); toCam /= d;
   float I = iM1.w;
   if (iM2.w > 0.0) { float c = max(dot(normalize(iM2.xyz), toCam), 0.0); I *= pow(c, iM2.w) * 0.97 + 0.03 * c; }
@@ -24,11 +28,11 @@ void main(){
 export const SPRITE_FS = `
 #include <common>
 in vec4 vClip; in vec4 vPrevClip;
-in vec2 vQ; in vec3 vCol; in float vI;
+in vec2 vQ; in vec3 vCol; in float vI; in float vLens;
 layout(location=0) out vec4 oColor; layout(location=1) out vec4 oAux;
 void main(){
   float r2 = dot(vQ, vQ); if (r2 > 1.0) discard;
-  float core = exp(-r2 * 22.0); float halo = exp(-r2 * 6.0) * 0.08;
+  float core = exp(-r2 * 22.0); float halo = exp(-r2 * 6.0) * 0.08 * (1.0 - step(0.5, vLens));
   vec3 c = vCol * vI * (core + halo);
   oColor = vec4(c, 0.0); oAux = vec4(0.0);
 }`;

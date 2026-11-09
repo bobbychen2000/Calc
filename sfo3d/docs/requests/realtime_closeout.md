@@ -745,3 +745,169 @@ Please commit js/live/traffic.js, js/live/ground.js, js/live/app.js, tools/live/
 realtime_impl.md Step 10 (fix round 2 changes). The earlier draft request C3F2.2 (a bridge query from the bridges track) is
 withdrawn: gates.js already exports what was needed (`solids`, `extension`, `boxHitsAc`).
 
+
+# Round 5 (residuals): close-out round 5, fix round 1 (8–9 Nov 2026)
+
+## What this round fixed
+
+The second round-3 verifier (`c3_verify2_realtime`: 2 majors and 6 minors) showed that two fix-round-2 changes had only
+looked fixed in the replay: v2, the bridge-ahead gate, and v11, the ghost expiry by `standRealloc`. Both rested on
+`planKnows`, which asks whether SFO's plan was fetched after the occupant was last heard. The replay's plan snapshots were
+hours old, so that almost never held there. The live relay re-fetches flysfo every 10 min, so live it holds 1–11 min after
+an occupant falls silent.
+
+This round:
+1. made the harness run the plan-gated rules as the live app does;
+2. fixed both rules at their root;
+3. fixed the minors.
+
+Every change in `js/live/traffic.js`, `js/live/ground.js`, `tools/live/invariants.mjs` and `sfo_live_server.py` carries a
+"close-out round 5" comment. `js/live/app.js` is unchanged.
+
+**Evidence rule.** Every number in this section comes from one harness copy, and before and after ran on that same copy.
+- Harness: `tools/live/invariants.mjs` **`e52f3dfd`** (round 5; it was `2f6c5d9b`), run with `--plan-cadence live`. A frozen
+  copy is in `SP/c5/realtime/h5/`.
+- `tools/live/build_stream.py` **`93da6fe0`** (unchanged): the streams are the earlier ones.
+- *before* = `SP/c5/realtime/root_b`: the repo at the start of this round, which is the verifier's `root_now`. traffic.js
+  `42937590`, ground.js `cd2b4965`.
+- *after* = `SP/c5/realtime/root_a6`: the final code. traffic.js **`51bc9e1f`**, ground.js **`d3353067`**. These are also the
+  repo's files.
+- Shared by both roots: app.js `89696504`, gates.js `a93cce58`, sfo_stands.js `3614cdb9`, integration.js `d0a3ac6f`,
+  types.js `d03d7ef4`, sfo_taxigraph.js `20d25128`. Each root has a `md5.txt`.
+- Runner `SP/c5/realtime/scripts/run5.sh`, through the hook `scripts/hook5.mjs`, which logs the evidence behind every fresh
+  retraction. Summaries come from `scripts/cmp5.py`.
+
+**Streams:**
+- **D**: out of sample, 8 Nov 00:30–08:30Z, 287,985 checked frames, `SP/c3/realtime_ver2/allD`. It has a real flysfo
+  snapshot fetched 04:24:42Z.
+- **A-w**: the verifier's segment-A window, 5 Nov 03:00–13:45Z, 387,000 frames. The plan is the 02:49Z snapshot.
+- **G6**: the verifier's window, 4 Nov 19:15–21:12Z, 70,200 frames. The plan is the 18:01Z snapshot.
+
+Each run took ≤ 1.5 GB, ran under `nice` without the lock, and took 800–2,819 s of wall time.
+
+## Per finding
+
+| # | finding | disposition | evidence (before → after; harness `e52f3dfd` live) |
+|---|---|---|---|
+| 3 (harness) | the replay runs the plan-gated rules in a state the live app never has | fixed | `invariants.mjs --plan-cadence live` (default) / `replay`: each 60-s plan poll carries `fetched_at` = max(the snapshot's fetch, the last 10-min tick), as `sfo_live_server.py` `Gates` serves it. `planKnows` was true on 7,741 of 7,902 calls on D and 5,176 of 5,387 on A-w (before arm, live cadence). Smoke test, D 05:00Z: `fetched_at` 05:00:00Z against the recorded 04:24:42Z. The opt-in relay recording flag is in C5.2 |
+| v2 (major) | false 400-m bridge-ahead retractions return with the live plan cadence | fixed | far retraction (`AHEAD_EV_M`) only on SFO's actual block-out ('blockout'); 'alloc', aEv and 'window' only once the arrival is close on that stand's lead-in; plus the round-3 two-signal veto for the geometric retraction. 'arrival gone' re-docks: D **7 → 0**, A-w **8 → 0**, G6 **4 → 0**. Of these, re-docks at occupants that stay (heard parked there again later): D 2 → 0 (ASA1838 B13, UAL2400 F14), A-w 4 → 0 (ASA41 B7, UAL2038 E10, AAL1430 B27, SKW3493 C1), G6 4 → 0 (UAL34 G6 ×2, UAL2855 F17 ×2). bridge-ahead D 33 → 9, A-w 19 → 3, G6 5 → 0; every one left was followed by the arrival driving in |
+| v11 (major) | `standRealloc` removes aircraft still at their stand | fixed | only ANOTHER aircraft's ARRIVAL with an ACTUAL block-in at that stand, more than `REALLOC_MARGIN_MS` (10 min) after the occupant was last heard. In the engine, A-w 'realloc' expiries **4 → 0**: AAL1175 B25, AAL3246 B24, UAL2038 E10 and ASA1438 B13, all heard there again 7–98 min later. Removals heard back at the same stand: A-w 4 → 0, D 0 → 0, G6 0 → 0. Offline over all of segment A (`scripts/realloc5.py`, served plans + raw reports): old rule 9 heard back at the same stand / 23 correct; new rule **1 / 10**. The 1 is aa7f27 UAL1385 at E8: a5cf82 UAL1363 drove onto E8 at 01:47Z and SFO has its actual in-block at E8 at 01:48Z, so aa7f27 had been towed off. The 1-min and 10-min margins give the same result. The rest wait for an aircraft to take the stand or for `PARK_KEEP_STAND_MS` (24 h) |
+| v8 (minor) | two taxiing-wing building residuals | deferred → request C5.1 | not reproduced on the current data: `building` D 0 → 0, G6 0 → 0, A-w 0 → 5/1. The A-w frames are CFJNX A321, a repositioned parking (below), next to the same footprint as UAL1757. Provenance: UAL1757's wing was over `integration.js` `physics.rings[82]`; AMX664's was over the SFO Museum 'Garage A' outline. No engine change for a body that follows its data |
+| v10 (minor) | renderer3 `fatal()` never calls `onFatal` | deferred | handed to the runtime-minors track this round (C3F2.1); not touched here |
+| v1 side effect (minor) | after a 'no push' cancel, the push waits for a hurried retraction | fixed | one re-signal per cancel when the aircraft's own squawk or callsign changes at the same stand. A-w: 4 re-signals (squawk 2, callsign 2). B21 and AAL446 B16 pushed 40 and 43 min later; 2 came at the end of the window. AAL402 B16 `lag.gnd_30m` **424 → 199** frames. No new early-cancel. SFO's off-block estimate is deliberately not used |
+| GroundPhysics lock churn (minor) | LXJ569 locked and unlocked every frame for 8 h | fixed | an invalid lock is released only when that moves something: a placement exists and this lock pose was not released before. Otherwise it is kept and logged once (event `phys-conflict`). D: `physUnlocks` **278,960 → 7**, engine locks 279,772 → 828, LXJ569 a748ec locks 278,875 → 4; A-w `physUnlocks` 43 → 2. 7 `phys-conflict` events on D, one per lock pose: LXJ569 'aircraft' with a57dc2 N453FD (nose to nose 23 m), 6 'other' (none of the logged tests names a blocker); A-w 2 (LXJ614 'aircraft' with XLJ411, DLH458 'other'). `clear.stand` 633,600/9 = (the real 0.46-m pair stays, now logged) |
+| 2-2A (minor) | silent dock at the remote stand 2-2A drawn 37 m short | fixed (root cause differs) | not a silent dock. SWA2974 stopped on its own data at 0 kt, 34 m from the stop node and **33 m beside** the stand's axis, and was put at 2-2A by the remote-stand 40-m disc. Remote stands now also need the contact-stand lateral limit. D `phase.gate_far_from_stand` **127,643/2 → 28/1**. ac4b95 and ad4afb, which really parked at 2-2A within 1 m of the axis, still match. Not claiming the stand exposed a second defect, fixed with it: a silent aircraft that had pushed was dropped (next row) |
+
+**Found and fixed: repositioned aircraft dropped while still parked.** A pushed aircraft that went silent while stopped off
+the taxiways was dropped 75 s after its last report.
+- On A-w, before: 22 such drops, of which **18 were heard again at the same place** 0–434 min later. Examples: SWA2974
+  ac4843 +434 min, ACA761 +429, CFJNX +223, DAL2197 +120, AAL2651 +83.
+- On D, SWA2974 would have vanished at 03:42Z, and the aircraft was next heard 49 m away 260 min later.
+- Now: a pushed aircraft that moved more than `REPOS_M` (200 m) from its off-block point and stopped off the taxiways and
+  runways stays parked where it stopped. Its departure state is cleared, as by an in-block, and an event `repos-parked` is
+  logged.
+- Counts: D 8, A-w 12, G6 4.
+- The first version kept `tr.pushed`. SWA2974, heard again at 08:02Z, then went silent short of D6. It was not docked and
+  was dead-reckoned into D6's rest tunnel: `bridge.hit.wing` 267 frames. Clearing the departure state fixed that (D
+  `bridge.hit.wing` 216/2 = before).
+
+## Classes (frames / keys, before → after)
+
+| class | D before | D after | A-w before | A-w after | G6 before | G6 after |
+|---|---|---|---|---|---|---|
+| `overlap.gnd` | 236/13 | 251/16 | 117/7 | 117/7 | 15,446/3 | 15,446/3 |
+| `clear.stand` | 633,600/9 | 633,600/9 | 369,630/3 | 369,644/4 | 57,271/8 | 57,271/8 |
+| `clear.taxi` | 116/18 | 164/24 | 28/6 | 38/9 | 59/5 | 59/5 |
+| `building` | 0/0 | 0/0 | 0/0 | 5/1 | 0/0 | 0/0 |
+| `bridge.hit.fus` | 61/1 | 61/1 | 13/1 | 13/1 | 0/0 | 0/0 |
+| `bridge.hit.wing` | 216/2 | 216/2 | 0/0 | 0/0 | 0/0 | 0/0 |
+| `bridge.hit_at_rest` | 277/3 | 277/3 | 13/1 | 13/1 | 0/0 | 0/0 |
+| `bridge.orphan` | 2,622/16 | 3,955/29 | 1,582/11 | 2,225/14 | 906/4 | 906/4 |
+| `bridge.refused` | 84,318/2 | 84,318/2 | 316,448/2 | 316,448/2 | 64,851/1 | 64,851/1 |
+| `cut.gnd_sfo` | 100/67 | 101/67 | 126/69 | 133/69 | 39/28 | 39/28 |
+| `lag.gnd_30m` | 14,120/63 | 14,120/63 | 19,938/60 | 19,791/61 | 2,886/24 | 2,886/24 |
+| `offpave.mask` | 34,303/149 | 34,303/149 | 144,258/132 | 431,976/132 | 7,909/73 | 7,909/73 |
+| `gnd.reverse` | 2/2 | 2/2 | 4/1 | 4/1 | 4/1 | 4/1 |
+| `gnd.spin` | 72/17 | 72/17 | 73/12 | 73/12 | 35/10 | 35/10 |
+| `phase.gate_far_from_stand` | 127,643/2 | 28/1 | 87/3 | 87/3 | 30/1 | 30/1 |
+| `phase.flicker` | 172/64 | 171/64 | 167/46 | 167/46 | 82/26 | 82/26 |
+
+## Trade-offs and residuals
+
+- **bridge.orphan**: D +1,333 frames / +13 keys (133 s in 8 h); A-w +643 / +3. These are the arrivals that did drive in:
+  without far evidence, the ghost's bridge now starts back only when the arrival is close on the lead-in, so it is still
+  out for ~5–20 s when the ghost is removed at contact.
+  - Before this round, those early retractions came from 'alloc' (D 5 of 11 right, A-w 6 of 12) and from 'window' (D 12 of
+    13). The same evidence produced the false ones: D 6 + 1, A-w 6 + 1, G6 2 + 2.
+  - A real gate change and a real stand assignment look the same in SFO's plan for the arrival. Whether SFO extends a late
+    departure's window cannot be checked on 3 snapshots (UAL2855 F17 stayed past its window). Neither is assumed.
+  - With fresh snapshots recorded (C5.2), the 'window' signal can be validated and re-admitted. On the old plan cadence it
+    held for 12 of 13 on D.
+- **overlap.gnd** D +15 frames / +3 keys, **clear.taxi** D +48 / +6, A-w +10 / +3: first contacts between an arrival and a
+  ghost whose bridge was not retracted early (the ghost is removed at that contact).
+- **offpave.mask** A-w +287,718 frames net, all from one aircraft (ASA503 1,280 → 289,121 frames): ASA503 B39M, now kept parked where it stopped on 5 Nov 05:22Z (37.6250
+  N, −122.3991 W, the west maintenance area). Before, it was dropped after 75 s, and it was next heard 661 min later. The
+  rendered pavement mask does not cover that spot: it was off the mask while it still reported, 1,280 frames before. A
+  static-data gap: request C5.3.
+- **building** A-w +5 frames: CFJNX A321, kept parked by repos, at (−1611.6, 324.2) next to `physics.rings[82]`, the
+  footprint of the UAL1757 residual. Added to request C5.1.
+- **clear.stand** LXJ569~N453FD (0.46 m) is unchanged: a real stand-clearance conflict between two parked aircraft that
+  the placement cannot resolve within 15 m. Now logged once instead of churning.
+- **phase.gate_far_from_stand** D 28/1 (UAL1274 E12) is pre-existing and unchanged.
+- **Harness limitation**: the live cadence keeps the recorded plan content. For the plan-gated rules it is a pessimistic
+  proxy that assumes SFO's plan did not change after that snapshot. That is why C5.2 is worth the owner's decision.
+
+## Requests (Round 5)
+
+### C5.1 Buildings / integration track: provenance of the footprints under taxiing / parked wings (verifier v8 residuals)
+
+Aircraft that follow their own data put a wing over a footprint of the building grid. The realtime track does not move a
+body off its reported path for this. Either the footprint or the data is wrong, and only the footprint's owner can tell
+which.
+- **`data/buildings3d/integration.js` (`d0a3ac6f`) `physics.rings[82]`** (ring 57 in `c869b8f3`; 18 vertices; bbox x
+  −1594.7…−1323.0, z 243.8…356.1):
+  - UAL1757 B789 (a31a57), taxiing on 5 Nov 04:10:56Z, reference point (−1421.5, 239.2): 3 wing samples, 113 frames
+    (fix-round-2 run). The ring's south edge lies 31 m from the reference point; the half span is 30 m.
+  - CFJNX A321 (c0192e), 5 Nov 09:44:26Z, holding at (−1611.6, 324.2) by its west edge: 5 frames (A-w after).
+  - Please name the asset unit this ring comes from and the source of its edges. Please also say whether it should block an
+    airliner wing (about 4–6 m above the apron). If the part under the wing is lower, or is a canopy or soffit above wing
+    height, the physics ring set needs that height band.
+- **SFO Museum 'Garage A' outline** (`data/sfo_airport.js` structures, kind garage; in the building grid). AMX664 B39M
+  (ad928d), 7 Nov 03:48:51Z, reference point (−1328, 535): 1 wing sample, 337 frames. No `integration.js` ring lies within
+  35 m.
+  - Does the outline really reach to within ~18 m of that taxi path? If not, should the landside 3-D asset's footprint
+    replace it in the grid?
+
+### C5.2 Lead / owner: the relay's opt-in `--record-sfo-gates` (needs_owner; not enabled, relay not restarted)
+
+`sfo_live_server.py` has a new flag, `--record-sfo-gates`, OFF by default. With `--record`, it also calls `Gates.want()`
+every `MIN_INTERVAL` + 5 s. This is the same path a client's `/api/gates` poll takes: at least 10 min between fetches
+(shared with `gatecheck.py`), a conditional GET, gzip and the identifying User-Agent. The snapshots land in
+`refs/cache/gate_truth/`.
+
+Why it would help: in 4 days of recording, the relay fetched only 3 flysfo snapshots, because no client asked. Without
+fresh snapshots, no replay can show how the plan-gated rules behave live, for example:
+- SFO's actual in-blocks for `standRealloc`;
+- the window ends behind 'window';
+- the gate changes behind 'alloc'.
+
+Terms (`docs/research/gate_truth.md` §7): flysfo publishes no terms of use, and robots.txt does not exclude the path.
+Whether SFO permits a continuous relay is **not verified**, and the document says to ask SFO before building a live
+dependency. The flag fetches at the same rate as an open app, but it does so all day. Enabling it is the owner's decision.
+The running relay was not restarted, and the code change takes effect only at the lead's next restart, with the flag.
+
+### C5.3 Static track: pavement at the west maintenance area
+
+ASA503 B39M (ad3c1f) taxied to (−2090.5, −687.3) on 5 Nov at 05:22Z (37.6250 N, −122.3991 W), stopped and went silent. It
+was next heard 661 min later, 1.9 km away. It was off the rendered pavement mask while it still reported (1,280 frames),
+and parked there it is off the mask for 8 h: `offpave.mask` 289,121 frames, A-w after.
+- Please check, against the NAIP imagery, the paved area around that point (apron or hangar floor).
+
+### C5.4 Lead
+
+The final code is already in the lead's WIP commit `2b323d9` (9 Nov 01:59Z): `js/live/traffic.js` (`51bc9e1f`),
+`js/live/ground.js` (`d3353067`), `tools/live/invariants.mjs` (`e52f3dfd`) and `sfo_live_server.py` (`d741a25f`: the opt-in
+flag only). Please commit this section.
+- The relay change takes effect only on a restart.
+- `--plan-cadence live` is the harness default now. Older numbers in this document come from the replay cadence and are not
+  comparable with this section's numbers.

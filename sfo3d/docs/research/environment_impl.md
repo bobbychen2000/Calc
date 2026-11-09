@@ -892,8 +892,11 @@ SSR on/off difference only in the reflection column (mean |Δ| 0.24 DN, max 24.7
 
 FAA Order 8400.9 (PDF cached, `refs/cache/env_src/faa_order_8400-9.pdf`, public domain, SOURCES.json) §4b:
 dry runway crosswind INCLUDING GUSTS ≤ 20 kt, tailwind ≤ 5 kt (7 kt with touchdown-zone anemometers — SFO's
-installation NV, so 5 is used); not clear / not dry: crosswind incl. gusts ≤ 15 kt, tailwind calm (0-3 kt).
-`js/env/state.js runwayConfigFrom` (constants `TAILWIND_SE_KT`, `CROSSWIND_SE_KT`, `WET_CROSSWIND_KT`, `WET_TAILWIND_KT`)
+installation NV, so 5 is used); not clear / not dry: crosswind incl. gusts ≤ 15 kt and "no tailwind component may be
+present except the nominal range of winds reported as calm (0-3 knots)" (§4b(2)(b): the 3 kt bounds the REPORTED WIND
+SPEED, gusts included, not the tailwind component - corrected in close-out round 5, see there; until then a wet light
+tailwind above calm, e.g. 18004KT -RA, kept the West plan).
+`js/env/state.js runwayConfigFrom` (constants `TAILWIND_SE_KT`, `CROSSWIND_SE_KT`, `WET_CROSSWIND_KT`, `WET_CALM_KT`)
 checks the West plan's arrival runway against these, then the Southeast plan's; both fail → the smaller excess (I); wet =
 precipitation in the METAR (I). Reviewer's `rwycfg.mjs` re-run (58 fixture reports): non-West 3 → 7 (the four new ones
 are gusty southerlies / wet light tailwinds: 170810Z 24010G21KT +RA, 260022Z 20015G22KT, 020448Z 24023G32KT GRRA,
@@ -928,12 +931,15 @@ should be; fog of distant terrain under the deck tends to the same colour.
 
 `js/env/aircraft_lights.js lensGain`: by day the fixed position light is drawn at the lens size `NAV_LENS_S` 0.08 m
 (was the 0.22 m night footprint) with its energy conserved and the 2.2-px floor (energy-conserving upscale only when
-sub-pixel), and the airfield display gain (DAY_GAIN 30) only where the lens is below the floor — a small saturated
-dot, no glare halo (js/three/lights.js: the lens flag suppresses the halo by day). At the review camera (14.4 m, 50°,
-360 px): peak 2.02 × sunlit white paint (before: 8.0 × at gain 30 in the record, 0.08 × after the renderer's fixedK
-cap; a CPU estimate for an assumed intensity); night unchanged (0.22 m, gain 1). Rendered (R3.13, c3e): E75L red light at
+sub-pixel), and the airfield display gain (DAY_GAIN 30) only where the lens is below the floor, with no glare halo
+(js/three/lights.js: the lens flag suppresses the halo by day). The CPU estimate at the review camera (14.4 m, 50°,
+360 px) was a peak of 2.02 × sunlit white paint for an assumed 80 cd; **measured (corrected in close-out round 5, c3
+verifier env-6): a desaturated pink-on-white, red-on-dark 3-px dot at about 0.85 × white paint in R** (c3e render below,
+67 cd), not "a small saturated dot"; night unchanged (0.22 m, gain 1). Rendered (R3.13, c3e): E75L red light at
 14.4 m, 8° off the nose: 67 cd → 0.85 × white paint radiance in R, a 3-px red-tinted dot without halo. live.html draws the same record (js/shaders/sprites.js: size `s` 0.08 m, energy
-conserved to its 2.2-px floor): its fixed 8 % halo (1.6 × s) now lies inside the 2.2-px dot instead of a 0.35 m glow at gain 30.
+conserved to its 2.2-px floor): its fixed 8 % halo (1.6 × s) now lies inside the 2.2-px dot instead of a 0.35 m glow at gain 30
+(argued, not rendered in round 3; close-out round 5: js/shaders/sprites.js drops the halo for lens records too, once
+js/scene.js packs the flag - request env_closeout.md R5.2 - and a live.html noon render measures the dot, round 5 section).
 
 ### R3.5 Glass and facades (env-7, env-8)
 
@@ -941,7 +947,9 @@ env-7: `_groundAlbedo` concrete mean = premultiplied level-0 point samples of th
 64 × 64 cell mean whose mixed edge cells added grass and sand). BA-G light-silver mullions (a2 photo) for the BA-G
 rings only (`glassWallAttrs` light-frame flag); other piers keep the dark frame (I). env-8: the own-shadow term uses the
 facade's real wall top and bottom per vertex (`glassWallAttrs`: 3-m columns, elevated walkways bottom > 5.5 m and
-height < 8 m) and is gated by the Sun above the horizon (night own = 1 everywhere). 344 BA-G light-frame vertices; wall
+height < 8 m) and is gated by the Sun above the horizon: own x smoothstep(0, 0.02, sunDir.y), so **at night own = 0
+(no facade shadow, kLoc = kG)** (corrected in close-out round 5: this line said "night own = 1 everywhere", which was
+the env-8 bug, not the fix). 344 BA-G light-frame vertices; wall
 tops 10.5-26.5 m.
 
 ### R3.6 Local ground bounce (env-10)
@@ -1009,7 +1017,8 @@ side / above points from the rig camera (`c3*_check.json proj`).
   diffraction peak (0.5, the Gaussian of photometry.js radius) and their refraction lobe (0.5, small-angle Henyey-Greenstein
   g_geom 0.70, θt 20.5°; extinction paradox Q_ext ≈ 2, half diffraction: textbook V; 0.5 + 0.5 × 0.70 = the overall
   g 0.85 of photometry.js), each veiled in front of nearer surfaces with its own path integral, the quad sized to where each
-  part falls below AUR_EPS (≈ 1/255 of display white) with a soft rim; phone tier: core only, ≤ 3 radii. CPU mirror in
+  part falls below AUR_EPS (≈ 1/255 of display white) with a soft rim; phone tier: core only, ≤ 3 radii (close-out round
+  5: 2 radii, as before round 3, with the rim's energy folded back - see there). CPU mirror in
   `test_c3.mjs` (+5 checks: split = g, lobe = HG within 2.5 % to 1.5 θt, normalisation 0.998, veil share = numeric path
   integral within 2e-4, quad edges = AUR_EPS). Dev page `js/three/dev/envtest.html ?sprites=1&night=1&aur=20000`: no
   non-finite light-pass texels.
@@ -1087,7 +1096,7 @@ relay, 37/37, 74/74, 178/178, 23/23, 29/29) and the round-3 renders (R3.13). Ver
 | look2-7 rain "over" | coverage × (L_drop − scene) | E9: streaks drawn over the bridge and darker than the sky (not snow-like) | confirmed |
 | look2-8 deck / far horizon | partly | → env-4: deckK air under the deck (R3.3), E5 c3b band 1.29 → 0.97 × deck | closed by env-4 |
 | look2-9 flood shadows | SPOT_SHARE 0.5 | E4: shadows under the wing / bridges soft, not black; rule now V (EASA M.750(c), R3.2) | confirmed |
-| look2-10 phone-tier caps | 3/4 flood samples, 2 taps, ≤ 64 aureoles ≤ 2.5° | `renderer3.js AUR_LOW_MAX_N / AUR_LOW_MAX_DEG`, `lights.js slopeTaps`; this round adds "no broad aureole lobe, core ≤ 3 radii" on the low tier | confirmed (A-PERF needs a GPU, OD-7) |
+| look2-10 phone-tier caps | 3/4 flood samples, 2 taps, ≤ 64 aureoles ≤ 2.5° | `renderer3.js AUR_LOW_MAX_N / AUR_LOW_MAX_DEG`, `lights.js slopeTaps`; this round adds "no broad aureole lobe, core ≤ 3 radii" on the low tier (close-out round 5: ≤ 2 radii) | confirmed (A-PERF needs a GPU, OD-7) |
 | look2-11 ozone | own 10-40 km layer | `sky.js` OZ_H / OZ_W tent; A-SUN / A-CLD unit gates | confirmed |
 | look2-12 old-renderer cover | 0 with no reported layer | `app.js` cover rule (no default 0.12) | confirmed |
 | look2-13 photo tag | dusk-fog photo re-tagged | `refs/cache/env_ref/SOURCES.json` "not a clear-dusk colour reference" | confirmed (clear civil-twilight photo still an owner item) |

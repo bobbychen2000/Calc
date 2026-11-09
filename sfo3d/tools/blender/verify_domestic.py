@@ -603,11 +603,91 @@ def run(path):
               v['n_fail'], 0, ok=v['n_fail'] == 0, src='app_bridges.json walk[0] (gates.js); max gap %s m; exempt: %s' %
               (v['max_gap'], ', '.join(e['stand'] + ' L%d' % e['door'] for e in v['exempt']) or 'none'), unit='', group='plausibility')
 
+    # close-out round 5 (verifier: the round-4 drum notches put the facade fins back where short walkways leave the building -
+    # 21 -> 27 contact sets; and new same-facing coplanar faces at the BA-C door heads / BA-B door jambs): (1) LOD0 mullion fins
+    # inside an app fixed walkway solid (app_bridges.json rest segments, separating-axis test shrunk 0.02 m) - 0 allowed;
+    # (2) same-facing coplanar overlapping faces (plane within 5 mm, normals within 2 deg) between each pier's detail node and
+    # the other nodes of that building at LOD0 - 0 allowed
+    try:
+        import app_bridges as AB
+
+        def _sat(T, c, u, hl, hw, lo, hi, shrink=0.02):
+            v = np.array([-u[1], u[0]])
+            ax = [np.array([u[0], 0, u[1]]), np.array([0, 1.0, 0]), np.array([v[0], 0, v[1]])]
+            h = np.array([hl - shrink, (hi - lo) / 2 - shrink, hw - shrink])
+            Pl = np.stack([(T - np.array([c[0], (lo + hi) / 2, c[1]])) @ a for a in ax], -1)
+            ok = np.ones(len(T), bool)
+            for k in range(3): ok &= ~((Pl[:, :, k].min(1) > h[k]) | (Pl[:, :, k].max(1) < -h[k]))
+            e = [Pl[:, 1] - Pl[:, 0], Pl[:, 2] - Pl[:, 1], Pl[:, 0] - Pl[:, 2]]
+            nn = np.cross(e[0], e[1]); ok &= np.abs((nn * Pl[:, 0]).sum(-1)) <= (np.abs(nn) * h).sum(-1)
+            for ei in e:
+                for k in range(3):
+                    a = np.cross(np.eye(3)[k][None], ei); pr = np.einsum('nj,nij->ni', a, Pl); r = (np.abs(a) * h).sum(-1)
+                    ok &= ~((pr.min(1) > r) | (pr.max(1) < -r))
+            return ok
+        fin_hits = {}
+        for n, m in S.items():
+            if m['lod'] != 0 or not n.endswith('_fins'): continue
+            T = np.concatenate([p['P'][p['T']] for p in m['prims']]); cen = T[:, :, [0, 2]].mean(1)
+            for b_ in AB.bridges('ABCDEFG'):
+                for so in b_['rest']:
+                    if so['part'] != 'walkway': continue
+                    R_ = so['hl'] + so['hw'] + 3
+                    mm = (np.abs(cen[:, 0] - so['c'][0]) < R_) & (np.abs(cen[:, 1] - so['c'][1]) < R_)
+                    if not mm.any(): continue
+                    hh = _sat(T[mm], so['c'], np.array(so['u'], float), so['hl'], so['hw'], so['lo'] + GROUND_Y, so['hi'] + GROUND_Y)
+                    if hh.any(): fin_hits['%s L%d seg %s' % (b_['stand'], b_['door'], so.get('seg'))] = int(hh.sum())
+        plaus['fins_in_app_walkways'] = fin_hits
+        C.add('LOD0 mullion fins inside the app fixed walkway solids (%d bridges)' % len(fin_hits), sum(fin_hits.values()), 0, ok=not fin_hits,
+              unit='tris', src='app_bridges.json rest walkway segments (gates.js); dom_geom.fin_spans cuts the fins round them: %s' % (fin_hits or 'none'),
+              group='plausibility')
+
+        def _nrm(T):
+            nn = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); L_ = np.linalg.norm(nn, axis=1); return nn / np.where(L_ > 0, L_, 1)[:, None], L_
+
+        def _inside(p_, t):
+            v0, v1, v2 = t[2] - t[0], t[1] - t[0], p_ - t[0]
+            d00, d01, d02, d11, d12 = v0 @ v0, v0 @ v1, v0 @ v2, v1 @ v1, v1 @ v2
+            den = d00 * d11 - d01 * d01
+            if abs(den) < 1e-12: return False
+            uu = (d11 * d02 - d01 * d12) / den; vv = (d00 * d12 - d01 * d02) / den
+            return uu > 0.01 and vv > 0.01 and uu + vv < 0.99
+        cop = {}
+        for bld in ('BA_B', 'BA_C', 'BA_D', 'BA_E', 'BA_F'):
+            dn = 'L0_%s_detail' % bld
+            if dn not in S: continue
+            A_ = np.concatenate([p['P'][p['T']] for p in S[dn]['prims']])
+            Bl = [(n, np.concatenate([p['P'][p['T']] for p in m['prims']])) for n, m in S.items() if m['lod'] == 0 and n != dn and n.startswith('L0_%s_' % bld)]
+            if not Bl: continue
+            B_ = np.concatenate([t for _, t in Bl]); BN = np.concatenate([[n] * len(t) for n, t in Bl])
+            nA, LA = _nrm(A_); nB, LB = _nrm(B_); cA = A_.mean(1); cB = B_.mean(1)
+            hits_ = []
+            for i in range(len(A_)):
+                if LA[i] < 1e-8: continue
+                near = np.nonzero((np.abs(cB - cA[i]) < 15).all(1) & (LB > 1e-8))[0]
+                if not len(near): continue
+                near = near[(nB[near] * nA[i]).sum(1) > np.cos(np.radians(2))]
+                if not len(near): continue
+                near = near[np.abs(((cA[i] - B_[near][:, 0]) * nB[near]).sum(1)) < 0.005]
+                for k in near:
+                    if _inside(cA[i], B_[k]) or _inside(cB[k], A_[i]): hits_.append((BN[k], tuple(np.round(cA[i], 1))))
+            if hits_: cop[dn] = dict(n=len(hits_), with_=sorted({h[0] for h in hits_}), at=[h[1] for h in hits_[:6]])
+        plaus['coplanar_same_facing_detail'] = cop
+        C.add('LOD0 same-facing coplanar overlapping faces, pier detail nodes vs their building (z-fight)', sum(v['n'] for v in cop.values()), 0, ok=not cop,
+              unit='pairs', src='plane within 5 mm, normals within 2 deg, centroid inside the other face: %s' % (cop or 'none'), group='plausibility')
+    except Exception as e:  # noqa: BLE001
+        C.add('fins vs walkways / coplanar detail faces', str(e), 'error', ok=False, group='plausibility')
+
     # close-out round 4 (verifier r3 v9): back-face first hits (tools/blender/bf_rays.py) at LOD0 and LOD2 in NEAR mode (context
     # occludes only within 10 m in front of the asset). Round 4 found pre-existing see-through on T3W / T1 / T3E that the far
     # context of round 3 hid (identical in the r3 fix-2 file and this one: not from the bridge heads) - recorded as residuals at
     # their measured counts (a regression above them fails), to be traced in the next round; other nodes: <= 60 (landside gate)
-    DOM_BF_RESIDUAL = {'L0_T3W_shell': 574, 'L0_T1_shell': 453, 'L0_T3E_shell': 74, 'L2_domestic': 1162}
+    # close-out round 5: traced - every T1 / T3W / T3E hit was a ray through the ITB core into a hall left open at its junction
+    # with the ITB (dom_geom: the ITB occupancy hid those walls); the junction is now closed by the domestic asset itself
+    # (emit_walls closure walls) - the round-4 residuals are dropped, per node <= 60 as the landside gate; the LOD2 file is ONE
+    # node (L2_domestic: all buildings), so it gets the sum of the per-building remainders measured on the geometry module
+    # (BA-B 31 / BA-E 24 / T1 22 / T3E 4 / BA-C 1 / BA-F 1 = 83) + 5 %
+    DOM_BF_RESIDUAL = {'L2_domestic': 88}
     try:
         import bf_rays as BF
         D3_ = os.path.join(ROOT, 'data', 'buildings3d')
@@ -619,7 +699,7 @@ def run(path):
             over = {k: v for k, v in r_['per_node'].items() if v > max(BF.NODE_MAX, int(DOM_BF_RESIDUAL.get(k, 0) * 1.05))}
             C.add('LOD%d back-face first hits, near context %.0f m (worst %s; residuals %s)' % (lod_, r_['near_m'], r_['worst'],
                   {k: r_['per_node'].get(k, 0) for k in DOM_BF_RESIDUAL if k.startswith('L%d' % lod_)}), r_['total'], 0, ok=not over, unit='hits',
-                  src='bf_rays.py near mode; per node <= 60 or <= 1.05 x the recorded round-4 residual; over: %s' % (over or 'none'), group='plausibility')
+                  src='bf_rays.py near mode; per node <= 60 (merged LOD2 node: <= 1.05 x the recorded close-out r5 sum); over: %s' % (over or 'none'), group='plausibility')
         plaus['backface_near'] = bfr
     except Exception as e:  # noqa: BLE001
         C.add('back-face near-context rays', str(e), 'error', ok=False, group='plausibility')

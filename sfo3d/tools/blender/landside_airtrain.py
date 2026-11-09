@@ -524,6 +524,18 @@ def pier(mb, F, site, lev, sides=10, cap_box=True):
         boxm(mb, c, n, max(D_ + 0.6, w - 0.8), 2.0, (zc, h - 0.02), 'guideway', (4.0, 4.0), top=False, bottom=True)
 
 
+VAULT_REACH = 0.6 + 0.05      # vault eaves 0.6 m beyond its rectangle (posts at 0.3 + 0.15 half width inside that) [model]
+
+
+def _across(mr, r):
+    """the rotated rectangle mr widened by r on both LONG sides (the vault's eaves / posts; the ends are not widened)."""
+    cs_ = np.array(mr.exterior.coords)[:4]; e0_, e1_ = cs_[1] - cs_[0], cs_[2] - cs_[1]
+    if np.linalg.norm(e0_) < np.linalg.norm(e1_): cs_ = np.roll(cs_, -1, axis=0); e1_ = cs_[2] - cs_[1]
+    u_ = e1_ / np.linalg.norm(e1_)
+    return Polygon([cs_[0] - u_ * r, cs_[1] - u_ * r, cs_[2] + u_ * r, cs_[3] + u_ * r])
+VAULT_HOST_CLEAR = 0.23 + 0.10  # host garage facade: screens / piers 0.15 + 0.08 m proud of the outline, + 0.1 m clear [model]
+
+
 def station(mb, det, F, key, lev, lod=0, exclude=None):
     """station enclosure / canopy on its SFO Museum polygon: platform = polygon minus the guideway polygon (minus the part
     inside a host building body, `exclude`), at the level."""
@@ -555,14 +567,18 @@ def station(mb, det, F, key, lev, lod=0, exclude=None):
         band = Polygon([cs_[0] - w_, cs_[1] - w_, cs_[2] + w_, cs_[3] + w_])        # widened across only (not along the platform)
         mr = unary_union([P, RAIL.intersection(band)]).minimum_rotated_rectangle
         if exclude is not None and not exclude.is_empty:
-            # keep the vault off the host garage: pull the long side nearest to it in until there is no overlap
-            for _ in range(40):
-                if mr.intersection(exclude).area < 0.5: break
+            # keep the vault off the host garage: pull the long side nearest to it in until there is no overlap.
+            # Close-out round 5 (verifier: Garage G spandrels / screen piers through the vault's eave posts and roof, x -1506 ..
+            # -1494.5, y 22-25 m): the test covers what the vault puts beyond its rectangle - the 0.6-m eaves and the posts 0.3 m
+            # out (0.15 m half width) - against the garage facade's own reach: screens / piers 0.23 m proud, + 0.1 m clear
+            ex_ = exclude.buffer(VAULT_HOST_CLEAR, join_style=2)
+            for _ in range(60):
+                if _across(mr, VAULT_REACH).intersection(ex_).area < 0.01: break
                 cs_ = np.array(mr.exterior.coords)[:4]; e0_, e1_ = cs_[1] - cs_[0], cs_[2] - cs_[1]
                 if np.linalg.norm(e0_) < np.linalg.norm(e1_): cs_ = np.roll(cs_, -1, axis=0); e1_ = cs_[2] - cs_[1]
                 u_ = e1_ / np.linalg.norm(e1_)
-                side0 = Polygon([cs_[0], cs_[1], cs_[1] + u_ * 2, cs_[0] + u_ * 2]).intersection(exclude).area
-                side1 = Polygon([cs_[3], cs_[2], cs_[2] - u_ * 2, cs_[3] - u_ * 2]).intersection(exclude).area
+                side0 = Polygon([cs_[0] - u_ * VAULT_REACH, cs_[1] - u_ * VAULT_REACH, cs_[1] + u_ * 2, cs_[0] + u_ * 2]).intersection(ex_).area
+                side1 = Polygon([cs_[3] + u_ * VAULT_REACH, cs_[2] + u_ * VAULT_REACH, cs_[2] - u_ * 2, cs_[3] - u_ * 2]).intersection(ex_).area
                 if side0 >= side1: cs_[0] = cs_[0] + u_ * 0.25; cs_[1] = cs_[1] + u_ * 0.25
                 else: cs_[2] = cs_[2] - u_ * 0.25; cs_[3] = cs_[3] - u_ * 0.25
                 mr = Polygon(cs_)

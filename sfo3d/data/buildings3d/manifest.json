@@ -2,9 +2,9 @@
  "_about": "SFO Live 3D building assets (glTF 2.0, built with Blender from the verified 2-D sheets); one key per asset group; frame ltp-nad83-2011 (x east, y up, z south, m from the ARP); see docs/research/buildings3d.md",
  "itb": {
   "asset": "data/buildings3d/itb.glb",
-  "bytes": 6934336,
-  "built": "2026-11-08T17:18:17+00:00",
-  "git": "03f5bde+dirty",
+  "bytes": 6807008,
+  "built": "2026-11-09T02:38:16+00:00",
+  "git": "2b323d9+dirty",
   "generator": "tools/blender/build_itb.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/itb_geom.py",
   "reference": "2-D sheets BI-01..04 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_itb.py, imported by itb_geom.py",
   "spec": "tools/buildings/spec_itb.json (+ itb_naip_measurements.json, itb_pods.json)",
@@ -36,8 +36,8 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 71939,
-    "verts": 81255,
+    "tris": 71929,
+    "verts": 81235,
     "ao_atlas": "itb_ao_A (shared by LOD0 / LOD1 shell meshes)"
    },
    {
@@ -52,8 +52,8 @@
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1600.0,
-    "tris": 7092,
-    "verts": 12206,
+    "tris": 5884,
+    "verts": 9186,
     "ao_atlas": "itb_ao_B"
    }
   ],
@@ -64,7 +64,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/itb_lod2.glb",
-   "bytes": 772664
+   "bytes": 645984
   },
   "textures": [
    {
@@ -84,7 +84,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 2148275,
+    "bytes": 2148329,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -184,7 +184,7 @@
      512
     ],
     "mime": "image/png",
-    "bytes": 164665,
+    "bytes": 166043,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -575,7 +575,7 @@
      0,
      1
     ],
-    "bake_s": 62.5,
+    "bake_s": 63.1,
     "mean": 0.669,
     "p2": 0.0,
     "samples": 48,
@@ -587,8 +587,8 @@
     "lods": [
      2
     ],
-    "bake_s": 2.5,
-    "mean": 0.689,
+    "bake_s": 2.6,
+    "mean": 0.686,
     "p2": 0.0,
     "samples": 48,
     "distance_m": 10.0,
@@ -1768,7 +1768,7 @@
   "verification": {
    "tool": "tools/blender/verify_itb.py",
    "report": "out/buildings3d/itb_verify.json (local)",
-   "n_checks": 135,
+   "n_checks": 138,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
@@ -2810,7 +2810,7 @@
     },
     {
      "check": "roadway decks under the elevated bar: min clearance (roadways.glb)",
-     "model": 5.452,
+     "model": 5.6,
      "drawing": 4.6,
      "dev": null,
      "tol": null,
@@ -2818,7 +2818,7 @@
      "src": "15 ft = 4.57 m minimum vertical clearance [pub]; deck tops from roadways.glb (integration)"
     },
     {
-     "check": "curb canopy over the roadway plate: clearance on the meshes (canopy faces over deck faces, 560 overlaps; parameter 4.70)",
+     "check": "curb canopy over the roadway plate: clearance on the meshes (canopy faces over deck faces, 562 overlaps; parameter 4.70)",
      "model": 4.7,
      "drawing": 4.6,
      "dev": null,
@@ -2899,13 +2899,13 @@
      "src": "check_stands.py criterion: >= 2.0 m (app planforms, all accepted types)"
     },
     {
-     "check": "bridge walkways (beyond 1.5 m) + rotundas overlapping the 3-D footprint (48 bridges)",
-     "model": 19.511,
+     "check": "bridge walkways (beyond 1.5 m) + rotundas overlapping the 3-D footprint less the bridge-head boxes (48 bridges)",
+     "model": 8.679,
      "drawing": 0.0,
      "dev": null,
      "tol": null,
      "ok": true,
-     "src": "NOTE, not introduced by the asset - pre-existing contact in the data (rotundas at the facade, outline +-5 m): max penetration 0.90 m (17 rotundas); the 3-D footprint = the SFO Museum outline the app and check_stands.py use"
+     "src": "NOTE, data contacts, not introduced by the asset (rotundas at the facade, outline +-5 m): max penetration 0.90 m (17 rotundas); footprint = the SFO Museum outline the app and check_stands.py use. The asset's own bridge-head boxes add 10.82 m2 more (stands-data walkway / rotunda shapes over the closing boxes at their own walkway ends, by design; the app solids are tested in the door-surround and walkway-end checks)"
     },
     {
      "check": "CROSS-ASSET (bridges): app walkway top <= host roof at the attach point - 0 of 45 A / G walkways fail (BA-G 0 of 24)",
@@ -2914,7 +2914,7 @@
      "dev": null,
      "tol": null,
      "ok": true,
-     "src": "gates.js DEPARTURE_LEVELS G 2.7 [obs, low] / A 5.4 [inf] + WALK_H 3.0 (tools/blender/app_bridges.json, generated 2026-11-08T17:13:22.689Z, stale inputs: none); BA-G bump-out roofs 6.5-7.1 m [obs a2]; BA-A failures are not counted (no photo of its bump-outs, A level inferred)"
+     "src": "gates.js DEPARTURE_LEVELS G 2.7 [obs, low] / A 5.4 [inf] + WALK_H 3.0 (tools/blender/app_bridges.json, generated 2026-11-09T02:36:15.292Z, stale inputs: none); BA-G bump-out roofs 6.5-7.1 m [obs a2]; BA-A failures are not counted (no photo of its bump-outs, A level inferred)"
     },
     {
      "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - LOD0: 0 of 46 open",
@@ -2941,7 +2941,7 @@
      "dev": null,
      "tol": null,
      "ok": true,
-     "src": "app_bridges.json walk[0] (gates.js); max gap 0.058 m"
+     "src": "app_bridges.json walk[0] (gates.js); max gap 0.067 m"
     },
     {
      "check": "walkway ends closed by the asset (gap <= 0.10 m over the full width at floor + 0.3 / 1.5 / 2.7) - itb_lod2.glb: 0 of 46 open",
@@ -2950,7 +2950,34 @@
      "dev": null,
      "tol": null,
      "ok": true,
-     "src": "app_bridges.json walk[0] (gates.js); max gap 0.058 m"
+     "src": "app_bridges.json walk[0] (gates.js); max gap 0.067 m"
+    },
+    {
+     "check": "LOD0 door surrounds vs the app fixed walkway / drum solids (886 triangles; min to a drum 0.054 m)",
+     "model": 0.0,
+     "drawing": 0.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "app_bridges.json rest solids; own first segment excluded (leaf); drums >= VEST_CLEAR 0.05 m: none"
+    },
+    {
+     "check": "LOD2 bridge-head triangles (itb_geom.bridge_head_parts(2): 32-gon drum cuts)",
+     "model": 548.0,
+     "drawing": 600.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "budget: plain boxes on the phone path (round 4: 1,756 = the LOD0 heads)"
+    },
+    {
+     "check": "itb_lod2.glb triangles (SFO_LITE phone path)",
+     "model": 5884.0,
+     "drawing": 6500.0,
+     "dev": null,
+     "tol": null,
+     "ok": true,
+     "src": "budget: round 3 5,336 (no heads) + <= 600 heads + margin; round 4 7,092"
     },
     {
      "check": "LOD0 back-face first hits, near context 10 m (worst ('L0_hall_hangers', 55))",
@@ -3017,16 +3044,16 @@
        "vestibule": 22,
        "nub": 3
       },
-      "area_outside_outlines_m2": 35.61,
+      "area_outside_outlines_m2": 35.57,
       "max_reach_m": 0.97,
-      "clipped_m2": 3.34
+      "clipped_m2": 3.39
      }
     },
     "stand_min_m": 5.35,
     "rotunda_contacts": [
      [
       "A2/A2L1",
-      0.57
+      0.53
      ],
      [
       "A4/A4L1",
@@ -3093,6 +3120,10 @@
       0.9
      ]
     ],
+    "walkway_overlap_m2": {
+     "data_contacts": 8.679,
+     "bridge_head_boxes": 10.815
+    },
     "walkway_vs_host_roof": [
      {
       "stand": "A1",
@@ -4398,7 +4429,7 @@
       "n": 46,
       "n_fail": 0,
       "n_exempt": 0,
-      "max_gap": 0.058,
+      "max_gap": 0.067,
       "fails": [],
       "exempt": [],
       "rows": [
@@ -4425,7 +4456,7 @@
         "door": 1,
         "upper": false,
         "Hb": 5.4,
-        "max_gap": 0.056,
+        "max_gap": 0.061,
         "min_gap": 0.039,
         "probes_without_face": 0
        },
@@ -4551,7 +4582,7 @@
         "door": 1,
         "upper": false,
         "Hb": 5.4,
-        "max_gap": 0.052,
+        "max_gap": 0.058,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -4614,7 +4645,7 @@
         "door": 1,
         "upper": false,
         "Hb": 2.7,
-        "max_gap": 0.052,
+        "max_gap": 0.06,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -4632,7 +4663,7 @@
         "door": 1,
         "upper": false,
         "Hb": 2.7,
-        "max_gap": 0.058,
+        "max_gap": 0.067,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -4686,7 +4717,7 @@
         "door": 1,
         "upper": false,
         "Hb": 2.7,
-        "max_gap": 0.056,
+        "max_gap": 0.059,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -4704,7 +4735,7 @@
         "door": 1,
         "upper": false,
         "Hb": 2.7,
-        "max_gap": 0.057,
+        "max_gap": 0.059,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -4776,7 +4807,7 @@
         "door": 1,
         "upper": false,
         "Hb": 2.7,
-        "max_gap": 0.052,
+        "max_gap": 0.057,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -4822,7 +4853,7 @@
       "n": 46,
       "n_fail": 0,
       "n_exempt": 0,
-      "max_gap": 0.058,
+      "max_gap": 0.067,
       "fails": [],
       "exempt": [],
       "rows": [
@@ -4849,7 +4880,7 @@
         "door": 1,
         "upper": false,
         "Hb": 5.4,
-        "max_gap": 0.056,
+        "max_gap": 0.061,
         "min_gap": 0.039,
         "probes_without_face": 0
        },
@@ -4975,7 +5006,7 @@
         "door": 1,
         "upper": false,
         "Hb": 5.4,
-        "max_gap": 0.052,
+        "max_gap": 0.058,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -5038,7 +5069,7 @@
         "door": 1,
         "upper": false,
         "Hb": 2.7,
-        "max_gap": 0.052,
+        "max_gap": 0.06,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -5056,7 +5087,7 @@
         "door": 1,
         "upper": false,
         "Hb": 2.7,
-        "max_gap": 0.058,
+        "max_gap": 0.067,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -5110,7 +5141,7 @@
         "door": 1,
         "upper": false,
         "Hb": 2.7,
-        "max_gap": 0.056,
+        "max_gap": 0.059,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -5128,7 +5159,7 @@
         "door": 1,
         "upper": false,
         "Hb": 2.7,
-        "max_gap": 0.057,
+        "max_gap": 0.059,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -5200,7 +5231,7 @@
         "door": 1,
         "upper": false,
         "Hb": 2.7,
-        "max_gap": 0.052,
+        "max_gap": 0.057,
         "min_gap": 0.0,
         "probes_without_face": 0
        },
@@ -5257,13 +5288,18 @@
      "2": {
       "n": 46,
       "n_fail": 0,
-      "max_gap": 0.058
+      "max_gap": 0.067
      },
      "lod2_glb": {
       "n": 46,
       "n_fail": 0,
-      "max_gap": 0.058
+      "max_gap": 0.067
      }
+    },
+    "door_surrounds_vs_app_solids": {
+     "tris": 886,
+     "hits": {},
+     "min_drum_m": 0.0535
     },
     "backface_near": {
      "lod0": {
@@ -6369,9 +6405,9 @@
  },
  "domestic": {
   "asset": "data/buildings3d/domestic.glb",
-  "bytes": 11174120,
-  "built": "2026-11-08T17:21:09+00:00",
-  "git": "03f5bde+dirty",
+  "bytes": 11196072,
+  "built": "2026-11-09T02:53:08+00:00",
+  "git": "2b323d9+dirty",
   "generator": "tools/blender/build_domestic.py (bpy 5.0.1, Cycles CPU AO bake); geometry tools/blender/dom_geom.py + dom_mesh.py; textures dom_tex.py",
   "reference": "2-D sheets BD-01..03 (docs/drawings/buildings/README.md), drawn by tools/buildings/draw_domestic.py, imported by dom_geom.py",
   "spec": "tools/buildings/spec_domestic.json (+ dom_bab_band.json, dom_baf_hub.json, dom_bab_roof.json; tools/blender/dom_pv.json)",
@@ -6434,26 +6470,26 @@
     "lod": 0,
     "node": "LOD0",
     "switch_m": 0.0,
-    "tris": 79070,
-    "verts": 164750,
-    "draw_calls": 154,
+    "tris": 79040,
+    "verts": 164690,
+    "draw_calls": 155,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 1,
     "node": "LOD1",
     "switch_m": 380.0,
-    "tris": 23334,
-    "verts": 55216,
-    "draw_calls": 120,
+    "tris": 23368,
+    "verts": 55284,
+    "draw_calls": 121,
     "ao_atlas": "dom_ao_S / dom_ao_N (shared by the LOD0 / LOD1 shell meshes)"
    },
    {
     "lod": 2,
     "node": "LOD2",
     "switch_m": 1300.0,
-    "tris": 23174,
-    "verts": 54864,
+    "tris": 23208,
+    "verts": 54932,
     "draw_calls": 21,
     "ao_atlas": "dom_ao_L2"
    }
@@ -6465,7 +6501,7 @@
   ],
   "lod2_glb": {
    "path": "data/buildings3d/domestic_lod2.glb",
-   "bytes": 2848024
+   "bytes": 2849948
   },
   "textures": [
    {
@@ -6505,7 +6541,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1379486,
+    "bytes": 1395222,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -6575,7 +6611,7 @@
      2048
     ],
     "mime": "image/png",
-    "bytes": 1335368,
+    "bytes": 1339314,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    },
    {
@@ -6685,7 +6721,7 @@
      1024
     ],
     "mime": "image/png",
-    "bytes": 480336,
+    "bytes": 479336,
     "kind": "AO (occlusionTexture, TEXCOORD_1)"
    }
   ],
@@ -7191,7 +7227,7 @@
      "T2",
      "C3C"
     ],
-    "bake_s": 60.0,
+    "bake_s": 61.4,
     "mean": 0.644,
     "p2": 0.002,
     "samples": 48,
@@ -7211,7 +7247,7 @@
      "BA_E",
      "BA_F"
     ],
-    "bake_s": 55.5,
+    "bake_s": 57.6,
     "mean": 0.702,
     "p2": 0.007,
     "samples": 48,
@@ -7226,9 +7262,9 @@
     "buildings": [
      "all"
     ],
-    "bake_s": 9.4,
-    "mean": 0.694,
-    "p2": 0.053,
+    "bake_s": 5.3,
+    "mean": 0.693,
+    "p2": 0.062,
     "samples": 48,
     "distance_m": 10.0,
     "ground_plane": true
@@ -8835,7 +8871,7 @@
      ]
     }
    },
-   "levels_source": "js/live/gates.js DEPARTURE_LEVELS via tools/blender/app_bridges.json (node tools/blender/app_bridges.mjs, generated 2026-11-08T17:13:22.689Z; stale inputs: none)",
+   "levels_source": "js/live/gates.js DEPARTURE_LEVELS via tools/blender/app_bridges.json (node tools/blender/app_bridges.mjs, generated 2026-11-09T02:36:15.292Z; stale inputs: js/live/gates.js)",
    "note": "every bridge of data/sfo_stands.json (B-F) gets a door surround where its walkway meets the 3-D facade; where the app's walkway (js/live/gates.js) starts outside the facade a vestibule closes the gap over the walkway's whole width (close-out round 4: tools/blender/bridge_head.py; a nub where the end lies inside the facade but its edge passes a corner); the walkway-end gap check (tools/blender/walkend_check.py, verify_domestic.py) holds every end <= 0.1 m",
    "walkway_end_gaps": {
     "0": {
@@ -8880,7 +8916,7 @@
   "verification": {
    "tool": "tools/blender/verify_domestic.py",
    "report": "out/buildings3d/domestic_verify.json (local)",
-   "n_checks": 67,
+   "n_checks": 69,
    "n_fail": 0,
    "failed": [],
    "tolerance": "0.5 m or 2 % of the drawn value (whichever is larger) unless stated",
@@ -9398,9 +9434,9 @@
     {
      "group": "footprints",
      "check": "apron-level walls (0.5-5 m) outside the SFO Museum outlines (bridge vestibules excluded)",
-     "model": 117.931,
+     "model": 117.7,
      "drawing": 0.0,
-     "dev": 117.931,
+     "dev": 117.7,
      "tol": null,
      "ok": true,
      "src": "m2: the vestibules reach from the facade to the app walkway start (bridges)"
@@ -9408,9 +9444,9 @@
     {
      "group": "footprints",
      "check": "LOD0 plan area outside the SFO Museum outlines (roof overhangs, canopy, vestibules)",
-     "model": 1050.675,
+     "model": 1050.519,
      "drawing": 0.0,
-     "dev": 1050.675,
+     "dev": 1050.519,
      "tol": null,
      "ok": true,
      "src": "BA-B / BA-D ESE overhangs +2.3 / +2.4 m [obs], T1 canopy 4 m [inf], vestibules [inf]"
@@ -9437,10 +9473,10 @@
     },
     {
      "group": "plausibility",
-     "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (66 bridges; INFO)",
-     "model": 8.06,
+     "check": "bridge attachments: walkway first 1.5 m beyond the facade touching 3-D geometry (63 bridges; INFO)",
+     "model": 7.56,
      "drawing": 0.0,
-     "dev": 8.06,
+     "dev": 7.56,
      "tol": null,
      "ok": true,
      "src": "door frames / vestibule ends / walkways meeting the facade at an angle (stand data vs SFO Museum outline, as the ITB rotunda contacts)"
@@ -9478,9 +9514,9 @@
     {
      "group": "plausibility",
      "check": "ITB outline (the ITB asset) inside the 3-D footprint",
-     "model": 0.013,
+     "model": 0.214,
      "drawing": 0.0,
-     "dev": 0.013,
+     "dev": 0.214,
      "tol": 0.5,
      "ok": true,
      "src": "SFO Museum ITB + BA-A / BA-G"
@@ -9537,23 +9573,43 @@
     },
     {
      "group": "plausibility",
-     "check": "LOD0 back-face first hits, near context 10 m (worst ('L0_T3W_shell', 574); residuals {'L0_T3W_shell': 574, 'L0_T1_shell': 453, 'L0_T3E_shell': 74})",
-     "model": 1155.0,
+     "check": "LOD0 mullion fins inside the app fixed walkway solids (0 bridges)",
+     "model": 0.0,
      "drawing": 0.0,
-     "dev": 1155.0,
+     "dev": 0.0,
      "tol": null,
      "ok": true,
-     "src": "bf_rays.py near mode; per node <= 60 or <= 1.05 x the recorded round-4 residual; over: none"
+     "src": "app_bridges.json rest walkway segments (gates.js); dom_geom.fin_spans cuts the fins round them: none"
     },
     {
      "group": "plausibility",
-     "check": "LOD2 back-face first hits, near context 10 m (worst ('L2_domestic', 1162); residuals {'L2_domestic': 1162})",
-     "model": 1162.0,
+     "check": "LOD0 same-facing coplanar overlapping faces, pier detail nodes vs their building (z-fight)",
+     "model": 0.0,
      "drawing": 0.0,
-     "dev": 1162.0,
+     "dev": 0.0,
      "tol": null,
      "ok": true,
-     "src": "bf_rays.py near mode; per node <= 60 or <= 1.05 x the recorded round-4 residual; over: none"
+     "src": "plane within 5 mm, normals within 2 deg, centroid inside the other face: none"
+    },
+    {
+     "group": "plausibility",
+     "check": "LOD0 back-face first hits, near context 10 m (worst ('L0_T1_shell', 37); residuals {})",
+     "model": 87.0,
+     "drawing": 0.0,
+     "dev": 87.0,
+     "tol": null,
+     "ok": true,
+     "src": "bf_rays.py near mode; per node <= 60 (merged LOD2 node: <= 1.05 x the recorded close-out r5 sum); over: none"
+    },
+    {
+     "group": "plausibility",
+     "check": "LOD2 back-face first hits, near context 10 m (worst ('L2_domestic', 86); residuals {'L2_domestic': 86})",
+     "model": 86.0,
+     "drawing": 0.0,
+     "dev": 86.0,
+     "tol": null,
+     "ok": true,
+     "src": "bf_rays.py near mode; per node <= 60 (merged LOD2 node: <= 1.05 x the recorded close-out r5 sum); over: none"
     }
    ],
    "plausibility": {
@@ -9566,7 +9622,7 @@
       "B2",
       "B2",
       1,
-      0.14
+      0.12
      ],
      [
       "B3",
@@ -9579,12 +9635,6 @@
       "B4",
       1,
       0.12
-     ],
-     [
-      "B5",
-      "B5",
-      1,
-      0.07
      ],
      [
       "B6",
@@ -9614,13 +9664,13 @@
       "B10",
       "B10",
       1,
-      0.13
+      0.12
      ],
      [
       "B11",
       "B11",
       1,
-      0.13
+      0.12
      ],
      [
       "B11S",
@@ -9645,12 +9695,6 @@
       "B14",
       1,
       0.11
-     ],
-     [
-      "B15",
-      "B15",
-      1,
-      0.06
      ],
      [
       "B17",
@@ -9776,79 +9820,73 @@
       "D3",
       "D3",
       1,
+      0.16
+     ],
+     [
+      "D4",
+      "D4",
+      1,
+      0.12
+     ],
+     [
+      "D5",
+      "D5",
+      1,
+      0.12
+     ],
+     [
+      "D6",
+      "D6",
+      1,
+      0.12
+     ],
+     [
+      "D7",
+      "D7",
+      1,
+      0.12
+     ],
+     [
+      "D8",
+      "D8",
+      1,
+      0.12
+     ],
+     [
+      "D9",
+      "D9",
+      1,
+      0.12
+     ],
+     [
+      "D11",
+      "D11",
+      1,
+      0.15
+     ],
+     [
+      "D12",
+      "D12",
+      1,
+      0.11
+     ],
+     [
+      "D14",
+      "D14",
+      1,
       0.18
      ],
      [
-      "D4",
-      "D4",
-      1,
-      0.15
-     ],
-     [
-      "D5",
-      "D5",
-      1,
-      0.13
-     ],
-     [
-      "D6",
-      "D6",
-      1,
-      0.12
-     ],
-     [
-      "D7",
-      "D7",
-      1,
-      0.12
-     ],
-     [
-      "D8",
-      "D8",
-      1,
-      0.12
-     ],
-     [
-      "D9",
-      "D9",
-      1,
-      0.12
-     ],
-     [
-      "D11",
-      "D11",
-      1,
-      0.16
-     ],
-     [
-      "D12",
-      "D12",
-      1,
-      0.11
-     ],
-     [
-      "D14",
-      "D14",
-      1,
-      0.2
-     ],
-     [
       "D15",
       "D15",
-      1,
-      0.16
-     ],
-     [
-      "D16",
-      "D16",
       1,
       0.14
      ],
      [
-      "E2",
-      "E2",
+      "D16",
+      "D16",
       1,
-      0.07
+      0.12
      ],
      [
       "E4",
@@ -9896,7 +9934,7 @@
       "F5",
       "F5",
       1,
-      0.21
+      0.19
      ],
      [
       "F6",
@@ -9920,7 +9958,7 @@
       "F12",
       "F12",
       1,
-      0.15
+      0.12
      ],
      [
       "F13",
@@ -9932,7 +9970,7 @@
       "F14",
       "F14",
       1,
-      0.14
+      0.12
      ],
      [
       "F15",
@@ -9944,19 +9982,19 @@
       "F16",
       "F16",
       1,
-      0.14
+      0.12
      ],
      [
       "F17",
       "F17",
       1,
-      0.08
+      0.06
      ],
      [
       "F20",
       "F20",
       1,
-      0.08
+      0.06
      ]
     ],
     "doors": {
@@ -10019,7 +10057,7 @@
         "upper": false,
         "Hb": 5.4,
         "max_gap": -0.27,
-        "min_gap": -0.537,
+        "min_gap": -0.407,
         "probes_without_face": 0
        },
        {
@@ -10352,7 +10390,7 @@
         "upper": false,
         "Hb": 3.65,
         "max_gap": -1.02,
-        "min_gap": -1.075,
+        "min_gap": -1.031,
         "probes_without_face": 0
        },
        {
@@ -10433,7 +10471,7 @@
         "upper": false,
         "Hb": 3.65,
         "max_gap": -1.32,
-        "min_gap": -1.547,
+        "min_gap": -1.366,
         "probes_without_face": 0
        },
        {
@@ -10442,7 +10480,7 @@
         "upper": false,
         "Hb": 3.65,
         "max_gap": -0.72,
-        "min_gap": -0.847,
+        "min_gap": -0.72,
         "probes_without_face": 0
        },
        {
@@ -10487,7 +10525,7 @@
         "upper": false,
         "Hb": 4.88,
         "max_gap": -0.57,
-        "min_gap": -0.721,
+        "min_gap": -0.579,
         "probes_without_face": 0
        },
        {
@@ -10649,7 +10687,7 @@
         "upper": false,
         "Hb": 4.88,
         "max_gap": -0.42,
-        "min_gap": -0.541,
+        "min_gap": -0.42,
         "probes_without_face": 0
        },
        {
@@ -10658,7 +10696,7 @@
         "upper": false,
         "Hb": 4.88,
         "max_gap": -0.32,
-        "min_gap": -0.425,
+        "min_gap": -0.32,
         "probes_without_face": 0
        },
        {
@@ -10685,7 +10723,7 @@
         "upper": false,
         "Hb": 4.88,
         "max_gap": -0.37,
-        "min_gap": -0.498,
+        "min_gap": -0.37,
         "probes_without_face": 0
        },
        {
@@ -12970,21 +13008,24 @@
       ]
      }
     },
+    "fins_in_app_walkways": {},
+    "coplanar_same_facing_detail": {},
     "backface_near": {
      "lod0": {
-      "total": 1155,
+      "total": 87,
       "per_node": {
-       "L0_T3W_shell": 574,
-       "L0_T1_shell": 453,
-       "L0_T3E_shell": 74,
+       "L0_T1_shell": 37,
        "L0_BA_E_shell": 24,
        "L0_BA_B_shell": 16,
-       "L0_BA_F_shell": 13,
-       "L0_BA_C_shell": 1
+       "L0_T3E_shell": 4,
+       "L0_BA_E_fins": 3,
+       "L0_BA_C_shell": 1,
+       "L0_BA_F_shell": 1,
+       "L0_BA_B_fins": 1
       },
       "worst": [
-       "L0_T3W_shell",
-       574
+       "L0_T1_shell",
+       37
       ],
       "near_m": 10.0,
       "lod": 0,
@@ -12995,13 +13036,13 @@
       ]
      },
      "lod2": {
-      "total": 1162,
+      "total": 86,
       "per_node": {
-       "L2_domestic": 1162
+       "L2_domestic": 86
       },
       "worst": [
        "L2_domestic",
-       1162
+       86
       ],
       "near_m": 10.0,
       "lod": 2,

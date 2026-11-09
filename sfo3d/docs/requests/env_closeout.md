@@ -82,7 +82,8 @@ SOURCES.json travels; `tools/cache/sync.py` lists the PDF in MANIFEST.json).
 diffraction core, ≤ 5 core radii, and a broad refraction lobe of 20.5°, ≤ 4 × that). A landing light seen in its beam
 in dense fog can cover most of the screen with one additive quad, by design (the in-beam glow). Desktop / ultra: please
 check the frame time of the E7a view (night_fog, an arrival on short final 28R, camera in the landing beams) on a real
-GPU (owner item OD-7); the phone tier draws no lobe (`aurTail: false`) and caps the core at 3 radii.
+GPU (owner item OD-7); the phone tier draws no lobe (`aurTail: false`) and caps the core at 3 radii (close-out round 5:
+2 radii, the round-2 fill rate; R5 below).
 
 ### R3.7 All tracks: live3 renders taken ~06:40Z-07:08Z on 2026-11-07 have NO light sprites
 

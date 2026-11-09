@@ -32,7 +32,9 @@
 // lobe F = (G(v u_o) − G(v)) / (1 − G(v)), G(v) = v/√(1 + v²), v = θ/θt), and the quad reaches as far as either part
 // stays above AUR_EPS once exposed (constants below; the outer 30 % of the quad fades out); the lobe energy beyond its quad
 // (a fraction 1/√(1 + k²)) is put back into the core, so a dim lamp keeps its aureole energy (first c3e render: the ALS
-// glow at 0.6 NM fell to 1/3 with the sub-threshold lobes cut). Phone tier: no lobe, core quad <= 3 radii (fill rate).
+// glow at 0.6 NM fell to 1/3 with the sub-threshold lobes cut). Phone tier: no lobe, core quad 2 radii (fill rate; round
+// 3 had let it grow to 3, close-out round 5). The energy the quad's soft rim and the lobe's tan-mapped billboard lose is
+// folded back into each amplitude (aurCoreGain / aurLobeGain, close-out round 5).
 // Vertex: optional directional lobe pow(max(dir.toCam, 0), k); on-screen radius between 2.2 px (intensity scaled down
 // to conserve energy) and 12 px (review round 1: a 1.4 m marker 17 m from the camera was a 110 px glare disk);
 // a 1.6x glow. By day (night factor 0) intensities x 0.5;
@@ -73,6 +75,21 @@ export const OCC_MOUNT_M = 0.5, OCC_PREC = 2e-4;
 // lamp's Gaussian was still saturated: hard-edged white discs with a dark gap between the two landing lights (c3c E7a).
 export const AUR_CORE_SHARE = 0.5, AUR_G_GEOM = 0.70, AUR_TAIL_RAD = (1 - AUR_G_GEOM) / Math.sqrt(AUR_G_GEOM), AUR_EPS = 3e-4;
 export const AUR_K_CORE_MAX = 5, AUR_K_TAIL_MAX = 4;   // lobe cap 4 θt = 82 deg: a capped rim lies outside a 50-deg view of the lamp (dev envtest ?aur=20000: a 2.5 θt rim showed)
+// phone tier (no broad lobe): the core quad stays at AUR_K_CORE_LOW = 2 radii, as before close-out round 3 (fill rate:
+// round 3 let it grow to 3 radii, up to 2.25x the additive overdraw of every bright aureole under the look2-10 caps -
+// close-out round 5); the soft rim fades the cut Gaussian, and its energy is folded back (aurCoreGain)
+export const AUR_K_CORE_LOW = 2;
+// Energy fold-back (close-out round 5; the c3 verifier measured the shader drawing 24-31 % less of the lobe's in-quad
+// energy, and 3-6 % less of a 2-radius core, than the plane model it is normalised by): the quad's soft rim
+// (1 - smoothstep(0.7, 1, r)) and, for the broad lobe, the billboard's tan mapping (a plane offset ρ at distance d
+// subtends cos³(atan(ρ/d)) dA / d²) lose part of each profile's energy. Each amplitude is divided by its drawn fraction
+// (numerical integral of the shader's own profile over the quad, fitted; tools/env/test_c3.mjs integrates it again):
+//  core (Gaussian, quad = kc radii): drawn 1 - 0.866 exp(-0.666 kc²) of its energy (fit error < 0.03 % for kc 2-5);
+//  lobe (quad = kq θt): drawn (1 - 1/√(1 + kq²)) / gT(kq) of the plane energy 2π θt², gT a cubic fit (< 1.4 %, kq 0-4).
+export const aurCoreGain = (kc) => 1 / (1 - 0.866 * Math.exp(-0.666 * kc * kc));
+export const aurLobeGain = (kq) => 1.3973 + kq * (-0.15896 + kq * (0.07857 - 0.00876 * kq));
+const aurCoreGainN = (kc) => float(1.0).div(float(1.0).sub(exp(kc.mul(kc).mul(-0.666)).mul(0.866)));
+const aurLobeGainN = (kq) => kq.mul(kq.mul(kq.mul(-0.00876).add(0.07857)).add(-0.15896)).add(1.3973);
 // erfc(x), x >= 0 (Abramowitz & Stegun 7.1.26): t (a1 + t (a2 + ...)) exp(-x^2); the polynomial part only (exp separate)
 const erfcPoly = (x) => { const t = float(1.0).div(x.mul(0.3275911).add(1.0)); return t.mul(t.mul(t.mul(t.mul(t.mul(1.061405429).sub(1.453152027)).add(1.421413741)).sub(0.284496736)).add(0.254829592)); };
 
@@ -92,7 +109,7 @@ export class Sprites {
     g.setAttribute('iP', this.aP); g.setAttribute('iC', this.aC); g.setAttribute('iD', this.aD); g.setAttribute('iA', this.aA); g.instanceCount = 0;
     this.camRight = uniform(new THREE.Vector3(1, 0, 0)); this.camUp = uniform(new THREE.Vector3(0, 1, 0)); this.fovScale = uniform(0.001);
     // broad aureole lobe on / off and the core quad cap (phone tier: off / 3 - fill rate, like the look2-10 caps)
-    this.aurTail = uniform(opts.aurTail === false ? 0 : 1); this.aurKCore = uniform(opts.aurTail === false ? 3 : AUR_K_CORE_MAX);
+    this.aurTail = uniform(opts.aurTail === false ? 0 : 1); this.aurKCore = uniform(opts.aurTail === false ? AUR_K_CORE_LOW : AUR_K_CORE_MAX);
     this.depthOn = uniform(1); // QA: 0 turns the occlusion test off (SFO.R.sprites.depthOn.value = 0) to tell an occluded light from a missing one
     const expo = opts.expo || uniform(1.0), night = opts.night || uniform(1.0);
     const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
@@ -131,8 +148,12 @@ export class Sprites {
       const Lc = Eaur.mul(float(1.0).sub(wT).add(wT.div(sqrt(kt.mul(kt).add(1.0))))).div(iA.y.mul(iA.y).mul(Math.PI));
       const kc = clamp(sqrt(log2(max(Lc.mul(expo).div(AUR_EPS), 1.0)).mul(Math.LN2)), 2.0, this.aurKCore);   // Gaussian = EPS there
       const sQ = select(aOn, max(s, max(iA.y.mul(kc), kt.mul(AUR_TAIL_RAD)).mul(d)), s);
+      // (the quad's actual extent in lobe units kq >= kt and in core radii kcq >= kc: the lobe energy beyond kq goes to the
+      // core, and each amplitude is divided by its drawn fraction - energy fold-back, header constants)
+      const kq = min(sQ.div(d.mul(AUR_TAIL_RAD)), AUR_K_TAIL_MAX), kcq = sQ.div(max(iA.y.mul(d), 1e-6));
+      const LcD = Eaur.mul(float(1.0).sub(wT).add(wT.div(sqrt(kq.mul(kq).add(1.0))))).div(iA.y.mul(iA.y).mul(Math.PI)).mul(aurCoreGainN(kcq));
       vRat.assign(sQ.div(s)); vAr.assign(max(iA.y.mul(d).div(sQ), 1e-4)); vAt.assign(max(d.mul(AUR_TAIL_RAD).div(sQ), 1e-4));
-      vAL.assign(select(aOn, Lc, float(0.0))); vAT.assign(select(aOn, Lt, float(0.0)));
+      vAL.assign(select(aOn, LcD, float(0.0))); vAT.assign(select(aOn, Lt.mul(aurLobeGainN(kq)), float(0.0)));
       // the light's own view depth and projected pixel (centre UV, top-left origin as screenUV: engine.js TRAA reprojection)
       const pv = cameraViewMatrix.mul(vec4(p, 1.0)); vZ.assign(pv.z); vTol.assign(pv.z.negate().mul(OCC_PREC).add(OCC_MOUNT_M));
       const pc = cameraProjectionMatrix.mul(pv); const ndc = pc.xy.div(max(pc.w, 1e-6));

@@ -1330,7 +1330,7 @@ def bridge_heads(lod):
         host = min(hosts, key=lambda h: h[1].distance(Point(*Xf)))
         fl0 = float(AB.floor_at(b, *Xf)); fl1 = float(b['walk'][0][1])
         f_lo, f_hi = min(fl0, fl1), max(fl0, fl1)
-        part = dict(E=E, u=u, fl=fl1, wtop=f_hi + 3.0, kind=hb['kind'])
+        part = dict(E=E, u=u, fl=fl1, wtop=f_hi + 3.0, kind=hb['kind'], key=(b['stand'], b['door'], b['upper']))
         recs.append(dict(stands=[(b['stand'], b['door'], b['upper'])], kind=hb['kind'], E=E, u=u, gap_max=hb['gap_max'], dmin=hb['dmin'],
                          overhang=hb['overhang'], host=host[0], host_top=host[2], poly=BH.rect(E, u, hb['a0'], hb['a1'], VEST_W / 2),
                          z0=f_lo + VEST_DZ[0], z1=f_hi + VEST_DZ[1], parts=[part], bridges=[b]))
@@ -1348,10 +1348,13 @@ def bridge_heads(lod):
                 if c['kind'] == 'vestibule': a['kind'] = 'vestibule'
                 del recs[k]; merged = True; break
             if merged: break
-    # clear of the OTHER bridges' fixed solids (walkway segments, drums) and the own drums whose band meets the box's
+    # clear of the OTHER bridges' fixed solids (walkway segments, drums) and the own drums whose band meets the box's.
+    # Close-out round 5 (verifier: itb_lod2.glb +34 % from full-detail heads): at LOD2 the drum keep-outs are 32-gons that
+    # circumscribe the clearance circle (BH.drum_disc) instead of 256-gons - the boxes stay >= VEST_CLEAR clear of every drum
+    segs = 8 if lod == 2 else 64
     for r in recs:
         mine = set(r['stands'])
-        cut = [BH.other_solids_cut(allb, mine, r['E'], r['z0'], r['z1'])] + [BH.own_drum_cut(b, r['z0'], r['z1']) for b in r['bridges']]
+        cut = [BH.other_solids_cut(allb, mine, r['E'], r['z0'], r['z1'], segs=segs)] + [BH.own_drum_cut(b, r['z0'], r['z1'], segs=segs) for b in r['bridges']]
         cut = [c for c in cut if c is not None]
         a0 = r['poly'].area
         if cut: r['poly'] = r['poly'].difference(unary_union(cut))
@@ -1389,21 +1392,44 @@ def bridge_head_parts(lod):
         # door surround on the vestibule end AROUND each walkway section (gates.js WALK_W 2.6 x WALK_H 3.0 at its floor): two
         # jambs and a head 0.12 m proud, clear of the walkway, and a dark leaf 0.02 m proud inside it (the closed door behind
         # the docked bridge's end) [inf] - as dom_geom.door_geom; only on vestibule ends (a nub lies behind the walkway end), and
-        # a member is left out where the clipped box does not back it (another bridge's solid there)
+        # a member is left out where the clipped box does not back it (another bridge's solid there).
+        # Close-out round 5 (verifier: A6 / A11 lower door heads 0.10 m into the upper deck's walkway floor, the A6 L1 jamb in
+        # its own walkway's turning second segment, the A2 door 0.003 m from a drum): every member's REAL footprint (u 0 ..
+        # depth in front of the end face) is clipped against every app fixed solid near the head - all walkway segments of all
+        # bridges (the upper deck's included) except the segment the door surrounds, and every drum - with VEST_CLEAR
+        # (BH.clip_member: a solid above the member caps its top, any other one removes its stretch or the member)
+        import app_bridges as AB
+        allb = AB.bridges('ABCDEFG')
+        stats = dict(members=0, kept=0, capped=0, trimmed=0, dropped=0)
         for r in recs:
             for p in r['parts']:
                 if p['kind'] != 'vestibule': continue
                 E, u = np.asarray(p['E']), np.asarray(p['u'])
                 n = np.array([-u[1], u[0]])
+                obst = [(g, lo, hi) for key, seg, part, g, lo, hi in BH.fixed_solids_near(allb, E)
+                        if not (key == p['key'] and part == 'walkway' and seg == 1)]
                 wj = 0.25; off = WALK_W_APP / 2 + 0.05 + wj / 2
                 for c, w_, h_, z, mat in [(E + u * 0.06 + n * off, wj, 0.12, (p['fl'] + DOOR_DZ[0], p['wtop'] + 0.4), 'mullion'),
                                           (E + u * 0.06 - n * off, wj, 0.12, (p['fl'] + DOOR_DZ[0], p['wtop'] + 0.4), 'mullion'),
                                           (E + u * 0.06, WALK_W_APP + 0.1 + 2 * wj, 0.12, (p['wtop'] + 0.08, p['wtop'] + 0.4), 'mullion'),
                                           (E + u * 0.01, WALK_W_APP + 0.1, 0.02, (p['fl'], p['wtop'] + 0.08), 'service_dark')]:
-                    foot = BH.rect(E - u * 0.05, n, float((c - E) @ n) - w_ / 2, float((c - E) @ n) + w_ / 2, 0.01)
-                    if not r['poly'].buffer(0.02).contains(foot): continue
-                    x, y, _ = B(c[0], c[1], 0); dx, dy, _ = B(c[0] + n[0], c[1] + n[1], 0)
-                    boxm(det, (x, y), (dx - x, dy - y), w_, h_, z, mat, (3.0, 3.0), top=True, bottom=(mat == 'mullion' and w_ > 1.0))
+                    stats['members'] += 1
+                    sc = float((c - E) @ n); uc = float((c - E) @ u)
+                    ck = BH.clip_member(sc - w_ / 2, sc + w_ / 2, z[0], z[1],
+                                        lambda a, b_, uc=uc, h_=h_: BH.rect(E + u * uc, n, a, b_, h_ / 2), obst)
+                    if ck is None:
+                        stats['dropped'] += 1; continue
+                    a_, b2, za, zb = ck
+                    if zb < z[1] - 1e-6: stats['capped'] += 1
+                    if b2 - a_ < w_ - 1e-6: stats['trimmed'] += 1
+                    foot = BH.rect(E - u * 0.05, n, a_, b2, 0.01)
+                    if not r['poly'].buffer(0.02).contains(foot):
+                        stats['dropped'] += 1; continue
+                    stats['kept'] += 1
+                    cc = E + u * uc + n * (0.5 * (a_ + b2))
+                    x, y, _ = B(cc[0], cc[1], 0); dx, dy, _ = B(cc[0] + n[0], cc[1] + n[1], 0)
+                    boxm(det, (x, y), (dx - x, dy - y), b2 - a_, h_, (za, zb), mat, (3.0, 3.0), top=True, bottom=(mat == 'mullion' and w_ > 1.0))
+        det.stats = stats
     return sh, det, recs
 
 

@@ -16,6 +16,14 @@ import { SHORE } from '../../data/sfo_shore.js';
 // surfaces themselves are items of their own (js/live/app.js, both renderers).
 import { RESERVOIRS } from '../env/reservoirs_data.js';
 export const LAKE_DEPTH = 3.0, LAKE_BANK_M = 400, LAKE_BANK_SLOPE = 0.12;
+// The terrain MESH samples height() on its grid (js/world/terrain.js buildMeshes: 15 m cells to +-4.2 km, then x1.052 per
+// cell - 100-300 m across at the lakes, 5-14 km out) and interpolates linearly between the samples, so the drawn shore lies
+// where the interpolated ground crosses the water level. With a bed only LAKE_DEPTH below the level inside the shore and
+// the bank rising LAKE_BANK_SLOPE per metre outside, that crossing fell up to ~0.9 cell INTO the lake and the land covered
+// 6-31 % of each lake (c3 verifier env-14, lake_mesh.mjs: 69-94 % of the water visible). The bed now falls with the bank's
+// slope mirrored (0.5 m + LAKE_BANK_SLOPE x distance below the level, to LAKE_BED_MAX), so a cell spanning the shore
+// interpolates to the level at the shore itself (close-out round 5; the depth is not drawn: the water surface hides it, I)
+export const LAKE_BED_MAX = 60;
 const LAKES = (RESERVOIRS.lakes || []).map(L => { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const [x, z] of L.ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } return { ...L, box: [x0 - LAKE_BANK_M, z0 - LAKE_BANK_M, x1 + LAKE_BANK_M, z1 + LAKE_BANK_M] }; });
 function lakeShape(x, z, h) {   // inside a lake: its bed; near one or more: the highest bank requirement (Upper / Lower Crystal Springs adjoin)
   let out = h;
@@ -28,7 +36,7 @@ function lakeShape(x, z, h) {   // inside a lake: its bed; near one or more: the
       const dx = xb - xa, dz = zb - za, l2 = dx * dx + dz * dz || 1; const t = Math.max(0, Math.min(1, ((x - xa) * dx + (z - za) * dz) / l2));
       d = Math.min(d, Math.hypot(x - xa - t * dx, z - za - t * dz));
     }
-    if (inside) return L.level_y - LAKE_DEPTH * Math.min(1, d / 30);
+    if (inside) return L.level_y - Math.min(LAKE_BED_MAX, 0.5 + d * LAKE_BANK_SLOPE);   // (the bank's slope mirrored: see LAKE_BED_MAX)
     if (d < LAKE_BANK_M) { const bank = L.level_y + 0.5 + d * LAKE_BANK_SLOPE; const k = smooth(LAKE_BANK_M * 0.5, LAKE_BANK_M, d); out = Math.max(out, Math.max(h, bank) * (1 - k) + h * k); }   // at least the bank near the shore, the terrain beyond
   }
   return out;

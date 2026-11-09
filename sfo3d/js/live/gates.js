@@ -155,10 +155,46 @@ function solidInBuilding(bx, own = null) {
   return false;
 }
 // the 3-D building assets' footprints (data/buildings3d/integration.js B3D_INTEGRATION.physics: plan rings [[outer, hole...]]
-// of the LOD0 assets, 0.1 m; no height bands yet - integration-5): only for the VDGS wall bracket (vdgsSpot)
+// of the LOD0 assets, 0.1 m): the VDGS wall bracket (vdgsSpot) - the plan face is what it reaches for
 const ASSET = ((B3D_INTEGRATION && B3D_INTEGRATION.physics && B3D_INTEGRATION.physics.rings) || []).map(P => { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (const p of P[0]) { a = Math.min(a, p[0]); c = Math.max(c, p[0]); b = Math.min(b, p[1]); d = Math.max(d, p[1]); } return { P, bb: [a, b, c, d] }; });
 const inRingXZ = (x, z, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j]; if (((a[1] > z) !== (b[1] > z)) && (x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0])) c = !c; } return c; };
 function inAsset(x, z) { for (const A of ASSET) { if (x < A.bb[0] || x > A.bb[2] || z < A.bb[1] || z > A.bb[3]) continue; let c = false; for (const r of A.P) if (inRingXZ(x, z, r)) c = !c; if (c) return true; } return false; }
+// ... and WITH their height bands (B3D_INTEGRATION.footprints.units[group][unit].tiers: part 'body' from grade to its top or
+// 'over' from an overhang's underside to its top, world y, rings [[outer, hole...]] grown by the ring tolerance so that every
+// LOD0 / LOD1 vertex lies inside - integration-5, close-out round 3 r22): a moving bridge part may not enter a 3-D asset at
+// its height (bldHit; close-out round 5, bridges-6 - before, only the plan-only SFO Museum proxy below stood for the
+// assets). The Museum proxy, the own-walkway strip and the walkway start at the drawn outline stay until the switch the
+// buildings track rebuilds with (docs/requests/bridges_closeout.md R5.3): both renderers share these bridges, and the
+// walkway length sets the rotunda floors (1:12 band)
+const TIERS = [], TIER_CELL = 40, TIER_GRID = new Map(), TIER_EC = new Map(); { const U = (B3D_INTEGRATION && B3D_INTEGRATION.footprints && B3D_INTEGRATION.footprints.units) || {};
+  for (const grp in U) for (const unit in U[grp]) for (const t of (U[grp][unit].tiers || [])) for (const P of (t.rings || [])) {
+    if (!P || !P[0] || P[0].length < 3) continue; let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (const p of P[0]) { a = Math.min(a, p[0]); c = Math.max(c, p[0]); b = Math.min(b, p[1]); d = Math.max(d, p[1]); }
+    const T = { y0: t.y[0], y1: t.y[1], bb: [a, b, c, d], band: new Map(), tag: grp + '/' + unit + ':' + t.part, k: TIERS.length }; TIERS.push(T);
+    for (let cx = Math.floor(a / TIER_CELL); cx <= Math.floor(c / TIER_CELL); cx++) for (let cz = Math.floor(b / TIER_CELL); cz <= Math.floor(d / TIER_CELL); cz++) { const key = cx * 65536 + cz; let L = TIER_GRID.get(key); if (!L) TIER_GRID.set(key, L = []); L.push(T); }
+    // (edges in EC-m cells for the box test, and per tier in EZ-m bands of z for the point-in-ring test, as the outlines above)
+    for (const r of P) for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const A = r[j], B = r[i]; const e = [T.k, A[0], A[1], B[0], B[1]];
+      for (let cx = Math.floor(Math.min(A[0], B[0]) / EC); cx <= Math.floor(Math.max(A[0], B[0]) / EC); cx++) for (let cz = Math.floor(Math.min(A[1], B[1]) / EC); cz <= Math.floor(Math.max(A[1], B[1]) / EC); cz++) { const key = cx * 65536 + cz; let L = TIER_EC.get(key); if (!L) TIER_EC.set(key, L = []); L.push(e); }
+      for (let bz = Math.floor(Math.min(A[1], B[1]) / EZ); bz <= Math.floor(Math.max(A[1], B[1]) / EZ); bz++) { let L = T.band.get(bz); if (!L) T.band.set(bz, L = []); L.push(e); } } } }
+// a solid {c, u, hl, hw, lo, hi} (world y) in a tier it overlaps in height (by > 0.05 m): its centre in the tier's rings or
+// a ring edge through the box less TIER_TOL all round - the tiers' rings are rounded to 0.1 m and grown by that tolerance
+// to hold every LOD0 / LOD1 vertex (b3d_integrate.py tiers), so a 0.1-m graze is not a contact (G10 L1's corridor grazed the
+// ITB hall's body tier by 0.02 m2 just outside its drum, which abuts the facade; +0.05 as solidInBuilding: 0.15 m, as the
+// VDGS bracket's asset face); the tier's tag, or null. Exact, indexed like the outlines above (start-up: 571 tiers)
+const TIER_TOL = 0.15;
+const tierOn = (T, bx) => Math.min(bx.hi, T.y1) - Math.max(bx.lo, T.y0) > 0.05;
+function solidInAsset(bx) {
+  const v = [-bx.u[1], bx.u[0]]; const hl = Math.max(0.01, bx.hl - TIER_TOL), hw = Math.max(0.01, bx.hw - TIER_TOL);
+  const ex = Math.abs(bx.u[0]) * hl + Math.abs(v[0]) * hw, ez = Math.abs(bx.u[1]) * hl + Math.abs(v[1]) * hw;
+  const C = TIER_GRID.get(Math.floor(bx.c[0] / TIER_CELL) * 65536 + Math.floor(bx.c[1] / TIER_CELL));
+  if (C) for (const T of C) { const bb = T.bb; if (bx.c[0] < bb[0] || bx.c[0] > bb[2] || bx.c[1] < bb[1] || bx.c[1] > bb[3] || !tierOn(T, bx)) continue;
+    const L = T.band.get(Math.floor(bx.c[1] / EZ)); if (!L) continue; let inn = false; const x = bx.c[0], z = bx.c[1];
+    for (const e of L) if (((e[2] > z) !== (e[4] > z)) && (x < (e[3] - e[1]) * (z - e[2]) / (e[4] - e[2]) + e[1])) inn = !inn;
+    if (inn) return T.tag; }
+  for (let cx = Math.floor((bx.c[0] - ex) / EC); cx <= Math.floor((bx.c[0] + ex) / EC); cx++) for (let cz = Math.floor((bx.c[1] - ez) / EC); cz <= Math.floor((bx.c[1] + ez) / EC); cz++) {
+    const L = TIER_EC.get(cx * 65536 + cz); if (!L) continue;
+    for (const e of L) { const T = TIERS[e[0]]; if (tierOn(T, bx) && segInBox(e, bx, hl, hw)) return T.tag; } }
+  return null;
+}
 // top of the terminal wall the point (x, z) lies in (0: none) - js/live/terminals.js: complex 0-5 m, parts 5 m - h
 function wallTop(x, z) { let h = 0; for (let i = 0; i < NBLD; i++) { const bb = BLD_BB[i]; if (x < bb[0] || x > bb[2] || z < bb[1] || z > bb[3]) continue; if (inRingK(x, z, i)) h = Math.max(h, BLD_H[i]); } return h; }
 
@@ -377,7 +413,7 @@ function doorOf(nose, f, T, which) {
   const d = v3.add(v3.sub(nose, v3.mul(f, x)), v3.mul(left, hw + 0.15)); d[1] = G + sill;
   return { door: d, left };
 }
-export { doorOf, acHit, boxHitsAc, boxHitsSwept, PBB, inBuilding, solidInBuilding, nearestBuilding };
+export { doorOf, acHit, boxHitsAc, boxHitsSwept, PBB, inBuilding, solidInBuilding, solidInAsset, nearestBuilding };
 
 // ---------------------------------------------------------------- aircraft solid for the bridge-path test
 // (x metres behind the nose, y to the right, heights above the apron). The fuselage tapers over the nose (types.js Ln)
@@ -700,8 +736,9 @@ export class LiveGateSystem {
     return null;
   }
   // the first moving part of bridge b in joint state q inside a building outline (solidInBuilding: the outline
-  // js/live/terminals.js draws, the SFO Museum outlines of the 3-D building assets, the sky bridges at their height), or null
-  bldHit(b, q, kk = 0) { for (const bx of this.solidsQ(b, q, kk)) if (bx.part !== 'stair' && solidInBuilding(bx, b._strip)) return bx.part; return null; }
+  // js/live/terminals.js draws, the SFO Museum outlines of the 3-D building assets, the sky bridges at their height) or in
+  // a 3-D asset at its height (solidInAsset, close-out round 5), or null
+  bldHit(b, q, kk = 0) { for (const bx of this.solidsQ(b, q, kk)) if (bx.part !== 'stair' && (solidInBuilding(bx, b._strip) || solidInAsset(bx))) return bx.part; return null; }
   // a fixed-walkway support column (r 0.35 m) at p: outside every outline (the bridge's own Museum walkway strip
   // excepted, ownStrip) and 0.6 m clear of the drawn outline and the sky bridges, as before the Museum outlines were
   // added (the Museum strips' edges run along the mapped walkways, 0-0.5 m off; tools: the column count per bridge)
@@ -1041,16 +1078,67 @@ export class LiveGateSystem {
     while (hi - lo > 0.001) { const mid = (lo + hi) / 2; if (hit(mid)) lo = mid; else hi = mid; }
     return hi;
   }
-  // the rotunda corridor as drawn / tested: [{s0, s1, off, hw}] - the full width from neckStart to F, and where that start
-  // moved out, the half away from the walkway from where that half leaves the walkway (it closes the junction between
-  // drum, walkway and corridor; half width 0.6 m, `off` to the right of the axis). Never empty (a pose in which no part
-  // clears the walkway keeps the full corridor from 0.3 m before F: fixedHit then refuses it, except at a data rest pose)
+  // the rotunda corridor as tested (solidsQ 'neck' boxes): [{s0, s1, off, hw}] - the full width from neckStart to F, and
+  // where that start moved out, the corridor between the drum and that start minus the walkway, as lateral bands of
+  // <= 0.3 m (neckShape: from the drum to where the band meets the walkway and from where it leaves the walkway to the
+  // full-width start, each 0.06 m clear of the walkway outside the drum, the neckStart criterion). Never empty (a pose in
+  // which no part clears the walkway keeps the full corridor from 0.3 m before F: fixedHit then refuses it, except at a
+  // data rest pose). Before close-out round 5 the walkway-side half was dropped from the drum to the full-width start, a
+  // 0.8-1.3 m x 1.2 m open notch beside the drum at A12, F5, F14, F17, F19, F21 L1 (c3 verifier, neckgap.mjs)
   neckParts(b, a) {
-    const s = this.neckStart(b, a), s0 = b.rotR * 0.8, Fm = b.m.F; const out = [];
+    const K = this.neckShape(b, a), s = K.s, s0 = b.rotR * 0.8, Fm = b.m.F; const out = [];
     if (s < Fm - 0.01) out.push({ s0: s, s1: Fm, off: 0, hw: 1.2 });
-    if (s > s0 + 0.05) for (const off of [-0.6, 0.6]) { const sh = this.neckStart(b, a, off, 0.6); if (sh < s - 0.05) out.push({ s0: sh, s1: Math.min(s, Fm), off, hw: 0.6 }); }
+    if (K.bands) for (const B of K.bands) out.push(B);
     if (!out.length) out.push({ s0: Math.max(s0, Fm - 0.3), s1: Fm, off: 0, hw: 1.2 });
     return out;
+  }
+  // the rotunda corridor's plan outline between the drum (0.8 rotR) and the full-width start s = neckStart (only where s
+  // moved out): per lateral position l (right of the tunnel axis, every 0.05 m and at the walkway corners) the corridor
+  // runs from the drum to near[i] (where it meets the drawn walkway) and from far[i] (where it leaves it) to s - so
+  // that drum, walkway and corridor close the junction without the corridor entering the walkway (bridgeGeo draws these
+  // outlines; neckParts tests bands inside them). The walkway is the drawn one (ownWalk, through to 0.8 rotR in the
+  // drum; the first segment's tube from 0.3 m inside the building). {s, l, near, far} (near / far null: untrimmed),
+  // cached per bridge and angle
+  neckShape(b, a) {
+    const Wk = this.ownWalk(b); if (b._nkOf !== Wk) { b._nkOf = Wk; b._nk = new Map(); }
+    const key = Math.round(a * 1e6); let K = b._nk.get(key); if (K) return K;
+    const s = this.neckStart(b, a), s0 = b.rotR * 0.8, Fm = b.m.F; K = { s, l: null, near: null, far: null };
+    if (s > s0 + 0.05) {
+      const u = [Math.cos(a), Math.sin(a)], r = [-u[1], u[0]], top = Math.min(s, Fm);
+      const W = []; for (const S of Wk) { const A = S.first ? v3.add(S.A, v3.mul(S.d, -0.3)) : S.A, B = S.B; const d = [B[0] - A[0], B[2] - A[2]]; const L = Math.hypot(d[0], d[1]); if (L < 0.05) continue;
+        W.push({ c: [(A[0] + B[0]) / 2, (A[2] + B[2]) / 2], u: [d[0] / L, d[1] / L], hl: L / 2, hw: WALK_W / 2 }); }
+      // [entry, exit] distance along u of the ray at lateral l through plan box w, or null
+      const span = (l, w) => { const px = b.rot[0] + r[0] * l - w.c[0], pz = b.rot[2] + r[1] * l - w.c[1]; let t0 = -1e9, t1 = 1e9;
+        for (const [ax, h] of [[w.u, w.hl], [[-w.u[1], w.u[0]], w.hw]]) { const o = px * ax[0] + pz * ax[1], dd = u[0] * ax[0] + u[1] * ax[1];
+          if (Math.abs(dd) < 1e-9) { if (Math.abs(o) > h) return null; continue; } let ta = (-h - o) / dd, tb = (h - o) / dd; if (ta > tb) [ta, tb] = [tb, ta]; t0 = Math.max(t0, ta); t1 = Math.min(t1, tb); }
+        return t0 <= t1 + 1e-9 ? [t0, t1] : null; };
+      const ls = new Set(); for (let i = 0; i <= 48; i++) ls.add(Math.round((-1.2 + i * 0.05) * 1e4) / 1e4);
+      for (const w of W) for (const [i, j] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { const l = (w.c[0] + w.u[0] * w.hl * i - w.u[1] * w.hw * j - b.rot[0]) * r[0] + (w.c[1] + w.u[1] * w.hl * i + w.u[0] * w.hw * j - b.rot[2]) * r[1]; for (const e of [-1e-4, 0, 1e-4]) if (l + e > -1.2 && l + e < 1.2) ls.add(l + e); } // (and either side of each corner: the outline jumps there)
+      K.l = [...ls].sort((x, y) => x - y); K.near = []; K.far = [];
+      for (const l of K.l) { let n = top, f = s0;
+        for (const w of W) { const sp = span(l, w); if (!sp || sp[1] <= s0 || sp[0] >= top) continue; n = Math.min(n, Math.max(s0, sp[0])); f = Math.max(f, Math.min(top, sp[1])); }
+        K.near.push(n); K.far.push(f > s0 ? f : top); }
+      // the tested boxes: per lateral band of 0.3 m, the longest box from the drum and the longest one to the full-width
+      // start inside that outline that clear the walkway outside the drum (ownOut) by 0.06 m (bisection to 1 mm);
+      // adjacent bands of the same reach merged
+      const O = this.ownOut(b); const clear = (s1, s2, la, lb) => { const sc = (s1 + s2) / 2, lc = (la + lb) / 2; const bx = { c: [b.rot[0] + u[0] * sc + r[0] * lc, b.rot[2] + u[1] * sc + r[1] * lc], u, hl: (s2 - s1) / 2, hw: (lb - la) / 2 }; return !O.some(w => obbOverlap(bx, w, 0.06)); };
+      const raw = [];
+      for (let la = -1.2; la < 1.19; la += 0.3) { const lb = la + 0.3; let n = top, f = top;
+        K.l.forEach((l, i) => { if (l >= la - 1e-6 && l <= lb + 1e-6) { n = Math.min(n, K.near[i]); f = Math.min(f, K.far[i]); } });
+        let hiN = n; if (hiN - s0 > 0.05 && !clear(s0, hiN, la, lb)) { let lo = s0; while (hiN - lo > 0.001) { const m = (lo + hiN) / 2; if (clear(s0, m, la, lb)) lo = m; else hiN = m; } hiN = lo; }
+        let loF = Math.max(...K.l.map((l, i) => l >= la - 1e-6 && l <= lb + 1e-6 && K.far[i] < top ? K.far[i] : s0));
+        if (loF <= s0) loF = top; // (no walkway in this band: the near box covers it)
+        if (top - loF > 0.05 && !clear(loF, top, la, lb)) { let hi = top; while (hi - loF > 0.001) { const m = (loF + hi) / 2; if (clear(m, top, la, lb)) hi = m; else loF = m; } loF = hi; }
+        raw.push([la, lb, hiN, loF]); }
+      K.bands = [];
+      for (const lo of [true, false]) { let cur = null;
+        const push = () => { if (cur) K.bands.push({ s0: cur.a0, s1: cur.a1, off: (cur.la + cur.lb) / 2, hw: (cur.lb - cur.la) / 2 }); cur = null; };
+        for (const [la, lb, n, f] of raw) { const a0 = lo ? s0 : f, a1 = lo ? n : top; if (a1 - a0 <= 0.05) { push(); continue; }
+          if (cur && Math.abs(cur.a0 - a0) < 0.03 && Math.abs(cur.a1 - a1) < 0.03) { cur.lb = lb; cur.a0 = Math.max(cur.a0, a0); cur.a1 = Math.min(cur.a1, a1); continue; }
+          push(); cur = { la, lb, a0, a1 }; }
+        push(); }
+    }
+    if (b._nk.size > 4096) b._nk.clear(); b._nk.set(key, K); return K;
   }
   // the bridge's own fixed-walkway slabs outside its drum (plan boxes; cached with ownWalk)
   ownOut(b) {
@@ -1147,7 +1235,17 @@ export class LiveGateSystem {
     cyl(geo, [rot[0], G + b.Hr - 0.3, rot[2]], b.rotR, 3.6, C.panel, [0.45, 0.25, 0, 0], 24);
     // rotunda corridor (turns with the tunnel) from the drum - or from where it leaves the bridge's own fixed walkway
     // (neckStart) - to tunnel A
-    for (const N of this.neckParts(b, q.a)) { const e1 = N.s1 + (N.hw > 1 ? 0.2 : 0.05); slab(geo, v3.add(at(N.s0, fl(N.s0) - 0.1), v3.mul(side, N.off)), v3.add(at(e1, fl(e1) - 0.1), v3.mul(side, N.off)), 2 * N.hw, 2.9, C.neck, C.panelE); }
+    // (where that start moved out: the outline between the drum and the walkway, neckShape - drawn as prisms, the tested
+    // boxes lie inside them)
+    { const K = this.neckShape(b, q.a), Fm = m.F;
+      for (const N of this.neckParts(b, q.a)) if (N.hw > 1) { const e1 = N.s1 + 0.2; slab(geo, at(N.s0, fl(N.s0) - 0.1), at(e1, fl(e1) - 0.1), 2.4, 2.9, C.neck, C.panelE); }
+      if (K.near) { const y0 = G + b.Hr - 0.1, s0 = b.rotR * 0.8, top = Math.min(K.s, Fm); const P = (s, l) => [rot[0] + u[0] * s + side[0] * l, rot[2] + u[2] * s + side[2] * l];
+        const prism = (pts) => { if (pts.length < 3) return; let A2 = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], n = pts[(i + 1) % pts.length]; A2 += p[0] * n[1] - n[0] * p[1]; } if (Math.abs(A2) < 2e-3) return;
+          if (A2 < 0) pts.reverse(); geo.extrude(pts, y0, y0 + 2.9, C.neck, C.panelE, C.neck, C.panelE); geo.cap(pts, y0, C.neck, C.panelE, false); };
+        // runs of lateral samples with something to draw: near (drum -> walkway) and far (walkway -> full-width start)
+        for (const [lo, arr] of [[true, K.near], [false, K.far]]) { let run = [];
+          const flush = () => { if (run.length > 1) { const pts = lo ? [P(s0, run[0][0]), ...run.map(([l, v]) => P(v, l)), P(s0, run[run.length - 1][0])] : [P(top, run[0][0]), ...run.map(([l, v]) => P(v, l)), P(top, run[run.length - 1][0])]; prism(pts); } run = []; };
+          K.l.forEach((l, i) => { const v = arr[i]; if (lo ? v - s0 > 0.005 : top - v > 0.005) run.push([l, v]); else flush(); }); flush(); } } }
     // telescoping tunnel sections (fixed lengths, nested: largest nearest the aircraft), floors on the rotunda -> cab line
     const secs = this.sections(b, q.e); let last = null;
     secs.forEach(([s0, s1, w, h], i) => { const dy = (h - secs[0][3]) / 2; last = tube(geo, at(s0, fl(s0) - dy), at(s1, fl(s1) - dy), w, h, C.panel, C.panelE); });
@@ -1674,6 +1772,12 @@ export class LiveGateSystem {
         for (const o of this.keepOut) if (o.gate !== g && hitsAircraft(o, [x, z], hi)) return no('other aircraft');
         if (inBuilding(x, z)) return no('building');
       }
+      // the conveyor's end face (its last 1.0 m may touch the fuselage above: the sill) must itself stay outside the
+      // rendered skin - corners and between, bottom to top edge (close-out round 5, c4 F3: none of it was tested)
+      if (belt && belt.end) { const xb = belt.x0 + belt.len * Math.cos(belt.th), yb = belt.y0 + belt.len * Math.sin(belt.th);
+        for (const t of [0, 0.5, 1]) { const ex = xb - t * belt.thick * Math.sin(belt.th), ey = yb + t * belt.thick * Math.cos(belt.th);
+          for (const z of [-0.5, -0.25, 0, 0.25, 0.5]) { const [x, zz] = W(ex, z * belt.w); const dx = x - n2[0], dz = zz - n2[1];
+            if (acHit(T, -(dx * f2[0] + dz * f2[1]), dx * r2[0] + dz * r2[1], ey, ey, 0, 'skin') === 'fus') return no('own fus (conveyor end)'); } } }
       const hb = boxes.map(([x0, x1, z0, z1, y0, y1]) => { const c = W((x0 + x1) / 2, (z0 + z1) / 2); return { c, u: [v.d[0], v.d[2]], hl: (x1 - x0) / 2, hw: (z1 - z0) / 2, lo: G + y0, hi: G + y1 }; });
       if (belt) { const xm = belt.x0 + belt.len * Math.cos(belt.th) / 2; hb.push({ c: W(xm, 0), u: [v.d[0], v.d[2]], hl: belt.len * Math.cos(belt.th) / 2, hw: belt.w / 2, lo: G + belt.y0, hi: G + belt.y0 + belt.len * Math.sin(belt.th) + belt.h }); }
       for (const vb of hb) { for (const s of solids) if (s.lo < vb.hi + 0.3 && s.hi > vb.lo && solidOverlap(vb, s, 0.5)) return no('bridge ' + s.part); for (const o of placed) if (solidOverlap(vb, o, 0.3)) return no('vehicle'); }
@@ -1703,10 +1807,13 @@ export class LiveGateSystem {
       for (const [pr, sgn, door] of [[0.85, -1, 'fwd'], [0.6, 1, 'aft']]) { if (R() >= pr) continue;
         const D = beltDoor(T, fam, door); if (!D) continue; const X = D.X;
         const st = setting('belt', D.S); if (!st) continue; const [bk, S] = st; const sh = beltShape(S);
-        const yEnd = beltEndY(T, X, S);
-        const belt = { x0: sh.x0, y0: sh.y0, len: sh.len, th: sh.th, w: sh.w, h: sh.thick + 0.25, thick: sh.thick, railGap: BELT_RAIL_GAP, xe: sh.xe };
+        const belt = { x0: sh.x0, y0: sh.y0, len: sh.len, th: sh.th, w: sh.w, h: sh.thick + 0.25, thick: sh.thick, railGap: BELT_RAIL_GAP, xe: sh.xe, end: true };
         const boxes = [[-2.5, 2.4, -1.05, 1.05, 0, sh.chassisTop], [-2.55, -1.2, -1.08, -0.5, 0, sh.cabTop]];
         for (const yaw of [72, 90, 60]) { const c = sgn * Math.cos(yaw * DEG), sn = -Math.sin(yaw * DEG); const d = v3.norm(v3.add(v3.mul(f, c), v3.mul(r, sn)));
+          // (the end face's corners at this yaw - station aft and outboard of its centre: beltEndY keeps the whole top edge
+          // 0.03 m off the rendered skin; close-out round 5, aircraft verifier c4 F3: by the centre line alone a corner went
+          // 0.04-0.12 m into the closed cargo door where the keel rises aft)
+          const rl = v3.norm(v3.cross(d, [0, 1, 0])); const yEnd = beltEndY(T, X, S, [-v3.dot(rl, f) * sh.w / 2, v3.dot(rl, r) * sh.w / 2]);
           const e = v3.add(v3.sub(nose, v3.mul(f, X)), v3.mul(r, yEnd)); const p = v3.sub(e, v3.mul(d, sh.xe));
           const v = { M: m4.basis(d, [0, 1, 0], [p[0], G, p[2]]), p, d }; if (ok(v, boxes, belt, bk)) { B[bk].push(inst(v.M, tint())); break; } } } }
     // baggage train alongside the aft fuselage behind the wing, tug facing forward, carts trailing

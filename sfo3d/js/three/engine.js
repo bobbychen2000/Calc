@@ -282,6 +282,9 @@ export class Engine {
       // the floodlight's direct term is occluded by the same AO (plain texture node of the AO target: GTAO and the
       // denoise are already scheduled by the context above, and a pass-texture here would also run them inside the pre-pass)
       this.flood.aoNode = mix(float(1.0), TSL.texture(aoT.value, screenUV).r, this.aoAmount);
+      // (the same AO for scene-pass materials that must know what the context did to their ambient terms: js/three/ssr.js
+      // replaces only the specular-occluded IBL reflection - close-out round 5)
+      this.aoScreen = this.flood.aoNode;
       color = sp; this.scenePass = sp;
     } else {
       const sp = pass(scene, camera); sp.name = 'scene';

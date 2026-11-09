@@ -214,7 +214,7 @@ def entry(build, ver, parts, mats):
 
 
 def keep_renders(old, new):
-    for k in ('renders', 'render_check', 'renders_updated', 'qa', 'closeout_r3', 'closeout_r3_fix2', 'closeout_r4'):   # (fix 2 / r4: close-out records survive)
+    for k in ('renders', 'render_check', 'renders_updated', 'qa', 'closeout_r3', 'closeout_r3_fix2', 'closeout_r4', 'closeout_r5'):   # (fix 2 / r4 / r5: close-out records survive)
         if old and old.get(k):
             new[k] = old[k]
     return new

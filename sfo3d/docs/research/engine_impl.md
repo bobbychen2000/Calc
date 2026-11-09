@@ -394,8 +394,10 @@ the green light (577, 326): before (verifier, `ver/run/v_day_ac8.png`) max (255,
 (145, 162, 170), mean (97, 113, 125), 0 green-dominant px (high and ultra alike): no halo, but no visible light either
 (`close2/nav_zoom.png`; the light is 14.4 m from the camera, not 38 m; corrected 7 Nov 2026, env close-out round 3 env-9).
 **Superseded (env close-out round 3, env-6):** by day the position light is now drawn at its lens size (0.08 m) with
-its energy conserved to the 2.2-px floor (`js/env/aircraft_lights.js lensGain`): a small saturated dot, ~2 x sunlit
-white paint at 14.4 m (docs/research/environment_impl.md R3.4). The records give 26 / 13 cd at the night calibration, 0.65x the rule's minimum (request in
+its energy conserved to the 2.2-px floor (`js/env/aircraft_lights.js lensGain`). Rendered (c3e, 14.4 m, 67 cd): a
+desaturated pink-on-white, red-on-dark 3-px dot at about 0.85 x sunlit white paint in R, no halo (corrected in close-out
+round 5: this line said "a small saturated dot, ~2 x sunlit white paint", the CPU estimate for an assumed 80 cd;
+docs/research/environment_impl.md R3.4). The records give 26 / 13 cd at the night calibration, 0.65x the rule's minimum (request in
 `docs/requests/engine_closeout.md` Round 2). Parity: live.html still draws a day halo (closeout §8).
 
 **Ultra tier (engine-v5), run once** (`out/engine_r3/ultra/`): tier 'ultra' from `?quality=ultra`, webgl2, ready 166 s,

@@ -17,10 +17,15 @@
 // js/three/engine.js traaNode: un-jittered, pre-exposed, without the light sprites, which renderer3 mirrors itself),
 // reprojected with the previous frame's view-projection (renderer3 ssrPrevVP) - the usual "previous-frame SSR" (one frame
 // of latency; exact for a still camera). The term is added to the ground's emission as
-//   dL = w x specW x (L_hit - L_env)
+//   dL = w x specW x (L_hit - specOcc x L_env)
 // L_env = the sky the material's IBL already mirrors along that ray (sky.js skyAlong for a mirror, its blurred sky for a
 // rough film), specW = the split-sum specular weight F0 x A + B (Karis 2014 analytic approximation of the DFG term, F0 0.04)
-// that three applies to that IBL radiance, and w = confidence: the gloss (1 at roughness <= 0.08, 0 at >= 0.4: the wet film
+// that three applies to that IBL radiance, specOcc = the specular occlusion three applied to that IBL term from the scene
+// pass's GTAO (three r186 PhysicalLightingModel.ambientOcclusion, the Lagarde & de Rousiers 2014 form: clamp(AO - 1 +
+// (n.v + AO)^(2^(-1 - 16 r)))), read from the same AO texture (ctx.ao = js/three/engine.js aoScreen; 1 without it):
+// only the part of the sky reflection that was actually drawn is replaced (close-out round 5: subtracting the
+// unoccluded L_env darkened the wet pavement under bridges, aircraft and GSE - where SSR hits AND GTAO < 1 - by
+// (1 - specOcc) x specW x L_env, negative for puddles under a dark object), and w = confidence: the gloss (1 at roughness <= 0.08, 0 at >= 0.4: the wet film
 // 0.22 keeps ~0.57, puddles 0.03 all; dry pavement 0.8-0.95 none), the screen-edge fade (4 % of the frame), the
 // ray-distance fade (the last 25 % of T_MAX) and the history being valid (renderer3 ssrOn: off until 2 frames after a
 // camera cut, a resize or the first frame). Blur of a rough film's reflection is not modelled (the single history sample
@@ -41,6 +46,11 @@ export const envBRDF = (F0, r, NoV) => {
   return AB.x.mul(F0).add(AB.y);
 };
 
+/** three r186's specular occlusion of the IBL term (PhysicalLightingModel.ambientOcclusion; Lagarde & de Rousiers 2014,
+ *  "Moving Frostbite to PBR"): clamp(AO - 1 + (n.v + AO)^(2^(-1 - 16 r)), 0, 1); and its CPU mirror for the tests. */
+export const specularOcclusion = (NoV, ao, r) => clamp(ao.sub(float(1.0)).add(NoV.add(ao).pow(exp2(r.mul(-16.0).sub(1.0)))), 0.0, 1.0);
+export const specularOcclusionCPU = (NoV, ao, r) => Math.min(1, Math.max(0, ao - 1 + Math.pow(NoV + ao, Math.pow(2, -1 - 16 * r))));
+
 // The ground material is also drawn by the depth / normal PRE-PASS, which writes the very depth texture the march reads:
 // sampling it there is a WebGL feedback loop (GL_INVALID_OPERATION, the draw is skipped; seen on the dev page, close-out
 // round 3). The term is therefore built only for passes without an MRT (the lit scene pass of the prepass tiers); in
@@ -55,7 +65,7 @@ class SceneOnlyNode extends THREE.Node {
  *  Matrix4), on (uniform 0 / 1), sky (js/three/sky.js Sky: skyAlong / skyEnvBlur) }. Returns (rough) => vec3 dL for the
  *  current ground fragment (positionWorld, flat normal). */
 export function makeSSR(ctx) {
-  const { depth, history, prevVP, on, sky } = ctx; const DBG = +ctx.debug || 0;   // debug modes (dev page ?ssr=dbg&ssrdbg=k; written as grey, read back from the meter): 1 const 1, 2 hit, 3 hit x (surface y - ground y), 4 hit x scene depth, 5 hit x t, 6 candidates
+  const { depth, history, prevVP, on, sky } = ctx; const aoS = ctx.ao || null, aoOn = ctx.aoOn || float(1.0); const DBG = +ctx.debug || 0;   // debug modes (dev page ?ssr=dbg&ssrdbg=k; written as grey, read back from the meter): 1 const 1, 2 hit, 3 hit x (surface y - ground y), 4 hit x scene depth, 5 hit x t, 6 candidates
   const hist = texture(history);
   const screenOf = (pv) => { const c = cameraProjectionMatrix.mul(vec4(pv, 1.0)); const n = c.xy.div(max(c.w, 1e-6)); return vec2(n.x.mul(0.5).add(0.5), n.y.mul(-0.5).add(0.5)); };
   const zAt = (uv) => perspectiveDepthToViewZ(depth.sample(uv).r, cameraNear, cameraFar);
@@ -102,7 +112,8 @@ export function makeSSR(ctx) {
         const Ru = vec3(Rw.x, max(Rw.y, 0.003), Rw.z);
         const Lenv = mix(sky.skyAlong(wp, Ru, 1), sky.skyEnvBlur(Ru), smoothstep(0.05, 0.3, rough));
         const NoV = max(V.y.negate(), 1e-3);
-        out.assign(Lhit.sub(Lenv).mul(envBRDF(float(0.04), rough, NoV)).mul(gloss.mul(edge).mul(far).mul(inPrev)));
+        const specOcc = aoS ? mix(float(1.0), specularOcclusion(NoV, aoS, rough), aoOn) : float(1.0);
+        out.assign(Lhit.sub(Lenv.mul(specOcc)).mul(envBRDF(float(0.04), rough, NoV)).mul(gloss.mul(edge).mul(far).mul(inPrev)));
       });
       if (DBG) { const h = step(0.0, tHit); out.assign(vec3([float(0.0), float(1.0), h, h.mul(dbgY), h.mul(dbgZ), h.mul(max(tHit, 0.0)), nCand][DBG] || float(0.0))); }
     });
