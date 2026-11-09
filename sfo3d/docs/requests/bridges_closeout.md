@@ -661,6 +661,15 @@ on both arms.
   - The largest cab move per 0.25 s is 0.074 m (G3 b738: L2 swings +15 deg, max 0.10 m). No jumps.
 - Plans, c6 verifier's vplans (b93a108c): 3,331 ok / 916 not before; identical output body after. The 78 refusals are unchanged
   (makePlan and planFor are untouched; their q0 stays the data rest).
+- Windowed replays, all on one frozen harness copy: SP/c7/runtime/harness_live = the static verifier's c5 copy
+  (invariants.mjs 2f6c5d9b, build_stream.py 93da6fe0). Stream SP/r3/all f6ff7ceb, warm 1,800 s. Roots: the static verifier's
+  cur_off (traffic 51bc9e1f, stands 50bf3003) with gates.js 21557c7d (before) or ede0d20c (after = this round's code; the repo
+  file cd91be02 differs only in comments). Every class is identical in both arms:
+  - w1, 4 Nov 21:15-22:15Z: bridge.hit_at_rest 30 frames / 1 key, DAL672 B763 C9 L1 cab (fuselage, taxi at the stop);
+    clear.stand 36,430; lag.gnd_30m 1,426.
+  - w2, 5 Nov 04:05-05:00Z: hit_at_rest 8 frames, SWA375 B38M D3 L1 cab; bridge.orphan 390; overlap.gnd 29; clear.taxi 4.
+  - Both contacts are arrival transients at L1 bridges that DOCK their aircraft, so a rest pose per occupant cannot touch them.
+    They stay the round-5 numbers (14 / 8 frames in the all-hours run; 30 frames in w1, whose window and warm-up differ).
 - check_stands is unchanged by construction (data rests, 24 WARNs). Its WARN text "gates.js could rest it elsewhere per occupant"
   is now what the app does. The static track may say so in its WARN text or closeout.
 - What is not done:
