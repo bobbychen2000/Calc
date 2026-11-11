@@ -694,3 +694,47 @@ local patch now would be redone. Not cheap within this round's budget.
    physics sees swung parked poses.
 3. Static (tools/stands/check_stands.py): optionally evaluate the 24 WARN rest poses with the app's per-occupant park (or
    reword the WARN) - the data rests themselves are unchanged and still WARN.
+
+### R7.5 Round 7 verifier fixes (11 Nov 2026; js/live/gates.js, traffic.js, ground.js, app.js, tools/live/invariants.mjs)
+
+Replays: the verifier's frozen harness copy on the all-hours stream (stream f6ff7ceb), `--warm 1800`, w1 = 4 Nov
+21:15-22:15Z, w2 = 5 Nov 04:05-05:00Z. Arms: **b** = round-7 tree + R7.5.1 only, **c** = + R7.5.2. Both arms were measured
+on the harness with the R7.5.3 key fix, and **b** on the old harness too (identical in every class, w1 and w2).
+
+**R7.5.1 (verifier R7.4.2, major) - the physics' rest-bridge grid follows the rest per occupant.** ground.js
+`restBridgeField(gates, gsys, groundY)` rebuilds the 1-m grid of the bridges' rest solids (`solids(g, b, 0)`) whenever
+gates.js `restVer` changes. `step()` bumps restVer when a bridge's park target (`parks` entry or `b._parkQ`) changes. app.js
+uses it for `GroundPhysics({bridges})` and `traffic.restBridgeAt`, and invariants.mjs does the same. Result: w1 and w2 are
+identical in every class to the round-7 'after' runs, so there is no regression. No case in these windows exercises it.
+
+**R7.5.2 (verifier R7.4.1, major) - pre-arrival park.**
+- traffic.js `expectStand` (called from each taxi report, after `docking`) announces the stand an arrival is about to take
+  through `onGateExpect(g, tr)`. The stand is the lead-in it is docking to, or else SFO's arrival record (`arrStand`) once the
+  report is within EXPECT_M = 400 m of that stand's stop mark [design value]. The announcement carries the pose: its type's
+  stop mark at the stand heading (`tr._expPose`). For C9V this is not C9's own pose.
+- `expectAssigned`, at the gate assignment, re-announces the assigned stand in its parked pose (`updatePark`). If that stand
+  differs from the announced one and does not share its bridges, the old announcement is withdrawn. This matters because the
+  gate is assigned before the drawn aircraft has come to rest: DAL672 was assigned at 21:42:00.6Z and docked at 21:42:23.8Z,
+  and in between C9 L1 went back to its data rest and touched the aircraft. SFO's record said C9V; the aircraft was assigned
+  to C9, which owns the same bridges.
+- gates.js `expectArrival(g, type, pose, now)` adds the arrival to `parkOcc` for every bridge of g, including the ones that
+  will dock it, and for the stands around. The arrival keeps a margin of EXPECT_MG = 3.0 m [inferred]: DAL672 stopped 2.6 m
+  short of C9V's mark and 1.4 m off its line. A bridge whose rest is in the way parks before the arrival passes. The
+  announcement ends at `setOccupant()`, after EXPECT_HOLD_S = 600 s without renewal [inferred], or when the arrival pushes back.
+- Result:
+  - **w1: DAL672 B763 C9 L1 at-rest contact 30 frames -> 0** (bridge.hit.fus 30 -> 0). All other classes are identical.
+  - **w2: SWA375 B38M D3 L1 unchanged (8 frames).** SFO's record put it at D4, and `docking()` follows SFO's plan, so it
+    never docks to D3's lead-in. D3 is announced only at the assignment, after the contact. A plan-free lead-in test was tried
+    and changed nothing in w2, so it was not kept. OPEN.
+  - **w2 side effects:** cut.gnd_sfo 17 -> 18 episodes (13 keys either way) and offpave.mask 4287 -> 4305 frames (77 -> 76
+    episodes: two episodes of one key merged). The per-key worst entries are identical, so the aircraft is not identified.
+    Suspected cause: a parked pose in the physics grid (R7.5.1) moving a rest pose. OPEN.
+
+**R7.5.3 (harness) - parked bridges were measured at their data rest.** invariants.mjs cached each bridge's boxes under
+`k | acType | dock`, so after a park (R7.2) or a pre-arrival park the bridge hit tests still used the data-rest boxes. The key
+now includes `b._parkQ`, and the current time while a park move runs. Before this fix, every per-occupant park was invisible to
+bridge.hit.*. That is why the verifier's arms of R7.2 were identical too.
+
+Still open from round 7: SWA375 / D3 (above), the w2 side effects (above), A5 L2 / A11 L2 / F12 L1 still short (minor),
+check_stands evaluating parks (minor), parkChoose per-frame cost (minor), G12 sliver (deferred), PARK_* and EXPECT_* values
+inferred (owner).

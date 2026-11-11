@@ -119,6 +119,9 @@ const AHEAD_COMMIT_M = 20;
 // (close-out round 3, realtime-10) [design value]. (Close-out round 5: SFO's plan for the ARRIVAL ('alloc', its own arrival
 // record for that stand) and the occupant's ended windows ('window') no longer start it from here; see groundLogic)
 const AHEAD_EV_M = 400;
+// expectStand (close-out round 7 verifier, R7.4.1): SFO's arrival record announces its stand to the bridges once the report is
+// within this of that stand's stop mark [design value: = AHEAD_EV_M; a 5 m/s taxi-in covers it in ~80 s]
+const EXPECT_M = 400;
 // standRealloc: another arrival's ACTUAL block-in at a silent occupant's stand counts only this long after the occupant was last
 // heard -- its own arrival record, when its callsign does not map to it (planFor), carries an actual block-in within minutes of
 // its own in-block / last report (close-out round 5) [design value]
@@ -1256,6 +1259,7 @@ export class Traffic {
     if (M.phase === 'pushback') tr.pushEnd = [r.x, r.z];   // (rolling forward straight out of the push-back)
     if (M.phase !== 'taxi') this.setPhase(tr, 'taxi', t, null, wasStill ? t0 : null);
     this.docking(tr, r, t);
+    this.expectStand(tr, r, t);
     // an arrival on the lead-in of the contact stand it is docking to, where a SILENT aircraft is still drawn: that one has
     // left unseen. It is removed now, its jet bridge retracting first (fadeRemove 'replaced'), not when the arrival drives into
     // it (GroundPhysics ghost: removed at once with its bridge still docked -- bridge.orphan 17-24 s, 4-5 Nov replay).
@@ -1797,7 +1801,7 @@ export class Traffic {
     if (tr.lock && !tr.bridgeOn) tr.lock = null;
     tr.gate = g; g.occupant = tr.hex; tr.dock = null; tr.shortBlocked = false; tr.misfitT = null;
     const T = typeOf(tr); g.oversize = !!(T && T.wing && (T.wing.span > g.maxSpan + 0.5));
-    this.updatePark(tr);
+    this.updatePark(tr); this.expectAssigned(tr, g);
     // in-block: a new turn begins (its departure pushes from here; the arrival's runway no longer applies: review
     // round 1, SKW3007 reported the stale arrival runway at its departure)
     tr.pushOk = !tr.pushback; tr.pushbackFrom = null; tr.pushG = null; tr.pushed = false; tr.pushEnd = null; tr.inBlockAt = t ?? tr.lastFixT; tr.leaving = false; tr.leaveFast = false; tr.leaveHintT = null;
@@ -2124,6 +2128,39 @@ export class Traffic {
     if (out < -4 || d > 300) return false; if (d < 6) return true;
     if (dir == null) return lat < 8 + 0.15 * Math.max(0, out);
     return Math.abs(wrapPi(vecHdg(-bx, -bz) - dir)) < 60 * DEG || (lat < 8 + 0.15 * Math.max(0, out) && Math.abs(wrapPi(dir - g.w.hdg)) < 50 * DEG);
+  }
+  // pre-arrival bridge positions (close-out round 7 verifier, R7.4.1): the stand this arrival is about to take -- the lead-in
+  // it is docking to, else SFO's arrival record for it (arrStand) once its report is within EXPECT_M of that stand's stop
+  // mark -- is announced to the bridges (onGateExpect(g, tr); gates.js expectArrival), so a bridge resting in its way parks
+  // before the aircraft passes it; withdrawn (onGateExpect(g, null)) when it heads for another stand or docks elsewhere
+  expectStand(tr, r, t) {
+    if (!this.onGateExpect) return; let g = null;
+    if ((tr.landedAt || tr.dirSFO === 'arr') && !tr.pushed && !tr.gate) {
+      if (tr.dock && tr.dock.g) g = tr.dock.g;
+      else { const a = this.arrStand(tr, t); if (a && (a.bridge || a.sharesBridgesOf) && (!a.occupant || a.occupant === tr.hex)) { const S = this.stopRef(tr, a); if (Math.hypot(r.x - S[0], r.z - S[1]) < EXPECT_M) g = a; } }
+    }
+    // (the pose it will stop in: its type's stop mark on that stand's lead-in, at the stand heading -- for a stand sharing the
+    // bridges of another (C9V on C9's) that is NOT the base stand's own pose; app.js poseST)
+    if (g) { const S = this.stopRef(tr, g); tr._expPose = { x: S[0], z: S[1], hdg: g.w.hdg }; }
+    // (no stand now -- the gate is assigned, the report is out of range, the plan has gone: the announcement stays until the
+    // bridges dock (gates.js setOccupant replaces it), another stand is announced, it pushes back, or it lapses. The gate is
+    // assigned BEFORE the drawn aircraft has come to rest and docks: DAL672 21:42:00.6Z vs 21:42:23.8Z, C9 L1 back at its
+    // data rest in between and touching it)
+    const old = tr._expG || null; if (!g) { if (old && tr.pushed) { this.onGateExpect(old, null); tr._expG = null; } return; }
+    if (g === old) { this.onGateExpect(g, tr); return; }
+    if (old) this.onGateExpect(old, null); tr._expG = g; this.onGateExpect(g, tr);
+  }
+  // ...and the stand an arrival has just been assigned (occupy): its bridges dock only once the DRAWN aircraft has come to rest,
+  // up to tens of seconds later (DAL672 C9: assigned 21:42:00.6Z, docked 21:42:23.8Z, C9 L1 back at its data rest in between
+  // and touching it). It is announced in its parked pose (updatePark), replacing the stand announced on the way in when that
+  // is another one (SFO's record said C9V or D4, it parked at C9 or D3); the bridges keep it until setOccupant() or it lapses
+  // (gates.js EXPECT_HOLD_S), the engine forgets it here
+  expectAssigned(tr, g) {
+    const old = tr._expG || null; tr._expG = null; if (!this.onGateExpect || tr.pushed || !(old || tr.landedAt)) return;
+    const shares = (a, b) => a === b || a.sharesBridgesOf === b.name || b.sharesBridgesOf === a.name || (!!a.sharesBridgesOf && a.sharesBridgesOf === b.sharesBridgesOf);
+    if (old && !shares(old, g)) this.onGateExpect(old, null);
+    if (!(g.bridge || g.sharesBridgesOf)) return;
+    const S = tr.parkPos || this.stopRef(tr, g); tr._expPose = { x: S[0], z: S[1], hdg: tr.parkPos && tr.parkHdg != null ? tr.parkHdg : g.w.hdg }; this.onGateExpect(g, tr);
   }
   // docking: a slow taxiing aircraft close to a free stand's lead-in line and heading along it follows that line
   docking(tr, r, t) {

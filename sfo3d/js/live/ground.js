@@ -80,6 +80,24 @@ export function bridgeGrid(boxes, groundY = 0, res = 1) {
   }
   return (x, z) => { const i = Math.floor((x - x0) / res), j = Math.floor((z - z0) / res); return i >= 0 && j >= 0 && i < W && j < H && m[j * W + i] === 1; };
 }
+// close-out round 7 verifier (major R7.4.2): the rest bridges follow the parked poses. gates.js solids(g, b, 0) is a
+// bridge's rest per occupant (restNow: parked, on its way, or the data rest) and gsys.restVer counts the changes of those
+// rests (gates.js step). This field rebuilds its grid lazily when the count moves, so the fuselage tests (GroundPhysics)
+// and traffic.js restBridgeAt see a parked bridge where it stands now, not at the data rest it left. A bridge on its way
+// is taken at the pose it had when the count moved and again when it arrives (the moving bridge is liveBridges' meanwhile)
+export function restBridgeField(gates, gsys, groundY = 0) {
+  if (!gsys || !gsys.solids) return null;
+  let ver = NaN, grid = null;
+  const build = () => {
+    ver = gsys.restVer || 0;
+    try { const boxes = []; for (const g of gates) for (const b of g.bridges || []) boxes.push(...gsys.solids(g, b, 0)); grid = bridgeGrid(boxes, groundY); }
+    catch (e) { console.warn('rest bridge solids', e); }
+  };
+  build();
+  const field = (x, z) => { if ((gsys.restVer || 0) !== ver) build(); return !!(grid && grid(x, z)); };
+  field.rebuild = build;
+  return field;
+}
 // (close-out round 3 fix round 2, verifier v4: the jet bridges that are docked or moving, with their CURRENT solids, for the
 // motion veto of a moving body (traffic.js ctlGround -- the rest bridges are bridgeGrid's). gsys: the gates.js system (solids,
 // docks, anims: each bridge at its own extension, as tools/live/invariants.mjs bridgeK draws and tests it); hitAc: gates.js

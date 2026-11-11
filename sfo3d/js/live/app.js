@@ -28,7 +28,7 @@ import { buildLiveWorld, releaseAirportMap } from './world.js';
 import { LiveGateSystem } from './gates.js';
 import { buildLiveLights, buildPierGeometry, alsPlacement, buildMountGeometry } from './lights.js';
 import { Traffic, category, hdgVec, RWY, phaseLabel, antOf, DELAY_MS } from './traffic.js';
-import { GroundPhysics, buildingGrid, bridgeGrid, liveBridges } from './ground.js';
+import { GroundPhysics, buildingGrid, bridgeGrid, liveBridges, restBridgeField } from './ground.js';
 import { B3D_INTEGRATION } from '../../data/buildings3d/integration.js'; // 3-D building footprints for the ground physics (buildingGrid)
 import { Feed, StreamFeed, Routes, fetchMetar, fetchTaf, fetchGates, parsePayload, SOURCES } from './feed.js';
 import { runwayStats, statsLine, statsHtml, runwayQueue, runwayConfig } from './stats.js';
@@ -266,7 +266,7 @@ export async function startApp(cfg) {
   const firstData = () => { if (bootUntil == null) bootUntil = Date.now() + 20000; };
   // pose a jet bridge docks to: the DRAWN pose the aircraft came to rest in (traffic.js syncBridge: tr.dockPose), as nose
   // position & heading in the airport (s,t) frame
-  const poseST = (tr) => { const T = tr.model && TYPES[tr.model.t] || TYPES.a320; const P = tr.dockPose || (tr.parkPos ? { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg } : { x: tr.last.x, z: tr.last.z, hdg: tr.last.hd });
+  const poseST = (tr, P0 = null) => { const T = tr.model && TYPES[tr.model.t] || TYPES.a320; const P = P0 || tr.dockPose || (tr.parkPos ? { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg } : { x: tr.last.x, z: tr.last.z, hdg: tr.last.hd });
     const h = hdgVec(P.hdg); const k = antOf(T);
     const n = worldToST(P.x + h[0] * k, P.z + h[1] * k), o = worldToST(0, 0), d = worldToST(h[0], h[1]); return { nose: n, dir: [d[0] - o[0], d[1] - o[1]] }; };
   const traffic = new Traffic({ gates: world.gates, airport: cfg.airport, persist: cfg.mode === 'live', centerlines: cfg.details ? cfg.details.centerlines : null, taxigraph: cfg.taxigraph || null, stands: cfg.stands || null,
@@ -293,6 +293,9 @@ export async function startApp(cfg) {
   }
   // extension (0 retracted .. 1 docked) of a stand's bridges, for the engine's hold-until-clear (gates.js extension(): 1
   // only when a bridge actually docks the occupant)
+  // pre-arrival park (close-out round 7 verifier, R7.4.1): the stand an arrival is about to take (traffic.js expectStand) --
+  // a bridge resting in its way parks before it passes (gates.js expectArrival)
+  traffic.onGateExpect = (g, tr) => { if (gateSys.expectArrival) gateSys.expectArrival(bridgeGate(g), tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null, tr && tr._expPose ? poseST(tr, tr._expPose) : null, Date.now()); };
   traffic.bridgeK = (g) => { const G = bridgeGate(g); if (gateSys.extension) return gateSys.extension(G); const a = gateSys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };
   // seconds until the stand's bridges are clear of the occupant's straight push-back (the body's hold) and until they are
   // fully retracted (gates.js pushClearEta / undockEta)
@@ -324,7 +327,8 @@ export async function startApp(cfg) {
   function statsSheet(now) { if (!ui.statsOpen()) return; const tD = traffic.displayTime(now); const ages = (traffic.ages || []).filter(q => q[2]).map(q => q[1]).sort((a, b) => a - b);
     ui.setStatsSheet(statsHtml(runwayStats(traffic.events, tD), runwayQueue(traffic.tracks.values(), RWY), { delayS: traffic.delay / 1000, audioS: (traffic.audioDelay || 0) / 1000, ageS: ages.length ? ages[ages.length >> 1] : null })); }
   // (the jet bridges at rest are obstacles for aircraft parked off a stand: gates.js solids(g, b, 0), ground.js bridgeGrid)
-  const restBridges = (() => { if (!gateSys.solids) return null; const boxes = []; try { for (const g of world.gates) for (const b of g.bridges || []) boxes.push(...gateSys.solids(g, b, 0)); } catch (e) { console.warn('bridge solids', e); return null; } return bridgeGrid(boxes, GROUND_Y); })();
+  // (close-out round 7 verifier R7.4.2: rebuilt when a bridge's rest per occupant changes -- ground.js restBridgeField)
+  const restBridges = (() => { try { return restBridgeField(world.gates, gateSys, GROUND_Y); } catch (e) { console.warn('bridge solids', e); return null; } })();
   const physics = new GroundPhysics({ paved: pavedMask, building: buildingAt, net: traffic.net, bridges: restBridges });
   traffic.restBridgeAt = restBridges;   // (traffic.js fusInRestBridge: no rest pose accepted past a stop inside a bridge)
   // (close-out round 3 fix round 2, verifier v4: the docked / moving bridges' CURRENT solids, for traffic.js ctlGround's bridge

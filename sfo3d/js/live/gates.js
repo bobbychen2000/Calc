@@ -281,6 +281,13 @@ const DOCK_TIME = 22, UNDOCK_TIME = 16;                   // s, fallback only (p
 // the last departure signal (the push-back and taxi-out; PARK_EARLY_S after an early undock, the engine's EARLY_MAX_MS
 // bound + PARK_RETURN_S) unless another aircraft keeps it parked. [inferred: PARK_SWING, PARK_RETURN_S, PARK_NEAR]
 const PARK_SWING = 30, PARK_RETURN_S = 180, PARK_EARLY_S = 3600 + 180, PARK_NEAR = 110;
+// pre-arrival park (close-out round 7 verifier, R7.4.1): how long an announced arrival (expectArrival) keeps the bridges
+// parked for it without being renewed by the engine [inferred: EXPECT_HOLD_S]
+const EXPECT_HOLD_S = 600;
+// ...and the margin its body keeps from a rest pose while it taxis in (parkChoose touch test; 0.5 m for a parked one): the
+// reported stop is not the stop mark -- DAL672 B763 stopped 2.6 m short and 1.4 m off C9V's line (4 Nov 21:42Z) with C9 L1's
+// data rest 0.5+ m clear of the mark pose and touching the aircraft [inferred: EXPECT_MG]
+const EXPECT_MG = 3.0;
 const icaoClear = (span) => span < 24 ? 3.0 : span < 36 ? 4.5 : 7.5;
 // exterior cross-sections (width, height) of tunnel sections A (rotunda) .. C (cab): AC 150/5220-21C §3.5.a(1) minimum
 // interior 50 in corridor / 80 in height; sheet minimum A tunnel interior 1.47 x 2.13 m; exterior inferred
@@ -1510,7 +1517,7 @@ export class LiveGateSystem {
   // typeKey: TYPES key of the parked aircraft (null = empty); pose: {nose:[s,t], dir:[s,t]}; icao: type designator;
   // opts.freighter: the occupant is a freighter (js/live/lookup.js isFreighter): only the door-1 bridge docks
   setOccupant(g, typeKey, animate, now, pose, icao, opts = {}) {
-    const was = !!g.acType;
+    const was = !!g.acType; if (typeKey) g._incoming = null; // (the announced arrival is here: its own clearance from now on)
     // the occupant whose door the bridges are at, retracting from or docking to; `same`: this one again (type, designator,
     // freighter, pose within 5 cm / 0.1 deg) - e.g. a departure signal that proved false (redock())
     const prev = { type: g.acType || g._lastType || null, pose: g.dock || null, icao: g.dockType || null, cargo: !!g.dockCargo };
@@ -1650,18 +1657,21 @@ export class LiveGateSystem {
   // parked at the stands around, and - while b is parked - a departing one for its hold (o._parkHold)
   parkOcc(g, b, holds = !!b._parkQ) {
     const out = []; const now = this._now ?? Date.now();
-    const add = (o, tk, pose) => { const T = TYPES[tk]; if (!T || !T.wing) return; const f = stD(pose ? pose.dir : o.dir), n = stW(pose ? pose.nose : o.nose, G);
-      out.push({ tk, T, nose: [n[0], n[2]], f: [f[0], f[2]], need: icaoClear(T.wing.span) }); };
+    const add = (o, tk, pose, mg = 0.5) => { const T = TYPES[tk]; if (!T || !T.wing) return; const f = stD(pose ? pose.dir : o.dir), n = stW(pose ? pose.nose : o.nose, G);
+      out.push({ tk, T, nose: [n[0], n[2]], f: [f[0], f[2]], need: icaoClear(T.wing.span), mg }); };
     for (const o of [g].concat(this.nearStands(g))) {
       if (o.acType) { if (o !== g || !this.docks(g, b)) add(o, o.acType, o.dock); }
       else if (holds && o._parkHold && o._parkHold.until > now) add(o, o._parkHold.type, o._parkHold.pose);
+      // (an arrival announced for stand o -- expectArrival: every bridge, the ones that will dock it too, keeps its clearance
+      // and its taxi-in sweep from its stand pose, so a rest in its way parks before it passes; R7.4.1)
+      if (!o.acType && o._incoming && o._incoming.until > now) add(o, o._incoming.type, o._incoming.pose, EXPECT_MG);
     }
     return out;
   }
   // the rest pose for the aircraft around (null: the data rest), cached per set of aircraft and poses
   parkTarget(g, b) {
     if (b.upper || !b.m) return null; const occ = this.parkOcc(g, b); if (!occ.length) return null;
-    const key = occ.map(o => o.tk + '@' + o.nose[0].toFixed(1) + ',' + o.nose[1].toFixed(1) + ',' + o.f[0].toFixed(3) + ',' + o.f[1].toFixed(3)).sort().join('|');
+    const key = occ.map(o => o.tk + '@' + o.nose[0].toFixed(1) + ',' + o.nose[1].toFixed(1) + ',' + o.f[0].toFixed(3) + ',' + o.f[1].toFixed(3) + '~' + o.mg).sort().join('|');
     if (b._parkC && b._parkC.key === key) return b._parkC.q;
     const q = this.parkChoose(g, b, occ); b._parkC = { key, q }; return q;
   }
@@ -1690,7 +1700,7 @@ export class LiveGateSystem {
   }
   parkChoose(g, b, occ) {
     const M = { a: b.a0, e: b.e0, t: 0, h: b.h0 }; const S = (q) => this.solidsQ(b, q, 0);
-    const touch = (q) => S(q).some(bx => occ.some(O => boxHitsAc(bx, O.T, O.nose, O.f, 0.5) || boxHitsSwept(bx, O.T, O.nose, O.f, 0.3, O.T.L + 15)));
+    const touch = (q) => S(q).some(bx => occ.some(O => boxHitsAc(bx, O.T, O.nose, O.f, O.mg ?? 0.5) || boxHitsSwept(bx, O.T, O.nose, O.f, Math.max(0.3, (O.mg ?? 0.5) - 0.2), O.T.L + 15)));
     const short = (q, d = 0) => S(q).some(bx => occ.some(O => boxHitsAc(bx, O.T, O.nose, O.f, Math.max(0.5, O.need - d), true))); // inside the clearance
     if (!short(M) && !touch(M)) return null; // the data rest holds the clearance: it stays
     const obs = this.parkObs(g, b); const sibs = this.bridgesOf(g).filter(o => o !== b && g.acType && this.docks(g, o));
@@ -1713,6 +1723,21 @@ export class LiveGateSystem {
     const gap = (q) => { let d = 0; while (d < 7.5 && short(q, d)) d += 0.25; return d; }; const g0 = gap(M); let best = null;
     for (const c of C) if (c.da === 0 || c.q.e <= b.m.opR + 1e-6) { if (touch(c.q) || !free(c.q, c.da > 0)) continue; const d = gap(c.q); if (d <= g0 - 0.5 && (!best || d < best.d) && this.parkPath(b, M, c.q, occ)) best = { q: c.q, d }; }
     return best ? best.q : null;
+  }
+  // pre-arrival rest poses (close-out round 7 verifier, R7.4.1): the engine announces the arrival that is about to take stand
+  // g (traffic.js expectStand: the lead-in it is docking to, or SFO's arrival record within EXPECT_M of the stop), so a bridge
+  // whose rest is inside that aircraft's clearance or taxi-in sweep parks BEFORE it passes, not after it has stopped (DAL672
+  // C9 L1, SWA375 D3 L1 at rest in the arrival's way). A bridge that docks it docks from the parked pose (dockFrom). A null
+  // type withdraws the announcement; it lapses EXPECT_HOLD_S after the last renewal; setOccupant() replaces it
+  // pose: { nose: [s, t], dir: [ds, dt] } (as setOccupant) -- the arrival's own stop pose on its stand (app.js poseST of
+  // traffic.js tr._expPose); null: stand g's own pose
+  expectArrival(g, typeKey, pose = null, now = Date.now()) {
+    const samePose = (p, q) => (!p && !q) || (p && q && Math.hypot(p.nose[0] - q.nose[0], p.nose[1] - q.nose[1]) < 0.5 && Math.abs(p.dir[0] - q.dir[0]) + Math.abs(p.dir[1] - q.dir[1]) < 0.01);
+    if (!g || !g.bridge) return; const tk = typeKey && TYPES[typeKey] ? typeKey : null; const prev = g._incoming;
+    if (!tk) { if (!prev) return; g._incoming = null; }
+    else if (prev && prev.type === tk && samePose(prev.pose, pose)) { prev.until = now + EXPECT_HOLD_S * 1000; return; }
+    else { g._incoming = { type: tk, pose: pose || null, until: now + EXPECT_HOLD_S * 1000 }; (this._incG || (this._incG = new Set())).add(g); }
+    this._now = now; this.parkNear(g, now); this.dirty = true;
   }
   // start (or snap) the bridges of stand g - and of the stands around it - towards their rest poses for the aircraft around
   parkNear(g, now, snap = false) { this.parkUpdate(g, now, snap); for (const o of this.nearStands(g)) if (o.bridge) this.parkUpdate(o, now, snap); }
@@ -1889,6 +1914,11 @@ export class LiveGateSystem {
     if (this.parks) for (const [b, p] of this.parks) { if (now - p.t0 >= p.total * 1000) { this.parks.delete(b); this.dirty = true; } else moving = true; }
     if (this._parkG && this._parkG.length) { const ids = new Set(this._parkG); this._parkG = []; for (const g of this.gates) if (ids.has(g.id)) this.parkNear(g, now); }
     if (this._holdG && this._holdG.size) for (const g of [...this._holdG]) if (!g._parkHold || g._parkHold.until <= now) { this._holdG.delete(g); g._parkHold = null; this.parkNear(g, now); }
+    if (this._incG && this._incG.size) for (const g of [...this._incG]) if (!g._incoming || g._incoming.until <= now) { this._incG.delete(g); if (g._incoming) { g._incoming = null; this.parkNear(g, now); } }
+    // rest-pose version (close-out round 7 verifier, R7.4.2): counts the changes of any bridge's rest per occupant (a park
+    // starting / ending, a parked pose taken or dropped) so ground.js restBridgeField rebuilds the rest-bridge grid
+    let rc = false; for (const g of this.gates) for (const b of g.bridges || []) { const sg = (this.parks && this.parks.get(b)) || b._parkQ || null; if (b._restSig !== sg) { b._restSig = sg; rc = true; } }
+    if (rc) this.restVer = (this.restVer || 0) + 1;
     return moving;
   }
   items(now = Date.now()) {

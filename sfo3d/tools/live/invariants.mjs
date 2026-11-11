@@ -138,7 +138,7 @@ if (gsys.finishPrep) gsys.finishPrep();
 let booted = false;
 // (as js/live/app.js: the bridge docks to the DRAWN pose the aircraft came to rest in, tr.dockPose; an alternative (MARS)
 // stand without bridges uses its base stand's bridges; only aircraft with a 3-D airframe are docked)
-const poseST = (tr) => { const T = tr.model && TYPES[tr.model.t] || TYPES.a320; const P = tr.dockPose || (tr.parkPos ? { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg } : { x: tr.last.x, z: tr.last.z, hdg: tr.last.hd }); const h = hdgVec(P.hdg); const k = antOf(T);
+const poseST = (tr, P0 = null) => { const T = tr.model && TYPES[tr.model.t] || TYPES.a320; const P = P0 || tr.dockPose || (tr.parkPos ? { x: tr.parkPos[0], z: tr.parkPos[1], hdg: tr.parkHdg } : { x: tr.last.x, z: tr.last.z, hdg: tr.last.hd }); const h = hdgVec(P.hdg); const k = antOf(T);
   const n = worldToST(P.x + h[0] * k, P.z + h[1] * k), o = worldToST(0, 0), d = worldToST(h[0], h[1]); return { nose: n, dir: [d[0] - o[0], d[1] - o[1]] }; };
 const gateByName = new Map(gates.map(g => [g.name, g]));
 const bridgeGate = (g) => (g.sharesBridgesOf && !(g.bridges && g.bridges.length) && gateByName.get(g.sharesBridgesOf)) || g;
@@ -164,12 +164,13 @@ const traffic = new Traffic({ gates, airport: AIRPORT, persist: false, centerlin
 const ALLEV = [];
 traffic.buildingAt = building; if (process.env.LOCKLOG) traffic.lockLog = []; if (process.env.CANDLOG) traffic.candLog = []; if (TRACE) { traffic.debug = TRACES.size === 1 ? TRACE : null; traffic.debugSet = TRACES; }
 traffic.onEvent = (e) => { ALLEV.push(e); if (TRACE && TRACES.has(e.hex)) console.error('EVENT', new Date(e.t).toISOString().slice(11, 21), e.kind, JSON.stringify(e).slice(0, 200)); };
+traffic.onGateExpect = (g, tr) => { if (gsys.expectArrival) gsys.expectArrival(bridgeGate(g), tr && tr.model && TYPES[tr.model.t] ? tr.model.t : null, tr && tr._expPose ? poseST(tr, tr._expPose) : null, simNow); };   // (as app.js: pre-arrival park, R7.4.1)
 traffic.bridgeK = (g) => { const G = bridgeGate(g); if (gsys.extension) return gsys.extension(G); const a = gsys.anims.get(G.id); return a ? a.k : (G.acType ? 1 : 0); };   // (as app.js)
 // (as app.js: seconds until the stand's bridges are clear of the occupant's straight push-back, gates.js pushClearEta; and the
 // seconds the whole retraction still takes, undockEta)
 if (gsys.pushClearEta) { traffic.pushClearEta = (g) => gsys.pushClearEta(bridgeGate(g), simNow); traffic.undockEta = (g) => gsys.undockEta(bridgeGate(g), simNow); }
 // (as js/live/app.js: the jet bridges at rest are obstacles for aircraft parked off a stand)
-const restBridges = GROUNDJS.bridgeGrid && gsys.solids ? (() => { const boxes = []; for (const g of gates) for (const b of g.bridges || []) boxes.push(...gsys.solids(g, b, 0)); return GROUNDJS.bridgeGrid(boxes, GROUND_Y); })() : null;
+const restBridges = GROUNDJS.restBridgeField && gsys.solids ? GROUNDJS.restBridgeField(gates, gsys, GROUND_Y) : GROUNDJS.bridgeGrid && gsys.solids ? (() => { const boxes = []; for (const g of gates) for (const b of g.bridges || []) boxes.push(...gsys.solids(g, b, 0)); return GROUNDJS.bridgeGrid(boxes, GROUND_Y); })() : null;
 const physics = new GroundPhysics({ paved: apt.paved, building, net: traffic.net, bridges: restBridges });
 traffic.restBridgeAt = restBridges;   // (as app.js)
 // (close-out round 3 fix round 2, verifier v4: as app.js -- the docked / moving bridges' current solids for traffic.js ctlGround's bridge veto)
@@ -583,7 +584,7 @@ while (simNow < tEnd && (nextEv || simNow < tStart + 1)) {
     if (!g.bridge) continue;
     for (const b of g.bridges) {
       const k = bridgeK(g, b);
-      let BB = b._inv; const bkey = k.toFixed(3) + '|' + (g.acType || '') + '|' + JSON.stringify(g.dock || null);
+      let BB = b._inv; const bkey = k.toFixed(3) + '|' + (g.acType || '') + '|' + JSON.stringify(g.dock || null) + '|' + (b._parkQ ? b._parkQ.a.toFixed(4) + ',' + b._parkQ.e.toFixed(3) : '-') + (gsys.parks && gsys.parks.has(b) ? '@' + simNow : '');   // (close-out round 7: the rest per occupant -- a bridge parked, or parking, for the aircraft around -- is part of the key; the data rest was measured for parked bridges before)
       if (!BB || BB.bkey !== bkey) { BB = b._inv = bridgeBoxes(g, b, k); BB.bkey = bkey; let cx = 0, cz = 0; for (const bx of BB.boxes) { cx += bx.c[0]; cz += bx.c[1]; } cx /= BB.boxes.length; cz /= BB.boxes.length; let r = 0; for (const bx of BB.boxes) for (const q of boxPoly(bx)) r = Math.max(r, Math.hypot(q[0] - cx, q[1] - cz)); BB.cc = [cx, cz]; BB.r = r; BB.ver = (BB.ver || 0) + 1; }
       const ot = occ.get(g.name) || null;
       // aircraft inside the bridge: SAT of each planform piece against each bridge box, then 3-D point test
