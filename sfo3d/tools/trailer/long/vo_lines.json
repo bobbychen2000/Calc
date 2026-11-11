@@ -1,0 +1,11 @@
+{"c0": "This is San Francisco International, rebuilt in 3D and driven by live data.",
+ "c1": "The terminals, the control tower, the AirTrain and the garages are modelled from public plans, aerial imagery and open map data.",
+ "c2": "Every aircraft here is a real flight, placed from its own transponder broadcasts: position, altitude and speed.",
+ "c2b": "Arrivals line up on twenty-eight left and twenty-eight right, over the bay.",
+ "c3": "On the ground, aircraft follow the real taxiway network, from the runway to their gate.",
+ "c3b": "Jet bridges swing out and dock at the door. Stands and bridges come from OpenStreetMap and the airport's own data.",
+ "c4": "Departures roll on one left and one right, and climb out over the water.",
+ "c5": "Each building is drawn from published plans and measurements, then checked against aerial imagery.",
+ "c6": "Weather comes from live reports. The sun and moon move with the clock, and fog and rain change what you see.",
+ "c7": "At night, runway, taxiway and approach lights are placed from F A A airport data, and every aircraft carries its own lights.",
+ "c8": "S F O Live 3D. The whole airport, live, in your browser."}

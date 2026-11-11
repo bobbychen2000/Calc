@@ -1,0 +1,1147 @@
+[
+{
+"id": "open_aerial",
+"ch": 0,
+"kind": "orbit",
+"target": "hub",
+"t": "2026-11-09T00:30:00Z",
+"yaw": [
+205,
+232
+],
+"pitch": [
+26,
+20
+],
+"dist": [
+2100,
+1700
+],
+"off": 0,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "itb",
+"ch": 1,
+"kind": "orbit",
+"target": "gates:A|G",
+"t": "2026-11-09T00:30:00Z",
+"yaw": [
+200,
+232
+],
+"pitch": [
+24,
+19
+],
+"dist": [
+700,
+540
+],
+"off": 120,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "t1",
+"ch": 1,
+"kind": "orbit",
+"target": "gates:B|C",
+"t": "2026-11-09T00:30:00Z",
+"yaw": [
+170,
+200
+],
+"pitch": [
+24,
+19
+],
+"dist": [
+650,
+520
+],
+"off": 240,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "t2",
+"ch": 1,
+"kind": "orbit",
+"target": "gates:D|E",
+"t": "2026-11-09T00:48:00Z",
+"yaw": [
+300,
+328
+],
+"pitch": [
+24,
+19
+],
+"dist": [
+650,
+520
+],
+"off": 360,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "t3",
+"ch": 1,
+"kind": "orbit",
+"target": "gates:F",
+"t": "2026-11-09T00:48:00Z",
+"yaw": [
+320,
+345
+],
+"pitch": [
+24,
+19
+],
+"dist": [
+650,
+520
+],
+"off": 480,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "tower_close",
+"ch": 1,
+"kind": "orbit",
+"target": "tower",
+"t": "2026-11-09T00:48:00Z",
+"yaw": [
+198,
+238
+],
+"pitch": [
+3,
+8
+],
+"dist": [
+150,
+115
+],
+"off": 600,
+"fov": 42,
+"ty": 44,
+"metar": null,
+"n": 168
+},
+{
+"id": "bay_gold",
+"ch": 1,
+"kind": "orbit",
+"target": "hub",
+"t": "2026-11-09T00:30:00Z",
+"yaw": [
+104,
+116
+],
+"pitch": [
+9,
+7
+],
+"dist": [
+2600,
+2300
+],
+"off": 720,
+"fov": 45,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "arr1",
+"ch": 2,
+"kind": "chase",
+"wait": "arrival",
+"t": "2026-11-09T00:30:00Z",
+"off": 40,
+"yawOff": [
+78,
+112
+],
+"pitch": [
+3,
+6
+],
+"dist": [
+95,
+82
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "arr2",
+"ch": 2,
+"kind": "chase",
+"wait": "arrival",
+"t": null,
+"off": 160,
+"yawOff": [
+250,
+280
+],
+"pitch": [
+4,
+7
+],
+"dist": [
+110,
+90
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "arr3",
+"ch": 2,
+"kind": "chase",
+"wait": "arrival",
+"t": "2026-11-09T00:30:00Z",
+"off": 300,
+"yawOff": [
+150,
+175
+],
+"pitch": [
+5,
+8
+],
+"dist": [
+120,
+100
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "arr4",
+"ch": 2,
+"kind": "chase",
+"wait": "arrival",
+"t": "2026-11-09T00:48:00Z",
+"off": 430,
+"yawOff": [
+60,
+95
+],
+"pitch": [
+2,
+5
+],
+"dist": [
+90,
+80
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "arr5",
+"ch": 2,
+"kind": "chase",
+"wait": "arrival",
+"t": null,
+"off": 720,
+"yawOff": [
+100,
+130
+],
+"pitch": [
+6,
+4
+],
+"dist": [
+140,
+100
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "arr6",
+"ch": 2,
+"kind": "chase",
+"wait": "arrival",
+"t": "2026-11-09T00:30:00Z",
+"off": 900,
+"yawOff": [
+265,
+300
+],
+"pitch": [
+3,
+6
+],
+"dist": [
+95,
+85
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "arr7",
+"ch": 2,
+"kind": "chase",
+"wait": "arrival",
+"t": null,
+"off": 1160,
+"yawOff": [
+90,
+120
+],
+"pitch": [
+4,
+6
+],
+"dist": [
+100,
+90
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "arr8",
+"ch": 2,
+"kind": "chase",
+"wait": "arrival",
+"t": "2026-11-09T00:30:00Z",
+"off": 1400,
+"yawOff": [
+240,
+270
+],
+"pitch": [
+3,
+6
+],
+"dist": [
+95,
+85
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "taxi1",
+"ch": 3,
+"kind": "chase",
+"wait": "taxi",
+"t": "2026-11-09T00:30:00Z",
+"off": 0,
+"yawOff": [
+140,
+160
+],
+"pitch": [
+9,
+9
+],
+"dist": [
+85,
+85
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "gateG",
+"ch": 3,
+"kind": "gate",
+"gate": "G",
+"heavy": true,
+"t": "2026-11-09T00:30:00Z",
+"off": 60,
+"metar": null,
+"n": 168
+},
+{
+"id": "taxi2",
+"ch": 3,
+"kind": "chase",
+"wait": "taxi",
+"t": null,
+"off": 300,
+"yawOff": [
+200,
+230
+],
+"pitch": [
+8,
+10
+],
+"dist": [
+90,
+80
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "gateA",
+"ch": 3,
+"kind": "gate",
+"gate": "A",
+"heavy": true,
+"t": "2026-11-09T00:48:00Z",
+"off": 180,
+"metar": null,
+"n": 168
+},
+{
+"id": "gateB",
+"ch": 3,
+"kind": "gate",
+"gate": "B|C",
+"heavy": false,
+"t": "2026-11-09T00:30:00Z",
+"off": 420,
+"metar": null,
+"n": 168
+},
+{
+"id": "taxi3",
+"ch": 3,
+"kind": "chase",
+"wait": "taxi",
+"t": "2026-11-09T00:48:00Z",
+"off": 600,
+"yawOff": [
+120,
+90
+],
+"pitch": [
+10,
+7
+],
+"dist": [
+80,
+95
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "gateD",
+"ch": 3,
+"kind": "gate",
+"gate": "D|E",
+"heavy": false,
+"t": null,
+"off": 540,
+"metar": null,
+"n": 168
+},
+{
+"id": "gateF",
+"ch": 3,
+"kind": "gate",
+"gate": "F",
+"heavy": false,
+"t": "2026-11-09T00:30:00Z",
+"off": 780,
+"metar": null,
+"n": 168
+},
+{
+"id": "taxi4",
+"ch": 3,
+"kind": "chase",
+"wait": "taxi",
+"t": "2026-11-09T00:30:00Z",
+"off": 900,
+"yawOff": [
+165,
+190
+],
+"pitch": [
+6,
+9
+],
+"dist": [
+100,
+85
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "gateC",
+"ch": 3,
+"kind": "gate",
+"gate": "C",
+"heavy": false,
+"t": null,
+"off": 1300,
+"metar": null,
+"n": 168
+},
+{
+"id": "taxi5",
+"ch": 3,
+"kind": "chase",
+"wait": "taxi",
+"t": null,
+"off": 1200,
+"yawOff": [
+150,
+170
+],
+"pitch": [
+8,
+8
+],
+"dist": [
+90,
+90
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "gateE",
+"ch": 3,
+"kind": "gate",
+"gate": "E",
+"heavy": false,
+"t": "2026-11-09T00:30:00Z",
+"off": 1700,
+"metar": null,
+"n": 168
+},
+{
+"id": "taxi6",
+"ch": 3,
+"kind": "chase",
+"wait": "taxi",
+"t": "2026-11-09T00:30:00Z",
+"off": 1500,
+"yawOff": [
+130,
+100
+],
+"pitch": [
+7,
+9
+],
+"dist": [
+95,
+85
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "gate2G",
+"ch": 3,
+"kind": "gate",
+"gate": "G",
+"heavy": false,
+"t": "2026-11-09T00:48:00Z",
+"off": 1000,
+"metar": null,
+"n": 168
+},
+{
+"id": "dep1",
+"ch": 4,
+"kind": "chase",
+"wait": "takeoff",
+"t": "2026-11-09T00:48:00Z",
+"off": 0,
+"yawOff": [
+105,
+150
+],
+"pitch": [
+4,
+7
+],
+"dist": [
+105,
+135
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "dep2",
+"ch": 4,
+"kind": "chase",
+"wait": "takeoff",
+"t": "2026-11-09T00:30:00Z",
+"off": 400,
+"yawOff": [
+250,
+215
+],
+"pitch": [
+5,
+8
+],
+"dist": [
+110,
+140
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "dep3",
+"ch": 4,
+"kind": "chase",
+"wait": "takeoff",
+"t": null,
+"off": 800,
+"yawOff": [
+160,
+180
+],
+"pitch": [
+6,
+10
+],
+"dist": [
+100,
+150
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "dep4",
+"ch": 4,
+"kind": "chase",
+"wait": "takeoff",
+"t": "2026-11-09T00:48:00Z",
+"off": 1200,
+"yawOff": [
+80,
+120
+],
+"pitch": [
+3,
+7
+],
+"dist": [
+100,
+130
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "dep5",
+"ch": 4,
+"kind": "chase",
+"wait": "takeoff",
+"t": "2026-11-09T00:30:00Z",
+"off": 1600,
+"yawOff": [
+120,
+165
+],
+"pitch": [
+5,
+9
+],
+"dist": [
+110,
+150
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "dep6",
+"ch": 4,
+"kind": "chase",
+"wait": "takeoff",
+"t": null,
+"off": 2000,
+"yawOff": [
+100,
+140
+],
+"pitch": [
+4,
+8
+],
+"dist": [
+105,
+140
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "tower_high",
+"ch": 5,
+"kind": "orbit",
+"target": "tower",
+"t": "2026-11-09T00:30:00Z",
+"yaw": [
+250,
+290
+],
+"pitch": [
+18,
+12
+],
+"dist": [
+260,
+210
+],
+"off": 200,
+"fov": 48,
+"ty": 40,
+"metar": null,
+"n": 168
+},
+{
+"id": "itb_low",
+"ch": 5,
+"kind": "orbit",
+"target": "gates:A|G",
+"t": "2026-11-09T00:48:00Z",
+"yaw": [
+235,
+255
+],
+"pitch": [
+8,
+6
+],
+"dist": [
+380,
+320
+],
+"off": 500,
+"fov": 45,
+"ty": 20,
+"metar": null,
+"n": 168
+},
+{
+"id": "hub_garage",
+"ch": 5,
+"kind": "orbit",
+"target": "hub",
+"t": null,
+"yaw": [
+150,
+190
+],
+"pitch": [
+35,
+30
+],
+"dist": [
+900,
+760
+],
+"off": 800,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "t2_low",
+"ch": 5,
+"kind": "orbit",
+"target": "gates:D|E",
+"t": "2026-11-09T00:30:00Z",
+"yaw": [
+80,
+110
+],
+"pitch": [
+10,
+8
+],
+"dist": [
+420,
+360
+],
+"off": 1100,
+"fov": 48,
+"ty": 15,
+"metar": null,
+"n": 168
+},
+{
+"id": "itb_g2",
+"ch": 5,
+"kind": "orbit",
+"target": "gates:G",
+"t": "2026-11-09T00:30:00Z",
+"yaw": [
+300,
+330
+],
+"pitch": [
+20,
+16
+],
+"dist": [
+500,
+420
+],
+"off": 1800,
+"fov": 48,
+"ty": 10,
+"metar": null,
+"n": 168
+},
+{
+"id": "t3_low",
+"ch": 5,
+"kind": "orbit",
+"target": "gates:F",
+"t": "2026-11-09T00:48:00Z",
+"yaw": [
+20,
+50
+],
+"pitch": [
+12,
+9
+],
+"dist": [
+450,
+380
+],
+"off": 2100,
+"fov": 48,
+"ty": 15,
+"metar": null,
+"n": 168
+},
+{
+"id": "tod_noon",
+"ch": 6,
+"kind": "orbit",
+"target": "hub",
+"t": null,
+"yaw": [
+210,
+220
+],
+"pitch": [
+24,
+24
+],
+"dist": [
+1500,
+1500
+],
+"off": 0,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "tod_gold",
+"ch": 6,
+"kind": "orbit",
+"target": "hub",
+"t": "2026-11-09T00:30:00Z",
+"yaw": [
+220,
+230
+],
+"pitch": [
+24,
+24
+],
+"dist": [
+1500,
+1500
+],
+"off": 0,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "tod_blue",
+"ch": 6,
+"kind": "orbit",
+"target": "hub",
+"t": "2026-11-09T01:32:00Z",
+"yaw": [
+230,
+240
+],
+"pitch": [
+24,
+24
+],
+"dist": [
+1500,
+1500
+],
+"off": 0,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "tod_night",
+"ch": 6,
+"kind": "orbit",
+"target": "hub",
+"t": "2026-11-09T03:30:00Z",
+"yaw": [
+240,
+250
+],
+"pitch": [
+24,
+24
+],
+"dist": [
+1500,
+1500
+],
+"off": 0,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "fog_itb",
+"ch": 6,
+"kind": "orbit",
+"target": "gates:A|G",
+"t": null,
+"yaw": [
+215,
+235
+],
+"pitch": [
+14,
+11
+],
+"dist": [
+380,
+300
+],
+"off": 300,
+"fov": 48,
+"ty": null,
+"metar": "METAR KSFO 082056Z 27006KT 3/4SM BR OVC004 13/12 A3010",
+"n": 168
+},
+{
+"id": "rain_gate",
+"ch": 6,
+"kind": "gate",
+"gate": "G",
+"heavy": true,
+"t": "2026-11-09T01:32:00Z",
+"off": 900,
+"metar": "METAR KSFO 090156Z 18015G24KT 3SM RA BR BKN008 OVC015 13/12 A2985",
+"n": 168
+},
+{
+"id": "night_arr",
+"ch": 7,
+"kind": "chase",
+"wait": "arrival",
+"t": "2026-11-09T01:32:00Z",
+"off": 160,
+"yawOff": [
+80,
+110
+],
+"pitch": [
+3,
+6
+],
+"dist": [
+95,
+85
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "blue_gate",
+"ch": 7,
+"kind": "gate",
+"gate": "B|C",
+"heavy": false,
+"t": "2026-11-09T01:32:00Z",
+"off": 1500,
+"metar": null,
+"n": 168
+},
+{
+"id": "night_taxi",
+"ch": 7,
+"kind": "chase",
+"wait": "taxi",
+"t": "2026-11-09T01:32:00Z",
+"off": 300,
+"yawOff": [
+140,
+160
+],
+"pitch": [
+9,
+9
+],
+"dist": [
+85,
+85
+],
+"fov": 40,
+"n": 168,
+"q": "high"
+},
+{
+"id": "night_tower",
+"ch": 7,
+"kind": "orbit",
+"target": "tower",
+"t": "2026-11-09T03:30:00Z",
+"yaw": [
+200,
+236
+],
+"pitch": [
+3,
+8
+],
+"dist": [
+160,
+120
+],
+"off": 900,
+"fov": 42,
+"ty": 44,
+"metar": null,
+"n": 168
+},
+{
+"id": "night_itb",
+"ch": 7,
+"kind": "orbit",
+"target": "gates:A|G",
+"t": "2026-11-09T03:30:00Z",
+"yaw": [
+210,
+232
+],
+"pitch": [
+26,
+20
+],
+"dist": [
+800,
+620
+],
+"off": 600,
+"fov": 48,
+"ty": null,
+"metar": null,
+"n": 168
+},
+{
+"id": "night_rw",
+"ch": 7,
+"kind": "orbit",
+"target": "rw28t",
+"t": "2026-11-09T03:30:00Z",
+"yaw": [
+128,
+112
+],
+"pitch": [
+12,
+10
+],
+"dist": [
+340,
+280
+],
+"off": 1200,
+"fov": 45,
+"ty": null,
+"metar": null,
+"expo": 1.8,
+"n": 168
+},
+{
+"id": "close_blue",
+"ch": 8,
+"kind": "orbit",
+"target": "hub",
+"t": "2026-11-09T01:32:00Z",
+"yaw": [
+230,
+250
+],
+"pitch": [
+22,
+30
+],
+"dist": [
+1500,
+2400
+],
+"off": 0,
+"fov": 50,
+"ty": null,
+"metar": null,
+"n": 168
+}
+]
