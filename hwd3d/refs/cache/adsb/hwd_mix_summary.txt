@@ -1,0 +1,17 @@
+files 111 polls 60667 ok 54537 span_h 164.3 median_poll_s 1.3619999885559082
+first 1793814183.065 last 1794405552.602
+aircraft within 3nm <3000ft AGL: 836
+source of fixes (3nm box): [('adsb_icao', 114534), ('adsr_icao', 13795), ('tisb_other', 598), ('tisb_trackfile', 368), ('adsb_other', 318), ('tisb_icao', 273), ('mlat', 41), ('adsr_other', 31)]
+source of fixes on airfield (<1.5km, <150ft AGL): [('adsb_icao', 73924), ('adsr_icao', 8059), ('tisb_icao', 223), ('tisb_trackfile', 132), ('tisb_other', 104), ('adsb_other', 102), ('adsr_other', 31), ('mlat', 6)] total 82581
+aircraft seen on/at airfield: 243  with alt_baro=ground: 196
+TYPE MIX (all low aircraft): [('(none)', 103), ('B38M', 99), ('B737', 98), ('C172', 53), ('B738', 39), ('B763', 34), ('E75L', 31), ('A20N', 14), ('E55P', 13), ('B77L', 12), ('A21N', 12), ('GLF4', 12), ('PC12', 11), ('GLF5', 9), ('C208', 8), ('C152', 8), ('CL35', 8), ('S22T', 7), ('E135', 7), ('P28A', 7), ('C182', 7), ('B39M', 6), ('C25B', 6), ('GLEX', 6), ('C72R', 5), ('BE20', 5), ('C750', 5), ('B06', 4), ('GALX', 4), ('CL30', 4), ('C56X', 4), ('C150', 4), ('A332', 4), ('M20P', 4), ('C700', 4), ('SR22', 4), ('C510', 4), ('C210', 4), ('EC45', 3), ('C68A', 3), ('E145', 3), ('GLF6', 3), ('E50P', 3), ('R44', 3), ('CL60', 3), ('A320', 3), ('B752', 3), ('MD11', 3), ('C680', 3), ('SF50', 3), ('F2TH', 3), ('DA40', 3), ('C82T', 3), ('C25M', 3), ('FA50', 3), ('BE35', 3), ('P28R', 3), ('LJ35', 3), ('HDJT', 2), ('C560', 2)]
+TYPE MIX (on airfield): [('C172', 42), ('(none)', 38), ('C152', 7), ('C182', 7), ('PC12', 6), ('P28A', 5), ('E55P', 5), ('C72R', 4), ('S22T', 4), ('B06', 4), ('GLF4', 4), ('C150', 4), ('M20P', 4), ('EC45', 3), ('R44', 3), ('DA40', 3), ('SR22', 3), ('C510', 3), ('C210', 3), ('G280', 2), ('C56X', 2), ('P180', 2), ('GLEX', 2), ('CL60', 2), ('E50P', 2), ('GLF5', 2), ('P46T', 2), ('RV4', 2), ('BL8', 2), ('CH7A', 2), ('DA62', 2), ('BE36', 2), ('A109', 2), ('C25M', 2), ('PA24', 2), ('BE35', 2), ('P28R', 2), ('BE50', 2), ('ST75', 1), ('PA22', 1), ('BE20', 1), ('AC11', 1), ('HDJT', 1), ('SR20', 1), ('EC30', 1), ('PA46', 1), ('GX', 1), ('RV12', 1), ('AA1', 1), ('CL35', 1), ('B407', 1), ('PTS1', 1), ('DA42', 1), ('C425', 1), ('LGEZ', 1), ('P32R', 1), ('BT36', 1), ('TBM7', 1), ('C185', 1), ('SF50', 1)]
+categories on field: [('A1', 171), ('(none)', 27), ('A2', 23), ('A7', 17), ('A3', 5)]
+no registration: 34  no type: 38  no callsign: 27
+non-ICAO/anon hex (~ prefix): 27
+callsign == registration: 186
+dominant source per on-field aircraft: [('adsb_icao', 184), ('adsr_icao', 32), ('tisb_trackfile', 13), ('tisb_other', 10), ('adsb_other', 4)]
+dbFlags (1=mil,2=interesting,4=PIA,8=LADD): [(0, 208), (8, 33), (4, 1), (1, 1)]
+on-field fixes by local PST hour: [(0, 116), (1, 30), (4, 61), (5, 50), (6, 40), (7, 1477), (8, 3858), (9, 4604), (10, 6276), (11, 8902), (12, 9917), (13, 11524), (14, 9104), (15, 8159), (16, 4185), (17, 4960), (18, 4070), (19, 1999), (20, 1326), (21, 924), (22, 518), (23, 481)]
+fixes by nm ring: [((0, 'air'), 30580), ((0, 'gnd'), 66273), ((1, 'air'), 18849), ((1, 'gnd'), 1), ((2, 'air'), 14255)]
+ICAO-callsign operators on field: [('CXK', 4), ('BYF', 4), ('TWY', 4), ('GDG', 2), ('CTP', 2), ('PXT', 2), ('NJZ', 1), ('EJA', 1), ('EJM', 1), ('FWR', 1), ('JTL', 1), ('FFL', 1), ('XSN', 1), ('CTF', 1)]

@@ -1,0 +1,14 @@
+{
+ "05015ad_2611.pdf": {
+  "url": "https://aeronav.faa.gov/d-tpp/2611/05015ad.pdf",
+  "licence": "US Government work (FAA, 17 U.S.C. 105), public domain",
+  "fetched": "2026-11-12",
+  "note": "AL-5015 (FAA) HWD airport diagram, cycle 2611, valid 29 Oct 2026 - 26 Nov 2026 (SW-2)"
+ },
+ "nasr_2026-10-29_HWD.json": {
+  "url": "https://nfdc.faa.gov/webContent/28DaySub/extra/29_Oct_2026_APT_CSV.zip ; .../29_Oct_2026_ATC_CSV.zip ; .../29_Oct_2026_FRQ_CSV.zip",
+  "licence": "US Government work (FAA, 17 U.S.C. 105), public domain",
+  "fetched": "2026-11-12",
+  "made_by": "own extraction (Phase 0): the HWD rows of APT_BASE, APT_RWY, APT_RWY_END, APT_RMK, APT_ATT, ATC_BASE, ATC_ATIS, ATC_RMK, FRQ; empty fields dropped"
+ }
+}

@@ -1,0 +1,8 @@
+hours with ok polls: 101 of span 165
+polls/hour median: 591
+NACp on field: [(0, 3511), (10, 60854), (11, 145), (2, 1), (3, 1), (4, 10), (5, 18), (6, 158), (7, 98), (8, 2351), (9, 12440), (None, 2994)]
+distinct on-field aircraft per local day: {20761: 72, 20762: 83, 20763: 23, 20764: 81, 20765: 73, 20766: 43, 20767: 7}
+moving ground fix gaps s: n 15600 p50 1.3000001907348633 p90 11.5 p99 51.59999990463257 >10s share 0.102
+low airborne fixes by direction: Counter({'28 (W-bound)': 10904, 'other': 823, '10 (E-bound)': 53})
+aircraft seen standing still on the ground >=20 fixes: 143
+ground->air transitions per aircraft (whole week, 6=6+): [(0, 126), (1, 74), (2, 17), (3, 4), (4, 3), (5, 1), (6, 18)]
