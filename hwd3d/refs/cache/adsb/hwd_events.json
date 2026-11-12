@@ -1,0 +1,1547 @@
+{
+ "what": "HWD runway and helicopter events classified from the pinned adsb.lol hours (tools/adsb/events.py): counts by event type, runway end, tower status, aircraft class and local hour, plus the distributions the rules cut on. Aggregates only (default D1): no ICAO address, registration, callsign or time stamp.",
+ "licence": "ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/) - aggregate derived from adsb.lol data (https://adsb.lol, ODbL 1.0); OSM location labels: (c) OpenStreetMap contributors, ODbL 1.0",
+ "attribution": "Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/).",
+ "source": "sfo3d/refs/cache/rec_pack/adsblol_<hour>.jsonl.xz @ a967f9b",
+ "hours": [
+  "20261104_17",
+  "20261104_18",
+  "20261104_19",
+  "20261104_20",
+  "20261104_21",
+  "20261104_22",
+  "20261104_23",
+  "20261105_00",
+  "20261105_01",
+  "20261105_02",
+  "20261105_03",
+  "20261105_04",
+  "20261105_05",
+  "20261105_06",
+  "20261105_07",
+  "20261105_08",
+  "20261105_09",
+  "20261105_10",
+  "20261105_11",
+  "20261105_12",
+  "20261105_13",
+  "20261105_14",
+  "20261105_15",
+  "20261105_16",
+  "20261105_17",
+  "20261105_18",
+  "20261105_19",
+  "20261105_20",
+  "20261105_21",
+  "20261105_22",
+  "20261105_23",
+  "20261106_00",
+  "20261106_01",
+  "20261106_02",
+  "20261106_03",
+  "20261106_04",
+  "20261106_05",
+  "20261106_06",
+  "20261107_01",
+  "20261107_02",
+  "20261107_03",
+  "20261107_04",
+  "20261107_05",
+  "20261107_06",
+  "20261107_07",
+  "20261107_08",
+  "20261107_09",
+  "20261107_10",
+  "20261107_11",
+  "20261107_12",
+  "20261107_13",
+  "20261107_14",
+  "20261107_15",
+  "20261107_16",
+  "20261107_17",
+  "20261107_18",
+  "20261107_19",
+  "20261107_20",
+  "20261107_21",
+  "20261107_22",
+  "20261107_23",
+  "20261108_00",
+  "20261108_01",
+  "20261108_02",
+  "20261108_03",
+  "20261108_04",
+  "20261108_05",
+  "20261108_06",
+  "20261108_07",
+  "20261108_08",
+  "20261108_09",
+  "20261108_10",
+  "20261108_11",
+  "20261108_12",
+  "20261108_13",
+  "20261108_14",
+  "20261108_15",
+  "20261108_16",
+  "20261108_17",
+  "20261108_18",
+  "20261108_19",
+  "20261108_20",
+  "20261108_21",
+  "20261108_22",
+  "20261108_23",
+  "20261109_00",
+  "20261109_01",
+  "20261109_02",
+  "20261109_03",
+  "20261109_04",
+  "20261109_05",
+  "20261109_06",
+  "20261109_07",
+  "20261109_08",
+  "20261109_09",
+  "20261109_10",
+  "20261109_11",
+  "20261109_12",
+  "20261109_13",
+  "20261109_18",
+  "20261109_19",
+  "20261109_20",
+  "20261109_21",
+  "20261109_22",
+  "20261109_23",
+  "20261110_10",
+  "20261110_22",
+  "20261111_10",
+  "20261111_11",
+  "20261111_12",
+  "20261111_13"
+ ],
+ "frame": "ltp-nad83-2011-hwd",
+ "sampling": {
+  "records": 60667,
+  "http_codes": {
+   "200": 54537,
+   "429": 5806,
+   "None": 324
+  },
+  "ok_polls": 54537,
+  "span_s": [
+   1793814184.002,
+   1794405552.001
+  ],
+  "poll_gap_s_pct": {
+   "5": 1.0,
+   "25": 1.0,
+   "50": 1.5,
+   "75": 1.5,
+   "90": 43.5,
+   "95": 48.0,
+   "99": 49.01
+  },
+  "polls_per_burst": {
+   "1": 22,
+   "2": 1,
+   "5": 3,
+   "6": 8,
+   "7": 36,
+   "8": 132,
+   "9": 506,
+   "10": 4782,
+   "11": 12,
+   "12": 5,
+   "13": 4,
+   "14": 2,
+   "15": 2,
+   "16": 8,
+   "17": 5,
+   "18": 6,
+   "19": 3,
+   "20": 3,
+   "28": 1
+  },
+  "gaps_over_60s": 17,
+  "gaps_over_600s": 17,
+  "hours_ok_polls": null
+ },
+ "local_time": "PST = UTC-8 (whole recording after the 1 Nov 2026 DST end); tower 07:00-21:00 local (FAA NASR ATC_BASE)",
+ "calibration": {
+  "n": 808,
+  "n_geom": 797,
+  "gs_window_kt": [
+   20.0,
+   50.0
+  ],
+  "GEOM_OFF": -108.08793657146512,
+  "geom_iqr": [
+   -112.00382328378393,
+   -94.19922466668018
+  ],
+  "baro_global": -148.56185264633592,
+  "baro_iqr": [
+   -210.54545462627362,
+   -135.34620211133287
+  ],
+  "per_ac_n": 22,
+  "per_ac_minus_global_ft_pct": {
+   "5": -7.7,
+   "25": -5.7,
+   "50": -0.7,
+   "75": 0.6,
+   "95": 14.2
+  },
+  "what": "h = alt_geom - GEOM_OFF - NASR runway surface (ft); baro fallback with a +-3 h running median offset"
+ },
+ "rules": {
+  "H_CONTACT": 30.0,
+  "H_CONTACT_COARSE": 80.0,
+  "H_LOW": 400.0,
+  "H_BREAK": 150.0,
+  "H_PASS": 300.0,
+  "EP_GAP": 100.0,
+  "CTX_GAP": 150.0,
+  "STOP_GS": 15.0,
+  "STOP_HOLE_GS": 25.0,
+  "LIFT_GS": 40.0,
+  "EXIT_GS": 30.0,
+  "HID_GAP": 100.0,
+  "HID_NEAR": 150.0,
+  "HID_H": 800.0,
+  "PASS_ISO": 60.0,
+  "SLOW_RATIO": 0.9,
+  "PASS_MIN_N": 3,
+  "DECEL_RATIO": 0.85,
+  "PASS_GS": 35.0,
+  "HOLE_S": 8.0,
+  "HELI_H": 150.0,
+  "HELI_GS": 40.0,
+  "HELI_R": 2000.0,
+  "HOVER_MIN_M": 30.0,
+  "STRIP_M": 12.0,
+  "CORR_M": 75.0,
+  "CORR_BEFORE": 2000.0,
+  "CORR_AFTER": 1000.0,
+  "ALIGN_DEG": 30.0,
+  "R_FIELD": 6000.0,
+  "GK_H": 30.0,
+  "GK_GS": 35.0
+ },
+ "rules_text": "(every threshold is a named constant below; the output repeats them)\n-------------------------------------------------------------------------------------\nPer aircraft, fixes within R_FIELD of the ARP get a state:\n  R  runway contact: on a runway strip, (ground flag or h <= H_CONTACT ft), and track within ALIGN_DEG of the runway axis\n     (or gs < 5 kt / no track). Many GA ADS-B units have no weight-on-wheels input and report 'airborne' while rolling\n     above some speed (observed: a C172 flagged airborne at 60 kt on the take-off roll and ground below ~30 kt on landing),\n     so the ground flag alone cannot see touch-and-goes - h does.\n  L  low on a runway corridor: airborne, |across| <= CORR_M, along in [-CORR_BEFORE, L + CORR_AFTER], h <= H_LOW, aligned.\n  G  ground flag and not R (taxiing, parked, crossing a runway).\n  A  any other airborne fix.\nRunway episode = R fixes of one runway with gaps <= EP_GAP s and no G fix or A fix above H_BREAK ft in between.\nContext of an episode (ctx): scanning away from it, skipping R fixes and airborne fixes at h <= H_BREAK ft (flare,\ninitial climb), the first G fix -> 'ground', the first airborne fix above H_BREAK -> 'air', within CTX_GAP s; only low\nairborne fixes -> 'air' before the episode, 'air' after it if they climb >= 25 ft, else 'none'.\nGround = the ground flag, or 'ground by kinematics' (derive.py: airborne flag with h <= GK_H ft and gs < GK_GS kt).\n  air  -> R -> air     touch_and_go; stop_and_go when the observed minimum gs < STOP_GS (obs) or the mean speed across\n                        a polling hole inside the episode < STOP_HOLE_GS (inf: the stop itself was not observed).\n                        touch_and_go is 'obs' with contact evidence (ground flag, ground by kinematics, >= 2 R fixes,\n                        or min gs < DECEL_RATIO x the approach gs), 'inf' on a single R fix without it\n  air  -> R -> ground  full_stop_landing (obs)\n  ground -> R -> air   takeoff (obs)\n  none -> R -> air     takeoff (inf: taxi-out unobserved)\n  ground -> R -> none  takeoff (inf) when the last gs >= LIFT_GS, else runway_ground_move\n  air  -> R -> none    full_stop_landing (inf) when the last gs < EXIT_GS, else landing_unresolved\n  none -> R -> ground  full_stop_landing (inf) when the first gs >= LIFT_GS, else runway_ground_move\n  ground -> R -> ground runway_ground_move (back-taxi, crossing at an angle within ALIGN_DEG, aborted take-off)\n  none -> R -> none    unresolved\nHidden transitions (no R fix observed; the roll fell into a polling hole):\n  G -> L/A within HID_GAP s, the G fix within HID_NEAR m of a runway axis, the air fix h <= HID_H ft and gs >= PASS_GS\n  kt, no runway episode within CTX_GAP s: takeoff (inf); L/A -> G likewise: full_stop_landing (inf)\n100-ft altitude transponders (derive.alt_quantum): R uses h <= H_CONTACT_COARSE, and a touch_and_go needs a ground flag,\nground by kinematics or the deceleration to be 'obs'.\nLow passes: runs of L fixes (one runway, gaps <= EP_GAP s) with no R episode within PASS_ISO s and no hidden transition,\nat least PASS_MIN_N fixes, minimum h <= H_PASS ft at gs >= PASS_GS kt, followed by a climb (a later fix >= 50 ft above\nthe minimum, or the next fix is A):\n  low_approach_go_around (obs) when the aircraft is seen descending into its lowest point and climbing out of it within\n  one polling burst (an earlier fix of that burst >= 25 ft higher and a later one >= 50 ft higher; h = 3-point median);\n  otherwise the lowest point may lie in the polling hole before / after that burst:\n  touch_and_go (inf) when the mean speed across that hole is < SLOW_RATIO x the slower of the speeds on either side (a\n  straight pass averages at least the slower end speed: it slowed down where it could have touched) and the lowest\n  observed h <= 100 ft;\n  low_pass_unresolved otherwise (T&G or low approach cannot be told apart).\nRunway end: from the direction of motion (circular mean track of the moving fixes; hwd_frame.rwy_axis headings 119.9 /\n299.9 deg true). Event time: the first R fix (takeoff: the last), or the lowest L fix.\n\nHelicopters (ICAO type in common.HELI_TYPES or emitter category A7): states G (ground flag), H (airborne, h <= HELI_H ft,\ngs <= HELI_GS kt, within HELI_R m), A. lift_off = G -> H/A, touch_down = H/A -> G (gaps <= HID_GAP s), placed by the G\nfix (OSM helipad / apron / runway / taxiway ... derive.Places); hover_taxi = runs of H fixes (gaps <= EP_GAP s) moving\n>= HOVER_MIN_M; low_transit = a visit (fixes <= HELI_R m, separated by > 30 min from other visits) with H/A fixes below\nHELI_H but no G fix.\n\nAfter tower hours: event time outside 07:00-21:00 local (NASR ATC_BASE; PST = UTC-8 for the whole recording).",
+ "counts": {
+  "full_stop_landing": {
+   "total": 341,
+   "by_src": {
+    "obs": 279,
+    "inf": 62
+   },
+   "by_runway_end": {
+    "10R": 1,
+    "28L": 173,
+    "28R": 167
+   },
+   "tower_closed": 15,
+   "tower_closed_by_runway_end": {
+    "28L": 15
+   },
+   "by_class": {
+    "piston_single": 255,
+    "light_other": 26,
+    "jet": 26,
+    "turboprop": 16,
+    "unknown": 16,
+    "piston_twin": 2
+   },
+   "by_local_hour": [
+    2,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    10,
+    19,
+    24,
+    26,
+    26,
+    35,
+    36,
+    38,
+    29,
+    33,
+    24,
+    16,
+    8,
+    11,
+    1,
+    0
+   ],
+   "aircraft": 132,
+   "via": {
+    "runway_episode": 284,
+    "hidden_transition": 57
+   }
+  },
+  "hover_taxi": {
+   "total": 64,
+   "by_src": {
+    "obs": 64
+   },
+   "by_runway_end": null,
+   "tower_closed": 0,
+   "tower_closed_by_runway_end": {},
+   "by_class": {
+    "helicopter": 64
+   },
+   "by_local_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    10,
+    18,
+    7,
+    9,
+    4,
+    9,
+    4,
+    3,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "aircraft": 10,
+   "via": {
+    "heli": 64
+   },
+   "by_place": {
+    "taxiway": 30,
+    "off_osm_pavement": 17,
+    "apron": 10,
+    "runway": 5,
+    "helipad": 1,
+    "taxilane": 1
+   }
+  },
+  "landing_unresolved": {
+   "total": 10,
+   "by_src": {
+    "obs": 10
+   },
+   "by_runway_end": {
+    "28L": 10
+   },
+   "tower_closed": 1,
+   "tower_closed_by_runway_end": {
+    "28L": 1
+   },
+   "by_class": {
+    "unknown": 4,
+    "light_other": 3,
+    "piston_single": 2,
+    "jet": 1
+   },
+   "by_local_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    1,
+    2,
+    1,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0
+   ],
+   "aircraft": 9,
+   "via": {
+    "runway_episode": 10
+   }
+  },
+  "lift_off": {
+   "total": 81,
+   "by_src": {
+    "inf": 65,
+    "obs": 16
+   },
+   "by_runway_end": null,
+   "tower_closed": 0,
+   "tower_closed_by_runway_end": {},
+   "by_class": {
+    "helicopter": 81
+   },
+   "by_local_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    13,
+    17,
+    9,
+    12,
+    10,
+    13,
+    3,
+    3,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "aircraft": 15,
+   "via": {
+    "heli": 81
+   },
+   "by_place": {
+    "off_osm_pavement": 26,
+    "taxiway": 20,
+    "apron": 18,
+    "runway": 17
+   },
+   "by_place_detail": {
+    "apron apron 1366756209": 12,
+    "apron apron 289829587": 5,
+    "apron Helicopter Ramp": 1
+   },
+   "by_helipad_osm_id": {}
+  },
+  "low_approach_go_around": {
+   "total": 2,
+   "by_src": {
+    "obs": 2
+   },
+   "by_runway_end": {
+    "28L": 2
+   },
+   "tower_closed": 0,
+   "tower_closed_by_runway_end": {},
+   "by_class": {
+    "piston_single": 2
+   },
+   "by_local_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "aircraft": 2,
+   "via": {
+    "low_pass": 2
+   }
+  },
+  "low_pass_unresolved": {
+   "total": 142,
+   "by_src": {
+    "inf": 142
+   },
+   "by_runway_end": {
+    "28L": 113,
+    "28R": 29
+   },
+   "tower_closed": 0,
+   "tower_closed_by_runway_end": {},
+   "by_class": {
+    "piston_single": 124,
+    "light_other": 10,
+    "unknown": 7,
+    "turboprop": 1
+   },
+   "by_local_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    10,
+    14,
+    9,
+    27,
+    13,
+    18,
+    16,
+    13,
+    8,
+    6,
+    3,
+    0,
+    0,
+    0,
+    0
+   ],
+   "aircraft": 48,
+   "via": {
+    "low_pass": 142
+   }
+  },
+  "low_transit": {
+   "total": 9,
+   "by_src": {
+    "obs": 9
+   },
+   "by_runway_end": null,
+   "tower_closed": 0,
+   "tower_closed_by_runway_end": {},
+   "by_class": {
+    "helicopter": 9
+   },
+   "by_local_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    2,
+    2,
+    1,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "aircraft": 3,
+   "via": {
+    "heli": 9
+   }
+  },
+  "runway_ground_move": {
+   "total": 22,
+   "by_src": {
+    "obs": 22
+   },
+   "by_runway_end": {
+    "10L": 1,
+    "10R": 2,
+    "28L": 7,
+    "28R": 12
+   },
+   "tower_closed": 1,
+   "tower_closed_by_runway_end": {
+    "28L": 1
+   },
+   "by_class": {
+    "piston_single": 18,
+    "jet": 3,
+    "unknown": 1
+   },
+   "by_local_hour": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    1,
+    1,
+    3,
+    2,
+    5,
+    2,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "aircraft": 15,
+   "via": {
+    "runway_episode": 22
+   }
+  },
+  "stop_and_go": {
+   "total": 7,
+   "by_src": {
+    "obs": 7
+   },
+   "by_runway_end": {
+    "28L": 7
+   },
+   "tower_closed": 0,
+   "tower_closed_by_runway_end": {},
+   "by_class": {
+    "piston_single": 7
+   },
+   "by_local_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3,
+    2,
+    0,
+    0,
+    0
+   ],
+   "aircraft": 3,
+   "via": {
+    "runway_episode": 7
+   }
+  },
+  "takeoff": {
+   "total": 318,
+   "by_src": {
+    "obs": 212,
+    "inf": 106
+   },
+   "by_runway_end": {
+    "10L": 6,
+    "10R": 5,
+    "28L": 159,
+    "28R": 148
+   },
+   "tower_closed": 10,
+   "tower_closed_by_runway_end": {
+    "28L": 10
+   },
+   "by_class": {
+    "piston_single": 233,
+    "jet": 25,
+    "light_other": 21,
+    "unknown": 19,
+    "turboprop": 14,
+    "piston_twin": 6
+   },
+   "by_local_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    6,
+    19,
+    25,
+    22,
+    30,
+    35,
+    28,
+    31,
+    33,
+    21,
+    15,
+    22,
+    14,
+    7,
+    8,
+    0,
+    2
+   ],
+   "aircraft": 132,
+   "via": {
+    "runway_episode": 227,
+    "hidden_transition": 91
+   }
+  },
+  "touch_and_go": {
+   "total": 390,
+   "by_src": {
+    "obs": 299,
+    "inf": 91
+   },
+   "by_runway_end": {
+    "28L": 340,
+    "28R": 50
+   },
+   "tower_closed": 0,
+   "tower_closed_by_runway_end": {},
+   "by_class": {
+    "piston_single": 339,
+    "light_other": 34,
+    "unknown": 17
+   },
+   "by_local_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    5,
+    29,
+    25,
+    37,
+    64,
+    35,
+    59,
+    35,
+    31,
+    33,
+    15,
+    18,
+    4,
+    0,
+    0,
+    0
+   ],
+   "aircraft": 52,
+   "via": {
+    "runway_episode": 357,
+    "low_pass": 33
+   }
+  },
+  "touch_down": {
+   "total": 79,
+   "by_src": {
+    "inf": 65,
+    "obs": 14
+   },
+   "by_runway_end": null,
+   "tower_closed": 0,
+   "tower_closed_by_runway_end": {},
+   "by_class": {
+    "helicopter": 79
+   },
+   "by_local_hour": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    9,
+    24,
+    4,
+    13,
+    8,
+    11,
+    4,
+    4,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0
+   ],
+   "aircraft": 9,
+   "via": {
+    "heli": 79
+   },
+   "by_place": {
+    "off_osm_pavement": 30,
+    "runway": 20,
+    "apron": 14,
+    "taxiway": 14,
+    "helipad": 1
+   },
+   "by_place_detail": {
+    "apron apron 1366756209": 11,
+    "apron apron 289829587": 3,
+    "helipad 1366756199": 1
+   },
+   "by_helipad_osm_id": {
+    "1366756199": 1
+   }
+  }
+ },
+ "rule_stats": {
+  "touch_and_go": {
+   "gs_min_kt": {
+    "edges": [
+     0,
+     1,
+     5,
+     10,
+     15,
+     20,
+     25,
+     30,
+     35,
+     40,
+     45,
+     50,
+     60,
+     80,
+     200
+    ],
+    "counts": [
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     6,
+     24,
+     54,
+     67,
+     66,
+     67,
+     70,
+     1
+    ],
+    "n": 357,
+    "median": 47.0
+   },
+   "gs_last_kt": {
+    "edges": [
+     0,
+     5,
+     10,
+     20,
+     30,
+     40,
+     50,
+     60,
+     80,
+     200
+    ],
+    "counts": [
+     0,
+     0,
+     0,
+     4,
+     29,
+     75,
+     84,
+     163,
+     2
+    ],
+    "n": 357,
+    "median": 58.7
+   },
+   "episode_s": {
+    "edges": [
+     0,
+     1,
+     5,
+     10,
+     20,
+     30,
+     60,
+     120,
+     300,
+     900,
+     3600
+    ],
+    "counts": [
+     17,
+     70,
+     86,
+     181,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "n": 357,
+    "median": 10.1
+   }
+  },
+  "stop_and_go": {
+   "gs_min_kt": {
+    "edges": [
+     0,
+     1,
+     5,
+     10,
+     15,
+     20,
+     25,
+     30,
+     35,
+     40,
+     45,
+     50,
+     60,
+     80,
+     200
+    ],
+    "counts": [
+     3,
+     1,
+     1,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "n": 7,
+    "median": 2.2
+   },
+   "gs_last_kt": {
+    "edges": [
+     0,
+     5,
+     10,
+     20,
+     30,
+     40,
+     50,
+     60,
+     80,
+     200
+    ],
+    "counts": [
+     1,
+     0,
+     1,
+     0,
+     1,
+     2,
+     1,
+     1,
+     0
+    ],
+    "n": 7,
+    "median": 43.4
+   },
+   "episode_s": {
+    "edges": [
+     0,
+     1,
+     5,
+     10,
+     20,
+     30,
+     60,
+     120,
+     300,
+     900,
+     3600
+    ],
+    "counts": [
+     0,
+     0,
+     1,
+     4,
+     0,
+     0,
+     0,
+     2,
+     0,
+     0
+    ],
+    "n": 7,
+    "median": 12.4
+   }
+  },
+  "full_stop_landing": {
+   "gs_min_kt": {
+    "edges": [
+     0,
+     1,
+     5,
+     10,
+     15,
+     20,
+     25,
+     30,
+     35,
+     40,
+     45,
+     50,
+     60,
+     80,
+     200
+    ],
+    "counts": [
+     0,
+     5,
+     17,
+     38,
+     42,
+     26,
+     27,
+     29,
+     16,
+     18,
+     16,
+     31,
+     13,
+     6
+    ],
+    "n": 284,
+    "median": 27.5
+   },
+   "gs_last_kt": {
+    "edges": [
+     0,
+     5,
+     10,
+     20,
+     30,
+     40,
+     50,
+     60,
+     80,
+     200
+    ],
+    "counts": [
+     5,
+     17,
+     78,
+     54,
+     46,
+     34,
+     30,
+     14,
+     6
+    ],
+    "n": 284,
+    "median": 27.5
+   },
+   "episode_s": {
+    "edges": [
+     0,
+     1,
+     5,
+     10,
+     20,
+     30,
+     60,
+     120,
+     300,
+     900,
+     3600
+    ],
+    "counts": [
+     21,
+     40,
+     52,
+     153,
+     2,
+     7,
+     9,
+     0,
+     0,
+     0
+    ],
+    "n": 284,
+    "median": 11.0
+   }
+  },
+  "takeoff": {
+   "gs_min_kt": {
+    "edges": [
+     0,
+     1,
+     5,
+     10,
+     15,
+     20,
+     25,
+     30,
+     35,
+     40,
+     45,
+     50,
+     60,
+     80,
+     200
+    ],
+    "counts": [
+     22,
+     22,
+     53,
+     24,
+     11,
+     6,
+     4,
+     11,
+     8,
+     3,
+     7,
+     16,
+     29,
+     11
+    ],
+    "n": 227,
+    "median": 12.8
+   },
+   "gs_last_kt": {
+    "edges": [
+     0,
+     5,
+     10,
+     20,
+     30,
+     40,
+     50,
+     60,
+     80,
+     200
+    ],
+    "counts": [
+     20,
+     16,
+     19,
+     19,
+     18,
+     15,
+     31,
+     61,
+     28
+    ],
+    "n": 227,
+    "median": 52.0
+   },
+   "episode_s": {
+    "edges": [
+     0,
+     1,
+     5,
+     10,
+     20,
+     30,
+     60,
+     120,
+     300,
+     900,
+     3600
+    ],
+    "counts": [
+     14,
+     46,
+     49,
+     113,
+     0,
+     2,
+     3,
+     0,
+     0,
+     0
+    ],
+    "n": 227,
+    "median": 10.2
+   }
+  },
+  "low_pass": {
+   "h_min_ft": {
+    "edges": [
+     -100,
+     0,
+     25,
+     50,
+     75,
+     100,
+     150,
+     200,
+     250,
+     300
+    ],
+    "counts": [
+     0,
+     2,
+     45,
+     27,
+     36,
+     46,
+     7,
+     6,
+     8
+    ],
+    "n": 177,
+    "median": 84.2
+   },
+   "al_thr_m": {
+    "edges": [
+     -2000,
+     -1000,
+     -500,
+     -250,
+     0,
+     250,
+     500,
+     1000,
+     1500,
+     2000,
+     3000
+    ],
+    "counts": [
+     1,
+     14,
+     43,
+     27,
+     7,
+     6,
+     66,
+     13,
+     0,
+     0
+    ],
+    "n": 177,
+    "median": 29.3
+   },
+   "slow_ratio": {
+    "edges": [
+     0,
+     0.4,
+     0.6,
+     0.7,
+     0.8,
+     0.9,
+     1.0,
+     1.2,
+     2.0
+    ],
+    "counts": [
+     0,
+     2,
+     1,
+     2,
+     39,
+     73,
+     41,
+     2
+    ],
+    "n": 163,
+    "median": 1.0
+   }
+  },
+  "hidden_transition": {
+   "h_air_ft": {
+    "edges": [
+     -100,
+     0,
+     50,
+     100,
+     200,
+     300,
+     400,
+     600,
+     800
+    ],
+    "counts": [
+     1,
+     15,
+     34,
+     47,
+     26,
+     17,
+     6,
+     1
+    ],
+    "n": 148,
+    "median": 145.2
+   }
+  },
+  "hover_taxi": {
+   "dur_s": {
+    "edges": [
+     0,
+     5,
+     10,
+     20,
+     40,
+     60,
+     120,
+     300,
+     900
+    ],
+    "counts": [
+     10,
+     16,
+     23,
+     0,
+     1,
+     2,
+     11,
+     1
+    ],
+    "n": 64,
+    "median": 11.5
+   },
+   "gs_med_kt": {
+    "edges": [
+     0,
+     2,
+     5,
+     10,
+     15,
+     20,
+     30,
+     40
+    ],
+    "counts": [
+     10,
+     1,
+     5,
+     8,
+     7,
+     20,
+     13
+    ],
+    "n": 64,
+    "median": 20.8
+   },
+   "path_m": {
+    "edges": [
+     0,
+     30,
+     60,
+     100,
+     200,
+     400,
+     800,
+     2000
+    ],
+    "counts": [
+     0,
+     13,
+     16,
+     24,
+     7,
+     4,
+     0
+    ],
+    "n": 64,
+    "median": 105.3
+   }
+  }
+ },
+ "movements_by_local_day": {
+  "2026-11-04": {
+   "full_stop_landing": 67,
+   "takeoff": 68,
+   "touch_and_go": 69,
+   "stop_and_go": 3
+  },
+  "2026-11-05": {
+   "takeoff": 59,
+   "full_stop_landing": 66,
+   "touch_and_go": 57,
+   "stop_and_go": 2
+  },
+  "2026-11-06": {
+   "full_stop_landing": 21,
+   "takeoff": 19
+  },
+  "2026-11-07": {
+   "takeoff": 65,
+   "full_stop_landing": 72,
+   "touch_and_go": 105,
+   "low_approach_go_around": 2
+  },
+  "2026-11-08": {
+   "takeoff": 78,
+   "full_stop_landing": 89,
+   "touch_and_go": 125,
+   "stop_and_go": 2
+  },
+  "2026-11-09": {
+   "full_stop_landing": 25,
+   "takeoff": 27,
+   "touch_and_go": 33
+  },
+  "2026-11-10": {
+   "full_stop_landing": 1,
+   "touch_and_go": 1,
+   "takeoff": 2
+  }
+ },
+ "quality": {
+  "codes": {
+   "takeoff": "T",
+   "full_stop_landing": "L",
+   "touch_and_go": "G",
+   "stop_and_go": "S",
+   "low_approach_go_around": "P",
+   "low_pass_unresolved": "U",
+   "landing_unresolved": "l"
+  },
+  "consecutive_pairs_within_1h": {
+   "GG": 238,
+   "TL": 94,
+   "LT": 93,
+   "GU": 76,
+   "UG": 75,
+   "GL": 45,
+   "TG": 44,
+   "UU": 28,
+   "UL": 22,
+   "TU": 13,
+   "LL": 3,
+   "TT": 3,
+   "GS": 3,
+   "SG": 3,
+   "LU": 3,
+   "SS": 2,
+   "GP": 2,
+   "TS": 2,
+   "SL": 2,
+   "LG": 2,
+   "lU": 2,
+   "Gl": 1,
+   "lL": 1,
+   "ll": 1,
+   "Ul": 1
+  },
+  "note": "TT = two take-offs with no arrival event between (a missed landing), LL = two full-stop landings with no take-off between (a missed take-off); both should be ~0",
+  "circuit_interval_s": {
+   "edges": [
+    0,
+    60,
+    120,
+    180,
+    240,
+    300,
+    360,
+    420,
+    480,
+    600,
+    900,
+    1800
+   ],
+   "counts": [
+    0,
+    3,
+    61,
+    263,
+    202,
+    46,
+    15,
+    3,
+    3,
+    2,
+    8
+   ],
+   "n": 606,
+   "median": 239.5
+  },
+  "takeoffs_minus_full_stop_landings": -23
+ },
+ "helipads_osm": {
+  "289829579": [
+   295.9,
+   -82.6
+  ],
+  "289829580": [
+   286.4,
+   -88.2
+  ],
+  "289829581": [
+   305.7,
+   -77.4
+  ],
+  "1366756196": [
+   -214.0,
+   -388.3
+  ],
+  "1366756197": [
+   -191.6,
+   -375.4
+  ],
+  "1366756198": [
+   -187.1,
+   -435.8
+  ],
+  "1366756199": [
+   -164.4,
+   -423.0
+  ],
+  "1366756200": [
+   -138.4,
+   -468.1
+  ],
+  "1366756201": [
+   -167.4,
+   -456.1
+  ]
+ },
+ "aircraft_considered": 869
+}

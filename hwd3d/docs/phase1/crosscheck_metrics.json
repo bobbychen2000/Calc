@@ -1,0 +1,2397 @@
+{
+ "data_sha256": "b1262637373b5570301efc530d1858cd44f396382e5e77968ec01fe9637ec7a8",
+ "al5015_registration": {
+  "dpi": 400,
+  "bar_ends_px": {
+   "28L": [
+    1840.6,
+    548.8
+   ],
+   "10R": [
+    793.7,
+    2372.7
+   ],
+   "28R": [
+    1307.7,
+    1107.3
+   ],
+   "10L": [
+    734.8,
+    2101.1
+   ]
+  },
+  "bar_ends_px_in_khwd_osm_xcheck": {
+   "28L": [
+    1840.4,
+    549.2
+   ],
+   "10R": [
+    793.7,
+    2372.6
+   ],
+   "28R": [
+    1307.6,
+    1107.5
+   ],
+   "10L": [
+    734.8,
+    2101.2
+   ]
+  },
+  "bar_end_diff_vs_xcheck_px": {
+   "28L": 0.5,
+   "10R": 0.1,
+   "28R": 0.2,
+   "10L": 0.2
+  },
+  "similarity": {
+   "scale_m_per_px": 0.82538,
+   "rot_deg": 89.976,
+   "resid_m": {
+    "28L": 0.34,
+    "10R": 0.48,
+    "28R": 0.67,
+    "10L": 0.8
+   },
+   "resid_along_across_m": {
+    "10L": {
+     "along_m": -0.29,
+     "across_m": 0.74
+    },
+    "28R": {
+     "along_m": 0.39,
+     "across_m": -0.54
+    },
+    "10R": {
+     "along_m": 0.1,
+     "across_m": -0.47
+    },
+    "28L": {
+     "along_m": -0.21,
+     "across_m": 0.27
+    }
+   }
+  },
+  "affine": {
+   "resid_m": {
+    "28L": 0.4,
+    "10R": 0.39,
+    "28R": 0.73,
+    "10L": 0.72
+   },
+   "singular_values_m_per_px": [
+    0.82547,
+    0.82416
+   ]
+  },
+  "affine_in_khwd_osm_xcheck_resid_m": {
+   "28L": 0.4,
+   "10R": 0.4,
+   "28R": 0.7,
+   "10L": 0.7
+  },
+  "bars": [
+   {
+    "len_px": 2103.0,
+    "len_m": 1735.8,
+    "width_px": 52.9,
+    "width_m_drawn": 43.7
+   },
+   {
+    "len_px": 1147.0,
+    "len_m": 946.7,
+    "width_px": 27.2,
+    "width_m_drawn": 22.4
+   }
+  ],
+  "nasr": {
+   "10R/28L": {
+    "len_m": 1735.5,
+    "width_m": 45.72
+   },
+   "10L/28R": {
+    "len_m": 947.3,
+    "width_m": 22.86
+   }
+  }
+ },
+ "al5015_vs_data": {
+  "taxiway_to_diagram_pavement_m": {
+   "(no ref)": {
+    "n": 705,
+    "on_pavement_frac": 0.986,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 5.0,
+    "worst": [
+     [
+      4.952255524855804,
+      "osm:way/1366760493",
+      [
+       305.9,
+       -180.5
+      ]
+     ],
+     [
+      2.9759352040112383,
+      "osm:way/58169722",
+      [
+       779.5,
+       509.9
+      ]
+     ],
+     [
+      0.8253759208093007,
+      "osm:way/204798823",
+      [
+       348.2,
+       -2.1
+      ]
+     ]
+    ]
+   },
+   "A": {
+    "n": 298,
+    "on_pavement_frac": 0.966,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 2.5,
+    "worst": [
+     [
+      2.476127762427902,
+      "osm:way/490634608",
+      [
+       -341.1,
+       -398.1
+      ]
+     ],
+     [
+      2.3345156425293894,
+      "osm:way/204801043",
+      [
+       346.5,
+       -3.0
+      ]
+     ],
+     [
+      0.0,
+      "osm:way/204801037",
+      [
+       620.7,
+       391.0
+      ]
+     ]
+    ]
+   },
+   "A1": {
+    "n": 67,
+    "on_pavement_frac": 0.985,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 1.7,
+    "worst": [
+     [
+      1.6507518416186013,
+      "osm:way/490634600",
+      [
+       698.9,
+       358.2
+      ]
+     ]
+    ]
+   },
+   "B": {
+    "n": 40,
+    "on_pavement_frac": 0.95,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 0.8,
+    "worst": [
+     [
+      0.8253759208093007,
+      "osm:way/58169875",
+      [
+       349.3,
+       39.2
+      ]
+     ]
+    ]
+   },
+   "C": {
+    "n": 37,
+    "on_pavement_frac": 1.0,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 0.0,
+    "worst": [
+     [
+      0.0,
+      "osm:way/58169877",
+      [
+       103.2,
+       226.9
+      ]
+     ],
+     [
+      0.0,
+      "osm:way/204801028",
+      [
+       236.9,
+       6.3
+      ]
+     ],
+     [
+      0.0,
+      "osm:way/204801024",
+      [
+       174.7,
+       103.9
+      ]
+     ]
+    ]
+   },
+   "D": {
+    "n": 99,
+    "on_pavement_frac": 0.99,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 2.5,
+    "worst": [
+     [
+      2.476127762427902,
+      "osm:way/58170248",
+      [
+       -85.6,
+       -66.6
+      ]
+     ],
+     [
+      0.0,
+      "osm:way/204801026",
+      [
+       -88.8,
+       37.2
+      ]
+     ],
+     [
+      0.0,
+      "osm:way/204801016",
+      [
+       -46.5,
+       -165.8
+      ]
+     ]
+    ]
+   },
+   "E": {
+    "n": 81,
+    "on_pavement_frac": 0.975,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 2.5,
+    "worst": [
+     [
+      2.476127762427902,
+      "osm:way/490634605",
+      [
+       -136.1,
+       -406.4
+      ]
+     ],
+     [
+      1.6507518416186013,
+      "osm:way/204801035",
+      [
+       -264.0,
+       -187.5
+      ]
+     ],
+     [
+      0.0,
+      "osm:way/204801036",
+      [
+       -198.6,
+       -300.4
+      ]
+     ]
+    ]
+   },
+   "F": {
+    "n": 171,
+    "on_pavement_frac": 0.994,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 1.7,
+    "worst": [
+     [
+      1.6507518416186013,
+      "osm:way/490634607",
+      [
+       -647.5,
+       -411.7
+      ]
+     ],
+     [
+      0.0,
+      "osm:way/58170416",
+      [
+       -592.1,
+       -443.3
+      ]
+     ],
+     [
+      0.0,
+      "osm:way/490634609",
+      [
+       -43.3,
+       -708.3
+      ]
+     ]
+    ]
+   },
+   "Z": {
+    "n": 360,
+    "on_pavement_frac": 1.0,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 0.0,
+    "worst": [
+     [
+      0.0,
+      "osm:way/58170277",
+      [
+       -129.0,
+       107.5
+      ]
+     ],
+     [
+      0.0,
+      "osm:way/58169880",
+      [
+       575.4,
+       471.4
+      ]
+     ],
+     [
+      0.0,
+      "osm:way/490634596",
+      [
+       564.3,
+       491.7
+      ]
+     ]
+    ]
+   },
+   "Z1": {
+    "n": 72,
+    "on_pavement_frac": 1.0,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 0.0,
+    "worst": [
+     [
+      0.0,
+      "osm:way/58170922",
+      [
+       805.5,
+       524.9
+      ]
+     ]
+    ]
+   }
+  },
+  "diagram_pavement_not_in_data": [
+   {
+    "centre_world": [
+     -2.0,
+     472.0
+    ],
+    "centre_px": [
+     1784.0,
+     1514.0
+    ],
+    "area_m2": 25376.0
+   },
+   {
+    "centre_world": [
+     -67.0,
+     206.0
+    ],
+    "centre_px": [
+     1462.0,
+     1593.0
+    ],
+    "area_m2": 3096.0
+   },
+   {
+    "centre_world": [
+     175.0,
+     458.0
+    ],
+    "centre_px": [
+     1767.0,
+     1300.0
+    ],
+    "area_m2": 1675.0
+   },
+   {
+    "centre_world": [
+     -258.0,
+     101.0
+    ],
+    "centre_px": [
+     1335.0,
+     1824.0
+    ],
+    "area_m2": 449.0
+   }
+  ],
+  "osm_footprints_vs_diagram_blocks": [
+   {
+    "id": "osm:way/204795468",
+    "name": "Hangar N",
+    "kind": "t_hangar_row",
+    "area_m2": 1599.0,
+    "covered_by_diagram_block": 0.94,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204795470",
+    "name": "Hangar Q",
+    "kind": "t_hangar_row",
+    "area_m2": 1785.0,
+    "covered_by_diagram_block": 0.98,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204795471",
+    "name": "Hangar EX1",
+    "kind": "box_hangar",
+    "area_m2": 1968.0,
+    "covered_by_diagram_block": 0.97,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204795472",
+    "name": "Hangar O",
+    "kind": "t_hangar_row",
+    "area_m2": 1953.0,
+    "covered_by_diagram_block": 0.91,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204795473",
+    "name": "Hangar P",
+    "kind": "t_hangar_row",
+    "area_m2": 2034.0,
+    "covered_by_diagram_block": 0.89,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797798",
+    "name": null,
+    "kind": "box_hangar",
+    "area_m2": 3765.0,
+    "covered_by_diagram_block": 0.95,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797799",
+    "name": "Hangar H",
+    "kind": "t_hangar_row",
+    "area_m2": 1109.0,
+    "covered_by_diagram_block": 0.99,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797800",
+    "name": "Hangar B",
+    "kind": "t_hangar_row",
+    "area_m2": 1304.0,
+    "covered_by_diagram_block": 0.9,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797801",
+    "name": "Hangar I",
+    "kind": "t_hangar_row",
+    "area_m2": 1142.0,
+    "covered_by_diagram_block": 0.98,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797802",
+    "name": "Hangar F",
+    "kind": "t_hangar_row",
+    "area_m2": 1150.0,
+    "covered_by_diagram_block": 0.99,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797803",
+    "name": "Hangar J",
+    "kind": "t_hangar_row",
+    "area_m2": 1152.0,
+    "covered_by_diagram_block": 0.97,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797804",
+    "name": "Hangar EX2",
+    "kind": "box_hangar",
+    "area_m2": 2981.0,
+    "covered_by_diagram_block": 0.96,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797805",
+    "name": null,
+    "kind": "box_hangar",
+    "area_m2": 2268.0,
+    "covered_by_diagram_block": 0.97,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797806",
+    "name": "Hangar M",
+    "kind": "t_hangar_row",
+    "area_m2": 917.0,
+    "covered_by_diagram_block": 0.95,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797807",
+    "name": "Hangar E",
+    "kind": "t_hangar_row",
+    "area_m2": 1342.0,
+    "covered_by_diagram_block": 0.96,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797808",
+    "name": "Hangar L",
+    "kind": "t_hangar_row",
+    "area_m2": 1136.0,
+    "covered_by_diagram_block": 0.98,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797809",
+    "name": "Hangar C",
+    "kind": "t_hangar_row",
+    "area_m2": 1288.0,
+    "covered_by_diagram_block": 0.89,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797810",
+    "name": "Hangar A",
+    "kind": "t_hangar_row",
+    "area_m2": 955.0,
+    "covered_by_diagram_block": 0.91,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797811",
+    "name": "Hangar D",
+    "kind": "t_hangar_row",
+    "area_m2": 1288.0,
+    "covered_by_diagram_block": 0.91,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797812",
+    "name": "Hangar G",
+    "kind": "t_hangar_row",
+    "area_m2": 1197.0,
+    "covered_by_diagram_block": 0.94,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204797813",
+    "name": "Hangar K",
+    "kind": "t_hangar_row",
+    "area_m2": 1203.0,
+    "covered_by_diagram_block": 0.96,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204798810",
+    "name": null,
+    "kind": "box_hangar",
+    "area_m2": 471.0,
+    "covered_by_diagram_block": 0.93,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204798811",
+    "name": null,
+    "kind": "box_hangar",
+    "area_m2": 624.0,
+    "covered_by_diagram_block": 0.93,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204798813",
+    "name": "Savage Aviation",
+    "kind": "box_hangar",
+    "area_m2": 487.0,
+    "covered_by_diagram_block": 0.89,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204800994",
+    "name": "Absolute Aero",
+    "kind": "box_hangar",
+    "area_m2": 965.0,
+    "covered_by_diagram_block": 0.94,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204800996",
+    "name": "Bud Field Aviation",
+    "kind": "box_hangar",
+    "area_m2": 3256.0,
+    "covered_by_diagram_block": 0.95,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204800997",
+    "name": null,
+    "kind": "box_hangar",
+    "area_m2": 527.0,
+    "covered_by_diagram_block": 0.91,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204800998",
+    "name": null,
+    "kind": "box_hangar",
+    "area_m2": 505.0,
+    "covered_by_diagram_block": 0.9,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204801537",
+    "name": null,
+    "kind": "box_hangar",
+    "area_m2": 1834.0,
+    "covered_by_diagram_block": 0.92,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204801544",
+    "name": null,
+    "kind": "box_hangar",
+    "area_m2": 2830.0,
+    "covered_by_diagram_block": 0.96,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204801545",
+    "name": null,
+    "kind": "box_hangar",
+    "area_m2": 791.0,
+    "covered_by_diagram_block": 0.9,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/971132674",
+    "name": "APP Jet Center",
+    "kind": "box_hangar",
+    "area_m2": 1924.0,
+    "covered_by_diagram_block": 0.93,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/971132675",
+    "name": null,
+    "kind": "t_hangar_row",
+    "area_m2": 2474.0,
+    "covered_by_diagram_block": 0.94,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/971132676",
+    "name": "Signature Aviation",
+    "kind": "box_hangar",
+    "area_m2": 3593.0,
+    "covered_by_diagram_block": 0.99,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204803620",
+    "name": "Hayward ATCT",
+    "kind": "control_tower",
+    "area_m2": 265.0,
+    "covered_by_diagram_block": 0.0,
+    "centroid_to_block_m": 27.6
+   },
+   {
+    "id": "osm:way/204798809",
+    "name": null,
+    "kind": "building",
+    "area_m2": 114.0,
+    "covered_by_diagram_block": 0.0,
+    "centroid_to_block_m": 8.9
+   },
+   {
+    "id": "osm:way/204798812",
+    "name": null,
+    "kind": "building",
+    "area_m2": 71.0,
+    "covered_by_diagram_block": 0.0,
+    "centroid_to_block_m": 12.6
+   },
+   {
+    "id": "osm:way/204800995",
+    "name": null,
+    "kind": "building",
+    "area_m2": 395.0,
+    "covered_by_diagram_block": 0.78,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204801541",
+    "name": null,
+    "kind": "building",
+    "area_m2": 5481.0,
+    "covered_by_diagram_block": 0.88,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204802917",
+    "name": null,
+    "kind": "building",
+    "area_m2": 2600.0,
+    "covered_by_diagram_block": 0.92,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204802918",
+    "name": null,
+    "kind": "building",
+    "area_m2": 711.0,
+    "covered_by_diagram_block": 0.82,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204802919",
+    "name": null,
+    "kind": "building",
+    "area_m2": 4085.0,
+    "covered_by_diagram_block": 0.91,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/204803615",
+    "name": null,
+    "kind": "building",
+    "area_m2": 902.0,
+    "covered_by_diagram_block": 0.96,
+    "centroid_to_block_m": 0.0
+   },
+   {
+    "id": "osm:way/479071719",
+    "name": null,
+    "kind": "building",
+    "area_m2": 502.0,
+    "covered_by_diagram_block": 0.0,
+    "centroid_to_block_m": 25.8
+   },
+   {
+    "id": "osm:way/1185317159",
+    "name": null,
+    "kind": "building",
+    "area_m2": 93.0,
+    "covered_by_diagram_block": 0.0,
+    "centroid_to_block_m": 32.2
+   },
+   {
+    "id": "osm:way/1185317211",
+    "name": null,
+    "kind": "building",
+    "area_m2": 661.0,
+    "covered_by_diagram_block": 0.0,
+    "centroid_to_block_m": 171.7
+   },
+   {
+    "id": "osm:way/1185317212",
+    "name": null,
+    "kind": "building",
+    "area_m2": 106.0,
+    "covered_by_diagram_block": 0.0,
+    "centroid_to_block_m": 233.1
+   },
+   {
+    "id": "osm:way/1185317213",
+    "name": null,
+    "kind": "building",
+    "area_m2": 2585.0,
+    "covered_by_diagram_block": 0.0,
+    "centroid_to_block_m": 65.2
+   },
+   {
+    "id": "osm:way/1185317215",
+    "name": null,
+    "kind": "building",
+    "area_m2": 209.0,
+    "covered_by_diagram_block": 0.0,
+    "centroid_to_block_m": 16.7
+   },
+   {
+    "id": "osm:way/1372203791",
+    "name": "Terminal / Airport Administration",
+    "kind": "terminal_admin",
+    "area_m2": 522.0,
+    "covered_by_diagram_block": 0.95,
+    "centroid_to_block_m": 0.0
+   }
+  ],
+  "diagram_blocks": {
+   "n": 117,
+   "n_on_field_ge_100m2": 54,
+   "note": "black blocks of the diagram (opened 7x7, runway bars removed) within 150 m of our paved features and >= 100 m2 (the frame ticks and text are outside or smaller)",
+   "not_near_osm_15m": [
+    {
+     "centre_world": [
+      535.0,
+      439.0
+     ],
+     "area_m2": 269.0,
+     "dist_to_osm_footprint_m": 166.3
+    },
+    {
+     "centre_world": [
+      298.0,
+      584.0
+     ],
+     "area_m2": 1271.0,
+     "dist_to_osm_footprint_m": 36.8
+    },
+    {
+     "centre_world": [
+      270.0,
+      97.0
+     ],
+     "area_m2": 254.0,
+     "dist_to_osm_footprint_m": 204.9
+    },
+    {
+     "centre_world": [
+      257.0,
+      280.0
+     ],
+     "area_m2": 279.0,
+     "dist_to_osm_footprint_m": 146.1
+    },
+    {
+     "centre_world": [
+      -29.0,
+      -60.0
+     ],
+     "area_m2": 278.0,
+     "dist_to_osm_footprint_m": 237.2
+    },
+    {
+     "centre_world": [
+      -202.0,
+      312.0
+     ],
+     "area_m2": 3360.0,
+     "dist_to_osm_footprint_m": 217.3
+    },
+    {
+     "centre_world": [
+      -290.0,
+      125.0
+     ],
+     "area_m2": 2281.0,
+     "dist_to_osm_footprint_m": 419.4
+    },
+    {
+     "centre_world": [
+      -407.0,
+      -394.0
+     ],
+     "area_m2": 272.0,
+     "dist_to_osm_footprint_m": 93.0
+    },
+    {
+     "centre_world": [
+      -415.0,
+      -254.0
+     ],
+     "area_m2": 269.0,
+     "dist_to_osm_footprint_m": 194.5
+    }
+   ]
+  },
+  "twr_beacon_symbol": {
+   "px": [
+    714.7,
+    1458.8
+   ],
+   "world": [
+    43.3,
+    -411.0
+   ],
+   "dist_to_osm_tower_m": 0.0,
+   "dist_to_osm_tower_centroid_m": 4.9
+  },
+  "hotspots": {
+   "note": "the data hot spots are the same al5015.hotspots ring centres mapped by the 4-point affine; this compares the affine with the similarity fit (a transform consistency check, not an independent placement check)",
+   "rows": [
+    {
+     "hs": "HS 1",
+     "centre_px": [
+      863.3,
+      1762.3
+     ],
+     "centre_similarity": [
+      -207.2,
+      -288.3
+     ],
+     "centre_data": [
+      -207.2,
+      -288.0
+     ],
+     "data_minus_similarity_m": 0.3,
+     "axes_m_similarity": [
+      53.8,
+      67.1
+     ]
+    },
+    {
+     "hs": "HS 2",
+     "centre_px": [
+      1494.3,
+      787.7
+     ],
+     "centre_similarity": [
+      597.4,
+      232.2
+     ],
+     "centre_data": [
+      597.7,
+      232.5
+     ],
+     "data_minus_similarity_m": 0.4,
+     "axes_m_similarity": [
+      62.2,
+      119.7
+     ]
+    },
+    {
+     "hs": "HS 3",
+     "centre_px": [
+      661.7,
+      2017.3
+     ],
+     "centre_similarity": [
+      -417.8,
+      -454.6
+     ],
+     "centre_data": [
+      -417.7,
+      -454.3
+     ],
+     "data_minus_similarity_m": 0.3,
+     "axes_m_similarity": [
+      30.5,
+      110.2
+     ]
+    },
+    {
+     "hs": "HS 4",
+     "centre_px": [
+      1172.3,
+      1182.8
+     ],
+     "centre_similarity": [
+      271.2,
+      -33.4
+     ],
+     "centre_data": [
+      271.4,
+      -33.1
+     ],
+     "data_minus_similarity_m": 0.4,
+     "axes_m_similarity": [
+      56.2,
+      112.2
+     ]
+    },
+    {
+     "hs": "HS 5",
+     "centre_px": [
+      1892.9,
+      681.8
+     ],
+     "centre_similarity": [
+      685.0,
+      561.2
+     ],
+     "centre_data": [
+      685.3,
+      561.1
+     ],
+     "data_minus_similarity_m": 0.4,
+     "axes_m_similarity": [
+      46.4,
+      57.1
+     ]
+    },
+    {
+     "hs": "HS 5",
+     "centre_px": [
+      1698.6,
+      568.1
+     ],
+     "centre_similarity": [
+      778.7,
+      400.8
+     ],
+     "centre_data": [
+      779.0,
+      401.0
+     ],
+     "data_minus_similarity_m": 0.3,
+     "axes_m_similarity": [
+      39.8,
+      46.3
+     ]
+    }
+   ]
+  },
+  "hs5_hold_symbols": [
+   {
+    "symbol_centre_world": [
+     683.7,
+     558.5
+    ],
+    "symbol_cl_dist_ft": 296,
+    "nearest_hold": "osm:node/12658043064",
+    "hold_twy": "Z1",
+    "hold_cl_dist_ft": 299,
+    "dist_m": 18.1,
+    "symbol_minus_hold_along_rwy_m": 18.0,
+    "symbol_minus_hold_from_cl_m": -1.0
+   },
+   {
+    "symbol_centre_world": [
+     781.1,
+     403.6
+    ],
+    "symbol_cl_dist_ft": 304,
+    "nearest_hold": "osm:node/12658043065",
+    "hold_twy": "A1",
+    "hold_cl_dist_ft": 300,
+    "dist_m": 5.8,
+    "symbol_minus_hold_along_rwy_m": -5.7,
+    "symbol_minus_hold_from_cl_m": 1.2
+   }
+  ],
+  "al5015_label_anchors": [
+   {
+    "text": "GA TRANSIENT RAMP",
+    "data_anchor_vs_text_m": 0.6
+   },
+   {
+    "text": "FBO RAMP",
+    "data_anchor_vs_text_m": 0.8
+   },
+   {
+    "text": "FBO RAMP",
+    "data_anchor_vs_text_m": 0.6
+   },
+   {
+    "text": "FBO RAMP",
+    "data_anchor_vs_text_m": 0.4
+   },
+   {
+    "text": "28L RUN-UP",
+    "data_anchor_vs_text_m": 0.5
+   },
+   {
+    "text": "EAST HANGARS",
+    "data_anchor_vs_text_m": 0.4
+   },
+   {
+    "text": "TERMINAL/AIRPORT ADMINISTRATION",
+    "data_anchor_vs_text_m": 0.7
+   },
+   {
+    "text": "TWR",
+    "data_anchor_vs_text_m": 0.8
+   },
+   {
+    "text": "FIRE STATION",
+    "data_anchor_vs_text_m": 0.6
+   },
+   {
+    "text": "WEST HANGARS",
+    "data_anchor_vs_text_m": 0.8
+   }
+  ]
+ },
+ "naip_source": "refs/cache/local/naip/naip_2024_hwd_utm10n.tif",
+ "naip_vs_data": {
+  "taxiway_vs_pavement_centre": {
+   "note": "positive offset = pavement centre lies to the right of the way direction; widths are grey-test pavement widths (shoulders of the same grey are included)",
+   "n_ways": 12,
+   "per_way_median_abs_p50_p90_max": [
+    0.75,
+    3.38,
+    3.9
+   ],
+   "ways": [
+    {
+     "id": "osm:way/58170922",
+     "ref": "Z1",
+     "len_m": 355.7,
+     "n": 13,
+     "median_offset_m": -3.9,
+     "iqr_m": 7.35,
+     "median_width_m": 9.0,
+     "n_abs_gt_2m": 11,
+     "where_mid": [
+      696.0,
+      567.0
+     ]
+    },
+    {
+     "id": "osm:way/58170416",
+     "ref": "F",
+     "len_m": 120.7,
+     "n": 5,
+     "median_offset_m": 3.6,
+     "iqr_m": 9.15,
+     "median_width_m": 31.8,
+     "n_abs_gt_2m": 3,
+     "where_mid": [
+      -554.0,
+      -432.0
+     ]
+    },
+    {
+     "id": "osm:way/58170248",
+     "ref": "D",
+     "len_m": 150.8,
+     "n": 5,
+     "median_offset_m": -1.35,
+     "iqr_m": 0.9,
+     "median_width_m": 12.3,
+     "n_abs_gt_2m": 0,
+     "where_mid": [
+      -87.0,
+      -89.0
+     ]
+    },
+    {
+     "id": "osm:way/204801025",
+     "ref": null,
+     "len_m": 60.1,
+     "n": 6,
+     "median_offset_m": -1.27,
+     "iqr_m": 0.71,
+     "median_width_m": 11.9,
+     "n_abs_gt_2m": 1,
+     "where_mid": [
+      166.0,
+      -173.0
+     ]
+    },
+    {
+     "id": "osm:way/490634596",
+     "ref": "Z",
+     "len_m": 798.3,
+     "n": 29,
+     "median_offset_m": -1.2,
+     "iqr_m": 4.95,
+     "median_width_m": 9.3,
+     "n_abs_gt_2m": 13,
+     "where_mid": [
+      127.0,
+      241.0
+     ]
+    },
+    {
+     "id": "osm:way/204801024",
+     "ref": "C",
+     "len_m": 85.5,
+     "n": 6,
+     "median_offset_m": -0.9,
+     "iqr_m": 0.41,
+     "median_width_m": 12.0,
+     "n_abs_gt_2m": 0,
+     "where_mid": [
+      194.0,
+      73.0
+     ]
+    },
+    {
+     "id": "osm:way/204801043",
+     "ref": "A",
+     "len_m": 1078.1,
+     "n": 22,
+     "median_offset_m": -0.6,
+     "iqr_m": 5.1,
+     "median_width_m": 12.6,
+     "n_abs_gt_2m": 11,
+     "where_mid": [
+      462.0,
+      89.0
+     ]
+    },
+    {
+     "id": "osm:way/58170277",
+     "ref": "Z",
+     "len_m": 947.1,
+     "n": 119,
+     "median_offset_m": 0.3,
+     "iqr_m": 0.15,
+     "median_width_m": 15.0,
+     "n_abs_gt_2m": 11,
+     "where_mid": [
+      -509.0,
+      -89.0
+     ]
+    },
+    {
+     "id": "osm:way/204801027",
+     "ref": "E",
+     "len_m": 77.6,
+     "n": 5,
+     "median_offset_m": 0.15,
+     "iqr_m": 0.0,
+     "median_width_m": 15.3,
+     "n_abs_gt_2m": 0,
+     "where_mid": [
+      -346.0,
+      -44.0
+     ]
+    },
+    {
+     "id": "osm:way/490634608",
+     "ref": "A",
+     "len_m": 336.6,
+     "n": 7,
+     "median_offset_m": 0.15,
+     "iqr_m": 0.15,
+     "median_width_m": 21.0,
+     "n_abs_gt_2m": 0,
+     "where_mid": [
+      -253.0,
+      -348.0
+     ]
+    },
+    {
+     "id": "osm:way/204801035",
+     "ref": "E",
+     "len_m": 109.0,
+     "n": 6,
+     "median_offset_m": 0.0,
+     "iqr_m": 0.34,
+     "median_width_m": 18.3,
+     "n_abs_gt_2m": 0,
+     "where_mid": [
+      -268.0,
+      -181.0
+     ]
+    },
+    {
+     "id": "osm:way/490634600",
+     "ref": "A1",
+     "len_m": 334.1,
+     "n": 40,
+     "median_offset_m": 0.0,
+     "iqr_m": 0.3,
+     "median_width_m": 9.0,
+     "n_abs_gt_2m": 1,
+     "where_mid": [
+      775.0,
+      401.0
+     ]
+    }
+   ]
+  },
+  "footprint_vs_roof_edges": {
+   "note": "shift (dx east, dz south, m) of the OSM outline that maximises the mean NAIP gradient magnitude along it, searched +-8.1 m in 0.3 m steps; gain = that mean / the mean at zero shift; stable_offset = shift >= 2.0 m in 2024 and the 2022 shift within 1.0 m of it (an outline offset rather than roof lean: candidates for a manual correction or an OSM note; roof lean is not excluded)",
+   "search_m": 8.1,
+   "n": 50,
+   "n_at_search_edge": 1,
+   "shift_abs_p50_p90_max": [
+    0.9,
+    4.9,
+    10.4
+   ],
+   "n_over_2m": 8,
+   "median_shift_dx_dz": [
+    0.3,
+    -0.6
+   ],
+   "stable_offset": [
+    {
+     "id": "osm:way/204798813",
+     "name": "Savage Aviation",
+     "shift_m": [
+      1.8,
+      -0.9
+     ],
+     "shift_2022_m": [
+      2.7,
+      -1.2
+     ],
+     "gain": 1.39
+    },
+    {
+     "id": "osm:way/204800994",
+     "name": "Absolute Aero",
+     "shift_m": [
+      4.2,
+      -3.6
+     ],
+     "shift_2022_m": [
+      5.1,
+      -3.9
+     ],
+     "gain": 3.12
+    },
+    {
+     "id": "osm:way/204800996",
+     "name": "Bud Field Aviation",
+     "shift_m": [
+      3.0,
+      -0.9
+     ],
+     "shift_2022_m": [
+      3.0,
+      -0.6
+     ],
+     "gain": 3.78
+    }
+   ],
+   "items": [
+    {
+     "id": "osm:way/479071719",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      -6.9,
+      7.8
+     ],
+     "shift_abs_m": 10.4,
+     "gain": 2.35,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      -2.1,
+      0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 2.15,
+     "shift_diff_2024_2022_m": 8.7,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204798812",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      7.5,
+      -5.7
+     ],
+     "shift_abs_m": 9.4,
+     "gain": 7.87,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.2,
+      4.5
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 3.08,
+     "shift_diff_2024_2022_m": 12.0,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204803620",
+     "name": "Hayward ATCT",
+     "kind": "control_tower",
+     "shift_m": [
+      8.1,
+      3.3
+     ],
+     "shift_abs_m": 8.7,
+     "gain": 1.42,
+     "at_search_edge": true,
+     "shift_2022_m": [
+      -7.8,
+      -7.8
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.62,
+     "shift_diff_2024_2022_m": 19.4,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/1185317211",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      -7.2,
+      3.6
+     ],
+     "shift_abs_m": 8.0,
+     "gain": 1.22,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.9,
+      0.0
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.07,
+     "shift_diff_2024_2022_m": 8.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204800994",
+     "name": "Absolute Aero",
+     "kind": "box_hangar",
+     "shift_m": [
+      4.2,
+      -3.6
+     ],
+     "shift_abs_m": 5.5,
+     "gain": 3.12,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      5.1,
+      -3.9
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 5.01,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": true
+    },
+    {
+     "id": "osm:way/204798809",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      2.4,
+      -4.8
+     ],
+     "shift_abs_m": 5.4,
+     "gain": 4.69,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      -5.1,
+      -4.8
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 2.45,
+     "shift_diff_2024_2022_m": 7.5,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/1185317215",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      -1.8,
+      4.5
+     ],
+     "shift_abs_m": 4.8,
+     "gain": 1.75,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      0.0
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.43,
+     "shift_diff_2024_2022_m": 5.1,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204800996",
+     "name": "Bud Field Aviation",
+     "kind": "box_hangar",
+     "shift_m": [
+      3.0,
+      -0.9
+     ],
+     "shift_abs_m": 3.1,
+     "gain": 3.78,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      3.0,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 4.26,
+     "shift_diff_2024_2022_m": 0.3,
+     "stable_offset": true
+    },
+    {
+     "id": "osm:way/1185317212",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      -3.0,
+      0.0
+     ],
+     "shift_abs_m": 3.0,
+     "gain": 1.76,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.9,
+      0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.28,
+     "shift_diff_2024_2022_m": 3.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204798813",
+     "name": "Savage Aviation",
+     "kind": "box_hangar",
+     "shift_m": [
+      1.8,
+      -0.9
+     ],
+     "shift_abs_m": 2.0,
+     "gain": 1.39,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      2.7,
+      -1.2
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.26,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": true
+    },
+    {
+     "id": "osm:way/204800997",
+     "name": null,
+     "kind": "box_hangar",
+     "shift_m": [
+      1.8,
+      -0.6
+     ],
+     "shift_abs_m": 1.9,
+     "gain": 1.52,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      2.1,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.7,
+     "shift_diff_2024_2022_m": 0.3,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797809",
+     "name": "Hangar C",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      1.2,
+      -0.9
+     ],
+     "shift_abs_m": 1.5,
+     "gain": 1.9,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.5,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 6.89,
+     "shift_diff_2024_2022_m": 0.4,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204800998",
+     "name": null,
+     "kind": "box_hangar",
+     "shift_m": [
+      1.2,
+      -0.9
+     ],
+     "shift_abs_m": 1.5,
+     "gain": 1.69,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.2,
+      -0.9
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.64,
+     "shift_diff_2024_2022_m": 0.0,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204800995",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      -1.5,
+      -0.3
+     ],
+     "shift_abs_m": 1.5,
+     "gain": 2.38,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      -1.2,
+      -0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.84,
+     "shift_diff_2024_2022_m": 0.3,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797800",
+     "name": "Hangar B",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      0.9,
+      -0.9
+     ],
+     "shift_abs_m": 1.3,
+     "gain": 1.36,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.5,
+      -0.9
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 4.35,
+     "shift_diff_2024_2022_m": 0.6,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797811",
+     "name": "Hangar D",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      0.9,
+      -0.9
+     ],
+     "shift_abs_m": 1.3,
+     "gain": 1.6,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.2,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 4.53,
+     "shift_diff_2024_2022_m": 0.4,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/971132674",
+     "name": "APP Jet Center",
+     "kind": "box_hangar",
+     "shift_m": [
+      1.2,
+      -0.6
+     ],
+     "shift_abs_m": 1.3,
+     "gain": 1.09,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.3,
+      -0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.04,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204801541",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      0.9,
+      -0.9
+     ],
+     "shift_abs_m": 1.3,
+     "gain": 1.5,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.5,
+      -1.2
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.24,
+     "shift_diff_2024_2022_m": 0.7,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204801545",
+     "name": null,
+     "kind": "box_hangar",
+     "shift_m": [
+      -0.3,
+      -1.2
+     ],
+     "shift_abs_m": 1.2,
+     "gain": 2.54,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.0,
+      -0.9
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.57,
+     "shift_diff_2024_2022_m": 0.4,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797807",
+     "name": "Hangar E",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      0.9,
+      -0.6
+     ],
+     "shift_abs_m": 1.1,
+     "gain": 1.47,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.2,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 3.73,
+     "shift_diff_2024_2022_m": 0.3,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204802919",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      0.6,
+      -0.9
+     ],
+     "shift_abs_m": 1.1,
+     "gain": 1.4,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.2,
+      -0.9
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 2.03,
+     "shift_diff_2024_2022_m": 0.6,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204798810",
+     "name": null,
+     "kind": "box_hangar",
+     "shift_m": [
+      0.0,
+      -0.9
+     ],
+     "shift_abs_m": 0.9,
+     "gain": 1.79,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.3,
+      -0.9
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 2.64,
+     "shift_diff_2024_2022_m": 0.3,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204801544",
+     "name": null,
+     "kind": "box_hangar",
+     "shift_m": [
+      0.0,
+      -0.9
+     ],
+     "shift_abs_m": 0.9,
+     "gain": 1.49,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.3,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.09,
+     "shift_diff_2024_2022_m": 0.4,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/971132675",
+     "name": null,
+     "kind": "t_hangar_row",
+     "shift_m": [
+      0.9,
+      0.3
+     ],
+     "shift_abs_m": 0.9,
+     "gain": 3.44,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.5,
+      0.0
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 5.48,
+     "shift_diff_2024_2022_m": 0.7,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204802917",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      0.3,
+      -0.9
+     ],
+     "shift_abs_m": 0.9,
+     "gain": 1.61,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.2,
+      -0.9
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 3.07,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204802918",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      0.3,
+      -0.9
+     ],
+     "shift_abs_m": 0.9,
+     "gain": 1.76,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.9,
+      -1.5
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 2.8,
+     "shift_diff_2024_2022_m": 0.8,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204798811",
+     "name": null,
+     "kind": "box_hangar",
+     "shift_m": [
+      0.6,
+      -0.6
+     ],
+     "shift_abs_m": 0.8,
+     "gain": 1.73,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.2,
+      -0.9
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.48,
+     "shift_diff_2024_2022_m": 0.7,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204801537",
+     "name": null,
+     "kind": "box_hangar",
+     "shift_m": [
+      -0.6,
+      -0.6
+     ],
+     "shift_abs_m": 0.8,
+     "gain": 1.45,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.0,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.25,
+     "shift_diff_2024_2022_m": 0.6,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/1185317213",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      0.6,
+      0.6
+     ],
+     "shift_abs_m": 0.8,
+     "gain": 1.7,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.9,
+      0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.22,
+     "shift_diff_2024_2022_m": 0.4,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204795468",
+     "name": "Hangar N",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      -0.3,
+      -0.6
+     ],
+     "shift_abs_m": 0.7,
+     "gain": 1.02,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 2.42,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204795471",
+     "name": "Hangar EX1",
+     "kind": "box_hangar",
+     "shift_m": [
+      0.3,
+      -0.6
+     ],
+     "shift_abs_m": 0.7,
+     "gain": 1.37,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.2,
+      -0.9
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.94,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204795473",
+     "name": "Hangar P",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      0.3,
+      -0.6
+     ],
+     "shift_abs_m": 0.7,
+     "gain": 1.41,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      1.2,
+      -0.9
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.05,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797798",
+     "name": null,
+     "kind": "box_hangar",
+     "shift_m": [
+      -0.3,
+      -0.6
+     ],
+     "shift_abs_m": 0.7,
+     "gain": 1.44,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.3,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.28,
+     "shift_diff_2024_2022_m": 0.6,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797799",
+     "name": "Hangar H",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      -0.3,
+      -0.6
+     ],
+     "shift_abs_m": 0.7,
+     "gain": 1.11,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 2.16,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797804",
+     "name": "Hangar EX2",
+     "kind": "box_hangar",
+     "shift_m": [
+      0.3,
+      -0.6
+     ],
+     "shift_abs_m": 0.7,
+     "gain": 1.27,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.9,
+      -0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.58,
+     "shift_diff_2024_2022_m": 0.7,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797806",
+     "name": "Hangar M",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      -0.3,
+      -0.6
+     ],
+     "shift_abs_m": 0.7,
+     "gain": 1.11,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.3,
+      -0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.19,
+     "shift_diff_2024_2022_m": 0.7,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/971132676",
+     "name": "Signature Aviation",
+     "kind": "box_hangar",
+     "shift_m": [
+      0.3,
+      -0.6
+     ],
+     "shift_abs_m": 0.7,
+     "gain": 1.2,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.3,
+      0.0
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.11,
+     "shift_diff_2024_2022_m": 0.6,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204803615",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      -0.3,
+      -0.6
+     ],
+     "shift_abs_m": 0.7,
+     "gain": 1.27,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      -0.3,
+      -0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.12,
+     "shift_diff_2024_2022_m": 0.3,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797813",
+     "name": "Hangar K",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      0.0,
+      -0.6
+     ],
+     "shift_abs_m": 0.6,
+     "gain": 1.15,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      0.0
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.26,
+     "shift_diff_2024_2022_m": 0.8,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204795470",
+     "name": "Hangar Q",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      -0.3,
+      -0.3
+     ],
+     "shift_abs_m": 0.4,
+     "gain": 1.02,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.96,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797801",
+     "name": "Hangar I",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      -0.3,
+      -0.3
+     ],
+     "shift_abs_m": 0.4,
+     "gain": 1.07,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      -0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.55,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797803",
+     "name": "Hangar J",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      -0.3,
+      -0.3
+     ],
+     "shift_abs_m": 0.4,
+     "gain": 1.04,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      0.0
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.77,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797805",
+     "name": null,
+     "kind": "box_hangar",
+     "shift_m": [
+      0.3,
+      -0.3
+     ],
+     "shift_abs_m": 0.4,
+     "gain": 1.29,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.9,
+      -0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.5,
+     "shift_diff_2024_2022_m": 0.6,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/1185317159",
+     "name": null,
+     "kind": "building",
+     "shift_m": [
+      0.3,
+      0.3
+     ],
+     "shift_abs_m": 0.4,
+     "gain": 1.29,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      0.0
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.44,
+     "shift_diff_2024_2022_m": 0.4,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/1372203791",
+     "name": "Terminal / Airport Administration",
+     "kind": "terminal_admin",
+     "shift_m": [
+      -0.3,
+      0.3
+     ],
+     "shift_abs_m": 0.4,
+     "gain": 1.16,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.3,
+      0.0
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.04,
+     "shift_diff_2024_2022_m": 0.7,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204795472",
+     "name": "Hangar O",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      0.0,
+      -0.3
+     ],
+     "shift_abs_m": 0.3,
+     "gain": 1.03,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.9,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 2.12,
+     "shift_diff_2024_2022_m": 0.9,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797802",
+     "name": "Hangar F",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      0.0,
+      -0.3
+     ],
+     "shift_abs_m": 0.3,
+     "gain": 1.02,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      -0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.97,
+     "shift_diff_2024_2022_m": 0.6,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797808",
+     "name": "Hangar L",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      -0.3,
+      0.0
+     ],
+     "shift_abs_m": 0.3,
+     "gain": 1.14,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.3,
+      0.0
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.21,
+     "shift_diff_2024_2022_m": 0.6,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797812",
+     "name": "Hangar G",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      0.0,
+      -0.3
+     ],
+     "shift_abs_m": 0.3,
+     "gain": 1.07,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      -0.3
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.83,
+     "shift_diff_2024_2022_m": 0.6,
+     "stable_offset": false
+    },
+    {
+     "id": "osm:way/204797810",
+     "name": "Hangar A",
+     "kind": "t_hangar_row",
+     "shift_m": [
+      0.0,
+      0.0
+     ],
+     "shift_abs_m": 0.0,
+     "gain": 1.0,
+     "at_search_edge": false,
+     "shift_2022_m": [
+      0.6,
+      -0.6
+     ],
+     "at_search_edge_2022": false,
+     "gain_2022": 1.07,
+     "shift_diff_2024_2022_m": 0.8,
+     "stable_offset": false
+    }
+   ]
+  },
+  "displaced_threshold_bars": {
+   "10R": {
+    "nasr_thr_from_end_m": 251.65,
+    "bar_outboard_edge_minus_nasr_m": -0.7,
+    "bar_inboard_edge_minus_nasr_m": 2.6,
+    "bar_width_m": 3.3,
+    "contrast_dn": 50.8
+   },
+   "28L": {
+    "nasr_thr_from_end_m": 205.91,
+    "bar_outboard_edge_minus_nasr_m": 0.1,
+    "bar_inboard_edge_minus_nasr_m": 3.3,
+    "bar_width_m": 3.2,
+    "contrast_dn": 45.1
+   }
+  }
+ },
+ "licence": "ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/): numbers derived from data/hwd_airport.json (OpenStreetMap, (c) OpenStreetMap contributors; adsb.lol) and from public-domain FAA AL-5015 and USDA NAIP",
+ "made_by": "hwd3d/tools/plot_overlays.py --docs"
+}

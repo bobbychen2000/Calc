@@ -1,0 +1,23 @@
+{
+ "ga_types.json": {
+  "url": "https://www.faa.gov/airports/engineering/aircraft_char_database/aircraft_data (FAA Aircraft Characteristics Database .xlsx, 'Aircraft Characteristics Data, October 2024', modified 2025-01-03; the copy read is sfo3d/refs/cache/faa/faa_aircraft_char_database.xlsx, fetched 2026-11-04, sha256 3e68848b6bb99f9700e25d33c080b993a80dc962d581a391f89aee94b6c8fcb3)",
+  "licence": "Mixed: dimensions from the FAA ACD (US Government work, 17 U.S.C. 105, public domain); on-field type counts derived from adsb.lol data - contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); the file is therefore offered under the ODbL 1.0 and carries the notice in _meta.licence / _meta.attribution",
+  "fetched": "2026-11-04 (by sfo3d)",
+  "made_by": "hwd3d/tools/types/build_ga_types.py (task G3d, 2026-11-12)",
+  "note": "wingspan (without / with winglets), length, tail height at OEW and MTOW per ICAO type designator seen on the HWD field, each with its ACD sheet row; types without an ACD row are null (not guessed). Type designators and aircraft counts only (default D1)."
+ },
+ "hwd_airport.json": {
+  "url": null,
+  "licence": "ODbL 1.0 - Derivative Database of OpenStreetMap ((c) OpenStreetMap contributors, https://www.openstreetmap.org/copyright) and of adsb.lol data ('Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL'), offered under the Open Database License 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); FAA (NASR, Chart Supplement, AL-5015, ACs) and USDA NAIP 2024 / 2022 inputs are U.S. public domain (NAIP credit requested: USDA FPAC-BC Geospatial Enterprise Operations). See docs/ATTRIBUTION.md",
+  "fetched": "built 2026-11-12 from committed inputs only (no network)",
+  "made_by": "hwd3d/tools/build_airport.py (task G5) from refs/cache/faa/nasr_2026-10-29_HWD.json, refs/cache/faa/chart_supplement_HWD.json, refs/cache/faa/05015ad_2611.pdf, refs/cache/osm/khwd_features.json + khwd_osm_xcheck.json (OSM state 2026-11-12T00:00:00Z), refs/cache/naip/naip_2024_hwd_rgb.jpg + naip_2022_hwd_rgb.jpg + naip_blob_review.json (by-eye verdicts), refs/cache/adsb/hwd_parked_stays.json, refs/cache/faa/ac150_5300_13b_chg1_p136_181_284-288.pdf (quoted values), data/ga_types.json; checked by hwd3d/tools/check_airport.py",
+  "note": "Runways (NASR), taxiways / taxilanes / aprons / holding positions / helipads / hangars / buildings (OSM; holds measured on NAIP), hot spots (AL-5015, inferred), parking spots (NAIP tie-down tees and parked aircraft, adsb.lol parked stays and signal starts/ends, OSM helipads, inferred hangar aprons). Every element carries src obs/inf, refs and evidence. No per-aircraft identity (default D1): ADS-B content is spot positions, type designators and counts. Rebuilt 2026-11-12 with the Phase 1 review fixes (docs/phase1_data_report.md section 6)."
+ },
+ "hwd_airport.js": {
+  "url": null,
+  "licence": "ODbL 1.0 - Derivative Database of OpenStreetMap ((c) OpenStreetMap contributors, https://www.openstreetmap.org/copyright) and of adsb.lol data ('Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL'), offered under the Open Database License 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); FAA (NASR, Chart Supplement, AL-5015, ACs) and USDA NAIP 2024 / 2022 inputs are U.S. public domain (NAIP credit requested: USDA FPAC-BC Geospatial Enterprise Operations). See docs/ATTRIBUTION.md",
+  "fetched": "built 2026-11-12 from committed inputs only (no network)",
+  "made_by": "hwd3d/tools/build_airport.py (task G5) from refs/cache/faa/nasr_2026-10-29_HWD.json, refs/cache/faa/chart_supplement_HWD.json, refs/cache/faa/05015ad_2611.pdf, refs/cache/osm/khwd_features.json + khwd_osm_xcheck.json (OSM state 2026-11-12T00:00:00Z), refs/cache/naip/naip_2024_hwd_rgb.jpg + naip_2022_hwd_rgb.jpg + naip_blob_review.json (by-eye verdicts), refs/cache/adsb/hwd_parked_stays.json, refs/cache/faa/ac150_5300_13b_chg1_p136_181_284-288.pdf (quoted values), data/ga_types.json; checked by hwd3d/tools/check_airport.py",
+  "note": "ES-module twin of hwd_airport.json (export const HWD_AIRPORT = ...), same object; header with the ODbL / source notices"
+ }
+}

@@ -1,0 +1,206 @@
+{
+ "items_2022/*.json": {
+  "url": "https://planetarycomputer.microsoft.com/api/stac/v1/search (collection naip) -> https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712224_sw_10_060_20220519.tif, https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712223_se_10_060_20220518.tif",
+  "licence": "NAIP metadata (USDA NAIP, public domain; data.gov licence https://www.usa.gov/publicdomain/label/1.0/); the file is a Microsoft Planetary Computer STAC API response (with _msft:* fields) - Planetary Computer service terms NOT reviewed (Phase 1 review, 2026-11-12). Credit requested by USDA FPAC-BC GEO: Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations)",
+  "fetched": "2026-11-12",
+  "items": [
+   "ca_m_3712224_sw_10_060_20220519",
+   "ca_m_3712223_se_10_060_20220518"
+  ],
+  "flight_dates": [
+   "2022-05-18",
+   "2022-05-19"
+  ],
+  "year": "2022",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source pc --year 2022",
+  "note": "STAC items (pc) / USDA catalog records (usda) used"
+ },
+ "items_2024/*.json": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer",
+  "licence": "public domain (USDA NAIP; data.gov licence https://www.usa.gov/publicdomain/label/1.0/). Credit requested by USDA FPAC-BC GEO (\"asks to be credited for derived products\"): Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "items": [
+   "m_3712224_sw_10_060_20240520",
+   "m_3712223_se_10_060_20240520"
+  ],
+  "flight_dates": [
+   "2024-05-20"
+  ],
+  "year": "2024",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source usda --year 2024",
+  "note": "STAC items (pc) / USDA catalog records (usda) used"
+ },
+ "naip_2022_hwd_rgb.jgw": {
+  "url": "https://planetarycomputer.microsoft.com/api/stac/v1/search (collection naip) -> https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712224_sw_10_060_20220519.tif, https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712223_se_10_060_20220518.tif",
+  "licence": "public domain (USDA NAIP; data.gov licence https://www.usa.gov/publicdomain/label/1.0/). Credit requested by USDA FPAC-BC GEO (\"asks to be credited for derived products\"): Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "items": [
+   "ca_m_3712224_sw_10_060_20220519",
+   "ca_m_3712223_se_10_060_20220518"
+  ],
+  "flight_dates": [
+   "2022-05-18",
+   "2022-05-19"
+  ],
+  "year": "2022",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source pc --year 2022",
+  "note": "world file of the JPEG"
+ },
+ "naip_2022_hwd_rgb.jpg": {
+  "url": "https://planetarycomputer.microsoft.com/api/stac/v1/search (collection naip) -> https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712224_sw_10_060_20220519.tif, https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712223_se_10_060_20220518.tif",
+  "licence": "public domain (USDA NAIP; data.gov licence https://www.usa.gov/publicdomain/label/1.0/). Credit requested by USDA FPAC-BC GEO (\"asks to be credited for derived products\"): Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "items": [
+   "ca_m_3712224_sw_10_060_20220519",
+   "ca_m_3712223_se_10_060_20220518"
+  ],
+  "flight_dates": [
+   "2022-05-18",
+   "2022-05-19"
+  ],
+  "year": "2022",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source pc --year 2022",
+  "note": "RGB, full resolution 0.6 m, JPEG q92 4:4:4 of the local GeoTIFF"
+ },
+ "naip_2022_hwd_rgb.json": {
+  "url": "https://planetarycomputer.microsoft.com/api/stac/v1/search (collection naip) -> https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712224_sw_10_060_20220519.tif, https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712223_se_10_060_20220518.tif",
+  "licence": "public domain (USDA NAIP; data.gov licence https://www.usa.gov/publicdomain/label/1.0/). Credit requested by USDA FPAC-BC GEO (\"asks to be credited for derived products\"): Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "items": [
+   "ca_m_3712224_sw_10_060_20220519",
+   "ca_m_3712223_se_10_060_20220518"
+  ],
+  "flight_dates": [
+   "2022-05-18",
+   "2022-05-19"
+  ],
+  "year": "2022",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source pc --year 2022",
+  "note": "exact georeference + provenance of the JPEG"
+ },
+ "naip_2022_hwd_tileidx.png": {
+  "url": "https://planetarycomputer.microsoft.com/api/stac/v1/search (collection naip) -> https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712224_sw_10_060_20220519.tif, https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712223_se_10_060_20220518.tif",
+  "licence": "public domain (USDA NAIP; data.gov licence https://www.usa.gov/publicdomain/label/1.0/). Credit requested by USDA FPAC-BC GEO (\"asks to be credited for derived products\"): Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "items": [
+   "ca_m_3712224_sw_10_060_20220519",
+   "ca_m_3712223_se_10_060_20220518"
+  ],
+  "flight_dates": [
+   "2022-05-18",
+   "2022-05-19"
+  ],
+  "year": "2022",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source pc --year 2022",
+  "note": "per-pixel source tile index of the mosaic"
+ },
+ "naip_2024_hwd_rgb.jgw": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer",
+  "licence": "public domain (USDA NAIP; data.gov licence https://www.usa.gov/publicdomain/label/1.0/). Credit requested by USDA FPAC-BC GEO (\"asks to be credited for derived products\"): Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "items": [
+   "m_3712224_sw_10_060_20240520",
+   "m_3712223_se_10_060_20240520"
+  ],
+  "flight_dates": [
+   "2024-05-20"
+  ],
+  "year": "2024",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source usda --year 2024",
+  "note": "world file of the JPEG"
+ },
+ "naip_2024_hwd_rgb.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer",
+  "licence": "public domain (USDA NAIP; data.gov licence https://www.usa.gov/publicdomain/label/1.0/). Credit requested by USDA FPAC-BC GEO (\"asks to be credited for derived products\"): Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "items": [
+   "m_3712224_sw_10_060_20240520",
+   "m_3712223_se_10_060_20240520"
+  ],
+  "flight_dates": [
+   "2024-05-20"
+  ],
+  "year": "2024",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source usda --year 2024",
+  "note": "RGB, full resolution 0.6 m, JPEG q92 4:4:4 of the local GeoTIFF"
+ },
+ "naip_2024_hwd_rgb.json": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer",
+  "licence": "public domain (USDA NAIP; data.gov licence https://www.usa.gov/publicdomain/label/1.0/). Credit requested by USDA FPAC-BC GEO (\"asks to be credited for derived products\"): Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "items": [
+   "m_3712224_sw_10_060_20240520",
+   "m_3712223_se_10_060_20240520"
+  ],
+  "flight_dates": [
+   "2024-05-20"
+  ],
+  "year": "2024",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source usda --year 2024",
+  "note": "exact georeference + provenance of the JPEG"
+ },
+ "naip_2024_hwd_tileidx.png": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer",
+  "licence": "public domain (USDA NAIP; data.gov licence https://www.usa.gov/publicdomain/label/1.0/). Credit requested by USDA FPAC-BC GEO (\"asks to be credited for derived products\"): Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "items": [
+   "m_3712224_sw_10_060_20240520",
+   "m_3712223_se_10_060_20240520"
+  ],
+  "flight_dates": [
+   "2024-05-20"
+  ],
+  "year": "2024",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source usda --year 2024",
+  "note": "per-pixel source tile index of the mosaic"
+ },
+ "naip_grid_check.json": {
+  "url": "https://planetarycomputer.microsoft.com/api/stac/v1 (NAIP 2024 COGs, two 512x512 windows read for comparison)",
+  "licence": "own measurement output (no third-party content beyond numbers derived from public-domain USDA NAIP and FAA NASR / FAA AC 150/5340-1M); credit for the imagery: Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "made_by": "hwd3d/tools/imagery/naip_grid_check.py (USDA image-service 2024 mosaic vs Planetary Computer 2024 COG pixels)"
+ },
+ "naip_reg_check.json": {
+  "url": null,
+  "licence": "own measurement output (no third-party content beyond numbers derived from public-domain USDA NAIP and FAA NASR / FAA AC 150/5340-1M); credit for the imagery: Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "made_by": "hwd3d/tools/imagery/naip_reg_check.py --years 2024,2022 (registration of NAIP vs FAA NASR runway ends / displaced thresholds; 2022-vs-2024)"
+ },
+ "naip_visual_notes.json": {
+  "url": null,
+  "licence": "own measurement output (no third-party content beyond numbers derived from public-domain USDA NAIP and FAA NASR / FAA AC 150/5340-1M); credit for the imagery: Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+  "fetched": "2026-11-12",
+  "made_by": "visual inspection of naip_crop.py crops by the task G2 agent (tie-down marks, rings, hangar doors)"
+ },
+ "stac_search.json": {
+  "url": "https://planetarycomputer.microsoft.com/api/stac/v1/search (collection naip) -> https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712224_sw_10_060_20220519.tif, https://naipeuwest.blob.core.windows.net/naip/v002/ca/2022/ca_060cm_2022/37122/m_3712223_se_10_060_20220518.tif",
+  "licence": "NAIP metadata (USDA NAIP, public domain; data.gov licence https://www.usa.gov/publicdomain/label/1.0/); the file is a Microsoft Planetary Computer STAC API response (with _msft:* fields) - Planetary Computer service terms NOT reviewed (Phase 1 review, 2026-11-12). Credit requested by USDA FPAC-BC GEO: Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations)",
+  "fetched": "2026-11-12",
+  "items": [
+   "ca_m_3712224_sw_10_060_20220519",
+   "ca_m_3712223_se_10_060_20220518"
+  ],
+  "flight_dates": [
+   "2022-05-18",
+   "2022-05-19"
+  ],
+  "year": "2022",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py --source pc --year 2022",
+  "note": "STAC search request and all item ids over the AOI"
+ },
+ "MANIFEST.json": {
+  "url": null,
+  "licence": "own output (file list with sizes and sha256 of the NAIP files made by naip_fetch.py, incl. the local GeoTIFFs that are not committed); numbers only, from public-domain USDA NAIP",
+  "fetched": "2026-11-12",
+  "made_by": "hwd3d/tools/imagery/naip_fetch.py",
+  "note": "entry added in the Phase 1 review (2026-11-12); its sha256 values match the 8 files it lists (checked by the reviewer)"
+ },
+ "_note": "The items_2022/ and items_2024/ STAC / catalog records are covered by the glob keys above (no SOURCES.json inside those folders). The NAIP / USDA licence quotes were taken from sfo3d/docs/research/imagery.md and were not re-read in hwd3d (to do before Phase 2 publishes credits).",
+ "naip_blob_review.json": {
+  "url": null,
+  "licence": "own output (by-eye review of public-domain USDA NAIP 2024; credit requested: USDA FPAC-BC GEO)",
+  "fetched": "2026-11-12",
+  "made_by": "by eye, Phase 1 review fix (2026-11-12); read by hwd3d/tools/build_airport.py",
+  "note": "verdict per NAIP 2024 parked-aircraft blob (aircraft / vehicle / no object / two aircraft / duplicate)"
+ }
+}

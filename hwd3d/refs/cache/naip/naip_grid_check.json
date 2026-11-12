@@ -1,0 +1,61 @@
+{
+ "about": "Check that the NAIP 2024 mosaic read from the USDA image service (naip_fetch.py --source usda) holds the tiles'\nnative pixels: compare windows of it with the same NAIP 2024 tiles read directly from their Cloud-Optimized GeoTIFFs on\nMicrosoft Planetary Computer (which added the CA 2024 items after sfo3d's survey; STAC search 2026-11-12 lists\nca_m_3712223_se_10_060_20240520 and ca_m_3712224_sw_10_060_20240520).",
+ "windows": {
+  "ARP (tile 3712224_sw)": {
+   "pc_item": "ca_m_3712224_sw_10_060_20240520",
+   "pc_href": "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2024/ca_060cm_2024/37122/m_3712224_sw_10_060_20240520.tif",
+   "bbox_utm": [
+    577311.6,
+    4168182.5999999996,
+    577618.7999999999,
+    4168489.8
+   ],
+   "shape": [
+    4,
+    512,
+    512
+   ],
+   "identical_fraction": 1.0,
+   "mean_abs_dn": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_abs_dn": 0,
+   "best_integer_offset_px": {
+    "rows": 0,
+    "cols": 0,
+    "mean_abs_dn": 0.0
+   }
+  },
+  "10R end (tile 3712223_se)": {
+   "pc_item": "ca_m_3712223_se_10_060_20240520",
+   "pc_href": "https://naipeuwest.blob.core.windows.net/naip/v002/ca/2024/ca_060cm_2024/37122/m_3712223_se_10_060_20240520.tif",
+   "bbox_utm": [
+    576598.2,
+    4168521.5999999996,
+    576905.3999999999,
+    4168828.8
+   ],
+   "shape": [
+    4,
+    512,
+    512
+   ],
+   "identical_fraction": 1.0,
+   "mean_abs_dn": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_abs_dn": 0,
+   "best_integer_offset_px": {
+    "rows": 0,
+    "cols": 0,
+    "mean_abs_dn": 0.0
+   }
+  }
+ }
+}

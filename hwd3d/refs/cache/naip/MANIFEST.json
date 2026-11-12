@@ -1,0 +1,80 @@
+{
+ "refs/cache/local/naip/naip_2022_hwd_utm10n.tif": {
+  "committed": false,
+  "why": "110.0 MB > 25 MB per-file limit; re-fetch with naip_fetch.py --source pc --year 2022",
+  "bytes": 109962470,
+  "sha256": "dbffa3b6c170d6ddc190f1d6f80df76c7708ee362b5987b753235d5bdf6c721d",
+  "pixels_sha256": "70f243aa33d3276d7210950cfa4ac9f6e5b9f0a45f2052d92073579638d5004f",
+  "pixels_layout": "uint8 array (4 bands R,G,B,NIR; H; W) C-order",
+  "shape": [
+   4,
+   5422,
+   6372
+  ],
+  "items": [
+   "ca_m_3712224_sw_10_060_20220519",
+   "ca_m_3712223_se_10_060_20220518"
+  ],
+  "fetched": "2026-11-12",
+  "note": "file sha256 depends on the GDAL/rasterio writer; pixels_sha256 does not"
+ },
+ "refs/cache/local/naip/naip_2024_hwd_utm10n.tif": {
+  "committed": false,
+  "why": "124.3 MB > 25 MB per-file limit; re-fetch with naip_fetch.py --source usda --year 2024",
+  "bytes": 124302085,
+  "sha256": "cd89d88ea125dfa4691359cb1dc57ed720b7d1a2ca5a2ea5fc008f4378605b3d",
+  "pixels_sha256": "d1b9f6baaf018f7cf19e80e9460f229a2c89abbc68737fb55d19f13e8cb45b8d",
+  "pixels_layout": "uint8 array (4 bands R,G,B,NIR; H; W) C-order",
+  "shape": [
+   4,
+   5422,
+   6372
+  ],
+  "items": [
+   "m_3712224_sw_10_060_20240520",
+   "m_3712223_se_10_060_20240520"
+  ],
+  "fetched": "2026-11-12",
+  "note": "file sha256 depends on the GDAL/rasterio writer; pixels_sha256 does not"
+ },
+ "refs/cache/naip/naip_2022_hwd_rgb.jgw": {
+  "committed": true,
+  "bytes": 40,
+  "sha256": "b86c3c0b0fdf77201f01eda4d320d79ec747784df601876b96d5cb2ec66ef519"
+ },
+ "refs/cache/naip/naip_2022_hwd_rgb.jpg": {
+  "committed": true,
+  "bytes": 13190371,
+  "sha256": "894e28e461cbf2990a711e092e66f94385b892f16cc8eb11176eea739a8c693d"
+ },
+ "refs/cache/naip/naip_2022_hwd_rgb.json": {
+  "committed": true,
+  "bytes": 2544,
+  "sha256": "f8abdf907f678e1099ea798a69866292686c6dc5fd100b20287f05f5959840a2"
+ },
+ "refs/cache/naip/naip_2022_hwd_tileidx.png": {
+  "committed": true,
+  "bytes": 46373,
+  "sha256": "cc091a028db3b4781961dc880b97e7dc281a0123bd5369e5d6d70047e7d1c75c"
+ },
+ "refs/cache/naip/naip_2024_hwd_rgb.jgw": {
+  "committed": true,
+  "bytes": 40,
+  "sha256": "b86c3c0b0fdf77201f01eda4d320d79ec747784df601876b96d5cb2ec66ef519"
+ },
+ "refs/cache/naip/naip_2024_hwd_rgb.jpg": {
+  "committed": true,
+  "bytes": 15884570,
+  "sha256": "e646ef8e34327dd91ea43d701c74299a58c21cd5edcdbf4aea9f6197a2d124e8"
+ },
+ "refs/cache/naip/naip_2024_hwd_rgb.json": {
+  "committed": true,
+  "bytes": 2737,
+  "sha256": "af35636ade8f28f4e40c59130ffc94a44a7d8d244ad01ebc4718a7fb17cc5fee"
+ },
+ "refs/cache/naip/naip_2024_hwd_tileidx.png": {
+  "committed": true,
+  "bytes": 46372,
+  "sha256": "a46d14096082d65dc4a0c3030951b0b6e56d4f8ff8373971e4f0ba924a098fd8"
+ }
+}

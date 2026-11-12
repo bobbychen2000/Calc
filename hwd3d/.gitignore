@@ -1,3 +1,5 @@
 # not redistributable reference material (city maps, photos, Google screenshots): local only
 refs/cache/local/
 out/
+# per-part raw Overpass / OSM API answers of tools/osm/fetch_osm.py (restart cache; the merged extract is committed)
+refs/cache/osm/.parts/

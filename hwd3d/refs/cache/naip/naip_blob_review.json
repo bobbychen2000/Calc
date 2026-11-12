@@ -1,0 +1,576 @@
+{
+ "what": "By-eye review of the NAIP 2024 parked-aircraft blobs that became ramp spots in the first Phase 1 build of data/hwd_airport.json (sha256 4f20a5cc...), made in answer to the Phase 1 review findings (2026-11-12). tools/build_airport.py reads it: a blob within 1.0 m of an entry takes its verdict.",
+ "method": "NAIP 2024 (committed JPEG) resampled to 0.12 m (30 x 30 m tiles) and 0.08 m (24 x 24 m) around each blob centroid, looked at by the Phase 1 fix agent; contact sheets out/phase1/review_fix/sheet_*.png (gitignored). Verdicts: aircraft | vehicle | no_object | two_aircraft | same_aircraft_as_another_blob. Blob shape measures (principal-axis extent, minor extent, fill) were tested as an automatic filter and do NOT separate the classes (wing-only aircraft blobs: minor 1.8-2.1 m, fill 0.70-0.81; vehicle blobs: minor 2.3-9.0 m, fill 0.16-0.59), so the review is recorded instead.",
+ "licence": "own visual review of public-domain USDA NAIP 2024 imagery (positions in the hwd3d world frame)",
+ "counts": {
+  "aircraft": 24,
+  "two_aircraft": 4,
+  "vehicle": 8,
+  "no_object": 3,
+  "same_aircraft_as_another_blob": 1
+ },
+ "src": "inf",
+ "src_note": "a by-eye reading (inferred), not a measurement",
+ "items": [
+  {
+   "x": -207.94,
+   "z": -550.97,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "at the nose of one aircraft in a row",
+   "blob": {
+    "extent_m": 10.1,
+    "minor_m": 7.0,
+    "fill": 0.27,
+    "area_m2": 19.3
+   },
+   "spot_id_in_review_build": "R075"
+  },
+  {
+   "x": -202.53,
+   "z": -586.54,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 19.5,
+    "minor_m": 6.0,
+    "fill": 0.23,
+    "area_m2": 26.8
+   },
+   "spot_id_in_review_build": "R076"
+  },
+  {
+   "x": -201.35,
+   "z": -559.91,
+   "year": "2024",
+   "verdict": "two_aircraft",
+   "note": "centred between two aircraft parked wing tip to wing tip",
+   "blob": {
+    "extent_m": 11.8,
+    "minor_m": 3.1,
+    "fill": 0.35,
+    "area_m2": 12.8
+   },
+   "spot_id_in_review_build": "R077"
+  },
+  {
+   "x": -149.12,
+   "z": -580.37,
+   "year": "2024",
+   "verdict": "two_aircraft",
+   "note": "centred between two aircraft parked wing tip to wing tip",
+   "blob": {
+    "extent_m": 8.5,
+    "minor_m": 2.1,
+    "fill": 0.6,
+    "area_m2": 10.6
+   },
+   "spot_id_in_review_build": "R079"
+  },
+  {
+   "x": -132.24,
+   "z": -347.5,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 8.1,
+    "minor_m": 4.8,
+    "fill": 0.4,
+    "area_m2": 15.5
+   },
+   "spot_id_in_review_build": "R067"
+  },
+  {
+   "x": -131.17,
+   "z": -556.3,
+   "year": "2024",
+   "verdict": "two_aircraft",
+   "note": "centred between two aircraft parked wing tip to wing tip",
+   "blob": {
+    "extent_m": 16.2,
+    "minor_m": 2.3,
+    "fill": 0.47,
+    "area_m2": 17.8
+   },
+   "spot_id_in_review_build": "R080"
+  },
+  {
+   "x": -109.19,
+   "z": -391.53,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 13.3,
+    "minor_m": 8.3,
+    "fill": 0.2,
+    "area_m2": 21.9
+   },
+   "spot_id_in_review_build": "R068"
+  },
+  {
+   "x": -92.65,
+   "z": -383.71,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 8.8,
+    "minor_m": 6.8,
+    "fill": 0.29,
+    "area_m2": 17.6
+   },
+   "spot_id_in_review_build": "R069"
+  },
+  {
+   "x": 32.22,
+   "z": -346.08,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 13.7,
+    "minor_m": 8.7,
+    "fill": 0.22,
+    "area_m2": 25.9
+   },
+   "spot_id_in_review_build": "R072"
+  },
+  {
+   "x": 47.71,
+   "z": -668.78,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "on the wing of an aircraft beside trees",
+   "blob": {
+    "extent_m": 19.4,
+    "minor_m": 10.5,
+    "fill": 0.21,
+    "area_m2": 43.2
+   },
+   "spot_id_in_review_build": "R081"
+  },
+  {
+   "x": 115.98,
+   "z": 316.18,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 11.0,
+    "minor_m": 6.1,
+    "fill": 0.28,
+    "area_m2": 18.9
+   },
+   "spot_id_in_review_build": "R057"
+  },
+  {
+   "x": 124.22,
+   "z": 300.17,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 12.2,
+    "minor_m": 3.2,
+    "fill": 0.39,
+    "area_m2": 15.2
+   },
+   "spot_id_in_review_build": "R058"
+  },
+  {
+   "x": 127.94,
+   "z": 275.13,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 17.0,
+    "minor_m": 8.1,
+    "fill": 0.17,
+    "area_m2": 23.6
+   },
+   "spot_id_in_review_build": "R059"
+  },
+  {
+   "x": 187.48,
+   "z": -279.07,
+   "year": "2024",
+   "verdict": "vehicle",
+   "note": "a row of parked cars / vans (landside lot inside the OSM apron polygon)",
+   "blob": {
+    "extent_m": 9.7,
+    "minor_m": 5.2,
+    "fill": 0.28,
+    "area_m2": 14.2
+   },
+   "spot_id_in_review_build": "R007"
+  },
+  {
+   "x": 221.52,
+   "z": -273.28,
+   "year": "2024",
+   "verdict": "vehicle",
+   "note": "white box trucks / trailers in stall rows (about 2.5 x 9 m each)",
+   "blob": {
+    "extent_m": 12.6,
+    "minor_m": 9.0,
+    "fill": 0.2,
+    "area_m2": 23.3
+   },
+   "spot_id_in_review_build": "R009"
+  },
+  {
+   "x": 226.2,
+   "z": 398.33,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 9.2,
+    "minor_m": 3.7,
+    "fill": 0.36,
+    "area_m2": 12.3
+   },
+   "spot_id_in_review_build": "R066"
+  },
+  {
+   "x": 229.16,
+   "z": -281.55,
+   "year": "2024",
+   "verdict": "vehicle",
+   "note": "white box truck / trailer in a stall row",
+   "blob": {
+    "extent_m": 8.3,
+    "minor_m": 2.3,
+    "fill": 0.59,
+    "area_m2": 11.1
+   },
+   "spot_id_in_review_build": "R010"
+  },
+  {
+   "x": 229.48,
+   "z": -309.97,
+   "year": "2024",
+   "verdict": "vehicle",
+   "note": "van in a yard",
+   "blob": {
+    "extent_m": 8.5,
+    "minor_m": 4.3,
+    "fill": 0.34,
+    "area_m2": 12.5
+   },
+   "spot_id_in_review_build": "R011"
+  },
+  {
+   "x": 237.41,
+   "z": -293.48,
+   "year": "2024",
+   "verdict": "vehicle",
+   "note": "van / pickup next to a yellow school bus",
+   "blob": {
+    "extent_m": 13.5,
+    "minor_m": 7.7,
+    "fill": 0.16,
+    "area_m2": 17.1
+   },
+   "spot_id_in_review_build": "R012"
+  },
+  {
+   "x": 264.74,
+   "z": -291.0,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 20.1,
+    "minor_m": 9.6,
+    "fill": 0.15,
+    "area_m2": 29.2
+   },
+   "spot_id_in_review_build": "R013"
+  },
+  {
+   "x": 269.37,
+   "z": -256.11,
+   "year": "2024",
+   "verdict": "no_object",
+   "note": "no object: painted lines only (also a 2022 blob: permanent paint)",
+   "blob": {
+    "extent_m": 11.3,
+    "minor_m": 1.1,
+    "fill": 0.7,
+    "area_m2": 8.9
+   },
+   "spot_id_in_review_build": "R014"
+  },
+  {
+   "x": 273.17,
+   "z": -234.72,
+   "year": "2024",
+   "verdict": "vehicle",
+   "note": "car-sized white object (about 2 x 5 m) beside the vegetation strip",
+   "blob": {
+    "extent_m": 8.1,
+    "minor_m": 4.9,
+    "fill": 0.35,
+    "area_m2": 13.8
+   },
+   "spot_id_in_review_build": "R016"
+  },
+  {
+   "x": 276.18,
+   "z": -242.86,
+   "year": "2024",
+   "verdict": "no_object",
+   "note": "no object: painted lines only",
+   "blob": {
+    "extent_m": 14.3,
+    "minor_m": 1.0,
+    "fill": 0.65,
+    "area_m2": 9.7
+   },
+   "spot_id_in_review_build": "R017"
+  },
+  {
+   "x": 277.43,
+   "z": -270.56,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "on the tail of a high-wing aircraft",
+   "blob": {
+    "extent_m": 9.3,
+    "minor_m": 4.7,
+    "fill": 0.28,
+    "area_m2": 12.4
+   },
+   "spot_id_in_review_build": "R018"
+  },
+  {
+   "x": 285.79,
+   "z": -242.94,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 9.1,
+    "minor_m": 4.5,
+    "fill": 0.24,
+    "area_m2": 9.5
+   },
+   "spot_id_in_review_build": "R019"
+  },
+  {
+   "x": 313.51,
+   "z": -131.29,
+   "year": "2024",
+   "verdict": "vehicle",
+   "note": "bus or RV-sized object in a yard beside a structure",
+   "blob": {
+    "extent_m": 10.5,
+    "minor_m": 2.4,
+    "fill": 0.45,
+    "area_m2": 11.2
+   },
+   "spot_id_in_review_build": "R022"
+  },
+  {
+   "x": 321.52,
+   "z": -62.14,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 11.4,
+    "minor_m": 5.4,
+    "fill": 0.29,
+    "area_m2": 17.7
+   },
+   "spot_id_in_review_build": "R023"
+  },
+  {
+   "x": 359.56,
+   "z": -186.57,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 10.6,
+    "minor_m": 7.7,
+    "fill": 0.25,
+    "area_m2": 20.2
+   },
+   "spot_id_in_review_build": "R030"
+  },
+  {
+   "x": 361.91,
+   "z": -91.42,
+   "year": "2024",
+   "verdict": "no_object",
+   "note": "no aircraft: pavement at a building edge with a small yellow object",
+   "blob": {
+    "extent_m": 11.7,
+    "minor_m": 3.7,
+    "fill": 0.26,
+    "area_m2": 11.1
+   },
+   "spot_id_in_review_build": "R033"
+  },
+  {
+   "x": 383.32,
+   "z": -167.39,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 12.1,
+    "minor_m": 2.1,
+    "fill": 0.72,
+    "area_m2": 18.5
+   },
+   "spot_id_in_review_build": "R035"
+  },
+  {
+   "x": 404.94,
+   "z": -217.39,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 12.3,
+    "minor_m": 7.2,
+    "fill": 0.18,
+    "area_m2": 15.9
+   },
+   "spot_id_in_review_build": "R038"
+  },
+  {
+   "x": 407.33,
+   "z": -208.78,
+   "year": "2024",
+   "verdict": "same_aircraft_as_another_blob",
+   "note": "the tail of the aircraft whose wing carries the neighbouring blob 8.9 m away (one aircraft, two blobs)",
+   "blob": {
+    "extent_m": 9.7,
+    "minor_m": 2.4,
+    "fill": 0.51,
+    "area_m2": 11.8
+   },
+   "spot_id_in_review_build": "R039"
+  },
+  {
+   "x": 447.67,
+   "z": -16.83,
+   "year": "2024",
+   "verdict": "two_aircraft",
+   "note": "centred between two aircraft parked wing to wing",
+   "blob": {
+    "extent_m": 20.2,
+    "minor_m": 7.4,
+    "fill": 0.24,
+    "area_m2": 35.8
+   },
+   "spot_id_in_review_build": "R041"
+  },
+  {
+   "x": 453.66,
+   "z": -69.87,
+   "year": "2024",
+   "verdict": "vehicle",
+   "note": "car park (several cars)",
+   "blob": {
+    "extent_m": 18.9,
+    "minor_m": 7.7,
+    "fill": 0.23,
+    "area_m2": 33.9
+   },
+   "spot_id_in_review_build": "R042"
+  },
+  {
+   "x": 469.84,
+   "z": -109.66,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 12.2,
+    "minor_m": 5.3,
+    "fill": 0.19,
+    "area_m2": 12.2
+   },
+   "spot_id_in_review_build": "R046"
+  },
+  {
+   "x": 472.41,
+   "z": -56.0,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 19.5,
+    "minor_m": 8.5,
+    "fill": 0.2,
+    "area_m2": 33.6
+   },
+   "spot_id_in_review_build": "R047"
+  },
+  {
+   "x": 479.39,
+   "z": -98.62,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 11.1,
+    "minor_m": 1.8,
+    "fill": 0.81,
+    "area_m2": 16.5
+   },
+   "spot_id_in_review_build": "R049"
+  },
+  {
+   "x": 483.25,
+   "z": -62.46,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 12.0,
+    "minor_m": 4.9,
+    "fill": 0.3,
+    "area_m2": 17.6
+   },
+   "spot_id_in_review_build": "R050"
+  },
+  {
+   "x": 486.41,
+   "z": 75.0,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 12.0,
+    "minor_m": 1.8,
+    "fill": 0.7,
+    "area_m2": 15.1
+   },
+   "spot_id_in_review_build": "R051"
+  },
+  {
+   "x": 495.23,
+   "z": -63.24,
+   "year": "2024",
+   "verdict": "aircraft",
+   "note": "a parked aircraft at the blob",
+   "blob": {
+    "extent_m": 9.5,
+    "minor_m": 5.8,
+    "fill": 0.32,
+    "area_m2": 17.6
+   },
+   "spot_id_in_review_build": "R053"
+  }
+ ]
+}

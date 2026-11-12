@@ -1,0 +1,99 @@
+{
+ "crs": "EPSG:26910",
+ "crs_name": "NAD83 / UTM zone 10N (NAIP E/N treated as NAD83(2011), as hwd_frame.py)",
+ "origin_E": 575664.0,
+ "origin_N": 4169916.6,
+ "origin_is": "outer north-west corner of pixel (col 0, row 0)",
+ "pixel_size_m": 0.6,
+ "width": 6372,
+ "height": 5422,
+ "bounds_utm": [
+  575664.0,
+  4166663.4,
+  579487.2,
+  4169916.6
+ ],
+ "pixel_centre": "E = origin_E + (col + 0.5) * pixel_size_m ; N = origin_N - (row + 0.5) * pixel_size_m",
+ "gdal_geotransform": [
+  575664.0,
+  0.6,
+  0.0,
+  4169916.6,
+  0.0,
+  -0.6
+ ],
+ "world_file": "naip_2024_hwd_rgb.jgw (pixel-centre convention of ESRI world files)",
+ "aoi_latlon_nad83": {
+  "lat0": 37.644,
+  "lat1": 37.673,
+  "lon0": -122.142,
+  "lon1": -122.099
+ },
+ "native_grid": "0.6 m, origin on multiples of 0.6 m (same grid as the NAIP tiles)",
+ "bands": "R, G, B (NIR only in the local GeoTIFF)",
+ "year": "2024",
+ "source": "usda",
+ "source_text": "USDA FPAC-BC-GEO NAIP image service https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer",
+ "tiles": [
+  {
+   "id": "m_3712224_sw_10_060_20240520",
+   "flight_date": "2024-05-20",
+   "href": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer/exportImage (mosaicRule LockRaster 11907)",
+   "footprint_bbox_utm": [
+    576946.8340709244,
+    4164366.5384215447,
+    582928.8349207068,
+    4171758.539358303
+   ],
+   "footprint_centre_utm": [
+    579937.8344958157,
+    4168062.538889924
+   ],
+   "read_window_utm": [
+    576946.7999999999,
+    4166663.4,
+    579487.2,
+    4169916.6
+   ],
+   "pixels_used": 20863003
+  },
+  {
+   "id": "m_3712223_se_10_060_20240520",
+   "flight_date": "2024-05-20",
+   "href": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer/exportImage (mosaicRule LockRaster 11910)",
+   "footprint_bbox_utm": [
+    571432.833635305,
+    4164318.5387192178,
+    577414.8344913389,
+    4171704.539614595
+   ],
+   "footprint_centre_utm": [
+    574423.834063322,
+    4168011.5391669064
+   ],
+   "read_window_utm": [
+    575664.0,
+    4166663.4,
+    577415.4,
+    4169916.6
+   ],
+   "pixels_used": 13685981
+  }
+ ],
+ "overlap_rule": "each pixel from the tile whose footprint-bbox centre is nearest",
+ "tile_index_png": "naip_2024_hwd_tileidx.png (0 = no data, k = tiles[k-1])",
+ "empty_px": 0,
+ "jpeg": {
+  "file": "naip_2024_hwd_rgb.jpg",
+  "quality": 92,
+  "chroma_subsampling": "4:4:4",
+  "error_vs_fullres_dn": {
+   "mean_abs": 2.125039489825036,
+   "p99_abs": 9.0,
+   "max_abs": 36
+  }
+ },
+ "credit": "Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+ "made_by": "hwd3d/tools/imagery/naip_fetch.py",
+ "fetched": "2026-11-12"
+}

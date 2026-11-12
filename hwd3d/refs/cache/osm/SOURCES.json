@@ -1,0 +1,34 @@
+{
+ "overpass_khwd_at_20261112T000000Z.json": {
+  "url": "OpenStreetMap database state at 2026-11-12T00:00:00Z, bbox (S,W,N,E) [37.65181, -122.13407, 37.66735, -122.1091] = aeroway=aerodrome way 186495935 bounds + 150 m; Overpass API attic query [date:\"2026-11-12T00:00:00Z\"], 14 parts merged by (type, id), instance(s) https://maps.mail.ru/osm/tools/overpass/api/interpreter, server databases 2026-11-12T17:15:51Z .. 2026-11-12T17:56:36Z",
+  "licence": "ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/), (c) OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+  "fetched": "2026-11-12",
+  "made_by": "hwd3d/tools/osm/fetch_osm.py",
+  "note": "Pinned with Overpass [date:\"2026-11-12T00:00:00Z\"]; all 14 parts answered by maps.mail.ru (other public instances failed on 2026-11-12: overpass-api.de connection reset, overpass.private.coffee timeout / 502, overpass.kumi.systems timeout / 504). Reproducibility checked: an independent rebuild of the state at the same instant from the OSM editing API has the same 2878 elements with identical versions, tags, geometry, timestamps, changesets and uids (only 9 contributor display names differ) - osmapi_khwd_at_20261112T000000Z.meta.json. Contributor metadata: since the Phase 1 review (2026-11-12) the committed file omits the OSM contributor display name ('user') and account id ('uid') of every element (fetch_osm.py STRIP_FIELDS; type, id, version, timestamp and changeset are kept). The meta records sha256_unstripped = 975f7ab7... (the merged answer with them, identical to the sha256 of the first fetch); the unstripped copy is kept locally in refs/cache/osm/.parts/ (gitignored) for the --via api cross-check. No ADS-B data."
+ },
+ "overpass_khwd_at_20261112T000000Z.meta.json": {
+  "url": "fetch provenance written by hwd3d/tools/osm/fetch_osm.py (query parts, endpoint, HTTP status, server database time, sha256 per part and of the merged file)",
+  "licence": "own output (fetch provenance; no OSM content beyond ids, counts and hashes)"
+ },
+ "overpass_khwd_latest.meta.json": {
+  "url": "copy of overpass_khwd_at_20261112T000000Z.meta.json (the file parse_osm.py reads to find the pinned extract)",
+  "licence": "own output (fetch provenance; no OSM content beyond ids, counts and hashes)"
+ },
+ "osmapi_khwd_at_20261112T000000Z.meta.json": {
+  "url": "provenance of the independent rebuild of the same state from the OSM editing API (hwd3d/tools/osm/fetch_osm.py --via api): every API request (url, HTTP status, sha256) and the comparison with the Overpass extract (crosscheck_overpass_merged: 2878 = 2878 elements, 0 differences in versions, tags, geometry, timestamps, changesets, uids; 9 elements differ only in the contributor display name). The rebuilt JSON itself is not kept (same data; re-run --via api to reproduce).",
+  "licence": "own output (fetch provenance; no OSM content beyond ids, counts and hashes)",
+  "note": "written 2026-11-12 before the contributor fields were stripped: its crosscheck_overpass_merged.overpass_sha256 (975f7ab7...) is the sha256 of the unstripped merged extract, = sha256_unstripped in overpass_khwd_at_20261112T000000Z.meta.json. It holds counts only, no contributor names or ids."
+ },
+ "khwd_features.json": {
+  "url": "hwd3d/tools/osm/parse_osm.py of overpass_khwd_at_20261112T000000Z.json: airfield features in the HWD world frame (tools/common/hwd_frame.py wgs84_to_world)",
+  "licence": "ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/), (c) OpenStreetMap contributors (derived database)",
+  "made_by": "hwd3d/tools/osm/parse_osm.py",
+  "note": "the file carries the licence URI and the OSM attribution itself (ODbL 4.2(b)/(c))"
+ },
+ "khwd_osm_xcheck.json": {
+  "url": "hwd3d/tools/osm/xcheck_osm_faa.py: khwd_features.json vs FAA NASR (2026-10-29) runway ends and AL-5015 (2611)",
+  "licence": "ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/), (c) OpenStreetMap contributors (OSM-derived numbers); FAA inputs public domain",
+  "made_by": "hwd3d/tools/osm/xcheck_osm_faa.py",
+  "note": "the file carries the licence URI and the OSM attribution itself (ODbL 4.2(b)/(c))"
+ }
+}

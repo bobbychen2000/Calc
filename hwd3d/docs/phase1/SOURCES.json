@@ -1,0 +1,100 @@
+{
+ "overlay_al5015.jpg": {
+  "url": "https://aeronav.faa.gov/d-tpp/2611/05015ad.pdf (base: FAA AL-5015, cycle 2611); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base U.S. Government work, public domain; overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 1587x2600, quality 88, 435495 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_al5015_east.jpg": {
+  "url": "https://aeronav.faa.gov/d-tpp/2611/05015ad.pdf (base: FAA AL-5015, cycle 2611); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base U.S. Government work, public domain; overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 1261x931, quality 88, 191474 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_al5015_west.jpg": {
+  "url": "https://aeronav.faa.gov/d-tpp/2611/05015ad.pdf (base: FAA AL-5015, cycle 2611); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base U.S. Government work, public domain; overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 788x1198, quality 88, 176665 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_naip.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer (base: USDA NAIP 2024, tiles m_3712223_se / m_3712224_sw, flown 2024-05-20); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base public domain (USDA NAIP; credit requested); overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 2600x2254, quality 88, 1321514 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_naip_east_hangars_runup.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer (base: USDA NAIP 2024, tiles m_3712223_se / m_3712224_sw, flown 2024-05-20); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base public domain (USDA NAIP; credit requested); overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 1067x1318, quality 88, 244416 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_naip_fbo_ne.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer (base: USDA NAIP 2024, tiles m_3712223_se / m_3712224_sw, flown 2024-05-20); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base public domain (USDA NAIP; credit requested); overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 1767x1809, quality 88, 506068 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_naip_fbo_south_heli.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer (base: USDA NAIP 2024, tiles m_3712223_se / m_3712224_sw, flown 2024-05-20); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base public domain (USDA NAIP; credit requested); overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 1400x1237, quality 88, 254801 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_naip_green_ramp_tower.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer (base: USDA NAIP 2024, tiles m_3712223_se / m_3712224_sw, flown 2024-05-20); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base public domain (USDA NAIP; credit requested); overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 1300x1468, quality 88, 311350 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_naip_rwy_10R_10L.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer (base: USDA NAIP 2024, tiles m_3712223_se / m_3712224_sw, flown 2024-05-20); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base public domain (USDA NAIP; credit requested); overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 1267x1034, quality 88, 199982 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_naip_rwy_28L.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer (base: USDA NAIP 2024, tiles m_3712223_se / m_3712224_sw, flown 2024-05-20); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base public domain (USDA NAIP; credit requested); overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 1167x968, quality 88, 187240 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_naip_rwy_28R.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer (base: USDA NAIP 2024, tiles m_3712223_se / m_3712224_sw, flown 2024-05-20); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base public domain (USDA NAIP; credit requested); overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 767x888, quality 88, 120421 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_naip_tower_helipads.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer (base: USDA NAIP 2024, tiles m_3712223_se / m_3712224_sw, flown 2024-05-20); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base public domain (USDA NAIP; credit requested); overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 1133x801, quality 88, 175938 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "overlay_naip_west_hangars.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer (base: USDA NAIP 2024, tiles m_3712223_se / m_3712224_sw, flown 2024-05-20); overlay: hwd3d data/hwd_airport.json (OpenStreetMap https://www.openstreetmap.org/copyright, adsb.lol https://adsb.lol, FAA NASR)",
+  "licence": "base public domain (USDA NAIP; credit requested); overlay content from OpenStreetMap and adsb.lol under ODbL 1.0 - Produced Work, the notice is in the image",
+  "fetched": "2026-11-12 (inputs: AL-5015 and NAIP fetched 2026-11-12; OSM state 2026-11-12T00:00Z; adsb.lol 2026-11-04..11)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (JPEG 1967x1620, quality 88, 518290 bytes)",
+  "note": "cross-check render for docs/phase1_crosscheck.md; not for navigation"
+ },
+ "crosscheck_metrics.json": {
+  "url": null,
+  "licence": "ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/): numbers derived from data/hwd_airport.json (OpenStreetMap, (c) OpenStreetMap contributors; adsb.lol) and from public-domain FAA AL-5015 and USDA NAIP",
+  "fetched": "2026-11-12 (inputs as the images)",
+  "made_by": "hwd3d/tools/plot_overlays.py --docs (copy of out/phase1/crosscheck_metrics.json)",
+  "note": "every measured number of docs/phase1_crosscheck.md; NAIP numbers come from the local lossless GeoTIFF when present (naip_source), else from the committed JPEG"
+ }
+}

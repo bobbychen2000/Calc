@@ -33,11 +33,11 @@ committed in `refs/cache/faa/nasr_2026-10-29_HWD.json`. "AL-5015" means the FAA 
 | 28R end | 37.65822866, −122.11795213, elev 37.1 ft. PAPI P4L, 3.0°, TCH 44 ft. **Right-hand traffic**. | NASR |
 | Traffic pattern | 10R right-hand; 10L and 28L left-hand; 28R right-hand. TPA 600 ft AGL, except 800 ft AGL for 10L/28R. | NASR RIGHT_HAND_TRAFFIC_PAT_FLAG, APT_RMK E147 |
 | Tower | FAA-operated ATCT (`TWR_OPERATOR_CODE` F), call "HAYWARD". **Hours 0700–2100 local.** When the tower is closed, 10L/28R is closed, CTAF is 120.2, and MIRL 10R/28L is preset to low (pilot-controlled). | NASR ATC_BASE, FRQ, APT_RMK |
-| Frequencies | Tower 120.2 (primary; also CTAF) and 118.9 (secondary; NASR only, not on the diagram), 257.8 UHF. Ground 121.4. Clearance 128.05. ATIS 126.7 (24 h, phone 510-786-3988). UNICOM 122.95. NorCal Approach/Departure 124.4 (primary), 125.35 and 134.5 (secondary). | NASR FRQ, AL-5015 |
+| Frequencies | Tower 120.2 (primary; also CTAF) and 118.9 (secondary; in NASR and in the Chart Supplement, "TOWER 120.2 118.9 (1500–0500Z‡)", but not on the diagram; *corrected 2026-11-12, Phase 1 review*), 257.8 UHF. Ground 121.4. Clearance 128.05. ATIS 126.7 (24 h, phone 510-786-3988). UNICOM 122.95. NorCal Approach/Departure 124.4 (primary), 125.35 and 134.5 (secondary). | NASR FRQ, AL-5015, Chart Supplement SW (29 Oct 2026) |
 | Surface ADS-B | "SAID in use. Operate transponders with altitude reporting mode and ADS-B (if equipped) enabled on all airport surfaces." This explains the good ground coverage in §3. | AL-5015, NASR ATC_RMK |
 | Taxiways on diagram | A, A1, B, C, D, E, F, Z, Z1. Z1 is closed to wingspans over 94 ft; A1 is closed to wingspans over 100 ft. "TWY A NOT VSB FM ATCT BTN TWY B & C." | AL-5015, NASR APT_RMK |
 | Hot spots | HS 1–HS 5 on the diagram | AL-5015 |
-| Named areas | West Hangars, East Hangars, FBO ramps (×2), GA Transient Ramp, Terminal/Airport Administration, TWR, Fire Station, 28L Run-up | AL-5015 |
+| Named areas | West Hangars, East Hangars, FBO ramps (×3: AL-5015 prints "FBO RAMP" three times; *corrected 2026-11-12, Phase 1 review*), GA Transient Ramp, Terminal/Airport Administration, TWR, Fire Station, 28L Run-up | AL-5015 |
 | Helicopters | "Transient helicopter TFC use helipads west of Green Ramp lctd at base of ATCT." | NASR APT_RMK |
 | Other remarks | Lighted distance-remaining signs: 10R on the north side, 28L on the south side. 155-ft energy-complex stack 1.5 NM SW (do not overfly below 1,000 ft MSL). Noise abatement in effect. Beacon WG (white–green), SS–SR. Segmented circle and lighted windsock. | NASR APT_RMK, APT_BASE |
 | Fuel and services | 100LL, Jet A, UL94 (self-serve island). Major airframe and powerplant repair. Charter, instruction, rental. Transient tie-downs available. | NASR APT_BASE / APT_RMK |
@@ -98,6 +98,12 @@ AGL, which includes `alt_baro: "ground"`. All local times are PST (UTC−8).
   degraded) for 8 %.
 - **Track continuity while taxiing** (ground fixes moving faster than 3 kt): median gap between fixes 1.3 s, p90 11.5 s,
   p99 52 s. 10 % of gaps exceed 10 s, so dead reckoning has to bridge these gaps along the taxi graph.
+  *Correction (Phase 1, G4):* these figures describe the **recorder**, not the airborne coverage. The sfo3d recorder
+  polls adsb.lol about every 1.3 s until it is rate-limited (HTTP 429), which happens after 10 polls in 4,782 of
+  5,541 one-minute bursts. It then waits for the next minute, so only about 14 s of every 60 s is observed and each
+  minute has a hole of about 46 s. In addition, 17 outages exceed 600 s and 9 of the 111 hour files are empty. The
+  true ADS-B update rate at HWD is therefore not measured. The live relay must poll within adsb.lol's rate limit, and
+  the replay must interpolate across 46 s holes. Details: `docs/phase1_data_report.md`, `refs/cache/adsb/hwd_events.json`.
 - **Parked aircraft keep transmitting:** 143 aircraft logged 20 or more stationary ground fixes over more than 10 min.
   Parking positions can therefore be learned from the data, as sfo3d did with `adsb_parked.py`.
 - **Pattern work:** 18 aircraft made 6 or more ground-to-air transitions in the week (touch-and-goes or closed

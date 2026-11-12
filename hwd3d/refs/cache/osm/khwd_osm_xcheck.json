@@ -1,0 +1,1379 @@
+{
+ "source": "refs/cache/osm/khwd_features.json",
+ "osm_base": "2026-11-12T00:00:00Z",
+ "source_sha256": "79aea73799f93aa5ad6cf2636541d6c1b18ed3d9f7430b6d61e1d7a145462f2e",
+ "licence": "ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/) for the OSM-derived numbers; FAA sources public domain",
+ "attribution": "(c) OpenStreetMap contributors - https://www.openstreetmap.org/copyright",
+ "counts": {
+  "aerodrome": 1,
+  "apron": 9,
+  "building": 36,
+  "control_tower": 1,
+  "fence": 5,
+  "fire_station": 1,
+  "fuel": 4,
+  "gate": 10,
+  "hangar": 34,
+  "helipad": 9,
+  "holding_position": 18,
+  "landuse": 32,
+  "poi": 24,
+  "runway": 2,
+  "service_road": 41,
+  "taxilane": 78,
+  "taxiway": 65,
+  "windsock": 1
+ },
+ "outside_counts": {
+  "building": 1840,
+  "fence": 2,
+  "gate": 37,
+  "landuse": 12,
+  "poi": 78,
+  "service_road": 538
+ },
+ "runways": [
+  {
+   "osm_id": 27194436,
+   "version": 6,
+   "timestamp": "2017-05-01T07:57:57Z",
+   "ref": "10L/28R",
+   "n_nodes": 8,
+   "tags": {
+    "aeroway": "runway",
+    "ele": "32.5",
+    "length": "947",
+    "ref": "10L/28R",
+    "surface": "asphalt",
+    "width": "23"
+   },
+   "wgs84": {
+    "ends": {
+     "10L": {
+      "dx_east": 2.07,
+      "dz_south": 1.1,
+      "dist": 2.34,
+      "along_beyond_end": -2.34,
+      "across_right_of_10L": -0.08
+     },
+     "28R": {
+      "dx_east": -0.61,
+      "dz_south": 0.06,
+      "dist": 0.61,
+      "along_beyond_end": -0.5,
+      "across_right_of_10L": 0.35
+     }
+    },
+    "across_max_abs": 0.35,
+    "across_mean": 0.17,
+    "osm_len_m": 944.54,
+    "nasr_len_m": 947.38,
+    "len_diff_m": -2.84,
+    "hdg_osm": 119.887,
+    "hdg_nasr": 119.86,
+    "hdg_diff_deg": 0.026
+   },
+   "as_nad83_no_shift": {
+    "ends": {
+     "10L": {
+      "dx_east": 0.5,
+      "dz_south": 0.94,
+      "dist": 1.06,
+      "along_beyond_end": -0.9,
+      "across_right_of_10L": 0.56
+     },
+     "28R": {
+      "dx_east": -2.18,
+      "dz_south": -0.1,
+      "dist": 2.18,
+      "along_beyond_end": -1.94,
+      "across_right_of_10L": 0.99
+     }
+    },
+    "across_max_abs": 0.99,
+    "across_mean": 0.81,
+    "osm_len_m": 944.54,
+    "nasr_len_m": 947.38,
+    "len_diff_m": -2.84,
+    "hdg_osm": 119.887,
+    "hdg_nasr": 119.86,
+    "hdg_diff_deg": 0.026
+   },
+   "tags_vs_nasr": {
+    "length_tag_m": "947",
+    "nasr_len_ft": 3108,
+    "nasr_len_m": 947.32,
+    "width_tag_m": "23",
+    "nasr_width_ft": 75,
+    "nasr_width_m": 22.86,
+    "surface_tag": "asphalt",
+    "nasr_surface": "ASPH",
+    "ele_tag": "32.5",
+    "nasr_end_elev_ft": [
+     28.1,
+     37.1
+    ]
+   }
+  },
+  {
+   "osm_id": 27194437,
+   "version": 8,
+   "timestamp": "2017-05-01T07:57:57Z",
+   "ref": "10R/28L",
+   "n_nodes": 13,
+   "tags": {
+    "aeroway": "runway",
+    "ele": "40",
+    "length": "1736",
+    "ref": "10R/28L",
+    "surface": "asphalt",
+    "width": "46"
+   },
+   "wgs84": {
+    "ends": {
+     "10R": {
+      "dx_east": 0.3,
+      "dz_south": 0.57,
+      "dist": 0.65,
+      "along_beyond_end": -0.54,
+      "across_right_of_10R": 0.35,
+      "along_beyond_displaced_thr": 251.11
+     },
+     "28L": {
+      "dx_east": -175.38,
+      "dz_south": -100.76,
+      "dist": 202.26,
+      "along_beyond_end": -202.26,
+      "across_right_of_10R": -0.08,
+      "along_beyond_displaced_thr": 3.65
+     }
+    },
+    "across_max_abs": 0.35,
+    "across_mean": 0.14,
+    "osm_len_m": 1532.66,
+    "nasr_len_m": 1735.46,
+    "len_diff_m": -202.8,
+    "hdg_osm": 119.841,
+    "hdg_nasr": 119.857,
+    "hdg_diff_deg": -0.016
+   },
+   "as_nad83_no_shift": {
+    "ends": {
+     "10R": {
+      "dx_east": -1.27,
+      "dz_south": 0.41,
+      "dist": 1.34,
+      "along_beyond_end": 0.9,
+      "across_right_of_10R": 0.99,
+      "along_beyond_displaced_thr": 252.55
+     },
+     "28L": {
+      "dx_east": -176.95,
+      "dz_south": -100.92,
+      "dist": 203.7,
+      "along_beyond_end": -203.7,
+      "across_right_of_10R": 0.57,
+      "along_beyond_displaced_thr": 2.21
+     }
+    },
+    "across_max_abs": 0.99,
+    "across_mean": 0.78,
+    "osm_len_m": 1532.66,
+    "nasr_len_m": 1735.46,
+    "len_diff_m": -202.8,
+    "hdg_osm": 119.841,
+    "hdg_nasr": 119.857,
+    "hdg_diff_deg": -0.016
+   },
+   "tags_vs_nasr": {
+    "length_tag_m": "1736",
+    "nasr_len_ft": 5694,
+    "nasr_len_m": 1735.53,
+    "width_tag_m": "46",
+    "nasr_width_ft": 150,
+    "nasr_width_m": 45.72,
+    "surface_tag": "asphalt",
+    "nasr_surface": "ASPH",
+    "ele_tag": "40",
+    "nasr_end_elev_ft": [
+     27.7,
+     52.1
+    ]
+   }
+  }
+ ],
+ "inventory": {
+  "taxiway_refs_osm": [
+   "A",
+   "A1",
+   "B",
+   "C",
+   "D",
+   "E",
+   "F",
+   "Z",
+   "Z1"
+  ],
+  "taxiway_refs_faa": [
+   "A",
+   "A1",
+   "B",
+   "C",
+   "D",
+   "E",
+   "F",
+   "Z",
+   "Z1"
+  ],
+  "faa_not_in_osm": [],
+  "osm_not_in_faa": [],
+  "taxiway_by_ref": {
+   "(no ref)": {
+    "ways": 43,
+    "len_m": 4240.2,
+    "ids": [
+     58169722,
+     58170347,
+     58172648,
+     204797814,
+     204797817,
+     204797821,
+     204797825,
+     204798823,
+     204798824,
+     204798827,
+     204798828,
+     204801001,
+     204801002,
+     204801005,
+     204801006,
+     204801008,
+     204801011,
+     204801012,
+     204801013,
+     204801019,
+     204801021,
+     204801023,
+     204801025,
+     204801029,
+     204801030,
+     204801031,
+     204801032,
+     204801033,
+     204801034,
+     204801038,
+     204801039,
+     204801040,
+     204801042,
+     204801045,
+     204801052,
+     204801053,
+     289829582,
+     289829583,
+     490634598,
+     490634610,
+     720795531,
+     1366756208,
+     1366760493
+    ]
+   },
+   "A": {
+    "ways": 3,
+    "len_m": 1481.9,
+    "ids": [
+     204801037,
+     204801043,
+     490634608
+    ]
+   },
+   "A1": {
+    "ways": 1,
+    "len_m": 334.1,
+    "ids": [
+     490634600
+    ]
+   },
+   "B": {
+    "ways": 1,
+    "len_m": 195.9,
+    "ids": [
+     58169875
+    ]
+   },
+   "C": {
+    "ways": 3,
+    "len_m": 175.1,
+    "ids": [
+     58169877,
+     204801024,
+     204801028
+    ]
+   },
+   "D": {
+    "ways": 3,
+    "len_m": 484.4,
+    "ids": [
+     58170248,
+     204801016,
+     204801026
+    ]
+   },
+   "E": {
+    "ways": 4,
+    "len_m": 395.6,
+    "ids": [
+     204801027,
+     204801035,
+     204801036,
+     490634605
+    ]
+   },
+   "F": {
+    "ways": 3,
+    "len_m": 846.0,
+    "ids": [
+     58170416,
+     490634607,
+     490634609
+    ]
+   },
+   "Z": {
+    "ways": 3,
+    "len_m": 1791.7,
+    "ids": [
+     58169880,
+     58170277,
+     490634596
+    ]
+   },
+   "Z1": {
+    "ways": 1,
+    "len_m": 355.7,
+    "ids": [
+     58170922
+    ]
+   }
+  },
+  "taxiway_status": {
+   "289829582": "abandoned",
+   "289829583": "disused",
+   "490634598": "disused",
+   "1366756208": "abandoned"
+  },
+  "taxilane_named": [],
+  "holding_position_refs": [
+   "(none)"
+  ],
+  "holding_positions": [
+   {
+    "id": 721607835,
+    "ref": null,
+    "runway": "10L/28R",
+    "along_m": -74.9,
+    "across_m": -50.6,
+    "across_ft": -166.0,
+    "dist_to_runway_m": 90.4
+   },
+   {
+    "id": 12658093733,
+    "ref": null,
+    "runway": "10L/28R",
+    "along_m": 296.6,
+    "across_m": 39.0,
+    "across_ft": 128.0,
+    "dist_to_runway_m": 39.0
+   },
+   {
+    "id": 12658093730,
+    "ref": null,
+    "runway": "10L/28R",
+    "along_m": 495.6,
+    "across_m": -38.6,
+    "across_ft": -127.0,
+    "dist_to_runway_m": 38.6
+   },
+   {
+    "id": 12658093732,
+    "ref": null,
+    "runway": "10L/28R",
+    "along_m": 495.7,
+    "across_m": 39.0,
+    "across_ft": 128.0,
+    "dist_to_runway_m": 39.0
+   },
+   {
+    "id": 12658093729,
+    "ref": null,
+    "runway": "10L/28R",
+    "along_m": 828.0,
+    "across_m": -39.5,
+    "across_ft": -129.0,
+    "dist_to_runway_m": 39.5
+   },
+   {
+    "id": 12658093728,
+    "ref": null,
+    "runway": "10L/28R",
+    "along_m": 941.2,
+    "across_m": -39.2,
+    "across_ft": -129.0,
+    "dist_to_runway_m": 39.2
+   },
+   {
+    "id": 12658043099,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": -68.3,
+    "across_m": 67.7,
+    "across_ft": 222.0,
+    "dist_to_runway_m": 96.2
+   },
+   {
+    "id": 12658043098,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 12.8,
+    "across_m": -72.8,
+    "across_ft": -239.0,
+    "dist_to_runway_m": 72.8
+   },
+   {
+    "id": 12658043097,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 33.3,
+    "across_m": -107.8,
+    "across_ft": -354.0,
+    "dist_to_runway_m": 107.8
+   },
+   {
+    "id": 12658043100,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 466.1,
+    "across_m": 60.6,
+    "across_ft": 199.0,
+    "dist_to_runway_m": 60.6
+   },
+   {
+    "id": 12658093734,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 466.2,
+    "across_m": -61.4,
+    "across_ft": -201.0,
+    "dist_to_runway_m": 61.4
+   },
+   {
+    "id": 12658093731,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 683.4,
+    "across_m": -65.7,
+    "across_ft": -216.0,
+    "dist_to_runway_m": 65.7
+   },
+   {
+    "id": 12658043101,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 729.5,
+    "across_m": 60.7,
+    "across_ft": 199.0,
+    "dist_to_runway_m": 60.7
+   },
+   {
+    "id": 12658043102,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 990.5,
+    "across_m": 60.8,
+    "across_ft": 200.0,
+    "dist_to_runway_m": 60.8
+   },
+   {
+    "id": 12658043103,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 1521.7,
+    "across_m": -62.5,
+    "across_ft": -205.0,
+    "dist_to_runway_m": 62.5
+   },
+   {
+    "id": 12658043066,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 1522.2,
+    "across_m": 60.9,
+    "across_ft": 200.0,
+    "dist_to_runway_m": 60.9
+   },
+   {
+    "id": 12658043064,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 1641.5,
+    "across_m": 91.2,
+    "across_ft": 299.0,
+    "dist_to_runway_m": 91.2
+   },
+   {
+    "id": 12658043065,
+    "ref": null,
+    "runway": "10R/28L",
+    "along_m": 1672.4,
+    "across_m": -91.5,
+    "across_ft": -300.0,
+    "dist_to_runway_m": 91.5
+   }
+  ],
+  "aprons": [
+   {
+    "id": 289829587,
+    "ref": null,
+    "name": null,
+    "area_m2": 115121.9
+   },
+   {
+    "id": 1366756209,
+    "ref": null,
+    "name": null,
+    "area_m2": 14300.4
+   },
+   {
+    "id": 1372203784,
+    "ref": null,
+    "name": null,
+    "area_m2": 21790.2
+   },
+   {
+    "id": 1372203790,
+    "ref": "10L Runup",
+    "name": null,
+    "area_m2": 1870.3
+   },
+   {
+    "id": 1366760487,
+    "ref": null,
+    "name": "28L Run-up",
+    "area_m2": 6712.1
+   },
+   {
+    "id": 1372203793,
+    "ref": "28R Runup",
+    "name": null,
+    "area_m2": 982.1
+   },
+   {
+    "id": 246152866,
+    "ref": "Green Ramp",
+    "name": null,
+    "area_m2": 27014.6
+   },
+   {
+    "id": 1372203789,
+    "ref": "Helicopter Ramp",
+    "name": null,
+    "area_m2": 8481.3
+   },
+   {
+    "id": 1366756195,
+    "ref": null,
+    "name": "air",
+    "area_m2": 104171.9
+   }
+  ],
+  "hangars": [
+   {
+    "id": 971132674,
+    "name": "APP Jet Center",
+    "area_m2": 1923.4,
+    "addr": null
+   },
+   {
+    "id": 204800994,
+    "name": "Absolute Aero",
+    "area_m2": 965.4,
+    "addr": "21889 Skywest Drive"
+   },
+   {
+    "id": 204800996,
+    "name": "Bud Field Aviation",
+    "area_m2": 3256.1,
+    "addr": "22005 Skywest Drive"
+   },
+   {
+    "id": 204797813,
+    "name": "Hanagar K",
+    "area_m2": 1202.6,
+    "addr": null
+   },
+   {
+    "id": 204797810,
+    "name": "Hangar A",
+    "area_m2": 955.2,
+    "addr": null
+   },
+   {
+    "id": 204797800,
+    "name": "Hangar B",
+    "area_m2": 1304.4,
+    "addr": null
+   },
+   {
+    "id": 204797809,
+    "name": "Hangar C",
+    "area_m2": 1287.6,
+    "addr": null
+   },
+   {
+    "id": 204797811,
+    "name": "Hangar D",
+    "area_m2": 1287.6,
+    "addr": null
+   },
+   {
+    "id": 204797807,
+    "name": "Hangar E",
+    "area_m2": 1341.6,
+    "addr": null
+   },
+   {
+    "id": 204795471,
+    "name": "Hangar EX1",
+    "area_m2": 1967.7,
+    "addr": null
+   },
+   {
+    "id": 204797804,
+    "name": "Hangar EX2",
+    "area_m2": 2980.4,
+    "addr": null
+   },
+   {
+    "id": 204797802,
+    "name": "Hangar F",
+    "area_m2": 1149.6,
+    "addr": null
+   },
+   {
+    "id": 204797812,
+    "name": "Hangar G",
+    "area_m2": 1197.3,
+    "addr": null
+   },
+   {
+    "id": 204797799,
+    "name": "Hangar H",
+    "area_m2": 1108.9,
+    "addr": null
+   },
+   {
+    "id": 204797801,
+    "name": "Hangar I",
+    "area_m2": 1141.7,
+    "addr": null
+   },
+   {
+    "id": 204797803,
+    "name": "Hangar J",
+    "area_m2": 1151.5,
+    "addr": null
+   },
+   {
+    "id": 204797808,
+    "name": "Hangar L",
+    "area_m2": 1135.9,
+    "addr": null
+   },
+   {
+    "id": 204797806,
+    "name": "Hangar M",
+    "area_m2": 917.1,
+    "addr": null
+   },
+   {
+    "id": 204795468,
+    "name": "Hangar N",
+    "area_m2": 1599.9,
+    "addr": null
+   },
+   {
+    "id": 204795472,
+    "name": "Hangar O",
+    "area_m2": 1952.8,
+    "addr": null
+   },
+   {
+    "id": 204795473,
+    "name": "Hangar P",
+    "area_m2": 2034.0,
+    "addr": null
+   },
+   {
+    "id": 204795470,
+    "name": "Hangar Q",
+    "area_m2": 1784.7,
+    "addr": null
+   },
+   {
+    "id": 204798813,
+    "name": "Savage Aviation",
+    "area_m2": 487.1,
+    "addr": "21593 Skywest Drive"
+   },
+   {
+    "id": 971132676,
+    "name": "Signature Aviation",
+    "area_m2": 3593.1,
+    "addr": null
+   },
+   {
+    "id": 204797798,
+    "name": null,
+    "area_m2": 3764.9,
+    "addr": null
+   },
+   {
+    "id": 204797805,
+    "name": null,
+    "area_m2": 2268.1,
+    "addr": null
+   },
+   {
+    "id": 204798810,
+    "name": null,
+    "area_m2": 471.4,
+    "addr": null
+   },
+   {
+    "id": 204798811,
+    "name": null,
+    "area_m2": 624.3,
+    "addr": null
+   },
+   {
+    "id": 204800997,
+    "name": null,
+    "area_m2": 526.9,
+    "addr": null
+   },
+   {
+    "id": 204800998,
+    "name": null,
+    "area_m2": 504.9,
+    "addr": null
+   },
+   {
+    "id": 204801537,
+    "name": null,
+    "area_m2": 1834.2,
+    "addr": null
+   },
+   {
+    "id": 204801544,
+    "name": null,
+    "area_m2": 2830.1,
+    "addr": null
+   },
+   {
+    "id": 204801545,
+    "name": null,
+    "area_m2": 791.3,
+    "addr": null
+   },
+   {
+    "id": 971132675,
+    "name": null,
+    "area_m2": 2474.1,
+    "addr": null
+   }
+  ],
+  "helipads": [
+   {
+    "id": 289829579,
+    "tags": {
+     "aeroway": "helipad"
+    },
+    "area_m2": 79.4,
+    "c_w": [
+     295.95,
+     -82.6
+    ]
+   },
+   {
+    "id": 289829580,
+    "tags": {
+     "aeroway": "helipad"
+    },
+    "area_m2": 79.3,
+    "c_w": [
+     286.37,
+     -88.15
+    ]
+   },
+   {
+    "id": 289829581,
+    "tags": {
+     "aeroway": "helipad"
+    },
+    "area_m2": 79.4,
+    "c_w": [
+     305.74,
+     -77.43
+    ]
+   },
+   {
+    "id": 1366756196,
+    "tags": {
+     "aeroway": "helipad"
+    },
+    "area_m2": 188.3,
+    "c_w": [
+     -213.99,
+     -388.33
+    ]
+   },
+   {
+    "id": 1366756197,
+    "tags": {
+     "aeroway": "helipad"
+    },
+    "area_m2": 188.3,
+    "c_w": [
+     -191.62,
+     -375.4
+    ]
+   },
+   {
+    "id": 1366756198,
+    "tags": {
+     "aeroway": "helipad"
+    },
+    "area_m2": 188.3,
+    "c_w": [
+     -187.07,
+     -435.76
+    ]
+   },
+   {
+    "id": 1366756199,
+    "tags": {
+     "aeroway": "helipad"
+    },
+    "area_m2": 188.3,
+    "c_w": [
+     -164.37,
+     -423.04
+    ]
+   },
+   {
+    "id": 1366756200,
+    "tags": {
+     "aeroway": "helipad"
+    },
+    "area_m2": 189.0,
+    "c_w": [
+     -138.4,
+     -468.1
+    ]
+   },
+   {
+    "id": 1366756201,
+    "tags": {
+     "aeroway": "helipad"
+    },
+    "area_m2": 479.9,
+    "c_w": [
+     -167.41,
+     -456.08
+    ]
+   }
+  ],
+  "control_tower": [
+   {
+    "type": "way",
+    "id": 204803620,
+    "name": null,
+    "tags": {
+     "addr:city": "Hayward",
+     "addr:housenumber": "20301",
+     "addr:postcode": "94541",
+     "addr:state": "CA",
+     "addr:street": "Skywest Drive",
+     "building": "yes",
+     "height": "15.85",
+     "man_made": "tower",
+     "service": "aircraft_control"
+    },
+    "c_w": [
+     38.55,
+     -409.62
+    ],
+    "in_aerodrome": true
+   }
+  ],
+  "fuel": [
+   {
+    "type": "node",
+    "id": 13566119588,
+    "name": null,
+    "tags": {
+     "amenity": "fuel"
+    },
+    "c_w": [
+     724.48,
+     -750.13
+    ],
+    "in_aerodrome": false
+   },
+   {
+    "type": "way",
+    "id": 479137008,
+    "name": "Chevron",
+    "tags": {
+     "addr:city": "Hayward",
+     "addr:housenumber": "511",
+     "addr:postcode": "94541",
+     "addr:state": "CA",
+     "addr:street": "West A Street",
+     "amenity": "fuel",
+     "brand": "Chevron",
+     "brand:wikidata": "Q319642",
+     "building": "roof",
+     "fuel:e85": "yes",
+     "fuel:octane_87": "yes",
+     "layer": "1",
+     "name": "Chevron",
+     "operator": "Chevron",
+     "self_service": "yes"
+    },
+    "c_w": [
+     998.23,
+     -828.94
+    ],
+    "in_aerodrome": false
+   },
+   {
+    "type": "node",
+    "id": 1243945811,
+    "name": "Valero",
+    "tags": {
+     "amenity": "fuel",
+     "brand": "Valero",
+     "brand:wikidata": "Q1283291",
+     "name": "Valero"
+    },
+    "c_w": [
+     349.45,
+     -784.27
+    ],
+    "in_aerodrome": false
+   },
+   {
+    "type": "way",
+    "id": 463573482,
+    "name": "Valero",
+    "tags": {
+     "amenity": "fuel",
+     "brand": "Valero",
+     "brand:wikidata": "Q1283291",
+     "name": "Valero"
+    },
+    "c_w": [
+     1033.5,
+     602.24
+    ],
+    "in_aerodrome": false
+   }
+  ],
+  "fire_station": [
+   {
+    "type": "node",
+    "id": 368168603,
+    "name": "Hayward Fire Station Number 6",
+    "tags": {
+     "addr:state": "CA",
+     "amenity": "fire_station",
+     "ele": "12",
+     "gnis:feature_id": "2107507",
+     "name": "Hayward Fire Station Number 6",
+     "source": "USGS Geonames"
+    },
+    "c_w": [
+     253.06,
+     590.69
+    ],
+    "in_aerodrome": false
+   }
+  ],
+  "windsock": [
+   {
+    "type": "node",
+    "id": 12658043150,
+    "name": null,
+    "tags": {
+     "aeroway": "windsock"
+    },
+    "c_w": [
+     -26.98,
+     -59.42
+    ],
+    "in_aerodrome": true
+   }
+  ],
+  "navaid": [],
+  "mast_beacon": [],
+  "lifecycle_aeroway": [],
+  "aviation_named": [
+   {
+    "kind": "aerodrome",
+    "type": "way",
+    "id": 186495935,
+    "name": "Hayward Executive Airport",
+    "tags": {
+     "aeroway": "aerodrome",
+     "closest_town": "Hayward, California",
+     "ele": "13",
+     "gnis:feature_id": "1653514",
+     "iata": "HWD",
+     "icao": "KHWD",
+     "name": "Hayward Executive Airport",
+     "name:en": "Hayward Executive Airport",
+     "old_name": "Hayward Air Terminal",
+     "operator": "City of Hayward",
+     "ref": "HWD",
+     "source_ref": "geonames.usgs.gov",
+     "type": "public",
+     "wikidata": "Q3887184",
+     "wikipedia": "en:Hayward Executive Airport"
+    }
+   },
+   {
+    "kind": "apron",
+    "type": "way",
+    "id": 1366756195,
+    "name": "air",
+    "tags": {
+     "aeroway": "apron",
+     "name": "air"
+    }
+   },
+   {
+    "kind": "hangar",
+    "type": "way",
+    "id": 971132674,
+    "name": "APP Jet Center",
+    "tags": {
+     "aeroway": "hangar",
+     "building": "hangar",
+     "name": "APP Jet Center"
+    }
+   },
+   {
+    "kind": "hangar",
+    "type": "way",
+    "id": 204800994,
+    "name": "Absolute Aero",
+    "tags": {
+     "aeroway": "hangar",
+     "building": "hangar",
+     "name": "Absolute Aero"
+    }
+   },
+   {
+    "kind": "hangar",
+    "type": "way",
+    "id": 204800996,
+    "name": "Bud Field Aviation",
+    "tags": {
+     "aeroway": "hangar",
+     "building": "hangar",
+     "name": "Bud Field Aviation"
+    }
+   },
+   {
+    "kind": "hangar",
+    "type": "way",
+    "id": 204798813,
+    "name": "Savage Aviation",
+    "tags": {
+     "aeroway": "hangar",
+     "building": "hangar",
+     "name": "Savage Aviation"
+    }
+   },
+   {
+    "kind": "hangar",
+    "type": "way",
+    "id": 971132676,
+    "name": "Signature Aviation",
+    "tags": {
+     "aeroway": "hangar",
+     "building": "hangar",
+     "name": "Signature Aviation"
+    }
+   }
+  ],
+  "buildings_by_type": {
+   "yes": 35,
+   "retail": 1
+  },
+  "buildings_named": [
+   {
+    "id": 204806151,
+    "name": "Target",
+    "type": "retail"
+   }
+  ]
+ },
+ "al5015": {
+  "raster_dpi": 400,
+  "runway_bars_px": {
+   "28L": [
+    1840.4,
+    549.2
+   ],
+   "10R": [
+    793.7,
+    2372.6
+   ],
+   "28R": [
+    1307.6,
+    1107.5
+   ],
+   "10L": [
+    734.8,
+    2101.2
+   ]
+  },
+  "bar_end_method": "refine_bar_ends (axis walk; fix 2026-11-12): ends moved from the extreme opened pieces by {'28L': 0.9, '10R': 0.4, '28R': 92.5, '10L': 0.5} px",
+  "bar_pieces": [
+   1,
+   2
+  ],
+  "affine_px_to_world": [
+   [
+    0.000554,
+    0.82436
+   ],
+   [
+    -0.82542,
+    -0.000358
+   ],
+   [
+    1247.011132,
+    -999.062987
+   ]
+  ],
+  "affine_singular_values_m_per_px": [
+   0.8256,
+   0.8242
+  ],
+  "scale_m_per_px": 0.8249,
+  "fit_resid_m": {
+   "28L": 0.4,
+   "10R": 0.4,
+   "28R": 0.7,
+   "10L": 0.7
+  },
+  "x_glyphs": 15,
+  "x_like_single_glyphs_ignored_px": [
+   [
+    1836.5,
+    516.5
+   ],
+   [
+    1657.0,
+    638.5
+   ],
+   [
+    1858.5,
+    743.0
+   ],
+   [
+    671.5,
+    1659.0
+   ],
+   [
+    711.0,
+    2113.5
+   ],
+   [
+    766.5,
+    2381.5
+   ]
+  ],
+  "closed_surface_rows": [
+   {
+    "n_x": 5,
+    "px": [
+     [
+      1716.0,
+      1213.0
+     ],
+     [
+      1728.0,
+      1154.0
+     ],
+     [
+      1741.0,
+      1084.0
+     ],
+     [
+      1754.0,
+      1012.0
+     ],
+     [
+      1768.0,
+      946.0
+     ]
+    ],
+    "w": [
+     [
+      246.7,
+      415.1
+     ],
+     [
+      295.4,
+      425.0
+     ],
+     [
+      353.2,
+      435.8
+     ],
+     [
+      412.7,
+      446.5
+     ],
+     [
+      467.1,
+      458.1
+     ]
+    ],
+    "len_m": 224.6,
+    "near_osm": [
+     {
+      "kind": "taxiway",
+      "id": 1366756208,
+      "ref": null,
+      "name": null,
+      "status": "abandoned",
+      "tags": {
+       "abandoned": "yes",
+       "aeroway": "taxiway"
+      },
+      "min_d_m": 0.0,
+      "mean_d_m": 0.4
+     },
+     {
+      "kind": "service_road",
+      "id": 1366756213,
+      "ref": null,
+      "name": null,
+      "status": null,
+      "tags": {
+       "highway": "service"
+      },
+      "min_d_m": 24.0,
+      "mean_d_m": 29.8
+     },
+     {
+      "kind": "taxiway",
+      "id": 490634596,
+      "ref": "Z",
+      "name": null,
+      "status": "open",
+      "tags": {
+       "aeroway": "taxiway",
+       "ref": "Z"
+      },
+      "min_d_m": 19.2,
+      "mean_d_m": 56.0
+     },
+     {
+      "kind": "apron",
+      "id": 1366756209,
+      "ref": null,
+      "name": null,
+      "status": null,
+      "tags": {
+       "aeroway": "apron"
+      },
+      "min_d_m": 21.0,
+      "mean_d_m": 124.4
+     },
+     {
+      "kind": "service_road",
+      "id": 1366756217,
+      "ref": null,
+      "name": null,
+      "status": null,
+      "tags": {
+       "highway": "service"
+      },
+      "min_d_m": 42.8,
+      "mean_d_m": 149.7
+     }
+    ]
+   },
+   {
+    "n_x": 4,
+    "px": [
+     [
+      1459.5,
+      1676.5
+     ],
+     [
+      1503.0,
+      1675.5
+     ],
+     [
+      1544.0,
+      1675.0
+     ],
+     [
+      1581.5,
+      1673.5
+     ]
+    ],
+    "w": [
+     [
+      -136.0,
+      203.5
+     ],
+     [
+      -135.1,
+      239.3
+     ],
+     [
+      -134.7,
+      273.1
+     ],
+     [
+      -133.5,
+      304.1
+     ]
+    ],
+    "len_m": 100.6,
+    "near_osm": [
+     {
+      "kind": "taxiway",
+      "id": 289829582,
+      "ref": null,
+      "name": null,
+      "status": "abandoned",
+      "tags": {
+       "abandoned": "yes",
+       "aeroway": "taxiway"
+      },
+      "min_d_m": 0.0,
+      "mean_d_m": 0.2
+     }
+    ]
+   }
+  ],
+  "legend_source": "FAA d-TPP 2611 front matter (https://aeronav.faa.gov/d-tpp/2611/frntmatter.pdf), p. 16 \"LEGEND - INSTRUMENT APPROACH PROCEDURES (CHARTS) - AIRPORT DIAGRAM/AIRPORT SKETCH\" (26302): symbol \"Closed Surface\" = grey pavement with rows of x; \"Closed Runway\" = runway bar with x; \"Positional accuracy within +-600 feet unless otherwise noted on the chart.\""
+ }
+}

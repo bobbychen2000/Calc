@@ -1,0 +1,237 @@
+{
+ "file": "osmapi_khwd_at_20261112T000000Z.json",
+ "osm_base": "2026-11-12T00:00:00Z",
+ "parts_only": null,
+ "attic_date": "2026-11-12T00:00:00Z",
+ "bbox": [
+  37.65181,
+  -122.13407,
+  37.66735,
+  -122.1091
+ ],
+ "bbox_def": "aeroway=aerodrome way 186495935 v13 bounds [37.6531711, -122.1323685, 37.6659952, -122.1108065] + 150 m, rounded outward to 1e-5 deg",
+ "fetched_utc": "20261112T180019Z",
+ "via": "api",
+ "endpoint": [
+  "https://api.openstreetmap.org/api/0.6"
+ ],
+ "parts": [
+  {
+   "part": "osm-api attic (aeroway, prefixed_aeroway, building, man_made, navigationaid, airmark, highway, barrier, amenity, landuse, named)",
+   "endpoint": "https://api.openstreetmap.org/api/0.6",
+   "overpass_crosscheck": {
+    "aeroway": {
+     "overpass": 217,
+     "api": 217,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 0,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:15:51Z"
+     ]
+    },
+    "prefixed_aeroway": {
+     "overpass": 0,
+     "api": 0,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 0,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:23:51Z"
+     ]
+    },
+    "building": {
+     "overpass": 1912,
+     "api": 1912,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 0,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:28:01Z",
+      "2026-11-12T17:29:01Z",
+      "2026-11-12T17:30:06Z",
+      "2026-11-12T17:31:06Z"
+     ]
+    },
+    "man_made": {
+     "overpass": 1,
+     "api": 1,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 0,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:31:06Z"
+     ]
+    },
+    "navigationaid": {
+     "overpass": 0,
+     "api": 0,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 0,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:36:09Z"
+     ]
+    },
+    "airmark": {
+     "overpass": 0,
+     "api": 0,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 0,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:36:09Z"
+     ]
+    },
+    "highway": {
+     "overpass": 579,
+     "api": 579,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 1,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:37:13Z"
+     ]
+    },
+    "barrier": {
+     "overpass": 54,
+     "api": 54,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 0,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:38:16Z"
+     ]
+    },
+    "amenity": {
+     "overpass": 47,
+     "api": 47,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 3,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:45:27Z"
+     ]
+    },
+    "landuse": {
+     "overpass": 44,
+     "api": 44,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 2,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:55:36Z"
+     ]
+    },
+    "named": {
+     "overpass": 136,
+     "api": 136,
+     "only_overpass": 0,
+     "only_api": 0,
+     "version_diff": 0,
+     "tag_diff": 0,
+     "meta_diff": 8,
+     "geometry_diff": 0,
+     "overpass_server_base": [
+      "2026-11-12T17:56:36Z"
+     ]
+    }
+   },
+   "status": [
+    "200",
+    "cache"
+   ],
+   "server_base": "live OSM database at request time (2026-11-12T17:28:57Z .. 2026-11-12T18:00:18Z)",
+   "method": " (exact, not an approximation of Overpass' attic query):\n  1. current data: GET /api/0.6/map?bbox=... on tiles (a tile over the API's node limit is split in 4);\n  2. every changeset that touched the bbox after the date: GET /api/0.6/changesets?bbox=...&time=<date>,<t> paged back from\n     now; for each, its osmChange (GET /api/0.6/changeset/<id>/download); per element the smallest version written after\n     the date (element timestamps > date; a changeset open across the date can hold earlier edits);\n  3. version at the date = that smallest version - 1 (0: created later, so absent); those versions are fetched by id+version\n     (GET /api/0.6/nodes?nodes=<id>v<n>,... / ways / relations, 100 per request); elements never touched after the date\n     are the current ones; nodes a way needs that step 1 did not return are fetched (current = state at the date when\n     untouched); any element still dated after the date (changed by a changeset that did not touch the bbox, e.g. a\n     node of a long way outside it) takes the last version of its history at or before the date;\n  4. the predicate of the extract (tags, element type) and the bbox (nodes inside; ways with a segment meeting it; relations with a\n     member inside) select the elements, written in Overpass `out meta geom` form (ways with `geometry`, `bounds`).\n     Relations carry member geometry like Overpass `out geom`: member ways outside the map tiles are fetched (their\n     version at the date, from their history, and their nodes).\nData (c) OpenStreetMap contributors, ODbL 1.0. API usage: one request at a time with a pau",
+   "elements": 2878,
+   "requests": [
+    {
+     "url": "https://api.openstreetmap.org/api/0.6/map.json?bbox=-122.13407,37.65181,-122.10910,37.66735",
+     "status": "cache",
+     "bytes": 4625506,
+     "sha256": "773c9390c611af78bb3d6854e3bf8cbf68a1e67a066e5730ca43bc50e28d43e6",
+     "utc": "2026-11-12T17:28:57Z"
+    },
+    {
+     "url": "https://api.openstreetmap.org/api/0.6/changesets.json?bbox=-122.13407,37.65181,-122.10910,37.66735&time=2026-11-12T00:00:00Z&limit=100",
+     "status": 200,
+     "bytes": 226,
+     "sha256": "08d6e7b3a4b1c89037691e6623e5a02cf1ec4c805a64e941d7958bbdc4cc5e50",
+     "utc": "2026-11-12T18:00:18Z"
+    },
+    {
+     "url": "https://api.openstreetmap.org/api/0.6/way/40324744/history.json",
+     "status": "cache",
+     "bytes": 6005,
+     "sha256": "8dd8d5754b204aabb614a66cac531b42102c103081da6541a90dd5a08893c193",
+     "utc": "2026-11-12T17:31:25Z"
+    },
+    {
+     "url": "https://api.openstreetmap.org/api/0.6/nodes.json?nodes=486644610,486644617,486644644,486644664,486644677,486644688,486644707,486644717,486644729,4900249788,53044028,486643928,486643940,486643954,5334457937,486643967,5334457934,5334457936,5334457935,5334457933,7776565077,486644007,5334457932,486644067,5334457931,5334457930,486644085,5334457929,5334457928",
+     "status": "cache",
+     "bytes": 5073,
+     "sha256": "a298285354fe6a3bc9638c56f402bfd7509a0d7827259e9efff0e48f0dbb380c",
+     "utc": "2026-11-12T17:31:53Z"
+    }
+   ],
+   "crosscheck_overpass_merged": {
+    "a": 2878,
+    "b": 2878,
+    "only_a": 0,
+    "only_b": 0,
+    "version_diff": 0,
+    "tag_diff": 0,
+    "geometry_diff": 0,
+    "timestamp_diff": 0,
+    "changeset_diff": 0,
+    "uid_diff": 0,
+    "user_diff": 9,
+    "overpass_file": "overpass_khwd_at_20261112T000000Z.json",
+    "overpass_sha256": "975f7ab73451fcb60442fb87c07e99e0142dcc38f31229a93786e5a477e5b35c"
+   }
+  }
+ ],
+ "bytes": 1966281,
+ "sha256": "e2d4d0b2a3b06d4ccafd35fb0be6bd421a7fdefbbe9cb25fa5c2145ed678c604",
+ "elements": 2878,
+ "log": [
+  "map (37.65181, -122.13407, 37.66735, -122.1091): 23683 elements",
+  "changesets touching the bbox since 2026-11-12T00:00:00Z: 0 []",
+  "elements written after 2026-11-12T00:00:00Z: 0",
+  "fetching 1 relation member ways outside the tiles",
+  "cross-check against cached Overpass attic parts: {\"aeroway\": {\"overpass\": 217, \"api\": 217, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 0, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:15:51Z\"]}, \"prefixed_aeroway\": {\"overpass\": 0, \"api\": 0, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 0, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:23:51Z\"]}, \"building\": {\"overpass\": 1912, \"api\": 1912, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 0, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:28:01Z\", \"2026-11-12T17:29:01Z\", \"2026-11-12T17:30:06Z\", \"2026-11-12T17:31:06Z\"]}, \"man_made\": {\"overpass\": 1, \"api\": 1, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 0, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:31:06Z\"]}, \"navigationaid\": {\"overpass\": 0, \"api\": 0, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 0, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:36:09Z\"]}, \"airmark\": {\"overpass\": 0, \"api\": 0, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 0, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:36:09Z\"]}, \"highway\": {\"overpass\": 579, \"api\": 579, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 1, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:37:13Z\"]}, \"barrier\": {\"overpass\": 54, \"api\": 54, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 0, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:38:16Z\"]}, \"amenity\": {\"overpass\": 47, \"api\": 47, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 3, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:45:27Z\"]}, \"landuse\": {\"overpass\": 44, \"api\": 44, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 2, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:55:36Z\"]}, \"named\": {\"overpass\": 136, \"api\": 136, \"only_overpass\": 0, \"only_api\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"meta_diff\": 8, \"geometry_diff\": 0, \"overpass_server_base\": [\"2026-11-12T17:56:36Z\"]}}",
+  "aerodrome way 186495935 v13, 95 nodes, bounds (37.6531711, -122.1323685, 37.6659952, -122.1108065), max deviation from AERO_BOUNDS 0.0e+00 deg",
+  "cross-check against overpass_khwd_at_20261112T000000Z.json: {\"a\": 2878, \"b\": 2878, \"only_a\": 0, \"only_b\": 0, \"version_diff\": 0, \"tag_diff\": 0, \"geometry_diff\": 0, \"timestamp_diff\": 0, \"changeset_diff\": 0, \"uid_diff\": 0, \"user_diff\": 9, \"overpass_file\": \"overpass_khwd_at_20261112T000000Z.json\", \"overpass_sha256\": \"975f7ab73451fcb60442fb87c07e99e0142dcc38f31229a93786e5a477e5b35c\"}"
+ ],
+ "licence": "ODbL 1.0, (c) OpenStreetMap contributors"
+}

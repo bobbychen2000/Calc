@@ -1,0 +1,364 @@
+{
+ "source": {
+  "publication": "FAA Chart Supplement, Southwest U.S. (digital Chart Supplement, d-CS)",
+  "cycle": "SW, 29 OCT 2026 to 24 DEC 2026 (effective 0901Z 29 Oct 2026; current on 2026-11-12)",
+  "index": "https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/dafd/ (current edition Oct 29 2026, next Dec 24 2026)",
+  "search": "https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/dafd/search/results/?cycle=2611&ident=HWD",
+  "file": {
+   "name": "sw_174_29OCT2026.pdf",
+   "url": "https://aeronav.faa.gov/afd/29oct2026/sw_174_29OCT2026.pdf",
+   "sha256": "732babc54b353e3f541a9e0959825a35d526592571899045069f4878becbaa0f",
+   "pages": "CALIFORNIA 174-175 (HWD entry starts on 174, continues on 175)"
+  },
+  "licence": "US Government work (FAA, 17 U.S.C. 105), public domain",
+  "fetched": "2026-11-12"
+ },
+ "method": "the text layer of the PDFs (pypdf), not OCR. Printed lines that wrap are joined into one logical line; runs of spaces are collapsed; two text-layer artefacts are corrected to match the printed page, which was checked line by line against a 300 dpi render (pdftoppm) on 2026-11-12: a missing space between a bold label and its value (\"CON124.4\" is printed \"CON 124.4\", \"DEL128.05\" is \"DEL 128.05\") and the radar symbol printed in the left margin before \"NORCAL\" (\"®NORCAL\" -> \"® NORCAL\"). The right-hand column (charts) is kept apart in 'chart_refs'. Characters are those of the text layer: º (U+00BA) for degrees, ´ (U+00B4) for feet/minutes, – en dash, — em dash, ‡, ®.",
+ "entry": {
+  "lines": [
+   "HAYWARD EXEC (HWD)(KHWD) 2 W UTC–8(–7DT) N37º39.54´ W122º07.30´",
+   "52 B TPA—See Remarks NOTAM FILE HWD",
+   "RWY 10R–28L: H5694X150 (ASPH–GRVD) S–30, D–75, 2S–95 MIRL 0.4% up E",
+   "RWY 10R: REIL. VASI(V4R)—GA 3.0º TCH 25´. Thld dsplcd 826´. Tree. Rgt tfc.",
+   "RWY 28L: REIL. VASI(V4L)—GA 4.0º TCH 35´. Thld dsplcd 676´.",
+   "RWY 10L–28R: H3108X75 (ASPH) S–13 MIRL 0.3% up SE",
+   "RWY 10L: PAPI(P4L)—GA 3.0º TCH 29´. Tree.",
+   "RWY 28R: PAPI(P4L)—GA 3.0º TCH 44´. Rgt tfc.",
+   "SERVICE: S4 FUEL 100LL, JET A, UL94 OX 1, 3 LGT When twr clsd MIRL Rwy 10R–28L preset low ints, to increase ints ACTIVATE—CTAF. When twr clsd VASI Rwy 10R and Rwy 28L opr SS–SR, PAPI Rwy 10L, PAPI Rwy 28R, REIL Rwy 10R and Rwy 28L unavailable.",
+   "NOISE: Noise abatement procedures in effect ctc arpt for noise rules 510–293–8669.",
+   "AIRPORT REMARKS: Attended 1600–0100Z‡. When tower clsd Rwy 10L–28R CLOSED. UL94 fuel avbl at self–serve island. Flocks of birds feeding along the shoreline, creek areas and at the golf course to the north, on occasion may fly across various parts of the arpt. SAID in use. Operate transponders with altitude reporting mode and ADS–B (if equipped) enabled on all airport surfaces. 155´ energy complex exhaust stack 1.5 NM southwest of arpt. Do not overfly energy complex facility below 1,000´ MSL. TPA—652(600) Rwy 10R–28L, 852(800) Rwy 10L–28R. Rwy 10R has ldg distance remaining signs (lgtd) north side of rwy. Rwy 28L has ldg distance remaining signs (lgtd) south side of rwy. Twy A not visible from twr between Twy B and Twy C. Twy A1 clsd to acft with wingspan greater than 100´. Twy Z1 clsd to acft with wingspan greater than 94´. Transient helicopter tfc use helipads west of green ramp located at base of twr.",
+   "AIRPORT MANAGER: (510) 293-8678",
+   "WEATHER DATA SOURCES: ASOS (510) 786–3052",
+   "COMMUNICATIONS: CTAF 120.2 ATIS 126.7 510–786–3988 UNICOM 122.95",
+   "® NORCAL APP CON 124.4 125.35 134.5",
+   "TOWER 120.2 118.9 (1500–0500Z‡) GND CON 121.4 CLNC DEL 128.05",
+   "® NORCAL DEP CON 124.4",
+   "CLEARANCE DELIVERY PHONE: For CD when ATCT is clsd ctc NorCal Apch at 916-361-0516.",
+   "AIRSPACE: CLASS D svc 1500–0500Z‡; other times CLASS E.",
+   "RADIO AIDS TO NAVIGATION: NOTAM FILE OAK.",
+   "OAKLAND (VH) (DH) VORW/DME 116.8 OAK Chan 115 N37º43.56´ W122º13.42´ 113º 6.3 NM to fld. 13/17E.",
+   "DME unusable:",
+   "340º–040º byd 30 NM blo 8,000´",
+   "VOR unusable:",
+   "116º–126º byd 105 NM",
+   "116º–126º byd 40 NM blo 5,000´",
+   "116º–126º byd 52 NM blo 12,000´",
+   "130º–140º byd 40 NM blo 14,000´",
+   "130º–140º byd 55 NM",
+   "146º–156º byd 40 NM blo 7,000´",
+   "146º–156º byd 49 NM blo 11,000´",
+   "146º–156º byd 83 NM",
+   "157º–183º byd 40 NM",
+   "198º–213º byd 40 NM",
+   "214º–224º byd 40 NM blo 14,000´",
+   "214º–224º byd 65 NM",
+   "230º–240º byd 40 NM blo 14,500´",
+   "230º–240º byd 85 NM",
+   "241º–250º byd 40 NM",
+   "251º–263º byd 40 NM blo 31,000´",
+   "275º–298º byd 40 NM",
+   "314º–320º byd 40 NM",
+   "338º–352º byd 40 NM blo 8,500´",
+   "338º–352º byd 46 NM blo 18,000´",
+   "353º–115º byd 40 NM",
+   "LOC/DME 111.5 I–HWD Chan 52 Rwy 28L. Localizer offset angle 3.00 deg. LOC unmonitored when ATCT clsd."
+  ],
+  "chart_refs": [
+   "SAN FRANCISCO",
+   "H–3B, L–2F, 3B, A",
+   "IAP, AD"
+  ]
+ },
+ "hot_spots": {
+  "source": {
+   "file": "cs_sw_hotspot_29oct2026_p2.pdf",
+   "sha256": "d2fb06c884f2890051ad0460bd2c41afc153e4917b4cfcf203534e1ccc1dfce4",
+   "url": "https://aeronav.faa.gov/afd/29oct2026/SW_hotspot.pdf (page 2 of 7)"
+  },
+  "HWD": {
+   "HS 1": "Acft approaching Twy A from the ramp sometimes fail to turn onto Twy A, proceeding onto Twy E and ultimately Rwy 10L–28R. Acft exiting Rwy 10L–28R sometimes fail to ctc GND prior to taxiing to parking.",
+   "HS 2": "Area not visible from ATCT.",
+   "HS 3": "Area not visible from ATCT. Acft exiting Rwy 10L–28R sometimes fail to ctc GND prior to taxiing to parking.",
+   "HS 4": "Area not visible from ATCT.",
+   "HS 5": "Rwy 28L hold bars on Twy A1 and Twy Z1 are at non–typical lctn. Pilots sometime pass the hold bar wo authorization."
+  }
+ },
+ "legend": {
+  "file": "cs_sw_front_29oct2026_legend_p15-26.pdf",
+  "sha256": "29b64f617235e3a7b2502239b903d3cc36902f3629b340632c511d171331aebd",
+  "url": "https://aeronav.faa.gov/afd/29oct2026/SW_front_29oct2026.pdf (pages 15, 16, 18, 20, 21, 22, 26)",
+  "items": {
+   "‡": {
+    "where": "SW_front p.15 (printed 14), item 6 TIME CONVERSION",
+    "quote_decoded_text_layer": "indicates that during periods of Daylight Saving Time (DST) effective hours will be one hour earlier than shown",
+    "meaning": "during Daylight Saving Time the effective hours are one hour earlier than shown (glyph checked on the render)"
+   },
+   "®": {
+    "where": "SW_front p.26 (printed 25), item 29 COMMUNICATIONS",
+    "quote_decoded_text_layer": "APP CON³Approach Control. The symbol",
+    "meaning": "radar approach control (glyph checked on the render: \"APP CON—Approach Control. The symbol ® indicates radar approach control.\")"
+   },
+   "® (meaning)": {
+    "where": "SW_front p.26 (printed 25)",
+    "quote_decoded_text_layer": "indicates radar approach control"
+   },
+   "2 W": {
+    "where": "SW_front p.15 (printed 14), item 5 AIRPORT LOCATION",
+    "quote_decoded_text_layer": "Airport location is expressed as distance and direction from the center of the associated city in nautical miles"
+   },
+   "B": {
+    "where": "SW_front p.16, ROTATING LIGHT BEACON",
+    "quote_decoded_text_layer": "B indicates rotating beacon is available. Rotating beacons operate sunset to sunrise unless otherwise indicated"
+   },
+   "TPA": {
+    "where": "SW_front p.16, TRAFFIC PATTERN ALTITUDE",
+    "quote_decoded_text_layer": "The first figure shown is TPA above mean sea level. The second figure in parentheses is TPA above airport"
+   },
+   "2S": {
+    "where": "SW_front p.18, RUNWAY WEIGHT BEARING CAPACITY",
+    "quote_decoded_text_layer": "ST=2S=Two single wheels in tandem type landing gear (C130)"
+   },
+   "strength units": {
+    "where": "SW_front p.18",
+    "quote_decoded_text_layer": "Runway strength"
+   },
+   "gradient": {
+    "where": "SW_front p.20, RUNWAY GRADIENT",
+    "quote_decoded_text_layer": "Runway slope will be shown only when it is 0.3 percent or greater"
+   },
+   "S4": {
+    "where": "SW_front p.21, SERVICE",
+    "quote_decoded_text_layer": "S4:=Major airframe and major powerplant repairs."
+   },
+   "OX 1, 3": {
+    "where": "SW_front p.22, OXYGEN",
+    "quote_decoded_text_layer": "OX 1=High Pressure=OX 3=High Pressure³Replacement Bottles"
+   }
+  }
+ },
+ "derived": {
+  "tower_hours_local": "0700-2100 all year (1500-0500Z in PST; 1400-0400Z in PDT per ‡)",
+  "class_d_hours_local": "0700-2100 all year; other times Class E",
+  "attended_local": "0800-1700 all year (1600-0100Z‡)",
+  "tpa_ft_msl": {
+   "10R/28L": 652,
+   "10L/28R": 852
+  },
+  "tpa_ft_agl": {
+   "10R/28L": 600,
+   "10L/28R": 800
+  },
+  "right_traffic": [
+   "10R",
+   "28R"
+  ],
+  "left_traffic": [
+   "28L",
+   "10L"
+  ],
+  "gradient": {
+   "10R/28L": "0.4% up E",
+   "10L/28R": "0.3% up SE"
+  },
+  "strength_klb": {
+   "10R/28L": {
+    "S": 30,
+    "D": 75,
+    "2S": 95
+   },
+   "10L/28R": {
+    "S": 13
+   }
+  }
+ },
+ "crosscheck_plan_section1": {
+  "plan": "hwd3d/docs/PLAN.md section 1 (commit 254e7f7)",
+  "rows": [
+   {
+    "plan_row": "Identity",
+    "plan_value": "LID HWD, ICAO KHWD, \"HAYWARD EXEC\", Hayward, Alameda County, CA; public use, City of Hayward; 1947/05",
+    "cs": "HAYWARD EXEC (HWD)(KHWD) 2 W",
+    "verdict": "partial",
+    "note": "Name, LID and ICAO agree. The CS gives the location as 2 NM W of the city (legend: nautical miles; NASR DIST_CITY_TO_AIRPORT 2, W). County, ownership and activation date are not in the CS entry."
+   },
+   {
+    "plan_row": "ARP",
+    "plan_value": "37.65893166 N, -122.12173888 E",
+    "cs": "N37º39.54´ W122º07.30´",
+    "verdict": "agree",
+    "note": "NASR 37-39-32.154 N = 39.536´ and 122-07-18.26 W = 07.304´ round to the CS values (0.01´ = 18 m)."
+   },
+   {
+    "plan_row": "Field elevation",
+    "plan_value": "52.1 ft (diagram 52)",
+    "cs": "52 B TPA—See Remarks",
+    "verdict": "agree",
+    "note": "CS 52 ft."
+   },
+   {
+    "plan_row": "Magnetic variation",
+    "plan_value": "15° E (epoch 2005)",
+    "cs": null,
+    "verdict": "not_in_cs",
+    "note": "The airport entry has no variation. \"13/17E\" on the OAKLAND VOR/DME line is that NAVAID's elevation and variation, not the airport's."
+   },
+   {
+    "plan_row": "Runway 10R/28L",
+    "plan_value": "5,694 x 150 ft, asphalt, grooved, MIRL, S-30 / D-75, PIR marking, true 120°/300°",
+    "cs": "RWY 10R–28L: H5694X150 (ASPH–GRVD) S–30, D–75, 2S–95 MIRL 0.4% up E",
+    "verdict": "partial",
+    "note": "Length, width, surface, grooving, MIRL, S-30 and D-75 agree. The CS adds 2S-95 (two single wheels in tandem, 95,000 lb; absent from the NASR extract and from the PLAN) and the gradient 0.4% up E. Marking type and true alignment are not in the CS."
+   },
+   {
+    "plan_row": "10R end",
+    "plan_value": "displaced threshold 826 ft; VASI V4R 3.0°, TCH 25 ft; REIL; coordinates, elev 27.7",
+    "cs": "RWY 10R: REIL. VASI(V4R)—GA 3.0º TCH 25´. Thld dsplcd 826´. Tree. Rgt tfc.",
+    "verdict": "agree",
+    "note": "All stated items agree; the CS adds the controlling obstacle \"Tree\" (NASR OBSTN_TYPE TREE). Coordinates and elevations are not in the CS."
+   },
+   {
+    "plan_row": "28L end",
+    "plan_value": "displaced threshold 676 ft; VASI V4L 4.0°, TCH 35 ft; LOC/DME; REIL",
+    "cs": "RWY 28L: REIL. VASI(V4L)—GA 4.0º TCH 35´. Thld dsplcd 676´.",
+    "verdict": "agree",
+    "note": "LOC/DME confirmed on the NAVAID line: \"LOC/DME 111.5 I–HWD Chan 52 Rwy 28L. Localizer offset angle 3.00 deg. LOC unmonitored when ATCT clsd.\""
+   },
+   {
+    "plan_row": "Runway 10L/28R",
+    "plan_value": "3,108 x 75 ft, asphalt, MIRL, S-13, NPI marking",
+    "cs": "RWY 10L–28R: H3108X75 (ASPH) S–13 MIRL 0.3% up SE",
+    "verdict": "partial",
+    "note": "All stated items agree except the marking, which the CS does not give. The CS adds the gradient 0.3% up SE."
+   },
+   {
+    "plan_row": "10L end",
+    "plan_value": "PAPI P4L 3.0°, TCH 29 ft; left-hand traffic",
+    "cs": "RWY 10L: PAPI(P4L)—GA 3.0º TCH 29´. Tree.",
+    "verdict": "agree",
+    "note": "No \"Rgt tfc\" on the 10L line, so the pattern is left-hand. The CS adds \"Tree\"."
+   },
+   {
+    "plan_row": "28R end",
+    "plan_value": "PAPI P4L 3.0°, TCH 44 ft; right-hand traffic",
+    "cs": "RWY 28R: PAPI(P4L)—GA 3.0º TCH 44´. Rgt tfc.",
+    "verdict": "agree",
+    "note": ""
+   },
+   {
+    "plan_row": "Traffic pattern",
+    "plan_value": "10R RH; 10L and 28L LH; 28R RH. TPA 600 ft AGL, 800 ft AGL for 10L/28R",
+    "cs": "TPA—652(600) Rwy 10R–28L, 852(800) Rwy 10L–28R.",
+    "verdict": "agree",
+    "note": "TPA 652 ft MSL (600 AGL) and 852 ft MSL (800 AGL); \"Rgt tfc\" only on 10R and 28R."
+   },
+   {
+    "plan_row": "Tower",
+    "plan_value": "FAA ATCT, call HAYWARD, hours 0700-2100 local; tower closed: 10L/28R closed, CTAF 120.2, MIRL 10R/28L preset low",
+    "cs": "TOWER 120.2 118.9 (1500–0500Z‡)",
+    "verdict": "agree",
+    "note": "1500-0500Z = 0700-2100 PST (UTC-8); with ‡ (legend: one hour earlier during DST) 1400-0400Z = 0700-2100 PDT. So 0700-2100 local all year. Also confirmed: \"When tower clsd Rwy 10L–28R CLOSED\", \"CTAF 120.2\", \"When twr clsd MIRL Rwy 10R–28L preset low ints, to increase ints ACTIVATE—CTAF\". The PLAN omits that, with the tower closed, VASI 10R/28L run sunset to sunrise and PAPI 10L, PAPI 28R and REIL 10R/28L are unavailable, and the LOC is unmonitored. Operator (FAA) and call sign are not stated in the CS."
+   },
+   {
+    "plan_row": "Frequencies",
+    "plan_value": "TWR 120.2 (P, CTAF) and 118.9 (S; \"NASR only, not on the diagram\"), 257.8 UHF; GND 121.4; CD 128.05; ATIS 126.7 (24 h, 510-786-3988); UNICOM 122.95; NorCal 124.4 (P), 125.35, 134.5",
+    "cs": "COMMUNICATIONS: CTAF 120.2 ATIS 126.7 510–786–3988 UNICOM 122.95",
+    "verdict": "differs",
+    "note": "VHF agree: TOWER 120.2 118.9, GND CON 121.4, CLNC DEL 128.05, NORCAL APP CON 124.4 125.35 134.5 (® = radar approach control), NORCAL DEP CON 124.4. Differences: (1) 118.9 is printed in the CS, so \"NASR only\" in the PLAN is wrong - it is missing only from the diagram; (2) the UHF 257.8 (NASR LCL/P) is not in the CS; (3) ATIS hours are not in the CS (NASR ATIS_HRS 24)."
+   },
+   {
+    "plan_row": "Surface ADS-B",
+    "plan_value": "SAID in use ...",
+    "cs": "SAID in use. Operate transponders with altitude reporting mode and ADS–B (if equipped) enabled on all airport surfaces.",
+    "verdict": "agree",
+    "note": "Same text in the CS airport remarks."
+   },
+   {
+    "plan_row": "Taxiways on diagram",
+    "plan_value": "A, A1, B, C, D, E, F, Z, Z1; Z1 > 94 ft and A1 > 100 ft wingspan closed; Twy A not visible from ATCT between B and C",
+    "cs": "Twy A not visible from twr between Twy B and Twy C. Twy A1 clsd to acft with wingspan greater than 100´. Twy Z1 clsd to acft with wingspan greater than 94´.",
+    "verdict": "agree",
+    "note": "Restrictions agree. The full taxiway list is a diagram fact (AL-5015), not in the CS entry."
+   },
+   {
+    "plan_row": "Hot spots",
+    "plan_value": "HS 1-HS 5 on the diagram",
+    "cs": null,
+    "verdict": "not_in_cs",
+    "note": "Not in the airport entry; the SW hot spot list (cs_sw_hotspot_29oct2026_p2.pdf) has HWD HS 1-HS 5 with descriptions, transcribed in \"hot_spots\" below."
+   },
+   {
+    "plan_row": "Named areas",
+    "plan_value": "West/East Hangars, FBO ramps, GA Transient Ramp, Terminal/Admin, TWR, Fire Station, 28L Run-up",
+    "cs": null,
+    "verdict": "not_in_cs",
+    "note": "Diagram facts. The CS only names the \"green ramp\" and the tower (helicopter remark)."
+   },
+   {
+    "plan_row": "Helicopters",
+    "plan_value": "Transient helicopter TFC use helipads west of Green Ramp lctd at base of ATCT",
+    "cs": "Transient helicopter tfc use helipads west of green ramp located at base of twr.",
+    "verdict": "agree",
+    "note": ""
+   },
+   {
+    "plan_row": "Other remarks",
+    "plan_value": "lighted distance-remaining signs 10R north, 28L south; 155-ft stack 1.5 NM SW, no overflight below 1,000 MSL; noise abatement; beacon WG SS-SR; segmented circle, lighted windsock",
+    "cs": "Rwy 10R has ldg distance remaining signs (lgtd) north side of rwy. Rwy 28L has ldg distance remaining signs (lgtd) south side of rwy.",
+    "verdict": "partial",
+    "note": "Signs, stack (\"155´ energy complex exhaust stack 1.5 NM southwest of arpt. Do not overfly energy complex facility below 1,000´ MSL.\") and noise (\"Noise abatement procedures in effect ctc arpt for noise rules 510–293–8669.\") agree; the CS says *landing* distance remaining signs. Beacon: the CS shows \"B\" (rotating beacon, legend: operates sunset to sunrise) but not its colours. Segmented circle and windsock are not in the CS."
+   },
+   {
+    "plan_row": "Fuel and services",
+    "plan_value": "100LL, Jet A, UL94 (self-serve island); major airframe and powerplant repair; charter, instruction, rental; transient tie-downs",
+    "cs": "SERVICE: S4 FUEL 100LL, JET A, UL94 OX 1, 3",
+    "verdict": "partial",
+    "note": "Fuel agrees (\"UL94 fuel avbl at self–serve island\"). S4 = major airframe and major powerplant repairs (legend) agrees with NASR MAJOR/MAJOR. The CS adds oxygen OX 1, 3 (high pressure; high-pressure replacement bottles). Charter/instruction/rental and transient tie-downs are not in the CS."
+   },
+   {
+    "plan_row": "ADS-B recordings cover HWD",
+    "plan_value": "rec_pack within 25 nm of SFO",
+    "cs": null,
+    "verdict": "not_in_cs",
+    "note": "Not an FAA fact."
+   }
+  ],
+  "cs_facts_not_in_plan": [
+   {
+    "cs": "Attended 1600–0100Z‡",
+    "note": "airport attended 0800-1700 local all year (NASR APT_ATT 0800-1700 agrees)"
+   },
+   {
+    "cs": "AIRSPACE: CLASS D svc 1500–0500Z‡; other times CLASS E.",
+    "note": "Class D with the tower hours, Class E otherwise"
+   },
+   {
+    "cs": "CLEARANCE DELIVERY PHONE: For CD when ATCT is clsd ctc NorCal Apch at 916-361-0516.",
+    "note": ""
+   },
+   {
+    "cs": "Flocks of birds feeding along the shoreline, creek areas and at the golf course to the north",
+    "note": "bird remark"
+   },
+   {
+    "cs": "WEATHER DATA SOURCES: ASOS (510) 786–3052",
+    "note": "ASOS on field"
+   },
+   {
+    "cs": "AIRPORT MANAGER: (510) 293-8678",
+    "note": ""
+   },
+   {
+    "cs": "OAKLAND (VH) (DH) VORW/DME 116.8 OAK Chan 115 N37º43.56´ W122º13.42´ 113º 6.3 NM to fld.",
+    "note": "OAK VOR/DME 6.3 NM"
+   },
+   {
+    "cs": "UTC–8(–7DT)",
+    "note": "time zone"
+   },
+   {
+    "cs": "NOTAM FILE HWD",
+    "note": ""
+   }
+  ]
+ }
+}

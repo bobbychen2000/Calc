@@ -1,8 +1,36 @@
 {
  "hwd_mix_summary.txt, hwd_cov_summary.txt": {
   "url": null,
-  "licence": "own aggregate output derived from adsb.lol data (ODbL 1.0). Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL.",
+  "licence": "own aggregate output derived from adsb.lol data, ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL. The two plain-text Phase 0 summaries carry no notice inside; this entry is their notice (ODbL 4.2(d))",
   "made_by": "hwd3d/tools/phase0/hwd_mix.py and hwd_cov.py run on sfo3d/refs/cache/rec_pack (base a967f9b; 111 hours 2026-11-04 17Z .. 2026-11-11 13Z), 2026-11-12",
   "note": "Aggregates only. Per-aircraft lists are deliberately NOT committed: 33 of the 243 aircraft seen on the field carry the FAA LADD flag (owner asked for limited display), see docs/PLAN.md risks."
+ },
+ "hwd_events.json": {
+  "url": "https://adsb.lol (API /v2 answers recorded by sfo3d tools/live/record.py)",
+  "licence": "ODbL 1.0 - own aggregate output derived from adsb.lol data. Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/).",
+  "fetched": "2026-11-04 .. 2026-11-11 (recording); derived 2026-11-12",
+  "made_by": "hwd3d/tools/adsb/extract.py + events.py (task G4, 2026-11-12) from sfo3d/refs/cache/rec_pack/adsblol_<hour>.jsonl.xz @ a967f9b (111 hourly files 2026-11-04 17Z .. 2026-11-11 13Z, pinned in hwd3d/tools/adsb/common.py HOURS)",
+  "note": "Runway / helicopter event counts by type, runway end, tower status, class and local hour, with the classifier rules and their cut statistics. Also uses FAA NASR runway data (public domain) via hwd3d/tools/common/hwd_frame.py and OSM features (ODbL) for helicopter places. Aggregates only (default D1, docs/PLAN.md 6a): positions, ICAO type designators, ADS-B emitter categories, source classes, duration buckets (stays) / durations rounded to 10 s (run-up stops) and counts; no ICAO address, registration, callsign or time stamp. The per-aircraft working files stay in refs/cache/local/adsb/ (gitignored)."
+ },
+ "hwd_parked_stays.json": {
+  "url": "https://adsb.lol (API /v2 answers recorded by sfo3d tools/live/record.py)",
+  "licence": "ODbL 1.0 - own aggregate output derived from adsb.lol data. Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/).",
+  "fetched": "2026-11-04 .. 2026-11-11 (recording); derived 2026-11-12",
+  "made_by": "hwd3d/tools/adsb/extract.py + parked_stays.py (task G4, 2026-11-12) from sfo3d/refs/cache/rec_pack/adsblol_<hour>.jsonl.xz @ a967f9b (111 hourly files 2026-11-04 17Z .. 2026-11-11 13Z, pinned in hwd3d/tools/adsb/common.py HOURS)",
+  "note": "Stationary stays >= 5 min, parking spots clustered from them, signal starts/ends on the ground, position noise by source/NACp. Location labels from refs/cache/osm/khwd_features.json (ODbL 1.0, (c) OpenStreetMap contributors); NDVI per stay from USDA NAIP 2024 (public domain). Aggregates only (default D1, docs/PLAN.md 6a): positions, ICAO type designators, ADS-B emitter categories, source classes, duration buckets (stays) / durations rounded to 10 s (run-up stops) and counts; no ICAO address, registration, callsign or time stamp. The per-aircraft working files stay in refs/cache/local/adsb/ (gitignored). Phase 1 review (2026-11-12): stays carry dur_bucket only (exact dur_s removed); the ADS-B transport class is 'feed' (was 'src', which in hwd3d means obs / inf)."
+ },
+ "hwd_ground_cells.json": {
+  "url": "https://adsb.lol (API /v2 answers recorded by sfo3d tools/live/record.py)",
+  "licence": "ODbL 1.0 - own aggregate output derived from adsb.lol data. Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/).",
+  "fetched": "2026-11-04 .. 2026-11-11 (recording); derived 2026-11-12",
+  "made_by": "hwd3d/tools/adsb/extract.py + ground_cells.py (task G4, 2026-11-12) from sfo3d/refs/cache/rec_pack/adsblol_<hour>.jsonl.xz @ a967f9b (111 hourly files 2026-11-04 17Z .. 2026-11-11 13Z, pinned in hwd3d/tools/adsb/common.py HOURS)",
+  "note": "5 m cells of moving / stationary ADS-B ground fixes (taxi-path density). Aggregates only (default D1, docs/PLAN.md 6a): positions, ICAO type designators, ADS-B emitter categories, source classes, duration buckets (stays) / durations rounded to 10 s (run-up stops) and counts; no ICAO address, registration, callsign or time stamp. The per-aircraft working files stay in refs/cache/local/adsb/ (gitignored)."
+ },
+ "hwd_runup_holds.json": {
+  "url": "https://adsb.lol (API /v2 answers recorded by sfo3d tools/live/record.py)",
+  "licence": "ODbL 1.0 - own aggregate output derived from adsb.lol data. Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/).",
+  "fetched": "2026-11-04 .. 2026-11-11 (recording); derived 2026-11-12",
+  "made_by": "hwd3d/tools/adsb/extract.py + events.py + runup_holds.py (task G4, 2026-11-12) from sfo3d/refs/cache/rec_pack/adsblol_<hour>.jsonl.xz @ a967f9b (111 hourly files 2026-11-04 17Z .. 2026-11-11 13Z, pinned in hwd3d/tools/adsb/common.py HOURS)",
+  "note": "Stops of 30 s - 10 min before departures (run-up pads, hold-short, line-up), with clusters. Labels from OSM (ODbL 1.0). Aggregates only (default D1, docs/PLAN.md 6a): positions, ICAO type designators, ADS-B emitter categories, source classes, duration buckets (stays) / durations rounded to 10 s (run-up stops) and counts; no ICAO address, registration, callsign or time stamp. The per-aircraft working files stay in refs/cache/local/adsb/ (gitignored). Phase 1 review (2026-11-12): per-stop dur_lo / dur_hi are rounded to 10 s; transport class 'feed' (was 'src')."
  }
 }
