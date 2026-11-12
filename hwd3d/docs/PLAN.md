@@ -169,6 +169,27 @@ a snapshot/replay artifact. Copy modules from sfo3d@a967f9b into `hwd3d/` and re
 - **Q6 (scope):** Should the camera and traffic scope include OAK arrivals overhead and nearby fields, or only HWD
   traffic?
 
+### 6a. Working defaults (2026-11-12)
+
+The owner asked me to "use your best judgement to proceed". Until the owner answers otherwise, these defaults apply.
+Each can be reversed.
+
+- **D1 (LADD/PIA):** the app shows the type only, with no registration, callsign or operator, for aircraft that carry
+  the LADD or PIA flag. **No committed file holds a per-aircraft identity** (hex, registration or callsign) derived
+  from ADS-B. Parked-stay and coverage outputs are aggregated into positions, type classes and counts. FAA registry
+  look-ups run locally or in the relay from a fetched copy that is not committed.
+- **D2 (ATC):** a link-out only, to LiveATC's KHWD search page `https://www.liveatc.net/search/?icao=KHWD`. No
+  embedded stream, and no mount names until they are verified. No synthetic audio.
+- **D3 (tie-downs):** tie-down and ramp spots are inferred from NAIP 2024 (painted rows and tie-down marks) and from
+  ADS-B parked stays, marked `src: 'inf'` or `'obs'` with the evidence. Labels use the hangar row letter or zone
+  ("West tie-downs row 3") and are never presented as official numbers.
+- **D4 (imagery):** NAIP only for now. Screenshots will be used as reference if the owner sends them.
+- **D5 (models):** FlightGear GPL-2.0+ models are acceptable, following the sfo3d airliner precedent. Each model's
+  licence file is checked; anything without a clear open licence is replaced by a procedural or own model.
+- **D6 (scope):** the app shows all traffic within about 5 nm and below 3,000 ft AGL. Only aircraft whose track
+  touches the HWD runways, taxiways or ramps, or flies the HWD pattern, are classified as HWD traffic. Other traffic
+  (OAK and SFO arrivals) is drawn as overflights.
+
 ## 7. Phased task list
 
 Each phase ends with commits, a push, and renders shown to the owner. No scored QA loop starts without the owner's
