@@ -41,5 +41,13 @@
  "_nominatim": {
   "url": "https://nominatim.openstreetmap.org/search",
   "note": "id lookup only (3 + 1 queries, 1/s, usage policy)"
+ },
+ "rel_16308125_full.xml": {
+  "url": "https://api.openstreetmap.org/api/0.6/relation/16308125/full",
+  "what": "Lake Merced (natural=water, water=lake; multipolygon v6 2024-07-17, 3 outer ways; id from https://nominatim.openstreetmap.org/search?q=Lake+Merced,+San+Francisco&format=jsonv2)",
+  "licence": "ODbL 1.0 - (c) OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+  "fetched": "2026-11-13",
+  "sha256": "fbc3357f4834a073f9ad9694490a7b00c5548bee504f30ab1a52e484a291f5c2",
+  "used_for": "tools/env/build_reservoirs.py -> js/env/reservoirs_data.js (terrain owner decision 7)"
  }
 }
