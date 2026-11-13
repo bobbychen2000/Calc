@@ -1,0 +1,10 @@
+{
+ "khwd_metar_20261105_14-21Z_iem.csv": {
+  "url": "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?station=HWD&data=metar&year1=2026&month1=11&day1=5&hour1=14&year2=2026&month2=11&day2=5&hour2=21&tz=Etc/UTC&format=onlycomma&latlon=no&missing=M&trace=T&direct=no&report_type=3",
+  "licence": "METAR reports of the KHWD ASOS (FAA/NWS observations, U.S. Government works, public domain), retrieved through the Iowa Environmental Mesonet ASOS archive (Iowa State University), which redistributes them freely; credit: Iowa Environmental Mesonet",
+  "fetched": "2026-11-13",
+  "sha256": "6b93aa3b96d6db26cad58546fa5751deba511271929d3c55cdfac3ad7a0bc1b0",
+  "made_by": null,
+  "note": "Routine METARs 14:54-20:54 UTC on 5 Nov 2026 (the day of the two video movements of owner decision OD3; the movements themselves are selected by rule at build time from the local, gitignored event list, default D1). Weather for the renderer's ?metar= override."
+ }
+}
