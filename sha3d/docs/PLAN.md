@@ -151,8 +151,8 @@ AIP content appears here as short cited facts only. Whole AIP lists are kept loc
 | Fraction of SHA movements seen | – | – | 0 % | 0 % |
 
 - The `prod` release was scanned for all three days. For 12 Nov the **MLAT-only release** was also scanned: 0 of
-  36,826 traces within 150 km. It is a single `.tar`, which made the first attempt fail. The staging release of 12 Nov
-  is being scanned and will be appended; it is expected to duplicate `prod`.
+  36,826 traces within 150 km. It is a single `.tar`, which made the first attempt fail. The **staging** release of 12 Nov
+  was scanned too: 0 of 73,539 traces.
 - **Coverage map, 12 Nov.**
   - The nearest covered area is a feeder cluster around Hefei/Nanjing, at 31–32 N and 116–119.9 E. Low-level aircraft
     appear there only at 116–118 E.

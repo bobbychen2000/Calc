@@ -1,12 +1,59 @@
 {
   "files": {
-    "grid_2026.11.12_prod.json": "per-1-degree counts of distinct aircraft over East Asia, derived by tools/adsb/globe_grid.py",
-    "zsss_<date>_<kind>.json.gz": "aircraft traces within 150 km of ZSSS, filtered by tools/adsb/globe_scan.py"
+    "grid_2026.11.12_prod.json": {
+      "what": "per-1-degree counts of distinct aircraft over East Asia, derived by tools/adsb/globe_grid.py",
+      "release_tag": "v2026.11.12-planes-readsb-prod-0",
+      "bytes": 9484,
+      "sha256": "3b833c1bbc9fec82541931b6e23b8f7609e61a7da085328cd23513fbb9e5ff52"
+    },
+    "zsss_2026.11.08_prod.json.gz": {
+      "what": "aircraft traces within 150 km of ZSSS (2 of 66,788), filtered by tools/adsb/globe_scan.py",
+      "release_tag": "v2026.11.08-planes-readsb-prod-0",
+      "bytes": 387,
+      "sha256": "9253eb1ccf4d29e1dfaf2b9082b566cecca59ee63aad2d68ee6d6f2bd0c4fa9b"
+    },
+    "zsss_2026.11.10_prod.json.gz": {
+      "what": "aircraft traces within 150 km of ZSSS (0 of 75,360), filtered by tools/adsb/globe_scan.py",
+      "release_tag": "v2026.11.10-planes-readsb-prod-0",
+      "bytes": 181,
+      "sha256": "6918e2b79e7f1ca378f8b7c457cf46e81acfcc1cee67b4a58be84cb1e3bdec04"
+    },
+    "zsss_2026.11.12_prod.json.gz": {
+      "what": "aircraft traces within 150 km of ZSSS (0 of 73,533), filtered by tools/adsb/globe_scan.py",
+      "release_tag": "v2026.11.12-planes-readsb-prod-0",
+      "bytes": 182,
+      "sha256": "53f3ecb1a33975082a27ed02fd1c6d08daf7d0edeb3737026a9a5a9c4f09e282"
+    },
+    "zsss_2026.11.12_mlatonly.json.gz": {
+      "what": "aircraft traces within 150 km of ZSSS (0 of 36,826), filtered by tools/adsb/globe_scan.py",
+      "release_tag": "v2026.11.12-planes-readsb-mlatonly-0",
+      "bytes": 188,
+      "sha256": "107ab9c1d74d79e7558bd7422da4a0fa3bf78830bcd4725e9eee0305a3551044"
+    },
+    "zsss_2026.11.12_staging.json.gz": {
+      "what": "aircraft traces within 150 km of ZSSS (0 of 73,539), filtered by tools/adsb/globe_scan.py",
+      "release_tag": "v2026.11.12-planes-readsb-staging-0",
+      "bytes": 188,
+      "sha256": "463359bd20514a9f8c4ce92364d62aba72c48c9e9b1d9da24acee97f4cc05847"
+    }
   },
-  "source": "adsb.lol globe_history daily archive, GitHub releases of adsblol/globe_history_2026 (tags v<date>-planes-readsb-prod-0 / -mlatonly-0)",
+  "files_note": "sha256 for every file in this directory except *.log (local scan logs, gitignored) and this SOURCES.json; computed with sha256sum on 2026-11-13",
+  "source": "adsb.lol globe_history daily archive, GitHub releases of adsblol/globe_history_2026",
   "url": "https://github.com/adsblol/globe_history_2026/releases",
+  "release_tags": [
+    "v2026.11.08-planes-readsb-prod-0",
+    "v2026.11.10-planes-readsb-prod-0",
+    "v2026.11.12-planes-readsb-prod-0",
+    "v2026.11.12-planes-readsb-mlatonly-0",
+    "v2026.11.12-planes-readsb-staging-0"
+  ],
   "retrieved": "2026-11-13",
-  "licence": "ODbL 1.0 (adsb.lol: data made available under the Open Database License; exact wording to be quoted in docs/phase0/adsb.md)",
+  "licence": "ODbL 1.0",
+  "licence_url": "https://www.adsb.lol/docs/open-data/historical/",
+  "licence_quote": "license: ODbL 1.0 , use it freely, just keep it open.",
+  "licence_quote_readme": "This database is made available under the Open Database License: http://opendatacommons.org/licenses/odbl/1.0/. (README of adsblol/globe_history_2026, commit 5959c79)",
+  "licence_quote_source": "docs/phase0/adsb.md, facts F7 (docs page) and F6 (README)",
   "attribution": "Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL",
+  "note": "derived database (filtered extract), ODbL 1.0 share-alike",
   "redistributable": true
 }

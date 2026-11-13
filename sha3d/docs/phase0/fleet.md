@@ -62,7 +62,7 @@ Details are in §1.4.
     - "C919 B" by juarturo: 88k faces, untextured. The same file is in GitHub `AlstonZhuang/comac` with a `license.txt` that quotes CC-BY-4.0.
     - "ARJ21" by DL.123: 608k faces, white model.
   - All other C919 models found are unlicensed, non-commercial or paid.
-- **Dimensions [verified]**: COMAC publishes ACAPs with full dimensions for both types (C919 R9 2025-10-17; C909 R13 2025-12-24) and a C919 three-view DWG. They are proprietary: use for measurement only (§3.4).
+- **Dimensions [verified]**: COMAC publishes ACAPs with full dimensions for both types (C919 R9 2025-10-17; C909 R13 2025-12-24) and a C919 three-view DWG. They are proprietary, so their figures are not reproduced here; whether they may be used at all is an open owner decision (§3.4). Main dimensions are also public on Wikipedia [secondary].
 - **ARJ21 → C909 [verified]**:
   - COMAC's product pages now say "C909".
   - The C909 ACAP cover reads "C909 (ARJ21-700)".
@@ -70,8 +70,8 @@ Details are in §1.4.
   - The timing (Zhuhai air show, Nov 2024) is **secondary** (Wikipedia citing FlightGlobal).
 
 ### 0.5 New work, in priority order (details in §5)
-1. **C919 model.** Candidate: CC BY 4.0 "C919 B". Fallback: fit our A320 model to the ACAP.
-2. **C909 model.** Candidate: CC BY 4.0 "ARJ21". Fallback: fit our CRJ900 model to the ACAP.
+1. **C919 model.** Candidate: CC BY 4.0 "C919 B". Fallback: fit our A320 model to published dimensions (source of the fit: owner decision, §3.4).
+2. **C909 model.** Candidate: CC BY 4.0 "ARJ21". Fallback: fit our CRJ900 model to published dimensions (source of the fit: owner decision, §3.4).
 3. **Liveries** for about 15 new brands, the four Shanghai carriers first. Existing CES / CCA / CSN liveries need extending to their narrow-bodies, C919 and C909.
 
 ---
@@ -286,7 +286,7 @@ All clones are in `refs/cache/models/gh_*`. Commits and blob ids are in each `SO
   - **Note [obs]:** while reading blob sizes, git fetched the blobs into the clone's object store. They are not checked out and nothing was converted.
   - **Reading the glTF JSON only** (`tools/fleet/gltf_bbox.py`, accessor min/max) **[obs]**:
     - Sketchfab export with 156 meshes, 11 materials, no textures. Bounding box 7.78 × 2.32 × 7.98 units (span × height × length).
-    - So **the model is not to scale**: span/length = 0.974, against ACAP 35.80/38.90 = 0.920, and height/length 0.290 against 0.307.
+    - So **the model is not to scale**: span/length = 0.974, against 35.8/38.9 = 0.920 from the published dimensions (Wikipedia spec table, §3.4), and height/length 0.290 against 0.307.
     - **[inf]** It needs the same "fit to published dimensions" step sfo3d applies to every model.
 - **`459605823/vis-c919`** @11893893: `public/vis/c919.glb` (994 KB). **No licence file**, so all rights reserved by default. Excluded.
 - **`caleseele/c919-autonomy`** @2f8bfeff: README says the model is self-made with Blender scripts ("模型由本仓库脚本生成") and "三维结构模型 / GLB / 涂装贴图不在公开站点发布". No GLB in the tree and **no licence file**. Excluded.
@@ -301,44 +301,47 @@ All clones are in `refs/cache/models/gh_*`. Commits and blob ids are in each `SO
 | Rename date | Wikipedia: "the jet was rebranded as the C909 in November 2024" (cites FlightGlobal 12 Nov 2024, Zhuhai air show) | secondary |
 | C919 service entry | COMAC: "The world's first C919 aircraft was delivered on December 9th, 2022, and successfully completed its first commercial flight on May 28th, 2023." Wikipedia: MU9191 departed Shanghai Hongqiao for Beijing Capital | verified / secondary |
 
-### 3.4 Published dimensions (COMAC ACAPs, for a procedural fallback and for fitting) [verified]
+### 3.4 Published dimensions (COMAC ACAPs exist; their figures are not reproduced here) [verified]
 
-- **C919**: ACAP C919-SVV19-50009-00, R9 2025-10-17, §02-02 "General Aircraft Dimensions" (Issue 003, 2025-10-17), p. 35 of the PDF. The figure values were read from the rendered drawing.
-- **C909**: ACAP TP-E700051 (PMC ARJ21-SVV19-50009-00), R13 2025-12-24, §02-02 "General Dimensions" (Issue 003, 2025-12-24), p. 29. Heights come from §02-03 "Ground Clearances".
+COMAC's ACAPs (cached locally, not redistributable):
+- **C919**: ACAP C919-SVV19-50009-00, R9 2025-10-17, §02-02 "General Aircraft Dimensions" (Issue 003, 2025-10-17), p. 35 of the PDF. https://www.comac.cc/fujian/c919acap_en.pdf, saved in `refs/cache/fleet/comac_c919_acap/`.
+- **C909**: ACAP TP-E700051 (PMC ARJ21-SVV19-50009-00), R13 2025-12-24, §02-02 "General Dimensions" (Issue 003, 2025-12-24), p. 29; heights in §02-03 "Ground Clearances". https://www.comac.cc/fujian/c909acap_en.pdf, saved in `refs/cache/fleet/comac_c909_acap/`.
+- **C919 three-view DWG**: https://www.comac.cc/fujian/c919sanmiantu.dwg, saved in `refs/cache/fleet/comac_c919_3view/`.
+- The ACAP terms (below) forbid reproducing or quoting their content, so the ACAP figures were removed from this report (2026-11-13). Earlier commits still hold them; that is the owner's decision.
+
+The values below come only from public non-ACAP sources this report already cites: the Wikipedia spec tables (Comac_C919 and Comac_C909 wikitext, CC BY-SA 4.0) and the COMAC product pages.
 
 | Dimension | C919 | C909 (ARJ21-700) | For comparison: our model base |
 |---|---|---|---|
-| Overall length | **38.90 m** | **33.46 m** | A320 37.57 m / CRJ900 36.2 m [secondary] |
-| Wing span | **35.80 m** (STD and ER, §03 Table 1) | **27.29 m** | A320neo 35.80 m [secondary] / CRJ900 24.9 m [secondary] |
-| Height | **11.95 m** (three-view). Ground-clearance table, vertical tail: 12.21 m (OEW, fwd CG, 15 °C) down to 11.88 m (MTW, aft CG) | Vertical-tail top **8.606 m** (OEW, 15 °C); 8.476–8.600 m at MTW | – |
-| Horizontal tail span | 12.60 m | 10.50 m | – |
-| Wheelbase | 13.47 m | 14.88 m | – |
-| Main-gear track | 7.62 m (outer tyre edges 8.98 m) | 4.68 m (outer 5.80 m) | – |
-| Nose to nose-gear | 5.28 m | 2.30 m | – |
-| Fuselage width | 3.96 m | 3.34 m (plan); 3.61 m depth dimension in the side view | – |
-| Engine centreline from fuselage centreline | 6.13 m | rear-fuselage pods (not dimensioned in plan) | – |
+| Overall length | 38.9 m [secondary, WP] | 33.46 m [secondary, WP] | A320 37.57 m / CRJ900 36.2 m [secondary] |
+| Wing span | 35.8 m [secondary, WP spec table; its prose also gives 33.6 m, 35.4 m with winglets] | 27.28 m [secondary, WP] | A320neo 35.80 m [secondary] / CRJ900 24.9 m [secondary] |
+| Height | 11.95 m [secondary, WP] | 8.44 m [secondary, WP] | – |
+| Fuselage width | 3.96 m [secondary, WP] | not in a public non-ACAP source we cite | – |
 | Seats / range (COMAC product page) | 158–192 seats, 4,075–5,555 km | 78–97 seats, 2,225–3,700 km | – |
-| MTOW STD / ER | 75,100 / 78,900 kg | 40,500 / 43,500 kg | – |
-| Engines | 2 × CFM LEAP-1C (ACAP text) | 2 × GE CF34-10A [secondary, WP] | – |
+| MTOW STD / ER | 75,100 / 78,900 kg [secondary, WP] | 40,500 / 43,500 kg [secondary, WP] | – |
+| Engines | 2 × CFM LEAP-1C (-1C28 STD, -1C30 ER) [secondary, WP] | 2 × GE CF34-10A [secondary, WP] | – |
+
+Horizontal-tail span, wheelbase, main-gear track, nose-gear position, engine positions and ground clearances are in the ACAPs only; they are not reproduced.
 
 **Licence of these documents [verified]**
 - ACAP front matter: "COMMERCIAL AIRCRAFT CORPORATION OF CHINA, LTD. PROPRIETARY, CONFIDENTIAL, AND/OR TRADE SECRET". It also says "The information contained herein shall not be reproduced, quoted, disclosed or used directly or indirectly, in whole or in part for any purposes, except with prior written authorization by COMAC."
 - COMAC site terms: "未经中国商飞公司或相关权利人事先的书面许可，您不得以任何方式擅自复制、传播、出版、转帖、改编或陈列本网站的内容。" The limited licence excludes "（3）衍生性的使用本网站及其内容".
-- The PDFs and DWG stay in the gitignored cache and are **not redistributable**. I quote only figure labels and numbers here.
+- The PDFs and DWG stay in the gitignored cache and are **not redistributable**. This report reproduces none of their figures; it gives only the revisions, URLs, cache paths and the terms above.
 - **Owner decision needed:** whether measured numbers from a manufacturer document may drive a published model. This is the same practice as sfo3d's use of the Boeing and Airbus ACAPs ("measurement only"), but COMAC's wording is stricter.
 
 **Contradicted:** C909 height and span.
 - Wikipedia gives height **8.44 m** and span **27.28 m**.
-- The ACAP gives 8.606 m (vertical-tail top at OEW) and 27.29 m.
-- Use the ACAP.
+- The ACAP values differ slightly (not reproduced here).
+- Which to use belongs to the owner decision below; until then, use the public values.
 
 **Procedural fallback (no new third-party geometry) [inf]:**
-- **C919** ≈ our GPL A320 model, fitted with `fit.js` plugs: +1.33 m length, same 35.80 m span, +0.19 m height.
-- **C909** ≈ our GPL CRJ900 model, fitted the way `BIZ` fits business jets: uniform scale to 33.46 m, outer wing stretched to 27.29 m, fin to 8.6 m.
+- **C919** ≈ our GPL A320 model, fitted with `fit.js` plugs to the public values above: +1.33 m length, same 35.8 m span, +0.19 m height.
+- **C909** ≈ our GPL CRJ900 model, fitted the way `BIZ` fits business jets: uniform scale to 33.46 m length, outer wing stretched to 27.28 m span, fin to about 8.4 m (public values above).
+- **Open owner decision:** may the fit (and any later detailing) use the ACAPs and the three-view DWG at all, or only public non-ACAP sources such as Wikipedia and the COMAC product pages? Until decided, use only the public values.
 - Both are recognisable but not faithful:
   - C919: 6-window cockpit, LEAP-1C nacelles and integrated winglets.
   - C909: supercritical wing with winglets, rear-mounted CF34s, MD-80-like T-tail.
-  - The C919 three-view DWG (`refs/cache/fleet/comac_c919_3view/`, AutoCAD 2013–2017, not converted; LibreDWG would be needed) could give plan and side outlines for measurement.
+  - The C919 three-view DWG (`refs/cache/fleet/comac_c919_3view/`, AutoCAD 2013–2017, not converted; LibreDWG would be needed) could give plan and side outlines for measurement, subject to the same owner decision.
 
 ---
 
@@ -407,15 +410,15 @@ Date checked for every row: **2026-11-13**.
 | 18 | C919 service entry | Delivered 9 Dec 2022; first commercial flight 28 May 2023 | https://english.comac.cc/products/ca/ | "successfully completed its first commercial flight on May 28th, 2023" | verified |
 | 19 | First C919 flight from SHA | MU9191 SHA→PEK, 28 May 2023 | https://en.wikipedia.org/w/index.php?title=Comac_C919&action=raw | "MU9191 departing from Shanghai Hongqiao Airport and arriving at Beijing Capital Airport" | secondary |
 | 20 | C919 on SHA–HKG | MU721/722 daily, C919, NW25 | https://www.aeroroutes.com/eng/251022-munw25shahkg | "MU721 SHA0800 – 1050HKG 919 D" | secondary |
-| 21 | C919 dimensions | L 38.90, span 35.80, H 11.95, HT 12.60, wheelbase 13.47, track 7.62 m | https://www.comac.cc/fujian/c919acap_en.pdf (R9 2025-10-17, §02-02) | figure labels "38.90 m", "35.80 m", "11.95 m" | verified |
-| 22 | C909 dimensions | L 33.46, span 27.29, HT 10.50, wheelbase 14.88, track 4.68 m; fin top 8.606 m (OEW 15 °C) | https://www.comac.cc/fujian/c909acap_en.pdf (R13 2025-12-24, §02-02, §02-03) | figure labels "33.46m", "27.29m" | verified |
-| 23 | C909 height / span | WP 8.44 m / 27.28 m vs ACAP 8.606 m / 27.29 m | Comac_C909 wikitext vs row 22 | "{{convert|8.44|m..." | contradicted |
+| 21 | C919 dimensions | L 38.9, span 35.8, H 11.95 m (Wikipedia spec table). The ACAP R9 2025-10-17 §02-02 has the full set; not reproduced (terms, row 25) | https://en.wikipedia.org/w/index.php?title=Comac_C919&action=raw ; ACAP: https://www.comac.cc/fujian/c919acap_en.pdf (local only) | "{{cvt\|38.9\|m\|ftin}}" / "{{cvt\|35.8\|m\|ftin}}" / "{{cvt\|11.95\|m\|ftin}}" | secondary (ACAP figures withheld) |
+| 22 | C909 dimensions | L 33.46, span 27.28, H 8.44 m (Wikipedia spec table). The ACAP R13 2025-12-24 §02-02/§02-03 has the full set; not reproduced (terms, row 25) | https://en.wikipedia.org/w/index.php?title=Comac_C909&action=raw ; ACAP: https://www.comac.cc/fujian/c909acap_en.pdf (local only) | "{{convert\|33.46\|m\|ftin\|abbr=on}}" | secondary (ACAP figures withheld) |
+| 23 | C909 height / span | WP 8.44 m / 27.28 m; the ACAP differs slightly (values not reproduced) | Comac_C909 wikitext vs the cached ACAP | "{{convert|8.44|m..." | contradicted |
 | 24 | C919 / C909 seats and range | 158–192 seats, 4,075–5,555 km / 78–97 seats, 2,225–3,700 km | https://english.comac.cc/products/ca/ ; https://english.comac.cc/products/c909/ | "a layout of 78 to 97 seats and a range of 2,225 to 3,700 kilometers" | verified |
 | 25 | COMAC document licence | Proprietary; no reproduction, quoting or use without written authorisation | ACAP PDFs (rows 21–22); https://www.comac.cc/bottom/201401/13/t20140113_1340598.shtml | "shall not be reproduced, quoted, disclosed or used directly or indirectly ... except with prior written authorization by COMAC" | verified |
 | 26 | COMAC trademarks | COMAC, ARJ21, C909, C919 names and logos | ACAP front matter | "are all trademarks owned by the Commercial Aircraft Corporation of China, Ltd." | verified |
 | 27 | Open C919 model | "C919 B" by juarturo, CC BY 4.0, 88,320 faces, downloadable | https://sketchfab.com/3d-models/c919-b-d7f372558e1c48fca54c145f2a491fc4 (API: https://api.sketchfab.com/v3/models/d7f372558e1c48fca54c145f2a491fc4) | "Author must be credited. Commercial use is allowed." | verified (licence as declared by the uploader) |
 | 28 | Same model on GitHub | `AlstonZhuang/comac` `public/models/aircraft/scene.glb` + `license.txt` | https://github.com/AlstonZhuang/comac (commit 957bdc44) | "licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)" | verified |
-| 29 | C919 B scale | Not to scale: span/length 0.974 (ACAP 0.920) | `tools/fleet/gltf_bbox.py` on the glTF JSON | – | verified [obs] |
+| 29 | C919 B scale | Not to scale: span/length 0.974 (published dimensions, row 21: 0.920) | `tools/fleet/gltf_bbox.py` on the glTF JSON | – | verified [obs] |
 | 30 | Open ARJ21 model | "ARJ21" by DL.123, CC BY 4.0, 607,816 faces, downloadable, white model | https://sketchfab.com/3d-models/arj21-1d2d165256ea48bdbc420388bb6807a5 | "art/飞机白模" (description) | verified (uploader-declared) |
 | 31 | Unlicensed C919 models | thaweverything (non-commercial), jsong.js.us (paid), 3devok (store), `459605823/vis-c919` (no licence), `caleseele/c919-autonomy` (no licence, GLB not published) | see §3.1–3.2 | "Non-Commercial / Educational Use Only" | verified [obs] |
 | 32 | FlightGear | No C919 / ARJ21 in FGAddon trunk (676 aircraft) | https://sourceforge.net/p/flightgear/fgaddon/HEAD/tree/trunk/Aircraft/ | – | verified [obs] |
@@ -437,7 +440,7 @@ Date checked for every row: **2026-11-13**.
 ## 7. Risks and open points
 - **No observed traffic.** The type mix is an estimate. Schedules (OAG/Cirium) or a working ZSSS feed are needed before tuning model priorities further.
 - **Licences**
-  - The COMAC ACAP and DWG terms forbid reproduction, quoting and "derivative use". Using their numbers to fit a published model needs the owner's decision.
+  - The COMAC ACAP and DWG terms forbid reproduction, quoting and "derivative use". Their figures are therefore not in this report. Using their numbers to fit a published model is an **open owner decision** (§3.4); until then, fit to public non-ACAP values only.
   - The Sketchfab CC BY models are uploader-declared. Provenance is not provable: they could be rips of commercial models. The "ARJ21" download needs a Sketchfab login.
 - **Model quality**
   - "C919 B" is not to scale and has no textures.

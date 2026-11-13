@@ -1,5 +1,22 @@
 # Phase 0 / aip: official aerodrome data for ZSSS (AIP China)
 
+**Errata (2026-11-13, from the verification reports).** Corrected in place below; see `verify_official.md`
+(headline findings 1-5, rows A9, A16, A20, A22):
+- The OSM control tower **is** in the AD 2.10 obstacle list: row 031 "Control TWR", 111° MAG / 520 m from the
+  RWY18L/36R centre, 47 m, lit. Placed on the map it lies about 7 m from OSM node 3342630333. The "TOWER 145/1022,
+  48 m" row (ID 039) is a different structure (headline 1, A20).
+- The obstacle tables have **at least 122 rows (IDs 001-122)**, not 114: `derived_aip_zsss/obstacles.json` dropped at
+  least 9 of them. The nearest obstacle is that Control TWR at 520 m, not a building at 892 m; **at least 36** rows
+  lie within 3 km (headline 2, A22).
+- "161 stands" is 161 **designators**; 6 of them are overlay or alternative designators (216E, 220E, 281E, 413E,
+  404C, 408C), so there are about **155 physical stands** (headline 3, A16).
+- The eAIP JS also holds a banner "Trial Phase: Data Unavailable for Formal Operation. Verify Before Use" and an
+  "AIP China" purchase / invoice module. Neither grants any reuse right (headline 5).
+- OurAirports vs the AIP ARP: under the truncation reading (row 9) the OurAirports latitude lies **inside** the AIP
+  box; it is outside only in longitude. The conclusion (OurAirports is not the AIP ARP) is unchanged (headline 4, A9).
+- Redaction for the public repo: whole AIP lists (stand designators, VDGS stands, frequencies, navaids, taxiways,
+  taxilines) are reduced to counts, series and a few examples, per this report's own rule (section 4).
+
 Date checked: 2026-11-13 (all downloads that day; UTC times and SHA-256 are in each `SOURCES.json` under
 `sha3d/refs/cache/aip/`). Scope: what the CAAC AIP says about Shanghai Hongqiao (SHA / ZSSS), whether we can
 read it, and whether we may redistribute it.
@@ -45,7 +62,7 @@ read it, and whether we may redistribute it.
   | RWY 18L/36R | **3400 x 45** ASPH (CONC ends), 177.34° GEO; THR and END both displaced 100 m; LDA 3200 |
   | RWY 18R/36L | **3300 x 60** CONC, 177.33° GEO; THR displaced 300 m, END displaced 150 m; SWY 150 m; LDA 2850 |
   | Centreline spacing | 365 m, with the north ends aligned |
-  | Stands | **161** in the stand-limits table (101-608 series), plus temporary stands TP01-TP08 |
+  | Stands | **161** designators in the stand-limits table (101-608 series), of which 6 are overlay or alternative designators, so about **155** physical stands; plus temporary stands TP01-TP08 |
   | VDGS stands | **54**: 101-127 (T1) and 221-275 (T2) |
 
   **THR coordinates are "Nil" in AD 2.12.** The AIP does not publish runway threshold or stand coordinates for
@@ -53,13 +70,18 @@ read it, and whether we may redistribute it.
 * **ARP vs OurAirports.** The OurAirports point (31.198104, 121.33426) is **174 m** from the AIP ARP as printed
   (31.196667, 121.335000).
   * The AIP ARP is given only to 0.1', which is +/-92 m N-S and +/-79 m E-W.
-  * The OurAirports point lies **outside** that rounding box in latitude (0.086' north).
+  * If the digits are rounded, the OurAirports point lies **outside** that box in latitude (0.086' north of
+    11.8'). Under the truncation reading of row 9 (box 11.8'-11.9', 20.1'-20.2') its latitude (11.886') is
+    **inside**, and it is outside only in longitude (20.056' < 20.1'). Either way it is outside the box.
   * The AIP defines the ARP as the centre of RWY18L/36R. OurAirports sits between the two runways, **196 m** west
     of the OSM centre of RWY18L/36R.
   * So the working hypothesis "OurAirports = official ARP" is **contradicted**. The OurAirports point is a generic
     airport point, not the AIP ARP.
 * **Licence: no terms of use or copyright notice is published on any public page of the eAIP.** Nothing in the
   site shell, the JS strings, the footer (ICP number only), the AD 2 text or the charts states one.
+  * The JS does hold a site banner, "Trial Phase: Data Unavailable for Formal Operation. Verify Before Use"
+    (试运行阶段：数据暂不可用于正式运行，使用前请自行核查), and an order / invoice module for "AIP China" purchases,
+    billed in USD to the AIS Center of the ATMB, CAAC. Neither grants a reuse right (verify_official.md headline 5).
   * Without a stated licence, the default is all rights reserved (CAAC).
   * **Nothing from the AIP or its mirrors may go into the public repo**: not the PDFs, not chart images, not tables
     transcribed from them.
@@ -84,7 +106,9 @@ read it, and whether we may redistribute it.
 | C | https://commons.wikimedia.org/w/index.php?title=File:Shanghai_Hongqiao_Airport_CAAC_Chart.png&action=raw | no | `commons_caac_chart_zsss/` (image itself: HTTP 429, not saved) |
 
 Derived (ours, from M1): `refs/cache/aip/derived_aip_zsss/` (`stands.json`, `obstacles.json`, text/tables), made
-by `sha3d/tools/aip/extract_ad2.py`. The ARP/geometry numbers come from `sha3d/tools/aip/arp_check.py`.
+by `sha3d/tools/aip/extract_ad2.py`. `obstacles.json` is incomplete: it misses at least 9 AD 2.10 rows, among them
+031 "Control TWR" (verify_official.md headline 2). Full lists are kept there, locally; they are not redistributable.
+The ARP/geometry numbers come from `sha3d/tools/aip/arp_check.py`.
 
 ## Facts table
 
@@ -103,7 +127,7 @@ Quotes are verbatim from the source text: pdftotext output, or the JSON body.
 |---|---|---|---|---|---|---|
 | 1 | eAIP access | AIP needs a (free) registered login; not read | E0 | 2026-11-13 | "The China Aeronautical Information Publication (AIP) can be registered and accessed free of charge via this website." / API: `"retMsg":"login has expired"` | verified |
 | 2 | eAIP public items | Login page offers without login: Flight Routes Information, NOTAM Summary, "AD Situation Awareness(Not for navigation)", AIP dataset page (dataset list itself needs login) | E0 | 2026-11-13 | `login:{title:{flightRoutes:"Flight Routes Information",notam:"NOTAM Summary",adSituation:"AD Situation Awareness(Not for navigation)",login:"eAIP Login"}` | verified |
-| 3 | eAIP terms / copyright | None published on public pages; footer shows only an ICP licence number; offline mode credits "中国民用航空局空中交通管理局 ATMB，CAAC" | E0 (chunk 516, 594) | 2026-11-13 | `"京ICP备14005333号-1"` | verified (absence observed on public pages; terms behind login unknown) |
+| 3 | eAIP terms / copyright | None published on public pages; footer shows only an ICP licence number; offline mode credits "中国民用航空局空中交通管理局 ATMB，CAAC". The JS also holds a "Trial Phase … Verify Before Use" banner and an "AIP China" purchase / invoice module (no reuse grant) | E0 (chunk 516, 594; bundle) | 2026-11-13 | `"京ICP备14005333号-1"` / "Trial Phase: Data Unavailable for Formal Operation. Verify Before Use" | verified (absence observed on public pages; terms behind login unknown; banner and purchase module added from verify_official.md) |
 | 4 | Current AIRAC | AIP China AMDT NR.11/2026 effective 1600 UTC 28 Oct 2026; next AMDT NR.12/2026 effective 1600 UTC 25 Nov 2026 | E2 (A.pdf, NOTAM A4854/26, A5342/26) | 2026-11-13 | "AIP CHINA AMENDMENT NR.11/2026(2026-9-17) WILL BE EFFECTIVE FROM 1600UTC ON 28 OCT 2026." / "AIP CHINA AMENDMENT NR.12/2026(2026-10-15) WILL BE EFFECTIVE FROM 1600UTC ON 25 NOV 2026." | verified |
 | 5 | Pending ZSSS change | AMDT 12/2026 changes the wind-direction-indicator locations at ZSSS | E2 (A5342/26) | 2026-11-13 | "6.WDI LCA CHANGED AT SHANGHAI/HONGQIAO AIRPORT(ZSSS)." | verified |
 | 6 | Identity | ZSSS / SHA, SHANGHAI/Hongqiao | E0 API (`airportChart/listPublish`), E1, M1 AD 2.1 | 2026-11-13 | `"airportCode":"ZSSS","airportCnName":"上海/虹桥","airportEnName":"SHANGHAI/Hongqiao"`; E1: "HONGQIAO INTL（SHA）ARRIVAL ALERT"; M1: "ZSSS/SHA-上海/虹桥 SHANGHAI/Hongqiao" | verified (official list + sheet); AD 2.1 wording secondary |
@@ -111,7 +135,7 @@ Quotes are verbatim from the source text: pdftotext output, or the JSON body.
 | 8 | ARP | N31°11.8' E121°20.1' (= 31.196667 N, 121.335000 E as printed), site "Center of RWY18L/36R" | M1 AD 2.2-1; same on M2 and on O1 (2019) | 2026-11-13 | "N31°11.8′ E121°20.1′ ... Center of RWY18L/36R" | secondary |
 | 9 | ARP precision (inferred) | 0.1' = +/-92 m N-S, +/-79 m E-W. OSM centre of RWY18L/36R is N31°11.871' E121°20.177': the AIP digits match truncation, not rounding (rounding would give 11.9'/20.2'). | M1 + OSM, `tools/aip/arp_check.py` | 2026-11-13 | (computed) | inferred |
 | 10 | Datum | AD 2 ZSSS states no datum. GEN 2.1 not readable (login). AIP China reportedly moved to WGS-84 in 2011-2012. | M1 (absence); ICAO APAC 2012 paper https://www.icao.int/APAC/Meetings/2012_AAITF_7/IP03%20China_Transition%20to%20WGS84.pdf returned HTTP 403, seen only as a search-result summary | 2026-11-13 | search summary: "Amendment Nr.4/12 (effective 5 April 2012) the content of GEN 2.1 item 3 'Geodetic reference datum' is to be revised to 'WGS-84'" (not verbatim from the PDF) | unverified |
-| 11 | ARP vs OurAirports | OurAirports 31.198104, 121.33426 lies 174.3 m from the printed AIP ARP (bearing 336° true), outside its 0.1' box in latitude, and 195.5 m from the OSM centre of RWY18L/36R (the AIP's ARP definition) | OA + M1 + OSM | 2026-11-13 | OA row: `27225,"ZSSS",...,31.198104,121.33426,10,...` | contradicted (OA is not the AIP ARP) |
+| 11 | ARP vs OurAirports | OurAirports 31.198104, 121.33426 lies 174.3 m from the printed AIP ARP (bearing 336° true), outside its 0.1' box (in latitude if rounded; under the truncation reading of row 9, inside in latitude and outside only in longitude), and 195.5 m from the OSM centre of RWY18L/36R (the AIP's ARP definition) | OA + M1 + OSM | 2026-11-13 | OA row: `27225,"ZSSS",...,31.198104,121.33426,10,...` | contradicted (OA is not the AIP ARP) |
 | 12 | Elevation / temperatures | AD ELEV 3.0 m; reference temperature 32.0 °C (JUL); mean low 1.4 °C (JAN); geoid undulation blank | M1 AD 2.2-3/4 | 2026-11-13 | "3.0 m/32.0℃(JUL)/1.4℃(JAN)" | secondary (OA 10 ft = 3.0 m agrees) |
 | 13 | Magnetic variation | 5°46'W (2017), annual change -42"; charts show VAR5.8°W | M1 AD 2.2-5; M2 | 2026-11-13 | "5°46′W(2017)/-42″" | secondary |
 | 14 | Location / operator / class | 253° GEO, 13.3 km from Renmin Square; operator Shanghai Hongqiao International Airport Company, Ltd.; IFR-VFR; CIVIL/4E | M1 AD 2.2-2/6/7/8 | 2026-11-13 | "253°GEO, 13.3km from Renmin square" / "CIVIL/4E" | secondary |
@@ -130,22 +154,22 @@ Quotes are verbatim from the source text: pdftotext output, or the JSON body.
 | 27 | ADS-B / transponder | SSR transponder mandatory; AD 2.22 section 4 is titled "Radar procedures and/or ADS-B procedures" but contains no ADS-B-specific rule; no ZSSS ADS-B NOTAM in force | M1 AD 2.20 1.1, AD 2.22 4; E2 | 2026-11-13 | "Take-off/landing aircraft without SSR transponder are forbidden." | secondary (NOTAM part verified) |
 | 28 | Runway use | 18R/36L mainly departures, 18L/36R mainly arrivals; cross 18R/36L via H1-H7, 18L/36R via H1, H4, H7; landing aircraft must not vacate via H3, H4, H5; vacate within 50 s | M1 AD 2.20 2.1-2.3 | 2026-11-13 | "RWY18R/36L mainly used for departure; RWY18L/36R mainly used for arrival" | secondary |
 | 29 | End-around taxiways | ROUTE-NORTH (TWY BN then N) and ROUTE-SOUTH (BS then S), normally H24 for arrivals to the west apron; wingspan < 36 m normal, 36-65 m limited, >= 65 m forbidden; visual screens 388 m beyond the 18R/36L ends | M1 AD 2.20 2.3.3 | 2026-11-13 | "ROUTE-NORTH: TWY BN→ TWY N; ROUTE-SOUTH: TWY BS→ TWY S." | secondary |
-| 30 | Taxiways (AD 2.8) | A, A1-A4, B, B1-B8, BN, BS, C, C1-C4, D, D3-D17, H1-H7, K1, K2, K4-K7, L01, N, S, T1, T6. Widths 23-60 m (A, B, C, D 23 m; D9, D13 60 m). CONC except BN/BS ASPH. Rapid exits B7, B8, C1-C4 grooved. | M1 AD 2.8-2/6 | 2026-11-13 | "23m : A, B, B1-B8, BN, BS, C, C1-C4, D, ..." / "B7, B8, C1, C2, C3, C4: Rapid exit TWY grooved in full length" | secondary |
-| 31 | Apron taxilines | Y1-Y3, M1-M6, L16, D, L01 (wingspan <= 68.4 m); L10, L11, L15, L17-L19 (< 65); L12-L14, L20 (< 36); L08 (< 31). Y1-Y3 arrivals only; M1-M6 and L11-L17 departures only. | M1 AD 2.20 3.1 | 2026-11-13 | "TWY Y1-Y3 are only used for arrival, and TWY M1-M6, L11-L17 are only used for departure." | secondary |
+| 30 | Taxiways (AD 2.8) | About 55 designators: parallels A, B, C, D (23 m) with numbered links (e.g. B1-B8, H1-H7 for runway crossings), end-around BN/BS, N, S, plus K, L and T links. Widths 23-60 m. CONC except BN/BS ASPH. Rapid exits B7, B8, C1-C4 grooved. (Full list kept local in refs/cache/aip/derived_aip_zsss/, not redistributable.) | M1 AD 2.8-2/6 | 2026-11-13 | "B7, B8, C1, C2, C3, C4: Rapid exit TWY grooved in full length" | secondary |
+| 31 | Apron taxilines | Y, M and L series with wingspan limits from < 31 m to <= 68.4 m (e.g. Y1-Y3 and M1-M6 up to 68.4 m). Y1-Y3 arrivals only; M1-M6 and L11-L17 departures only. (Full table kept local in refs/cache/aip/derived_aip_zsss/, not redistributable.) | M1 AD 2.20 3.1 | 2026-11-13 | "TWY Y1-Y3 are only used for arrival, and TWY M1-M6, L11-L17 are only used for departure." | secondary |
 | 32 | Aprons | Apron Nr.2 (T2, west: 212-290), Nr.4 (401-416, NW), Nr.6 (601-608, SW), east aprons (101-127 at T1, 310-342 incl. business apron 310-312, 501-525); apron CONC, PCR 750-970 | M1 AD 2.8-1, M3 | 2026-11-13 | "PCR 940/R/B/W/T : Apron Nr. 4, 6, Stands Nr. 286-290" | secondary |
-| 33 | Stand list | 161 stands. 1xx (13): 101, 102, 109-115, 120, 121, 126, 127. 2xx (68): 212-238 incl. 216E, 220E; 240, 246, 248, 250, 256, 257, 259-290 incl. 281E. 3xx (33): 310-342. 4xx (19): 401-416 incl. 404C, 408C, 413E. 5xx (19): 501, 502, 504, 506, 508, 510, 511, 514-525. 6xx (9): 601-603, 604A, 604B, 605-608. Plus temporary TP01-TP08. Combined stands: 215/216/216E, 219/220/220E, 280/281/281E, 412/413/413E. | M1 AD 2.20 3.2.6-3.2.8 (`derived_aip_zsss/stands.json`) | 2026-11-13 | "248 ≤68.4 Taxi in, Push back" ... "310-312 ＜31 ＜33 Taxi in, Push back" | secondary |
-| 34 | Stand sizes | Largest: 248 (<= 68.4 m span; B747-8 normal stand; 250, 411, 511 with restrictions). < 65 m: 102, 111, 112, 126, 127, 216E, 220E, 250, 281E, 283, 284, 313-315, 406, 411, 413E, 414-416, 501, 502, 504, 506, 508, 510, 603, 606. Most others < 36 m. All "Taxi in, Push back". | M1 AD 2.20 2.5.1, 3.2.6 | 2026-11-13 | "B747-8 can normally use stand Nr.248 or use stand Nr. 250, 411 or 511 with restrictions" | secondary |
-| 35 | VDGS stands | 54: 101, 102, 109-115, 120, 121, 126, 127 (T1, VDGS guide III; 112 guide II) and 221-238, 240, 246, 248, 250, 256, 257, 259-275 (T2, ZSSS DGS chart 0G); other stands marshaller | M1 AD 2.9-1, AD 2.20 3.2.2.3; M (0G-1..3) | 2026-11-13 | "Visual docking guidance system at aircraft stands Nr. 101, 102, 109-115, 120, 121, 126, 127, 221-238, 240, 246, 248, 250, 256, 257, 259-275, Marshalling assistance for other aircraft stands." | secondary |
+| 33 | Stand list | 161 designators: 1xx 13 (within 101-127), 2xx 68 (212-290), 3xx 33 (310-342), 4xx 19 (401-416), 5xx 19 (501-525), 6xx 9 (601-608). Six are overlay or alternative designators (216E, 220E, 281E, 413E = combined stands, e.g. 215/216/216E; 404C, 408C), so about 155 physical stands. Plus temporary TP01-TP08. (Full list kept local in refs/cache/aip/derived_aip_zsss/, not redistributable.) | M1 AD 2.20 3.2.6-3.2.8 (`derived_aip_zsss/stands.json`) | 2026-11-13 | "248 ≤68.4 Taxi in, Push back" ... "310-312 ＜31 ＜33 Taxi in, Push back" | secondary |
+| 34 | Stand sizes | Largest: 248 (<= 68.4 m span; B747-8 normal stand; 250, 411, 511 with restrictions). 28 designators < 65 m (e.g. 102, 250, 313-315, 501), spread over all series; most others < 36 m. All "Taxi in, Push back". (Full list kept local in refs/cache/aip/derived_aip_zsss/, not redistributable.) | M1 AD 2.20 2.5.1, 3.2.6 | 2026-11-13 | "B747-8 can normally use stand Nr.248 or use stand Nr. 250, 411 or 511 with restrictions" | secondary |
+| 35 | VDGS stands | 54: 13 at T1 (within 101-127) and 41 at T2 (within 221-275, ZSSS DGS chart 0G); other stands marshaller. (Full list kept local in refs/cache/aip/derived_aip_zsss/, not redistributable.) | M1 AD 2.9-1, AD 2.20 3.2.2.3; M (0G-1..3) | 2026-11-13 | "Visual docking guidance system at aircraft stands Nr. 101, 102, … Marshalling assistance for other aircraft stands." | secondary |
 | 36 | Jet bridges | AIP has **no list** of bridge (contact) stands; AD 2.20 3.5.1 only distinguishes "boarding bridge stand" and "remote stand". Bridge stands = the 54 VDGS stands is an **inference**. | M1 AD 2.20 3.5.1 | 2026-11-13 | "The aircraft parking on boarding bridge stand shall turn off APU and use bridge 400Hz power supply" | secondary (list: inferred) |
 | 37 | Stand coordinates | **None published** (no stand-coordinate table in AD 2 or on 2P-1, 2R-x) | M1, M3 | 2026-11-13 | (absence) | secondary |
 | 38 | Stand ID signs | Stands with ID sign boards listed (101-127 ... 601-608, not all stands) | M1 AD 2.9-1 | 2026-11-13 | "Aircraft stand identification sign boards at stands Nr. 101, 102, 109-115, ..." | secondary |
 | 39 | AIP stands vs OSM | AIP-only: 216E, 220E, 281E, 404C, 408C, 413E, 414, 415, 416, 514, 515, 516. OSM-only refs: 238A, 239, 240A, 258, 259A, 301-309, 604. Other 149 refs agree. | M1 + OSM map tile | 2026-11-13 | (computed) | contradicted (OSM has old/renumbered stands; the AIP 2P-1 says "Changes: Stand number adjusted") |
-| 40 | Frequencies | ATIS 132.25 (D-ATIS, H24); Delivery 121.75 (121.55), 0000-1200 UTC, DCL; GND(E) 121.6 (121.575), GND(W) 121.9 (121.575); TWR(E) 118.1 (124.3), TWR(W) 118.65 (118.25); APN(E) 121.675 (121.55), APN(W) 121.95 (121.55); Shanghai Approach APP01-APP14 (H24: APP02 125.4, APP05 126.65; others by ATC: 120.3, 125.85, 123.8, 126.3, 121.1, 127.75, 121.375, 125.625, 119.075, 119.975, 120.825, 124.725); AOC "Pujiang" 130.75; EMG 121.5 | M1 AD 2.18; M2/M3 headers | 2026-11-13 | "TWR(E):118.1 (124.3) ... TWR(W):118.65 (118.25)" / "GND(W):121.9 (121.575)" | secondary |
+| 40 | Frequencies | Main: ATIS 132.25 (D-ATIS, H24); GND(E) 121.6, GND(W) 121.9; TWR(E) 118.1, TWR(W) 118.65. Also Delivery (DCL), two Apron frequencies (E/W), Shanghai Approach in 14 sectors (APP01-APP14, two of them H24), an AOC frequency and EMG. (Full list kept local in refs/cache/aip/derived_aip_zsss/, not redistributable.) | M1 AD 2.18; M2/M3 headers | 2026-11-13 | "TWR(E):118.1 (124.3) ... TWR(W):118.65 (118.25)" / "GND(W):121.9 (121.575)" | secondary |
 | 41 | Frequency change since 2019 | GND(W) 121.85 (121.9) in 2019 became 121.9 (121.575) in 2026; APN(E)/APN(W) did not exist on the 2019 chart | O1 1A (EFF1907171600) vs M2 | 2026-11-13 | O1: "GND 121.6(118.1)(E) 121.85(121.9)(W)" | contradicted (time change; 2026 value supersedes) |
-| 42 | Two towers | "East TWR and West TWR"; position and height of the control towers **not published** in AD 2. AD 2.10 lists a "TOWER 145°MAG/1022 m, 48 m" from the RWY18L/36R centre. That point is computed at 31.19087, 121.34329, near Terminal 1, 665 m from the OSM `aircraft_control` node. The OSM tower (110° MAG / 516 m) is not in the obstacle list. | M1 AD 2.20 3.2.1.3, AD 2.10; OSM | 2026-11-13 | "transferred from GND to TWR or between the East TWR and West TWR" / "TOWER TOWER 145/1022 48" | secondary (which tower is which: unverified) |
+| 42 | Two towers | "East TWR and West TWR". AD 2.10 row 031 "Control TWR", 111° MAG / 520 m from the RWY18L/36R centre, 47 m, lit, is the OSM `aircraft_control` node 3342630333 (110° MAG / 516 m): placed with VAR 5.77° W it lands about 7 m from the node. A separate AD 2.10 row 039 "TOWER 145°MAG/1022 m, 48 m" is computed at 31.19087, 121.34329, near Terminal 1, 665 m from the OSM node. *(Corrected: this row first said the OSM tower is not in the obstacle list; the derived `obstacles.json` had dropped row 031. See verify_official.md A20.)* | M1 AD 2.20 3.2.1.3, AD 2.10; OSM | 2026-11-13 | "transferred from GND to TWR or between the East TWR and West TWR" / "Control TWR 111/520 47 LGT" / "TOWER TOWER 145/1022 48" | secondary (which tower is East and which West: unverified) |
 | 43 | Tower control area | Within 10 km W and 7 km E of RCL, SFC-QNH 300 m; TL 3600 m, TA 3000 m (ZSSS/ZSPD region) | M1 AD 2.17 | 2026-11-13 | "Within 10km west of RCL and 7km east of RCL as the landing track or ILS established from north or south." | secondary |
-| 44 | Obstacles | 114 rows (MAG bearing/distance from the centre of RWY18L/36R). Within 15 km: 31 rows within 3 km, the nearest being a building at 122°/892 m, 52 m. Farther rows (15-50 km band) include a 635 m building at 081° MAG/16182 m (inferred: the Lujiazui towers). | M1 AD 2.10 (`derived_aip_zsss/obstacles.json`) | 2026-11-13 | "Obstacles within 15km of the center of RWY18L/36R" | secondary |
-| 45 | Nav aids | ILS CAT I all four ends: 18L IPK 111.3 (GP 332.3), 36R IWB 110.3 (GP 335.0), 18R IHQ 110.9 (GP 330.8), 36L ISH 111.7 (GP 333.5), GP 3°, RDH 15 m; VOR/DME SHA 117.2 (7 m W of RCL, 1064 m outside DTHR18L); NDB PK 208 | M1 AD 2.19 | 2026-11-13 | "Hongqiao VOR/DME SHA 117.2 MHz CH 119X ... 7m W of RCL, 1064m outside DTHR18L" | secondary |
+| 44 | Obstacles | At least 122 rows, IDs 001-122 (MAG bearing/distance from the centre of RWY18L/36R); `obstacles.json` holds only 114. At least 36 rows lie within 3 km; the nearest is the Control TWR at 111°/520 m, 47 m (row 42). Farther rows (15-50 km band) include a 635 m building at 081° MAG/16182 m (inferred: the Lujiazui towers). (Full rows kept local in refs/cache/aip/derived_aip_zsss/, not redistributable.) *(Corrected from 114 rows, 31 within 3 km, nearest a building at 122°/892 m: verify_official.md A22.)* | M1 AD 2.10 (`derived_aip_zsss/obstacles.json`) | 2026-11-13 | "Obstacles within 15km of the center of RWY18L/36R" | secondary |
+| 45 | Nav aids | ILS CAT I on all four runway ends, GP 3°, RDH 15 m; a VOR/DME on the field (7 m W of RCL, 1064 m outside DTHR18L); one NDB. (Identifiers and frequencies kept local in refs/cache/aip/derived_aip_zsss/, not redistributable.) | M1 AD 2.19 | 2026-11-13 | "7m W of RCL, 1064m outside DTHR18L" | secondary |
 | 46 | RET distances (temporary) | From DTHR: 18L to B4 1850 m, A3 1890 m; 36R to B3 1950 m, A2 1715 m; vacate within 50 s | E2 F4301/26 (2026-10-14 to 2026-12-14) | 2026-11-13 | "RWY18L TWY B4 1,850M" | verified |
 | 47 | Current closures (NOTAM) | RWY18L/36R CLSD 1700-2200 UTC daily 2026-11-10 to 11-29, crossing via H4/H7, with listed TWY closures; stand 267 CLSD 2026-11-14 1700 to 11-21 1000; TWY A / K1 intersection works (SUP 21/26); WIP 120-960 m north of the RWY18L DTHR | E2 F4551/26, F4552/26, F4313/26, F4516/26, F4275/26, F4276/26 | 2026-11-13 | "RWY18L/36R CLSD.ACFT SHALL CROSS RWY18L/36R VIA TWY H4,H7." / "PARKING STAND NR.267 CLSD." | verified |
 | 48 | Stand allocation via datalink | LID trial: Shanghai APP sends arrival procedure, runway and parking stand by datalink 50 min before landing (stand "for reference only") | E2 F3192/26 | 2026-11-13 | "THE LID INFORMATION WILL INCLUDE EXPECTED ARRIVAL PROCEDURE, TRANSITION(ON REQUIRED), LANDING RUNWAY, AND PARKING STAND" | verified |
@@ -216,7 +240,8 @@ Quotes are verbatim from the source text: pdftotext output, or the JSON body.
 ## 3. Stands: what the AIP gives and does not give
 
 * **Given (secondary):**
-  * The designators of all 161 stands and 8 temporary stands.
+  * 161 stand designators (about 155 physical stands, since 216E, 220E, 281E, 413E, 404C and 408C are overlay or
+    alternative designators) and 8 temporary stands.
   * The wingspan limit of each stand, plus a fuselage limit for 310-312.
   * The entry mode of each stand: all "Taxi in, Push back".
   * Combined-stand groups and push-back end points (EOP/EOT).
@@ -238,6 +263,9 @@ Quotes are verbatim from the source text: pdftotext output, or the JSON body.
 
 * **Observed.**
   * eaipchina.cn publishes no licence, terms of use or copyright statement on any page reachable without login.
+  * Its JS holds a "Trial Phase: Data Unavailable for Formal Operation. Verify Before Use" banner and an "AIP China"
+    purchase / invoice module (USD, payable to the AIS Center, ATMB CAAC; probably a printed subscription). Neither
+    grants a reuse right.
   * The AD 2 text and charts carry no copyright line, only "中国民用航空局 CAAC".
   * The registration terms, if any, are behind the account step.
 * **Inferred (not legal advice).** With no grant, treat everything as CAAC copyright, all rights reserved.
@@ -250,7 +278,8 @@ Quotes are verbatim from the source text: pdftotext output, or the JSON body.
     `derived_aip_zsss/`.
   * The public repo may carry our own geometry: OSM-based (ODbL) and imagery-measured.
   * Docs may cite AIP facts with source and date. Short factual citations are reasonable; tables or chart images
-    are not.
+    are not. Whole AIP lists (stands, VDGS stands, frequencies, navaids, taxiways, obstacles) appear here only as
+    counts, series and a few examples; the full lists stay in `refs/cache/aip/derived_aip_zsss/`.
   * This needs an owner decision before anything AIP-derived ships.
 
 ## 5. Observed vs inferred (summary)
@@ -263,7 +292,8 @@ Quotes are verbatim from the source text: pdftotext output, or the JSON body.
   * That the mirror copy is a faithful copy of the official AIP (consistent with E1/E2, not authenticated).
   * That the AIP ARP digits are truncated.
   * That VDGS stands equal bridge stands.
-  * That the AD 2.10 "TOWER" is the old Terminal 1 tower.
+  * That the AD 2.10 "TOWER" (row 039, 145/1022) is the old Terminal 1 tower. (The "Control TWR", row 031, is the
+    OSM tower: observed, 7 m apart.)
   * That AIP coordinates are WGS-84 (AD 2 states no datum).
 * **Not checked:**
   * Current AMDT 11/2026 content.

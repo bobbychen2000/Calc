@@ -1,0 +1,68 @@
+{
+ "about": "Derived files committed in sha3d/docs/phase0/ (Phase 0 research). Each entry names its inputs, licence, required notice and the tool that made it. The reports (*.md) are our own text and are not listed.",
+ "date_checked": "2026-11-13",
+ "files": {
+  "geo_align_S2B_51RUQ_20261014.json": {
+   "what": "Per-run offsets between OSM aeroway centrelines and the Sentinel-2 L2A scene S2B_51RUQ_20261014_0_L2A (UTM 51N, EPSG 32651); see geo.md section 4",
+   "made_by": "sha3d/tools/geo/s2_osm_align.py",
+   "inputs": [
+    "OpenStreetMap API 0.6 extract: sha3d/refs/cache/osm/api_map_tiles_geo/ (retrieved 2026-11-13)",
+    "Copernicus Sentinel-2 L2A scene S2B_51RUQ_20261014_0_L2A: sha3d/refs/cache/s2/ (retrieved 2026-11-13)"
+   ],
+   "licence": "ODbL 1.0 for the OpenStreetMap-derived content (derived database, share-alike); Copernicus Sentinel data under the Sentinel Data Legal Notice (free, full and open; notice required when modified)",
+   "attribution": [
+    "(c) OpenStreetMap contributors",
+    "Contains modified Copernicus Sentinel data 2026"
+   ],
+   "redistributable": "yes, with both notices; ODbL share-alike applies to this file as a derived database",
+   "bytes": 56783,
+   "sha256": "2af5c1fd4adbf743a1184f387a08b1aadbcb5473a038eb334d8864b638209cbb"
+  },
+  "geo_align_S2C_51RUQ_20260221.json": {
+   "what": "Per-run offsets between OSM aeroway centrelines and the Sentinel-2 L2A scene S2C_51RUQ_20260221_0_L2A (UTM 51N, EPSG 32651); see geo.md section 4",
+   "made_by": "sha3d/tools/geo/s2_osm_align.py",
+   "inputs": [
+    "OpenStreetMap API 0.6 extract: sha3d/refs/cache/osm/api_map_tiles_geo/ (retrieved 2026-11-13)",
+    "Copernicus Sentinel-2 L2A scene S2C_51RUQ_20260221_0_L2A: sha3d/refs/cache/s2/ (retrieved 2026-11-13)"
+   ],
+   "licence": "ODbL 1.0 for the OpenStreetMap-derived content (derived database, share-alike); Copernicus Sentinel data under the Sentinel Data Legal Notice (free, full and open; notice required when modified)",
+   "attribution": [
+    "(c) OpenStreetMap contributors",
+    "Contains modified Copernicus Sentinel data 2026"
+   ],
+   "redistributable": "yes, with both notices; ODbL share-alike applies to this file as a derived database",
+   "bytes": 54923,
+   "sha256": "fad0c35af2a04ae6eb3729654276f6db33c3454e57ee1881fc963733e674eae8"
+  },
+  "geo_overlay.jpg": {
+   "what": "OSM aeroway features drawn over the Sentinel-2 true-colour image (S2B 2026-10-14), overview and 1.2 km zoom; see geo.md section 4",
+   "made_by": "sha3d/tools/geo/geo_overlay.py",
+   "inputs": [
+    "OpenStreetMap API 0.6 extract: sha3d/refs/cache/osm/api_map_tiles_geo/ (retrieved 2026-11-13)",
+    "Copernicus Sentinel-2 L2A scene S2B_51RUQ_20261014_0_L2A (true colour): sha3d/refs/cache/s2/ (retrieved 2026-11-13)",
+    "the two geo_align_*.json files above"
+   ],
+   "licence": "produced work from ODbL 1.0 data (OpenStreetMap) and Copernicus Sentinel data (Sentinel Data Legal Notice)",
+   "attribution": [
+    "(c) OpenStreetMap contributors",
+    "Contains modified Copernicus Sentinel data 2026"
+   ],
+   "redistributable": "yes, with both notices",
+   "bytes": 588469,
+   "sha256": "10b2b7ef0764b10cfd505cbff5b2334490b23879112c9e4bc8f835b38c6dcebe"
+  },
+  "coverage_map_20261112.png": {
+   "what": "Distinct aircraft per 1-degree cell over East Asia on 2026-11-12, with ZSSS and the 150 km scan circle marked",
+   "made_by": "sha3d/tools/adsb/globe_grid.py (grid) and sha3d/tools/adsb/coverage_map.py (plot), from sha3d/refs/cache/adsb/grid_2026.11.12_prod.json",
+   "inputs": [
+    "adsb.lol globe_history daily archive, release v2026.11.12-planes-readsb-prod-0 of https://github.com/adsblol/globe_history_2026 (retrieved 2026-11-13)"
+   ],
+   "licence": "ODbL 1.0 (adsb.lol globe_history); this image is a produced work",
+   "licence_url": "https://www.adsb.lol/docs/open-data/historical/",
+   "attribution": "Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL",
+   "redistributable": "yes, with the notice",
+   "bytes": 93753,
+   "sha256": "ec1a3f355279f604e3c7696a16fcca2477de1fb0988abcfe3685f5acdc41502d"
+  }
+ }
+}

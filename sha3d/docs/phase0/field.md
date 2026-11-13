@@ -260,14 +260,18 @@ The diagrams are SAA schematics, not to scale. Use them as **reference only**.
 - T2 check-in islands are A–H on 3F. Departures airside is on M2.
 
 ### 3.3 AIP cross-check (from the `aip` key's `stands.json`, not re-read by me)
-- The AIP list has **161** stands. **54** have VDGS:
-  - **T1: 13** (101, 102, 109–115, 120, 121, 126, 127);
-  - **T2: 41** (221–238, 240, 246, 248, 250, 256, 257, 259–275).
-- **54 VDGS stands = caacnews' 54 contact stands.** 54/161 = 33.5 %, which matches "约为34%".
-- T1 bridge gates (T01, T02, T09–T15, T20, T21, T26, T27) map one-to-one onto stands 101, 102, 109–115, 120, 121, 126 and 127.
+- The AIP list has **161** stand designators (about 155 physical stands: 6 are overlay or alternative designators,
+  verify_official.md A16). **54** have VDGS:
+  - **T1: 13**, all within 101–127;
+  - **T2: 41**, all within 221–275.
+  - (Full list kept local in refs/cache/aip/derived_aip_zsss/, not redistributable.)
+- **54 VDGS stands = caacnews' 54 contact stands.** 54/161 = 33.5 %, which matches "约为34%". So does 54/155 = 34.8 %,
+  so the match is weak evidence (verify_official.md F27).
+- The 13 T1 bridge gates (§3.2) map one-to-one onto the 13 T1 VDGS stands, with the same digits (e.g. T01 → 101,
+  T15 → 115).
 - **Inferred rule: gate Txx → stand 1xx (T1), gate nn → stand 2nn (T2).**
 - T2 gates 39, 47, 49 and 58 have no stand 239, 247, 249 or 258 in the AIP list. They are probably second gates on shared or MARS stands [inf].
-- Remote stands ≈ 161 − 54 = **107** [inf]. Stands 3xx–6xx in the AIP list are remote or cargo stands; their roles are for the `aip` key.
+- Remote stands ≈ 161 − 54 = **107** designators, or about 155 − 54 ≈ **101** physical stands [inf]. Stands 3xx–6xx in the AIP list are remote or cargo stands; their roles are for the `aip` key.
 
 ---
 

@@ -1,5 +1,25 @@
 # Phase 0 / adsb: live and historical flight data for ZSSS
 
+**Errata (2026-11-13, from the verification reports).** Corrected in place below; see `verify_licences_law.md`
+(headline findings 1, 2, 6, 8 and rows A2, A5, A10, A33, A43, A46):
+- Nearest non-PRC locations: the Korean **Ieodo Ocean Research Station** (a sea platform) at about **378 km** (no
+  receiver known there), then Gageodo about 476 km, Marado about 511 km, Dongyin (Matsu) about 543 km and Jeju 548 km,
+  not Jeju first. Ieodo lies inside the 455 km FL350 horizon, so only cruise-level traffic could be seen from there.
+  The low-level conclusion is unchanged (headline 6, A46).
+- The ground radio horizon is about **29 km** for an aircraft antenna at 0 m; the 38 km figure assumes about 5 m (A46).
+- adsb.lol publishes no start date for its metering. "New since Sep 2026" is inferred from sfo3d's capture of the old
+  text on 2026-09-24 (A2).
+- OpenSky Terms 3(i) require aircraft identifiers (and sensor locations) to be anonymised in any publication (A10).
+- The Shanghai Airport statement page answered curl with HTTP 200; only the home page failed (headline 8, A43).
+- Radio Regs Art. 72: up to CNY 30,000, or with serious consequences licence revocation plus CNY 30,000-100,000;
+  Art. 75(2)/(3) (foreign radio monitoring inside the PRC; supplying security-related radio data abroad: CNY
+  30,000-100,000, serious 100,000-300,000) was missed (headlines 1-2, A33).
+- globe_history has three release tags per day (prod, staging, mlatonly), not one (A5).
+- Redaction for the public repo: per-record data from the ADS-B Exchange samples (callsigns, hex codes, positions,
+  altitudes, speeds, `nic`, `rssi`) and per-cell OpenSky coverage values are replaced by aggregates. The ADSBx AUP
+  forbids publishing its data, and the samples are "for testing and evaluation". Per-record details stay local in
+  `refs/cache/adsb_terms/`. They remain in earlier git history; whether to rewrite it is the owner's decision.
+
 Checked on 2026-11-13. All downloads were made that day between 20:18Z and 20:38Z. Each cached source has its URL,
 UTC save time, SHA-256, quoted licence and a redistribution flag in a `SOURCES.json`:
 - `sha3d/refs/cache/adsb_terms/SOURCES.json`: provider terms, coverage data and probes.
@@ -29,8 +49,9 @@ point lies 174 m from the AIP ARP. At the 20 to 800 km scales used here, that of
        nearest cells are at 29 N, and the lowest altitude reported in them is 6.5 km or more.
      - **ADS-B Exchange free sample, 2026-11-01 02:00Z and 06:00Z.** The nearest real ADS-B position was **106 to
        119 km** away, at 6,850 ft or higher. The only records nearer ZSSS have message source `other`, which readsb
-       defines as "quality / source is unknown". They carry `nic` 0 and a constant `rssi`, and one is flagged
-       "ground" while moving at 370 kt. They are not usable as observations (inferred).
+       defines as "quality / source is unknown". They all carry `nic` 0 and one constant `rssi`, and one is flagged
+       "ground" while moving at 370 kt. They are not usable as observations (inferred). (Aggregates only; per-record
+       details stay local, see C5.)
      - **AvioADSB, 2026-11-13 20:33Z (04:33 local).** It returned 0 aircraft within 100 nm. That hour is quiet at
        night, so this check is weak on its own.
 2. **Why the gap exists.** Two causes combine.
@@ -40,14 +61,18 @@ point lies 174 m from the AIP ARP. At the 20 to 800 km scales used here, that of
      - The Ministry of State Security (MSS) statement of 2024-01-06 described a nationwide crackdown. It cited the
        Counter-espionage Law and the Data Security Law.
      - Flightradar24 left Chinese app stores in early November 2021 [secondary].
-   - **Physical.** Approach and ground traffic can only be received within about 40 to 100 km (radio horizon). Every
-     receiver that could see ZSSS below about 3,000 ft would therefore have to stand in or near Shanghai, inside the
-     PRC. The nearest receivers outside the PRC are Jeju (548 km), Taiwan (676 km) and Kyushu (823 km). From there,
-     only cruise-level traffic at the edge of range is visible (inferred).
+   - **Physical.** Approach and ground traffic can only be received within about 30 to 100 km (radio horizon: about
+     29 km for an aircraft on the ground with a 0 m antenna, 38 km with 5 m, 101 km at 1,000 ft). Every receiver that
+     could see ZSSS below about 3,000 ft would therefore have to stand in or near Shanghai, inside the PRC. The
+     nearest non-PRC locations are the Korean Ieodo Ocean Research Station, a sea platform about 378 km away (no
+     receiver is known there), then Gageodo (about 476 km), Marado (about 511 km), Dongyin in Matsu (about 543 km),
+     Jeju (548 km), Taiwan (Keelung 676 km) and Kyushu (823 km). From there, only cruise-level traffic is visible:
+     Ieodo lies inside the 455 km FL350 horizon, the others near or beyond its edge (inferred).
 3. **Terms changed recently. Re-check them before relying on any sfo3d assumption.**
-   - **adsb.lol now meters its API.** Without a key the limit is "500 requests/day per IP". Feeder keys get 7,200 a
-     day. Sponsor plans range from EUR 20 to 999 a month. The data licence is still **ODbL** (API and archive), and
-     feeders' input is CC0.
+   - **adsb.lol now meters its API.** Without a key the limit is "500 requests/day per IP". adsb.lol publishes no
+     start date; that it is new since September 2026 is inferred from sfo3d's capture of the old text on 2026-09-24.
+     Feeder keys get 7,200 a day. Sponsor plans range from EUR 20 to 999 a month. The data licence is still **ODbL**
+     (API and archive), and feeders' input is CC0.
    - **airplanes.live returns 403** to anyone who does not feed it. A third party reports that it went
      contributor-only in September 2026 [secondary].
    - **OpenSky** needs a written licence for "any operational capacity — including integration into a live product,
@@ -76,8 +101,8 @@ point lies 174 m from the AIP ARP. At the 20 to 800 km scales used here, that of
 | C1 | Live point queries, adsb.lol / adsb.fi / OpenSky, 40 nm, 2026-11-13 18:59Z | 0 aircraft each | secondary (lead; `refs/cache/live/`) |
 | C2 | adsb.lol globe_history, full day, 150 km | 2026-11-08: 2 traces of 66,788; 2026-11-10: 0 of 75,360; 2026-11-12: 0 of 73,533 | secondary (lead; `refs/cache/adsb/*.log`) |
 | C3 | Nearest covered area seen live | about 31.5 N, 117-119 E (Hefei / Nanjing) | secondary (lead) |
-| C4 | OpenSky coverage API, day 2026-11-12 (`/api/range/coverage?day=1794441600`), ground-based ADS-B, 0.2 deg cells, value = lowest altitude seen | 92,484 cells worldwide; **0 cells within 233 km of ZSSS**; 18 cells within 300 km, all at 28.6-29.4 N, lowest altitudes 6,546-11,918 m; nearest cell below 3,000 m is 434 km away (27.4 N 120.3 E, 2,797 m). The mainland interior (100-115 E, 25-35 N) has 0 cells. A cell at 39.0 N 117.3 E (Tianjin) reports -91 m, i.e. ground level. | verified (own measurement on OpenSky's published coverage data) |
-| C5 | ADS-B Exchange free sample `readsb-hist` 2026-11-01 02:00:00Z and 06:00:00Z | 02:00Z: 8,316 aircraft worldwide; nearest `adsb_icao` position to ZSSS 119 km (6,850 ft). 06:00Z: nearest `adsb_icao` 106 km (CCA8548 at 6,925 ft and CSH9308 at 14,650 ft, both near 30.25 N 121.21 E). Within 100 km only `type: "other"` records (CSZ8371 at 19.9 km "ground" with gs 370 kt; DKH1107 at 45 km "ground", i.e. Pudong; CES591 at 79 km), all `nic` 0, `rssi` -49.5. At 02:00Z the 4-degree box that contains ZSSS (28-32 N / 120-124 E) held only 3 `adsb_icao` aircraft: CQH6226 at 3,075 ft near Ningbo (29.79 N 121.52 E, 157 km away), CSN6545 at 6,850 ft and CSH9266 at 22,600 ft. The box north of it (32-36 N / 120-124 E) had a lowest altitude of 34,100 ft. Low-level `adsb_icao` positions appear near Nanjing (CSZ9841, 650 ft, 31.69 N 118.81 E), near Xi'an (CES5223, 2,750 ft, 34.52 N 108.84 E), and on the ground at Hong Kong (22.31 N 113.90 E, Cathay Pacific flights) and Taipei Taoyuan (25.07 N 121.23 E). | verified (own measurement on ADSBx sample data; "for testing and evaluation") |
+| C4 | OpenSky coverage API, day 2026-11-12 (`/api/range/coverage?day=1794441600`), ground-based ADS-B, 0.2 deg cells, value = lowest altitude seen | 92,484 cells worldwide; **0 cells within 233 km of ZSSS**; 18 cells within 300 km, all at 28.6-29.4 N, lowest altitudes 6,546-11,918 m; the nearest cell with a lowest altitude below 3,000 m is 434 km away. The mainland interior (100-115 E, 25-35 N) has 0 cells. Northern China (35-42 N, 112-122 E) has about 500 cells, the lowest at ground level. (Aggregates only; per-cell values stay local in `refs/cache/adsb_terms/opensky_coverage_api/`.) | verified (own measurement on OpenSky's published coverage data) |
+| C5 | ADS-B Exchange free sample `readsb-hist` 2026-11-01 02:00:00Z and 06:00:00Z | Aggregates only. 02:00Z: 8,316 aircraft worldwide; nearest `adsb_icao` position to ZSSS 119 km (6,850 ft); no `other` record within 100 km. 06:00Z: 7,927 aircraft; nearest `adsb_icao` positions 106 km (two aircraft, 6,925 and 14,650 ft). Within 100 km only 4 records with message source `other` (nearest 19.9 km; 3 flagged "ground", two of those with ground speeds of 220 and 370 kt), all with `nic` 0 and the same `rssi`. The 4-degree box that contains ZSSS (28-32 N / 120-124 E) held 3 `adsb_icao` aircraft at 02:00Z (lowest 3,075 ft, 157 km away) and 5 at 06:00Z (lowest 6,925 ft). The box north of it (32-36 N / 120-124 E) had a lowest altitude of 34,100 ft (02:00Z). Low-level `adsb_icao` aircraft (below 3,000 ft or on the ground, within 20 km of the airport), 02:00Z / 06:00Z: Hong Kong VHHH 12 / 19, Taipei Taoyuan RCTP 10 / 6, Nanjing ZSNJ 1 / 1, Xi'an ZLXY 1 / 1, so mainland low-level coverage is thin. Per-record details (callsigns, hex, positions, speeds) stay local in `refs/cache/adsb_terms/adsbx_sample_20261101/`; the ADSBx AUP forbids publishing them. | verified (own measurement on ADSBx sample data; "for testing and evaluation") |
 | C6 | AvioADSB `/v1/point/31.198104/121.33426/100`, 2026-11-13 20:33:16Z | `{"ac":[],"total":0}` | verified (own probe), weak: 04:33 local |
 | C7 | airplanes.live `/v2/point/31.198/121.334/5`, 2026-11-13 20:21:32Z | HTTP 403 `{"error": "Please contact us at contact@airplanes.live. Your email MUST include any links, a description of the project, and any information you deem appropriate."}` (JSON from the application, behind Cloudflare) | verified (own probe) |
 
@@ -103,12 +128,16 @@ receiver at 50 m:
 | 3,000 ft | 154 km |
 | 1,000 ft | 101 km |
 | On the ground (antenna 5 m) | 38 km (theoretical; buildings cut this) |
+| On the ground (antenna 0 m) | 29 km |
 
-ZSSS's distances to the nearest airports outside the PRC are Jeju 548 km, Taipei 680 km, Nagasaki 823 km, Naha 829 km
-and Incheon 839 km. Receivers in those places cannot see ZSSS approach or ground traffic. Only receivers inside the PRC
-could. The OpenSky cells at 29 N (6.5-12 km altitude) fit receivers in Taiwan seeing cruise traffic near their range
-limit (inferred). The covered area near Hefei and Nanjing (C3, C5) shows that at least one feeder inside the mainland
-still reports to adsb.lol and ADSBx (inferred).
+The nearest non-PRC locations (great circle from the AIP ARP, verify_licences_law.md A46) are the Ieodo Ocean
+Research Station (Korean sea platform) about 378 km, Gageodo about 476 km, Marado about 511 km, Dongyin (Matsu, ROC)
+about 543 km and Jeju 548 km; then Keelung 676 km, Taipei 680 km, Nagasaki 823 km, Naha 829 km and Incheon 839 km. No
+receiver is known at Ieodo. Ieodo is inside the 455 km FL350 horizon, so a receiver there could in theory see
+cruise-level traffic over ZSSS, but none of these places can see ZSSS approach or ground traffic. Only receivers
+inside the PRC could. The OpenSky cells at 29 N (6.5-12 km altitude) fit receivers in Taiwan seeing cruise traffic
+near their range limit (inferred). The covered area near Hefei and Nanjing (C3, C5) shows that at least one feeder
+inside the mainland still reports to adsb.lol and ADSBx (inferred).
 
 ## 2. Provider terms (as published on 2026-11-13)
 
@@ -128,8 +157,9 @@ API terms are in the live OpenAPI description (version 0.0.2, `adsblol_openapi/o
 - **Contradiction on the daily window.** The docs page (`/docs/open-data/api`) says "the daily window resets at 00:00
   UTC". The OpenAPI says "a fixed 24h bucket, not midnight UTC". Status: **contradicted** within adsb.lol's own pages.
 - **What changed.** sfo3d's research of 2026-09-24 (`sfo3d/docs/research/realtime_feeds.md` §3.1) quoted the old text,
-  "You can use the API for free. In the future, you will require an API key …". **The sfo3d design of 1 request per
-  second through a relay (86,400 a day) no longer fits any free tier.**
+  "You can use the API for free. In the future, you will require an API key …". adsb.lol states no start date for the
+  metering, and its changelog does not list the key work, so "since September 2026" is our inference from that
+  capture. **The sfo3d design of 1 request per second through a relay (86,400 a day) no longer fits any free tier.**
 - **Sponsor plans** (`/sponsor`): clearance EUR 20/month (24,000 requests/month), tower EUR 50 (72,000/month,
   "included with feeder"), approach EUR 99, center EUR 499, oceanic EUR 999 ("real-time firehose").
 
@@ -141,7 +171,8 @@ The historical archive (globe_history) has its own terms:
 - On feeders, the README says: "By feeding adsb.lol, you agree to the extent possible under law, to waive all
   copyright and related or neighboring rights to your data, associating your work with the CC0 license." The privacy
   page says the same.
-- The archive's size is stated as "2056 GiB" for 2026, with one release per day.
+- The archive's size is stated as "2056 GiB" for 2026. The README says "Each release is 1 day of flight data"; each
+  day has three release tags (prod, staging, mlatonly).
 
 **Redistribution.** It is allowed under ODbL 1.0:
 - **Attribution (§4.3).** A notice is needed, for example: "Contains information from ADSB.lol (https://adsb.lol),
@@ -171,6 +202,9 @@ Consequence: adsb.fi records cannot go into anything we publish under ODbL. This
 > non-profit or governmental entities."
 
 > §1: "solely for the purpose of non-profit research and non-profit education."
+
+> §3(i): "For any publication or other disclosure, You will anonymize or de-identify personally-identifiable
+> information, aircraft identifiers, sensor locations and other data identified in Supplemental provisions (if any)."
 
 > §3(iii): "You will not distribute, disclose, transfer or otherwise make available the data set(s) to any person other
 > than those employed by your institute …"
@@ -236,7 +270,8 @@ contract and redirect to `jetnet.com/legal/terms-of-use`.
 > "we offer free access to the first-of-the-month data sets for testing and evaluation … Complete data from the 1st of
 > each month are made available free of charge."
 
-We used two snapshots only for evaluation (C5). They must not be redistributed or used in the product.
+We used two snapshots only for evaluation (C5). They must not be redistributed or used in the product, and this
+report gives only aggregates from them.
 
 **Verdict.** No: redistribution is forbidden, and the coverage at ZSSS is no better (C5).
 
@@ -315,21 +350,27 @@ The statement then quotes two laws:
 | same | Art. 37 | important data "确需向境外提供的，应当通过国家网信部门组织的数据出境安全评估"; data that has not been notified or published as important data "不需要将其作为重要数据申报" | verified |
 | 无线电管理条例 Radio Regulations, State Council / CMC Order 672, in force 2016-12-01 (gov.cn Gazette 2016 No. 35) | Art. 27(2) | a radio-station licence is required, "但设置、使用下列无线电台（站）的除外：…（二）单收无线电台（站）" (receive-only stations are exempt) | verified |
 | same | Art. 41 | "使用无线电台（站）的单位或者个人不得故意收发无线电台执照许可事项之外的无线电信号，不得传播、公布或者利用无意接收的信息。" | verified |
-| same | Art. 72(2) | penalty for "故意收发无线电台执照许可事项之外的无线电信号，传播、公布或者利用无意接收的信息": correction, confiscation of illegal gains, a fine of up to CNY 30,000 | verified |
+| same | Art. 72(2) | penalty for "故意收发无线电台执照许可事项之外的无线电信号，传播、公布或者利用无意接收的信息": correction, confiscation of illegal gains, a fine of up to CNY 30,000; "造成严重后果的，吊销无线电台执照，并处3万元以上10万元以下的罚款" (serious consequences: licence revoked plus CNY 30,000-100,000) | verified |
+| same | Art. 75(2)/(3) | "（二）境外组织或者个人在我国境内进行电波参数测试或者电波监测；（三）向境外组织或者个人提供涉及国家安全的境内电波参数资料": correction; on refusal, confiscation and CNY 30,000-100,000; serious consequences CNY 100,000-300,000 | verified (added from verify_licences_law.md) |
 | 民航数据管理办法（试行） CAAC Civil Aviation Data Management Measures (trial), published 2025-03 (caac.gov.cn PDF) | Arts. 14, 31 | data are graded "一般数据、重要数据、核心数据"; "民航局数据统筹管理部门…制定民航领域重要数据和核心数据目录" | verified (text); the catalogue itself was not found, so whether flight-track or ADS-B data are listed is unverified |
 | 著作权法 Copyright Law (2020 amendment), Art. 5 (MOFCOM law-database copy) | Art. 5(1) | "本法不适用于：（一）法律、法规，国家机关的决议、决定、命令和其他具有立法、行政、司法性质的文件，及其官方正式译文" | verified (government mirror; NCAC original unreachable) |
 
 **Not found.** No PRC law or regulation names ADS-B reception or the sharing of aircraft positions specifically
-(observed: none in the texts read, and none in searches).
+(observed: none in the texts read, and none in searches). The closest general radio rule is Radio Regs Art. 75(2)/(3):
+foreign radio monitoring inside the PRC, and supplying security-related PRC radio data abroad.
 
-**How the authorities frame it.** The 2021 and 2024 cases rest on the Counter-espionage Law (supplying data "关系国家安全和利益"
-to foreign organisations) and on Data Security Law Art. 32, applied to the cross-border feed. They do not rest on the
-act of reception itself (observed in the statements).
+**How the authorities frame it.** The 2021 and 2024 statements cite the Counter-espionage Law (supplying data
+"关系国家安全和利益" to foreign organisations) and the Data Security Law's collection rule (our Art. 32), applied to the
+cross-border feed. They quote the wording without article numbers; the article mapping is ours. They do not rest on
+the act of reception itself (observed in the statements). This list is incomplete: Radio Regs Art. 75(2)/(3) also
+covers foreign radio monitoring inside the PRC (inferred).
 
 ### 3.3 What this means for sha3d (inferred, not legal advice; owner's decision)
 
 - **Receiving without a station licence.** Art. 27(2) exempts receive-only stations. But Art. 41 forbids
-  "传播、公布或者利用无意接收的信息". In addition, the security services treat a feed sent abroad as espionage-relevant.
+  deliberately receiving signals outside the licence and "传播、公布或者利用无意接收的信息" (spreading, publishing or
+  using unintentionally received information). Art. 75(2)/(3) covers radio monitoring inside the PRC on behalf of
+  foreign parties. In addition, the security services treat a feed sent abroad as espionage-relevant.
   **Anyone in the PRC who ran a receiver feeding our project, or adsb.lol or similar, would carry real legal risk.**
   Do not set one up, ask anyone to, or buy one for anyone.
 - **Data processing outside China.** It is in scope of the Data Security Law where it "harms" PRC national security
@@ -354,7 +395,7 @@ act of reception itself (observed in the statements).
 | **Aireon** (Iridium NEXT payloads) | AireonSTREAM: "global, gate-to-gate, surface-to-space ATS surveillance quality data" (vendor claim) | observed (airborne for certain; surface unverified) | for ANSPs and data partners; price on contract | not published | expensive; surface claim and update rate unverified for ZSSS |
 | **FlightAware AeroAPI** | Personal tier: "Current flight status and tracks"; "Aireon Space-Based ADS-B" only in Premium ("Contact us to enable"; $1,000/month minimum) | tracks: mixed sources (unknown for China) | Personal: up to $5 free a month, "10 result sets/minute"; Standard: $100/month minimum; Premium: $1,000/month minimum | Personal: "Storage and distribution of derivative works for personal or academic purposes only" | possible per-flight check (status, gate?) on Personal; satellite positions only on Premium. The 2016 VariFlight-FlightAware data exchange (环球旅讯, 2016-11-02) suggests FlightAware has Chinese data, but it is old [secondary]. |
 | **Spire Aviation** | "Satellite and terrestrial ADS-B data … Historical API … Flight tracking data stream" | observed (airborne; surface unverified) | "Contact us directly for custom pricing" | not read | commercial only |
-| **Shanghai Airport Authority** flight query (shanghaiairport.com) | departures and arrivals for Pudong and Hongqiao; template fields seen: 航空公司, 主航班号, 计划时间, 出发地/目的地, 候机楼. No gate or stand field was visible (data rendered client-side). | reported schedule and status; no positions | free web page; unreachable from this sandbox with curl (connection reset); read with WebFetch | 网站声明: "非经本公司书面授权，任何人不得将本网站的交易资讯、行业资讯、服务资讯等讯息进行再传播。"; "本网站所提供信息仅供参考" | no redistribution without written authorisation; scraping not permitted (inferred); at most a manual reference |
+| **Shanghai Airport Authority** flight query (shanghaiairport.com) | departures and arrivals for Pudong and Hongqiao; template fields seen: 航空公司, 主航班号, 计划时间, 出发地/目的地, 候机楼. No gate or stand field was visible (data rendered client-side). | reported schedule and status; no positions | free web page; the home page reset the connection to curl and was read with WebFetch; the statement page (`/wzaqzc/`) answered curl with HTTP 200 on re-check (verify_licences_law.md A43) | 网站声明: "非经本公司书面授权，任何人不得将本网站的交易资讯、行业资讯、服务资讯等讯息进行再传播。"; "本网站所提供信息仅供参考" | no redistribution without written authorisation; scraping not permitted (inferred); at most a manual reference |
 | **CAAC open data** | data.caac.gov.cn is unreachable here. CAAC publishes statistics; the CAAC ADS-B plan states ADS-B information services "为航空企业全面提供", i.e. for aviation enterprises only | aggregates; not per-flight | — | — | no observed traffic for the public |
 | **OAG / Cirium / airline timetables / AeroDataBox** | schedules, sometimes FIDS times and gates | scheduled / inferred | commercial (AeroDataBox: "Can I resell your API or any data from it? No" [secondary: sfo3d §3.8]) | licence-bound | scheduled or inferred traffic only |
 | **adsb.lol archive** (ODbL) | daily traces | observed, but empty near ZSSS (C2) | free | ODbL 1.0 | nothing to replay |
@@ -416,8 +457,8 @@ act of reception itself (observed in the statements).
 5. **Not recommended: our own receiver in Shanghai, or recruiting feeders there.** Sections 3.1 and 3.3 explain why.
    It would put a person in the PRC at risk, and it would also conflict with the owner's privacy rule.
 6. **Out of scope, for the owner to weigh.** If real live traffic is the point of the project, the ADSBx sample shows
-   aircraft on the ground at Hong Kong (VHHH) and Taipei Taoyuan (RCTP) (C5). A different airport would have a live
-   feed; ZSSS will not with open data. Coverage at those airports was seen only in the ADSBx sample and has not been
+   aircraft on the ground at Hong Kong (VHHH) and Taipei Taoyuan (RCTP) (C5, counts only). A different airport would
+   have a live feed; ZSSS will not with open data. Coverage at those airports was seen only in the ADSBx sample and has not been
    checked in adsb.lol.
 
 ## 7. Facts table
@@ -430,17 +471,18 @@ act of reception itself (observed in the statements).
 | F4 | adsb.lol feeder tier | 7,200/day, 20 GB/month, re-api | https://api.adsb.lol/api/openapi.json | 2026-11-13 | "feeder (free, by feeding the network): 7,200/day, 20 GB/month" | verified |
 | F5 | adsb.lol sponsor plans | EUR 20 (clearance) … EUR 999 (oceanic) a month | https://www.adsb.lol/sponsor | 2026-11-13 | "clearance … €20"; "oceanic … €999" | verified |
 | F6 | globe_history licence | ODbL 1.0 | https://github.com/adsblol/globe_history_2026 (README, commit 5959c79) | 2026-11-13 | "This database is made available under the Open Database License: http://opendatacommons.org/licenses/odbl/1.0/." | verified |
-| F7 | globe_history docs | ODbL 1.0, one release per day | https://www.adsb.lol/docs/open-data/historical/ | 2026-11-13 | "license: ODbL 1.0 , use it freely, just keep it open." | verified |
+| F7 | globe_history docs | ODbL 1.0; one day per release, three release tags per day (prod, staging, mlatonly) | https://www.adsb.lol/docs/open-data/historical/ | 2026-11-13 | "license: ODbL 1.0 , use it freely, just keep it open." | verified |
 | F8 | adsb.lol feeder input | CC0 waiver | https://www.adsb.lol/docs/privacy-license/ | 2026-11-13 | "you agree … to waive all copyright and related or neighboring rights to the data you are sharing, under the CC0 license" | verified |
 | F9 | adsb.lol archive sources | ADSB.lol feeders, FlyItalyADSB, TheAirTraffic | globe_history_2026 README | 2026-11-13 | "This includes data from ADSB.lol feeders and friends, FlyItalyADSB and TheAirTraffic.com" | verified |
 | F10 | adsb.fi terms | personal, non-commercial; no licensing; cite with link | https://github.com/adsbfi/opendata (README, commit 9fe1c9a) | 2026-11-13 | "adsb.fi open data is for personal, non-commercial use only. You may not license, sell, rent, or lease any part of the data or the service." | verified |
 | F11 | adsb.fi rate limit | 1 request/s | same | 2026-11-13 | "The public endpoints are rate limited to 1 request per second" | verified |
 | F12 | OpenSky operational use | written agreement needed, even non-profit | https://opensky-network.org/about/terms-of-use | 2026-11-13 | "Use of the REST API in any operational capacity — including integration into a live product, service, or automated system (even if only internal) — requires a previous written agreement" | verified |
 | F13 | OpenSky redistribution | not allowed outside one's institute | same, §3(iii) | 2026-11-13 | "You will not distribute, disclose, transfer or otherwise make available the data set(s) to any person other than those employed by your institute" | verified |
+| F13a | OpenSky publication | aircraft identifiers and sensor locations must be anonymised in any publication | same, §3(i) | 2026-11-13 | "For any publication or other disclosure, You will anonymize or de-identify personally-identifiable information, aircraft identifiers, sensor locations" | verified (added from verify_licences_law.md) |
 | F14 | OpenSky FAQ vs Terms | FAQ more permissive | https://opensky-network.org/about/faq | 2026-11-13 | "You can freely use the API for personal and non-profit applications but any commercial use requires our consent." | contradicted (vs F12) |
 | F15 | OpenSky anonymous REST | latest state only, 10 s resolution, 400 credits/day | https://openskynetwork.github.io/opensky-api/rest.html | 2026-11-13 | "Anonymous users (unauthenticated, bucketed by IP): Only the most recent state vectors are available … Time resolution is 10 seconds" | verified |
 | F16 | OpenSky auth | OAuth2 client credentials only | same | 2026-11-13 | "OpenSky exclusively supports the OAuth2 client credentials flow. Basic authentication with username and password is no longer accepted." | verified |
-| F17 | OpenSky coverage near ZSSS, 2026-11-12 | 0 cells within 233 km; nearest at 28.6-29.4 N with min alt 6.5-12 km | https://opensky-network.org/api/range/coverage?day=1794441600 | 2026-11-13 | (data: 92,484 cells; nearest (29.2, 120.6, 9022 m) at 233 km) | verified (own measurement) |
+| F17 | OpenSky coverage near ZSSS, 2026-11-12 | 0 cells within 233 km; nearest at 28.6-29.4 N with min alt 6.5-12 km | https://opensky-network.org/api/range/coverage?day=1794441600 | 2026-11-13 | (data: 92,484 cells; nearest at 233 km; per-cell values kept local) | verified (own measurement) |
 | F18 | OpenSky stated coverage | best in Europe and US | https://opensky-network.org/about/faq | 2026-11-13 | "have the best coverage in Europe and the US" | verified |
 | F19 | airplanes.live API | 403 "contact us" | https://api.airplanes.live/v2/point/31.198/121.334/5 | 2026-11-13 | "Please contact us at contact@airplanes.live. Your email MUST include any links, a description of the project" | verified (own probe) |
 | F20 | airplanes.live contributor-only | since Sep 2026 | https://github.com/ColinWaddell/FlightTracker/issues/123 | 2026-11-13 | "In September 2026, airplanes.live moved their API to be contributor-only" | secondary |
@@ -448,7 +490,7 @@ act of reception itself (observed in the statements).
 | F22 | ADS-B Exchange AUP | no publishing or redistribution | https://www.adsbexchange.com/acceptable-use-policy/ | 2026-11-13 | "Publish, resell, transmit, broadcast, distribute the Services or data acquired from the Services." | verified |
 | F23 | ADS-B Exchange Community API | $10/month, 10,000 requests, non-commercial | https://www.adsbexchange.com/community/developer-hub/ | 2026-11-13 | "What you get for $10/mo. 10,000 requests" | verified |
 | F24 | ADS-B Exchange samples | 1st of month free "for testing and evaluation" | https://www.adsbexchange.com/data-products/sample-data/ | 2026-11-13 | "we offer free access to the first-of-the-month data sets for testing and evaluation" | verified |
-| F25 | ADSBx coverage near ZSSS (2026-11-01) | nearest `adsb_icao` 106-119 km at ≥ 6,850 ft; only `other` records closer | https://samples.adsbexchange.com/readsb-hist/2026/11/01/060000Z.json.gz | 2026-11-13 | (data) | verified (own measurement) |
+| F25 | ADSBx coverage near ZSSS (2026-11-01) | nearest `adsb_icao` 106-119 km at ≥ 6,850 ft; only `other` records closer (aggregates; records kept local) | https://samples.adsbexchange.com/readsb-hist/2026/11/01/060000Z.json.gz | 2026-11-13 | (data) | verified (own measurement) |
 | F26 | readsb `type: other` | source unknown | https://raw.githubusercontent.com/wiedehopf/readsb/dev/README-json.md | 2026-11-13 | "other: miscellaneous data received via Basestation / SBS format, quality / source is unknown." | verified |
 | F27 | ADSBHub terms | feed to get; no use restrictions | https://www.adsbhub.org/howtogetdata.php | 2026-11-13 | "There are no restrictions on how the users will use the data. Everybody is allowed to publish the data for free or to use it for commercial purposes." | verified |
 | F28 | AvioADSB licence | CC BY-NC 4.0 | https://avioadsb.org/docs/api | 2026-11-13 | "Free for personal and research use, CC BY-NC 4.0." | verified |
@@ -464,7 +506,7 @@ act of reception itself (observed in the statements).
 | F38 | Data Security Law Art. 32 | lawful collection | same | 2026-11-13 | "任何组织、个人收集数据，应当采取合法、正当的方式，不得窃取或者以其他非法方式获取数据。" | verified |
 | F39 | "Important data" definition | Order 790 Art. 62(4) | https://www.gov.cn/gongbao/2024/issue_11646/202410/content_6980863.html | 2026-11-13 | "重要数据，是指特定领域、特定群体、特定区域或者达到一定精度和规模…可能直接危害国家安全…的数据" | verified |
 | F40 | Radio Regulations Art. 27(2) | receive-only stations exempt from licence | https://www.gov.cn/gongbao/content/2016/content_5148745.htm | 2026-11-13 | "但设置、使用下列无线电台（站）的除外：…（二）单收无线电台（站）" | verified |
-| F41 | Radio Regulations Art. 41 | no dissemination or use of unintentionally received information | same | 2026-11-13 | "不得传播、公布或者利用无意接收的信息" | verified |
+| F41 | Radio Regulations Art. 41 | no deliberate reception outside the licence; no dissemination or use of unintentionally received information | same | 2026-11-13 | "不得传播、公布或者利用无意接收的信息" | verified |
 | F42 | CAAC important-data catalogue | required by the CAAC measures; not found publicly | http://www.caac.gov.cn/XXGK/XXGK/GFXWJ/202503/P020250331376967414116.pdf | 2026-11-13 | "制定民航领域重要数据和核心数据目录" | verified (measures) / unverified (catalogue content) |
 | F43 | China uses 1090ES | transport and general aviation | http://www.caac.gov.cn/XXGK/XXGK/ZFGW/201601/P020160125652058562641.pdf | 2026-11-13 | "运输航空采用国际民航组织标准的 1090ES 数据链。" | verified |
 | F44 | ADS-B OUT target | full operation by end 2020 | same | 2026-11-13 | "到 2020 年底，实现 ADS-B OUT 全面运行" | verified |
@@ -475,7 +517,7 @@ act of reception itself (observed in the statements).
 | F49 | Aireon claim | "gate-to-gate, surface-to-space" | https://aireon.com/our-technology | 2026-11-13 | "AireonSTREAM provides global, gate-to-gate, surface-to-space ATS surveillance quality data" | verified (as a vendor claim; performance at ZSSS unverified) |
 | F50 | FlightAware AeroAPI | Personal: personal/academic derivative works; Aireon only in Premium | https://www.flightaware.com/commercial/aeroapi/ | 2026-11-13 | "Storage and distribution of derivative works for personal or academic purposes only"; "Aireon Space-Based ADS-B* Not included in Personal Not included in Standard Included in Premium" | verified |
 | F51 | Spire pricing | custom | https://spire.com/plans/ | 2026-11-13 | "Contact us directly for custom pricing." | verified |
-| F52 | Shanghai Airport site statement | no redistribution without written authorisation | https://www.shanghaiairport.com/wzaqzc/index.html | 2026-11-13 | "非经本公司书面授权，任何人不得将本网站的交易资讯、行业资讯、服务资讯等讯息进行再传播。" | verified (read with WebFetch; not cached) |
+| F52 | Shanghai Airport site statement | no redistribution without written authorisation | https://www.shanghaiairport.com/wzaqzc/index.html | 2026-11-13 | "非经本公司书面授权，任何人不得将本网站的交易资讯、行业资讯、服务资讯等讯息进行再传播。" | verified (read with WebFetch; not cached; curl got HTTP 200 on re-check, verify_licences_law.md A43) |
 | F53 | Shanghai Airport flight widget fields | airline, flight number, scheduled time, origin/destination, terminal; gate/stand not seen | https://www.shanghaiairport.com/ | 2026-11-13 | "航空公司 … 主航班号 … 候机楼" (template) | verified (fields); gate/stand unverified |
 | F54 | VariFlight-FlightAware data exchange | strategic cooperation announced 2016-11-02 | https://www.traveldaily.cn/article/108758 | 2026-11-13 | "飞常准将推进与FlightAware之间的航班跟踪数据交流" | secondary (old) |
 | F55 | Copyright Law Art. 5 | laws and regulations not protected | https://ipr.mofcom.gov.cn/law/detail.shtml?id=1969 | 2026-11-13 | "本法不适用于：（一）法律、法规…及其官方正式译文" | verified |
@@ -490,7 +532,8 @@ act of reception itself (observed in the statements).
   publishing aggregated PRC flight tracks cannot be fully assessed. Keep displays transient and avoid building a
   dataset of Chinese flight tracks in the public repository (inferred).
 - **R4: terms drift.**
-  - adsb.lol went from "free" to metered (500 requests/day) between Sep and Nov 2026.
+  - adsb.lol went from "free" to metered (500 requests/day) between 2026-09-24 (sfo3d's capture) and 2026-11-13. It
+    publishes no start date.
   - airplanes.live went contributor-only in Sep 2026.
   - OpenSky tightened its terms.
   - Re-check all terms at build time. The sfo3d relay design (1 Hz) is over quota.
@@ -502,7 +545,8 @@ act of reception itself (observed in the statements).
 - **R7: misleading "observed" labels.** ADSBx and other aggregators contain `type: other` records of unknown origin,
   with impossible fields (ground at 370 kt). Treat only `adsb_icao` (and perhaps `mlat`) as observed positions.
 - **R8: blocked or slow access from this sandbox.**
-  - shanghaiairport.com, data.caac.gov.cn, ncac.gov.cn and web.archive.org reset the connection.
+  - The shanghaiairport.com home page, data.caac.gov.cn, ncac.gov.cn and web.archive.org reset the connection. (The
+    shanghaiairport.com statement page answered HTTP 200 on re-check.)
   - airplanes.live, adsb.fi and SCMP return 403.
   - Some facts above are therefore secondary or unverified.
 - **R9: the owner's privacy.** Any key request (adsb.lol adhoc form, VariFlight, FlightAware) needs the owner's
@@ -537,7 +581,8 @@ act of reception itself (observed in the statements).
   - `sha3d/refs/cache/china_law/`, 19 sources: laws, CAAC PDFs and news pages.
   - Each has a `SOURCES.json`. `adsb_terms/SOURCES.json` also lists `read_not_cached` (WebFetch-only and 403 pages).
 - Redistributable: only our own probe logs, the PRC legal texts (Copyright Law Art. 5) and the ODbL README and licence
-  texts of globe_history. **Keep everything else local.** This includes the ADSBx samples and the OpenSky coverage data.
+  texts of globe_history. **Keep everything else local.** This includes the ADSBx samples and the OpenSky coverage data,
+  and any per-record listing from them: public docs carry aggregates only (ADSBx AUP; OpenSky Terms 3(i) and 3(iii)).
 - Scripts used: kept in the session scratchpad and run with `python3 -I`; not part of the repository.
   - `os_cov.py`: OpenSky coverage cells.
   - `adsbx_snap.py`, `adsbx_other.py`, `adsbx_grid.py`, `adsbx_cn.py`: ADSBx sample analysis.
