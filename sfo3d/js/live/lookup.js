@@ -166,9 +166,12 @@ function familyOf(code) {
   }
   return famOf(code);
 }
+// Keyed by the registration too (13 Nov 2026, tracking-film review): the object carries B.reg, and without it in the key
+// every aircraft resolved the same way (e.g. 'callsign UAL') shared the first one's registration -- UAL900 N71112 wore
+// UAL901's N61115 decal (js/three/aircraft.js regU via js/live/aircraft.js registration()).
 const livCache = new Map();
 function livery(code, B, airline) {
-  const k = (code || '-') + '|' + (B ? B.src + '|' + B.why : '') + '|' + (airline || '');
+  const k = (code || '-') + '|' + (B ? B.src + '|' + B.why + '|' + (B.reg || '') : '') + '|' + (airline || '');
   let v = livCache.get(k);
   if (!v) {
     const fam = (code && familyOf(code)) || famOf(airline) || NEUTRAL;

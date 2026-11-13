@@ -11741,6 +11741,78 @@
    "bytes": 1840769,
    "sha256": "a6588b0d4bf4b3acf1f2d8e99333bb8f6eec634366aa50882d0f9d2c7e90166e"
   },
+  "rec/adsbfi_20261111_22.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 2201721,
+   "sha256": "87ea29b5baeca3c335beebe964424bcb610f38814db5a9874c06268411c000f4"
+  },
+  "rec/adsbfi_20261112_10.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 78969,
+   "sha256": "335d4ca0f2869526c9dcf79c1c2b628409c45591eef4e2e616956ae070932b54"
+  },
+  "rec/adsbfi_20261112_16.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 12323382,
+   "sha256": "3932002a1dd1ce6b12b903233a867d97de1fd0408f7227af7d58998138a629cf"
+  },
+  "rec/adsbfi_20261112_17.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 19013757,
+   "sha256": "a3d6b8d65ddf153176b5a6a205bafc28efd693db2d7715bcff1ee5db1f97f120"
+  },
+  "rec/adsbfi_20261112_18.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 20709566,
+   "sha256": "891e443cbb4e2163c21ba85f477528dc6e83879f104eba07b70e3e77fb569656"
+  },
+  "rec/adsbfi_20261112_19.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 21674346,
+   "sha256": "1f6359be43ec1c2a8f6ad22de9f7a629aa740da254f20cd6ce9e14edced5e621"
+  },
+  "rec/adsbfi_20261112_20.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 22061488,
+   "sha256": "6c3814e5b0b5d899870b64cd19c67d974e66165a658369c39dcc3b06e7c7ecf5"
+  },
+  "rec/adsbfi_20261112_21.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 22692146,
+   "sha256": "5b39648412778c343439c435afd4580fd459f1aabbfd70e9090f6e18c8ee0b0d"
+  },
+  "rec/adsbfi_20261112_22.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 22574432,
+   "sha256": "57c9fc3f7ca9ffe6c80b12da3e20e722bc8d76929202537fdc8394c41593fd68"
+  },
+  "rec/adsbfi_20261112_23.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 20223839,
+   "sha256": "fdda09e6bc947fd2134f6a2c331b82b39af113df34a91ce2fdb3e6084b718bb5"
+  },
+  "rec/adsbfi_20261113_00.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 18049389,
+   "sha256": "f7498202e88f658f10b446eef3206c13790f6f407855824f8838944742423610"
+  },
+  "rec/adsbfi_20261113_01.jsonl.gz": {
+   "class": "local",
+   "why": "adsb.fi terms: personal non-commercial use, not to be licensed on",
+   "bytes": 372869,
+   "sha256": "57c3996bb5036517d3bc89e252d3b36ad82d18c9664bf330b124b670ba6977b8"
+  },
   "rec/adsblol_20261104_17.jsonl.gz": {
    "class": "pack",
    "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
@@ -12413,6 +12485,78 @@
    "bytes": 593179,
    "sha256": "abb7e6192136f634b1c53fcfcd40fc8e1e47f713908d7d92087d6dd9c665a55b"
   },
+  "rec/adsblol_20261111_22.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 640171,
+   "sha256": "119dd8a995ec2fa08382090729e701ec121dd2d45efd1afcf6299e4db7d9cf89"
+  },
+  "rec/adsblol_20261112_10.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 28266,
+   "sha256": "3049442de3b75513191b0dae926a14112d1736449991b1e5b75b38d2b31b776c"
+  },
+  "rec/adsblol_20261112_16.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 3433751,
+   "sha256": "8f4f63301670da431a2e3dfbe98b9883fe83b3ecbc6ac6680975bbca62a3aaa4"
+  },
+  "rec/adsblol_20261112_17.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 5166678,
+   "sha256": "77268014bd8c5c5910ae464506497b65c4bc3f5fc64afc6472bf328a8f1dd1f0"
+  },
+  "rec/adsblol_20261112_18.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 5601218,
+   "sha256": "352f69251147afe6ac24e6844b69e684ddbeebe743b7e572b5288c37ae0c7978"
+  },
+  "rec/adsblol_20261112_19.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 6071163,
+   "sha256": "d70b781ce65e63758f662ad6fdd38b0420b462897724d4eafaea5c2db38e90b9"
+  },
+  "rec/adsblol_20261112_20.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 6130657,
+   "sha256": "50bbaac4e0f89a47ca6f0f81a10a35091020251a3bf8e0652cba83a5700ad838"
+  },
+  "rec/adsblol_20261112_21.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 6280267,
+   "sha256": "defae991840b163d07f49f6dc70b69ac3884aa42c0392aabe9b39db2a7b96d57"
+  },
+  "rec/adsblol_20261112_22.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 6291256,
+   "sha256": "54596796b180e034e0d0c63844ffac6fccbdbb1e243d14433299d28a00b4aad3"
+  },
+  "rec/adsblol_20261112_23.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 5474389,
+   "sha256": "75184c8b676f53f96395956f96a4723851cba4c2feb2068d38d905f6e4ae4232"
+  },
+  "rec/adsblol_20261113_00.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 4790501,
+   "sha256": "41c9c187b209ca784f6524d938df374e4d54f23dd9361a7e698d8fb3486d82cc"
+  },
+  "rec/adsblol_20261113_01.jsonl.gz": {
+   "class": "pack",
+   "why": "ODbL (adsb.lol); trimmed copy in rec_pack/",
+   "bytes": 141623,
+   "sha256": "b9632bcb9d7a9bd4283df485184ce327f80580019cca65a0b0a2e01f9f445b4a"
+  },
   "rec/recorder.log": {
    "class": "local",
    "why": "recorder state",
@@ -12435,14 +12579,14 @@
   "rec/relay.out": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 1773,
-   "sha256": "4feecdec43429e5c62c6ab75c4f052008e3b712f783c12cbf321d433d23588f8"
+   "bytes": 2561,
+   "sha256": "1fef5160fe36f0e46b13e5e0c0a83121c6fca0ad51f9154f44d15368d0054966"
   },
   "rec/relay_record.pid": {
    "class": "local",
    "why": "recorder state",
-   "bytes": 5,
-   "sha256": "646ea841f7adf759aa08103b831fdeef311cab719e1b9a9aefa8536e1393f9da"
+   "bytes": 3,
+   "sha256": "dac53c17c250fd4d4d81eaf6d88435676dac1f3f3896441e277af839bf50ed8a"
   },
   "replay/reports.pkl": {
    "class": "local",
