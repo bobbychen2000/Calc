@@ -1,0 +1,635 @@
+[
+ {
+  "id": "a_bay",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 800,
+  "n": 216,
+  "speed": 1,
+  "off": 600,
+  "t": "2026-11-08T23:45:20Z",
+  "q": "high",
+  "cam": {
+   "type": "chase",
+   "yawOff": [
+    -50,
+    -68
+   ],
+   "pitch": [
+    7,
+    4
+   ],
+   "dist": [
+    160,
+    135
+   ],
+   "fov": 40
+  },
+  "cap": "approach"
+ },
+ {
+  "id": "a_side",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 872,
+  "n": 192,
+  "speed": 1,
+  "off": 670,
+  "t": "2026-11-08T23:46:32Z",
+  "q": "high",
+  "cam": {
+   "type": "chase",
+   "yawOff": [
+    -78,
+    -96
+   ],
+   "pitch": [
+    4,
+    2
+   ],
+   "dist": [
+    150,
+    115
+   ],
+   "fov": 40
+  },
+  "cap": "approach"
+ },
+ {
+  "id": "a_lights",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 951,
+  "n": 336,
+  "speed": 1,
+  "off": 750,
+  "t": "2026-11-08T23:47:51Z",
+  "q": "high",
+  "cam": {
+   "type": "spot",
+   "pos": [
+    2294.2,
+    17.0,
+    1028.1
+   ],
+   "frame": [
+    60,
+    75
+   ],
+   "up": 0
+  },
+  "cap": "final"
+ },
+ {
+  "id": "a_td",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 969,
+  "n": 384,
+  "speed": 1,
+  "off": 760,
+  "t": "2026-11-08T23:48:09Z",
+  "q": "high",
+  "cam": {
+   "type": "spot",
+   "pos": [
+    981.2,
+    4.8,
+    387.5
+   ],
+   "frame": [
+    55,
+    80
+   ],
+   "up": 0
+  },
+  "cap": "touchdown"
+ },
+ {
+  "id": "a_roll",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 988,
+  "n": 264,
+  "speed": 2,
+  "off": 780,
+  "t": "2026-11-08T23:48:28Z",
+  "q": "high",
+  "cam": {
+   "type": "chase",
+   "yawOff": [
+    -35,
+    -20
+   ],
+   "pitch": [
+    4,
+    6
+   ],
+   "dist": [
+    105,
+    115
+   ],
+   "fov": 42
+  },
+  "cap": "rollout"
+ },
+ {
+  "id": "a_exit",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 1012,
+  "n": 360,
+  "speed": 3,
+  "off": 810,
+  "t": "2026-11-08T23:48:52Z",
+  "q": "high",
+  "cam": {
+   "type": "chase",
+   "yawOff": [
+    35,
+    70
+   ],
+   "pitch": [
+    12,
+    16
+   ],
+   "dist": [
+    125,
+    145
+   ],
+   "fov": 42
+  },
+  "cap": "taxi"
+ },
+ {
+  "id": "a_taxi",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 1058,
+  "n": 348,
+  "speed": 6,
+  "off": 850,
+  "t": "2026-11-08T23:49:38Z",
+  "q": "high",
+  "cam": {
+   "type": "chase",
+   "yawOff": [
+    160,
+    205
+   ],
+   "pitch": [
+    28,
+    22
+   ],
+   "dist": [
+    210,
+    175
+   ],
+   "fov": 45
+  },
+  "cap": "taxi"
+ },
+ {
+  "id": "a_taxi2",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 1336,
+  "n": 432,
+  "speed": 8,
+  "off": 1130,
+  "t": "2026-11-08T23:54:16Z",
+  "q": "high",
+  "cam": {
+   "type": "orbit",
+   "yaw": [
+    120,
+    200
+   ],
+   "pitch": [
+    22,
+    27
+   ],
+   "dist": [
+    240,
+    190
+   ],
+   "fov": 45
+  },
+  "cap": "taxi"
+ },
+ {
+  "id": "a_pull1",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 1622,
+  "n": 360,
+  "speed": 4,
+  "off": 1420,
+  "t": "2026-11-08T23:59:02Z",
+  "q": "high",
+  "cam": {
+   "type": "orbit",
+   "yaw": [
+    300,
+    250
+   ],
+   "pitch": [
+    26,
+    20
+   ],
+   "dist": [
+    170,
+    135
+   ],
+   "fov": 45
+  },
+  "cap": "gate"
+ },
+ {
+  "id": "a_pull2",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 1682,
+  "n": 360,
+  "speed": 4,
+  "off": 1480,
+  "t": "2026-11-09T00:00:02Z",
+  "q": "high",
+  "cam": {
+   "type": "orbit",
+   "yaw": [
+    210,
+    180
+   ],
+   "pitch": [
+    16,
+    13
+   ],
+   "dist": [
+    120,
+    100
+   ],
+   "fov": 45
+  },
+  "cap": "gate"
+ },
+ {
+  "id": "a_dock1",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 1742,
+  "n": 360,
+  "speed": 3,
+  "off": 1540,
+  "t": "2026-11-09T00:01:02Z",
+  "q": "high",
+  "cam": {
+   "type": "orbit",
+   "yaw": [
+    160,
+    135
+   ],
+   "pitch": [
+    14,
+    12
+   ],
+   "dist": [
+    85,
+    72
+   ],
+   "fov": 45,
+   "up": 4
+  },
+  "cap": "gate"
+ },
+ {
+  "id": "a_dock2",
+  "film": "arr",
+  "hex": "a9825a",
+  "start": 1787,
+  "n": 360,
+  "speed": 3,
+  "off": 1580,
+  "t": "2026-11-09T00:01:47Z",
+  "q": "high",
+  "cam": {
+   "type": "orbit",
+   "yaw": [
+    250,
+    285
+   ],
+   "pitch": [
+    30,
+    24
+   ],
+   "dist": [
+    150,
+    130
+   ],
+   "fov": 45
+  },
+  "cap": "dock"
+ },
+ {
+  "id": "d_gate",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 200,
+  "n": 312,
+  "speed": 2,
+  "off": 0,
+  "t": "2026-11-08T23:29:38Z",
+  "q": "high",
+  "cam": {
+   "type": "orbit",
+   "yaw": [
+    200,
+    235
+   ],
+   "pitch": [
+    22,
+    17
+   ],
+   "dist": [
+    170,
+    140
+   ],
+   "fov": 45
+  },
+  "cap": "gate"
+ },
+ {
+  "id": "d_push1",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 214,
+  "n": 432,
+  "speed": 5,
+  "off": 10,
+  "t": "2026-11-08T23:29:52Z",
+  "q": "high",
+  "cam": {
+   "type": "orbit",
+   "yaw": [
+    60,
+    20
+   ],
+   "pitch": [
+    24,
+    18
+   ],
+   "dist": [
+    170,
+    150
+   ],
+   "fov": 45
+  },
+  "cap": "push"
+ },
+ {
+  "id": "d_push2",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 304,
+  "n": 432,
+  "speed": 5,
+  "off": 100,
+  "t": "2026-11-08T23:31:22Z",
+  "q": "high",
+  "cam": {
+   "type": "orbit",
+   "yaw": [
+    300,
+    330
+   ],
+   "pitch": [
+    12,
+    10
+   ],
+   "dist": [
+    130,
+    115
+   ],
+   "fov": 45
+  },
+  "cap": "push"
+ },
+ {
+  "id": "d_away",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 642,
+  "n": 360,
+  "speed": 3,
+  "off": 440,
+  "t": "2026-11-08T23:37:00Z",
+  "q": "high",
+  "cam": {
+   "type": "chase",
+   "yawOff": [
+    30,
+    55
+   ],
+   "pitch": [
+    6,
+    9
+   ],
+   "dist": [
+    115,
+    125
+   ],
+   "fov": 42
+  },
+  "cap": "taxi"
+ },
+ {
+  "id": "d_taxi1",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 758,
+  "n": 480,
+  "speed": 12,
+  "off": 550,
+  "t": "2026-11-08T23:38:56Z",
+  "q": "high",
+  "cam": {
+   "type": "chase",
+   "yawOff": [
+    165,
+    200
+   ],
+   "pitch": [
+    30,
+    24
+   ],
+   "dist": [
+    230,
+    190
+   ],
+   "fov": 45
+  },
+  "cap": "taxi"
+ },
+ {
+  "id": "d_taxi2",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 1000,
+  "n": 432,
+  "speed": 12,
+  "off": 800,
+  "t": "2026-11-08T23:42:58Z",
+  "q": "high",
+  "cam": {
+   "type": "orbit",
+   "yaw": [
+    30,
+    100
+   ],
+   "pitch": [
+    24,
+    28
+   ],
+   "dist": [
+    260,
+    210
+   ],
+   "fov": 45
+  },
+  "cap": "taxi"
+ },
+ {
+  "id": "d_taxi3",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 1400,
+  "n": 480,
+  "speed": 8,
+  "off": 1200,
+  "t": "2026-11-08T23:49:38Z",
+  "q": "high",
+  "cam": {
+   "type": "chase",
+   "yawOff": [
+    -95,
+    -80
+   ],
+   "pitch": [
+    8,
+    10
+   ],
+   "dist": [
+    170,
+    150
+   ],
+   "fov": 42
+  },
+  "cap": "taxi"
+ },
+ {
+  "id": "d_lineup",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 1740,
+  "n": 528,
+  "speed": 2.5,
+  "off": 1540,
+  "t": "2026-11-08T23:55:18Z",
+  "q": "high",
+  "cam": {
+   "type": "spot",
+   "pos": [
+    1107.4,
+    7.5,
+    448.4
+   ],
+   "frame": [
+    75,
+    62
+   ],
+   "up": 0
+  },
+  "cap": "lineup"
+ },
+ {
+  "id": "d_roll",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 1804,
+  "n": 480,
+  "speed": 1,
+  "off": 1600,
+  "t": "2026-11-08T23:56:22Z",
+  "q": "high",
+  "cam": {
+   "type": "chase",
+   "yawOff": [
+    190,
+    176
+   ],
+   "pitch": [
+    2.5,
+    4
+   ],
+   "dist": [
+    85,
+    100
+   ],
+   "fov": 42
+  },
+  "cap": "takeoff"
+ },
+ {
+  "id": "d_rotate",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 1836,
+  "n": 480,
+  "speed": 1,
+  "off": 1630,
+  "t": "2026-11-08T23:56:54Z",
+  "q": "high",
+  "cam": {
+   "type": "spot",
+   "pos": [
+    -970.9,
+    4.8,
+    -606.5
+   ],
+   "frame": [
+    60,
+    110
+   ],
+   "up": 0
+  },
+  "cap": "takeoff"
+ },
+ {
+  "id": "d_climb",
+  "film": "dep",
+  "hex": "a28dc8",
+  "start": 1857,
+  "n": 384,
+  "speed": 1,
+  "off": 1650,
+  "t": "2026-11-08T23:57:15Z",
+  "q": "high",
+  "cam": {
+   "type": "chase",
+   "yawOff": [
+    186,
+    178
+   ],
+   "pitch": [
+    -4,
+    3
+   ],
+   "dist": [
+    150,
+    280
+   ],
+   "fov": 42
+  },
+  "cap": "climb"
+ }
+]
