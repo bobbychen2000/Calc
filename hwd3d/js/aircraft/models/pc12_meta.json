@@ -1,0 +1,1486 @@
+{
+ "_provenance": {
+  "source": "pc12's own builders (pc12/model, pc12/cad @ eb34f7d044286fbfb9dacc49ef97470a46eff974, unchanged files) run by hwd3d/tools/models/pc12/build_pc12_variant.py with the override set 'fr2' (docs/phase3_models.md section 4), output out/pc12_fr2/fr2/ (gitignored, rebuilt bit-for-bit by: python3 -B tools/models/pc12/build_pc12_variant.py --set=fr2)",
+  "commit": "eb34f7d044286fbfb9dacc49ef97470a46eff974",
+  "commit_date": "2026-11-13T16:32:47+00:00",
+  "glb_sha256": "9ccfd9a564c0ade4f816b2d2035f4465958db76be21e1693a0a6de039da7c630",
+  "meta_sha256": "25818abcf6e2fdf587dd2232ab11efc767eaeed28bf978e041d25c0306cf6cb7",
+  "licence": "own work (this repository)",
+  "variant": {
+   "set": "fr2",
+   "overrides": {
+    "layout": {
+     "WIN_HX": 0.1475,
+     "WIN_HZ": 0.19,
+     "WIN_R": 0.065,
+     "WIN_CZ": 2.047,
+     "FIXED_WINDOWS": {
+      "1": [
+       5.339,
+       6.967,
+       7.716,
+       8.469
+      ],
+      "-1": [
+       5.607,
+       6.201,
+       6.98
+      ]
+     },
+     "AIRSTAIR": {
+      "side": -1,
+      "cx": 4.971,
+      "cz": 1.775,
+      "hx": 0.305,
+      "hz": 0.675,
+      "r": 0.09
+     },
+     "CARGO": {
+      "side": -1,
+      "cx": 8.242,
+      "cz": 1.78,
+      "hx": 0.675,
+      "hz": 0.66,
+      "r": 0.1
+     },
+     "EXIT": {
+      "side": 1,
+      "cx": 6.195,
+      "cz": 2.061,
+      "hx": 0.24,
+      "hz": 0.32,
+      "r": 0.07
+     },
+     "DOOR_WINDOWS": {
+      "door_airstair": null,
+      "door_cargo": 7.961,
+      "exit_hatch": 6.195
+     }
+    },
+    "wing": {
+     "DIHEDRAL_DEG": 6.2,
+     "PIVOT_BL": 2.265,
+     "DIHEDRAL_deg": [
+      4.5,
+      6.2
+     ],
+     "Z_QC0": 0.8372016246900535
+    }
+   },
+   "builder": "hwd3d/tools/models/pc12/build_pc12_variant.py",
+   "builder_sha256": "25bb94a303373a915101aba4f74a7a83a33607becdb0d7f9adb40f15aa37f34a",
+   "pc12_sources_tree_sha256": "04893879d350d732abc09424959cffba786ccd7cbf2bff0c6c85e78005acaa01",
+   "pc12_sources_dirty": false,
+   "pc12_sources": {
+    "pc12/cad/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pc12/cad/glb.py": "dc6bedda99cbf85f138afbfacf88a420785a1b8df47320c96c23cc3b3577e1a6",
+    "pc12/cad/mesh.py": "7a24dd9bb4a32f2f6d86fd591e1e0363cf561e7cd5303992bc686f5e2cb73d6a",
+    "pc12/cad/sdf2d.py": "50ed4c2f2ecdbe48640366f6eb48f3b4b7a2bbeb89e074de2af969a8cd1dfc80",
+    "pc12/model/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "pc12/model/airfoil.py": "1badf3f43cb20c7278a61f6fd8176c6f02e2a1ba73acbd5930c64a6ea06b17ba",
+    "pc12/model/assemble.py": "43929a915b5c306cf94a23461fe11de874706d191d4de9a6607c2cfff0828d56",
+    "pc12/model/bays.py": "a04493caa9a31e9ff79d16cba3d77120362395f826e5141cfe44152a9cb1e202",
+    "pc12/model/brace.py": "f83bb61f80b01e276c028413ea161d592f5bc5268d4a3a44296f96469e4a7300",
+    "pc12/model/build.py": "51f14abdc731724ce0a82dfdb94a4dea5dc9fefc27bb370df818ffd413b4f7f6",
+    "pc12/model/cockpit_glazing.py": "8d0345966ccc529665454297e184c3b6f9503d7b009b0b3ff1c1df6ff40804c9",
+    "pc12/model/details.py": "3992ddd40935018d2cfb811302a7c94e19b80a3d602fb8832e080de6a8788073",
+    "pc12/model/empennage.py": "46c8116676836208e94f701fae499051105491c46c2cc562e0fae2594c1cb0cd",
+    "pc12/model/fuselage.py": "106ec5b9459b54a4caeca20d2edf9f3c918ea60666cc6321f6d771f2f733dfb7",
+    "pc12/model/fuselage_parts.py": "8ddfa1bc87a5b28c3fc17cfeccb80234279ebb98f269cd7d9f9d1d07c5d1fdc5",
+    "pc12/model/gear.py": "d80c90ccf10bfbf51e50b0c5782e6b78434415cbddc3e34e92970e541f07cd68",
+    "pc12/model/interior.py": "aba60defadd73438af75c29b6c7f0f1c6e5e0183ad8e1e3d2dbf767a2b20f629",
+    "pc12/model/lifting.py": "d7f881c5bc9b3568ac52b30410b6590f28b39c482ee10062cb0727053fa22ec1",
+    "pc12/model/livery.py": "f2d643db610412759d58dbad6b5b7ef95fd5652486c9a772addc0d378df479e3",
+    "pc12/model/parts.py": "41801a05d2135951fefcaeae6de66c07ebb83a945d0de2e23de5cd148c842db8",
+    "pc12/model/powerplant.py": "7d09525cdef2f5d2b240c06c5676fc0e0a1637dcc84515dd038b21178d168532",
+    "pc12/model/wing.py": "ce5cbfe415365860600acf8b0b596777f62280efe8779915723989749646c227"
+   },
+   "built": "2026-11-13T20:21:56Z"
+  },
+  "imported_by": "hwd3d/tools/models/pc12/import_pc12.mjs",
+  "imported": "2026-11-13",
+  "facts": "dimensions and configuration facts with their sources: pc12/CLAUDE.md \"Sourced facts\" (Pilatus, POH NGX, EASA TCDS, Jane's); contours, airfoils, interior and livery are estimated / reconstructed (\"Estimated / reconstructed\" there)",
+  "livery": "original neutral scheme (pc12/model/livery.py: white, cool-grey belly, navy swoosh, brass pinstripe); no registration, no logo"
+ },
+ "frame": {
+  "note": "hwd3d aircraft local frame (+x forward, +y up, +z starboard, origin = main-gear ground contact on pc12's own ground plane; the tyres sit 14.5 mm (mains) / 10.5 mm (nose) into it, pc12's static deflection), measured by js/aircraft/glb.js convertGLB with js/aircraft/models.js MODEL_LOAD_OPTS",
+  "origin_gl": [
+   0,
+   0,
+   6.43
+  ],
+  "contacts": {
+   "mainL": [
+    0,
+    -0.014,
+    -2.265
+   ],
+   "mainR": [
+    0,
+    -0.014,
+    2.265
+   ],
+   "nose": [
+    3.48,
+    -0.011,
+    0
+   ]
+  },
+  "wheelbase_m": 3.48,
+  "track_m": 4.53,
+  "bbox_local": [
+   -8.36,
+   -0.014,
+   -8.141,
+   6.04,
+   4.26,
+   8.141
+  ],
+  "length_m": 14.4,
+  "span_m": 16.281,
+  "height_m": 4.26,
+  "nose_to_main_m": 6.04,
+  "lights": {
+   "navL": {
+    "p": [
+     0.894,
+     1.711,
+     -7.827
+    ],
+    "part": null,
+    "src": "lens cluster light_red (port tip)"
+   },
+   "navR": {
+    "p": [
+     0.894,
+     1.711,
+     7.827
+    ],
+    "part": null,
+    "src": "lens cluster light_green (starboard tip)"
+   },
+   "tail": {
+    "p": [
+     -8.342,
+     4.125,
+     0
+    ],
+    "part": null,
+    "src": "lens cluster light_white (aft-most)"
+   },
+   "beaconTop": {
+    "p": [
+     -6.64,
+     4.192,
+     0
+    ],
+    "part": null,
+    "src": "lens cluster light_red (centreline, upper)"
+   },
+   "beaconBot": {
+    "p": [
+     -0.97,
+     0.738,
+     0
+    ],
+    "part": null,
+    "src": "lens cluster light_red (centreline, lower)"
+   },
+   "strobeL": {
+    "p": [
+     -0.121,
+     1.741,
+     -7.877
+    ],
+    "part": null,
+    "src": "lens cluster light_white (port tip)"
+   },
+   "strobeR": {
+    "p": [
+     -0.121,
+     1.741,
+     7.877
+    ],
+    "part": null,
+    "src": "lens cluster light_white (starboard tip)"
+   },
+   "strobeTail": null,
+   "landL": {
+    "p": [
+     0.23,
+     1.027,
+     -3.15
+    ],
+    "part": null,
+    "src": "registry (js/aircraft/models.js): Pilatus PC-12 NGX Model Building Plan p.4 photo \"LANDING LIGHTS\" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]"
+   },
+   "landR": {
+    "p": [
+     0.23,
+     1.027,
+     3.15
+    ],
+    "part": null,
+    "src": "registry (js/aircraft/models.js): Pilatus PC-12 NGX Model Building Plan p.4 photo \"LANDING LIGHTS\" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]"
+   },
+   "taxi": {
+    "p": [
+     3.482,
+     0.796,
+     0
+    ],
+    "part": "gear_nose",
+    "src": "lens on the nose gear (strut lamp)"
+   }
+  },
+  "excluded_parts": [
+   "structure"
+  ],
+  "tris_drawn": 410834
+ },
+ "checks": [
+  {
+   "check": "Overall length (spinner tip -> aft-most)",
+   "official": 14.4,
+   "model": 14.4,
+   "delta_mm": 0
+  },
+  {
+   "check": "Wing span (over winglets)",
+   "official": 16.28,
+   "model": 16.281,
+   "delta_mm": 1.3
+  },
+  {
+   "check": "Overall height (static)",
+   "official": 4.26,
+   "model": 4.26,
+   "delta_mm": 0
+  },
+  {
+   "check": "Tailplane span",
+   "official": 5.2,
+   "model": 5.2,
+   "delta_mm": 0
+  },
+  {
+   "check": "Wing reference area (m^2)",
+   "official": 25.81,
+   "model": 25.81,
+   "delta_mm": 0
+  },
+  {
+   "check": "Propeller diameter",
+   "official": 2.67,
+   "model": 2.668,
+   "delta_mm": -1.8
+  },
+  {
+   "check": "Propeller ground clearance (blade down)",
+   "official": 0.32,
+   "model": 0.321,
+   "delta_mm": 0.9
+  },
+  {
+   "check": "Wheel track",
+   "official": 4.53,
+   "model": 4.53,
+   "delta_mm": 0
+  },
+  {
+   "check": "Wheelbase",
+   "official": 3.48,
+   "model": 3.48,
+   "delta_mm": 0
+  },
+  {
+   "check": "Cabin floor width (OML - lining)",
+   "official": 1.3,
+   "model": 1.301,
+   "delta_mm": 0.8
+  }
+ ],
+ "wing": {
+  "semi_span": 7.856956443470179,
+  "root_chord": 2.189991352308809,
+  "tip_chord": 1.0949956761544044,
+  "mac": 1.7033266073512958,
+  "lemac": 5.323469760618404,
+  "x_qc": 5.749301412456228,
+  "dihedral_deg": 6.2,
+  "z_qc0": 0.8372016246900535
+ },
+ "stats": {
+  "triangles": 440661,
+  "vertices": 269931,
+  "glb_bytes": 6043144,
+  "parts": 69
+ },
+ "parts": [
+  {
+   "id": "structure",
+   "name": "Primary structure: frames, stringers, spars, ribs",
+   "group": "Structure",
+   "qty": 1,
+   "note": "2024-T3 / 7075-T6, zinc-chromate primed",
+   "tris": 29827,
+   "materials": [
+    "interior_green",
+    "zinc_chromate"
+   ],
+   "info": {
+    "frames": "20 (representative)",
+    "wing": "2-spar box, ribs @ 550 mm"
+   }
+  },
+  {
+   "id": "fus_center",
+   "name": "Centre fuselage (pressure cabin)",
+   "group": "Fuselage",
+   "qty": 1,
+   "note": "2024-T3 skin, 5.8 psi max differential",
+   "tris": 53564,
+   "materials": [
+    "paint_accent",
+    "paint_belly",
+    "paint_stripe",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "fus_fwd",
+   "name": "Forward fuselage & flight deck shell",
+   "group": "Fuselage",
+   "qty": 1,
+   "note": "2024-T3 skins, frames 10-14",
+   "tris": 14928,
+   "materials": [
+    "paint_accent",
+    "paint_belly",
+    "paint_stripe",
+    "paint_white",
+    "trim_black"
+   ],
+   "info": {}
+  },
+  {
+   "id": "fus_aft",
+   "name": "Aft fuselage & tail cone",
+   "group": "Fuselage",
+   "qty": 1,
+   "note": "Semi-monocoque, frames 29-38",
+   "tris": 29154,
+   "materials": [
+    "paint_accent",
+    "paint_belly",
+    "paint_stripe",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "glazing_cabin",
+   "name": "Cabin windows (7 fixed, stretched acrylic)",
+   "group": "Glazing",
+   "qty": 7,
+   "note": "Two-ply laminated stretched acrylic",
+   "tris": 17626,
+   "materials": [
+    "glass",
+    "seal"
+   ],
+   "info": {}
+  },
+  {
+   "id": "glazing_flightdeck",
+   "name": "Windshield (2 heated panes) & side windows (no DV window, PRO)",
+   "group": "Glazing",
+   "qty": 4,
+   "note": "Heated laminated glass windshield, acrylic side windows",
+   "tris": 26904,
+   "materials": [
+    "glass",
+    "glass_windshield",
+    "seal"
+   ],
+   "info": {}
+  },
+  {
+   "id": "door_airstair",
+   "name": "Airstair passenger door (0.61 x 1.35 m)",
+   "group": "Doors",
+   "qty": 1,
+   "note": "Downward-opening, integral steps",
+   "tris": 9050,
+   "materials": [
+    "lining",
+    "paint_accent",
+    "paint_stripe",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "door_cargo",
+   "name": "Cargo door (1.35 x 1.32 m)",
+   "group": "Doors",
+   "qty": 1,
+   "note": "Upward-opening, gas-strut assisted",
+   "tris": 20366,
+   "materials": [
+    "glass",
+    "lining",
+    "paint_accent",
+    "paint_stripe",
+    "paint_white",
+    "seal"
+   ],
+   "info": {}
+  },
+  {
+   "id": "exit_hatch",
+   "name": "Type III overwing emergency exit",
+   "group": "Doors",
+   "qty": 1,
+   "note": "Plug-type, removable inward",
+   "tris": 5598,
+   "materials": [
+    "glass",
+    "lining",
+    "paint_white",
+    "seal"
+   ],
+   "info": {}
+  },
+  {
+   "id": "door_frames",
+   "name": "Door surrounds, seals & jambs",
+   "group": "Doors",
+   "qty": 1,
+   "note": "Machined door frames",
+   "tris": 9554,
+   "materials": [
+    "jamb",
+    "seam"
+   ],
+   "info": {}
+  },
+  {
+   "id": "wing_R",
+   "name": "Right wing (integral fuel tank)",
+   "group": "Wing",
+   "qty": 1,
+   "note": "2024/7075 two-spar box, integral tank ribs 3-16",
+   "tris": 10446,
+   "materials": [
+    "deice_boot",
+    "paint_white"
+   ],
+   "info": {
+    "root chord": "2,190 mm, LS(1)-0417MOD",
+    "tip chord": "1,095 mm, LS(1)-0313",
+    "MAC": "1,703 mm, LEMAC STA 5,323",
+    "dihedral": "4.5 deg (est.)",
+    "incidence": "+2.0 root / -1.0 tip (est.)"
+   }
+  },
+  {
+   "id": "wing_L",
+   "name": "Left wing (integral fuel tank)",
+   "group": "Wing",
+   "qty": 1,
+   "note": "2024/7075 two-spar box, integral tank ribs 3-16",
+   "tris": 10446,
+   "materials": [
+    "deice_boot",
+    "paint_white"
+   ],
+   "info": {
+    "root chord": "2,190 mm, LS(1)-0417MOD",
+    "tip chord": "1,095 mm, LS(1)-0313",
+    "MAC": "1,703 mm, LEMAC STA 5,323",
+    "dihedral": "4.5 deg (est.)",
+    "incidence": "+2.0 root / -1.0 tip (est.)"
+   }
+  },
+  {
+   "id": "belly_fairing",
+   "name": "Wing-to-body belly fairing",
+   "group": "Wing",
+   "qty": 1,
+   "note": "Composite fairing over the wing carry-through",
+   "tris": 5760,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "flap_R",
+   "name": "Right Fowler flap",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Single-piece Fowler flap, 3 support arms",
+   "tris": 2024,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "aileron_R",
+   "name": "Right aileron",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Mass-balanced, sealed gap",
+   "tris": 1166,
+   "materials": [
+    "black",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "ail_tab_R",
+   "name": "Right aileron Flettner tab",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Geared balance tab, moves opposite to the aileron (POH 7-3)",
+   "tris": 270,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "flap_L",
+   "name": "Left Fowler flap",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Single-piece Fowler flap, 3 support arms",
+   "tris": 2024,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "aileron_L",
+   "name": "Left aileron",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Mass-balanced, sealed gap",
+   "tris": 1166,
+   "materials": [
+    "black",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "ail_tab_L",
+   "name": "Left aileron Flettner tab (electric trim)",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Geared balance tab, moves opposite to the aileron (POH 7-3)",
+   "tris": 270,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "flap_fairings",
+   "name": "Flap-track fairings (3 per side)",
+   "group": "Flight controls",
+   "qty": 6,
+   "note": "Composite canoe fairings",
+   "tris": 7488,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "winglet_R",
+   "name": "Right winglet",
+   "group": "Wing",
+   "qty": 1,
+   "note": "Carbon fibre / honeycomb, Cu foil",
+   "tris": 5141,
+   "materials": [
+    "black",
+    "paint_accent"
+   ],
+   "info": {}
+  },
+  {
+   "id": "winglet_L",
+   "name": "Left winglet",
+   "group": "Wing",
+   "qty": 1,
+   "note": "Carbon fibre / honeycomb, Cu foil",
+   "tris": 5141,
+   "materials": [
+    "black",
+    "paint_accent"
+   ],
+   "info": {}
+  },
+  {
+   "id": "fin",
+   "name": "Vertical stabiliser (fin)",
+   "group": "Empennage",
+   "qty": 1,
+   "note": "Aluminium two-spar fin",
+   "tris": 5856,
+   "materials": [
+    "paint_accent",
+    "paint_belly",
+    "paint_stripe",
+    "paint_white"
+   ],
+   "info": {
+    "LE sweep": "39 deg",
+    "section": "NACA 0013 -> 0010 (est.)"
+   }
+  },
+  {
+   "id": "rudder",
+   "name": "Rudder",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Mass-balanced rudder",
+   "tris": 2394,
+   "materials": [
+    "black",
+    "paint_accent",
+    "paint_stripe",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "rudder_tab",
+   "name": "Rudder trim tab (electric)",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Electric trim (tab location est.)",
+   "tris": 324,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "dorsal_fin",
+   "name": "Dorsal fin fillet",
+   "group": "Empennage",
+   "qty": 1,
+   "note": "Glass-fibre fairing",
+   "tris": 2564,
+   "materials": [
+    "paint_accent",
+    "paint_stripe",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "strakes",
+   "name": "Ventral strakes (2)",
+   "group": "Empennage",
+   "qty": 2,
+   "note": "Kevlar / honeycomb sandwich",
+   "tris": 1052,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "stabilizer",
+   "name": "Horizontal stabiliser (variable incidence)",
+   "group": "Empennage",
+   "qty": 1,
+   "note": "Electrically trimmed, dual actuators",
+   "tris": 14536,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {
+    "span": "5,200 mm",
+    "root chord": "1220 mm",
+    "LE sweep": "14 deg + raked tips (est.)"
+   }
+  },
+  {
+   "id": "elevator_R",
+   "name": "Right elevator",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Paired elevators",
+   "tris": 1448,
+   "materials": [
+    "black",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "elevator_L",
+   "name": "Left elevator",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Paired elevators",
+   "tris": 1448,
+   "materials": [
+    "black",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "tail_bullet",
+   "name": "Fin / tailplane bullet fairing",
+   "group": "Empennage",
+   "qty": 1,
+   "note": "Composite fairing, tail nav/strobe light",
+   "tris": 2808,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "eng_rgb",
+   "name": "Reduction gearbox (2-stage planetary)",
+   "group": "Engine PT6E-67XP",
+   "qty": 1,
+   "note": "Prop shaft flange = engine STA 0 (TCDS length 1,870.9 mm)",
+   "tris": 4312,
+   "materials": [
+    "metal"
+   ],
+   "info": {}
+  },
+  {
+   "id": "eng_exhaust",
+   "name": "Exhaust duct (twin ports)",
+   "group": "Engine PT6E-67XP",
+   "qty": 1,
+   "note": "Heat-resistant steel",
+   "tris": 2720,
+   "materials": [
+    "exhaust"
+   ],
+   "info": {}
+  },
+  {
+   "id": "eng_pt",
+   "name": "Power turbine (2 stages) + compressor turbine (1 stage)",
+   "group": "Engine PT6E-67XP",
+   "qty": 1,
+   "note": "Free power turbine drives the propeller only",
+   "tris": 1760,
+   "materials": [
+    "hot_section"
+   ],
+   "info": {}
+  },
+  {
+   "id": "eng_combustor",
+   "name": "Combustion chamber + 14 fuel nozzles",
+   "group": "Engine PT6E-67XP",
+   "qty": 1,
+   "note": "Folded (reverse-flow) annular liner; nozzle count est.",
+   "tris": 4912,
+   "materials": [
+    "hot_section"
+   ],
+   "info": {}
+  },
+  {
+   "id": "eng_compressor",
+   "name": "Compressor (4 axial + 1 centrifugal)",
+   "group": "Engine PT6E-67XP",
+   "qty": 1,
+   "note": "Gas-generator case",
+   "tris": 3840,
+   "materials": [
+    "metal"
+   ],
+   "info": {}
+  },
+  {
+   "id": "eng_inlet_screen",
+   "name": "Air inlet screen (plenum)",
+   "group": "Engine PT6E-67XP",
+   "qty": 1,
+   "note": "Rear-facing inlet, fed from the chin duct",
+   "tris": 384,
+   "materials": [
+    "metal_dark"
+   ],
+   "info": {}
+  },
+  {
+   "id": "eng_agb",
+   "name": "Accessory gearbox, starter-gen, FADEC",
+   "group": "Engine PT6E-67XP",
+   "qty": 1,
+   "note": "Dual-channel EEC / FADEC",
+   "tris": 1720,
+   "materials": [
+    "metal_dark"
+   ],
+   "info": {}
+  },
+  {
+   "id": "engine_mount",
+   "name": "Engine mount truss",
+   "group": "Powerplant installation",
+   "qty": 1,
+   "note": "Welded 4130 steel tube",
+   "tris": 1628,
+   "materials": [
+    "black"
+   ],
+   "info": {}
+  },
+  {
+   "id": "firewall",
+   "name": "Firewall (titanium, frame 10)",
+   "group": "Powerplant installation",
+   "qty": 1,
+   "note": "Titanium + insulation, STA 3.000",
+   "tris": 94,
+   "materials": [
+    "titanium"
+   ],
+   "info": {}
+  },
+  {
+   "id": "inlet_duct",
+   "name": "Inlet duct + inertial separator",
+   "group": "Powerplant installation",
+   "qty": 1,
+   "note": "Composite duct, ice-vane separator",
+   "tris": 1472,
+   "materials": [
+    "composite"
+   ],
+   "info": {}
+  },
+  {
+   "id": "cowl_upper",
+   "name": "Upper engine cowling",
+   "group": "Powerplant installation",
+   "qty": 1,
+   "note": "Carbon/Nomex honeycomb, Cu mesh",
+   "tris": 10504,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "cowl_lower",
+   "name": "Lower engine cowling",
+   "group": "Powerplant installation",
+   "qty": 1,
+   "note": "Carbon/Nomex honeycomb",
+   "tris": 13452,
+   "materials": [
+    "paint_accent",
+    "paint_belly",
+    "paint_stripe",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "chin_inlet",
+   "name": "Chin air inlet (engine + oil cooler)",
+   "group": "Powerplant installation",
+   "qty": 1,
+   "note": "Composite lip, electrically de-iced",
+   "tris": 5016,
+   "materials": [
+    "inlet_dark",
+    "metal",
+    "paint_belly",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "exhaust_stacks",
+   "name": "Exhaust stacks (L/R)",
+   "group": "Powerplant installation",
+   "qty": 2,
+   "note": "Inconel stacks",
+   "tris": 4368,
+   "materials": [
+    "black",
+    "exhaust"
+   ],
+   "info": {}
+  },
+  {
+   "id": "propeller",
+   "name": "Hartzell 5-blade composite propeller (2.67 m)",
+   "group": "Propeller",
+   "qty": 1,
+   "note": "Carbon composite blades, nickel erosion shields, full-feathering, reversible",
+   "tris": 5664,
+   "materials": [
+    "metal_dark",
+    "paint_white"
+   ],
+   "info": {
+    "diameter": "2,670 mm (105 in)",
+    "blades": "5",
+    "rpm": "1,700 (1,550 low-speed mode)",
+    "ground clearance": "320 mm"
+   }
+  },
+  {
+   "id": "blade_1",
+   "name": "Blade 1",
+   "group": "Propeller",
+   "qty": 1,
+   "note": "Composite blade",
+   "tris": 5928,
+   "materials": [
+    "prop_blade",
+    "prop_tip"
+   ],
+   "info": {}
+  },
+  {
+   "id": "blade_2",
+   "name": "Blade 2",
+   "group": "Propeller",
+   "qty": 1,
+   "note": "Composite blade",
+   "tris": 5928,
+   "materials": [
+    "prop_blade",
+    "prop_tip"
+   ],
+   "info": {}
+  },
+  {
+   "id": "blade_3",
+   "name": "Blade 3",
+   "group": "Propeller",
+   "qty": 1,
+   "note": "Composite blade",
+   "tris": 5928,
+   "materials": [
+    "prop_blade",
+    "prop_tip"
+   ],
+   "info": {}
+  },
+  {
+   "id": "blade_4",
+   "name": "Blade 4",
+   "group": "Propeller",
+   "qty": 1,
+   "note": "Composite blade",
+   "tris": 5928,
+   "materials": [
+    "prop_blade",
+    "prop_tip"
+   ],
+   "info": {}
+  },
+  {
+   "id": "blade_5",
+   "name": "Blade 5",
+   "group": "Propeller",
+   "qty": 1,
+   "note": "Composite blade",
+   "tris": 5928,
+   "materials": [
+    "prop_blade",
+    "prop_tip"
+   ],
+   "info": {}
+  },
+  {
+   "id": "gear_main_R",
+   "name": "Right main gear (trailing link)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Trailing link, hydraulic shock strut, electromechanical actuator",
+   "tris": 4120,
+   "materials": [
+    "chrome",
+    "gear_leg",
+    "paint_white",
+    "steel",
+    "tire",
+    "wheel"
+   ],
+   "info": {
+    "tyre": "22 x 8.50-10, 55 psi",
+    "track": "4,530 mm",
+    "retraction": "inward; tyre protrudes ~1 in (POH)",
+    "door": "single leg-mounted door"
+   }
+  },
+  {
+   "id": "gear_main_L",
+   "name": "Left main gear (trailing link)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Trailing link, hydraulic shock strut, electromechanical actuator",
+   "tris": 4120,
+   "materials": [
+    "chrome",
+    "gear_leg",
+    "paint_white",
+    "steel",
+    "tire",
+    "wheel"
+   ],
+   "info": {
+    "tyre": "22 x 8.50-10, 55 psi",
+    "track": "4,530 mm",
+    "retraction": "inward; tyre protrudes ~1 in (POH)",
+    "door": "single leg-mounted door"
+   }
+  },
+  {
+   "id": "gear_nose",
+   "name": "Nose gear (steerable, retracts aft)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Hydraulic shock strut, 17.5x6.25-6 tyre, +/-60 deg steering",
+   "tris": 2520,
+   "materials": [
+    "chrome",
+    "gear_leg",
+    "lens",
+    "tire",
+    "wheel"
+   ],
+   "info": {
+    "tyre": "17.5 x 6.25-6, 60 psi",
+    "wheelbase": "3,480 mm",
+    "retraction": "aft, enclosed by doors",
+    "steering": "+/-60 deg (Jane's)"
+   }
+  },
+  {
+   "id": "gear_door_NR",
+   "name": "Nose gear door (right)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Composite door",
+   "tris": 648,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "gear_door_NL",
+   "name": "Nose gear door (left)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Composite door",
+   "tris": 648,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "gear_bays",
+   "name": "Wheel wells (zinc-chromate liners)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Primed aluminium liners",
+   "tris": 522,
+   "materials": [
+    "zinc_chromate"
+   ],
+   "info": {}
+  },
+  {
+   "id": "brace_main_R_up",
+   "name": "Right main-gear folding side brace (upper link)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Over-centre lock, down-lock spring",
+   "tris": 336,
+   "materials": [
+    "gear_leg"
+   ],
+   "info": {}
+  },
+  {
+   "id": "brace_main_R_lo",
+   "name": "Right main-gear folding side brace (lower link)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Over-centre lock",
+   "tris": 192,
+   "materials": [
+    "gear_leg"
+   ],
+   "info": {}
+  },
+  {
+   "id": "brace_main_L_up",
+   "name": "Left main-gear folding side brace (upper link)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Over-centre lock, down-lock spring",
+   "tris": 336,
+   "materials": [
+    "gear_leg"
+   ],
+   "info": {}
+  },
+  {
+   "id": "brace_main_L_lo",
+   "name": "Left main-gear folding side brace (lower link)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Over-centre lock",
+   "tris": 192,
+   "materials": [
+    "gear_leg"
+   ],
+   "info": {}
+  },
+  {
+   "id": "brace_nose_up",
+   "name": "Nose-gear folding drag brace (upper link)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Over-centre lock, down-lock spring",
+   "tris": 336,
+   "materials": [
+    "gear_leg"
+   ],
+   "info": {}
+  },
+  {
+   "id": "brace_nose_lo",
+   "name": "Nose-gear folding drag brace (lower link)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Over-centre lock",
+   "tris": 192,
+   "materials": [
+    "gear_leg"
+   ],
+   "info": {}
+  },
+  {
+   "id": "flight_deck",
+   "name": "Flight deck: Garmin G3000 PRIME, PC-24-style yokes, crew seats",
+   "group": "Interior",
+   "qty": 1,
+   "note": "3 x 14-in touchscreen PDUs, 2 x 7-in touchscreen SDUs",
+   "tris": 8652,
+   "materials": [
+    "leather_dark",
+    "metal_dark",
+    "panel_black",
+    "screen_mfd",
+    "screen_pfd",
+    "screen_sdu"
+   ],
+   "info": {
+    "avionics": "Garmin G3000 PRIME (PC-12 PRO)",
+    "displays": "3 x 14 in + 2 x 7 in",
+    "design eye": "STA 3,980 / BL +/-335 / WL 2,360 (est.)"
+   }
+  },
+  {
+   "id": "cabin_interior",
+   "name": "Cabin: executive 6-seat interior",
+   "group": "Interior",
+   "qty": 1,
+   "note": "Leather seats, wood veneer ledges",
+   "tris": 17964,
+   "materials": [
+    "carpet",
+    "leather",
+    "lining",
+    "metal_dark",
+    "wood"
+   ],
+   "info": {
+    "cabin": "5.16 x 1.52 x 1.47 m",
+    "floor width": "1.30 m",
+    "seats": "6 executive (up to 9)"
+   }
+  },
+  {
+   "id": "radar_pod",
+   "name": "Weather-radar pod, right wing (GWX 8000, 12-in antenna)",
+   "group": "Avionics",
+   "qty": 1,
+   "note": "Radome enlarged on the PRO",
+   "tris": 2880,
+   "materials": [
+    "paint_belly",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "lights",
+   "name": "Navigation, strobe & beacon lights",
+   "group": "Lights",
+   "qty": 1,
+   "note": "LED nav/strobe, red beacons",
+   "tris": 2240,
+   "materials": [
+    "light_green",
+    "light_red",
+    "light_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "antennas",
+   "name": "Antennas (VHF, GPS, XPDR, DME, ELT)",
+   "group": "Avionics",
+   "qty": 1,
+   "note": "Blade & patch antennas",
+   "tris": 2202,
+   "materials": [
+    "paint_belly",
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "pitot",
+   "name": "Pitot-static probes (heated, L & R)",
+   "group": "Avionics",
+   "qty": 1,
+   "note": "Heated probes",
+   "tris": 732,
+   "materials": [
+    "chrome"
+   ],
+   "info": {}
+  }
+ ],
+ "pivots": [
+  {
+   "id": "door_airstair",
+   "kind": "door",
+   "open": 2.234021442552742
+  },
+  {
+   "id": "door_cargo",
+   "kind": "door",
+   "open": -1.7453292519943295
+  },
+  {
+   "id": "flap_R",
+   "kind": "flap",
+   "max": 40,
+   "settings": [
+    0,
+    15,
+    30,
+    40
+   ]
+  },
+  {
+   "id": "aileron_R",
+   "kind": "aileron",
+   "range": [
+    -20,
+    15
+   ],
+   "sign": 1
+  },
+  {
+   "id": "ail_tab_R",
+   "kind": "tab",
+   "gearing": -0.6
+  },
+  {
+   "id": "flap_L",
+   "kind": "flap",
+   "max": 40,
+   "settings": [
+    0,
+    15,
+    30,
+    40
+   ]
+  },
+  {
+   "id": "aileron_L",
+   "kind": "aileron",
+   "range": [
+    -20,
+    15
+   ],
+   "sign": -1
+  },
+  {
+   "id": "ail_tab_L",
+   "kind": "tab",
+   "gearing": -0.6
+  },
+  {
+   "id": "rudder",
+   "kind": "rudder",
+   "range": [
+    -25,
+    25
+   ]
+  },
+  {
+   "id": "rudder_tab",
+   "kind": "tab",
+   "gearing": 0,
+   "range": [
+    -12,
+    12
+   ]
+  },
+  {
+   "id": "stabilizer",
+   "kind": "trim",
+   "range": [
+    -4,
+    2
+   ]
+  },
+  {
+   "id": "elevator_R",
+   "kind": "elevator",
+   "range": [
+    -20,
+    15
+   ]
+  },
+  {
+   "id": "elevator_L",
+   "kind": "elevator",
+   "range": [
+    -20,
+    15
+   ]
+  },
+  {
+   "id": "propeller",
+   "kind": "spin",
+   "rpm": 1700
+  },
+  {
+   "id": "blade_1",
+   "kind": "pitch",
+   "feather": 62,
+   "reverse": -38
+  },
+  {
+   "id": "blade_2",
+   "kind": "pitch",
+   "feather": 62,
+   "reverse": -38
+  },
+  {
+   "id": "blade_3",
+   "kind": "pitch",
+   "feather": 62,
+   "reverse": -38
+  },
+  {
+   "id": "blade_4",
+   "kind": "pitch",
+   "feather": 62,
+   "reverse": -38
+  },
+  {
+   "id": "blade_5",
+   "kind": "pitch",
+   "feather": 62,
+   "reverse": -38
+  },
+  {
+   "id": "gear_main_R",
+   "kind": "gear",
+   "retract": -90
+  },
+  {
+   "id": "gear_main_L",
+   "kind": "gear",
+   "retract": 90
+  },
+  {
+   "id": "gear_nose",
+   "kind": "gear",
+   "retract": -95
+  },
+  {
+   "id": "gear_door_NR",
+   "kind": "gear_door",
+   "open": 85
+  },
+  {
+   "id": "gear_door_NL",
+   "kind": "gear_door",
+   "open": -85
+  },
+  {
+   "id": "brace_main_R_up",
+   "kind": "brace",
+   "role": "upper",
+   "gear": "gear_main_R",
+   "L1": 0.17885249296295114,
+   "L2": 0.17885249296295114
+  },
+  {
+   "id": "brace_main_R_lo",
+   "kind": "brace",
+   "role": "lower",
+   "gear": "gear_main_R"
+  },
+  {
+   "id": "brace_main_L_up",
+   "kind": "brace",
+   "role": "upper",
+   "gear": "gear_main_L",
+   "L1": 0.17885249296295114,
+   "L2": 0.17885249296295114
+  },
+  {
+   "id": "brace_main_L_lo",
+   "kind": "brace",
+   "role": "lower",
+   "gear": "gear_main_L"
+  },
+  {
+   "id": "brace_nose_up",
+   "kind": "brace",
+   "role": "upper",
+   "gear": "gear_nose",
+   "L1": 0.2793926479805123,
+   "L2": 0.2793926479805123
+  },
+  {
+   "id": "brace_nose_lo",
+   "kind": "brace",
+   "role": "lower",
+   "gear": "gear_nose"
+  }
+ ]
+}

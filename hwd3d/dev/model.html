@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>HWD aircraft model (dev)</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #0b0d10; overflow: hidden; touch-action: none; }
+  canvas { display: block; width: 100vw; height: 100vh; height: 100dvh; }
+  #hud { position: absolute; left: 8px; top: 8px; right: 8px; color: #e8eef6; font: 12px/1.35 system-ui, sans-serif; pointer-events: none;
+         text-shadow: 0 1px 2px #000; white-space: pre-wrap; }
+  #ui { position: absolute; left: 8px; bottom: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+        padding-bottom: env(safe-area-inset-bottom); }
+  #ui button, #ui label { font: 13px system-ui, sans-serif; padding: 8px 10px; min-height: 36px; box-sizing: border-box; border: 0; border-radius: 6px;
+        background: rgba(20,24,30,.78); color: #e8eef6; display: inline-flex; align-items: center; gap: 6px; }
+  #ui input[type=range] { width: 110px; }
+  body.shot #hud, body.shot #ui { display: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">loading…</div>
+<div id="ui"></div>
+<!-- dev page: ONE detailed aircraft (js/aircraft/detailed.js) with the hwd3d renderer, sun, shadows and environment on the
+     HWD ramp (or a neutral pad when the world fails to load). URL parameters: see the header of dev/model.js. -->
+<script type="module" src="./model.js"></script>
+</body>
+</html>

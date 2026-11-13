@@ -1,0 +1,1927 @@
+{
+ "_provenance": {
+  "made_by": "hwd3d/tools/models/sf50/build_sf50.py (python3 -B; pc12/cad loftkit kernel, read-only)",
+  "repo_rev": "eb34f7d044286fbfb9dacc49ef97470a46eff974",
+  "repo_rev_note": "git HEAD when built; the builder itself is identified by builder_state / sources_tree_sha256",
+  "sources_sha256": {
+   "hwd3d/tools/models/sf50/build_sf50.py": "1322f81adc12d3d87c6cc4b1b51cd0aa40680c6624333dd99046e21015ba5419",
+   "hwd3d/tools/models/sf50/raster.py": "47a3b24dd68bcc08e2d23ce0b4c7d7544f24e1b245748c0af7283b051adda8aa",
+   "hwd3d/tools/models/sf50/render_checks.py": "8b4500b55ba5c2dfe93e33ee915cd1770339586065dd90b9c312da1e67da8e7c",
+   "hwd3d/tools/models/sf50/sf50_assemble.py": "8b08b7f1a22f86a0ba0ca6dbc40b2b47f6a581f201343fb58d345442dd183c96",
+   "hwd3d/tools/models/sf50/sf50_fuselage.py": "050ac84f15857b394927a5bce9e901e911d2586a9f7cf9882bf62655abad2fe3",
+   "hwd3d/tools/models/sf50/sf50_gear.py": "6799ea673f7c3e6d6aeac566e9ae229bffa23e1b927431669780b1e6e28512ae",
+   "hwd3d/tools/models/sf50/sf50_geom.py": "e328069a875b4062799dc690783e2cb6c070bd8767e81fe55540e52d3e732fbf",
+   "hwd3d/tools/models/sf50/sf50_interior.py": "9b3e3cb327b3ed55513c9ebea96ea2f24c6349f65fc4848c289c000c1f9242f0",
+   "hwd3d/tools/models/sf50/sf50_kernel.py": "2442ff6ee32b7b2977495780cad65a46bc48ab49dfb2b5cce2111b4f3bdcb1e3",
+   "hwd3d/tools/models/sf50/sf50_nacelle.py": "0366a4bea9ef43aada604504f7875466f62688482cf63798f6d2ff5dbfcd6129",
+   "hwd3d/tools/models/sf50/sf50_tail.py": "56fa0c83e5fbb95dd9b95a4f8c3c3a3da6b6b512d667f3216e72beb16cfd88f0",
+   "hwd3d/tools/models/sf50/sf50_wing.py": "bb43aa09cd3690baeb54dd07dc8d150efe2cc5a878e4a50fc824adfa3d7698a9",
+   "pc12/cad/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "pc12/cad/glb.py": "dc6bedda99cbf85f138afbfacf88a420785a1b8df47320c96c23cc3b3577e1a6",
+   "pc12/cad/mesh.py": "7a24dd9bb4a32f2f6d86fd591e1e0363cf561e7cd5303992bc686f5e2cb73d6a",
+   "pc12/cad/sdf2d.py": "50ed4c2f2ecdbe48640366f6eb48f3b4b7a2bbeb89e074de2af969a8cd1dfc80",
+   "pc12/model/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "pc12/model/airfoil.py": "1badf3f43cb20c7278a61f6fd8176c6f02e2a1ba73acbd5930c64a6ea06b17ba",
+   "pc12/model/lifting.py": "d7f881c5bc9b3568ac52b30410b6590f28b39c482ee10062cb0727053fa22ec1",
+   "pc12/model/parts.py": "41801a05d2135951fefcaeae6de66c07ebb83a945d0de2e23de5cd148c842db8"
+  },
+  "sources_tree_sha256": "cec3f62893dc6f7a27cf118d64e29f4d9b4e5c3a167783f983d98950665f31c5",
+  "builder_state": "working tree (uncommitted: tools/models/sf50 is not in git)",
+  "builder_dirty": true,
+  "pc12_kernel_dirty": false,
+  "rebuild": "cd hwd3d && python3 -B tools/models/sf50/build_sf50.py (deterministic: the same sources give the same GLB bytes)",
+  "glb_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
+  "built": "2026-11-13T20:12:10Z",
+  "facts": "hwd3d/tools/models/sf50/SF50_FACTS.md",
+  "doc": "hwd3d/docs/phase3_sf50.md",
+  "licence": "own work (this repository); no third-party geometry or texture"
+ },
+ "model": "Cirrus SF50 Vision Jet (type-generic, original neutral livery, no registration, no logos)",
+ "frame": {
+  "model_axes": "x = FS (m aft of the FAA TCDS A00018CH datum: 89 in ahead of the forward cabin bulkhead), y = butt line (+ starboard), z = height above ground, static on the gear",
+  "gltf_axes": "X = starboard (model y), Y = up (model z), Z = aft (model x)  (pc12/cad/glb.py to_gl)",
+  "gltf_origin": "model origin: FS 0 (TCDS datum, 0.900 m ahead of the nose tip [inf]), butt line 0, ground plane",
+  "nose_tip_fs": 0.9,
+  "tail_end_fs": 10.257,
+  "main_gear_contact_gl": [
+   0.0,
+   0.0,
+   5.353
+  ],
+  "main_gear_contacts_model": {
+   "gear_main_L": [
+    5.353,
+    -1.7069,
+    0.0
+   ],
+   "gear_main_R": [
+    5.353,
+    1.7069,
+    0.0
+   ],
+   "gear_nose": [
+    2.048,
+    0.0,
+    0.0
+   ]
+  },
+  "rest_pose": "gear down and locked, flaps up, surfaces neutral, cabin / baggage doors closed, nose-gear doors CLOSED in the geometry (their pivot seq 'down' opens them whenever the gear is down)"
+ },
+ "steps": [
+  {
+   "key": "fuselage",
+   "title": "Fuselage",
+   "text": "One-piece carbon shell lofted from four control lines (crown, keel, half-breadth, max-breadth water line) and a super-ellipse section law; openings cut by signed-distance trims.",
+   "parts": [
+    "fuselage",
+    "reg_panel_L",
+    "reg_panel_R"
+   ]
+  },
+  {
+   "key": "glazing",
+   "title": "Glazing",
+   "text": "Two wrap-around windshield panes with a centre post; door window; starboard egress window; two further cabin windows per side.",
+   "parts": [
+    "windshield",
+    "cabin_windows"
+   ]
+  },
+  {
+   "key": "doors",
+   "title": "Doors",
+   "text": "Clam-shell cabin door (upper half up, lower half down) and the aft baggage door, both on the left.",
+   "parts": [
+    "door_upper",
+    "door_lower",
+    "door_baggage"
+   ]
+  },
+  {
+   "key": "wing",
+   "title": "Wing",
+   "text": "Tapered low wing solved from the 18.18 m2 TCDS area and the 11.796 m span; NACA 23015 -> 23012 [inf]; de-ice boots; tip fairings with nav, strobe and landing lights.",
+   "parts": [
+    "wing_R",
+    "wing_L"
+   ]
+  },
+  {
+   "key": "controls_wing",
+   "title": "Flaps & ailerons",
+   "text": "Single-slotted flaps (15 / 39 deg, TCDS); ailerons UP 15 / DOWN 11.5 deg (TCDS) with the left trim tab and the right servo tab.",
+   "parts": [
+    "flap_fairings_R",
+    "flap_R",
+    "aileron_R",
+    "ail_tab_R",
+    "flap_fairings_L",
+    "flap_L",
+    "aileron_L",
+    "ail_tab_L"
+   ]
+  },
+  {
+   "key": "empennage",
+   "title": "V-tail & ventral fins",
+   "text": "38 deg V-tail, ruddervators (pitch UP 20 / DOWN 15, yaw +-9 deg, TCDS) with servo / trim tabs; ventral fins carrying the yaw-SAS surfaces.",
+   "parts": [
+    "vtail_L",
+    "ruddervator_L",
+    "rv_tab_L",
+    "vtail_R",
+    "ruddervator_R",
+    "rv_tab_R",
+    "ventral_fin_L",
+    "yaw_sas_L",
+    "ventral_fin_R",
+    "yaw_sas_R"
+   ]
+  },
+  {
+   "key": "powerplant",
+   "title": "Powerplant",
+   "text": "Williams FJ33-5A in the dorsal nacelle: heated inlet lip, fan, exhaust mixer.",
+   "parts": [
+    "nacelle",
+    "fan",
+    "fan_face"
+   ]
+  },
+  {
+   "key": "gear",
+   "title": "Landing gear",
+   "text": "Trailing-link mains retract inward with a leg door each; castering nose gear retracts forward between two doors.",
+   "parts": [
+    "nose_bay",
+    "nose_door_L",
+    "nose_door_R",
+    "gear_main_L",
+    "gear_main_R",
+    "gear_nose"
+   ]
+  },
+  {
+   "key": "interior",
+   "title": "Cabin",
+   "text": "Panel, displays, seven seats, lining (seen through the glazing).",
+   "parts": [
+    "cabin_lining",
+    "flight_deck",
+    "cabin_seats"
+   ]
+  },
+  {
+   "key": "details",
+   "title": "Systems & details",
+   "text": "Antennas, AOA vane, EVS camera, pitot probes, TKS spray bars, lights.",
+   "parts": [
+    "wing_details_R",
+    "wing_details_L",
+    "details"
+   ]
+  }
+ ],
+ "parts": [
+  {
+   "id": "fuselage",
+   "name": "Fuselage shell (one-piece carbon composite)",
+   "step": "fuselage",
+   "group": "Fuselage",
+   "qty": 1,
+   "note": "Carbon-fibre / honeycomb sandwich, one-piece pressure shell",
+   "tris": 178615,
+   "materials": [
+    "paint_accent",
+    "paint_belly",
+    "paint_stripe",
+    "paint_white",
+    "seal",
+    "seam"
+   ],
+   "parent": null,
+   "info": {
+    "length": "9.357 m (TCDS / FAA ACD 30.7 ft)",
+    "max width": "1.696 m [inf: AFM Fig 1-2 outline]",
+    "cabin": "137.8 x 61 x 48.8 in (AFM Fig 1-2)"
+   }
+  },
+  {
+   "id": "reg_panel_L",
+   "name": "Registration panel, left (blank)",
+   "step": "fuselage",
+   "group": "Fuselage",
+   "qty": 1,
+   "note": "Blank: the runtime draws the registration only for aircraft not flagged LADD/PIA (D1); never baked into the model",
+   "tris": 3312,
+   "materials": [
+    "reg_panel"
+   ],
+   "parent": null,
+   "info": {
+    "reg_panel": {
+     "centre": [
+      7.675000000000001,
+      -0.4312836362045226,
+      1.635
+     ],
+     "normal": [
+      0.0,
+      -1.0,
+      0.0
+     ],
+     "up": [
+      0,
+      0,
+      1.0
+     ],
+     "length": 1.25,
+     "height": 0.3,
+     "text_dir": [
+      1.0,
+      0.0,
+      0.0
+     ],
+     "note": "model axes; text reads left-to-right seen from outside (text_dir), panel follows the curved skin (centre is on the OML)"
+    }
+   }
+  },
+  {
+   "id": "reg_panel_R",
+   "name": "Registration panel, right (blank)",
+   "step": "fuselage",
+   "group": "Fuselage",
+   "qty": 1,
+   "note": "Blank: the runtime draws the registration only for aircraft not flagged LADD/PIA (D1); never baked into the model",
+   "tris": 3312,
+   "materials": [
+    "reg_panel"
+   ],
+   "parent": null,
+   "info": {
+    "reg_panel": {
+     "centre": [
+      7.675000000000001,
+      0.4312836362045226,
+      1.635
+     ],
+     "normal": [
+      0.0,
+      1.0,
+      0.0
+     ],
+     "up": [
+      0,
+      0,
+      1.0
+     ],
+     "length": 1.25,
+     "height": 0.3,
+     "text_dir": [
+      -1.0,
+      0.0,
+      0.0
+     ],
+     "note": "model axes; text reads left-to-right seen from outside (text_dir), panel follows the curved skin (centre is on the OML)"
+    }
+   }
+  },
+  {
+   "id": "windshield",
+   "name": "Windshield: two wrap-around heated panes with centre post",
+   "step": "glazing",
+   "group": "Glazing",
+   "qty": 2,
+   "note": "Heated laminated windshield, TKS spray bar ahead of it (AOPA)",
+   "tris": 21304,
+   "materials": [
+    "glass_windshield",
+    "seal",
+    "trim_black"
+   ],
+   "parent": null,
+   "info": {
+    "outline": "AFM Fig 1-1 (digitised) [inf]"
+   }
+  },
+  {
+   "id": "cabin_windows",
+   "name": "Cabin windows (port 2 + door window, starboard 3 incl. egress window)",
+   "step": "glazing",
+   "group": "Glazing",
+   "qty": 5,
+   "note": "Stretched acrylic",
+   "tris": 22146,
+   "materials": [
+    "glass_cabin",
+    "seal"
+   ],
+   "parent": null,
+   "info": {
+    "positions": "AFM Fig 1-1 / 1-2 [inf]",
+    "starboard w1": "emergency egress window (AFM)"
+   }
+  },
+  {
+   "id": "door_upper",
+   "name": "Cabin door, upper half (window)",
+   "step": "doors",
+   "group": "Doors",
+   "qty": 1,
+   "note": "Clam-shell door: 'pull the bottom half of the door up and the top half down' (AOPA); opening 24.6 x 49.4 in (AFM Fig 1-2)",
+   "tris": 14170,
+   "materials": [
+    "glass_cabin",
+    "lining",
+    "metal",
+    "paint_white",
+    "seal"
+   ],
+   "parent": null,
+   "info": {
+    "split": "z 1.625 m [inf]"
+   }
+  },
+  {
+   "id": "door_lower",
+   "name": "Cabin door, lower half (steps)",
+   "step": "doors",
+   "group": "Doors",
+   "qty": 1,
+   "note": "Clam-shell door: 'pull the bottom half of the door up and the top half down' (AOPA); opening 24.6 x 49.4 in (AFM Fig 1-2)",
+   "tris": 9762,
+   "materials": [
+    "lining",
+    "paint_accent",
+    "paint_stripe",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {
+    "split": "z 1.625 m [inf]"
+   }
+  },
+  {
+   "id": "door_baggage",
+   "name": "Baggage door (aft, left)",
+   "step": "doors",
+   "group": "Doors",
+   "qty": 1,
+   "note": "External baggage compartment door, opening 23.0-24.9 x 17.6-19.3 in (AFM Fig 1-2)",
+   "tris": 13010,
+   "materials": [
+    "lining",
+    "paint_accent",
+    "paint_stripe",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "wing_R",
+   "name": "Right wing",
+   "step": "wing",
+   "group": "Wing",
+   "qty": 1,
+   "note": "Carbon spar, carbon sandwich skins, integral fuel tank (296 US gal usable total, TCDS)",
+   "tris": 30206,
+   "materials": [
+    "deice_boot",
+    "gear_bay",
+    "lens",
+    "light_green",
+    "light_white",
+    "paint_white",
+    "seal"
+   ],
+   "parent": null,
+   "info": {
+    "airfoil": "NACA 23015 root -> NACA 23012 tip [inf: SF50 section unpublished]",
+    "root chord (BL 0)": "1.957 m",
+    "tip chord (span/2)": "1.125 m",
+    "LE sweep": "5.65 deg [inf]",
+    "dihedral": "4.8 deg [inf]",
+    "area": "18.18 m2 (TCDS)",
+    "tip": "upswept, aft-raked tip: body reach 0.349 m, upturn 70 deg from the wing plane, top 0.13 m above the tip chord plane, top trailing edge 0.16 m aft [inf: AFM Fig 1-1 plan / front, Fig 8-1, Cirrus photos]; outermost point at the 38.7 ft span [obs]"
+   }
+  },
+  {
+   "id": "wing_L",
+   "name": "Left wing",
+   "step": "wing",
+   "group": "Wing",
+   "qty": 1,
+   "note": "Carbon spar, carbon sandwich skins, integral fuel tank (296 US gal usable total, TCDS)",
+   "tris": 30206,
+   "materials": [
+    "deice_boot",
+    "gear_bay",
+    "lens",
+    "light_red",
+    "light_white",
+    "paint_white",
+    "seal"
+   ],
+   "parent": null,
+   "info": {
+    "airfoil": "NACA 23015 root -> NACA 23012 tip [inf: SF50 section unpublished]",
+    "root chord (BL 0)": "1.957 m",
+    "tip chord (span/2)": "1.125 m",
+    "LE sweep": "5.65 deg [inf]",
+    "dihedral": "4.8 deg [inf]",
+    "area": "18.18 m2 (TCDS)",
+    "tip": "upswept, aft-raked tip: body reach 0.349 m, upturn 70 deg from the wing plane, top 0.13 m above the tip chord plane, top trailing edge 0.16 m aft [inf: AFM Fig 1-1 plan / front, Fig 8-1, Cirrus photos]; outermost point at the 38.7 ft span [obs]"
+   }
+  },
+  {
+   "id": "flap_fairings_R",
+   "name": "Right flap hinge fairings",
+   "step": "controls_wing",
+   "group": "Wing",
+   "qty": 1,
+   "note": "[inf]",
+   "tris": 704,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "flap_R",
+   "name": "Right flap (single-slotted)",
+   "step": "controls_wing",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Aluminium (Wikipedia: 'primary flight control surfaces and wing flaps are aluminum')",
+   "tris": 1890,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {
+    "deflection": "UP 0, 50 % 15.0 deg, 100 % 39.0 deg (FAA TCDS A00018CH)",
+    "span": "BL 1.17-3.48 [inf]"
+   }
+  },
+  {
+   "id": "aileron_R",
+   "name": "Right aileron",
+   "step": "controls_wing",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Aluminium, sealed gap",
+   "tris": 1660,
+   "materials": [
+    "black",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {
+    "deflection": "UP 15.0, DOWN 11.5 deg (FAA TCDS A00018CH)",
+    "span": "BL 3.56-5.3 [inf]"
+   }
+  },
+  {
+   "id": "ail_tab_R",
+   "name": "Right aileron roll servo tab",
+   "step": "controls_wing",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Servo tab (AFM walk-around) [inf: gearing]",
+   "tris": 314,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": "aileron_R",
+   "info": {}
+  },
+  {
+   "id": "flap_fairings_L",
+   "name": "Left flap hinge fairings",
+   "step": "controls_wing",
+   "group": "Wing",
+   "qty": 1,
+   "note": "[inf]",
+   "tris": 704,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "flap_L",
+   "name": "Left flap (single-slotted)",
+   "step": "controls_wing",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Aluminium (Wikipedia: 'primary flight control surfaces and wing flaps are aluminum')",
+   "tris": 1890,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {
+    "deflection": "UP 0, 50 % 15.0 deg, 100 % 39.0 deg (FAA TCDS A00018CH)",
+    "span": "BL 1.17-3.48 [inf]"
+   }
+  },
+  {
+   "id": "aileron_L",
+   "name": "Left aileron",
+   "step": "controls_wing",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Aluminium, sealed gap",
+   "tris": 1660,
+   "materials": [
+    "black",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {
+    "deflection": "UP 15.0, DOWN 11.5 deg (FAA TCDS A00018CH)",
+    "span": "BL 3.56-5.3 [inf]"
+   }
+  },
+  {
+   "id": "ail_tab_L",
+   "name": "Left aileron roll trim tab",
+   "step": "controls_wing",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Electric roll trim, +-10 deg (TCDS)",
+   "tris": 314,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": "aileron_L",
+   "info": {}
+  },
+  {
+   "id": "vtail_L",
+   "name": "V-tail surface, left",
+   "step": "empennage",
+   "group": "Empennage",
+   "qty": 1,
+   "note": "Carbon composite stabiliser",
+   "tris": 7946,
+   "materials": [
+    "deice_boot",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {
+    "dihedral": "38 deg [inf: AFM Fig 1-1 front view]",
+    "span (tip to tip)": "4.481 m (AFM Fig 1-1, 14.7 ft)",
+    "section": "NACA 0010 [inf]"
+   }
+  },
+  {
+   "id": "ruddervator_L",
+   "name": "Ruddervator, left",
+   "step": "empennage",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Aluminium, mass balanced",
+   "tris": 2000,
+   "materials": [
+    "black",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {
+    "travel": "pitch UP 20 / DOWN 15 deg, yaw +-9 deg (FAA TCDS A00018CH)",
+    "mixing": "deflection = pitch term + side x yaw term (TE down positive) [inf: mixing law]"
+   }
+  },
+  {
+   "id": "rv_tab_L",
+   "name": "Ruddervator pitch servo / trim tab, left",
+   "step": "empennage",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Pitch servo tab with trim (TCDS ruddervator trim UP 7 / DOWN 18 deg; + = trailing edge down, the convention of every surface here, so range [-7, +18]; fix round 1: it was inverted) [inf: gearing -0.4, opposite to the ruddervator as a servo tab moves]",
+   "tris": 418,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": "ruddervator_L",
+   "info": {}
+  },
+  {
+   "id": "vtail_R",
+   "name": "V-tail surface, right",
+   "step": "empennage",
+   "group": "Empennage",
+   "qty": 1,
+   "note": "Carbon composite stabiliser",
+   "tris": 7946,
+   "materials": [
+    "deice_boot",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {
+    "dihedral": "38 deg [inf: AFM Fig 1-1 front view]",
+    "span (tip to tip)": "4.481 m (AFM Fig 1-1, 14.7 ft)",
+    "section": "NACA 0010 [inf]"
+   }
+  },
+  {
+   "id": "ruddervator_R",
+   "name": "Ruddervator, right",
+   "step": "empennage",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Aluminium, mass balanced",
+   "tris": 2000,
+   "materials": [
+    "black",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {
+    "travel": "pitch UP 20 / DOWN 15 deg, yaw +-9 deg (FAA TCDS A00018CH)",
+    "mixing": "deflection = pitch term + side x yaw term (TE down positive) [inf: mixing law]"
+   }
+  },
+  {
+   "id": "rv_tab_R",
+   "name": "Ruddervator pitch servo / trim tab, right",
+   "step": "empennage",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Pitch servo tab with trim (TCDS ruddervator trim UP 7 / DOWN 18 deg; + = trailing edge down, the convention of every surface here, so range [-7, +18]; fix round 1: it was inverted) [inf: gearing -0.4, opposite to the ruddervator as a servo tab moves]",
+   "tris": 418,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": "ruddervator_R",
+   "info": {}
+  },
+  {
+   "id": "ventral_fin_L",
+   "name": "Ventral fin (strake), left",
+   "step": "empennage",
+   "group": "Empennage",
+   "qty": 1,
+   "note": "AFM walk-around 'Ventral Fins' [inf: shape, cant]",
+   "tris": 2504,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "yaw_sas_L",
+   "name": "Yaw-SAS surface, left ventral fin",
+   "step": "empennage",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Servo-driven yaw stability augmentation surface (AOPA, TCDS)",
+   "tris": 216,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "ventral_fin_R",
+   "name": "Ventral fin (strake), right",
+   "step": "empennage",
+   "group": "Empennage",
+   "qty": 1,
+   "note": "AFM walk-around 'Ventral Fins' [inf: shape, cant]",
+   "tris": 2504,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "yaw_sas_R",
+   "name": "Yaw-SAS surface, right ventral fin",
+   "step": "empennage",
+   "group": "Flight controls",
+   "qty": 1,
+   "note": "Servo-driven yaw stability augmentation surface (AOPA, TCDS)",
+   "tris": 216,
+   "materials": [
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "nacelle",
+   "name": "Engine nacelle, inlet & exhaust (FJ33-5A)",
+   "step": "powerplant",
+   "group": "Powerplant",
+   "qty": 1,
+   "note": "Composite cowls; bleed-air heated inlet lip; exhaust mixer",
+   "tris": 26423,
+   "materials": [
+    "exhaust",
+    "inlet_dark",
+    "inlet_lip",
+    "metal",
+    "metal_dark",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {
+    "engine": "Williams International FJ33-5A, 1,846 lbf take-off (TCDS A00018CH / E3GL)",
+    "engine envelope": "42.7 x 25.1 in, fwd flange OD 18.4 in (TCDS E3GL)",
+    "inlet": "FS 5.865, exit FS 8.010 [inf: AFM Fig 1-1]"
+   }
+  },
+  {
+   "id": "fan",
+   "name": "FJ33-5A fan & spinner",
+   "step": "powerplant",
+   "group": "Powerplant",
+   "qty": 1,
+   "note": "Fan: 18 blades [inf: count], spins with state.rotorAng",
+   "tris": 840,
+   "materials": [
+    "fan",
+    "metal_dark"
+   ],
+   "parent": null,
+   "info": {
+    "fan diameter": "0.41 m [inf]"
+   }
+  },
+  {
+   "id": "fan_face",
+   "name": "Fan case / engine face (dark)",
+   "step": "powerplant",
+   "group": "Powerplant",
+   "qty": 1,
+   "note": "",
+   "tris": 48,
+   "materials": [
+    "inlet_dark"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "nose_bay",
+   "name": "Nose-gear bay",
+   "step": "gear",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Bay liner",
+   "tris": 104,
+   "materials": [
+    "gear_bay"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "nose_door_L",
+   "name": "Nose-gear door, left",
+   "step": "gear",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Open whenever the gear is down (AFM Fig 1-1) [inf: angle]",
+   "tris": 12184,
+   "materials": [
+    "gear_bay",
+    "paint_belly"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "nose_door_R",
+   "name": "Nose-gear door, right",
+   "step": "gear",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Open whenever the gear is down (AFM Fig 1-1) [inf: angle]",
+   "tris": 12184,
+   "materials": [
+    "gear_bay",
+    "paint_belly"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "gear_main_L",
+   "name": "Left main gear (trailing link)",
+   "step": "gear",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Trailing link, air/oil oleo (AFM 8-25), retracts inward into the wing",
+   "tris": 2970,
+   "materials": [
+    "black",
+    "chrome",
+    "gear_leg",
+    "metal_dark",
+    "paint_white",
+    "tire",
+    "wheel"
+   ],
+   "parent": null,
+   "info": {
+    "tyre": "18 x 5.5, 8-ply, 105 psi (AFM 8-26)",
+    "track": "3.414 m (AFM Fig 1-1, 11.2 ft)",
+    "door": "one leg-mounted door (AFM walk-around 'MLG Door')",
+    "retraction": "inward, tyre stowed flat in the wing [inf]"
+   }
+  },
+  {
+   "id": "gear_main_R",
+   "name": "Right main gear (trailing link)",
+   "step": "gear",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Trailing link, air/oil oleo (AFM 8-25), retracts inward into the wing",
+   "tris": 2970,
+   "materials": [
+    "black",
+    "chrome",
+    "gear_leg",
+    "metal_dark",
+    "paint_white",
+    "tire",
+    "wheel"
+   ],
+   "parent": null,
+   "info": {
+    "tyre": "18 x 5.5, 8-ply, 105 psi (AFM 8-26)",
+    "track": "3.414 m (AFM Fig 1-1, 11.2 ft)",
+    "door": "one leg-mounted door (AFM walk-around 'MLG Door')",
+    "retraction": "inward, tyre stowed flat in the wing [inf]"
+   }
+  },
+  {
+   "id": "gear_nose",
+   "name": "Nose gear (castering, retracts forward)",
+   "step": "gear",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Castering nose wheel (AFM 8-26), air/oil oleo, landing light on the strut",
+   "tris": 2996,
+   "materials": [
+    "chrome",
+    "gear_leg",
+    "lens",
+    "light_white",
+    "metal_dark",
+    "tire",
+    "wheel"
+   ],
+   "parent": null,
+   "info": {
+    "tyre": "5.00-5, 10-ply, 88 psi (AFM 8-26)",
+    "retraction": "forward into the keel bay [inf]",
+    "wheelbase": "3.305 m [inf: AFM Fig 1-1 side view]"
+   }
+  },
+  {
+   "id": "cabin_lining",
+   "name": "Cabin lining, floor & bulkheads",
+   "step": "interior",
+   "group": "Interior",
+   "qty": 1,
+   "note": "Seen through the glazing",
+   "tris": 31967,
+   "materials": [
+    "carpet",
+    "lining"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "flight_deck",
+   "name": "Flight deck: panel, glareshield, displays, controllers",
+   "step": "interior",
+   "group": "Interior",
+   "qty": 1,
+   "note": "Garmin G3000-based Perspective Touch+ (Cirrus) [inf: layout]",
+   "tris": 660,
+   "materials": [
+    "black",
+    "panel_black",
+    "screen"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "cabin_seats",
+   "name": "Seats: 2 crew + 2 middle + 3 aft bench (AFM Fig 1-2)",
+   "step": "interior",
+   "group": "Interior",
+   "qty": 7,
+   "note": "Leather [inf: colour]",
+   "tris": 5488,
+   "materials": [
+    "leather",
+    "leather_dark"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "wing_details_R",
+   "name": "Right wing details (pitot, VGs, fence)",
+   "step": "details",
+   "group": "Systems",
+   "qty": 1,
+   "note": "[inf: positions]",
+   "tris": 264,
+   "materials": [
+    "metal",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "wing_details_L",
+   "name": "Left wing details (pitot, VGs, fence)",
+   "step": "details",
+   "group": "Systems",
+   "qty": 1,
+   "note": "[inf: positions]",
+   "tris": 264,
+   "materials": [
+    "metal",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {}
+  },
+  {
+   "id": "details",
+   "name": "Antennas, AOA vane, EVS camera, TKS spray bars, static ports",
+   "step": "details",
+   "group": "Systems",
+   "qty": 1,
+   "note": "Positions [inf]; items listed in the AFM walk-around",
+   "tris": 2412,
+   "materials": [
+    "black",
+    "lens",
+    "light_white",
+    "metal",
+    "paint_white"
+   ],
+   "parent": null,
+   "info": {}
+  }
+ ],
+ "pivots": [
+  {
+   "part": "door_upper",
+   "parent": null,
+   "origin": [
+    3.9875,
+    -0.50892,
+    2.255
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "kind": "door",
+   "open": -1.7453292519943295,
+   "origin_gl": [
+    -0.50892,
+    2.255,
+    3.9875
+   ],
+   "axis_gl": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "part": "door_lower",
+   "parent": null,
+   "origin": [
+    3.6975,
+    -0.68738,
+    0.995
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "kind": "door",
+   "open": 1.7453292519943295,
+   "origin_gl": [
+    -0.68738,
+    0.995,
+    3.6975
+   ],
+   "axis_gl": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "part": "door_baggage",
+   "parent": null,
+   "origin": [
+    6.43,
+    -0.55551,
+    1.855
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "kind": "door",
+   "open": -1.6580627893946132,
+   "origin_gl": [
+    -0.55551,
+    1.855,
+    6.43
+   ],
+   "axis_gl": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "part": "flap_R",
+   "parent": null,
+   "origin": [
+    5.74623,
+    1.17,
+    0.74631
+   ],
+   "axis": [
+    -0.01232,
+    0.99372,
+    0.11117
+   ],
+   "kind": "flap",
+   "travel": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max": 39.0,
+   "settings": [
+    0,
+    15,
+    39
+   ],
+   "origin_gl": [
+    1.17,
+    0.74631,
+    5.74623
+   ],
+   "axis_gl": [
+    0.99372,
+    0.11117,
+    -0.01232
+   ]
+  },
+  {
+   "part": "aileron_R",
+   "parent": null,
+   "origin": [
+    5.65002,
+    3.56,
+    1.15028
+   ],
+   "axis": [
+    -0.00774,
+    0.99585,
+    0.0907
+   ],
+   "kind": "aileron",
+   "range": [
+    -15.0,
+    11.5
+   ],
+   "sign": 1,
+   "origin_gl": [
+    3.56,
+    1.15028,
+    5.65002
+   ],
+   "axis_gl": [
+    0.99585,
+    0.0907,
+    -0.00774
+   ]
+  },
+  {
+   "part": "ail_tab_R",
+   "parent": "aileron_R",
+   "origin": [
+    5.86397,
+    3.66,
+    1.1568
+   ],
+   "axis": [
+    -0.02861,
+    0.99517,
+    0.09387
+   ],
+   "kind": "tab",
+   "gearing": -0.5,
+   "range": [
+    -12.0,
+    12.0
+   ],
+   "origin_gl": [
+    3.66,
+    1.1568,
+    5.86397
+   ],
+   "axis_gl": [
+    0.99517,
+    0.09387,
+    -0.02861
+   ]
+  },
+  {
+   "part": "flap_L",
+   "parent": null,
+   "origin": [
+    5.74623,
+    -1.17,
+    0.74631
+   ],
+   "axis": [
+    0.01232,
+    0.99372,
+    -0.11117
+   ],
+   "kind": "flap",
+   "travel": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max": 39.0,
+   "settings": [
+    0,
+    15,
+    39
+   ],
+   "origin_gl": [
+    -1.17,
+    0.74631,
+    5.74623
+   ],
+   "axis_gl": [
+    0.99372,
+    -0.11117,
+    0.01232
+   ]
+  },
+  {
+   "part": "aileron_L",
+   "parent": null,
+   "origin": [
+    5.65002,
+    -3.56,
+    1.15028
+   ],
+   "axis": [
+    0.00774,
+    0.99585,
+    -0.0907
+   ],
+   "kind": "aileron",
+   "range": [
+    -15.0,
+    11.5
+   ],
+   "sign": -1,
+   "origin_gl": [
+    -3.56,
+    1.15028,
+    5.65002
+   ],
+   "axis_gl": [
+    0.99585,
+    -0.0907,
+    0.00774
+   ]
+  },
+  {
+   "part": "ail_tab_L",
+   "parent": "aileron_L",
+   "origin": [
+    5.86397,
+    -3.66,
+    1.1568
+   ],
+   "axis": [
+    0.02861,
+    0.99517,
+    -0.09387
+   ],
+   "kind": "tab",
+   "gearing": 0.0,
+   "range": [
+    -10.0,
+    10.0
+   ],
+   "origin_gl": [
+    -3.66,
+    1.1568,
+    5.86397
+   ],
+   "axis_gl": [
+    0.99517,
+    -0.09387,
+    0.02861
+   ]
+  },
+  {
+   "part": "ruddervator_L",
+   "parent": null,
+   "origin": [
+    9.52635,
+    -0.25184,
+    1.76082
+   ],
+   "axis": [
+    -0.19063,
+    0.77356,
+    -0.60437
+   ],
+   "kind": "ruddervator",
+   "range": [
+    -20.0,
+    15.0
+   ],
+   "pitchRange": [
+    -20.0,
+    15.0
+   ],
+   "side": -1,
+   "yawGain": 9.0,
+   "origin_gl": [
+    -0.25184,
+    1.76082,
+    9.52635
+   ],
+   "axis_gl": [
+    0.77356,
+    -0.60437,
+    -0.19063
+   ]
+  },
+  {
+   "part": "rv_tab_L",
+   "parent": "ruddervator_L",
+   "origin": [
+    9.84549,
+    -0.33064,
+    1.82239
+   ],
+   "axis": [
+    -0.13909,
+    0.78035,
+    -0.60968
+   ],
+   "kind": "tab",
+   "gearing": -0.4,
+   "range": [
+    -7.0,
+    18.0
+   ],
+   "origin_gl": [
+    -0.33064,
+    1.82239,
+    9.84549
+   ],
+   "axis_gl": [
+    0.78035,
+    -0.60968,
+    -0.13909
+   ]
+  },
+  {
+   "part": "ruddervator_R",
+   "parent": null,
+   "origin": [
+    9.52635,
+    0.25184,
+    1.76082
+   ],
+   "axis": [
+    0.19063,
+    0.77356,
+    0.60437
+   ],
+   "kind": "ruddervator",
+   "range": [
+    -20.0,
+    15.0
+   ],
+   "pitchRange": [
+    -20.0,
+    15.0
+   ],
+   "side": 1,
+   "yawGain": 9.0,
+   "origin_gl": [
+    0.25184,
+    1.76082,
+    9.52635
+   ],
+   "axis_gl": [
+    0.77356,
+    0.60437,
+    0.19063
+   ]
+  },
+  {
+   "part": "rv_tab_R",
+   "parent": "ruddervator_R",
+   "origin": [
+    9.84549,
+    0.33064,
+    1.82239
+   ],
+   "axis": [
+    0.13909,
+    0.78035,
+    0.60968
+   ],
+   "kind": "tab",
+   "gearing": -0.4,
+   "range": [
+    -7.0,
+    18.0
+   ],
+   "origin_gl": [
+    0.33064,
+    1.82239,
+    9.84549
+   ],
+   "axis_gl": [
+    0.78035,
+    0.60968,
+    0.13909
+   ]
+  },
+  {
+   "part": "yaw_sas_L",
+   "parent": null,
+   "origin": [
+    9.45181,
+    -0.30211,
+    1.25496
+   ],
+   "axis": [
+    -0.90814,
+    0.26911,
+    0.32072
+   ],
+   "kind": "rudder",
+   "range": [
+    -15.0,
+    15.0
+   ],
+   "role": "yaw_sas",
+   "origin_gl": [
+    -0.30211,
+    1.25496,
+    9.45181
+   ],
+   "axis_gl": [
+    0.26911,
+    0.32072,
+    -0.90814
+   ]
+  },
+  {
+   "part": "yaw_sas_R",
+   "parent": null,
+   "origin": [
+    9.45181,
+    0.30211,
+    1.25496
+   ],
+   "axis": [
+    -0.90814,
+    -0.26911,
+    0.32072
+   ],
+   "kind": "rudder",
+   "range": [
+    -15.0,
+    15.0
+   ],
+   "role": "yaw_sas",
+   "origin_gl": [
+    0.30211,
+    1.25496,
+    9.45181
+   ],
+   "axis_gl": [
+    -0.26911,
+    0.32072,
+    -0.90814
+   ]
+  },
+  {
+   "part": "fan",
+   "parent": null,
+   "origin": [
+    6.205,
+    0.0,
+    2.362
+   ],
+   "axis": [
+    0.99756,
+    0.0,
+    -0.06976
+   ],
+   "kind": "spin",
+   "rpm": null,
+   "origin_gl": [
+    0.0,
+    2.362,
+    6.205
+   ],
+   "axis_gl": [
+    0.0,
+    -0.06976,
+    0.99756
+   ]
+  },
+  {
+   "part": "nose_door_L",
+   "parent": null,
+   "origin": [
+    1.815,
+    -0.165,
+    0.78167
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "kind": "gear_door",
+   "open": -85.0,
+   "seq": "down",
+   "origin_gl": [
+    -0.165,
+    0.78167,
+    1.815
+   ],
+   "axis_gl": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "part": "nose_door_R",
+   "parent": null,
+   "origin": [
+    1.815,
+    0.165,
+    0.78167
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "kind": "gear_door",
+   "open": 85.0,
+   "seq": "down",
+   "origin_gl": [
+    0.165,
+    0.78167,
+    1.815
+   ],
+   "axis_gl": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "part": "gear_main_L",
+   "parent": null,
+   "origin": [
+    5.085,
+    -1.70688,
+    0.92
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "kind": "gear",
+   "retract": 90.0,
+   "origin_gl": [
+    -1.70688,
+    0.92,
+    5.085
+   ],
+   "axis_gl": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "part": "gear_main_R",
+   "parent": null,
+   "origin": [
+    5.085,
+    1.70688,
+    0.92
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "kind": "gear",
+   "retract": -90.0,
+   "origin_gl": [
+    1.70688,
+    0.92,
+    5.085
+   ],
+   "axis_gl": [
+    0.0,
+    0.0,
+    1.0
+   ]
+  },
+  {
+   "part": "gear_nose",
+   "parent": null,
+   "origin": [
+    2.165,
+    0.0,
+    0.79
+   ],
+   "axis": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "kind": "gear",
+   "retract": 100.0,
+   "origin_gl": [
+    0.0,
+    0.79,
+    2.165
+   ],
+   "axis_gl": [
+    1.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "pivot_conventions": {
+  "angles": "deg unless noted; door 'open' in rad (pc12 convention); right-handed rotation about 'axis' at 'origin'",
+  "gear": "retract (deg) about axis; mains inward (about +x model / +Z glTF), nose forward (about +y model / +X glTF)",
+  "gear_door": "nose doors: open (deg) with seq 'down' = open whenever the gear is down (AFM Fig 1-1 shows them open)",
+  "flap": "rotation about a drop hinge below the lower surface, max 39 deg, settings 0/15/39 (TCDS); travel = 0",
+  "aileron": "range [-15 UP, +11.5 DOWN] (TCDS), positive = trailing edge down, sign = side",
+  "ruddervator": "kind 'ruddervator': pitchRange [-20 UP, +15 DOWN] (TCDS), side = +1 right / -1 left, yawGain 9 deg (TCDS +-9); positive = TE toward the surface's lower (outboard-down) side; right yaw = right TE down, left TE up",
+  "tab": "gearing x parent deflection; left aileron tab = trim (gearing 0, +-10 deg TCDS); right aileron servo tab gearing -0.5 [inf]; ruddervator tabs gearing -0.4 [inf], range [-7, +18] (TCDS trim UP 7 / DOWN 18; + = TE down)",
+  "rudder": "yaw-SAS surfaces on the ventral fins, range +-15 (TCDS 'Yaw SAS'), positive = TE to starboard",
+  "door": "cabin door upper half opens up (-100 deg), lower half down (+100 deg), baggage door up; open in rad",
+  "spin": "fan about the engine axis (FS +, 4 deg nose-down along the nacelle) [inf]"
+ },
+ "light_anchors": {
+  "navR": {
+   "p": [
+    4.897056245776478,
+    5.730901827206974,
+    1.3259311050999663
+   ],
+   "p_gl": [
+    5.730901827206974,
+    1.3259311050999663,
+    4.897056245776478
+   ],
+   "part": "wing_R",
+   "colour": "green",
+   "src": "AFM walk-around 'Wing Tip, Strobe/Nav Lights'; lens at the tip leading edge (Cirrus photos) [inf: position]"
+  },
+  "strobeR": {
+   "p": [
+    5.8499106573746325,
+    5.872877770279663,
+    1.360628274395155
+   ],
+   "p_gl": [
+    5.872877770279663,
+    1.360628274395155,
+    5.8499106573746325
+   ],
+   "part": "wing_R",
+   "colour": "white",
+   "src": "AFM Kinds of Operation: anti-collision lights 3 installed [inf: position on the tip]"
+  },
+  "landR": {
+   "p": [
+    4.799629389231869,
+    5.602302114264728,
+    1.31351694934316
+   ],
+   "p_gl": [
+    5.602302114264728,
+    1.31351694934316,
+    4.799629389231869
+   ],
+   "part": "wing_R",
+   "colour": "white",
+   "src": "AFM Kinds of Operation 'Landing Lights 4/0 ... at least one wingtip landing light is operative' (wing-tip landing lights exist) [obs]; their number per tip and position [inf]"
+  },
+  "navL": {
+   "p": [
+    4.897056245776478,
+    -5.730901827206974,
+    1.3259311050999663
+   ],
+   "p_gl": [
+    -5.730901827206974,
+    1.3259311050999663,
+    4.897056245776478
+   ],
+   "part": "wing_L",
+   "colour": "red",
+   "src": "AFM walk-around 'Wing Tip, Strobe/Nav Lights'; lens at the tip leading edge (Cirrus photos) [inf: position]"
+  },
+  "strobeL": {
+   "p": [
+    5.8499106573746325,
+    -5.872877770279663,
+    1.360628274395155
+   ],
+   "p_gl": [
+    -5.872877770279663,
+    1.360628274395155,
+    5.8499106573746325
+   ],
+   "part": "wing_L",
+   "colour": "white",
+   "src": "AFM Kinds of Operation: anti-collision lights 3 installed [inf: position on the tip]"
+  },
+  "landL": {
+   "p": [
+    4.799629389231869,
+    -5.602302114264728,
+    1.31351694934316
+   ],
+   "p_gl": [
+    -5.602302114264728,
+    1.31351694934316,
+    4.799629389231869
+   ],
+   "part": "wing_L",
+   "colour": "white",
+   "src": "AFM Kinds of Operation 'Landing Lights 4/0 ... at least one wingtip landing light is operative' (wing-tip landing lights exist) [obs]; their number per tip and position [inf]"
+  },
+  "taxi": {
+   "p": [
+    2.02,
+    0.0,
+    0.62
+   ],
+   "p_gl": [
+    0.0,
+    0.62,
+    2.02
+   ],
+   "part": "gear_nose",
+   "colour": "white",
+   "src": "Cirrus Vision Jet page: 'new nose gear landing light'; AFM 'NOSE LAND LIGHT' [inf: position]"
+  },
+  "tail": {
+   "p": [
+    10.267,
+    0.0,
+    1.59
+   ],
+   "p_gl": [
+    0.0,
+    1.59,
+    10.267
+   ],
+   "part": "details",
+   "colour": "white",
+   "src": "AFM walk-around 'Tail Lights'; position lights 3 installed [inf: position]"
+  },
+  "strobeTail": {
+   "p": [
+    10.262,
+    0.0,
+    1.62
+   ],
+   "p_gl": [
+    0.0,
+    1.62,
+    10.262
+   ],
+   "part": "details",
+   "colour": "white",
+   "src": "AFM: anti-collision lights 3 installed (2 tips + tail) [inf]"
+  },
+  "iceLight": {
+   "p": [
+    3.55,
+    -0.800087528194252,
+    1.3
+   ],
+   "p_gl": [
+    -0.800087528194252,
+    1.3,
+    3.55
+   ],
+   "part": "details",
+   "colour": "white",
+   "src": "AFM: ice inspection light 1 installed [inf: position]"
+  }
+ },
+ "light_anchor_note": "node extras light = kind (js/aircraft/glb.js KINDS: navL navR tail strobeL strobeR strobeTail landL landR taxi; strobeTail is drawn in phase with the tip strobes); iceLight is kept as an anchor, not drawn. The SF50 has no rotating beacons: anti-collision = 3 strobes (AFM Kinds of Operation 'Anti-Collision Lights 3').",
+ "reg_panels": {
+  "reg_panel_L": {
+   "centre": [
+    7.675000000000001,
+    -0.4312836362045226,
+    1.635
+   ],
+   "normal": [
+    0.0,
+    -1.0,
+    0.0
+   ],
+   "up": [
+    0,
+    0,
+    1.0
+   ],
+   "length": 1.25,
+   "height": 0.3,
+   "text_dir": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "note": "model axes; text reads left-to-right seen from outside (text_dir), panel follows the curved skin (centre is on the OML)"
+  },
+  "reg_panel_R": {
+   "centre": [
+    7.675000000000001,
+    0.4312836362045226,
+    1.635
+   ],
+   "normal": [
+    0.0,
+    1.0,
+    0.0
+   ],
+   "up": [
+    0,
+    0,
+    1.0
+   ],
+   "length": 1.25,
+   "height": 0.3,
+   "text_dir": [
+    -1.0,
+    0.0,
+    0.0
+   ],
+   "note": "model axes; text reads left-to-right seen from outside (text_dir), panel follows the curved skin (centre is on the OML)"
+  }
+ },
+ "checks": [
+  {
+   "check": "Overall length",
+   "source_value": 9.357,
+   "model": 9.357,
+   "delta_mm": 0.0,
+   "source": "FAA ACD 30.7 ft / AFM Fig 1-1 / EASA TCDS 9.36 m"
+  },
+  {
+   "check": "Wing span (overall)",
+   "source_value": 11.796,
+   "model": 11.793,
+   "delta_mm": -3.0,
+   "source": "FAA ACD 38.7 ft / AFM Fig 1-1 / Cirrus (EASA TCDS: 11.67 m)"
+  },
+  {
+   "check": "Overall height (static)",
+   "source_value": 3.322,
+   "model": 3.3254,
+   "delta_mm": 3.4,
+   "source": "FAA ACD 10.9 ft / AFM Fig 1-1 / Cirrus 3.32 m"
+  },
+  {
+   "check": "Wing reference area (m^2)",
+   "source_value": 18.18,
+   "model": 18.18,
+   "delta_mm": 0.0,
+   "source": "EASA TCDS 18.18 m2 / AFM 195.7 sq ft"
+  },
+  {
+   "check": "Main-gear track (tyre contacts)",
+   "source_value": 3.4138,
+   "model": 3.4138,
+   "delta_mm": 0.0,
+   "source": "AFM Fig 1-1 front view 11.2 ft"
+  },
+  {
+   "check": "Wheelbase (tyre contacts)",
+   "source_value": 3.305,
+   "model": 3.305,
+   "delta_mm": 0.0,
+   "source": "[inf] AFM Fig 1-1 side view, scaled (no published figure)"
+  },
+  {
+   "check": "V-tail span, tip to tip",
+   "source_value": 4.4806,
+   "model": 4.4898,
+   "delta_mm": 9.2,
+   "source": "AFM Fig 1-1 top view 14.7 ft"
+  },
+  {
+   "check": "Nose -> wing root LE",
+   "source_value": 3.3833,
+   "model": 3.3833,
+   "delta_mm": 0.0,
+   "source": "AFM Fig 1-1 top view 11.1 ft"
+  },
+  {
+   "check": "Nose -> wing root TE (fillet)",
+   "source_value": 5.5778,
+   "model": 5.5852,
+   "delta_mm": 7.4,
+   "source": "AFM Fig 1-1 top view 18.3 ft"
+  },
+  {
+   "check": "Fuselage max width (OML)",
+   "source_value": 1.6967,
+   "model": 1.696,
+   "delta_mm": -0.7,
+   "source": "[inf] AFM Fig 1-2 outline at uniform scale (cabin 61 in + walls)"
+  },
+  {
+   "check": "Main tyre diameter",
+   "source_value": 0.4572,
+   "model": 0.4572,
+   "delta_mm": 0.0,
+   "source": "AFM 8-26: 18 x 5.5"
+  },
+  {
+   "check": "Engine length fits the nacelle (fan face -> exit >= 0.8 x 42.7 in)",
+   "source_value": 1.0846,
+   "model": 1.805,
+   "delta_mm": null,
+   "source": "FAA TCDS E3GL",
+   "ok": true
+  }
+ ],
+ "stats": {
+  "triangles": 463121,
+  "vertices": 284128,
+  "glb_bytes": 7051052,
+  "parts": 43
+ },
+ "wing": {
+  "semi_span_ref": 5.898,
+  "c_root_bl0": 1.9572,
+  "c_tip_ref": 1.1252,
+  "le_sweep_deg": 5.65,
+  "dihedral_deg": 4.8,
+  "x_le_bl0": 4.1994,
+  "airfoils": "NACA 23015 (root) -> NACA 23012 (tip) [inf]"
+ }
+}
