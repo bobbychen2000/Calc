@@ -10,8 +10,8 @@ this file.
 Method: NAIP 2024 bands R, G and NIR (EPSG:26910 GeoTIFF, refs/cache/naip/, public domain) sampled on a 2 m world grid
 (exact per-point mapping, tools/imagery/common.py NaipSampler). Water = NDWI = (G - NIR) / (G + NIR) > 0.25 and
 (NIR < 90 or NIR < 0.65 R: sun glint), on bands box-filtered over 10 m (glint speckle)
-(measured: Bay 0.42-0.89 with NIR 7-59 incl. sun glint; asphalt / concrete 0.07-0.20 with NIR >= 114; grass / sand
-< 0). Cleaned with a 3 px opening / closing; water bodies < 5000 m2 (puddles, dark roofs, shadows) are land. Land = the
+(measured: Bay 0.42-0.89 with NIR 7-59 incl. sun glint; airport asphalt / concrete 0.07-0.20 with NIR >= 114 -- but the
+US-101 / I-380 freeway asphalt at the west edge reaches NDWI 0.27 with NIR 82, see the hole fill below; grass / sand < 0). Cleaned with a 3 px opening / closing; water bodies < 5000 m2 (puddles, dark roofs, shadows) are land. Land = the
 connected non-water component containing the ARP (the airport and the mainland it joins, over the whole NAIP coverage),
 after cutting connections thinner than ~12 m (catwalks, glint patches beyond the 28 seawalls) and regrowing 12 m inside
 the classified land. Holes are filled. Contours simplified to 1.0 m; `nodata` = where NAIP has no pixels (unknown).
@@ -71,7 +71,11 @@ def main():
     land = ndi.binary_dilation(core, iterations=6) & land0
     land = ndi.binary_opening(land, iterations=3) | core
     lab, n = ndi.label(land); land = lab == lab[i0, j0]
-    land = ndi.binary_fill_holes(land)
+    # holes are filled with the coverage's WEST border counted as land (13 Nov 2026, verifier: the US-101 / I-380 asphalt at
+    # the west edge, x -2599..-2499 / z -2149..-1939, passed the water rule -- box-filtered NDWI 0.27, NIR 82 -- and, touching
+    # the array border, escaped binary_fill_holes: a 220 x 45 m 'Bay water' strip on the mainland, drawn by js/world/terrain.js
+    # as a 100 m deep shaft in the hills). The west border is mainland everywhere in the coverage; the Bay lies east.
+    land = ndi.binary_fill_holes(np.pad(land, ((0, 0), (1, 0)), constant_values=True))[:, 1:]
     nodata = ndi.binary_dilation(~valid, iterations=3)
     def rings_of(mask, tol, min_area):
         cs, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)

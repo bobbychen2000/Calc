@@ -287,7 +287,10 @@ export class Terrain {
     // (within 200 m of its polygon) and to at least 1.2 m elsewhere
     const m = this.shoreAt(x, z);
     if (m >= 0) {
-      if (m < 0.5) h = Math.min(h, -2.6 - 0.8 * fbm(e * 0.0011, n * 0.0011, 2));
+      // (only where the ground is coastal lowland: a misclassified 'water' cell in the hills became a 100 m deep shaft --
+      // the US-101 / I-380 strip at the NAIP west edge, 13 Nov 2026; the data is fixed in tools/imagery/shore_naip.py, this
+      // guard keeps any future misclassification from carving more than the shore: real water cells lie below 8.5 m here)
+      if (m < 0.5 && h < 20) h = Math.min(h, -2.6 - 0.8 * fbm(e * 0.0011, n * 0.0011, 2));
       else if (aptD > -200 && h < GROUND_Y) h = GROUND_Y;
       else if (h < 1.2) h = 1.2;
     }

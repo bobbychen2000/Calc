@@ -70,9 +70,12 @@ export async function decodeModel(buf, stretch = null) {
     extra[i * 4] = zq[i];
   }
   const dims = { ...head.dims };
+  // retraction legs of the model's own gear (737 / 777): legs on the unstretched mesh (the same assignment for every
+  // variant), pivots / fold angles on the stretched one (what is drawn)
+  const legs = dims.hasGear ? gearLegs(pos, zq, extra, nv) : null;
   if (stretch) applyStretch(pos, zq, nv, stretch, dims);
-  const gear = dims.hasGear ? gearRig(pos, zq, extra, nv) : null;   // retraction legs of the model's own gear (737 / 777)
   const idxIn = head.idxType === 'u16' ? new Uint16Array(raw, B + o.idx, head.ni) : new Uint32Array(raw, B + o.idx, head.ni);
+  const gear = legs ? gearPivots(pos, zq, extra, nv, legs, idxIn) : null;
   // bake material properties into vertices; regroup triangles by texture
   const mats = head.mats;
   const groups = new Map(); // tex index (-1 = none) -> [draws]
@@ -112,65 +115,147 @@ export async function decodeModel(buf, stretch = null) {
   return { key: head.key, name: head.name, head, dims, mesh, draws: drawList, all, bbox: [mn, mx], verts: nv, tris: nIdx / 3, anchors, tip, gearRig: gear };
 }
 
-// Retraction legs of a model that carries its own landing gear (dims.hasGear: the 737 / 777 families; zone 3 = gear, 4 = gear
-// doors). Until 13 Nov 2026 the gear was drawn down and simply vanished once retracted (owner: 'I don't see landing gear
-// pull up during take off'); now each leg swings about the top of its strut: the nose gear FORWARD (about the lateral z
-// axis), the main gears INBOARD (about the longitudinal x axis), as on the 737 and 777 (landing-gear descriptions of the
-// Boeing FCOMs as quoted by secondary sources -- smartcockpit 737NG gear quiz, scribd B777 landing-gear notes, planefyi
-// gear-retraction page; the FCOM text itself was not retrieved: V-secondary). The leg of each vertex is written into the
-// fraction of extra.x (the zone stays its integer part: floor(x + 0.5) everywhere else): 0.1 nose, 0.2 port main, 0.3
-// starboard main, 0.4 static -- zone-3 parts that are not gear legs (the 777 models' small flap-track fairing tips at
-// 11-20 m span, which used to vanish with the gear) -- and 0 for zone-4 doors that stay (the 777's inboard wheel-well doors,
-// collapsed once the gear is up as before). Pivot = the top of the strut: the highest gear vertex of the leg; nose x and main
-// |z| = the mean of the gear vertices within 0.4 model units of it. Returns [xNose, yNose, yMain, zMain] or null.
-// Shaders: js/three/aircraft.js realMaterial, js/shaders/aircraft_real.js ACR_VS; angle = progress x (nose 0.95, main 0.98)
-// x 90 deg as the procedural gear (js/aircraft/model.js).
-export function gearRig(pos, zone, extra, nv) {
-  // legs = the connected zone-3 clusters (0.5-unit cells, 26-neighbourhood) that reach the ground (lowest vertex within
-  // 0.5 units of the model's lowest gear vertex); the nose leg is the one ahead of 0.3 L, the mains the others by side
+// Retraction of a model that carries its own landing gear (dims.hasGear: the 737 / 777 families; zone 3 = gear, 4 = gear
+// doors; tools/convert_models.py ZONE). Until 13 Nov 2026 the gear stayed down and vanished once retracted (owner: 'I don't
+// see landing gear pull up during take off'). Each leg now swings about the top of its strut: the nose gear FORWARD (about
+// the lateral z axis), the main gears INBOARD (about the longitudinal x axis), as on the 737 and 777 (the landing-gear
+// descriptions of the Boeing FCOMs as quoted by secondary sources -- smartcockpit 737NG gear quiz, scribd B777 landing-gear
+// notes, planefyi gear-retraction page; the FCOM text itself was not retrieved: V-secondary).
+// The role of each gear / door vertex is written into the fraction of extra.x in steps of 0.05 (the zone stays the integer
+// part, floor(x + 0.5), everywhere else): 1 nose leg, 2 / 3 port / starboard main leg (rigid), 4 static (zone-3 parts that
+// are not legs: the 777 flap-track fairing tips at 11-20 m span, the 737 nose wheel-well box), 5 / 6 port / starboard
+// brace (side braces and actuators: a rigid swing about the trunnion lifts them through the wing, verifier 13 Nov: up to
+// 1.6 m above the 777 wing; they fold away during the swing), 7 / 8 port / starboard belly door (the 777's inboard main
+// gear doors, closed on the ground: open about their outboard hinge while the trucks pass, then close; drawn closed with
+// the gear up), 0 other doors (collapse once the gear is up, as before). Shaders: js/three/aircraft.js realMaterial,
+// js/shaders/aircraft_real.js ACR_VS.
+const GEAR_STEP = 0.05;
+// Stage 1 (unstretched mesh; 0.5-unit cells, 26-neighbourhood): the strut clusters are the zone-3 clusters reaching the
+// ground (lowest vertex within 0.5 of the lowest gear vertex; nose ahead of 0.3 L, mains by side). Split-off pieces whose
+// centre lies INSIDE a strut cluster's box join it (rigid); for the mains, pieces within 1 unit of the box are braces; the
+// rest is static. Main-leg vertices inboard of the strut axis by > 0.3 in the upper 55 % of the leg are braces.
+// Returns { strut: Uint8Array (1 = vertex of a strut cluster) } or null.
+export function gearLegs(pos, zone, extra, nv) {
   let x0 = 1e9, x1 = -1e9, yLow = 1e9;
   for (let i = 0; i < nv; i++) { const x = pos[i * 3]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (zone[i] === 3 && pos[i * 3 + 1] < yLow) yLow = pos[i * 3 + 1]; }
   if (yLow > 1e8) return null;
   const xs = x1 - 0.3 * (x1 - x0), C = 0.5, cellOf = (i) => Math.floor(pos[i * 3] / C) + ',' + Math.floor(pos[i * 3 + 1] / C) + ',' + Math.floor(pos[i * 3 + 2] / C);
   const cells = new Map();
   for (let i = 0; i < nv; i++) if (zone[i] === 3) { const k = cellOf(i); let a = cells.get(k); if (!a) cells.set(k, a = []); a.push(i); }
-  const comp = new Map(); const clusters = [];
+  const seen = new Set(), clusters = [];
   for (const k0 of cells.keys()) {
-    if (comp.has(k0)) continue; const id = clusters.length, st = [k0], idx = []; comp.set(k0, id);
+    if (seen.has(k0)) continue; const st = [k0], idx = []; seen.add(k0);
     while (st.length) {
       const k = st.pop(); idx.push(...cells.get(k)); const [a, b, c] = k.split(',').map(Number);
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
-        const kk = (a + dx) + ',' + (b + dy) + ',' + (c + dz); if (cells.has(kk) && !comp.has(kk)) { comp.set(kk, id); st.push(kk); }
+        const kk = (a + dx) + ',' + (b + dy) + ',' + (c + dz); if (cells.has(kk) && !seen.has(kk)) { seen.add(kk); st.push(kk); }
       }
     }
-    let ymin = 1e9, ymax = -1e9, xm = 0, zm = 0; for (const i of idx) { ymin = Math.min(ymin, pos[i * 3 + 1]); ymax = Math.max(ymax, pos[i * 3 + 1]); xm += pos[i * 3]; zm += pos[i * 3 + 2]; }
-    xm /= idx.length; zm /= idx.length;
-    let bb = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9]; for (const i of idx) for (let k = 0; k < 3; k++) { bb[k] = Math.min(bb[k], pos[i * 3 + k]); bb[k + 3] = Math.max(bb[k + 3], pos[i * 3 + k]); }
-    clusters.push({ idx, ymin, ymax, bb, leg: ymin < yLow + 0.5 ? (xm > xs ? 1 : zm < 0 ? 2 : 3) : 4 });
+    const bb = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9]; let zm = 0;
+    for (const i of idx) { for (let k = 0; k < 3; k++) { bb[k] = Math.min(bb[k], pos[i * 3 + k]); bb[k + 3] = Math.max(bb[k + 3], pos[i * 3 + k]); } zm += pos[i * 3 + 2]; }
+    const ground = bb[1] < yLow + 0.5, cx = (bb[0] + bb[3]) / 2;
+    clusters.push({ idx, bb, ground, leg: ground ? (cx > xs ? 1 : zm < 0 ? 2 : 3) : 4 });
   }
-  // pieces of a leg that the 0.5-unit cells split off (side braces, actuators, torque links: 81-300 vertices on the 737 / 777
-  // models) join the leg whose box (+1 unit) holds their centre; the far-off flap-track tips stay static
-  const legs = clusters.filter(c => c.leg !== 4);
+  const struts = clusters.filter(c => c.ground);
+  if (!struts.some(c => c.leg === 1) || !struts.some(c => c.leg !== 1)) return null;
+  const inBox = (g, m, d) => [0, 1, 2].every(k => m[k] >= g.bb[k] - d && m[k] <= g.bb[k + 3] + d);
+  const strut = new Uint8Array(nv), code = new Uint8Array(nv);
   for (const c of clusters) {
-    if (c.leg !== 4) continue; const m = [0, 1, 2].map(k => (c.bb[k] + c.bb[k + 3]) / 2);
-    const L = legs.find(g => [0, 1, 2].every(k => m[k] >= g.bb[k] - 1 && m[k] <= g.bb[k + 3] + 1));
-    if (L) c.leg = L.leg;
+    let cd = c.leg;
+    if (!c.ground) {
+      const m = [0, 1, 2].map(k => (c.bb[k] + c.bb[k + 3]) / 2);
+      const G = struts.find(g => inBox(g, m, 0)), Gm = struts.find(g => g.leg !== 1 && inBox(g, m, 1));
+      cd = G ? G.leg : Gm ? Gm.leg + 3 : 4;          // inside a strut box: rigid with it; near a main strut: brace; else static
+    }
+    for (const i of c.idx) { code[i] = cd; if (c.ground) strut[i] = 1; }
   }
-  const nose = clusters.filter(c => c.leg === 1), mains = clusters.filter(c => c.leg === 2 || c.leg === 3);
-  if (!nose.length || !mains.length) return null;
-  // pivot = the top of the strut: the highest vertex of the leg; nose x / main |z| = mean of the vertices within 0.4 units of it
-  const top = (cs, f) => { const yT = Math.max(...cs.map(c => c.ymax)); let s = 0, n = 0; for (const c of cs) for (const i of c.idx) if (pos[i * 3 + 1] > yT - 0.4) { s += f(i); n++; } return [yT, s / n]; };
-  const [yN, xN] = top(nose, i => pos[i * 3]), [yM, zM] = top(mains, i => Math.abs(pos[i * 3 + 2]));
-  let zLegMax = 0; for (const c of mains) for (const i of c.idx) zLegMax = Math.max(zLegMax, Math.abs(pos[i * 3 + 2]));
-  for (const c of clusters) for (const i of c.idx) extra[i * 4] = 3 + c.leg * 0.1;
-  // doors (zone 4): on the leg (outboard of the strut, within the leg's span; or at the nose) move with it, the rest stays
+  // side braces / actuators of the mains: inboard of the strut axis (median |z| of the mid-strut band) in the upper part
+  for (const g of struts) {
+    if (g.leg === 1) continue; const yb = g.bb[1], yt = g.bb[4], span = yt - yb;
+    const band = []; for (const i of g.idx) { const y = pos[i * 3 + 1]; if (y > yb + 0.45 * span && y < yb + 0.75 * span) band.push(Math.abs(pos[i * 3 + 2])); }
+    band.sort((a, b) => a - b); const zAx = band.length ? band[band.length >> 1] : 0;
+    for (const i of g.idx) if (pos[i * 3 + 1] > yb + 0.45 * span && Math.abs(pos[i * 3 + 2]) < zAx - 0.3) code[i] = g.leg + 3;
+  }
+  for (let i = 0; i < nv; i++) if (zone[i] === 3) extra[i * 4] = 3 + code[i] * GEAR_STEP;
+  // doors: on a leg (outboard of its strut, within its span) move with it; inboard of the mains = belly doors; else 0
+  const mainBoxes = struts.filter(g => g.leg !== 1);
+  let zAxis = 1e9; for (const g of mainBoxes) zAxis = Math.min(zAxis, Math.abs((g.bb[2] + g.bb[5]) / 2));
   for (let i = 0; i < nv; i++) {
-    if (zone[i] !== 4) continue; const x = pos[i * 3], az = Math.abs(pos[i * 3 + 2]);
-    const code = x > xs ? 1 : az >= zM - 0.2 && az <= zLegMax + 0.5 ? (pos[i * 3 + 2] < 0 ? 2 : 3) : 0;
-    extra[i * 4] = 4 + code * 0.1;
+    if (zone[i] !== 4) continue; const x = pos[i * 3], z = pos[i * 3 + 2], az = Math.abs(z), side = z < 0 ? 0 : 1;
+    const onMain = mainBoxes.some(g => x >= g.bb[0] - 0.5 && x <= g.bb[3] + 0.5);
+    const cd = x > xs ? 1 : onMain && az >= zAxis - 0.2 ? 2 + side : onMain ? 7 + side : 0;
+    extra[i * 4] = 4 + cd * GEAR_STEP;
   }
-  return [xN, yN, yM, zM];
+  return { strut };
 }
+// Stage 2 (the drawn, stretched mesh): pivots and fold angles. Returns [xNose, yNose, yMain, zMain, aNose, aMain, yHinge,
+// zHinge] (model units, rad). Strut top = the highest strut vertex; strut axis = the median of the mid-strut band (45-75 %
+// of the leg height: the side brace and the top fittings no longer pull the pivot inboard, 0.45 / 0.98 units on the 737 /
+// 777, verifier 13 Nov). The fold angles are solved on a skin height map (0.5-unit (x, z) cells; topmost / lowest surface
+// of the non-gear triangles at each cell centre): the nose angle is the smallest in 85..120 deg that folds 98 % of the tyre
+// vertices (lowest 35 % of the leg) above the belly (the 777 nose needs ~100-105 deg, the 737 ~100); the main angle the
+// largest in 80..88 deg (88 = the procedural gear's 0.98 x 90) that leaves no rigid leg vertex above the top skin (the
+// models have no well cavity: at 88-90 deg the 777's inboard tyres rose up to 0.35 above the wing-body fairing). Belly-door
+// hinge = the doors' outboard top edge.
+export function skinMap(pos, zone, idx, C = 0.5) {
+  const top = new Map(), bot = new Map();
+  for (let t = 0; t + 2 < idx.length; t += 3) {
+    const a = idx[t], b = idx[t + 1], c = idx[t + 2]; const g = v => zone[v] === 3 || zone[v] === 4 || zone[v] === 8; if (g(a) || g(b) || g(c)) continue;
+    const ax = pos[a * 3], az = pos[a * 3 + 2], bx = pos[b * 3], bz = pos[b * 3 + 2], cx = pos[c * 3], cz = pos[c * 3 + 2];
+    const d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz); if (Math.abs(d) < 1e-12) continue;
+    for (let gx = Math.floor(Math.min(ax, bx, cx) / C); gx <= Math.floor(Math.max(ax, bx, cx) / C); gx++) for (let gz = Math.floor(Math.min(az, bz, cz) / C); gz <= Math.floor(Math.max(az, bz, cz) / C); gz++) {
+      const x = (gx + 0.5) * C, z = (gz + 0.5) * C;
+      const w0 = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / d, w1 = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / d, w2 = 1 - w0 - w1;
+      if (w0 < -1e-6 || w1 < -1e-6 || w2 < -1e-6) continue;
+      const y = w0 * pos[a * 3 + 1] + w1 * pos[b * 3 + 1] + w2 * pos[c * 3 + 1], k = gx * 65536 + gz;
+      if (!top.has(k) || y > top.get(k)) top.set(k, y); if (!bot.has(k) || y < bot.get(k)) bot.set(k, y);
+    }
+  }
+  const key = (x, z) => Math.floor(x / C) * 65536 + Math.floor(z / C);
+  return { top: (x, z) => top.get(key(x, z)), bot: (x, z) => bot.get(key(x, z)) };
+}
+export function gearPivots(pos, zone, extra, nv, legs, idx) {
+  const code = (i) => Math.round((extra[i * 4] - zone[i]) / GEAR_STEP);
+  const axis = (sel, f) => {
+    let yb = 1e9, yt = -1e9; for (let i = 0; i < nv; i++) if (sel(i)) { const y = pos[i * 3 + 1]; yb = Math.min(yb, y); yt = Math.max(yt, y); }
+    const span = yt - yb, v = []; for (let i = 0; i < nv; i++) if (sel(i)) { const y = pos[i * 3 + 1]; if (y > yb + 0.45 * span && y < yb + 0.75 * span) v.push(f(i)); }
+    v.sort((a, b) => a - b); return { yb, yt, med: v.length ? v[v.length >> 1] : 0 };
+  };
+  const nose = axis(i => zone[i] === 3 && legs.strut[i] && code(i) === 1, i => pos[i * 3]);
+  const main = axis(i => zone[i] === 3 && legs.strut[i] && (code(i) === 2 || code(i) === 3), i => Math.abs(pos[i * 3 + 2]));
+  if (nose.yt < -1e8 || main.yt < -1e8) return null;
+  const xN = nose.med, yN = nose.yt, yM = main.yt, zM = main.med;
+  const S = idx ? skinMap(pos, zone, idx) : null;
+  // nose: smallest angle that stows 98 % of the tyre vertices above the belly
+  const tyres = []; const tTop = nose.yb + 0.35 * (nose.yt - nose.yb);
+  for (let i = 0; i < nv; i++) if (zone[i] === 3 && code(i) === 1 && pos[i * 3 + 1] < tTop) tyres.push(i);
+  let aN = Math.PI / 2 * 0.95;
+  if (S) {
+    let best = -1;
+    for (let deg = 85; deg <= 120; deg++) {
+      const a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); let ok = 0;
+      for (const i of tyres) { const dx = pos[i * 3] - xN, dy = pos[i * 3 + 1] - yN, x = c * dx - s * dy + xN, y = s * dx + c * dy + yN; const b = S.bot(x, pos[i * 3 + 2]); if (b === undefined || y > b + 0.02) ok++; }
+      const f = tyres.length ? ok / tyres.length : 1;
+      if (f > best + 1e-9) { best = f; aN = a; } if (f >= 0.98) { aN = a; break; }
+    }
+  }
+  // mains: largest angle (<= 88 deg) with no rigid leg vertex above the top skin
+  let aM = Math.PI / 2 * 0.98;
+  if (S) for (let deg = 88; deg >= 80; deg--) {
+    const a0 = deg * Math.PI / 180; let above = 0;
+    for (let i = 0; i < nv && !above; i++) {
+      const cd = code(i); if (zone[i] !== 3 || (cd !== 2 && cd !== 3)) continue;
+      const sg = cd === 3 ? 1 : -1, a = a0 * sg, c = Math.cos(a), s = Math.sin(a), zp = zM * sg, dy = pos[i * 3 + 1] - yM, dz = pos[i * 3 + 2] - zp;
+      const y = c * dy - s * dz + yM, z = s * dy + c * dz + zp, t = S.top(pos[i * 3], z); if (t !== undefined && y > t - 0.02) above++;
+    }
+    aM = a0; if (!above) break;
+  }
+  let zH = 0, yH = 0; for (let i = 0; i < nv; i++) { const cd = code(i); if (zone[i] === 4 && (cd === 7 || cd === 8)) zH = Math.max(zH, Math.abs(pos[i * 3 + 2])); }
+  if (zH > 0) { yH = -1e9; for (let i = 0; i < nv; i++) { const cd = code(i); if (zone[i] === 4 && (cd === 7 || cd === 8) && Math.abs(pos[i * 3 + 2]) > zH - 0.1) yH = Math.max(yH, pos[i * 3 + 1]); } }
+  return [xN, yN, yM, zM, aN, aM, yH, zH];
+}
+// one call on one position set (tests / tools)
+export function gearRig(pos, zone, extra, nv, idx = null) { const L = gearLegs(pos, zone, extra, nv); return L ? gearPivots(pos, zone, extra, nv, L, idx) : null; }
 
 // Some source meshes carry degenerate or contradictory vertex normals (FAM 747-400 nose: 17 % of the skin vertices ahead of
 // the wing have near-zero normals where inward and outward faces were averaged; they shade as dark blotches, review round

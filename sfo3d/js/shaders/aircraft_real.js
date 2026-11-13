@@ -15,22 +15,25 @@ export const ACR_VS = `
 #include <vout>
 layout(location=0) in vec3 aPos; layout(location=1) in vec3 aNrm; layout(location=2) in vec2 aUV; layout(location=3) in vec4 aCol; layout(location=4) in vec4 aExtra;
 uniform mat4 uModel; uniform mat4 uPrevModel; uniform float uGearUp;
-uniform float uGearT; uniform vec4 uGearRig; // own-gear retraction (js/live/models.js gearRig; js/three/aircraft.js has the same)
+uniform float uGearT; uniform vec4 uGearRig; uniform vec4 uGearB; // own-gear retraction (js/live/models.js gearLegs / gearPivots; js/three/aircraft.js has the same)
 out vec3 vWP; out vec3 vN; out vec2 vUV; out vec3 vLP; out vec3 vLN; flat out vec4 vMat; flat out vec4 vMat2;
+vec2 rot2(vec2 d, float a) { float c = cos(a), s = sin(a); return vec2(c * d.x - s * d.y, s * d.x + c * d.y); }
 void main(){
-  int zone = int(aExtra.x + 0.5); int leg = int((aExtra.x - float(zone)) * 10.0 + 0.5);
+  int zone = int(aExtra.x + 0.5); int leg = int((aExtra.x - float(zone)) * 20.0 + 0.5);
   vec3 p = aPos; vec3 n = aNrm;
   bool gz = zone == 3 || zone == 4;
   if (gz && uGearT > 0.0005) {
-    if (leg == 1) { // nose: forward about z through the strut top
-      float a = uGearT * 1.4923, c = cos(a), s = sin(a); vec2 d = p.xy - uGearRig.xy;
-      p.xy = vec2(c * d.x - s * d.y, s * d.x + c * d.y) + uGearRig.xy; n.xy = vec2(c * n.x - s * n.y, s * n.x + c * n.y);
-    } else if (leg == 2 || leg == 3) { // mains: inboard about x through the strut top
-      float sg = leg == 3 ? 1.0 : -1.0; float a = uGearT * 1.5394 * sg, c = cos(a), s = sin(a); vec2 q = vec2(uGearRig.z, uGearRig.w * sg);
-      vec2 d = p.yz - q; p.yz = vec2(c * d.x - s * d.y, s * d.x + c * d.y) + q; n.yz = vec2(c * n.y - s * n.z, s * n.y + c * n.z);
+    if (leg == 1) { float a = uGearT * uGearB.x; p.xy = rot2(p.xy - uGearRig.xy, a) + uGearRig.xy; n.xy = rot2(n.xy, a); }  // nose: forward about z
+    else if (leg == 2 || leg == 3) {  // mains: inboard about x through the strut top
+      float sg = leg == 3 ? 1.0 : -1.0; float a = uGearT * uGearB.y * sg; vec2 q = vec2(uGearRig.z, uGearRig.w * sg);
+      p.yz = rot2(p.yz - q, a) + q; n.yz = rot2(n.yz, a);
+    } else if (leg == 5 || leg == 6) p = vec3(0.0);  // braces fold away during the swing
+    else if (leg == 7 || leg == 8) {  // belly doors: open 80 deg about the outboard hinge during 0-0.2, close over 0.8-1
+      float sg = leg == 8 ? -1.0 : 1.0; float a = smoothstep(0.0, 0.2, uGearT) * (1.0 - smoothstep(0.8, 1.0, uGearT)) * 1.396 * sg;
+      vec2 q = vec2(uGearB.z, -uGearB.w * sg); p.yz = rot2(p.yz - q, a) + q; n.yz = rot2(n.yz, a);
     }
   }
-  if (uGearUp > 0.5 && gz && leg != 4) p = vec3(0.0); // retracted gear & open gear doors collapse away (static parts stay)
+  if (uGearUp > 0.5 && gz && leg != 4 && leg != 7 && leg != 8) p = vec3(0.0); // retracted gear & open doors collapse away
   vec4 wp = uModel * vec4(p, 1.0);
   vWP = wp.xyz; vN = normalize(mat3(uModel) * n); vUV = aUV; vLP = aPos; vLN = aNrm;
   vMat = aCol; vMat2 = aExtra;

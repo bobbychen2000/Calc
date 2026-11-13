@@ -111,7 +111,7 @@ export class LiveAircraft extends Aircraft {
     // own-gear retraction (js/live/models.js gearRig): progress 0 (down) .. 1 (up), eased like a hydraulic actuator's
     // start / stop; the pivots of the legs in model units
     const gr = this.model.gearRig, gt = gr ? Math.min(1, Math.max(0, 1 - this.gear)) : 0;
-    U.uGearT = gt * gt * (3 - 2 * gt); U.uGearRig = gr || [0, 0, 0, 0];
+    U.uGearT = gt * gt * (3 - 2 * gt); U.uGearRig = gr ? gr.slice(0, 4) : [0, 0, 0, 0]; U.uGearB = gr ? gr.slice(4, 8) : [0, 0, 0, 0];
     return U;
   }
   // freighter (lookup.js isFreighter): cargo brand, all-cargo operator, cargo-only type of the operator, or the database
