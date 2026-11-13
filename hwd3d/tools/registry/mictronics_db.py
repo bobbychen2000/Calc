@@ -137,8 +137,10 @@ def check():
                           'first': hours[0], 'last': hours[-1]},
            'on_field_rule': 'within 1500 m of the NASR ARP and below 150 ft AGL or alt_baro ground (tools/phase0/hwd_mix.py)',
            'on_field_aircraft': len(seen), 'counts': dict(sorted(c.items())), 'callsigns': dict(sorted(opc.items())),
-           'attribution': 'Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL; '
-                          'aircraft data: Mictronics aircraft database, Open Data Commons Attribution License 1.0'}
+           'attribution': 'Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL '
+                          '(https://opendatacommons.org/licenses/odbl/1-0/); aircraft data: Mictronics aircraft database '
+                          '(https://github.com/Mictronics/aircraft-database), Open Data Commons Attribution License 1.0 '
+                          '(https://opendatacommons.org/licenses/by/1-0/)'}
     os.makedirs(os.path.dirname(CHECK), exist_ok=True)
     with open(CHECK, 'w') as f:
         json.dump(doc, f, indent=1, sort_keys=True)

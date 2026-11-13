@@ -67,7 +67,7 @@ Checks
   8. Holds: NAIP bar vs OSM node offset; distance from the runway centreline per runway.
   9. Data hygiene: every element has src 'obs' / 'inf' and refs that exist in 'sources'; the .js twin carries the same
      object as the .json. D1 (no ADS-B identity in any committed file; since the Phase 1 review): every committed
-     ADS-B-derived file (D1_FILES: data/hwd_airport.*, data/ga_types.json, refs/cache/adsb/*, docs/phase1/*.json,
+     ADS-B-derived file (D1_FILES: refs/cache/registry/*.json, data/hwd_airport.*, data/ga_types.json, refs/cache/adsb/*, docs/phase1/*.json,
      docs/*.md) is scanned for identity keys (hex, icao24, callsign, flight, registration, r ...), per-row time keys
      (t, t0, time, seen ...) and epoch-second numbers, N-number-like tokens, and any token equal to a hex address,
      registration or callsign of an aircraft that the pinned adsb.lol recording saw within 5 km of the ARP
@@ -141,7 +141,7 @@ def say(s=''):
     print(s); OUT.append(s)
 
 
-D1_FILES = ['data/hwd_airport.json', 'data/hwd_airport.js', 'data/ga_types.json', 'refs/cache/adsb/*.json', 'refs/cache/adsb/*.txt',
+D1_FILES = ['refs/cache/registry/*.json', 'data/hwd_airport.json', 'data/hwd_airport.js', 'data/ga_types.json', 'refs/cache/adsb/*.json', 'refs/cache/adsb/*.txt',
             'docs/phase1/*.json', 'docs/*.md']
 ID_KEYS = {'hex', 'icao', 'icao24', 'icao_hex', 'callsign', 'flight', 'registration', 'reg', 'r', 'owner', 'squawk'}
 TIME_KEYS = {'t', 't0', 't1', 'time', 'ts', 'utc', 'seen', 'seen_pos', 'now', 'timestamp', 'local_h'}

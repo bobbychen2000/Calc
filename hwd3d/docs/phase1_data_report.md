@@ -41,7 +41,7 @@ Every element has three fields:
 
 Attribute-level `*_src` fields mark inferred parts of observed elements.
 
-The JSON is 826 kB (826,197 bytes). The `.js` twin is `export const HWD_AIRPORT = …` with a licence header.
+The JSON is 841 kB (840,643 bytes). The `.js` twin is `export const HWD_AIRPORT = …` with a licence header.
 
 | Section | Count | src | Content and origin |
 |---|---|---|---|
@@ -360,7 +360,8 @@ What the ramp spots rest on (counted in sessions, round-2 rule):
 
 History: round 1 replaced stays and signal events by sessions (ramp split unchanged at 33 / 34; HE623S150 became inf;
 HE625S176 and HE154S380 became obs). Round 2 joined a parked aircraft's power cycles into one session: RE181S395,
-RW166N607 and HE154S380 each rested on one aircraft's single presence and are now inf; HE625S176 stays obs (that
+RW166N607 and HE154S380 each rested on what the session rule now treats as one presence (for the first two, a signal
+end and a later start joined across unobserved time, as section 2 explains: inferred, not observed) and are now inf; HE625S176 stays obs (that
 aircraft flew away between its two sessions). 25 other spots (3 helipads and 1 tie-down among them) lost sessions but stay obs.
 
 Headings are known for all 80 tie-downs (inf, from the tee), for the 9 rule-made hangar aprons and for the door spot
@@ -525,10 +526,12 @@ reads the current `.js`.)
        fix away or airborne in between). It cannot show that an aircraft stayed while it had no fix: a departure and
        return in that time is joined (section 2).
    - **SOURCES** (round 1 extended, hard):
-     - all 60 committed data files have an entry (58 in round 2; the 2 FAA TAF files of commit 34a8cc8, made outside
+     - all 61 committed data files have an entry (58 in round 2; the 2 FAA TAF files of commit 34a8cc8 and, since 2026-11-13,
+       `refs/cache/registry/mictronics_check.json` of commit 5258b3e, made outside
        this round, are new);
-     - all entries in the 7 SOURCES.json files (6 in round 2, plus `refs/cache/faa/taf/`) have `made_by` or `note`;
-     - all 14 text / JSON files whose SOURCES licence names the ODbL carry the ODbL URI in the file itself.
+     - all entries in the 8 SOURCES.json files (6 in round 2, plus `refs/cache/faa/taf/` and `refs/cache/registry/`) have `made_by` or `note`;
+     - all 15 text / JSON files whose SOURCES licence names the ODbL carry the ODbL URI in the file itself (14 in round 3, plus
+       `refs/cache/registry/mictronics_check.json`); the D1 scan covers `refs/cache/registry/*.json` since 2026-11-13 (19 files).
    - **src values** (round 1): every `src` / `*_src` value in every committed JSON is obs, inf or null, field-documentation
      maps aside. The one listed exception is `data/ga_types.json` `src: 'none'` (23 types without an FAA ACD row; its
      `src_legend` says so).
