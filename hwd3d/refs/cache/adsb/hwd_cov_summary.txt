@@ -1,3 +1,4 @@
+# Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); aggregate output of hwd3d/tools/phase0/hwd_cov.py; offered under the ODbL 1.0
 hours with ok polls: 101 of span 165
 polls/hour median: 591
 NACp on field: [(0, 3511), (10, 60854), (11, 145), (2, 1), (3, 1), (4, 10), (5, 18), (6, 158), (7, 98), (8, 2351), (9, 12440), (None, 2994)]

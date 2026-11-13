@@ -1,3 +1,4 @@
+# Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); aggregate output of hwd3d/tools/phase0/hwd_mix.py; offered under the ODbL 1.0
 files 111 polls 60667 ok 54537 span_h 164.3 median_poll_s 1.3619999885559082
 first 1793814183.065 last 1794405552.602
 aircraft within 3nm <3000ft AGL: 836

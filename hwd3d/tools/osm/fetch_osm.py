@@ -307,6 +307,9 @@ def run(name, date, latest, only=None, via='overpass', attempts=2, max_depth=1):
         os.makedirs(PARTS, exist_ok=True)
         open(os.path.join(PARTS, fn.replace('.json', '.full.json')), 'wb').write(body_full)    # local only (gitignored)
     res['elements'] = [{k: v for k, v in e.items() if k not in STRIP_FIELDS} for e in elements]
+    # ODbL notice with the licence URI in the committed file itself (round-1 re-check, 2026-11-12: only OSM's own osm3s line
+    # was in it); added after sha256_unstripped is taken, so that hash still equals the first fetch's
+    res = {'licence': 'ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/) - (c) OpenStreetMap contributors, https://www.openstreetmap.org/copyright; extract of hwd3d/tools/osm/fetch_osm.py with the contributor fields %s removed' % list(STRIP_FIELDS), **res}
     body = json.dumps(res, separators=(',', ':')).encode()
     open(os.path.join(OUT, fn), 'wb').write(body)
     now = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')

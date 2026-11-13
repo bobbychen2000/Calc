@@ -3,6 +3,8 @@ import lzma, json, glob, math, sys, collections as C, statistics as S
 ARP=(37.65893166,-122.12173888); FE=52
 def xy(lat,lon): return ((lon-ARP[1])*111195*math.cos(math.radians(ARP[0])),(lat-ARP[0])*111195)
 files=sorted(glob.glob(sys.argv[1]+'/adsblol_*.jsonl.xz'))
+# ODbL notice as the first output line (round-1 re-check, 2026-11-12: the committed summary is this script's stdout)
+print('# Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); aggregate output of hwd3d/tools/phase0/hwd_cov.py; offered under the ODbL 1.0')
 okh=set(); trk=C.defaultdict(list); nacp=C.Counter(); per_day=C.defaultdict(set); polls_per_h=C.Counter()
 for f in files:
     for line in lzma.open(f,'rt'):

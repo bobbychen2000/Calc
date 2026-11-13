@@ -1,7 +1,7 @@
 {
  "source": "refs/cache/osm/khwd_features.json",
  "osm_base": "2026-11-12T00:00:00Z",
- "source_sha256": "79aea73799f93aa5ad6cf2636541d6c1b18ed3d9f7430b6d61e1d7a145462f2e",
+ "source_sha256": "fc792197e616a9c23c71b8e0308a8c95500953028c050386f73d39b6f4eda20d",
  "licence": "ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/) for the OSM-derived numbers; FAA sources public domain",
  "attribution": "(c) OpenStreetMap contributors - https://www.openstreetmap.org/copyright",
  "counts": {

@@ -67,7 +67,14 @@ AC_EXT = (7.0, 24.0)     # m, its largest extent (GA singles 9-12 m span; rows w
 PLAN_WING = (5.5, 1.5)
 PLAN_FUS = (0.8, 6.5, 2.5)
 PLAN_OCC_M2 = 2.5
-PARAMS = dict(PLAN_WING=list(PLAN_WING), PLAN_FUS=list(PLAN_FUS), PLAN_OCC_M2=PLAN_OCC_M2,
+# position / heading tolerance of the planform (round-1 re-check, 2026-11-12: TW054N324 had a high wing about 2.3 m off the
+# junction and read 0.9 m2): the outline is also tried shifted along the aircraft axis by PLAN_SHIFT (m) and turned by
+# PLAN_TURN (deg); the largest mask area counts. Calibration on the Green Ramp (80 positions x 2 years): with the tolerance
+# the values split into <= 2.1 m2 and >= 5.6 m2; the 18 positions it adds (TW054N324 in 2024, 17 in 2022, all shifted
+# 2-3 m toward the stem) each show an aircraft over the tee by eye (out/phase1/r1/green_td_2022.png / _2024.png)
+PLAN_SHIFT = tuple(np.round(np.arange(-3.0, 3.01, 0.5), 2))
+PLAN_TURN = (-10.0, 0.0, 10.0)
+PARAMS = dict(PLAN_WING=list(PLAN_WING), PLAN_FUS=list(PLAN_FUS), PLAN_OCC_M2=PLAN_OCC_M2, PLAN_SHIFT=[float(v) for v in PLAN_SHIFT], PLAN_TURN=list(PLAN_TURN),
               RES=RES, BAR=BAR, STEM=STEM, SIG=SIG, ANG_STEP=ANG_STEP, BRIGHT=BRIGHT, SEED_NCC=SEED_NCC,
               SEED_ARM=SEED_ARM, ROW_NCC=ROW_NCC, ROW_ARM=ROW_ARM, ROW_ANG=ROW_ANG, ROW_ACROSS=ROW_ACROSS, MIN_ROW_SEEDS=MIN_ROW_SEEDS,
               PITCH_RANGE=list(PITCH_RANGE), AC_R=AC_R, OCC_R=OCC_R, OCC_M2=OCC_M2, AC_D=AC_D, AC_AREA=list(AC_AREA), AC_EXT=list(AC_EXT))
@@ -176,16 +183,23 @@ class Grid:
         return bool((sub & (np.hypot(yy, xx) <= k)).sum() * RES * RES >= OCC_M2)
 
     def planform(self, x, z, stem_hdg):
-        """m2 of the aircraft mask inside the outline of a GA single parked on a tee at (x, z) (nose away from the stem)"""
-        h = math.radians((stem_hdg + 180) % 360); u = np.array([math.sin(h), -math.cos(h)]); b = np.array([math.cos(h), math.sin(h)])
-        r, c = self.rc(x, z); k = int(round(9.0 / RES))
+        """m2 of the aircraft mask inside the outline of a GA single parked on a tee at (x, z) (nose away from the stem),
+        the largest over shifts along the aircraft axis (PLAN_SHIFT) and turns (PLAN_TURN)"""
+        h0 = math.radians((stem_hdg + 180) % 360); a0 = np.array([math.sin(h0), -math.cos(h0)])
+        r, c = self.rc(x, z); k = int(round(12.5 / RES))
         r0, r1, c0, c1 = max(0, r - k), min(self.acmask.shape[0], r + k + 1), max(0, c - k), min(self.acmask.shape[1], c + k + 1)
         sub = self.acmask[r0:r1, c0:c1]
         yy, xx = np.mgrid[r0 - r:r1 - r, c0 - c:c1 - c] * RES
-        pu = xx * u[0] + yy * u[1]; pb = xx * b[0] + yy * b[1]
-        wing = (np.abs(pb) <= PLAN_WING[0]) & (np.abs(pu) <= PLAN_WING[1])
-        fus = (np.abs(pb) <= PLAN_FUS[0]) & (pu <= PLAN_FUS[2]) & (pu >= -PLAN_FUS[1])
-        return float((sub & (wing | fus)).sum() * RES * RES)
+        best = 0.0
+        for dv in PLAN_SHIFT:
+            for dt in PLAN_TURN:
+                h = h0 + math.radians(dt); u = np.array([math.sin(h), -math.cos(h)]); b = np.array([math.cos(h), math.sin(h)])
+                ox, oz = xx - a0[0] * dv, yy - a0[1] * dv
+                pu = ox * u[0] + oz * u[1]; pb = ox * b[0] + oz * b[1]
+                wing = (np.abs(pb) <= PLAN_WING[0]) & (np.abs(pu) <= PLAN_WING[1])
+                fus = (np.abs(pb) <= PLAN_FUS[0]) & (pu <= PLAN_FUS[2]) & (pu >= -PLAN_FUS[1])
+                best = max(best, float((sub & (wing | fus)).sum() * RES * RES))
+        return best
 
     def aircraft(self):
         """parked aircraft on the image: the aircraft mask fragments (a high wing, the fuselage and the tail break apart

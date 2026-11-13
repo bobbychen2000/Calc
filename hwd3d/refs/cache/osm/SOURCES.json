@@ -8,16 +8,19 @@
  },
  "overpass_khwd_at_20261112T000000Z.meta.json": {
   "url": "fetch provenance written by hwd3d/tools/osm/fetch_osm.py (query parts, endpoint, HTTP status, server database time, sha256 per part and of the merged file)",
-  "licence": "own output (fetch provenance; no OSM content beyond ids, counts and hashes)"
+  "licence": "own output (fetch provenance; no OSM content beyond ids, counts and hashes)",
+  "made_by": "hwd3d/tools/osm/fetch_osm.py (written with the extract; a cache-only re-merge keeps fetched_utc and the fetch log)"
  },
  "overpass_khwd_latest.meta.json": {
   "url": "copy of overpass_khwd_at_20261112T000000Z.meta.json (the file parse_osm.py reads to find the pinned extract)",
-  "licence": "own output (fetch provenance; no OSM content beyond ids, counts and hashes)"
+  "licence": "own output (fetch provenance; no OSM content beyond ids, counts and hashes)",
+  "made_by": "hwd3d/tools/osm/fetch_osm.py (copy of the dated meta)"
  },
  "osmapi_khwd_at_20261112T000000Z.meta.json": {
   "url": "provenance of the independent rebuild of the same state from the OSM editing API (hwd3d/tools/osm/fetch_osm.py --via api): every API request (url, HTTP status, sha256) and the comparison with the Overpass extract (crosscheck_overpass_merged: 2878 = 2878 elements, 0 differences in versions, tags, geometry, timestamps, changesets, uids; 9 elements differ only in the contributor display name). The rebuilt JSON itself is not kept (same data; re-run --via api to reproduce).",
   "licence": "own output (fetch provenance; no OSM content beyond ids, counts and hashes)",
-  "note": "written 2026-11-12 before the contributor fields were stripped: its crosscheck_overpass_merged.overpass_sha256 (975f7ab7...) is the sha256 of the unstripped merged extract, = sha256_unstripped in overpass_khwd_at_20261112T000000Z.meta.json. It holds counts only, no contributor names or ids."
+  "note": "re-run 2026-11-12T23:06Z (round-1 re-check, to write the ODbL URI into the meta): 3 requests from the local cache, 1 live; the reconstruction has sha256_unstripped e2d4d0b2..., equal to the sha256 of the first API run (18:00Z), so the state rebuilt is unchanged; its crosscheck_overpass_merged compares with the unstripped Overpass copy (overpass_sha256 975f7ab7... = sha256_unstripped of overpass_khwd_at_20261112T000000Z.meta.json). It holds counts only, no contributor names or ids.",
+  "made_by": "hwd3d/tools/osm/fetch_osm.py --via api (tools/osm/osm_attic_api.py)"
  },
  "khwd_features.json": {
   "url": "hwd3d/tools/osm/parse_osm.py of overpass_khwd_at_20261112T000000Z.json: airfield features in the HWD world frame (tools/common/hwd_frame.py wgs84_to_world)",

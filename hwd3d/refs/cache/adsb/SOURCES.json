@@ -1,7 +1,7 @@
 {
  "hwd_mix_summary.txt, hwd_cov_summary.txt": {
   "url": null,
-  "licence": "own aggregate output derived from adsb.lol data, ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL. The two plain-text Phase 0 summaries carry no notice inside; this entry is their notice (ODbL 4.2(d))",
+  "licence": "own aggregate output derived from adsb.lol data, ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL. Since the round-1 re-check (2026-11-12) each summary carries this notice as its first line (printed by the script)",
   "made_by": "hwd3d/tools/phase0/hwd_mix.py and hwd_cov.py run on sfo3d/refs/cache/rec_pack (base a967f9b; 111 hours 2026-11-04 17Z .. 2026-11-11 13Z), 2026-11-12",
   "note": "Aggregates only. Per-aircraft lists are deliberately NOT committed: 33 of the 243 aircraft seen on the field carry the FAA LADD flag (owner asked for limited display), see docs/PLAN.md risks."
  },

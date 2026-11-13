@@ -24,6 +24,11 @@ parked heading [inferred].
 Spots: complete-linkage clustering (scipy) of the stay positions of stays with NACp median >= SPOT_NACP and spread90 <=
 SPOT_SPREAD_M, cut at SPOT_DIAM_M (every pair of member stays within SPOT_DIAM_M: radius about SPOT_DIAM_M / 2 = 4 m).
 A visit = consecutive stays of one aircraft in a spot without a fix farther than VISIT_LEAVE_M from the spot in between.
+Sessions (round-1 re-check, 2026-11-12; round 2, 2026-11-13): stays and signal edges carry an opaque 'session' number -
+one aircraft's continuous presence at one place (sessions()); spots list the sessions of their stays. A stay and its own
+signal start / end are one session, and so is a parked aircraft's power cycle (signal end, then its next start at the same
+place with no fix elsewhere in between, however long after); the same aircraft after taxiing away or flying is another.
+The number is assigned by position, so it holds no time order and no identity (D1).
 Note: positions are GNSS antenna positions, not the aircraft centre (common.py header).
 usage: python3 -I hwd3d/tools/adsb/parked_stays.py
 """
@@ -53,6 +58,14 @@ SIG_GS = 3.0          # kt: chosen; slower than a hand-pushed or towed aircraft
 AREA_BUF_M = 50.0     # m: chosen; stays are kept inside the OSM aerodrome polygon + this margin (tie-downs at the fence)
 NDVI_VEG = 0.2        # NAIP 2024 NDVI above this at a stay = vegetation (not pavement) [chosen threshold, inferred]
 COMMIT_DROP = ('dur_s',)   # exact durations stay in the local file; committed stays carry dur_bucket (PLAN D1, review 2026-11-12)
+# sessions (round-1 re-check, 2026-11-12: a stay and the signal start / end around it are one observation, not three;
+# round-2 re-check, 2026-11-13: the 20-min time limit of round 1 split one uninterrupted presence in two - a signal start,
+# 22 fixes within 10.6 m and the signal end 23.7 min later; a signal end and the same aircraft's next start at the same
+# place with no fix anywhere in between - so there is no time limit now: only evidence that the aircraft left separates)
+SESSION_R_M = 15.0      # m: consecutive events of one aircraft this close in place are one session unless the aircraft has a
+                        # fix farther than VISIT_LEAVE_M from the earlier event, or off the ground, in between [chosen]. A
+                        # signal end and the next signal start at the same place with no fix in between are one session
+                        # (powered off and on while parked): the recording cannot show that it left.
 
 
 def covered(polls, t0, t1, max_gap=60.0):
@@ -174,6 +187,38 @@ def signal_edges(hx, a, polls, inside):
 RUNUP_APRONS = ('10L Runup', '28L Run-up', '28R Runup')     # OSM apron ref / name tags (refs/cache/osm/khwd_features.json)
 
 
+def sessions(stays, sig, T):
+    """one aircraft's continuous presence at one place: its stays and signal starts / ends, linked when consecutive in
+    time, <= SESSION_R_M apart and with no fix of that aircraft farther than VISIT_LEAVE_M from the earlier event or off the
+    ground in between (no time limit: a power cycle while parked, even overnight, is the same presence). Writes
+    s['session'] / e['session']: an opaque number per session (numbered by the position of the session's first-listed
+    event, so it carries no time order and no identity; the same aircraft after taxiing away or flying is another
+    session). Returns the number of sessions."""
+    ev = [(s['_hex'], s['_t0'], s['_t1'], s['x'], s['z'], s) for s in stays] + [(e['_hex'], e['_t'], e['_t'], e['x'], e['z'], e) for e in sig]
+    par = list(range(len(ev)))
+
+    def root(i):
+        while par[i] != i: par[i] = par[par[i]]; i = par[i]
+        return i
+    by = {}
+    for i, e in enumerate(ev): by.setdefault(e[0], []).append(i)
+    for hx in sorted(by):
+        idx = sorted(by[hx], key=lambda i: (ev[i][1], ev[i][2]))
+        a = T[hx]
+        for i, j in zip(idx, idx[1:]):
+            A, B = ev[i], ev[j]
+            if math.hypot(A[3] - B[3], A[4] - B[4]) > SESSION_R_M: continue
+            m = (a['t'] > A[2]) & (a['t'] < B[1])
+            if m.any() and (np.hypot(a['x'][m] - A[3], a['z'][m] - A[4]).max() > VISIT_LEAVE_M or (~a['gk'][m]).any()): continue
+            par[root(j)] = root(i)
+    groups = {}
+    for i in range(len(ev)): groups.setdefault(root(i), []).append(i)
+    order = sorted(groups.values(), key=lambda g: min((round(ev[i][3], 2), round(ev[i][4], 2)) for i in g))
+    for n, g in enumerate(order):
+        for i in g: ev[i][5]['session'] = n + 1
+    return len(order)
+
+
 def spot_kind(M, lab, det, places, x, z):
     """what a spot most likely is [inferred from its place and members]: 'runup_or_hold' (OSM run-up apron, <= 25 m of an
     OSM holding position, or on a taxiway / runway), 'helicopter' (most member stays by helicopters), else 'parking'."""
@@ -205,6 +250,7 @@ def main():
         for st in stays_of(a, inside):
             s = describe(a, st, polls, places, naip); s['_hex'] = hx; stays.append(s); hexes_with_stays.add(hx)
         sig += signal_edges(hx, a, polls, inside)
+    n_sessions = sessions(stays, sig, T)
     # ---- spots
     elig = [s for s in stays if (s['nacp_med'] or 0) >= SPOT_NACP and s['spread90'] <= SPOT_SPREAD_M]
     lab = cluster(elig)
@@ -229,6 +275,7 @@ def main():
         lat, lon = F.world_to_wgs84(cx, cz)
         spots.append(dict(x=round(cx, 2), z=round(cz, 2), lat_wgs84=round(lat, 7), lon_wgs84=round(lon, 7), radius=round(rad, 2),
                           n_stays=len(M), n_visits=vis, n_aircraft=len(set(s['_hex'] for s in M)),
+                          sessions=sorted({s['session'] for s in M}),
                           classes=dict(Counter(s['cls'] for s in M).most_common()),
                           types=dict(Counter(s['type'] or '?' for s in M).most_common()),
                           cats=dict(Counter(s['cat'] or '?' for s in M).most_common()),
@@ -275,9 +322,10 @@ def main():
                         'feed': 'dominant ADS-B transport / source class (1090 / UAT / TIS-B ...); not the obs/inf src of the project', 'nacp_med': 'median NACp',
                         'loc / loc_detail': 'OSM label (derive.Places) / OSM id, apron name or distance to mapped pavement',
                         'near_hold_m': 'distance to the nearest OSM holding position if <= 25 m',
-                        'naip2024_ndvi': 'NAIP 2024 NDVI (3x3 px) at the stay (> %.1f: vegetation)' % NDVI_VEG},
+                        'naip2024_ndvi': 'NAIP 2024 NDVI (3x3 px) at the stay (> %.1f: vegetation)' % NDVI_VEG,
+                        'session': 'opaque session number (stays and signal_edges): one aircraft\'s continuous presence at one place (consecutive events <= %.0f m apart with no fix of it farther than %.0f m away or airborne in between, however long the gap: a power cycle while parked stays one session); numbered by position, not by time or aircraft; the same aircraft after it taxied away or flew is another session. Count sessions, not stays + signal edges, for independent observations' % (SESSION_R_M, VISIT_LEAVE_M)},
         'summary': {
-            'stays': len(stays), 'aircraft_with_stays': len(hexes_with_stays), 'spots': len(spots),
+            'stays': len(stays), 'aircraft_with_stays': len(hexes_with_stays), 'spots': len(spots), 'sessions': n_sessions,
             'spot_eligible_stays': len(elig), 'spots_with_2plus_visits': sum(1 for s in spots if s['n_visits'] >= 2),
             'spots_by_kind': dict(Counter(s['kind'] for s in spots).most_common()),
             'parking_spots_with_2plus_visits': sum(1 for s in spots if s['kind'] == 'parking' and s['n_visits'] >= 2),

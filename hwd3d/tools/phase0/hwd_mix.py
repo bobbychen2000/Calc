@@ -5,6 +5,8 @@ FE=52  # field elev ft
 def dist(lat,lon):
     dy=(lat-ARP[0])*111195; dx=(lon-ARP[1])*111195*math.cos(math.radians(ARP[0])); return math.hypot(dx,dy)
 files=sorted(glob.glob(sys.argv[1]+'/adsblol_*.jsonl.xz'))
+# ODbL notice as the first output line (round-1 re-check, 2026-11-12: the committed summary is this script's stdout)
+print('# Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); aggregate output of hwd3d/tools/phase0/hwd_mix.py; offered under the ODbL 1.0')
 polls=0; okp=0; ts=[]
 ac={}   # hex -> info
 src_fix=C.Counter(); ground_src=C.Counter(); air_src=C.Counter()

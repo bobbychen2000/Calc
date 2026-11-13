@@ -24,8 +24,8 @@ src 'obs' (seen in a source: surveyed, mapped, measured or observed) or 'inf' (i
 schematic chart or by eye), 'refs' (keys of the top-level 'sources') and 'evidence'.
 
 Changes from the Phase 1 review (2026-11-12; docs/phase1_data_report.md section 6):
-  taxiways   a faint-paint rule moves ways / 50 m sections whose faint yellow ridges agree on an offset (taxiway E
-             490634605 was 3.3 m off its paint); per-way faint sections are written; ref_src / ref_note (three OSM refs
+  taxiways   a faint-paint rule moved ways / 50 m sections whose faint yellow ridges agree on an offset (taxiway E
+             490634605 was 3.3 m off its paint; superseded in round 1, below: it left E as a zig-zag); ref_src / ref_note (three OSM refs
              AL-5015 does not support along the way, REF_DIAGRAM); on_runway; width (NAIP grey width where measurable,
              else an AC default marked inf).
   runways    lighting when the tower is closed (VASI SS-SR, PAPI / REIL unavailable, MIRL preset low; NASR LGT_SKED + CS).
@@ -42,6 +42,16 @@ Changes from the Phase 1 review (2026-11-12; docs/phase1_data_report.md section 
              (stable across rebuilds), e.g. RE187N279 = ramp spot 187 m east, 279 m north of the ARP.
   other      segmented-circle diameter_src inf; fire-station deviation; not_placed ids generated; not_yet_sourced (signs,
              lighting fixtures, marking geometry, wind cones).
+Changes from the round-1 re-check (2026-11-12; docs/phase1_data_report.md section 7):
+  taxiways   a way is moved as a whole onto a robust smooth fit of all its yellow ridges (robust_fit; ridges every 2 m, >= 2.5
+             DN, +-5 m) or not at all, with junction-end tapers only; unmoved ways record their off-paint windows
+             (paint_offset_unsnapped); widths: no value below 5 stations, obs only with an IQR <= 1.5 m.
+  parking    obs counts adsb.lol sessions (a stay and its own signal start / end are one), not events; door spots (ADS-B <= 5 m
+             from its hangar wall, nose in) are the only spots that may enter their own hangar; sizing planform = wing +
+             fuselage (length / span of the widest observed type, else C172); rule spots must be reachable from the taxi
+             network over OSM pavement within CONNECT_M and carry a by-eye review (HGR_REVIEW); tie-down planform test with a
+             +-3 m / +-10 deg tolerance; parked aircraft without a spot listed (unspotted_aircraft).
+  provenance apron name_src obs / inf (name_from says where); size.observed_src obs (observed_basis says how).
 usage: python3 hwd3d/tools/build_airport.py [--no-plot]
 """
 import json, math, os, sys
@@ -146,6 +156,9 @@ TWY_WIDTH_DEFAULT = {'taxiway': 35 * FT, 'taxilane': 25 * FT}
 # TDG 1A/1B 25 ft (7.6 m) for taxilanes; HWD's design aircraft / TDG per taxiway is not known (no ALP read), so these are
 # defaults chosen for a GA airport with business jets, not measurements
 GREY_STEP = 6.0     # m between pavement cross profiles (as plot_overlays.py naip_measure (a))
+WIDTH_N_MIN = 5     # stations: fewer give no width value (round-1 re-check: 38 ways carried a number from 1-4 stations)
+WIDTH_IQR_MAX = 1.5 # m: IQR of the station widths above which the width is inf, not obs (2.5 NAIP pixels) [chosen; round-1
+                    # re-check: Z1 58170922 read 9.0 m with an IQR of 21.9 m and was obs]
 NOT_YET_SOURCED = [
     {'what': 'airfield signs: mandatory (hold-position, runway / taxiway location), direction, destination and the distance-remaining sign positions',
      'known': 'only the NASR remarks "RY 10R HAS LANDING DISTANCE REMAINING SIGNS (LGTD) NORTH SIDE OF RY" / "RY 28L ... SOUTH SIDE OF RY" (runways[].distance_remaining_signs); no sign location, text or direction in any source read so far',
@@ -170,17 +183,53 @@ FIT_RES_TXT = None  # 'min-max' residual (m) of the AL-5015 affine at the 4 NASR
 ST_STEP = 4.0       # m between measuring stations
 HALF, AVG = 3.5, 4.0
 MIN_C = 10.0        # DN, min(R,G)-B ridge over the profile median (sfo3d: 10)
-FAINT_C = 4.0       # DN: faint ridges (worn paint) are measured and reported per way ('faint'), never used to move a line
 AMB = 0.6           # second ridge (>= 1.5 m away) must be < AMB x the best (sfo3d: 0.6)
 BSTAR_MIN = 9.0     # CIE b* of the ridge colour (white-paint rejection; sfo3d calibration) - HWD distribution in the output
-# faint-paint snap (Phase 1 review, 2026-11-12: taxiway E 490634605 lay 3.3 m from its worn centreline paint and the
-# strong rule above never moved it). A way, or a 50 m section of it, whose faint yellow ridges agree is moved onto them:
+# Paint snap, revised after the round-1 re-check (2026-11-12). The Phase 1 review fix moved taxiway E 490634605 with
+# window_corr over sparse faint ridges; window_corr tapers to 0 wherever a 7-sample window lacks ridges, so E came out as
+# a zig-zag (on the paint over s 45-60 / 110-145 m, back at the OSM position 3.3 m off the paint at s 0-22 / 78-92 m).
+# Now a way is either moved as a whole onto a robust smooth fit of ALL its reliable yellow ridges, or not moved at all
+# (its measured offsets are recorded). Ridges are sampled every FAINT_STEP m (independent of ST_STEP):
+FAINT_STEP = 2.0        # m between ridge stations [chosen: twice the density of ST_STEP; E's paint is faint and patchy]
+FAINT_HALF = 5.0        # m: search half-width across the way [chosen: E's paint lies 3.0-4.0 m off its OSM line, beyond HALF]
+FAINT_C = 2.5           # DN: a ridge (worn paint); E's centreline reads 2.2-9 DN on NAIP 2024 (cross profiles, 2026-11-12)
+EDGE_GUARD = 0.3        # m: a peak this close to the edge of the search window is a brightness gradient, not a ridge
+FAINT_BSTAR_MIN = 8.0   # CIE b* of a ridge counted here (yellow; worn yellow paint measured 8.6-15 at HWD, white < 5)
+# trigger (does the paint show an offset?): a FAINT_SEC_M section whose ridges agree, or the whole way
 FAINT_SEC_M = 50.0      # m, section length (chosen)
-FAINT_SEC_N = 8         # faint ridges per section, or FAINT_WAY_N over the whole way (chosen; 8 of 12-13 stations)
-FAINT_WAY_N = 20
+FAINT_SEC_FRAC = 0.6    # share of a section's stations with a ridge (chosen; the review build used 8 of 12-13 stations)
+FAINT_WAY_N = 40        # ridges over the whole way (chosen; = the review build's 20 at its 4 m step)
 FAINT_MED_MIN = 1.0     # m: |median offset| of a section that counts as an offset (chosen; above the 0.6 m NAIP pixel)
 FAINT_IQR_MAX = 0.6     # m: IQR of the section's ridges (chosen; one NAIP pixel)
-FAINT_BSTAR_MIN = 8.0   # CIE b* of a faint ridge counted here (yellow; worn yellow paint measured 8.6-15 at HWD, white < 5)
+# the move: a piecewise-linear offset curve c(s) (knots every FIT_KNOT_M, second-difference smoothing FIT_LAMBDA) fitted
+# by iteratively reweighted least squares (Tukey biweight) to every ridge of the way; c is held constant before the first
+# and after the last inlier ridge; accepted only if it explains the paint everywhere (else the way is not moved)
+FIT_KNOT_M = 25.0       # m [chosen: half a section; follows a slow drift, not a 0.6 m pixel jitter]
+FIT_LAMBDA = 4.0        # second-difference penalty weight (per knot, in ridge units) [chosen]
+FIT_INLIER_M = 0.5      # m: |ridge - c(s)| of an inlier [chosen: < one NAIP pixel]
+FIT_INLIER_FRAC = 0.7   # share of all ridges that must be inliers [chosen]
+FIT_MAD_MAX = 0.25      # m: median |residual| of the inliers [chosen]
+FIT_GAP_MAX = 40.0      # m: a longer stretch between inlier ridges is accepted only when c(s) changes across it by at most
+FIT_GAP_SLOPE = 0.02    # x its length (a gentle drift, linearly interpolated: taxiway F's paint drifts 1.5 m over ~100 m where
+                        # competing lines hide the ridge; the review build's zig-zag ramps were 3.3 m over 20 m = 0.165) [chosen]
+FIT_HOLD_MAX = 1.0      # m: an end stretch > FIT_GAP_MAX without an inlier is held at c of the last inlier only if |c| <= this
+                        # (a larger shift is not carried over a long stretch the paint does not confirm) [chosen]
+END_TAPER_M = 15.0      # m: shortest taper of a junction correction along a way (below) [chosen]; a free end moves with c(s)
+# Junctions (round-2 re-check, 2026-11-13: moving whole ways one by one left 22 joins on the 4 moved ways without a shared
+# vertex - 12 gaps up to 2.74 m and 10 crossings with an overhanging stub; the round-1 build held only a moved way's own
+# ends). Every OSM vertex shared by two or more ways is now one node with one displacement (network_fields):
+J_EVID_M = 12.0         # m: ridges of a moved way within this of an end tell whether its paint holds up to that end [chosen:
+                        # 6 stations; E's far end: the paint curves back to the junction there, median +0.45 m against c -3.34 m]
+J_EVID_N = 3            # ridges needed within J_EVID_M m [chosen]
+J_EVID_TOL = 1.0        # m: |median of those ridges - c(end)| for 'holds' [chosen: twice FIT_INLIER_M]
+J_SLOPE = 0.2           # a correction e at a junction end tapers to 0 over max(END_TAPER_M, |e| / J_SLOPE) m (1 in 5) [chosen]
+J_FORK_DEG = 30.0       # deg: a moved way ending on a through way at less than this is a shallow fork [chosen; E / 204801549 meet
+                        # at 9.6 deg in OSM, and NAIP 2024 shows 204801549's paint leaving E's about 15-18 m from the OSM node]
+J_FORK_M = 20.0         # m: the fork point (own moved line meets the through way's final line) must lie within this of the node
+J_FORK_MIN = 1.0        # m: ... and at least this far (closer, the plain end correction is used) [chosen]
+OFF_WIN_M, OFF_WIN_N = 20.0, 5   # m, ridges: sliding windows (step OFF_WIN_M / 2) for the recorded off-paint windows ...
+OFF_WIN_MED, OFF_WIN_IQR = 0.9, 0.9   # ... |median| > 0.9 m and IQR <= 0.9 m (looser than check_airport's 1.0 / 0.8, so
+                                      # that every window the check finds on an unmoved way is recorded here)
 HOLD_MASK_M = 12.0  # stations within this of an OSM holding position are not measured (the yellow bar)
 HOLD_MIN_C = 20.0   # find_ladder contrast to accept a NAIP bar (sfo3d HOLD_MIN_C 20)
 HOLD_SEARCH = 12.0  # m along the taxiway either side of the OSM node
@@ -341,67 +390,349 @@ def holds_osm():
     return [(h['osm']['id'], h['w'][0]) for h in FE['holding_position']]
 
 
-def snap_way(N, w, hold_pts):
-    """measure the yellow centreline paint along an OSM way (NAIP 2024) and move it locally onto the paint"""
-    P = densify(w['w'], 2.0); S = arclen(P); T = tangents(P)
-    if S[-1] < 8.0:
-        return P, {'stations': 0, 'faint': {}}
-    ss = np.arange(0.0, S[-1] + 1e-9, ST_STEP)
-    offs = np.full(len(ss), np.nan); foffs = np.full(len(ss), np.nan); bst = []; faint = []
+def ridge_scan(N, P, S, T, hold_pts, step=FAINT_STEP, phase=0.0):
+    """yellow ridges across a densified line (P points, S arc length, T unit tangents) every `step` m from `phase`:
+    returns stations ss and offsets fo (m, + = right of the direction of travel; nan = no reliable ridge, inf = masked:
+    inside a runway (+3 m) or within HOLD_MASK_M of a holding position). A ridge needs contrast >= FAINT_C over the
+    profile median within +-FAINT_HALF m, a second ridge (>= 1.5 m away) < AMB x it, no peak within EDGE_GUARD of the
+    window edge, and CIE b* >= FAINT_BSTAR_MIN (yellow). Shared with tools/check_airport.py (which uses another phase)."""
+    ss = np.arange(phase, S[-1] + 1e-9, step); fo = np.full(len(ss), np.nan)
     for i, s_ in enumerate(ss):
         p = np.array([np.interp(s_, S, P[:, 0]), np.interp(s_, S, P[:, 1])])
         t = np.array([np.interp(s_, S, T[:, 0]), np.interp(s_, S, T[:, 1])]); t /= max(1e-9, np.hypot(*t))
         if RWY_MASK.contains(Point(p)) or any(math.hypot(p[0] - h[0], p[1] - h[1]) < HOLD_MASK_M for h in hold_pts):
-            offs[i] = np.inf; foffs[i] = np.inf; continue
-        r = N.cross_peak(p, t, half=HALF, avg=AVG, step=0.1, min_contrast=FAINT_C)
+            fo[i] = np.inf; continue
+        r = N.cross_peak(p, t, half=FAINT_HALF, avg=AVG, step=0.1, min_contrast=FAINT_C)
+        if r and r[2] < AMB * r[1] and abs(r[0]) <= FAINT_HALF - EDGE_GUARD and N.bstar(p, t, r[0], AVG) >= FAINT_BSTAR_MIN:
+            fo[i] = r[0]
+    return ss, fo
+
+
+def off_windows(ss, fo, win=OFF_WIN_M, nmin=OFF_WIN_N, med_min=OFF_WIN_MED, iqr_max=OFF_WIN_IQR, skip=None):
+    """sliding windows (length win, step win / 2) whose ridges agree on an offset: >= nmin ridges, |median| > med_min,
+    IQR <= iqr_max. skip(s0, s1) -> True excludes a window (the junction tapers of a moved way)."""
+    out = []
+    if not len(ss): return out
+    for s0 in np.arange(0.0, max(ss[-1] - win / 2, 0.0) + 1e-9, win / 2):
+        if skip and skip(s0, s0 + win): continue
+        m = (ss >= s0) & (ss < s0 + win) & np.isfinite(fo)
+        if m.sum() < nmin: continue
+        q = np.percentile(fo[m], [25, 50, 75])
+        if abs(q[1]) > med_min and q[2] - q[0] <= iqr_max:
+            out.append({'s0_m': r1(s0), 's1_m': r1(s0 + win), 'n': int(m.sum()), 'median_m': r2(q[1]), 'iqr_m': r2(q[2] - q[0])})
+    return out
+
+
+def merge_windows(a, b):
+    """union of two lists of off-paint windows (same s0: the one with more ridges)"""
+    d = {}
+    for q in a + b:
+        if q['s0_m'] not in d or q['n'] > d[q['s0_m']]['n']: d[q['s0_m']] = q
+    return [d[k] for k in sorted(d)]
+
+
+def robust_fit(ss, fo, L):
+    """piecewise-linear offset curve c(s) (knots every FIT_KNOT_M over [0, L]) fitted to the finite ridges fo(ss) by
+    IRLS with Tukey biweight weights (scale = 1.4826 MAD, floor 0.15 m; 30 iterations from the median) and a
+    second-difference penalty FIT_LAMBDA; returns (knots, values, residuals of every ridge, inlier mask)"""
+    ok = np.isfinite(fo); s = ss[ok]; y = fo[ok]
+    K = max(2, int(math.ceil(L / FIT_KNOT_M)) + 1); u = np.linspace(0.0, L, K)
+    A = np.stack([np.interp(s, u, np.eye(K)[k]) for k in range(K)], 1)
+    D2 = np.diff(np.eye(K), 2, axis=0) if K >= 3 else np.zeros((0, K))
+    c = np.full(K, float(np.median(y)))
+    for _ in range(30):
+        r = y - A @ c; sc = max(0.15, 1.4826 * float(np.median(np.abs(r - np.median(r)))))
+        q = r / (4.685 * sc); w = np.where(np.abs(q) < 1, (1 - q * q) ** 2, 0.0)
+        M = A.T @ (A * w[:, None]) + FIT_LAMBDA * D2.T @ D2 + 1e-9 * np.eye(K)
+        c = np.linalg.solve(M, A.T @ (w * y))
+    r = y - A @ c
+    return u, c, s, r, np.abs(r) <= FIT_INLIER_M
+
+
+def measure_way(N, w, hold_pts):
+    """measure the yellow centreline paint along an OSM way (NAIP 2024) and fit its own move: a robust smooth offset
+    curve c(s) of its ridges when the paint shows an offset and the fit explains the paint everywhere, else c = 0.
+    Returns the measurement m (densified line P, arc length S, tangents T, normals Nrm, own lateral move c, ridges, fit);
+    the junctions with other ways are applied afterwards by network_fields() and finish_way()."""
+    P, kv = densify_idx(w['w'], 2.0); S = arclen(P); T = tangents(P); L = float(S[-1])
+    m = {'P': P, 'S': S, 'T': T, 'L': L, 'Nrm': np.stack([-T[:, 1], T[:, 0]], 1), 'kv': kv, 'c': np.zeros(len(S)), 'short': L < 8.0,
+         'end_holds': (False, False)}
+    if m['short']:
+        return m
+    # strong rule (sfo3d window_corr on >= MIN_C ridges): kept as a trigger and for the b* distribution
+    ss = np.arange(0.0, L + 1e-9, ST_STEP)
+    offs = np.full(len(ss), np.nan); bst = []
+    for i, s_ in enumerate(ss):
+        p = np.array([np.interp(s_, S, P[:, 0]), np.interp(s_, S, P[:, 1])])
+        t = np.array([np.interp(s_, S, T[:, 0]), np.interp(s_, S, T[:, 1])]); t /= max(1e-9, np.hypot(*t))
+        if RWY_MASK.contains(Point(p)) or any(math.hypot(p[0] - h[0], p[1] - h[1]) < HOLD_MASK_M for h in hold_pts):
+            offs[i] = np.inf; continue
+        r = N.cross_peak(p, t, half=HALF, avg=AVG, step=0.1, min_contrast=MIN_C)
         if r and r[2] < AMB * r[1]:
-            faint.append(r[0])
-            b = N.bstar(p, t, r[0], AVG)
-            if b >= FAINT_BSTAR_MIN: foffs[i] = r[0]
-            if r[1] >= MIN_C:
-                bst.append(b)
-                if b >= BSTAR_MIN: offs[i] = r[0]
-    corr = window_corr(ss, offs)
-    # faint-paint snap: sections (or the whole way) whose yellow faint ridges agree on an offset
-    secs = faint_sections(ss, foffs)
-    whole = faint_whole(foffs)
-    qual = np.zeros(len(ss), bool)
-    for q in secs:
-        if q['offset']: qual |= (ss >= q['s0_m']) & (ss < q['s0_m'] + FAINT_SEC_M)
-    if whole: qual[:] = True
-    fsnap = None
-    if qual.any() and not np.any(corr):
-        fo = np.where(qual & ~np.isnan(foffs) & ~np.isinf(foffs), foffs, np.nan); fo[np.isinf(offs)] = np.inf
-        corr = window_corr(ss, fo, strict_big=False)
-        fsnap = {'rule': 'faint yellow ridges (>= %.0f DN, b* >= %.0f) consistent over %s: |median| >= %.1f m, IQR <= %.1f m, n >= %d per %.0f m section (or n >= %d over the way); window_corr without the strict rule for > 1.5 m' % (
-                     FAINT_C, FAINT_BSTAR_MIN, 'the whole way' if whole else 'the sections marked offset', FAINT_MED_MIN, FAINT_IQR_MAX, FAINT_SEC_N, FAINT_SEC_M, FAINT_WAY_N),
-                 'whole_way': bool(whole), 'stations_used': int((~np.isnan(fo) & ~np.isinf(fo)).sum()),
-                 'residual_after_snap_m': r2(np.median(np.abs(foffs[qual & ~np.isnan(foffs)] - corr[qual & ~np.isnan(foffs)]))) if (qual & ~np.isnan(foffs)).any() else None}
-    c = np.interp(S, ss, corr); Nrm = np.stack([-T[:, 1], T[:, 0]], 1)
-    Q = P + Nrm * c[:, None]
-    paint = ~np.isnan(offs) & ~np.isinf(offs)
-    resid_secs = faint_sections(ss, foffs - corr)
-    st = {'stations': int(len(ss)), 'masked': int(np.isinf(offs).sum()), 'paint': int(paint.sum()),
+            b = N.bstar(p, t, r[0], AVG); bst.append(b)
+            if b >= BSTAR_MIN: offs[i] = r[0]
+    strong = bool(np.any(window_corr(ss, offs)))
+    # faint ridges every FAINT_STEP m; the trigger
+    fs, fo = ridge_scan(N, P, S, T, hold_pts)
+    secs = faint_sections(fs, fo); whole = faint_whole(fo)
+    trig = [k for k, v in (('strong rule (window_corr)', strong), ('section offset', any(q['offset'] for q in secs)), ('whole-way offset', whole)) if v]
+    fin = np.isfinite(fo); c = np.zeros(len(S)); fit = None
+    if trig and fin.sum() >= 8:
+        u, cv, s_r, res, inl = robust_fit(fs, fo, L)
+        si = s_r[inl]
+        edges = np.r_[0.0, si, L] if len(si) else np.array([0.0, L])
+        gaps = np.diff(edges); frac = float(inl.mean()); mad = float(np.median(np.abs(res[inl]))) if inl.any() else None
+        gmax = float(gaps.max()); interp = []; steep = []; held = []
+        for k in np.nonzero(gaps > FIT_GAP_MAX)[0]:
+            a_, b_ = float(edges[k]), float(edges[k + 1])
+            if k == 0 or k == len(gaps) - 1:                         # no paint towards an end: c is held constant there
+                hv = float(np.interp(b_ if k == 0 else a_, u, cv))
+                (held if abs(hv) <= FIT_HOLD_MAX else steep).append((a_, b_, hv)); continue
+            dc = abs(float(np.interp(b_, u, cv) - np.interp(a_, u, cv)))
+            (interp if dc <= FIT_GAP_SLOPE * (b_ - a_) else steep).append((a_, b_, dc))
+        why = [t_ for t_, bad in (('inlier share %.2f < %.2f' % (frac, FIT_INLIER_FRAC), frac < FIT_INLIER_FRAC),
+                                  ('inlier MAD %s > %.2f m' % (r2(mad), FIT_MAD_MAX), mad is None or mad > FIT_MAD_MAX),
+                                  ('stretches without an inlier ridge longer than %.0f m that are neither a gentle drift nor a small held end (s m, change or held value m): %s' % (
+                                      FIT_GAP_MAX, [(r1(a_), r1(b_), r2(dc)) for a_, b_, dc in steep]), bool(steep))) if bad]
+        accepted = not why
+        if accepted:
+            sc = np.clip(S, si[0], si[-1])                           # constant before the first / after the last inlier
+            c = np.interp(sc, u, cv)
+            c[np.abs(c) < 0.05] = 0.0
+            # does the paint confirm c right up to each end? (decides whether an all-ends junction follows this way)
+            hold_ = []
+            for near, ce in ((fs <= J_EVID_M, c[0]), (fs >= L - J_EVID_M, c[-1])):
+                v = fo[near & fin]
+                hold_.append(bool(len(v) >= J_EVID_N and abs(float(np.median(v)) - ce) <= J_EVID_TOL))
+            m['end_holds'] = tuple(hold_)
+        fit = {'trigger': trig, 'accepted': accepted, 'not_moved_because': why or None,
+               'ridges': int(fin.sum()), 'inlier_share': r2(frac), 'inlier_mad_m': r2(mad), 'max_gap_m': r1(gmax),
+               'interpolated_gaps': [{'s0_m': r1(a_), 's1_m': r1(b_), 'change_m': r2(dc)} for a_, b_, dc in interp],
+               'held_end_stretches': [{'s0_m': r1(a_), 's1_m': r1(b_), 'held_offset_m': r2(hv)} for a_, b_, hv in held],
+               'knots_s_m': [r1(v) for v in u], 'knots_offset_m': [r2(v) for v in cv],
+               'end_paint_holds': list(m['end_holds']) if accepted else None,
+               'rule': 'piecewise-linear offset curve (knots every %.0f m, second-difference penalty %.1f) fitted by IRLS (Tukey) to every yellow ridge (>= %.1f DN, b* >= %.0f, within +-%.1f m, every %.0f m); accepted when >= %.0f %% of the ridges lie within %.1f m of it, their MAD <= %.2f m and every stretch > %.0f m without an inlier either lies between inliers and changes c by <= %.2f x its length (interpolated_gaps) or runs to an end where |c| <= %.1f m is held (held_end_stretches); the whole way then moves (held at the first / last inlier value towards the ends); its junctions are then solved over the network (naip_paint.junctions)' % (
+                   FIT_KNOT_M, FIT_LAMBDA, FAINT_C, FAINT_BSTAR_MIN, FAINT_HALF, FAINT_STEP, 100 * FIT_INLIER_FRAC, FIT_INLIER_M, FIT_MAD_MAX, FIT_GAP_MAX, FIT_GAP_SLOPE, FIT_HOLD_MAX)}
+    # the same ridges at stations shifted by FAINT_STEP / 2 (tools/check_airport.py measures there), so that an off-paint
+    # window found at either set of stations is recorded
+    fs2, fo2 = ridge_scan(N, P, S, T, hold_pts, phase=FAINT_STEP / 2)
+    m.update(c=c, fit=fit, ss=ss, offs=offs, bst=bst, fs=fs, fo=fo, fs2=fs2, fo2=fo2, secs=secs, whole=whole)
+    return m
+
+
+def densify_idx(pl, step=2.0):
+    """densify(pl, step) plus the index of every original vertex in the result"""
+    P = densify(pl, step); kv = [0]
+    for i in range(len(pl) - 1):
+        L = math.hypot(pl[i + 1][0] - pl[i][0], pl[i + 1][1] - pl[i][1]); kv.append(kv[-1] + max(1, int(math.ceil(L / step))))
+    assert kv[-1] == len(P) - 1
+    return P, kv
+
+
+def junction_nodes(ways):
+    """OSM vertices shared by two or more taxiway / taxilane / runway ways (or the closing vertex of a closed way):
+    {(x, z): [(way id, vertex index), ...]} with exact coordinates (all members carry the same converted OSM node)"""
+    idx = {}
+    for oid, w in ways:
+        for i, p in enumerate(w['w']):
+            idx.setdefault((p[0], p[1]), []).append((oid, i))
+    return {k: v for k, v in idx.items() if len(v) >= 2}
+
+
+def _end_correction(S, e0, eL):
+    """vector correction along a way from its junction-end corrections e0 (s = 0) / eL (s = L) (None = not a junction
+    end): each tapers linearly to 0 over max(END_TAPER_M, |e| / J_SLOPE); when the two tapers overlap, linear between them"""
+    L = float(S[-1]); out = np.zeros((len(S), 2))
+    T0 = max(END_TAPER_M, float(np.hypot(*e0)) / J_SLOPE) if e0 is not None else 0.0
+    TL = max(END_TAPER_M, float(np.hypot(*eL)) / J_SLOPE) if eL is not None else 0.0
+    if e0 is not None and eL is not None and T0 + TL >= L:
+        f = (S / max(L, 1e-9))[:, None]; return (1 - f) * np.asarray(e0)[None, :] + f * np.asarray(eL)[None, :], (L, L)
+    if e0 is not None: out += np.clip(1 - S / T0, 0, 1)[:, None] * np.asarray(e0)[None, :]
+    if eL is not None: out += np.clip(1 - (L - S) / TL, 0, 1)[:, None] * np.asarray(eL)[None, :]
+    return out, (T0, TL)
+
+
+def network_fields(meas, osmw, fixed):
+    """displacement field of every way such that the taxi network stays connected (round-2 re-check: moving whole ways
+    one by one left 22 joins on the 4 moved ways without a shared vertex). Every junction node gets ONE displacement D:
+      - a node on the interior of a way (a through way): D = that way's final displacement there (two or more through
+        ways: the least-squares point on all of their moved lines) - a way that ends on another follows it;
+      - a node where only way ends meet: D = the own move of the moved way(s) whose paint holds up to that end (>= J_EVID_N
+        ridges within J_EVID_M m whose median is within J_EVID_TOL m of c), else 0 (the junction stays where OSM has it).
+    Each way then takes its own move plus a correction at each junction end, e = D - (own move there), tapered to 0 over
+    max(END_TAPER_M, |e| / J_SLOPE) m; runway ways (fixed) do not move. A shallow fork is the exception: a moved way that
+    ends on a through way at less than J_FORK_DEG and whose own moved line meets that way's final line within J_FORK_M m
+    of the node starts there instead (it is trimmed to the meeting point, which becomes a vertex of both; tapering it to
+    the node would cross the through way). Iterated to a fixed point (a through way's end correction changes D at its
+    interior nodes). Returns ({way id: field (n, 2)}, {node: D}, {way id: [junction records]}, nodes, forks)."""
+    nodes = junction_nodes([(o, osmw[o]) for o in sorted(osmw)])
+    own = {o: (meas[o]['c'][:, None] * meas[o]['Nrm'] if o in meas else None) for o in osmw}
+    D = {k: np.zeros(2) for k in nodes}
+    def role(o, i): return 'end' if i in (0, len(osmw[o]['w']) - 1) else 'through'
+    def odir(o, i):           # OSM direction of way o at vertex i (into the way at an end)
+        W_ = np.asarray(osmw[o]['w'], float); j = i + 1 if i < len(W_) - 1 else i - 1; v = W_[j] - W_[i]; return v / max(1e-9, np.hypot(*v))
+    def compute_fields(D, forks):
+        f = {}; t = {}
+        for o in meas:
+            m = meas[o]; e = [None, None]
+            for k, mem in nodes.items():
+                for o2, i in mem:
+                    if o2 != o or role(o, i) != 'end': continue
+                    j = 0 if i == 0 else 1
+                    if (o, j) in forks: continue                 # a fork end follows its own move (trimmed later)
+                    e[j] = D[k] - own[o][m['kv'][i]]
+            corr, t[o] = _end_correction(m['S'], e[0], e[1])
+            f[o] = own[o] + corr
+        return f, t
+    def find_forks(fields):
+        out = {}
+        for k, mem in sorted(nodes.items()):
+            thr = [(o, i) for o, i in mem if role(o, i) == 'through']
+            if len(thr) != 1 or thr[0][0] in fixed: continue
+            t_, it = thr[0]
+            for o, i in mem:
+                if role(o, i) != 'end' or o not in meas or not np.any(meas[o]['c']): continue
+                ang = math.degrees(math.acos(min(1.0, abs(float(odir(o, i) @ odir(t_, it))))))
+                if ang >= J_FORK_DEG: continue
+                m = meas[o]; j = 0 if i == 0 else 1
+                Lo = LineString([tuple(p) for p in m['P'] + own[o]]); Lt = LineString([tuple(p) for p in meas[t_]['P'] + fields[t_]])
+                g = Lo.intersection(Lt); hits = []
+                for q in getattr(g, 'geoms', [g]):
+                    if q.is_empty or q.geom_type != 'Point': continue
+                    sq = Lo.project(q); sq = sq if j == 0 else m['L'] - sq
+                    if J_FORK_MIN < sq <= J_FORK_M: hits.append((sq, q.coords[0]))
+                if not hits: continue
+                sq, pt = min(hits)
+                inner = [m['S'][m['kv'][i2]] for k2, mem2 in nodes.items() for o2, i2 in mem2 if o2 == o and i2 != i]
+                if any((sv < sq if j == 0 else sv > m['L'] - sq) for sv in inner): continue   # would cut off another junction
+                out[(o, j)] = {'s': sq, 'pt': np.array(pt), 'through': t_, 'node': k, 'angle_deg': ang}
+        return out
+    forks = {}
+    for it in range(50):
+        fields, tap = compute_fields(D, forks)
+        newD = {}
+        for k, mem in sorted(nodes.items()):
+            thr = [(o, i) for o, i in mem if role(o, i) == 'through']
+            if thr:
+                if any(o in fixed for o, _ in thr):          # a runway through the node: the node does not move
+                    newD[k] = np.zeros(2)
+                elif len(thr) == 1:
+                    o, i = thr[0]; newD[k] = fields[o][meas[o]['kv'][i]].copy()
+                else:
+                    A = [meas[o]['Nrm'][meas[o]['kv'][i]] for o, i in thr]
+                    b = [float(A[j] @ fields[o][meas[o]['kv'][i]]) for j, (o, i) in enumerate(thr)]
+                    newD[k] = np.linalg.lstsq(np.array(A), np.array(b), rcond=1e-3)[0]
+            else:
+                conf = [own[o][meas[o]['kv'][i]] for o, i in mem if o in meas and o not in fixed and np.any(meas[o]['c'])
+                        and meas[o]['end_holds'][0 if i == 0 else 1]]
+                newD[k] = np.mean(conf, axis=0) if conf else np.zeros(2)
+        newF = find_forks(fields)
+        dmax = max(float(np.hypot(*(newD[k] - D[k]))) for k in nodes) if nodes else 0.0
+        same = set(newF) == set(forks) and all(np.hypot(*(newF[q]['pt'] - forks[q]['pt'])) < 1e-6 for q in newF)
+        D, forks = newD, newF
+        if dmax < 1e-6 and same: break
+    assert dmax < 1e-6 and same, 'junction displacements did not converge (%.3g m)' % dmax
+    fields, tap = compute_fields(D, forks)
+    recs = {o: [] for o in meas}
+    for k, mem in sorted(nodes.items()):
+        if not any(o in meas and (np.any(meas[o]['c']) or np.any(np.abs(fields[o]) > 1e-9)) for o, _ in mem): continue
+        thr = sorted({o for o, i in mem if role(o, i) == 'through'})
+        conf = sorted({o for o, i in mem if role(o, i) == 'end' and o in meas and np.any(meas[o]['c']) and meas[o]['end_holds'][0 if i == 0 else 1]})
+        why = ('on the interior of way %s: follows its final line' % thr if len(thr) == 1 else
+               ('on the interior of ways %s: least-squares point on their final lines' % thr if thr else
+                ('only way ends meet; the paint of moved way(s) %s holds up to the node: follows them' % conf if conf else
+                 'only way ends meet and no moved way\'s paint holds up to the node: stays where OSM has it')))
+        for o, i in mem:
+            if o not in meas: continue
+            kk = meas[o]['kv'][i]; e = D[k] - own[o][kk]; j = 0 if i == 0 else 1
+            r_ = {'vertex': i, 'role': role(o, i), 's_m': r1(meas[o]['S'][kk]), 'osm_node': [r2(k[0]), r2(k[1])],
+                  'node_shift_m': r2(np.hypot(*D[k])), 'with_ways': sorted({o2 for o2, _ in mem if o2 != o}),
+                  'correction_m': r2(np.hypot(*e)) if role(o, i) == 'end' and (o, j) not in forks else 0.0,
+                  'taper_m': r1(tap[o][j]) if role(o, i) == 'end' and (o, j) not in forks and np.hypot(*e) > 1e-9 else None,
+                  'node_rule': why}
+            if role(o, i) == 'end' and (o, j) in forks:
+                fk = forks[(o, j)]
+                r_['fork'] = {'meets_way': fk['through'], 'at': xz(fk['pt']), 'trimmed_m': r1(fk['s']), 'angle_deg': r1(fk['angle_deg']),
+                              'rule': 'shallow fork (< %.0f deg): the own moved line of this way meets the final line of way %d %.1f m from the OSM node end; the way is trimmed to start there and that point is a vertex of both' % (J_FORK_DEG, fk['through'], fk['s'])}
+            recs[o].append(r_)
+    return fields, D, recs, nodes, forks
+
+
+def finish_way(N, w, m, field, D, nodes, jrec, forks):
+    """final geometry of a way from its displacement field (trimmed at a fork end; fork points of other ways that meet it
+    inserted as vertices); NAIP paint record on that final geometry"""
+    oid = w['osm']['id']; P, S, L = m['P'], m['S'], m['L']
+    Q = P + field
+    keep = np.zeros(len(P), bool); keep[[0, -1]] = True
+    for k, mem in nodes.items():                   # every member of a junction gets exactly the node + D (shared vertex)
+        for o, i in mem:
+            if o != oid: continue
+            if i in (0, len(w['w']) - 1) and (oid, 0 if i == 0 else 1) in forks: continue     # trimmed below
+            Q[m['kv'][i]] = np.asarray(w['w'][i], float) + D[k]; keep[m['kv'][i]] = True
+    sarr = S.copy(); pts = [tuple(q) for q in Q]
+    # fork points of ways that meet this one: insert as vertices (by arc length along the final line)
+    ins = [fk['pt'] for (o, j), fk in sorted(forks.items(), key=lambda t: t[0]) if fk['through'] == oid]
+    if ins:
+        Lq = LineString(pts); cum = np.r_[0, np.cumsum(np.hypot(*np.diff(Q, axis=0).T))]
+        for pt in ins:
+            sp = Lq.project(Point(pt)); j = int(np.searchsorted(cum, sp))
+            pts.insert(j, tuple(pt)); cum = np.insert(cum, j, sp); sarr = np.insert(sarr, j, np.interp(sp, cum[np.arange(len(cum)) != j], sarr)); keep = np.insert(keep, j, True)
+    # trim at a fork end of this way
+    lo, hi = -1e9, 1e9
+    if (oid, 0) in forks: lo = forks[(oid, 0)]['s']
+    if (oid, 1) in forks: hi = L - forks[(oid, 1)]['s']
+    if lo > -1e9 or hi < 1e9:
+        sel = [n for n in range(len(pts)) if lo < sarr[n] < hi]
+        pts2 = [pts[n] for n in sel]; keep2 = [bool(keep[n]) for n in sel]
+        if (oid, 0) in forks: pts2 = [tuple(forks[(oid, 0)]['pt'])] + pts2; keep2 = [True] + keep2
+        if (oid, 1) in forks: pts2 = pts2 + [tuple(forks[(oid, 1)]['pt'])]; keep2 = keep2 + [True]
+        pts, keep = pts2, np.array(keep2)
+    Qf = np.array(pts); keep_idx = sorted(int(n) for n in np.nonzero(keep)[0])
+    if m['short']:
+        st = {'stations': 0, 'faint': {}}
+        if jrec: st['junctions'] = jrec
+        return Qf, keep_idx, st
+    c = m['c']; fs, fo, fs2, fo2 = m['fs'], m['fo'], m['fs2'], m['fo2']; fin = np.isfinite(fo)
+    lat = np.einsum('ij,ij->i', field, m['Nrm'])     # lateral displacement of the final line from the OSM line
+    moved = bool(np.any(c)); adjusted = bool(np.any(np.abs(field - c[:, None] * m['Nrm']) > 0.005))
+    gone = lambda s_: (s_ <= lo) | (s_ >= hi)        # stations cut off at a fork end
+    after = np.where(np.isfinite(fo) & ~gone(fs), fo - np.interp(fs, S, lat), np.where(gone(fs), np.nan, fo))
+    after2 = np.where(np.isfinite(fo2) & ~gone(fs2), fo2 - np.interp(fs2, S, lat), np.where(gone(fs2), np.nan, fo2))
+    win_before = merge_windows(off_windows(fs, fo), off_windows(fs2, fo2))
+    win_after = merge_windows(off_windows(fs, after), off_windows(fs2, after2))
+    offs = m['offs']; paint = np.isfinite(offs); mag = np.hypot(field[:, 0], field[:, 1])
+    st = {'stations': int(len(m['ss'])), 'masked': int(np.isinf(offs).sum()), 'paint': int(paint.sum()),
           'median_abs_offset_m': r2(np.median(np.abs(offs[paint]))) if paint.any() else None,
-          'residual_after_snap_m': r2(np.median(np.abs(offs[paint] - corr[paint]))) if paint.any() else None,
           'snapped_len_m': r1(np.sum(np.diff(S)[(np.abs(c[:-1]) > 0) | (np.abs(c[1:]) > 0)])) if len(S) > 1 else 0.0,
-          'max_shift_m': r2(np.max(np.abs(corr))) if len(corr) else 0.0, 'end_shift_m': [r2(c[0]), r2(c[-1])], 'bstar': bst,
-          'faint': {'n': len(faint), 'median_offset_m': r2(np.median(faint)) if faint else None,
-                    'iqr_m': [r2(v) for v in np.percentile(faint, [25, 75])] if len(faint) >= 4 else None,
-                    'yellow_n': int((~np.isnan(foffs) & ~np.isinf(foffs)).sum()), 'sections': secs, 'whole_way_offset': whole,
-                    'snap': fsnap, 'sections_after_snap': resid_secs,
-                    'offset_left_after_snap': [q for q in resid_secs if q['offset']]}}
-    return Q, st
+          'max_shift_m': r2(np.max(mag)) if len(mag) else 0.0, 'end_shift_m': [r2(mag[0]), r2(mag[-1])], 'bstar': m['bst'],
+          'faint': {'stations': int(len(fs)), 'masked': int(np.isinf(fo).sum()), 'ridges': int(fin.sum()),
+                    'median_offset_m': r2(np.median(fo[fin])) if fin.any() else None,
+                    'iqr_m': [r2(v) for v in np.percentile(fo[fin], [25, 75])] if fin.sum() >= 4 else None,
+                    'sections': m['secs'], 'whole_way_offset': m['whole'], 'fit': m['fit'],
+                    'sections_after': faint_sections(fs, after),
+                    'off_paint_windows_before': win_before, 'off_paint_windows_after': win_after}}
+    if jrec: st['junctions'] = jrec
+    if adjusted:
+        st['junction_adjusted_len_m'] = r1(np.sum(np.diff(S)[(np.abs(lat - c)[:-1] > 0.005) | (np.abs(lat - c)[1:] > 0.005)]))
+    fit = m['fit']
+    st['outcome'] = ('moved' if moved else
+                     ('not moved: the fit does not explain the paint (%s); offsets recorded' % '; '.join(fit['not_moved_because']) if fit and not fit['accepted'] else
+                      ('not moved: off-paint windows recorded (no 50 m section / whole-way offset, no strong-rule snap)' if win_after else 'not moved: no paint offset found')))
+    if adjusted: st['outcome'] += '; ends attached to moved junctions (junctions)'
+    if (oid, 0) in forks or (oid, 1) in forks: st['outcome'] += '; trimmed at a shallow fork (junctions[].fork)'
+    return Qf, keep_idx, st
 
 
 def faint_sections(ss, fo):
-    """per FAINT_SEC_M section with >= FAINT_SEC_N yellow faint ridges: median offset, IQR, and whether that counts
-    as an offset (|median| >= FAINT_MED_MIN and IQR <= FAINT_IQR_MAX)"""
+    """per FAINT_SEC_M section with >= FAINT_SEC_FRAC of its stations holding a yellow ridge: median offset, IQR, and
+    whether that counts as an offset (|median| >= FAINT_MED_MIN and IQR <= FAINT_IQR_MAX)"""
     out = []
     if not len(ss): return out
+    step = float(ss[1] - ss[0]) if len(ss) > 1 else FAINT_STEP
+    nmin = int(math.ceil(FAINT_SEC_FRAC * FAINT_SEC_M / step))
     for s0 in np.arange(0.0, ss[-1] + 1e-9, FAINT_SEC_M):
-        m = (ss >= s0) & (ss < s0 + FAINT_SEC_M) & ~np.isnan(fo) & ~np.isinf(fo)
-        if m.sum() < FAINT_SEC_N: continue
+        m = (ss >= s0) & (ss < s0 + FAINT_SEC_M) & np.isfinite(fo)
+        if m.sum() < nmin: continue
         q = np.percentile(fo[m], [25, 50, 75])
         out.append({'s0_m': r1(s0), 'n': int(m.sum()), 'median_m': r2(q[1]), 'iqr_m': r2(q[2] - q[0]),
                     'offset': bool(abs(q[1]) >= FAINT_MED_MIN and q[2] - q[0] <= FAINT_IQR_MAX)})
@@ -409,10 +740,17 @@ def faint_sections(ss, fo):
 
 
 def faint_whole(fo):
-    v = fo[~np.isnan(fo) & ~np.isinf(fo)]
+    v = fo[np.isfinite(fo)]
     if len(v) < FAINT_WAY_N: return False
     q = np.percentile(v, [25, 50, 75])
     return bool(abs(q[1]) >= max(1.5, FAINT_MED_MIN) and q[2] - q[0] <= FAINT_IQR_MAX)
+
+
+def junction_ends(w):
+    """(start, end) of an OSM way is a junction: the end vertex is a vertex of another OSM taxiway / taxilane / runway way"""
+    oth = [v for k in ('taxiway', 'taxilane', 'runway') for v in FE.get(k, []) if v['osm']['id'] != w['osm']['id']]
+    def j(p): return any(math.hypot(q[0] - p[0], q[1] - p[1]) < 0.05 for v in oth for q in v['w'])
+    return (j(w['w'][0]), j(w['w'][-1]))
 
 
 def grey_width(N, pts):
@@ -446,28 +784,40 @@ def grey_width(N, pts):
     return {'n': len(wids), 'median': r1(np.median(wids)), 'iqr': r1(np.subtract(*np.percentile(wids, [75, 25])))}
 
 
-def simplify(Q, tol=0.05):
-    L = LineString([tuple(p) for p in Q]).simplify(tol, preserve_topology=False)
-    return [xz(p) for p in L.coords]
+def simplify(Q, tol=0.05, keep=()):
+    """Douglas-Peucker to tol m, keeping the vertices with indices in keep (junction vertices, so that every way meeting
+    at a junction keeps a vertex there)"""
+    ks = sorted(set(keep) | {0, len(Q) - 1}); out = []
+    for a, b in zip(ks[:-1], ks[1:]):
+        L = LineString([tuple(p) for p in Q[a:b + 1]]).simplify(tol, preserve_topology=False)
+        out += [xz(p) for p in L.coords][(1 if out else 0):]
+    return out
 
 
 def taxiways(N):
     hp = [h for _, h in holds_osm()]
     rmk_a = [t for t in RMK if t.startswith('TWY A NOT VSB')]
     out = {'taxiway': [], 'taxilane': []}; allb = []
+    # pass 1: each way's paint and own move; pass 2: the junctions over the whole network (network_fields)
+    osmw = {w['osm']['id']: w for k in ('taxiway', 'taxilane', 'runway') for w in FE.get(k, [])}
+    fixed = {w['osm']['id'] for w in FE.get('runway', [])}
+    meas = {w['osm']['id']: measure_way(N, w, hp) for k in ('taxiway', 'taxilane') for w in sorted(FE[k], key=lambda e: e['osm']['id'])}
+    fields, Dn, jrecs, nodes, forks = network_fields(meas, osmw, fixed)
     for kind in ('taxiway', 'taxilane'):
         for w in sorted(FE[kind], key=lambda e: e['osm']['id']):
+            oid = w['osm']['id']
             tags = w['tags']; ref = tags.get('ref'); status = w.get('status', 'open') if kind == 'taxiway' else ('abandoned' if tags.get('abandoned') == 'yes' else ('disused' if tags.get('disused') == 'yes' else 'open'))
-            Q, st = snap_way(N, w, hp); allb += st.pop('bstar', [])
-            e = {'id': 'osm:way/%d' % w['osm']['id'], 'kind': kind, 'ref': ref, 'status': status,
-                 'pts': simplify(Q), 'len_m': r1(w['len_m']),
+            Q, keep, st = finish_way(N, w, meas[oid], fields[oid], Dn, nodes, jrecs[oid], forks); allb += st.pop('bstar', [])
+            e = {'id': 'osm:way/%d' % oid, 'kind': kind, 'ref': ref, 'status': status,
+                 'pts': simplify(Q, keep=keep), 'len_m': r1(w['len_m']),
                  'src': 'obs', 'refs': ['osm', 'naip2024'],
                  'evidence': {'osm': {'id': w['osm']['id'], 'version': w['osm']['version'], 'tags': tags},
                               'naip_paint': st,
-                              'geometry': (('OSM centreline moved locally onto the faint NAIP 2024 yellow centreline paint (consistent faint ridges, see naip_paint.faint.snap)' if st['faint'].get('snap') else
-                                            'OSM centreline moved locally onto the NAIP 2024 yellow centreline paint where the evidence is clear (window_corr rule)') if st.get('snapped_len_m') else
-                                           ('OSM centreline unchanged, but its faint NAIP paint shows a consistent offset (naip_paint.faint.offset_left_after_snap) [flag]' if st['faint'].get('offset_left_after_snap') else
-                                            'OSM centreline unchanged (no clear NAIP paint offset)'))}}
+                              'geometry': ('OSM centreline moved as a whole onto a robust smooth fit of its NAIP 2024 yellow centreline ridges (naip_paint.faint.fit); its junctions solved over the network (naip_paint.junctions)' if st.get('snapped_len_m') else
+                                           ('OSM centreline%s; NAIP 2024 paint offsets recorded in naip_paint.faint (off_paint_windows_after, fit.not_moved_because) [flag]' if st.get('faint', {}).get('off_paint_windows_after') or (st.get('faint', {}).get('fit') or {}).get('not_moved_because') else
+                                            'OSM centreline%s (no NAIP paint offset found)') % (', its end(s) attached to a junction that moved with a neighbouring moved way (naip_paint.junctions)' if st.get('junction_adjusted_len_m') else ' unchanged'))}}
+            if st.get('faint'):
+                e['paint_offset_unsnapped'] = bool(not st.get('snapped_len_m') and st['faint']['off_paint_windows_after'])
             if ref:
                 e['ref_check'] = {'al5015': ref in AL5015_TWYS, 'src': 'obs', 'refs': ['osm', 'al5015'],
                                   'evidence': 'OSM ref %r %s the AL-5015 2611 taxiway labels %s' % (ref, 'is among' if ref in AL5015_TWYS else 'is NOT among', AL5015_TWYS)}
@@ -480,9 +830,12 @@ def taxiways(N):
                                   'src': 'obs', 'refs': ['nasr', 'osm'],
                                   'evidence': 'length of the way inside the NASR runway rectangle; runway_overlap = more than 50 m inside (more than a crossing of the 45.7 m wide runway: a lead-on / lead-off loop or a runway-aligned segment that OSM tags taxiway); Phase 2 taxi graph: treat that part as runway'}
             gw = grey_width(N, e['pts']) if status == 'open' else None
-            e['width'] = {'naip_grey_width_m': gw and gw['median'], 'naip_grey_iqr_m': gw and gw['iqr'], 'naip_stations': gw['n'] if gw else 0,
-                          'naip_src': 'obs' if gw and gw['n'] >= 5 else None,
-                          'naip_note': 'pavement width by the grey test (saturation < %.2f, excess green < %.0f; build SAT_MAX / EG_MAX) on cross profiles every %.0f m, skipping stations within 40 m of a runway or inside an apron; paved shoulders of the same grey are included and concrete that reads tan is missed; null when fewer than 5 stations measured' % (SAT_MAX, EG_MAX, GREY_STEP),
+            n_ = gw['n'] if gw else 0; enough = n_ >= WIDTH_N_MIN; tight = enough and gw['iqr'] <= WIDTH_IQR_MAX
+            e['width'] = {'naip_grey_width_m': gw['median'] if enough else None, 'naip_grey_iqr_m': gw['iqr'] if enough else None, 'naip_stations': n_,
+                          'naip_src': ('obs' if tight else 'inf') if enough else None,
+                          'naip_reason': (None if tight else 'IQR %.1f m > %.1f m over %d stations: the grey edges are not consistent along the way (adjoining aprons, shoulders, junctions); a median, not a measured width' % (gw['iqr'], WIDTH_IQR_MAX, n_)) if enough else
+                                         ('%d station(s) measured (< %d): no value' % (n_, WIDTH_N_MIN)),
+                          'naip_note': 'pavement width by the grey test (saturation < %.2f, excess green < %.0f; build SAT_MAX / EG_MAX) on cross profiles every %.0f m, skipping stations within 40 m of a runway or inside an apron; paved shoulders of the same grey are included and concrete that reads tan is missed; null when fewer than %d stations measured; obs only when the IQR of the stations is <= %.1f m, else inf' % (SAT_MAX, EG_MAX, GREY_STEP, WIDTH_N_MIN, WIDTH_IQR_MAX),
                           'default_m': r2(TWY_WIDTH_DEFAULT[kind]), 'default_src': 'inf',
                           'default_basis': 'AC 150/5300-13B Chg 1 Table 4-2: %s; the TDG of this way is not known (default, not measured)' % ('TDG 2A/2B 35 ft (10.7 m)' if kind == 'taxiway' else 'TDG 1A/1B 25 ft (7.6 m)')}
             if ref in WINGSPAN_LIMIT:
@@ -557,7 +910,8 @@ def aprons(labels):
         name = nm or FBO_QUAL.get('osm:way/%d' % oid) or (al['text'].title() if al and al['text'] != 'WEST HANGARS' else None)
         e = {'id': 'osm:way/%d' % oid, 'name': name, 'osm_name': t.get('name'), 'osm_ref': t.get('ref'),
              'al5015_label': al, 'al5015_labels_more': als[1:] or None,
-             'name_src': ('osm' if nm else ('al5015 label + own qualifier (north-east / south) [inf]' if 'osm:way/%d' % oid in FBO_QUAL else None)),
+             'name_src': ('obs' if nm else ('inf' if 'osm:way/%d' % oid in FBO_QUAL else None)),
+             'name_from': ('OSM name / ref tag' if nm else ('AL-5015 label + own qualifier (north-east / south)' if 'osm:way/%d' % oid in FBO_QUAL else None)),
              'ring': ring(a['w'][:-1]), 'area_m2': r1(a['area_m2']), 'surface': t.get('surface'),
              'src': 'obs', 'refs': ['osm'] + (['al5015'] if al else []),
              'evidence': 'OSM aeroway=apron way %d v%d%s' % (oid, a['osm']['version'], ('; ' + note) if note else '')}
@@ -745,6 +1099,16 @@ def markers():
              'evidence': 'NASR SEG_CIRCLE_MKR_FLAG %s; NAIP 2024 shows a ring of red/white segments about 31.5 m across centred on the OSM windsock, with two L-shaped traffic-pattern indicators (diameter read by eye on a 0.1 m resampling, +-1 m)' % BASE.get('SEG_CIRCLE_MKR_FLAG')}]
 
 
+def unspotted(spots):
+    out = []
+    for x, z, where, note in UNSPOTTED_NAIP2024:
+        near = min(spots, key=lambda s: math.hypot(s['x'] - x, s['z'] - z))
+        out.append({'x': x, 'z': z, 'where': where, 'note': note, 'nearest_spot': near['id'], 'nearest_spot_m': r1(math.hypot(near['x'] - x, near['z'] - z)),
+                    'src': 'inf', 'refs': ['naip2024'],
+                    'evidence': 'a parked aircraft on NAIP 2024 (flown 2024-05-20) without a parking spot, found by eye (position +-2 m on a 10 m grid; build_airport.UNSPOTTED_NAIP2024); one image, so a few may be taxiing (noted)'})
+    return out
+
+
 def not_placed(labels, spots):
     heli_area = [s['id'] for s in spots if s['kind'] == 'helipad' and HELI_AREA[0] <= s['x'] <= HELI_AREA[1] and HELI_AREA[2] <= s['z'] <= HELI_AREA[3]]
     return [
@@ -793,12 +1157,18 @@ SPLIT_MIN_EXT = 16.0   # m: a blob reviewed as two aircraft is split in two only
 DUP_M = 9.5         # m: two ramp / hangar-apron spots closer than this are one parking position [chosen: below the span
                     # of the smallest common type (C150 / C152 10.17 m, FAA ACD) minus ~0.7 m of position noise; the
                     # review's duplicates were 8.4 and 8.9 m apart]
-N_OBS_MIN = 2       # independent observations (NAIP years with an aircraft + ADS-B stays + signal-edge events) for a
-                    # ramp / hangar-apron spot to be 'obs' as a parking position; one sighting = 'inf' (review)
+N_OBS_MIN = 2       # independent observations (NAIP years with an aircraft + adsb.lol sessions) for a ramp / hangar-apron
+                    # spot to be 'obs' as a parking position; one sighting = 'inf' (review). Since the round-1 re-check an
+                    # ADS-B observation is a session (tools/adsb/parked_stays.py sessions(): one aircraft's continuous
+                    # presence at one place), so a stay and its own signal start / end count once
 TWY_OBJ_M = 44.5 * FT   # AC 150/5300-13B Chg 1 Table 4-1, ADG I: "Taxiway centerline to fixed or movable object 44.5 ft (13.6 m)"
 TLN_OBJ_M = 39.5 * FT   # same table: "Taxilane centerline to fixed or movable object 39.5 ft (12.0 m)"
 FUS_FWD, FUS_AFT = 2.0, 6.5   # m: inferred aircraft outline relative to its wing line (C172: length 8.29 m, FAA ACD; the wing
                               # leading edge about 2 m behind the nose [inf, by eye on NAIP 2024 Green Ramp aircraft])
+FUS_FWD_FRAC = FUS_FWD / (FUS_FWD + FUS_AFT)   # share of the fuselage ahead of the wing line in the sizing planform [inf]
+HGR_DOOR_M = 5.0    # m: an ADS-B hangar-apron spot this close to its hangar's wall is a door spot (round-1 re-check): the
+                    # aircraft stands at the door, its axis perpendicular to the wall, nose in [inf]; its nose may enter
+                    # that hangar and its wing keeps CAP_GAP from it at both sizes (the AC 10 ft is for parking positions)
 HGR_SPOT_M = 8.0    # m: an inferred hangar-apron spot (wing line) sits this far out from the real hangar wall [chosen: a GA
                     # single's nose-to-wing distance plus room to open the door; the door position is unknown]
 HGR_STRIP = (2.0, 14.0)   # m from the wall: the strip in front of the side that must be OSM apron (not taxiway) [chosen]
@@ -815,9 +1185,65 @@ HGR_ROOF_GRAY = 235.0   # NAIP 2024 median grey (6 x 6 m) above which an inferre
 HGR_REVIEW_REJECT = {
     'osm:way/971132674': 'the rule point falls on an unmapped white annex building attached to the hangar (APP Jet Center)',
     'osm:way/204800998': 'the rule point falls inside a walled yard beside the building, not on an aircraft apron',
+}   # (the round-1 re-check's HE221N301, hangar 204801537, in the landside truck and bus yard, is dropped by CONNECT_M below)
+CONNECT_M = 75.0    # m: an inferred hangar-apron spot must be reachable from an open OSM taxiway / taxilane centreline within this
+                    # path length over OSM pavement (aprons, taxi-line buffers PAVE_TWY) around buildings (+1 m) (round-1
+                    # re-check: HE221N301 sat in a landside yard 119 m away). [chosen: the rule spots that look plausible by eye
+                    # lie 20-69 m away - HE244N218, 69 m, is on the lane past T-hangar 971132675 where adsb.lol aircraft park
+                    # (HE248N195) but OSM maps no taxilane; aircraft on the north-east FBO ramp park up to ~95 m from a mapped
+                    # taxi line, so this is a limit for unobserved spots only]
+# by-eye review of every inferred hangar-apron spot that passes the rules (NAIP 2024 | 2022 at 0.1 m with the capacity
+# planform, out/phase1/r1/hgr_rule_sheet_{a,b,c}.png, 2026-11-12, round 1): hangar -> verdict and what the images show.
+# check_airport requires an 'ok' entry for every rule-made spot (a new rule spot must be looked at before it is kept).
+HGR_REVIEW = {
+    'osm:way/204800994': 'ok: open apron in front of the hangar among parked aircraft (ramp spots RE470N110 / RE479N099); a small light object by the wall in 2024, empty pavement in 2022',
+    'osm:way/204800996': 'ok: light concrete door pad of the hangar; an aircraft is parked on the same pad in 2024 (RE486S075)',
+    'osm:way/204795471': 'ok: concrete pad in front of the hangar, empty in both years',
+    'osm:way/204797798': 'ok: open apron in front of the West Hangars building; a small vehicle by the wall in 2022, outside the planform',
+    'osm:way/204797805': 'ok: open apron in front of the West Hangars building, empty in both years',
+    'osm:way/204798810': 'ok: apron where aircraft park in both years (HE383N167 beside it, another aircraft nearby in 2022); cars stand along the building to the east, outside the planform',
+    'osm:way/204798811': 'ok: apron in front of the hangar; aircraft parked next to the planform in both years',
+    'osm:way/204801544': 'ok: paved strip between two hangars; empty in 2024, two aircraft parked along the hangar wall over the planform in 2022',
+    'osm:way/204801545': 'ok: concrete pad south of the hangar on the lane past T-hangar 971132675 (adsb.lol parking HE248N195), empty in both years',
 }
 HGR_OCC_M2 = 3.0    # m2 of the NAIP 2024 bright-object mask inside an inferred hangar-apron outline (+1 m) that rejects it
                     # (vehicles or aircraft there; the review found an inferred spot in a car lot) [chosen, = tiedowns OCC_M2]
+
+
+# parked aircraft on NAIP 2024 that no spot stands for (round-1 re-check: the report claimed only 3 such aircraft). Found by
+# a by-eye pass over every apron with the spots drawn (0.25 m tiles, 0.06-0.15 m crops; out/phase1/r1/) and over the NAIP
+# 2024 aircraft-mask blobs more than 6 m from any spot, 2026-11-12; positions read on a 10 m grid, +-2 m; each has an
+# aircraft-bright patch within 2.5 m. A known gap of the parking model (written to the output as unspotted_aircraft,
+# not as spots); tools/check_airport.py fails if a spot now lies within 5 m of one (the list must then be revised).
+UNSPOTTED_NAIP2024 = [  # (x, z, where, what the image shows)
+ (-4.9, -275.8, 'Green Ramp', 'SE end of a tie-down row, no tee found under it'),
+ (-22.0, -308.6, 'Green Ramp', 'between two tee rows'), (-10.8, -302.6, 'Green Ramp', 'between two tee rows'), (-0.6, -296.6, 'Green Ramp', 'between two tee rows'),
+ (-200.0, -595.2, 'West Hangars apron', 'cluster of 5 aircraft wing to wing; RW203N587 is the 5th'), (-210.8, -589.2, 'West Hangars apron', 'same cluster'),
+ (-222.2, -583.8, 'West Hangars apron', 'same cluster'), (-213.2, -580.2, 'West Hangars apron', 'same cluster'),
+ (-195.8, -563.4, 'West Hangars apron', 'pair wing to wing north of RW208N551'), (-206.0, -556.2, 'West Hangars apron', 'same pair, 5.6 m from RW208N551 (which is on the next aircraft)'),
+ (-155.0, -577.8, 'West Hangars apron', 'pair wing to wing'), (-144.2, -584.4, 'West Hangars apron', 'same pair'),
+ (-140.6, -552.6, 'West Hangars apron', 'row of 4 wing to wing; RW130N558 is the first'), (-150.8, -546.0, 'West Hangars apron', 'same row'), (-161.0, -540.0, 'West Hangars apron', 'same row'),
+ (-376.6, -463.0, 'West Hangars apron', 'group of 4 in a painted rectangle; RW374N473 lies 9-10 m north'), (-367.0, -462.4, 'West Hangars apron', 'same group'),
+ (-370.9, -452.8, 'West Hangars apron', 'same group'), (-360.7, -452.2, 'West Hangars apron', 'same group'),
+ (-158.6, -507.6, 'West Hangars apron', 'beside a taxi line: parked or taxiing (one image)'), (-114.8, -532.8, 'West Hangars apron', 'on a taxi-line curve: probably taxiing'),
+ (-173.6, -496.8, 'West Hangars apron', 'larger twin / jet beside a taxi line at the edge of the apron: parked or taxiing'),
+ (162.5, -361.3, 'FBO Ramp (north-east)', 'north end of the apron'), (156.3, -267.5, 'FBO Ramp (north-east)', 'east of the RE127N262 / RE131N273 / RE139N285 row'),
+ (150.5, -255.0, 'FBO Ramp (north-east)', 'same'),
+ (266.3, -282.5, 'FBO Ramp (north-east)', 'north-east strip, on a painted lead-in / tie-down mark between RE265N291 and RE277N271'),
+ (281.3, -253.8, 'FBO Ramp (north-east)', 'north-east strip, on a painted lead-in / tie-down mark between RE277N271 and RE286N243'),
+ (325.2, -244.8, 'FBO Ramp (north-east)', 'open apron'), (382.2, -266.4, 'FBO Ramp (north-east)', 'open apron'),
+ (397.8, -274.2, 'FBO Ramp (north-east)', 'row of 7 along the road, wing to wing'), (406.2, -264.6, 'FBO Ramp (north-east)', 'same row'),
+ (413.4, -255.0, 'FBO Ramp (north-east)', 'same row'), (419.4, -244.8, 'FBO Ramp (north-east)', 'same row'), (424.8, -231.6, 'FBO Ramp (north-east)', 'same row'),
+ (430.2, -222.0, 'FBO Ramp (north-east)', 'same row'), (433.8, -211.2, 'FBO Ramp (north-east)', 'same row'),
+ (343.2, -212.4, 'FBO Ramp (north-east)', 'yellow aircraft beside RE331N209'), (411.0, -204.0, 'FBO Ramp (north-east)', 'beside RE405N217'),
+ (400.8, -202.2, 'FBO Ramp (north-east)', 'on a taxi line: parked or taxiing'), (491.3, -27.5, 'FBO Ramp (north-east)', 'south of the FBO building'),
+ (455.7, 14.9, 'FBO Ramp (north-east)', 'nested double row east of x 445: back (south-east) row, behind RE447S012 / RE457S005 (round-2 re-check)'),
+ (465.7, 8.5, 'FBO Ramp (north-east)', 'same back row, behind RE457S005 / RE468S001'), (476.9, 4.2, 'FBO Ramp (north-east)', 'same back row, behind RE468S001 / RE478N006'),
+ (486.5, -2.1, 'FBO Ramp (north-east)', 'same back row, behind RE478N006 / RE487N010'), (497.1, -6.7, 'FBO Ramp (north-east)', 'same back row, behind RE487N010 / RE498N016'),
+ (507.8, -11.3, 'FBO Ramp (north-east)', 'same back row, east end, behind RE498N016 (teal tail)'),
+ (126.3, 285.0, 'FBO Ramp (south)', 'west edge, between two spots'),
+ (255.1, 357.6, 'FBO Ramp (south)', 'business jet on the east edge, partly on grass outside the OSM apron polygon (docs/phase1_crosscheck.md #18)'),
+]
 
 
 def common_min_span():
@@ -840,7 +1266,7 @@ def parking(N24, N22, apr, hgr, bld, helis):
     spots = []; td_meta = {}; ac_all = {'2024': [], '2022': []}; dropped = Counter(); acm = {}
 
     def new(**kw):
-        d = dict(_naip=set(), _stays=0, _aircraft=0, _sig=0, _types=Counter(), _merged=[]); d.update(kw); return d
+        d = dict(_naip=set(), _stays=0, _aircraft=0, _sig=0, _sess=set(), _types=Counter(), _merged=[]); d.update(kw); return d
     # ---- a. tie-down rows per apron (both NAIP years)
     for a in apr:
         pg = apron_pg[a['id']]; holes = [h for h in holes_all if h.intersects(pg)]
@@ -899,9 +1325,10 @@ def parking(N24, N22, apr, hgr, bld, helis):
             if 'naip2024' not in sp['refs']: sp['refs'] = sp['refs'] + ['naip2024']
         spots.append(sp)
 
-    def attach(i, key, val, dist, stays=0, aircraft=0, sig=0, types=None):
+    def attach(i, key, val, dist, stays=0, aircraft=0, sig=0, types=None, sess=()):
         spots[i]['ev'].setdefault(key, []).append(dict(val, dist_m=r2(dist))); spots[i]['refs'] = sorted(set(spots[i]['refs'] + ['adsb']))
         spots[i]['_stays'] += stays; spots[i]['_aircraft'] += aircraft; spots[i]['_sig'] += sig; spots[i]['_types'].update(types or {})
+        spots[i]['_sess'] |= set(sess)
     on_apron = lambda x, z: next((aid for aid, pg in sorted(apron_pg.items()) if pg.contains(Point(x, z))), None)
     lanes = prep(unary_union([LineString(w['w']).buffer(LANE_M) for k in ('taxiway', 'taxilane') for w in FE[k] if w.get('status', 'open') == 'open' and not w['tags'].get('abandoned') and not w['tags'].get('disused')]))
     # ---- b0. helipad spots (OSM), made before the ADS-B steps so that ADS-B evidence on a pad attaches to its spot
@@ -922,7 +1349,7 @@ def parking(N24, N22, apr, hgr, bld, helis):
         if p['kind'] == 'runup_or_hold': continue
         types = {t: n for t, n in sorted(p['types'].items()) if t != '?'}
         spans = [type_span(t) for t in types]; spans = [s_ for s_ in spans if s_]
-        ev = {'adsb_spot': p['id'], 'stays': p['n_stays'], 'aircraft': p['n_aircraft'], 'radius_m': p['radius'], 'types': types,
+        ev = {'adsb_spot': p['id'], 'stays': p['n_stays'], 'sessions': len(p['sessions']), 'aircraft': p['n_aircraft'], 'radius_m': p['radius'], 'types': types,
               'classes': p['classes'], 'loc': p['loc'], 'loc_detail': p['loc_detail'], 'dur_buckets': p['dur_buckets'], 'max_type_span_m': r2(max(spans)) if spans else None}
         if p['kind'] == 'helicopter':
             hp = sorted(helis, key=lambda h: math.hypot(h['x'] - p['x'], h['z'] - p['z']))[0]
@@ -934,20 +1361,22 @@ def parking(N24, N22, apr, hgr, bld, helis):
                 dropped['fixed-wing adsb spot on an OSM helipad (+2 m): kept as evidence on that helipad spot'] += 1; continue
         big = max(spans) / 2 + 2.0 if spans and max(spans) > BIG_SPAN else 0.0     # a wide aircraft: half its span + 2 m
         nb = near_spot(p['x'], p['z'], MERGE_TD, ('tiedown',)) or near_spot(p['x'], p['z'], max(MERGE_RAMP, big), ('ramp', 'helipad'))
-        if nb: attach(nb[1], 'adsb', ev, nb[0], stays=p['n_stays'], aircraft=p['n_aircraft'], types=types); continue
+        if nb: attach(nb[1], 'adsb', ev, nb[0], stays=p['n_stays'], aircraft=p['n_aircraft'], types=types, sess=p['sessions']); continue
         if in_bld.contains(Point(p['x'], p['z'])): dropped['adsb spot inside a building / hangar footprint'] += 1; continue
         if p['kind'] != 'helicopter' and lanes.contains(Point(p['x'], p['z'])): dropped['adsb spot within %.0f m of an open OSM taxiway / taxilane centreline (a stop, not parking)' % LANE_M] += 1; continue
         hd = p.get('hdg_taxi_mean') if (p.get('n_hdg', 0) >= 3 and (p.get('hdg_taxi_R') or 0) >= 0.7) else None
         hw = min(((pg.exterior.distance(Point(p['x'], p['z'])), hid) for hid, pg in hg_pg))
         at_hgr = p['kind'] != 'helicopter' and hw[0] <= HGR_ADSB
-        add(new(kind='helipad' if p['kind'] == 'helicopter' else ('hangar_apron' if at_hgr else 'ramp'), x=p['x'], z=p['z'], heading=hd, apron=on_apron(p['x'], p['z']),
-                hangar=hw[1] if at_hgr else None,
+        door = door_heading(hg_pg, hw[1], p['x'], p['z']) if at_hgr and hw[0] <= HGR_DOOR_M else None
+        add(new(kind='helipad' if p['kind'] == 'helicopter' else ('hangar_apron' if at_hgr else 'ramp'), x=p['x'], z=p['z'], heading=door if door is not None else hd, apron=on_apron(p['x'], p['z']),
+                hangar=hw[1] if at_hgr else None, door=door is not None,
                 refs=['adsb'], adsb_span=max(spans) if spans else None, _r=big, _stays=p['n_stays'], _aircraft=p['n_aircraft'],
-                _types=Counter(types), _ref='gnss_antenna',
+                _types=Counter(types), _ref='gnss_antenna', _sess=set(p['sessions']),
                 ev=dict(ev, how='adsb.lol parking spot: >= 5 min stationary stays clustered (tools/adsb/parked_stays.py); position = GNSS antenna; heading = mean taxi-in heading when >= 3 stays agree (R >= 0.7), else null%s' % (
-                    '; %.1f m from the OSM outline of the hangar: an aircraft parked at its door (hangar apron)' % hw[0] if at_hgr else ''))), 'adsb spot')
+                    ('; %.1f m from the OSM outline of the hangar: an aircraft at its door (door spot: heading = nose in, perpendicular to the wall [inf])' % hw[0]) if door is not None else
+                    ('; %.1f m from the OSM outline of the hangar (hangar apron)' % hw[0] if at_hgr else '')))), 'adsb spot')
     # ---- c. signal-edge clusters (aircraft switched on / off on the ground after >= 30 min silence)
-    E = [(e['x'], e['z'], e['kind'], e.get('type'), e.get('cls')) for e in STAYS['signal_edges']]
+    E = [(e['x'], e['z'], e['kind'], e.get('type'), e.get('cls'), e['session']) for e in STAYS['signal_edges']]
     used = [False] * len(E); clusters = []
     for i in range(len(E)):
         if used[i]: continue
@@ -964,24 +1393,27 @@ def parking(N24, N22, apr, hgr, bld, helis):
         if len(grp) < need: continue
         types = dict(sorted(Counter(E[j][3] or '?' for j in grp).items()))
         st_, en_ = sum(1 for j in grp if E[j][2] == 'start'), sum(1 for j in grp if E[j][2] == 'end')
-        ev = {'signal_edges': len(grp), 'starts': st_, 'ends': en_, 'types': types}
+        sess = {E[j][5] for j in grp}
+        ev = {'signal_edges': len(grp), 'starts': st_, 'ends': en_, 'sessions': len(sess), 'types': types}
         tclean = {t: n for t, n in types.items() if t != '?'}
         hi = on_heli(x, z)
         if hi is not None:
             fw = sum(1 for j in grp if E[j][4] != 'helicopter') * 2 > len(grp)
-            attach(hi, 'fixed_wing_adsb_signal_edges' if fw else 'adsb_signal_edges', ev, math.hypot(spots[hi]['x'] - x, spots[hi]['z'] - z), sig=0 if fw else max(st_, en_), types=tclean)
+            attach(hi, 'fixed_wing_adsb_signal_edges' if fw else 'adsb_signal_edges', ev, math.hypot(spots[hi]['x'] - x, spots[hi]['z'] - z), sig=0 if fw else max(st_, en_), types=tclean, sess=() if fw else sess)
             if fw: spots[hi]['ev']['fixed_wing_note'] = FIXED_NOTE
             dropped['signal-edge cluster on an OSM helipad (+2 m): kept as evidence on that helipad spot'] += 1; continue
         nb = near_spot(x, z, MERGE_TD, ('tiedown',)) or near_spot(x, z, MERGE_RAMP if hd[0] > HGR_D else 5.0)
-        if nb: attach(nb[1], 'adsb_signal_edges', ev, nb[0], sig=max(st_, en_), types=tclean); continue
+        if nb: attach(nb[1], 'adsb_signal_edges', ev, nb[0], sig=max(st_, en_), types=tclean, sess=sess); continue
         if in_bld.contains(Point(x, z)): dropped['signal-edge cluster inside a building / hangar footprint (+1 m)'] += 1; continue
         if lanes.contains(Point(x, z)): dropped['signal-edge cluster within %.0f m of an open OSM taxiway / taxilane centreline' % LANE_M] += 1; continue
         if hd[0] <= HGR_D:
-            add(new(kind='hangar_apron', x=x, z=z, heading=None, apron=on_apron(x, z), hangar=hd[1], refs=['adsb', 'osm'], _sig=max(st_, en_),
-                    _types=Counter(tclean), _ref='gnss_antenna',
-                    ev=dict(ev, how='>= %d adsb.lol signal starts/ends on the ground within %.0f m (single linkage), %.1f m from the OSM hangar outline: an aircraft parked at / in this hangar' % (EDGE_MIN_HGR, EDGE_LINK, hd[0]))), 'signal-edge cluster')
+            door = door_heading(hg_pg, hd[1], x, z) if hd[0] <= HGR_DOOR_M else None
+            add(new(kind='hangar_apron', x=x, z=z, heading=door, apron=on_apron(x, z), hangar=hd[1], door=door is not None, refs=['adsb', 'osm'], _sig=max(st_, en_),
+                    _types=Counter(tclean), _ref='gnss_antenna', _sess=sess,
+                    ev=dict(ev, how='>= %d adsb.lol signal starts/ends on the ground within %.0f m (single linkage), %.1f m from the OSM hangar outline: an aircraft parked at / in this hangar%s' % (
+                        EDGE_MIN_HGR, EDGE_LINK, hd[0], ' (door spot: heading = nose in, perpendicular to the wall [inf])' if door is not None else ''))), 'signal-edge cluster')
         elif on_apron(x, z):
-            add(new(kind='ramp', x=x, z=z, heading=None, apron=on_apron(x, z), refs=['adsb'], _sig=max(st_, en_), _types=Counter(tclean), _ref='gnss_antenna',
+            add(new(kind='ramp', x=x, z=z, heading=None, apron=on_apron(x, z), refs=['adsb'], _sig=max(st_, en_), _types=Counter(tclean), _ref='gnss_antenna', _sess=sess,
                     ev=dict(ev, how='>= %d adsb.lol signal starts/ends on the ground within %.0f m (single linkage) on an OSM apron' % (EDGE_MIN, EDGE_LINK))), 'signal-edge cluster')
         else:
             dropped['signal-edge cluster off OSM aprons and not near a hangar'] += 1
@@ -1039,9 +1471,7 @@ def parking(N24, N22, apr, hgr, bld, helis):
             frac = apr_u.intersection(strip).length / (HGR_STRIP[1] - HGR_STRIP[0])
             if frac <= 0.9: why['strip not OSM apron'] += 1; continue
             if in_bld.intersects(strip): why['strip meets a building'] += 1; continue
-            u_ = np.array([-n_[1], n_[0]])
-            outline = unary_union([LineString([tuple(q - u_ * ADG_SPAN['I'] / 2), tuple(q + u_ * ADG_SPAN['I'] / 2)]),
-                                   LineString([tuple(q - n_ * FUS_FWD), tuple(q + n_ * FUS_AFT)])])
+            outline = _shape({'x': float(q[0]), 'z': float(q[1]), 'heading': F.vec_hdg(-n_[0], -n_[1]), '_ratio': DEFAULT_RATIO}, ADG_SPAN['I'])
             dt, dl = outline.distance(twy_u), outline.distance(tln_u)
             if dt < TWY_OBJ_M or dl < TLN_OBJ_M: why['aircraft outline inside the AC taxiway / taxilane object distance'] += 1; continue
             occ = mask_area(acm, outline.buffer(1.0))
@@ -1049,15 +1479,18 @@ def parking(N24, N22, apr, hgr, bld, helis):
             g_ = np.linspace(-3, 3, 13); X_, Z_ = np.meshgrid(g_ + q[0], g_ + q[1])
             gray = float(np.median(np.mean([N24.sample(X_, Z_, k) for k in 'RGB'], 0)))
             if gray > HGR_ROOF_GRAY: why['NAIP 2024 white roof at the rule point (grey %.0f)' % gray] += 1; continue
-            if best is None or (frac, L) > best[0]: best = ((frac, L), q, n_, L, dt, dl, float(pg.exterior.distance(Point(*q))))
+            pth = taxi_path(q[0], q[1])
+            if pth is None: why['not connected to an open taxiway / taxilane within %.0f m over OSM pavement' % CONNECT_M] += 1; continue
+            if best is None or (frac, L) > best[0]: best = ((frac, L), q, n_, L, dt, dl, float(pg.exterior.distance(Point(*q))), pth)
         if best is None:
             dropped['box hangar: no side gives an inferred spot (%s)' % ', '.join('%s %d' % kv for kv in sorted(why.items()))] += 1; continue
-        _, q, n_, L, dt, dl, dw = best
+        _, q, n_, L, dt, dl, dw, pth = best
         if near_spot(q[0], q[1], MERGE_RAMP): dropped['box hangar whose inferred apron spot falls within %.0f m of an observed spot (kept that one)' % MERGE_RAMP] += 1; continue
         add(new(kind='hangar_apron', x=float(q[0]), z=float(q[1]), heading=F.vec_hdg(-n_[0], -n_[1]), apron=on_apron(q[0], q[1]), hangar=h['id'], src='inf', refs=['osm', 'ac5300'],
                 _rule=True, _ref='rule_point',
-                ev={'how': 'box hangar with no observed spot: %.0f m out from the real wall, on the normal through the middle of the longest side (%.0f m) whose %.0f-%.0f m strip is OSM apron free of buildings; the outline of an ADG I aircraft parked nose to the hangar keeps %.1f m from open taxiway and %.1f m from open taxilane centrelines (AC 150/5300-13B Table 4-1 ADG I object distances %.1f / %.1f m); door position unknown (NAIP shows no doors)' % (
-                    HGR_SPOT_M, L, HGR_STRIP[0], HGR_STRIP[1], dt, dl, TWY_OBJ_M, TLN_OBJ_M), 'wall_dist_m': r2(dw)}), 'inferred hangar apron')
+                ev={'how': 'box hangar with no observed spot: %.0f m out from the real wall, on the normal through the middle of the longest side (%.0f m) whose %.0f-%.0f m strip is OSM apron free of buildings; the outline of an ADG I aircraft parked nose to the hangar keeps %.1f m from open taxiway and %.1f m from open taxilane centrelines (AC 150/5300-13B Table 4-1 ADG I object distances %.1f / %.1f m); reachable from an open taxiway / taxilane over %.0f m of OSM pavement (<= %.0f m); door position unknown (NAIP shows no doors)' % (
+                    HGR_SPOT_M, L, HGR_STRIP[0], HGR_STRIP[1], dt, dl, TWY_OBJ_M, TLN_OBJ_M, pth, CONNECT_M), 'wall_dist_m': r2(dw), 'taxi_path_m': r1(pth),
+                    'review_by_eye': HGR_REVIEW.get(h['id'], 'NOT REVIEWED')}), 'inferred hangar apron')
     # ---- g. duplicates: ramp / hangar-apron spots closer than DUP_M are one parking position (strongest evidence kept)
     W = [i for i, s in enumerate(spots) if s['kind'] in ('ramp', 'hangar_apron') and not s.get('_rule')]
     strength = lambda s: (s['_stays'] * 3 + s['_sig'] * 2 + len(s['_naip']), s['kind'] == 'ramp', -s['x'], -s['z'])
@@ -1079,20 +1512,51 @@ def parking(N24, N22, apr, hgr, bld, helis):
             o = spots[i]; d = math.hypot(o['x'] - K['x'], o['z'] - K['z'])
             K['_merged'].append({'kind': o['kind'], 'x': r2(o['x']), 'z': r2(o['z']), 'dist_m': r2(d), 'ref_point': o['_ref'], 'evidence': o['ev']})
             K['_naip'] |= o['_naip']; K['_stays'] += o['_stays']; K['_aircraft'] += o['_aircraft']; K['_sig'] += o['_sig']; K['_types'].update(o['_types'])
+            K['_sess'] |= o['_sess']
             K['refs'] = sorted(set(K['refs']) | set(o['refs']))
             if o.get('adsb_span') and (K.get('adsb_span') or 0) < o['adsb_span']: K['adsb_span'] = o['adsb_span']
             gone.add(i); dropped['duplicate: ramp / hangar-apron spot within %.1f m of a stronger one (merged into it)' % DUP_M] += 1
     spots = [s for i, s in enumerate(spots) if i not in gone]
     # ---- h. src of the parking role from the number of independent observations
     for s in spots:
-        n_obs = len(s['_naip']) + s['_stays'] + s['_sig']
-        s['strength'] = {'naip_aircraft_years': sorted(s['_naip']), 'adsb_stays': s['_stays'], 'adsb_aircraft_at_most': s['_aircraft'],
+        n_obs = len(s['_naip']) + len(s['_sess'])
+        s['strength'] = {'naip_aircraft_years': sorted(s['_naip']), 'adsb_sessions': len(s['_sess']), 'adsb_stays': s['_stays'], 'adsb_aircraft_at_most': s['_aircraft'],
                          'adsb_signal_events': s['_sig'], 'tee_years': s['ev'].get('tee_seen', []) if s['kind'] == 'tiedown' else [],
                          'osm_helipad': bool(s.get('helipad')), 'n_observations': n_obs, 'merged_duplicates': len(s['_merged'])}
         if s['kind'] == 'tiedown' or (s['kind'] == 'helipad' and s.get('helipad')) or s.get('_rule'): continue
         s['src'] = 'obs' if n_obs >= N_OBS_MIN else 'inf'
         if s['_merged']: s['ev']['merged_duplicates'] = s['_merged']
     return spots, td_meta, ac_all, dict(sorted(dropped.items())), dict(rev_used)
+
+
+def _taxi_grid():
+    """OSM pavement (aprons + open taxi-line buffers) minus buildings / hangars (+1 m) and the open taxi centrelines (+1 m),
+    as shapely geometries (cached)"""
+    if not hasattr(_taxi_grid, 'g'):
+        is_open = lambda w: w.get('status', 'open') == 'open' and not w['tags'].get('abandoned') and not w['tags'].get('disused')
+        lines = unary_union([LineString(w['w']) for k in ('taxiway', 'taxilane') for w in FE[k] if is_open(w)])
+        pav = unary_union([Polygon(a['w']).buffer(0) for a in FE['apron']] + [LineString(w['w']).buffer(PAVE_TWY) for k in ('taxiway', 'taxilane') for w in FE[k] if is_open(w)])
+        bld = unary_union([Polygon(h['w']).buffer(1.0) for h in FE['hangar']] + [Polygon(b['w']).buffer(1.0) for b in FE['building'] + FE['control_tower'] if len(b.get('w', [])) > 3])
+        _taxi_grid.g = (pav, bld, lines.buffer(1.0))
+    return _taxi_grid.g
+
+
+def taxi_path(x, z, res=1.0):
+    """path length (m) from an open OSM taxiway / taxilane centreline (+1 m) to (x, z) over OSM pavement around buildings:
+    breadth-first growth on a 1 m grid (alternating 4- and 8-neighbour steps, an octagonal metric: exact along the grid axes,
+    about 6 % long on diagonals); None when farther than CONNECT_M"""
+    from shapely import contains_xy
+    from scipy import ndimage as nd_
+    pav, bld, src_g = _taxi_grid(); R = CONNECT_M + 5.0
+    xs = np.arange(x - R, x + R + 1e-9, res); zs = np.arange(z - R, z + R + 1e-9, res); X, Z = np.meshgrid(xs, zs)
+    m = contains_xy(pav, X, Z) & ~contains_xy(bld, X, Z); reach = contains_xy(src_g, X, Z) & m
+    i, j = int(round((z - zs[0]) / res)), int(round((x - xs[0]) / res))
+    if reach[i, j]: return 0.0
+    cross, sq = nd_.generate_binary_structure(2, 1), nd_.generate_binary_structure(2, 2)
+    for k in range(1, int(CONNECT_M / res) + 1):
+        reach = reach | (nd_.binary_dilation(reach, structure=cross if k % 3 else sq) & m)
+        if reach[i, j]: return k * res
+    return None
 
 
 def mask_area(acm, geom):
@@ -1110,14 +1574,47 @@ def mask_area(acm, geom):
     return tot
 
 
-def _shape(s, span):
-    if s['heading'] is None: return Point(s['x'], s['z']).buffer(max(span / 2, 0.005), 32)
-    u = np.array([math.cos(math.radians(s['heading'])), math.sin(math.radians(s['heading']))])   # wing axis, perpendicular to the heading
-    c = np.array([s['x'], s['z']])
-    return LineString([tuple(c - u * span / 2), tuple(c + u * span / 2)])
+def door_heading(hg_pg, hid, x, z):
+    """heading (deg true) from (x, z) to the nearest point of hangar hid's outline: nose in at its door [inf]"""
+    pg = dict(hg_pg)[hid]; q = pg.exterior.interpolate(pg.exterior.project(Point(x, z)))
+    return F.vec_hdg(q.x - x, q.y - z) % 360
 
 
-def wing_shape(s, span): return _shape(s, span)
+def type_ratio(types):
+    """(length / span, type) of the widest type in `types` with both in the FAA ACD (data/ga_types.json), else the
+    C172 default (DEFAULT_RATIO); the sizing planform scales the fuselage with the span by this ratio"""
+    best = None
+    for t in sorted(types):
+        g = GATYPES.get(t) or {}; sp = type_span(t)
+        if sp and g.get('length_m') and (best is None or sp > best[0]): best = (sp, g['length_m'] / sp, t)
+    return (best[1], best[2]) if best else (DEFAULT_RATIO, None)
+
+
+DEFAULT_RATIO = GATYPES['C172']['length_m'] / type_span('C172')   # 8.29 / 11.00 m (FAA ACD): the most common type at HWD
+
+
+def _shape(s, span, nose=True):
+    """sizing planform of a spot for a given span (round-1 re-check: the wing alone left out the fuselage): heading known ->
+    the wing (a segment of `span` across the heading through the reference point) and the fuselage (a segment of
+    length = span x the spot's length / span ratio along the heading, FUS_FWD_FRAC of it ahead of the wing line;
+    nose=False drops the part ahead of the wing line); heading unknown -> a disc that holds that planform in every heading:
+    radius = span x max(1/2, (1 - FUS_FWD_FRAC) x ratio) (round-2 re-check: the round-1 disc of diameter span x max(1, ratio)
+    left the tail, (1 - FUS_FWD_FRAC) x length behind the reference point, outside it)"""
+    r = s.get('_ratio', DEFAULT_RATIO); span = max(span, 0.005)
+    if s['heading'] is None: return Point(s['x'], s['z']).buffer(span * disc_k(r), 64)
+    h = math.radians(s['heading']); u = np.array([math.cos(h), math.sin(h)]); f = np.array([math.sin(h), -math.cos(h)])
+    c = np.array([s['x'], s['z']]); L = r * span
+    return unary_union([LineString([tuple(c - u * span / 2), tuple(c + u * span / 2)]),
+                        LineString([tuple(c + f * (L * FUS_FWD_FRAC if nose else 0.0)), tuple(c - f * L * (1 - FUS_FWD_FRAC))])])
+
+
+def disc_k(r):
+    """radius / span of the heading-less sizing disc for a length / span ratio r: the farthest point of the planform from
+    the reference point is a wingtip (span / 2) or the tail ((1 - FUS_FWD_FRAC) x r x span)"""
+    return max(0.5, (1.0 - FUS_FWD_FRAC) * r)
+
+
+def wing_shape(s, span, nose=True): return _shape(s, span, nose)
 
 
 def _largest(cap, ok):
@@ -1133,8 +1630,9 @@ def _largest(cap, ok):
 
 
 def size_solve(wing, caps, clear, obst, tier):
-    """sizes of the wing spots for a wingtip clearance `clear`: (1) each spot alone against its fixed obstacles (buildings,
-    helipad discs: obst[k] = [(geom, label)]); (2) tier by tier (0 = painted tie-down rows, 1 = obs, 2 = inf): a spot is
+    """sizes of the spots (planform: wing + fuselage, _shape) for a clearance `clear`: (1) each spot alone against its
+    fixed obstacles (buildings incl. its own hangar, helipad discs: obst[k] = [(geom, label, mode)]; mode 'door' = the own
+    hangar of a door spot: the planform without its nose keeps CAP_GAP); (2) tier by tier (0 = painted tie-down rows, 1 = obs, 2 = inf): a spot is
     first fitted around the final shapes of every higher-priority spot within SIZE_R, then the spots of its tier share
     the space pairwise (equal share: the largest common span s, each capped, that keeps the two shapes >= clear apart;
     each spot takes the minimum over its pairs). Every pair and every obstacle then keeps `clear`. Returns sizes and,
@@ -1142,8 +1640,9 @@ def size_solve(wing, caps, clear, obst, tier):
     n = len(wing); lim = list(caps); by = [None] * n
     pos = np.array([[s['x'], s['z']] for s in wing])
     for k in range(n):
-        for g, lab in obst[k]:
-            v = _largest(lim[k], lambda sp: wing_shape(wing[k], sp).distance(g) >= clear - 1e-6)
+        for g, lab, mode in obst[k]:
+            cl = CAP_GAP if mode == 'door' else clear          # a door spot: its own hangar, nose excepted, at CAP_GAP
+            v = _largest(lim[k], lambda sp: wing_shape(wing[k], sp, nose=mode != 'door').distance(g) >= cl - 1e-6)
             if v < lim[k] - 1e-9: lim[k] = v; by[k] = ('obstacle', lab, float(g.distance(Point(wing[k]['x'], wing[k]['z']))))
     final = {}
     for t in sorted(set(tier)):
@@ -1180,6 +1679,7 @@ def finish_spots(spots, apr, hgr, bld):
             if not s.get('helipad'): s['size']['max_rotor_m'] = None
             s['_disc'] = s.get('rotor_max_m') if s.get('helipad') else heli_def
             continue
+        s['_ratio'], s['_ratio_type'] = type_ratio(s['_types'])
         obs_span = s.get('adsb_span') or None
         cls = adg_of(obs_span) if obs_span and obs_span > ADG_SPAN['I'] else 'I'
         s['_cap'] = ADG_SPAN.get(cls, ADG_SPAN['III'])
@@ -1190,11 +1690,10 @@ def finish_spots(spots, apr, hgr, bld):
     obst = []
     for s in wing:
         P = Point(s['x'], s['z']); o = []
-        for bid, pg in blds:
-            if bid == s.get('hangar') and s['kind'] == 'hangar_apron': continue      # it parks at / into its own hangar
-            if pg.distance(P) < SIZE_R: o.append((pg, bid))
+        for bid, pg in blds:       # every building, the spot's own hangar included (round-1 re-check); door spots: see size_solve
+            if pg.distance(P) < SIZE_R: o.append((pg, bid, 'door' if (s.get('door') and bid == s.get('hangar')) else None))
         for h in helis:
-            if math.hypot(h['x'] - s['x'], h['z'] - s['z']) < SIZE_R: o.append((Point(h['x'], h['z']).buffer(h['_disc'] / 2, 32), ('helipad', id(h))))
+            if math.hypot(h['x'] - s['x'], h['z'] - s['z']) < SIZE_R: o.append((Point(h['x'], h['z']).buffer(h['_disc'] / 2, 32), ('helipad', id(h)), None))
         obst.append(o)
     caps = [s['_cap'] for s in wing]
     des, des_by = size_solve(wing, caps, WINGTIP_CLEAR, obst, tier)
@@ -1205,7 +1704,12 @@ def finish_spots(spots, apr, hgr, bld):
         s['size'] = {'max_span_m': r2(math.floor(des[k] * 100) / 100), 'adg': adg_of(des[k]) if des[k] > 0.01 else None, 'src': 'inf', 'basis': basis,
                      'clearance_m': r2(WINGTIP_CLEAR),
                      'capacity_span_m': r2(math.floor(cap[k] * 100) / 100), 'capacity_gap_m': CAP_GAP,
-                     'capacity_note': 'practical size: the same rule with a %.1f m wingtip gap (observed use at HWD) instead of the AC 10 ft; use this to place aircraft, max_span_m is the AC design value' % CAP_GAP}
+                     'capacity_note': 'practical size: the same rule with a %.1f m wingtip gap (observed use at HWD) instead of the AC 10 ft; use this to place aircraft, max_span_m is the AC design value' % CAP_GAP,
+                     'planform': {'length_per_span': r2(s['_ratio']), 'from_type': s['_ratio_type'] or 'C172 (default)', 'fus_ahead_of_ref': r2(FUS_FWD_FRAC),
+                                  'disc_radius_per_span': None if s['heading'] is not None else round(disc_k(s['_ratio']), 4),
+                                  'rule': ('wing segment of the span across the heading + fuselage of span x length_per_span along it (%.0f %% ahead of the reference point)' % (100 * FUS_FWD_FRAC)) if s['heading'] is not None else
+                                          'heading unknown: a disc that holds the planform in every heading, radius span x max(1/2, %.3f x length_per_span) = %.3f x span (wingtip or tail, whichever is farther from the reference point)' % (1 - FUS_FWD_FRAC, disc_k(s['_ratio'])),
+                                  'src': 'inf', 'basis': 'FAA ACD length / wingspan of the widest adsb.lol type seen here with both values (else C172); fuselage split from FUS_FWD / FUS_AFT'}}
         s['_by'] = (des_by[k] if des[k] < capk - 1e-3 else None, cap_by[k] if cap[k] < capk - 1e-3 else None)
         if s['kind'] == 'tiedown':
             s['size']['rule'] = 'tee row pitch %.2f m - 10 ft = %.2f m (AC 150/5300-13B Fig E-2: tiedown spacing = wingspan plus 10 ft (3 m))' % (s['pitch'], s['pitch'] - WINGTIP_CLEAR)
@@ -1215,7 +1719,8 @@ def finish_spots(spots, apr, hgr, bld):
             if sp_: occ[t] = r2(sp_)
         if occ:
             s['size']['observed_max_span_m'] = max(occ.values()); s['size']['observed_type_spans_m'] = occ
-            s['size']['observed_src'] = 'obs: every adsb.lol type seen parked here (stays, signal starts / ends, merged duplicates) -> FAA ACD wingspan (data/ga_types.json)'
+            s['size']['observed_src'] = 'obs'
+            s['size']['observed_basis'] = 'every adsb.lol type seen parked here (stays, signal starts / ends, merged duplicates) -> FAA ACD wingspan (data/ga_types.json)'
         if s['ev'].get('naip_extent_m'): s['size']['naip_blob_extent_m'] = s['ev']['naip_extent_m']
         fl = []
         o = s['size'].get('observed_max_span_m')
@@ -1267,11 +1772,12 @@ def finish_spots(spots, apr, hgr, bld):
              'apron': s.get('apron'), 'size': s['size'], 'src': s['src'],
              'src_rule': ('painted tee seen (obs) / pitch position of a tee row (inf)' if s['kind'] == 'tiedown' else
                           'mapped OSM helipad' if s.get('helipad') else 'rule (no observation)' if s.get('_rule') else
-                          'obs when >= %d independent observations (NAIP years with an aircraft + adsb.lol stays + signal-edge events), else inf' % N_OBS_MIN),
+                          'obs when >= %d independent observations (NAIP years with an aircraft + adsb.lol sessions: a stay and its own signal start / end are one session), else inf' % N_OBS_MIN),
              'strength': s['strength'], 'refs': sorted(set(s['refs'])), 'evidence': s['ev']}
         if s['kind'] == 'tiedown':
             e['heading_evidence'] = 'nose away from the tee stem (aircraft parked on the Green Ramp tees sit with the tail over the stem end, NAIP 2024) [inf for the other tees]'
         if s.get('hangar'): e['hangar'] = s['hangar']
+        if s.get('door'): e['door_spot'] = True
         if s.get('helipad'): e['helipad'] = s['helipad']
         out.append((i, e))
     wing_pos = {id(s): k for k, s in enumerate(wing)}
@@ -1328,8 +1834,9 @@ def main():
         'sources': SOURCES,
         'src_legend': {'obs': 'seen in a source: surveyed (FAA), mapped (OSM), measured on NAIP, or observed by ADS-B', 'inf': 'inferred: by a stated rule, from a schematic chart, by eye, or a default'},
         'parking_fields': {'id': 'kind letter (T tie-down, R ramp, H hangar apron, P helipad) + the rounded position: E/W metres east / west and N/S metres north / south of the ARP; stable as long as the position is',
-                           'src': 'role as a parking position: see src_rule (a ramp / hangar-apron spot needs >= %d independent observations to be obs)' % N_OBS_MIN,
-                           'strength': 'the observations behind the spot: NAIP years with an aircraft, adsb.lol stays (and at most how many aircraft), signal-edge events (max of starts and ends), tee years, merged duplicates',
+                           'src': 'role as a parking position: see src_rule (a ramp / hangar-apron spot needs >= %d independent observations - NAIP years + adsb.lol sessions - to be obs)' % N_OBS_MIN,
+                           'door_spot': 'true: an aircraft at the door of its hangar (ADS-B <= %.0f m from the wall); heading = nose in, perpendicular to the wall [inf]; its nose may enter that hangar, its wing keeps %.1f m from it' % (HGR_DOOR_M, CAP_GAP),
+                           'strength': 'the observations behind the spot: NAIP years with an aircraft, adsb.lol sessions (n_observations = NAIP years + sessions), and for information stays (and at most how many aircraft), signal-edge events (max of starts and ends), tee years, merged duplicates',
                            'ref_point': 'what point of the aircraft the position stands for (ref_point_def)',
                            'size.max_span_m': 'AC 150/5300-13B design value: largest span keeping 10 ft from neighbours (tiered equal share), buildings and helipads [inf]',
                            'size.capacity_span_m': 'the same with a %.1f m gap: the practical size for placing aircraft [inf]' % CAP_GAP,
@@ -1339,6 +1846,7 @@ def main():
         'helipads': hp, 'hangars': hg, 'buildings': bl, 'markers': mk, 'parking': sp,
         'al5015_labels': [dict(l, src='inf', refs=['al5015'], evidence='label anchor = centre of its text-layer words mapped by the diagram affine (residuals %s m at the runway ends); this is where the label text is printed, which the chart sets beside the feature (often with a leader), so it is not the feature position' % FIT_RES_TXT) for l in labels],
         'not_placed': not_placed(labels, sp),
+        'unspotted_aircraft': unspotted(sp),
         'not_yet_sourced': NOT_YET_SOURCED,
         'checks_at_build': {
             'taxiway_refs_osm': refs_osm, 'taxiway_refs_al5015': AL5015_TWYS, 'refs_equal': refs_osm == sorted(AL5015_TWYS),
@@ -1354,7 +1862,7 @@ def main():
         },
         'build_env': build_env(),
     }
-    D['counts'] = {k: len(D[k]) for k in ('runways', 'taxiways', 'taxilanes', 'aprons', 'holds', 'hotspots', 'helipads', 'hangars', 'buildings', 'markers', 'parking')}
+    D['counts'] = {k: len(D[k]) for k in ('runways', 'taxiways', 'taxilanes', 'aprons', 'holds', 'hotspots', 'helipads', 'hangars', 'buildings', 'markers', 'parking', 'unspotted_aircraft')}
     D['counts']['parking_by_kind_src'] = {'%s/%s' % k: v for k, v in sorted(Counter((s['kind'], s['src']) for s in sp).items())}
     s = json.dumps(D, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
     os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)

@@ -16,31 +16,36 @@ Checks
      diagram affine): every taxiway label glyph (A, A1, B ... Z1) must lie within LABEL_TOL m of an OSM way with the same
      ref, and the set of label refs must equal the set of OSM refs - hard. Ways whose ref the diagram does not support
      (ref_src 'inf') are listed. Every way with ref A1 / Z1 carries the NASR wingspan limit (100 / 94 ft) - hard.
-     NAIP paint per way (since the Phase 1 review): the faint yellow centreline ridges are measured again along every
-     open way's final geometry; a 50 m section whose ridges agree on an offset (build_airport.faint_sections:
-     >= 8 ridges, |median| >= 1.0 m, IQR <= 0.6 m) fails - hard (a median over all ways can hide one offset way).
+     NAIP paint per way (rewritten after the round-1 re-check, which found taxiway E zig-zagging between its paint and its
+     old position while the earlier 50 m section test passed): the yellow ridges are measured again along every open way's
+     final geometry (build_airport.ridge_scan, stations shifted by PAINT_PHASE from the build's). A 20 m window (step
+     10 m) with >= 6 ridges, |median| > 1.0 m and IQR <= 0.8 m is off the paint. Hard: (a) no off-paint window on a moved
+     way outside its END_TAPER_M junction tapers; (b) no lateral kink in a moved way: the second difference over +-10 m of
+     its displacement from the OSM line (khwd_features.json) <= 0.5 m outside the junction tapers; (c) every unmoved way
+     with an off-paint window carries paint_offset_unsnapped (its offsets recorded). The review build fails (a), (b) and
+     (c) (run with --data on it).
   4. Every parking spot centre on pavement: inside an OSM apron polygon, or within PAVE_TWY m of an OSM taxiway / taxilane
      centreline, or NAIP 2024 grey (median saturation < SAT_MAX and excess green < EG_MAX in a 2 m disc - a
      calibration read on this mosaic: asphalt / concrete aprons 0.04-0.14, grass 0.19-0.36). A spot passing only the
      NAIP test is reported.
-  5. No spot centre inside a building footprint (OSM hangars, buildings, tower; point in polygon) - hard. Since the
-     Phase 1 review also the wing shape: at max_span_m it keeps 10 ft from every building / hangar outline, at
-     capacity_span_m CAP_GAP (a spot's own hangar excepted for hangar-apron spots) - hard, but a consistency check: the
-     build sizes the spots so that this holds.
+  5. No spot centre inside a building footprint (OSM hangars, buildings, tower; point in polygon) - hard.
   6. Spot spacing against the size class: FAA AC 150/5300-13B Chg 1 Table 5-1 recommends a 10 ft (3 m) clearance for
      ADG I and II parking positions and Figure E-2 sets tiedown spacing to "Wingspan plus 10 ft (3 m) for critical
      aircraft" (Figure E-3: "10 ft (3 m) Minimum wing tip separation"); the quotes are asserted against the text of the
-     committed extract refs/cache/faa/ac150_5300_13b_chg1_p136_181_284-288.pdf. For every pair of spots closer than
-     40 m the wing shapes (a segment of max_span_m across the heading, or a disc of that diameter when the heading is
-     unknown) must be >= 10 ft apart - hard; helipad spots take part as discs of their rotor size (or the smallest OSM
-     pad when unknown); capacity_span_m must keep CAP_GAP likewise. These are consistency checks (the build derives the
-     sizes from the same rule). Independent of the sizing: no two ramp / hangar-apron spots closer than DUP_M (one
-     aircraft seen twice) - hard; the observed types are recounted from every adsb.lol type in a spot's evidence
-     (stays, signal starts / ends, merged duplicates) and spots whose observed type is wider than max_span_m /
-     capacity_span_m are listed (not a failure) and compared with the spot's own flags - hard if they disagree.
-     Spot vs taxiways: the distance from each spot's wing shape (capacity size) to open taxiway / taxilane centrelines,
-     against AC 150/5300-13B Table 4-1 ADG I object distances (13.6 / 12.0 m), reported per src; hard for rule-made
-     (inferred hangar-apron) spots, whose rule promises it.
+     committed extract refs/cache/faa/ac150_5300_13b_chg1_p136_181_284-288.pdf. Since the round-1 re-check every spot is
+     a wing + fuselage planform (length / span recounted here from the observed types, FAA ACD, else C172; a disc
+     without a heading). For every pair of spots closer than 45 m the planforms at max_span_m keep 10 ft and at
+     capacity_span_m CAP_GAP - hard (consistency checks: the build sizes with the same rule); helipad spots take part as
+     discs; spots flagged no_design_size are listed and left out of the design-size pair test. Planform vs every
+     building / hangar, the spot's own hangar included; only a door spot (verified: <= HGR_DOOR_M from its hangar wall,
+     heading to the nearest wall point) may enter its own hangar with its nose, its wing keeping CAP_GAP - hard.
+     Independent of the sizing: no two ramp / hangar-apron spots closer than DUP_M - hard; observed types recounted and
+     compared with the spots' flags - hard if they disagree; n_observations = NAIP years + adsb.lol sessions and src
+     by the >= 2 rule - hard; an independent recount of sessions near every obs spot finds >= 2 - hard. Spot vs
+     taxiways: planform (capacity size) vs AC Table 4-1 ADG I object distances (13.6 / 12.0 m), reported per src; hard
+     for rule-made spots, which must also be reachable over OSM pavement within CONNECT_M (own Dijkstra, pave_path) and
+     carry an 'ok' by-eye review (build_airport.HGR_REVIEW) - hard. The unspotted_aircraft list must not hold an
+     aircraft that now has a spot within 5 m - hard.
   7. Hot spots: the OSM taxiways inside each AL-5015 ellipse against the taxiways the CS hot-spot text names. A
      consistency check of the diagram registration and the OSM refs; HS whose CS text names no taxiway (HS 2, 3, 4) are
      reported as 'not checkable against the CS'.
@@ -51,10 +56,13 @@ Checks
      docs/*.md) is scanned for identity keys (hex, icao24, callsign, flight, registration, r ...), per-row time keys
      (t, t0, time, seen ...) and epoch-second numbers, N-number-like tokens, and any token equal to a hex address,
      registration or callsign of an aircraft that the pinned adsb.lol recording saw within 5 km of the ARP
-     (identity_set, read from sfo3d/refs/cache/rec_pack) - hard. SOURCES coverage: every committed data file under
+     (identity_set, read from sfo3d/refs/cache/rec_pack) - hard; the session numbers of hwd_parked_stays.json never hold
+     two signal starts / ends or span more than 2 x SESSION_R_M - hard. SOURCES coverage: every committed data file under
      data/, refs/cache/ (not local/, not .parts/) and docs/phase1/ matches a key (or glob key) of a SOURCES.json in its
-     folder or a parent folder - hard.
-usage: python3 hwd3d/tools/check_airport.py
+     folder or a parent folder - hard; every SOURCES entry has made_by or note - hard; every text / JSON file whose
+     SOURCES licence names the ODbL carries the ODbL URI itself - hard; src / *_src values in every committed JSON are
+     obs / inf / null (field-documentation maps skipped; the documented ga_types 'none' listed) - hard.
+usage: python3 hwd3d/tools/check_airport.py [--data FILE] [--paint-only]
 """
 import json, math, os, re, subprocess, sys
 from collections import Counter
@@ -85,6 +93,13 @@ LABEL_FAR = 100.0   # m: label glyphs farther than this from every OSM way are n
 LABEL_ON_M = 8.0    # m: a glyph that is not an OSM ref counts as a diagram taxiway label missing in OSM only this close to an
                     # OSM taxiway centreline (the other single letters of AL-5015 - X closed-surface marks, runway-side
                     # letters, symbol letters, the WEST HANGARS glyphs - lie 14 m or more from every centreline)
+PAINT_PHASE = 1.0   # m: the check's ridge stations sit half-way between the build's (FAINT_STEP 2 m from s = 0)
+PAINT_WIN_M, PAINT_WIN_N = 20.0, 6   # m, ridges: off-paint windows (round-1 re-check: E was off by 3.3 m over 14-22 m stretches)
+PAINT_OFF_M, PAINT_IQR_M = 1.0, 0.8  # m: |median| above this with an IQR at most this = off the paint
+KINK_H, KINK_M = 10.0, 0.5           # m: lateral second difference of a move over +-KINK_H m above KINK_M = a kink (the review
+                                     # build's E zig-zag: 3.3 m ramps over ~20 m give about 1.6 m; a smooth fit gives < 0.1 m)
+TOPO_NODE_M = 8.0   # m: a junction's shared vertex may lie this far from its OSM node (the largest move is 3.5 m) [chosen]
+FORK_DEG, FORK_M = 30.0, 20.0   # a shallow fork may meet up to FORK_M m from the OSM node (build_airport J_FORK_DEG / J_FORK_M)
 AC_QUOTES = [  # (where, text) - asserted against pdftotext -layout of the committed extract (whitespace-normalised)
     ('Table 5-1. Parking Position Clearance (PDF p. 181, printed 5-7)', 'Table 5-1. Parking Position Clearance.'),
     ('Table 5-1 row', 'I and II 10 ft (3 m)'),
@@ -191,24 +206,256 @@ def sources_coverage():
     ls = subprocess.run(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '--', 'hwd3d/data', 'hwd3d/refs/cache', 'hwd3d/docs/phase1'],
                         capture_output=True, text=True, check=True).stdout.split()
     files = sorted(os.path.relpath(os.path.join(root, f), HWD) for f in ls if os.path.basename(f) != 'SOURCES.json')
-    miss = []
+    miss = []; entry = {}
     for f in files:
         d = os.path.dirname(f); ok = False
         while True:
             sj = os.path.join(HWD, d, 'SOURCES.json')
             if os.path.exists(sj):
                 rel_ = os.path.relpath(f, d) if d else f
-                for k in json.load(open(sj)):
-                    if any(fnmatch.fnmatch(rel_, kk.strip()) for kk in k.split(',')): ok = True; break
+                for k, v in json.load(open(sj)).items():
+                    if any(fnmatch.fnmatch(rel_, kk.strip()) for kk in k.split(',')): ok = True; entry[f] = (os.path.relpath(sj, HWD), k, v); break
             if ok or not d: break
             d = os.path.dirname(d)
         if not ok: miss.append(f)
     say('   SOURCES coverage: %d committed data files under data/, refs/cache/, docs/phase1/; without a SOURCES.json entry: %d %s' % (len(files), len(miss), miss))
-    return miss
+    # provenance residuals (round-1 re-check): every SOURCES entry names its maker or carries a note; every committed text /
+    # JSON file whose SOURCES licence names the ODbL carries the licence URI in the file itself
+    sjs = sorted(os.path.relpath(os.path.join(root, f), HWD) for f in subprocess.run(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '--', 'hwd3d'],
+                 capture_output=True, text=True, check=True).stdout.split() if os.path.basename(f) == 'SOURCES.json')
+    nomaker = [(sj, k) for sj in sjs for k, v in json.load(open(os.path.join(HWD, sj))).items() if not k.startswith('_') and not (isinstance(v, dict) and (v.get('made_by') or v.get('note')))]
+    say('   SOURCES entries (%d files) without made_by or note: %d %s' % (len(sjs), len(nomaker), nomaker))
+    odbl = [f for f in files if f in entry and 'odbl' in json.dumps(entry[f][2]).lower() and f.rsplit('.', 1)[-1] in ('json', 'js', 'txt', 'csv', 'md')]
+    nouri = [f for f in odbl if 'opendatacommons.org/licenses/odbl' not in open(os.path.join(HWD, f), encoding='utf-8', errors='replace').read()]
+    say('   text / JSON files whose SOURCES licence names the ODbL: %d; without the ODbL URI in the file itself: %d %s' % (len(odbl), len(nouri), nouri))
+    return miss + ['SOURCES entry without made_by / note: %s' % (x,) for x in nomaker] + ['no ODbL URI: %s' % f for f in nouri]
+
+
+def pave_path(x, z, FE, res=1.0):
+    """shortest path (m) from an open OSM taxiway / taxilane centreline (+1 m) to (x, z) over OSM pavement (aprons and
+    taxi-line buffers of build_airport.PAVE_TWY) around OSM buildings / hangars (+1 m): Dijkstra on an 8-neighbour 1 m grid
+    (scipy.sparse.csgraph); an implementation independent of build_airport.taxi_path; None if not reachable within 100 m"""
+    from shapely import contains_xy
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import dijkstra
+    is_open = lambda w: w.get('status', 'open') == 'open' and not w['tags'].get('abandoned') and not w['tags'].get('disused')
+    lines = unary_union([LineString(w['w']) for k in ('taxiway', 'taxilane') for w in FE[k] if is_open(w)])
+    pav = unary_union([Polygon(a['w']).buffer(0) for a in FE['apron']] + [LineString(w['w']).buffer(B.PAVE_TWY) for k in ('taxiway', 'taxilane') for w in FE[k] if is_open(w)])
+    bld = unary_union([Polygon(h['w']).buffer(1.0) for h in FE['hangar']] + [Polygon(b['w']).buffer(1.0) for b in FE['building'] + FE['control_tower'] if len(b.get('w', [])) > 3])
+    R = 100.0; xs = np.arange(x - R, x + R + 1e-9, res); zs = np.arange(z - R, z + R + 1e-9, res); X, Z = np.meshgrid(xs, zs)
+    m = contains_xy(pav, X, Z) & ~contains_xy(bld, X, Z); src = contains_xy(lines.buffer(1.0), X, Z) & m
+    ny, nx = m.shape; idx = np.arange(ny * nx).reshape(ny, nx); rows_, cols_, w_ = [], [], []
+    for dy, dx in ((0, 1), (1, 0), (1, 1), (1, -1)):
+        x0, x1 = (0, nx - dx) if dx >= 0 else (-dx, nx)
+        a = idx[0:ny - dy, x0:x1]; b = idx[dy:ny, x0 + dx:x1 + dx]
+        ok = m.ravel()[a.ravel()] & m.ravel()[b.ravel()]
+        rows_.append(a.ravel()[ok]); cols_.append(b.ravel()[ok]); w_.append(np.full(ok.sum(), math.hypot(dx, dy) * res))
+    G = coo_matrix((np.concatenate(w_), (np.concatenate(rows_), np.concatenate(cols_))), shape=(ny * nx, ny * nx)).tocsr()
+    sidx = idx[src]
+    if not len(sidx): return None
+    i, j = int(round((z - zs[0]) / res)), int(round((x - xs[0]) / res))
+    d = dijkstra(G, directed=False, indices=[idx[i, j]], limit=R)[0]
+    v = float(d[sidx].min())
+    return None if not np.isfinite(v) else v
+
+
+def _disp(osm_pts, built_pts, step=2.0):
+    """lateral displacement of a built line from its OSM line, every step m along the OSM line (intersection of the
+    OSM normal with the built line within +-8 m; nan where there is none)"""
+    O = B.densify(osm_pts, step); SO = B.arclen(O); TO = B.tangents(O); fin = LineString(built_pts)
+    so = np.arange(0.0, SO[-1] + 1e-9, step); dl = []
+    for s_ in so:
+        p_ = np.array([np.interp(s_, SO, O[:, 0]), np.interp(s_, SO, O[:, 1])]); t_ = np.array([np.interp(s_, SO, TO[:, 0]), np.interp(s_, SO, TO[:, 1])]); t_ /= np.hypot(*t_)
+        n_ = np.array([-t_[1], t_[0]]); hit = LineString([tuple(p_ - 8 * n_), tuple(p_ + 8 * n_)]).intersection(fin)
+        pts_ = [np.array(g.coords[0]) for g in getattr(hit, 'geoms', [hit]) if not g.is_empty and g.geom_type == 'Point']
+        dl.append(min((float(np.dot(q_ - p_, n_)) for q_ in pts_), key=abs) if pts_ else np.nan)
+    return so, np.array(dl)
+
+
+def paint_check(D, FE):
+    """check 3, NAIP paint per way (see the module docstring); returns the hard failures"""
+    hard = []
+    # NAIP paint on the final geometry (round-1 re-check: the review build's E was a zig-zag that a 50 m section test
+    # passed; round-2 re-check: junction tapers were exempt). Ridges are re-measured with build_airport.ridge_scan at
+    # stations shifted by PAINT_PHASE from the build's, on the final line and (for changed ways) on the OSM line.
+    N24p = Naip('2024'); hp = [(h['x'], h['z']) for h in D['holds']]
+    osm_w = {w['osm']['id']: w for k in ('taxiway', 'taxilane') for w in FE[k]}
+    moved_bad = []; unrec = []; worse = []; kinks = []; zig = []; n_win = 0; n_moved = 0; n_adj = 0; n_rec = 0; nways = 0; kmax = []; zmax = []
+    def wins_of(P_):
+        S_ = B.arclen(P_); T_ = B.tangents(P_)
+        ss, fo = B.ridge_scan(N24p, P_, S_, T_, hp, phase=PAINT_PHASE)
+        return B.off_windows(ss, fo, win=PAINT_WIN_M, nmin=PAINT_WIN_N, med_min=PAINT_OFF_M, iqr_max=PAINT_IQR_M)
+    for w in D['taxiways'] + D['taxilanes']:
+        if w['status'] != 'open': continue
+        P_ = B.densify(w['pts'], 2.0); S_ = B.arclen(P_)
+        if S_[-1] < 8.0: continue
+        nways += 1; oid = int(w['id'].split('/')[-1]); O_ = osm_w[oid]['w']
+        moved = bool(w['evidence']['naip_paint'].get('snapped_len_m')); n_moved += moved
+        so, dl = _disp(O_, w['pts'])
+        changed = moved or bool(np.nanmax(np.abs(dl)) > 0.05) if np.isfinite(dl).any() else moved
+        adjusted = changed and not moved; n_adj += adjusted
+        wins = wins_of(P_); n_win += len(wins)
+        if wins and moved: moved_bad.append((w['id'], w['ref'], [(q['s0_m'], q['n'], q['median_m']) for q in wins]))
+        elif wins and not w.get('paint_offset_unsnapped'): unrec.append((w['id'], w['ref'], [(q['s0_m'], q['n'], q['median_m']) for q in wins]))
+        elif wins: n_rec += 1
+        if adjusted and wins:   # a junction attachment must not take a way off its paint: compare with the OSM line
+            wo = wins_of(B.densify(O_, 2.0))
+            for q in wins:
+                pre = [r for r in wo if abs(r['s0_m'] - q['s0_m']) <= PAINT_WIN_M / 2 and abs(r['median_m']) >= abs(q['median_m']) - 0.3]
+                if not pre: worse.append((w['id'], q['s0_m'], q['median_m'], [(r['s0_m'], r['median_m']) for r in wo]))
+        if not changed: continue
+        # (b1) zig-zag, everywhere (no exemption): the displacement from the OSM line returns towards the old position
+        #      and leaves it again - a local extremum deeper than KINK_M against both neighbours KINK_H m away
+        h = int(round(KINK_H / 2.0)); zw = 0.0; zat = None
+        for i in range(h, len(so) - h):
+            a_, b_, c_ = dl[i - h], dl[i], dl[i + h]
+            if not np.isfinite([a_, b_, c_]).all(): continue
+            dep = min(abs(b_ - a_), abs(b_ - c_)) if (b_ - a_) * (b_ - c_) > 0 else 0.0
+            if dep > zw: zw, zat = dep, so[i]
+        zmax.append((w['id'], w['ref'], round(zw, 2)))
+        if zw > KINK_M: zig.append((w['id'], w['ref'], round(zw, 2), r1(zat)))
+        # (b2) lateral kinks of a moved way: second difference over +-KINK_H m outside its recorded junction tapers
+        if moved:
+            L_ = so[-1]; tz = []
+            for j in w['evidence']['naip_paint'].get('junctions', []):
+                if j['role'] == 'end' and j.get('taper_m'):
+                    tz.append((0.0, j['taper_m']) if j['s_m'] < 1.0 else (L_ - j['taper_m'], L_))
+            worst = 0.0
+            for i in range(h, len(so) - h):
+                if any(a0 - KINK_H < so[i] < a1 + KINK_H for a0, a1 in tz): continue
+                v = abs(dl[i + h] - 2 * dl[i] + dl[i - h])
+                if np.isfinite(v): worst = max(worst, float(v))
+            kmax.append((w['id'], w['ref'], round(worst, 2)))
+            if worst > KINK_M: kinks.append((w['id'], w['ref'], round(worst, 2)))
+    say('   NAIP 2024 yellow ridges re-measured on the final geometry of %d open ways (stations every %.0f m from s = %.1f m; build_airport.ridge_scan): %d-m windows (step %.0f m) with >= %d ridges, |median| > %.1f m and IQR <= %.1f m = off the paint' % (
+        nways, B.FAINT_STEP, PAINT_PHASE, PAINT_WIN_M, PAINT_WIN_M / 2, PAINT_WIN_N, PAINT_OFF_M, PAINT_IQR_M))
+    say('   moved ways: %d; off-paint windows anywhere on them (junction tapers included): %d %s' % (n_moved, len(moved_bad), moved_bad))
+    say('   ways changed only by a junction attachment: %d; off-paint windows the attachment made (no window at least as far off on the OSM line): %d %s' % (n_adj, len(worse), worse))
+    say('   zig-zag (displacement from the OSM line a local extremum > %.2f m deeper than both points %.0f m away; every changed way, no exemption): largest %s; failing: %d %s' % (
+        KINK_M, KINK_H, sorted(zmax, key=lambda t: -t[2])[:5], len(zig), zig))
+    say('   moved ways: largest lateral second difference of the move over %.0f m (outside the recorded junction tapers) %s; above %.2f m: %d %s' % (KINK_H, kmax, KINK_M, len(kinks), kinks))
+    say('   unchanged / attached ways with off-paint windows: %d, all recorded as paint_offset_unsnapped: %s %s' % (n_rec + len(unrec), 'yes' if not unrec else 'NO', unrec))
+    if moved_bad: hard.append('moved taxiway off its paint')
+    if worse: hard.append('junction attachment off the paint')
+    if zig: hard.append('taxiway zig-zag')
+    if kinks: hard.append('lateral kink in a moved taxiway')
+    if unrec: hard.append('unrecorded paint offset')
+    return hard
+
+
+def topology_check(D, FE):
+    """check 3, taxi network topology (round-2 re-check: whole-way moves had left 22 joins without a shared vertex).
+    (a) every OSM vertex shared by two or more taxiway / taxilane ways (or closing a closed way) is ONE vertex in the
+    data: every member way has a vertex there, all identical (to 0.015 m), within TOPO_NODE_M of the OSM node;
+    (b) built ways that touch or cross do so only at a shared vertex, unless their OSM ways already cross without one.
+    Returns the hard failures."""
+    hard = []
+    built = {int(w['id'].split('/')[-1]): w['pts'] for w in D['taxiways'] + D['taxilanes']}
+    osm = {w['osm']['id']: w['w'] for k in ('taxiway', 'taxilane') for w in FE[k] if w['osm']['id'] in built}
+    nodes = {}
+    for o in sorted(osm):
+        for i, p in enumerate(osm[o]): nodes.setdefault((p[0], p[1]), []).append((o, i))
+    nodes = {k: v for k, v in nodes.items() if len(v) >= 2}
+    bad = []; shifts = []; forks = []
+    def odir(o, i):
+        W_ = np.asarray(osm[o], float); j = i + 1 if i < len(W_) - 1 else i - 1; v = W_[j] - W_[i]; return v / max(1e-9, np.hypot(*v))
+    def fork_ok(k, mem):
+        # a shallow fork (build_airport J_FORK_*): two OSM ways, one ending on the other's interior at < FORK_DEG; the ending
+        # way's built end is a vertex of the other's built line within FORK_M of the OSM node
+        if len(mem) != 2: return None
+        (a, ia), (b, ib) = mem
+        for (o, i), (t, it) in (((a, ia), (b, ib)), ((b, ib), (a, ia))):
+            if i not in (0, len(osm[o]) - 1) or it in (0, len(osm[t]) - 1): continue
+            ang = math.degrees(math.acos(min(1.0, abs(float(odir(o, i) @ odir(t, it))))))
+            e_ = built[o][0] if i == 0 else built[o][-1]; T_ = np.array(built[t])
+            on = float(np.min(np.hypot(T_[:, 0] - e_[0], T_[:, 1] - e_[1]))); dk = math.hypot(e_[0] - k[0], e_[1] - k[1])
+            if ang < FORK_DEG and on <= 0.015 and dk <= FORK_M: return (k, o, t, r1(ang), r1(dk))
+        return None
+    for k, mem in sorted(nodes.items()):
+        cand = None; ok = True
+        for o, _ in mem:
+            P = np.array(built[o]); d = np.hypot(P[:, 0] - k[0], P[:, 1] - k[1])
+            vs = P[d <= TOPO_NODE_M]
+            if not len(vs): ok = False; break
+            if cand is None: cand = [tuple(v) for v in vs]
+            else: cand = [c for c in cand if np.min(np.hypot(vs[:, 0] - c[0], vs[:, 1] - c[1])) <= 0.015]
+        if not ok or not cand:
+            fk = fork_ok(k, mem)
+            if fk: forks.append(fk); continue
+            gap = max(LineString(built[a]).distance(LineString(built[b])) for (a, _) in mem for (b, _) in mem if a != b) if len({o for o, _ in mem}) > 1 else None
+            bad.append((k, sorted({o for o, _ in mem}), r1(gap) if gap is not None else None))
+        else:
+            shifts.append(min(math.hypot(c[0] - k[0], c[1] - k[1]) for c in cand))
+    say('   network: %d OSM junction vertices (shared by two or more taxiway / taxilane ways); one shared vertex in the data within %.0f m of the OSM node: %d; NOT shared: %d (%d of them with a gap > 0.05 m between the ways) %s' % (
+        len(nodes), TOPO_NODE_M, len(shifts), len(bad), sum(1 for b_ in bad if b_[2] is not None and b_[2] > 0.05), bad[:12]))
+    say('   shift of the shared vertices from their OSM node: max %.2f m, %d moved by > 0.05 m' % (max(shifts or [0]), sum(1 for v in shifts if v > 0.05)))
+    say('   shallow forks (a way ending on another at < %.0f deg in OSM; its built end is a vertex of the other within %.0f m of the OSM node): %d %s' % (FORK_DEG, FORK_M, len(forks), forks))
+    # (b) crossings / touches away from shared vertices
+    from shapely.geometry import MultiPoint
+    ids = sorted(built); lines = {o: LineString(built[o]) for o in ids}; ext = []; osm_x = set()
+    for i, a in enumerate(ids):
+        for b in ids[i + 1:]:
+            if not lines[a].intersects(lines[b]): continue
+            g = lines[a].intersection(lines[b]); pts = [q for q in getattr(g, 'geoms', [g]) if q.geom_type == 'Point']
+            va = np.array(built[a]); vb = np.array(built[b])
+            for q in pts:
+                x, z = q.coords[0]
+                if np.min(np.hypot(va[:, 0] - x, va[:, 1] - z)) <= 0.015 and np.min(np.hypot(vb[:, 0] - x, vb[:, 1] - z)) <= 0.015: continue
+                oa, ob = LineString(osm[a]), LineString(osm[b])
+                if oa.intersects(ob):
+                    og = oa.intersection(ob); ops = [r for r in getattr(og, 'geoms', [og]) if r.geom_type == 'Point']
+                    if any(min(math.hypot(r.x - c[0], r.y - c[1]) for c in osm[a]) > 0.05 or min(math.hypot(r.x - c[0], r.y - c[1]) for c in osm[b]) > 0.05 for r in ops):
+                        osm_x.add((a, b)); continue
+                ext.append((a, b, r1(x), r1(z)))
+    say('   built ways touching or crossing away from a shared vertex: %d %s; OSM\'s own crossings without a node (kept): %s' % (len(ext), ext[:12], sorted(osm_x)))
+    if bad: hard.append('taxi network: junction without a shared vertex')
+    if ext: hard.append('taxi network: crossing away from a vertex')
+    return hard
+
+
+PRES_SAME_M, PRES_LEAVE_M = 15.0, 30.0   # m: same place / left (as tools/adsb/parked_stays.py SESSION_R_M / VISIT_LEAVE_M)
+
+
+def presence_recount(R_, types_of, tspan):
+    """independent count of aircraft presences at every obs ramp / hangar-apron spot, from the gitignored per-aircraft
+    files (local only; None if absent). Events (stays, signal starts / ends) within the spot's radius (8 m; a type wider
+    than build_airport.BIG_SPAN: half its span + 2 m) of the spot or its merged duplicates; per aircraft in time order, a
+    new presence starts only when the next event is > PRES_SAME_M m from the previous one or the aircraft has a fix > PRES_LEAVE_M
+    m from the previous event in between. Returns ([(spot id, NAIP years, presences)] below N_OBS_MIN, spots, joins)."""
+    import pickle
+    lf = os.path.join(HWD, 'refs', 'cache', 'local', 'adsb', 'hwd_parked_stays_local.json')
+    tf = os.path.join(HWD, 'refs', 'cache', 'local', 'adsb', 'hwd_tracks.pkl')
+    if not (os.path.exists(lf) and os.path.exists(tf)): return None
+    L = json.load(open(lf)); T = pickle.load(open(tf, 'rb'))['tracks']
+    ev = [(s['_hex'], s['_t0'], s['_t1'], s['x'], s['z']) for s in L['stays']] + [(e['_hex'], e['_t'], e['_t'], e['x'], e['z']) for e in L['signal_edges']]
+    weak = []; n = 0; joins = 0
+    for s in R_:
+        if s['src'] != 'obs' or s['ref_point'] == 'rule_point': continue
+        n += 1; st = s['strength']
+        sp_ = [tspan(t) for t in types_of(s['evidence'])]; sp_ = max([x for x in sp_ if x] or [0.0])
+        rr = max(B.MERGE_RAMP, sp_ / 2 + 2.0 if sp_ > B.BIG_SPAN else 0.0)
+        pts = [(s['x'], s['z'])] + [(m['x'], m['z']) for m in s['evidence'].get('merged_duplicates', [])]
+        near = [e for e in ev if any(math.hypot(e[3] - a, e[4] - b) <= rr for a, b in pts)]
+        by = {}
+        for e in near: by.setdefault(e[0], []).append(e)
+        pres = 0
+        for hx, es in by.items():
+            es.sort(key=lambda e: (e[1], e[2])); a = T[hx]; pres += 1
+            for A, Bv in zip(es, es[1:]):
+                m = (a['t'] > A[2]) & (a['t'] < Bv[1])
+                left = bool(m.any() and np.hypot(a['x'][m] - A[3], a['z'][m] - A[4]).max() > PRES_LEAVE_M)
+                if left or math.hypot(Bv[3] - A[3], Bv[4] - A[4]) > PRES_SAME_M: pres += 1
+                else: joins += 1
+        if len(st['naip_aircraft_years']) + pres < B.N_OBS_MIN: weak.append((s['id'], len(st['naip_aircraft_years']), pres))
+    return weak, n, joins
 
 
 def main():
-    D = json.load(open(os.path.join(HWD, 'data', 'hwd_airport.json')))
+    data = sys.argv[sys.argv.index('--data') + 1] if '--data' in sys.argv else os.path.join(HWD, 'data', 'hwd_airport.json')
+    D = json.load(open(data))
+    if '--paint-only' in sys.argv:      # check 3's paint part alone, e.g. against an older build (--data)
+        FE = json.load(open(os.path.join(HWD, 'refs', 'cache', 'osm', 'khwd_features.json')))['features']
+        h = paint_check(D, FE) + topology_check(D, FE); say('RESULT (paint only): %s' % ('passed' if not h else 'FAILED: ' + '; '.join(h))); return 1 if h else 0
     NASR = json.load(open(os.path.join(HWD, 'refs', 'cache', 'faa', 'nasr_2026-10-29_HWD.json')))['tables']
     CS = json.load(open(os.path.join(HWD, 'refs', 'cache', 'faa', 'chart_supplement_HWD.json')))
     FE = json.load(open(os.path.join(HWD, 'refs', 'cache', 'osm', 'khwd_features.json')))['features']
@@ -312,31 +559,20 @@ def main():
     sn = [w for w in D['taxiways'] + D['taxilanes'] if w['evidence']['naip_paint'].get('snapped_len_m')]
     say('   NAIP paint snapping: %d of %d ways moved (%.0f m), largest shift %.2f m: %s' % (len(sn), len(D['taxiways']) + len(D['taxilanes']), sum(w['evidence']['naip_paint']['snapped_len_m'] for w in sn),
                                                                                        max([w['evidence']['naip_paint']['max_shift_m'] for w in sn] or [0]),
-                                                                                       ', '.join('%s %s (%s)' % (w['id'], w['ref'] or '-', 'faint rule' if w['evidence']['naip_paint']['faint'].get('snap') else 'strong rule') for w in sn)))
-    N24p = Naip('2024'); hp = [(h['x'], h['z']) for h in D['holds']]; off_secs = []; nsec = 0
-    for w in D['taxiways'] + D['taxilanes']:
-        if w['status'] != 'open': continue
-        P_ = B.densify(w['pts'], 2.0); S_ = B.arclen(P_); T_ = B.tangents(P_)
-        if S_[-1] < 8.0: continue
-        ss = np.arange(0.0, S_[-1] + 1e-9, B.ST_STEP); fo = np.full(len(ss), np.nan)
-        for i, s_ in enumerate(ss):
-            p_ = np.array([np.interp(s_, S_, P_[:, 0]), np.interp(s_, S_, P_[:, 1])])
-            t_ = np.array([np.interp(s_, S_, T_[:, 0]), np.interp(s_, S_, T_[:, 1])]); t_ /= max(1e-9, np.hypot(*t_))
-            if B.RWY_MASK.contains(Point(p_)) or any(math.hypot(p_[0] - h[0], p_[1] - h[1]) < B.HOLD_MASK_M for h in hp): continue
-            r_ = N24p.cross_peak(p_, t_, half=B.HALF, avg=B.AVG, step=0.1, min_contrast=B.FAINT_C)
-            if r_ and r_[2] < B.AMB * r_[1] and N24p.bstar(p_, t_, r_[0], B.AVG) >= B.FAINT_BSTAR_MIN: fo[i] = r_[0]
-        secs = B.faint_sections(ss, fo); nsec += len(secs)
-        off_secs += [(w['id'], w['ref'], q['s0_m'], q['n'], q['median_m'], q['iqr_m']) for q in secs if q['offset']]
-    say('   NAIP 2024 faint yellow centreline per 50 m section on the final geometry: %d sections with >= %d ridges; sections with a consistent offset (|median| >= %.1f m, IQR <= %.1f m): %d %s' % (
-        nsec, B.FAINT_SEC_N, B.FAINT_MED_MIN, B.FAINT_IQR_MAX, len(off_secs), off_secs))
-    if off_secs: hard.append('taxiway paint offset per section')
-    fo_ = [w['evidence']['naip_paint']['faint']['median_offset_m'] for w in D['taxiways'] if w['evidence']['naip_paint'].get('faint', {}).get('median_offset_m') is not None and w['evidence']['naip_paint']['faint']['n'] >= 10]
-    if fo_: say('   (for reference: faint ridges of the OSM line before snapping, >= 10 per way, %d taxiways: per-way median offset p10/p50/p90 %+.2f / %+.2f / %+.2f m; this summary hides single ways, hence the section test)' % (len(fo_), *np.percentile(fo_, [10, 50, 90])))
+                                                                                       ', '.join('%s %s (trigger: %s)' % (w['id'], w['ref'] or '-', ' + '.join((w['evidence']['naip_paint']['faint'].get('fit') or {}).get('trigger', ['?']))) for w in sn)))
+    hard += paint_check(D, FE)
+    hard += topology_check(D, FE)
     onr = [(w['id'], w['ref'], w['on_runway']['len_m']) for w in D['taxiways'] if w.get('on_runway', {}).get('runway_overlap')]
     say('   taxiway ways with > 50 m inside a NASR runway rectangle (on_runway.runway_overlap): %d %s' % (len(onr), onr))
-    wd = [w['width']['naip_grey_width_m'] for w in D['taxiways'] + D['taxilanes'] if w.get('width', {}).get('naip_src') == 'obs']
-    say('   widths: NAIP grey width measured on %d of %d open ways (median %s m); the others carry only the AC default width [inf]' % (
-        len(wd), sum(1 for w in D['taxiways'] + D['taxilanes'] if w['status'] == 'open'), r1(np.median(wd)) if wd else None))
+    # widths (round-1 re-check: obs widths with IQRs of 11-22 m, and values from 1-4 stations under a note saying null)
+    wd = [w['width'] for w in D['taxiways'] + D['taxilanes'] if w['status'] == 'open']
+    w_obs = [x for x in wd if x.get('naip_src') == 'obs']; w_inf = [x for x in wd if x.get('naip_src') == 'inf']
+    w_bad = [x for x in wd if (x.get('naip_src') == 'obs' and (x['naip_stations'] < B.WIDTH_N_MIN or x['naip_grey_iqr_m'] > B.WIDTH_IQR_MAX)) or
+             (x['naip_stations'] < B.WIDTH_N_MIN and x.get('naip_grey_width_m') is not None) or (x.get('naip_src') == 'inf' and not x.get('naip_reason'))]
+    say('   widths: NAIP grey width obs (>= %d stations, IQR <= %.1f m) on %d of %d open ways (median %s m, IQR %s m); inf with a reason (IQR larger) on %d; no value (< %d stations) on %d; the AC default [inf] is on all. Rule violations: %d' % (
+        B.WIDTH_N_MIN, B.WIDTH_IQR_MAX, len(w_obs), len(wd), r1(np.median([x['naip_grey_width_m'] for x in w_obs])) if w_obs else None,
+        [x['naip_grey_iqr_m'] for x in w_obs], len(w_inf), B.WIDTH_N_MIN, sum(1 for x in wd if x['naip_grey_width_m'] is None), len(w_bad)))
+    if w_bad: hard.append('taxiway width src')
 
     # ------------------------------------------------------------------------------------------- 4/5. spots on pavement, not in buildings
     say('\n4./5. Parking spots on pavement, not in buildings')
@@ -375,33 +611,96 @@ def main():
         if not found: hard.append('AC quote')
     W = [s for s in P if s['kind'] != 'helipad']; H = [s for s in P if s['kind'] == 'helipad']
     heli_def = min(s['size']['max_rotor_m'] for s in H if s['size'].get('max_rotor_m'))
+    gat = json.load(open(os.path.join(HWD, 'data', 'ga_types.json')))['types']
+    def tspan(t):
+        g = gat.get(t) or {}; v = [x for x in (g.get('wingspan_m'), g.get('wingspan_winglets_m')) if x]
+        return max(v) if v else None
+    def types_of(ev):
+        out = Counter()
+        for k in ('types',): out.update({t: n for t, n in (ev.get(k) or {}).items() if t != '?'})
+        for k in ('adsb', 'adsb_signal_edges'):
+            for a in ev.get(k, []): out.update({t: n for t, n in (a.get('types') or {}).items() if t != '?'})
+        for m in ev.get('merged_duplicates', []): out.update(types_of(m['evidence']))
+        return out
+    c172 = gat['C172']['length_m'] / tspan('C172')
+    def ratio(s):
+        """fuselage length / span of the widest observed type with both in the FAA ACD, else the C172's (recounted here
+        from the evidence, not read from the spot's planform field)"""
+        best = None
+        for t in sorted(types_of(s['evidence'])):
+            sp_ = tspan(t); ln = (gat.get(t) or {}).get('length_m')
+            if sp_ and ln and (best is None or sp_ > best[0]): best = (sp_, ln / sp_)
+        return best[1] if best else c172
+    RAT = {s['id']: ratio(s) for s in W}
+    rat_bad = [(s['id'], round(RAT[s['id']], 2), s['size'].get('planform', {}).get('length_per_span')) for s in W if round(RAT[s['id']], 2) != s['size'].get('planform', {}).get('length_per_span')]
+    say('   sizing planform (round-1 re-check: the wing alone left out the fuselage): wing segment across the heading + fuselage of span x length/span (FAA ACD of the widest observed type, else C172 %.3f) along it, %.0f %% ahead of the reference point; without a heading a disc of radius span x max(1/2, (1 - that share) x length/span), which holds the planform in every heading. Recounted length/span agrees with every spot\'s planform field: %s' % (
+        c172, 100 * B.FUS_FWD_FRAC, 'yes' if not rat_bad else 'NO %s' % rat_bad[:6]))
+    if rat_bad: hard.append('planform length/span')
 
-    def shape(s, key='max_span_m'):
+    def shape(s, key='max_span_m', nose=True):
         if s['kind'] == 'helipad': return Point(s['x'], s['z']).buffer((s['size'].get('max_rotor_m') or heli_def) / 2, 32)
-        sp = s['size'][key]
-        if s['heading'] is None: return Point(s['x'], s['z']).buffer(max(sp / 2, 0.005), 32)
-        u = np.array([math.cos(math.radians(s['heading'])), math.sin(math.radians(s['heading']))]); c = np.array([s['x'], s['z']])
-        return LineString([tuple(c - u * sp / 2), tuple(c + u * sp / 2)])
+        sp = max(s['size'][key], 0.005); r = RAT[s['id']]
+        if s['heading'] is None:      # the spot's recorded disc (round 2: radius / span in size.planform.disc_radius_per_span;
+            return Point(s['x'], s['z']).buffer(sp * disc_k(s), 64)   # builds before round 2: diameter span x max(1, ratio))
+        return headed(s['x'], s['z'], s['heading'], sp, r, nose)
+    def disc_k(s):
+        k = s['size'].get('planform', {}).get('disc_radius_per_span')
+        return k if k is not None else max(1.0, RAT[s['id']]) / 2
+    def headed(x, z, hdg, sp, r, nose=True):
+        h = math.radians(hdg); u = np.array([math.cos(h), math.sin(h)]); f = np.array([math.sin(h), -math.cos(h)]); c = np.array([x, z])
+        L = r * sp
+        return unary_union([LineString([tuple(c - u * sp / 2), tuple(c + u * sp / 2)]),
+                            LineString([tuple(c + f * (L * B.FUS_FWD_FRAC if nose else 0.0)), tuple(c - f * L * (1 - B.FUS_FWD_FRAC))])])
+    # round-2 re-check: the heading-less disc (span x max(1, ratio) across) left the tail of the build's own planform
+    # outside. Hard: for every spot without a heading, the disc holds the wing + fuselage planform at every heading (5 deg steps)
+    nh_bad = []
+    for s in W:
+        if s['heading'] is not None: continue
+        for key in ('max_span_m', 'capacity_span_m'):
+            sp = s['size'][key]
+            if sp <= 0.01: continue
+            dsc = shape(s, key).buffer(0.005)
+            if not all(dsc.contains(headed(s['x'], s['z'], hd, sp, RAT[s['id']])) for hd in range(0, 360, 5)): nh_bad.append((s['id'], key))
+    say('   spots without a heading: %d; their recorded disc (size.planform.disc_radius_per_span) holds the wing + fuselage planform at every heading (5 deg steps) at both sizes: %s' % (
+        sum(1 for s in W if s['heading'] is None), 'yes' if not nh_bad else 'NO %s' % nh_bad[:8]))
+    if nh_bad: hard.append('heading-less disc does not hold the planform')
+    # door spots: the only spots whose own hangar may be entered (by the nose); verified here from the geometry
+    door_bad = []
+    for s in W:
+        if not s.get('door_spot'): continue
+        pg = dict(blds)[s['hangar']]; pt = Point(s['x'], s['z']); q = pg.exterior.interpolate(pg.exterior.project(pt))
+        hd = math.degrees(math.atan2(q.x - s['x'], -(q.y - s['z']))) % 360
+        if pg.exterior.distance(pt) > B.HGR_DOOR_M + 0.05 or abs((hd - s['heading'] + 180) % 360 - 180) > 2.0 or s['kind'] != 'hangar_apron':
+            door_bad.append((s['id'], round(pg.exterior.distance(pt), 1), round(hd, 1), s['heading']))
+    say('   door spots (an aircraft at its hangar door: ADS-B <= %.0f m from the wall, nose in): %d %s; each within %.0f m of its hangar wall and heading to the nearest wall point: %s' % (
+        B.HGR_DOOR_M, sum(1 for s in W if s.get('door_spot')), [s['id'] for s in W if s.get('door_spot')], B.HGR_DOOR_M, 'yes' if not door_bad else 'NO %s' % door_bad))
+    if door_bad: hard.append('door spot geometry')
     WH = W + H; pos = np.array([[s['x'], s['z']] for s in WH])
     for key, clear, name in (('max_span_m', WINGTIP, 'AC design size (10 ft)'), ('capacity_span_m', B.CAP_GAP, 'capacity size (%.1f m gap)' % B.CAP_GAP)):
         viol = []; mins = []
         for i in range(len(WH)):
             d = np.hypot(*(pos - pos[i]).T)
-            for j in np.nonzero((d < 40) & (np.arange(len(WH)) > i))[0]:
+            for j in np.nonzero((d < 45) & (np.arange(len(WH)) > i))[0]:
                 if WH[i]['kind'] == 'helipad' and WH[j]['kind'] == 'helipad': continue      # pads are fixed, mapped geometry
-                c = shape(WH[i], key).distance(shape(WH[j], key)); mins.append(c)
+                if key == 'max_span_m' and any(any(f.startswith('no_design_size') for f in WH[k_]['size'].get('flags', [])) for k_ in (i, j)): continue   # listed below
+                c = shape(WH[i], key).distance(shape(WH[j], key)); mins.append((c, WH[i]['id'], WH[j]['id']))
                 if c < clear - 0.006: viol.append((WH[i]['id'], WH[j]['id'], round(c, 3)))   # 0.006: sizes are floored to 0.01 m
-        say('   %s: %d spot pairs within 40 m (helipad spots included as discs of their rotor size, unknown = %.1f m, the smallest OSM pad); min clearance %.3f m (required %.3f m); violations %d %s' % (
-            name, len(mins), heli_def, min(mins), clear, len(viol), viol[:10]))
+        mn = min(mins)
+        say('   %s: %d spot pairs within 45 m (planforms; helipad spots as discs of their rotor size, unknown = %.1f m, the smallest OSM pad); min clearance %.3f m (%s / %s; required %.3f m); violations %d %s' % (
+            name, len(mins), heli_def, mn[0], mn[1], mn[2], clear, len(viol), viol[:10]))
         if viol: hard.append('spacing (%s)' % name)
+        if key == 'max_span_m':
+            nd_ = [(s_['id'], s_['size'].get('limited_by')) for s_ in W if any(f.startswith('no_design_size') for f in s_['size'].get('flags', []))]
+            say('   spots with no AC design size (flag no_design_size: not even a point keeps 10 ft from a higher-priority spot / building; left out of the design-size pair test above, kept in the capacity test): %d %s' % (len(nd_), nd_))
+            if any(s_['size']['max_span_m'] > 0 for s_ in W if any(f.startswith('no_design_size') for f in s_['size'].get('flags', []))): hard.append('no_design_size flag')
         bv = []
         for s in W:
             for bid, pg in blds:
-                if s['kind'] == 'hangar_apron' and bid == s.get('hangar'): continue
-                if pg.distance(Point(s['x'], s['z'])) > 40: continue
-                c = shape(s, key).distance(pg)
-                if c < clear - 0.006: bv.append((s['id'], bid, round(c, 2)))
-        say('   %s: wing shape vs building / hangar outlines (own hangar excepted for hangar-apron spots): violations %d %s' % (name, len(bv), bv[:8]))
+                if pg.distance(Point(s['x'], s['z'])) > 45: continue
+                own_door = bool(s.get('door_spot') and bid == s.get('hangar'))
+                c = shape(s, key, nose=not own_door).distance(pg); need = B.CAP_GAP if own_door else clear
+                if c < need - 0.006: bv.append((s['id'], bid, round(c, 2)))
+        say('   %s: planform vs every building / hangar outline, the spot\'s own hangar included (door spots: without the nose, %.1f m): violations %d %s' % (name, B.CAP_GAP, len(bv), bv[:8]))
         if bv: hard.append('spot shape in building clearance (%s)' % name)
     say('   (consistency checks: the build sizes the spots with this rule; they show the sizes, the helipads and the buildings agree)')
     sz = Counter(s['size'].get('adg') for s in W)
@@ -417,17 +716,6 @@ def main():
     say('   duplicates: ramp / hangar-apron spot pairs closer than %.1f m (one aircraft seen twice): %d %s' % (B.DUP_M, len(dup), dup))
     if dup: hard.append('duplicate spots')
     # observed types recounted from every adsb.lol type in the evidence
-    gat = json.load(open(os.path.join(HWD, 'data', 'ga_types.json')))['types']
-    def tspan(t):
-        g = gat.get(t) or {}; v = [x for x in (g.get('wingspan_m'), g.get('wingspan_winglets_m')) if x]
-        return max(v) if v else None
-    def types_of(ev):
-        out = Counter()
-        for k in ('types',): out.update({t: n for t, n in (ev.get(k) or {}).items() if t != '?'})
-        for k in ('adsb', 'adsb_signal_edges'):
-            for a in ev.get(k, []): out.update({t: n for t, n in (a.get('types') or {}).items() if t != '?'})
-        for m in ev.get('merged_duplicates', []): out.update(types_of(m['evidence']))
-        return out
     tight_d = []; tight_c = []; flag_bad = []
     for s in W:
         sp = [tspan(t) for t in types_of(s['evidence'])]; sp = [x for x in sp if x]
@@ -448,23 +736,66 @@ def main():
             pit, [round(p - WINGTIP, 2) for p in pit], [round(p - B.CAP_GAP, 2) for p in pit], [round(p - 11.003, 2) for p in pit]))
     fl_all = Counter(f.split(' (')[0] for s in W for f in s['size'].get('flags', []))
     say('   size flags: %s' % dict(fl_all))
+    # independent observations (round-1 re-check: a stay and its own signal start / end were counted as 2-3)
+    ST = json.load(open(os.path.join(HWD, 'refs', 'cache', 'adsb', 'hwd_parked_stays.json')))
+    ev_all = [(e['x'], e['z'], e['session']) for e in ST['stays'] + ST['signal_edges']]
+    obs_bad = []; weak = []
+    for s in R_:
+        st = s['strength']
+        if s['ref_point'] == 'rule_point': continue
+        n_ = len(st['naip_aircraft_years']) + st.get('adsb_sessions', 0)     # (missing in builds before round 1)
+        if n_ != st['n_observations'] or s['src'] != ('obs' if n_ >= B.N_OBS_MIN else 'inf'): obs_bad.append(s['id'])
+        if s['src'] == 'obs':   # recount: sessions of committed stays / signal edges within 8 m (a wide type: half its span + 2 m,
+            # as build_airport.BIG_SPAN) of the spot or of a merged duplicate
+            sp_ = [tspan(t) for t in types_of(s['evidence'])]; sp_ = max([x for x in sp_ if x] or [0.0])
+            rr = max(B.MERGE_RAMP, sp_ / 2 + 2.0 if sp_ > B.BIG_SPAN else 0.0)
+            pts = [(s['x'], s['z'])] + [(m['x'], m['z']) for m in s['evidence'].get('merged_duplicates', [])]
+            ss_ = {k for x, z, k in ev_all if any(math.hypot(x - a, z - b) <= rr for a, b in pts)}
+            if len(st['naip_aircraft_years']) + len(ss_) < B.N_OBS_MIN: weak.append((s['id'], st['naip_aircraft_years'], len(ss_), st.get('adsb_sessions')))
+    ua = D.get('unspotted_aircraft') or []
+    stale = [(u['x'], u['z'], s_['id']) for u in ua for s_ in P if math.hypot(s_['x'] - u['x'], s_['z'] - u['z']) < 5.0]
+    say('   parked aircraft on NAIP 2024 without a spot (unspotted_aircraft, by eye): %d (%s); listed ones that now have a spot within 5 m: %d %s' % (
+        len(ua), dict(Counter(u['where'] for u in ua)), len(stale), stale))
+    if stale: hard.append('unspotted_aircraft list stale')
+    say('   ramp / hangar-apron src: n_observations = NAIP years with an aircraft + adsb.lol sessions, obs when >= %d: consistent on every spot: %s' % (B.N_OBS_MIN, 'yes' if not obs_bad else 'NO %s' % obs_bad))
+    say('   independent recount (distinct sessions of the committed stays / signal edges within 8 m - for a type wider than %.0f m half its span + 2 m - of an obs spot or its merged duplicates, + NAIP years): obs spots below %d: %d %s - hard (round-1 re-check: HE623S150 was obs on one session)' % (B.BIG_SPAN, B.N_OBS_MIN, len(weak), weak))
+    if obs_bad: hard.append('spot src vs independent observations')
+    if weak: hard.append('obs spot on fewer than %d independent observations (recount)' % B.N_OBS_MIN)
+    # presences recounted from the LOCAL per-aircraft files, without the session numbers (round-2 re-check: the recount
+    # above reuses the session numbers, so it could not see that they split one aircraft's uninterrupted presence)
+    pres = presence_recount(R_, types_of, tspan)
+    if pres is None:
+        say('   presence recount: SKIPPED (refs/cache/local/adsb/hwd_parked_stays_local.json or hwd_tracks.pkl not present: gitignored, local only)')
+    else:
+        weak2, n_spots, n_merge = pres
+        say('   presence recount from the local per-aircraft files (own code, not the session numbers): one aircraft\'s events at an obs spot are one presence unless it has a fix > %.0f m from the earlier event in between or the two events are > %.0f m apart, however long the gap; %d obs spots, %d same-aircraft event pairs joined; obs spots below %d (NAIP years + presences): %d %s - hard (no identities printed)' % (
+            PRES_LEAVE_M, PRES_SAME_M, n_spots, n_merge, B.N_OBS_MIN, len(weak2), weak2))
+        if weak2: hard.append('obs spot on fewer than %d independent presences (local recount)' % B.N_OBS_MIN)
     # spot vs taxiway / taxilane centrelines
     twy = unary_union([LineString(w['pts']) for w in D['taxiways'] if w['status'] == 'open'])
     tln = unary_union([LineString(w['pts']) for w in D['taxilanes'] if w['status'] == 'open'])
-    rows = Counter(); rule_bad = []
+    rows = Counter(); rule_bad = []; conn_bad = []; rev_bad = []; conn = []
     for s in W:
         g = shape(s, 'capacity_span_m'); dt, dl = g.distance(twy), g.distance(tln)
         inside = dt < B.TWY_OBJ_M or dl < B.TLN_OBJ_M
         rows[(s['src'], s['kind'], 'inside' if inside else 'clear')] += 1
         if s.get('ref_point') == 'rule_point':
-            u = np.array([math.cos(math.radians(s['heading'])), math.sin(math.radians(s['heading']))]); n_ = np.array([u[1], -u[0]])   # nose direction
-            c = np.array([s['x'], s['z']])
-            ol = unary_union([LineString([tuple(c - u * B.ADG_SPAN['I'] / 2), tuple(c + u * B.ADG_SPAN['I'] / 2)]), LineString([tuple(c + n_ * B.FUS_FWD), tuple(c - n_ * B.FUS_AFT)])])
+            h = math.radians(s['heading']); u = np.array([math.cos(h), math.sin(h)]); f = np.array([math.sin(h), -math.cos(h)]); c = np.array([s['x'], s['z']])
+            L = c172 * B.ADG_SPAN['I']
+            ol = unary_union([LineString([tuple(c - u * B.ADG_SPAN['I'] / 2), tuple(c + u * B.ADG_SPAN['I'] / 2)]), LineString([tuple(c + f * L * B.FUS_FWD_FRAC), tuple(c - f * L * (1 - B.FUS_FWD_FRAC))])])
             if ol.distance(twy) < B.TWY_OBJ_M - 0.05 or ol.distance(tln) < B.TLN_OBJ_M - 0.05: rule_bad.append((s['id'], round(ol.distance(twy), 1), round(ol.distance(tln), 1)))
-    say('   spot wing shape (capacity size) vs open taxiway / taxilane centrelines, AC 150/5300-13B Table 4-1 ADG I object distance %.1f / %.1f m: %s' % (
+            pl = pave_path(s['x'], s['z'], FE); conn.append((s['id'], None if pl is None else round(pl)))
+            if pl is None or pl > B.CONNECT_M * 1.06: conn_bad.append((s['id'], pl))
+            rv = s['evidence'].get('review_by_eye', '')
+            if not rv.startswith('ok') or rv != B.HGR_REVIEW.get(s.get('hangar')): rev_bad.append(s['id'])
+    say('   spot planform (capacity size) vs open taxiway / taxilane centrelines, AC 150/5300-13B Table 4-1 ADG I object distance %.1f / %.1f m: %s' % (
         B.TWY_OBJ_M, B.TLN_OBJ_M, ', '.join('%s %s %s: %d' % (k[0], k[1], k[2], v) for k, v in sorted(rows.items()))))
-    say('   rule-made (inferred hangar-apron) spots whose ADG I outline is inside that distance: %d %s' % (len(rule_bad), rule_bad))
+    say('   rule-made (inferred hangar-apron) spots whose ADG I planform is inside that distance: %d %s' % (len(rule_bad), rule_bad))
+    say('   rule-made spots: shortest path over OSM pavement around buildings to an open taxiway / taxilane (8-neighbour Dijkstra on a 1 m grid; build limit %.0f m, +6 %% for the two grid metrics): %s; beyond: %d %s' % (B.CONNECT_M, conn, len(conn_bad), conn_bad))
+    say('   rule-made spots with an "ok" by-eye review entry (build_airport.HGR_REVIEW): %d of %d; missing / not ok: %s' % (len(conn) - len(rev_bad), len(conn), rev_bad))
     if rule_bad: hard.append('inferred spot vs taxiway clearance')
+    if conn_bad: hard.append('inferred spot not connected to the taxi network')
+    if rev_bad: hard.append('inferred spot without by-eye review')
 
     # ------------------------------------------------------------------------------------------- 7. hot spots
     say('\n7. Hot spots: OSM taxiways inside the AL-5015 ellipse vs the CS text')
@@ -488,7 +819,7 @@ def main():
     # ------------------------------------------------------------------------------------------- 9. hygiene
     say('\n9. Data hygiene')
     srcs = set(D['sources']); nel = 0; badel = []
-    for k in ('runways', 'taxiways', 'taxilanes', 'aprons', 'holds', 'hotspots', 'helipads', 'hangars', 'buildings', 'markers', 'parking', 'al5015_labels', 'not_placed'):
+    for k in ('runways', 'taxiways', 'taxilanes', 'aprons', 'holds', 'hotspots', 'helipads', 'hangars', 'buildings', 'markers', 'parking', 'al5015_labels', 'not_placed', 'unspotted_aircraft'):
         for e in D[k]:
             nel += 1
             if e.get('src') not in ('obs', 'inf') or not e.get('refs') or not set(e['refs']) <= srcs: badel.append((k, e.get('id') or e.get('what')))
@@ -503,8 +834,42 @@ def main():
     if not same: hard.append('js twin')
     d1 = d1_scan()
     if d1: hard.append('D1')
+    # session numbers (round 1) must not link an aircraft's separate presences: per session <= 1 signal start, <= 1 end, and
+    # all its events within 2 x SESSION_R_M of each other
+    import collections
+    sys.path.insert(0, os.path.join(HERE, 'adsb'))
+    ST = json.load(open(os.path.join(HWD, 'refs', 'cache', 'adsb', 'hwd_parked_stays.json'))); by = collections.defaultdict(list)
+    for e in ST['stays']: by[e['session']].append(('stay', e['x'], e['z']))
+    for e in ST['signal_edges']: by[e['session']].append((e['kind'], e['x'], e['z']))
+    import parked_stays as PS
+    # round 2: a session may now hold a parked aircraft's power cycles (end, start, end ...), so starts and ends alternate:
+    # their counts differ by at most 1
+    sbad = [k for k, v in by.items() if abs(sum(1 for t in v if t[0] == 'start') - sum(1 for t in v if t[0] == 'end')) > 1 or
+            max(math.hypot(a[1] - b[1], a[2] - b[2]) for a in v for b in v) > 2 * PS.SESSION_R_M]
+    say('   D1 session numbers in refs/cache/adsb/hwd_parked_stays.json: %d sessions (%d hold a power cycle: > 1 start or end); signal starts and ends differ by <= 1 in each and each lies within %.0f m: %s' % (
+        len(by), sum(1 for v in by.values() if sum(1 for t in v if t[0] in ('start', 'end')) > 2 or sum(1 for t in v if t[0] == 'start') > 1 or sum(1 for t in v if t[0] == 'end') > 1),
+        2 * PS.SESSION_R_M, 'yes' if not sbad else 'NO %s' % sbad[:10]))
+    if sbad: hard.append('D1 session structure')
     miss = sources_coverage()
-    if miss: hard.append('SOURCES coverage')
+    if miss: hard.append('SOURCES coverage / provenance')
+    # src-like keys in every committed JSON: obs / inf (or null); field-documentation maps are skipped; data/ga_types.json
+    # uses 'none' for types without an FAA ACD row (its src_legend) - listed, not a failure
+    root = os.path.dirname(HWD); bad_src = []; doc_maps = ('src_legend', 'parking_fields', 'stay_fields', 'hold_fields', 'field_definitions', 'fields')
+    for f in sorted(subprocess.run(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '--', 'hwd3d'], capture_output=True, text=True, check=True).stdout.split()):
+        if not f.endswith('.json'): continue
+        vals = Counter()
+        def walk(o, inside_doc=False):
+            if isinstance(o, dict):
+                for k, v in o.items():
+                    if not inside_doc and (k == 'src' or k.endswith('_src')) and not isinstance(v, (dict, list)): vals[(k, v)] += 1
+                    walk(v, inside_doc or k in doc_maps or k.endswith('_fields'))
+            elif isinstance(o, list):
+                for v in o: walk(v, inside_doc)
+        walk(json.load(open(os.path.join(root, f))))
+        b = {'%s=%r' % k: n for k, n in vals.items() if k[1] not in ('obs', 'inf', None)}
+        if b: bad_src.append((os.path.relpath(os.path.join(root, f), HWD), b))
+    say('   src / *_src values other than obs / inf / null in committed JSON (field-documentation maps skipped): %s' % (bad_src or 'none'))
+    if any(f != 'data/ga_types.json' or set(b) != {"src='none'"} for f, b in bad_src): hard.append('src values')
 
     say('\nRESULT: %s' % ('ALL HARD CHECKS PASSED' if not hard else 'FAILED: ' + '; '.join(hard)))
     os.makedirs(os.path.join(HWD, 'out', 'phase1', 'g5'), exist_ok=True)
