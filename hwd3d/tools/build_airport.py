@@ -1202,7 +1202,7 @@ SPLIT_MIN_EXT = 16.0   # m: a blob reviewed as two aircraft gives two spots only
                        # Kept unchanged in round 3, so that the round only moves the spots of the split blobs (below)
 # by-eye centres (wing / fuselage crossing) of the two aircraft in each blob that the review (NAIP_REVIEW) marks
 # 'two_aircraft', keyed by the review entry's spot_id_in_review_build (round-3 re-check, 2026-11-13: the split along the
-# blob's major axis put spot RW134N555 on the wingtip junction between the two aircraft of R080 - 5.5 m and 7.0 m from
+# blob's major axis put spot RW134N555 on the wingtip junction between the two aircraft of R080 - 6.3 m and 7.0 m from
 # their centres - and its other half, on the first aircraft, was dropped by the LANE_M rule and never listed). Read on
 # NAIP 2024 (0.6 m GeoTIFF, x8-x12 bicubic, 2 m grid) from the tail, the nose and the wing band of each aircraft, +-1.5 m.
 # A split blob now gives its spots at these centres (ref_point 'naip_by_eye_aircraft_centre'); a blob below SPLIT_MIN_EXT

@@ -3,7 +3,7 @@
 Task G5, 2026-11-12. Built by `tools/build_airport.py` and checked by `tools/check_airport.py`. The build reads only
 committed inputs and makes no network calls.
 
-**Updated three times on the same day, and once on 2026-11-13:**
+**Updated three times on the same day, and twice on 2026-11-13:**
 - **By the Phase 1 cross-check** (`docs/phase1_crosscheck.md`). The AL-5015 registration had a bug: the 28R end of the
   diagram's runway bar was found 76 m short. It was fixed in `tools/osm/xcheck_osm_faa.py`, which moved the hot spots,
   the label anchors, two apron-name matches and the terminal.
@@ -19,7 +19,12 @@ committed inputs and makes no network calls.
 - **By the round-2 re-check fixes** (section 8, 2026-11-13). A second independent re-check found that the round-1 taxiway
   moves had broken the taxi network at 22 joins, that a power-cycled parked aircraft still counted as two sessions, that
   the back row of a nested double row was missing from the unspotted list, and that the heading-less sizing disc left
-  the tail out. Section 8 lists each finding with its outcome; sections 1-5 below describe the current build.
+  the tail out. Section 8 lists each finding with its outcome.
+- **By the round-3 re-check fixes** (section 9, 2026-11-13). A third independent re-check found that the docs miscounted
+  the joined power cycles (14 for 106) and claimed a session guarantee that the check did not test, that the unspotted
+  list named a spot that no build had (RW130N558) while one aircraft of a split blob had neither a spot nor a listing, and
+  that section 2 swapped taxiway E's ends. Section 9 lists each finding with its outcome; sections 1-5 below describe the
+  current build.
 
 The numbers below are those of the current build. Sources, terms and notices are in `docs/ATTRIBUTION.md`. The file
 itself is offered under **ODbL 1.0**.
@@ -41,7 +46,7 @@ The JSON is 826 kB (826,197 bytes). The `.js` twin is `export const HWD_AIRPORT 
 | Section | Count | src | Content and origin |
 |---|---|---|---|
 | `runways` | 2 | obs | See below this table. |
-| `taxiways` | 65 | obs | OSM centrelines with ref, status and OSM tags: 61 open, 2 `abandoned`, 2 `disused`; 10.3 km in total, 9.5 km open. Fields on each way:<br>• `naip_paint`: its NAIP paint measurement, including faint-ridge sections.<br>• `ref_src` / `ref_note`: 3 OSM refs that AL-5015 does not support along the way are `inf` (section 2).<br>• `on_runway`: present on every way that enters a NASR runway rectangle; 13 ways overlap it by more than 50 m.<br>• `width`: an AC default marked inf on all; a NAIP grey-test width marked obs on 6 ways (≥ 5 stations, IQR ≤ 1.5 m), inf with a reason on 8 (IQR 3.6-21.9 m), no value on 125 (< 5 stations).<br>• `paint_offset_unsnapped`: 30 unmoved ways whose measured paint offsets are recorded (section 2).<br>• `naip_paint.junctions`: since round 2, every junction with another way is one shared vertex with one displacement (section 2); 22 unmoved ways have an end attached to a moved junction.<br>A1 carries the NASR wingspan limit of 100 ft, Z1 of 94 ft. A carries the remark "not visible from ATCT between B and C". |
+| `taxiways` | 65 | obs | OSM centrelines with ref, status and OSM tags: 61 open, 2 `abandoned`, 2 `disused`; 10.3 km in total, 9.5 km open. Fields on each way:<br>• `naip_paint`: its NAIP paint measurement, including faint-ridge sections.<br>• `ref_src` / `ref_note`: 3 OSM refs that AL-5015 does not support along the way are `inf` (section 2).<br>• `on_runway`: present on every way that enters a NASR runway rectangle; 13 ways overlap it by more than 50 m.<br>• `width`: an AC default marked inf on all; a NAIP grey-test width marked obs on 6 ways (≥ 5 stations, IQR ≤ 1.5 m), inf with a reason on 8 (IQR 3.6-21.9 m), no value on 125 (< 5 stations).<br>• `paint_offset_unsnapped`: 30 unmoved ways whose measured paint offsets are recorded (section 2).<br>• `naip_paint.junctions`: since round 2, every junction with another way is one shared vertex with one displacement (section 2); 22 unmoved ways have an end attached to a moved junction. Since round 3 an end junction names its end by compass (`way_end`, e.g. E's s = 0 end is "start (s = 0), north-east end").<br>A1 carries the NASR wingspan limit of 100 ft, Z1 of 94 ft. A carries the remark "not visible from ATCT between B and C". |
 | `taxilanes` | 78 | obs | OSM centrelines, 6.3 km in total. Two are moved as a whole onto a fit of their NAIP paint (section 2); one of them, 204801549, now starts at a shallow fork on taxiway E. |
 | `aprons` | 9 | obs | OSM polygons. Names are only where OSM tags them or AL-5015 labels them (see after this table). |
 | `holds` | 18 | obs | OSM holding-position nodes. 16 are moved onto the yellow bar measured on NAIP 2024. Each records the runway, its distance from the centreline in ft, and the bar direction and skew. |
@@ -51,7 +56,7 @@ The JSON is 826 kB (826,197 bytes). The `.js` twin is `export const HWD_AIRPORT 
 | `buildings` | 17 | obs | **Control tower:** OSM way 204803620 (man_made=tower, service=aircraft_control, height 15.85 m), matched to the AL-5015 TWR label and the NASR ATCT. Its beacon is inf.<br>**Fire station:** OSM node 368168603, a point only. It now carries the cross-check `deviation` [inf]: the AL-5015 block, with a building on NAIP, is 45 m east.<br>**Terminal / Airport Administration:** OSM way 1372203791, name inf, placed by the AL-5015 label leader.<br>**Other:** 14 OSM buildings inside the aerodrome, role unknown. |
 | `markers` | 2 | obs | The windsock (OSM node; NASR: lighted) and the segmented circle around it. The circle is obs (NASR flag, NAIP). Its diameter of about 31.5 m was read by eye, so `diameter_src` is inf; its centring on the windsock gives `position_src` inf. |
 | `parking` | 177 | 113 obs / 64 inf | Tie-downs, ramp spots, hangar aprons and helipad spots (section 3). |
-| `unspotted_aircraft` | 48 | inf | Parked aircraft on NAIP 2024 that no spot stands for, found by eye; since round 2 the check's omission sweep (machine candidates, by-eye verdicts) looks for more (positions ±2 m; section 5). A known gap, not spots. |
+| `unspotted_aircraft` | 48 | inf | Parked aircraft on NAIP 2024 that no spot stands for, found by eye; since round 2 the check's omission sweep (machine candidates, by-eye verdicts) looks for more, and since round 3 every NAIP aircraft blob must be a spot, a listed aircraft or a by-eye verdict (positions ±2 m; section 5). A known gap, not spots. |
 | `al5015_labels` | 10 | inf | AL-5015 area labels placed by the diagram affine. |
 | `not_placed` | 3 | obs / inf | Known features without a location: the UL94 self-serve fuel island; an unmapped paved helicopter area with four square pads south of 10R/28L (its spot ids are generated at build time); the official tie-down numbering. |
 | `not_yet_sourced` | 4 | inf | What the data set still lacks, with candidate sources: signs, lighting fixtures, marking geometry beyond hold bars and thresholds, and five unlit wind cones (section 5). |
@@ -142,11 +147,14 @@ the NASR 28L end, at the displaced threshold. The OSM geometry is reported but n
 
 **4 of 143 ways moved (1,024 m):**
 - **Taxiway E, way 490634605:** the curve is −3.27 to −3.51 m over the whole way (73 ridges, 89 % inliers, MAD 0.12 m,
-  longest gap 22 m). Its paint holds up to the south end (s = 0), so that node follows E by 3.51 m and the last 17.5 m of
-  taxilane 58169733, which ends there, taper to it (58169733's own last ~45 m is still recorded as off the paint,
-  unmoved). At the north end (s = 168 m) the paint curves back to the junction (ridges there median +0.45 m against the
-  fit's −3.34 m), so that node stays and E tapers to it over 16.7 m; on NAIP 2024 the built line follows the curving
-  paint there (looked at on a NAIP 2024 crop with both lines drawn, round 2). Interior nodes: 204801012 joins at s = 165.7 m and
+  longest gap 22 m). E runs from north-east (s = 0, world (−101.9, −469.0) in OSM, lat 37.66316) to south-west (s = 168 m,
+  (−185.5, −323.3), lat 37.66185); z is south, so the s = 0 end is the northern one (round 3 corrected this paragraph,
+  which had the two ends swapped). Its paint holds up to the north-east end (s = 0), so that node follows E by 3.51 m and
+  the last 17.5 m of taxilane 58169733, which ends there, taper to it (58169733's own last ~45 m is still recorded as off
+  the paint, unmoved). At the south-west end (s = 168 m) the paint curves back to the junction (ridges there median
+  +0.45 m against the fit's −3.34 m), so that node stays and E tapers to it over 16.7 m; on NAIP 2024 the built line
+  follows the curving paint there (looked at on a NAIP 2024 crop with both lines drawn, round 2). The junction records
+  name these ends (`way_end`). Interior nodes: 204801012 joins at s = 165.7 m and
   follows E (0.47 m); 204801549 forks off at s = 53.2 m (below).
 - **Taxiway F, way 490634609:** +1.66 m at the start, drifting to +0.2 m by s ≈ 225 m (82 ridges, 93 % inliers, MAD
   0.16 m). It has one interpolated stretch (s 280-380 m, change 0.05 m) and one held end stretch (s 384-445 m at
@@ -255,8 +263,14 @@ The **NAIP blob review**. I looked at every NAIP blob that had become a ramp spo
 - 1 the same aircraft as a neighbouring blob;
 - 4 centred between two aircraft parked wing to wing.
 
-The build drops the vehicles, the empty ones and the duplicate. It splits the two-aircraft blobs of 16 m or more into two
-spots (2) and drops the others (2). I tested the blob shape (extent, minor extent, fill) as an automatic filter, and it
+The build drops the vehicles, the empty ones and the duplicate. A two-aircraft blob of 16 m or more gives two spots and
+the other two-aircraft blobs (2) give none; their four aircraft are listed as unspotted (section 5). Since round 3 the two
+spots stand at the two **aircraft centres read by eye** (`build_airport.TWO_AIRCRAFT_CENTRES`, wing / fuselage crossing,
+±1.5 m), not at the centroids of the blob's halves: for R080 on the West Hangars apron the split had put a spot (RW134N555)
+on the wingtip junction between two aircraft, 6.3 m and 7.0 m from their centres, and the other half, on the first
+aircraft, had been dropped by the 4 m lane rule without being listed. Now R080 gives the spot RW141N553 on its second
+aircraft, and its first aircraft, 2.9 m from the centreline of OSM taxilane 58169733, is dropped by the lane rule and listed; R041 on the FBO
+Ramp (north-east) gives RE442N015 and RE452N019 (the half centroids had been within 0.3 m of these centres). I tested the blob shape (extent, minor extent, fill) as an automatic filter, and it
 does not separate the classes. Wing-only aircraft blobs (minor 1.8–2.1 m, fill 0.70–0.81) look like trucks. Blobs not
 in the review are marked "not reviewed by eye".
 
@@ -282,9 +296,15 @@ aircraft's continuous presence at one place: its consecutive stays and signal st
 the aircraft has no fix farther than 30 m away, and none off the ground, in between, **however long the gap** (round 2;
 `tools/adsb/parked_stays.py sessions()`). So a stay and its own signal start and end are one session, and so is a parked
 aircraft's power cycle: its signal end and its next signal start at the same place with no fix elsewhere in between, even
-two days later. The same aircraft after taxiing away or flying is another session. Round 1 linked events only when ≤ 20
-min apart, which split such presences (section 8 R2-2). The rule errs towards fewer sessions: an aircraft that left and
-came back while the recorder had an outage (17 outages > 600 s, PLAN §3) counts once. One sighting gives inf. `strength` lists
+two days later. The same aircraft after taxiing away or flying is another session **where the recording shows it** (a
+fix > 30 m away, or off the ground). During a power cycle it cannot show it: no fix of the aircraft lies between a signal
+end and its next signal start. 106 of the 522 sessions hold such a join (107 joins; `summary.session_joins` in
+`hwd_parked_stays.json`, round 3): 30 span less than 1 h, 36 1-8 h, 26 8-24 h, 13 one to three days and 2 three days or
+more. The recorder itself had 17 outages > 600 s, 72.5 h of the 164.3 h recording, and 45 of the joins bridge more than
+1 h of such outage. A departure and return hidden in a join (by an outage, or made with the transponder off) is counted
+as one session, so these joins are inferred across time the recording did not see. Joining can only lower the session
+count, so it can turn an obs spot into inf, never the reverse. Round 1 linked events only when ≤ 20 min apart, which split such presences
+(section 8 R2-2). One sighting gives inf. `strength` lists
 `adsb_sessions` and, for information, stays and signal events. The other kinds keep their rules:
 - a tie-down is obs when its tee is seen;
 - a helipad is obs when it is mapped in OSM;
@@ -317,7 +337,7 @@ the OSM pad size, or null.
 **ref_point** (new) says what point each position stands for:
 - the tee junction (wing line), 80 spots;
 - the GNSS antenna median, 52;
-- the NAIP blob centroid, 24, or the centroid of one half of a split blob, 3;
+- the NAIP blob centroid, 24, or the by-eye centre of one aircraft of a two-aircraft blob, 3 (round 3; before, the centroid of one half of the blob);
 - the helipad centroid, 9;
 - the rule point, 9.
 
@@ -352,7 +372,11 @@ reported heading only 29 % of the time).
 All hard checks passed on the current build. Several of them are *consistency* checks: the build derives the data from
 the same rule or source that the check uses. The report says so. Since round 1 the check takes `--data FILE`; run on the
 build that the re-check examined, it fails on every round-1 finding it covers (section 7). Run on the round-1 build
-(the one the round-2 re-check examined), it fails on each of the four round-2 findings (section 8).
+(the one the round-2 re-check examined), it fails on each of the four round-2 findings (section 8). Run on the round-2
+build (`hwd_airport.json` df5a8828…, the one the round-3 re-check examined), it fails on the round-3 tests for findings
+R3-2 (section 9): the NAIP aircraft accounting and the spot-id references. (That run also fails the rule-spot review test,
+because the old evidence still holds the HGR_REVIEW text with the HE383N167 typo, and the `.js` twin test, which always
+reads the current `.js`.)
 
 1. **Runways vs NASR**, recomputed from the NASR rows rather than from `hwd_frame`'s constants:
    - 69 fields compared, 0 mismatches;
@@ -455,22 +479,55 @@ build that the re-check examined, it fails on every round-1 finding it covers (s
      13 paint, 1 structure, 5 the far part of the aircraft at a spot, 2 part of a listed aircraft). The round-1 build
      fails: one candidate without a verdict at (486.3, −0.9), 53.8 m², the merged back row of the nested double row.
      Limits: the mask needs a bright object, so dark aircraft and aircraft in shadow are not found, and only OSM aprons
-     are swept.
+     are swept. Since round 3 a two-aircraft review blob is no longer an exclusion point (it lay between R080's two
+     aircraft); the result did not change.
+   - **NAIP aircraft accounting** (round 3, hard; `check_airport.naip_accounting`): every NAIP 2024 aircraft blob of the
+     build's grouping (the same mask and `tiedowns.Grid.aircraft`, extent ≥ 8 m, on every OSM apron with buildings cut
+     out) must be a spot within 8 m, a listed aircraft within 3 m, or carry a by-eye verdict (SWEEP_REVIEW); both by-eye
+     centres of each two-aircraft blob need a spot or a listed aircraft within 3 m; every split-blob spot must lie within
+     3 m of a by-eye centre. Current build: 59 blobs at a spot, 3 listed, 2 with a verdict (taxi-centreline paint; part of
+     the jet at RE171S300), 12 not aircraft by the review; 8 two-aircraft centres (3 spots, 5 listed); 0 failures. The
+     round-2 build fails: R080's first aircraft (−129.0, −558.5) has no spot or listed aircraft within 3 m (RW134N555
+     6.3 m away, the nearest listed aircraft 13.0 m), and RW134N555 lies 6.3 m from the nearest by-eye centre. The test
+     reuses the build's blob grouping and the by-eye records: it shows that the build applied them, not that the by-eye
+     readings are right.
+   - **Lane-rule drops** (round 3, hard on the build's record `checks_at_build.naip_aircraft_dropped_by_lane_rule`): 5
+     NAIP aircraft candidates lie within 4 m of an open OSM taxi line; 4 are listed and 1 is taxi-centreline paint (sweep
+     verdict at (67.3, −537.4)); 0 unaccounted.
 7. **Hot spots:** HS 1 and HS 5 agree with the taxiways their CS texts name. HS 2–4 are *not checkable against the CS*, because their texts name no taxiway (earlier versions called them "consistent").
 8. **Holds:** 16 of 18 have a NAIP bar; the offset from the OSM node is at most 0.60 m (median 0.30 m).
 9. **Hygiene:**
    - all 478 elements have a valid `src` and `refs`;
+   - **spot-id references** (round 3, hard): every spot-id token in the data text and in `build_airport`'s by-eye records
+     (UNSPOTTED_NAIP2024, SWEEP_REVIEW, HGR_REVIEW, HGR_REVIEW_REJECT) names a spot of the data: 0 missing. The round-2
+     build fails with RW130N558 (the unspotted note) and HE383N167 (an HGR_REVIEW typo for RE383N167; looked at on NAIP
+     2024: RE383N167 is the aircraft beside rule spot HE394N170);
    - the `.js` twin parses to the same object.
    - **D1:** all 17 committed ADS-B-derived files were scanned against the hex, registration and callsign of the 1,098
      aircraft that the recording saw within 5 km. The scan also looks for identity keys, per-row time keys, epoch
      numbers and N-number-like tokens. 0 findings.
-   - **Session numbers** (round 1, revised in round 2): the 522 sessions in `hwd_parked_stays.json` (630 under the round-1
-     rule) each lie within 30 m, and in each the signal starts and ends differ by at most 1: 14 sessions hold a power
-     cycle (end, start, ...) at one place. A number still never links an aircraft's visits to different places or
-     across a departure.
+   - **Session numbers** (round 1, revised in rounds 2 and 3):
+     - committed file (runs in a fresh clone): the 522 sessions in `hwd_parked_stays.json` (630 under the round-1 rule)
+       each lie within 30 m, and in each the signal starts and ends differ by at most 1; 124 hold both a start and an
+       end, 14 more than one start or end. The file has no time order, so this test cannot tell a power cycle (end,
+       then start) from a start followed by an end. The round-2 report's "14 sessions hold a power cycle" counted only
+       the 14 with more than one start or end; 106 sessions hold a power cycle (below);
+     - local per-aircraft files (round 3, own code, hard; SKIPPED without `refs/cache/local/adsb/`, no identity printed):
+       the committed and local session numbers agree; each session holds one aircraft; in time order its consecutive
+       events lie ≤ 15 m apart with no fix of the aircraft > 30 m away and none off the ground in between, and its
+       signal starts and ends alternate (0 sessions with two starts or two ends in a row); no consecutive pair of one
+       aircraft's events that the rule links is split across two sessions; the recount of `summary.session_joins`
+       agrees (106 sessions with a power cycle, 107 joins, all 107 without a fix in between, 45 of them bridging > 1 h
+       of recorder outage; 17 outages > 600 s, 72.5 h of the 164.3 h recording). Positive controls on modified copies
+       (scratch, round 3): merging two sessions of one aircraft across a recorded departure, splitting a power-cycle
+       session, changing one committed session number, and setting the summary to 14 each make it fail;
+     - what this shows: a session number never joins visits that the recording shows to be separate (other places, or a
+       fix away or airborne in between). It cannot show that an aircraft stayed while it had no fix: a departure and
+       return in that time is joined (section 2).
    - **SOURCES** (round 1 extended, hard):
-     - all 58 committed data files have an entry;
-     - all entries in the 6 SOURCES.json files have `made_by` or `note`;
+     - all 60 committed data files have an entry (58 in round 2; the 2 FAA TAF files of commit 34a8cc8, made outside
+       this round, are new);
+     - all entries in the 7 SOURCES.json files (6 in round 2, plus `refs/cache/faa/taf/`) have `made_by` or `note`;
      - all 14 text / JSON files whose SOURCES licence names the ODbL carry the ODbL URI in the file itself.
    - **src values** (round 1): every `src` / `*_src` value in every committed JSON is obs, inf or null, field-documentation
      maps aside. The one listed exception is `data/ga_types.json` `src: 'none'` (23 types without an FAA ACD row; its
@@ -480,7 +537,9 @@ build that the re-check examined, it fails on every round-1 finding it covers (s
 - Every input of the build is committed. The build reads the committed NAIP JPEGs, never the local GeoTIFF.
 - Round 1 re-ran these, and each came out byte-identical on a second run:
   - `tools/adsb/parked_stays.py` (now with sessions; round 2 changed the session rule, and a re-run on 2026-11-13 gave a
-    byte-identical `hwd_parked_stays.json`);
+    byte-identical `hwd_parked_stays.json`; round 3 added `summary.session_joins` and the two constants OUTAGE_S /
+    JOIN_BLIND_S: the stays, signal edges and session numbers came out unchanged, and a second run gave a byte-identical
+    file, sha256 8201e5a5…);
   - `tools/phase0/hwd_mix.py` and `hwd_cov.py`. Before the notice line was added they reproduced the committed
     summaries exactly; after it, the summaries differ from the committed ones only by that first line.
 - OSM:
@@ -489,7 +548,7 @@ build that the re-check examined, it fails on every round-1 finding it covers (s
   - `fetch_osm.py --via api` needed one live OSM API request.
 - Two dependencies stay local. The NDVI fields of `hwd_parked_stays.json` need the local NAIP GeoTIFF, but the build does not use them. `tools/plot_overlays.py` uses the GeoTIFF when present; its numbers are committed as `docs/phase1/crosscheck_metrics.json`.
 - A fresh clone cannot re-merge the OSM extract without the network, because `.parts/` is gitignored. The merged extract itself is committed.
-- Build: `hwd_airport.json` sha256 df5a8828…, `.js` 7781349a… (round 2, 2026-11-13); about 3 min. A second build from scratch, with every `__pycache__` deleted first, gave byte-identical files.
+- Build: `hwd_airport.json` sha256 554d1e9f…, `.js` 9bf3e642… (round 3, 2026-11-13); about 3 min. Further builds from scratch, with every `__pycache__` deleted first, gave byte-identical files.
 - Environment: `build_env` in the file records Python 3.13.18, numpy 2.5.3, scipy 1.18.1, shapely 2.2.0, Pillow 12.3.0 and poppler 24.02.
 
 ## 5. Gaps and things not verified
@@ -505,7 +564,7 @@ build that the re-check examined, it fails on every round-1 finding it covers (s
   - Most centrelines are still OSM as mapped; only 4 ways moved.
   - 30 unmoved ways carry recorded off-paint windows (`paint_offset_unsnapped`). Most are short windows near junctions;
     whether they are centreline offsets or lead-in curves was not looked at way by way.
-  - Taxilane 58169733, which ends at E's south end: its end now follows E's moved node (17.5 m taper), but the 40 m
+  - Taxilane 58169733, which ends at E's north-east end (s = 0): its end now follows E's moved node (17.5 m taper), but the 40 m
     before that still read −1.9 to −3.2 m off its paint (recorded windows); it is not moved as a whole.
   - 22 unmoved ways are attached to moved junctions; the check verifies that this takes none of them farther off the
     paint than OSM was, not that they are on it.
@@ -532,7 +591,7 @@ build that the re-check examined, it fails on every round-1 finding it covers (s
   | West Hangars apron | (−200.0, −595.2), (−210.8, −589.2), (−222.2, −583.8), (−213.2, −580.2) | cluster of 5 wing to wing; RW203N587 is the 5th |
   | West Hangars apron | (−195.8, −563.4), (−206.0, −556.2) | pair north of RW208N551 (which is on the next aircraft) |
   | West Hangars apron | (−155.0, −577.8), (−144.2, −584.4) | pair wing to wing |
-  | West Hangars apron | (−140.6, −552.6), (−150.8, −546.0), (−161.0, −540.0) | row of 4; RW130N558 is the first |
+  | West Hangars apron | (−129.0, −558.5), (−150.8, −546.0), (−161.0, −540.0) | row of 4 high-wing aircraft: the 1st (north-east) lies 2.9 m from the centreline of OSM taxilane 58169733, which runs over it, and is dropped by the 4 m lane rule; the 2nd is spot RW141N553 (round 3; the round-2 list named a spot RW130N558 that no build had, and missed the 1st) |
   | West Hangars apron | (−376.6, −463.0), (−367.0, −462.4), (−370.9, −452.8), (−360.7, −452.2) | 4 in a painted rectangle; RW374N473 lies 9-10 m north |
   | West Hangars apron | (−158.6, −507.6), (−114.8, −532.8), (−173.6, −496.8) | beside / on taxi lines: parked or taxiing (the last a larger twin or jet) |
   | FBO Ramp (north-east) | (162.5, −361.3), (156.3, −267.5), (150.5, −255.0) | north end; east of the RE127N262 / RE131N273 / RE139N285 row |
@@ -545,7 +604,10 @@ build that the re-check examined, it fails on every round-1 finding it covers (s
 
   Why they were missed: aircraft parked wing to wing merge into blobs above the 24 m extent limit; the West Hangars and
   NE-strip markings are not detected as tee rows; and blobs within 4 m of a taxi line count as taxiing. They are listed,
-  not made into spots. Whether to add them as inf spots is open. Aircraft that sit about 6 m from a spot were counted as
+  not made into spots. Since round 3 the check enforces this for the build's own NAIP candidates (section 4, check 6:
+  NAIP aircraft accounting and lane-rule drops); it cannot enforce it for aircraft that form no blob. The listed
+  aircraft are not obstacles in the sizing, so a spot next to them is sized as if they were not there: for example
+  RW141N553 (capacity 14.93 m) stands 13.0 m and 12.1 m from the listed 1st and 3rd aircraft of its row. Whether to add them as inf spots is open. Aircraft that sit about 6 m from a spot were counted as
   standing at it by eye (inferred): (304, −70) at RE308N064 and (272, −268) at RE277N271 are sweep verdicts; (365, −35),
   6.4 m from RE361N040, has no part beyond 7.5 m that the sweep shows.
 - **Size classes.** `max_span_m` follows the AC design rule and is tighter than the real use (Green Ramp 9.1 m against a C172 of 11.0 m). Use `capacity_span_m` for placement and `flags` for the spots where even that is smaller than the type seen there.
@@ -651,3 +713,30 @@ partial round-2 build). "The 7afa0ac build" is the one the round-1 re-check exam
 Still open after round 2: the FAA registry (403), the adsb.lol `www.` quotes, signs / lighting / markings, the D offset,
 whether the 48 unspotted aircraft become spots, and the sweep's blind spots (dark or shadowed aircraft, aircraft off the
 OSM aprons).
+
+*Round 3 (R3-1): the R2-2 row's "14 hold a power cycle" is wrong: 14 sessions hold more than one start or end, and 106
+hold a power cycle (107 joins). Its statement that the rule "errs towards fewer sessions when an outage hides a
+departure" stands; section 2 now gives the numbers.*
+
+## 9. Round-3 re-check (2026-11-13): findings and outcomes
+
+A third independent re-check of the round-2 build (`hwd_airport.json` df5a8828…) raised three minor findings. Each was
+fixed in the tools, not by editing outputs: `tools/adsb/parked_stays.py` (re-run twice: byte-identical; its stays, signal
+edges and session numbers did not change), `tools/build_airport.py` and `tools/check_airport.py`. The build was then run
+three times from scratch with every `__pycache__` deleted (byte-identical: `hwd_airport.json` 554d1e9f…, `.js` 9bf3e642…;
+the second and third runs on the final code, the first before a code-comment edit). `check_airport.py` passed every hard check on that build; run with `--data`
+on the round-2 build it fails the new R3-2 tests (section 4). `plot_overlays.py --docs` was re-run: six images changed and
+`crosscheck_metrics.json` changed only in `data_sha256`. Against the round-2 images (as committed in the checkpoint
+6106667, made from the round-2 build df5a8828…) the changed pixels lie only around the moved spots, and I looked at each: the R080 spot moved from the wingtip junction onto the
+second aircraft of the row (West Hangars, Green Ramp / tower, whole field, AL-5015 and its west crop), and the R041 spots
+moved by about 0.2 m (FBO Ramp north-east).
+
+| # | Finding (severity) | Outcome | What was done; evidence |
+|---|---|---|---|
+| R3-1 | The docs counted 14 power cycles where there are 106, and claimed that check 9 shows a session number "never links an aircraft's visits ... across a departure", which it does not test and which cannot hold for joins across recorder outages; the outages were given only as a count (minor) | **fixed: docs and check; the session rule and numbers unchanged** | The finding is about the claims, not the data: the session numbers are unchanged, and a hidden departure can only lower the session count. *Tool:* `parked_stays.py` writes `summary.session_joins` (counts and gap buckets only, no times, no identity): 106 sessions with a power cycle, 107 signal end → start joins, all 107 with no fix of the aircraft in between, 45 of them bridging more than 1 h of recorder outage; 17 outages > 600 s, 72.5 h of the 164.3 h recording. These reproduce the re-check's numbers except 45 against its 46 for the outage joins: I sum the poll gaps > 600 s inside each join, clipped to the join. *Check 9:* the committed-file test is labelled a necessary condition (the file has no time order) and counts only what it can see (124 sessions with both a start and an end, 14 with more than one). A new local test (`session_check_local`, hard, SKIPPED without the gitignored files) verifies one aircraft per session, the link rule between consecutive events, starts and ends alternating in time, no split of a linked pair, committed = local numbers, and recounts `summary.session_joins`; four positive controls on modified copies fail as they should (section 4). *Docs:* section 2 gives the join and outage numbers and says the joins are inferred across time the recording did not see; section 4 check 9 is rewritten; the R2-2 row is annotated; the D1 sentence in `docs/ATTRIBUTION.md` now says what the check verifies and what a session number cannot show; the `adsb/SOURCES.json` note and the data's `src_rule` say that a hidden departure is joined. |
+| R3-2 | The unspotted list named a spot RW130N558 that does not exist; the first aircraft of the West Hangars row of 4 had no spot and was not listed (its half of split blob R080 was dropped by the 4 m lane rule, and the kept half RW134N555 sat on the wingtip junction); neither the stale test nor the omission sweep could see it (minor) | **fixed** | Confirmed: no build has RW130N558 (round 1 6864aef4, 7afa0ac, round 2). On NAIP 2024 (GeoTIFF at x8-x12 with a 2 m grid) the row holds 4 high-wing aircraft wing to wing; RW134N555 lay 6.3 m and 7.0 m from the centres of the first two. The dropped half lay at (−125.7, −559.6), 0.45 m from the OSM taxilane (the re-check's (−128.4, −558.0) was a symmetric estimate). *Cause:* a split put spots at the centroids of the blob's halves, which need not be aircraft centres; the hand-written note named an id that nothing checked. *Fix:* `TWO_AIRCRAFT_CENTRES` holds the by-eye centres of the 4 two-aircraft review blobs (±1.5 m); a split blob gives its spots there (`ref_point` `naip_by_eye_aircraft_centre`). R080 now gives RW141N553 on its second aircraft, and its first aircraft (−129.0, −558.5), 2.9 m from the centreline of OSM taxilane 58169733, is dropped by the lane rule and listed. R041 gives RE442N015 / RE452N019, 0.2 m from the old halves. The R077 / R079 centres are the listed positions, looked at again. The build records the lane-rule drops and what accounts for each. The unspotted note names no spot; `HGR_REVIEW`'s "HE383N167" is corrected to RE383N167 (found by the new id test). Counts are unchanged: 177 spots (ramp 31 obs / 36 inf), 48 unspotted aircraft. *Checks* (new, hard): NAIP aircraft accounting, lane-rule drops, spot-id references (section 4, checks 6 and 9); the round-2 build fails the first (R080's first aircraft; RW134N555 6.3 m off a centre) and the third (RW130N558, HE383N167). *Not done:* I did not repeat the re-check's own wide sweep (127 candidates, no other unlisted bright aircraft found there). Still not covered: aircraft that form no NAIP blob (dark, in shadow, off the OSM aprons), and the listed aircraft are not obstacles in the sizing (section 5). |
+| R3-3 | Sections 2 and 5 swapped taxiway E's ends (minor) | **fixed: docs; the data was right** | OSM vertex 0 of 490634605 (s = 0) is at (−101.94, −469.00), lat 37.66316, the north-east end; vertex 4 (s = 168 m) at (−185.52, −323.25), lat 37.66185, the south-west end (`hwd_frame.world_to_wgs84`; z is south). Sections 2 and 5 are corrected. The junction records now name each end by compass, computed from the coordinates (`way_end`): E's read "start (s = 0), north-east end" (node follows E, 3.51 m, with 58169733) and "end (s = L), south-west end" (stays, correction 3.34 m, taper 16.7 m). The geometry is unchanged. |
+
+Still open after round 3: the FAA registry (403), the adsb.lol `www.` quotes, signs / lighting / markings, the D offset,
+whether the 48 unspotted aircraft become spots (and become sizing obstacles), the sweep's blind spots, and the session
+joins across recorder outages, which stay inferred.

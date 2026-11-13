@@ -55,7 +55,12 @@ Checks
      at every heading - hard; a presence recount from the gitignored per-aircraft files, without the session numbers
      (presence_recount; SKIPPED without them) finds >= 2 for every obs spot - hard; the omission sweep (omission_sweep)
      finds no NAIP 2024 aircraft-mask part on an OSM apron farther than build_airport.SWEEP_R from every spot and listed
-     aircraft without a by-eye verdict (build_airport.SWEEP_REVIEW) - hard.
+     aircraft without a by-eye verdict (build_airport.SWEEP_REVIEW) - hard. Round 3: NAIP aircraft accounting
+     (naip_accounting): every NAIP 2024 aircraft blob of the build's grouping is a spot, a listed aircraft or a by-eye
+     verdict, both by-eye centres of a two-aircraft blob (build_airport.TWO_AIRCRAFT_CENTRES) have a spot or a listed
+     aircraft within TWO_MATCH_M, and every split-blob spot lies on a by-eye centre - hard; the build's record of the NAIP
+     aircraft dropped by the LANE_M rule has none 'NOT ACCOUNTED' - hard; the omission sweep no longer treats a
+     two-aircraft review blob as an exclusion point.
   7. Hot spots: the OSM taxiways inside each AL-5015 ellipse against the taxiways the CS hot-spot text names. A
      consistency check of the diagram registration and the OSM refs; HS whose CS text names no taxiway (HS 2, 3, 4) are
      reported as 'not checkable against the CS'.
@@ -67,7 +72,13 @@ Checks
      (t, t0, time, seen ...) and epoch-second numbers, N-number-like tokens, and any token equal to a hex address,
      registration or callsign of an aircraft that the pinned adsb.lol recording saw within 5 km of the ARP
      (identity_set, read from sfo3d/refs/cache/rec_pack) - hard; in each session of hwd_parked_stays.json the signal
-     starts and ends differ by at most 1 (round 2: power cycles in place) and it spans at most 2 x SESSION_R_M - hard. SOURCES coverage: every committed data file under
+     starts and ends differ by at most 1 (round 2: power cycles in place) and it spans at most 2 x SESSION_R_M - hard (a
+     necessary condition only: the committed file has no time order). Round 3, with the gitignored per-aircraft files
+     (session_check_local; SKIPPED without them): committed = local session numbers, one aircraft per session, its
+     consecutive events linked by the parked_stays rule (no departure that the recording shows), starts / ends alternating
+     in time, no split of a linked pair, and summary.session_joins recounted - hard; the joins that bridge recorder
+     outages are reported, not excluded. Spot-id tokens in the data text and in build_airport's by-eye records must name
+     spots of the data (spot_id_refs) - hard. SOURCES coverage: every committed data file under
      data/, refs/cache/ (not local/, not .parts/) and docs/phase1/ matches a key (or glob key) of a SOURCES.json in its
      folder or a parent folder - hard; every SOURCES entry has made_by or note - hard; every text / JSON file whose
      SOURCES licence names the ODbL carries the ODbL URI itself - hard; src / *_src values in every committed JSON are
