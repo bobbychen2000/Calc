@@ -1,0 +1,9 @@
+{
+ "mictronics_check.json": {
+  "url": "https://github.com/Mictronics/aircraft-database (commit 479e4d016c596214c8ab853d8fdf3175ce6739d3, indexedDB_old.zip)",
+  "licence": "own aggregate output; inputs: Mictronics aircraft database, Open Data Commons Attribution License 1.0 (ODC-By), and adsb.lol recordings (ODbL 1.0)",
+  "fetched": "2026-11-13",
+  "made_by": "tools/registry/mictronics_db.py check",
+  "note": "Counts only (no ICAO addresses, registrations or callsigns: PLAN D1). Used instead of the FAA registry download, which registry.faa.gov refuses to automated clients."
+ }
+}

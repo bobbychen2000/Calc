@@ -1,0 +1,37 @@
+{
+ "attribution": "Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL; aircraft data: Mictronics aircraft database, Open Data Commons Attribution License 1.0",
+ "callsigns": {
+  "icao_callsign": 26,
+  "operator_named": 26
+ },
+ "counts": {
+  "has_description": 175,
+  "icao_address_in_db": 191,
+  "icao_address_not_in_db": 25,
+  "no_description": 16,
+  "non_icao_or_anonymous_address": 27,
+  "reg_agrees": 190,
+  "type_agrees": 189,
+  "type_differs": 1,
+  "type_only_in_db": 1
+ },
+ "mictronics": {
+  "aircraft_in_db": 455928,
+  "commit": "479e4d016c596214c8ab853d8fdf3175ce6739d3",
+  "dbversion": {
+   "version": 530
+  },
+  "licence": "ODC-By 1.0",
+  "repo": "https://github.com/Mictronics/aircraft-database",
+  "zip_sha256": "db9055f5d18839ddf91db4be708759a1274df865d33d5fe523009d1b0d1f38ff"
+ },
+ "on_field_aircraft": 243,
+ "on_field_rule": "within 1500 m of the NASR ARP and below 150 ft AGL or alt_baro ground (tools/phase0/hwd_mix.py)",
+ "recordings": {
+  "dir": "sfo3d/refs/cache/rec_pack (adsb.lol, ODbL 1.0)",
+  "first": "adsblol_20261104_17.jsonl.xz",
+  "hours": 111,
+  "last": "adsblol_20261111_13.jsonl.xz"
+ },
+ "what": "Agreement of the Mictronics aircraft database with what aircraft on the HWD field broadcast (adsb.lol recordings); aggregate counts only, no identities (PLAN D1)."
+}
