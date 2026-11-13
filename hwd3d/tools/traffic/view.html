@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HWD traffic (P3 test page)</title>
+<style>:root{color-scheme:dark} html,body{margin:0;height:100%;background:#0b0d10;overflow:hidden} canvas{display:block;width:100vw;height:100vh}
+#hud{position:absolute;left:8px;top:8px;color:#e8eef6;font:12px/1.35 system-ui,sans-serif;text-shadow:0 1px 2px #000;white-space:pre-wrap;pointer-events:none}</style></head>
+<body><canvas id="c"></canvas><div id="hud">loading…</div>
+<!-- P3 test page (not the app; P4 owns live.html): P2's world + the traffic engine on a P1 replay pack + GA placeholders.
+     ?pack=out/replay/pack_weekend.json.gz  ?min=<replay minutes to simulate>  window.HWDT.shot(view) -> PNG data URL -->
+<script type="module" src="./view.js"></script></body></html>

@@ -11,7 +11,9 @@
 // HWD paints them is not established; Part 139 status not read).
 //
 // Every dimension below cites AC 150/5340-1M (Chg 1, 12/23/2020; the full AC is in refs/cache/local/faa/, paras 2.8,
-// 2.9.1 and 3.3.4.1 are also committed in refs/cache/faa/ac150_5340_1m_chg1_p52-54_63.pdf). Feet are converted with
+// 2.9.1 and 3.3.4.1 are also committed in refs/cache/faa/ac150_5340_1m_chg1_p52-54_63.pdf). Re-read on 2026-11-13 against
+// the full AC: Table 2-1 / 2-2 / 2-4, paras 2.3-2.9 and 3.3.4, Figures A-1, A-2, A-6, A-7, A-8, A-10 and A-13. Where the
+// paint on NAIP 2024 differs from the AC figures, the measured value is used (END_PAINT_OBS below). Feet are converted with
 // FT = 0.3048 (geo.js). Where the AC leaves a choice, or the layout is read from NAIP 2024 (public domain), the inventory
 // record says so (src 'inf' / 'obs').
 import { Mesh } from '../gl.js';
@@ -153,6 +155,25 @@ export const END_SCHEME = {
   '10L': { preceded: 'aligned_taxiway', src: 'obs', evidence: 'NAIP 2024 crop 10L end: white threshold bar at the end, 3 yellow arrowheads on the paved area before it' },
   '28R': { preceded: 'none', src: 'obs', evidence: 'NAIP 2024 crop 28R end: threshold stripes, no bar; a taxiway crosses at the end' },
 };
+// Per-end deviations of the painted layout from the AC 150/5340-1M standard figures, measured on NAIP 2024 (0.6 m pixels)
+// along the runway axes with dev/measure_paint.py and dev/naip_compare.py (out/phase2/naip_paint_measure.json,
+// out/phase2/cmp_rwy*_end.png; docs/phase2_world.md section 4). Values in ft; every one is [obs], +-2 ft.
+//   stripeStartFt: threshold stripes start (AC 2.5.3 Location: 20 ft; the superseded practice was 30 ft when a threshold bar is
+//                  painted, AC 2.5.3 "Previously ... increased to 30 feet"). 10L: white run 27.9-178.1 ft -> 30 ft; the
+//                  designation and the first centreline stripe follow it (+10 ft; NAIP: L foot at 217.8-228.2 ft).
+//   aimLenFt:      aiming point length (AC 2.6.5 item 1: 150 ft for >= 4,200 ft between thresholds, else 100 ft; HWD
+//                  10R/28L has 5,694 - 826 - 676 = 4,192 ft, so the AC rule gives 100 ft). NAIP: 10R 1,018.9-1,169.5 ft,
+//                  28L 1,020.1-1,171.6 ft -> both painted 150 ft long.
+//   arrowTipFt:    last displaced-area centreline arrow tip before the threshold (AC Fig. A-7: 100 ft before the threshold
+//                  stripes = 80 ft). NAIP head runs: 10R tip ~83 ft (AC kept), 28L ~67 ft, 200 ft pitch on both.
+//   edgeStartFt:   where the edge stripes begin from the runway end (AC 2.8.5: full length). 28R: a taxiway crosses at
+//                  the end and NAIP shows the stripes from the threshold-stripe start (~20 ft).
+export const END_PAINT_OBS = {
+  '10R': { aimLenFt: 150 },
+  '28L': { aimLenFt: 150, arrowTipFt: 67 },
+  '10L': { stripeStartFt: 30 },
+  '28R': { edgeStartFt: 20 },
+};
 
 // arrowheads across a runway (Fig. A-7 / A-8 chart): count and spacing by runway width W (ft)
 function arrowheadRow(Wft) {
@@ -184,8 +205,8 @@ export function buildRunwayPaint(P) {
     const id = `${a}/${b}`; const D = RWY_DATA[id]; const Wft = D.widthFt; const W = Wft * FT, hw = W / 2;
     const L = rwyAxis(a).length;
     const prec = RWY_ENDS[a].marking === 'PIR';
-    const edgeW = (Wft >= 100 ? 36 : 18) * IN;          // 2.8.4: min 36 in for runways >= 100 ft wide, 18 in otherwise
-    const clW = (prec ? 36 : 18) * IN;                  // 2.4.4 item 2: 36 in precision, 18 in non-precision
+    const edgeW = (Wft >= 100 ? 36 : 18) * IN;          // 2.8.5: min 36 in for runways >= 100 ft wide, 18 in otherwise
+    const clW = (prec ? 36 : 18) * IN;                  // 2.4.5 item 2: 36 in precision, 18 in non-precision
     const th = { [a]: thrDispM(a), [b]: thrDispM(b) };  // surveyed displacement (m) from each end
     // runway-local helper from end `e` (along from that end, across + = right of a pilot landing on e)
     const AX = { [a]: rwyAxis(a), [b]: rwyAxis(b) };
@@ -195,9 +216,10 @@ export function buildRunwayPaint(P) {
       for (let k = 0; k < n; k++) { const u0 = al0 + (al1 - al0) * k / n, u1 = al0 + (al1 - al0) * (k + 1) / n; P.poly([W2(e, u0, ac0), W2(e, u1, ac0), W2(e, u1, ac1), W2(e, u0, ac1)], col); }
     };
     const polyFt = (e, base, pts, col, holes = []) => P.poly(pts.map(([u, v]) => W2(e, base + u * FT, v * FT)), col, holes.map(h => h.map(([u, v]) => W2(e, base + u * FT, v * FT))));
-    // --- edge stripes (2.8): outer edge on the runway edge, the full length incl. the displaced areas (2.8.4 item 1)
-    for (const s of [-1, 1]) rect(a, 0, L, s > 0 ? hw - edgeW : -hw, s > 0 ? hw : -hw + edgeW, WHT);
-    rec(id, 'edge stripes', 2, `2.8 (width ${Wft >= 100 ? 36 : 18} in, full length, 2.8.4 item 1)`, 'obs', { note: 'stripes measured on NAIP 2024 / 2022 within 0.12 m of the NASR edges (Phase 1 report section 2)' });
+    // --- edge stripes (2.8): outer edge on the runway edge, the full length incl. the displaced areas (2.8.5 item 1)
+    const eA = ((END_PAINT_OBS[a] || {}).edgeStartFt || 0) * FT, eB = ((END_PAINT_OBS[b] || {}).edgeStartFt || 0) * FT;
+    for (const s of [-1, 1]) rect(a, eA, L - eB, s > 0 ? hw - edgeW : -hw, s > 0 ? hw : -hw + edgeW, WHT);
+    rec(id, 'edge stripes', 2, `2.8 (width ${Wft >= 100 ? 36 : 18} in, full length, 2.8.5 item 1)`, 'obs', { note: 'stripes measured on NAIP 2024 / 2022 within 0.12 m of the NASR edges (Phase 1 report section 2)' + (eA || eB ? `; from ${((eA || eB) / FT).toFixed(0)} ft past the ${eA ? a : b} end (NAIP 2024, a taxiway crosses there)` : '') });
     for (const e of [a, b]) {
       const o = e === a ? b : a; const disp = th[e]; const S = END_SCHEME[e];
       // --- threshold bar (2.9.1): 10 ft white, outboard edge on the (displaced) threshold, between the edge markings;
@@ -206,14 +228,15 @@ export function buildRunwayPaint(P) {
       // --- threshold stripes (2.5): 20 ft from the threshold, 150 ft long, 5.75 ft stripes and gaps, the two central
       // stripes 11.5 ft apart; count from Table 2-2 (12 for 150 ft, 6 for 75 ft)
       const nStr = Wft >= 150 ? 12 : Wft >= 100 ? 8 : Wft >= 75 ? 6 : 4;
-      for (let k = 0; k < nStr / 2; k++) for (const s of [-1, 1]) { const c0 = (11.5 / 2 + k * 11.5) * FT; rect(e, disp + 20 * FT, disp + 170 * FT, s > 0 ? c0 : -c0 - 5.75 * FT, s > 0 ? c0 + 5.75 * FT : -c0, WHT); }
-      rec(e, 'threshold stripes', nStr, '2.5.4 + Table 2-2 + Fig. A-1/A-2 (20 ft from the threshold, 150 x 5.75 ft, 11.5 ft central gap)', 'inf', { note: 'AC standard layout; NAIP 2024 shows the stripe groups at all four ends' });
+      const OB = END_PAINT_OBS[e] || {}; const sS = OB.stripeStartFt || 20, dS = sS - 20;   // dS: shift of everything past the stripes
+      for (let k = 0; k < nStr / 2; k++) for (const s of [-1, 1]) { const c0 = (11.5 / 2 + k * 11.5) * FT; rect(e, disp + sS * FT, disp + (sS + 150) * FT, s > 0 ? c0 : -c0 - 5.75 * FT, s > 0 ? c0 + 5.75 * FT : -c0, WHT); }
+      rec(e, 'threshold stripes', nStr, `2.5.3 + 2.5.5 + Table 2-2 + Fig. A-1/A-2 (${sS} ft from the threshold, 150 x 5.75 ft, 11.5 ft central gap)`, OB.stripeStartFt ? 'obs' : 'inf', { note: OB.stripeStartFt ? `start ${sS} ft measured on NAIP 2024 (AC: 20 ft; superseded 30-ft practice, 2.5.3)` : 'AC standard layout; NAIP 2024 shows the stripe groups at all four ends, position matched within 1 m (out/phase2/cmp_rwy*_end.png)' });
       // --- designation (2.3 + Fig. A-1 / A-6): letter 210-270 ft, numerals 290-350 ft from the threshold, stacked
       const num = e.replace(/[LRC]$/, ''), let_ = e.slice(num.length);
-      if (let_) { const g = GLYPHS[let_]; for (const [o2, hs] of g.parts) polyFt(e, disp + 210 * FT, o2.map(([x, y]) => [y, x - g.w / 2]), WHT, hs.map(h => h.map(([x, y]) => [y, x - g.w / 2]))); }
+      if (let_) { const g = GLYPHS[let_]; for (const [o2, hs] of g.parts) polyFt(e, disp + (210 + dS) * FT, o2.map(([x, y]) => [y, x - g.w / 2]), WHT, hs.map(h => h.map(([x, y]) => [y, x - g.w / 2]))); }
       { const gs = [...num].map(ch => GLYPHS[ch]); const tot = gs.reduce((s, g) => s + g.w, 0) + 15 * (gs.length - 1); let x0 = -tot / 2;
-        for (const g of gs) { for (const [o2, hs] of g.parts) polyFt(e, disp + (let_ ? 290 : 210) * FT, o2.map(([x, y]) => [y, x0 + x]), WHT, hs.map(h => h.map(([x, y]) => [y, x0 + x]))); x0 += g.w + 15; } }
-      rec(e, `designation ${e}`, 1, '2.3 + Fig. A-1 (stacked: letter 210-270 ft, number 290-350 ft) + Fig. A-6 (60 x 20 ft glyphs, 15 ft numeral spacing)', 'inf');
+        for (const g of gs) { for (const [o2, hs] of g.parts) polyFt(e, disp + ((let_ ? 290 : 210) + dS) * FT, o2.map(([x, y]) => [y, x0 + x]), WHT, hs.map(h => h.map(([x, y]) => [y, x0 + x]))); x0 += g.w + 15; } }
+      rec(e, `designation ${e}`, 1, `2.3 + Fig. A-1 (stacked: letter ${210 + dS}-${270 + dS} ft, number ${290 + dS}-${350 + dS} ft) + Fig. A-6 (60 x 20 ft glyphs, 15 ft numeral spacing)`, 'inf', { note: 'positions matched on NAIP 2024 within ~2 ft' + (dS ? ' after the measured +10 ft shift' : '') + '; glyph stroke details read from Fig. A-6 (not fully dimensioned)' });
       // --- displaced threshold arrows (2.9.2 + Fig. A-7): 4 / 3 arrowheads (W/4 or W/3 apart) with tips 5 ft before
       // the threshold; centreline arrows (80 ft tail 1.5 ft wide + 45 ft head = 120 ft) every 200 ft, the last tip
       // 100 ft before the start of the threshold stripes (= 80 ft before the threshold)
@@ -221,12 +244,13 @@ export function buildRunwayPaint(P) {
         const row = arrowheadRow(Wft);
         for (let k = 0; k < row.n; k++) { const c = (k - (row.n - 1) / 2) * row.pitch; for (const q of chevron(disp / FT - 5, c)) polyFt(e, 0, q, WHT); }
         let nA = 0;
-        for (let tip = disp / FT - 80; tip - 120 > 0; tip -= 200) {
+        const tipFt = OB.arrowTipFt || 80;
+        for (let tip = disp / FT - tipFt; tip - 120 > 0; tip -= 200) {
           for (const q of chevron(tip, 0)) polyFt(e, 0, q, WHT);
           polyFt(e, 0, [[tip - 120, -0.75], [tip - 40, -0.75], [tip - 40, 0.75], [tip - 120, 0.75]], WHT); nA++;
         }
         rec(e, 'displaced-threshold arrowheads', row.n, 'Fig. A-7 (45 ft, 15 ft wide, 3 ft stroke; tips 5 ft before the threshold; chart: n and spacing by width)', 'inf');
-        rec(e, 'displaced-area centreline arrows', nA, 'Fig. A-7 (120 ft arrows every 200 ft, last tip 100 ft before the threshold stripes)', 'inf', { note: 'count matches NAIP 2024 (10R 4, 28L 3)' });
+        rec(e, 'displaced-area centreline arrows', nA, `Fig. A-7 (120 ft arrows = 80 ft tail 1.5 ft wide + 45 ft head 15 ft wide, every 200 ft; last tip ${tipFt} ft before the threshold${OB.arrowTipFt ? ' [NAIP 2024; AC 80 ft]' : ''})`, OB.arrowTipFt ? 'obs' : 'inf', { note: 'count and pitch match NAIP 2024 (10R 4, 28L 3)' });
       }
       // --- before the runway end: yellow demarcation bar (2.9.3: 3 ft, on the taxiway, its runway-side edge at the
       // start of the runway, across the paved width) + yellow arrowheads (Fig. A-10 / A-8 chart, tips 5 ft before the
@@ -243,12 +267,12 @@ export function buildRunwayPaint(P) {
       // non-precision runways only when instrumented and >= 4,200 ft (Note 3) - 10L/28R is 3,108 ft: none
       const between = D.lenFt - RWY_ENDS[e].disp - RWY_ENDS[o].disp;
       if (prec) {
-        const apL = between >= 4200 ? 150 : 100; const apW = Wft >= 150 ? 30 : Wft >= 100 ? 20 : Wft >= 75 ? 15 : 12; const apIn = Wft >= 150 ? 72 : Wft >= 100 ? 48 : Wft >= 75 ? 36 : 28.8;
+        const apRule = between >= 4200 ? 150 : 100, apL = OB.aimLenFt || apRule; const apW = Wft >= 150 ? 30 : Wft >= 100 ? 20 : Wft >= 75 ? 15 : 12; const apIn = Wft >= 150 ? 72 : Wft >= 100 ? 48 : Wft >= 75 ? 36 : 28.8;
         for (const s of [-1, 1]) rect(e, disp + 1020 * FT, disp + (1020 + apL) * FT, s > 0 ? apIn / 2 * FT : -(apIn / 2 + apW) * FT, s > 0 ? (apIn / 2 + apW) * FT : -apIn / 2 * FT, WHT);
-        rec(e, 'aiming point', 2, `2.6.3 / 2.6.5 (1,020 ft; ${apL} ft long because ${between} ft lie between the thresholds; ${apW} ft wide, ${apIn} ft inner spacing)`, 'inf');
+        rec(e, 'aiming point', 2, `2.6.3 / 2.6.5 (1,020 ft; ${apW} ft wide, ${apIn} ft inner spacing; ${apL} ft long${OB.aimLenFt && OB.aimLenFt !== apRule ? ` as painted (NAIP 2024) - the 2.6.5 rule gives ${apRule} ft for ${between} ft between the thresholds` : ''})`, OB.aimLenFt ? 'obs' : 'inf');
         // --- touchdown zone (2.7): groups start 500 ft apart from 20 ft past the threshold (Table 2-3 Note 1);
         // 3-bar group at 520 ft, 2-bar at 1,520 / 2,020, 1-bar at 2,520 / 3,020; bars 75 x 6 ft, 5 ft spaces, inner
-        // sides on the aiming point's (2.7.4); pairs that extend within 900 ft of the midpoint between the thresholds
+        // sides on the aiming point's (2.7.5 item 3); pairs that extend within 900 ft of the midpoint between the thresholds
         // are not painted (2.7.3.1) - with 4,192 ft between the HWD thresholds only the 3-bar group remains
         const mid = between / 2; const groups = [[520, 3], [1520, 2], [2020, 2], [2520, 1], [3020, 1]]; let ng = 0;
         for (const [g0, nb] of groups) {
@@ -256,29 +280,31 @@ export function buildRunwayPaint(P) {
           for (const s of [-1, 1]) for (let k = 0; k < nb; k++) { const c0 = (apIn / 2 + k * 11) * FT; rect(e, disp + g0 * FT, disp + (g0 + 75) * FT, s > 0 ? c0 : -c0 - 6 * FT, s > 0 ? c0 + 6 * FT : -c0, WHT); }
           ng++;
         }
-        rec(e, 'touchdown zone bars', ng, '2.7 + Table 2-4 / 2.7.3.1 (900 ft no-marking zone from the midpoint) + 2.7.4 (75 x 6 ft, 5 ft spaces)', 'inf', { note: `${ng} group(s): midpoint ${mid.toFixed(0)} ft from the threshold` });
+        rec(e, 'touchdown zone bars', ng, '2.7 + Table 2-4 / 2.7.3.1 (900 ft no-marking zone from the midpoint) + 2.7.5 (75 x 6 ft, 5 ft spaces)', 'inf', { note: `${ng} group(s): midpoint ${mid.toFixed(0)} ft from the threshold` });
       }
     }
     // --- centreline (2.4): 120 ft stripes, 80 ft gaps, from 40 ft past the designation (390 ft from each threshold,
-    // Fig. A-1); adjustments made near the midpoint by shortening stripes (>= 80 ft) and gaps (>= 40 ft) (2.4.4 item 3)
+    // Fig. A-1); adjustments made near the midpoint by shortening stripes (>= 80 ft) and gaps (>= 40 ft) (2.4.5 item 3)
     {
-      const s0 = (th[a] / FT + 390), s1 = (L / FT - th[b] / FT - 390); const Lc = s1 - s0;
+      const dA = ((END_PAINT_OBS[a] || {}).stripeStartFt || 20) - 20, dB = ((END_PAINT_OBS[b] || {}).stripeStartFt || 20) - 20;
+      const s0 = (th[a] / FT + 390 + dA), s1 = (L / FT - th[b] / FT - 390 - dB); const Lc = s1 - s0;
       const n = Math.ceil((Lc + 80) / 200); let ex = n * 120 + (n - 1) * 80 - Lc;
       const st = new Array(n).fill(120), gp = new Array(n - 1).fill(80);
       // shrink symmetric pairs around the middle until the excess is absorbed
       const order = []; const m = (n - 1) / 2; for (let i = 0; i < n; i++) order.push(i); order.sort((p, q) => Math.abs(p - m) - Math.abs(q - m));
       for (const i of order) { if (ex <= 1e-6) break; const d = Math.min(40, ex); st[i] -= d; ex -= d; if (i < n - 1 && ex > 1e-6) { const d2 = Math.min(40, ex); gp[i] -= d2; ex -= d2; } }
       let u = s0; for (let i = 0; i < n; i++) { rect(a, u * FT, (u + st[i]) * FT, -clW / 2, clW / 2, WHT); u += st[i] + (gp[i] || 0); }
-      rec(id, 'centreline', n, `2.4.4 (120 ft / 80 ft, ${prec ? 36 : 18} in wide; starts 390 ft from each threshold per Fig. A-1; midpoint adjustment 2.4.4 item 3)`, 'inf');
+      rec(id, 'centreline', n, `2.4.5 (120 ft / 80 ft, ${prec ? 36 : 18} in wide; starts 390 ft from each threshold per Fig. A-1${dA || dB ? ` (${390 + dA} ft at ${dA ? a : b}, NAIP 2024)` : ''}; midpoint adjustment 2.4.5 item 3)`, 'inf', { note: 'stripe positions matched on NAIP 2024 within ~2 ft (out/phase2/cmp_rwy*_end.png)' });
     }
   }
   return inv;
 }
 
 // ------------------------------------------------------------------ taxiway / taxilane centrelines, holds, tees
-// Runway rectangle test with a margin (m): taxiway centrelines end at the outer edge of the runway edge marking
-// (4.2.3.2.1), i.e. at the runway edge; lead-on / lead-off lines on the runway are not drawn (their painted geometry is
-// not measured; NAIP 2024 shows them at the 28L displaced area).
+// Runway rectangle test with a margin (m): taxiway centrelines end at the runway edge (4.2.3.2.1). The lead-on / lead-off
+// lines that AC 4.2.3.3 continues onto the runway (curving to 3 ft beside the runway centreline and running 200 ft past
+// the tangent point) are NOT drawn: NAIP 2024 shows them at the HWD runway intersections, but their curve radii are not
+// measured yet (docs/phase2_world.md, known gaps).
 function runwayRects() {
   return RWY_PAIRS.map(([a, b]) => { const A = rwyAxis(a); return { A, hw: RWY_DATA[`${a}/${b}`].widthFt * FT / 2, L: A.length }; });
 }

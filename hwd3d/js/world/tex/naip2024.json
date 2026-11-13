@@ -43,5 +43,47 @@
   0.4225,
   0.3896,
   0.3241
- ]
+ ],
+ "region": {
+  "file": "naip2024_region_8m.jpg",
+  "file_16m": "naip2024_region_16m.jpg",
+  "width": 3000,
+  "height": 3000,
+  "pixel_size_m": 8.0,
+  "origin_E": 565464.0,
+  "origin_N": 4180336.0,
+  "origin_is": "outer north-west corner of pixel (col 0, row 0)",
+  "crs": "EPSG:26910",
+  "covers_m": [
+   24000.0,
+   24000.0
+  ],
+  "bytes": 2489857,
+  "bytes_16m": 707472,
+  "nodata_filled_px": 614316,
+  "border_linear_rgb": [
+   0.1981,
+   0.2159,
+   0.1301
+  ],
+  "request": {
+   "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer/exportImage",
+   "params": {
+    "bbox": "565464.0,4156336.0,589464.0,4180336.0",
+    "bboxSR": 26910,
+    "imageSR": 26910,
+    "size": "3000,3000",
+    "format": "jpg",
+    "compressionQuality": 92,
+    "pixelType": "U8",
+    "interpolation": "RSP_BilinearInterpolation",
+    "bandIds": "0,1,2",
+    "mosaicRule": "{\"mosaicMethod\": \"esriMosaicNorthwest\", \"where\": \"year_ts = 2024 OR year_ts IS NULL\"}",
+    "f": "image"
+   }
+  },
+  "fetched": "2026-11-13",
+  "raw_sha256": "4b6b46a95ae15b398730024ba90e54af91d6171f260ebc270bdfce3c5192c410",
+  "note": "USDA image-service resampling (bilinear) of the 2024 NAIP flights (28 quads, all flown 2024-05-20 per the service query) and its overviews, Northwest mosaic; no-data square over the open Bay filled by push-pull interpolation of the surrounding water; JPEG q 82"
+ }
 }

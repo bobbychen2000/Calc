@@ -199,6 +199,24 @@ Each can be reversed.
   touches the HWD runways, taxiways or ramps, or flies the HWD pattern, are classified as HWD traffic. Other traffic
   (OAK and SFO arrivals) is drawn as overflights.
 
+### 6b. Owner decisions (2026-11-13), binding
+
+These came from the owner directly. They **supersede** anything earlier in this plan, in `CLAUDE.md` or in any agent
+prompt that says "everything must work on a phone" or asks for phone performance.
+
+- **OD1 (one quality level only):** build **only the full-feature version**, at the highest resolution and with the
+  most complex shading. There is **no phone-friendly "lite" version**: no `quality=low` path, no reduced shading,
+  geometry, texture size or render scale for phones. Performance is judged by the owner **on a laptop**. Do not spend
+  effort on phone GPU frame time, memory or battery.
+- **OD2 (artifact on an iPhone):** the published artifact link must still **open and be usable on an iPhone**. The
+  layout must fit the screen and touch must work, but the rendering is not reduced or tuned for the phone ("no need to
+  optimize it"). The existing phone layout (bottom sheet, touch targets) stays as the layout; only performance work for
+  phones is dropped.
+- **OD3 (videos):** make **two videos**, each with a camera **following one aircraft through a landing and/or a
+  take-off at HWD**: one **Cirrus SF50 Vision Jet** and one **Pilatus PC-12**. They use real recorded tracks and the
+  full-quality renderer, and they need detailed SF50 and PC-12 models. This moves those two types to the front of
+  Phase 3. D1 still applies to anything shown in the videos.
+
 ## 7. Phased task list
 
 Each phase ends with commits, a push, and renders shown to the owner. No scored QA loop starts without the owner's
@@ -218,7 +236,9 @@ approval.
   - Write the GA phase classifier and taxi graph, and exclude OAK traffic.
   - Show the first renders.
 - **Phase 3 – aircraft.**
-  - Verify licences and convert C172, PA-28, SR22, C182, PC-12 (ours), a bizjet set and three helicopters.
+  - First (OD3): detailed **SF50** (procedural, from published dimensions) and **PC-12** (from our `pc12/` model),
+    then the two follow-cam videos of a real recorded landing / take-off for each.
+  - Verify licences and convert C172, PA-28, SR22, C182, a bizjet set and three helicopters.
   - Add N-number decals, lights, gear and shadows, and a category fallback for unknown types.
 - **Phase 4 – airport fidelity.**
   - Tower, hangar rows (T and box) with doors, FBOs, fuel island, fire station.
@@ -230,5 +250,6 @@ approval.
   - Pattern work, run-ups, hover-taxi; test against the replay.
 - **Phase 6 – QA and delivery.**
   - Adversarial visual QA passes, after the owner approves.
-  - Phone-friendly UI, ATC link-out (after Q2), About/credits panel with ODbL, NAIP and FAA notices.
-  - Standalone app plus relay; artifact in snapshot/replay mode.
+  - ATC link-out (after Q2), About/credits panel with ODbL, NAIP and FAA notices.
+  - Standalone app plus relay, full quality only (OD1); artifact in snapshot/replay mode whose layout works on an
+    iPhone (OD2, no phone performance tuning).

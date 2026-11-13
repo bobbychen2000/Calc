@@ -51,7 +51,12 @@ Data sources, terms and limits (verified 2026-11-13; quotes and hashes in docs/p
             tripped is named in the body (per-second, per-minute, per-hour or per-day for unkeyed traffic ...)". A key
             is sent as `x-api-key` (feeder key: 7,200/day). Only the daily number of unkeyed traffic is published;
             the recorder of sfo3d met a 429 after ~10 polls in each minute (4,782 of 5,541 one-minute bursts, 4-11 Nov
-            2026, PLAN section 3) [observed]. A 200 response carries no quota headers [observed, 1 probe]. So the
+            2026, PLAN section 3) [observed] while making ~7,970 OK polls a day unkeyed (54,537 in 6.84 days,
+            refs/cache/adsb/hwd_events.json), so the 500/day limit was not enforced then or is newer (sfo3d's research
+            quoted the same URL and info.version as "You can use the API for free"). The docs page
+            https://www.adsb.lol/docs/open-data/api (2026-11-13) repeats 500/day but says "the daily window resets at
+            00:00 UTC"; a rolling 24-h count <= cap satisfies either reading. A 200 response carries no quota headers
+            [observed, 2026-11-13]. So the
             relay counts its own requests (Quota) and polls at >= 6.5 s, stretched so the rest of the rolling-24-h
             budget lasts `--adsblol-horizon` s of watching, and only while a client is connected. Data: ODbL 1.0.
   adsb.fi   GET https://opendata.adsb.fi/api/v3/lat/{lat}/lon/{lon}/dist/{nm} every 2.0 s ~0.3 s after an even second.
@@ -59,8 +64,9 @@ Data sources, terms and limits (verified 2026-11-13; quotes and hashes in docs/p
             second"; "adsb.fi open data is for personal, non-commercial use only. You may not license, sell, rent, or
             lease any part of the data or the service." Live only: never recorded, never packed, never committed.
   METAR     https://aviationweather.gov/api/data/metar (NOAA/NWS AWC, US Government work): "maximum 100 requests per
-            minute"; "up to the previous 30 days of data". KHWD routine METAR at hh:54, received 4.1-4.4 min later
-            (p10-p90 of 194 routine reports 4-13 Nov 2026) -> 60 s cache from hh:56 to hh:01, 300 s otherwise.
+            minute"; "up to the previous 30 days of data". KHWD routine METAR at hh:54 (215 of 215 routine reports 4-13 Nov
+            2026), received 4.1-4.4 min later (p10-p90; one AWC request of 13 Nov) -> 60 s cache from hh:56 to hh:01,
+            300 s otherwise.
   identity  Mictronics aircraft database (ODC-By 1.0), local copy refs/cache/local/registry/mictronics_lookup.json
             (gitignored; tools/registry/mictronics_db.py), added inline as `_mx` {r, t, d, op}.
 
@@ -1013,8 +1019,9 @@ def _pos(a):
 # ------------------------------------------------------------------------------------------------ METAR (KHWD)
 # Forked from sfo3d's Metar (environment_spec.md 3.3): one upstream JSON fetch serves raw text and JSON, hours=3, on
 # demand (the app asks about every 60 s), cache TTL 60 s from hh:56 to hh:01 and 300 s otherwise -- KHWD routine
-# METARs are at hh:54 (24 of 24 reports 12-13 Nov; 170 of 170 routine reports 4-11 Nov 2026) and reach the API
-# 4.1-4.4 min later (p10-p90, 194 reports) -- never below the upstream "cache-control: max-age", conditional
+# METARs are at hh:54 (215 of 215 routine reports 4-13 Nov 2026, plus 40 SPECIs) and reach the API 4.08 / 4.21 /
+# 4.37 min later (p10 / p50 / p90 of receiptTime - obsTime; one AWC request of 13 Nov) -- never below the upstream
+# "cache-control: max-age", conditional
 # (If-None-Match / ETag). AWC: "maximum 100 requests per minute" (https://aviationweather.gov/data/api/, 2026-11-13).
 # Upstream errors keep the last good body (header X-Wx-Upstream-Error). Replay: only reports observed at or before the
 # replay time (never today's weather in a replay), from out/replay/wx/metar_khwd_*.json; when none is cached within
@@ -1202,7 +1209,7 @@ def denied(upath):
     """True for any URL path the static server must not serve."""
     p = urllib.parse.unquote(upath).lstrip('/')
     parts = [s for s in p.replace('\\', '/').split('/') if s]
-    if any(s.startswith('.') for s in parts):
+    if any(s.startswith('.') or s == '__pycache__' for s in parts):
         return True
     if not parts:
         return False

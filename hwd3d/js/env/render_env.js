@@ -14,6 +14,7 @@ import { Mesh } from '../gl.js';
 import { CLOUD_VS, CLOUD_FS } from '../shaders/env.js';
 import { metarSummary } from './wx/metar.js';
 import { FIELD_ELEV_Y, FT } from '../geo.js';
+import { towerOpenAt } from '../live/lights.js';
 
 const DEG = Math.PI / 180;
 const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -58,6 +59,7 @@ export function applyEnvToRenderer(R, world, E, { quality = 'high', force = fals
   setClouds(R, world, st, lowSlab ? { H: env.cloud[1], cov: env.cloud[0] } : null);
   if (world.setWind) world.setWind(E.wind && E.wind.fromTrue != null ? E.wind.fromTrue : null, E.wind ? E.wind.speed : 0, E.wind ? E.wind.sockExt : null);
   world.nightF = nightF; world.sunEl = elN;
+  world.lightEnv = { sunEl: elN, nightW: E.photocell ? E.photocell.asosNightW : (elN < 0 ? 1 : 0), towerOpen: towerOpenAt(E.tEnv), sigma: E.atm.sigmaSurface, tEnv: E.tEnv };
   st.exposure = exposure; st.nightF = nightF;
   return { exposure, nightF, changed: true, metar: M };
 }

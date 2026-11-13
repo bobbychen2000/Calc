@@ -1,0 +1,19 @@
+<!doctype html>
+<!-- Forked from sfo3d/live.html @ a967f9b. Kept: the page skeleton (#app, live.css, one entry module), the phone viewport
+     (viewport-fit=cover for the safe areas, no pinch-zoom of the page: the 3-D view takes the pinch). Changed: title,
+     theme colour, no Google Fonts (the UI uses the system font stack: works offline and in a sandboxed artifact, and sends
+     no request to a third party). Dropped: live3.html / the three.js import map (fork map 0: hwd3d forks the live.html
+     path only). Modes: ?mode=live (default: relay detected via api/ping) | replay (P1's pack, out/replay/) | snapshot
+     (one instant of the pack); see js/live/entry.js. -->
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0a0e13">
+<meta name="description" content="Hayward Executive Airport (KHWD) in 3-D, driven by live or recorded ADS-B traffic.">
+<title>Hayward Live 3D</title>
+<link rel="stylesheet" href="live.css">
+</head>
+<body>
+<div id="app"></div>
+<script type="module" src="js/live/entry.js"></script>
+</body></html>

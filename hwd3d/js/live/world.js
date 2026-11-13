@@ -5,12 +5,19 @@
 // textures (clouds, noise) and returns them with the ground uniforms; releaseAirportMap(). Changed: the SFO procedural
 // region / Bay water / city bakes / EMAS / masts / signs / Blender asset groups are gone; the terrain is a tensor grid
 // over the HWD site (10 m inside the aerodrome, growing outward to 40 km) whose heights come from site.groundY (NASR
-// runway profiles, js/world/site.js); the pavement map and the NAIP backdrop are js/live/airport.js; the paint is
-// js/live/markings.js; the buildings js/live/buildings.js; markers and beacon js/live/lights.js.
+// runway profiles, js/world/site.js); the pavement map and the NAIP backdrops (0.6 m HWD mosaic downsampled to 1.2 / 2.4 m,
+// and a 24 km 8 / 16 m regional resampling around it) are js/live/airport.js; the paint is js/live/markings.js; the
+// buildings js/live/buildings.js; windsock, wind cones, segmented circle, VASI / PAPI units and beacon js/live/lights.js.
+// The ground is NAIP by default (docs/phase2_world.md section 3: rendered both ways, the imagery wins away from the
+// pavement; the procedural dry grass shows while the textures load and with setGroundMode('procedural')).
 //
 //   buildHwdWorld(R, airport, { site, quality = 'high', taxigraph = null, naip = true, log }) -> World
 //   World = { items, site, towerPos, towerEye, textures, groundU, waterU: null, staticSprites(t), stats, ready (Promise),
-//             setWind(fromDeg, speedMs, ext), setGroundMode('naip' | 'procedural'), inventory }
+//             setWind(fromDeg, speedMs, ext), setGroundMode('naip' | 'procedural'), lightEnv, inventory }
+//   quality 'high' | 'low' (phone): pavement map 0.5 / 1.0 m, NAIP 1.2 / 2.4 m, region 8 / 16 m, terrain cells 10 / 12.5 m.
+//   staticSprites(t) uses R.curCam (the previous frame's camera) for the direction-dependent VASI / PAPI colours, and
+//   world.lightEnv, which js/env/render_env.js applyEnvToRenderer sets. Light sprites are blended items: the renderer
+//   draws them in the near range only (cam.split), so keep split >= ~2.5 km where approach lights matter.
 import { gl, Mesh, texture } from '../gl.js';
 import { makeCloudTexture, makeNoiseTexture } from '../world/textures.js';
 import { GROUND_VS, GROUND_FS } from '../shaders/ground.js';
@@ -19,14 +26,14 @@ import { OBJ_VS, OBJ_FS } from '../shaders/objects.js';
 import '../shaders/common.js';
 import { GRID } from '../world/grid.js';
 import { RWY_PAIRS, RWY_DATA, FT, rwyAxis, thrDispM } from '../geo.js';
-import { paintAirportMap, mapTexture, naipTexture } from './airport.js';
+import { paintAirportMap, mapTexture, naipTexture, regionTexture } from './airport.js';
 import { PAINT_VS, PAINT_FS, buildPaint } from './markings.js';
 import { buildBuildings } from './buildings.js';
 import { buildMarkers } from './lights.js';
 
 export const QUALITY = {
-  high: { mapRes: 0.5, naip: '1m2', inner: 10 },
-  low: { mapRes: 1.0, naip: '2m4', inner: 12.5 },
+  high: { mapRes: 0.5, naip: '1m2', region: '8m', inner: 10 },
+  low: { mapRes: 1.0, naip: '2m4', region: '16m', inner: 12.5 },
 };
 // terrain extent: 40 km from the ARP (the camera far plane, fork map 2.5 starting point far 40,000 m)
 const FAR = 40000;
@@ -93,6 +100,7 @@ export function buildHwdWorld(R, airport, { site, quality = 'high', taxigraph = 
     uAptMap: mapTex, uMapRect: [map.rect.s0, map.rect.t0, map.rect.w, map.rect.h], uMapSize: [map.w, map.h], uGs: GRID.s, uGt: GRID.t,
     uRw: rw, uRwI: rwi,
     uNaip: placeholder, uNaipU: [0, 0, -1], uNaipV: [0, 0, -1], uNaipMix: 0, uNaipGain: 0.55, uNaipBorder: naipBorder,
+    uReg: placeholder, uRegU: [0, 0, -1], uRegV: [0, 0, -1], uRegBorder: naipBorder, uRegOn: 0,
   };
   const items = [];
   // ---- terrain
@@ -106,30 +114,40 @@ export function buildHwdWorld(R, airport, { site, quality = 'high', taxigraph = 
   const B = buildBuildings(site); items.push(...B.items);
   lap('buildings');
   // ---- markers, beacon
-  const MK = buildMarkers(site, airport); items.push(...MK.items);
+  const MK = buildMarkers(site, airport, { R }); items.push(...MK.items);
   lap('markers');
   const tw = site.anchors.tower;
   const world = {
     items, site,
     towerPos: tw ? [tw.x, tw.top, tw.z] : [0, 30, 0],
     towerEye: tw ? [tw.x, tw.eyeY, tw.z] : [0, 25, 0],
-    textures: { clouds, noise, map: mapTex, naip: null },
+    textures: { clouds, noise, map: mapTex, naip: null, region: null },
     groundU, waterU: null, map,
     nightF: 0, sunEl: 30,
-    staticSprites: (t) => MK.sprites(t, world.sunEl),
+    // light environment for the static sprites, set by js/env/render_env.js applyEnvToRenderer:
+    // {sunEl, nightW (ASOS photocell night weight), towerOpen (0700-2100 local, NASR), sigma (surface extinction 1/m)}
+    lightEnv: { sunEl: 30, nightW: 0, towerOpen: true, sigma: 3.3e-5 },
+    staticSprites: (t) => MK.sprites(t, world.lightEnv),
     setWind: (fromDeg, speedMs, ext) => MK.setWind(fromDeg, speedMs, ext),
     setGroundMode: (m) => { groundU.uNaipMix = m === 'naip' && world.textures.naip ? 1 : 0; world.groundMode = groundU.uNaipMix ? 'naip' : 'procedural'; },
     groundMode: 'procedural',
     inventory: { paint: paint.inventory, buildings: B.list, markers: MK.inventory },
     stats: { ms: T, terrain: { verts: TR.verts, tris: TR.tris, chunks: TR.chunks.length, grid: `${TR.nx} x ${TR.nz}`, inner_m: Q.inner }, map: { w: map.w, h: map.h, res: map.res }, paint: { tris: paint.tris, verts: paint.verts }, buildings: B.stats, quality },
   };
-  // ---- NAIP backdrop (async; the ground shows the procedural grass until it is in)
-  world.ready = (naip ? naipTexture(Q.naip).then(N => {
+  // ---- NAIP backdrop (async; the ground shows the procedural grass until it is in): the 0.6 m HWD mosaic (downsampled)
+  // and the 24 km regional resampling around it
+  const pNaip = naip ? naipTexture(Q.naip).then(N => {
     groundU.uNaip = N.tex; groundU.uNaipU = N.U; groundU.uNaipV = N.V; groundU.uNaipBorder = N.meta.border_linear_rgb;
     world.textures.naip = N.tex; world.stats.naip = { level: Q.naip, w: N.level.width, h: N.level.height, residual_m: Math.round(N.residual_m * 1000) / 1000 };
     world.setGroundMode('naip');
     log('NAIP backdrop ' + Q.naip + ' ' + N.level.width + 'x' + N.level.height + ' fit residual ' + N.residual_m.toFixed(4) + ' m');
-  }).catch(e => { log('NAIP backdrop not loaded: ' + e.message); world.stats.naip = { error: String(e.message || e) }; }) : Promise.resolve());
+  }).catch(e => { log('NAIP backdrop not loaded: ' + e.message); world.stats.naip = { error: String(e.message || e) }; }) : Promise.resolve();
+  const pReg = naip ? regionTexture(Q.region).then(G => {
+    groundU.uReg = G.tex; groundU.uRegU = G.U; groundU.uRegV = G.V; groundU.uRegBorder = G.meta.border_linear_rgb || groundU.uRegBorder; groundU.uRegOn = 1;
+    world.textures.region = G.tex; world.stats.region = { level: Q.region, w: G.level.width, h: G.level.height, residual_m: Math.round(G.residual_m * 100) / 100 };
+    log('NAIP region ' + Q.region + ' ' + G.level.width + 'x' + G.level.height + ' fit residual ' + G.residual_m.toFixed(2) + ' m');
+  }).catch(e => { log('NAIP region not loaded: ' + e.message); world.stats.region = { error: String(e.message || e) }; }) : Promise.resolve();
+  world.ready = Promise.all([pNaip, pReg]);
   log('world ' + JSON.stringify(world.stats));
   return world;
 }

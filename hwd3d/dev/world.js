@@ -8,7 +8,7 @@ import { buildHwdWorld } from '../js/live/world.js';
 import { AppEnv } from '../js/env/app_env.js';
 import { applyEnvToRenderer } from '../js/env/render_env.js';
 import { HWD_AIRPORT } from '../data/hwd_airport.js';
-import { thrWorld, endWorld } from '../js/geo.js';
+import { thrWorld, endWorld, rwyAxis, FT } from '../js/geo.js';
 
 const q = new URLSearchParams(location.search);
 const SHOT = q.has('shot'); if (SHOT) document.body.classList.add('shot');
@@ -41,13 +41,26 @@ const gy = (x, z) => site.groundY(x, z);
 const P = (p) => [p[0], gy(p[0], p[1]), p[1]];
 const thr = (e) => { const t = thrWorld(e); return [t[0], t[2]]; };
 const tw = site.anchors.tower;
+// eye on the extended centreline `dist` m before the threshold at the glide-path height (gpa deg, TCH ft); looking at the
+// point `aim` m past the threshold (fov deg)
+function approach(end, dist, gpa, tchFt, fov = 30, aim = 300) {
+  const A = rwyAxis(end); const t = thr(end); const y0 = gy(t[0], t[1]);
+  const h = dist * Math.tan(gpa * D2R) + tchFt * FT;
+  return { eye: [t[0] - A.dir[0] * dist, y0 + h, t[1] - A.dir[1] * dist], yaw: A.hdg, pitch: Math.atan2(h, dist + aim) / D2R, fov };
+}
 export const VIEWS = {
-  overview: { target: P([40, 30]), yaw: 22, pitch: 30, dist: 2700, fov: 45 },
+  overview: { target: P([40, 30]), yaw: 22, pitch: 30, dist: 2700, fov: 45, pyaw: 300 },   // pyaw: yaw on portrait screens (along the runways)
   thr10R: { target: P(thr('10R')), yaw: 119.85, pitch: 11, dist: 330, fov: 50 },
   thr28L: { target: P(thr('28L')), yaw: 299.86, pitch: 11, dist: 330, fov: 50 },
   green: { target: P([-50, -335]), yaw: 30, pitch: 38, dist: 230, fov: 50 },
   west: { target: P([-235, -615]), yaw: 335, pitch: 32, dist: 430, fov: 50 },
   tower: { eye: [tw.x, tw.eyeY, tw.z], yaw: 165, pitch: 7, fov: 62 },
+  // on the published visual glide path (NASR VGSI angle / TCH) 1.5 km before the threshold: the VASI / PAPI test views
+  app28L: approach('28L', 1500, 4.0, 35), app10R: approach('10R', 1500, 3.0, 25), app10L: approach('10L', 1200, 3.0, 29), app28R: approach('28R', 1200, 3.0, 44),
+  app28L_low: approach('28L', 1500, 3.2, 35),
+  // telephoto on the light units (VASI / PAPI test)
+  zoom28L: approach('28L', 1500, 4.0, 35, 5, 170), zoom28L_low: approach('28L', 1500, 3.2, 35, 5, 170), zoom28L_high: approach('28L', 1500, 5.0, 35, 5, 170),
+  zoom10L: approach('10L', 1200, 3.0, 29, 4, 185), zoom10L_low: approach('10L', 1200, 2.6, 29, 4, 185), zoom10R: approach('10R', 1500, 3.0, 25, 5, 140),
   // top-down (north up) views for the NAIP comparison: width covered = 2 * dist * tan(fov / 2) * aspect
   top_10R: { target: P(thr('10R')), yaw: 0, pitch: 89.95, dist: 700, fov: 14 },
   top_28L: { target: P(thr('28L')), yaw: 0, pitch: 89.95, dist: 700, fov: 14 },
@@ -57,16 +70,24 @@ export const VIEWS = {
   top_wsock: { target: P([-26.98, -59.42]), yaw: 0, pitch: 89.95, dist: 250, fov: 14 },
   top_field: { target: P([40, 0]), yaw: 0, pitch: 89.95, dist: 7000, fov: 14 },
 };
-function setView(name) { const v = VIEWS[name]; if (!v) throw new Error('no view ' + name); Object.assign(cam, { eye: null, target: v.target || cam.target, dist: v.dist || 1 }, v); cam.name = name; }
+function setView(name) { const v = VIEWS[name]; if (!v) throw new Error('no view ' + name); Object.assign(cam, { eye: null, target: v.target || cam.target, dist: v.dist || 1 }, v); if (W < H && v.pyaw != null) cam.yaw = v.pyaw; cam.name = name; }
+// portrait screens (phones): the named views were framed for 16:9; keep most of their horizontal coverage by moving orbit
+// cameras back and widening eye cameras (vertical fov capped at 75 deg)
+function portrait() { const a = W / H; return a < 1 ? Math.min(2.4, (16 / 9) / a * 0.62) : 1; }
 function camera() {
+  const k = portrait();
   const dir = [Math.sin(cam.yaw * D2R) * Math.cos(cam.pitch * D2R), -Math.sin(cam.pitch * D2R), -Math.cos(cam.yaw * D2R) * Math.cos(cam.pitch * D2R)];
-  const pos = cam.eye ? cam.eye : [cam.target[0] - dir[0] * cam.dist, cam.target[1] - dir[1] * cam.dist, cam.target[2] - dir[2] * cam.dist];
+  const dist = cam.dist * (cam.eye ? 1 : k);
+  const pos = cam.eye ? cam.eye : [cam.target[0] - dir[0] * dist, cam.target[1] - dir[1] * dist, cam.target[2] - dir[2] * dist];
   const hAbove = Math.max(1, pos[1] - gy(pos[0], pos[2]));
-  const d = cam.eye ? 200 : cam.dist;
+  const d = cam.eye ? 200 : dist;
   const near = Math.min(5, Math.max(0.2, Math.min(d * 0.004, hAbove * 0.3)));
-  const split = Math.min(5000, Math.max(300, d * 3.5));
+  // the renderer draws blended items (paint, light sprites) in the near pass only: eye views keep a 3 km near range so the
+  // VASI / PAPI sprites of the approach views (1.2-1.5 km) are drawn (sfo3d's tower camera used 2.5 km)
+  const split = cam.eye ? 3000 : Math.min(5000, Math.max(300, d * 3.5));
   const up = Math.abs(dir[1]) > 0.999 ? [0, 0, -1] : [0, 1, 0];
-  return { pos, dir, up, fov: cam.fov * D2R, near, split, far: 40000, shadowSplits: [Math.max(60, d * 0.6), Math.max(400, d * 2.2), Math.max(2500, d * 4.5)] };
+  const fov = cam.eye ? Math.min(75, cam.fov * Math.min(1.5, k)) : cam.fov;
+  return { pos, dir, up, fov: fov * D2R, near, split, far: 40000, shadowSplits: [Math.max(60, d * 0.6), Math.max(400, d * 2.2), Math.max(2500, d * 4.5)] };
 }
 // ---------------------------------------------------------------- render
 let frames = 0;

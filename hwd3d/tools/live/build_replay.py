@@ -22,11 +22,13 @@ up to ~55 s lies between two real fixes and is interpolated (Hermite on the air,
 data/hwd_taxigraph.json). The shim delivers the first `lookahead_s` of the window at once, so the first frame does not
 wait. Each pack's meta lists its measured holes (`sampling`).
 
-Windows (chosen from per-hour counts over the whole rec_pack, see docs/phase2_relay.md section 5):
-  weekend  2026-11-08T20:00Z + 60 min  Sunday 12:00-13:00 PST: the busiest hour (29 aircraft on the field, 52 ground-to-air
-                                      transitions within 2.5 km, 142 distinct aircraft within 8 NM / 5,000 ft)
-  weekday  2026-11-09T21:00Z + 60 min  Monday 13:00-14:00 PST: weekday midday with pattern work (18 on the field, 27
-                                      transitions, 111 distinct aircraft)
+Windows (chosen with tools/live/rank_hours.py over all 111 rec_pack hours; counts as defined there: 'ground' = distinct
+aircraft reporting ground within 1.5 km of the ARP, 'transitions' = ground -> airborne changes within 2.5 km seen between
+consecutive fixes (the 46-s holes hide some), 'area' = distinct aircraft within 8 NM at <= 5,000 ft or on the ground):
+  weekend  2026-11-08T20:00Z + 60 min  Sunday 12:00-13:00 PST: the most aircraft on the ground (26) and in the area (142)
+                                      of any hour, 14 transitions (Sat 7 Nov 20Z: 22 / 125 / 19 is the close second)
+  weekday  2026-11-09T21:00Z + 60 min  Monday 13:00-14:00 PST: pattern work, 18 transitions (2nd of all weekday hours;
+                                      Wed 4 Nov 23Z has 19), 15 on the ground, 111 in the area
 pack.json.gz = the weekend pack (default URL of the shim); pack_<name>.json.gz each; packs.json lists them.
 
 Identity (D1; docs/phase2_fork_map.md 2.2, risk R11): --ident type-only (DEFAULT) strips flight, r, ownOp, year, squawk,
@@ -48,7 +50,7 @@ import build_stream as B  # noqa: E402
 import hwd_live_server as S  # noqa: E402
 import recio  # noqa: E402
 
-PRESETS = {'weekend': ('2026-11-08T20:00Z', 60.0, 'Sunday 8 Nov 2026, 12:00-13:00 PST (busiest hour of the recording)'),
+PRESETS = {'weekend': ('2026-11-08T20:00Z', 60.0, 'Sunday 8 Nov 2026, 12:00-13:00 PST (most aircraft on the field of the recording)'),
            'weekday': ('2026-11-09T21:00Z', 60.0, 'Monday 9 Nov 2026, 13:00-14:00 PST (weekday midday, pattern work)')}
 DEFAULT_PACK = 'weekend'
 RADIUS_NM = 8.0          # = the relay's area (D6 ~5 NM + 3 NM lead-in) [inf]

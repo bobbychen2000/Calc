@@ -19,5 +19,19 @@
   "fetched": "built 2026-11-12 from committed inputs only (no network)",
   "made_by": "hwd3d/tools/build_airport.py (task G5) from refs/cache/faa/nasr_2026-10-29_HWD.json, refs/cache/faa/chart_supplement_HWD.json, refs/cache/faa/05015ad_2611.pdf, refs/cache/osm/khwd_features.json + khwd_osm_xcheck.json (OSM state 2026-11-12T00:00:00Z), refs/cache/naip/naip_2024_hwd_rgb.jpg + naip_2022_hwd_rgb.jpg + naip_blob_review.json (by-eye verdicts), refs/cache/adsb/hwd_parked_stays.json, refs/cache/faa/ac150_5300_13b_chg1_p136_181_284-288.pdf (quoted values), data/ga_types.json; checked by hwd3d/tools/check_airport.py",
   "note": "ES-module twin of hwd_airport.json (export const HWD_AIRPORT = ...), same object; header with the ODbL / source notices"
+ },
+ "hwd_taxigraph.json": {
+  "url": null,
+  "licence": "ODbL 1.0 - Derivative Database of data/hwd_airport.json (OpenStreetMap (c) OpenStreetMap contributors, https://www.openstreetmap.org/copyright, and adsb.lol: 'Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL'), offered under the Open Database License 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); USDA NAIP 2024 (public domain) used for a pavement grey test. See docs/ATTRIBUTION.md",
+  "fetched": "built 2026-11-13 from committed inputs (hashes in the file header)",
+  "made_by": "hwd3d/tools/live/build_taxigraph.py (Phase 2, P1)",
+  "note": "taxi routing graph ('hwd-taxigraph/1'): nodes and edges along the taxiway / taxilane / runway centrelines and parking-spot links of data/hwd_airport.json; positions and network only, no per-aircraft data (default D1)."
+ },
+ "hwd_taxigraph.js": {
+  "url": null,
+  "licence": "ODbL 1.0 - Derivative Database of data/hwd_airport.json (OpenStreetMap (c) OpenStreetMap contributors, https://www.openstreetmap.org/copyright, and adsb.lol: 'Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL'), offered under the Open Database License 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); USDA NAIP 2024 (public domain) used for a pavement grey test. See docs/ATTRIBUTION.md",
+  "fetched": "built 2026-11-13 from committed inputs (hashes in the file header)",
+  "made_by": "hwd3d/tools/live/build_taxigraph.py (Phase 2, P1)",
+  "note": "taxi routing graph ('hwd-taxigraph/1'): nodes and edges along the taxiway / taxilane / runway centrelines and parking-spot links of data/hwd_airport.json; positions and network only, no per-aircraft data (default D1). JS wrapper of hwd_taxigraph.json for file:// and artifact use."
  }
 }

@@ -1,0 +1,17 @@
+{
+  "name": "hwd3d",
+  "private": true,
+  "description": "Hayward Live 3D (KHWD): a real-time 3-D view of Hayward Executive Airport driven by live or recorded ADS-B. Plain ES modules, a custom WebGL2 renderer, no framework or bundler; a Python-stdlib relay.",
+  "type": "module",
+  "scripts": {
+    "relay": "python3 hwd_live_server.py",
+    "serve": "python3 -m http.server 8000",
+    "views": "node livetest.mjs jobs/views.mjs",
+    "views:phone": "MOBILE=1 PREFIX=phone node livetest.mjs jobs/views.mjs",
+    "smoke": "RELAY=none node livetest.mjs jobs/smoke.mjs",
+    "relaycheck": "RELAY=spawn WAIT=80000 node livetest.mjs jobs/relaycheck.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56"
+  }
+}

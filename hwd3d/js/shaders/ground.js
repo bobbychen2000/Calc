@@ -9,8 +9,11 @@
 //     sharpened in the shader so that edges stay crisp when magnified (the anti-aliased coverage acts as a 1-texel SDF);
 //   - the two runways analytically from the FAA NASR ends (uRw / uRwI): exact rectangles, no texture;
 //   - uNaip: USDA NAIP 2024 (public domain) as the ground albedo OUTSIDE the pavement (uNaipMix = 1), mapped by an affine
-//     fit of geo.js worldToUtm10 (6 mm residual); beyond the imagery it fades to its border colour. uNaipMix = 0 gives
-//     the procedural dry-grass ground instead (the comparison of docs/phase2_world.md section 3).
+//     fit of geo.js worldToUtm10 (6 mm residual); beyond it (3.8 x 3.3 km) the 24 x 24 km regional NAIP 2024 resampling
+//     uReg (8 m, js/world/tex/fetch_region.py), then the regional border colour. Close to the camera the imagery (1.2 m
+//     texels) gets the procedural grass's high-frequency luminance detail so that it is not a blur (detail only: the
+//     colour stays the photograph's). uNaipMix = 0 gives the procedural dry-grass ground instead (the comparison of
+//     docs/phase2_world.md section 3).
 // Paint (runway and taxiway markings) is NOT in this shader: it is decal geometry (js/live/markings.js).
 import { defineChunk } from '../gl.js';
 
@@ -41,15 +44,20 @@ void main(){ vWP = aPos; vN = aNrm; emitClip(aPos, aPos); }`;
 
 defineChunk('hwdground', `
 // dry California annual grass (sfo3d grassCol, unchanged)
+// high-frequency luminance factor of the grass (mean 1): the two fine noise terms of grassCol, faded out when their
+// wavelength is below a pixel (fw = world size of a pixel)
+float grassDetail(vec2 p, float fw){
+  float n2 = vnoise(p * 0.25), n3 = vnoise(p * 1.7), n4 = vnoise(p * 6.3);
+  float det = 1.0 - smoothstep(0.2, 1.0, fw);
+  float d = (0.85 + 0.3 * mix(0.5, n2, det)) * (0.92 + 0.16 * mix(0.5, n3, 1.0 - smoothstep(0.05, 0.3, fw)));
+  return d * (0.94 + 0.12 * mix(0.5, n4, 1.0 - smoothstep(0.02, 0.1, fw)));
+}
 vec3 grassCol(vec2 p, float fw){
-  float n1 = fbm2(p * 0.02, 4), n2 = vnoise(p * 0.25), n3 = vnoise(p * 1.7);
+  float n1 = fbm2(p * 0.02, 4);
   vec3 dry = vec3(0.50, 0.42, 0.26), dry2 = vec3(0.40, 0.33, 0.20), green = vec3(0.26, 0.30, 0.15);
   vec3 c = mix(dry, dry2, smoothstep(0.3, 0.7, n1));
   c = mix(c, green, smoothstep(0.55, 0.8, fbm2(p * 0.006 + 3.0, 3)) * 0.7);
-  float det = 1.0 - smoothstep(0.2, 1.0, fw);
-  c *= 0.85 + 0.3 * mix(0.5, n2, det) ;
-  c *= 0.92 + 0.16 * mix(0.5, n3, 1.0 - smoothstep(0.05, 0.3, fw));
-  return c * 0.85;
+  return c * grassDetail(p, fw) * 0.85;
 }
 // coverage texture value -> crisp edge: the canvas anti-aliasing makes the coverage ramp ~1 texel wide, so near the
 // camera (texel larger than a pixel) it is read like a signed distance; far away (texel smaller than a pixel) the
@@ -70,6 +78,7 @@ in vec3 vWP; in vec3 vN;
 uniform sampler2D uAptMap; uniform vec4 uMapRect; uniform vec2 uGs; uniform vec2 uGt; uniform vec2 uMapSize;
 uniform vec4 uRw[2]; uniform vec4 uRwI[2];   // runway: (origin x, z, dir x, z), (half width, length, touchdown zone a, b)
 uniform sampler2D uNaip; uniform vec3 uNaipU; uniform vec3 uNaipV; uniform float uNaipMix; uniform float uNaipGain; uniform vec3 uNaipBorder;
+uniform sampler2D uReg; uniform vec3 uRegU; uniform vec3 uRegV; uniform vec3 uRegBorder; uniform float uRegOn;
 uniform float uNight;
 void main(){
   vec3 wp = vWP; vec3 V = uCamPos - wp; float dist = length(V); V /= dist;
@@ -83,9 +92,26 @@ void main(){
   float inN = step(0.0, nuv.x) * step(nuv.x, 1.0) * step(0.0, nuv.y) * step(nuv.y, 1.0);
   float edgeN = min(min(nuv.x, 1.0 - nuv.x), min(nuv.y, 1.0 - nuv.y));
   vec3 naip = inN > 0.5 ? texture(uNaip, nuv).rgb : uNaipBorder;
-  // beyond the imagery: its border colour, broken up by low-frequency noise so the edge is not a straight seam
+  // beyond the HWD mosaic: the regional 8 m resampling (when loaded), else the mosaic's border colour broken up by
+  // low-frequency noise; beyond the region its border colour
+  vec2 ruv = vec2(dot(uRegU, vec3(wp.xz, 1.0)), dot(uRegV, vec3(wp.xz, 1.0)));
+  float inR = step(0.0, ruv.x) * step(ruv.x, 1.0) * step(0.0, ruv.y) * step(ruv.y, 1.0);
+  float edgeR = min(min(ruv.x, 1.0 - ruv.x), min(ruv.y, 1.0 - ruv.y));
   vec3 beyond = uNaipBorder * (0.82 + 0.36 * nzA.b) * (0.9 + 0.2 * nzB.g);
+  if (uRegOn > 0.5) beyond = mix(uRegBorder * (0.9 + 0.2 * nzA.b), inR > 0.5 ? texture(uReg, ruv).rgb : uRegBorder, smoothstep(0.0, 0.04, edgeR) * inR);
   naip = mix(beyond, naip, smoothstep(0.0, 0.03, edgeN) * inN);
+  // close range (a 1.2 m imagery texel over many pixels): vegetated imagery ((G - B) / (R + G + B) > ~0.07: dry grass,
+  // shrubs, trees) is drawn from a ~5 m low-pass of the photograph (mip bias 2.5) times the procedural grass's fine
+  // luminance texture, so the texel blobs do not show; non-vegetated imagery (roads, roofs, concrete) keeps the photo
+  // with the fine texture only [inf look; colour always from the photograph]
+  float nearW = 1.0 - smoothstep(0.06, 0.45, fw);
+  if (nearW > 0.0 && inN > 0.5) {
+    vec3 lp = texture(uNaip, nuv, 2.5).rgb;
+    float veg = smoothstep(0.04, 0.10, (lp.g - lp.b) / max(lp.r + lp.g + lp.b, 1e-3));
+    float gd = grassDetail(wp.xz, fw);
+    naip = mix(naip, lp * (0.55 + 0.45 * gd * gd), veg * nearW);
+  }
+  naip *= mix(1.0, grassDetail(wp.xz, fw), 1.0 - smoothstep(0.35, 1.2, fw));
   vec3 albedo = mix(grass, naip * uNaipGain, uNaipMix);
   float rough = 0.95;
   // ---- pavement
@@ -99,7 +125,6 @@ void main(){
   float n1 = texture(uNoise, wp.xz * 0.013).b, n2 = texture(uNoise, wp.xz * 0.6).r;
   // aged asphalt (HWD aprons and taxiways read light grey on NAIP 2024; no surface survey: [inf] tone)
   vec3 asph = vec3(0.17, 0.17, 0.172) * (0.86 + 0.28 * n1) * (0.94 + 0.12 * n2);
-  vec2 pc = floor(gs / vec2(31.0, 19.0)); if (ihashf(ivec2(pc), 3) < 0.10) asph *= 1.12;   // patch repairs
   asph = mix(asph, vec3(0.24, 0.23, 0.21) * (0.85 + 0.3 * n1), closed * 0.8);              // abandoned: weathered
   albedo = mix(albedo, asph, paved);
   rough = mix(rough, 0.85, paved);
@@ -114,12 +139,13 @@ void main(){
     if (inR > 0.0) {
       float r1 = texture(uNoise, vec2(al * 0.0012, ac * 0.02)).b, r2 = texture(uNoise, vec2(al * 0.02, ac * 0.5)).r;
       vec3 ra = vec3(0.145, 0.146, 0.152) * (0.84 + 0.32 * r1) * (0.95 + 0.1 * r2);
-      ra *= 0.96 + 0.06 * smoothstep(6.0, 16.0, abs(ac));   // traffic-darkened centre band
+      ra *= 0.975 + 0.035 * smoothstep(3.0, 9.0, abs(ac));   // traffic-darkened centre band [inf]
       // rubber deposits in the touchdown zones (from each landing threshold, uRwI.zw = along of the two thresholds)
       float t0 = al - uRwI[i].z, t1 = uRwI[i].w - al;
       float rub = max(smoothstep(60.0, 180.0, t0) * (1.0 - smoothstep(450.0, 800.0, t0)), smoothstep(60.0, 180.0, t1) * (1.0 - smoothstep(450.0, 800.0, t1)));
-      rub *= (1.0 - smoothstep(4.0, 11.0, abs(ac))) * (0.55 + 0.45 * texture(uNoise, vec2(al * 0.05, ac * 1.3)).g);
-      ra *= 1.0 - 0.45 * rub;
+      // light GA traffic: narrow, faint deposits about the centreline (NAIP 2024 shows dark smudges ~3-4 m wide there) [inf]
+      rub *= (1.0 - smoothstep(1.5, 5.0, abs(ac))) * (0.55 + 0.45 * texture(uNoise, vec2(al * 0.05, ac * 1.3)).g);
+      ra *= 1.0 - 0.3 * rub;
       albedo = mix(albedo, ra, inR); rough = mix(rough, 0.82, inR);
       paved = max(paved, inR);
     }

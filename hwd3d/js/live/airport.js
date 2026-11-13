@@ -67,10 +67,25 @@ export async function naipTexture(level = '1m2') {
   const fit = naipAffine(meta, L);
   return { tex, meta, level: L, U: fit.U, V: fit.V, residual_m: fit.residual_m };
 }
-export function naipAffine(meta, L) {
+// Regional backdrop beyond the HWD mosaic: a 24 x 24 km 8 m (16 m on the low tier) USDA NAIP 2024 resampling centred on
+// the ARP (js/world/tex/fetch_region.py), mapped by the same kind of affine fit over +-12 km (residual measured at load,
+// world.stats.region.residual_m).
+export async function regionTexture(level = '8m') {
+  const base = new URL('../world/tex/', import.meta.url);
+  const meta = await (await fetch(new URL('naip2024.json', base))).json();
+  const G = meta.region; if (!G) throw new Error('no region entry in naip2024.json');
+  const file = level === '16m' ? G.file_16m : G.file; const k = level === '16m' ? 2 : 1;
+  const img = new Image(); img.decoding = 'async'; img.src = new URL(file, base).href;
+  await img.decode();
+  const L = { width: G.width / k, height: G.height / k, pixel_size_m: G.pixel_size_m * k };
+  const tex = texture(L.width, L.height, { internal: gl.SRGB8_ALPHA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE, source: img, mips: true, aniso: true });
+  const fit = naipAffine({ origin_E: G.origin_E, origin_N: G.origin_N }, L, 12000, 1000);
+  return { tex, meta: G, level: L, U: fit.U, V: fit.V, residual_m: fit.residual_m };
+}
+export function naipAffine(meta, L, half = 2000, step = 250) {
   const Wm = L.width * L.pixel_size_m, Hm = L.height * L.pixel_size_m;
   const S = [];
-  for (let x = -1900; x <= 2100; x += 250) for (let z = -1700; z <= 1800; z += 250) { const [E, N] = worldToUtm10(x, z); S.push([x, z, (E - meta.origin_E) / Wm, (meta.origin_N - N) / Hm]); }
+  for (let x = -half + 100; x <= half + 100; x += step) for (let z = -half + 300; z <= half - 200; z += step) { const [E, N] = worldToUtm10(x, z); S.push([x, z, (E - meta.origin_E) / Wm, (meta.origin_N - N) / Hm]); }
   const fit = (k) => {
     let a = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], b = [0, 0, 0];
     for (const s of S) { const r = [s[0], s[1], 1]; for (let i = 0; i < 3; i++) { b[i] += r[i] * s[k]; for (let j = 0; j < 3; j++) a[i][j] += r[i] * r[j]; } }

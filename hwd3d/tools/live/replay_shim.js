@@ -86,19 +86,23 @@ export async function installReplay({ url = 'out/replay/pack.json.gz', loop = tr
   setInterval(tick, 200);
 
   function FakeES(u) {
-    this.url = u; this.readyState = 1; this._l = {}; this.onerror = null; this.onopen = null; this.onmessage = null;
+    this.url = u; this.readyState = 0; this._l = {}; this.onerror = null; this.onopen = null; this.onmessage = null;
+    this._q = [];                    // payloads pushed before the history was delivered keep their order behind it
     sources.push(this);
     const self = this, back = history.map(h => h.data);
     setTimeout(() => {               // like the relay's ?history: the recent payloads, oldest first
       if (self.readyState === 2) return;
+      self.readyState = 1;
       if (self.onopen) self.onopen({ type: 'open' });
       for (const d of back) self._fire('adsb', d);
+      for (const [t, d] of self._q.splice(0)) self._fire(t, d);
     }, 0);
   }
   FakeES.prototype.addEventListener = function (type, fn) { (this._l[type] = this._l[type] || []).push(fn); };
   FakeES.prototype.removeEventListener = function (type, fn) { const a = this._l[type] || []; const i = a.indexOf(fn); if (i >= 0) a.splice(i, 1); };
   FakeES.prototype.close = function () { this.readyState = 2; const i = sources.indexOf(this); if (i >= 0) sources.splice(i, 1); };
   FakeES.prototype._fire = function (type, data) {
+    if (this.readyState === 0) { this._q.push([type, data]); return; }
     const e = { type, data };
     for (const fn of (this._l[type] || []).slice()) { try { fn(e); } catch (x) { console.error(x); } }
     if (type === 'message' && this.onmessage) this.onmessage(e);

@@ -191,7 +191,7 @@ class Serving(unittest.TestCase):
                 '/tools/live/recio.py', '/out/phase1/x.png', '/out/replay/.state/adsblol_quota.json', '/out/replay',
                 '/out/replay/', '/out/rec/adsblol_20261113_03.jsonl.gz', '/.git/config', '/jobs/a.mjs',
                 '/node_modules/x/y.js', '/x/../refs/cache/local/a', '/%2e%2e/sfo3d/x', '/docs/qa/ref/a.png',
-                '/out%2fphase1/a.png']
+                '/out%2fphase1/a.png', '/__pycache__/hwd_live_server.cpython-313.pyc', '/tools/live/__pycache__/recio.pyc']
         allow = ['/live.html', '/js/geo.js', '/data/hwd_taxigraph.json', '/out/replay/pack.json.gz',
                  '/out/replay/replay_shim.js', '/out/replay/wx/metar_khwd_20261108T2100Z_5h.json', '/']
         for p in deny:
@@ -215,8 +215,9 @@ class Weather(unittest.TestCase):
 
     def test_replay_cache_and_station(self):
         d = tempfile.mkdtemp(); T = 1794168000.0
-        json.dump([{'obsTime': T - 360, 'rawOb': 'METAR KHWD 081954Z A'}, {'obsTime': T - 3960, 'rawOb': 'METAR KHWD 081854Z B'},
-                   {'obsTime': T + 3240, 'rawOb': 'METAR KHWD 082054Z FUTURE'}], open(os.path.join(d, 'metar_khwd_t.json'), 'w'))
+        with open(os.path.join(d, 'metar_khwd_t.json'), 'w') as f:
+            json.dump([{'obsTime': T - 360, 'rawOb': 'METAR KHWD 081954Z A'}, {'obsTime': T - 3960, 'rawOb': 'METAR KHWD 081854Z B'},
+                       {'obsTime': T + 3240, 'rawOb': 'METAR KHWD 082054Z FUTURE'}], f)
         time.sleep(0.01)
         clk = S.Clock(time.time(), T, 1.0)
         m = S.Metar(clk, wx_dir=d)

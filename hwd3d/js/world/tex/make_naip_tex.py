@@ -43,6 +43,11 @@ def main():
         small.save(os.path.join(HERE, fn), quality=85, optimize=True, progressive=False, subsampling=0)
         out['levels'][name] = {'file': fn, 'width': w, 'height': h, 'pixel_size_m': px * f, 'covers_m': [w * f * px, h * f * px],
                                'bytes': os.path.getsize(os.path.join(HERE, fn))}
+    # keep the regional backdrop entry written by fetch_region.py
+    prev = os.path.join(HERE, 'naip2024.json')
+    if os.path.exists(prev):
+        reg = json.load(open(prev)).get('region')
+        if reg: out['region'] = reg
     json.dump(out, open(os.path.join(HERE, 'naip2024.json'), 'w'), indent=1)
     print(json.dumps(out, indent=1))
 
