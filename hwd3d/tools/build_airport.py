@@ -52,6 +52,21 @@ Changes from the round-1 re-check (2026-11-12; docs/phase1_data_report.md sectio
              network over OSM pavement within CONNECT_M and carry a by-eye review (HGR_REVIEW); tie-down planform test with a
              +-3 m / +-10 deg tolerance; parked aircraft without a spot listed (unspotted_aircraft).
   provenance apron name_src obs / inf (name_from says where); size.observed_src obs (observed_basis says how).
+Changes from the round-2 re-check (2026-11-13; docs/phase1_data_report.md section 8):
+  taxiways   junctions solved over the whole network (network_fields): every shared OSM vertex is one node with one
+             displacement, so the moved ways keep the network connected; shallow forks start where the lines meet;
+             junction vertices are kept by the simplification.
+  parking    sessions (parked_stays.py) join a parked aircraft's power cycles; a heading-less spot is sized as a disc that
+             holds the wing + fuselage planform in every heading (disc_k); the back row of the nested double row on the
+             FBO Ramp (north-east) is listed as unspotted; SWEEP_REVIEW holds the by-eye verdicts of check_airport's
+             omission sweep.
+Changes from the round-3 re-check (2026-11-13; docs/phase1_data_report.md section 9):
+  parking    a NAIP blob reviewed as two aircraft gives its spots at the two aircraft centres read by eye
+             (TWO_AIRCRAFT_CENTRES), not at the centroids of its halves (one sat on a wingtip junction); the NAIP aircraft
+             dropped by the LANE_M rule are recorded with what accounts for each (checks_at_build); the unspotted list
+             names the first aircraft of the West Hangars row of 4 (it named a spot that no build had); an id typo in
+             HGR_REVIEW corrected.
+  taxiways   junction records name the way end by compass (way_end).
 usage: python3 hwd3d/tools/build_airport.py [--no-plot]
 """
 import json, math, os, sys
@@ -646,6 +661,7 @@ def network_fields(meas, osmw, fixed):
             if o not in meas: continue
             kk = meas[o]['kv'][i]; e = D[k] - own[o][kk]; j = 0 if i == 0 else 1
             r_ = {'vertex': i, 'role': role(o, i), 's_m': r1(meas[o]['S'][kk]), 'osm_node': [r2(k[0]), r2(k[1])],
+                  'way_end': way_end(meas[o]['P'], kk),
                   'node_shift_m': r2(np.hypot(*D[k])), 'with_ways': sorted({o2 for o2, _ in mem if o2 != o}),
                   'correction_m': r2(np.hypot(*e)) if role(o, i) == 'end' and (o, j) not in forks else 0.0,
                   'taper_m': r1(tap[o][j]) if role(o, i) == 'end' and (o, j) not in forks and np.hypot(*e) > 1e-9 else None,
@@ -656,6 +672,19 @@ def network_fields(meas, osmw, fixed):
                               'rule': 'shallow fork (< %.0f deg): the own moved line of this way meets the final line of way %d %.1f m from the OSM node end; the way is trimmed to start there and that point is a vertex of both' % (J_FORK_DEG, fk['through'], fk['s'])}
             recs[o].append(r_)
     return fields, D, recs, nodes, forks
+
+
+COMPASS8 = ('north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west')
+
+
+def way_end(P, kk):
+    """which end of the way a junction vertex is, by compass (round-3 re-check: the report called E's s = 0 end its south
+    end; it is the north-east end - z is south). The direction from the way's other end to this one, 8 points; None for an
+    interior vertex."""
+    if kk not in (0, len(P) - 1): return None
+    a, b = (P[-1], P[0]) if kk == 0 else (P[0], P[-1])
+    brg = math.degrees(math.atan2(b[0] - a[0], -(b[1] - a[1]))) % 360.0
+    return '%s (s = %s), %s end' % ('start' if kk == 0 else 'end', '0' if kk == 0 else 'L', COMPASS8[int(round(brg / 45.0)) % 8])
 
 
 def finish_way(N, w, m, field, D, nodes, jrec, forks):
@@ -1109,6 +1138,22 @@ def unspotted(spots):
     return out
 
 
+def lane_drop_accounted(lane_dropped):
+    """the NAIP 2024 aircraft candidates that the LANE_M rule dropped, each with what accounts for it (round-3 re-check:
+    the report said they are listed, and one was not): a listed unspotted aircraft within TWO_MATCH_M, or a by-eye
+    SWEEP_REVIEW verdict within SWEEP_MATCH_M (paint / vehicle / structure, or part of the aircraft at a spot); else
+    'NOT ACCOUNTED' (tools/check_airport.py fails on it)"""
+    out = []
+    for c in lane_dropped:
+        u = min(UNSPOTTED_NAIP2024, key=lambda u: math.hypot(u[0] - c['x'], u[1] - c['z']))
+        v = min(SWEEP_REVIEW, key=lambda v: math.hypot(v[0] - c['x'], v[1] - c['z']))
+        if math.hypot(u[0] - c['x'], u[1] - c['z']) <= TWO_MATCH_M: acc = 'listed in unspotted_aircraft at (%.1f, %.1f)' % (u[0], u[1])
+        elif math.hypot(v[0] - c['x'], v[1] - c['z']) <= SWEEP_MATCH_M: acc = 'by-eye verdict %s at (%.1f, %.1f): %s' % (v[2], v[0], v[1], v[3])
+        else: acc = 'NOT ACCOUNTED'
+        out.append(dict(c, accounted_by=acc))
+    return out
+
+
 def not_placed(labels, spots):
     heli_area = [s['id'] for s in spots if s['kind'] == 'helipad' and HELI_AREA[0] <= s['x'] <= HELI_AREA[1] and HELI_AREA[2] <= s['z'] <= HELI_AREA[3]]
     return [
@@ -1152,15 +1197,32 @@ LANE_M = 4.0        # m: candidates this close to an open OSM taxiway / taxilane
 # ---- added in answer to the Phase 1 review (2026-11-12)
 NAIP_REVIEW = 'refs/cache/naip/naip_blob_review.json'   # by-eye verdicts on NAIP 2024 aircraft blobs (own review, inf)
 REVIEW_MATCH_M = 1.0   # m: a blob takes the verdict of a review entry this close (blob centroids are deterministic)
-SPLIT_MIN_EXT = 16.0   # m: a blob reviewed as two aircraft is split in two only when its extent is >= this [chosen: two
-                       # GA singles wing to wing; smaller blobs hold only parts of each and are dropped]
+SPLIT_MIN_EXT = 16.0   # m: a blob reviewed as two aircraft gives two spots only when its extent is >= this [chosen: two
+                       # GA singles wing to wing; smaller blobs hold only parts of each; their aircraft are listed as unspotted].
+                       # Kept unchanged in round 3, so that the round only moves the spots of the split blobs (below)
+# by-eye centres (wing / fuselage crossing) of the two aircraft in each blob that the review (NAIP_REVIEW) marks
+# 'two_aircraft', keyed by the review entry's spot_id_in_review_build (round-3 re-check, 2026-11-13: the split along the
+# blob's major axis put spot RW134N555 on the wingtip junction between the two aircraft of R080 - 5.5 m and 7.0 m from
+# their centres - and its other half, on the first aircraft, was dropped by the LANE_M rule and never listed). Read on
+# NAIP 2024 (0.6 m GeoTIFF, x8-x12 bicubic, 2 m grid) from the tail, the nose and the wing band of each aircraft, +-1.5 m.
+# A split blob now gives its spots at these centres (ref_point 'naip_by_eye_aircraft_centre'); a blob below SPLIT_MIN_EXT
+# gives none, and its two aircraft must be listed in UNSPOTTED_NAIP2024 (tools/check_airport.py checks both).
+TWO_AIRCRAFT_CENTRES = {
+    'R041': ((442.5, -15.0), (452.5, -19.0)),       # two low-wing aircraft (crosses), FBO Ramp (north-east)
+    'R077': ((-195.8, -563.4), (-206.0, -556.2)),   # two high-wing aircraft wing tip to wing tip, West Hangars apron
+    'R079': ((-155.0, -577.8), (-144.2, -584.4)),   # the same
+    'R080': ((-129.0, -558.5), (-140.6, -552.6)),   # the first two of a row of 4 high-wing aircraft, West Hangars apron
+}
+TWO_MATCH_M = 3.0   # m: a split spot / listed aircraft stands for a by-eye centre only this close [chosen: the +-1.5 m reading
+                    # plus margin; well below the 10-12 m spacing of aircraft wing to wing]
 DUP_M = 9.5         # m: two ramp / hangar-apron spots closer than this are one parking position [chosen: below the span
                     # of the smallest common type (C150 / C152 10.17 m, FAA ACD) minus ~0.7 m of position noise; the
                     # review's duplicates were 8.4 and 8.9 m apart]
 N_OBS_MIN = 2       # independent observations (NAIP years with an aircraft + adsb.lol sessions) for a ramp / hangar-apron
                     # spot to be 'obs' as a parking position; one sighting = 'inf' (review). Since the round-1 re-check an
                     # ADS-B observation is a session (tools/adsb/parked_stays.py sessions(): one aircraft's continuous
-                    # presence at one place), so a stay and its own signal start / end count once
+                    # presence at one place), so a stay and its own signal start / end count once (round 2: a power cycle
+                    # in place, too)
 TWY_OBJ_M = 44.5 * FT   # AC 150/5300-13B Chg 1 Table 4-1, ADG I: "Taxiway centerline to fixed or movable object 44.5 ft (13.6 m)"
 TLN_OBJ_M = 39.5 * FT   # same table: "Taxilane centerline to fixed or movable object 39.5 ft (12.0 m)"
 FUS_FWD, FUS_AFT = 2.0, 6.5   # m: inferred aircraft outline relative to its wing line (C172: length 8.29 m, FAA ACD; the wing
@@ -1201,7 +1263,7 @@ HGR_REVIEW = {
     'osm:way/204795471': 'ok: concrete pad in front of the hangar, empty in both years',
     'osm:way/204797798': 'ok: open apron in front of the West Hangars building; a small vehicle by the wall in 2022, outside the planform',
     'osm:way/204797805': 'ok: open apron in front of the West Hangars building, empty in both years',
-    'osm:way/204798810': 'ok: apron where aircraft park in both years (HE383N167 beside it, another aircraft nearby in 2022); cars stand along the building to the east, outside the planform',
+    'osm:way/204798810': 'ok: apron where aircraft park in both years (RE383N167 beside it, another aircraft nearby in 2022); cars stand along the building to the east, outside the planform',
     'osm:way/204798811': 'ok: apron in front of the hangar; aircraft parked next to the planform in both years',
     'osm:way/204801544': 'ok: paved strip between two hangars; empty in 2024, two aircraft parked along the hangar wall over the planform in 2022',
     'osm:way/204801545': 'ok: concrete pad south of the hangar on the lane past T-hangar 971132675 (adsb.lol parking HE248N195), empty in both years',
@@ -1222,7 +1284,8 @@ UNSPOTTED_NAIP2024 = [  # (x, z, where, what the image shows)
  (-222.2, -583.8, 'West Hangars apron', 'same cluster'), (-213.2, -580.2, 'West Hangars apron', 'same cluster'),
  (-195.8, -563.4, 'West Hangars apron', 'pair wing to wing north of RW208N551'), (-206.0, -556.2, 'West Hangars apron', 'same pair, 5.6 m from RW208N551 (which is on the next aircraft)'),
  (-155.0, -577.8, 'West Hangars apron', 'pair wing to wing'), (-144.2, -584.4, 'West Hangars apron', 'same pair'),
- (-140.6, -552.6, 'West Hangars apron', 'row of 4 wing to wing; RW130N558 is the first'), (-150.8, -546.0, 'West Hangars apron', 'same row'), (-161.0, -540.0, 'West Hangars apron', 'same row'),
+ (-129.0, -558.5, 'West Hangars apron', 'row of 4 high-wing aircraft wing to wing, north-east end: the OSM taxilane runs over it, so the LANE_M rule drops it (by-eye centre of review blob R080; round-3 re-check)'),
+ (-150.8, -546.0, 'West Hangars apron', 'same row, 3rd (the 2nd is a spot at the other by-eye centre of review blob R080)'), (-161.0, -540.0, 'West Hangars apron', 'same row, 4th'),
  (-376.6, -463.0, 'West Hangars apron', 'group of 4 in a painted rectangle; RW374N473 lies 9-10 m north'), (-367.0, -462.4, 'West Hangars apron', 'same group'),
  (-370.9, -452.8, 'West Hangars apron', 'same group'), (-360.7, -452.2, 'West Hangars apron', 'same group'),
  (-158.6, -507.6, 'West Hangars apron', 'beside a taxi line: parked or taxiing (one image)'), (-114.8, -532.8, 'West Hangars apron', 'on a taxi-line curve: probably taxiing'),
@@ -1245,6 +1308,51 @@ UNSPOTTED_NAIP2024 = [  # (x, z, where, what the image shows)
  (255.1, 357.6, 'FBO Ramp (south)', 'business jet on the east edge, partly on grass outside the OSM apron polygon (docs/phase1_crosscheck.md #18)'),
 ]
 
+# by-eye verdicts on the omission sweep of tools/check_airport.py (round-2 re-check, 2026-11-13: the list above missed the
+# back row of the nested double row on the FBO Ramp (north-east), 9.5-10.5 m from the front-row spots, and the check could
+# not see an omission). The sweep takes every part of the NAIP 2024 aircraft mask (tiedowns.py AC_D) on an OSM apron,
+# buildings cut out, that lies farther than SWEEP_R from every spot, every listed unspotted aircraft and every reviewed NAIP
+# blob (refs/cache/naip/naip_blob_review.json), with an area >= SWEEP_MIN_M2; check_airport fails on a part without a verdict
+# here within SWEEP_MATCH_M. Looked at on NAIP 2024 at 0.12 m with the spots and the listed aircraft drawn, and at 0.05-0.06 m
+# (also NAIP 2022) where unclear, 2026-11-13. Verdicts: 'vehicle', 'paint', 'structure' (not an aircraft); 'spot:<id>' (by
+# eye: the far part of the aircraft that the spot stands for - the spot point lies on it, or, for RE277N271 and RE308N064,
+# about 6 m from its centre, which is taken as the same position [inf]); 'listed' (part of a listed unspotted aircraft).
+# Distance alone does not separate positions: the nested back-row aircraft lie 7.8-10.6 m from the front-row spots. Any
+# aircraft with a part beyond SWEEP_R from every spot is shown for a verdict (a GA single is about 11 m across). Limits: the
+# mask needs a bright object (>= AC_D DN over the 4 m median): dark aircraft and aircraft in shadow are not found; only OSM
+# aprons are swept.
+SWEEP_R = 7.5          # m [chosen: below DUP_M 9.5 m, so an aircraft standing >= 9.5 m from every spot always has parts beyond it]
+SWEEP_MIN_M2 = 6.0     # m2 of the part beyond SWEEP_R [chosen: under the 8 m2 lower bound of one parked aircraft, tiedowns AC_AREA]
+SWEEP_MATCH_M = 3.0    # m: a verdict applies to the part whose centroid lies this close (the sweep is deterministic) [chosen]
+SWEEP_REVIEW = [  # (x, z, verdict, what the image shows)
+ (-108.0, -637.9, 'vehicle', 'car by the hangar wall'), (-90.9, -648.1, 'vehicle', 'two cars by the hangar wall'),
+ (32.4, -645.9, 'vehicle', 'cars and a small trailer by the trees'),
+ (42.5, -665.2, 'spot:RE048N669', 'wing end of the long-winged aircraft (about 19 m) that RE048N669 stands on; the same in 2022'),
+ (150.7, 350.1, 'spot:RE142S348', 'tail of the low-wing single that RE142S348 stands on'),
+ (172.9, 309.3, 'spot:RE171S300', 'tail of the business jet that RE171S300 stands on'),
+ (245.2, 349.8, 'listed', 'nose of the listed business jet at (255.1, 357.6)'),
+ (-112.8, -482.0, 'structure', 'white kerb / wall edge beside the grass'),
+ (-22.0, -485.7, 'paint', 'taxi centreline'), (23.3, -512.0, 'paint', 'taxi centreline'), (67.3, -537.4, 'paint', 'taxi centreline'),
+ (97.3, -512.4, 'paint', 'taxi centreline'), (99.1, -555.9, 'paint', 'taxi centreline'), (125.2, -464.3, 'paint', 'taxi centreline'),
+ (-215.8, -356.8, 'paint', 'white dashed lines'), (-171.8, -436.9, 'paint', 'white lines'), (-141.1, -447.6, 'vehicle', 'cars in a car park'),
+ (-138.4, -303.4, 'paint', 'white dashed lines'), (-84.5, -280.4, 'paint', 'white dashed lines'), (-73.4, -266.1, 'paint', 'white dashed lines'),
+ (-19.5, -413.8, 'vehicle', 'cars in a car park'), (-11.4, -409.6, 'vehicle', 'cars in a car park'), (48.7, -374.3, 'vehicle', 'cars in a car park'),
+ (172.9, -341.5, 'vehicle', 'cars'), (176.4, -334.1, 'vehicle', 'cars'), (177.5, -284.0, 'vehicle', 'cars in a car park'),
+ (179.8, -332.1, 'vehicle', 'cars'), (202.1, -278.6, 'vehicle', 'cars and vans'),
+ (213.1, -109.5, 'paint', 'white stripe along the pavement edge by a roof corner'),
+ (215.8, -265.1, 'vehicle', 'trucks and trailers'), (223.4, -233.1, 'vehicle', 'truck by the building'), (236.3, -302.7, 'vehicle', 'bus and vans'),
+ (259.4, -276.4, 'paint', 'curved painted lead-in lines of the north-east strip; no aircraft at the point'),
+ (270.7, -268.8, 'spot:RE277N271', 'high-wing aircraft whose wing centre lies about 6 m from the RE277N271 blob centroid'),
+ (289.2, -66.8, 'vehicle', 'fuel truck'),
+ (300.7, -69.9, 'spot:RE308N064', 'aircraft whose centre lies about 6 m from the RE308N064 antenna median'),
+ (305.8, -137.7, 'vehicle', 'cars'), (310.2, -144.5, 'vehicle', 'cars'), (326.7, -142.1, 'vehicle', 'cars and a trailer'),
+ (392.0, -138.9, 'vehicle', 'car by the hangar'), (408.9, -178.4, 'vehicle', 'pickup by the hangar'), (409.1, -188.8, 'vehicle', 'van by the hangar'),
+ (419.2, -164.2, 'vehicle', 'cars'), (420.7, -157.0, 'vehicle', 'cars'),
+ (421.6, -228.5, 'listed', 'wings of the listed row of 7 along the road'),
+ (427.3, -160.3, 'vehicle', 'cars'), (436.4, -62.5, 'vehicle', 'cars in a car park'), (459.4, -70.1, 'vehicle', 'cars in a car park'),
+ (573.1, 91.2, 'vehicle', 'car by the hangar'),
+]
+
 
 def common_min_span():
     """smallest FAA ACD wingspan among the types seen on >= 3 aircraft on the field (data/ga_types.json)"""
@@ -1263,7 +1371,7 @@ def parking(N24, N22, apr, hgr, bld, helis):
     in_bld = prep(unary_union(holes_all))
     apron_pg = {a['id']: Polygon(a['ring']).buffer(0) for a in apr}
     REV = _review(); rev_used = Counter()
-    spots = []; td_meta = {}; ac_all = {'2024': [], '2022': []}; dropped = Counter(); acm = {}
+    spots = []; td_meta = {}; ac_all = {'2024': [], '2022': []}; dropped = Counter(); acm = {}; lane_dropped = []
 
     def new(**kw):
         d = dict(_naip=set(), _stays=0, _aircraft=0, _sig=0, _sess=set(), _types=Counter(), _merged=[]); d.update(kw); return d
@@ -1428,8 +1536,8 @@ def parking(N24, N22, apr, hgr, bld, helis):
             dropped['NAIP 2024 blob reviewed by eye: %s' % verdict] += 1; continue
         cands = [(a['x'], a['z'])]
         if verdict == 'two_aircraft':
-            if a['extent'] >= SPLIT_MIN_EXT and len(a.get('halves') or []) == 2: cands = [tuple(h) for h in a['halves']]
-            else: dropped['NAIP 2024 blob reviewed by eye: centred between two aircraft, extent < %.0f m (not split)' % SPLIT_MIN_EXT] += 1; continue
+            if a['extent'] >= SPLIT_MIN_EXT: cands = [tuple(c) for c in TWO_AIRCRAFT_CENTRES[rv['spot_id_in_review_build']]]
+            else: dropped['NAIP 2024 blob reviewed by eye: centred between two aircraft, extent < %.0f m (not split; both aircraft listed)' % SPLIT_MIN_EXT] += 1; continue
         for (x, z) in cands:
             blob = {'extent_m': a['extent'], 'area_m2': a['area'], 'review': verdict or 'not reviewed'}
             nt = near_spot(x, z, MERGE_RAMP, ('tiedown',))
@@ -1440,12 +1548,15 @@ def parking(N24, N22, apr, hgr, bld, helis):
                 if verdict in ('aircraft', 'two_aircraft') and spots[nb[1]]['kind'] != 'tiedown': spots[nb[1]]['_naip'].add('2024')
                 if 'naip2024' not in spots[nb[1]]['refs']: spots[nb[1]]['refs'] = spots[nb[1]]['refs'] + ['naip2024']
                 continue
-            if lanes.contains(Point(x, z)): dropped['NAIP 2024 aircraft within %.0f m of an open OSM taxiway / taxilane centreline (taxiing or holding)' % LANE_M] += 1; continue
+            if lanes.contains(Point(x, z)):
+                dropped['NAIP 2024 aircraft within %.0f m of an open OSM taxiway / taxilane centreline (taxiing or holding)' % LANE_M] += 1
+                lane_dropped.append({'x': r2(x), 'z': r2(z), 'extent_m': a['extent'], 'review': verdict or 'not reviewed by eye'})
+                continue
             m = [b for b in ac_all['2022'] if math.hypot(x - b['x'], z - b['z']) <= 3.0]
             add(new(kind='ramp', x=x, z=z, heading=None, apron=a['apron'], refs=['naip2024'] + (['naip2022'] if m else []),
-                    _naip={'2024'} | ({'2022'} if m else set()), _ref='naip_blob_centroid' if len(cands) == 1 else 'naip_blob_half_centroid',
+                    _naip={'2024'} | ({'2022'} if m else set()), _ref='naip_blob_centroid' if len(cands) == 1 else 'naip_by_eye_aircraft_centre',
                     ev={'how': 'a parked aircraft on NAIP 2024 (bright mask fragments grouped by 1 m: %.1f m extent, %.0f m2; tools/airport/tiedowns.py Grid.aircraft)%s%s' % (
-                            a['extent'], a['area'], '; split in two along its major axis (by-eye review: two aircraft)' if len(cands) > 1 else '', '; also there in NAIP 2022' if m else ''),
+                            a['extent'], a['area'], '; the blob holds two aircraft (by-eye review): one spot at each aircraft centre read by eye (build_airport.TWO_AIRCRAFT_CENTRES, +-1.5 m)' if len(cands) > 1 else '', '; also there in NAIP 2022' if m else ''),
                         'naip_extent_m': a['extent'], 'naip_review': verdict or 'not reviewed by eye', 'naip_review_note': rv['note'] if rv else None}), 'NAIP aircraft')
     # ---- f. box hangars without an observed hangar-apron spot: one inferred spot in front of a side facing apron
     have = {s.get('hangar') for s in spots if s['kind'] == 'hangar_apron'}
@@ -1526,7 +1637,7 @@ def parking(N24, N22, apr, hgr, bld, helis):
         if s['kind'] == 'tiedown' or (s['kind'] == 'helipad' and s.get('helipad')) or s.get('_rule'): continue
         s['src'] = 'obs' if n_obs >= N_OBS_MIN else 'inf'
         if s['_merged']: s['ev']['merged_duplicates'] = s['_merged']
-    return spots, td_meta, ac_all, dict(sorted(dropped.items())), dict(rev_used)
+    return spots, td_meta, ac_all, dict(sorted(dropped.items())), dict(rev_used), lane_dropped
 
 
 def _taxi_grid():
@@ -1755,7 +1866,7 @@ def finish_spots(spots, apr, hgr, bld):
     REFP = {'tee_junction': 'junction of the painted tee = wing / main-gear line (AC 150/5300-13B Fig E-1)',
             'gnss_antenna': 'median ADS-B position = GNSS antenna (1-3 m from the planform centre for a GA single [inferred])',
             'naip_blob_centroid': 'centroid of the NAIP 2024 aircraft-mask blob (about the planform centroid; a high wing may dominate)',
-            'naip_blob_half_centroid': 'centroid of one half of a NAIP 2024 blob of two aircraft parked wing to wing',
+            'naip_by_eye_aircraft_centre': 'one of two aircraft parked wing to wing in one NAIP 2024 blob: its wing / fuselage crossing read by eye (TWO_AIRCRAFT_CENTRES, +-1.5 m)',
             'helipad_polygon_centroid': 'centroid of the OSM helipad polygon', 'rule_point': 'rule point: the wing line of an aircraft parked nose to the hangar'}
     for i in idx:
         s = spots[i]
@@ -1772,7 +1883,7 @@ def finish_spots(spots, apr, hgr, bld):
              'apron': s.get('apron'), 'size': s['size'], 'src': s['src'],
              'src_rule': ('painted tee seen (obs) / pitch position of a tee row (inf)' if s['kind'] == 'tiedown' else
                           'mapped OSM helipad' if s.get('helipad') else 'rule (no observation)' if s.get('_rule') else
-                          'obs when >= %d independent observations (NAIP years with an aircraft + adsb.lol sessions: a stay and its own signal start / end are one session), else inf' % N_OBS_MIN),
+                          'obs when >= %d independent observations (NAIP years with an aircraft + adsb.lol sessions: one aircraft at one place: a stay, its own signal start / end and a power cycle in place are one session; leaving or flying starts another where the recording shows it, while a departure and return hidden by a recorder outage or a signal gap is joined, so the count errs low), else inf' % N_OBS_MIN),
              'strength': s['strength'], 'refs': sorted(set(s['refs'])), 'evidence': s['ev']}
         if s['kind'] == 'tiedown':
             e['heading_evidence'] = 'nose away from the tee stem (aircraft parked on the Green Ramp tees sit with the tail over the stem end, NAIP 2024) [inf for the other tees]'
@@ -1820,7 +1931,7 @@ def main():
     tw, tl, bst = taxiways(N24)
     apr = aprons(labels); hd = holds(N24); hs = hotspots(hs_geo)
     hp = helipads(); hg = hangars(); bl = buildings(labels, M); mk = markers()
-    sp_raw, td_meta, ac_all, dropped, rev_used = parking(N24, N22, apr, hg, bl, hp)
+    sp_raw, td_meta, ac_all, dropped, rev_used, lane_dropped = parking(N24, N22, apr, hg, bl, hp)
     sp = finish_spots(sp_raw, apr, hg, bl)
     refs_osm = sorted({w['ref'] for w in tw if w['ref']})
     D = {
@@ -1853,9 +1964,10 @@ def main():
             'paint_bstar_of_ridges': {'n': len(bst), 'p5_p50_p95': [r1(v) for v in np.percentile(bst, [5, 50, 95])] if bst else None, 'threshold': BSTAR_MIN},
             'tiedown_detection': {'params': TD.PARAMS, 'per_apron': td_meta, 'naip_aircraft_blobs': {y: len(v) for y, v in ac_all.items()}},
             'parking_candidates_dropped': dropped,
+            'naip_aircraft_dropped_by_lane_rule': lane_drop_accounted(lane_dropped),
             'naip_blob_review': {'file': NAIP_REVIEW, 'verdicts_used': rev_used},
             'parking_rules': {'MERGE_TD': MERGE_TD, 'MERGE_RAMP': MERGE_RAMP, 'BIG_SPAN': BIG_SPAN, 'EDGE_LINK': EDGE_LINK, 'EDGE_MIN': EDGE_MIN, 'EDGE_MIN_HGR': EDGE_MIN_HGR, 'HGR_D': HGR_D, 'AC_EXT_MIN': AC_EXT_MIN, 'LANE_M': LANE_M, 'PAVE_TWY': PAVE_TWY, 'SAT_MAX': SAT_MAX, 'EG_MAX': EG_MAX,
-                              'REVIEW_MATCH_M': REVIEW_MATCH_M, 'SPLIT_MIN_EXT': SPLIT_MIN_EXT, 'DUP_M': DUP_M, 'N_OBS_MIN': N_OBS_MIN, 'TWY_OBJ_M': r2(TWY_OBJ_M), 'TLN_OBJ_M': r2(TLN_OBJ_M),
+                              'REVIEW_MATCH_M': REVIEW_MATCH_M, 'SPLIT_MIN_EXT': SPLIT_MIN_EXT, 'TWO_MATCH_M': TWO_MATCH_M, 'DUP_M': DUP_M, 'N_OBS_MIN': N_OBS_MIN, 'TWY_OBJ_M': r2(TWY_OBJ_M), 'TLN_OBJ_M': r2(TLN_OBJ_M),
                               'FUS_FWD': FUS_FWD, 'FUS_AFT': FUS_AFT, 'HGR_SPOT_M': HGR_SPOT_M, 'HGR_ADSB': HGR_ADSB, 'HGR_OCC_M2': HGR_OCC_M2, 'HGR_ROOF_GRAY': HGR_ROOF_GRAY, 'HGR_REVIEW_REJECT': HGR_REVIEW_REJECT, 'HGR_STRIP': list(HGR_STRIP), 'CAP_GAP': CAP_GAP, 'SIZE_R': SIZE_R,
                               'WINGTIP_CLEAR_m': r2(WINGTIP_CLEAR), 'ADG_SPAN_m': {k: r2(v) for k, v in ADG_SPAN.items()}},
             'wingspan_limits_nasr': {k: v[0] for k, v in sorted(WINGSPAN_LIMIT.items())},

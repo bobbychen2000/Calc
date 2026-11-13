@@ -19,11 +19,17 @@ Checks
      NAIP paint per way (rewritten after the round-1 re-check, which found taxiway E zig-zagging between its paint and its
      old position while the earlier 50 m section test passed): the yellow ridges are measured again along every open way's
      final geometry (build_airport.ridge_scan, stations shifted by PAINT_PHASE from the build's). A 20 m window (step
-     10 m) with >= 6 ridges, |median| > 1.0 m and IQR <= 0.8 m is off the paint. Hard: (a) no off-paint window on a moved
-     way outside its END_TAPER_M junction tapers; (b) no lateral kink in a moved way: the second difference over +-10 m of
-     its displacement from the OSM line (khwd_features.json) <= 0.5 m outside the junction tapers; (c) every unmoved way
-     with an off-paint window carries paint_offset_unsnapped (its offsets recorded). The review build fails (a), (b) and
-     (c) (run with --data on it).
+     10 m) with >= 6 ridges, |median| > 1.0 m and IQR <= 0.8 m is off the paint. Hard: (a) no off-paint window anywhere on
+     a moved way (round 2: junction tapers included); (a2) a way changed only by a junction attachment has no off-paint
+     window that its OSM line lacks; (b1) no zig-zag on any changed way: its displacement from the OSM line is never a
+     local extremum more than KINK_M deeper than both points KINK_H m away (no exemption); (b2) no lateral kink in a moved
+     way: the second difference over +-10 m of its displacement from the OSM line (khwd_features.json) <= 0.5 m outside
+     its recorded junction tapers; (c) every unchanged / attached way with an off-paint window carries
+     paint_offset_unsnapped (its offsets recorded). The review build fails (a), (b1), (b2) and (c) (run with --data on it).
+     Taxi network topology (round 2, topology_check): every OSM vertex shared by two or more taxiway / taxilane ways is one
+     vertex in the data on every member way within TOPO_NODE_M of the node (or a shallow fork: the ending way's built end
+     is a vertex of the other within FORK_M, OSM angle < FORK_DEG), and built ways touch or cross only at shared vertices
+     (unless OSM already crosses without a node) - hard. The round-1 build fails.
   4. Every parking spot centre on pavement: inside an OSM apron polygon, or within PAVE_TWY m of an OSM taxiway / taxilane
      centreline, or NAIP 2024 grey (median saturation < SAT_MAX and excess green < EG_MAX in a 2 m disc - a
      calibration read on this mosaic: asphalt / concrete aprons 0.04-0.14, grass 0.19-0.36). A spot passing only the
@@ -45,7 +51,11 @@ Checks
      taxiways: planform (capacity size) vs AC Table 4-1 ADG I object distances (13.6 / 12.0 m), reported per src; hard
      for rule-made spots, which must also be reachable over OSM pavement within CONNECT_M (own Dijkstra, pave_path) and
      carry an 'ok' by-eye review (build_airport.HGR_REVIEW) - hard. The unspotted_aircraft list must not hold an
-     aircraft that now has a spot within 5 m - hard.
+     aircraft that now has a spot within 5 m - hard. Round 2: every heading-less disc holds the wing + fuselage planform
+     at every heading - hard; a presence recount from the gitignored per-aircraft files, without the session numbers
+     (presence_recount; SKIPPED without them) finds >= 2 for every obs spot - hard; the omission sweep (omission_sweep)
+     finds no NAIP 2024 aircraft-mask part on an OSM apron farther than build_airport.SWEEP_R from every spot and listed
+     aircraft without a by-eye verdict (build_airport.SWEEP_REVIEW) - hard.
   7. Hot spots: the OSM taxiways inside each AL-5015 ellipse against the taxiways the CS hot-spot text names. A
      consistency check of the diagram registration and the OSM refs; HS whose CS text names no taxiway (HS 2, 3, 4) are
      reported as 'not checkable against the CS'.
@@ -56,8 +66,8 @@ Checks
      docs/*.md) is scanned for identity keys (hex, icao24, callsign, flight, registration, r ...), per-row time keys
      (t, t0, time, seen ...) and epoch-second numbers, N-number-like tokens, and any token equal to a hex address,
      registration or callsign of an aircraft that the pinned adsb.lol recording saw within 5 km of the ARP
-     (identity_set, read from sfo3d/refs/cache/rec_pack) - hard; the session numbers of hwd_parked_stays.json never hold
-     two signal starts / ends or span more than 2 x SESSION_R_M - hard. SOURCES coverage: every committed data file under
+     (identity_set, read from sfo3d/refs/cache/rec_pack) - hard; in each session of hwd_parked_stays.json the signal
+     starts and ends differ by at most 1 (round 2: power cycles in place) and it spans at most 2 x SESSION_R_M - hard. SOURCES coverage: every committed data file under
      data/, refs/cache/ (not local/, not .parts/) and docs/phase1/ matches a key (or glob key) of a SOURCES.json in its
      folder or a parent folder - hard; every SOURCES entry has made_by or note - hard; every text / JSON file whose
      SOURCES licence names the ODbL carries the ODbL URI itself - hard; src / *_src values in every committed JSON are
@@ -312,8 +322,8 @@ def paint_check(D, FE):
             if not np.isfinite([a_, b_, c_]).all(): continue
             dep = min(abs(b_ - a_), abs(b_ - c_)) if (b_ - a_) * (b_ - c_) > 0 else 0.0
             if dep > zw: zw, zat = dep, so[i]
-        zmax.append((w['id'], w['ref'], round(zw, 2)))
-        if zw > KINK_M: zig.append((w['id'], w['ref'], round(zw, 2), r1(zat)))
+        zmax.append((w['id'], w['ref'], round(float(zw), 2)))
+        if zw > KINK_M: zig.append((w['id'], w['ref'], round(float(zw), 2), r1(zat)))
         # (b2) lateral kinks of a moved way: second difference over +-KINK_H m outside its recorded junction tapers
         if moved:
             L_ = so[-1]; tz = []
@@ -413,6 +423,126 @@ def topology_check(D, FE):
     return hard
 
 
+def omission_sweep(D, N):
+    """round-2 re-check: the unspotted_aircraft test only caught a listed aircraft that gained a spot, never an omission.
+    Own sweep: the NAIP 2024 aircraft mask (gray > tiedowns.AC_D DN over the 4 m median, closed by a 0.75 m disc, as
+    tiedowns.Grid) on every OSM apron with buildings (+1 m) cut out; mask parts joined within 1 m; the pixels of a part
+    farther than build_airport.SWEEP_R from every spot, listed unspotted aircraft and reviewed NAIP blob form a candidate
+    when their area is >= SWEEP_MIN_M2. Each candidate needs a by-eye verdict (build_airport.SWEEP_REVIEW) within
+    SWEEP_MATCH_M; a 'spot:<id>' verdict needs that spot within DUP_M + SWEEP_R of the candidate, a 'listed' one a listed
+    aircraft within 15 m. Returns (candidates, unmatched, bad verdicts)."""
+    import tiedowns as TD
+    from scipy import ndimage as nd
+    from shapely import contains_xy
+    # round 3: a blob reviewed as two aircraft is not an exclusion point (it lies between the aircraft and hid one of R080's
+    # two from the sweep); its by-eye centres are spots or listed aircraft, which are exclusion points themselves
+    rev = [r for r in json.load(open(os.path.join(HWD, B.NAIP_REVIEW)))['items'] if r['year'] == '2024' and 'x' in r and r['verdict'] != 'two_aircraft']
+    E = np.array([(s['x'], s['z']) for s in D['parking']] + [(u['x'], u['z']) for u in D.get('unspotted_aircraft') or []] + [(r['x'], r['z']) for r in rev])
+    holes_all = [Polygon(h['ring']).buffer(1.0) for h in D['hangars']] + [Polygon(b['ring']).buffer(1.0) for b in D['buildings'] if b.get('ring')]
+    close = np.hypot(*np.mgrid[-3:4, -3:4]) <= 3.0; join = np.hypot(*np.mgrid[-4:5, -4:5]) <= 4.0; R = TD.RES
+    cands = []
+    for a in D['aprons']:
+        pg = Polygon(a['ring']).buffer(0); holes = [h for h in holes_all if h.intersects(pg)]
+        x0, z0, x1, z1 = pg.bounds
+        xs = np.arange(x0 - 6, x1 + 6, R); zs = np.arange(z0 - 6, z1 + 6, R); X, Z = np.meshgrid(xs, zs)
+        I = N.sample(X, Z, 'gray'); acm = nd.binary_closing(I - nd.median_filter(I, size=int(round(4.0 / R))) > TD.AC_D, structure=close)
+        inside = contains_xy(pg, X, Z)
+        if holes: inside &= ~contains_xy(unary_union(holes), X, Z)
+        lab, _ = nd.label(nd.binary_dilation(acm, structure=join)); lab = np.where(acm, lab, 0)
+        for i, sl in enumerate(nd.find_objects(lab)):
+            if sl is None: continue
+            m = (lab[sl] == i + 1) & inside[sl]
+            if m.sum() * R * R < B.SWEEP_MIN_M2: continue
+            px, pz = X[sl][m], Z[sl][m]
+            far = np.min(np.hypot(px[:, None] - E[None, :, 0], pz[:, None] - E[None, :, 1]), axis=1) > B.SWEEP_R
+            if far.sum() * R * R < B.SWEEP_MIN_M2: continue
+            cands.append((a['id'], round(float(px[far].mean()), 1), round(float(pz[far].mean()), 1), round(float(far.sum() * R * R), 1)))
+    spots = {s['id']: s for s in D['parking']}; ua = D.get('unspotted_aircraft') or []
+    unmatched = []; badv = []; verd = Counter()
+    for c in cands:
+        hit = [v for v in B.SWEEP_REVIEW if math.hypot(v[0] - c[1], v[1] - c[2]) <= B.SWEEP_MATCH_M]
+        if not hit: unmatched.append(c); continue
+        v = min(hit, key=lambda v: math.hypot(v[0] - c[1], v[1] - c[2])); verd[v[2].split(':')[0]] += 1
+        if v[2].startswith('spot:'):
+            s = spots.get(v[2][5:])
+            if s is None or math.hypot(s['x'] - c[1], s['z'] - c[2]) > B.DUP_M + B.SWEEP_R: badv.append((c, v[2]))
+        elif v[2] == 'listed':
+            if not any(math.hypot(u['x'] - c[1], u['z'] - c[2]) <= 15.0 for u in ua): badv.append((c, v[2]))
+        elif v[2] not in ('vehicle', 'paint', 'structure'): badv.append((c, v[2]))
+    return cands, unmatched, badv, verd
+
+
+def naip_accounting(D, N):
+    """round-3 re-check: one aircraft of the split review blob R080 had no spot and was not listed (its half was dropped by
+    the lane rule and the other half sat on the wingtip junction, so neither the 5 m stale test nor the omission sweep could
+    see it). Every NAIP 2024 aircraft blob of the build's grouping (tiedowns.Grid.aircraft on the same mask, extent >=
+    build_airport.AC_EXT_MIN, on every OSM apron with buildings cut out) must be accounted for:
+      - review verdict vehicle / no_object / duplicate: not an aircraft;
+      - review verdict two_aircraft: both by-eye centres (build_airport.TWO_AIRCRAFT_CENTRES) need a spot or a listed
+        unspotted aircraft within TWO_MATCH_M;
+      - otherwise the blob centroid needs a spot within MERGE_RAMP (the build attaches it), a listed aircraft within
+        TWO_MATCH_M, or a by-eye SWEEP_REVIEW verdict within SWEEP_MATCH_M (paint / vehicle / structure, or spot:<id> with
+        that spot present).
+    And every spot whose ref_point is a split-blob position (naip_by_eye_aircraft_centre, or the older
+    naip_blob_half_centroid) lies within TWO_MATCH_M of a by-eye centre. Returns (counts, failures)."""
+    import tiedowns as TD
+    from scipy import ndimage as nd
+    rev = [r for r in json.load(open(os.path.join(HWD, B.NAIP_REVIEW)))['items'] if r['year'] == '2024' and 'x' in r]
+    P = D['parking']; ua = D.get('unspotted_aircraft') or []; ids = {s['id'] for s in P}
+    holes_all = [Polygon(h['ring']).buffer(1.0) for h in D['hangars']] + [Polygon(b['ring']).buffer(1.0) for b in D['buildings'] if b.get('ring')]
+    disk = np.hypot(*np.mgrid[-3:4, -3:4]) <= 3.0
+    near = lambda pts, x, z: min([math.hypot(a - x, b - z) for a, b in pts] or [1e9])
+    sp_xy = [(s['x'], s['z']) for s in P]; ua_xy = [(u['x'], u['z']) for u in ua]
+    cnt = Counter(); bad = []
+    for a in D['aprons']:
+        pg = Polygon(a['ring']).buffer(0); holes = [h for h in holes_all if h.intersects(pg)]
+        x0, z0, x1, z1 = pg.bounds
+        g = TD.Grid.__new__(TD.Grid)
+        g.xs = np.arange(x0 - 6, x1 + 6, TD.RES); g.zs = np.arange(z0 - 6, z1 + 6, TD.RES); X, Z = np.meshgrid(g.xs, g.zs)
+        I = N.sample(X, Z, 'gray'); g.acmask = nd.binary_closing(I - nd.median_filter(I, size=int(round(4.0 / TD.RES))) > TD.AC_D, structure=disk)
+        g.poly = pg; g.holes = holes
+        for b in TD.Grid.aircraft(g):
+            if b['extent'] < B.AC_EXT_MIN: continue
+            r = min(rev, key=lambda r: math.hypot(r['x'] - b['x'], r['z'] - b['z']))
+            v = r['verdict'] if math.hypot(r['x'] - b['x'], r['z'] - b['z']) <= B.REVIEW_MATCH_M else None
+            if v in ('vehicle', 'no_object', 'same_aircraft_as_another_blob'): cnt['not an aircraft (review)'] += 1; continue
+            if v == 'two_aircraft':
+                C = getattr(B, 'TWO_AIRCRAFT_CENTRES', {}).get(r.get('spot_id_in_review_build'))
+                if not C: bad.append(('two-aircraft blob without by-eye centres', r.get('spot_id_in_review_build'), b['x'], b['z'])); continue
+                for (x, z) in C:
+                    if near(sp_xy, x, z) <= B.TWO_MATCH_M: cnt['two-aircraft centre: spot'] += 1
+                    elif near(ua_xy, x, z) <= B.TWO_MATCH_M: cnt['two-aircraft centre: listed'] += 1
+                    else: bad.append(('by-eye aircraft centre of blob %s with no spot or listed aircraft within %.0f m' % (r.get('spot_id_in_review_build'), B.TWO_MATCH_M), x, z, round(near(sp_xy, x, z), 1), round(near(ua_xy, x, z), 1)))
+                continue
+            x, z = b['x'], b['z']
+            if near(sp_xy, x, z) <= B.MERGE_RAMP: cnt['blob: spot'] += 1; continue
+            if near(ua_xy, x, z) <= B.TWO_MATCH_M: cnt['blob: listed'] += 1; continue
+            vv = [w for w in B.SWEEP_REVIEW if math.hypot(w[0] - x, w[1] - z) <= B.SWEEP_MATCH_M]
+            if vv and (vv[0][2] in ('paint', 'vehicle', 'structure') or (vv[0][2].startswith('spot:') and vv[0][2][5:] in ids)):
+                cnt['blob: by-eye verdict %s' % vv[0][2].split(':')[0]] += 1; continue
+            bad.append(('aircraft blob with no spot, listed aircraft or verdict', round(x, 1), round(z, 1), b['extent']))
+    cen = [c for C in getattr(B, 'TWO_AIRCRAFT_CENTRES', {}).values() for c in C]
+    for s in P:
+        if s.get('ref_point') in ('naip_by_eye_aircraft_centre', 'naip_blob_half_centroid'):
+            d = near(cen, s['x'], s['z'])
+            cnt['split-blob spots'] += 1
+            if d > B.TWO_MATCH_M: bad.append(('split-blob spot not on a by-eye aircraft centre', s['id'], round(d, 1)))
+    return dict(sorted(cnt.items())), bad
+
+
+SPOT_ID_RE = re.compile(r'\b[TRHP][EW]\d{3}[NS]\d{3}\b')
+
+
+def spot_id_refs(D):
+    """round-3 re-check: a note named spot RW130N558, which no build had (and a review entry HE383N167 for RE383N167).
+    Every spot-id token in the data file's text and in the by-eye records of build_airport (UNSPOTTED_NAIP2024,
+    SWEEP_REVIEW, HGR_REVIEW, HGR_REVIEW_REJECT) must name a spot of the data. Returns the missing ones."""
+    ids = {s['id'] for s in D['parking']}
+    txt = json.dumps({k: v for k, v in D.items() if k != 'parking'}) + json.dumps([{k: v for k, v in s.items() if k != 'id'} for s in D['parking']])
+    txt += json.dumps([list(u) for u in B.UNSPOTTED_NAIP2024]) + json.dumps([list(v) for v in B.SWEEP_REVIEW]) + json.dumps(B.HGR_REVIEW) + json.dumps(B.HGR_REVIEW_REJECT)
+    return sorted(set(SPOT_ID_RE.findall(txt)) - ids)
+
+
 PRES_SAME_M, PRES_LEAVE_M = 15.0, 30.0   # m: same place / left (as tools/adsb/parked_stays.py SESSION_R_M / VISIT_LEAVE_M)
 
 
@@ -448,6 +578,84 @@ def presence_recount(R_, types_of, tspan):
                 else: joins += 1
         if len(st['naip_aircraft_years']) + pres < B.N_OBS_MIN: weak.append((s['id'], len(st['naip_aircraft_years']), pres))
     return weak, n, joins
+
+
+def session_check_local(ST, L=None, T=None, polls=None):
+    """round-3 re-check: check 9 tested only |starts - ends| <= 1 and a 30 m span per session, but the docs claimed that a
+    session number never links an aircraft's visits across a departure. With the gitignored per-aircraft files (local
+    only; None without them) this verifies, with own code, what the numbers do and do not join:
+      - the committed stays / signal edges carry the same session numbers as the local file (same run);
+      - each session holds one aircraft; in time order its consecutive events lie <= SESSION_R_M apart, the aircraft has
+        no fix farther than VISIT_LEAVE_M from the earlier event and none off the ground in between (no departure that the
+        recording shows), and its signal starts and ends alternate (no two starts or two ends in a row);
+      - no two consecutive events of one aircraft that meet those conditions are in different sessions (no split);
+      - the join statistics of hwd_parked_stays.json summary.session_joins are recounted: signal end -> next start joins,
+        how many have no fix in between and bridge more than JOIN_BLIND_S of recorder outage (poll gaps > OUTAGE_S), and
+        the outages themselves.
+    A departure and return hidden by an outage (or by the aircraft's own signal gap) is joined; this is counted, not
+    excluded. Returns (failures, recount) or None."""
+    import pickle
+    sys.path.insert(0, os.path.join(HERE, 'adsb')); import parked_stays as PS
+    if L is None:
+        lf = os.path.join(HWD, 'refs', 'cache', 'local', 'adsb', 'hwd_parked_stays_local.json')
+        tf = os.path.join(HWD, 'refs', 'cache', 'local', 'adsb', 'hwd_tracks.pkl')
+        if not (os.path.exists(lf) and os.path.exists(tf)): return None
+        L = json.load(open(lf)); P_ = pickle.load(open(tf, 'rb')); T = P_['tracks']; polls = np.asarray(P_['polls'], float)
+    need = {s['_hex'] for s in L['stays']} | {e['_hex'] for e in L['signal_edges']}
+    if any('gk' not in T[h] for h in need):   # 'off the ground' = not ground by kinematics (tools/adsb/derive.py, as parked_stays)
+        import derive as DV
+        cal = DV.calibrate(T)
+        for h in sorted(need):
+            if 'gk' not in T[h]: T[h]['hex'] = h; DV.derive(T[h], cal)
+    ev = [(s['session'], s['_hex'], s['_t0'], s['_t1'], 'stay', s['x'], s['z']) for s in L['stays']] + \
+         [(e['session'], e['_hex'], e['_t'], e['_t'], e['kind'], e['x'], e['z']) for e in L['signal_edges']]
+    bad = []
+    loc = Counter((round(e[5], 2), round(e[6], 2), e[0], 'stay' if e[4] == 'stay' else e[4]) for e in ev)
+    com = Counter([(s['x'], s['z'], s['session'], 'stay') for s in ST['stays']] + [(e['x'], e['z'], e['session'], e['kind']) for e in ST['signal_edges']])
+    if loc != com: bad.append(('committed vs local session numbers differ', sum((loc - com).values()), sum((com - loc).values())))
+    def linked(a, A, B_):
+        if math.hypot(A[5] - B_[5], A[6] - B_[6]) > PS.SESSION_R_M: return False
+        m = (a['t'] > A[3]) & (a['t'] < B_[2])
+        return not (m.any() and (np.hypot(a['x'][m] - A[5], a['z'][m] - A[6]).max() > PS.VISIT_LEAVE_M or (~a['gk'][m]).any()))
+    by = {}
+    for e in ev: by.setdefault(e[0], []).append(e)
+    pc = joins = blind = nofix = 0; multi_ac = notlinked = consec = 0
+    for k, v in by.items():
+        v.sort(key=lambda e: (e[2], e[3]))
+        if len({e[1] for e in v}) > 1: multi_ac += 1; continue
+        a = T[v[0][1]]; has = False
+        kinds = [e[4] for e in v if e[4] != 'stay']
+        if any(x == y for x, y in zip(kinds, kinds[1:])): consec += 1
+        for A, B_ in zip(v, v[1:]):
+            if not linked(a, A, B_): notlinked += 1
+            if A[4] == 'end' and B_[4] == 'start':
+                joins += 1; has = True
+                m = (a['t'] > A[3]) & (a['t'] < B_[2])
+                i0 = np.searchsorted(polls, A[3]); i1 = np.searchsorted(polls, B_[2])
+                pp = np.concatenate([[A[3]], polls[i0:i1], [B_[2]]]); dd = np.diff(pp)
+                nofix += not m.any()
+                if not m.any() and dd[dd > PS.OUTAGE_S].sum() > PS.JOIN_BLIND_S: blind += 1
+        pc += has
+    split = 0
+    byac = {}
+    for e in ev: byac.setdefault(e[1], []).append(e)
+    for hx, v in byac.items():
+        v.sort(key=lambda e: (e[2], e[3]))
+        for A, B_ in zip(v, v[1:]):
+            if A[0] != B_[0] and linked(T[hx], A, B_): split += 1
+    if multi_ac: bad.append(('sessions holding more than one aircraft', multi_ac))
+    if notlinked: bad.append(('consecutive events of a session not linked by the rule (> %.0f m apart, or a fix > %.0f m away / airborne in between)' % (PS.SESSION_R_M, PS.VISIT_LEAVE_M), notlinked))
+    if consec: bad.append(('sessions with two signal starts or two ends in a row', consec))
+    if split: bad.append(('consecutive events of one aircraft linked by the rule but in different sessions', split))
+    dp = np.diff(polls); out = dp[dp > PS.OUTAGE_S]
+    rec = {'sessions': len(by), 'sessions_with_power_cycle': pc, 'power_cycle_joins': joins, 'power_cycle_joins_without_fix_between': nofix,
+           'power_cycle_joins_without_fix_bridging_outage_over_%dh' % round(PS.JOIN_BLIND_S / 3600): blind,
+           'recording_span_h': round(float(polls[-1] - polls[0]) / 3600, 1),
+           'recorder_outages_over_%ds' % PS.OUTAGE_S: {'n': int(len(out)), 'total_h': round(float(out.sum()) / 3600, 1)}}
+    sj = ST['summary'].get('session_joins') or {}
+    diff = {k: (v, sj.get(k)) for k, v in rec.items() if k != 'sessions' and sj.get(k) != v}
+    if diff: bad.append(('summary.session_joins differs from the recount', diff))
+    return bad, rec
 
 
 def main():
@@ -757,6 +965,22 @@ def main():
     say('   parked aircraft on NAIP 2024 without a spot (unspotted_aircraft, by eye): %d (%s); listed ones that now have a spot within 5 m: %d %s' % (
         len(ua), dict(Counter(u['where'] for u in ua)), len(stale), stale))
     if stale: hard.append('unspotted_aircraft list stale')
+    cands, unm, badv, verd = omission_sweep(D, N24)
+    say('   omission sweep (round-2 re-check; own code): NAIP 2024 aircraft-mask parts on OSM aprons (buildings cut out) more than %.1f m from every spot, listed unspotted aircraft and reviewed NAIP blob, >= %.0f m2: %d; by-eye verdicts (build_airport.SWEEP_REVIEW) %s; without a verdict: %d %s; verdicts that do not fit (spot not within %.0f m / no listed aircraft within 15 m): %d %s - hard' % (
+        B.SWEEP_R, B.SWEEP_MIN_M2, len(cands), dict(verd), len(unm), unm[:12], B.DUP_M + B.SWEEP_R, len(badv), badv[:6]))
+    if unm or badv: hard.append('omission sweep: NAIP aircraft-mask part without a verdict')
+    acc, acc_bad = naip_accounting(D, N24)
+    say('   NAIP 2024 aircraft accounting (round 3; the build\'s blob grouping, own matching): every aircraft blob (extent >= %.0f m) on an OSM apron is a spot (within %.0f m), a listed aircraft or a by-eye verdict; both by-eye centres of a two-aircraft blob have a spot or listed aircraft within %.0f m; split-blob spots lie on a by-eye centre: %s; failures: %d %s - hard' % (
+        B.AC_EXT_MIN, B.MERGE_RAMP, B.TWO_MATCH_M, acc, len(acc_bad), acc_bad[:8]))
+    if acc_bad: hard.append('NAIP aircraft not accounted for')
+    ld = D.get('checks_at_build', {}).get('naip_aircraft_dropped_by_lane_rule')
+    if ld is None:
+        say('   NAIP aircraft dropped by the lane rule: not recorded in this build (round 3 adds the record)')
+    else:
+        nacc = [(c['x'], c['z']) for c in ld if c['accounted_by'] == 'NOT ACCOUNTED']
+        say('   NAIP 2024 aircraft dropped by the lane rule (build record, %.0f m from an open OSM taxi line): %d; listed %d, by-eye verdict %d, not accounted %d %s - hard' % (
+            B.LANE_M, len(ld), sum(c['accounted_by'].startswith('listed') for c in ld), sum(c['accounted_by'].startswith('by-eye') for c in ld), len(nacc), nacc))
+        if nacc: hard.append('lane-dropped NAIP aircraft not accounted for')
     say('   ramp / hangar-apron src: n_observations = NAIP years with an aircraft + adsb.lol sessions, obs when >= %d: consistent on every spot: %s' % (B.N_OBS_MIN, 'yes' if not obs_bad else 'NO %s' % obs_bad))
     say('   independent recount (distinct sessions of the committed stays / signal edges within 8 m - for a type wider than %.0f m half its span + 2 m - of an obs spot or its merged duplicates, + NAIP years): obs spots below %d: %d %s - hard (round-1 re-check: HE623S150 was obs on one session)' % (B.BIG_SPAN, B.N_OBS_MIN, len(weak), weak))
     if obs_bad: hard.append('spot src vs independent observations')
@@ -825,6 +1049,9 @@ def main():
             if e.get('src') not in ('obs', 'inf') or not e.get('refs') or not set(e['refs']) <= srcs: badel.append((k, e.get('id') or e.get('what')))
     say('   %d elements; %d without a valid src / refs %s' % (nel, len(badel), badel[:5]))
     if badel: hard.append('src/refs')
+    miss_ids = spot_id_refs(D)
+    say('   spot ids named in the data text and in build_airport\'s by-eye records that are not spots of the data (round 3): %d %s - hard' % (len(miss_ids), miss_ids))
+    if miss_ids: hard.append('spot id references')
     share = Counter(e['src'] for k in ('runways', 'taxiways', 'taxilanes', 'aprons', 'holds', 'hotspots', 'helipads', 'hangars', 'buildings', 'markers', 'parking') for e in D[k])
     say('   element src shares: %s' % dict(share))
     js = open(os.path.join(HWD, 'data', 'hwd_airport.js'), encoding='utf-8').read()
@@ -846,10 +1073,24 @@ def main():
     # their counts differ by at most 1
     sbad = [k for k, v in by.items() if abs(sum(1 for t in v if t[0] == 'start') - sum(1 for t in v if t[0] == 'end')) > 1 or
             max(math.hypot(a[1] - b[1], a[2] - b[2]) for a in v for b in v) > 2 * PS.SESSION_R_M]
-    say('   D1 session numbers in refs/cache/adsb/hwd_parked_stays.json: %d sessions (%d hold a power cycle: > 1 start or end); signal starts and ends differ by <= 1 in each and each lies within %.0f m: %s' % (
-        len(by), sum(1 for v in by.values() if sum(1 for t in v if t[0] in ('start', 'end')) > 2 or sum(1 for t in v if t[0] == 'start') > 1 or sum(1 for t in v if t[0] == 'end') > 1),
+    # (round 3: the committed file has no time order, so it cannot tell a power cycle (end, start) from a start then an
+    # end; it shows only sessions with both a start and an end, and those with more than one start or end)
+    say('   session numbers in refs/cache/adsb/hwd_parked_stays.json (committed file, no time order): %d sessions; %d with both a signal start and an end, %d with more than one start or end; in each, starts and ends differ by <= 1 and all events lie within %.0f m: %s - hard (a necessary condition only: it cannot see time order)' % (
+        len(by), sum(1 for v in by.values() if any(t[0] == 'start' for t in v) and any(t[0] == 'end' for t in v)),
+        sum(1 for v in by.values() if sum(1 for t in v if t[0] == 'start') > 1 or sum(1 for t in v if t[0] == 'end') > 1),
         2 * PS.SESSION_R_M, 'yes' if not sbad else 'NO %s' % sbad[:10]))
     if sbad: hard.append('D1 session structure')
+    sl = session_check_local(ST)
+    if sl is None:
+        say('   session numbers vs the local per-aircraft files: SKIPPED (refs/cache/local/adsb/ not present: gitignored, local only)')
+    else:
+        sl_bad, rec = sl
+        say('   session numbers vs the local per-aircraft files (round 3; own code, no identity printed): one aircraft per session, consecutive events <= %.0f m apart with no fix > %.0f m away or airborne in between, starts / ends alternating in time, no split of a linked pair, committed = local numbers, summary.session_joins recounted: %s; recount %s - hard' % (
+            PS.SESSION_R_M, PS.VISIT_LEAVE_M, 'yes' if not sl_bad else 'NO %s' % sl_bad, json.dumps(rec)))
+        say('   what a session number does not show: a departure and return with no fix in between. %d of the %d signal end -> start joins have no fix of the aircraft in between, and %d of them bridge more than %.0f h of recorder outage (poll gaps > %.0f s: %d, %.1f h of the %.1f h recording)' % (
+            rec['power_cycle_joins_without_fix_between'], rec['power_cycle_joins'], rec['power_cycle_joins_without_fix_bridging_outage_over_%dh' % round(PS.JOIN_BLIND_S / 3600)],
+            PS.JOIN_BLIND_S / 3600, PS.OUTAGE_S, rec['recorder_outages_over_%ds' % PS.OUTAGE_S]['n'], rec['recorder_outages_over_%ds' % PS.OUTAGE_S]['total_h'], rec['recording_span_h']))
+        if sl_bad: hard.append('session numbers vs local files')
     miss = sources_coverage()
     if miss: hard.append('SOURCES coverage / provenance')
     # src-like keys in every committed JSON: obs / inf (or null); field-documentation maps are skipped; data/ga_types.json

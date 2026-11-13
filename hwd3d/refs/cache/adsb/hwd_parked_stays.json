@@ -135,9 +135,11 @@
   "SIG_GS": 3.0,
   "AREA_BUF_M": 50.0,
   "NDVI_VEG": 0.2,
-  "SESSION_R_M": 15.0
+  "SESSION_R_M": 15.0,
+  "OUTAGE_S": 600.0,
+  "JOIN_BLIND_S": 3600.0
  },
- "rules_text": "Stationary stays of aircraft on the HWD field from the pinned adsb.lol hours, clustered into parking spots ->\nrefs/cache/adsb/hwd_parked_stays.json (positions, type designators, emitter categories, source classes, counts: no ICAO\naddress, registration, callsign or time stamp - default D1). Seeds the tie-down / ramp spot inference (PLAN D3).\n\nForked from sfo3d/tools/stands/adsb_parked.py @ a967f9b. Kept: per-aircraft maximal runs of on-ground reports that stay\nwithin BREAK_M m of the run's running median (last 40 fixes), a gap of more than MAX_GAP s ends a run, position = median\nof the reports with good NACp, spread = 90th percentile distance from it, provider = adsb.lol only (ODbL). Changed:\ninput = refs/cache/local/adsb/hwd_tracks.pkl (extract.py; HWD frame hwd_frame.wgs84_to_world); 'on ground' = the ground\nflag or derive.py 'ground by kinematics'; a fix is still when gs < STILL_GS kt (or no gs) OR it lies within SPREAD_M m of\nthe run median (task G4: \"gs < 1 kt or position spread < 3 m\"); minimum duration MIN_STAY_S = 300 s (sfo3d 180 s); the\ngood-NACp set is NACp >= 9 (EPU < 30 m) when it has >= 3 fixes, else >= 8, else all; heading from the last taxi-in segment\n(below) instead of the reported true_heading (which is kept as hdg_rep for comparison); no flysfo stand matching (SFO\nonly); identity fields dropped from the output (and, since the Phase 1 review, the exact stay duration dur_s and the\ntransport class is called 'feed', not 'src', which in hwd3d means obs / inf); OSM location labels and a NAIP 2024 NDVI pavement check per stay; stays\nclustered into spots; signal starts / ends on the ground (the method of sfo3d/tools/imagery/adsb_ground_cells.py\n'signal_end' @ a967f9b: a ground fix followed / preceded by >= SIG_GAP_S of no fix of that aircraft, here counting only\ntime the recorder was polling).\n\nHeading from the taxi-in segment: scanning back from the stay's first fix (gaps <= 180 s), the last fix that is TAXI_MIN_M\nto TAXI_MAX_M from the stay position; hdg_taxi = direction from it to the stay position (deg true). null when the aircraft\narrived through a polling hole from farther away, or the stay began with the signal (powered on in place). GA aircraft\nare often pushed back into tie-downs by hand after shutdown, so hdg_taxi is the direction of arrival, not necessarily the\nparked heading [inferred].\nSpots: complete-linkage clustering (scipy) of the stay positions of stays with NACp median >= SPOT_NACP and spread90 <=\nSPOT_SPREAD_M, cut at SPOT_DIAM_M (every pair of member stays within SPOT_DIAM_M: radius about SPOT_DIAM_M / 2 = 4 m).\nA visit = consecutive stays of one aircraft in a spot without a fix farther than VISIT_LEAVE_M from the spot in between.\nSessions (round-1 re-check, 2026-11-12; round 2, 2026-11-13): stays and signal edges carry an opaque 'session' number -\none aircraft's continuous presence at one place (sessions()); spots list the sessions of their stays. A stay and its own\nsignal start / end are one session, and so is a parked aircraft's power cycle (signal end, then its next start at the same\nplace with no fix elsewhere in between, however long after); the same aircraft after taxiing away or flying is another.\nThe number is assigned by position, so it holds no time order and no identity (D1).\nNote: positions are GNSS antenna positions, not the aircraft centre (common.py header).",
+ "rules_text": "Stationary stays of aircraft on the HWD field from the pinned adsb.lol hours, clustered into parking spots ->\nrefs/cache/adsb/hwd_parked_stays.json (positions, type designators, emitter categories, source classes, counts: no ICAO\naddress, registration, callsign or time stamp - default D1). Seeds the tie-down / ramp spot inference (PLAN D3).\n\nForked from sfo3d/tools/stands/adsb_parked.py @ a967f9b. Kept: per-aircraft maximal runs of on-ground reports that stay\nwithin BREAK_M m of the run's running median (last 40 fixes), a gap of more than MAX_GAP s ends a run, position = median\nof the reports with good NACp, spread = 90th percentile distance from it, provider = adsb.lol only (ODbL). Changed:\ninput = refs/cache/local/adsb/hwd_tracks.pkl (extract.py; HWD frame hwd_frame.wgs84_to_world); 'on ground' = the ground\nflag or derive.py 'ground by kinematics'; a fix is still when gs < STILL_GS kt (or no gs) OR it lies within SPREAD_M m of\nthe run median (task G4: \"gs < 1 kt or position spread < 3 m\"); minimum duration MIN_STAY_S = 300 s (sfo3d 180 s); the\ngood-NACp set is NACp >= 9 (EPU < 30 m) when it has >= 3 fixes, else >= 8, else all; heading from the last taxi-in segment\n(below) instead of the reported true_heading (which is kept as hdg_rep for comparison); no flysfo stand matching (SFO\nonly); identity fields dropped from the output (and, since the Phase 1 review, the exact stay duration dur_s and the\ntransport class is called 'feed', not 'src', which in hwd3d means obs / inf); OSM location labels and a NAIP 2024 NDVI pavement check per stay; stays\nclustered into spots; signal starts / ends on the ground (the method of sfo3d/tools/imagery/adsb_ground_cells.py\n'signal_end' @ a967f9b: a ground fix followed / preceded by >= SIG_GAP_S of no fix of that aircraft, here counting only\ntime the recorder was polling).\n\nHeading from the taxi-in segment: scanning back from the stay's first fix (gaps <= 180 s), the last fix that is TAXI_MIN_M\nto TAXI_MAX_M from the stay position; hdg_taxi = direction from it to the stay position (deg true). null when the aircraft\narrived through a polling hole from farther away, or the stay began with the signal (powered on in place). GA aircraft\nare often pushed back into tie-downs by hand after shutdown, so hdg_taxi is the direction of arrival, not necessarily the\nparked heading [inferred].\nSpots: complete-linkage clustering (scipy) of the stay positions of stays with NACp median >= SPOT_NACP and spread90 <=\nSPOT_SPREAD_M, cut at SPOT_DIAM_M (every pair of member stays within SPOT_DIAM_M: radius about SPOT_DIAM_M / 2 = 4 m).\nA visit = consecutive stays of one aircraft in a spot without a fix farther than VISIT_LEAVE_M from the spot in between.\nSessions (round-1 re-check, 2026-11-12; round 2, 2026-11-13): stays and signal edges carry an opaque 'session' number -\none aircraft's continuous presence at one place (sessions()); spots list the sessions of their stays. A stay and its own\nsignal start / end are one session, and so is a parked aircraft's power cycle (signal end, then its next start at the same\nplace with no fix elsewhere in between, however long after); the same aircraft after taxiing away or flying is another.\nThe number is assigned by position, so it holds no time order and no identity (D1). Round 3 (2026-11-13): a departure and\nreturn to the same place that left no fix (a recorder outage, or the signal off) is joined too; summary.session_joins\ncounts the power-cycle joins and how many of them bridge more than JOIN_BLIND_S of recorder outage with no fix in between.\nNote: positions are GNSS antenna positions, not the aircraft centre (common.py header).",
  "stay_fields": {
   "x, z": "median of the pos_set fixes (m)",
   "spread50/90": "percentile distance of those fixes from it (m)",
@@ -152,13 +154,32 @@
   "loc / loc_detail": "OSM label (derive.Places) / OSM id, apron name or distance to mapped pavement",
   "near_hold_m": "distance to the nearest OSM holding position if <= 25 m",
   "naip2024_ndvi": "NAIP 2024 NDVI (3x3 px) at the stay (> 0.2: vegetation)",
-  "session": "opaque session number (stays and signal_edges): one aircraft's continuous presence at one place (consecutive events <= 15 m apart with no fix of it farther than 30 m away or airborne in between, however long the gap: a power cycle while parked stays one session); numbered by position, not by time or aircraft; the same aircraft after it taxied away or flew is another session. Count sessions, not stays + signal edges, for independent observations"
+  "session": "opaque session number (stays and signal_edges): one aircraft's continuous presence at one place (consecutive events <= 15 m apart with no fix of it farther than 30 m away or airborne in between, however long the gap: a power cycle while parked stays one session); numbered by position, not by time or aircraft; the same aircraft after it taxied away or flew is another session where the recording shows it - a departure and return hidden by a recorder outage or by the aircraft's own signal gap is joined into one session (summary.session_joins counts these joins). Count sessions, not stays + signal edges, for independent observations"
  },
  "summary": {
   "stays": 148,
   "aircraft_with_stays": 76,
   "spots": 68,
   "sessions": 522,
+  "session_joins": {
+   "sessions_with_power_cycle": 106,
+   "power_cycle_joins": 107,
+   "power_cycle_joins_by_gap": {
+    "< 1 h": 30,
+    "1-8 h": 36,
+    "8-24 h": 26,
+    "1-3 d": 13,
+    ">= 3 d": 2
+   },
+   "power_cycle_joins_without_fix_between": 107,
+   "power_cycle_joins_without_fix_bridging_outage_over_1h": 45,
+   "sessions_with_two_consecutive_starts_or_ends": 0,
+   "recording_span_h": 164.3,
+   "recorder_outages_over_600s": {
+    "n": 17,
+    "total_h": 72.5
+   }
+  },
   "spot_eligible_stays": 145,
   "spots_with_2plus_visits": 29,
   "spots_by_kind": {

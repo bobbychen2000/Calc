@@ -28,7 +28,9 @@ Sessions (round-1 re-check, 2026-11-12; round 2, 2026-11-13): stays and signal e
 one aircraft's continuous presence at one place (sessions()); spots list the sessions of their stays. A stay and its own
 signal start / end are one session, and so is a parked aircraft's power cycle (signal end, then its next start at the same
 place with no fix elsewhere in between, however long after); the same aircraft after taxiing away or flying is another.
-The number is assigned by position, so it holds no time order and no identity (D1).
+The number is assigned by position, so it holds no time order and no identity (D1). Round 3 (2026-11-13): a departure and
+return to the same place that left no fix (a recorder outage, or the signal off) is joined too; summary.session_joins
+counts the power-cycle joins and how many of them bridge more than JOIN_BLIND_S of recorder outage with no fix in between.
 Note: positions are GNSS antenna positions, not the aircraft centre (common.py header).
 usage: python3 -I hwd3d/tools/adsb/parked_stays.py
 """
@@ -66,6 +68,9 @@ SESSION_R_M = 15.0      # m: consecutive events of one aircraft this close in pl
                         # fix farther than VISIT_LEAVE_M from the earlier event, or off the ground, in between [chosen]. A
                         # signal end and the next signal start at the same place with no fix in between are one session
                         # (powered off and on while parked): the recording cannot show that it left.
+OUTAGE_S = 600.0        # s: a poll gap longer than this is a recorder outage (PLAN section 3: '17 outages > 600 s') [chosen]
+JOIN_BLIND_S = 3600.0   # s: a power-cycle join with no fix in between that spans more than this of recorder outage is
+                        # counted as bridging an outage: a departure and return could hide in it (round-3 re-check) [chosen]
 
 
 def covered(polls, t0, t1, max_gap=60.0):
@@ -187,13 +192,16 @@ def signal_edges(hx, a, polls, inside):
 RUNUP_APRONS = ('10L Runup', '28L Run-up', '28R Runup')     # OSM apron ref / name tags (refs/cache/osm/khwd_features.json)
 
 
-def sessions(stays, sig, T):
+def sessions(stays, sig, T, polls):
     """one aircraft's continuous presence at one place: its stays and signal starts / ends, linked when consecutive in
     time, <= SESSION_R_M apart and with no fix of that aircraft farther than VISIT_LEAVE_M from the earlier event or off the
     ground in between (no time limit: a power cycle while parked, even overnight, is the same presence). Writes
     s['session'] / e['session']: an opaque number per session (numbered by the position of the session's first-listed
-    event, so it carries no time order and no identity; the same aircraft after taxiing away or flying is another
-    session). Returns the number of sessions."""
+    event, so it carries no time order and no identity; the same aircraft after taxiing away or flying, where the
+    recording shows it, is another session). Returns (number of sessions, join statistics).
+    What a session does NOT show (round-3 re-check, 2026-11-13): a departure and return to the same place while the
+    recorder was not polling (OUTAGE_S) or the aircraft's signal was off leaves no fix, so such visits are joined into one
+    session. The statistics count these joins (aggregates only: counts and gap buckets, no time or identity)."""
     ev = [(s['_hex'], s['_t0'], s['_t1'], s['x'], s['z'], s) for s in stays] + [(e['_hex'], e['_t'], e['_t'], e['x'], e['z'], e) for e in sig]
     par = list(range(len(ev)))
 
@@ -216,7 +224,39 @@ def sessions(stays, sig, T):
     order = sorted(groups.values(), key=lambda g: min((round(ev[i][3], 2), round(ev[i][4], 2)) for i in g))
     for n, g in enumerate(order):
         for i in g: ev[i][5]['session'] = n + 1
-    return len(order)
+    # joins of a signal end and the next signal start inside one session ('power cycles'), and how many of them bridge a
+    # stretch the recording could not see (no fix of the aircraft in between and > JOIN_BLIND_S of recorder outage)
+    pc_sess = 0; joins = 0; nofix = 0; blind = 0; same = 0; gaps = Counter()
+    for g in order:
+        q = sorted(g, key=lambda i: (ev[i][1], ev[i][2])); a = T[ev[q[0]][0]]; has = False
+        kinds = [ev[i][5]['kind'] for i in q if 'kind' in ev[i][5]]
+        same += any(k == k2 for k, k2 in zip(kinds, kinds[1:]))
+        for i, j in zip(q, q[1:]):
+            if ev[i][5].get('kind') == 'end' and ev[j][5].get('kind') == 'start':
+                joins += 1; has = True; t0, t1 = ev[i][2], ev[j][1]
+                m = (a['t'] > t0) & (a['t'] < t1)
+                gaps[gap_bucket(t1 - t0)] += 1
+                if not m.any():
+                    nofix += 1
+                    if (t1 - t0) - covered(polls, t0, t1, max_gap=OUTAGE_S) > JOIN_BLIND_S: blind += 1
+        pc_sess += has
+    dp = np.diff(polls); out = dp[dp > OUTAGE_S]
+    stats = {'sessions_with_power_cycle': pc_sess, 'power_cycle_joins': joins, 'power_cycle_joins_by_gap': {k: gaps[k] for k in GAP_BUCKETS if gaps[k]},
+             'power_cycle_joins_without_fix_between': nofix,
+             'power_cycle_joins_without_fix_bridging_outage_over_%dh' % round(JOIN_BLIND_S / 3600): blind,
+             'sessions_with_two_consecutive_starts_or_ends': same,
+             'recording_span_h': round(float(polls[-1] - polls[0]) / 3600, 1),
+             'recorder_outages_over_%ds' % OUTAGE_S: {'n': int(len(out)), 'total_h': round(float(out.sum()) / 3600, 1)}}
+    return len(order), stats
+
+
+GAP_BUCKETS = ('< 1 h', '1-8 h', '8-24 h', '1-3 d', '>= 3 d')
+
+
+def gap_bucket(s):
+    for lim, name in zip((3600, 8 * 3600, 24 * 3600, 72 * 3600), GAP_BUCKETS):
+        if s < lim: return name
+    return GAP_BUCKETS[-1]
 
 
 def spot_kind(M, lab, det, places, x, z):
@@ -250,7 +290,7 @@ def main():
         for st in stays_of(a, inside):
             s = describe(a, st, polls, places, naip); s['_hex'] = hx; stays.append(s); hexes_with_stays.add(hx)
         sig += signal_edges(hx, a, polls, inside)
-    n_sessions = sessions(stays, sig, T)
+    n_sessions, sess_stats = sessions(stays, sig, T, polls)
     # ---- spots
     elig = [s for s in stays if (s['nacp_med'] or 0) >= SPOT_NACP and s['spread90'] <= SPOT_SPREAD_M]
     lab = cluster(elig)
@@ -323,9 +363,10 @@ def main():
                         'loc / loc_detail': 'OSM label (derive.Places) / OSM id, apron name or distance to mapped pavement',
                         'near_hold_m': 'distance to the nearest OSM holding position if <= 25 m',
                         'naip2024_ndvi': 'NAIP 2024 NDVI (3x3 px) at the stay (> %.1f: vegetation)' % NDVI_VEG,
-                        'session': 'opaque session number (stays and signal_edges): one aircraft\'s continuous presence at one place (consecutive events <= %.0f m apart with no fix of it farther than %.0f m away or airborne in between, however long the gap: a power cycle while parked stays one session); numbered by position, not by time or aircraft; the same aircraft after it taxied away or flew is another session. Count sessions, not stays + signal edges, for independent observations' % (SESSION_R_M, VISIT_LEAVE_M)},
+                        'session': 'opaque session number (stays and signal_edges): one aircraft\'s continuous presence at one place (consecutive events <= %.0f m apart with no fix of it farther than %.0f m away or airborne in between, however long the gap: a power cycle while parked stays one session); numbered by position, not by time or aircraft; the same aircraft after it taxied away or flew is another session where the recording shows it - a departure and return hidden by a recorder outage or by the aircraft\'s own signal gap is joined into one session (summary.session_joins counts these joins). Count sessions, not stays + signal edges, for independent observations' % (SESSION_R_M, VISIT_LEAVE_M)},
         'summary': {
             'stays': len(stays), 'aircraft_with_stays': len(hexes_with_stays), 'spots': len(spots), 'sessions': n_sessions,
+            'session_joins': sess_stats,
             'spot_eligible_stays': len(elig), 'spots_with_2plus_visits': sum(1 for s in spots if s['n_visits'] >= 2),
             'spots_by_kind': dict(Counter(s['kind'] for s in spots).most_common()),
             'parking_spots_with_2plus_visits': sum(1 for s in spots if s['kind'] == 'parking' and s['n_visits'] >= 2),
