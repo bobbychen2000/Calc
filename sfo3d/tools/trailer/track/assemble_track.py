@@ -1,11 +1,11 @@
-# Assemble one tracking film: its shots in shots3.json order (missing ones skipped), 0.5-s dissolves, per-shot phase label +
+# Assemble one tracking film: its shots in shots3.json order (missing ones skipped), hard cuts, per-shot phase label +
 # time-lapse badge (cards_track.mjs), film title over the opening, end card with credits, generative music bed (long/music.wav).
 # usage: assemble_track.py <track dir> <arr|dep> <out.mp4>
 import json, os, subprocess, sys
 T, FILM, OUT = sys.argv[1:4]; SH = f'{T}/shots'; CD = f'{T}/cards'
 def dur(p): return float(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p]).strip())
 spec = [s for s in json.load(open(f'{T}/shots3.json')) if s['film'] == FILM and os.path.exists(f"{SH}/shot_{s['id']}.mp4")]
-X, END = 0.5, 6.0
+X, END = 0.0, 6.0
 ds = [dur(f"{SH}/shot_{s['id']}.mp4") for s in spec]; st = []; t = 0.0
 for i, d in enumerate(ds):
     if i: t -= X
@@ -18,10 +18,10 @@ inp += ['-loop', '1', '-framerate', '24', '-t', f'{END}', '-i', f'{CD}/end.png',
 for s in spec: inp += ['-loop', '1', '-framerate', '24', '-t', f'{total:.3f}', '-i', f"{CD}/lab_{s['id']}.png"]
 for i in range(n): fc.append(f'[{i}:v]settb=AVTB,fps=24,format=yuv420p,setsar=1,eq=contrast=1.04:saturation=1.06[v{i}]')
 fc.append(f'[{iE}:v]scale=1920:1080,format=yuv420p,setsar=1,settb=AVTB,fps=24[vE]')
-cur, acc = 'v0', ds[0]
-for i in range(1, n):
-    fc.append(f'[{cur}][v{i}]xfade=transition=fade:duration={X}:offset={acc - X:.3f}[x{i}]'); cur = f'x{i}'; acc += ds[i] - X
-fc.append(f'[{cur}][vE]xfade=transition=fadeblack:duration=1.0:offset={acc - 1.0:.3f}[xe]')
+# hard cuts between shots (a dissolve between two shots of the same aircraft reads as a ghosted double aircraft --
+# review 13 Nov); fade through black into the end card only
+fc.append(''.join(f'[v{i}]' for i in range(n)) + f'concat=n={n}:v=1:a=0,fps=24[cat]'); acc = sum(ds)
+fc.append(f'[cat][vE]xfade=transition=fadeblack:duration=1.0:offset={acc - 1.0:.3f}[xe]')
 fc.append(f'[{iT}:v]format=rgba,fade=t=in:st=0.8:d=0.8:alpha=1,fade=t=out:st=6.2:d=0.9:alpha=1[ti]')
 fc.append('[xe][ti]overlay=0:0:shortest=1[o0]'); lab = 'o0'
 for j in range(n):

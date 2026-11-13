@@ -30,7 +30,7 @@ shot('a_dock1', 'arr', 1742, 15, 3, dict(type='orbit', yaw=[160, 135], pitch=[14
 shot('a_dock2', 'arr', 1787, 15, 3, dict(type='orbit', yaw=[250, 285], pitch=[30, 24], dist=[150, 130], fov=45), cap='dock')
 # ---------------- departure: UAL857
 shot('d_gate', 'dep', 200, 13, 2, dict(type='orbit', yaw=[200, 235], pitch=[22, 17], dist=[170, 140], fov=45), cap='gate')
-shot('d_push1', 'dep', 214, 18, 5, dict(type='orbit', yaw=[60, 20], pitch=[24, 18], dist=[170, 150], fov=45), cap='push')
+shot('d_push1', 'dep', 214, 18, 5, dict(type='orbit', yaw=[60, 20], pitch=[24, 18], dist=[170, 150], fov=45), cap='pushstart')
 shot('d_push2', 'dep', 304, 18, 5, dict(type='orbit', yaw=[300, 330], pitch=[12, 10], dist=[130, 115], fov=45), cap='push')
 shot('d_away', 'dep', 642, 15, 3, dict(type='chase', yawOff=[30, 55], pitch=[6, 9], dist=[115, 125], fov=42), cap='taxi')
 shot('d_taxi1', 'dep', 758, 20, 12, dict(type='chase', yawOff=[165, 200], pitch=[30, 24], dist=[230, 190], fov=45), cap='taxi')
@@ -39,7 +39,7 @@ shot('d_taxi3', 'dep', 1400, 20, 8, dict(type='chase', yawOff=[-95, -80], pitch=
 shot('d_lineup', 'dep', 1740, 22, 2.5, dict(type='spot', pos=rw(420, 115, 4.5), frame=[75, 62], up=0), cap='lineup')
 shot('d_roll', 'dep', 1804, 20, 1, dict(type='chase', yawOff=[190, 176], pitch=[2.5, 4], dist=[85, 100], fov=42), cap='takeoff')
 shot('d_rotate', 'dep', 1836, 20, 1, dict(type='spot', pos=rw(2750, 150, 1.8), frame=[60, 110], up=0), cap='takeoff')
-shot('d_climb', 'dep', 1857, 16, 1, dict(type='chase', yawOff=[186, 178], pitch=[-4, 3], dist=[150, 280], fov=42), cap='climb')
+shot('d_climb', 'dep', 1857, 16, 1, dict(type='chase', yawOff=[200, 168], pitch=[11, 15], dist=[175, 270], fov=42, up=0), cap='climb')
 json.dump(S, open(sys.argv[1], 'w'), indent=1)
 tot = {f: sum(s['n'] for s in S if s['film'] == f) for f in ('arr', 'dep')}
 print(len(S), 'shots', tot, 'frames;', {f: round(v / FPS, 1) for f, v in tot.items()}, 's;', 'offsets', sorted({s['off'] for s in S}))

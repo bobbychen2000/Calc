@@ -9,12 +9,12 @@ const css = `html,body{margin:0;width:1920px;height:1080px;background:transparen
 .lab{position:absolute;left:84px;bottom:78px} .lab .p{font-size:30px;font-weight:650;letter-spacing:.2px} .lab .bar{width:46px;height:4px;background:#ffb547;margin-bottom:12px}
 .badge{position:absolute;right:84px;bottom:82px;font-size:20px;font-weight:650;letter-spacing:3px;padding:8px 14px;border-radius:6px;background:rgba(0,0,0,.38);color:#ffd28a}
 .badge.rt{color:#cfe6ff}
-.title{position:absolute;left:96px;top:96px} .title .k{font-size:22px;letter-spacing:6px;color:#ffb547;font-weight:600} .title .t{font-size:64px;font-weight:750;letter-spacing:-1px;margin-top:8px}
-.title .s{font-size:28px;font-weight:500;margin-top:10px;opacity:.95} .title .m{font-size:20px;font-weight:500;margin-top:14px;opacity:.8}
+.title{position:absolute;left:0;top:0;width:1500px;height:560px;box-sizing:border-box;padding:96px 0 0 96px;background:radial-gradient(ellipse 100% 100% at 0% 0%,rgba(0,0,0,.46) 0%,rgba(0,0,0,.30) 38%,rgba(0,0,0,.10) 70%,rgba(0,0,0,0) 100%)} .title .k{font-size:22px;letter-spacing:6px;color:#ffb547;font-weight:600} .title .t{font-size:64px;font-weight:750;letter-spacing:-1px;margin-top:8px}
+.title .s{font-size:28px;font-weight:500;margin-top:10px;opacity:.95} .title .m{font-size:23px;font-weight:550;margin-top:14px;opacity:.95}
 .end{position:absolute;left:0;top:0;width:1920px;height:1080px;background:#06080c;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .end .t{font-size:58px;font-weight:750} .end .s{font-size:24px;margin-top:14px;opacity:.85} .end .c{font-size:17px;margin-top:46px;opacity:.6;max-width:1500px;text-align:center;line-height:1.6}`;
-const LAB = { approach: 'Approach over San Francisco Bay', final: 'Final approach, runway 28R', touchdown: 'Touchdown, runway 28R', rollout: 'Rollout',
-  taxi: 'Taxi', gate: 'Arriving at gate G7', dock: 'Jet bridge docking', push: 'Pushback', lineup: 'Lining up, runway 28R', takeoff: 'Take-off, runway 28R', climb: 'Climb-out',
+const LAB = { approach: 'Approach over San Francisco Bay', final: 'Final approach, runway 28R', touchdown: 'Landing, runway 28R', rollout: 'Rollout',
+  taxi: 'Taxi', gate: 'Arriving at gate G7', dock: 'Jet bridge docking', push: 'Pushback', pushstart: 'Bridges retract, pushback', lineup: 'Lining up, runway 28R', takeoff: 'Take-off, runway 28R', climb: 'Climb-out',
   'gate-dep': 'At gate G13', 'taxi-dep': 'Taxi to runway 28R' };
 const FILM = {
   arr: { k: 'ARRIVAL', t: 'UAL900 · London → San Francisco', s: 'Boeing 787-9 · N71112 · United Airlines', m: 'Followed from the bay to the gate · recorded ADS-B, 8 Nov 2026' },
