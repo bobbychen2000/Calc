@@ -1,0 +1,5 @@
+# Downloads and recordings stay local unless we may redistribute them; those are staged with `git add -f`
+# together with a SOURCES.json beside them (owner rule: commit only redistributable cached data).
+refs/cache/*
+!refs/cache/adsb/
+refs/cache/adsb/*.log

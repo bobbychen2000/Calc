@@ -1,0 +1,12 @@
+{
+  "files": {
+    "grid_2026.11.12_prod.json": "per-1-degree counts of distinct aircraft over East Asia, derived by tools/adsb/globe_grid.py",
+    "zsss_<date>_<kind>.json.gz": "aircraft traces within 150 km of ZSSS, filtered by tools/adsb/globe_scan.py"
+  },
+  "source": "adsb.lol globe_history daily archive, GitHub releases of adsblol/globe_history_2026 (tags v<date>-planes-readsb-prod-0 / -mlatonly-0)",
+  "url": "https://github.com/adsblol/globe_history_2026/releases",
+  "retrieved": "2026-11-13",
+  "licence": "ODbL 1.0 (adsb.lol: data made available under the Open Database License; exact wording to be quoted in docs/phase0/adsb.md)",
+  "attribution": "Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL",
+  "redistributable": true
+}
