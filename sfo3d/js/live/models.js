@@ -71,6 +71,7 @@ export async function decodeModel(buf, stretch = null) {
   }
   const dims = { ...head.dims };
   if (stretch) applyStretch(pos, zq, nv, stretch, dims);
+  const gear = dims.hasGear ? gearRig(pos, zq, extra, nv) : null;   // retraction legs of the model's own gear (737 / 777)
   const idxIn = head.idxType === 'u16' ? new Uint16Array(raw, B + o.idx, head.ni) : new Uint32Array(raw, B + o.idx, head.ni);
   // bake material properties into vertices; regroup triangles by texture
   const mats = head.mats;
@@ -108,7 +109,67 @@ export async function decodeModel(buf, stretch = null) {
   const drawList = draws.map(d => ({ ...d, atlas: atlas && d.tex === 0, U: { uAlbedo: d.tex >= 0 ? textures[d.tex] : (textures[0] || white), uHasTex: d.tex >= 0 ? 1 : 0, uAtlas: atlas && d.tex === 0 ? 1 : 0, uLivTex: 0 },
     sub: { draw: () => mesh.drawRange(d.first, d.count) } }));
   const all = { draw: () => mesh.drawRange(0, nIdx) };
-  return { key: head.key, name: head.name, head, dims, mesh, draws: drawList, all, bbox: [mn, mx], verts: nv, tris: nIdx / 3, anchors, tip };
+  return { key: head.key, name: head.name, head, dims, mesh, draws: drawList, all, bbox: [mn, mx], verts: nv, tris: nIdx / 3, anchors, tip, gearRig: gear };
+}
+
+// Retraction legs of a model that carries its own landing gear (dims.hasGear: the 737 / 777 families; zone 3 = gear, 4 = gear
+// doors). Until 13 Nov 2026 the gear was drawn down and simply vanished once retracted (owner: 'I don't see landing gear
+// pull up during take off'); now each leg swings about the top of its strut: the nose gear FORWARD (about the lateral z
+// axis), the main gears INBOARD (about the longitudinal x axis), as on the 737 and 777 (landing-gear descriptions of the
+// Boeing FCOMs as quoted by secondary sources -- smartcockpit 737NG gear quiz, scribd B777 landing-gear notes, planefyi
+// gear-retraction page; the FCOM text itself was not retrieved: V-secondary). The leg of each vertex is written into the
+// fraction of extra.x (the zone stays its integer part: floor(x + 0.5) everywhere else): 0.1 nose, 0.2 port main, 0.3
+// starboard main, 0.4 static -- zone-3 parts that are not gear legs (the 777 models' small flap-track fairing tips at
+// 11-20 m span, which used to vanish with the gear) -- and 0 for zone-4 doors that stay (the 777's inboard wheel-well doors,
+// collapsed once the gear is up as before). Pivot = the top of the strut: the highest gear vertex of the leg; nose x and main
+// |z| = the mean of the gear vertices within 0.4 model units of it. Returns [xNose, yNose, yMain, zMain] or null.
+// Shaders: js/three/aircraft.js realMaterial, js/shaders/aircraft_real.js ACR_VS; angle = progress x (nose 0.95, main 0.98)
+// x 90 deg as the procedural gear (js/aircraft/model.js).
+export function gearRig(pos, zone, extra, nv) {
+  // legs = the connected zone-3 clusters (0.5-unit cells, 26-neighbourhood) that reach the ground (lowest vertex within
+  // 0.5 units of the model's lowest gear vertex); the nose leg is the one ahead of 0.3 L, the mains the others by side
+  let x0 = 1e9, x1 = -1e9, yLow = 1e9;
+  for (let i = 0; i < nv; i++) { const x = pos[i * 3]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (zone[i] === 3 && pos[i * 3 + 1] < yLow) yLow = pos[i * 3 + 1]; }
+  if (yLow > 1e8) return null;
+  const xs = x1 - 0.3 * (x1 - x0), C = 0.5, cellOf = (i) => Math.floor(pos[i * 3] / C) + ',' + Math.floor(pos[i * 3 + 1] / C) + ',' + Math.floor(pos[i * 3 + 2] / C);
+  const cells = new Map();
+  for (let i = 0; i < nv; i++) if (zone[i] === 3) { const k = cellOf(i); let a = cells.get(k); if (!a) cells.set(k, a = []); a.push(i); }
+  const comp = new Map(); const clusters = [];
+  for (const k0 of cells.keys()) {
+    if (comp.has(k0)) continue; const id = clusters.length, st = [k0], idx = []; comp.set(k0, id);
+    while (st.length) {
+      const k = st.pop(); idx.push(...cells.get(k)); const [a, b, c] = k.split(',').map(Number);
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+        const kk = (a + dx) + ',' + (b + dy) + ',' + (c + dz); if (cells.has(kk) && !comp.has(kk)) { comp.set(kk, id); st.push(kk); }
+      }
+    }
+    let ymin = 1e9, ymax = -1e9, xm = 0, zm = 0; for (const i of idx) { ymin = Math.min(ymin, pos[i * 3 + 1]); ymax = Math.max(ymax, pos[i * 3 + 1]); xm += pos[i * 3]; zm += pos[i * 3 + 2]; }
+    xm /= idx.length; zm /= idx.length;
+    let bb = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9]; for (const i of idx) for (let k = 0; k < 3; k++) { bb[k] = Math.min(bb[k], pos[i * 3 + k]); bb[k + 3] = Math.max(bb[k + 3], pos[i * 3 + k]); }
+    clusters.push({ idx, ymin, ymax, bb, leg: ymin < yLow + 0.5 ? (xm > xs ? 1 : zm < 0 ? 2 : 3) : 4 });
+  }
+  // pieces of a leg that the 0.5-unit cells split off (side braces, actuators, torque links: 81-300 vertices on the 737 / 777
+  // models) join the leg whose box (+1 unit) holds their centre; the far-off flap-track tips stay static
+  const legs = clusters.filter(c => c.leg !== 4);
+  for (const c of clusters) {
+    if (c.leg !== 4) continue; const m = [0, 1, 2].map(k => (c.bb[k] + c.bb[k + 3]) / 2);
+    const L = legs.find(g => [0, 1, 2].every(k => m[k] >= g.bb[k] - 1 && m[k] <= g.bb[k + 3] + 1));
+    if (L) c.leg = L.leg;
+  }
+  const nose = clusters.filter(c => c.leg === 1), mains = clusters.filter(c => c.leg === 2 || c.leg === 3);
+  if (!nose.length || !mains.length) return null;
+  // pivot = the top of the strut: the highest vertex of the leg; nose x / main |z| = mean of the vertices within 0.4 units of it
+  const top = (cs, f) => { const yT = Math.max(...cs.map(c => c.ymax)); let s = 0, n = 0; for (const c of cs) for (const i of c.idx) if (pos[i * 3 + 1] > yT - 0.4) { s += f(i); n++; } return [yT, s / n]; };
+  const [yN, xN] = top(nose, i => pos[i * 3]), [yM, zM] = top(mains, i => Math.abs(pos[i * 3 + 2]));
+  let zLegMax = 0; for (const c of mains) for (const i of c.idx) zLegMax = Math.max(zLegMax, Math.abs(pos[i * 3 + 2]));
+  for (const c of clusters) for (const i of c.idx) extra[i * 4] = 3 + c.leg * 0.1;
+  // doors (zone 4): on the leg (outboard of the strut, within the leg's span; or at the nose) move with it, the rest stays
+  for (let i = 0; i < nv; i++) {
+    if (zone[i] !== 4) continue; const x = pos[i * 3], az = Math.abs(pos[i * 3 + 2]);
+    const code = x > xs ? 1 : az >= zM - 0.2 && az <= zLegMax + 0.5 ? (pos[i * 3 + 2] < 0 ? 2 : 3) : 0;
+    extra[i * 4] = 4 + code * 0.1;
+  }
+  return [xN, yN, yM, zM];
 }
 
 // Some source meshes carry degenerate or contradictory vertex normals (FAM 747-400 nose: 17 % of the skin vertices ahead of

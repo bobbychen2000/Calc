@@ -15,13 +15,24 @@ export const ACR_VS = `
 #include <vout>
 layout(location=0) in vec3 aPos; layout(location=1) in vec3 aNrm; layout(location=2) in vec2 aUV; layout(location=3) in vec4 aCol; layout(location=4) in vec4 aExtra;
 uniform mat4 uModel; uniform mat4 uPrevModel; uniform float uGearUp;
+uniform float uGearT; uniform vec4 uGearRig; // own-gear retraction (js/live/models.js gearRig; js/three/aircraft.js has the same)
 out vec3 vWP; out vec3 vN; out vec2 vUV; out vec3 vLP; out vec3 vLN; flat out vec4 vMat; flat out vec4 vMat2;
 void main(){
-  int zone = int(aExtra.x + 0.5);
-  vec3 p = aPos;
-  if (uGearUp > 0.5 && (zone == 3 || zone == 4)) p = vec3(0.0); // retracted gear & open gear doors collapse away
+  int zone = int(aExtra.x + 0.5); int leg = int((aExtra.x - float(zone)) * 10.0 + 0.5);
+  vec3 p = aPos; vec3 n = aNrm;
+  bool gz = zone == 3 || zone == 4;
+  if (gz && uGearT > 0.0005) {
+    if (leg == 1) { // nose: forward about z through the strut top
+      float a = uGearT * 1.4923, c = cos(a), s = sin(a); vec2 d = p.xy - uGearRig.xy;
+      p.xy = vec2(c * d.x - s * d.y, s * d.x + c * d.y) + uGearRig.xy; n.xy = vec2(c * n.x - s * n.y, s * n.x + c * n.y);
+    } else if (leg == 2 || leg == 3) { // mains: inboard about x through the strut top
+      float sg = leg == 3 ? 1.0 : -1.0; float a = uGearT * 1.5394 * sg, c = cos(a), s = sin(a); vec2 q = vec2(uGearRig.z, uGearRig.w * sg);
+      vec2 d = p.yz - q; p.yz = vec2(c * d.x - s * d.y, s * d.x + c * d.y) + q; n.yz = vec2(c * n.y - s * n.z, s * n.y + c * n.z);
+    }
+  }
+  if (uGearUp > 0.5 && gz && leg != 4) p = vec3(0.0); // retracted gear & open gear doors collapse away (static parts stay)
   vec4 wp = uModel * vec4(p, 1.0);
-  vWP = wp.xyz; vN = normalize(mat3(uModel) * aNrm); vUV = aUV; vLP = aPos; vLN = aNrm;
+  vWP = wp.xyz; vN = normalize(mat3(uModel) * n); vUV = aUV; vLP = aPos; vLN = aNrm;
   vMat = aCol; vMat2 = aExtra;
   vec4 pwp = uPrevModel * vec4(p, 1.0);
   emitClip(wp.xyz, pwp.xyz);

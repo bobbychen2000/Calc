@@ -44,8 +44,33 @@ function realMaterial(tex, liveryTex, atlas = false) {
   const uRegOn = ou('regOn', 0), uReg = ou('reg', V4()), uRegRect = ou('regRect', V4());
   const col = attribute('color', 'vec4'), ext = attribute('extra', 'vec4'), LP = attribute('position', 'vec3'), LN = attribute('normal', 'vec3');
   const zone = floor(ext.x.add(0.5));
-  // retracted gear and open gear doors collapse away (ACR_VS)
-  m.positionNode = select(uGearUp.greaterThan(0.5).and(zone.equal(3).or(zone.equal(4))), vec3(0), LP);
+  // landing-gear retraction of models carrying their own gear (js/live/models.js gearRig: leg code in the fraction of
+  // extra.x; uGearRig = nose pivot x, y, main pivot y, |z|; uGearT = retraction progress 0..1, eased): the nose leg swings
+  // forward about z, the mains inboard about x (normals rotated with them); once the gear is up the legs and the open
+  // doors collapse away as before (ACR_VS), the static zone-3 parts (code 4) stay
+  const uGearT = ou('gearT', 0), uGearRig = ou('gearRig', V4());
+  const leg = floor(ext.x.sub(zone).mul(10.0).add(0.5));
+  const gearZ = zone.equal(3).or(zone.equal(4));
+  m.positionNode = Fn(() => {
+    const p = LP.toVar(), n = LN.toVar();
+    If(gearZ.and(uGearT.greaterThan(0.0005)), () => {
+      If(leg.equal(1), () => {
+        const a = uGearT.mul(Math.PI / 2 * 0.95), c = TSL.cos(a), s = TSL.sin(a);
+        const dx = p.x.sub(uGearRig.x), dy = p.y.sub(uGearRig.y);
+        p.x.assign(c.mul(dx).sub(s.mul(dy)).add(uGearRig.x)); p.y.assign(s.mul(dx).add(c.mul(dy)).add(uGearRig.y));
+        const nx = n.x, ny = n.y; n.assign(vec3(c.mul(nx).sub(s.mul(ny)), s.mul(nx).add(c.mul(ny)), n.z));
+      }).ElseIf(leg.equal(2).or(leg.equal(3)), () => {
+        const sg = select(leg.equal(3), float(1), float(-1));
+        const a = uGearT.mul(Math.PI / 2 * 0.98).mul(sg), c = TSL.cos(a), s = TSL.sin(a), zp = uGearRig.w.mul(sg);
+        const dy = p.y.sub(uGearRig.z), dz = p.z.sub(zp);
+        p.y.assign(c.mul(dy).sub(s.mul(dz)).add(uGearRig.z)); p.z.assign(s.mul(dy).add(c.mul(dz)).add(zp));
+        const ny = n.y, nz = n.z; n.assign(vec3(n.x, c.mul(ny).sub(s.mul(nz)), s.mul(ny).add(c.mul(nz))));
+      });
+    });
+    If(uGearUp.greaterThan(0.5).and(gearZ).and(leg.notEqual(4)), () => { p.assign(vec3(0)); });
+    TSL.normalLocal.assign(n);
+    return p;
+  })();
   let R = null;
   const core = () => {
     const kc = ext.y; const alphaTest = kc.greaterThan(7.5); const kind = floor(mod(kc, 8.0).add(0.5)).toVar();
@@ -252,6 +277,7 @@ function realU(ac, U, LU) {
   v3('top', LU.uLivTop); v3('belly', LU.uLivBelly); v3('tail', LU.uLivTail); v3('tail2', LU.uLivTail2); v3('eng', LU.uLivEngine); v4('stripe', LU.uLivStripe);
   U.bellyLine = LU.uBellyLine; U.tailStyle = LU.uTailStyle; U.dirt = LU.uDirt; U.noCabin = LU.uNoCabin ? 1 : 0;
   v4('fus', LU.uFus); v4('fusB', LU.uFusB); U.lights = LU.uLights; U.gearUp = LU.uGearUp; U.sel = LU.uSel || 0;
+  U.gearT = LU.uGearT || 0; v4('gearRig', LU.uGearRig || [0, 0, 0, 0]);
 }
 // (an older LiveAircraft without realUniforms: the round-1 copy)
 function realUFallback(ac, U) {
