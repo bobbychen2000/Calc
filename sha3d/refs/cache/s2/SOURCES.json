@@ -1,0 +1,72 @@
+{
+ "source": "Sentinel-2 L2A COGs via Element 84 Earth Search STAC v1 (collection sentinel-2-l2a), read as windows with HTTP range requests (rasterio/GDAL vsicurl)",
+ "date_checked": "2026-11-13",
+ "downloaded_utc": "2026-11-13T19:17Z",
+ "licence": "Copernicus Sentinel data: free, full and open (EU Regulation 1159/2013); STAC collection lists license \"proprietary\" linking the Sentinel Data Legal Notice",
+ "licence_url": "https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice",
+ "licence_quote": "Sentinel Data Legal Notice (European Commission): 'users shall have a free, full and open access to Copernicus Sentinel Data' ... 'EU law grants free access to Copernicus Sentinel Data and Service Information for the purpose of the following use in so far as it is lawful: (a) reproduction; (b) distribution; (c) communication to the public; (d) adaptation, modification and combination with other data and information' ... 'Where the Copernicus Sentinel Data and Service Information have been adapted or modified, the user shall provide the following notice: (1) 'Contains modified Copernicus Sentinel data [Year]' for Sentinel data'",
+ "licence_copy": "../licences/sentinel_legal_notice/Sentinel_Data_Legal_Notice.pdf (saved by another phase-0 task; sentinel.esa.int itself was not reachable from this sandbox on 2026-11-13: proxy 502)",
+ "attribution": "Contains modified Copernicus Sentinel data 2026",
+ "redistributable": "yes, with the attribution notice above",
+ "scenes": [
+  {
+   "dir": "S2B_51RUQ_20261014_0_L2A",
+   "stac_item": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items/S2B_51RUQ_20261014_0_L2A",
+   "datetime": "2026-10-14T02:49:03.229000Z",
+   "platform": "sentinel-2b",
+   "product_uri": "S2B_MSIL2A_20261014T023639_N0513_R089_T51RUQ_20261014T044615.SAFE",
+   "processing_baseline": "05.13",
+   "tile_cloud_cover_pct": 1.98167,
+   "epsg": 32651,
+   "window": "lon 121.300-121.370, lat 31.165-31.235 reprojected to the native UTM 51N grid (679 x 786 px at 10 m; SCL at 20 m)",
+   "band_urls": {
+    "blue": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/10/S2B_51RUQ_20261014_0_L2A/B02.tif",
+    "green": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/10/S2B_51RUQ_20261014_0_L2A/B03.tif",
+    "red": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/10/S2B_51RUQ_20261014_0_L2A/B04.tif",
+    "nir": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/10/S2B_51RUQ_20261014_0_L2A/B08.tif",
+    "visual": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/10/S2B_51RUQ_20261014_0_L2A/TCI.tif",
+    "scl": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/10/S2B_51RUQ_20261014_0_L2A/SCL.tif"
+   },
+   "files": {
+    "B02.tif": "18d25ec0ca67ea7e45c2defc6db8655efbd3fb5bd77a983d9ad99dee0e1c787b",
+    "B03.tif": "e9c95a666719cb676e9deab522dcf1463eae9b60b014b4de8b863cbde11f9c46",
+    "B04.tif": "582b55015f0fe1113c7d296d93a442c74a9b45db3bd8a58287c81bef92a72991",
+    "B08.tif": "142fa23b680489dfca2fc5aa84585ae9b0dd0ecddecc0a31862e257baf776362",
+    "SCL.tif": "5b9cc1886a3b8e08aeed49f7a7f4d398bac173fa49f08e1d95457fcb408e2b19",
+    "TCI.tif": "563adb47c7ddee096ff8d3139b43df5bb33c9996539faa556a4feafe6ee14c08"
+   },
+   "values": "uint16 DN; reflectance = DN*0.0001 - 0.1 (STAC raster:bands scale/offset, earthsearch:boa_offset_applied=true); TCI uint8"
+  },
+  {
+   "dir": "S2C_51RUQ_20260221_0_L2A",
+   "stac_item": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items/S2C_51RUQ_20260221_0_L2A",
+   "datetime": "2026-02-21T02:49:06.443000Z",
+   "platform": "sentinel-2c",
+   "product_uri": "S2C_MSIL2A_20260221T023731_N0512_R089_T51RUQ_20260221T060315.SAFE",
+   "processing_baseline": "05.12",
+   "tile_cloud_cover_pct": 0.025276,
+   "epsg": 32651,
+   "window": "lon 121.300-121.370, lat 31.165-31.235 reprojected to the native UTM 51N grid (679 x 786 px at 10 m; SCL at 20 m)",
+   "band_urls": {
+    "blue": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/2/S2C_51RUQ_20260221_0_L2A/B02.tif",
+    "green": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/2/S2C_51RUQ_20260221_0_L2A/B03.tif",
+    "red": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/2/S2C_51RUQ_20260221_0_L2A/B04.tif",
+    "nir": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/2/S2C_51RUQ_20260221_0_L2A/B08.tif",
+    "visual": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/2/S2C_51RUQ_20260221_0_L2A/TCI.tif",
+    "scl": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/2/S2C_51RUQ_20260221_0_L2A/SCL.tif"
+   },
+   "files": {
+    "B02.tif": "364af7b70ffcd1955690a8d40c6dc8d1285f7bfc0e592ff6f2d15dcab09495d1",
+    "B03.tif": "a2d28870c7c22622d7827f30f33df64810d10c95d0f773a305cc16e9812f4733",
+    "B04.tif": "5f589f61ab983d6a69eff98191a4d5e5c2e22644edfca66a8fe69f724cfc79fa",
+    "B08.tif": "83a31e2d111fed0982d0295909e57425705d4f5ba80d23490384a61c1cfeda89",
+    "SCL.tif": "5e3b96f44fcf4183baa34d095674c52b211ffcc43fc2e99450f263ff67da9883",
+    "TCI.tif": "c1e21fcca21ddbac87f95536cd217b48fea3f241154ed6398c65d374b3fc595f"
+   },
+   "values": "uint16 DN; reflectance = DN*0.0001 - 0.1 (STAC raster:bands scale/offset, earthsearch:boa_offset_applied=true); TCI uint8"
+  }
+ ],
+ "extra_files": {
+  "stac_collection_sentinel-2-l2a.json": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a"
+ }
+}

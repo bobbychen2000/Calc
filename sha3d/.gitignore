@@ -3,3 +3,6 @@
 refs/cache/*
 !refs/cache/adsb/
 refs/cache/adsb/*.log
+__pycache__/
+# Unofficial GCJ-02 approximation: kept local until the owner decides (docs/PLAN.md §6 Q3, law.md D8)
+tools/geo/gcj02.py
