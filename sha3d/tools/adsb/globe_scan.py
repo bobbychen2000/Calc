@@ -24,8 +24,10 @@ def dist_km(a, b, c, d):
 
 def stream(date, kind):
     tag = f"v{date}-planes-readsb-{kind}-0"
-    for suf in ("aa", "ab", "ac", "ad", "ae"):
-        url = f"{BASE}/{tag}/{tag}.tar.{suf}"
+    # prod/staging are split into .tar.aa, .tar.ab, ...; mlatonly is one .tar (checked 2026-11-13)
+    sufs = ("aa", "ab", "ac", "ad", "ae") if kind != "mlatonly" else ("",)
+    for suf in sufs:
+        url = f"{BASE}/{tag}/{tag}.tar" + (f".{suf}" if suf else "")
         p = subprocess.Popen(["curl", "-sS", "-L", "-f", "--retry", "4", url], stdout=subprocess.PIPE)
         got = 0
         while True:
