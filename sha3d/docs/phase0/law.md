@@ -1,5 +1,24 @@
 # Phase 0 / law: legal constraints on a public repo and a public web app that show Shanghai Hongqiao (SHA / ZSSS) in 3-D
 
+**Errata (2026-11-13, from the verification reports).** Corrected in place below; see
+`verify_licences_law.md` (headline findings 1-5, rows L11, L14, L22, L24, A33):
+- OSM military / armed-police objects near ZSSS: **6 distinct elements** (3 rail ways, 3 `landuse=military` areas),
+  not 5. Ids stay withheld (headline 5, L22).
+- Radio Regs Art. 72: fine up to CNY 30,000, **or, with serious consequences, licence revocation plus CNY
+  30,000-100,000** (headline 1, L24).
+- Radio Regs Art. 75(2)/(3) was missed: foreign organisations or individuals monitoring radio inside the PRC, or
+  supplying security-related PRC radio data abroad: CNY 30,000-100,000 (after refusing to correct), serious cases
+  CNY 100,000-300,000 (headline 2).
+- Radio Regs Art. 41: users must not deliberately receive signals outside their licence, nor spread, publish or use
+  **unintentionally** received information; the qualifier is kept throughout (A33).
+- Criminal Law Art. 111 has **no universal 5-year minimum**: minor cases get under 5 years. The Art. 8 threshold for
+  foreigners abroad (minimum of 3 years or more) is met only for non-minor cases (headline 3, L14).
+- Secret catalogue items 23 and 24 are separate: item 23 (DEM/DSM) planar ≤10 m **or** height ≤15 m; item 24 (3-D
+  models, point clouds etc.) planar ≤10 m **or** relative object-height ≤5 %; both outside military zones and over
+  more than 25 km² contiguous. The catalogue's third column is the knowledge scope (approved holders and users), not
+  the producer, so the argument "made by licensed surveyors, so our model is not such a product" is weakened. The
+  verifier rates R3 as, if anything, understated (headline 4, L11).
+
 KEY = law. Checked 2026-11-13. Written for the owner and the lead.
 
 **This is not legal advice.** It is a reading of primary texts plus some secondary analysis. The owner is a non-Chinese
@@ -58,7 +77,8 @@ Related sibling reports:
    - The reach is indirect, through extraterritorial "harm to national security" clauses:
      - Data Security Law Art. 2 [verified];
      - Network Data Security Management (NDSM) Regulations Art. 2 [verified];
-     - Criminal Law Art. 8, which requires a minimum sentence of 3 years and dual criminality [verified];
+     - Criminal Law Art. 8, which requires a minimum sentence of 3 years and dual criminality [verified]; Art. 111
+       meets that threshold only in non-minor cases (§2.5);
      - the State Secrets Law's concern with data "汇聚、关联" (aggregation and linkage) (Art. 36) [verified].
    - For a civil airport that is a public facility, and shown from open foreign data, the likelihood of action against
      a foreign individual abroad looks low [inferred].
@@ -66,8 +86,8 @@ Related sibling reports:
    rail spurs and barracks, are** [verified, item 20(1)].
    - Item 20(5) also bars the important facilities of military-civil joint-use (军民合用) airports.
    - ZSSS is "CIVIL/4E" in the AIP [secondary via aip.md]. Its military use ended in 1963–64 [secondary: Wikipedia].
-   - **But OSM around ZSSS contains 5 military-tagged objects 1.2–3.3 km from the ARP** [obs, ids withheld on purpose]:
-     a military rail spur and armed-police compounds.
+   - **But OSM around ZSSS contains 6 military-tagged elements 1.2–3.3 km from the ARP** [obs, ids withheld on
+     purpose]: a military rail spur (3 ways) and 3 military / armed-police areas.
    - These must be filtered out before anything is rendered, labelled or committed.
 5. **OSM is blocked in mainland China** (GreatFire, since 2012) [secondary].
    - The OSM wiki says the project is effectively illegal there [secondary].
@@ -77,7 +97,10 @@ Related sibling reports:
 6. **ATC audio: no lawful, verified live source for ZSSS exists.**
    - Receive-only stations need no licence (Radio Regs Art. 27(2)) [verified].
    - But station users "不得传播、公布或者利用无意接收的信息" (must not spread, publish or use information received
-     unintentionally) (Art. 41, fine up to CNY 30,000, Art. 72) [verified].
+     unintentionally) (Art. 41; Art. 72: fine up to CNY 30,000, or with serious consequences licence revocation plus
+     CNY 30,000–100,000) [verified].
+   - Art. 75(2)/(3) also covers foreign organisations or individuals monitoring radio inside China, and supplying
+     security-related PRC radio data abroad: CNY 30,000–100,000, serious cases CNY 100,000–300,000 [verified].
    - A Chinese hobbyist's 2024 note says LiveATC lists **no** Chinese airport, ZSSS included [unverified]. We could not
      open LiveATC: Cloudflare 403, and the Wayback Machine is refused by the session proxy.
    - Recommendation: no ATC-audio toggle for SHA [inferred].
@@ -184,24 +207,31 @@ Relevant 秘密/机密 (secret/confidential) entries:
 - **Item 22 (秘密):** "军事禁区以外平面精度优于10米或者地面分辨率优于0.5米、且连续覆盖范围超过25平方千米的正射影像"
   (outside military zones: orthophotos better than 10 m planar accuracy or 0.5 m resolution, covering more than
   25 km² contiguously).
-- **Item 23 (秘密):** DEM/DSM "平面精度优于（含）10米或高程精度优于（含）15米、且连续覆盖范围超过25平方千米" (planar
-  accuracy 10 m or better, or height accuracy 15 m or better, covering more than 25 km² contiguously).
-- **Item 24 (秘密):** "军事禁区以外平面精度优于（含）10米或地物高度相对量测精度优于（含）5%、且连续覆盖范围超过25平方千米的三维模型、点云、倾斜影像、实景影像、导航电子地图等实测成果"
+- **Item 23 (秘密):** DEM/DSM "军事禁区以外平面精度优于（含）10米或高程精度优于（含）15米、且连续覆盖范围超过25平方千米"
+  (outside military zones: planar accuracy 10 m or better, **or** height accuracy 15 m or better, covering more than
+  25 km² contiguously).
+- **Item 24 (秘密), a separate item:** "军事禁区以外平面精度优于（含）10米或地物高度相对量测精度优于（含）5%、且连续覆盖范围超过25平方千米的三维模型、点云、倾斜影像、实景影像、导航电子地图等实测成果"
   (outside military zones: measured 3-D models, point clouds, oblique imagery, real-scene imagery, navigation e-maps
-  and similar, with 10 m planar accuracy or 5 % relative height accuracy or better, covering more than 25 km²
-  contiguously).
+  and similar, with 10 m planar accuracy or better, **or** relative object-height accuracy of 5 % or better, covering
+  more than 25 km² contiguously). Its height test is relative (5 %), not the 15 m of item 23.
 - **Item 25 (秘密):** "与军事、国家安全相关的国民经济重要设施精度优于（含）±10米的点位坐标及其名称属性" (point
   coordinates, accurate to ±10 m or better, plus names and attributes, of important economic facilities related to
   the military or national security).
-- **Note 1:** these secrets are "由从事测绘地理信息活动的测绘资质单位、军队测绘部门（单位）产生" (generated by licensed
-  surveying units and military surveying departments).
+- **Note 1:** these secrets are "由从事测绘地理信息活动的测绘资质单位、军队测绘部门（单位）产生" (arise at licensed
+  surveying units and military surveying departments), which must mark them under the catalogue without seeking
+  separate classification authority.
+- **Third column (知悉范围, knowledge scope):** lists the approved holders and users ("…批准的测绘成果保管单位及用户"),
+  not the producer [verified, re-read in the cached PDF].
 - **Art. 5:** the rule itself is "按照工作秘密管理" (managed as a work secret).
 
 **Reading [inferred]:**
-- Item 24 is about *measured* products made by licensed Chinese surveyors. Our model is *derived* abroad from foreign
-  open data, so it is not such a product.
-- But a model of a Chinese airport plus surroundings above 25 km², at metre accuracy, has the **same shape** as a 秘密
-  (secret) product.
+- Item 24 is about *measured* products (实测成果). Note 1 says where such secrets arise and who marks them; neither it
+  nor the third column limits the items to products made by licensed Chinese surveyors. So the argument "our model is
+  *derived* abroad from foreign open data, so it is not such a product" is **weak**: only the word 实测 (measured)
+  still separates us from item 24.
+- A model of a Chinese airport plus surroundings above 25 km², at metre accuracy, has the **same shape** as a 秘密
+  (secret) product. Any modelled building height will meet the 5 % relative-height test of item 24, so the verifier
+  rates R3 as, if anything, understated (verify_licences_law.md headline 4).
 - Whether an airport is a facility "related to military or national security" (item 25) is not defined anywhere we read.
 - A conservative design keeps the detailed model's contiguous extent **under 25 km²**: the aerodrome plus a margin.
   The aerodrome boundary is in OSM.
@@ -244,14 +274,18 @@ Relevant 秘密/机密 (secret/confidential) entries:
   - Criminal Law Art. 8: a foreigner's crime abroad "对中华人民共和国国家或者公民" (against the PRC state or citizens),
     where "最低刑为三年以上有期徒刑" (the minimum sentence is 3 years or more), "可以适用本法，但是按照犯罪地的法律不受处罚的除外"
     (PRC law may apply, except where the act is not punishable where it was committed).
-    - Art. 111 (supplying state secrets or intelligence to foreign organisations or persons) has a 5-year minimum.
+    - Art. 111 (supplying state secrets or intelligence to foreign organisations or persons): 5–10 years, but
+      "情节较轻的，处五年以下有期徒刑、拘役、管制或者剥夺政治权利" (minor cases: under 5 years, criminal detention,
+      public surveillance or deprivation of political rights). There is no universal 5-year minimum, so the Art. 8
+      threshold is met only for non-minor cases.
   - State Secrets Law (2024) Art. 36: "防範數據匯聚、關聯引發的泄密風險" (guard against leaks caused by data aggregation
     and linkage; quoted as rendered by the gov.cn traditional-character gateway).
 - **Official caution, observed [secondary via aip.md fact 21]:** the eAIP's AD 2.12 for ZSSS gives **no** threshold
   coordinates ("Nil" for all four).
   - The state chooses not to publish precise runway-end coordinates. OSM and our model will show them [inferred].
 - **Reading [inferred]:**
-  - These hooks need "harm to national security" (or a secret, or a 3-year crime).
+  - These hooks need "harm to national security" (or a secret, or a crime with a minimum of 3 years or more, i.e. a
+    non-minor Art. 111 case).
   - A civil airport is a facility the 2023 Specification lets public maps show (item 18).
   - Its geometry is already in OSM, Google, X-Plane and elsewhere.
   - So the realistic consequences for a foreign individual are blocking and refused entry, not prosecution. Those need
@@ -271,7 +305,7 @@ Relevant 秘密/机密 (secret/confidential) entries:
   proof].
 - **OSM, observed** (`tools/law/osm_sensitive.py` on the OSM API extracts in `refs/cache/osm/`, dated 2024-01 to
   2026-02):
-  - **5 objects tagged military within 1.2–3.3 km of the AIP ARP**:
+  - **6 distinct elements tagged military within 1.2–3.3 km of the AIP ARP** (4 features if the spur counts once):
     - a rail spur tagged `usage=military` (3 ways, 1.4–2.2 km);
     - 3 `landuse=military` areas (1.2, 3.2 and 3.3 km), two of them named as armed-police (武警) units.
   - Their names, ids and coordinates are **deliberately not reproduced in this public document**. Run the script on
@@ -287,7 +321,7 @@ Relevant 秘密/机密 (secret/confidential) entries:
 | Data | Its accuracy (sibling reports) | In-China public-map threshold | Note |
 |---|---|---|---|
 | Sentinel-2 L2A | 10 m GSD; OSM fit ±10 m (geo.md) | imagery ≤0.5 m resolution (item 22): OK | used only as reference/texture if licensed |
-| Copernicus DEM GLO-30 | LE90 1.92 m on the ZSSS tile (terrain.md) | heights ≤15 m accuracy (item 19); 秘密 above 25 km² (cat. 23) if Chinese-produced | foreign product, globally distributed; keep the detailed terrain extent small (D2) |
+| Copernicus DEM GLO-30 | LE90 1.92 m on the ZSSS tile (terrain.md) | heights ≤15 m accuracy (item 19); 秘密 above 25 km² outside military zones (cat. 23); the catalogue does not limit this to Chinese-produced data (§2.3) | foreign product, globally distributed; keep the detailed terrain extent small (D2) |
 | OSM geometry | metre-level (geo.md) | 10 m (item 19) | public abroad; filter military (§2.6) |
 | ADS-B positions | GNSS-grade | not a map rule; DSL/CEL frame (§3) | see adsb.md |
 
@@ -377,14 +411,21 @@ Primary texts were read in `refs/cache/china_law/` [verified]. The ADS-B case hi
   - Art. 41: "使用无线电台（站）的单位或者个人不得故意收发无线电台执照许可事项之外的无线电信号，不得传播、公布或者利用无意接收的信息。"
     (users of radio stations must not deliberately transmit or receive signals outside their licence, and must not
     spread, publish or use information received unintentionally.)
-  - Art. 72(2): correction, confiscation of illegal gains, fine up to CNY 30,000.
+  - Art. 72(2): correction, confiscation of illegal gains, fine up to CNY 30,000; "造成严重后果的，吊销无线电台执照，并处3万元以上10万元以下的罚款"
+    (with serious consequences: licence revocation plus a fine of CNY 30,000–100,000).
+  - Art. 75: "（二）境外组织或者个人在我国境内进行电波参数测试或者电波监测；（三）向境外组织或者个人提供涉及国家安全的境内电波参数资料"
+    ((2) foreign organisations or individuals testing or monitoring radio waves inside China; (3) giving foreign
+    organisations or individuals PRC radio-parameter data concerning national security): correction; on refusal,
+    confiscation of the equipment and a fine of CNY 30,000–100,000; serious consequences CNY 100,000–300,000.
+    - Art. 75 does not name ADS-B, but it is the radio rule closest to a foreign-run receiver in China [inferred].
 - **Criminal Law Art. 288** [verified]: setting up or using a station without permission, "干扰无线电通讯秩序，情节严重的"
   (disrupting radio communications, in serious cases), up to 3 years. This concerns transmitters and interference, not
   listening.
 - **Hobbyist view** [unverified, personal note on GitHub, 2024]: "根据国内的现行法律，未禁止公众守听民航空管频率，但禁止擅自发射"
   (under current domestic law, the public is not prohibited from listening to civil ATC frequencies, but transmitting
   without permission is prohibited).
-  - That squares with Art. 27(2), but not with **publishing**, which Art. 41 forbids [inferred].
+  - That squares with Art. 27(2), but not with **publishing** what is received: Art. 41 forbids deliberately receiving
+    signals outside the licence, and spreading, publishing or using unintentionally received information [inferred].
 - **LiveATC coverage of ZSSS:**
   - The same note: "中国机场暂时都搜不到（ZBAA, ZBAD, ZSPD, ZGGG, ZSSS, VMMC）" (no Chinese airport can be found at
     the moment) [unverified].
@@ -396,7 +437,8 @@ Primary texts were read in `refs/cache/china_law/` [verified]. The ADS-B case hi
   - GreatFire says liveatc.net was reachable from mainland China at its last test (2026-05-05) [secondary]. That is a
     network fact, not a legal one.
 - **Reading [inferred]:**
-  - A ZSSS stream would need a receiver in or near Shanghai publishing ATC audio. That is the act Art. 41 forbids, and
+  - A ZSSS stream would need a receiver in or near Shanghai publishing received ATC audio. That is the act Art. 41
+    forbids (for unintentionally received information; deliberate reception outside a licence is barred too), and
     the profile MSS acted on in 2025.
   - So we must not encourage, fund or embed one.
   - The sfo3d ATC toggle should be **absent or disabled for SHA**. If wanted, a plain outbound link to LiveATC's search
@@ -460,10 +502,10 @@ Likelihood is our judgement [inferred]. "PRC" means mainland China.
 |---|---|---|---|---|---|
 | R1 | Someone in the PRC helps us (ADS-B receiver, ATC stream, photos, GNSS tracks, drone, stand measurements, OSM edits) | that person | **High if it happens** (cases 2021, 2024, 2025, 2026) | fines, confiscation, detention; espionage framing | Never solicit or accept PRC-side data collection. State it in CONTRIBUTING. No feeder programme, no "send us photos". |
 | R2 | Rendering, labelling or committing military / armed-police features near ZSSS (in OSM now) | owner, users who share screenshots, the repo | Medium (they are 1.2–3.3 km away) | complaint, block, takedown request | Filter by tag and name in the OSM import (§2.6). Never label. CI check with `osm_sensitive.py` logic. |
-| R3 | A metre-accurate WGS-84 3-D model of a PRC airport in a public repo | owner (mainly if travelling to the PRC), repo | Low (civil, public facility, data already public abroad) | entry refusal or questioning; repo block | Derive only from open foreign data. Keep the detailed extent ≤ aerodrome + margin (≤25 km² contiguous). No measured data from the PRC. No secret-catalogue shapes (DSM/point clouds of the city). |
+| R3 | A metre-accurate WGS-84 3-D model of a PRC airport in a public repo | owner (mainly if travelling to the PRC), repo | Low (civil, public facility, data already public abroad); the verifier rates this as, if anything, understated: any modelled building meets the 5 % height test of catalogue item 24, and the "not made by licensed surveyors" argument is weak (§2.3) | entry refusal or questioning; repo block | Derive only from open foreign data. Keep the detailed extent ≤ aerodrome + margin (≤25 km² contiguous). No measured data from the PRC. No secret-catalogue shapes (DSM/point clouds of the city). |
 | R4 | The app is used inside the PRC and counts as an unreviewed public map or internet map service | owner; users in the PRC | Low (enforcement = blocking) | block; in theory Map Regs Art. 54 fines | Don't target the PRC: no PRC hosting/CDN, no ICP, no Chinese-language promotion. "Not a map; not for navigation" notice. |
 | R5 | Showing live and recorded PRC flight positions from foreign aggregators | owner (DSL Art. 2); data feeders | Low for the owner; high for feeders | as R1/R10 | Airport vicinity only, civil only, no long archives, no military/state highlighting. Crop recordings before committing (D5). See adsb.md. |
-| R6 | ATC audio for ZSSS | stream provider in the PRC; owner if re-streaming | High for a provider; none if we drop the feature | Art. 41/72 fines; security framing | Drop the toggle for SHA (D4). |
+| R6 | ATC audio for ZSSS | stream provider in the PRC; owner if re-streaming | High for a provider; none if we drop the feature | Art. 41/72 fines (up to CNY 100k with licence revocation if serious); Art. 75 for foreign monitoring (up to CNY 300k); security framing | Drop the toggle for SHA (D4). |
 | R7 | GCJ-02 approximation code in a public repo | owner | Very low (widely published) | reputational / takedown | Keep it out of the published app; decide on the repo (D8). Never convert data with it. |
 | R8 | Airline trademarks or logo copyright (CES, CSH, CQH, DKH) | owner | Low (non-commercial depiction) | takedown request | sfo3d notice; no monetisation; no marks in the app name or icon; takedown contact. |
 | R9 | Copyright in terminal architecture or in photos used as textures | owner | Low | takedown | Model geometry ourselves; never texture from photos or Google/Baidu/Amap imagery. |
@@ -525,15 +567,15 @@ Likelihood is our judgement [inferred]. "PRC" means mainland China.
 | L20 | Spec item 22: imagery | ≤0.5 m resolution | same | 2026-11-13 | "表现地为我国境内的遥感影像，地面分辨率不得优于0.5米" | verified |
 | L21 | Spec item 23: validity and repeal | 5 years; repeals the 2003 and 2009 rules | same | 2026-11-13 | "本规范自颁布之日起实施，有效期5年。…（国测法字〔2003〕1号）和…（国测图字〔2009〕2号）同时废止。" | verified |
 | L22 | Secret catalogue item 3 | the secrecy-processing algorithm is 机密 | https://www.mfa.gov.cn/wjb_673085/zzjg_673183/bjhysws_674671/bhflfg/ldbjchxgfl/202303/P020230313534680395614.pdf | 2026-11-13 | "国家认定的地理信息保密处理技术算法及参数 机密 长期" | verified |
-| L23 | Secret catalogue item 24 | ≥10 m-accurate 3-D models over 25 km² = 秘密 | same | 2026-11-13 | "…且连续覆盖范围超过 25 平方千米的三维模型、点云、倾斜影像、实景影像、导航电子地图等实测成果 秘密" | verified |
+| L23 | Secret catalogue items 23 and 24 (separate) | item 23 DEM/DSM: planar ≤10 m or height ≤15 m; item 24 3-D models, point clouds etc.: planar ≤10 m or relative object-height ≤5 %; both outside military zones, >25 km² contiguous = 秘密 | same | 2026-11-13 | "…且连续覆盖范围超过 25 平方千米的三维模型、点云、倾斜影像、实景影像、导航电子地图等实测成果 秘密" | verified |
 | L24 | Secret catalogue item 25 | ±10 m coordinates of important facilities related to the military or security = 秘密 | same | 2026-11-13 | "与军事、国家安全相关的国民经济重要设施精度优于（含）±10 米的点位坐标及其名称属性" | verified |
-| L25 | Secret catalogue: who generates secrets | licensed surveyors and military surveying units | same | 2026-11-13 | "国家秘密事项由从事测绘地理信息活动的测绘资质单位、军队测绘部门（单位）产生" | verified |
+| L25 | Secret catalogue Note 1: where secrets arise | at licensed surveyors and military surveying units, which mark them; the third column (知悉范围) is the knowledge scope (approved holders and users), not the producer, and neither limits the items to their products | same | 2026-11-13 | "国家秘密事项由从事测绘地理信息活动的测绘资质单位、军队测绘部门（单位）产生" | verified |
 | L26 | GCJ-02 legal basis | GB 20263-2006 §4.1 (via Wikipedia); official name | https://en.wikipedia.org/w/index.php?title=Restrictions_on_geographic_data_in_China&action=raw | 2026-11-13 | "Technical spatial processing must be applied to electronic navigational maps prior to publication, sales, redistribution, and usage." / "地形图非线性保密处理算法" | secondary |
 | L27 | GCJ-02 in the primary texts | not named in the Surveying Law, Map Regs, 2023 Spec or 2020 catalogue | the four above | 2026-11-13 | (absence) | verified (absence) |
 | L28 | State Secrets Law: definition | matters concerning security and interests, set by legal procedure | http://big5.www.gov.cn/gate/big5/www.gov.cn/yaowen/liebiao/202402/content_6934648.htm | 2026-11-13 | "國家秘密是關係國家安全和利益，依照法定程序確定，在一定時間內只限一定範圍的人員知悉的事項。" | verified |
 | L29 | State Secrets Law Art. 36 | aggregation risk | same | 2026-11-13 | "防範數據匯聚、關聯引發的泄密風險" | verified |
 | L30 | Criminal Law Art. 8 | foreigners abroad: minimum 3 years, dual criminality | https://fgk.chinatax.gov.cn/zcfgk/c100009/c5212248/content.html | 2026-11-13 | "外国人在中华人民共和国领域外对中华人民共和国国家或者公民犯罪，而按本法规定的最低刑为三年以上有期徒刑的，可以适用本法，但是按照犯罪地的法律不受处罚的除外。" | verified (official government mirror; consolidated 2023-12-29) |
-| L31 | Criminal Law Art. 111 | supplying secrets or intelligence abroad: 5–10 years | same | 2026-11-13 | "为境外的机构、组织、人员窃取、刺探、收买、非法提供国家秘密或者情报的，处五年以上十年以下有期徒刑" | verified |
+| L31 | Criminal Law Art. 111 | supplying secrets or intelligence abroad: 5–10 years; minor cases under 5 years (no universal 5-year minimum) | same | 2026-11-13 | "为境外的机构、组织、人员窃取、刺探、收买、非法提供国家秘密或者情报的，处五年以上十年以下有期徒刑" … "情节较轻的，处五年以下有期徒刑、拘役、管制或者剥夺政治权利" | verified |
 | L32 | NPC Q&A on Art. 8 | must target the PRC or its citizens | http://www.npc.gov.cn/zgrdw/npc/flsyywd/flwd/2002-04/17/content_292709.htm | 2026-11-13 | "一是针对中华人民共和国国家或者公民犯罪，如犯罪的对象直接危害了我国国家的安全和利益" | verified (explanatory) |
 | L33 | DSL Art. 2(2) | extraterritorial if harm | http://www.npc.gov.cn/npc/c2/c30834/202106/t20210610_311888.html | 2026-11-13 | "在中华人民共和国境外开展数据处理活动，损害中华人民共和国国家安全、公共利益或者公民、组织合法权益的，依法追究法律责任。" | verified |
 | L34 | DSL Art. 3 | processing includes publishing | same | 2026-11-13 | "数据处理，包括数据的收集、存储、使用、加工、传输、提供、公开等。" | verified |
@@ -557,10 +599,11 @@ Likelihood is our judgement [inferred]. "PRC" means mainland China.
 | L52 | ZSSS military history | military until 1963; civil reopening April 1964 | https://en.wikipedia.org/w/index.php?title=Shanghai_Hongqiao_International_Airport&action=raw | 2026-11-13 | "From late 1963, it was rebuilt for civilian use and was reopened in April 1964." | secondary |
 | L53 | ZSSS joint-use history | 1963 joint military-civil, civil-only from about 1971 | https://www.sohu.com/a/15058612_119207 (search summary only) | 2026-11-13 | "将虹桥机场扩建为军民合用的国际机场" | unverified |
 | L54 | AIP withholds threshold coordinates | Nil for 18L/36R/18R/36L | aip.md row 21 | 2026-11-13 | "Nil" | secondary |
-| L55 | Military-tagged OSM objects near ZSSS | 5 (rail spur in 3 ways; 3 `landuse=military`), 1.2–3.3 km from the ARP | `refs/cache/osm/` (OSM API extracts, ODbL) via `tools/law/osm_sensitive.py` | 2026-11-13 | ids, names and coordinates deliberately withheld | obs |
+| L55 | Military-tagged OSM objects near ZSSS | 6 distinct elements (rail spur in 3 ways; 3 `landuse=military`), 1.2–3.3 km from the ARP | `refs/cache/osm/` (OSM API extracts, ODbL) via `tools/law/osm_sensitive.py` | 2026-11-13 | ids, names and coordinates deliberately withheld | obs |
 | L56 | Radio Regs Art. 27(2) | receive-only stations need no licence | https://www.gov.cn/gongbao/content/2016/content_5148745.htm | 2026-11-13 | "（二）单收无线电台（站）" | verified |
-| L57 | Radio Regs Art. 41 | no spreading or publishing of unintentionally received information | same | 2026-11-13 | "不得传播、公布或者利用无意接收的信息" | verified |
-| L58 | Radio Regs Art. 72(2) | fine up to CNY 30k | same | 2026-11-13 | "（二）故意收发无线电台执照许可事项之外的无线电信号，传播、公布或者利用无意接收的信息" (with "可以并处3万元以下的罚款") | verified |
+| L57 | Radio Regs Art. 41 | no deliberate reception outside the licence; no spreading, publishing or use of unintentionally received information | same | 2026-11-13 | "不得传播、公布或者利用无意接收的信息" | verified |
+| L58 | Radio Regs Art. 72(2) | fine up to CNY 30k; serious: licence revoked plus CNY 30k–100k | same | 2026-11-13 | "（二）故意收发无线电台执照许可事项之外的无线电信号，传播、公布或者利用无意接收的信息" (with "可以并处3万元以下的罚款；造成严重后果的，吊销无线电台执照，并处3万元以上10万元以下的罚款") | verified |
+| L58a | Radio Regs Art. 75(2)/(3) | foreign radio monitoring in the PRC, or supplying security-related PRC radio data abroad: CNY 30k–100k after refusing to correct; serious CNY 100k–300k | same | 2026-11-13 | "（二）境外组织或者个人在我国境内进行电波参数测试或者电波监测；（三）向境外组织或者个人提供涉及国家安全的境内电波参数资料" | verified (added from verify_licences_law.md) |
 | L59 | Criminal Law Art. 288 | unlicensed stations disrupting radio: up to 3 years | https://fgk.chinatax.gov.cn/zcfgk/c100009/c5212248/content.html | 2026-11-13 | "擅自设置、使用无线电台（站），或者擅自使用无线电频率，干扰无线电通讯秩序，情节严重的，处三年以下有期徒刑" | verified |
 | L60 | Hobbyist view on listening | listening not prohibited; transmitting is | https://github.com/Panic-W/KWSNote (file 航空波段收听与录音.md, commit 842c5b1) | 2026-11-13 | "根据国内的现行法律，未禁止公众守听民航空管频率，但禁止擅自发射" | unverified |
 | L61 | LiveATC and ZSSS | no Chinese airport found on LiveATC (2024) | same | 2026-11-13 | "中国机场暂时都搜不到（ZBAA, ZBAD, ZSPD, ZGGG, ZSSS, VMMC）" | unverified |
