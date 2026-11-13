@@ -1,0 +1,15 @@
+{
+ "taf2025_HWD.json": {
+  "url": "https://taf.faa.gov/Downloads/APO100_TAF_Final_2025.zip",
+  "licence": "U.S. Government work (FAA, 17 U.S.C. 105), public domain",
+  "fetched": "2026-11-13",
+  "made_by": "tools/faa/taf_hwd.py: HWD rows of Airports.xlsx, BasedAircraft.xlsx, AirportsOperations.xlsx (zip sha256 inside the file)",
+  "note": "Used instead of the FAA Form 5010 PDF, which ADIP serves only behind a page token and reCAPTCHA."
+ },
+ "Glossaryfor2025TAF.pdf": {
+  "url": "https://taf.faa.gov/Downloads/Glossaryfor2025TAF.pdf",
+  "licence": "U.S. Government work (FAA, 17 U.S.C. 105), public domain",
+  "fetched": "2026-11-13",
+  "note": "Column definitions for taf2025_HWD.json (based aircraft classes, local vs itinerant operations, fiscal year)."
+ }
+}
