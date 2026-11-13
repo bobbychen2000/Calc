@@ -2,7 +2,9 @@
 # tracking films batch: one Chromium per shot, resumable (skips finished shots), 3 passes; PREVIEW=1 -> stills only into prev/
 T=/tmp/claude-0/-home-user-Calc/3fd08d73-28ea-592f-8f33-69ede4de867b/scratchpad/track
 cd /home/user/Calc/sfo3d
-pgrep -f "http.server 8771" >/dev/null || (setsid nohup python3 -m http.server 8771 --bind 127.0.0.1 --directory out/phone_artifact/pub > /dev/null 2>&1 < /dev/null &)
+PUB=${PUB:-out/phone_artifact/pub}   # the Full build the shots are rendered from (phone_artifact.sh output)
+pkill -f "http.server 8771" 2>/dev/null; sleep 1
+(setsid nohup python3 -m http.server 8771 --bind 127.0.0.1 --directory $PUB > /dev/null 2>&1 < /dev/null &)
 sleep 2
 OUT=$T/shots; [ -n "$PREVIEW" ] && OUT=$T/prev; mkdir -p $OUT
 IDS=${IDS:-$(python3 -c "import json;print(' '.join(s['id'] for s in json.load(open('$T/shots3.json'))))")}

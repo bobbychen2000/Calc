@@ -52,10 +52,12 @@ await page.evaluate(F0 => {
 console.log('ready', ((Date.now() - t0) / 1000).toFixed(1), 's');
 console.log('fx', JSON.stringify(await page.evaluate(() => { const R = window.SFO && SFO.R; if (!R) return null; const Q = R.Q || {}; const e = R.engine || {};
   return { tier: R.tier, backend: e.backend, ao: Q.ao, traa: Q.traa, bloom: Q.bloom, shadow: Q.shadow, spotMap: Q.spotMap, lod: Q.lod, gb: R.qsGB, canvas: R.canvas && (R.canvas.width + 'x' + R.canvas.height) }; })));
-// real-time warm-up until the drawn aircraft is ~6 s short of the shot's start
+// real-time warm-up until the drawn aircraft is ~24 s short of the shot's start
 let simT = await page.evaluate(() => window.__simT()); console.log('simT at ready', simT.toFixed(1), 'start', sh.start);
 if (simT > sh.start - 2) { console.log('LATE', simT.toFixed(1)); await browser.close(); process.exit(6); }
-while (simT < sh.start - 6) { await page.waitForTimeout(Math.min(4000, Math.max(300, (sh.start - 6 - simT) * 800))); simT = await page.evaluate(() => window.__simT()); }
+// (stop 24 s short: pausing the virtual clock needs a 4-16 s margin (pauseAt retries below) during which the replay runs on;
+// with the old 6 s every shot began 0-16 s late (d_climb 16, a_taxi 12: 13 Nov 2026); the 250-ms step loop then lands on start)
+while (simT < sh.start - 24) { await page.waitForTimeout(Math.min(4000, Math.max(300, (sh.start - 24 - simT) * 800))); simT = await page.evaluate(() => window.__simT()); }
 const flush = c => page.evaluate(c => { const r = window.__cam(c); const q = window.__q; window.__q = []; const t = performance.now(); for (const cb of q) cb(t); return r; }, c);
 await page.evaluate(() => { window.__q = []; window.requestAnimationFrame = cb => { window.__q.push(cb); return window.__q.length; }; window.cancelAnimationFrame = () => {}; });
 await page.waitForFunction(() => window.__q.length > 0, null, { timeout: 0, polling: 200 });

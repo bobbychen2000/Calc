@@ -14,7 +14,7 @@ const css = `html,body{margin:0;width:1920px;height:1080px;background:transparen
 .end{position:absolute;left:0;top:0;width:1920px;height:1080px;background:#06080c;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .end .t{font-size:58px;font-weight:750} .end .s{font-size:24px;margin-top:14px;opacity:.85} .end .c{font-size:17px;margin-top:46px;opacity:.6;max-width:1500px;text-align:center;line-height:1.6}`;
 const LAB = { approach: 'Approach over San Francisco Bay', final: 'Final approach, runway 28R', touchdown: 'Landing, runway 28R', rollout: 'Rollout',
-  taxi: 'Taxi', gate: 'Arriving at gate G7', dock: 'Jet bridge docking', push: 'Pushback', pushstart: 'Bridges retract, pushback', lineup: 'Lining up, runway 28R', takeoff: 'Take-off, runway 28R', climb: 'Climb-out',
+  taxi: 'Taxi', gate: 'Arriving at gate G7', dock: 'Jet bridge docking', push: 'Pushback', pushstart: 'Bridges retract, pushback', lineup: 'Lining up, runway 28R', takeoff: 'Take-off, runway 28R', gearup: 'Positive rate, gear up', climb: 'Climb-out',
   'gate-dep': 'At gate G13', 'taxi-dep': 'Taxi to runway 28R' };
 const FILM = {
   arr: { k: 'ARRIVAL', t: 'UAL900 · London → San Francisco', s: 'Boeing 787-9 · N71112 · United Airlines', m: 'Followed from the bay to the gate · recorded ADS-B, 8 Nov 2026' },
@@ -29,5 +29,5 @@ for (const s of S) {
 for (const [f, v] of Object.entries(FILM)) await shot(`<div class="title sh"><div class="k">${v.k}</div><div class="t">${v.t}</div><div class="s">${v.s}</div><div class="m">${v.m}</div></div>`, `title_${f}.png`);
 await shot(`<div class="end"><div class="t">SFO Live 3D</div><div class="s">Real ADS-B traffic, physically simulated and rendered in the browser</div>
 <div class="c">Aircraft data: ADSB.lol (ODbL 1.0) and adsb.fi open data · Routes: Virtual Radar Server standing data (CC0) · Weather: NOAA/NWS AWC<br>
-Traffic recorded 8 Nov 2026, 12:46–13:26 PST; lighting set to late afternoon · Time-lapse segments are marked on screen</div></div>`, 'end.png');
+Traffic recorded 8 Nov 2026, 12:46–13:26 PST · For the film: lighting set to late afternoon, sky cleared (recorded: few clouds at 800 ft, broken cirrus at 20,000 ft) · Time-lapse segments are marked on screen</div></div>`, 'end.png');
 await b.close(); console.log('cards ok', S.length);
