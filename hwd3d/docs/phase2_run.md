@@ -41,7 +41,7 @@ are excluded from the kinematics (pairs with dt > 0.4 s). Measures are taken on 
 inside the D6 window, not hidden) with the same definitions as P3's `tools/traffic/replay_engine.mjs`; keys never leave
 the page (opaque per-run ids, ICAO types only in the output).
 
-**D1 reference.** `docs/phase2/phase2_run_ref.py` builds, locally, the identity strings (ICAO address, registration,
+**D1 reference.** `tools/qa/phase2_run_ref.py` (in `docs/phase2/` until fix round 1) builds, locally, the identity strings (ICAO address, registration,
 callsign, `ownOp`, Mictronics registration) of every LADD/PIA-flagged aircraft (readsb `dbFlags & 12`) within 8 NM in the
 window's hour — A: 5 flagged aircraft, 12 strings; B: 11 flagged, 28 strings — and, as a positive control, the
 registrations/callsigns of unflagged aircraft (206 / 192 strings). The lists stayed in a scratch directory (never in
@@ -65,6 +65,7 @@ fetched 2026-11-13, sha256 `abb581d9…2b30`, identical to the copy P1 quoted): 
 | … fuselage inside a building footprint | **66** | **15** | **149** | **15** |
 | Ground overlaps (planforms, margin 0) | 0 | **56** (1 pair, both moving) | 0 | **60** (same pair) |
 | Teleports (> 1.5 × speed × dt + 2 m) | 0 | 0 | 2 (a B738 overflight, 16.7 m) | 0 |
+| ↳ *correction (fix round 2)* | *this row counted only jumps between consecutive drawn samples; fade cuts and absences of any length were not counted, so "0" was not true. Re-measured with the any-absence definition in section 7* ||||
 | Airborne below the ground / ground y ≠ `site.groundY` (> 0.3 m) | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
 | D1: masked tracks; label = type; no reg/callsign/operator | 2; 2; 2 | 1; 1; 1 | 55; 55; 55 | 47; 47; 47 |
 | D1: LADD/PIA identity strings found in the DOM (text + attributes) | 0 of 12 (23 scans) | 0 of 28 (20 scans) | 0 of 12 (27 scans) | 0 of 28 (24 scans) |
@@ -220,8 +221,9 @@ lead equals the adaptive delay (up to 65 s).
   the 28R end (25 / 46 still samples). Overall off-pavement rates stay at 0.007–0.28 % of ground samples.
 - **e. A parked P180 with its fuselage in a building** for 1.5 s at its ramp spot (181.6, 396.7) before the placement
   moved it (15 samples, both B runs).
-- Not seen in any run: airborne aircraft below the ground, ground aircraft off `site.groundY`, teleports of HWD traffic,
-  fixed-wing aircraft on helipads, two aircraft on one spot.
+- Not seen in any run: airborne aircraft below the ground, ground aircraft off `site.groundY`, fixed-wing aircraft on
+  helipads, two aircraft on one spot. (*Correction, fix round 2:* this list also said "teleports of HWD traffic"; the
+  measure behind it missed fade cuts and absences longer than one sample, so that claim was withdrawn - see section 7.)
 
 **F4 — Phase label lags the drawn motion on departure (P3).** The card of image 3 says "Taxiing" for an aircraft drawn
 40 ft above the runway at 50 kt and +650 ft/min (the take-off happened inside a recorder hole; the back-dated label
@@ -300,3 +302,458 @@ air}[_clean], card_masked, follow, plus `about`, `atc`, `stats`, `card_stalepark
   relay's adsb.lol quota log is unchanged since 11:35Z); the relay fetched the KHWD METARs of the two new hour slots
   from aviationweather.gov once each (cached in the gitignored `out/replay/wx/`); the readsb README was fetched once
   from raw.githubusercontent.com.
+
+## 6. Review fix round 1 (2026-11-13)
+
+The Phase 2 review raised 40 findings (traffic behaviour 12, visual / world 10, provenance 18). Fix round 1 changed the
+app, relay, data tools and docs (nothing committed). Every number below was measured after the fixes, on this machine;
+every image named here was looked at.
+
+### 6.1 Re-run of the review's traffic harness (three 1-h windows, 10 Hz, the app's replay path)
+
+The reviewer's packs (heli = 5 Nov 19Z, pat = 8 Nov 22Z, night = 5 Nov 05Z; full-ident, gitignored, `out/review_traffic/`)
+through a harness that follows the app (ingest at send time, display 60 s behind, `update` + `physics.resolve` at 10 Hz).
+Before = the review's numbers.
+
+| Measure | heli before → after | pat before → after | night before → after |
+|---|---|---|---|
+| Visible re-placements (invisible < 5 s, reappearing > 1.5 v·gap + 5 m and > 10 m away) | 28 → 5 | 27 → 2 | 6 → 1 |
+| Lift-offs of fixed-wing aircraft below 40 kt | 3 of 12 → 0 of 11 | 12 of 34 → 0 of 33 | 1 of 5 → 0 of 6 |
+| On-ground stops from > 40 kt to < 8 kt within 3 s | 14 in the three windows → 0 | | |
+| Ghost-parked aircraft (drawn parked > 50 m from their newest fix) | 3 → 0 | 2 → 0 | 1 → 0 |
+| Airborne label on a rolling aircraft / ground label > 50 ft up / "parked" while moving (10-Hz samples) | 1,052 / 20 / 203 → 0 / 0 / 0 | 3,002 / 114 / 530 → 0 / 0 / 0 | 978 / 162 / 29 → 0 / 0 / 0 |
+| Air speed above 1.15 × the reported speed + 3 m/s (samples) | 5 → 6 | 178 → 0 | 0 → 0 |
+| Helicopter drawn inside a building (samples) | 12,628 → 0 | 0 → 0 | 0 → 0 |
+| Fixed-wing ground samples with a wheel off the site + NAIP pavement | 801 → 786 | 197 → 265 | 2 → 1 |
+
+The remaining re-placements (by class only: these are named hours of full-ident packs, and a type plus an hour of a
+LADD / PIA-flagged aircraft is not repeated in committed docs): heli two single-engine pistons (one twice, 205-256 m),
+two helicopters (145 m, 16 m) and an airliner overflight (734 m); pat a single-engine piston (39 m) and a helicopter
+(184 m); night a helicopter (321 m). The pat off-pavement count rose by 68 samples: aircraft now
+follow taxi routes through two places where the site pavement has holes that NAIP shows paved (around (-220, -288) and
+(-516, -484)); the heli count is mostly a C172 standing at the 28R end on grass by its GNSS fixes (15-20 m off the
+pavement) [*correction, fix round 2: that attribution was wrong - the body was driving on a planned route (577 of its
+773 off-pavement samples had route = 1) and only one of its fixes lay on grass; it shuttled ~12 m to and fro between a
+GroundPhysics seek offset and its decay. Root cause and fix in section 7*]. 289 fixed-wing samples in the heli window still have the planform inside a building footprint (aircraft
+entering hangars; review residual (d)).
+
+### 6.2 P3's harness, now strict (`node tools/traffic/replay_engine.mjs <w> --strict`)
+
+The harness now counts fade re-placements as teleports and fails on > 6 re-placements per hour, any ghost-parked frame,
+lift-off below 0.7 × the approach speed, on-ground hard stop, hop, airborne hover, helicopter inside a building, and label
+contradiction.
+
+- **Weekday (Mon 9 Nov 21Z; *correction, fix round 2:* this line said "Wed 11 Nov 19Z", but the P3 weekday pack `out/replay/pack_weekday.json.gz` covers 2026-11-09T21:00-21:59Z): RESULT ALL PLAUSIBILITY CHECKS PASSED.** 2 re-placements (an R44 on the ground 25 m, an
+  untyped aircraft on downwind 339 m), 0 ghost frames, 0 slow lift-offs, 0 hard stops, 0 hops, 0 hover frames, 0 label
+  contradictions. Event counts unchanged from section 2.
+- **Weekend (Sun 8 Nov 20Z): RESULT FAILED** on three checks: 7 re-placements in the hour (7.1 / h, limit 6), 1 ghost-parked
+  frame and 1 hop. Before fix round 1 the harness did not count re-placements; the old fade counter gave 46 cuts in the
+  review's pat window. The 7 (by phase only, see 6.1): an arrival (248 m), a downwind (316 m), two take-off rolls / climb-outs of
+  two aircraft (432 and 971 m; 66 and 891 m) and a landing roll (294 m). One take-off case was traced: the last taxi fix
+  lies 70 m from the runway end at 13 kt and the next fix, 48 s later, 455 m down the runway at 117 kt; a taxi route plus
+  a 3.9 m/s2 roll needs 62 s, so no plan within the [inf] limits fits and the body is re-placed (`planRollTo`, new in
+  this round, handles the feasible cases: 1 to 2 per window). The event counts are unchanged.
+
+### 6.3 Other checks run after the fixes
+
+| Check | Result |
+|---|---|
+| `python3 -I tools/live/test_relay.py` | 20 tests OK (new: late-flag purge + forget event, case-variant / allow-list serving, two processes sharing the quota file) |
+| `node tools/live/test_shim.mjs` | PASS |
+| `python3 -I tools/live/test_taxigraph.py` | 9 tests OK (graph rebuilt with 23 holds: 747 nodes, 1 component, 0 unreachable holds / spots / helipads) |
+| `python3 -I tools/check_airport.py` | see the bullet below |
+| Planted D1 token in an untracked `docs/phase2/*.md` | found by the extended scan (then deleted) |
+| Headless renders (desktop + phone, day and night) | 0 console errors / warnings in every run |
+
+`tools/check_airport.py` after the fixes: section 8 lists the 5 NAIP-only holds (contrast 22.4-32.0, 128-203 ft from the
+centreline; 0 failing). The D1 scan reads 27 ADS-B-derived files plus 190 more committed text files (taxigraph,
+docs/phase2, CLAUDE.md, code, generated modules), 0 findings. The SOURCES coverage now includes `docs/phase2/` and
+`js/` data files and generated modules. The RESULT line still reports FAILED, on two items, and both come from files of
+the concurrent Phase 3a work (`js/aircraft/models/`, untracked, not touched by this round): its `SOURCES.json` has an
+entry without `made_by` / `note` (`sf50_meta.json`), and its `pc12_meta.json` / `sf50_meta.json` carry `src` texts other
+than obs / inf. The same two items failed before this round's edits.
+
+### 6.4 Renders looked at
+
+- Night, 20:00 PST (tower open): the MIRL rows of both runways, the PAPI / VASI and the beacon (`phase2_fix1_9`); at
+  23:30 PST (tower closed) only 10R/28L is lit, dimmer (preset low), 10L/28R dark.
+- Tower: the shaft on its single-storey base (`phase2_fix1_10`); the Tower view's eye now stands over the shaft.
+- Ground: before / after / NAIP on one camera (`phase2_fix1_11`). Over five off-airport tiles the render / NAIP mean RGB
+  went from 0.80-0.82 / 0.77-0.79 / 0.72-0.74 to 0.87-0.91 on every channel, and the mean saturation from 0.22-0.32
+  (NAIP 0.14-0.25) to within 0.01-0.015 of NAIP. On the runway and taxiway points of three airfield tiles the pavement
+  luminance went from 0.68-0.73 to 0.84-0.93 of NAIP.
+- The business jet that was cut in half at the FBO Ramp (south) edge is in-painted away. One aircraft-like object on the
+  grass near the 28R end is not in the catalogue (not on pavement) and still shows as a flat image.
+- The helicopter pad complex south of 10R/28L is paved (the helicopter that the review saw "on grass" there now stands
+  on a pad).
+- Phone card (`phase2_fix1_12`): "Identity not shown · type-only feed", icons on screen, opaque footer.
+
+### 6.5 Per-finding status
+
+| # | Finding (short) | Status | What changed / evidence |
+|---|---|---|---|
+| 1 | Re-placement cuts are visual teleports | fixed (residual) | `motion.js` profiles and plans the body can follow; re-placements counted as teleports in both harnesses; real alpha cross-fade (`uAlpha`). 28 / 27 / 6 → 5 / 2 / 1 per h; weekend P3 still 7.1 / h (6.2). *Fix round 2: both counts covered only absences < 5 s; with any-absence counting and the fixes of section 7: 0 in all five windows* |
+| 2 | Stale park record → ghost + teleport back | fixed | park released on moving > 15 m or airborne; no "parked" from first-heard on a taxiway. Ghost-parked 6 → 0 aircraft in the review windows. *Correction (fix round 2): this row said "ground loss rests at the last fix pose" - true only on aprons / helipads / hangar-door taxilanes with gs < 1 kt; elsewhere the aircraft faded out and reappeared minutes later. Fixed in fix round 2 (section 7)* |
+| 3 | Take-off / T&G in a hole: brake, pivot, slow lift-off | fixed | rolling start at the fix's own speed and position, line-up at the route's runway join, VLOF from the ACD approach speed; lift-offs < 40 kt 16 → 0, hard stops 14 → 0 |
+| 4 | Chord across grass and runways | fixed | route → fast route → chord only if on pavement → forced route ≤ 1.5 × → hold; roll-out + exit split. The P46T grass chord is gone |
+| 5 | Ground state from unsmoothed per-fix height | fixed | debounced ground (slow fixes < 0.45 Vapp on the ground, one airborne-by-altitude fix < 250 ft held, lift-off needs ≥ 0.8 VR) |
+| 6 | Live: fixed-wing hovering after reports stop | fixed | air tracks dead-reckoned straight and level, faded after 20 s; synthetic live test: hovering 0 s at a 156-s poll period |
+| 7 | Helicopters: no rest pose; inside a hangar | fixed | helicopter still runs and rest poses; hidden while the rest pose is in a hangar. Helicopter-in-building samples 12,628 → 0 |
+| 8 | D6 'L corridor fix' rule not implemented | fixed | an L corridor fix within R_FIELD and ≤ H_PASS sets K.hwd; synthetic corridor test: scope hwd at t = 0 |
+| 9 | Phase labels lag / contradict | fixed | `drawnPhase`: the plan's phase, then the drawn ground / air state; contradictions 0 in all windows |
+| 10 | Runway end from the line-up turn | fixed (app); deferred (Phase 1 `events.py`) | end from the decisive airborne fix if aligned, else ground-speed-weighted ≥ 15 kt; the pat '10L ↑1' is gone. `events.py` not changed: regenerating the frozen Phase 1 `hwd_events.json` cascades into Phase 1 docs and counts |
+| 11 | Six residuals | (a) fixed, (b) fixed, (c) fixed, (d) partly, (e) not a defect, (f) fixed | (a) speed cap 1.15 × target + 3 m/s, feed-forward (pat 178 → 0); (b) TIS-B echo de-duplication (150 m / 300 ft / 10 s); (c) one stop event per still run; (d) fillets keep wingtips clear, 289 heli-window samples remain near hangar doors; (e) the tie-down row pitch is 12.15 m, so matching 8-13 m would assign the neighbour's spot; (f) ground bodies > 3 km from the ARP are not drawn |
+| 12 | Relay budget consequences | fixed (docs + record mode) | the real budget behaviour is in About, the status pill (poll period from `/api/ping`) and `phase2_relay.md`; adsb.fi polls only while a client is connected, also with `--record` |
+| 13 | 5 hold bars missing | fixed | `NAIP_HOLDS` measured (contrast 22-32), data + taxigraph rebuilt (23 holds), check section 8 |
+| 14 | TDZ bars not drawn | fixed | `END_PAINT_OBS` tdz groups (src obs); docs corrected |
+| 15 | Night: airfield invisible | fixed | MIRL on both runways (type obs, positions inf), NASR schedule (`phase2_fix1_9`) |
+| 16 | Tower massing | fixed | tall part ~8 × 9 m [inf, NAIP 2022 + 2024], base 4 m; eye over the shaft (`phase2_fix1_10`) |
+| 17 | Unmapped helicopter pad area | fixed | `site.js HELI_APRON_NAIP` (NAIP-segmented outline, 4 pads); not added to the Phase 1 data set |
+| 18 | NAIP aircraft as flat images | fixed (residual) | catalogued aircraft in-painted in the texture; one uncatalogued object on grass remains |
+| 19 | PAPI / VASI without a vertical cut-off | fixed | PAPI 4°, VASI 6° above the aim, 4° below, with a fade |
+| 20 | Surface-painted holding position signs | fixed (as a documented gap) | listed under "Not drawn" in `phase2_world.md` §4 |
+| 21 | Phone UI defects | fixed | sticky icons, 44-px targets, opaque footer, label clamp, no "-0 ft", "unspotted" reworded, closer phone overview (`phase2_fix1_12`) |
+| 22 | Ground tone and pavement patchwork | fixed | `uNaipSat` / `uNaipBal` and NAIP-calibrated asphalt (6.4; `phase2_fix1_11`) |
+| 23 | D1: identity kept after a late flag | fixed | purge from `/api/ident` and history, `forget` SSE event, test; adsb.fi v3 verified to carry `dbFlags` |
+| 24 | Type-only cards claim LADD / PIA | fixed | `_masked` 'd1' / 'type-only' → `maskWhy`; card text per reason |
+| 25 | Persistence vs salted masked keys | fixed | masked tracks not stored / restored; reconcile restored stale tracks |
+| 26 | Static deny rules case-sensitive | fixed | allow-list + lower-cased parts + case-insensitive realpath check; tests for `/Refs/…`, `/OUT/…`, `/JS/geo.js` |
+| 27 | "Broadcast" for database fields | fixed | `adsb_db` source "aggregator database"; About reworded |
+| 28 | `--record` guard too loose | fixed | inside hwd3d only `refs/cache/local/` or `out/` (not `out/replay/`) |
+| 29 | ATTRIBUTION not updated | fixed | rows for the taxigraph, NAIP textures, regional mosaic, fixtures, pave mask, ACD module, docs/phase2 images, AWC, IEM METARs, earcut; adsb.fi row updated; NAIP terms still not re-read (marked unverified) |
+| 30 | SOURCES.json / ODbL URI | fixed | `js/world/SOURCES.json`, `js/world/tex/SOURCES.json`, `js/aircraft/SOURCES.json`; URI in `pave_naip.js`; coverage check extended |
+| 31 | D1 guard scope | fixed | every committed text file scanned (taxigraph node ids, synthetic test values, numeric tokens and FAA coordinates whitelisted); planted-token test |
+| 32 | Flagged types + hour in docs | fixed | `phase2_app.md` and `phase2_traffic.md` now give counts / "business jets" only |
+| 33 | Unescaped pack text in About | fixed | `esc()` on desc / src; `?pack=` same-origin relative only |
+| 34 | About poll claim vs real budget | fixed | About text + status pill; the quota file is merged under a lock before each request |
+| 35 | Regional backdrop provenance | fixed | described as a mosaic incl. undated overviews; raw kept in `refs/cache/local/naip/` (sha256 4b6b46a9…) |
+| 36 | earcut ISC notice | fixed | licence text in `js/world/earcut.js`, ATTRIBUTION software row, `requests_to_sfo3d.md` R6 |
+| 37 | Plain static server binds all interfaces | fixed | `--bind 127.0.0.1` in CLAUDE.md and `package.json` |
+| 38 | QA script hygiene | fixed | moved to `tools/qa/phase2_run_ref.py` (not served), output refused outside `out/` / temp |
+| 39 | Docs vs code (OD1, Phase 2 status, persistence comment) | fixed | `QUALITY` high only; CLAUDE.md "in review"; comment reworded |
+| 40 | Derived N-number for unregistered addresses | fixed | shown only with a known type and marked [inf] (the FAA PIA program page was not re-read) |
+
+## 7. Review fix round 2 (2026-11-13)
+
+The second review raised 9 findings:
+
+| Area | Findings |
+|---|---|
+| Traffic | F1-F5 |
+| Relay | F6, F7 |
+| Phone UI | F8 |
+| Docs | F9 |
+
+Fix round 2 changed these files (nothing committed):
+
+- the app: `js/live/{traffic,motion,ground,feed,classifier,ui}.js` and `live.css`;
+- the relay: `hwd_live_server.py`;
+- the checks: both teleport harnesses, a new phone-UI job (`jobs/phone_ui.mjs`), and `tools/live/test_relay.py`;
+- these docs.
+
+Every number below was measured after the fixes, on this machine (4 CPUs, SwiftShader), and every image named here was
+looked at.
+
+**Windows.** All five run at 10 Hz through the app's replay path: ingest at send time, display 60 s behind,
+`update` + `physics.resolve`.
+
+| Window | Pack | Hour (UTC) |
+|---|---|---|
+| heli | review | 5 Nov 19Z |
+| pat | review | 8 Nov 22Z |
+| night | review | 5 Nov 05Z |
+| weekday | P3 | Mon 9 Nov 21Z |
+| weekend | P3 | Sun 8 Nov 20Z |
+
+The review packs are full-ident and gitignored (`out/review_traffic/`); the P3 packs are in `out/replay/`.
+
+**Before and after.** "Before" is the fix-round-1 code measured with the *new* counting, so the two columns compare like
+with like.
+
+### 7.1 How a teleport is counted now (F1)
+
+Fix round 1 counted a re-placement only when the drawn body was invisible for less than 5 s. A fade-out, removal and
+re-creation of the same aircraft somewhere else was never counted, and neither was a hidden segment. The gate also
+allowed 6 re-placements per hour.
+
+Both harnesses now follow each aircraft by its key across *any* absence: a fade cut, a fade-out and removal, `hideSeg`,
+an air hide or the hangar. The harnesses are `tools/traffic/replay_engine.mjs` and the in-app `phase2_run_job.mjs`.
+
+- **Counted as a teleport:** the aircraft reappears more than 1.5 × speed × absence + 10 m (and more than 10 m) from
+  where it vanished.
+- **Not counted:** absences only outside the D6 window or simulation range. These are reported as window re-entries.
+- **Engine or signal:** each teleport is attributed to one of two causes.
+  - *Engine:* the fixes on either side of the absence are no more than `SIGNAL_LOSS_S` = 90 s apart [inf]. That is
+    longer than any recorder hole (≤ 52.4 s) plus `seen_pos` latency.
+  - *Signal:* the aircraft was not heard for longer than that and moved unseen.
+- **Gates:** `teleports_engine` = 0, and `teleports_signal_hwd` (signal teleports of HWD traffic) = 0. The 6 / h
+  allowance is gone.
+- **Independent check:** the reviewer's scratch harness measures the same quantity (`reappJump`).
+
+With this count, the fix-round-1 code had these teleports:
+
+| heli | pat | night | weekday | weekend |
+|---|---|---|---|---|
+| 7 (5 engine + 2 signal) | 3 | 1 | 5 | 12 |
+
+Section 6.2's "weekday: ALL PASSED" was therefore true only under the old count.
+
+### 7.2 Root causes and what changed
+
+**F1 / F2 — silent ground aircraft.** A ground track whose reports stopped was faded out off an apron. It then came back
+wherever it was next heard. This was the main source of the long-absence teleports, and of aircraft vanishing while
+moving.
+
+- `groundLost` now keeps such an aircraft drawn (`tr.stale`, phase `no_signal`, "No signal · last position", src inf).
+  - It stays at the stop point of its own braking extrapolation (`groundStop`: taxi / roll deceleration, clipped to the
+    pavement).
+  - It is kept for up to 30 min (`LOST_KEEP_MS`); park records keep their own rule.
+  - Only aircraft more than 3 km from the ARP (not drawn anyway) are removed.
+- When the aircraft is heard again, the motion continues from the drawn pose. A continuation anchor at the current target
+  pose is inserted before the new fix (`anchorAt`).
+- **Race with `seen_pos` latency.** Ground loss now needs `MOVING_LOST_MS` (45 s) + `LATENCY_ALLOW_MS` (30 s) [inf], so
+  a report that arrives late no longer races the loss.
+- A heard, moving aircraft that drives into a silent, unparked one fades the silent one. That one is evidently gone
+  (`staleOverrun`, 0-1 per window).
+
+| Window | Silent aircraft kept (`groundLostKept`) |
+|---|---|
+| heli | 9 |
+| pat | 13 |
+| night | 1 |
+| weekday | 6 |
+| weekend | 16 |
+
+**F3 — OAK arrivals faded high.** An arrival whose next fix is a ground fix more than 3 km away (OAK; its runways are not
+modelled) fell into the generic hole rule. That rule hid the body at 55-2,063 ft.
+
+- A *far* transition (`farTransition`) now flies a curve to a touchdown short of the roll fix, then rolls hidden.
+- A far departure waits hidden at lift-off, then flies along the next fix's track.
+- Air dead-reckoning hides a fixed-wing below 5 m/s.
+
+**F4 — ground physics shuttling on grass.**
+
+- **Root cause.** `GroundPhysics.resolve` decided "stationary" by the body's speed, so a body driving to its seek offset
+  counted as *moving*. Its offset decayed, its target swung back, and it shuttled ~12 m to and fro for a minute. In the
+  heli window this was 577 of 773 off-pavement samples, with `route = 1`.
+- **The fix.** A body is now stationary when its *target* rests (`restPose`), whatever its own speed. The offset is kept
+  while the target rests and decays from where it is once the target moves.
+- **Other changes:**
+  - Off-pavement ground fixes snap to the nearest paved point within 25 m, unless that point is inside a building
+    [inf].
+  - Roll fixes snap to the runway axis.
+  - A route reversal over its first or last 15 m is penalised, and out-and-back spurs are removed (`despur`).
+  - The rest-jitter threshold is 0.3 m.
+  - `grass_route_frames` was reported but not gated; it is gated now.
+  - Section 6.1's attribution was corrected.
+
+**F5 — straight air-ground chord ('ag:lin').** When no take-off or landing plan fitted, the engine drew a straight chord
+between an air fix and a ground fix. Finals and lift-offs could then be misaligned with the runway. The chord is gone:
+
+- **Near failures** (`fallbackTransition`) roll along the runway axis: touchdown at threshold + 30 m or later, then the
+  exit route.
+  - A take-off with no feasible plan whose ground fix is more than 30 m of taxi route from the runway is not drawn
+    rolling along taxilanes at take-off speed. It fades out where it stood and fades in on its climb-out (`replaceSignal`;
+    1 case, heli window). This is a re-placement after a signal loss. The teleport count does not flag it, because the
+    distance fits within 1.5 × speed × absence.
+- **Air curves** (`flightCurve`) are Hermite curves unless the curvature needs more than 30° of bank at the flown speed
+  [inf].
+  - Then `motion.js turnFlight` builds a turn-limited Dubins CSC path at 25 / 30 / 35° of bank.
+  - It has a straight final of 300 m (600 m for jets) and a straight initial climb-out of 500 m (1,500 m for jets, and at
+    most 0.4 × the distance) [inf].
+- **Contacts before the threshold** that report only an altitude stay airborne.
+- **Slow runway contacts** (< 0.7 × Vapp on the runway) are on the ground.
+- **Implausible air fixes** are rejected. These are fixes whose implied acceleration exceeds 2 g over 2-20 s; three
+  agreeing fixes override the rejection, and repeated copies of a rejected report are ignored.
+- **New measures in the harness:**
+  - `transition_linear` (INFO).
+  - The gate `misaligned_transitions`: a lift-off or touchdown more than 15° off the runway heading, measured 2-12 s
+    around it, within 2.5 km of the field.
+
+**F6 — `--record` guard.** The guard lower-cased the path, so `Refs/Cache/Local/rec` passed on a case-sensitive file
+system, and that directory is not gitignored. `record_dir_check` now checks the real path case-sensitively:
+
+- Inside hwd3d it allows only `refs/cache/local/…` or `out/…`, not `out/replay/…`.
+- It then requires `git check-ignore -q --no-index` to report a would-be recording file as ignored.
+- Outside a work tree the directory is allowed. Without git, only the path rule applies.
+
+**F7 — late-flag forget reached only open SSE streams, and only the last event.**
+
+- The Hub keeps every forget event for 10 min, with the seq at which each key was first published.
+- `/api/adsb?since=<seq>` adds `"forget": [keys]` for the events after `since` whose key the client had already seen.
+- The SSE loop sends every pending event.
+- `feed.js` polls with `?since=`.
+- `traffic.forget` marks the track `maskWhy: 'd1'`.
+
+**F8 — phone.** Several controls were smaller than 44 px (the sheet grab was 34 px). The view row also ran off the right
+edge under the icons.
+
+- The view buttons now wrap onto two rows.
+- Icons, grab, stats line (one `#statsbtn` button), search and card actions are at least 44 px.
+- The credit line and the pop-up sheets sit below the second view row.
+
+**F9 — stale docs and image caption.**
+
+- Image 3's caption now marks the pre-fix false "IDENTITY WITHHELD - LADD / PIA" header (`docs/phase2/SOURCES.json`).
+- These places were corrected in place, marked *correction, fix round 2*:
+  - the teleport row of 2.1 (after line 67);
+  - the "not seen" list of section 3 (e);
+  - the attribution in 6.1;
+  - rows 1 and 2 of 6.5;
+  - the weekday window in 6.2.
+- `phase2_traffic.md`, `phase2_relay.md`, `phase2_app.md`, `phase2_fork_map.md` and `CLAUDE.md` describe the new
+  behaviour.
+
+### 7.3 P3's harness, strict (`node tools/traffic/replay_engine.mjs <w> --strict`)
+
+| Check (10-Hz samples unless stated) | heli | pat | night | weekday | weekend |
+|---|---|---|---|---|---|
+| Teleports, engine + signal | 7 → **0** | 3 → **0** | 1 → **0** | 5 → **0** | 12 → **0** |
+| Window re-entries | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| Ghost-parked frames | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 1 → **0** |
+| Slow lift-offs / hard stops / air hover / heli in building / label contradictions | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| Hops | 0 → 0 | 1 → **1** | 0 → 0 | 0 → 0 | 1 → **0** |
+| Route samples with a wheel on grass (`grass_route_frames`) | 579 → **9** | 141 → **58** | 1 → **1** | 1 → **5** | 110 → **74** |
+| Misaligned lift-offs / touchdowns (> 15°) | 3 → **0** | 0 → 0 | 0 → 0 | 1 → **2** | 4 → **1** |
+| Straight air-ground chords (`transition_linear`, INFO) | 23 → 0 | 20 → 0 | 10 → 0 | 16 → 0 | 26 → 0 |
+| Fixed-wing ground samples off pavement (site + NAIP) | 786 → 42 | 376 → 99 | 1 → 1 | 57 → 37 | 845 → 143 |
+| Fixed-wing in a building footprint | 19 → 0 | 0 → 0 | 0 → 0 | 2 → 2 | 29 → 29 |
+| Ground planform overlaps, one body stopped (frames / pairs) | 0 → 3 / 1 | 8 / 1 → 24 / 2 | 0 → 0 | 0 → 0 | 75 / 1 → 78 / 2 |
+| **RESULT** | FAIL → **FAIL** (grass 9) | FAIL → **FAIL** (hop 1, grass 58) | FAIL → **FAIL** (grass 1) | FAIL → **FAIL** (grass 5, misaligned 2) | FAIL → **FAIL** (grass 74, misaligned 1) |
+
+The fixed-wing ground-sample denominator grew: heli 173,126 → 237,456 and weekend 227,715 → 310,934. Silent aircraft are
+now drawn, so they are sampled.
+
+**Event counts against the offline classifier.** Weekend take-offs were 7 live against 9 offline, the same as before.
+There is one new difference, not traced:
+
+| Window | Event | Live before → after | Offline |
+|---|---|---|---|
+| Weekday | Touch-and-go | 13 → 13 | 14 |
+| Weekday | Take-off | 6 → **7** | 6 |
+| Weekend | Touch-and-go | 24 → 24 | 25 |
+| Weekend | Full-stop landing | 9 → 10 | 10 |
+| Weekend | Low pass | 18 → 18 | 15 |
+
+Scope-HWD events fell: weekday 22 → 18, weekend 36 → 30. Unpark events fell too (weekday 9 → 7). This is consistent with
+fewer remove-and-re-create cycles [inf].
+
+### 7.4 The reviewer's scratch harness, re-run on its three windows
+
+The script is `recheck/harness2.mjs`, a scratch file of the review that is not in the repo. Its "before" is the review's
+own measurement of the fix-round-1 code.
+
+| Measure | heli | pat | night |
+|---|---|---|---|
+| Re-appearance jumps after any absence (`reappJump`) | 7 → **0** | 3 → **0** | 1 → **0** |
+| Cuts started / jumps | 5 / 5 → **0 / 0** | 2 / 2 → **0 / 0** | 1 / 1 → **0 / 0** |
+| Vanished while moving, not fading (`vanishMoving`) | 8 → 2 | 9 → 1 | 9 → 1 |
+| Height of those vanishes | 76-2,063 ft → 7-8 ft | 55-408 ft (+ 1 on the ground) → 5 ft | 1-775 ft → 5 ft |
+| Fixed-wing samples off pavement (`fw_off`) | 786 → 42 | 265 → 99 | 1 → 1 |
+| Fixed-wing in a building footprint (`g_in_bld`) | 289 → 179 | 0 → 0 | 0 → 0 |
+| Air speed > 1.25 × reported + 10 kt (`a_overspeed`) | 6 → 0 | 0 → 0 | 0 → 0 |
+| Air crab > 15° (`a_crab15`) | 478 → 0 | 103 → 0 | 0 → 0 |
+| Ground body moving backwards (`g_back`) | 56 → 47 | 37 → 12 | 42 → 23 |
+| Ground planform overlaps (`ovl_g`) | 0 → 3 | 8 → 24 | 0 → 0 |
+| Phase-label contradictions / stale park poses | 0 / 0 → 0 / 0 | 0 / 0 → 0 / 0 | 0 / 0 → 0 / 0 |
+
+The remaining `vanishMoving` cases are all jet arrivals to OAK. They now go out of sight at touchdown at 5-8 ft, where the
+hidden far roll begins. Before, 19 of 26 vanished above 100 ft.
+
+`g_in_bld` counts fixed-wing aircraft taxiing into hangar footprints (residual (d) of fix round 1). P3's own measure, which
+excludes hangar-door spots, gives 0 in this window.
+
+### 7.5 Other checks
+
+| Check | Result |
+|---|---|
+| `python3 tools/live/test_relay.py` | 22 tests OK. New: `test_forget_reaches_pollers_and_every_pending_event`, `test_record_dir_case_sensitive_and_git_ignored` |
+| `node tools/live/test_shim.mjs` | PASS |
+| `hwd_live_server.py --replay rec_pack --record Refs/Cache/Local/rec` | refused, exit 1, no `Refs/` directory created |
+| `feed.js` poll with a mocked `fetch` | requests `api/adsb`, then `api/adsb?since=5`; the forget list applied; seq 7 |
+| Spawned replay relay (scratch job), `api/adsb?since=<seq>` and `?since=abc` | both answer the snapshot (200), 0 console errors |
+| `MOBILE=1 RELAY=none node livetest.mjs jobs/phone_ui.mjs` | 53 controls in the default, sheet-open and card-open states: 0 smaller than 44 px, 0 off-screen, 0 covered; page scroll width = viewport; 0 console errors |
+| Synthetic late flag in the strict harness (`d1_late_flag_forget`) | masked, `maskWhy` 'd1', no registration: 0 failures in all five windows |
+| `node --check` on every edited JS file | OK |
+| In-app run `phase2_run_job.mjs`, desktop, 8 min of the weekend hour (20:00Z), spawned relay with `--ident type-only` | **Teleports:** none counted.<br>**D1:** 53 tracks, all type-only; 0 leak or key hits.<br>**Pavement:** 42 of 19,680 fixed-wing ground samples off pavement, 34 of them on a route; 0 in buildings; 0 planform overlaps.<br>**Console:** 0 errors.<br>**Images:** overview and West Hangars looked at. |
+
+### 7.6 Images (looked at)
+
+- `phase2_fix2_13_phone_view_row.jpg`: the phone top bar. The five view buttons wrap onto two rows, clear of the 44-px
+  icons; the credit line sits below them.
+- `phase2_fix2_14_card_no_signal_phone.jpg`: a silent aircraft's card. It reads "No signal · last position", with the
+  inf marker and "last signal 2 min ago".
+- `phase2_fix2_15_no_signal_taxiway_phone.jpg`: a silent single-engine aircraft drawn on the taxiway by a hold bar,
+  where its signal stopped. With the fix-round-1 code such an aircraft faded out there. A helicopter is in the
+  foreground.
+- All three are type-only (D1); their notices are in `docs/phase2/SOURCES.json`.
+- `phase2_run_3_card_stale_parking_phone.jpg` is kept as a record of the pre-fix state, and is captioned as such.
+
+### 7.7 Per-finding status
+
+| # | Finding | Status | Evidence |
+|---|---|---|---|
+| F1 | Teleports: re-placements after absences > 5 s uncounted; 6 / h gate; docs :67 / :223 | fixed | any-absence count in both harnesses; teleports 7 / 3 / 1 / 5 / 12 → 0 / 0 / 0 / 0 / 0; reviewer `reappJump` 7 / 3 / 1 → 0; gate 0; docs corrected |
+| F2 | Silent aircraft vanish off aprons; race with `seen_pos` latency; doc :392 | fixed | kept as `no_signal` [inf] for 30 min; latency allowance 30 s; continuation anchors; images 14 / 15; 6.5 row 2 corrected |
+| F3 | OAK arrivals fade at 125-459 ft | fixed | far transitions; remaining vanishes at 5-8 ft (touchdown), before 76-2,063 ft |
+| F4 | GroundPhysics seek / decay oscillation; `grass_route_frames` not gated; §6 attribution | fixed (root cause); residual open | stationary by target rest state; pavement snap; gated; route-on-grass 579 / 141 / 1 / 1 / 110 → 9 / 58 / 1 / 5 / 74 (the gate still fails); attribution corrected |
+| F5 | 'ag:lin' straight chord; misaligned finals; transitions not counted | fixed (root cause); residual open | no chord (`transition_linear` 0 in all windows); turn-limited aligned finals; misaligned 3 / 0 / 0 / 1 / 4 → 0 / 0 / 0 / 2 / 1 (gated, still fails) |
+| F6 | `--record` guard lower-cases paths | fixed | case-sensitive real-path rule + `git check-ignore`; test; CLI probe refused |
+| F7 | Forget only via SSE, only the last event, no `maskWhy` | fixed | `?since` forget for pollers, pending event list, `maskWhy` 'd1'; relay test + harness check |
+| F8 | Phone targets < 44 px; view row off-screen / covered | fixed | wrapped view row, 44-px controls; `jobs/phone_ui.mjs` 53 / 0 |
+| F9 | Stale docs / image caption | fixed | run_3 re-captioned; 2.1, 3 (e), 6.1, 6.2, 6.5 corrected |
+
+### 7.8 Residuals and limits (not verified)
+
+**Strict harness still fails.** `--strict` fails in all five windows:
+
+- route samples on grass: 1-74 per hour (≤ 7.4 s of drawn time);
+- 1 hop in pat (a single-engine piston at 68 s, 54 m, 0 ft: a ground / air flip at lift-off);
+- 3 misaligned transitions: two lift-offs in the weekday window (25° and 67°) and a touchdown in the weekend window
+  (18°).
+
+**Where the grass samples cluster**, as 50-m cells (x, z):
+
+| Window | Cells |
+|---|---|
+| pat | (-500, -500), (-200, -300) |
+| weekday | (-250, -300) to (-350, -350) |
+| weekend | (650, 550), (200, 300), (100, 250) |
+| heli | (-50, -200) |
+
+None of these residuals was traced to a root cause in this round.
+
+**Ground planform overlaps rose.** With one body stopped they rose in pat (8 → 24 frames, 2 pairs; one pair is a
+run-up aircraft and a hold-short aircraft 9.7 m apart at 28R) and heli (0 → 3). They are reported but not gated.
+
+**The new event difference is not traced:** weekday take-offs, 7 live against 6 offline.
+
+**Not run:**
+
+- Live mode (adsb.lol / adsb.fi) was not run in this round. The `?since` path was exercised against the replay relay and
+  a mocked `fetch`, not against a real late flag in live traffic.
+- No real phone was used. The phone check is Chromium at 390 × 844, DPR 1, with touch emulation.
+
+**Inferred, not sourced** [inf]:
+
+- the 90-s signal-loss split;
+- the 30-s latency allowance;
+- the 30-min silent keep;
+- the 25-m pavement snap;
+- the bank limits and the final / climb-out lengths;
+- the 2-g fix rejection.
+
+**In-app teleport counter.** The run's JSON has no `teleports` key, because the counter keys were created only on the
+first count; they are now initialised to 0. The counter was not shown to fire on a planted case.
+
+**In-app re-placement cuts.** The in-app engine logged 59 re-placement cuts in 8 min (68 air-error triggers). The offline
+harness logs 5-9 per hour, and round-1 in-app runs logged 98-118 in 12.5 min.
+
+- The relay replays the whole Bay Area recording (53 tracks) where the P3 pack holds fewer.
+- Neither harness counted a teleport, so these are probably tracks outside the drawn window [inf]. This was not
+  traced.
+
+**OAK.** OAK's runways are not modelled. Far arrivals and departures are drawn up to touchdown and from lift-off only.
+
+**Teleport definition.** A disappearance followed by a reappearance within 1.5 × speed × absence + 10 m is not counted.
+This is the same rule as the reviewer's `reappJump`, and the hidden take-off of 7.2 F5 passes under it.

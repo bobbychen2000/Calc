@@ -111,7 +111,18 @@ How the relay stays inside these limits:
     20 s, after 2 h about 56 s.
   - `Retry-After` is honoured in full, up to 24 h.
   - Each 429 raises an adaptive floor ×1.5; each success lowers it ×0.9.
-  - Polling runs only while a client is connected.
+  - Polling runs only while a client is connected (in `--record` mode adsb.lol keeps polling for the recording; adsb.fi
+    still polls only while a client is connected - fix round 1).
+  - The quota file is merged before every request and on every save (max of both logs, under a lock file with
+    `O_EXCL`, stale after 10 s), so two relay processes on one machine share one budget (fix round 1;
+    `test_two_processes_share_the_file`).
+  - **What this means for a viewer (fix round 1, also in the About panel and the status pill).** The 475-request day
+    lasts about 3 h of continuous watching. The first hour polls every 7-20 s, the second every 20-60 s, then the
+    period grows to minutes and, once the rolling 24 h is spent, to about one request an hour until the oldest requests
+    age out. Between slow polls aircraft are kept for the snapshot TTL and dead-reckoned; airborne tracks fade out after
+    20 s without a report. With adsb.fi on (live, personal use) the picture stays fresh every 2 s regardless; a feeder
+    key (`--adsblol-daily 7200`) keeps adsb.lol at the 6.5-7.5 s floor all day. The status pill shows the current poll
+    period from `/api/ping`.
   - The snapshot TTL is max(45 s, 1.5 × the expected period + 5 s), so aircraft do not vanish between slow polls.
   - With a feeder key (`--adsblol-daily 7200`) the period stays at the 6.5–7.5 s floor.
 - **adsb.fi.** Every 2.0 s, about 0.3 s after an even second (half the documented 1 request/s). Never recorded, never
@@ -138,7 +149,36 @@ How the relay stays inside these limits:
   - Removes `flight`, `r`, `ownOp`, `year`, `squawk`, `dbFlags`, `_mx` and `_dbalt`.
   - Keeps `t`, `desc`, `category`, `emergency` and the kinematics.
   - Sets `hex` to `x` + 8 hex characters of HMAC-SHA256(per-process random salt, hex). The salt is never written.
-  - Sets `_masked: 1`.
+  - Sets `_masked` to `'d1'` (flagged LADD / PIA) or `'type-only'` (the relay or pack masks everyone); the UI says
+    "Identity withheld · LADD / PIA" only for `'d1'` and "Identity not shown in this recording" for `'type-only'` (fix
+    round 1: every type-only track used to claim LADD / PIA enrolment).
+- **Late flag (fix round 1).** In `--ident full` an aircraft is published under its real key until some provider's record
+  carries the flag (the two providers' databases can disagree; adsb.fi v3 does carry `dbFlags`: one request on
+  2026-11-13, 2 of 78 records). When `D1.newly` gains a key, the Hub drops its `/api/ident` entry, removes every
+  `?history` payload that holds it, counts `d1_late_flag`, and sends `event: forget` (`{"forget": [keys], "seq"}`) on the
+  open SSE streams only - never in the full snapshot or the history, so a client that never saw the key does not learn
+  it. `feed.js StreamFeed onForget` -> `traffic.forget(keys)` drops the track and its identity at once.
+  `test_late_flag_purges_ident_history_and_tells_clients` covers it.
+- **Late flag, fix round 2.** The SSE-only path missed two cases. A client that polls `/api/adsb` because its stream
+  failed never heard the forget. And only the last forget event was kept, so a stream that missed two merges saw one.
+  - The Hub now keeps every forget event for 10 min (`forget_evs`: seq, wall time, and for each key the seq at which it
+    was first published).
+  - `/api/adsb?since=<seq>` adds `"forget": [keys]` to the snapshot, for every event after `since` whose key had been
+    published to the client by then (first seq ≤ since). A client that never saw the key still does not learn it.
+  - The SSE loop sends every pending event since the client's last seq.
+  - `feed.js` polls with `?since=` once it knows a seq, and `traffic.forget` marks the track `maskWhy: 'd1'`.
+  - Covered by `test_forget_reaches_pollers_and_every_pending_event`: two late flags, one poller, one stream, and a
+    flag before publication. Against the spawned replay relay, `api/adsb?since=<seq>` and a malformed `since` both
+    answer the snapshot (200), with 0 console errors.
+- **`--record` guard, fix round 2.** The fix-round-1 rule lower-cased the path. On a case-sensitive file system that
+  let `Refs/Cache/Local/rec` (not gitignored) through.
+  - `record_dir_check` now resolves the real path and compares it case-sensitively: inside hwd3d only
+    `refs/cache/local/…` or `out/…` (not `out/replay/…`).
+  - It then asks git: `git check-ignore -q --no-index` on a would-be recording file must say the path is ignored. Outside
+    any work tree the directory is allowed; without git only the path rule applies.
+  - Covered by `test_record_dir_case_sensitive_and_git_ignored`, which refuses `Refs/Cache/Local/rec`, `OUT/REPLAY/rec`,
+    `Out/rec`, `out/replay/rec`, `out/Replay/rec`, `tools/rec`, `refs/cache/adsb/rec` and `../hwd_rec_probe`. A CLI
+    probe with `--record Refs/Cache/Local/rec` exits 1 and creates nothing.
 - **`--ident type-only`** masks every aircraft, including `~` (non-ICAO) addresses.
 - **`/api/ident`** answers type only for masked keys, and 404 for keys not in the picture.
 - **Packs.** `build_replay.py` defaults to `type-only`, for anything that may be distributed (fork map §2.2, risk R11).

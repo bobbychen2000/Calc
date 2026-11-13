@@ -7,15 +7,31 @@ never into a committed file. It prints counts only.
 - ctrl: registrations / callsigns of UNflagged aircraft (positive control: the DOM scan must see some of them);
 - offline: hexes (unflagged only) with Phase 1 offline HWD events inside [t0, t1], and the event counts by type.
 Writes the JSON to OUT.json; prints counts only.
-usage: python3 -I docs/phase2/phase2_run_ref.py NAME FROM_ISO MINUTES out/phase2/ref_NAME.json
+usage: python3 -I tools/qa/phase2_run_ref.py NAME FROM_ISO MINUTES out/phase2/ref_NAME.json
+Needs the local-only working files refs/cache/local/registry/mictronics_lookup.json and
+refs/cache/local/adsb/hwd_events_local.json (gitignored; a fresh clone cannot run it). Moved from docs/phase2/ to tools/qa/
+in Phase 2 review fix round 1 (tools/ is never served by the relay) and given an output guard: OUT must lie under
+hwd3d/out/ (not out/replay/, which the relay serves) or under the system temp directory.
 """
 import sys, os, json, math, datetime as dt
-HWD = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+HWD = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))   # tools/qa -> hwd3d
 sys.path.insert(0, os.path.join(HWD, 'tools', 'live')); sys.path.insert(0, os.path.join(HWD, 'tools', 'common'))
 import recio  # noqa
 import hwd_frame as F  # noqa
 
 name, frm, minutes, out = sys.argv[1], sys.argv[2], float(sys.argv[3]), sys.argv[4]
+
+
+def _out_ok(path):
+    import tempfile
+    rp = os.path.realpath(path); outd = os.path.realpath(os.path.join(HWD, 'out'))
+    tmp = os.path.realpath(tempfile.gettempdir())
+    if rp.startswith(os.path.join(outd, 'replay') + os.sep): return False
+    return rp.startswith(outd + os.sep) or rp.startswith(tmp + os.sep)
+
+
+if not _out_ok(out):
+    sys.exit('refused: the output holds identity strings (D1); write it under hwd3d/out/ (not out/replay/) or the temp directory, not %s' % out)
 t0 = dt.datetime.fromisoformat(frm.replace('Z', '+00:00')).timestamp(); t1 = t0 + minutes * 60
 R = 8 * 1852.0
 hours = sorted({dt.datetime.fromtimestamp(t, dt.timezone.utc).strftime('%Y%m%d_%H') for t in (t0, t1 - 1)})

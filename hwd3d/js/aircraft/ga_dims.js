@@ -74,7 +74,7 @@ const CAT_STAND_IN = { A1: 'C172', A2: 'C56X', A3: 'B738', A4: 'B752', A5: 'B763
 const cache = new Map();
 const r3 = (v) => Math.round(v * 1000) / 1000;
 
-function acdRow(t) { const a = t && ACD[t]; if (!a) return null; return { L: a[0], span: a[1] ?? a[2], spanWl: a[2], H: a[3], mtow: a[4], eng: a[5], n: a[6], row: a[7], name: a[8] }; }
+function acdRow(t) { const a = t && ACD[t]; if (!a) return null; return { L: a[0], span: a[1] ?? a[2], spanWl: a[2], H: a[3], mtow: a[4], eng: a[5], n: a[6], row: a[7], name: a[8], vapp: a[9] ?? null }; }
 
 // -> { cls, sub, src, basis }   cls: single_hw | single_lw | twin | turboprop | jet | heli | glider | ultralight | unknown
 // sub: jet -> light (MTOW <= 5,700 kg) | biz (<= 50 t) | airliner; turboprop -> single | twin; twin -> piston
@@ -164,7 +164,7 @@ export function gaDims(icaoType, category = null) {
     const P = PROP[cls === 'jet' ? (sub === 'light' ? 'jet_light' : sub === 'airliner' ? 'airliner' : 'jet_biz') : cls === 'ultralight' ? 'single_hw' : cls] || PROP.single_lw;
     const tt = t || stand;
     d = { type: t, name: t ? (ACD[t] ? ACD[t][8] : t) : (cat ? `Unknown type (${cat} ${CATEGORY[cat] || ''})`.replace(/ \)/, ')') : 'Unknown type'),
-      cls, sub, engines: a.n || 1, engType: a.eng || null, L: a.L, span: a.span, H: a.H, rotor: null, mtow_kg: a.mtow,
+      cls, sub, engines: a.n || 1, engType: a.eng || null, L: a.L, span: a.span, H: a.H, rotor: null, mtow_kg: a.mtow, vapp_kt: a.vapp, vappSrc: a.vapp != null ? (stand ? 'inf' : 'obs') : null,
       gearKind: TAIL_WHEEL.has(tt) ? 'tail' : 'tricycle', retract: RETRACT.has(tt) || cls === 'jet' || (cls === 'turboprop'), tail: V_TAIL.has(tt) ? 'V' : T_TAIL.has(tt) ? 'T' : 'conv',
       src: stand ? 'inf' : 'obs', basis: stand ? prov.join('; ') : `FAA ACD row ${a.row} (${a.name}): L, span, H, MTOW [obs]; layout by class rule [inf]` };
     if (tt === 'PC12') { d.track = PC12_GEAR.track; prov.push(PC12_GEAR.basis); }

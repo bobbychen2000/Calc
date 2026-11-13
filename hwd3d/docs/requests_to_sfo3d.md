@@ -81,3 +81,13 @@ information: the hwd3d fork also queries lifecycle-prefixed keys (`nwr[~"^[a-z_]
    network, rewrote the meta's `fetched_utc` and dropped the original FAIL log lines. The new `fetched_utc` then
    propagated into the parsed file. hwd3d now keeps the existing meta's `fetched_utc` and log when no part was fetched.
    sfo3d's `fetch_osm.py`, which hwd3d forked, probably behaves the same; this was not checked in sfo3d.
+
+## R6 (2026-11-13, Phase 2 review fix round 1): ISC notice for the earcut port
+
+`sfo3d/js/live/earcut.js` is a function-for-function port of mapbox/earcut (linkedList, filterPoints, earcutLinked,
+isEar, cureLocalIntersections, splitEarcut, eliminateHoles, findHoleBridge, sectorContainsSector, ...) and carries only
+"Algorithm after mapbox/earcut (ISC)". The ISC licence asks that "the above copyright notice and this permission notice
+appear in all copies". hwd3d's fork (`hwd3d/js/world/earcut.js`) now carries the licence text as read on 2026-11-13 from
+https://raw.githubusercontent.com/mapbox/earcut/main/LICENSE ("Copyright (c) 2026, Mapbox" - the file's current year;
+the year of the version sfo3d ported was not checked) and `hwd3d/docs/ATTRIBUTION.md` lists it under software.
+Suggestion: add the same notice to the sfo3d copy (and to any other sfo3d port of a licensed library).

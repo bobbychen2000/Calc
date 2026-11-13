@@ -30,8 +30,11 @@
 //   beacon            NASR BCN_LENS_COLOR WG, BCN_LGT_SKED SS-SR; on the tower [inf, data buildings[].beacon]; white /
 //                     green alternating flashes, 24 flashes per minute [inf: AC 150/5345-12 range "24 to 30 flashes per
 //                     minute" as remembered, not re-read].
-// NOT placed (no position in any source read; not visible on NAIP 2024 at 0.6 m): runway edge lights (MIRL 10R/28L and
-// 10L/28R; a periodic-dot search along all four edges found no 200-ft pattern), REIL 10R / 28L (candidate objects near
+//   runway edge lights MIRL 10R/28L and 10L/28R (fix round 1): type obs (NASR / CS), positions INFERRED from the standard
+//                     layout (AC 150/5340-30 as remembered, not re-read; a periodic-dot search along all four edges on NAIP
+//                     2024 found no 200-ft pattern, so no position is observed) - drawn because an unlit runway at night is
+//                     a worse picture than lights at the standard spacing, and the inventory marks them inf.
+// NOT placed (no position in any source read; not visible on NAIP 2024 at 0.6 m): REIL 10R / 28L (candidate objects near
 // the 28L threshold, not certain), taxiway edge lights or reflectors, the segmented circle's L-shaped traffic-pattern
 // indicators (seen on NAIP 2024, shape not measured).
 import { Mesh } from '../gl.js';
@@ -148,8 +151,24 @@ export function buildMarkers(site, airport, { R = null } = {}) {
   // beacon on the tower roof [inf position]
   const tw = site.anchors.tower; let beacon = null;
   if (tw) { beacon = [tw.x, tw.top + 1.0, tw.z]; inventory.push({ element: 'rotating beacon (WG)', at: [tw.x, tw.z], src: 'inf position (on the tower, data buildings[].beacon); colours / schedule obs (NASR)' }); }
-  for (const what of ['runway edge lights (MIRL 10R/28L, 10L/28R)', 'REIL 10R / 28L', 'taxiway edge lights / reflectors', 'segmented-circle traffic-pattern indicators'])
+  for (const what of ['REIL 10R / 28L', 'taxiway edge lights / reflectors', 'segmented-circle traffic-pattern indicators'])
     inventory.push({ element: what, at: null, src: 'not placed: no position in any source read (not resolvable on NAIP 2024)' });
+  // runway edge lights (fix round 1: at night the runways were invisible). MIRL on both runways (NASR RWY_LGT_CODE MED, CS
+  // "MIRL") [obs type]; positions [inf]: the standard layout of FAA AC 150/5340-30 as remembered (not re-read) - both edges,
+  // 2 ft outside the runway edge, evenly spaced at <= 200 ft from end to end, white (the yellow caution zone of instrument
+  // runways and the threshold / end lights are not drawn). Schedule [obs, NASR APT_RMK LGT_SKED]: tower open - on at night
+  // (on SS-SR while the tower is open [inf]); tower closed - 10R/28L preset low intensity (pilot-controlled, CTAF), 10L/28R
+  // closed (off). Intensity 200 cd medium / 50 cd preset low [inf].
+  const edge = [];
+  for (const R0 of airport.runways || []) {
+    const S0 = (site.runways || []).find(q => q.id === R0.id); if (!S0 || !R0.edge_lights) continue;
+    const n = Math.ceil(S0.length / (200 * FT)), off = S0.halfWidth + 2 * FT;
+    for (let k = 0; k <= n; k++) { const al = S0.length * k / n;
+      for (const sd of [-1, 1]) { const x = S0.origin[0] + S0.dir[0] * al + S0.right[0] * off * sd, z = S0.origin[1] + S0.dir[1] * al + S0.right[1] * off * sd;
+        edge.push({ p: [x, site.groundY(x, z) + 0.35, z], rwy: R0.id, closedWhenTwrClosed: !!R0.closed_when_tower_closed }); } }
+    inventory.push({ element: `runway edge lights ${R0.id} (${R0.edge_lights.type})`, count: (n + 1) * 2, at: null, spacing_m: +(S0.length / n).toFixed(1),
+      src: `type obs (NASR / CS); positions inf (AC 150/5340-30 standard layout as remembered: <= 200 ft spacing, 2 ft outside the edge)` });
+  }
   // ---------------------------------------------------------------- dynamic parts
   const state = { fromDeg: 290, speed: 4, ext: 0.6 };
   function setWind(fromDeg, speedMs, ext) {
@@ -171,6 +190,14 @@ export function buildMarkers(site, airport, { R = null } = {}) {
       if (on > 0) out.push({ p: beacon, c: k % 2 ? [0.1, 1.0, 0.45] : [1, 0.97, 0.9], i: 40 * on, s: 0.8 });
     }
     if (night && socks.length && socks[0].what === 'lit') { const b = socks[0].base; out.push({ p: [b[0], b[1] + 0.6, b[2]], c: [1, 0.95, 0.85], i: 3, s: 0.5 }); }
+    if (night && edge.length && cam) {
+      const open = env.towerOpen !== false, sig = env.sigma ?? 3.3e-5;
+      for (const L of edge) {
+        if (!open && L.closedWhenTwrClosed) continue;
+        const cd = open ? 200 : 50; const d = Math.hypot(cam[0] - L.p[0], cam[1] - L.p[1], cam[2] - L.p[2]) || 1;
+        out.push({ p: L.p, c: [1.0, 0.93, 0.78], i: lampUnits(cd * Math.exp(-sig * d), 0.25), s: 0.25, phys: true });
+      }
+    }
     if (cam) {
       const open = env.towerOpen !== false;
       const w = env.nightW ?? (night ? 1 : 0); const cd = VGSI_CD.night + (VGSI_CD.day - VGSI_CD.night) * (1 - w);
@@ -182,9 +209,15 @@ export function buildMarkers(site, airport, { R = null } = {}) {
         const along = dx * L.back[0] + dz * L.back[2]; if (along <= 1) continue;               // behind the unit: no beam
         const el = Math.atan2(dy, along) / DEG, dh = Math.atan2(Math.abs(dx * L.back[2] - dz * L.back[0]), along) / DEG;
         if (dh > 15) continue;                                                                   // outside the beam [inf +-15 deg]
+        // vertical cut-off (fix round 1: seen from steeply above at midday a PAPI showed as white glare discs). PAPI: the
+        // outermost isocandela contour of AC 150/5345-28H Fig 3-1 spans +-4 deg about the beam axis (sfo3d
+        // tools/env/lighting_spec.json PAPI_LHA, as read there) - no beam beyond it; VASI: the same about the
+        // aiming angle, +6 deg upward [inf, the L-880 vertical spread not read]
+        const dv = el - L.aim; if (dv > (L.papi ? 4 : 6) || dv < -4) continue;
+        const vf = Math.max(0, 1 - Math.max(0, Math.abs(dv) - 2) / 3);                            // fade over the outer 2 deg [inf]
         const wf = papiWhite(L.aim, el, dh);
         const c = [AV_RED[0] + (AV_WHITE[0] - AV_RED[0]) * wf, AV_RED[1] + (AV_WHITE[1] - AV_RED[1]) * wf, AV_RED[2] + (AV_WHITE[2] - AV_RED[2]) * wf];
-        const I = cd * (0.15 + 0.85 * wf) * Math.exp(-sig * d) * Math.max(0, 1 - dh / 15);     // red filter ~15 % [inf]
+        const I = cd * (0.15 + 0.85 * wf) * Math.exp(-sig * d) * Math.max(0, 1 - dh / 15) * vf;     // red filter ~15 % [inf]
         const s = 0.35;
         // display gain by day: 8 ^ (1 - ASOS night weight) [inf, tuned by eye on out/phase2/lights_*.png; the aircraft lights
         // use DAY_GAIN 30 (js/env/aircraft_lights.js), which made a white PAPI unit a glare disc at 1.5 km]
@@ -193,7 +226,7 @@ export function buildMarkers(site, airport, { R = null } = {}) {
     }
     return out;
   }
-  return { items, inventory, setWind, sprites, windState: state, vgsi: lights };
+  return { items, inventory, setWind, sprites, windState: state, vgsi: lights, edgeLights: edge };
 }
 
 /** Tower open (0700-2100 local, NASR ATC_BASE) at epoch ms, local time from Intl (America/Los_Angeles, DST-correct). */

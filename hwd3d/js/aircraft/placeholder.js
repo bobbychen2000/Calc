@@ -137,7 +137,7 @@ export class GaAircraft {
   constructor(T, { id = null, colour = null, lodDist = 6000, shadowDist = 2500 } = {}) {
     this.T = T; this.id = id; this.colour = colour; this.lodDist = lodDist; this.shadowDist = shadowDist;
     this.pos = [0, 0, 0]; this.fwd = [0, 0, -1]; this.pitch = 0; this.roll = 0; this.gear = 1; this.rotor = 0; this.rotorAng = 0;
-    this.visible = true; this.selected = false; this.lightsOn = { nav: false, beacon: false, strobe: false, landing: false, taxi: false };
+    this.visible = true; this.alpha = 1; this.selected = false; this.lightsOn = { nav: false, beacon: false, strobe: false, landing: false, taxi: false };
     this.seed = Math.random() * 10; this.model = m4.ident(); this.prevModel = null; this.rotModel = m4.ident(); this.prevRot = null;
     this.ready = Promise.resolve(this); this.meshes = null;
   }
@@ -167,7 +167,7 @@ export class GaAircraft {
       const h = this.geo().rotor.hub; this.rotModel = m4.mul(this.model, m4.mul(m4.translate(h[0], h[1], h[2]), m4.rotY(this.rotorAng)));
       out.push({ mesh: M.rotor, prog: 'obj', model: this.rotModel, prevModel: this.prevRot || this.rotModel, bbox, castShadow: sh });
     }
-    for (const it of out) { if (!it.uniforms) delete it.uniforms; it.noCull = true; }   // (slab winding is not checked face by face)
+    for (const it of out) { if (!it.uniforms) delete it.uniforms; it.noCull = true; it.alpha = this.alpha; }   // (slab winding is not checked face by face); alpha: screen-door fade
     return out;
   }
   step(dt) { this.rotorAng = (this.rotorAng + this.rotor * dt) % (Math.PI * 2); }

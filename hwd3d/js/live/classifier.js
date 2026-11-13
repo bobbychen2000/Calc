@@ -45,6 +45,8 @@ export const RULES = {
   // refs/cache/adsb/hwd_runup_holds.json `rules`
   STILL_GS: 1.0, BREAK_M: 8.0, MIN_S: 30.0, MAX_S: 600.0, HOLD_R: 25.0,
   // new for the live display [inf]: see the header
+  END_GS: 15, GEOM_BAD_FT: 500,   // fix round 1 [inf]
+    // fix round 1: runway-end direction only from episode fixes at >= 15 kt [inf]
   PARK_S: 60, SCOPE_S: 90, WIN_S: 900, LEG_ALIGN: 30, LEG_MAX_NM: 4, LEG_ABOVE_TPA_FT: 700, CL_M: 300, VISIT_GAP_S: 1800,
 };
 const R = RULES;
@@ -86,6 +88,8 @@ export const PHASES = {
   heli_air: { label: 'Helicopter in flight', group: 'heli', airborne: true },
   overflight: { label: 'Overflight (not HWD traffic)', group: 'area', airborne: true },
   vehicle: { label: 'Ground vehicle', group: 'ground', airborne: false },
+  // fix round 2: a ground aircraft whose signal ended away from a parking place - drawn where it was last placed, inferred
+  no_signal: { label: 'No signal · last position', group: 'ground', airborne: false },
   unknown: { label: 'Unknown', group: 'area', airborne: false },
 };
 // offline event type (hwd_events.json counts) -> TrafficEvent kind (fork map 2.8)
@@ -123,6 +127,7 @@ export class PhaseClassifier {
     this.flowEv = [];             // [t, '28'|'10'] of recent HWD runway events
     this.baroDelta = [];          // [t, altBaro - altGeom] of airborne fixes (QNH + geoid; the baro fallback)
     this.counters = { evals: 0, events: 0 };
+    this.parkable = null;         // (x, z, heli) -> bool: set by traffic.js (an apron / helipad / hangar door, not a taxiway)
   }
   // ------------------------------------------------------------------------------------------------ per-fix derivation
   // f: {t, x, z, g, gs, trk, th, altB, altG, vs, cat} -> adds r, Rf, near, alNear, acNear, surfFt, h, hRaw, hSrc, gk, strip, corr
@@ -136,10 +141,15 @@ export class PhaseClassifier {
     // alt quantum (derive.alt_quantum): 100 ft when every airborne alt_baro within 3 km is a multiple of 100 (>= 10 seen)
     if (!f.g && f.altB != null && f.r < 3000) { K.qn++; if (f.altB % 100 !== 0) K.q25 = true; }
     K.q = K.qn >= 10 && !K.q25 ? 100 : 25;
-    if (f.altB != null && f.altG != null && !f.g && f.altB < 10000) { this.baroDelta.push([f.t, f.altB - f.altG]); if (this.baroDelta.length > 400) this.baroDelta.shift(); }
+    // a geometric altitude that disagrees with the barometric one by > GEOM_BAD_FT more than the regional (QNH + geoid) offset
+    // is not used (fix round 1: TIS-B trackfiles reported alt_geom jumping by +-3,150 ft between bursts while alt_baro was
+    // smooth; the drawn aircraft was cut back and forth by 190 m) [inf]
+    let geomOk = f.altG != null;
+    if (geomOk && f.altB != null && !f.g && this.baroDelta.length >= 5) { const md = median(this.baroDelta.slice(-80).map(q => q[1])); if (Math.abs(f.altB - f.altG - md) > R.GEOM_BAD_FT) { geomOk = false; f.geomBad = true; } }
+    if (geomOk && f.altB != null && !f.g && f.altB < 10000) { this.baroDelta.push([f.t, f.altB - f.altG]); if (this.baroDelta.length > 400) this.baroDelta.shift(); }
     let h = null, src = '';
     if (f.g) { h = 0; src = 'gnd'; }
-    else if (f.altG != null) { h = f.altG - (K.perAc ?? R.GEOM_OFF) - surf; src = 'geom'; }
+    else if (geomOk) { h = f.altG - (K.perAc ?? R.GEOM_OFF) - surf; src = 'geom'; }
     else if (f.altB != null) {
       const d = this.baroDelta.filter(q => Math.abs(q[0] - f.t) < 3 * 3600e3).map(q => q[1]);
       h = d.length >= 5 ? f.altB - median(d) - R.GEOM_OFF - surf : f.altB - R.BARO_GLOBAL - surf; src = 'baro';
@@ -253,7 +263,15 @@ export class PhaseClassifier {
   baseLabel(tr, F, i, heli, dataNow) {
     const f = F[i]; const tw = towerStatus(f.t); f.stillRun = null;
     if (heli) {
-      if (f.st === 'G') return this.label(f, 'heli_ground', { src: 'obs', rule: 'hwd_events.heli.G', tower: tw });
+      if (f.st === 'G') {
+        // still runs for helicopters too (fix round 1): a helicopter standing still gets a rest pose (its median position,
+        // placed by GroundPhysics, or hidden inside a hangar) instead of sliding with the GNSS noise
+        const RA = this._run.runA[i], RB = this._run.runB[i];
+        if (RA >= 0) { let t0 = F[RA].run0 != null && F[RA].run0 < F[RA].t ? F[RA].run0 : F[RA].t; for (let q = RA; q <= RB; q++) if (F[q].run0 == null || F[q].run0 > t0) F[q].run0 = t0;
+          f.stillRun = [t0, F[RB].t]; const dur = (F[RB].t - t0) / 1000;
+          return this.label(f, 'heli_ground', { src: 'obs', rule: 'hwd_events.heli.G (still)', heliPark: RA === 0 || dur >= R.PARK_S, tower: tw }); }
+        return this.label(f, 'heli_ground', { src: 'obs', rule: 'hwd_events.heli.G', tower: tw });
+      }
       if (f.st === 'H') {
         const p = F[i - 1], q = F[i + 1]; let mv = f.gs != null ? f.gs >= 3 : false;
         if (p && f.t - p.t <= 15000 && Math.hypot(f.x - p.x, f.z - p.z) >= 4) mv = true;
@@ -304,8 +322,11 @@ export class PhaseClassifier {
     const ap = this.site ? this.site.apronAt(f.x, f.z) : null;
     if (hold && !first) return this.label(f, 'hold_short', { src: 'obs', rule: 'runup_holds.HOLD_R (place obs; clearance inf)', rwy: hold.runway, hold: hold.id, tower: tw });
     if (ap && ap.name && /run-?up/i.test(ap.name) && !first) return this.label(f, 'runup', { src: 'inf', rule: 'still in a run-up apron (place obs, purpose inf)', apron: ap.name, tower: tw });
-    if (first || dur >= R.PARK_S) return this.label(f, 'parked', { src: 'obs', rule: first ? 'first heard standing still' : `still >= ${R.PARK_S} s [inf]`, tower: tw });
-    return this.label(f, 'taxi', { src: 'obs', rule: 'stopped while taxiing', stopped: true, tower: tw });
+    // parked only where an aircraft can be left (an apron / helipad / a hangar door, this.parkable); standing on a taxiway or a
+    // runway is a stop while taxiing however long it lasts (fix round 1: 'first heard standing' on a taxiway made a park record)
+    const place = this.parkable ? this.parkable(f.x, f.z, false) : true;
+    if ((first || dur >= R.PARK_S) && place) return this.label(f, 'parked', { src: 'obs', rule: first ? 'first heard standing still' : `still >= ${R.PARK_S} s [inf]`, tower: tw });
+    return this.label(f, 'taxi', { src: 'obs', rule: place ? 'stopped while taxiing' : 'stopped on a taxiway', stopped: true, tower: tw });
   }
   // pattern leg of an airborne fix [inf thresholds]: the pattern of the runway pair on whose side the aircraft is
   leg(f) {
@@ -400,9 +421,16 @@ export class PhaseClassifier {
       else if (pv === 'none' && nx === 'ground') { if (g0 != null && g0 >= R.LIFT_GS) { typ = 'full_stop_landing'; src = 'inf'; evd.push('approach unobserved'); } else typ = 'runway_ground_move'; }
       else if (pv === 'ground' && nx === 'ground') typ = 'runway_ground_move';
       else typ = 'unresolved';
-      // runway end from the direction of motion (circular mean of the moving fixes, gs-weighted)
-      let end = null; { let sx = 0, sz = 0; for (const i of e) { const f = F[i]; if (f.mtrk == null || (f.gs != null && f.gs < 5)) continue; const w = Math.max(f.gs ?? 10, 1); sx += Math.sin(f.mtrk * Math.PI / 180) * w; sz += Math.cos(f.mtrk * Math.PI / 180) * w; }
-        if (sx || sz) end = endOf(r, brg(sx, -sz)); else if (e.length >= 2) { const a = F[e[0]], b = F[e[e.length - 1]]; if (Math.hypot(b.x - a.x, b.z - a.z) > 20) end = endOf(r, brg(b.x - a.x, b.z - a.z)); }
+      // runway end (fix round 1): the direction of the airborne neighbour that decides the episode - the climb-out fix of a
+      // take-off, the approach fix of a landing - when it is aligned with the runway; else the gs-weighted circular mean of
+      // the episode fixes at >= END_GS kt (a slow line-up turn at the far end said nothing about the direction: a 28R
+      // departure was counted as a 10L take-off); else the displacement of the episode
+      let end = null; {
+        const dec = typ === 'takeoff' ? [inx, ip] : typ === 'full_stop_landing' || typ === 'landing_unresolved' ? [ip, inx] : [ip, inx];
+        for (const k of dec) { if (k == null || F[k].mtrk == null || F[k].st === 'G') continue; if (aligned(F[k].mtrk, r)) { end = endOf(r, F[k].mtrk); break; } }
+        if (!end) { let sx = 0, sz = 0; for (const i of e) { const f = F[i]; if (f.mtrk == null || (f.gs != null && f.gs < R.END_GS)) continue; const w = Math.max(f.gs ?? 10, 1); sx += Math.sin(f.mtrk * Math.PI / 180) * w; sz += Math.cos(f.mtrk * Math.PI / 180) * w; }
+          if (sx || sz) end = endOf(r, brg(sx, -sz)); }
+        if (!end && e.length >= 2) { const a = F[e[0]], b = F[e[e.length - 1]]; if (Math.hypot(b.x - a.x, b.z - a.z) > 20) end = endOf(r, brg(b.x - a.x, b.z - a.z)); }
         if (!end) for (const k of [ip, inx]) if (k != null && F[k].mtrk != null) { end = endOf(r, F[k].mtrk); break; } }
       // labels: provisional while undecided
       const prov = !decided;
@@ -557,7 +585,8 @@ export class PhaseClassifier {
       const f = F[i]; if (!f.stillRun) continue;
       const kind = f.ph === 'runup' ? 'runup' : f.ph === 'hold_short' ? 'hold_short' : f.ph === 'line_up' ? 'line_up' : null; if (!kind) continue;
       const dur = (f.stillRun[1] - f.stillRun[0]) / 1000; if (dur < R.MIN_S) continue;
-      this.emit(K, `st:${kind}:${f.stillRun[0]}`, ev, { t: f.stillRun[0], kind, type: kind, rwy: f.pi && f.pi.rwy || null, src: kind === 'runup' ? 'inf' : 'obs', rule: `runup_holds.${kind} (>= ${R.MIN_S} s still)`,
+      // one stop event per still run (fix round 1: a run whose fixes were labelled both hold_short and runup gave both)
+      this.emit(K, `st:${f.stillRun[0]}`, ev, { t: f.stillRun[0], kind, type: kind, rwy: f.pi && f.pi.rwy || null, src: kind === 'runup' ? 'inf' : 'obs', rule: `runup_holds.${kind} (>= ${R.MIN_S} s still)`,
         dur_s: dur, x: f.x, z: f.z, apron: f.pi && f.pi.apron || null });
     }
     // line-up stops on the runway (R fixes still >= MIN_S)
@@ -583,6 +612,10 @@ export class PhaseClassifier {
     for (let i = w0; i < F.length; i++) {
       const f = F[i];
       if (!K.hwd && (f.st === 'G' || (f.st === 'H' && f.h != null && f.h <= 50)) && f.r <= 1500 && (!this.site || this.site.paved(f.x, f.z) || f.r <= 1200)) K.hwd = f.t;
+      // an L corridor fix (aligned with an HWD runway within CORR_M of its axis, h <= H_LOW) at or below H_PASS within R_FIELD:
+      // an aircraft that low on an HWD approach / climb-out corridor uses HWD (fix round 1: documented, not implemented; a
+      // departure first heard just after lift-off was tagged overflight)
+      if (!K.hwd && f.st === 'L' && f.h != null && f.h <= R.H_PASS && f.r <= R.R_FIELD) K.hwd = f.t;
       if (['crosswind', 'downwind', 'base'].includes(f.ph)) { const lg = K.legs; if (!lg.length || lg[lg.length - 1][1] !== f.ph) lg.push([f.t, f.ph]); while (lg.length && f.t - lg[0][0] > 600e3) lg.shift(); if (new Set(lg.map(q => q[1])).size >= 2) K.hwd = K.hwd || f.t; }
     }
     if (K.seenT0 == null) K.seenT0 = L.t;

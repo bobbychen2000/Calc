@@ -79,7 +79,9 @@ renderer, as the workflow brief and PLAN §4 require. `js/three/**` (5,363 lines
 - SSE fan-out at `/api/stream`: full and delta events.
 - `Metar`: conditional upstream fetches; cached METARs in replay.
 - `--replay` re-times recorder files to wall time.
-- `--record` writes `record.py`-format files.
+- `--record` writes `record.py`-format files. (amended, fix round 2) The directory is accepted only when, inside hwd3d/, it
+  is under `refs/cache/local/` or `out/` (exact case, not `out/replay/`) and, anywhere in a git work tree, `git
+  check-ignore` says it is ignored (`record_dir_check`).
 - Static serving denies `refs`, `tools`, `node_modules`, `out`, `jobs` and dotfiles.
 - SFO-only parts: `FaaRegistry` (transport types), `Routes` (adsb.lol routeset / VRS mirror) and `Gates` (flysfo.com).
 
@@ -398,7 +400,15 @@ python3 hwd_live_server.py [--port 8000] [--host 127.0.0.1] [--radius NM] [--no-
   - keeps `t`, `desc`, `category`, `emergency` and the kinematic and quality fields;
   - replaces `hex` with `x` + the first 8 hex characters of HMAC-SHA256(salt, hex). The salt is random per relay
     process or pack build and is never written anywhere;
-  - sets `_masked: 1`.
+  - sets `_masked` to `'d1'` (flagged LADD / PIA) or `'type-only'` (everyone masked by the relay / pack mode); the
+    client reads any truthy value as masked (amended in Phase 2 review fix round 1: it was `1`).
+- **Late flag (amended, fix round 1):** a key flagged only after it was published unmasked is purged from `/api/ident`
+  and the `?history` buffer, and the open SSE streams get `event: forget` with data `{"forget": [keys], "seq"}` (never
+  in the full snapshot or history). `StreamFeed({..., onForget})` -> `traffic.forget(keys)`.
+  (amended, fix round 2) Every forget event is kept for `FORGET_KEEP_S` (600 s): a stream gets ALL events after its own
+  `seq` (not only the newest), and a polling client that sends `GET /api/adsb?since=<seq of its last answer>` gets
+  `"forget": [keys]` in the answer for the keys it could have seen (first published at or before that `seq`). `feed.js`
+  polls with `?since=` and calls `onForget` before the new list. `traffic.forget` sets `maskWhy: 'd1'`.
 - **Consequences:**
   - Tracks stay continuous within a relay session.
   - A masked parked aircraft is a new track after a relay restart [inf, accepted].
@@ -414,7 +424,7 @@ python3 hwd_live_server.py [--port 8000] [--host 127.0.0.1] [--radius NM] [--no-
 |---|---|
 | `GET /` | 302 → `live.html` (query kept) |
 | `GET /api/ping` | `{"hwdlive": 1, "v": "0.1", "mode": "live"\|"replay", "stream": true, "delta": true, "dataNow": ms\|null, "center": {"lat": 37.6589317, "lon": -122.1217389, "radius_nm": N}, "poll": {"adsblol_s": s, "adsbfi": bool}, "features": {"metar": "KHWD", "taf": null, "ident": "mictronics 479e4d0"\|null, "d1": "dbFlags & 12", "replay": null \| {"src", "from": ms, "until": ms, "speed", "loop", "lookahead_s": 60}}, "providers": ["adsb.lol", …], "attribution": {"adsb": "…", "metar": "…", "ident": "…"}}`. P4 detects the relay by `j.hwdlive === 1`; an sfo3d relay (`sfolive`) is not accepted. |
-| `GET /api/adsb` | readsb jv2: `{"now": ms (relay wall clock), "dataNow": ms (data clock: recording time in replay), "seq": n, "total": n, "_source": "adsb.lol+adsb.fi", "msg": "No error", "ac": [record…]}` |
+| `GET /api/adsb[?since=seq]` | readsb jv2: `{"now": ms (relay wall clock), "dataNow": ms (data clock: recording time in replay), "seq": n, "total": n, "_source": "adsb.lol+adsb.fi", "msg": "No error", "ac": [record…]}`; with `since` (fix round 2) also `"forget": [keys]` when a D1 late flag hit keys that client was shown |
 | `GET /api/stream[?delta=1]` | SSE as sfo3d. `retry: 2000`, then `event: adsb` (full payload as `/api/adsb`). With delta: `event: delta` `{"now", "dataNow", "seq", "ac": [changed records], "gone": [keys]}`; a full event on every seq gap and at least every 30 s; `: keepalive` every 15 s. |
 | `GET /api/metar?ids=KHWD[&format=json]` | Raw lines by default, newest first, for the last 3 h; `format=json` gives the aviationweather.gov objects (`icaoId`, `obsTime` epoch s, `reportTime`, `rawOb`, …). Header `X-Data-Now`. Replay: only reports observed at or before the replay time; HTTP 502 `{"error"}` when none is within 90 min (never today's weather in a replay). Only `KHWD` is accepted. |
 | `GET /api/status` | provider health, latency and 429 counts, merge counters, ident loader state, masked count, replay position. No identities. |
@@ -583,6 +593,10 @@ Site = {
   buildingAt(x, z) -> { id, kind, height_m, height_src } | null,
   hangars: [{ id, letter, kind, ring, height_m, height_src }],
   anchors: { tower: { x, z, y, eyeY, src }, aprons: { [name]: [x, z] }, windsock: [x, z] },
+  // (amended, fix round 1) tower.x/z = centre of the tower's tall part (site.js TOWER_TALL, NAIP by eye, inf), not the
+  // OSM ring centroid; surface()/paved()/apronAt() also cover HELI_APRON_NAIP (the NAIP-segmented helicopter pad complex,
+  // id 'naip:heli_apron', 4 pads 'naip:heli_pad/1..4' as 'helipad'). airport.js naipTexture(level, {blobs}) in-paints
+  // the catalogued NAIP 2024 aircraft (naipAircraft(airport)); lights.js buildMarkers also returns edgeLights (MIRL, inf).
   stats: { … }
 }
 ```
@@ -668,6 +682,7 @@ used). `Scene` registers `sprite` and `smoke`.
 | `sortKey` | `(camPos) => number` |
 | `polyOffset` | `[factor, units]` |
 | `nearOnly` / `farOnly` | restrict the item to one range |
+| `alpha` | (amended, fix round 1) 0..1 for the `obj` program: screen-door (4x4 Bayer) dithered fade, `uAlpha`; `1` or absent = opaque. `AircraftViews` sets it from `tr.disp.alpha`, so a re-placement cross-fades |
 
 Vertex `extra` is `(roughness, metal, matID, emissive)` (`geom.js`).
 
@@ -745,7 +760,19 @@ export class Traffic {
   counters: { … }
   remove(tr)
   clearParked()
+  forget(keys /* string[] */)   // (amended, fix round 1) drop these tracks and their identity at once (relay 'forget' event)
 }
+// js/live/motion.js (new, fix round 1; Node-pure) - the motion primitives traffic.js plans with
+export function polyOf(pts) -> { pts, s /* cumulative */, len }
+export function polyAt(poly, s) -> { x, z, ux, uz }
+export function filletPath(pts, r, ok /* (x, z, tx, tz) -> bool */) -> pts      // corners rounded where ok() allows
+export function profilePath(R, D, v0, v1, opt) -> P   // drivable speed profile over a path in D s: {tmin, feasible, dwell, ...}
+export function profAt(P, t) -> { s, v }
+export function geoHermite(p0, d0, s0, p1, d1, s1, D) -> { at(t) -> { x, z, vx, vz, s, v }, len }   // air-hole curve
+// (fix round 2) turn-limited air paths where the Hermite shape turns tighter than ~30 deg of bank at the flown speed:
+export function hermiteMaxCurv(G, D) -> 1/m
+export function dubinsCSC(p0, d0, p1, d1, r) -> { pts, len } | null
+export function turnFlight(p0, d0, s0, p1, d1, s1, D, r, { final, initial }) -> { at(t), len, k /* flown / reported speed */ }
 export function phaseLabel(tr, now) -> string
 export function category(tr) -> 'hwd_air' | 'hwd_ground' | 'heli' | 'overflight' | 'vehicle' | 'unknown'
 ```
@@ -754,7 +781,10 @@ export function category(tr) -> 'hwd_air' | 'hwd_ground' | 'heli' | 'overflight'
 
 ```
 tr.key                         internal handle (§2.0); never displayed
-tr.ident = { masked, label, reg, callsign, operator, icaoType, typeName, category, src }
+tr.ident = { masked, maskWhy /* 'd1' | 'type-only' | 'unknown' (fix round 1) */, label, reg, regSrc, callsign, operator,
+             icaoType, typeName, category, src }
+           // regSrc 'adsb_db' = the aggregator's database (r / t / desc are not broadcast); a registration derived from
+           // the ICAO address (nNumberFromHex) is shown only with a known type and marked [inf] (fix round 1)
            // label: masked → type designator (e.g. "C172"), or "Aircraft" when the type is unknown;
            //        else callsign, else registration, else type
            // reg / callsign / operator: null when masked
@@ -767,6 +797,10 @@ tr.scope                       'hwd' | 'overflight' | 'pending' (D6)
 tr.inView                      inside the D6 display window (≈ 5 nm, ≤ 3,000 ft AGL, with hysteresis)
 tr.park = { spotId, kind, zone, src, inside /* hangared */, pose: { x, z, hdg } } | null
 tr.stale, tr.removed, tr.noData, tr.lastFixT, tr.lastRecv, tr.vehicle
+           // (amended, fix round 2) tr.stale: a ground aircraft whose signal ended is KEPT where it was last placed - parked
+           // (tr.park, phase 'parked' / 'hangared') on an apron / helipad / hangar-door taxilane, else phase 'no_signal'
+           // (src inf) on a taxiway, run-up pad or runway - and fades out only after LOST_KEEP_MS (30 min) / PARK_KEEP_MS
+           // (8 h) without a report. Heard again, it moves on from that pose (a continuation anchor), never re-placed
 ```
 
 **Delays**
@@ -781,7 +815,7 @@ tr.stale, tr.removed, tr.noData, tr.lastFixT, tr.lastRecv, tr.vehicle
   aircraft, and by 3 m for others [inf; data report §2].
 
 **`normalizeAircraft`** (`feed.js`) adds:
-- `masked` (from `_masked`);
+- `masked` (from `_masked`, any truthy value) and `maskWhy` (`'d1'` / `'type-only'`, fix round 1);
 - `mx: {r, t, d, op} | null`;
 - `nacp` (from `nac_p`);
 - `nic`;
@@ -1024,6 +1058,7 @@ text: "Many GA ADS-B units have no weight-on-wheels input and report 'airborne' 
 | `heli_air` | helicopter airborne near HWD, arriving or departing | A state after `lift_off` / before `touch_down` | `E.rules.HELI_*` | obs |
 | `overflight` | not HWD traffic (D6): OAK/SFO arrivals and departures, transits, helicopter low transits without ground contact | in the scope, but no R/G fix on HWD pavement, no L corridor and no pattern-leg sequence; airliner categories (A3+) on OAK flows | PLAN §3: OAK arrivals within 3 nm below 3,000 ft; `E.counts.low_transit` 9 (helicopters) | inf (until evidence) |
 | `vehicle` | ground vehicle | emitter category C1–C7, type SERV/GRND, or a sticky `_veh` | sfo3d hygiene | obs |
+| `no_signal` | No signal · last position | (amended, fix round 2) a ground aircraft whose signal ended away from a parking place, drawn where it was last placed until heard again or 30 min pass | traffic.js `groundLost` | inf |
 | `unknown` | not enough evidence | new track, no altitude, TIS-B with NACp 0 (8 % of on-field fixes, PLAN §3), or scope pending | — | — |
 
 ### 3.2 Notes for P3

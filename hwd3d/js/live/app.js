@@ -46,18 +46,13 @@ const DEG = Math.PI / 180, KT = 1852 / 3600;
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 // quality tiers: P2's world tiers 'high' | 'low' (pavement map 0.5 / 1 m, NAIP 1.2 / 2.4 m); msaa / shadow map as P2's dev
 // page; canvas caps and dynamic resolution as sfo3d's high / low tiers
+// One quality level (owner decision OD1, 2026-11-13, CLAUDE.md / docs/PLAN.md 6b): the full-feature, highest-resolution
+// tier everywhere - no phone 'lite' tier and no ?quality=low (fix round 1 removed the low tier that was still selectable)
 const QUALITY = {
   high: { name: 'high', world: 'high', msaa: 4, shadow: 4096, scaleMax: 1.0, dprMax: 2, maxPx: 3.2e6, aniso: 8 },
-  low: { name: 'low', world: 'low', msaa: 2, shadow: 2048, scaleMax: 0.85, dprMax: 2, maxPx: 1.1e6, aniso: 4 },
 };
 const store = { get(k, d) { try { const v = localStorage.getItem('hwdlive.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('hwdlive.' + k, JSON.stringify(v)); } catch (e) { } } };
-function pickQuality(pref) {
-  const ua = navigator.userAgent || '';
-  const mobile = /iPhone|iPad|iPod|Android/i.test(ua) || (matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 900);
-  const url = new URLSearchParams(location.search).get('quality');   // ?quality=high|low overrides the setting
-  const q = url && QUALITY[url] ? url : pref && QUALITY[pref] ? pref : mobile ? 'low' : 'high';
-  return QUALITY[q];
-}
+function pickQuality() { return QUALITY.high; }
 const nextFrame = () => new Promise(r => setTimeout(r, 0));
 const Q_ = new URLSearchParams(location.search);
 const FIXED_RES = Q_.has('fixedres');
@@ -67,10 +62,10 @@ const SRC_TXT = (s) => !s ? null : /^adsb/.test(s) ? 'ADS-B 1090' : /^adsr/.test
 export async function startApp(cfg) {
   const root = document.getElementById('app');
   const canvas = document.createElement('canvas'); canvas.id = 'gl'; root.prepend(canvas);
-  const qPref = store.get('quality', 'auto'); const Q = pickQuality(qPref);
+  const Q = pickQuality();
   const mode = cfg.mode; const snap = mode === 'snapshot' ? cfg.snapshot : null;
   let lightMode = store.get('light', 'real'), showOthers = store.get('others', true);
-  let selected = null, followMode = null;
+  let selected = null, followMode = null; let relayPoll = cfg.relayInfo && cfg.relayInfo.poll || null;
   // opaque per-page ids for the DOM (fork map 2.0: a track key never reaches the UI)
   const idByKey = new Map(), keyById = new Map(); let nextId = 1;
   const idOf = (k) => { if (k == null) return null; let i = idByKey.get(k); if (i == null) { i = nextId++; idByKey.set(k, i); keyById.set(i, k); } return i; };
@@ -79,7 +74,7 @@ export async function startApp(cfg) {
     onSetting: (k, v) => setting(k, v), showOthers: () => showOthers, idOf,
     onStatsOpen: () => statsSheet(), onAtcOpen: () => ui.setAtc(sceneTime(), mode),
   });
-  ui.root.querySelector('[data-set="light"]').value = lightMode; ui.root.querySelector('[data-set="quality"]').value = QUALITY[qPref] ? qPref : 'auto'; ui.root.querySelector('[data-set="others"]').checked = showOthers;
+  ui.root.querySelector('[data-set="light"]').value = lightMode; ui.root.querySelector('[data-set="others"]').checked = showOthers;
   ui.setAbout(cfg.about || ''); ui.setAttrib(cfg.attrib || '');
   try {
     ui.progress(0.05, 'Starting graphics…'); await nextFrame();
@@ -89,7 +84,7 @@ export async function startApp(cfg) {
     window.ANISO = Math.min(ext ? gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 1, Q.aniso);
   } catch (e) { ui.fail('Sorry — this browser can\'t run the 3D view (WebGL 2 required).<br><small>' + String(e.message || e) + '</small>'); throw e; }
   let running = true;
-  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); ui.fail('The graphics context was lost (the device ran low on GPU memory). <a href="#" onclick="location.reload()">Reload</a>, or pick a lower quality in Settings.'); running = false; });
+  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); ui.fail('The graphics context was lost (the device ran low on GPU memory). <a href="#" onclick="location.reload()">Reload</a>, or close other tabs and apps.'); running = false; });
   // ---------------------------------------------------------------- sizes
   let scale = Q.scaleMax; const size = () => {
     const dpr = Math.min(window.devicePixelRatio || 1, Q.dprMax);
@@ -138,7 +133,9 @@ export async function startApp(cfg) {
   const A28 = rwyAxis('28L'), T28 = thrWorld('28L');
   const fin = 600, finY = gy(T28[0], T28[2]) + fin * Math.tan(4.0 * DEG) + 35 * FT;   // NASR VASI 28L 4.0 deg, TCH 35 ft
   const VIEWS = {
-    overview: { target: P(40, 30), yaw: 22, pitch: 30, dist: 2700, fov: 45, pyaw: 300 },
+    // pdist: the distance on portrait screens before portraitK (fix round 1: 2,700 m x 2.39 put the phone camera 6.45 km out,
+    // an 11-m aircraft was 1.5 px); 1,250 m x 2.39 = 3 km frames the two runways across a 390-px screen
+    overview: { target: P(40, 30), yaw: 22, pitch: 30, dist: 2700, pdist: 1250, fov: 45, pyaw: 300 },
     tower: { eye: tw ? [tw.x, tw.eyeY, tw.z] : [38.5, 23.6, -409.6], yaw: 165, pitch: -7, fov: 62 },
     green: { target: P(-50, -335), yaw: 30, pitch: 38, dist: 230, fov: 50 },
     west: { target: P(-235, -615), yaw: 335, pitch: 32, dist: 430, fov: 50 },
@@ -152,7 +149,7 @@ export async function startApp(cfg) {
     else {
       rig.leaveTower();
       const portrait = canvas.clientWidth < canvas.clientHeight;
-      const to = { target: v.target.slice(), yaw: ((portrait && v.pyaw != null ? v.pyaw : v.yaw) + 180) * DEG, pitch: v.pitch * DEG, dist: v.dist, fov: v.fov * DEG };
+      const to = { target: v.target.slice(), yaw: ((portrait && v.pyaw != null ? v.pyaw : v.yaw) + 180) * DEG, pitch: v.pitch * DEG, dist: portrait && v.pdist ? v.pdist : v.dist, fov: v.fov * DEG };
       if (instant) rig.set(to); else rig.flyTo(to);
     }
     markView(name); currentView = name;
@@ -189,7 +186,6 @@ export async function startApp(cfg) {
   }
   function setting(k, v) {
     if (k === 'light') { lightMode = v; store.set('light', v); envCore.setLightMode(v); applyEnv(Date.now(), true); }
-    else if (k === 'quality') { store.set('quality', v); location.reload(); }
     else if (k === 'others') { showOthers = v; store.set('others', v); ui.renderList(true, [...traffic.tracks.values()]); }
     else if (k === 'clearParked') traffic.clearParked();
   }
@@ -253,8 +249,9 @@ export async function startApp(cfg) {
     };
     let fails = 0;
     const onStatus = (s) => { if (s.ok) { fails = 0; feedState = { state: replay ? 'replay' : 'live', text: replay ? 'Replay' : 'Live', src: s.source && s.source.name }; } else { fails++; feedState = { state: fails > 3 ? 'err' : 'wait', text: fails > 3 ? 'Feed unavailable' : 'Reconnecting…', err: s.error }; } };
-    const feed = new StreamFeed({ onData, onStatus, history: hist }); feed.start();
+    const feed = new StreamFeed({ onData, onStatus, onForget: (keys) => traffic.forget(keys), history: hist }); feed.start();
     const wx = async () => { const L = await fetchMetar('KHWD'); if (L) { envCore.setReports(L); applyEnv(Date.now(), false); } };
+    if (!replay) setInterval(async () => { try { const r = await fetch('api/ping', { cache: 'no-store' }); if (r.ok) { const j = await r.json(); relayPoll = j && j.poll; } } catch (e) { } }, 60000);
     wx(); setInterval(wx, 60000);
     window.addEventListener('pagehide', () => feed.stop());
   } else feedState = { state: 'err', text: 'No data', err: cfg.note || 'no relay' };
@@ -296,7 +293,10 @@ export async function startApp(cfg) {
   }
   function status() {
     const s = feedState, lag = traffic.delay / 1000;
-    const txt = s.state === 'live' ? `Live · ${lag.toFixed(0)} s` : s.state === 'replay' ? `Replay · ${lag.toFixed(0)} s behind` : s.state === 'snap' ? 'Recorded instant' : s.text;
+    // the relay's current adsb.lol poll period (fix round 1: the budget thins the polls out over a day of watching - the pill
+    // says so once it is slower than 20 s, from /api/ping, refreshed every minute)
+    const pp = relayPoll && relayPoll.adsblol_s, slow = pp != null && pp > 20 ? ` · polls ${pp >= 120 ? Math.round(pp / 60) + ' min' : Math.round(pp) + ' s'}` : '';
+    const txt = s.state === 'live' ? `Live · ${lag.toFixed(0)} s${slow}` : s.state === 'replay' ? `Replay · ${lag.toFixed(0)} s behind` : s.state === 'snap' ? 'Recorded instant' : s.text;
     const provs = s.src ? String(s.src).split('+').join(' + ') : '';
     ui.setStatus({ state: s.state, text: txt, sub: s.state === 'snap' ? '' : provs,
       title: s.err ? 'Last error: ' + s.err : s.state === 'live' ? `scene ${lag.toFixed(0)} s behind real time so motion is interpolated between real reports · positions from ${provs || 'the relay'}`
@@ -335,7 +335,8 @@ export async function startApp(cfg) {
       const I = tr.ident;
       let sub = null;
       if (sel || dist < 1800 || (!D.ground && dist < 6000)) {
-        const alt = !D.ground && tr.last && tr.last.altB != null ? Math.round(tr.last.altB / 100) * 100 : null;
+        // (fix round 1: Math.round(-30 / 100) * 100 is -0 -> '-0 ft'; + 0 turns negative zero into 0)
+        const alt = !D.ground && tr.last && tr.last.altB != null ? Math.round(tr.last.altB / 100) * 100 + 0 : null;
         sub = [I.icaoType && I.icaoType !== I.label ? I.icaoType : null, alt != null ? alt.toLocaleString('en-US') + ' ft' : phaseLabel(tr).split(' · ')[0].replace(/ \(provisional\)$/, '')].filter(Boolean).join(' · ');
       }
       items.push({ id: idOf(tr.key), x: pt[0], y: pt[1], depth: dist, cat, text: I.label, sub, sel: sel ? 1 : 0, stale: tr.stale });

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "relay": "python3 hwd_live_server.py",
-    "serve": "python3 -m http.server 8000",
+    "serve": "python3 -m http.server 8000 --bind 127.0.0.1",
     "views": "node livetest.mjs jobs/views.mjs",
     "views:phone": "MOBILE=1 PREFIX=phone node livetest.mjs jobs/views.mjs",
     "smoke": "RELAY=none node livetest.mjs jobs/smoke.mjs",

@@ -65,7 +65,7 @@ Every image below was looked at (Read tool) before this was written.
   `overview, tower, green, west, final28l` (clean 3-D, fast framebuffer read), `card`, `follow`, `about`, `atc`,
   `stats` (full HUD).
   - **D1 in the UI**: a locally-built **full-ident** pack (gitignored, then deleted; the committed default is
-    type-only) with 27 tracks in view: **2 masked** (C680, GLF4) leaked nothing (reg/callsign/operator null, label = the
+    type-only) with 27 tracks in view: **2 masked** (business jets; their types are not named here, fix round 1: a type plus a named hour of a flagged aircraft is not repeated in committed docs) leaked nothing (reg/callsign/operator null, label = the
     type designator); **23 of 25 unmasked carried real identity** (positive control: registration, callsign and operator shown for
     unflagged airline and GA tracks; the identities are not repeated here, default D1); **no hex key reached the DOM** (`keyInDom: false`). On the committed type-only
     pack all 25 tracks are masked and type-only.
@@ -118,8 +118,9 @@ None of these required editing P1/P2/P3 files.
 - `HWD.qa.shot()` renders from the renderer's final framebuffer (as P2's dev page does) so the harness avoids
   recompositing the heavy SwiftShader scene with `page.screenshot`; a `qa.pause(on)` stops the rAF loop during QA stills
   so the harness drives frames. The DOM-overlay shots (card, follow, About, ATC, statistics) still use `page.screenshot`.
-- The quality tiers are just `high` / `low` (P2's world tiers), with sfo3d's dynamic-resolution controller and canvas
-  caps; `?quality=` and the Settings menu switch them.
+- One quality level (owner decision OD1): the full-feature, highest-resolution tier only. The `low` tier, `?quality=`
+  and the Settings switch were removed in review fix round 1 (`app.js QUALITY` has `high` only); sfo3d's
+  dynamic-resolution controller and canvas caps remain.
 - The settings "lighting" menu is the data clock's light-mode machine (Scene time / Dawn / Day / Dusk / Night, P2's
   `clock.js`), not sfo3d's fixed UTC presets.
 
@@ -133,7 +134,39 @@ None of these required editing P1/P2/P3 files.
   untested because no east-flow window exists.
 - The P4 D1 UI test is strong (masked tracks leak nothing; unmasked carry identity; no key in the DOM) but was run on
   one window; P3's own leak harness covers the engine across both windows.
-- The card header reads "Identity withheld · LADD / PIA" for every masked track. On a **type-only pack** (where the
-  relay masks *all* aircraft for a published artifact, not only the flagged ones) this names a specific reason that may
-  not apply to a given aircraft; the About panel states "This recording shows every aircraft by type only". Softening
-  the header per-pack is an open nicety, not a correctness issue.
+- (Fixed in review fix round 1.) The card header said "Identity withheld · LADD / PIA" for every masked track, also
+  on type-only packs where no aircraft need be enrolled. The record now carries the reason (`_masked` 'd1' /
+  'type-only' -> `ident.maskWhy`): 'd1' reads "Identity withheld · LADD / PIA", 'type-only' "Identity not shown in this
+  recording".
+
+## 8. Review fix round 1 (2026-11-13), app shell
+
+- **Provenance on the card.** Registration, type and model come from the aggregator's database (readsb / tar1090-db), not
+  from the broadcast: the card's source reads "aggregator database (adsb.lol / adsb.fi)" (`adsb_db`); "broadcast" stays
+  for callsign, position, altitude, speed, squawk and category. A registration derived from the ICAO address
+  (`nNumberFromHex`) is shown only when the type is known, with an "inf" marker. The About bullet says the same.
+- **About.** Pack text (`desc`, `src`) is HTML-escaped (`about.js esc`); `?pack=` accepts only same-origin relative paths
+  (`entry.js safePack`). The live-data line states the real adsb.lol budget behaviour (fast for the first hour, then
+  minutes, then about hourly until the rolling 24 h frees up) and the status pill shows the current poll period from
+  `/api/ping` (refreshed every 60 s in live mode). The regional backdrop is credited as a USDA NAIP image-service mosaic
+  with undated overviews.
+- **Phone.** The icon buttons stay on screen (sticky on the right of the top bar), touch targets are 44 px (the sheet
+  grab 34 px tall), the tabs 44 px, the ODbL footer has an opaque backing at 11 px; 3-D labels are clamped to the
+  viewport, altitudes cannot print "-0 ft", "unspotted" reads "Parked here … no mapped spot", and the phone overview
+  starts closer (1,250 m).
+  - *Fix round 2.* The fix-round-1 statement was not true everywhere: the grab was 34 px and other controls were small.
+    The view row also ran off the right edge, under the icons. Now:
+    - The view buttons wrap onto two rows.
+    - The icons, the sheet grab, the stats line (one `#statsbtn` button holding the phase line and the runway line),
+      the search field and the card actions are each at least 44 px tall.
+    - The credit line and the pop-up sheets moved below the second view row.
+  - `jobs/phone_ui.mjs` (new, `MOBILE=1 RELAY=none node livetest.mjs jobs/phone_ui.mjs`) checks every visible button,
+    link, input and list row in three states: default, sheet open and card open. Each must be at least 44 × 44 px, in
+    the viewport and not covered at its centre (`elementFromPoint`). It exits 1 on any violation.
+    - Exempt: the inline credit links (WCAG 2.2 SC 2.5.8 inline exception), controls below the bottom edge (the sheet
+      in peek) and the sheet under an open card.
+    - Result: 53 controls, 0 violations, 0 console errors (`docs/phase2/phase2_fix2_13_phone_view_row.jpg`).
+- **Persistence (D1).** Masked tracks are neither stored nor restored (`hwdlive.parked.v1`); a restored stale track is
+  reconciled with a new same-type stationary track within 15 m.
+- **Docs / commands.** `CLAUDE.md` and `package.json` bind the plain static server to 127.0.0.1; Phase 2 is "in review".
+

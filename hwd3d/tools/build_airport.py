@@ -985,7 +985,40 @@ def holds(N):
                 ev.append('no clear NAIP 2024 bar (contrast %s)' % (r1(lad['contrast']) if lad else None))
         e['evidence'] = '; '.join(ev)
         out.append(e)
+    # Phase 2 review fix round 1: Pattern A bars seen on NAIP 2024 where OSM has no holding_position node. Found by the review's
+    # colour + shape scan of the NAIP 2024 mosaic (calibrated on the 16 NAIP-measured bars above; 21 hold-like bars on open
+    # taxiways, 16 within 3.5 m of a data hold, these 5 78-130 m from any) and confirmed by eye on native-resolution crops
+    # (yellow, dashes on the runway side). Each is MEASURED here with the same find_ladder as the OSM holds, around the
+    # scan position on the taxiway way that passes it; one without a clear NAIP band is not added.
+    for i, h in enumerate(NAIP_HOLDS):
+        best = None
+        for w in ways:
+            P = densify(w['w'], 1.0); d = np.hypot(*(P - np.array(h)).T); k = int(np.argmin(d))
+            if d[k] < 8.0 and (best is None or d[k] < best[0]): best = (float(d[k]), w, P, k)
+        if best is None:
+            continue
+        _, w, P, k = best; S = arclen(P); T = tangents(P); s0 = S[k]
+        lad = find_ladder(N, P, T, S, max(0.0, s0 - HOLD_SEARCH), min(S[-1], s0 + HOLD_SEARCH), half_w=4.0)
+        if not (lad and lad['contrast'] >= HOLD_MIN_C and lad['second'] < 0.6 * lad['contrast']):
+            continue
+        s = lad['s']; pp = np.array([np.interp(s, S, P[:, 0]), np.interp(s, S, P[:, 1])])
+        t = np.array([np.interp(s, S, T[:, 0]), np.interp(s, S, T[:, 1])]); t /= np.hypot(*t)
+        n = np.array([-t[1], t[0]]); sk = math.tan(math.radians(lad['skew_deg'])); bdir = n + t * sk; bdir /= np.hypot(*bdir)
+        rw = min(sorted(F.RWY_DATA), key=lambda kk: RWY_POLY[kk].distance(Point(pp)))
+        al, ac = F.rwy_along_across(rw.split('/')[0], *pp)
+        out.append({'id': 'naip:hold/%d' % (i + 1), 'x': r2(pp[0]), 'z': r2(pp[1]), 'runway': rw, 'runway_rule': 'nearest NASR runway rectangle',
+                    'along_m': r1(al), 'cl_dist_m': r1(abs(ac)), 'cl_dist_ft': round(abs(ac) / FT), 'dist_to_runway_m': r1(RWY_POLY[rw].distance(Point(pp))),
+                    'way': 'osm:way/%d' % w['osm']['id'], 'ref': None, 'twy_ref': w['tags'].get('ref'),
+                    'bar': {'x': r2(pp[0]), 'z': r2(pp[1]), 'dir': [round(float(bdir[0]), 4), round(float(bdir[1]), 4)], 'offset_from_osm_m': None,
+                            'contrast': r1(lad['contrast']), 'second': r1(lad['second']), 'skew_deg': lad['skew_deg'], 'depth_m': r2(7 * FT), 'src': 'obs',
+                            'refs': ['naip2024', 'ac5340'], 'evidence': 'centre of the 7 ft yellow band (AC 150/5340-1M para 3.3.4.1 Pattern A, 12 in lines) found on NAIP 2024 along the taxiway'},
+                    'src': 'obs', 'refs': ['naip2024'],
+                    'evidence': 'no OSM holding_position node: Pattern A bar found on NAIP 2024 (Phase 2 review scan, by-eye confirmed) and measured here %.1f m along the taxiway from the scan position' % (s - s0)})
     return out
+
+
+# Phase 2 review fix round 1: scan positions (world x, z, m) of Pattern A bars on NAIP 2024 that OSM does not map
+NAIP_HOLDS = [(309.1, 108.5), (208.4, 50.8), (283.6, 153.3), (180.2, 94.7), (-210.6, -280.4)]
 
 
 # ================================================================================================== 6. hot spots

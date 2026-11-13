@@ -26,7 +26,7 @@ import { OBJ_VS, OBJ_FS } from '../shaders/objects.js';
 import '../shaders/common.js';
 import { GRID } from '../world/grid.js';
 import { RWY_PAIRS, RWY_DATA, FT, rwyAxis, thrDispM } from '../geo.js';
-import { paintAirportMap, mapTexture, naipTexture, regionTexture } from './airport.js';
+import { paintAirportMap, mapTexture, naipTexture, regionTexture, naipAircraft } from './airport.js';
 import { PAINT_VS, PAINT_FS, buildPaint } from './markings.js';
 import { buildBuildings } from './buildings.js';
 import { buildMarkers } from './lights.js';
@@ -99,7 +99,7 @@ export function buildHwdWorld(R, airport, { site, quality = 'high', taxigraph = 
   const groundU = {
     uAptMap: mapTex, uMapRect: [map.rect.s0, map.rect.t0, map.rect.w, map.rect.h], uMapSize: [map.w, map.h], uGs: GRID.s, uGt: GRID.t,
     uRw: rw, uRwI: rwi,
-    uNaip: placeholder, uNaipU: [0, 0, -1], uNaipV: [0, 0, -1], uNaipMix: 0, uNaipGain: 0.55, uNaipBorder: naipBorder,
+    uNaip: placeholder, uNaipU: [0, 0, -1], uNaipV: [0, 0, -1], uNaipMix: 0, uNaipGain: 0.55, uNaipBorder: naipBorder, uNaipBal: [1.24, 1.32, 1.38], uNaipSat: 0.92,
     uReg: placeholder, uRegU: [0, 0, -1], uRegV: [0, 0, -1], uRegBorder: naipBorder, uRegOn: 0,
   };
   const items = [];
@@ -136,9 +136,9 @@ export function buildHwdWorld(R, airport, { site, quality = 'high', taxigraph = 
   };
   // ---- NAIP backdrop (async; the ground shows the procedural grass until it is in): the 0.6 m HWD mosaic (downsampled)
   // and the 24 km regional resampling around it
-  const pNaip = naip ? naipTexture(Q.naip).then(N => {
+  const pNaip = naip ? naipTexture(Q.naip, { blobs: naipAircraft(airport) }).then(N => {
     groundU.uNaip = N.tex; groundU.uNaipU = N.U; groundU.uNaipV = N.V; groundU.uNaipBorder = N.meta.border_linear_rgb;
-    world.textures.naip = N.tex; world.stats.naip = { level: Q.naip, w: N.level.width, h: N.level.height, residual_m: Math.round(N.residual_m * 1000) / 1000 };
+    world.textures.naip = N.tex; world.stats.naip = { level: Q.naip, w: N.level.width, h: N.level.height, residual_m: Math.round(N.residual_m * 1000) / 1000, aircraft_inpainted: N.inpainted };
     world.setGroundMode('naip');
     log('NAIP backdrop ' + Q.naip + ' ' + N.level.width + 'x' + N.level.height + ' fit residual ' + N.residual_m.toFixed(4) + ' m');
   }).catch(e => { log('NAIP backdrop not loaded: ' + e.message); world.stats.naip = { error: String(e.message || e) }; }) : Promise.resolve();

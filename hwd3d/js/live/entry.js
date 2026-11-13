@@ -17,6 +17,9 @@ import { HWD_AIRPORT } from '../../data/hwd_airport.js';
 import { aboutHtml, attribHtml } from './about.js';
 
 const PACK_DEFAULT = 'out/replay/pack.json.gz';   // P1 (tools/live/build_replay.py): the weekend window, type-only (D1)
+// ?pack= takes only a same-origin relative path to a .json / .json.gz file (fix round 1: any URL was accepted, and the
+// pack's description reached the About sheet's innerHTML)
+const safePack = (p) => p && !/^[a-z][a-z0-9+.-]*:|^\/\/|\.\.|\\/i.test(p) && /^[\w./-]+\.json(\.gz)?$/.test(p) ? p : null;
 const SHIM = '../../out/replay/replay_shim.js';    // P1 copies tools/live/replay_shim.js there at pack time
 
 async function detectRelay() {
@@ -59,7 +62,7 @@ function snapshotAt(pack, at) {
 (async () => {
   const q = new URLSearchParams(location.search);
   let mode = q.get('mode') || window.HWD_MODE || 'live';
-  const packUrl = q.get('pack') || window.HWD_PACK || PACK_DEFAULT;
+  const packUrl = safePack(q.get('pack')) || window.HWD_PACK || PACK_DEFAULT;
   let relayInfo = null, replayInfo = null, snapshot = null, note = null;
   if (mode === 'snapshot') {
     const pack = await loadPack(packUrl);

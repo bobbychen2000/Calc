@@ -1,6 +1,6 @@
 // Forked from sfo3d/js/shaders/objects.js @ a967f9b. Kept: the generic object shader (obj / objI instanced) and all its
 // materials. Changed: the ground-contact AO uses uGroundRef (render item field `groundRef`, the ground y under the object)
-// instead of the SFO flat ground y = 3. Dropped: nothing.
+// instead of the SFO flat ground y = 3; uAlpha screen-door fade (render item field `alpha`, fix round 1). Dropped: nothing.
 // Generic object shader (buildings, jet bridges, vehicles, props) with optional instancing
 export const OBJ_VS = `
 #include <common>
@@ -35,8 +35,13 @@ export const OBJ_FS = `
 #include <fout>
 in vec3 vWP; in vec3 vN; in vec4 vCol; in vec4 vExt; in vec3 vLP; in vec3 vLN; in vec2 vUV; in vec4 vData;
 uniform float uEmissiveBoost; uniform float uNight; uniform float uGroundRef;
+// uAlpha (fix round 1): screen-door fade of one item (an aircraft fading in / out on a re-placement). The program has no
+// blending; a 4x4 ordered-dither threshold discards a growing share of fragments, so a fade reads as a fade, not a blink
+uniform float uAlpha;
+float bayer4(vec2 p){ ivec2 q = ivec2(mod(p, 4.0)); int i = q.x + q.y * 4; int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5); return (float(m[i]) + 0.5) / 16.0; }
 float gridLine(float x, float period, float w){ float f = abs(fract(x / period + 0.5) - 0.5) * period; float fw = fwidth(x) * 0.8; return 1.0 - smoothstep(w, w + fw, f); }
 void main(){
+  if (uAlpha < 0.999 && uAlpha >= 0.0 && bayer4(gl_FragCoord.xy) > uAlpha) discard;
   vec3 wp = vWP; vec3 V = uCamPos - wp; float dist = length(V); V /= dist;
   vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;
   vec3 albedo = vCol.rgb; float rough = vExt.x, metal = vExt.y; int mat = int(vExt.z + 0.5); float emis = vExt.w;

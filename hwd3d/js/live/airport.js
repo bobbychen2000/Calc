@@ -11,7 +11,7 @@
 // naipTexture(level) -> Promise<{tex, meta, U, V}>   U, V: affine world (x, z, 1) -> texture (u, v)
 import { gl, texture } from '../gl.js';
 import { gridRectOf, GRID } from '../world/grid.js';
-import { wayWidth } from '../world/site.js';
+import { wayWidth, HELI_APRON_NAIP } from '../world/site.js';
 import { worldToUtm10 } from '../geo.js';
 
 export function airportGridRect(airport, margin = 60) {
@@ -37,6 +37,8 @@ export function paintAirportMap(airport, site, { res = 0.5, maxTex = 4096 } = {}
   const pave = layer(() => {
     for (const a of airport.aprons) { cx.beginPath(); ring(a.ring); cx.fill(); }
     for (const h of airport.helipads) { cx.beginPath(); ring(h.ring); cx.fill(); }
+    // site.js HELI_APRON_NAIP: the NAIP-segmented helicopter pad complex (obs imagery; fix round 1)
+    cx.beginPath(); ring(HELI_APRON_NAIP.ring); cx.fill();
     for (const k of ['taxiways', 'taxilanes']) for (const w of airport[k]) line(w.pts, wayWidth(w).m);
   });
   const clos = layer(() => { for (const k of ['taxiways', 'taxilanes']) for (const w of airport[k]) if (closed(w)) line(w.pts, wayWidth(w).m); });
@@ -57,15 +59,61 @@ export function mapTexture(map) {
 // The texture covers the UTM-aligned mosaic of refs/cache/naip/naip_2024_hwd_rgb.jpg (js/world/tex/make_naip_tex.py makes
 // the downsampled JPEGs and naip2024.json). The world -> (u, v) map is an affine least-squares fit of geo.js worldToUtm10
 // over the mosaic (measured residual 6 mm, docs/phase2_world.md); u = (E - E0) / width_m, v = (N0 - N) / height_m.
-export async function naipTexture(level = '1m2') {
+export async function naipTexture(level = '1m2', { blobs = null } = {}) {
   const base = new URL('../world/tex/', import.meta.url);
   const meta = await (await fetch(new URL('naip2024.json', base))).json();
   const L = meta.levels[level];
   const img = new Image(); img.decoding = 'async'; img.src = new URL(L.file, base).href;
   await img.decode();
-  const tex = texture(L.width, L.height, { internal: gl.SRGB8_ALPHA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE, source: img, mips: true, aniso: true });
   const fit = naipAffine(meta, L);
-  return { tex, meta, level: L, U: fit.U, V: fit.V, residual_m: fit.residual_m };
+  let source = img, inpainted = 0;
+  if (blobs && blobs.length) { const r = inpaintBlobs(img, L, fit, blobs); source = r.canvas; inpainted = r.n; }
+  const tex = texture(L.width, L.height, { internal: gl.SRGB8_ALPHA8, format: gl.RGBA, type: gl.UNSIGNED_BYTE, source, mips: true, aniso: true });
+  if (source !== img) { source.width = source.height = 1; }
+  return { tex, meta, level: L, U: fit.U, V: fit.V, residual_m: fit.residual_m, inpainted };
+}
+// Parked aircraft on the photograph (fix round 1, review: they showed as flat images on the ground wherever they extend
+// past the OSM pavement - one business jet cut in half at an apron edge, its tail over the grass). Each catalogued NAIP
+// 2024 aircraft (naipAircraft below) is in-painted before upload: every texel of a disc around it takes the colour of the
+// ring just outside the disc in the same direction (radial projection, smoothed over +-1 of 72 angle bins), so a
+// pavement / grass edge under the aircraft continues straight through. Extent [inf]: discs, not the aircraft outline.
+function inpaintBlobs(img, L, fit, blobs) {
+  const W = L.width, H = L.height; const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(img, 0, 0);
+  const NB = 72; let n = 0;
+  for (const b of blobs) {
+    const u = (fit.U[0] * b.x + fit.U[1] * b.z + fit.U[2]) * W, v = (fit.V[0] * b.x + fit.V[1] * b.z + fit.V[2]) * H;
+    const rp = b.r / L.pixel_size_m, R = Math.ceil(rp + 4);
+    const x0 = Math.max(0, Math.floor(u - R)), y0 = Math.max(0, Math.floor(v - R)), x1 = Math.min(W, Math.ceil(u + R)), y1 = Math.min(H, Math.ceil(v + R));
+    if (x1 - x0 < 4 || y1 - y0 < 4) continue;
+    const im = cx.getImageData(x0, y0, x1 - x0, y1 - y0), d = im.data, w = x1 - x0;
+    const acc = new Float64Array(NB * 4);
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+      const dx = x + 0.5 - u, dy = y + 0.5 - v, r = Math.hypot(dx, dy); if (r < rp + 0.5 || r > rp + 3) continue;
+      const k = ((Math.round(Math.atan2(dy, dx) / (2 * Math.PI) * NB) % NB) + NB) % NB, i = ((y - y0) * w + (x - x0)) * 4;
+      acc[k * 4] += d[i]; acc[k * 4 + 1] += d[i + 1]; acc[k * 4 + 2] += d[i + 2]; acc[k * 4 + 3]++;
+    }
+    const ringC = (k) => { let r = 0, g = 0, bb = 0, c = 0; for (let j = -1; j <= 1; j++) { const q = ((k + j) % NB + NB) % NB; r += acc[q * 4]; g += acc[q * 4 + 1]; bb += acc[q * 4 + 2]; c += acc[q * 4 + 3]; } return c ? [r / c, g / c, bb / c] : null; };
+    const C = Array.from({ length: NB }, (_, k) => ringC(k)); if (C.some(c => !c)) continue;
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+      const dx = x + 0.5 - u, dy = y + 0.5 - v, r = Math.hypot(dx, dy); if (r > rp + 0.5) continue;
+      const a = (Math.atan2(dy, dx) / (2 * Math.PI) * NB + NB) % NB, k0 = Math.floor(a) % NB, k1 = (k0 + 1) % NB, f = a - Math.floor(a);
+      const wgt = Math.min(1, Math.max(0, (rp + 0.5 - r) / 1.5)), i = ((y - y0) * w + (x - x0)) * 4;
+      for (let c = 0; c < 3; c++) d[i + c] = d[i + c] * (1 - wgt) + (C[k0][c] * (1 - f) + C[k1][c] * f) * wgt;
+    }
+    cx.putImageData(im, x0, y0); n++;
+  }
+  return { canvas: cv, n };
+}
+// the catalogued NAIP 2024 aircraft: data/hwd_airport.json unspotted_aircraft (+-2 m; the business jets by their note get
+// 17 m - a ~30 m bizjet on the photograph) and the parking spots with an aircraft on NAIP 2024 (half the spot's capacity
+// span + 2.5 m, >= 7.5 m) [inf radii]
+export function naipAircraft(airport) {
+  const out = [];
+  for (const u of airport.unspotted_aircraft || []) out.push({ x: u.x, z: u.z, r: /jet/i.test(u.note || '') ? 17 : 7.5 });
+  for (const s of airport.parking || []) if (s.strength && (s.strength.naip_aircraft_years || []).includes('2024'))
+    out.push({ x: s.x, z: s.z, r: Math.max(7.5, ((s.size && s.size.capacity_span_m) || 11) / 2 + 2.5) });
+  return out;
 }
 // Regional backdrop beyond the HWD mosaic: a 24 x 24 km 8 m (16 m on the low tier) USDA NAIP 2024 resampling centred on
 // the ARP (js/world/tex/fetch_region.py), mapped by the same kind of affine fit over +-12 km (residual measured at load,

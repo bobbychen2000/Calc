@@ -168,9 +168,14 @@ export const END_SCHEME = {
 //                  stripes = 80 ft). NAIP head runs: 10R tip ~83 ft (AC kept), 28L ~67 ft, 200 ft pitch on both.
 //   edgeStartFt:   where the edge stripes begin from the runway end (AC 2.8.5: full length). 28R: a taxiway crosses at
 //                  the end and NAIP shows the stripes from the threshold-stripe start (~20 ft).
+//   tdz:           the touchdown-zone groups as painted, [start ft from the threshold, bars per side] (fix round 1). NAIP
+//                  2024 and 2022, white runs sampled along the axis at the inner / outer bar offsets (+-11.9 m, +-15.3 m):
+//                  10R 516-593 ft (3-bar), 1,519-1,595 ft inner bar only (1-bar pair), 2,019-2,095 ft both (2-bar pair);
+//                  28L 520-596 ft (3-bar), 1,520-1,596 ft both (2-bar pair). The AC 2.7.3.1 900-ft no-marking rule (from
+//                  the midpoint, 2,096 ft) would leave only the 3-bar groups - the paint does not follow it.
 export const END_PAINT_OBS = {
-  '10R': { aimLenFt: 150 },
-  '28L': { aimLenFt: 150, arrowTipFt: 67 },
+  '10R': { aimLenFt: 150, tdz: [[520, 3], [1520, 1], [2020, 2]] },
+  '28L': { aimLenFt: 150, arrowTipFt: 67, tdz: [[520, 3], [1520, 2]] },
   '10L': { stripeStartFt: 30 },
   '28R': { edgeStartFt: 20 },
 };
@@ -274,13 +279,13 @@ export function buildRunwayPaint(P) {
         // 3-bar group at 520 ft, 2-bar at 1,520 / 2,020, 1-bar at 2,520 / 3,020; bars 75 x 6 ft, 5 ft spaces, inner
         // sides on the aiming point's (2.7.5 item 3); pairs that extend within 900 ft of the midpoint between the thresholds
         // are not painted (2.7.3.1) - with 4,192 ft between the HWD thresholds only the 3-bar group remains
-        const mid = between / 2; const groups = [[520, 3], [1520, 2], [2020, 2], [2520, 1], [3020, 1]]; let ng = 0;
+        const mid = between / 2; const groupsAC = [[520, 3], [1520, 2], [2020, 2], [2520, 1], [3020, 1]].filter(([g0]) => g0 + 75 <= mid - 900);
+        const groups = OB.tdz || groupsAC; let ng = 0;
         for (const [g0, nb] of groups) {
-          if (g0 + 75 > mid - 900) continue;
           for (const s of [-1, 1]) for (let k = 0; k < nb; k++) { const c0 = (apIn / 2 + k * 11) * FT; rect(e, disp + g0 * FT, disp + (g0 + 75) * FT, s > 0 ? c0 : -c0 - 6 * FT, s > 0 ? c0 + 6 * FT : -c0, WHT); }
           ng++;
         }
-        rec(e, 'touchdown zone bars', ng, '2.7 + Table 2-4 / 2.7.3.1 (900 ft no-marking zone from the midpoint) + 2.7.5 (75 x 6 ft, 5 ft spaces)', 'inf', { note: `${ng} group(s): midpoint ${mid.toFixed(0)} ft from the threshold` });
+        rec(e, 'touchdown zone bars', ng, OB.tdz ? '2.7 + 2.7.5 (75 x 6 ft, 5 ft spaces); the groups as painted (NAIP 2024 / 2022, fix round 1) - more than the 2.7.3.1 900-ft rule leaves' : '2.7 + Table 2-4 / 2.7.3.1 (900 ft no-marking zone from the midpoint) + 2.7.5 (75 x 6 ft, 5 ft spaces)', OB.tdz ? 'obs' : 'inf', { note: `${ng} group(s) (${groups.map(g => g[0] + ' ft x' + g[1]).join(', ')}); midpoint ${mid.toFixed(0)} ft from the threshold` });
       }
     }
     // --- centreline (2.4): 120 ft stripes, 80 ft gaps, from 40 ft past the designation (390 ft from each threshold,

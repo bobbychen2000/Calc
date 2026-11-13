@@ -1,0 +1,21 @@
+{
+ "naip2024.json": {
+  "url": null,
+  "licence": "USDA NAIP, public domain (data.gov 'License: https://www.usa.gov/publicdomain/label/1.0/'; USDA FSA asks for 'appropriate byline/photo/image credits'; quoted from sfo3d/docs/research/imagery.md via refs/cache/naip/SOURCES.json, NOT re-read in hwd3d - the credit wording is kept as requested, its terms text is unverified here). Credit: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations).",
+  "made_by": "hwd3d/js/world/tex/make_naip_tex.py (levels) + hwd3d/js/world/tex/fetch_region.py (region entry)",
+  "note": "georeference and provenance of the four JPEGs below (origin, pixel size, flight date, border colours, the regional request and raw sha256)."
+ },
+ "naip2024_1m2.jpg,naip2024_2m4.jpg": {
+  "url": null,
+  "licence": "USDA NAIP, public domain (data.gov 'License: https://www.usa.gov/publicdomain/label/1.0/'; USDA FSA asks for 'appropriate byline/photo/image credits'; quoted from sfo3d/docs/research/imagery.md via refs/cache/naip/SOURCES.json, NOT re-read in hwd3d - the credit wording is kept as requested, its terms text is unverified here). Credit: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations).",
+  "made_by": "hwd3d/js/world/tex/make_naip_tex.py from refs/cache/naip/naip_2024_hwd_rgb.jpg (committed; sha256 e646ef8e34327dd9)",
+  "note": "USDA NAIP 2024 CA (flown 2024-05-20) downsampled to 1.2 m / 2.4 m for the ground texture; sha256 1m2 ac55f0c30bba220e, 2m4 afc1abb302f58871"
+ },
+ "naip2024_region_8m.jpg,naip2024_region_16m.jpg": {
+  "url": "https://apps.geo.fpac.usda.gov/geo-imagery/rest/services/naip/conus_naip/ImageServer/exportImage",
+  "licence": "USDA NAIP, public domain (data.gov 'License: https://www.usa.gov/publicdomain/label/1.0/'; USDA FSA asks for 'appropriate byline/photo/image credits'; quoted from sfo3d/docs/research/imagery.md via refs/cache/naip/SOURCES.json, NOT re-read in hwd3d - the credit wording is kept as requested, its terms text is unverified here). Credit: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations). USDA FPAC-BC GEO asks to be credited for derived products (same source, not re-read).",
+  "fetched": "2026-11-13 (one request; raw kept locally in refs/cache/local/naip/naip_region_24km_8m_raw.jpg, sha256 4b6b46a9...)",
+  "made_by": "hwd3d/js/world/tex/fetch_region.py",
+  "note": "24 x 24 km regional backdrop: a USDA NAIP image-service MOSAIC INCLUDING UNDATED OVERVIEWS (year_ts IS NULL at 8 m), not a dated 2024 image; the names keep 'naip2024' for the code. sha256 8m e84b428aa0d25131, 16m c6f7ae042db53785"
+ }
+}

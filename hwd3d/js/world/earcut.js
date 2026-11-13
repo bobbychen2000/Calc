@@ -1,6 +1,25 @@
 // Forked from sfo3d/js/live/earcut.js @ a967f9b. Kept: the triangulation. Changed: path (js/live -> js/world, P2 contract). Dropped: nothing. Node-pure.
 // Polygon triangulation with holes (ear clipping on a linked list, with hole bridging).
-// Algorithm after mapbox/earcut (ISC). data: flat [x0,y0,x1,y1,...]; holeIndices: start vertex index of each hole.
+// A function-for-function port of mapbox/earcut (https://github.com/mapbox/earcut), ISC licence. data: flat
+// [x0,y0,x1,y1,...]; holeIndices: start vertex index of each hole. The licence of the original (read 2026-11-13 from
+// https://raw.githubusercontent.com/mapbox/earcut/main/LICENSE, sha256 0b348fff...; the copyright year is the file's
+// current one, the year of the version sfo3d ported was not checked):
+//
+// ISC License
+//
+// Copyright (c) 2026, Mapbox
+//
+// Permission to use, copy, modify, and/or distribute this software for any purpose
+// with or without fee is hereby granted, provided that the above copyright notice
+// and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+// FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+// TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+// THIS SOFTWARE.
 export function earcut(data, holeIndices, dim = 2) {
   const hasHoles = holeIndices && holeIndices.length;
   const outerLen = hasHoles ? holeIndices[0] * dim : data.length;

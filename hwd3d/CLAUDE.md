@@ -59,8 +59,10 @@ python3 hwd_live_server.py                 # http://localhost:8000/  -> live.htm
 python3 hwd_live_server.py --host 0.0.0.0  # open it from a phone on the same Wi-Fi
 # a recorded hour, re-timed to wall clock, through the same merge path:
 python3 hwd_live_server.py --replay rec_pack --from 2026-11-08T20:00Z --loop
-# relay-less (plain static server): the app falls back to the in-page replay pack (out/replay/, P1's shim)
-python3 -m http.server 8000                # http://localhost:8000/live.html?mode=replay
+# relay-less (plain static server): the app falls back to the in-page replay pack (out/replay/, P1's shim).
+# Bind it to this machine only: http.server has no deny rules and binds every interface by default, so refs/cache/local/
+# (identity working files) and out/ (full-ident screenshots / packs) would be served to the LAN.
+python3 -m http.server 8000 --bind 127.0.0.1   # http://localhost:8000/live.html?mode=replay
 
 # the replay / snapshot pack (generated, gitignored; type-only by default):
 python3 tools/live/build_replay.py         # -> out/replay/pack.json.gz + replay_shim.js (P1)
@@ -73,8 +75,8 @@ RELAY=spawn WAIT=80000 node livetest.mjs jobs/relaycheck.mjs   # end-to-end agai
 ```
 
 ### URL parameters
-`?mode=live|replay|snapshot` (default live; falls back to replay when no relay answers) · `?pack=<url>` ·
-`?at=<ISO | minutes>` (snapshot instant) · `?quality=high|low` · `?t=<ISO UTC>` / `?metar=<raw>` (QA time machine) ·
+`?mode=live|replay|snapshot` (default live; falls back to replay when no relay answers) · `?pack=<same-origin path to a .json[.gz]>` ·
+`?at=<ISO | minutes>` (snapshot instant) · `?t=<ISO UTC>` / `?metar=<raw>` (QA time machine) ·
 `?fixedres=1` (pin the render scale for stills) · `?qa=env` (EnvState HUD).
 
 ## Architecture
@@ -108,9 +110,18 @@ aircraft), follow / chase / free camera, and About / statistics / ATC bottom she
 
 ## Status / next steps
 
-- **Phase 2 is complete** across P1–P4: a working app on recorded (shim / relay) and live data, phone-first UI, D1
-  throughout, the ATC link-out (D2), the About panel with every ATTRIBUTION notice. See `docs/phase2_app.md` for the
-  integration issues found against the P1–P3 contracts and the workarounds (all in P4 files).
+- **Phase 2 is in review** (not yet accepted): P1–P4 built a working app on recorded (shim / relay) and live data,
+  phone-first UI, D1 throughout, the ATC link-out (D2), the About panel with every ATTRIBUTION notice. Review fix round 1
+  (`docs/phase2_run.md` section 6) reworked the motion engine (`js/live/motion.js`: drivable ground profiles, a geometric
+  air-hole curve; take-off / landing plans from the fix's own speed; no ghost parking) and the relay's D1 / serving rules.
+  Review fix round 2 (`docs/phase2_run.md` section 7) counts a teleport across an absence of any length and gates it
+  at 0, keeps silent ground aircraft drawn at their last position ("No signal", [inf]), replaces the straight air-ground
+  chord with turn-limited aligned paths, and sends late-flag forgets to polling clients. The relay's `--record` guard is
+  now case-sensitive and checked with git. Phone controls are ≥ 44 px (`jobs/phone_ui.mjs`).
+  `node tools/traffic/replay_engine.mjs <w> --strict` fails on any teleport (engine, or HWD after a signal loss), ghost
+  parking, slow lift-offs, hard stops, hops, hovering, helicopters in buildings, label contradictions, route samples on
+  grass and lift-offs / touchdowns more than 15° off the runway. It still FAILS on residual grass-route samples in all
+  five windows, 1 hop and 3 misaligned transitions (section 7). See `docs/phase2_app.md` for the integration notes.
 - **Phase 3 — aircraft** (`docs/PLAN.md` §7): real GA models (C172, PA-28, SR22, C182, the PC-12 from `pc12/`, a bizjet
   set, three helicopters) with N-number decals, replacing the placeholders. Verify each model's licence.
 - **Phase 4 — airport fidelity**: hangar doors, FBO buildings, the fuel island, signs and light fixtures (positions not

@@ -64,14 +64,18 @@ Checks
   7. Hot spots: the OSM taxiways inside each AL-5015 ellipse against the taxiways the CS hot-spot text names. A
      consistency check of the diagram registration and the OSM refs; HS whose CS text names no taxiway (HS 2, 3, 4) are
      reported as 'not checkable against the CS'.
-  8. Holds: NAIP bar vs OSM node offset; distance from the runway centreline per runway.
+  8. Holds: NAIP bar vs OSM node offset; distance from the runway centreline per runway; (Phase 2 review fix round 1) the
+     NAIP-only holds (naip:hold/*) each with a measured bar (contrast >= 15), an OSM taxiway and 110-270 ft from the
+     centreline - hard.
   9. Data hygiene: every element has src 'obs' / 'inf' and refs that exist in 'sources'; the .js twin carries the same
      object as the .json. D1 (no ADS-B identity in any committed file; since the Phase 1 review): every committed
      ADS-B-derived file (D1_FILES: refs/cache/registry/*.json, data/hwd_airport.*, data/ga_types.json, refs/cache/adsb/*, docs/phase1/*.json,
      docs/*.md) is scanned for identity keys (hex, icao24, callsign, flight, registration, r ...), per-row time keys
      (t, t0, time, seen ...) and epoch-second numbers, N-number-like tokens, and any token equal to a hex address,
      registration or callsign of an aircraft that the pinned adsb.lol recording saw within 5 km of the ARP
-     (identity_set, read from sfo3d/refs/cache/rec_pack) - hard; in each session of hwd_parked_stays.json the signal
+     (identity_set, read from sfo3d/refs/cache/rec_pack) - hard; since fix round 1 also every other committed text file
+     under hwd3d (exact identity tokens; N-number-like tokens in .md / .json / .txt / .csv, taxigraph node ids, synthetic
+     test registrations, all-digit tokens and FAA coordinates whitelisted) - hard; in each session of hwd_parked_stays.json the signal
      starts and ends differ by at most 1 (round 2: power cycles in place) and it spans at most 2 x SESSION_R_M - hard (a
      necessary condition only: the committed file has no time order). Round 3, with the gitignored per-aircraft files
      (session_check_local; SKIPPED without them): committed = local session numbers, one aircraft per session, its
@@ -79,7 +83,8 @@ Checks
      in time, no split of a linked pair, and summary.session_joins recounted - hard; the joins that bridge recorder
      outages are reported, not excluded. Spot-id tokens in the data text and in build_airport's by-eye records must name
      spots of the data (spot_id_refs) - hard. SOURCES coverage: every committed data file under
-     data/, refs/cache/ (not local/, not .parts/) and docs/phase1/ matches a key (or glob key) of a SOURCES.json in its
+     data/, refs/cache/ (not local/, not .parts/), docs/phase1/ and (fix round 1) docs/phase2/ and js/ (json / images /
+     binary models and generated js data modules) matches a key (or glob key) of a SOURCES.json in its
      folder or a parent folder - hard; every SOURCES entry has made_by or note - hard; every text / JSON file whose
      SOURCES licence names the ODbL carries the ODbL URI itself - hard; src / *_src values in every committed JSON are
      obs / inf / null (field-documentation maps skipped; the documented ga_types 'none' listed) - hard.
@@ -216,7 +221,36 @@ def d1_scan():
         say('   D1 %-46s %s' % (rel_, 'clean' if not hit else 'FOUND %s' % {k: v[:6] for k, v in hit.items()}))
         if hit: probs.append((rel_, hit))
     say('   D1: %d committed ADS-B-derived files scanned, %d with a finding' % (len(files), len(probs)))
-    return probs
+    # Phase 2 review fix round 1: the scan above read only the Phase 1 files and docs/*.md. Now also every other committed
+    # (tracked or untracked-not-ignored) text file under hwd3d - data/hwd_taxigraph.*, docs/phase2/*, CLAUDE.md, the code,
+    # the generated js data modules, jobs, tools - for tokens equal to a hex address / registration / callsign of the
+    # recording's aircraft (exact match), and, in prose / data files (.md .json .txt .csv), N-number-like tokens.
+    # Whitelist: taxigraph node ids (N + digits, in data/hwd_taxigraph.*), the synthetic test registrations below, all-digit
+    # tokens (numbers, not callsigns) and the FAA documents' coordinates (N37...) for the N-number pattern.
+    SYNTH = {'N100AA', 'N12345'}
+    root = os.path.dirname(HWD)
+    allf = subprocess.run(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '--', 'hwd3d'], capture_output=True, text=True, check=True).stdout.split()
+    done = {os.path.relpath(f, HWD) for f in files}; nb = 0; probs2 = []
+    for f in sorted(allf):
+        rel_ = os.path.relpath(os.path.join(root, f), HWD); ext = rel_.rsplit('.', 1)[-1].lower()
+        if rel_ in done or ext not in ('md', 'json', 'js', 'mjs', 'py', 'txt', 'csv', 'html', 'css', 'sh', 'yml', 'yaml', 'toml'): continue
+        try: txt = open(os.path.join(HWD, rel_), encoding='utf-8').read()
+        except (OSError, UnicodeDecodeError): continue
+        nb += 1; tokens = set(re.findall(r'[~A-Za-z0-9-]+', txt)); up = {t.upper() for t in tokens}
+        hit = {}
+        h = sorted({t for t in tokens if len(t.lstrip('~')) == 6 and t.lower().lstrip('~') in hx})
+        r_ = sorted({t for t in up if len(t) >= 4 and t in rr and t not in SYNTH and re.search('[A-Z]', t)})
+        c_ = sorted({t for t in up if len(t) >= 4 and t in fl and t not in SYNTH and re.search('[A-Z]', t)})   # all-digit callsigns match numbers
+        if ext in ('md', 'json', 'txt', 'csv') and not rel_.startswith('refs/cache/faa/'):   # FAA documents: N37 = latitude
+            nn = {t for t in up if re.fullmatch(r'N[1-9][0-9]{0,4}[A-HJ-NP-Z]{0,2}', t) and len(t) >= 3} - SYNTH
+            if 'hwd_taxigraph' in rel_: nn = {t for t in nn if not re.fullmatch(r'N[0-9]+', t)}
+            if nn: hit['N-number-like'] = sorted(nn)
+        if h: hit['hex of a recorded aircraft'] = h
+        if r_: hit['registration of a recorded aircraft'] = r_
+        if c_: hit['callsign of a recorded aircraft'] = c_
+        if hit: probs2.append((rel_, hit)); say('   D1 (all files) %-40s FOUND %s' % (rel_, {k: v[:6] for k, v in hit.items()}))
+    say('   D1 (all committed text files, round fix-1): %d more files scanned, %d with a finding' % (nb, len(probs2)))
+    return probs + probs2
 
 
 def sources_coverage():
@@ -224,9 +258,20 @@ def sources_coverage():
     key (exact, glob, or one of several comma-separated names) in a SOURCES.json of its folder or a parent folder"""
     import fnmatch
     root = os.path.dirname(HWD)
-    ls = subprocess.run(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '--', 'hwd3d/data', 'hwd3d/refs/cache', 'hwd3d/docs/phase1'],
+    ls = subprocess.run(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '--', 'hwd3d/data', 'hwd3d/refs/cache', 'hwd3d/docs/phase1', 'hwd3d/docs/phase2', 'hwd3d/js'],
                         capture_output=True, text=True, check=True).stdout.split()
-    files = sorted(os.path.relpath(os.path.join(root, f), HWD) for f in ls if os.path.basename(f) != 'SOURCES.json')
+    # Phase 2 review fix round 1: also every data file under js/ (json / images / binary models) and every generated js data
+    # module (a header line saying "generated by"), and the docs/phase2 images
+    def is_data(f):
+        if not f.startswith('hwd3d/js/') and not f.startswith('hwd3d/docs/phase2/'): return True
+        ext = f.rsplit('.', 1)[-1].lower()
+        if ext in ('json', 'jpg', 'jpeg', 'png', 'glb', 'bin', 'webp'): return True
+        if ext == 'js' and f.startswith('hwd3d/js/'):
+            try: head = open(os.path.join(root, f), encoding='utf-8', errors='replace').read(600).lower()
+            except OSError: return False
+            return 'generated by' in head
+        return False
+    files = sorted(os.path.relpath(os.path.join(root, f), HWD) for f in ls if os.path.basename(f) != 'SOURCES.json' and is_data(f))
     miss = []; entry = {}
     for f in files:
         d = os.path.dirname(f); ok = False
@@ -239,7 +284,7 @@ def sources_coverage():
             if ok or not d: break
             d = os.path.dirname(d)
         if not ok: miss.append(f)
-    say('   SOURCES coverage: %d committed data files under data/, refs/cache/, docs/phase1/; without a SOURCES.json entry: %d %s' % (len(files), len(miss), miss))
+    say('   SOURCES coverage: %d committed data files under data/, refs/cache/, docs/phase1/, docs/phase2/ and js/ (data files and generated modules); without a SOURCES.json entry: %d %s' % (len(files), len(miss), miss))
     # provenance residuals (round-1 re-check): every SOURCES entry names its maker or carries a note; every committed text /
     # JSON file whose SOURCES licence names the ODbL carries the licence URI in the file itself
     sjs = sorted(os.path.relpath(os.path.join(root, f), HWD) for f in subprocess.run(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '--', 'hwd3d'],
@@ -1045,8 +1090,16 @@ def main():
 
     # ------------------------------------------------------------------------------------------- 8. holds
     say('\n8. Holding positions')
-    hb = [h for h in D['holds'] if h['bar']]
-    say('   %d OSM holds, %d with a NAIP 2024 bar; |bar - OSM node| along the taxiway: max %.2f m, median %.2f m' % (len(D['holds']), len(hb), max(abs(h['bar']['offset_from_osm_m']) for h in hb), float(np.median([abs(h['bar']['offset_from_osm_m']) for h in hb]))))
+    osm_h = [h for h in D['holds'] if not h['id'].startswith('naip:')]; naip_h = [h for h in D['holds'] if h['id'].startswith('naip:')]
+    hb = [h for h in osm_h if h['bar']]
+    say('   %d OSM holds, %d with a NAIP 2024 bar; |bar - OSM node| along the taxiway: max %.2f m, median %.2f m' % (len(osm_h), len(hb), max(abs(h['bar']['offset_from_osm_m']) for h in hb), float(np.median([abs(h['bar']['offset_from_osm_m']) for h in hb]))))
+    # fix round 1: bars painted on NAIP 2024 with no OSM node (review scan). Each must carry a measured bar (contrast >= 15),
+    # lie on an OSM taxiway, and sit at a plausible runway-centreline distance (AC 150/5300-13B Table 3-2: 125 ft ADG I/II
+    # small, 200 ft / 250 ft larger; accept 110 .. 270 ft).
+    bad_naip = [h['id'] for h in naip_h if not h.get('bar') or h['bar'].get('contrast', 0) < 15 or not h.get('way') or not (110 <= h['cl_dist_ft'] <= 270)]
+    say('   %d NAIP-only holds (no OSM node): %s; failing the bar / taxiway / centreline-distance test: %d %s - hard' % (len(naip_h),
+        ', '.join('%s %s twy %s %d ft (contrast %.1f)' % (h['id'], h['runway'], h.get('twy_ref'), h['cl_dist_ft'], h['bar']['contrast']) for h in naip_h if h.get('bar')), len(bad_naip), bad_naip))
+    if bad_naip: hard.append('naip holds')
     for rw in sorted({h['runway'] for h in D['holds']}):
         ds = sorted(h['cl_dist_ft'] for h in D['holds'] if h['runway'] == rw and h['dist_to_runway_m'] < 120)
         say('   %s: distance from the runway centreline (ft) %s' % (rw, ds))

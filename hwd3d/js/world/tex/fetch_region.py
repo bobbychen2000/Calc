@@ -83,7 +83,8 @@ def main():
                       'nodata_filled_px': filled, 'border_linear_rgb': border,
                       'request': {'url': USDA + '/exportImage', 'params': params}, 'fetched': fetched or prev.get('fetched'),
                       'raw_sha256': hashlib.sha256(raw).hexdigest(),
-                      'note': 'USDA image-service resampling (bilinear) of the 2024 NAIP flights (28 quads, all flown 2024-05-20 per the service query) and its overviews, Northwest mosaic; no-data square over the open Bay filled by push-pull interpolation of the surrounding water; JPEG q 82'}
+                      'dated': False, 'raw_local': 'refs/cache/local/naip/naip_region_24km_8m_raw.jpg (gitignored; copy of the download, same raw_sha256)',
+                      'note': 'USDA NAIP image-service mosaic INCLUDING UNDATED OVERVIEWS - not a dated 2024 image: at 8 m per pixel the service draws from its overview rasters, which carry no year (the request needs year_ts IS NULL; year_ts = 2024 alone returned an all-black image), so only the parts the service fills from the 2024 flights (28 quads flown 2024-05-20 per the service query) are 2024; bilinear resampling, Northwest mosaic; no-data square over the open Bay filled by push-pull interpolation of the surrounding water; JPEG q 82. The file names keep "naip2024" for the code; credit it as "USDA NAIP (image-service mosaic incl. undated overviews)"'}
     json.dump(meta, open(os.path.join(HERE, 'naip2024.json'), 'w'), indent=1)
     print(json.dumps(meta['region'], indent=1))
 

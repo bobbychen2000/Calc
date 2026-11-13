@@ -30,8 +30,12 @@ const KT = 1852 / 3600, FT = 0.3048;
 export const TABS = { air: 'Air', ground: 'Ground', heli: 'Heli', over: 'Over', all: 'All' };
 const TAB_OF = { hwd_air: 'air', hwd_ground: 'ground', heli: 'heli', overflight: 'over', unknown: 'over', vehicle: null };
 export const VIEW_NAMES = [['overview', 'Overview'], ['tower', 'Tower'], ['green', 'Green Ramp'], ['west', 'West Hangars'], ['final28l', '28L Final']];
-const SRC_NAME = { adsb: 'broadcast', mictronics: 'Mictronics database', icao_address: 'from the ICAO address (US block)', faa_acd: 'FAA ACD', inf: 'inferred' };
-const PARK_KIND = { tiedown: 'tie-down', tie_down: 'tie-down', ramp: 'ramp spot', hangar_apron: 'hangar apron', helipad: 'helipad', hangar: 'hangar', door: 'hangar door' };
+// provenance names (fix round 1): registration / type / operator of a record are the aggregator's DATABASE values, not broadcast
+const SRC_NAME = { adsb: 'broadcast', adsb_db: 'aggregator database (adsb.lol / adsb.fi)', mictronics: 'Mictronics database', icao_address: 'derived from the ICAO address (US block) - inferred', faa_acd: 'FAA ACD', inf: 'inferred' };
+// why a masked aircraft shows type only: only 'd1' means it is flagged LADD / PIA
+const maskHead = (I) => I.maskWhy === 'd1' ? 'Identity withheld · LADD / PIA' : 'Identity not shown · type-only feed';
+const maskReg = (I) => I.maskWhy === 'd1' ? 'withheld (LADD / PIA: type only)' : 'not shown (this feed / recording shows every aircraft by type only)';
+const PARK_KIND = { tiedown: 'tie-down', tie_down: 'tie-down', ramp: 'ramp spot', hangar_apron: 'hangar apron', helipad: 'helipad', hangar: 'hangar', door: 'hangar door', unspotted: 'no mapped spot' };
 const inf = (t) => `<span class="inf" title="${esc(t || 'inferred')}">inf</span>`;
 
 export class UI {
@@ -58,8 +62,7 @@ export class UI {
 <aside id="panel" class="peek">
   <button id="grab" aria-label="Expand list"><i></i></button>
   <div class="tabs" role="tablist">${Object.entries(TABS).map(([k, n]) => `<button data-tab="${k}" class="t-${k}">${n} <b></b></button>`).join('')}</div>
-  <button id="phaseline" class="rwystats mono" title="Traffic in view by phase · tap for the airfield statistics"></button>
-  <button id="rwystats" class="rwystats mono" title="Runway movements detected from the aircraft's own motion"></button>
+  <button id="statsbtn" class="statsbtn" title="Traffic in view by phase and runway movements detected from the aircraft's own motion · tap for the airfield statistics"><span id="phaseline" class="rwystats mono"></span><span id="rwystats" class="rwystats mono"></span></button>
   <div class="search"><input id="search" type="search" placeholder="Registration, callsign, type, operator, spot" autocomplete="off" spellcheck="false"></div>
   <div id="list" role="list"></div>
 </aside>
@@ -67,7 +70,6 @@ export class UI {
 <div id="settings" class="pop" hidden>
   <h3>Settings</h3>
   <label>Lighting <select data-set="light"><option value="real">Scene time</option><option value="dawn">Dawn</option><option value="day">Day</option><option value="dusk">Dusk</option><option value="night">Night</option></select></label>
-  <label>Quality <select data-set="quality"><option value="auto">Auto</option><option value="high">High</option><option value="low">Low</option></select></label>
   <label class="chk"><input type="checkbox" data-set="labels" checked> Show labels</label>
   <label class="chk"><input type="checkbox" data-set="others" checked> Show overflights (not HWD traffic)</label>
   <button data-set="clearParked" class="ghost">Forget remembered parked aircraft</button>
@@ -91,14 +93,15 @@ export class UI {
     $('#btn-about').addEventListener('click', () => this.toggle(this.el.about));
     this.el.status.addEventListener('click', () => this.toggle(this.el.about));
     $('#btn-atc').addEventListener('click', () => { this.toggle(this.el.atc); if (!this.el.atc.hidden && this.o.onAtcOpen) this.o.onAtcOpen(); });
-    for (const b of [this.el.phase, this.el.rws]) b.addEventListener('click', () => { this.toggle(this.el.rstats); if (!this.el.rstats.hidden && this.o.onStatsOpen) this.o.onStatsOpen(); });
+    // (fix round 2: the two status lines are ONE button - one 44-px touch target on phones instead of two of 19-21 px)
+    for (const b of [$('#statsbtn')]) b.addEventListener('click', () => { this.toggle(this.el.rstats); if (!this.el.rstats.hidden && this.o.onStatsOpen) this.o.onStatsOpen(); });
     for (const P of [this.el.rstats, this.el.atc, this.el.about]) P.addEventListener('click', e => {
       const h = e.target.closest('[data-id]'); if (h) { this.o.onSelect(+h.dataset.id, true); if (window.innerWidth < 760) P.hidden = true; return; }
       if (e.target.closest('button.x')) P.hidden = true;
     });
     this.el.settings.addEventListener('change', e => { const k = e.target.dataset.set; if (!k) return; const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value; if (k === 'labels') this.showLabels = v; this.o.onSetting(k, v); });
     this.el.settings.addEventListener('click', e => { const k = e.target.dataset.set; if (k === 'clearParked') { this.o.onSetting(k, true); e.target.textContent = 'Forgotten'; } });
-    document.addEventListener('pointerdown', e => { for (const p of this.pops) if (!p.hidden && !p.contains(e.target) && !e.target.closest('#btn-settings,#btn-about,#status,#btn-atc,#rwystats,#phaseline')) p.hidden = true; });
+    document.addEventListener('pointerdown', e => { for (const p of this.pops) if (!p.hidden && !p.contains(e.target) && !e.target.closest('#btn-settings,#btn-about,#status,#btn-atc,#statsbtn')) p.hidden = true; });
     this.el.card.addEventListener('click', e => {
       const b = e.target.closest('button[data-act]'); if (!b) return;
       const a = b.dataset.act; if (a === 'close') this.o.onSelect(null); else this.o.onFollow(a);
@@ -181,7 +184,7 @@ export class UI {
       const sub = I.masked ? (I.typeName || 'type only') : [I.reg && I.reg !== I.label ? I.reg : null, I.operator, I.typeName].filter(Boolean).join(' · ');
       const ph = this.ph(tr, now);
       return `<div class="row c-${cat}${this.sel === tr.key ? ' sel' : ''}${tr.stale ? ' stale' : ''}${tr.info && tr.info.emergency ? ' emg' : ''}" data-id="${id}" role="listitem">
-  <div class="l1"><b>${esc(I.label)}</b><span class="ty mono">${esc(I.icaoType || '····')}</span>${I.masked ? '<span class="d1" title="LADD / PIA: type only">type only</span>' : ''}<span class="ph">${esc(ph)}${isInf(tr) ? ' ' + inf('phase or spot inferred') : ''}</span></div>
+  <div class="l1"><b>${esc(I.label)}</b><span class="ty mono">${esc(I.icaoType || '····')}</span>${I.masked ? `<span class="d1" title="${I.maskWhy === 'd1' ? 'LADD / PIA: type only' : 'type-only feed'}">type only</span>` : ''}<span class="ph">${esc(ph)}${isInf(tr) ? ' ' + inf('phase or spot inferred') : ''}</span></div>
   <div class="l2"><span class="rt">${esc(sub)}</span><span class="nums mono">${esc([alt, spd].filter(Boolean).join('  '))}</span></div></div>`;
     }).join('') : `<div class="empty">${this.q ? 'No matches.' : { air: 'No HWD traffic in the air right now.', ground: 'No aircraft on the ground yet.', heli: 'No helicopters right now.', over: 'No overflights right now.', all: 'No traffic yet.' }[this.tab]}</div>`;
     if (force || html !== this._lastHtml) { const st = this.el.list.scrollTop; this.el.list.innerHTML = html; this.el.list.scrollTop = st; this._lastHtml = html; }
@@ -194,7 +197,7 @@ export class UI {
     if (!tr) { C.hidden = true; this.sel = null; document.body.classList.remove('has-card'); return; }
     this.sel = tr.key; C.hidden = false; document.body.classList.add('has-card');
     const I = tr.ident || {}, D = tr.disp, P = tr.phaseInfo || {}, cat = category(tr), now = Date.now();
-    const head = I.masked ? 'Identity withheld · LADD / PIA' : I.operator ? esc(I.operator) + (I.opSrc && I.opSrc !== 'adsb' ? ` <span class="dim">· ${esc(SRC_NAME[I.opSrc] || I.opSrc)}</span>` : '') : ({ hwd_air: 'HWD traffic', hwd_ground: 'HWD traffic', heli: 'Helicopter', overflight: 'Overflight', unknown: 'Not yet classified', vehicle: 'Ground vehicle' }[cat] || '');
+    const head = I.masked ? maskHead(I) : I.operator ? esc(I.operator) + (I.opSrc && I.opSrc !== 'adsb' ? ` <span class="dim">· ${esc(SRC_NAME[I.opSrc] || I.opSrc)}</span>` : '') : ({ hwd_air: 'HWD traffic', hwd_ground: 'HWD traffic', heli: 'Helicopter', overflight: 'Overflight', unknown: 'Not yet classified', vehicle: 'Ground vehicle' }[cat] || '');
     const scope = tr.scope === 'hwd' ? 'HWD traffic' : tr.scope === 'overflight' ? 'Overflight, not HWD traffic' : 'Not yet classified (watching)';
     const T = towerAt(extra.tScene);
     const park = parkText(tr, extra);
@@ -208,9 +211,9 @@ export class UI {
 <div class="ty">${esc(I.typeName || (I.icaoType ? '' : 'Type not reported'))}${I.icaoType ? ` <span class="mono dim">${esc(I.icaoType)}</span>` : ''}</div>
 <div class="ph c-${cat}">${esc(this.ph(tr, now))}${P.src === 'inf' ? ' ' + inf(P.rule || 'inferred phase') : ''}</div>
 <dl>
-  <dt>Registration</dt><dd class="mono">${I.masked ? '<span class="dim">withheld (LADD / PIA: type only)</span>' : I.reg ? esc(I.reg) + (I.regSrc && I.regSrc !== 'adsb' ? ` <span class="dim small">${esc(SRC_NAME[I.regSrc] || I.regSrc)}</span>` : '') : '—'}</dd>
+  <dt>Registration</dt><dd class="mono">${I.masked ? `<span class="dim">${maskReg(I)}</span>` : I.reg ? esc(I.reg) + (I.regSrc ? ` <span class="dim small">${esc(SRC_NAME[I.regSrc] || I.regSrc)}</span>` : '') + (I.regSrc === 'icao_address' ? ' ' + inf('N-number derived from the ICAO address; not checked against the registry') : '') : '—'}</dd>
   ${!I.masked && I.callsign && I.callsign === I.label && I.reg && I.reg !== I.callsign ? `<dt>Callsign</dt><dd class="mono">${esc(I.callsign)}</dd>` : ''}
-  <dt>Operator</dt><dd>${I.masked ? '<span class="dim">withheld</span>' : I.operator ? esc(I.operator) : '<span class="dim">not known</span>'}</dd>
+  <dt>Operator</dt><dd>${I.masked ? `<span class="dim">${I.maskWhy === 'd1' ? 'withheld' : 'not shown'}</span>` : I.operator ? esc(I.operator) : '<span class="dim">not known</span>'}</dd>
   ${park ? `<dt>Parking</dt><dd>${park}</dd>` : ''}
   ${P.rwy ? `<dt>Runway</dt><dd class="mono"><b>${esc(P.rwy)}</b>${P.leg ? ` <span class="dim">${esc(P.leg)}</span>` : ''}</dd>` : ''}
   <dt>Traffic</dt><dd>${esc(scope)}${tr.scope === 'overflight' ? '' : ''}</dd>
@@ -234,6 +237,8 @@ ${extra.modelNote ? `<div class="model">${esc(extra.modelNote)}</div>` : ''}
       if (!e) { e = document.createElement('div'); e.dataset.id = it.id; e.innerHTML = '<b></b><span></span>'; this.el.labels.appendChild(e); L.set(it.id, e); }
       seen.add(it.id);
       const w = it.sub ? 92 : 56, h = it.sub ? 30 : 18;
+      // clamped into the viewport (fix round 1: labels at the screen edge were cut off on the phone)
+      if (it.x > -60 && it.x < W + 60) it.x = Math.min(W - w / 2 - 2, Math.max(w / 2 + 2, it.x));
       const box = [it.x - w / 2, it.y - h - 14, it.x + w / 2, it.y - 14];
       const clash = !it.sel && (shown > cap || boxes.some(b => b[0] < box[2] && box[0] < b[2] && b[1] < box[3] && box[1] < b[3]));
       if (clash || it.x < -60 || it.y < -60 || it.x > W + 60 || it.y > H + 60) { e.style.display = 'none'; continue; }
@@ -259,6 +264,9 @@ function parkText(tr, extra) {
   if (p.inside) return `In hangar${p.zone ? ' ' + esc(p.zone) : ''} ${inf(p.rule || 'signal ended next to the hangar')}`;
   const kind = PARK_KIND[p.kind] || (p.kind ? String(p.kind).replace(/_/g, ' ') : 'parked');
   const where = extra.parkLabel || p.zone || null;
+  // (fix round 1: 'unspotted [obs]' read as nonsense on the phone card - an aircraft parked where no Phase 1 spot is mapped
+  // stands at its own reported position, which is what the obs mark then says)
+  if (p.kind === 'unspotted' || !p.spotId) return `Parked here${where ? ' · ' + esc(where) : ''} <span class="dim">· no mapped spot (its own reported position)</span>`;
   return `${where ? esc(where) : esc(kind)}${where && kind ? ` <span class="dim">· ${esc(kind)}</span>` : ''} ${p.src === 'inf' ? inf('spot inferred (NAIP / parked stays)') : '<span class="obs" title="spot observed: two or more independent observations (NAIP, recorded stays)">obs</span>'}`;
 }
 function ago(ms) { if (ms == null) return '—'; const m = Math.round(ms / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min ago'; }

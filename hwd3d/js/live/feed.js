@@ -33,7 +33,10 @@ export function normalizeAircraft(a, nowMs) {
     mlat: Array.isArray(a.mlat) ? a.mlat : null, tisb: Array.isArray(a.tisb) ? a.tisb : null,
     nacp: num(a.nac_p), nic: num(a.nic),
     // D1 (fork map 2.1): masked by the relay / pack builder, or flagged LADD (8) / PIA (4) and not yet masked (defence in depth)
-    masked: a._masked === 1 || a._masked === true || (dbFlags != null && (dbFlags & 12) !== 0) || /^x[0-9a-f]{8}$/.test(String(a.hex || '')),
+    masked: !!a._masked || (dbFlags != null && (dbFlags & 12) !== 0) || /^x[0-9a-f]{8}$/.test(String(a.hex || '')),
+    // why (fix round 1): 'd1' (flagged LADD / PIA), 'type-only' (a type-only relay / pack masks every aircraft), 'unknown'
+    // (an older pack: _masked 1, or only the masked key form) - the UI claims LADD / PIA only for 'd1'
+    maskWhy: (dbFlags != null && (dbFlags & 12) !== 0) || a._masked === 'd1' ? 'd1' : a._masked === 'type-only' ? 'type-only' : (a._masked || /^x[0-9a-f]{8}$/.test(String(a.hex || ''))) ? 'unknown' : null,
     dbFlags, mx,
   };
 }
@@ -50,9 +53,9 @@ export function parsePayload(json, fallbackNow = Date.now()) {
 // changed records and gone keys). Keeps the full aircraft list and hands it to onData after every event. Falls back to
 // polling /api/adsb when EventSource fails. (sfo3d design; the replay shim fakes both endpoints.)
 export class StreamFeed {
-  constructor({ url = 'api/stream?delta=1', pollUrl = 'api/adsb', onData, onStatus, pollMs = 2000, history = 0 } = {}) {
+  constructor({ url = 'api/stream?delta=1', pollUrl = 'api/adsb', onData, onStatus, onForget = null, pollMs = 2000, history = 0 } = {}) {
     if (history > 0 && !/history=/.test(url)) url += (url.includes('?') ? '&' : '?') + 'history=' + Math.min(120, Math.round(history));
-    Object.assign(this, { url, pollUrl, onData, onStatus, pollMs });
+    Object.assign(this, { url, pollUrl, onData, onStatus, onForget, pollMs });
     this.map = new Map(); this.seq = 0; this.es = null; this.mode = null; this.lastOk = 0; this.fails = 0; this.timer = null; this.running = false; this.head = null;
   }
   start() { if (this.running) return; this.running = true; if (typeof EventSource !== 'undefined') this.sse(); else this.poll(); }
@@ -67,6 +70,9 @@ export class StreamFeed {
   sse() {
     this.mode = 'stream'; const es = this.es = new EventSource(this.url);
     es.addEventListener('adsb', (ev) => { try { const j = JSON.parse(ev.data); this.map.clear(); for (const a of j.ac || []) this.map.set(a.hex, a); this.seq = j.seq; this.emit(j); } catch (e) { } });
+    // D1 late flag (fix round 1): the relay names keys it published unmasked before a LADD/PIA flag arrived (open streams, and
+    // since fix round 2 the poll answers too); the app drops their identity at once (traffic.forget)
+    es.addEventListener('forget', (ev) => { try { const j = JSON.parse(ev.data); for (const k of j.forget || []) this.map.delete(k); this.onForget && this.onForget(j.forget || []); } catch (e) { } });
     es.addEventListener('delta', (ev) => { try { const j = JSON.parse(ev.data); for (const a of j.ac || []) this.map.set(a.hex, a); for (const k of j.gone || []) this.map.delete(k); this.seq = j.seq; this.emit(j); } catch (e) { } });
     es.onerror = () => {
       this.fails++; this.onStatus && this.onStatus({ ok: false, source: { name: 'local relay' }, error: 'stream interrupted' });
@@ -77,8 +83,13 @@ export class StreamFeed {
     this.mode = 'poll'; if (!this.running) return;
     let wait = this.pollMs;
     try {
-      const r = await fetch(this.pollUrl, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
-      const j = await r.json(); this.map.clear(); for (const a of j.ac || []) this.map.set(a.hex, a); this.emit(j);
+      // ?since=<seq of the last answer>: the relay adds 'forget' (D1 late flags) for keys this client was shown (fix round 2:
+      // the forget event used to reach SSE streams only)
+      const u = this.seq ? this.pollUrl + (this.pollUrl.includes('?') ? '&' : '?') + 'since=' + encodeURIComponent(this.seq) : this.pollUrl;
+      const r = await fetch(u, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      if (Array.isArray(j.forget) && j.forget.length) { for (const k of j.forget) this.map.delete(k); this.onForget && this.onForget(j.forget); }
+      this.map.clear(); for (const a of j.ac || []) this.map.set(a.hex, a); if (j.seq != null) this.seq = j.seq; this.emit(j);
     } catch (e) { this.fails++; wait = Math.min(15000, 1000 * Math.pow(1.6, Math.min(this.fails, 8))); this.onStatus && this.onStatus({ ok: false, source: { name: 'local relay' }, error: e.message || 'failed' }); }
     this.timer = setTimeout(() => this.poll(), wait);
   }

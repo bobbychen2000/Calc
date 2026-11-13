@@ -85,7 +85,7 @@ D1 (docs/PLAN.md 6a; contract docs/phase2_fork_map.md 2.1) - the LAST step befor
   --ident type-only does the same to every aircraft (for anything that may be published).
 """
 import argparse, base64, datetime as dt, glob, gzip, heapq, hmac, hashlib, http.client, json, math, os, random, re
-import signal, ssl, sys, threading, time, urllib.parse, urllib.request
+import signal, ssl, subprocess, sys, threading, time, urllib.parse, urllib.request
 from collections import deque
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 
@@ -127,6 +127,7 @@ MLAT_HOLD_S = 10.0    # ignore MLAT/TIS-B positions while an ADS-B/ADS-R one is 
 FULL_EVERY = 30.0     # delta streams get a full list at least this often (s)
 HISTORY_S = 120.0     # /api/stream?history=S keeps at most this much (s)
 IDENT_KEEP_S = 600.0  # /api/ident answers for keys seen in the last 10 min
+FORGET_KEEP_S = 600.0  # D1 late-flag forget events are offered to SSE streams / pollers (?since=) this long (fix round 2)
 
 ATTRIBUTION = {
     'adsb': 'Aircraft data: contains information from ADSB.lol (https://adsb.lol), which is made available here under '
@@ -293,12 +294,43 @@ class Quota:
         except (OSError, ValueError):
             pass
 
-    def _save(self):
+    def _merge_file(self):
+        """Fix round 1: two relays on one IP share the quota file. Before each decision the file is re-read and its request
+        times merged with ours (set union), so each process counts the other's requests; the save happens under an exclusive
+        lock file (O_EXCL, stale after 10 s) so the two writers do not overwrite each other."""
         if not self.path:
             return
         try:
+            with open(self.path) as f:
+                d = json.load(f)
+        except (OSError, ValueError):
+            return
+        now = time.time()
+        mine = {round(t, 1) for t in self.log}
+        for t in d.get('t', []):
+            if now - t < self.window and round(t, 1) not in mine:
+                self.log.append(t)
+        self.log = deque(sorted(self.log))
+        self.blocked_until = max(self.blocked_until, float(d.get('blocked_until') or 0.0))
+
+    def _save(self):
+        if not self.path:
+            return
+        lk = self.path + '.lock'
+        try:
             os.makedirs(os.path.dirname(self.path), exist_ok=True)
-            tmp = self.path + '.tmp'
+            for _ in range(50):
+                try:
+                    fd = os.open(lk, os.O_CREAT | os.O_EXCL | os.O_WRONLY); os.close(fd); break
+                except FileExistsError:
+                    try:
+                        if time.time() - os.path.getmtime(lk) > 10:
+                            os.unlink(lk)
+                    except OSError:
+                        pass
+                    time.sleep(0.02)
+            self._merge_file()
+            tmp = self.path + '.tmp.%d' % os.getpid()
             with open(tmp, 'w') as f:
                 json.dump({'about': 'hwd_live_server.py Quota: our adsb.lol request times (epoch s), rolling 24 h; no '
                                     'identities', 'daily': self.daily, 'cap': self.cap,
@@ -306,6 +338,11 @@ class Quota:
             os.replace(tmp, self.path)
         except OSError as e:
             print('quota save failed:', e, file=sys.stderr)
+        finally:
+            try:
+                os.unlink(lk)
+            except OSError:
+                pass
 
     def _prune(self, now):
         while self.log and now - self.log[0] >= self.window:
@@ -332,6 +369,7 @@ class Quota:
     def next_allowed(self, now):
         """Earliest time a request may go out (>= now)."""
         with self.lock:
+            self._merge_file()
             self._prune(now)
             t = max(now, self.blocked_until)
             if len(self.log) >= self.cap:
@@ -641,6 +679,7 @@ class D1:
         self.mode = mode
         self.salt = salt or os.urandom(16)
         self.flagged = set()       # sticky: original keys seen with dbFlags & 12 in this process
+        self.newly = []            # keys flagged since the last merge (Hub purges what it published for them unmasked)
         self.n_masked = 0
 
     def key(self, hx):
@@ -651,8 +690,9 @@ class D1:
             f = int(rec.get('dbFlags') or 0)
         except (TypeError, ValueError):
             f = 0
-        if f & D1_BITS:
+        if f & D1_BITS and hx not in self.flagged:
             self.flagged.add(hx)
+            self.newly.append(hx)
         return self.mode == 'type-only' or hx in self.flagged
 
     def apply(self, hx, rec):
@@ -663,7 +703,9 @@ class D1:
             rec.pop(k, None)
         k = self.key(hx)
         rec['hex'] = k
-        rec['_masked'] = 1
+        # the reason (fix round 1): 'd1' = flagged LADD / PIA; 'type-only' = every aircraft is masked in this run / pack (which
+        # aircraft are flagged is then not said - the UI must not claim LADD / PIA for them)
+        rec['_masked'] = 'type-only' if self.mode == 'type-only' else 'd1'
         return k, rec
 
 
@@ -708,6 +750,11 @@ class Hub:
                        'msg': 'waiting for the first provider response'}
         self.full = json.dumps(self.latest, separators=(',', ':')).encode()
         self.history = deque()   # (wall, full payload bytes) of recent publishes, for /api/stream?history=S
+        # D1 late flags (fix round 2): every pending forget event (seq, wall, {key: seq the key was first published}) for
+        # FORGET_KEEP_S - SSE streams get all events they have not seen yet (not only the newest), /api/adsb?since=S gets
+        # the keys a polling client could have seen (published at or before its last answer S)
+        self.forget_evs = deque()
+        self.pub_first = {}      # unmasked output key -> seq of its first publication (kept while /api/ident holds the key)
         self.idents = {}         # output key -> (wall, identity subset) for /api/ident
         self.last_client = 0.0
         self.clients = 0
@@ -763,6 +810,8 @@ class Hub:
             self.hist.clear()
             self.prev_sig.clear()
             self.history.clear()
+            self.forget_evs.clear()
+            self.pub_first.clear()
 
     # -- merge
     def _merge(self):
@@ -809,18 +858,47 @@ class Hub:
         for k in [k for k, h in self.hist.items() if wall - h.get('seen', 0) > 600]:
             del self.hist[k]
         self.fresher, self.masked_now = fresher, masked
+        # D1 late flag (fix round 1): a key that a provider's record flagged LADD/PIA only now (another provider's database
+        # row had no dbFlags, so it was published unmasked until this merge): its identity is purged everywhere it is still
+        # held - /api/ident, the ?history replay - and clients are told to forget it ('forget' in the next payload; the
+        # client drops the identity of that track at once). adsb.fi v3 answers do carry dbFlags (one request, 2026-11-13: 2
+        # of 78 records; readsb omits the field when it is 0), so this covers the providers' databases disagreeing.
+        forget = []
+        for hx in self.d1.newly:
+            pub = hx in self.prev_sig or hx in self.idents
+            self.idents.pop(hx, None)
+            tag = ('"hex":"%s"' % hx).encode()
+            if any(tag in b for _, b in self.history):
+                self.history = deque((w, b) for (w, b) in self.history if tag not in b)
+                pub = True
+            if pub:
+                forget.append(hx)
+                C['d1_late_flag'] = C.get('d1_late_flag', 0) + 1
+        self.d1.newly = []
+        first = {hx: self.pub_first.pop(hx, 0) for hx in forget}
         changed = [r for k, r in out if self.prev_sig.get(k) != sigs[k]]
         gone = [k for k in self.prev_sig if k not in sigs]
-        publish = bool(changed or gone) or self.seq == 0
+        publish = bool(changed or gone or forget) or self.seq == 0
         if publish:                  # a duplicate snapshot (nothing new) is not pushed to streams
             self.seq += 1
         used = sorted({s['name'] for s in self.snaps.values() if wall - s['recv'] <= s.get('ttl', SNAP_TTL)})
         head = {'now': int(wall * 1000), 'dataNow': self.data_now_ms(wall), 'seq': self.seq, 'total': len(out),
                 '_source': '+'.join(used) or None, 'msg': 'No error'}
+        if forget:
+            # sent to clients that were receiving while the key was published - open SSE streams, and polling clients whose
+            # last answer (?since=S) came at or after its first publication - never in the full snapshot or the ?history
+            # buffer: a client that never saw the key must not learn the address from the forget list
+            self.forget_ev = (self.seq, json.dumps({'forget': forget, 'seq': self.seq}, separators=(',', ':')).encode())
+            self.forget_evs.append((self.seq, wall, first))
+        while self.forget_evs and wall - self.forget_evs[0][1] > FORGET_KEEP_S:
+            self.forget_evs.popleft()
         full = dict(head, ac=[r for _, r in out])
         self.latest = full
         self.full = json.dumps(full, separators=(',', ':')).encode()
         if publish:
+            for k in sigs:
+                if not k.startswith('x'):
+                    self.pub_first.setdefault(k, self.seq)
             self.prev_sig = sigs
             self.delta = json.dumps(dict(head, ac=changed, gone=gone), separators=(',', ':')).encode()
             self.history.append((wall, self.full))
@@ -830,9 +908,32 @@ class Hub:
                 self.idents[k] = (wall, _ident_subset(k, r))
             for k in [k for k, v in self.idents.items() if wall - v[0] > IDENT_KEEP_S]:
                 del self.idents[k]
+            for k in [k for k in self.pub_first if k not in self.idents]:
+                del self.pub_first[k]
             self.cond.notify_all()
         else:
             self.counters['unchanged'] = self.counters.get('unchanged', 0) + 1
+
+    def adsb_answer(self, since=0):
+        """/api/adsb: the full snapshot; with ?since=S (the seq of the poller's last answer) plus 'forget', the keys it was
+        shown before a D1 late flag arrived (fix round 2: the poll fallback of js/live/feed.js never got the SSE event)."""
+        with self.lock:
+            b = self.full
+            fk = self.forget_since(since) if since > 0 else []
+        if fk:
+            b = b[:-1] + b',"forget":' + json.dumps(fk, separators=(',', ':')).encode() + b'}'
+        return b
+
+    def forget_since(self, since, upto=None, polled=True):
+        """Keys of the forget events after seq `since` (up to `upto`, default now). polled=True (/api/adsb?since=S): only
+        keys the client could have seen - first published at or before its last answer S. SSE streams (polled=False) were
+        open for every publication since their own seq."""
+        upto = self.seq if upto is None else upto
+        out = []
+        for seq, _w, first in self.forget_evs:
+            if since < seq <= upto:
+                out += [k for k, f in first.items() if not polled or (0 < f <= since)]
+        return sorted(set(out))
 
     def _finish(self, key, rec):
         """The last merge step: Mictronics `_mx` (unmasked aircraft only), then D1 masking."""
@@ -1205,19 +1306,38 @@ SERVED_OUT = ('replay',)                                    # out/ is denied exc
 GZIP_TYPES = ('.js', '.mjs', '.css', '.html', '.json', '.svg', '.txt', '.csv', '.md')
 
 
+# fix round 1: an ALLOW-list (the deny-list matched case-sensitively: on a case-insensitive filesystem - macOS APFS, Windows
+# NTFS by default - /Refs/cache/local/... and /OUT/... were served). Only the app's own files are served: the page, its
+# stylesheet, js/, data/, dev/ (development pages, code only) and out/replay/ (the generated pack + shim). Every part is
+# compared lower-cased, and the resolved real path must stay inside one of the allowed directories (no symlink escape).
+ALLOW_FILES = {'', 'live.html', 'live.css', 'index.html', 'favicon.ico'}
+ALLOW_DIRS = ('js', 'data', 'dev', 'out/replay')
+
+
 def denied(upath):
     """True for any URL path the static server must not serve."""
     p = urllib.parse.unquote(upath).lstrip('/')
     parts = [s for s in p.replace('\\', '/').split('/') if s]
-    if any(s.startswith('.') or s == '__pycache__' for s in parts):
+    low = [s.lower() for s in parts]
+    if any(s.startswith('.') or s == '__pycache__' or s == '..' for s in low):
         return True
     if not parts:
         return False
-    if parts[0] in DENY_TOP or any(p.startswith(d) for d in DENY_PREFIX):
+    if len(parts) == 1:
+        return low[0] not in ALLOW_FILES
+    j = '/'.join(low)
+    if not any(j.startswith(d + '/') for d in ALLOW_DIRS):
         return True
-    if parts[0] == 'out' and (len(parts) < 3 or parts[1] not in SERVED_OUT):
+    if low[0] in DENY_TOP or any(j.startswith(d) for d in DENY_PREFIX):
         return True
-    return False
+    # the real path (symlinks resolved) must lie inside the allowed directory it names
+    real = os.path.realpath(os.path.join(ROOT, *parts))
+    for d in ALLOW_DIRS:
+        base = os.path.realpath(os.path.join(ROOT, *d.split('/')))
+        rl, bl = real.lower(), base.lower()       # (case-insensitive filesystems: /JS/geo.js is js/geo.js)
+        if rl == bl or rl.startswith(bl + os.sep):
+            return False
+    return True
 
 
 class StaticGzip:
@@ -1314,9 +1434,11 @@ def make_handler(app):
                     return self._json(ping_payload(app))
                 if u.path == '/api/adsb':
                     hub.touch()
-                    with hub.lock:
-                        b = hub.full
-                    return self._json(b)
+                    try:
+                        since = int(q.get('since', ['0'])[0] or 0)
+                    except ValueError:
+                        since = 0
+                    return self._json(hub.adsb_answer(since))
                 if u.path == '/api/stream':
                     try:
                         hist = float(q.get('history', ['0'])[0] or 0)
@@ -1404,10 +1526,14 @@ def make_handler(app):
                         if hub.seq == seq:
                             msg = b': keepalive\n\n'
                         else:
+                            # every forget event since this stream's last seq (fix round 2: not only the newest one)
+                            fk = hub.forget_since(seq, polled=False)
+                            pre = (b'event: forget\ndata: ' + json.dumps({'forget': fk, 'seq': hub.seq}, separators=(',', ':')).encode()
+                                   + b'\n\n') if fk else b''
                             if delta and hub.seq == seq + 1 and time.time() - last_full < FULL_EVERY:
-                                msg = b'event: delta\ndata: ' + hub.delta + b'\n\n'
+                                msg = pre + b'event: delta\ndata: ' + hub.delta + b'\n\n'
                             else:
-                                msg = b'event: adsb\ndata: ' + hub.full + b'\n\n'
+                                msg = pre + b'event: adsb\ndata: ' + hub.full + b'\n\n'
                                 last_full = time.time()
                             seq = hub.seq
                     hub.touch()
@@ -1433,6 +1559,37 @@ def app_status(app):
             'ident': {'enabled': bool(ident and ident.enabled), 'ready': bool(ident and ident.ready),
                       'aircraft': ident.n if ident else 0, 'source': ident.label() if ident else None,
                       'error': ident.err if ident else None}}
+
+
+def record_dir_check(path, root=None):
+    """May --record write identity-bearing recordings to `path`? -> (ok, reason).
+    Fix round 2: inside hwd3d/ only under refs/cache/local/ or out/ (not out/replay/, which is served), compared
+    CASE-SENSITIVELY on the resolved path (fix round 1 lower-cased it: on Linux `Refs/Cache/Local/rec` is another directory,
+    not covered by .gitignore, and `git add hwd3d` picked it up); and anywhere in a git work tree the directory must be
+    ignored by git (`git check-ignore`), so a recording can never be staged. Outside any work tree: allowed."""
+    root = os.path.realpath(root or ROOT)
+    rd = os.path.realpath(path)
+    rel = os.path.relpath(rd, root).replace(os.sep, '/')
+    inside = not (rel == '..' or rel.startswith('../'))
+    if inside:
+        r = rel + '/'
+        if not ((r.startswith('refs/cache/local/') or r.startswith('out/')) and not r.lower().startswith('out/replay/')):
+            return False, ('inside hwd3d/ use refs/cache/local/<dir> or out/<dir> (exact lower-case spelling; gitignored, '
+                           'never served), or a directory outside the repository')
+    # the nearest existing ancestor runs git; a probe file name inside the directory is tested (it need not exist)
+    anc = rd
+    while not os.path.isdir(anc) and os.path.dirname(anc) != anc:
+        anc = os.path.dirname(anc)
+    probe = os.path.join(rd, 'adsblol_00000000_00.jsonl.gz')
+    try:
+        r = subprocess.run(['git', '-C', anc, 'check-ignore', '-q', '--no-index', probe], capture_output=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return (True, 'git not available; hwd3d path rule only') if inside else (True, 'git not available')
+    if r.returncode == 0:
+        return True, 'ignored by git'
+    if r.returncode == 1:
+        return False, f'{rd} is in a git work tree and not ignored by git: `git add` would pick the recordings up'
+    return True, 'not in a git work tree'
 
 
 def parse_time(s):
@@ -1493,11 +1650,10 @@ def main():
     app = {'hub': hub, 'metar': metar, 'ident': ident, 't_start': time.time(), 'quiet': a.quiet, 'radius': a.radius}
     writer = None
     if a.record:
-        rd = os.path.abspath(a.record)
-        rel = os.path.relpath(rd, ROOT)
-        if not rel.startswith('..') and not denied('/' + rel.replace(os.sep, '/') + '/x.jsonl.gz'):
-            sys.exit(f'--record {a.record}: recordings hold identities and this directory would be served; use '
-                     'refs/cache/local/... or out/<dir> (gitignored, never served), or a directory outside hwd3d/')
+        ok, why = record_dir_check(a.record)
+        if not ok:
+            sys.exit(f'--record {a.record}: recordings hold identities; {why}')
+        rd = os.path.realpath(a.record)
         writer = RecordWriter(rd)
         hub.ext.append(writer.write)
         app['record_dir'] = a.record
@@ -1518,7 +1674,9 @@ def main():
                          daemon=True).start()
         hub.last_client = float('inf')
     else:
-        active = (lambda: True) if writer else hub.active
+        # --record keeps adsb.lol polling with no client (that is what it records); adsb.fi is live-only (never recorded) and
+        # is polled only while a client is connected (fix round 1: it was polled every 2 s around the clock)
+        active_rec = (lambda: True) if writer else hub.active
         key = read_key(a)
         for pid, prov in PROVIDERS.items():
             if pid == 'adsbfi' and a.no_adsbfi:
@@ -1529,7 +1687,7 @@ def main():
                 quota = Quota(os.path.join(a.state_dir, 'adsblol_quota.json'), daily, horizon=a.adsblol_horizon)
                 if key:
                     hdr['x-api-key'] = key
-            p = Poller(prov, hub.on_result, ARP[0], ARP[1], a.radius, active=active, quota=quota, headers=hdr)
+            p = Poller(prov, hub.on_result, ARP[0], ARP[1], a.radius, active=(hub.active if pid == 'adsbfi' else active_rec), quota=quota, headers=hdr)
             hub.wakes.append(p.wake)
             hub.pollers[pid] = p
             p.start()

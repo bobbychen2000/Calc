@@ -195,6 +195,7 @@ export class Renderer {
       // ground-contact AO reference of obj / objI items (js/shaders/objects.js): set for every draw so that one item's value
       // never leaks to the next draw of the same program (GL keeps uniform values per program)
       if (p.u.uGroundRef) p.set('uGroundRef', it.groundRef ?? -1e4);
+      if (p.u.uAlpha) p.set('uAlpha', it.alpha ?? 1);   // screen-door fade of obj items (fix round 1); 1 = opaque
       if (it.blend === 'add') { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.depthMask(false); }
       else if (it.blend === 'alpha') { gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE); gl.depthMask(false); }
       if (it.polyOffset && passName !== 'shadow') { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(it.polyOffset[0], it.polyOffset[1]); }

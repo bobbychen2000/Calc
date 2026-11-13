@@ -98,7 +98,7 @@ class D1(unittest.TestCase):
         masked = [a for k, a in m.items() if k.startswith('x')]
         self.assertEqual(len(masked), 2)
         for a in masked:
-            self.assertRegex(a['hex'], r'^x[0-9a-f]{8}$'); self.assertEqual(a['_masked'], 1)
+            self.assertRegex(a['hex'], r'^x[0-9a-f]{8}$'); self.assertEqual(a['_masked'], 'd1')
             for f in S.D1_DROP:
                 self.assertNotIn(f, a)
             self.assertIn('t', a)                                    # type stays
@@ -118,6 +118,41 @@ class D1(unittest.TestCase):
         self.assertIn('ddd444', m3)                                   # unflagged in a new session: not masked
         feed(h2, FI, T, [ac('ddd444', dbFlags=12)])
         self.assertIn(k, h2.latest['ac'][0]['hex'])                   # a flag from either provider masks it
+
+    def test_late_flag_purges_ident_history_and_tells_clients(self):
+        # fix round 1: a provider whose record lacks dbFlags publishes the identity first; when the flag arrives the identity
+        # must leave /api/ident and the ?history buffer, and the next payload carries 'forget' for that key
+        h = S.Hub(); T = time.time()
+        m1 = feed(h, FI, T, [ac('a1b2c3', r='N999ZZ', flight='N999ZZ')])
+        self.assertIn('a1b2c3', m1)
+        self.assertIsNotNone(h.ident_of('a1b2c3'))
+        m2 = feed(h, LOL, T + 1, [ac('a1b2c3', r='N999ZZ', flight='N999ZZ', dbFlags=8, seen_pos=0.1)])
+        k = next(iter(m2)); self.assertTrue(k.startswith('x'))
+        self.assertIsNone(h.ident_of('a1b2c3'))
+        self.assertFalse(any(b'N999ZZ' in b or b'a1b2c3' in b for _, b in h.history))    # history purged, no forget in it
+        self.assertNotIn(b'a1b2c3', h.full); self.assertNotIn(b'N999ZZ', h.full)           # nor in the full snapshot
+        self.assertEqual(json.loads(h.forget_ev[1])['forget'], ['a1b2c3'])               # streams get a 'forget' event
+        self.assertEqual(h.counters.get('d1_late_flag'), 1)
+
+    def test_forget_reaches_pollers_and_every_pending_event(self):
+        # fix round 2: the forget list also reaches /api/adsb pollers (?since=S, keys they could have seen), and a client
+        # that missed two late-flag events gets both, not only the newest
+        h = S.Hub(); T = time.time()
+        feed(h, FI, T, [ac('a1b2c3', r='N999ZZ'), ac('d4e5f6', r='N888YY')])
+        s_seen = h.seq                                                     # a poller's last answer: both keys public
+        feed(h, LOL, T + 1, [ac('a1b2c3', r='N999ZZ', dbFlags=8, seen_pos=0.1), ac('d4e5f6', r='N888YY', seen_pos=0.1)])
+        feed(h, LOL, T + 2, [ac('a1b2c3', dbFlags=8, seen_pos=0.1), ac('d4e5f6', r='N888YY', dbFlags=4, seen_pos=0.1)])
+        self.assertEqual(h.forget_since(s_seen), ['a1b2c3', 'd4e5f6'])     # poller: both events
+        self.assertEqual(h.forget_since(s_seen, polled=False), ['a1b2c3', 'd4e5f6'])   # SSE stream: both events
+        self.assertEqual(h.forget_since(h.seq), [])                        # already up to date: nothing
+        self.assertEqual(h.forget_since(0), [])                            # never polled: learns nothing
+        j = json.loads(h.adsb_answer(s_seen)); self.assertEqual(j['forget'], ['a1b2c3', 'd4e5f6']); self.assertIn('ac', j)
+        self.assertNotIn('forget', json.loads(h.adsb_answer(0))); self.assertNotIn(b'a1b2c3', h.adsb_answer(h.seq))
+        h2 = S.Hub(); feed(h2, FI, T, [ac('aaaaaa', r='N1')]); s_before = h2.seq
+        feed(h2, FI, T + 1, [ac('aaaaaa', r='N1'), ac('bbbbbb', r='N2')])
+        feed(h2, LOL, T + 2, [ac('bbbbbb', r='N2', dbFlags=8, seen_pos=0.1)])
+        self.assertEqual(h2.forget_since(s_before), [])                    # last answer before bbbbbb was published
+        self.assertEqual(h2.forget_since(s_before + 1), ['bbbbbb'])
 
     def test_type_only_masks_everything_including_anonymous(self):
         h = S.Hub(d1=S.D1('type-only')); T = time.time()
@@ -161,6 +196,20 @@ class Quota(unittest.TestCase):
         self.assertAlmostEqual(q2.next_allowed(T), T - 3600 + 86400 + 1, delta=0.1)   # oldest ages out of 24 h
         q2.block(T + 7200, 'per-day'); self.assertGreaterEqual(q2.next_allowed(T), T + 7200)
 
+    def test_two_processes_share_the_file(self):
+        # fix round 1: two relays on one IP: each re-reads the shared log before deciding, so both together stay in the cap
+        d = tempfile.mkdtemp(); p = os.path.join(d, 'q.json')
+        a, b = S.Quota(p, 500), S.Quota(p, 500); T = time.time()
+        for i in range(300):
+            a.note(T - 1000 + i)
+        self.assertEqual(b.left(T), 475)                              # b's in-memory log is stale ...
+        self.assertGreater(b.next_allowed(T), T - 1)                  # ... next_allowed merges the file first
+        self.assertEqual(b.left(T), 175)
+        for i in range(175):
+            b.note(T - 500 + i)
+        self.assertEqual(S.Quota(p, 500).left(T), 0)                  # the file holds both processes' requests
+        self.assertGreater(a.next_allowed(T), T + 3600)
+
     def test_budget_schedule_and_retry_after_in_full(self):
         q = S.Quota('', 500)
         p = S.Poller(LOL, lambda *a: None, quota=q)
@@ -194,6 +243,11 @@ class Serving(unittest.TestCase):
                 '/out%2fphase1/a.png', '/__pycache__/hwd_live_server.cpython-313.pyc', '/tools/live/__pycache__/recio.pyc']
         allow = ['/live.html', '/js/geo.js', '/data/hwd_taxigraph.json', '/out/replay/pack.json.gz',
                  '/out/replay/replay_shim.js', '/out/replay/wx/metar_khwd_20261108T2100Z_5h.json', '/']
+        # fix round 1: an allow-list, compared case-insensitively (APFS / NTFS map /Refs to refs)
+        deny += ['/Refs/cache/local/x', '/REFS/cache/adsb/hwd_events.json', '/OUT/replay/../phase2/a.png', '/Out/phase2/run.json',
+                 '/Tools/live/recio.py', '/docs/phase2/phase2_run_job.mjs', '/tools/qa/phase2_run_ref.py', '/docs/ATTRIBUTION.md', '/hwd_live_server.py',
+                 '/CLAUDE.md', '/package.json', '/livetest.mjs', '/Jobs/views.mjs']
+        allow += ['/LIVE.HTML', '/JS/geo.js', '/dev/world.html', '/live.css']
         for p in deny:
             self.assertTrue(S.denied(p), p)
         for p in allow:
@@ -205,6 +259,19 @@ class Serving(unittest.TestCase):
              {'hex': 'f', 'lastPosition': {'lat': LAT, 'lon': LON, 'seen_pos': 70}}]
         self.assertEqual([a['hex'] for a in S.window_filter(L, 8)], ['a', 'c', 'd', 'f'])
         self.assertEqual([a['hex'] for a in S.window_filter(L, 8, 5000)], ['a', 'd', 'f'])
+
+
+class RecordGuard(unittest.TestCase):
+    def test_record_dir_case_sensitive_and_git_ignored(self):
+        # fix round 2: `Refs/Cache/Local/rec` is not refs/cache/local/ on Linux (and not gitignored): refused; anything in a
+        # git work tree that git does not ignore: refused
+        for p in ('Refs/Cache/Local/rec', 'OUT/REPLAY/rec', 'Out/rec', 'out/replay/rec', 'out/Replay/rec', 'tools/rec',
+                  'refs/cache/adsb/rec', os.path.join(ROOT, '..', 'hwd_rec_probe')):
+            self.assertFalse(S.record_dir_check(os.path.join(ROOT, p) if not os.path.isabs(p) else p)[0], p)
+        for p in ('refs/cache/local/rec', 'out/rec'):
+            self.assertTrue(S.record_dir_check(os.path.join(ROOT, p))[0], p)
+        with tempfile.TemporaryDirectory() as d:
+            self.assertTrue(S.record_dir_check(os.path.join(d, 'rec'))[0])   # outside any work tree
 
 
 class Weather(unittest.TestCase):

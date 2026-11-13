@@ -31,7 +31,7 @@ export function naipPaved(x, z) {
 }
 // the pavement the physics uses: the site model's (P2) united with the NAIP-seen airside asphalt
 export const pavedWith = (site) => (x, z) => (site ? site.paved(x, z) : false) || naipPaved(x, z);
-export const PHYS_RULES = { PARK_GAP_M: 1.0, OTHER_GAP_M: 3.0, MOVING_M: 1.5, SCATTER_M: 6, SEEK_MAX_M: 15, ROTOR_M: 0.0 };
+export const PHYS_RULES = { PARK_GAP_M: 1.0, OTHER_GAP_M: 3.0, MOVING_M: 1.5, SCATTER_M: 6, SEEK_MAX_M: 25, ROTOR_M: 0.0 };   // SEEK_MAX_M 15 -> 25 m (fix round 1: a GNSS pose 15-20 m off the runway end pavement stayed on the grass) [inf]
 
 // planform sample points of an aircraft whose main-gear origin is at (x, z), nose heading hdg (deg). Local: a = metres
 // ahead of the origin along the nose, s = metres to the right.
@@ -120,9 +120,16 @@ export class GroundPhysics {
     const fixed = [], free = [], moving = [];
     for (const tr of traffic.tracks.values()) {
       const D = tr.disp; tr._B = null;
-      if (!D.valid || !D.ground || tr.vehicle || !tr.dims || tr.hidden || (tr.park && tr.park.inside)) { tr.physOff = null; continue; }
+      if (!D.valid || !D.ground || tr.vehicle || !tr.dims || tr.hidden || tr.inHangarRest || (tr.park && tr.park.inside)) { tr.physOff = null; continue; }
       if (!(D.alpha > 0.01) && !tr.stale) { tr.physOff = null; continue; }
-      const stationary = (D.gs || 0) < 0.3 && tr.restPose;
+      // a helicopter standing on its skids between two still runs (GNSS noise of a few m) is placed like a parked one, from
+      // its target pose (fix round 1: rotor discs through hangar walls) [inf]
+      if (!tr.restPose && tr.dims.cls === 'heli' && (D.gs || 0) < 0.5 && tr._raw) tr._heliRest = { x: tr._raw[0], z: tr._raw[1], hdg: D.hdg }; else tr._heliRest = null;
+      // (fix round 2) stationary = the TARGET rests (a rest pose), whatever the body's own speed: a body driving to its seek
+      // offset used to count as 'moving', its offset decayed, the target swung back and the body shuttled 12 m to and fro on
+      // the grass for a minute. The offset is kept while the target rests and decays from where it is once the target moves
+      // (one continuous offset, hysteresis by the target state)
+      const stationary = !!tr.restPose || tr._heliRest;
       if (stationary) free.push(tr); else moving.push(tr);
     }
     // every stationary pair keeps PARK_GAP_M (the tie-down rows are painted 12.15 m apart for ~11 m spans: a 3 m rule would
@@ -134,7 +141,7 @@ export class GroundPhysics {
     let moved = 0, unresolved = 0;
     const placed = [];
     for (const tr of free) {
-      const P = tr.restPose; const base = bodyOf(tr.dims, P.x, P.z, P.hdg); base.tr = tr;
+      const P = tr.restPose || tr._heliRest; const base = bodyOf(tr.dims, P.x, P.z, P.hdg); base.tr = tr;
       const key = Math.round(P.x * 4) + ',' + Math.round(P.z * 4) + ',' + Math.round(P.hdg) + '|' + placed.map(b => b.tr.key).join(',');
       if (!tr.phys || tr.phys.key !== key || (!tr.phys.ok && this.frame % 100 === 0)) {
         let o = this.seek(base, placed, gapOf, PHYS_RULES.SCATTER_M);
@@ -153,6 +160,10 @@ export class GroundPhysics {
       for (const o of placed.concat(movB)) {
         if (o === B) continue;
         if (!overlaps(B, o, PHYS_RULES.MOVING_M)) continue;
+        // (fix round 2) a SILENT aircraft (stale: drawn at its last position, inferred) that a heard, moving aircraft drives
+        // into is evidently not there any more: traffic.update fades it out [inf]
+        // (only 'no_signal' ones: a silent aircraft PARKED at a spot stays - there the mover is the one off its line)
+        if (o.tr && o.tr.stale && !o.tr.park && !(B.tr && B.tr.stale) && overlaps(B, o, 0)) { o.tr.staleOverrun = true; continue; }
         ov++; const vx = B.x - o.x, vz = B.z - o.z, l = Math.hypot(vx, vz) || 1; push[0] += vx / l; push[1] += vz / l;
       }
       const decay = Math.exp(-dt / 3); cur[0] = cur[0] * decay + push[0] * dt * 1.5; cur[1] = cur[1] * decay + push[1] * dt * 1.5;

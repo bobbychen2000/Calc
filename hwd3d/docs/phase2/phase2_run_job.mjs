@@ -1,6 +1,6 @@
 // Independent Phase 2 run of the integrated app (docs/phase2_run.md). QA only: it changes nothing in the app. Run from
 // hwd3d/ under the harness, e.g.
-//   python3 -I docs/phase2/phase2_run_ref.py satA 2026-11-07T20:00Z 12 out/phase2/ref_satA.json   # local-only D1 reference
+//   python3 -I tools/qa/phase2_run_ref.py satA 2026-11-07T20:00Z 12 out/phase2/ref_satA.json   # local-only D1 reference
 //   RELAY=spawn REPLAY_FROM=2026-11-07T20:00Z WIN=satA SIM_MIN=12.5 SHOT_AT=6,11 PREFIX=run_satA REF=out/phase2/ref_satA.json \
 //     node livetest.mjs docs/phase2/phase2_run_job.mjs
 //   (+ MOBILE=1 for 390x844; RELAY_ARGS="--ident type-only" for commit-safe HUD shots; WATCH_TYPE=M20P WATCH_DIST/PITCH to
@@ -52,12 +52,13 @@ export default async ({ page, base, OUT, DEV, MOBILE, errors, log, relayURL }) =
     const PAV = G.pavedWith(site), OFF = new Set(OFFHEX || []);
     const ids = new Map(); let nid = 1; const idOf = (k) => { let i = ids.get(k); if (!i) { i = nid++; ids.set(k, i); } return i; };
     const EVER = new Map(), prev = new Map();
-    const M = { samples: 0, drawnSum: 0, groundFW: 0, heliGround: 0, heliUnpaved: 0, air: 0, offPave: 0, offPaveMoving: 0, offPaveRoute: 0, offPaveStill: 0, offSite: 0,
+    const M = { teleports: 0, teleportsHwd: 0, windowReentries: 0, samples: 0, drawnSum: 0, groundFW: 0, heliGround: 0, heliUnpaved: 0, air: 0, offPave: 0, offPaveMoving: 0, offPaveRoute: 0, offPaveStill: 0, offSite: 0,
       inBld: 0, inBldDoor: 0, yErr: 0, yErrMax: 0, belowGround: 0, belowGroundMax: 0, ovl: { parked: 0, mixed: 0, moving: 0 }, ovlPairs: new Set(), jumps: 0, airProx: 0, airProxPairs: new Set(),
       offTracks: new Set(), offCells: {}, bldCells: {}, kinPairs: 0, gaps: 0, offLog: [], bldLog: [], ovlLog: [] };
     const DIST = { a_label_dalt: [], a_label_lead: [], g_gs: [], a_gs: [], g_along: [], g_plat: [], g_w: [], g_crab: [], a_along: [], a_plat: [], a_w: [], a_vs: [] };
     const EXC = { label_alt200: 0, g_along3: 0, roll_along6: 0, g_lat3: 0, g_w30: 0, g_plat3: 0, g_crab10: 0, a_lat6: 0, a_w25: 0, a_vs_lim: 0, a_plat6: 0, taxi_fast: 0, ga_air_fast: 0, any_air_fast: 0 };
     const MAX = {}; const note = (k, v, ctx) => { if (!MAX[k] || v > MAX[k].v) MAX[k] = { v: +v.toFixed(2), ...ctx }; };
+    const PRES = new Map(); const ctx0 = (tr, id, E, ts) => ({ id, type: E.type, cls: E.cls, phase: tr.phase, t: ts });
     const raf = []; let lastRaf = null;
     const sceneISO = () => new Date(H.qa.sceneTime()).toISOString().slice(11, 19);
     function sample() {
@@ -66,6 +67,25 @@ export default async ({ page, base, OUT, DEV, MOBILE, errors, log, relayURL }) =
       const dt = R.lastNow != null ? (now - R.lastNow) / 1000 : null; R.lastNow = now; M.samples++;
       const kin = dt != null && dt <= 0.4; if (dt != null && !kin) M.gaps++;
       const gnd = [], air = []; let drawn = 0; const ts = sceneISO();
+      // re-placements (fix round 2): presence as AircraftViews draws it (valid, in the D6 window, not hidden, alpha > 0.02);
+      // ANY absence - fade cut, fade-out + removal, hidden segment, hangar - followed by a reappearance farther than
+      // 1.5 x speed x absence + 10 m (and > 10 m) from where it vanished is a TELEPORT; an absence spent only outside the D6
+      // window / simulation range is a window re-entry (fix round 1 counted only absences < 5 s)
+      { const td = traffic.displayTime(now);
+        for (const [pid, V] of PRES) if (!V.seen && V.last) { if (!V.absent) V.absent = { t: td, why: new Set() }; V.absent.why.add('removed'); }
+        for (const V of PRES.values()) V.seen = false;
+        for (const tr of traffic.tracks.values()) {
+          const id = idOf(tr.key), D = tr.disp, present = !!(D.valid && tr.inView && !tr.hidden && D.alpha > 0.02 && tr.dims);
+          let V = PRES.get(id); if (!V) PRES.set(id, V = { last: null, absent: null }); V.seen = true;
+          if (present) {
+            if (V.absent && V.last) { const g = (td - V.last.t) / 1000, d = Math.hypot(D.x - V.last.x, D.z - V.last.z, D.y - V.last.y);
+              if (d > 1.5 * Math.max(D.gs, V.last.gs) * g + 10 && d > 10) { const why = [...V.absent.why];
+                if (why.every(w => w === 'window' || w === 'far')) M.windowReentries = (M.windowReentries || 0) + 1;
+                else { M.teleports = (M.teleports || 0) + 1; if (tr.scope === 'hwd') M.teleportsHwd = (M.teleportsHwd || 0) + 1; (M.teleLog = M.teleLog || []).length < 30 && M.teleLog.push({ id, type: tr.info.icao || null, phase: tr.phase, scope: tr.scope, d: +d.toFixed(1), absent_s: +g.toFixed(1), why }); } } }
+            V.absent = null; V.last = { t: td, x: D.x, y: D.y, z: D.z, gs: D.gs };
+          } else if (V.last) { if (!V.absent) V.absent = { t: td, why: new Set() };
+            V.absent.why.add(!D.valid ? (tr._far ? 'far' : 'invalid') : !tr.inView ? 'window' : tr.hidden ? 'hidden' : tr.fadeOut ? 'fadeOut' : tr.cutting ? 'cut' : tr.inHangarRest ? 'inHangar' : tr.airHidden ? 'airHidden' : tr._hideSeg ? 'hideSeg' : 'other'); }
+        } }
       for (const tr of traffic.tracks.values()) {
         const id = idOf(tr.key); let E = EVER.get(id);
         if (!E) EVER.set(id, E = { id, first: now, last: now, scopes: [], phases: {}, cats: {}, parks: new Set(), parkKinds: new Set(), minD: 1e9, minAgl: 1e9, gF: 0, dF: 0, offline: OFF.has(tr.key), masked: false, type: null, cls: null, ecat: null, maxGsA: 0, maxGsG: 0, removed: false, label: null });

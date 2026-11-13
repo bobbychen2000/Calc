@@ -1,0 +1,8 @@
+{
+ "fixtures_naip.json,fixtures_naip.js": {
+  "url": null,
+  "licence": "USDA NAIP, public domain (data.gov 'License: https://www.usa.gov/publicdomain/label/1.0/'; USDA FSA asks for 'appropriate byline/photo/image credits'; quoted from sfo3d/docs/research/imagery.md via refs/cache/naip/SOURCES.json, NOT re-read in hwd3d - the credit wording is kept as requested, its terms text is unverified here). Credit: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations).",
+  "made_by": "hwd3d/dev/measure_fixtures.py from refs/cache/naip/naip_2024_hwd_rgb.jpg",
+  "note": "VASI / PAPI light-unit positions measured on NAIP 2024 (docs/phase2_world.md section 5); positions only."
+ }
+}

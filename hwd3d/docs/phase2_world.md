@@ -127,7 +127,10 @@ the paint along the axes (`out/phase2/naip_paint_measure.json`). Matched within 
 - the threshold bars;
 - the 10R / 28L / 28R stripes;
 - all designators (after the 10L shift below);
-- the TDZ 3-bar groups, which are the only TDZ bars painted;
+- the TDZ 3-bar groups at 500 ft. (Corrected in fix round 1: the review found 10 more TDZ bars on NAIP 2024 and 2022 that
+  were not drawn - 10R: a 1-bar pair at 1,500 ft and a 2-bar pair at 2,000 ft; 28L: a 2-bar pair at 1,500 ft. They are now
+  drawn from `END_PAINT_OBS` `tdz` entries, src obs; the AC 2.7.3.1 midpoint rule, which would drop them, is not what is
+  painted);
 - the aiming-point positions and widths;
 - the centreline stripes;
 - the arrowhead rows;
@@ -144,7 +147,15 @@ Four deviations from the AC figures were measured and are now drawn as painted (
 | 28L displaced-area arrows | last tip 80 ft before the threshold | head runs end ~72 ft before it; centroid comparison with 10R gives ~13 ft nearer | last tip 67 ft before the threshold, 200 ft pitch |
 | 28R edge stripes | full length | start with the threshold stripes (a taxiway crosses the end) | from 20 ft past the end |
 
+**Holding positions (fix round 1).** NAIP 2024 shows 5 Pattern-A bars on open taxiways that OSM has no node for (B and C
+at both runways, E at 10L/28R). `tools/build_airport.py NAIP_HOLDS` measures them with the same bar finder as the other
+16 (`naip:hold/1..5`, contrast 22-32, 128-203 ft from the runway centreline, src obs) and the data set and the taxigraph
+now carry 23 holds; `tools/check_airport.py` section 8 checks each NAIP-only bar (contrast, taxiway, centreline
+distance). The classifier's `hold_short` and the paint both read them.
+
 **Not drawn (seen on NAIP, geometry not measured):**
+- the surface-painted holding position signs (red rectangles with white runway designators) beside several hold bars
+  (added to the gap list in fix round 1);
 - the taxiway lead-on / lead-off lines that AC 4.2.3.3 curves onto the runways;
 - the non-movement-area boundary markings (yellow solid + dashed) at several apron edges;
 - the painted "H" circle and arcs at the north edge of the Green Ramp;
@@ -212,9 +223,13 @@ the split at 2.5 km or more where the approach lights matter; the dev page uses 
   - terminal 7.5 m;
   - other buildings 4.5 m;
   - fire station 7.0 / 4.0 m.
-- **Tower eye:** top − 2.4 m [inf], 13.5 m above the ground.
+- **Tower massing (fix round 1).** The OSM ring (265 m2, 24 x 22 m) is not all tall. On NAIP 2022 and 2024 only its
+  north-east part, a light roof of about 8 x 9 m, casts the long north-west shadow, in the same place in both years.
+  `site.js TOWER_TALL` [inf, by eye +-1 m] rises to 15.85 m with the cab glazing band. The rest of the ring is a
+  single-storey base, 4.0 m [inf].
+- **Tower eye:** top − 2.4 m [inf], 13.5 m above the ground, over the tall part's centre (it was the ring centroid).
 - **Shapes [inf]:** low-pitch gable roofs on rectangular hangars, flat roofs elsewhere, and a dark glazing band on the
-  tower. No doors and no detail (Phase 4).
+  tower shaft. No doors and no detail (Phase 4).
 - Phase 4 can calibrate the heights from the NAIP shadow lengths against the tower.
 
 ## 7. Environment
@@ -251,8 +266,11 @@ the split at 2.5 km or more where the approach lights matter; the dev page uses 
 1. No elevation source off the runways (USGS 3DEP not fetched). The field surface is a blend of the NASR runway
    profiles, and the hills east of Hayward are flat imagery.
 2. Building heights, roof shapes and wall colours are inferred, except the tower height. There are no doors.
-3. MIRL, REIL, taxiway lights and signs are not placed (no position source). The night field shows only the VASI / PAPI,
-   the beacon and the windsock light.
+3. REIL, taxiway lights and signs are not placed (no position source). MIRL edge lights are drawn since fix round 1
+   (the night field was almost invisible): the type is obs (NASR / CS: MIRL on both runways), the positions are INFERRED
+   from the standard layout (AC 150/5340-30 as remembered: both edges, 2 ft outside, evenly at <= 200 ft; white only),
+   on at night while the tower is open; with the tower closed 10R/28L at preset low intensity and 10L/28R off (NASR
+   schedule). `lights.js inventory` marks them inf.
 4. The VASI aiming angles, all light intensities and the unit sizes are inferred. The windsock and cone sizes are
    remembered, not re-read (AC 150/5345-27 [verify]).
 5. Lead-on / lead-off lines, non-movement boundary markings, the Green Ramp H circle and apron lead-in lines are not
@@ -264,7 +282,22 @@ the split at 2.5 km or more where the approach lights matter; the dev page uses 
 9. Near-field imagery is soft at the tower cab (section 3).
 10. The regional backdrop's one Bay quad is interpolated water. The image service's resampling of the 2024 flights and
     its overviews is not the 0.6 m originals.
-11. Light sprites follow the renderer's near-pass-only rule (section 5).
-12. The NAIP credit for the regional texture is the same as for the mosaic: "Imagery: USDA NAIP". `docs/ATTRIBUTION.md`
-    already lists NAIP. The orchestrator should confirm that the new file `js/world/tex/naip2024_region_*.jpg` is
-    covered by it.
+11. Light sprites follow the renderer's near-pass-only rule (section 5). Since fix round 1 the PAPI / VASI sprites have a
+    vertical cut-off (PAPI 4 deg, VASI 6 deg above the aiming angle, 4 deg below, with a fade), so they no longer glare
+    when seen from steeply above.
+13. **Fix round 1, ground.** (a) Tone: the imagery rendered ~20 % darker, warmer and ~40 % more saturated than NAIP on
+    the same cameras (render / NAIP mean RGB 0.81 / 0.78 / 0.72). The ground shader now pulls the photo's chroma back and
+    re-balances it (`uNaipSat` 0.92, `uNaipBal` [1.24, 1.32, 1.38], calibrated on 5 top-down tiles at the default
+    replay hour): the ratio is now 0.87-0.91 on all three channels with the saturation of NAIP (0.218 vs 0.211, etc.).
+    The residual ~10 % is the November sun (35.6 deg vs ~65-72 deg on the May NAIP flight). (b) Pavement: the procedural
+    asphalt (albedo 0.17, runways 0.145) rendered at 0.70 of NAIP's pavement luminance next to pale unmapped NAIP
+    pavement; it is now NAIP-calibrated (0.29 / 0.275) to 0.84-0.93 of NAIP on runway and taxiway points, so the
+    patchwork is gone in the tile comparisons. [inf tone, NAIP-calibrated.] (c) NAIP aircraft: the 48 unspotted
+    aircraft and the spots with an aircraft on NAIP 2024 are in-painted in the texture before upload (`airport.js
+    inpaintBlobs`: radial projection of the ring outside a disc, 7.5 m, bizjets 17 m) - the business jet cut in half at
+    the FBO Ramp (south) edge is gone. (d) The helicopter pad complex south of 10R/28L (paved on NAIP 2024, in no source
+    read) is `site.js HELI_APRON_NAIP`: outline segmented from NAIP 2024 with own code (+-1.5 m, src obs imagery) and 4
+    square pads read by eye; `site.surface()` returns apron / helipad there and the pave map draws it.
+12. The regional texture is a USDA NAIP image-service mosaic that includes undated overviews (at 8 m the service reads
+    rasters with no year), not a dated 2024 image (fix round 1: `naip2024.json region.dated = false`, the About credit
+    and `docs/ATTRIBUTION.md` say so; the raw download is kept in `refs/cache/local/naip/` with its sha256).

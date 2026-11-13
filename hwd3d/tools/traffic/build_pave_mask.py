@@ -110,7 +110,7 @@ def main():
            '// shows grey (Phase 1 grey test: saturation < %.2f, excess green < %.0f in a 2-m disc) inside the OSM aerodrome boundary, outside OSM car\n'
            '// parks / buildings / fences, connected to and within %.0f m of the OSM pavement of data/hwd_airport.json - added to the site pavement\n'
            '// for the ground physics (js/live/ground.js). Cells are 1 m; rows: [start, length, ...] of added cells. Derived in part from OSM\n'
-           '// (c) OpenStreetMap contributors, ODbL 1.0.\n' % (sha[:16], SAT_MAX, EG_MAX, MAX_FROM_OSM_M))
+           '// (c) OpenStreetMap contributors, ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/).\n' % (sha[:16], SAT_MAX, EG_MAX, MAX_FROM_OSM_M))
     body = json.dumps({'x0': x0, 'z0': z0, 'res': RES, 'nx': nx, 'nz': nz, 'stats': stats, 'rows': rows}, separators=(',', ':'))
     open(OUT, 'w').write(hdr + 'export const PAVE_NAIP = ' + body + ';\n')
     print('wrote', OUT, os.path.getsize(OUT), 'bytes', stats)

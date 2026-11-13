@@ -190,8 +190,9 @@ body.qa #panel, body.qa #card, body.qa #views, body.qa #top, body.qa #attrib, bo
 #btn-atc { padding: 0 12px 0 10px; gap: 6px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 #btn-atc svg { width: 17px; height: 17px; fill: currentColor; }
 #btn-atc.open .tn { color: var(--gnd); } #btn-atc.closed .tn { color: var(--accent); }
-button.rwystats { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; color: var(--dim); font-family: var(--mono); }
-button.rwystats:hover { color: var(--text); background: rgba(255, 255, 255, 0.03); }
+button.statsbtn { display: block; width: 100%; padding: 0; text-align: left; background: none; border: 0; cursor: pointer; color: var(--dim); }
+.statsbtn .rwystats { display: block; border-bottom: 1px solid var(--line); font-family: var(--mono); }
+button.statsbtn:hover { color: var(--text); background: rgba(255, 255, 255, 0.03); }
 .pop .x { position: sticky; top: 0; float: right; background: none; border: 0; font-size: 26px; line-height: 1; color: var(--dim); cursor: pointer; padding: 0 2px; margin: -4px -4px 0 8px; z-index: 1; }
 .pop .small, .small { font-size: 12.5px; }
 .pop .warn, .warn { color: var(--accent); }
@@ -249,4 +250,41 @@ button.rwystats:hover { color: var(--text); background: rgba(255, 255, 255, 0.03
   #btn-settings, #btn-about { flex: none; }
   .row .l1 b { font-size: 15px; }
   #panel .rwystats { font-size: 11px; padding: 4px 10px; }
+}
+/* ---------- fix round 1 (docs/phase2_run.md section 6, phone review at 390 x 844) */
+@media (max-width: 760px) {
+  /* the Settings and About icons stay pinned at the right end of the scrolling view row (they started off-screen) */
+  #views { padding-right: 0; -webkit-mask-image: none; }
+  #views button { height: 44px; font-size: 14px; }
+  #views button.icon { width: 44px; position: sticky; z-index: 2; background: var(--panel-solid, #121820); }
+  #views #btn-about { right: 0; }
+  #views #btn-settings { right: 50px; }
+  /* touch targets >= 44 px (Apple HIG): card close, list grab handle, list tabs */
+  #card .x { min-width: 44px; min-height: 44px; font-size: 28px; margin: -8px -8px -8px 0; }
+  .pop .x { min-width: 44px; min-height: 44px; }
+  #grab { height: 34px; }
+  #grab i { margin-top: 12px; }
+  .tabs button { min-height: 44px; }
+  /* the ODbL attribution must stay readable over the scene: opaque backing, larger and brighter text */
+  #attrib { font-size: 11px; line-height: 1.3; color: #d5dde6; background: rgba(9, 13, 19, 0.86); padding: 3px 7px; border-radius: 6px; text-shadow: none; left: auto; right: 8px; top: calc(102px + var(--safe-t)); max-width: calc(100vw - 16px); }
+  #attrib a { color: #ffffff; }
+}
+/* ---------- fix round 2 (docs/phase2_run.md section 7, phone re-check at 390 x 844): every touch target >= 44 px, and the
+   view row WRAPS instead of scrolling under sticky icons (two buttons were off-screen or covered) */
+@media (max-width: 760px) {
+  #top > * { height: 44px; }
+  #status, #btn-atc { min-height: 44px; }
+  #views { top: calc(62px + var(--safe-t)); overflow: visible; flex-wrap: wrap; gap: 6px; padding-bottom: 0; }
+  #views button { flex: 1 1 auto; height: 44px; padding: 0 10px; }
+  #views button.icon { position: static; flex: 0 0 44px; width: 44px; }
+  #grab { height: 44px; }
+  #grab i { margin-top: 14px; }
+  #panel.peek { transform: translateY(calc(100% - 146px - var(--safe-b))); }
+  button.statsbtn { min-height: 44px; }
+  #search { min-height: 44px; }
+  #card .acts button { min-height: 44px; }
+  #attrib { top: calc(164px + var(--safe-t)); }
+  #card { max-height: calc(100vh - 318px); }
+  body.has-card #card { max-height: calc(100vh - 242px); }
+  .pop, .pop.wide { top: calc(164px + var(--safe-t)); max-height: calc(100vh - 184px); }
 }

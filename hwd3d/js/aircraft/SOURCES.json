@@ -1,0 +1,14 @@
+{
+ "ga_acd.js": {
+  "url": "https://www.faa.gov/airports/engineering/aircraft_char_database",
+  "licence": "FAA Aircraft Characteristics Data, October 2024 (modified 2025-01-03): U.S. Government work, public domain",
+  "made_by": "hwd3d/tools/traffic/build_ga_dims.py from sfo3d/refs/cache/faa/faa_aircraft_char_database.xlsx (sha256 3e68848b...)",
+  "note": "ICAO designator -> length, span, tail height, MTOW, engine class / count, ACD row, model name, approach speed (kt); no per-aircraft data."
+ },
+ "pave_naip.js": {
+  "url": null,
+  "licence": "Derived from OpenStreetMap ((c) OpenStreetMap contributors, ODbL 1.0, https://opendatacommons.org/licenses/odbl/1-0/; the OSM pavement and boundary of data/hwd_airport.json) and USDA NAIP 2024 (public domain grey test). Offered under ODbL 1.0.",
+  "made_by": "hwd3d/tools/traffic/build_pave_mask.py",
+  "note": "1-m run-length mask of airside asphalt that NAIP 2024 shows grey next to the OSM pavement, added to the site pavement for the ground physics; no per-aircraft data."
+ }
+}

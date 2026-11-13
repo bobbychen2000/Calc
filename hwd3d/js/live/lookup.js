@@ -59,18 +59,25 @@ export function identity(info, key, prev = null) {
   const masked = !!(info.masked || isMaskedKey(key) || (prev && prev.masked));
   const mx = info.mx || null;
   const icaoType = info.icao || (mx && mx.t) || null;
-  const typeSrc = info.icao ? 'adsb' : mx && mx.t ? 'mictronics' : null;
+  const typeSrc = info.icao ? 'adsb_db' : mx && mx.t ? 'mictronics' : null;
   const tn = typeName(icaoType, info.desc, mx && mx.d);
   const category = info.category || null;
   if (masked) {
-    return { masked: true, label: icaoType || 'Aircraft', reg: null, regSrc: null, callsign: null, operator: null, opSrc: null,
-      icaoType, typeName: tn.name, typeSrc, category, src: { type: typeSrc, name: tn.src, d1: 'LADD/PIA: type only (D1)' } };
+    // maskWhy (fix round 1): only 'd1' means the aircraft is flagged LADD / PIA; a type-only relay / pack masks every aircraft
+    const why = info.maskWhy || (prev && prev.maskWhy) || 'unknown';
+    return { masked: true, maskWhy: why, label: icaoType || 'Aircraft', reg: null, regSrc: null, callsign: null, operator: null, opSrc: null,
+      icaoType, typeName: tn.name, typeSrc, category, src: { type: typeSrc, name: tn.src, d1: why === 'd1' ? 'LADD/PIA: type only (D1)' : 'type only (this feed / recording shows every aircraft by type only)' } };
   }
-  let reg = info.reg || (mx && mx.r) || null, regSrc = info.reg ? 'adsb' : mx && mx.r ? 'mictronics' : null;
-  if (!reg) { const n = nNumberFromHex(key); if (n) { reg = n; regSrc = 'icao_address'; } }
+  // registration / type / operator from the record are the aggregator's DATABASE values (readsb README-json.md: "r: aircraft
+  // registration pulled from database", "t: aircraft type pulled from database"), not broadcast: source 'adsb_db' (fix round 1)
+  let reg = info.reg || (mx && mx.r) || null, regSrc = info.reg ? 'adsb_db' : mx && mx.r ? 'mictronics' : null;
+  // an N-number derived from a US-block ICAO address [inf] - only where the database knows the address (it gave a type): an
+  // address the database does not know at all may be a PIA temporary address, whose algorithmic N-number slot belongs to
+  // another aircraft or to none (fix round 1)
+  if (!reg && icaoType) { const n = nNumberFromHex(key); if (n) { reg = n; regSrc = 'icao_address'; } }
   const cs = info.flight ? String(info.flight).trim().toUpperCase() : null;
   const callsign = cs && /[A-Z]/.test(cs) ? cs : null;
-  const operator = info.ownOp || (mx && mx.op) || null, opSrc = info.ownOp ? 'adsb' : mx && mx.op ? 'mictronics' : null;
+  const operator = info.ownOp || (mx && mx.op) || null, opSrc = info.ownOp ? 'adsb_db' : mx && mx.op ? 'mictronics' : null;
   // label: the callsign when it is an ICAO flight id or differs from the registration, else the registration, else the type
   const label = (callsign && (ICAO_CS.test(callsign) || !reg || callsign !== reg.replace(/-/g, ''))) ? callsign : reg || callsign || icaoType || 'Aircraft';
   return { masked: false, label, reg, regSrc, callsign, operator, opSrc, icaoType, typeName: tn.name, typeSrc, category,

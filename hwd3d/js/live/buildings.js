@@ -79,18 +79,22 @@ export function buildBuildings(site) {
       walls(g, r, y0, () => yE, cw, E_METAL);
       if (rect) gable(g, r, yE, rise, C_ROOF, E_METAL, cw, E_METAL); else cap(g, r, yE, C_ROOF, E_ROOF);
     } else if (b.kind === 'control_tower') {
-      // OSM footprint and total height (15.85 m, obs); the split shaft / glazing band / roof is [inf]
-      const yTop = yG + H, yGl0 = yTop - 3.25, yGl1 = yTop - 0.85;
-      walls(g, r, y0, () => yGl0, C_TWR, E_CONC);
-      walls(g, r, yGl0, () => yGl1, [0.05, 0.06, 0.07, 1], E_CAB);
-      walls(g, r, yGl1, () => yTop, C_TWR, E_CONC);
-      cap(g, r, yTop, C_ROOF, E_ROOF);
+      // OSM footprint and total height (15.85 m, obs). Fix round 1: only the tall part (site TOWER_TALL, by eye on NAIP,
+      // [inf]) rises to 15.85 m with the cab glazing band; the rest of the ring is a single-storey base [inf]. The base is
+      // the whole ring (the shaft stands on it), so no inner wall is needed.
+      const T = b.tall; const yTop = yG + H, yGl0 = yTop - 3.25, yGl1 = yTop - 0.85;
+      const yB = T ? yG + T.baseH : yGl0; const rt = T ? ccw(T.ring) : r;
+      if (T) { walls(g, r, y0, () => yB, C_BLD, E_CONC); cap(g, r, yB, C_ROOF, E_ROOF); }
+      walls(g, rt, T ? yB - 0.1 : y0, () => yGl0, C_TWR, E_CONC);
+      walls(g, rt, yGl0, () => yGl1, [0.05, 0.06, 0.07, 1], E_CAB);
+      walls(g, rt, yGl1, () => yTop, C_TWR, E_CONC);
+      cap(g, rt, yTop, C_ROOF, E_ROOF);
     } else {
       walls(g, r, y0, () => yG + H, b.kind === 'fire_station' && H > 5 ? C_FIRE : C_BLD, b.kind === 'terminal_admin' ? E_WIN : E_CONC);
       cap(g, r, yG + H, C_ROOF, E_ROOF);
     }
     tris += add(g, b, yG);
-    list.push({ id: b.id, kind: b.kind, name: b.name, height_m: H, height_src: b.height_src, footprint_src: b.footprint_src || 'obs (OSM)' });
+    list.push({ id: b.id, kind: b.kind, name: b.name, height_m: H, height_src: b.height_src, footprint_src: b.footprint_src || 'obs (OSM)', ...(b.tall ? { tall_part: 'inf (NAIP 2022 + 2024 by eye, ~8 x 9 m)', base_h_m: b.tall.baseH } : {}) });
   }
   return { items, list, stats: { buildings: list.length, tris } };
 }

@@ -133,34 +133,84 @@ with a per-unit altitude bias was drawn rolling over the grass of the approach.
     | heading rate | ≤ min(20°/s, 4.5 m/s² / speed) |
 
   - Roll is the coordinated bank `atan(v·ω/g)`, capped at ±35°.
-- **Ground across a hole longer than 8 s, or where the Hermite curve would leave pavement:**
-  - The path is a route on the taxi graph (`TaxiNet.routeXY`: projection onto the P1 links, then Dijkstra with a
-    wingspan limit and a 40 m runway penalty). Its arc length uses a Hermite with the two end speeds.
-  - A route is used only when it is ≤ 1.8 × the chord + 80 m and its mean speed is ≤ 30 kt. Otherwise the path is the
-    straight chord with the same speed profile.
-- **Take-off or landing inside a hole** (ground ↔ air between two fixes): the engine builds a timed plan, `planTakeoff`
-  or `planLanding` [inf GA values].
-  - The legs are: wait; taxi route to the runway; roll along the centreline (lift-off at VR 28 m/s, 40 for turboprops,
-    55 for jets); Hermite climb-out.
-  - For a landing the legs are: Hermite approach; touchdown 150 m past the landing threshold; roll along the runway to
-    where the ground fix projects; taxi route.
-  - Without a plan, lift-off or touchdown is timed by VR and 2–2.5 m/s².
-- **Rest poses.** A fix of a still run stands for the run's rest pose: the spot pose or the median, plus the physics
-  offset. Leaving or reaching a spot is therefore continuous.
-- **Ground body (new: trail following).**
-  - The target's positions form a trail, and the body moves along it.
-  - The body brakes for curvature ahead so that `v ≤ sqrt(2 m/s² · R)`. Its acceleration limits are:
-
-    | Phase | Accelerate | Brake |
-    |---|---|---|
-    | taxi | 1.2 m/s² | 2.0 m/s² |
-    | roll | 2.5–4.5 m/s² | 3.5 m/s² |
-
-  - The nose turns at ≤ 25°/s, and at ≤ 2 m/s² / v at speed (≥ 5°/s on a roll).
-  - Motion along the path fades out between 20° and 60° of nose misalignment, so the aircraft stops and pivots
-    (≤ 20°/s) instead of sliding.
-  - Re-placements fade over 0.4 s (sfo3d). The thresholds are 60 m on the ground, 300 m on a roll, and the larger of
-    150 m and 4 × speed in the air.
+- **Fix round 1 (Phase 2 review) - what changed and why.** The review counted 28 / 27 / 6 visible re-placements per hour
+  (an aircraft vanishing for ~0.5 s and reappearing 60-1,295 m away), take-offs that braked to a stop on the runway and
+  lifted off at 1-30 kt, ghost-parked aircraft at their old spot, straight chords across grass, and fixed-wing aircraft
+  hanging in the air. The root causes were bodies that could not follow their own plans (pivot rule, body lag) and
+  fallbacks that ignored the pavement. The motion now comes from `js/live/motion.js` (new, Node-pure):
+  - `filletPath(pts, r, ok)`: the taxi route's corners are rounded with 20 m fillets where the wheels stay on pavement
+    and the wingtips clear the buildings (halved down to 1 m otherwise) [inf radius].
+  - `profilePath(R, D, v0, v1, opt)`: a drivable speed profile over the route - start and end at the fixes' own speeds,
+    corner caps `v <= min(sqrt(a_lat * r), w * r)`, the body's own acceleration and braking limits, cruise capped at
+    20 kt (25 kt when the hole cannot be taxied at 20); spare time becomes a stop, never a crawl; a profile is feasible
+    only if its minimum time is <= 1.15 x the hole. The body follows the profile exactly, so it never has to catch up.
+  - `geoHermite(p0, d0, s0, p1, d1, s1, D)`: across an airborne hole a curve shaped by the two reported directions, its
+    tangent scale solved so that the curve length equals the hole time x the mean speed, with a flat-topped speed
+    profile - no speed spikes, no loops.
+  - **Take-off / landing plans** start from the ground fix's own position and speed (a rolling start), route to the
+    point where the taxi path joins the runway centreline and line up there; the touchdown is placed >= 60 m before the
+    roll-out fix and the hole time is split by the natural roll time; lift-off at VLOF = 0.85 x the FAA ACD approach
+    speed, touchdown at 0.95 x, never below 0.7 x (`ga_acd.js` approach speed, [inf] factors). The roll decelerates at
+    2.5 m/s2 (3.0 for jets and turboprops).
+  - **No chord over grass.** A ground hole uses the taxi route, then the fast-taxi route, then the straight chord only
+    if the chord itself stays on pavement, then a forced route if it is at most 1.5 x too slow; otherwise the aircraft
+    holds (HWD only, holes > 20 s). A landing roll-out followed by a runway exit is roll-out + taxi.
+  - **Debounced ground state.** A slow fixed-wing fix (< 0.45 x its approach speed) is on the ground; one
+    airborne-by-altitude fix under 250 ft after a ground fix is held on the ground; a lift-off needs the body at
+    >= 0.8 VR, else the target stays on the ground along the nose.
+  - **Re-placements** are rare and counted as teleports: thresholds 150 m on the ground, 400 m on a roll, max(250 m,
+    8 s x v) in the air, plus a jump of the raw ground target > 10 m in one step. Since fix round 1 a re-placement
+    cross-fades with real alpha (the obj shader's screen-door `uAlpha`, `objects.js`), not just a 0.5 s blank.
+  - **Live: no hovering.** An airborne track dead-reckoned (straight and level) longer than 20 s fades out; a fixed-wing
+    body is never brought to rest in the air.
+  - **Ground bodies** follow the target's trail (loop removal for zig-zag trails, catch-up capped at +3 m/s, never above
+    25 kt while taxiing); ground bodies more than 3 km from the ARP are not drawn (no pavement model there).
+  - **Parking:** a park record is released when the aircraft moves more than 15 m from it while transmitting, or goes
+    airborne; on a ground loss the aircraft rests at its last fix pose (or in the hangar), never at an older park pose;
+    "parked" is not created for an aircraft first heard standing on a taxiway or taxilane ("stopped on a taxiway").
+  - **Helicopters** get still runs and rest poses (skid stance); a ground track whose rest pose lies inside a hangar is
+    hidden, not drawn through the walls.
+- **Measured (fix round 1).** The reviewer's three windows (heli / pat / night packs) through a harness that follows the
+  app's replay path at 10 Hz: visible re-placements 28 -> 5, 27 -> 2, 6 -> 1; lift-offs below 40 kt 12 -> 0 (pat);
+  on-ground stops from > 40 kt to < 8 kt within 3 s 14 -> 0; ghost-parked aircraft 0; label contradictions 0. P3's own
+  harness `tools/traffic/replay_engine.mjs <window> --strict` now fails on re-placements > 6 / h, ghost parking, slow
+  lift-offs, hard stops, hops, hovering and label contradictions (see `docs/phase2_run.md` section 6 for the numbers).
+- **Fix round 2 (second review) - what changed and why** (numbers in `docs/phase2_run.md` section 7).
+  - **Teleports of any absence.** Fix round 1 counted only absences shorter than 5 s. A fade-out, removal and re-creation
+    elsewhere was invisible to both harnesses, and the gate allowed 6 per hour.
+    - Now any absence counts. A teleport is split into *engine* (the signal was continuous, fix gaps ≤ 90 s) and
+      *signal* (the aircraft was not heard for longer).
+    - Both are gated at 0 (signal: HWD traffic).
+  - **Silent aircraft stay (`groundLost`).** A ground track whose reports stop used to fade out off an apron and come
+    back elsewhere. Now it stays drawn (`tr.stale`), phase `no_signal` "No signal · last position" [inf].
+    - It stays at the stop point of its own braking extrapolation (`groundStop`: taxi / roll deceleration, clipped to
+      the pavement) for up to 30 min (`LOST_KEEP_MS`). The fix-round-1 text above ("rests at its last fix pose") held
+      only on aprons, helipads and hangar-door taxilanes below 1 kt; anywhere else the aircraft faded out.
+    - Once heard again it continues from where it is drawn (a continuation anchor), not from the new fix.
+    - groundLost waits `MOVING_LOST_MS` + 30 s (`LATENCY_ALLOW_MS`) [inf], so a report that arrives late by its
+      `seen_pos` latency no longer races the loss.
+    - A heard, moving aircraft that drives into a silent, unparked one fades the silent one (`staleOverrun`).
+  - **Far transitions (OAK).** An arrival whose next fix is a ground fix more than 3 km from the ARP flies a curve to a
+    touchdown short of that fix and rolls hidden (OAK's runways are not modelled). Before, the generic hole faded
+    these arrivals out hundreds of feet up. A departure from there waits hidden at lift-off, then flies the next
+    fix's track (`farTransition`).
+  - **Ground physics.** A body counts as stationary when its *target* rests (`restPose`), whatever its own speed. The
+    seek offset is kept while the target rests and decays from where it is once the target moves. Before, a body
+    driving to its seek offset counted as moving, its offset decayed and it shuttled ~12 m to and fro.
+    - Ground fixes off the pavement snap to the nearest paved point within 25 m (not inside a building) [inf].
+    - Roll fixes snap to the runway axis.
+    - Routes get a reversal penalty and lose out-and-back spurs (`despur`).
+    - The rest-jitter threshold is 0.3 m.
+  - **No straight chord.** The straight air-to-ground fallback ('ag:lin') is gone.
+    - A near transition with no feasible plan rolls along the runway axis (touchdown ≥ threshold + 30 m, then the exit
+      route; `fallbackTransition`).
+    - Flight curves come from `flightCurve`: a Hermite curve unless it needs more than 30° of bank at the flown speed.
+      Otherwise a turn-limited Dubins path at 25 / 30 / 35° bank (`motion.js turnFlight`), with a straight final
+      (300 m, jets 600 m) and a straight climb-out (500 m, jets 1,500 m) [inf].
+    - A contact before the threshold that reports only an altitude stays airborne.
+    - Air fixes implying more than 2 g over 2-20 s are rejected (three agreeing fixes override).
+    - Harness: `transition_linear` (INFO, now 0) and the gate `misaligned_transitions` (a lift-off or touchdown more
+      than 15° off the runway).
 
 ## 5. Parking, hangars, physics
 
@@ -319,7 +369,8 @@ before and after it).
   fillet, and take-off and landing plans whose straight approach or climb leg starts on the ground.
 - **Weekday building frames:** an unspotted aircraft parked at about (600, 140) beside Hangar C. Its drawn pose
   overlaps the hangar footprint.
-- **Helicopters on unpaved ground** are allowed. Phase 1 lists an unmapped helicopter pad area as `not_placed`.
+- **Helicopters on unpaved ground** are allowed. The helicopter pad complex south of 10R/28L that Phase 1 could not place is
+  paved since fix round 1 (`site.js HELI_APRON_NAIP`, segmented from NAIP 2024).
 
 **Overlaps of drawn ground aircraft:** 2 frames (1 pair, both moving) on the weekend; none on the weekday.
 
@@ -327,7 +378,7 @@ before and after it).
 
 | Measure | Ground | Air |
 |---|---|---|
-| Teleports | 0 / 0 | — |
+| Teleports | 0 / 0 (the pre-fix harness did not count fade re-placements; fix round 1 counts them: `docs/phase2_run.md` section 6) | — |
 | Longitudinal acceleration | p50 0.48 / 0.32, p99 5.25 / 3.54 m/s² | p99 4.45 / 4.49 m/s² |
 | Path-based lateral acceleration | p99 6.7 / 5.9 m/s² | p99 4.47 / 4.39 m/s² |
 | Turn rate | p99 25°/s (the cap) | p99 7.6 / 6.9°/s |
@@ -367,8 +418,9 @@ Denominators:
 
 **Parking.**
 - `park` events: 11 / 10. Matched to a spot: 4 / 4.
-- Weekday matches: a C152 to a tie-down, a GLEX, a C510 and a C172 to ramp spots. Weekend matches: a C680 and a C25M
-  to ramp spots, a C152 to a tie-down, a C182 to a hangar-apron spot.
+- Weekday matches: a C152 to a tie-down, a GLEX, a C510 and a C172 to ramp spots. Weekend matches: two business jets
+  to ramp spots, a C152 to a tie-down, a C182 to a hangar-apron spot (types of jets in a named hour are not given: one
+  may be LADD / PIA-flagged; fix round 1).
 - Unspotted parks are aircraft on pavement where Phase 1 placed no spot, or whose zone's spots were taken. In the
   weekend run these are two C172s, a C72R, an unknown type and a TBM9 that parked three times. They draw at their own
   median pose, which the pavement check (§5) keeps on asphalt and clear of the others.

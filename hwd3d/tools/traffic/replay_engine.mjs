@@ -54,6 +54,60 @@ const M = { bldCells: new Map(), inBldDoor: 0, frames: 0, visFrames: 0, groundFr
 const DIST = { g_along: [], g_lat: [], g_w: [], a_lat: [], a_w: [], a_vs: [], a_along: [], g_plat: [], a_plat: [], g_crab: [] };
 const EXC = { g_along3: 0, g_lat3: 0, g_w30: 0, a_lat6: 0, a_w25: 0, a_vs_lim: 0, roll_along6: 0, g_plat3: 0, a_plat6: 0, g_crab10: 0 };
 const prev = new Map();
+// ---- plausibility checks added in fix round 1 (docs/phase2_run.md section 6): each one would have caught a review finding
+//   teleports      (fix round 2: ANY absence, whatever its length) a drawn aircraft (as AircraftViews draws it: valid, in the
+//                  D6 window, not hidden, alpha > 0.02) that disappears - fade cut, fade-out and removal, hideSeg, air hide,
+//                  hangar - and reappears > 1.5 x speed x absence + 10 m (and > 10 m) from where it vanished. Absences that
+//                  were only outside the D6 window / simulation range are window re-entries, not teleports. Each teleport
+//                  is split by the signal: 'engine' (the fixes around the absence are no further apart than a polling hole
+//                  plus latency, SIGNAL_LOSS_S) or 'signal' (the aircraft was not heard for longer: it moved unseen).
+//                  Fix round 1 counted only absences < 5 s - finding 1 of round 2
+//   ghost_parked   drawn 'parked' > 50 m from its newest fix at the display time (a stale park pose) - finding 2
+//   slow_liftoff   a fixed-wing drawn leaving the ground below 0.65 x its ACD approach speed - finding 3
+//   hard_stops     on the ground from > 40 kt to < 8 kt within 3 s - finding 3
+//   grass_route    a drawn route / plan sample of a fixed-wing with a wheel off pavement - finding 4 (subset of off_pavement)
+//   hops           a fixed-wing airborne episode < 150 s that starts and ends on the ground within 200 m - finding 5
+//   air_hover      a fixed-wing drawn airborne below 0.5 x its approach speed - finding 6
+//   heli_in_bldg   a helicopter drawn with any part inside a building footprint - finding 7
+//   label_*        phase label contradicting the drawn state (airborne label rolling > 5 kt; ground label > 50 ft up;
+//                  'parked' moving > 2 m/s; 'Helicopter on the ground' > 10 ft up) - finding 9
+const SIGNAL_LOSS_S = 90;   // s: longer than any recorder hole (<= 52.4 s) + report latency (seen_pos) [inf]
+const PL = { teleports: 0, teleports_hwd: 0, teleports_engine: 0, teleports_signal: 0, window_reentries: 0, teleLog: [], misaligned: 0, alignLog: [], ghost_parked_frames: 0, ghostLog: [], slow_liftoff: 0, liftLog: [], hard_stops: 0, hops: 0, hopLog: [], grass_route_frames: 0, air_hover_frames: 0, heli_in_bldg_frames: 0,
+  label_air_on_ground: 0, label_ground_in_air: 0, label_parked_moving: 0, label_heli_ground_up: 0 };
+const PRES = new Map(), SER = new Map();
+// presence of every key as AircraftViews draws it; why it is absent (per frame)
+function absentWhy(tr) {
+  const D = tr.disp; if (!D.valid) return tr._far ? 'far' : 'invalid';
+  if (!tr.inView) return 'window'; if (tr.hidden) return 'hidden'; if (tr.fadeOut) return 'fadeOut'; if (tr.cutting) return 'cut';
+  if (tr.inHangarRest) return 'inHangar'; if (tr.airHidden) return 'airHidden'; if (tr._hideSeg) return 'hideSeg'; return 'other';
+}
+// the longest gap between consecutive fixes of the track inside [t0 - 60 s, t1] (display times, ms)
+function fixGap(tr, t0, t1) { const F = tr.fx; let g = 0; for (let k = 1; k < F.length; k++) { if (F[k].t < t0 - 60000 || F[k - 1].t > t1) continue; g = Math.max(g, F[k].t - F[k - 1].t); } return g / 1000; }
+function presence(now) {
+  const td = traffic.displayTime(now);
+  for (const [k, V] of PRES) if (!traffic.tracks.has(k) && V.last) { if (!V.absent) V.absent = { t: td, why: new Set() }; V.absent.why.add('removed'); }
+  for (const tr of traffic.tracks.values()) {
+    const D = tr.disp, present = !!(D.valid && tr.inView && !tr.hidden && D.alpha > 0.02 && tr.dims);
+    let V = PRES.get(tr.key); if (!V) PRES.set(tr.key, V = { last: null, absent: null });
+    if (present) {
+      if (V.absent && V.last) {
+        const g = (td - V.last.t) / 1000, d = Math.hypot(D.x - V.last.x, D.z - V.last.z, D.y - V.last.y);
+        if (d > 1.5 * Math.max(D.gs, V.last.gs) * g + 10 && d > 10) {
+          const why = [...V.absent.why], onlyWin = why.every(w => w === 'window' || w === 'far');
+          if (onlyWin) PL.window_reentries++;
+          else {
+            // (a track removed and created again holds only its new fixes: the silence between the old track's newest fix and
+            // the new one's first counts too)
+            const f1 = tr.fx.find(f => f.t > (V.lastFixT || 0)), gap = Math.max(fixGap(tr, V.last.t, td), f1 && V.lastFixT ? (f1.t - V.lastFixT) / 1000 : 0), kind = gap > SIGNAL_LOSS_S ? 'signal' : 'engine';
+            PL.teleports++; PL['teleports_' + kind]++; if (tr.scope === 'hwd') PL.teleports_hwd++;
+            if (PL.teleLog.length < 60) PL.teleLog.push([Math.round(td / 1000 - pack.from), tr.info.icao || '?', tr.scope, tr.phase, +d.toFixed(0), +g.toFixed(1), why.join('+'), kind, +gap.toFixed(0)]);
+          }
+        }
+      }
+      V.absent = null; V.last = { t: td, x: D.x, y: D.y, z: D.z, gs: D.gs }; V.lastFixT = tr.last ? tr.last.t : V.lastFixT;
+    } else if (V.last) { if (!V.absent) V.absent = { t: td, why: new Set() }; V.absent.why.add(absentWhy(tr)); }
+  }
+}
 // every track object of the run (the engine drops lost tracks): D1 and D6 are checked over all of them, and the identity
 // / phase-label strings each one showed are collected for the leak search
 const EVER = new Map(), SHOWN = new Map();
@@ -62,10 +116,22 @@ function noteShown(tr) { let S = SHOWN.get(tr.key); if (!S) SHOWN.set(tr.key, S 
 const LIMS = 'ground: |a_long| > 3 m/s2 (taxi) or > 6 m/s2 (runway roll), |a_lat| > 3 m/s2, |turn| > 30 deg/s; air: |a_lat| > 6 m/s2 (~31 deg bank), |turn| > 25 deg/s, |vs| > 2,500 ft/min (jets 6,000) [inf limits for GA]';
 function sampleFrame(now) {
   M.frames++;
+  presence(now);
   const ground = [];
   for (const tr of traffic.tracks.values()) {
     EVER.set(tr.key, tr); if (M.frames % HZ === 0) noteShown(tr);
     const D = tr.disp; if (!D.valid || !(D.alpha > 0.5) || !tr.inView || tr.hidden) { prev.delete(tr.key); continue; }
+    { const T0 = tr.dims, fw = T0 && T0.cls !== 'heli' && !tr.vehicle, va = ((T0 && T0.vapp_kt) || 62) * 0.514444, gy0 = site.groundY(D.x, D.z), agl = (D.y - gy0) / 0.3048;
+      if (tr.phase === 'parked') { const F = tr.fx, td = traffic.displayTime(now); let k = F.length - 1; while (k > 0 && F[k].t > td) k--; if (F[k] && Math.hypot(F[k].x - D.x, F[k].z - D.z) > 50) { PL.ghost_parked_frames++; if (PL.ghostLog.length < 20) PL.ghostLog.push([Math.round(now / 1000 - pack.from - L), tr.info.icao || '?', Math.round(Math.hypot(F[k].x - D.x, F[k].z - D.z))]); } }
+      if (fw && !D.ground && D.gs < 0.5 * va) PL.air_hover_frames++;
+      if (fw && D.ground && D.route && samples(T0, D.x, D.z, D.hdg).gear.some(g => !PAV(g[0], g[1]))) PL.grass_route_frames++;
+      if (T0 && T0.cls === 'heli' && D.ground) { const S0 = samples(T0, D.x, D.z, D.hdg); if (S0.fus.concat(S0.outline).some(p => site.building(p[0], p[1]))) PL.heli_in_bldg_frames++; }
+      const ph = PHASES[tr.phase] || PHASES.unknown;
+      if (fw && D.ground && ph.airborne && D.gs > 5 * 0.514444) PL.label_air_on_ground++;
+      if (!D.ground && agl > 50 && ['parked', 'hangared', 'taxi', 'runup', 'hold_short'].includes(tr.phase)) PL.label_ground_in_air++;
+      if (tr.phase === 'parked' && D.gs > 2) PL.label_parked_moving++;
+      if (T0 && T0.cls === 'heli' && tr.phase === 'heli_ground' && agl > 10) PL.label_heli_ground_up++;
+      if (fw && M.frames % HZ === 0) { let S = SER.get(tr.key); if (!S) SER.set(tr.key, S = { type: tr.info.icao || '?', va, s: [] }); S.s.push([now / 1000, D.x, D.z, D.ground ? 1 : 0, D.gs, agl]); } }
     M.visFrames++; M.phaseFrames[tr.phase] = (M.phaseFrames[tr.phase] || 0) + 1; M.scopeFrames[tr.scope] = (M.scopeFrames[tr.scope] || 0) + 1;
     if (tr.phaseInfo.provisional) M.provisionalFrames++;
     const T = tr.dims;
@@ -126,6 +192,40 @@ for (let t = tStart; t <= tEnd; t += DT) {
   M.updMs.push(performance.now() - a);
   sampleFrame(t * 1000);
 }
+// plausibility from the 1-Hz series of the drawn fixed-wing bodies
+for (const S of SER.values()) {
+  const a = S.s;
+  for (let k = 1; k < a.length; k++) { if (a[k][0] - a[k - 1][0] > 1.5) continue;
+    if (a[k - 1][3] === 1 && a[k][3] === 0 && Math.max(a[k - 1][4], a[k][4]) < 0.65 * S.va) { PL.slow_liftoff++; if (PL.liftLog.length < 20) PL.liftLog.push([Math.round(a[k][0] - pack.from - L), S.type, +(Math.max(a[k - 1][4], a[k][4]) / 0.514444).toFixed(0)]); } }
+  for (let k = 3; k < a.length; k++) if (a[k][3] === 1 && a[k - 3][3] === 1 && a[k - 3][4] > 40 * 0.514444 && a[k][4] < 8 * 0.514444 && a[k][0] - a[k - 3][0] < 3.5) PL.hard_stops++;
+  // (fix round 2: a hop stays near and low - < 600 m from the lift-off point and < 300 ft AGL; a 140-s touch-and-go circuit
+  // of an aerobatic single that lands within 200 m of where it lifted off is not one)
+  for (let k = 1; k < a.length; k++) if (a[k - 1][3] === 1 && a[k][3] === 0) { let j = k, far = 0, hi = 0; while (j < a.length && a[j][3] === 0 && a[j][0] - a[j - 1][0] < 3) { far = Math.max(far, Math.hypot(a[j][1] - a[k - 1][1], a[j][2] - a[k - 1][2])); hi = Math.max(hi, a[j][5] || 0); j++; }
+    if (j < a.length && a[j][3] === 1 && a[j][0] - a[k - 1][0] < 150 && Math.hypot(a[j][1] - a[k - 1][1], a[j][2] - a[k - 1][2]) < 200 && far < 600 && hi < 300) { PL.hops++; if (PL.hopLog.length < 10) PL.hopLog.push([Math.round(a[k - 1][0] - pack.from - L), S.type, Math.round(far), Math.round(hi)]); } }
+}
+// touch-downs / lift-offs on the HWD site whose drawn track over the last / first 2-12 s is more than 15 deg off the runway
+// axis (a straight 'ag:lin' chord from a base-leg fix to the runway: review round 2, finding 5) [inf limit]
+{ const RH = (site.runways || []).map(r => Math.atan2(r.dir[0], -r.dir[1]) * 180 / Math.PI);
+  const off = (t) => Math.min(...RH.map(h => Math.min(Math.abs(((t - h) % 360 + 540) % 360 - 180), Math.abs(((t - h + 180) % 360 + 540) % 360 - 180))));
+  for (const S of SER.values()) { const a = S.s;
+    for (let k = 1; k < a.length; k++) { if (a[k][0] - a[k - 1][0] > 1.5 || Math.abs(a[k][1]) > 2500 || Math.abs(a[k][2]) > 2500 || a[k - 1][3] === a[k][3]) continue;
+      const td = a[k][3] === 1, P = a.filter(q => td ? (q[0] >= a[k][0] - 12 && q[0] <= a[k][0] - 2) : (q[0] >= a[k][0] + 2 && q[0] <= a[k][0] + 12));
+      if (P.length < 5) continue;
+      const dx = P[P.length - 1][1] - P[0][1], dz = P[P.length - 1][2] - P[0][2]; if (Math.hypot(dx, dz) < 30) continue;
+      const m = off(Math.atan2(dx, -dz) * 180 / Math.PI);
+      if (m > 15) { PL.misaligned++; if (PL.alignLog.length < 20) PL.alignLog.push([Math.round(a[k][0] - pack.from - L), S.type, td ? 'touchdown' : 'lift-off', +m.toFixed(0)]); } } } }
+PL.label_contradictions = PL.label_air_on_ground + PL.label_ground_in_air + PL.label_parked_moving + PL.label_heli_ground_up;
+// pass / fail (fix round 2: every limit is zero - the 6-per-hour allowance of fix round 1 for re-placements is gone; the
+// teleports of the gate are those the ENGINE caused with the signal continuous; a re-placement after a real signal loss
+// (the aircraft moved unseen for > SIGNAL_LOSS_S) is reported as teleports_signal, also gated at 0 for HWD traffic)
+const hrs = Math.max(1 / 60, (tEnd - tStart) / 3600);
+const sigHwd = PL.teleLog.filter(r => r[7] === 'signal' && r[2] === 'hwd').length;
+const CHECKS = { teleports_engine: [PL.teleports_engine, 0], teleports_signal_hwd: [sigHwd, 0], ghost_parked_frames: [PL.ghost_parked_frames, 0], slow_liftoff: [PL.slow_liftoff, 0], hard_stops: [PL.hard_stops, 0], hops: [PL.hops, 0],
+  air_hover_frames: [PL.air_hover_frames, 0], heli_in_bldg_frames: [PL.heli_in_bldg_frames, 0], label_contradictions: [PL.label_contradictions, 0], grass_route_frames: [PL.grass_route_frames, 0],
+  misaligned_transitions: [PL.misaligned, 0] };
+// reported, not gated: transitions without a take-off / landing plan (the straight fallback chord) - review round 2, finding 5
+const INFO = { transition_linear: traffic.counters.transitionLinear || 0, transition_plans: traffic.counters.transitionPlans || 0, transition_fallback: traffic.counters.transitionFallback || 0, teleports_per_h: +(PL.teleports / hrs).toFixed(1), window_reentries: PL.window_reentries };
+const FAILED = Object.entries(CHECKS).filter(([k, [v, lim]]) => v > lim).map(([k]) => k);
 // end of the window: decide what is still open (contexts that would time out after it)
 for (const tr of traffic.tracks.values()) for (const e of traffic.classifier.flush(tr, tEnd * 1000 + 3600e3)) traffic.event(e);
 
@@ -183,6 +283,15 @@ for (const s of LEAK) if (blob.includes(s.toUpperCase())) d1.leaks_found++;
   const I = identity({ ...a, reg: a.reg, flight: a.flight, icao: a.icao }, a.hex, null);
   d1.synthetic_ladd_masked = I.masked && !I.reg && !I.callsign && I.label === 'C172';
 }
+{ // review round 2, finding 7: a late D1 flag ('forget' from the relay, SSE or poll) leaves a type-only card that says LADD /
+  // PIA (maskWhy 'd1'), no registration / callsign, and the track is not persisted
+  const t2 = new Traffic({ airport: HWD_AIRPORT, taxigraph: TAXIGRAPH, site, parking: null, persist: false }); const nowS = 1.8e9;
+  t2.ingest(parsePayload({ now: nowS * 1000, ac: [{ hex: 'a12345', r: 'N12345', flight: 'N12345', t: 'C172', category: 'A1', lat: 37.66, lon: -122.12, alt_baro: 'ground', _pt: nowS }] }, nowS * 1000), nowS * 1000);
+  const before = t2.tracks.get('a12345'); const hadReg = !!(before && before.ident && before.ident.reg);
+  t2.forget(['a12345']); const I2 = before && before.ident;
+  d1.late_flag_forget_ok = hadReg && !!I2 && I2.masked && I2.maskWhy === 'd1' && !I2.reg && !I2.callsign && I2.label === 'C172' && !!before.fadeOut === !!before.disp.valid;
+  CHECKS.d1_late_flag_forget = [d1.late_flag_forget_ok ? 0 : 1, 0]; if (!d1.late_flag_forget_ok) FAILED.push('d1_late_flag_forget');
+}
 
 const out = {
   name, pack: path.relative(ROOT, packPath), window: { from: new Date(pack.from * 1000).toISOString(), until: new Date(pack.until * 1000).toISOString() }, lookahead_s: L, hz: HZ,
@@ -197,7 +306,7 @@ const out = {
     ground_crab_deg: { p50: pct(DIST.g_crab, .5), p99: pct(DIST.g_crab, .99), max: pct(DIST.g_crab, 1) },
     ground: { along: { p50: pct(DIST.g_along, .5), p99: pct(DIST.g_along, .99), max: pct(DIST.g_along, 1) }, lat: { p50: pct(DIST.g_lat, .5), p99: pct(DIST.g_lat, .99), max: pct(DIST.g_lat, 1) }, turn_dps: { p50: pct(DIST.g_w, .5), p99: pct(DIST.g_w, .99), max: pct(DIST.g_w, 1) }, n: DIST.g_along.length },
     air: { along: { p50: pct(DIST.a_along, .5), p99: pct(DIST.a_along, .99), max: pct(DIST.a_along, 1) }, lat: { p50: pct(DIST.a_lat, .5), p99: pct(DIST.a_lat, .99), max: pct(DIST.a_lat, 1) }, turn_dps: { p50: pct(DIST.a_w, .5), p99: pct(DIST.a_w, .99), max: pct(DIST.a_w, 1) }, vs_fpm: { p50: pct(DIST.a_vs, .5), p99: pct(DIST.a_vs, .99), max: pct(DIST.a_vs, 1) }, n: DIST.a_lat.length } },
-  parking: park, scope, d1, physics: physics.stats,
+  parking: park, scope, d1, physics: physics.stats, plausibility: PL, checks: CHECKS, checks_failed: FAILED, info: INFO,
 };
 if (DUMP) { for (const tr of traffic.tracks.values()) { const d = DUMP.get(tr.key); if (d) d.fx = tr.fx.map(f => [+(f.t / 1000).toFixed(1), +f.x.toFixed(1), +f.z.toFixed(1), f.g ? 1 : 0, f.ground ? 1 : 0, f.ph, f.gs]); }
   for (const [k, d] of DUMP) if (!d.fx) d.fx = [];
@@ -213,3 +322,10 @@ console.log('pavement', JSON.stringify(out.pavement)); console.log('overlaps', J
 console.log('motion', JSON.stringify(out.motion)); console.log('parking', JSON.stringify(park)); console.log('scope', JSON.stringify(scope)); console.log('d1', JSON.stringify(d1));
 console.log('counters', JSON.stringify(traffic.counters), 'net', JSON.stringify(out.run.net), 'flow', JSON.stringify(out.run.flow));
 console.log('visible phases', JSON.stringify(M.phaseFrames));
+console.log('plausibility', JSON.stringify({ ...PL, teleLog: undefined, ghostLog: undefined, liftLog: undefined, hopLog: undefined, alignLog: undefined }));
+if (PL.teleLog.length) console.log('teleports [t s, type, scope, phase, m, absent s, why, engine|signal, longest fix gap s]', JSON.stringify(PL.teleLog));
+if (PL.alignLog.length) console.log('misaligned [t s, type, kind, deg off the runway]', JSON.stringify(PL.alignLog));
+console.log('INFO', JSON.stringify(INFO));
+console.log('CHECKS', Object.entries(CHECKS).map(([k, [v, lim]]) => `${k} ${v} (<= ${lim}) ${v > lim ? 'FAIL' : 'ok'}`).join(' | '));
+console.log(FAILED.length ? 'RESULT: FAILED ' + FAILED.join(', ') : 'RESULT: ALL PLAUSIBILITY CHECKS PASSED');
+if (args.includes('--strict') && FAILED.length) process.exitCode = 1;

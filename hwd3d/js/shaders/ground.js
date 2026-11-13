@@ -78,6 +78,7 @@ in vec3 vWP; in vec3 vN;
 uniform sampler2D uAptMap; uniform vec4 uMapRect; uniform vec2 uGs; uniform vec2 uGt; uniform vec2 uMapSize;
 uniform vec4 uRw[2]; uniform vec4 uRwI[2];   // runway: (origin x, z, dir x, z), (half width, length, touchdown zone a, b)
 uniform sampler2D uNaip; uniform vec3 uNaipU; uniform vec3 uNaipV; uniform float uNaipMix; uniform float uNaipGain; uniform vec3 uNaipBorder;
+uniform vec3 uNaipBal; uniform float uNaipSat;
 uniform sampler2D uReg; uniform vec3 uRegU; uniform vec3 uRegV; uniform vec3 uRegBorder; uniform float uRegOn;
 uniform float uNight;
 void main(){
@@ -112,6 +113,12 @@ void main(){
     naip = mix(naip, lp * (0.55 + 0.45 * gd * gd), veg * nearW);
   }
   naip *= mix(1.0, grassDetail(wp.xz, fw), 1.0 - smoothstep(0.35, 1.2, fw));
+  // fix round 1 (review: the imagery rendered ~20 % darker, warmer and ~40 % more saturated than NAIP on the same cameras):
+  // the photograph already carries its own sun and colour balance, so lighting it again warms and saturates it. Pull its
+  // chroma back (uNaipSat) and re-balance (uNaipBal), calibrated against NAIP tiles warped into the render cameras at the
+  // default replay hour (Nov 8 12:00 PST, sun 35.6 deg) [inf look]. The residual darkness is the lower November sun
+  // (NAIP was flown 2024-05-20, sun ~65-72 deg).
+  naip = mix(vec3(dot(naip, vec3(0.2126, 0.7152, 0.0722))), naip, uNaipSat) * uNaipBal;
   vec3 albedo = mix(grass, naip * uNaipGain, uNaipMix);
   float rough = 0.95;
   // ---- pavement
@@ -123,9 +130,12 @@ void main(){
   float paved = crisp(m.r, texPerPx);
   float closed = m.g;
   float n1 = texture(uNoise, wp.xz * 0.013).b, n2 = texture(uNoise, wp.xz * 0.6).r;
-  // aged asphalt (HWD aprons and taxiways read light grey on NAIP 2024; no surface survey: [inf] tone)
-  vec3 asph = vec3(0.17, 0.17, 0.172) * (0.86 + 0.28 * n1) * (0.94 + 0.12 * n2);
-  asph = mix(asph, vec3(0.24, 0.23, 0.21) * (0.85 + 0.3 * n1), closed * 0.8);              // abandoned: weathered
+  // aged asphalt (HWD aprons and taxiways read light grey on NAIP 2024; no surface survey). Fix round 1: the tone is
+  // calibrated so the rendered pavement matches NAIP 2024 on the same cameras as closely as the grass does (render / NAIP
+  // display luminance ~0.9 at the default replay hour; it was 0.70 with albedo 0.17, so unmapped NAIP pavement next to
+  // the procedural asphalt looked patchy) [inf tone, NAIP-calibrated]
+  vec3 asph = vec3(0.295, 0.285, 0.258) * (0.88 + 0.24 * n1) * (0.95 + 0.10 * n2);
+  asph = mix(asph, vec3(0.33, 0.315, 0.28) * (0.85 + 0.3 * n1), closed * 0.8);              // abandoned: weathered
   albedo = mix(albedo, asph, paved);
   rough = mix(rough, 0.85, paved);
   // ---- runways (FAA NASR rectangles, exact)
@@ -138,7 +148,7 @@ void main(){
     float inR = 1.0 - smoothstep(-fwr, fwr, dOut);
     if (inR > 0.0) {
       float r1 = texture(uNoise, vec2(al * 0.0012, ac * 0.02)).b, r2 = texture(uNoise, vec2(al * 0.02, ac * 0.5)).r;
-      vec3 ra = vec3(0.145, 0.146, 0.152) * (0.84 + 0.32 * r1) * (0.95 + 0.1 * r2);
+      vec3 ra = vec3(0.275, 0.266, 0.243) * (0.86 + 0.28 * r1) * (0.95 + 0.1 * r2);   // NAIP-calibrated like asph [inf]
       ra *= 0.975 + 0.035 * smoothstep(3.0, 9.0, abs(ac));   // traffic-darkened centre band [inf]
       // rubber deposits in the touchdown zones (from each landing threshold, uRwI.zw = along of the two thresholds)
       float t0 = al - uRwI[i].z, t1 = uRwI[i].w - al;

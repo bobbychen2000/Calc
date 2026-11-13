@@ -7,8 +7,9 @@
 //        the traffic body (main-gear contact; on the ground y = site.groundY, set by traffic.js), heading (deg true) ->
 //        fwd, pitch / roll, gear, rotor spin, light states (js/env/aircraft_lights.js aircraftLightStates)
 //   .get(key) -> GaAircraft | null ;  .modelNote(tr) -> text ;  .dispose()
-// A track is drawn when disp.valid, inside the D6 window (tr.inView), not hidden (hangared) and its fade alpha > 0.5 (the
-// obj program has no alpha: the 0.4-s fades of traffic.js become a cut at their midpoint).
+// A track is drawn when disp.valid, inside the D6 window (tr.inView), not hidden (hangared) and its fade alpha > 0.02; the
+// fade is drawn as a screen-door dither (js/shaders/objects.js uAlpha, fix round 1 - before, the obj program had no alpha and
+// a 0.4-s re-placement fade became a blink and a jump at its midpoint).
 import { GaAircraft } from '../aircraft/placeholder.js';
 import { dimsNote } from '../aircraft/ga_dims.js';
 import { aircraftLightStates } from '../env/aircraft_lights.js';
@@ -24,12 +25,12 @@ export class AircraftViews {
     const seen = new Set();
     for (const tr of traffic.tracks.values()) {
       const D = tr.disp;
-      if (!D.valid || !tr.inView || tr.hidden || !(D.alpha > 0.5) || !tr.dims) continue;
+      if (!D.valid || !tr.inView || tr.hidden || !(D.alpha > 0.02) || !tr.dims) continue;
       seen.add(tr.key);
       let v = this.map.get(tr.key);
       if (v && v.T !== tr.dims) { this.scene.remove(v); v.dispose(); v = null; }   // type resolved later: new placeholder
       if (!v) { v = new GaAircraft(tr.dims, { id: tr.key, lodDist: this.quality === 'low' ? 4000 : 8000, shadowDist: this.quality === 'low' ? 1200 : 2500 }); this.map.set(tr.key, v); this.scene.add(v); }
-      v.pos = [D.x, D.y, D.z];
+      v.pos = [D.x, D.y, D.z]; v.alpha = Math.min(1, D.alpha);
       v.fwd = [Math.sin(D.hdg * D2R), 0, -Math.cos(D.hdg * D2R)];
       v.pitch = D.pitch || 0; v.roll = D.roll || 0; v.gear = D.gear ?? 1; v.selected = tr.key === selectedKey;
       const heli = tr.dims.cls === 'heli';
@@ -37,7 +38,7 @@ export class AircraftViews {
       v.step(dt);
       const altAgl = traffic.groundY ? D.y - traffic.groundY(D.x, D.z) : 0;
       const ph = LIGHT_PHASE[tr.phase] || (D.ground ? 'taxi' : 'climb');
-      v.lightsOn = aircraftLightStates({ phase: ph, ground: D.ground, gs: D.gs / KT, altAgl, stale: tr.stale });
+      v.lightsOn = D.alpha > 0.5 ? aircraftLightStates({ phase: ph, ground: D.ground, gs: D.gs / KT, altAgl, stale: tr.stale }) : { nav: false, beacon: false, strobe: false, landing: false, taxi: false };
       v.visible = true;
     }
     for (const [k, v] of this.map) if (!seen.has(k)) { this.scene.remove(v); v.dispose(); this.map.delete(k); }

@@ -45,6 +45,14 @@ export const HEIGHT_RULES = {
 // control-tower eye height: OSM gives only the top (15.85 m); cab roof / glazing / floor are not sourced. Eye = top -
 // 2.4 m (0.9 m roof + 1.5 m above the eye line of a standing controller) [inf]
 export const TOWER_EYE_BELOW_TOP = 2.4;
+// Control-tower massing (fix round 1, review finding: the whole 265 m2 OSM ring read as a 16-m office block). On NAIP
+// 2022 and 2024 (resampled 0.1 m, axes along the ring's long edges) only the ring's north-east part has a roof that casts
+// the long shadow (NW in both years) - a light roof ~8 x 9 m with a dark hatch / mast spot, the same place in both years
+// (so relief displacement is small). That part is the tall structure [inf, by eye, +-1 m]; the rest of the OSM ring is a
+// single-storey base whose roof carries rooftop units (light dots in both years) [inf]. Only the total height (15.85 m)
+// is sourced (OSM). The eye goes to the tall part's centre.
+export const TOWER_TALL = { ring: [[43.21, -417.23], [49.62, -412.44], [44.23, -405.23], [37.82, -410.01]], baseH: 4.0, src: 'inf',
+  rule: 'tall part read by eye on NAIP 2022 + 2024 (light roof with the long NW shadow, ~8 x 9 m, ring NE corner); base 4.0 m single storey [inf]' };
 // Fire station footprint [inf]: read by eye on a 0.15 m north-up resampling of NAIP 2024 centred at world (290, 585)
 // (+-1 m): a main block 55.8 x 18.5 m and a 6 m deep lower strip along its north side (~1,300 m2; AL-5015 block ~1,270 m2)
 export const FIRE_STATION_NAIP = {
@@ -52,6 +60,19 @@ export const FIRE_STATION_NAIP = {
   parts: [{ suffix: '#main', ring: [[271.7, 579.3], [327.5, 579.3], [327.5, 597.8], [271.7, 597.8]], h: 7.0 },
     { suffix: '#north', ring: [[274.3, 573.3], [328.3, 573.3], [328.3, 579.3], [274.3, 579.3]], h: 4.0 }],
   height_rule: 'apparatus-bay block 7.0 m, lower strip 4.0 m; no source',
+};
+
+// Helicopter pad complex south of 10R/28L (fix round 1, review: paved on NAIP 2024 but in no source read - not OSM, not
+// the AL-5015 diagram - so site.surface() called it grass and a parked R22 stood "on grass"). Outline = the NAIP 2024 pale
+// pavement segmented with own code (saturation < 0.21, mean RGB > 140 at 0.5 m, opening / closing, the largest component,
+// simplified 0.8 m; the road running south off its west arm and the OSM taxiway strip at x < -127.5 cut off) [obs
+// imagery, +-1.5 m]. Four square concrete pads read by eye (+-2 m, edges along the runway; one carries a dark helicopter
+// on NAIP 2024) [obs position; use as helicopter parking inf]. Not added to data/hwd_airport.json (Phase 1 data; the
+// taxigraph does not reach it: helicopters air-taxi there).
+export const HELI_APRON_NAIP = {
+  id: 'naip:heli_apron', name: 'Helicopter pads (south)', src: 'obs', refs: ['naip2024'],
+  ring: [[-123.0, 185.0], [-115.5, 183.0], [-106.5, 184.0], [-101.5, 189.5], [-102.5, 195.5], [-110.0, 209.0], [-110.0, 226.0], [-102.0, 226.0], [-99.5, 220.5], [-92.0, 220.5], [-53.5, 242.0], [-49.0, 241.5], [-48.5, 238.0], [-37.5, 222.5], [-33.0, 211.5], [-35.0, 207.5], [-43.5, 203.5], [-46.5, 198.5], [-41.5, 193.0], [-32.0, 175.5], [-33.5, 173.0], [-57.0, 160.0], [-68.5, 178.5], [-68.0, 183.0], [-70.0, 185.0], [-74.5, 185.5], [-89.5, 176.0], [-120.5, 175.5], [-127.5, 168.8], [-127.5, 191.4]],
+  pads: [{"id": "naip:heli_pad/1", "c": [-93.8, 207.5], "ring": [[-95.5, 201.4], [-87.7, 205.8], [-92.1, 213.6], [-99.9, 209.2]]}, {"id": "naip:heli_pad/2", "c": [-74.3, 218.7], "ring": [[-76.0, 212.6], [-68.2, 217.0], [-72.6, 224.8], [-80.4, 220.4]]}, {"id": "naip:heli_pad/3", "c": [-54.7, 229.7], "ring": [[-56.4, 223.6], [-48.6, 228.0], [-53.0, 235.8], [-60.8, 231.4]]}, {"id": "naip:heli_pad/4", "c": [-52.2, 179.2], "ring": [[-54.6, 170.3], [-43.3, 176.8], [-49.8, 188.1], [-61.1, 181.6]]}],
 };
 
 function ringArea(r) { let a = 0; for (let i = 0; i < r.length; i++) { const p = r[i], q = r[(i + 1) % r.length]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; }
@@ -177,6 +198,8 @@ export function buildSite(airport, { res = 0.5, bres = 1.0 } = {}) {
     surf.fillRibbon(w.pts, W.m / 2, putS(cls)); ribbons[w.status === 'open' ? w.kind : 'closed']++; if (W.src === 'obs') ribbons.width_obs++;
   }
   for (const hp of A.helipads) surf.fillRings([hp.ring], putS(S.helipad));
+  surf.fillRings([HELI_APRON_NAIP.ring], putS(S.apron));
+  for (const hp of HELI_APRON_NAIP.pads) surf.fillRings([hp.ring], putS(S.helipad));
   for (const r of A.runways) surf.fillRings([r.outline.ring], putS(S.runway));
   // ---------------------------------------------------------------- buildings and hangars
   const blds = [];
@@ -203,7 +226,7 @@ export function buildSite(airport, { res = 0.5, bres = 1.0 } = {}) {
   blds.forEach((b, i) => { b.area_m2 = Math.abs(ringArea(b.ring)); b.centroid = centroid(b.ring); occ.fillRings([b.ring], (k) => { occ.a[k] = i; }); });
   const buildingAt = (x, z) => { const k = occ.idx(x, z); if (k < 0 || occ.a[k] < 0) return null; const b = blds[occ.a[k]]; return { id: b.id, kind: b.kind, name: b.name, height_m: b.height_m, height_src: b.height_src }; };
   // ---------------------------------------------------------------- aprons, anchors
-  const aprons = A.aprons.map(a => {
+  const aprons = [...A.aprons, HELI_APRON_NAIP].map(a => {
     let ax0 = 1e9, ax1 = -1e9, az0 = 1e9, az1 = -1e9; for (const p of a.ring) { ax0 = Math.min(ax0, p[0]); ax1 = Math.max(ax1, p[0]); az0 = Math.min(az0, p[1]); az1 = Math.max(az1, p[1]); }
     return { id: a.id, name: a.name || null, ring: a.ring, bb: [ax0, az0, ax1, az1] };
   });
@@ -211,8 +234,10 @@ export function buildSite(airport, { res = 0.5, bres = 1.0 } = {}) {
   const tw = blds.find(b => b.kind === 'control_tower');
   const anchors = { aprons: {}, thresholds: {}, tower: null, windsock: null };
   if (tw) {
-    const [cx, cz] = tw.centroid; const y = groundY(cx, cz);
-    anchors.tower = { x: cx, z: cz, y, eyeY: y + tw.height_m - TOWER_EYE_BELOW_TOP, top: y + tw.height_m, id: tw.id, src: 'obs footprint (OSM) / inf eye height', eyeRule: `top (OSM 15.85 m) - ${TOWER_EYE_BELOW_TOP} m [inf]` };
+    // the eye stands over the tall part (TOWER_TALL, inf); the ground reference stays the ring centroid as before
+    const [gx, gz] = tw.centroid; const y = groundY(gx, gz); const [cx, cz] = centroid(TOWER_TALL.ring);
+    tw.tall = TOWER_TALL;
+    anchors.tower = { x: cx, z: cz, y, eyeY: y + tw.height_m - TOWER_EYE_BELOW_TOP, top: y + tw.height_m, id: tw.id, src: 'obs footprint + height (OSM) / inf tall part (NAIP by eye) and eye height', eyeRule: `top (OSM 15.85 m) - ${TOWER_EYE_BELOW_TOP} m [inf], over the tall part [inf]` };
   }
   for (const a of aprons) if (a.name) anchors.aprons[a.name] = centroid(a.ring);
   const ws = (A.markers || []).find(m => m.kind === 'windsock'); if (ws) anchors.windsock = [ws.x, ws.z];
