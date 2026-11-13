@@ -1,0 +1,47 @@
+{
+ "source": "refs/cache/naip/naip_2024_hwd_rgb.jpg (USDA NAIP 2024, public domain)",
+ "crs": "EPSG:26910",
+ "origin_E": 575664.0,
+ "origin_N": 4169916.6,
+ "origin_is": "outer north-west corner of pixel (col 0, row 0)",
+ "flight_date": [
+  "2024-05-20",
+  "2024-05-20"
+ ],
+ "credit": "Imagery: USDA NAIP (USDA Farm Production and Conservation Business Center, Geospatial Enterprise Operations), public domain",
+ "made_by": "hwd3d/js/world/tex/make_naip_tex.py",
+ "levels": {
+  "1m2": {
+   "file": "naip2024_1m2.jpg",
+   "width": 3186,
+   "height": 2711,
+   "pixel_size_m": 1.2,
+   "covers_m": [
+    3823.2,
+    3253.2
+   ],
+   "bytes": 3553841
+  },
+  "2m4": {
+   "file": "naip2024_2m4.jpg",
+   "width": 1593,
+   "height": 1355,
+   "pixel_size_m": 2.4,
+   "covers_m": [
+    3823.2,
+    3252.0
+   ],
+   "bytes": 1003759
+  }
+ },
+ "border_linear_rgb": [
+  0.3467,
+  0.3095,
+  0.2502
+ ],
+ "mean_linear_rgb": [
+  0.4225,
+  0.3896,
+  0.3241
+ ]
+}
