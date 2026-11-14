@@ -17,21 +17,25 @@
 //   6. gear retracted (gear = 0): every gear vertex against the airframe's lower skin (the lowest downward-facing
 //      fuselage / wing / gear-door skin point within +-0.6 m fore-aft on the same butt line +-5 cm, which bridges the
 //      wheel-well openings); only tyres may protrude, by at most the documented amount (PC12: POH, tyres protrude ~1 in
-//      = 25.4 mm; tolerance 10 mm), anything else <= 10 mm; also the lowest retracted point of the whole aircraft
+//      = 25.4 mm; tolerance 10 mm), anything else <= 10 mm; also the lowest retracted point of the whole aircraft; and
+//      (fix round 3) upward: no gear vertex above the topmost upward-facing skin at its plan position (SF50: stowed link)
 //   7. light anchors: every light node the GLB names reaches model.lights (fix round 1: strobeTail / iceLight were
 //      dropped); the anti-collision lights drawn = the documented count; landing lights where the type has them
 //   8. registration panels: every field the builder wrote is kept (fix round 1: text_dir was dropped)
 //   9. traffic frame: js/aircraft/models.js frame = the measured model (5 mm), withModelFrame(gaDims(type)) hands traffic /
 //      ground physics the model's gear layout (fix round 1: gaDims' class rule was off by up to 0.72 m for the SF50)
 //  10. type-specific shape checks: SF50 upswept wing tip at the 38.7 ft span with flush lenses, nacelle fillets and a raised
-//      D inlet lip; PC-12 cabin window count, window / door stations and the wing front-view silhouette vs the Pilatus
-//      drawings (fix round 2), and the remaining cabin / wing height offset (KNOWN pc12 loft item)
+//      D inlet lip; PC-12 cabin window count, belly-fairing coverage of the wing and the flat 1.30 m cabin floor (geometry), and vs Pilatus drawing
+//      190.10.40.432 (local reference data, SKIP when absent): window / door stations and water lines, crown / keel /
+//      aft underside / half-breadth / body-plan sections, dorsal fin, winglet side view, wing front view, absolute heights
 //  11. the drawable (js/aircraft/detailed.js, Node with a stub WebGL context): every item carries the screen-door alpha in
 //      both the loaded and the placeholder path, every field js/live/aircraft.js sets is synced to the placeholder, the
 //      aircraft programs read uAlpha, spinning groups keep the aircraft's motion in their prevModel, CPU arrays released
 //  12. provenance: js/aircraft/models/SOURCES.json hashes = the files on disk (and = the builder's own record); every image
 //      in docs/phase3 has a caption in docs/phase3/SOURCES.json, and every caption that claims to show the current model
 //      names the current file hash (fix round 1: stills and SOURCES of a superseded SF50 build were presented as current)
+// Checks against digitised manufacturer-drawing readings (Pilatus / Cirrus AFM) use the gitignored local reference files
+// (loadLocalRef below) and print SKIP when they are absent - a clean clone never fails on them (fix round 3, decision (b)).
 // Exit code 1 when a check fails. Read-only: no file under pc12/ or js/ is written.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -54,6 +58,18 @@ const check = (model, name, ok, detail) => {
   console.log(`${status} ${model} ${name}: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}${isKnown ? '\n      known: ' + kn.note : ''}`);
 };
 const info = (model, name, detail) => { results.push({ model, name, ok: null, status: 'INFO', detail }); console.log(`INFO ${model} ${name}: ${JSON.stringify(detail)}`); };
+// Local reference data (orchestrator decision (b) 2026-11-13 under the owner's delegation; the owner may overrule):
+// digitised readings of manufacturer drawings (Pilatus 190.10.40.432 / MBP sheets, Cirrus AFM figures: outline tables,
+// per-butt-line water lines, window centre readings, raster registration) are never committed. They live in the gitignored
+// refs/cache/local/models/<name>.json (each with a 'src' note); a check that needs one prints SKIP when it is absent (a clean
+// clone), never FAIL. loadLocalRef(name) -> the parsed object, or null when the file is not present.
+let skipped = 0;
+const LOCAL_REF_DIR = path.join(HWD, 'refs/cache/local/models');
+const localRefPath = (name) => path.join(LOCAL_REF_DIR, name.endsWith('.json') ? name : name + '.json');
+const loadLocalRef = (name) => { const f = localRefPath(name); if (!fs.existsSync(f)) return null;
+  try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (err) { console.log(`FAIL provenance local reference ${path.relative(HWD, f)}: ${err}`); fails++; return null; } };
+const skip = (model, name, why) => { skipped++; results.push({ model, name, ok: null, status: 'SKIP', detail: why }); console.log(`SKIP ${model} ${name}: ${why}`); };
+const SKIP_LOCAL = (name) => `(local reference data not present) ${path.relative(HWD, localRefPath(name))} is gitignored and absent in this clone`;
 const r3 = (v) => Math.round(v * 1000) / 1000;
 const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
 const REQUIRED = {
@@ -63,15 +79,9 @@ const REQUIRED = {
 // Known deviations of a model from a check, measured and reported rather than hidden: the check prints KNOWN (not PASS)
 // while the measured value stays within `limit`; beyond it, it FAILS. Each one is an open item in docs/phase3_models.md.
 const KNOWN = {
-  provenance: {
-    'docs/phase3 in docs/ATTRIBUTION.md and in tools/check_airport.py SOURCES coverage': { key: 'missing', limit: 2,
-      note: 'not M1 / M2 files (docs/ATTRIBUTION.md, tools/check_airport.py): the exact diffs are in docs/phase3_models.md section 8 items 5 / 6 for their owners; until then this test checks every docs/phase3 caption and licence notice itself. Must be closed before the artifact is published.' },
-  },
   PC12: {
     'gear retracted: only tyres protrude (documented amount)': { key: 'other_max_protrusion_mm', limit: 70,
-      note: 'pc12 model (not hwd3d): with the mains retracted, the trailing-link arm / axle near the trunnion (gear_leg material, STA ~6.03, BL ~1.74) hangs below the local wing lower skin (67 mm in pc12/out; 51 mm in the fix-round-2 build, whose wing inboard of BL 2.265 is up to 4 cm lower); the POH says only the tyres protrude (~1 in). Open item for pc12/ (owner), not changed here.' },
-    'cabin crown / wing height above the ground vs Pilatus drawing 190.10.40.432': { key: 'offset_max_mm', limit: 160,
-      note: 'pc12 model (not hwd3d; pc12/model/fuselage.py control lines): measured in fix round 2 on drawing 190.10.40.432 (side view registered on 9 frame stations, the spinner tip and the ground line; tail top then reads 4.266 m vs 4.26): the cabin crown is WL 2.768 on the drawing and 2.630 in pc12 (keel 0.938 vs 0.800), the wing ~0.12 m lower too, while the nose and the propeller axis agree. Fixing it moves the cabin loft, glazing, wing root, gear legs and fin: a pc12 owner item (its drawings-first method). Windows / doors are placed relative to the crown, so their look on the fuselage is right.' },
+      note: 'pc12 model (not hwd3d): with the mains retracted, the trailing-link arm / axle near the trunnion (gear_leg material, STA ~6.03, BL ~1.74) hangs below the local wing lower skin (67 mm in pc12/out; 51 mm in the fix-round-2 build; 58 mm in the fix-round-3 build, whose trunnion rises 17 mm less than the wing so the tyre keeps its fr2 protrusion); the POH says only the tyres protrude (~1 in). Open item for pc12/ (owner), not changed here.' },
   },
 };
 const TYRE_PROTRUSION = { PC12: { max_m: 0.0254, src: 'POH NGX (pc12/CLAUDE.md sourced facts): main tyres protrude ~1 in when retracted' } };
@@ -81,49 +91,28 @@ const DEFLECTION = { PC12: { main: 0.0145, nose: 0.0105, src: 'pc12/model/gear.p
 // sourced propeller ground clearance (gear down, static): pc12/CLAUDE.md "prop clearance 0.32"
 const PROP_CLEARANCE = { PC12: { m: 0.32, tol: 0.02, src: 'pc12/CLAUDE.md sourced facts: prop clearance 0.32 m' } };
 // Control-surface travels from the type certificate (deg; up = trailing edge up). SF50: FAA TCDS A00018CH Rev. 7
-// (tools/models/sf50/SF50_FACTS.md S1), read through the FAA DRS web viewer after DRS's data API answered 403. Fix round 2:
-// no copy outside DRS was found (the EASA TCDS has no travels), so these values are **inf (DRS)** until the owner rules on
-// that access route (docs/phase3_sf50.md section 7); the check keeps the model consistent with them, it does not make them
-// obs. Each part's sign convention is MEASURED here (trailing-edge motion for a +10 deg rotation), so a range written with
-// the wrong sign fails.
+// (tools/models/sf50/SF50_FACTS.md S1), read in the FAA DRS public web viewer. Fix round 3: obs with the TCDS citation -
+// the DRS web viewer (no login, no key, no bot check) is the FAA's intended public interface for type certificate data
+// sheets (orchestrator decision 2026-11-13 under the owner's delegation; the owner may overrule). Each part's sign
+// convention is MEASURED here (trailing-edge motion for a +10 deg rotation), so a range written with the wrong sign fails.
+const TCDS_SF50 = '[obs] FAA TCDS A00018CH Rev. 7 (FAA DRS public web viewer)';
 const TRAVEL = {
   SF50: [
-    { parts: ['aileron_L', 'aileron_R'], up: 15, down: 11.5, src: '[inf (DRS): owner decision pending] TCDS A00018CH "Aileron Up 15.0 Down 11.5"' },
-    { parts: ['ail_tab_L'], up: 10, down: 10, src: '[inf (DRS): owner decision pending] TCDS A00018CH "LH Aileron Trim Up 10.0 Down 10.0"' },
-    { parts: ['ruddervator_L', 'ruddervator_R'], up: 20, down: 15, field: 'pitchRange', src: '[inf (DRS): owner decision pending] TCDS A00018CH "Ruddervator Pitch Up 20.0 Down 15.0"' },
-    { parts: ['rv_tab_L', 'rv_tab_R'], up: 7, down: 18, src: '[inf (DRS): owner decision pending] TCDS A00018CH "Ruddervator Trim Up 7.0 Down 18.0"' },
-    { parts: ['yaw_sas_L', 'yaw_sas_R'], up: 15, down: 15, src: '[inf (DRS): owner decision pending] TCDS A00018CH "Yaw SAS Up 15 Down 15"', lateral: true },
+    { parts: ['aileron_L', 'aileron_R'], up: 15, down: 11.5, src: TCDS_SF50 + ' "Aileron Up 15.0 Down 11.5"' },
+    { parts: ['ail_tab_L'], up: 10, down: 10, src: TCDS_SF50 + ' "LH Aileron Trim Up 10.0 Down 10.0"' },
+    { parts: ['ruddervator_L', 'ruddervator_R'], up: 20, down: 15, field: 'pitchRange', src: TCDS_SF50 + ' "Ruddervator Pitch Up 20.0 Down 15.0"' },
+    { parts: ['rv_tab_L', 'rv_tab_R'], up: 7, down: 18, src: TCDS_SF50 + ' "Ruddervator Trim Up 7.0 Down 18.0"' },
+    { parts: ['yaw_sas_L', 'yaw_sas_R'], up: 15, down: 15, src: TCDS_SF50 + ' "Yaw SAS Up 15 Down 15"', lateral: true },
   ],
 };
 const ANTICOLLISION = { SF50: { n: 3, src: 'AFM P/N 31452-001 Kinds of Operation "Anti-Collision Lights 3/3" (2 tips + tail)' } };
-// PC-12 reference measurements (fix round 2), re-digitised from the Pilatus "PC-12 NGX Model Building Plan"
-// (https://www.pilatus-aircraft.com/assets/files/Model-Building-Plans/PC-12-NGX-Model-Building-Plan.pdf; the PDF and the
-// rasters stay out of the repository): p.9 = drawing 190.10.40.432 at 200 dpi, side view (from port) scaled on its 9
-// labelled frame lines EF1..FR40 (328.44 px/m, nominal 1:24 = 328.08; residuals <= 1.3 mm), x from the spinner tip at
-// STA 0.39 (pc12 anchor), z from the drawn ground line (tail top then 4.266 m vs the published 4.26); starboard detail view
-// registered on FR16; front view scaled on the 4530 track dimension (328.04 px/m), z from the tyre bottoms. Stations are
-// window / door outline centres (+-~5 mm reading). Starboard windows from the p.5 livery sheet (to scale: its port windows
-// agree with the drawing to <= 15 mm); the drawing's partial starboard view shows 4 openings at the mirrored port stations
-// (5.602, exit 6.199, 6.978, 7.955) - a conflict between the two Pilatus documents, recorded in docs/phase3_models.md.
-// SF50 AFM P/N 31452-001 Fig 1-1 front view (fix round 2), page raster 2550 x 3300 px: registered on the main-wheel bottoms
-// (y 2550) at 104.9 px/m (its fuselage width 178 px = 1.697 m; the span extension lines give 102.3, the figure is not drawn
-// to one scale); its fuselage max-width line then reads WL 1.56-1.58 (model 1.555-1.565). Wing outline line centres at the
-// butt lines (both sides agree within 5 mm; the BL 1.6 lower line is hidden by the gear); the tip top point is 6.4 px
-// (0.061 m, +-0.02 m) above the extrapolated upper line on both tips. These few numbers are measurements of a published
-// figure, like the dimensions in SF50_FACTS.md; the AFM itself stays out of the repository (owner question F20).
-const AFM_SF50 = {
-  bl: [2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.2], up: [1.165, 1.201, 1.239, 1.275, 1.311, 1.341, 1.384], lo: [0.884, 0.934, 0.987, 1.039, 1.090, 1.136, 1.206],
-  top_below_maxwidth_bl1_6: 0.43, tip_rise: [0.04, 0.09],
-  src: 'AFM P/N 31452-001 Fig 1-1 front view, measured in fix round 2 (tools/models/sf50/SF50_FACTS.md S5)',
-};
-const PILATUS_PC12 = {
-  port: { airstair: 4.971, windows: [5.607, 6.201, 6.980], cargo: 8.242, cargo_window: 7.961 },
-  stbd: { windows: [5.339, 6.967, 7.716, 8.469], exit: 6.203, exit_window: 6.192 },
-  window_below_crown: 0.583, window_w: 0.295, window_h: 0.380, crown: 2.768,
-  src_layout: 'drawing 190.10.40.432 (MBP p.9) side view (port) + starboard detail view; MBP p.5 livery sheet (starboard windows)',
-  wing: { bl: [2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.0, 7.5], up: [1.355, 1.398, 1.443, 1.532, 1.620, 1.712, 1.815, 1.873], lo: [null, 1.105, 1.166, 1.291, 1.413, 1.535, 1.654, 1.712], winglet_rise: 0.262, winglet_top_wl: 2.135 },
-  src_wing: 'drawing 190.10.40.432 (MBP p.9) front view, port wing: upper / lower outline WL per butt line (BL 2.0 lower hidden by the gear)',
-};
+// SF50 AFM P/N 31452-001 Fig 1-1 front-view readings (wing outline per butt line, wing top vs the fuselage max-width line,
+// tip rise; registration in its 'src' / 'front_view' notes): local reference data, gitignored (decision (b) above), or null
+const AFM_SF50 = loadLocalRef('afm_sf50_meas');
+// PC-12: drawing 190.10.40.432 (Pilatus 'PC-12 NGX Model Building Plan' sheet 1) digitised from its vector strokes (side,
+// plan and front views, body-plan sections, openings; starboard windows from the MBP p.5 livery sheet) by the local
+// refs/cache/local/models/tools/measure_pc12_mbp.py: local reference data, gitignored (decision (b) above), or null
+const PILATUS_PC12 = loadLocalRef('pilatus_pc12_meas');
 
 // stub WebGL2 context for the drawable test (Mesh / Program creation only; nothing is drawn)
 initGL({ getContext: () => new Proxy({}, { get: (t, k) => (typeof k === 'string' && /^[A-Z0-9_]+$/.test(k) ? 1 : () => ({})) }) });
@@ -253,6 +242,42 @@ for (const [type, e] of Object.entries(MODELS)) {
   check(type, 'gear retracted: only tyres protrude (documented amount)', tyreOK && otherMax <= 0.010,
     { tyre_max_protrusion_mm: Math.round(tyreMax * 1000), other_max_protrusion_mm: Math.round(otherMax * 1000), documented: doc || 'none (flush)', gear_vertices: gearV.length, without_skin_nearby: uncovered,
       per_part: Object.fromEntries(Object.entries(worstBy).map(([k, v]) => [k, { mm: Math.round(v.pro * 1000), material: v.mat, at: v.at }])) });
+  // upward (fix round 3, finding S1): no retracted gear vertex above the airframe's UPPER skin. The skin height at the
+  // vertex's plan position (x, z) is interpolated in the upward-facing triangles (mean vertex normal y > 0.3) of the
+  // Fuselage / Wing / Flight controls / Powerplant installation parts whose plan projection contains it; the topmost one
+  // counts (inside the fuselage outline that is the fuselage's upper half). SF50 fix round 2 failed it: the stowed
+  // trailing-link end stood 3.5-4.5 mm above the wing upper skin at the root (a shield-shaped patch seen from above)
+  {
+    const upGrp = /^(Fuselage|Wing|Flight controls|Powerplant installation)$/, CELL = 0.05, TH = new Map(); let nUp = 0;
+    const ck = (i, j) => i + ',' + j;
+    for (const g of mp.groups) {
+      const p = g.part >= 0 ? m.parts[g.part] : null; if (!p || !g.opaque || !upGrp.test(p.group || '') || gearMover(g.mover)) continue;
+      const d = g.opaque, Mx = g.mover >= 0 ? P0[g.mover] : null;
+      const V = (i) => Mx ? xform(Mx, [d.pos[3 * i], d.pos[3 * i + 1], d.pos[3 * i + 2]]) : [d.pos[3 * i], d.pos[3 * i + 1], d.pos[3 * i + 2]];
+      const NY = (i) => Mx ? xform(Mx, [d.nrm[3 * i], d.nrm[3 * i + 1], d.nrm[3 * i + 2]])[1] - Mx[13] : d.nrm[3 * i + 1];
+      for (let t = 0; t < d.idx.length; t += 3) {
+        const a = d.idx[t], b = d.idx[t + 1], c = d.idx[t + 2]; if (NY(a) + NY(b) + NY(c) <= 0.9) continue;
+        const T3 = [V(a), V(b), V(c)]; nUp++;
+        const i0 = Math.floor(Math.min(T3[0][0], T3[1][0], T3[2][0]) / CELL), i1 = Math.floor(Math.max(T3[0][0], T3[1][0], T3[2][0]) / CELL);
+        const j0 = Math.floor(Math.min(T3[0][2], T3[1][2], T3[2][2]) / CELL), j1 = Math.floor(Math.max(T3[0][2], T3[1][2], T3[2][2]) / CELL);
+        for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const k = ck(i, j); if (!TH.has(k)) TH.set(k, []); TH.get(k).push(T3); }
+      }
+    }
+    const topAt = (x, z) => { let best = -Infinity;
+      for (const [A, B, C] of TH.get(ck(Math.floor(x / CELL), Math.floor(z / CELL))) || []) {
+        const den = (B[2] - C[2]) * (A[0] - C[0]) + (C[0] - B[0]) * (A[2] - C[2]); if (Math.abs(den) < 1e-12) continue;
+        const l1 = ((B[2] - C[2]) * (x - C[0]) + (C[0] - B[0]) * (z - C[2])) / den, l2 = ((C[2] - A[2]) * (x - C[0]) + (A[0] - C[0]) * (z - C[2])) / den, l3 = 1 - l1 - l2;
+        if (l1 < -1e-9 || l2 < -1e-9 || l3 < -1e-9) continue; best = Math.max(best, l1 * A[1] + l2 * B[1] + l3 * C[1]); }
+      return isFinite(best) ? best : null; };
+    const upBy = {}; let covered = 0, above = 0;
+    for (const g of gearV) { const h = topAt(g.v[0], g.v[2]); if (h == null) continue; covered++; const pro = g.v[1] - h; if (pro > 0) above++; const k = g.part + ':' + g.mat;
+      if (!upBy[k] || pro > upBy[k].pro) upBy[k] = { pro, at: g.v.map(r3) }; }
+    const upMax = Math.max(-Infinity, ...Object.values(upBy).map(v => v.pro));
+    check(type, 'gear retracted: no gear vertex above the upper skin', covered > 0 && above === 0,
+      { vertices_above: above, worst_mm: isFinite(upMax) ? Math.round(upMax * 10000) / 10 : null, gear_vertices_under_skin: covered, gear_vertices: gearV.length, upward_skin_triangles: nUp,
+        per_part_closest_mm: Object.fromEntries(Object.entries(upBy).sort((a, b) => b[1].pro - a[1].pro).slice(0, 6).map(([k, v]) => [k, { mm: Math.round(v.pro * 10000) / 10, at: v.at }])),
+        note: 'mm = gear vertex height minus the topmost upward-facing skin at its plan position (negative = below the skin)' });
+  }
   let low = { y: Infinity };
   for (const g of mp.groups) { const d = g.opaque; if (!d) continue; const Mx = g.mover >= 0 ? P0[g.mover] : null; for (let i = 0; i < d.pos.length; i += 3) { const v = Mx ? xform(Mx, [d.pos[i], d.pos[i + 1], d.pos[i + 2]]) : [d.pos[i], d.pos[i + 1], d.pos[i + 2]]; if (v[1] < low.y) low = { y: v[1], part: g.key, at: v.map(r3) }; } }
   info(type, 'gear retracted: lowest point (report)', { lowest_y_m: r3(low.y), part: low.part, at: low.at });
@@ -295,21 +320,27 @@ for (const [type, e] of Object.entries(MODELS)) {
   if (M) {
     const { m, mp } = M; const span2 = MODELS.SF50.frame.span / 2;
     // wing outline in the front view (fix round 2): upper / lower outline of wing_R per butt line vs AFM Fig 1-1; the
-    // mid-line (root height) within 0.03 m, the slope within 0.5 deg (fix round 1's wing sat 0.10 m low: Z_LE0 inferred)
-    const A = AFM_SF50; const wR = mp.groups.find(q => q.key === 'wing_R').opaque.pos; const bins = new Map();
+    // mid-line (root height) within 0.03 m, the slope within 0.5 deg (fix round 1's wing sat 0.10 m low: Z_LE0 inferred).
+    // The AFM readings are local reference data (fix round 3, decision (b)): SKIP when the file is absent
+    const A = AFM_SF50, LREF = 'refs/cache/local/models/afm_sf50_meas.json (AFM P/N 31452-001 Fig 1-1 front view; gitignored)';
+    const wR = mp.groups.find(q => q.key === 'wing_R').opaque.pos; const bins = new Map();
     for (let i = 0; i < wR.length; i += 3) { const k = Math.round(wR[i + 2] / 0.01); const b = bins.get(k) || { n: 0, hi: -Infinity, lo: Infinity, bl: 0 }; b.n++; b.bl += wR[i + 2]; b.hi = Math.max(b.hi, wR[i + 1]); b.lo = Math.min(b.lo, wR[i + 1]); bins.set(k, b); }
     const rowsS = [...bins.values()].filter(b => b.n >= 30).map(b => ({ bl: b.bl / b.n, hi: b.hi, lo: b.lo })).sort((a, b) => a.bl - b.bl);
     const atS = (bl, k) => { for (let i = 1; i < rowsS.length; i++) if (rowsS[i].bl >= bl) { const a = rowsS[i - 1], b = rowsS[i], t = (bl - a.bl) / (b.bl - a.bl); return a[k] + t * (b[k] - a[k]); } return null; };
+    const lsq = (X, Y) => { const n = X.length, sx = X.reduce((a, b) => a + b, 0), sy = Y.reduce((a, b) => a + b, 0), sxx = X.reduce((a, b) => a + b * b, 0), sxy = X.reduce((a, b, i) => a + b * Y[i], 0); const k1 = (n * sxy - sx * sy) / (n * sxx - sx * sx); return [(sy - k1 * sx) / n, k1]; };
+    const OUTLINE = 'wing front-view outline vs AFM Fig 1-1: mid-line (root height) within 0.03 m, upper-line slope within 0.5 deg, top at BL 1.6 vs the fuselage max-width line within 0.04 m';
+    if (!A) skip('SF50', OUTLINE, SKIP_LOCAL('afm_sf50_meas'));
+    else {
     const upS = A.bl.map(b => atS(b, 'hi')), loS = A.bl.map(b => atS(b, 'lo'));
     const midOff = A.bl.map((b, i) => A.lo[i] == null ? null : (A.up[i] + A.lo[i]) / 2 - (upS[i] + loS[i]) / 2).filter(v => v != null);
     const mo = midOff.reduce((a, b) => a + b, 0) / midOff.length;
-    const lsq = (X, Y) => { const n = X.length, sx = X.reduce((a, b) => a + b, 0), sy = Y.reduce((a, b) => a + b, 0), sxx = X.reduce((a, b) => a + b * b, 0), sxy = X.reduce((a, b, i) => a + b * Y[i], 0); const k1 = (n * sxy - sx * sy) / (n * sxx - sx * sx); return [(sy - k1 * sx) / n, k1]; };
     const slM = Math.atan(lsq(A.bl, upS)[1]) * 180 / Math.PI, slA = Math.atan(lsq(A.bl, A.up)[1]) * 180 / Math.PI;
     let fusW = { hw: 0, y: 0 }; for (const q of mp.groups) { if (q.key !== 'fuselage' || !q.opaque) continue; const d = q.opaque.pos; for (let i = 0; i < d.length; i += 3) if (Math.abs(d[i] - (m.originGl[2] - 4.4)) < 0.03 && Math.abs(d[i + 2]) > fusW.hw) fusW = { hw: Math.abs(d[i + 2]), y: d[i + 1] }; }
     const relTop = fusW.y - atS(1.6, 'hi');
-    check('SF50', 'wing front-view outline vs AFM Fig 1-1: mid-line (root height) within 0.03 m, upper-line slope within 0.5 deg, top at BL 1.6 vs the fuselage max-width line within 0.04 m', Math.abs(mo) <= 0.03 && Math.abs(slM - slA) <= 0.5 && Math.abs(relTop - A.top_below_maxwidth_bl1_6) <= 0.04,
+    check('SF50', OUTLINE, Math.abs(mo) <= 0.03 && Math.abs(slM - slA) <= 0.5 && Math.abs(relTop - A.top_below_maxwidth_bl1_6) <= 0.04,
       { bl: A.bl, model_upper: upS.map(r3), model_lower: loS.map(r3), afm_upper: A.up, afm_lower: A.lo, midline_offset_m: r3(mo), upper_slope_deg: { model: Math.round(slM * 100) / 100, afm: Math.round(slA * 100) / 100 },
-        fuselage_max_width_wl_m: r3(fusW.y), wing_top_bl1_6_below_max_width_m: { model: r3(relTop), afm: A.top_below_maxwidth_bl1_6 }, src: A.src });
+        fuselage_max_width_wl_m: r3(fusW.y), wing_top_bl1_6_below_max_width_m: { model: r3(relTop), afm: A.top_below_maxwidth_bl1_6 }, src: LREF });
+    }
     // upswept tip: the highest point outboard of the tip rib (|z| > 5.5) above the EXTRAPOLATED upper-surface line (least
     // squares over BL 3.5-5.4), the way the AFM Fig 1-1 front view is read (fix round 2: fix round 1 measured the rise
     // above the rib and cited Fig 1-1 for a >= 0.12 m limit; the figure shows ~0.06 m); and a pointed top (its chord)
@@ -334,79 +365,210 @@ for (const [type, e] of Object.entries(MODELS)) {
       let worstOff = 0; for (const p of lampV) worstOff = Math.max(worstOff, near(HL, 0.03, p));
       const flushOK = lensTri > 0 && bnd > 0 && worstRim <= 0.002 && lampV.length > 0 && worstOff <= 0.030;
       const rise = top.y - (u0 + u1 * top.bl);
-      check('SF50', `wing tip ${side}: upswept, pointed tip at the 38.7 ft span, AFM front-view height, flush lenses`, Math.abs(zmax - span2) < 0.005 && rise >= A.tip_rise[0] && rise <= A.tip_rise[1] && topChord <= 0.08 && flushOK,
-        { outermost_bl_m: r3(zmax), span2_m: span2, tip_top: { bl: r3(top.bl), wl: r3(top.y) }, rise_above_extrapolated_upper_line_m: r3(rise), top_chord_m: r3(topChord), lens_triangles: lensTri, lens_boundary_vertices: bnd, worst_lens_rim_to_skin_m: r3(worstRim), lamp_vertices: lampV.length, worst_lamp_to_lens_m: r3(worstOff),
-          limits: `outermost = span / 2 +-5 mm [obs 38.7 ft]; rise above the extrapolated upper line ${A.tip_rise[0]}-${A.tip_rise[1]} m [obs: AFM Fig 1-1 front view 0.06 +-0.02 m]; top chord <= 0.08 m (a point, not the fix-round-1 0.265 m square plate) [inf: Cirrus photos]; lens = an open patch in the skin opening (rim within 2 mm), lamps behind it (within 30 mm)` });
+      check('SF50', `wing tip ${side}: upswept, pointed tip at the 38.7 ft span, flush lenses`, Math.abs(zmax - span2) < 0.005 && topChord <= 0.08 && flushOK,
+        { outermost_bl_m: r3(zmax), span2_m: span2, tip_top: { bl: r3(top.bl), wl: r3(top.y) }, model_rise_above_extrapolated_upper_line_m: r3(rise), top_chord_m: r3(topChord), lens_triangles: lensTri, lens_boundary_vertices: bnd, worst_lens_rim_to_skin_m: r3(worstRim), lamp_vertices: lampV.length, worst_lamp_to_lens_m: r3(worstOff),
+          limits: 'outermost = span / 2 +-5 mm [obs 38.7 ft]; top chord <= 0.08 m (a point, not the fix-round-1 0.265 m square plate) [inf: Cirrus photos]; lens = an open patch in the skin opening (rim within 2 mm), lamps behind it (within 30 mm)' });
+      // the tip height vs the AFM front view (fix round 3: the reading is local reference data, SKIP when absent)
+      const RISE = `wing tip ${side}: rise above the extrapolated upper-surface line vs AFM Fig 1-1 front view`;
+      if (!A) skip('SF50', RISE, SKIP_LOCAL('afm_sf50_meas'));
+      else check('SF50', RISE, rise >= A.tip_rise[0] && rise <= A.tip_rise[1], { model_rise_m: r3(rise), limits_m: A.tip_rise, src: LREF });
     }
     // nacelle: D inlet with a raised lip (waist behind it) and fillets into the spine
     const g = mp.groups.find(q => q.key === 'nacelle'), P = g.opaque.pos;
     const og = m.originGl[2];   // local x = origin station - FS
     const atFS = (fs) => { let w = 0; for (let i = 0; i < P.length; i += 3) { const m2 = m.materials[g.opaque.mat[i / 3]].name; if (m2 !== 'paint_white' && m2 !== 'inlet_lip') continue; if (Math.abs(P[i] - (og - fs)) < 0.012 && P[i + 1] > 1.9) w = Math.max(w, Math.abs(P[i + 2])); } return w; };
     const lipW = atFS(5.92), waistW = atFS(6.03), cowlW = atFS(6.80);
-    check('SF50', 'nacelle: raised D lip (waist behind it) and fillets into the fuselage spine', lipW - waistW >= 0.010 && cowlW >= 0.356 + 0.05,
-      { half_width_m: { lip_FS5_92: r3(lipW), waist_FS6_03: r3(waistW), cowl_with_fillet_FS6_80: r3(cowlW) }, afm_plan_half_width_m: 0.356, note: 'cowl half-width at its centre line unchanged (AFM Fig 1-1 plan 0.71 m); the fillet foot is wider [inf]' });
+    // geometry only (fix round 3 iteration 2, finding F1: the AFM plan half-width is local reference data, no longer a
+    // committed threshold): the lip stands >= 10 mm proud of the waist behind it, the fillet foot is >= 0.05 m wider than
+    // the waist (the cowl blends into the spine)
+    check('SF50', 'nacelle: raised D lip (waist behind it) and fillets into the fuselage spine', lipW - waistW >= 0.010 && cowlW >= waistW + 0.05,
+      { half_width_m: { lip_FS5_92: r3(lipW), waist_FS6_03: r3(waistW), cowl_with_fillet_FS6_80: r3(cowlW) }, limits: 'lip - waist >= 0.010 m; fillet foot >= waist + 0.05 m [inf]' });
+    // the cowl's fillet foot vs the AFM plan view (local reference data: SKIP when absent)
+    const NAC_AFM = 'nacelle: fillet foot wider than the AFM Fig 1-1 plan-view cowl half-width + 0.05 m';
+    if (!A || A.plan_cowl_half_width_m == null) skip('SF50', NAC_AFM, SKIP_LOCAL('afm_sf50_meas'));
+    else check('SF50', NAC_AFM, cowlW >= A.plan_cowl_half_width_m + 0.05, { cowl_with_fillet_FS6_80_m: r3(cowlW), margin_over_afm_m: r3(cowlW - A.plan_cowl_half_width_m), src: LREF });
   }
   const Q = models.PC12;
   if (Q) {
     const { m, mp } = Q; const og = m.originGl[2], STA = (x) => og - x;   // local x -> pc12 station (glTF Z = STA)
-    const D = PILATUS_PC12;
-    // cabin windows per side: glass clusters of glazing_cabin + door / exit parts with a window
-    const g = mp.groups.find(q => q.key === 'glazing_cabin'); const P = g.glass ? g.glass.pos : g.opaque.pos; const cl = [];
+    const D = PILATUS_PC12, LREF = 'refs/cache/local/models/pilatus_pc12_meas.json (drawing 190.10.40.432 digitised; gitignored)';
+    const part = (id) => mp.groups.find(q => q.key === id);
+    const box = (d) => { if (!d || !d.pos.length) return null; const b = [Infinity, Infinity, -Infinity, -Infinity, 0]; for (let i = 0; i < d.pos.length; i += 3) { b[0] = Math.min(b[0], d.pos[i]); b[1] = Math.min(b[1], d.pos[i + 1]); b[2] = Math.max(b[2], d.pos[i]); b[3] = Math.max(b[3], d.pos[i + 1]); b[4] += d.pos[i + 2]; } b[4] /= d.pos.length / 3; return b; };
+    // plane section x = STA of the opaque skins of the given parts (rest pose, local frame) -> points [[WL, BL], ...]; with
+    // segs = true the section segments [[WL, BL, WL, BL], ...] (one per cut triangle)
+    const slice = (keys, sta, segs = false) => { const X = og - sta, out = [];
+      for (const q of mp.groups) { if (!keys.includes(q.key)) continue; for (const dd of [q.opaque, q.glass]) { if (!dd) continue; const P = dd.pos, I = dd.idx;
+        for (let t = 0; t < I.length; t += 3) { const a = I[t] * 3, b = I[t + 1] * 3, c = I[t + 2] * 3, da = P[a] - X, db = P[b] - X, dc = P[c] - X;
+          if ((da > 0 && db > 0 && dc > 0) || (da < 0 && db < 0 && dc < 0)) continue; const pts = [];
+          for (const [u, v, du, dv] of [[a, b, da, db], [b, c, db, dc], [c, a, dc, da]]) if ((du < 0) !== (dv < 0)) { const k = du / (du - dv); pts.push([P[u + 1] + k * (P[v + 1] - P[u + 1]), P[u + 2] + k * (P[v + 2] - P[u + 2])]); }
+          if (segs) { if (pts.length === 2) out.push([...pts[0], ...pts[1]]); } else out.push(...pts); } } }
+      return out; };
+    const segDist = (S, z, y) => { let best = Infinity;   // distance from (WL z, |BL| y) to the nearest section segment (|BL|)
+      for (const [z1, b1, z2, b2] of S) { const y1 = Math.abs(b1), y2 = Math.abs(b2), dz = z2 - z1, dy = y2 - y1, L2 = dz * dz + dy * dy;
+        const t = L2 > 0 ? Math.max(0, Math.min(1, ((z - z1) * dz + (y - y1) * dy) / L2)) : 0; best = Math.min(best, Math.hypot(z1 + t * dz - z, y1 + t * dy - y)); }
+      return best; };
+    const FUS = ['fus_fwd', 'fus_center', 'fus_aft'];
+    const lerp = (arr, x) => { for (let i = 1; i < arr.length; i++) if (arr[i][0] >= x) { const a = arr[i - 1], b = arr[i]; return a[1] + (x - a[0]) / (b[0] - a[0]) * (b[1] - a[1]); } return null; };
+    // cabin windows per side (geometry only, no reference data): glass clusters of glazing_cabin + door / exit windows
+    const g = part('glazing_cabin'); const P = g.glass ? g.glass.pos : g.opaque.pos; const cl = [];
     for (let i = 0; i < P.length; i += 3) { const p = [P[i], P[i + 1], P[i + 2]]; let c = cl.find(c => Math.abs((c.x0 + c.x1) / 2 - p[0]) < 0.25 && Math.sign(c.z) === Math.sign(p[2]));
       if (!c) { c = { x0: p[0], x1: p[0], y0: p[1], y1: p[1], z: p[2] }; cl.push(c); } c.x0 = Math.min(c.x0, p[0]); c.x1 = Math.max(c.x1, p[0]); c.y0 = Math.min(c.y0, p[1]); c.y1 = Math.max(c.y1, p[1]); }
-    const box = (d) => { if (!d || !d.pos.length) return null; const b = [Infinity, Infinity, -Infinity, -Infinity, 0]; for (let i = 0; i < d.pos.length; i += 3) { b[0] = Math.min(b[0], d.pos[i]); b[1] = Math.min(b[1], d.pos[i + 1]); b[2] = Math.max(b[2], d.pos[i]); b[3] = Math.max(b[3], d.pos[i + 1]); b[4] += d.pos[i + 2]; } b[4] /= d.pos.length / 3; return b; };
-    const part = (id) => mp.groups.find(q => q.key === id);
     const doorWin = (id) => { const q = part(id); return q && q.glass && q.glass.pos.length ? Math.sign(q.glass.pos[2]) : 0; };
     const port = cl.filter(c => c.z < 0).length, stbd = cl.filter(c => c.z > 0).length;
     const dAir = doorWin('door_airstair'), dCargo = doorWin('door_cargo'), dExit = doorWin('exit_hatch');
     const portTot = port + (dAir < 0) + (dCargo < 0) + (dExit < 0), stbdTot = stbd + (dAir > 0) + (dCargo > 0) + (dExit > 0);
-    const excess = Math.abs(portTot - 4) + Math.abs(stbdTot - 5);
     check('PC12', 'cabin windows per side vs the Pilatus NGX drawings', portTot === 4 && stbdTot === 5 && !dAir,
-      { port_fixed: port, starboard_fixed: stbd, airstair_door_window: !!dAir, cargo_door_window: !!dCargo, exit_window: !!dExit, port_total: portTot, starboard_total: stbdTot, pilatus: 'port 3 + cargo-door window, no airstair-door window (4); starboard 5 incl. the exit (MBP p.2, p.5, p.9)', window_count_excess: excess });
-    // stations (fix round 2: the count alone passed a layout with the cargo door 0.7 m aft): every window / door centre
-    // vs the station measured on the Pilatus documents (+-0.03 m), heights relative to the model's own cabin crown
-    let crown = -Infinity; for (const q of mp.groups) { const p = q.part >= 0 ? m.parts[q.part] : null; if (!p || p.group !== 'Fuselage' || !q.opaque) continue; const d = q.opaque.pos;
-      for (let i = 0; i < d.length; i += 3) if (Math.abs(d[i + 2]) < 0.03 && Math.abs(STA(d[i]) - 6.0) < 0.06) crown = Math.max(crown, d[i + 1]); }
-    const meas = { port_windows: cl.filter(c => c.z < 0).map(c => STA((c.x0 + c.x1) / 2)).sort((a, b) => a - b), stbd_windows: cl.filter(c => c.z > 0).map(c => STA((c.x0 + c.x1) / 2)).sort((a, b) => a - b) };
-    const bAir = box(part('door_airstair') && part('door_airstair').opaque), bCargo = box(part('door_cargo') && part('door_cargo').opaque), bExit = box(part('exit_hatch') && part('exit_hatch').opaque);
-    const bCw = box(part('door_cargo') && part('door_cargo').glass), bEw = box(part('exit_hatch') && part('exit_hatch').glass);
-    meas.airstair = bAir && STA((bAir[0] + bAir[2]) / 2); meas.cargo = bCargo && STA((bCargo[0] + bCargo[2]) / 2); meas.exit = bExit && STA((bExit[0] + bExit[2]) / 2);
-    meas.cargo_window = bCw && STA((bCw[0] + bCw[2]) / 2); meas.exit_window = bEw && STA((bEw[0] + bEw[2]) / 2);
-    const winBelowCrown = cl.map(c => crown - (c.y0 + c.y1) / 2), winH = cl.map(c => c.y1 - c.y0), winW = cl.map(c => c.x1 - c.x0);
-    const dev = []; const cmp = (k, a, b, tol = 0.03) => { if (a == null || b == null || Math.abs(a - b) > tol) dev.push(`${k}: model ${a == null ? '-' : r3(a)} vs ${b}`); };
-    cmp('airstair door', meas.airstair, D.port.airstair); cmp('cargo door', meas.cargo, D.port.cargo); cmp('cargo-door window', meas.cargo_window, D.port.cargo_window); cmp('exit', meas.exit, D.stbd.exit); cmp('exit window', meas.exit_window, D.stbd.exit_window);
-    if (meas.port_windows.length !== D.port.windows.length) dev.push('port windows ' + meas.port_windows.length); else D.port.windows.forEach((w, i) => cmp('port window ' + (i + 1), meas.port_windows[i], w));
-    if (meas.stbd_windows.length !== D.stbd.windows.length) dev.push('starboard windows ' + meas.stbd_windows.length); else D.stbd.windows.forEach((w, i) => cmp('starboard window ' + (i + 1), meas.stbd_windows[i], w));
-    for (const v of winBelowCrown) cmp('window centre below the crown', v, D.window_below_crown);
-    // the glass runs 10 mm under the seal all round (pc12 build_glazing: trim at the outline + 0.010)
-    for (const v of winH) cmp('window outline height (glass - 0.02)', v - 0.02, D.window_h, 0.02); for (const v of winW) cmp('window outline width (glass - 0.02)', v - 0.02, D.window_w, 0.02);
-    check('PC12', 'cabin window / door / exit stations vs Pilatus drawing 190.10.40.432 + MBP p.5 (+-0.03 m)', dev.length === 0,
-      { deviations: dev, measured: Object.fromEntries(Object.entries(meas).map(([k, v]) => [k, Array.isArray(v) ? v.map(r3) : v == null ? null : r3(v)])), crown_wl_m: r3(crown), window_centre_below_crown_m: [...new Set(winBelowCrown.map(r3))], window_glass_wh_m: [r3(Math.max(...winW)), r3(Math.max(...winH))], wing_rows: undefined, reference: D.src_layout });
-    // wing silhouettes in the front view (fix round 2: re-digitised): upper and lower outline of wing_R per butt line vs the
-    // drawing; the SHAPE (each minus its mean offset) must match within 15 mm rms, the top-line slope within 0.3 deg
-    // the skin's spanwise rows are sparse: every full section row (>= 30 vertices in a 1-cm butt-line bin) gives its highest
-    // and lowest vertex; the outline at a butt line is interpolated between the neighbouring rows
-    const w = mp.groups.find(q => q.key === 'wing_R').opaque.pos; const bins = new Map();
-    for (let i = 0; i < w.length; i += 3) { const k = Math.round(w[i + 2] / 0.01); const b = bins.get(k) || { n: 0, hi: -Infinity, lo: Infinity, bl: 0 }; b.n++; b.bl += w[i + 2]; b.hi = Math.max(b.hi, w[i + 1]); b.lo = Math.min(b.lo, w[i + 1]); bins.set(k, b); }
-    const rowsW = [...bins.values()].filter(b => b.n >= 30).map(b => ({ bl: b.bl / b.n, hi: b.hi, lo: b.lo })).sort((a, b) => a.bl - b.bl);
-    const at = (bl, k) => { for (let i = 1; i < rowsW.length; i++) if (rowsW[i].bl >= bl) { const a = rowsW[i - 1], b = rowsW[i], t = (bl - a.bl) / (b.bl - a.bl); return a[k] + t * (b[k] - a[k]); } return null; };
-    const up = D.wing.bl.map(bl => at(bl, 'hi')), lo = D.wing.bl.map(bl => at(bl, 'lo'));
-    const fit = (X, Y) => { const n = X.length, sx = X.reduce((a, b) => a + b, 0), sy = Y.reduce((a, b) => a + b, 0), sxx = X.reduce((a, b) => a + b * b, 0), sxy = X.reduce((a, b, i) => a + b * Y[i], 0); return Math.atan((n * sxy - sx * sy) / (n * sxx - sx * sx)) * 180 / Math.PI; };
-    const sel = D.wing.bl.map((b, i) => i).filter(i => D.wing.bl[i] >= 3 && D.wing.bl[i] <= 7);
-    const slope = fit(sel.map(i => D.wing.bl[i]), sel.map(i => up[i])), slopeD = fit(sel.map(i => D.wing.bl[i]), sel.map(i => D.wing.up[i]));
-    const dU = D.wing.up.map((v, i) => v - up[i]), dL = D.wing.lo.map((v, i) => v == null ? null : v - lo[i]);
-    const mean = (A) => { const B = A.filter(v => v != null); return B.reduce((a, b) => a + b, 0) / B.length; }, oU = mean(dU), oL = mean(dL);
-    const rms = Math.sqrt(mean([...dU.map(v => (v - oU) ** 2), ...dL.filter(v => v != null).map(v => (v - oL) ** 2)]));
-    // winglet: top point above the wing upper outline at BL 7.5 (drawing: top BL 8.04 / WL 2.135, i.e. +0.262 m)
-    let wl = { y: -Infinity, bl: 0 }; for (const q of mp.groups) { if (q.key !== 'winglet_R' || !q.opaque) continue; const d = q.opaque.pos; for (let i = 0; i < d.length; i += 3) if (d[i + 1] > wl.y) wl = { y: d[i + 1], bl: d[i + 2] }; }
-    const wRise = wl.y - up[D.wing.bl.indexOf(7.5)];
-    check('PC12', 'wing front-view silhouette (dihedral, winglet) vs Pilatus drawing 190.10.40.432: shape rms <= 15 mm, top line within 0.3 deg, winglet rise within 0.03 m', rms <= 0.015 && Math.abs(slope - slopeD) <= 0.3 && Math.abs(wRise - D.wing.winglet_rise) <= 0.03,
-      { bl: D.wing.bl, model_upper: up.map(r3), model_lower: lo.map(r3), drawing_upper: D.wing.up, drawing_lower: D.wing.lo, shape_rms_mm: Math.round(rms * 1000), top_line_deg: Math.round(slope * 100) / 100, drawing_top_line_deg: Math.round(slopeD * 100) / 100, offset_upper_m: r3(oU), offset_lower_m: r3(oL), winglet_top: { bl: r3(wl.bl), wl: r3(wl.y), rise_above_upper_BL7_5_m: r3(wRise), drawing_rise_m: D.wing.winglet_rise }, src: D.src_wing });
-    // what is left: the cabin section and the wing sit lower above the ground than on the drawing (the nose and the
-    // propeller axis agree) - a pc12 fuselage-loft item, measured here so it cannot grow unnoticed
-    const offs = { crown: D.crown - crown, wing_upper: oU, wing_lower: oL, winglet_top: D.wing.winglet_top_wl - wl.y }; const offMax = Math.max(...Object.values(offs).map(Math.abs));
-    check('PC12', 'cabin crown / wing height above the ground vs Pilatus drawing 190.10.40.432', offMax <= 0.03,
-      { drawing_crown_wl_m: D.crown, model_crown_wl_m: r3(crown), offsets_m: Object.fromEntries(Object.entries(offs).map(([k, v]) => [k, r3(v)])), offset_max_mm: Math.round(offMax * 1000), note: 'nose (STA <= 3.0) and propeller axis (drawing WL 1.653, model 1.655) agree; the cabin crown and keel are both ~0.14 m lower in pc12/model/fuselage.py' });
+      { port_fixed: port, starboard_fixed: stbd, airstair_door_window: !!dAir, cargo_door_window: !!dCargo, exit_window: !!dExit, port_total: portTot, starboard_total: stbdTot, pilatus: 'port 3 + cargo-door window, no airstair-door window (4); starboard 5 incl. the exit (MBP p.2, p.5, p.9)', window_count_excess: Math.abs(portTot - 4) + Math.abs(stbdTot - 5) });
+    // P1 (fix round 3; geometry only): the belly fairing covers the wing - no wing-skin vertex below the fairing's lower
+    // surface inside 0.98 of the fairing's local half-width (fix round 2 with the 6.2 deg dihedral: the wing hung up to 65 mm
+    // below it from STA 5.4 to 6.8)
+    {
+      const bf = part('belly_fairing').opaque, BP = bf.pos, BI = bf.idx, CELL = 0.05, grid = new Map(); let x0 = Infinity, x1 = -Infinity; const hw = new Map();
+      for (let i = 0; i < BP.length; i += 3) { x0 = Math.min(x0, BP[i]); x1 = Math.max(x1, BP[i]); const k = Math.round(BP[i] / 0.02); hw.set(k, Math.max(hw.get(k) || 0, Math.abs(BP[i + 2]))); }
+      for (let t = 0; t < BI.length; t += 3) { const T3 = [BI[t], BI[t + 1], BI[t + 2]].map(i => [BP[3 * i], BP[3 * i + 1], BP[3 * i + 2]]);
+        const i0 = Math.floor(Math.min(...T3.map(v => v[0])) / CELL), i1 = Math.floor(Math.max(...T3.map(v => v[0])) / CELL), j0 = Math.floor(Math.min(...T3.map(v => v[2])) / CELL), j1 = Math.floor(Math.max(...T3.map(v => v[2])) / CELL);
+        for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const k = i + ',' + j; if (!grid.has(k)) grid.set(k, []); grid.get(k).push(T3); } }
+      const lowAt = (x, z) => { let lo = Infinity; for (const [A, B, C] of grid.get(Math.floor(x / CELL) + ',' + Math.floor(z / CELL)) || []) {
+        const den = (B[2] - C[2]) * (A[0] - C[0]) + (C[0] - B[0]) * (A[2] - C[2]); if (Math.abs(den) < 1e-12) continue;
+        const l1 = ((B[2] - C[2]) * (x - C[0]) + (C[0] - B[0]) * (z - C[2])) / den, l2 = ((C[2] - A[2]) * (x - C[0]) + (A[0] - C[0]) * (z - C[2])) / den, l3 = 1 - l1 - l2;
+        if (l1 < -1e-9 || l2 < -1e-9 || l3 < -1e-9) continue; lo = Math.min(lo, l1 * A[1] + l2 * B[1] + l3 * C[1]); } return lo; };
+      let n = 0, below = 0, worst = { d: -Infinity };
+      for (const id of ['wing_L', 'wing_R']) { const W = part(id).opaque.pos;
+        for (let i = 0; i < W.length; i += 3) { const x = W[i]; if (x < x0 || x > x1) continue; const h = hw.get(Math.round(x / 0.02)) || 0; if (Math.abs(W[i + 2]) > 0.98 * h) continue;
+          const lo = lowAt(x, W[i + 2]); if (!isFinite(lo)) continue; n++; const d = lo - W[i + 1]; if (d > 0.001) below++; if (d > worst.d) worst = { d, at: [r3(STA(x)), r3(W[i + 2]), r3(W[i + 1])] }; } }
+      check('PC12', 'belly fairing covers the wing (no wing vertex below the fairing within its width)', n > 0 && below === 0,
+        { wing_vertices_within_fairing: n, below_fairing: below, worst_mm: Math.round(worst.d * 1000 * 10) / 10, worst_at_sta_bl_wl: worst.at, fairing_sta: [r3(STA(x1)), r3(STA(x0))], note: 'mm = fairing lower surface minus the wing vertex (positive = the wing hangs below the fairing)' });
+    }
+    // F2 (fix round 3 iteration 2; geometry only): the cabin floor is one flat panel, as wide as the sourced 1.30 m (pc12/CLAUDE.md
+    // 'cabin floor 1.30') within 2 %, and no cabin item (seat rails, lining, seats) dips below its top; the meta's floor-width
+    // check (build_pc12_variant.py patch_verify) agrees. The fix-round-3 build failed all three: 1.257 m, top WL 1.244 ->
+    // 1.371 aft (pc12's planar panel warped by the station-wise loft map), seat rails 65 mm / lining 40 mm below it
+    {
+      const g = part('cabin_interior'), d = g.opaque, nm = (i) => m.materials[d.mat[i]].name, other = [], CELL = 0.05, grid = new Map(), face = [];
+      // the panel's upward-facing triangles (all three vertex normals up), hashed in plan (local x, z); the floor top at a
+      // plan point = the highest of them there (works for a warped panel too)
+      for (let t = 0; t < d.idx.length; t += 3) { const I3 = [d.idx[t], d.idx[t + 1], d.idx[t + 2]]; if (!I3.every(i => nm(i) === 'carpet' && d.nrm[3 * i + 1] > 0.5)) continue;
+        const T3 = I3.map(i => [d.pos[3 * i], d.pos[3 * i + 1], d.pos[3 * i + 2]]); face.push(...T3);
+        const i0 = Math.floor(Math.min(...T3.map(v => v[0])) / CELL), i1 = Math.floor(Math.max(...T3.map(v => v[0])) / CELL), j0 = Math.floor(Math.min(...T3.map(v => v[2])) / CELL), j1 = Math.floor(Math.max(...T3.map(v => v[2])) / CELL);
+        for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const k = i + ',' + j; if (!grid.has(k)) grid.set(k, []); grid.get(k).push(T3); } }
+      const highAt = (x, z) => { let hi = -Infinity; for (const [A, B, C] of grid.get(Math.floor(x / CELL) + ',' + Math.floor(z / CELL)) || []) {
+        const den = (B[2] - C[2]) * (A[0] - C[0]) + (C[0] - B[0]) * (A[2] - C[2]); if (Math.abs(den) < 1e-12) continue;
+        const l1 = ((B[2] - C[2]) * (x - C[0]) + (C[0] - B[0]) * (z - C[2])) / den, l2 = ((C[2] - A[2]) * (x - C[0]) + (A[0] - C[0]) * (z - C[2])) / den, l3 = 1 - l1 - l2;
+        if (l1 < -1e-9 || l2 < -1e-9 || l3 < -1e-9) continue; hi = Math.max(hi, l1 * A[1] + l2 * B[1] + l3 * C[1]); } return hi; };
+      for (let i = 0; i < d.pos.length / 3; i++) if (nm(i) !== 'carpet') other.push([d.pos[3 * i], d.pos[3 * i + 1], d.pos[3 * i + 2]]);
+      const ys = face.map(v => v[1]), yTop = Math.max(...ys), flat = yTop - Math.min(...ys);
+      const mid = face.filter(v => Math.abs(STA(v[0]) - 6.0) < 0.15), width = mid.length ? Math.max(...mid.map(v => v[2])) - Math.min(...mid.map(v => v[2])) : 0;
+      let n = 0, worst = 0, at = null; for (const [x, y, z] of other) { const h = highAt(x, z); if (!isFinite(h)) continue; if (y < h - 0.003) { n++; if (h - y > worst) { worst = h - y; at = [r3(STA(x)), r3(z), r3(y)]; } } }
+      const mf = JSON.parse(fs.readFileSync(fileURLToPath(MODELS.PC12.meta), 'utf8')), mc = (mf.checks || []).find(c => /^Cabin floor width/.test(c.check));
+      const tol = 0.02 * 1.30, metaOK = !!mc && Math.abs(mc.model - 1.30) <= tol;
+      check('PC12', 'cabin floor: one flat panel, sourced 1.30 m wide (2 %), no cabin item below its top; meta floor-width check within 2 %', flat <= 0.002 && Math.abs(width - 1.30) <= tol && n === 0 && metaOK,
+        { floor_top_wl: r3(yTop), top_face_spread_mm: Math.round(flat * 10000) / 10, width_at_sta6_m: r3(width), sourced_m: 1.30, tolerance_m: r3(tol), cabin_vertices_below_floor_top: n, worst_mm: Math.round(worst * 1000), worst_at_sta_bl_wl: at,
+          meta_check: mc ? { check: mc.check, model: mc.model, delta_mm: mc.delta_mm } : 'missing', src: 'pc12/CLAUDE.md sourced facts: cabin 5.16 x 1.52 x 1.47 m, floor 1.30 m' });
+    }
+    if (!D) {
+      for (const name of ['cabin window / door / exit stations and water lines vs Pilatus drawing 190.10.40.432 + MBP p.5 (+-0.03 m)', 'wing front-view silhouette (dihedral, winglet) vs Pilatus drawing 190.10.40.432',
+        'fuselage profile (crown / keel) vs Pilatus drawing 190.10.40.432 side view', 'aft-fuselage underside vs Pilatus drawing 190.10.40.432 side view', 'fuselage half-breadth vs Pilatus drawing 190.10.40.432 plan view',
+        'fuselage sections vs Pilatus drawing 190.10.40.432 body plan', 'dorsal fin start and top edge vs Pilatus drawing 190.10.40.432 side view', 'winglet side view vs Pilatus drawing 190.10.40.432',
+        'cabin crown / wing height above the ground vs Pilatus drawing 190.10.40.432']) skip('PC12', name, SKIP_LOCAL('pilatus_pc12_meas'));
+    } else {
+      const L = D.layout;
+      // stations (fix round 2) and, since fix round 3, the absolute water lines: every window / door centre vs the drawing
+      const meas = { port_windows: cl.filter(c => c.z < 0).map(c => STA((c.x0 + c.x1) / 2)).sort((a, b) => a - b), stbd_windows: cl.filter(c => c.z > 0).map(c => STA((c.x0 + c.x1) / 2)).sort((a, b) => a - b) };
+      const bAir = box(part('door_airstair') && part('door_airstair').opaque), bCargo = box(part('door_cargo') && part('door_cargo').opaque), bExit = box(part('exit_hatch') && part('exit_hatch').opaque);
+      const bCw = box(part('door_cargo') && part('door_cargo').glass), bEw = box(part('exit_hatch') && part('exit_hatch').glass);
+      meas.airstair = bAir && STA((bAir[0] + bAir[2]) / 2); meas.cargo = bCargo && STA((bCargo[0] + bCargo[2]) / 2); meas.exit = bExit && STA((bExit[0] + bExit[2]) / 2);
+      meas.cargo_window = bCw && STA((bCw[0] + bCw[2]) / 2); meas.exit_window = bEw && STA((bEw[0] + bEw[2]) / 2);
+      meas.airstair_wl = bAir && (bAir[1] + bAir[3]) / 2; meas.cargo_wl = bCargo && (bCargo[1] + bCargo[3]) / 2;
+      const winWL = cl.map(c => (c.y0 + c.y1) / 2), winH = cl.map(c => c.y1 - c.y0), winW = cl.map(c => c.x1 - c.x0);
+      const dev = []; const cmp = (k, a, b, tol = 0.03) => { if (a == null || b == null || Math.abs(a - b) > tol) dev.push(`${k}: model ${a == null ? '-' : r3(a)} vs ${b}`); };
+      cmp('airstair door', meas.airstair, L.port.airstair); cmp('cargo door', meas.cargo, L.port.cargo); cmp('cargo-door window', meas.cargo_window, L.port.cargo_window); cmp('exit', meas.exit, L.stbd.exit); cmp('exit window', meas.exit_window, L.stbd.exit_window);
+      if (meas.port_windows.length !== L.port.windows.length) dev.push('port windows ' + meas.port_windows.length); else L.port.windows.forEach((w, i) => cmp('port window ' + (i + 1), meas.port_windows[i], w));
+      if (meas.stbd_windows.length !== L.stbd.windows.length) dev.push('starboard windows ' + meas.stbd_windows.length); else L.stbd.windows.forEach((w, i) => cmp('starboard window ' + (i + 1), meas.stbd_windows[i], w));
+      for (const v of winWL) cmp('window centre WL', v, L.window_wl);
+      cmp('airstair door centre WL (sourced 1.35 m opening on the drawn centre)', meas.airstair_wl, L.door_wl.airstair); cmp('cargo door centre WL', meas.cargo_wl, L.door_wl.cargo);
+      // the glass runs 10 mm under the seal all round (pc12 build_glazing: trim at the outline + 0.010)
+      for (const v of winH) cmp('window outline height (glass - 0.02)', v - 0.02, L.window_h, 0.02); for (const v of winW) cmp('window outline width (glass - 0.02)', v - 0.02, L.window_w, 0.02);
+      check('PC12', 'cabin window / door / exit stations and water lines vs Pilatus drawing 190.10.40.432 + MBP p.5 (+-0.03 m)', dev.length === 0,
+        { deviations: dev, measured: Object.fromEntries(Object.entries(meas).map(([k, v]) => [k, Array.isArray(v) ? v.map(r3) : v == null ? null : r3(v)])), window_centre_wl_m: [...new Set(winWL.map(r3))], window_glass_wh_m: [r3(Math.max(...winW)), r3(Math.max(...winH))], reference: LREF });
+      // fuselage profile (fix round 3, finding P2): crown (BL 0) and keel (lowest skin within BL +-0.25: the nose-gear bay
+      // is open at BL 0) at stations from the windshield to the tail cone vs the drawing's side view; 2 cm
+      const stations = [3.3, 3.6, 3.9, 4.2, 4.6, 5.0, 6.0, 7.0, 8.0, 8.6, 9.0, 9.4, 9.75, 10.25, 10.8, 11.3, 11.85, 12.3, 12.9];
+      const prof = { crown: {}, keel: {}, half_breadth: {} };
+      for (const x of stations) { const S = slice(FUS, x); if (!S.length) continue;
+        const cr = S.filter(p => Math.abs(p[1]) < 0.03), kl = S.filter(p => Math.abs(p[1]) < 0.25);
+        if (cr.length) prof.crown[x] = [Math.max(...cr.map(p => p[0])), lerp(D.side.crown, x)];
+        if (kl.length && !(x > 5.25 && x < 7.45)) prof.keel[x] = [Math.min(...kl.map(p => p[0])), lerp(D.side.keel, x)];   // keel hidden by the belly fairing on the drawing
+        prof.half_breadth[x] = [Math.max(...S.map(p => Math.abs(p[1]))), lerp(D.plan.half_breadth, x)]; }
+      const devs = (o, f = () => true) => Object.fromEntries(Object.entries(o).filter(([x]) => f(+x)).map(([x, [mv, dv]]) => [x, Math.round((mv - dv) * 1000)]));
+      const mx = (o) => Math.max(0, ...Object.values(o).map(Math.abs));
+      const dCrown = devs(prof.crown), dKeelFwd = devs(prof.keel, x => x <= 8.23), dAft = devs(prof.keel, x => x > 8.23), dHb = devs(prof.half_breadth);
+      check('PC12', 'fuselage profile (crown / keel) vs Pilatus drawing 190.10.40.432 side view', mx(dCrown) <= 20 && mx(dKeelFwd) <= 20,
+        { crown_dev_mm: dCrown, keel_dev_mm: dKeelFwd, max_mm: Math.max(mx(dCrown), mx(dKeelFwd)), limit_mm: 20, note: 'model - drawing; fix round 2: crown and keel 139 mm low along the cabin', reference: LREF });
+      check('PC12', 'aft-fuselage underside vs Pilatus drawing 190.10.40.432 side view', mx(dAft) <= 50 && Object.keys(dAft).length >= 6,
+        { underside_dev_mm: dAft, max_mm: mx(dAft), limit_mm: 50, note: 'FR30 aft (strake-hidden span bridged straight on the drawing); fix round 2: up to 339 mm low at FR38', reference: LREF });
+      check('PC12', 'fuselage half-breadth vs Pilatus drawing 190.10.40.432 plan view', mx(dHb) <= 20,
+        { half_breadth_dev_mm: dHb, max_mm: mx(dHb), limit_mm: 20, note: 'fix round 2: up to 232 mm wider aft of FR33', reference: LREF });
+      // body plan: every drawn outline point of the frames FR10..FR38 against the model's section (nearest point), rms / max
+      const secs = {}; let worstSec = 0, worstRms = 0;
+      for (const [name, sec] of Object.entries(D.sections)) { if (name === 'EF2' || name === 'FR40') continue;   // EF2: pc12's cowling (kept); FR40 crowded by dorsal / strakes
+        const x = Array.isArray(sec.sta) ? 6.0 : sec.sta, S = slice([...FUS, 'glazing_flightdeck'], x, true); if (!S.length) continue;
+        // the keel's nose-gear bay opening (STA 3.02-4.26, |BL| < 0.14; doors in the housing below) is not on the drawing's frames
+        const pts = sec.outline.filter(([y, z]) => !(x > 2.95 && x < 4.3 && y < 0.2 && z < 1.0));
+        const d = pts.map(([y, z]) => segDist(S, z, y));
+        const rms = Math.sqrt(d.reduce((a, b) => a + b * b, 0) / d.length), dmax = Math.max(...d);
+        secs[name] = { sta: r3(x), rms_mm: Math.round(rms * 1000), max_mm: Math.round(dmax * 1000), n: d.length }; worstRms = Math.max(worstRms, rms); worstSec = Math.max(worstSec, dmax); }
+      check('PC12', 'fuselage sections vs Pilatus drawing 190.10.40.432 body plan', worstRms <= 0.015 && worstSec <= 0.04,
+        { sections: secs, limits_mm: { rms: 15, max: 40 }, note: 'drawn outline points (labels, dorsal fin and strakes removed) to the model section (fuselage skins + windshield); EF2 (pc12 cowling, kept) and FR40 (crowded) not scored; the keel inside the nose-gear bay opening skipped', reference: LREF });
+      // dorsal fin (finding P2: started ~1.35 m too far aft): first station whose slice rises 1 cm above the crown, and the
+      // top edge (highest dorsal / fin point) vs the drawn edge; 5 cm
+      let start = null; for (let x = 8.8; x <= 10.5; x += 0.01) { const S = slice(['dorsal_fin'], x); if (S.length && Math.max(...S.map(p => p[0])) > lerp(D.side.crown, x) + 0.01) { start = x; break; } }
+      let startD = null; for (let x = 8.8; x <= 10.5; x += 0.01) { const t = lerp(D.side.dorsal_top, x); if (t != null && t > lerp(D.side.crown, x) + 0.01) { startD = x; break; } }
+      const dTop = {}; for (const x of [9.25, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 12.4]) { const S = slice(['dorsal_fin', 'fin'], x); if (S.length) dTop[x] = Math.round((Math.max(...S.map(p => p[0])) - lerp(D.side.dorsal_top, x)) * 1000); }
+      check('PC12', 'dorsal fin start and top edge vs Pilatus drawing 190.10.40.432 side view', start != null && startD != null && Math.abs(start - startD) <= 0.05 && mx(dTop) <= 50,
+        { start_sta: start && r3(start), drawing_start_sta: startD && r3(startD), drawing_edge_leaves_crown_sta: r3(D.side.dorsal_start_sta), top_edge_dev_mm: dTop, limit_m: 0.05, note: 'start = first station 1 cm above the crown (model and drawing alike); fix round 2: no dorsal above the crown before STA 10.4, top edge up to 449 mm low', reference: LREF });
+      // winglet in side view (finding P3: top chord 0.3-0.4 m forward, LE much less swept): leading / trailing edge of the
+      // port winglet at absolute water lines (plane sections) vs the drawn edge lines, and the top chord ends at each one's
+      // own top; 5 cm
+      const wq = part('winglet_L').opaque, wv = wq.pos; let top = -Infinity; for (let i = 1; i < wv.length; i += 3) top = Math.max(top, wv[i]);
+      const zcut = (wl) => { let lo = Infinity, hi = -Infinity; const I = wq.idx;
+        for (let t = 0; t < I.length; t += 3) { const a = I[t] * 3, b = I[t + 1] * 3, c = I[t + 2] * 3, da = wv[a + 1] - wl, db = wv[b + 1] - wl, dc = wv[c + 1] - wl;
+          if ((da > 0 && db > 0 && dc > 0) || (da < 0 && db < 0 && dc < 0)) continue;
+          for (const [u, v, du, dv] of [[a, b, da, db], [b, c, db, dc], [c, a, dc, da]]) if ((du < 0) !== (dv < 0)) { const x = STA(wv[u] + du / (du - dv) * (wv[v] - wv[u])); lo = Math.min(lo, x); hi = Math.max(hi, x); } }
+        return [lo, hi]; };
+      const W8 = D.side.winglet, onLine = (line, z) => { const L2 = [...line].sort((p, q) => p[1] - q[1]); for (let i = 1; i < L2.length; i++) if (L2[i][1] >= z) { const a = L2[i - 1], b = L2[i]; return a[0] + (z - a[1]) / ((b[1] - a[1]) || 1) * (b[0] - a[0]); } return null; };
+      // the edges up to 1.5 cm below the drawn top (WL 2.10: the top chord; the model's static wick hangs 3 cm below its top)
+      const wdev = {}; let tLe = null, tTe = null;
+      for (const z of [1.94, 1.98, 2.02, 2.06, 2.10]) { if (z === 2.10) [tLe, tTe] = zcut(z); const [le, te] = zcut(z), dl = onLine(W8.le_line, z), dt = onLine(W8.te_line, z);
+        if (dl != null) wdev['le_wl' + z] = le - dl; if (dt != null) wdev['te_wl' + z] = te - dt; }
+      const wmax = Math.max(...Object.values(wdev).map(Math.abs));
+      check('PC12', 'winglet side view vs Pilatus drawing 190.10.40.432', wmax <= 0.05,
+        { dev_mm: Object.fromEntries(Object.entries(wdev).map(([k, v]) => [k, Math.round(v * 1000)])), max_mm: Math.round(wmax * 1000), limit_mm: 50, model_top_wl: r3(top), model_chord_wl2_10: [r3(tLe), r3(tTe)], drawing_top: { wl: W8.top_wl, chord_sta: W8.top_chord }, note: 'fix round 2: top chord 0.29 / 0.38 m forward of the drawn one', reference: LREF });
+      // wing silhouettes in the front view (fix round 2): upper and lower outline of wing_R per butt line vs the drawing;
+      // the SHAPE (each minus its mean offset) within 15 mm rms, the top-line slope within 0.3 deg, the winglet rise 0.03 m.
+      // The skin's spanwise rows are sparse: every full section row (>= 30 vertices in a 1-cm butt-line bin) gives its
+      // highest and lowest vertex; the outline at a butt line is interpolated between the neighbouring rows
+      const F = D.front, BL = F.wing_upper.map(p => p[0]), UP = F.wing_upper.map(p => p[1]), LO = F.wing_lower.map(p => p[1]);
+      const w = part('wing_R').opaque.pos; const bins = new Map();
+      for (let i = 0; i < w.length; i += 3) { const k = Math.round(w[i + 2] / 0.01); const b = bins.get(k) || { n: 0, hi: -Infinity, lo: Infinity, bl: 0 }; b.n++; b.bl += w[i + 2]; b.hi = Math.max(b.hi, w[i + 1]); b.lo = Math.min(b.lo, w[i + 1]); bins.set(k, b); }
+      const rowsW = [...bins.values()].filter(b => b.n >= 30).map(b => ({ bl: b.bl / b.n, hi: b.hi, lo: b.lo })).sort((a, b) => a.bl - b.bl);
+      const at = (bl, k) => { for (let i = 1; i < rowsW.length; i++) if (rowsW[i].bl >= bl) { const a = rowsW[i - 1], b = rowsW[i], t = (bl - a.bl) / (b.bl - a.bl); return a[k] + t * (b[k] - a[k]); } return null; };
+      const up = BL.map(bl => at(bl, 'hi')), lo = BL.map(bl => at(bl, 'lo'));
+      const fit = (X, Y) => { const n = X.length, sx = X.reduce((a, b) => a + b, 0), sy = Y.reduce((a, b) => a + b, 0), sxx = X.reduce((a, b) => a + b * b, 0), sxy = X.reduce((a, b, i) => a + b * Y[i], 0); return Math.atan((n * sxy - sx * sy) / (n * sxx - sx * sx)) * 180 / Math.PI; };
+      const sel = BL.map((b, i) => i).filter(i => BL[i] >= 3 && BL[i] <= 7);
+      const slope = fit(sel.map(i => BL[i]), sel.map(i => up[i])), slopeD = fit(sel.map(i => BL[i]), sel.map(i => UP[i]));
+      const dU = UP.map((v, i) => v - up[i]), dL = LO.map((v, i) => (BL[i] < 2.4 ? null : v - lo[i]));   // BL 2.0 lower line: behind the gear on the drawing
+      const mean = (A) => { const B = A.filter(v => v != null); return B.reduce((a, b) => a + b, 0) / B.length; }, oU = mean(dU), oL = mean(dL);
+      const rms = Math.sqrt(mean([...dU.map(v => (v - oU) ** 2), ...dL.filter(v => v != null).map(v => (v - oL) ** 2)]));
+      let wl = { y: -Infinity, bl: 0 }; { const d = part('winglet_R').opaque.pos; for (let i = 0; i < d.length; i += 3) if (d[i + 1] > wl.y) wl = { y: d[i + 1], bl: d[i + 2] }; }
+      const wRise = wl.y - up[up.length - 1];
+      check('PC12', 'wing front-view silhouette (dihedral, winglet) vs Pilatus drawing 190.10.40.432', rms <= 0.015 && Math.abs(slope - slopeD) <= 0.3 && Math.abs(wRise - F.winglet_rise_above_upper_at_last_bl) <= 0.03,
+        { limits: 'shape rms <= 15 mm, top line within 0.3 deg, winglet rise within 0.03 m', bl: BL, model_upper: up.map(r3), model_lower: lo.map(r3), shape_rms_mm: Math.round(rms * 1000), top_line_deg: Math.round(slope * 100) / 100, drawing_top_line_deg: Math.round(slopeD * 100) / 100, offset_upper_m: r3(oU), offset_lower_m: r3(oL), winglet_top: { bl: r3(wl.bl), wl: r3(wl.y), rise_m: r3(wRise), drawing_rise_m: F.winglet_rise_above_upper_at_last_bl }, reference: LREF });
+      // absolute heights (fix round 2 KNOWN: cabin and wing ~0.12-0.14 m low): crown at STA 6, wing outline offsets, winglet top
+      let crown = -Infinity; for (const p of slice(FUS, 6.0)) if (Math.abs(p[1]) < 0.03) crown = Math.max(crown, p[0]);
+      const dc = lerp(D.side.crown, 6.0), offs = { crown: dc - crown, wing_upper: oU, wing_lower: oL, winglet_top: F.winglet_top_bl_wl[1] - wl.y }; const offMax = Math.max(...Object.values(offs).map(Math.abs));
+      check('PC12', 'cabin crown / wing height above the ground vs Pilatus drawing 190.10.40.432', offMax <= 0.03,
+        { drawing_crown_wl_m: r3(dc), model_crown_wl_m: r3(crown), offsets_m: Object.fromEntries(Object.entries(offs).map(([k, v]) => [k, r3(v)])), offset_max_mm: Math.round(offMax * 1000), note: 'drawing - model; fix round 2: crown 138 mm, wing ~120 mm', reference: LREF });
+    }
   }
 }
 
@@ -501,18 +663,22 @@ for (const [type, e] of Object.entries(MODELS)) {
     { images: imgs.length, uncaptioned: noCap, stale_claims: stale, captions_without_image: orphan, marked_superseded: superseded.length });
   // the write-ups too (fix round 2: docs/phase3_render.md kept calling a superseded SF50 build 'final'): every
   // docs/phase3_*.md that names a model must name its CURRENT file hash (first 8 hex digits) or carry a SUPERSEDED banner in
-  // its first 15 lines
-  const mdBad = [];
+  // its first 15 lines. A banner line that names a type (PC-12 / pc12.glb, SF50 / sf50.glb) marks only that type's parts of
+  // the page superseded (fix round 3 iteration 2: docs/phase3_video.md's PC-12 clips show an earlier build, its SF50 clips the
+  // current one); a banner that names no type marks the whole page
+  const mdBad = [], mdMarked = [];
   for (const f of fs.readdirSync(path.join(HWD, 'docs')).filter(f => /^phase3_.*\.md$/.test(f))) { const t = fs.readFileSync(path.join(HWD, 'docs', f), 'utf8'); const head = t.split('\n').slice(0, 15).join('\n');
-    if (/SUPERSEDED/.test(head)) continue;
-    for (const [type, re] of [['SF50', /SF50|sf50\.glb/], ['PC12', /PC-12|pc12\.glb/]]) if (cur[type] && re.test(t) && !t.includes(cur[type].slice(0, 8))) mdBad.push(`docs/${f}: names ${type} but not its current hash ${cur[type].slice(0, 8)}`); }
-  // licence notice plumbing outside M1 / M2 (fix round 2, finding F12 residual): the docs/phase3 row in docs/ATTRIBUTION.md
-  // and docs/phase3 in tools/check_airport.py's SOURCES scope. Not M1 / M2 files: reported as KNOWN until their owners add them
+    const TYPES = [['SF50', /SF50|sf50\.glb/], ['PC12', /PC-12|pc12\.glb/]], banners = head.split('\n').filter(l => /SUPERSEDED/.test(l));
+    if (banners.some(l => !TYPES.some(([, re]) => re.test(l)))) { mdMarked.push(`docs/${f}: all`); continue; }
+    for (const [type, re] of TYPES) { if (banners.some(l => re.test(l))) { mdMarked.push(`docs/${f}: ${type}`); continue; }
+      if (cur[type] && re.test(t) && !t.includes(cur[type].slice(0, 8))) mdBad.push(`docs/${f}: names ${type} but not its current hash ${cur[type].slice(0, 8)}`); } }
+  // licence notice plumbing (fix round 2, finding F12 residual; closed in fix round 3, finding V1): the docs/phase3 row in
+  // docs/ATTRIBUTION.md and docs/phase3 in tools/check_airport.py's SOURCES scope. A plain check since fix round 3 (was KNOWN)
   const attr = fs.readFileSync(path.join(HWD, 'docs/ATTRIBUTION.md'), 'utf8'), chk = fs.readFileSync(path.join(HWD, 'tools/check_airport.py'), 'utf8');
   const plumb = { attribution_row: /docs\/phase3\//.test(attr), check_airport_scope: /hwd3d\/docs\/phase3/.test(chk) };
   check('provenance', 'docs/phase3 in docs/ATTRIBUTION.md and in tools/check_airport.py SOURCES coverage', plumb.attribution_row && plumb.check_airport_scope,
-    { ...plumb, missing: Object.values(plumb).filter(v => !v).length, proposed_diffs: 'docs/phase3_models.md section 8 items 5 / 6' });
-  check('provenance', 'docs/phase3_*.md name the current model hashes (or are marked SUPERSEDED)', mdBad.length === 0, mdBad.length ? mdBad : 'every write-up current or marked');
+    { ...plumb, missing: Object.values(plumb).filter(v => !v).length, closed: 'fix round 3 (finding V1): docs/ATTRIBUTION.md Phase 3 row, check_airport.py scans docs/phase3' });
+  check('provenance', 'docs/phase3_*.md name the current model hashes (or are marked SUPERSEDED)', mdBad.length === 0, mdBad.length ? mdBad : { result: 'every write-up current or marked', marked_superseded: mdMarked });
 }
 
 // ---- 13. a synthetic glb exercising the generic paths the pc12 file does not use (FLOAT positions in an interleaved
@@ -555,6 +721,6 @@ for (const [type, e] of Object.entries(MODELS)) {
       { origin_gl: S.originGl, nose_vertex_local: p2, navL: S.lights.navL && S.lights.navL.p, iceLight: S.lights.iceLight && S.lights.iceLight.p, wheelbase: S.wheelbase, track: S.track, expected: 'origin (0,0,1); vertex (4,2,0); navL (0.5,1,-5); iceLight kept; wheelbase 3.5; track 3' });
   } catch (err) { check('synthetic', 'generic glTF paths', false, String(err && err.stack || err)); }
 }
-const out = process.argv.find(a => a.startsWith('--json=')); if (out) fs.writeFileSync(path.resolve(HWD, out.slice(7)), JSON.stringify({ when: new Date().toISOString(), fails, known, results }, null, 1));
-console.log(fails ? `${fails} check(s) FAILED` : `all checks passed${known ? ` (${known} known deviation(s), see above)` : ''}`);
+const out = process.argv.find(a => a.startsWith('--json=')); if (out) fs.writeFileSync(path.resolve(HWD, out.slice(7)), JSON.stringify({ when: new Date().toISOString(), fails, known, skipped, results }, null, 1));
+console.log((fails ? `${fails} check(s) FAILED` : `all checks passed${known ? ` (${known} known deviation(s), see above)` : ''}`) + (skipped ? ` (${skipped} skipped: local reference data not present)` : ''));
 process.exit(fails ? 1 : 0);

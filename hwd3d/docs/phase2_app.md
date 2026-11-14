@@ -43,8 +43,8 @@ The app auto-detects: `?mode=live` with no relay falls back to the shim and show
 - **Phone-first touch** — `controls.js`: one finger pans, two pinch-zoom/twist/tilt, tap selects; inertia; follow/chase.
   Verified at 390 × 844 (`app_*_phone.png`).
 - **Aircraft picking + info card** — `app.js tap()` projects each track with the near-range view-projection; the card
-  (`ui.renderCard`) shows registration / type / model / operator / phase / parking spot / runway / tower / altitude /
-  speed / data age. **LADD/PIA → type only** (the card says "Identity withheld", the rows say "withheld").
+  (`ui.renderCard`) shows registration / type / model / operator / phase / parking spot / runway / tower / altitude MSL
+  and height above the field (§9) / speed / data age. **LADD/PIA → type only** (the card says "Identity withheld", the rows say "withheld").
 - **Follow-aircraft camera** — `rig.setFollow`; the card's Follow / Chase buttons.
 - **Named views** — Overview, Tower (the cab eye from `site.anchors.tower`), Green Ramp, West Hangars, 28L Final (behind
   an aircraft on the NASR 4.0° VASI path). `HWD.qa.view(name)`.
@@ -169,4 +169,101 @@ None of these required editing P1/P2/P3 files.
 - **Persistence (D1).** Masked tracks are neither stored nor restored (`hwdlive.parked.v1`); a restored stale track is
   reconciled with a new same-type stationary track within 15 m.
 - **Docs / commands.** `CLAUDE.md` and `package.json` bind the plain static server to 127.0.0.1; Phase 2 is "in review".
+
+## 9. Altitude display (round-2 recheck m7, 2026-11-13)
+
+**Problem.** The list, the 3-D labels and the card printed `alt_baro` raw as "N ft". `alt_baro` is the transponder's
+*pressure* altitude, referenced to 29.92 inHg (14 CFR 91.217(a)(2), LII copy read 2026-11-13). In the five review windows the KHWD
+altimeter setting was 30.06-30.17 inHg, so `alt_baro` read 128-229 ft below the altitude MSL (computed with H below), so aircraft on final showed "Final 28L -150 ft" and helicopters "-100 ft".
+The card set this value beside a drawn height from another datum ("Altitude 400 ft · 560 ft AGL"). The value also came
+from the newest fix, which in replay is up to 60 s ahead of the drawn position. Over the five review windows, 1,095 of
+8,279 airborne fixes within 5 km had a negative raw `alt_baro` [obs, aggregate].
+
+**What is shown now** (`js/live/ui.js altitudeOf / altFor / altCard / altMethod`, `js/live/app.js altCtx / qnhAt`):
+
+- **One value per aircraft.** List row, 3-D label and card read the same number: altitude MSL at the display time,
+  rounded to 10 ft. It is refreshed on the list's 1-s tick, before the labels are drawn. On the ground the card says
+  "On the ground" and the list and label show no altitude.
+- **List and labels:** "1,450 ft". A legend line above the rows says "Altitudes in ft MSL · <method> [inf]".
+- **Card:** "Altitude 1,450 ft MSL · 1,400 ft above field". The height above the field is the rounded MSL value minus
+  the NASR field elevation (52.1 ft, `data/hwd_airport.json frame.field_elev_ft`), so a reader's own subtraction
+  agrees. Within ±10 ft of the field elevation it reads "at field elevation"; lower values read "N ft below field
+  elevation". The data line names the method, marked inf, for example "altitude: pressure altitude corrected with the
+  KHWD altimeter 30.13 inHg (METAR <local time>), between fixes [inf]". Its tooltip gives the formula and the sources.
+
+**Method** (in order; the first plausible value is used):
+
+1. **baro** (default). The aircraft's altitude is what an altimeter set to the current KHWD altimeter setting A would
+   read: `MSL = alt_baro - H(A)`, where `H(p) = (1 - (p / 1013.25 hPa)^0.190284) x 145,366.45 ft`.
+   - `H` is the NWS pressure-altitude equation (weather.gov/media/epz/wxcalc/pressureAltitude.pdf, read 2026-11-13) [V].
+   - The NWS altimeter-setting equation (weather.gov/media/epz/wxcalc/altimeterSetting.pdf, read 2026-11-13) is the same
+     relation solved for A at the station elevation. Rearranged, station elevation = H(P_station) - H(A) [V].
+   - There is no temperature correction: this is indicated altitude, not true altitude [inf].
+   - The cockpit rule of thumb (1 inHg ≈ 1,000 ft) would add about 8 % (dH/dA at 29.92 is 924 ft per inHg, computed).
+   - **Which setting.** A comes from the KHWD report at or before the *scene* time (the data clock: the recording's
+     time in replay and snapshot). It must be at most 90 min old (`state.js STALE_MIN`, spec §3.3). The reports are the
+     ones the environment already holds: the relay's `/api/metar`, the shim's pack reports, or the snapshot pack's.
+   - A QA weather override (`?metar=`, `?wx=`) is not the traffic's weather and is never used for altitudes.
+2. **geom** applies when there is no usable report or no `alt_baro`. `MSL = alt_geom + 108.09 ft`, the Phase 1
+   calibration of the GNSS height against the NASR runway surfaces (`GEOM_OFF`, n 797, `classifier.js RULES`) [obs
+   calibration, inf use]. The legend gives the reason, for example "no KHWD METAR at or before this time" or "the QA
+   weather override is not used for altitudes".
+3. **drawn** applies when neither fix has a usable value, for example a take-off or landing reconstructed across a
+   recorder hole. The engine's drawn height (NAVD 88 ≈ MSL) is shown [inf].
+
+**Between fixes** [inf]:
+- At a fix, the value is that fix's report.
+- Between two fixes, it is the drawn height plus the report-minus-drawn offset (`report MSL - f.y`). The offset is taken
+  at the two fixes around the display time and interpolated in time. The number therefore follows the 3-D picture
+  through a hole (flare, reconstructed climb-out) and still equals the reports at the fixes.
+- A straight interpolation of the reports printed "110 ft MSL" over an aircraft the engine drew touching down (case C
+  below); the anchored value reads "50 ft MSL".
+
+**Plausibility** [inf]: an airborne aircraft is not below the ground under it.
+- A value more than 25 ft below that ground (the 25-ft report quantum) falls through to the next method. Causes: an
+  encoder outside the 125-ft tolerance, or a fix flagged airborne on the runway.
+- A value up to 25 ft below the ground is shown at the ground height.
+- Measured over the five windows: 156 of 8,279 airborne fixes within 5 km gave a QNH-corrected value below 0 ft MSL
+  [obs, aggregate].
+
+**Agreement of the two methods** (QNH-corrected `alt_baro` minus `alt_geom + 108.09 ft`, fixes with both values within
+9 km and below 4,000 ft, METAR ≤ 90 min old; aggregate only, script in the fixer's scratch directory):
+
+| window | n | median | IQR |
+|---|---|---|---|
+| weekend | 3,199 | +9 ft | −16 to +34 |
+| weekday | 2,005 | −2 ft | −52 to +23 |
+| heli | 2,127 | −6 ft | −31 to +19 |
+| pat | 3,226 | −21 ft | −71 to +4 |
+| night | 632 | −37 ft | −37 to −12 |
+
+Single aircraft can differ by more. In the weekend window, case D (a C152) reads about 100 ft below its GNSS height.
+
+**Checked in the app** (`livetest.mjs`, shim, type-only weekend pack, snapshot mode). Desktop 1280×720 and phone
+390×844, 0 console errors; every image looked at.
+
+| case | what | before | now (list = label = card) |
+|---|---|---|---|
+| A | C172 on final 28L | 200 ft (newest fix, 60 s ahead) | 490 ft; card "490 ft MSL · 440 ft above field" |
+| B | R22 in flight | 600 ft | 650-660 ft MSL · 600-610 ft above field (it climbs while the snapshot runs) |
+| C | BL8 on short final 28R | −150 ft | 50 ft MSL · at field elevation |
+
+- **Replay mode.** The setting is picked up the same way, from the shim's `/api/metar` (A3013, 6 min old).
+- **QA override.** With `?metar=…A2992…` all values switch to the geom method. For the same aircraft they are 10-90 ft
+  from the baro values (case D: 760 vs 670 ft).
+- **Phone UI.** `jobs/phone_ui.mjs`: 52 controls, 0 violations. One fix was needed. With the 44-px grab of fix round 2,
+  the card-open peek (56 px) left 9 px of the tab row on screen, which gave five half-visible targets. The card-open
+  peek is now 47 px, so only the grab shows.
+  - The job samples 0.8 s after selecting. Under SwiftShader the sheet transition had not started 1.8 s after
+    selecting and had finished by 4.8 s, so the job may see either end state. The settled state was measured separately: grab 798-842 px, tabs at 844 px (below the edge).
+
+**Not done / limits.**
+- No temperature correction (cold-day true altitude is lower).
+- No per-aircraft encoder calibration for the baro value: the classifier's per-aircraft geom offset is not applied
+  to it.
+- A one-second refresh: a 2,000 ft/min climb moves in about 30-ft steps.
+- `about.js` (not a file of this task) still says altitudes "are what the aircraft broadcast". It should say that the
+  shown altitude is the broadcast pressure altitude corrected with the KHWD altimeter setting.
+- Observed in passing, not changed: in snapshot mode, airborne aircraft keep moving and slowing after the engine
+  clock is frozen (about 1 kt and 5 m per 10 frames). §2 says only rotors and lights move.
 

@@ -1,28 +1,28 @@
 {
  "pc12.glb": {
   "url": null,
-  "source": "pc12 builders @ eb34f7d044286fbfb9dacc49ef97470a46eff974 (pc12 sources unchanged, tree sha256 04893879d350d732…) + override set 'fr2' of hwd3d/tools/models/pc12/build_pc12_variant.py (sha256 25bb94a303373a91…, working tree), this repository",
-  "sha256": "9ccfd9a564c0ade4f816b2d2035f4465958db76be21e1693a0a6de039da7c630",
+  "source": "pc12 builders @ bd22c605c710972676f5ca82fc55ab1c82fac85e (pc12 sources unchanged, tree sha256 04893879d350d732…) + override set 'fr3' of hwd3d/tools/models/pc12/build_pc12_variant.py (sha256 93485d0a1651183e…, working tree), this repository",
+  "sha256": "6e3493299108b23235d0ec8534bc1a2443c403824b720427b4ab739fe649cf51",
   "licence": "own work (this repository); no third-party geometry or texture",
-  "made_by": "pc12/model + pc12/cad builders run by hwd3d/tools/models/pc12/build_pc12_variant.py --set=fr2; copied unchanged by hwd3d/tools/models/pc12/import_pc12.mjs --variant",
-  "overrides": "cabin window / door / exit layout from Pilatus drawing 190.10.40.432 + MBP p.5 livery (stations measured), wing dihedral 6.2 deg about BL 2.265 (fitted to the drawing front view); docs/phase3_models.md section 4",
-  "note": "Pilatus PC-12 PRO (NGX) parametric model, 69 parts, pivots in node extras. Sourced dimensions in pc12/CLAUDE.md; reconstructed contours marked there. Original neutral livery, no registration or logo (D1)."
+  "made_by": "pc12/model + pc12/cad builders run by hwd3d/tools/models/pc12/build_pc12_variant.py --set=fr3; copied unchanged by hwd3d/tools/models/pc12/import_pc12.mjs --variant",
+  "overrides": "fr2 + fuselage loft aft of the nose (crown, keel, half-breadth, max-breadth WL, section exponents), cockpit glazing, window / door water lines, wing and main-gear trunnion height, nose-gear housing, belly fairing covering the wing, dorsal fin, fin leading edge, ventral strakes and winglet, all fitted to Pilatus drawing 190.10.40.432 (review fix round 3); iteration 2: flat cabin floor at the sourced 1.30 m width and a cabin layout clear of the doors, nose-gear housing with rounded edges and a strut slot, belly fairing section blended into the wing, belly antennas on the skin [inf: layout / shapes]; docs/phase3_models.md section 4",
+  "note": "Pilatus PC-12 PRO (NGX) parametric model, 70 parts (as built), pivots in node extras. Sourced dimensions in pc12/CLAUDE.md; reconstructed contours marked there. Original neutral livery, no registration or logo (D1)."
  },
  "pc12_meta.json": {
   "url": null,
-  "source": "subset of out/pc12_fr2/fr2/pc12_meta.json (variant fr2, pc12 builders @ eb34f7d044286fbfb9dacc49ef97470a46eff974) + the frame measured by js/aircraft/glb.js",
-  "sha256": "84f5f88d07abe6ca61d6242272f4c787d9836bd9d2c5575835ec7e720fb311ef",
+  "source": "subset of out/pc12_fr3/pc12_meta.json (variant fr3, pc12 builders @ bd22c605c710972676f5ca82fc55ab1c82fac85e) + the frame measured by js/aircraft/glb.js",
+  "sha256": "89a16797a42fea0673aae4ca1fbd560cc862e3edf0baad2da1e08ecee9c78f3a",
   "licence": "own work (this repository)",
   "made_by": "hwd3d/tools/models/pc12/import_pc12.mjs"
  },
  "sf50.glb": {
   "url": null,
-  "source": "hwd3d/tools/models/sf50/build_sf50.py (python3 -B; pc12/cad loftkit kernel, read-only), working tree (uncommitted: tools/models/sf50 is not in git), sources tree sha256 cec3f62893dc6f7a27cf118d64e29f4d9b4e5c3a167783f983d98950665f31c5 (per-file hashes in sf50_meta.json _provenance.sources_sha256; git HEAD at build eb34f7d044286fbfb9dacc49ef97470a46eff974), built 2026-11-13T20:12:10Z",
-  "sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "builder_state": "working tree (uncommitted: tools/models/sf50 is not in git)",
-  "sources_tree_sha256": "cec3f62893dc6f7a27cf118d64e29f4d9b4e5c3a167783f983d98950665f31c5",
+  "source": "hwd3d/tools/models/sf50/build_sf50.py (python3 -B; pc12/cad loftkit kernel, read-only), working tree (modified since HEAD), sources tree sha256 48ac26baee2ecfe9717e0c3962ee1545576fda9da0e9dbbbc4aa6886634d0a5e (per-file hashes in sf50_meta.json _provenance.sources_sha256; git HEAD at build bd22c605c710972676f5ca82fc55ab1c82fac85e), built 2026-11-13T21:13:45Z",
+  "sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "builder_state": "working tree (modified since HEAD)",
+  "sources_tree_sha256": "48ac26baee2ecfe9717e0c3962ee1545576fda9da0e9dbbbc4aa6886634d0a5e",
   "rebuild": "cd hwd3d && python3 -B tools/models/sf50/build_sf50.py (deterministic: the same sources give the same GLB bytes)",
-  "sha256_recorded_by_builder": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
+  "sha256_recorded_by_builder": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
   "sha256_match": true,
   "licence": "own work (this repository); no third-party geometry or texture",
   "facts": "hwd3d/tools/models/sf50/SF50_FACTS.md",
@@ -31,8 +31,10 @@
  },
  "sf50_meta.json": {
   "url": null,
-  "source": "hwd3d/tools/models/sf50/build_sf50.py (python3 -B; pc12/cad loftkit kernel, read-only), working tree (uncommitted: tools/models/sf50 is not in git)",
-  "sha256": "9d68bbb73074c49eadc6a447d65d3019b51ce24094bbc2c788a075cfcdcc93e3",
-  "licence": "own work (this repository); no third-party geometry or texture"
+  "source": "hwd3d/tools/models/sf50/build_sf50.py (python3 -B; pc12/cad loftkit kernel, read-only), working tree (modified since HEAD)",
+  "sha256": "1a0391659b998c761ec9ea54391cd321325eda9b8dbed7fce639e3b2266a8bd7",
+  "licence": "own work (this repository); no third-party geometry or texture",
+  "made_by": "hwd3d/tools/models/sf50/build_sf50.py (python3 -B; pc12/cad loftkit kernel, read-only)",
+  "note": "SF50 model metadata written by its builder with the GLB (parts, pivots, light anchors, checks, frame, _provenance); facts and their sources: hwd3d/tools/models/sf50/SF50_FACTS.md"
  }
 }

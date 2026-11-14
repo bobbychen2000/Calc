@@ -25,8 +25,10 @@ operating empty weight, maximum takeoff gross weight (lb).
 
 Output: hwd3d/data/ga_types.json (+ hwd3d/data/SOURCES.json entry, written by hand). Type designators and counts only
 (default D1: no per-aircraft identity). Since the Phase 1 review (2026-11-12) _meta carries the ODbL licence URI and the
-adsb.lol attribution (the counts are adsb.lol-derived; ODbL 4.2(b)/(c)), and a type without an ACD row has src 'none'
-(src_legend) instead of null.
+adsb.lol attribution (the counts are adsb.lol-derived; ODbL 4.2(b)/(c)). A type without an ACD row has src null
+(Phase 2 review fix round 3, 2026-11-13: it was the string 'none', outside the obs / inf / null values that
+tools/check_airport.py check 9 allows in every committed JSON); its reason is in that type's "note" (and acd_row is null),
+and _meta.src_legend documents null. Only those src values and that legend entry changed in the output.
 usage: python3 -I hwd3d/tools/types/build_ga_types.py [--no-recount]
 """
 import argparse
@@ -183,7 +185,7 @@ def main():
             types[t] = {**info, **entry(t, row)}
         else:
             types[t] = {**info, 'wingspan_m': None, 'wingspan_winglets_m': None, 'length_m': None, 'tail_height_m': None,
-                        'mtow_kg': None, 'src': 'none', 'acd_row': None,
+                        'mtow_kg': None, 'src': None, 'acd_row': None,   # null, not 'none' (fix round 3): reason in 'note'
                         'note': 'no FAA ACD row with ICAO_Code or FAA_Designator %r: dimensions left null, not guessed '
                                 '(context: this ACD edition has no helicopter rows at all)' % t}
     sha = hashlib.sha256(open(XLSX, 'rb').read()).hexdigest()
@@ -202,7 +204,7 @@ def main():
                                                                                     if not v['acd_row']),
         'privacy': 'type designators and aircraft counts only (default D1)',
         'src_legend': {'obs': 'dimensions read from the FAA ACD row named in "source"',
-                       'none': 'no FAA ACD row for this designator: dimensions are null, not guessed (see "note")'},
+                       'null': 'no FAA ACD row for this designator: dimensions are null, not guessed (see "note")'},
         'licence': 'Mixed: the dimensions (FAA ACD) are a U.S. Government work in the public domain; the on-field counts '
                    '(onfield_aircraft, note_count) are derived from adsb.lol data, made available under the Open Database '
                    'License 1.0 (https://opendatacommons.org/licenses/odbl/1-0/), so this file is offered under the ODbL 1.0',

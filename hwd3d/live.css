@@ -81,6 +81,10 @@ a { color: var(--arr); }
 .row .nums { margin-left: auto; font-size: 12px; white-space: nowrap; }
 .row.emg { box-shadow: inset 3px 0 0 var(--emg); }
 .empty { padding: 26px 16px; color: var(--dim); text-align: center; font-size: 14px; }
+/* the altitude legend above the rows (review round-2 recheck m7): the rows print '1,450 ft' = ft MSL */
+#list .legend { padding: 6px 12px 6px 14px; font-size: 11.5px; line-height: 1.35; color: var(--dim); border-bottom: 1px solid var(--line); }
+#card .altm { font-size: 12px; }
+#card .nw { white-space: nowrap; }
 .c-hwd_air { --c: var(--arr); } .c-hwd_ground { --c: var(--gnd); } .c-heli { --c: var(--heli); } .c-overflight { --c: var(--oth); } .c-unknown { --c: #7d8794; } .c-vehicle { --c: var(--veh); }
 
 /* ---------- detail card */
@@ -287,4 +291,7 @@ button.statsbtn:hover { color: var(--text); background: rgba(255, 255, 255, 0.03
   #card { max-height: calc(100vh - 318px); }
   body.has-card #card { max-height: calc(100vh - 242px); }
   .pop, .pop.wide { top: calc(164px + var(--safe-t)); max-height: calc(100vh - 184px); }
+  /* (round-2 recheck: with the 44-px grab the 56-px card-open peek left 9 px of the tab row showing below it - five
+     half-visible 44-px targets; now only the grab shows while a card is open, the tabs sit just below the screen edge) */
+  body.has-card #panel.peek { transform: translateY(calc(100% - 47px - var(--safe-b))); }
 }

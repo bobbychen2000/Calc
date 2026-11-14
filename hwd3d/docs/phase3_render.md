@@ -145,18 +145,16 @@ and a nacelle close-up) and 19 PC-12 stills. The per-job parameters, HUD text an
 - This is a pc12 model item. Phase 3b could override the anchors.
 
 **D3. PC-12 cabin crown sits 0.10–0.16 m low, and the dorsal fairing is short (silhouette).**
-- Pilatus drawing 190.10.40.432 (the Model Building Plan p. 9 side view) was measured on a 100-dpi raster. It was
-  registered by its 2,690 / 1,380 mm water-line dimensions and the FR10–FR30 frame spacing (166.6 px/m both ways).
-  - It puts the cabin crown 2.73 m above the hatched ground line.
-  - Anchoring instead on the 4.26 m tail height gives 2.79 m.
-- On the p. 2 brochure three-view, registered on its 14.40 m and 4.26 m extension lines, the crown is 2.75–2.76 m
-  (median over STA 4.5–10).
-- The model crown is 2.630 m (`pc12/model/fuselage.py` `_top`), so it is 0.10–0.16 m low. The 1.83 m external fuselage
-  depth agrees with the drawing (crown to the "290" keel line), so the whole cabin section sits low. The nose and
-  cowling match: STA 1–3 is +16 mm.
-- Both drawings show a long straight dorsal fairing from about frame FR33 (≈ STA 9.0) to the fin. The model's
-  `dorsal_fin` starts at STA 10.35, so the top silhouette is 0.37 m low (median) over STA 10–12.
-- Tail height and length match. One drawing pixel is 6 mm (p. 9) or 16 mm (p. 2), with lines about 2 px wide.
+- Compared with Pilatus drawing 190.10.40.432 (the Model Building Plan p. 9 side view) and the p. 2 brochure three-view,
+  the model's cabin crown (`pc12/model/fuselage.py` `_top`) sat 0.10–0.16 m low, depending on how the drawing is
+  anchored (ground line or tail height). The model's external fuselage depth agreed with the drawing, so the whole cabin
+  section sat low. The nose and cowling matched within 2 cm.
+- Both drawings show a long straight dorsal fairing that starts about 1.35 m further forward than the model's
+  `dorsal_fin`, so the model's top silhouette was low over the aft fuselage ahead of the fin.
+- Tail height and length matched.
+- **Superseded:** fix round 3 fitted the crown, the cabin section and the dorsal fin to the drawing in the hwd3d build
+  (`docs/phase3_models.md` sections 4 and 12). The drawing readings are not in this repository (orchestrator decision (b),
+  2026-11-13): they are kept in the gitignored `refs/cache/local/models/pilatus_pc12_meas.json`.
 - The overlay image is kept in `out/phase3_render/silhouette/` (gitignored, because it contains the Pilatus drawing).
 - pc12/CLAUDE.md lists the fuselage contours as "estimated / reconstructed". This is an owner item for pc12.
 
@@ -286,8 +284,8 @@ positions were computed from the sprite list and match the picture.
   - PC-12 window count per side.
 - Laptop-GPU appearance and performance were not checked. All renders are SwiftShader.
 - The take-off rotation (8°) and flare (5°, 0.6 m) attitudes are illustrative, not taken from the recorded tracks.
-- The PC-12 crown measurement (D3) was made on a 100-dpi raster of the drawing, accurate to about ±2 cm. pc12's own
-  registration pipeline (`pc12/refs/mbp.py`) was not run, because it writes into pc12/.
+- The PC-12 crown comparison (D3) was made on a raster of the drawing, accurate to about ±2 cm. pc12's own registration
+  pipeline (`pc12/refs/mbp.py`) was not run, because it writes into pc12/.
 - The night METAR is carried forward [inf].
 
 **Re-run** (from `hwd3d/`):

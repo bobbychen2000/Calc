@@ -33,8 +33,9 @@ export const AC_MAT = (info) => /^(paint_|trim_)/.test(info.name) ? 21 : /^scree
   : /^(leather|carpet|lining|wood|panel_black|interior|seat|cabin)/.test(info.name) ? 23 : 0;
 export const MODELS = {
   // own work: pc12/ parametric model - since review fix round 2 a build of pc12's own (unchanged) builders with the override
-  // set 'fr2' of tools/models/pc12/build_pc12_variant.py (cabin window / door layout and wing dihedral fitted to the Pilatus
-  // drawings; docs/phase3_models.md section 4), copied with provenance; the internal primary structure
+  // set 'fr3' of tools/models/pc12/build_pc12_variant.py (fix round 3: fuselage loft, glazing, openings, wing / gear height,
+  // fairings, dorsal fin and winglet fitted to the Pilatus drawings; docs/phase3_models.md section 4), copied with
+  // provenance; the internal primary structure
   // (frames / stringers / spars, 'structure') is left out: it is inside the skins and the pc12 viewer shows it only in X-ray
   PC12: { url: here('./models/pc12.glb'), meta: here('./models/pc12_meta.json'), exclude: ['structure'], note: 'pc12/ parametric model (own work)',
     // origin height = pc12's own ground (glTF Y 0, "ground = 0, static on gear", pc12/CLAUDE.md): pc12 sinks its tyres by a
@@ -46,17 +47,17 @@ export const MODELS = {
     // Pilatus "PC-12 NGX Model Building Plan" p. 4 (https://www.pilatus-aircraft.com/assets/files/Model-Building-Plans/
     // PC-12-NGX-Model-Building-Plan.pdf, photo "LANDING LIGHTS") shows a multi-LED lamp in a fairing under the wing beside a
     // flap-track fairing [obs]; the spanwise station is not readable from the close-up, so the anchors sit just inboard of
-    // the middle flap-track fairing (pc12 BL 3.30), 4.6 cm below the wing lower surface (WL 1.073 at BL 3.15 / STA 6.20 in
-    // the fix-round-2 build with the 6.2 deg dihedral; it was 1.046) [inf: position].
+    // the middle flap-track fairing (pc12 BL 3.30), 4.6 cm below the wing lower surface (WL 1.194 at BL 3.15 / STA 6.20 in
+    // the fix-round-3 build, whose wing sits 0.121 m higher; fix round 2: 1.073, pc12/out: 1.046) [inf: position].
     // Model axes (x = station, y = butt line, z = water line); sprites only (no lamp geometry: a pc12 owner item).
     lightAnchors: {
-      landL: { p: [6.20, -3.15, 1.027], src: 'Pilatus PC-12 NGX Model Building Plan p.4 photo "LANDING LIGHTS" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]' },
-      landR: { p: [6.20, 3.15, 1.027], src: 'Pilatus PC-12 NGX Model Building Plan p.4 photo "LANDING LIGHTS" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]' },
+      landL: { p: [6.20, -3.15, 1.148], src: 'Pilatus PC-12 NGX Model Building Plan p.4 photo "LANDING LIGHTS" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]' },
+      landR: { p: [6.20, 3.15, 1.148], src: 'Pilatus PC-12 NGX Model Building Plan p.4 photo "LANDING LIGHTS" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]' },
     },
     // measured frame (convertGLB with the options above; tools/models/test_models.mjs fails if the GLB disagrees by > 5 mm):
     // xMain = nose tip -> main-gear contact, xNose = nose tip -> nose-wheel contact (js/live/ground.js meaning), metres
-    frame: { L: 14.400, span: 16.281, H: 4.260, xMain: 6.040, xNose: 2.560, track: 4.530, wheelbase: 3.480,
-      basis: 'measured from js/aircraft/models/pc12.glb (fix-round-2 build: pc12 builders + override set fr2; the gear and the overall dimensions are those of pc12/out @ f097de2) by js/aircraft/glb.js; L / span / H / track / wheelbase agree with pc12/CLAUDE.md sourced facts (14.40, 16.28, 4.26, 4.53, 3.48)' },
+    frame: { L: 14.400, span: 16.280, H: 4.260, xMain: 6.040, xNose: 2.560, track: 4.530, wheelbase: 3.480,
+      basis: 'measured from js/aircraft/models/pc12.glb (fix-round-3 build: pc12 builders + override set fr3; the gear contacts and the overall dimensions are those of pc12/out @ f097de2) by js/aircraft/glb.js; L / span / H / track / wheelbase agree with pc12/CLAUDE.md sourced facts (14.40, 16.28, 4.26, 4.53, 3.48)' },
   },
   // own work: hwd3d/tools/models/sf50 (procedural, from published dimensions; M1, Phase 3)
   SF50: { url: here('./models/sf50.glb'), meta: here('./models/sf50_meta.json'), exclude: [], note: 'tools/models/sf50 procedural model (own work)',

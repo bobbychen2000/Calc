@@ -1,0 +1,85 @@
+<!doctype html>
+<!-- OD3 video preview (hwd3d Phase 3, video): the UNMODIFIED app (js/live/entry.js, as live.html loads it) under the
+     virtual clock of js/video/vclock.js, played through the job's timeline with the planned camera and the caption overlay,
+     in real time on this machine's GPU (no capture). For tuning shots on a laptop; the deterministic frames and the encode
+     are tools/video/render.mjs. Serve hwd3d/ on 127.0.0.1 (out/ holds the job and the plan, never put it on the LAN):
+       python3 -m http.server 8710 --bind 127.0.0.1
+       http://127.0.0.1:8710/dev/video.html?job=out/od3/video_S.json&mode=replay&fixedres=1&pack=out/video/packs/pack_vS.json.gz
+     (`pack` must be the job's pack; `job` and `pack` are same-origin relative paths). Keys: space play / pause, . one
+     frame, r reload. The engine only runs forward: to go back, reload. D1: type only (the overlay of js/video/overlay.js);
+     the hero is chosen in the page by rule and its key never leaves js/video/director.js.
+     This page runs the WORKING TREE's app; the plan (cams.json: cameras, captions, cuts) was made on the case's frozen
+     snapshot (out/video/<case>/app/, docs/phase3_video.md section 2). If the engine changed since, the preview's hero drifts
+     from the planned camera; the renders never do (they serve the snapshot). -->
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="../">
+<title>Video preview</title>
+<link rel="stylesheet" href="live.css">
+<style>
+  #vp { position: fixed; z-index: 99; right: 12px; bottom: 12px; font: 13px/1.4 Inter, system-ui, sans-serif; color: #dfe7ef; background: rgba(10,14,19,.86);
+        border: 1px solid rgba(255,255,255,.14); border-radius: 8px; padding: 8px 10px; display: flex; gap: 8px; align-items: center; }
+  #vp button { font: inherit; color: inherit; background: #1d2733; border: 1px solid #33414f; border-radius: 5px; padding: 3px 9px; cursor: pointer; }
+  #vp .st { min-width: 260px; font-variant-numeric: tabular-nums; }
+</style>
+<script src="js/video/vclock.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<div id="vp"><button id="vp-play">Play</button><button id="vp-step">Step</button><span class="st" id="vp-st">loading…</span></div>
+<script type="module">
+import { buildTimeline } from './js/video/timeline.js';
+const q = new URLSearchParams(location.search);
+const rel = (p) => p && !/^[a-z][a-z0-9+.-]*:|^\/\/|\.\.|\\/i.test(p) && /^[\w./-]+$/.test(p) ? p : null;
+const st = (t) => { document.getElementById('vp-st').textContent = t; };
+const T = (v) => typeof v === 'number' ? v : Date.parse(/Z$|[+-]\d\d:?\d\d$/.test(v) ? v : v + 'Z');
+async function getJSON(u) { const r = await fetch(u, { cache: 'no-store' }); if (!r.ok) throw new Error(u + ': HTTP ' + r.status); return r.json(); }
+async function getPack(u) {
+  const r = await fetch(u, { cache: 'no-store' }); const b = new Uint8Array(await r.arrayBuffer());
+  const t = b[0] === 0x1f && b[1] === 0x8b ? await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).text() : new TextDecoder().decode(b);
+  return JSON.parse(t);
+}
+(async () => {
+  const jobUrl = rel(q.get('job')); if (!jobUrl) { st('?job=<out/od3/video_X.json> missing'); return; }
+  const job = await getJSON(jobUrl);
+  const packUrl = rel(q.get('pack')) || job.pack.file;
+  const pack = await getPack(packUrl);
+  const t0 = Math.round((pack.from + (pack.lookahead_s || 60)) * 1000);   // = tools/video/lib.mjs epochOf
+  const V = window.installVClock({ t0, perf0: 1000, seed: job.seed ?? 0x5eed });   // = tools/video/lib.mjs VIDEO_SEED
+  await import('./js/live/entry.js');                                          // the app, exactly as live.html starts it
+  while (!window.__hwdReady && !window.__hwdError) await V.settle(4);
+  if (window.__hwdError) { st('app failed: ' + window.__hwdError); return; }
+  const segs = job.segments.map(s => ({ from: T(s.from), to: T(s.to), speed: s.speed ?? 1, skip: !!s.skip }));
+  if (job.end && job.end.seconds) { const l = segs[segs.length - 1]; segs.push({ from: l.to, to: l.to + job.end.seconds * 1000, speed: 1 }); }
+  const TL = buildTimeline({ segments: segs, fps: job.fps || 30, rampS: job.rampS ?? 1.0 });
+  let cams = null, plan = null; try { const c = await getJSON(`out/video/${job.case}/cams.json`); if (c.cams.length === TL.frames.length) { cams = c.cams; plan = c; } } catch (e) { }
+  const { installDirector } = await import('./js/video/director.js');
+  const info = await installDirector({ t0, packUrl, type: job.type, event: job.event, runway: job.runway || '28L', models: job.models !== false,
+    window: job.window ? { from: T(job.window.from), to: T(job.window.to) } : null, frames: TL.frames, cams, preStep: job.preStep || 0.1, fps: job.fps || 30,
+    cuts: plan ? plan.cuts : [], shutter: job.shutter ?? 0.5, overlay: { timeOnly: !!job.timeOnly, endDate: !!job.endDate } });
+  if (!info.hero) { st('no hero found by the rule'); return; }
+  // the overlay is laid out for the 1920 x 1080 frames: scaled to this window for the preview
+  const fit = () => { const o = document.getElementById('vov'); if (!o) return; const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+    Object.assign(o.style, { right: 'auto', bottom: 'auto', width: '1920px', height: '1080px', transformOrigin: '0 0', transform: `scale(${k})` }); };
+  fit(); window.addEventListener('resize', fit);
+  st('pre-roll…'); await window.__vd.prepare();
+  let playing = false, busy = false;
+  const endF = job.end && job.end.seconds ? TL.frames.length - Math.round(job.end.seconds * (job.fps || 30)) : TL.frames.length;
+  async function one() {
+    if (busy || window.__vd.f + 1 >= TL.frames.length) { playing = false; return; }
+    busy = true; const f = window.__vd.f + 1;
+    const p = await window.__vd.step(true);
+    window.__vd.overlay({ pose: p, fade: 0, caption: 1, end: f >= endF ? Math.min(1, (f - endF + 1) / 24) : 0, cap: plan && plan.capTab ? plan.capTab[plan.capIdx[f]] : null });
+    st(`frame ${f} / ${TL.frames.length - 1} · ${(f / (job.fps || 30)).toFixed(1)} s · ${cams ? 'planned camera' : 'follow camera (no plan)'}`);
+    busy = false;
+  }
+  const loop = async () => { if (playing) await one(); V.real.raf(loop); };
+  V.real.raf(loop);
+  document.getElementById('vp-play').onclick = (e) => { playing = !playing; e.target.textContent = playing ? 'Pause' : 'Play'; };
+  document.getElementById('vp-step').onclick = () => one();
+  window.addEventListener('keydown', (e) => { if (e.key === ' ') document.getElementById('vp-play').click(); else if (e.key === '.') one(); else if (e.key === 'r') location.reload(); });
+  st('ready · ' + (cams ? 'planned camera' : 'follow camera (no plan: run tools/video/render.mjs plan)'));
+})().catch(e => { console.error(e); st('error: ' + (e && e.message || e)); });
+</script>
+</body></html>

@@ -164,18 +164,18 @@ def main_opening_sdf(x, y):
 # edge) and front view (the tip turned up at its outer end), Fig 8-1 isometric (upturned tips), Cirrus product-page photos
 # (an upturned, aft-raked tip fin above the trailing part of the tip, the lamps in a clear lens at the tip leading edge).
 # Shape, height and angles below are read off those views by eye [inf]; the outermost point stays at the 38.7 ft span.
-# Fix round 2: the fin height follows the AFM Fig 1-1 FRONT view (orthographic): the tip's top point is 6.4 px above the
-# extrapolated upper-surface line on both tips at 104.9 px/m, i.e. 0.06 m (+-0.02 m reading) - the fix-round-1 fin
-# (rise 0.20, 0.13 m above that line, a broad plate with a square top) was twice that. The Cirrus photos show a slender
-# spike raked aft; perspective photos give no height, so the drawing sets the height [obs: AFM front view] and the
-# photos the plan shape: the fin narrows to a point (le_top > 1: its leading edge rakes aft past the rib trailing edge)
-# [inf: photos]. Conflict recorded in SF50_FACTS.md (S5 / S10).
+# Fix round 2: the fin height is fitted to the AFM Fig 1-1 FRONT view (orthographic; the reading is local reference data,
+# refs/cache/local/models/afm_sf50_meas.json) - the fix-round-1 fin (a broad plate with a square top) was about twice as
+# high. The Cirrus photos show a slender spike raked aft; perspective photos give no height, so the drawing sets the height
+# and the photos the plan shape: the fin narrows to a point (le_top > 1: its leading edge rakes aft past the rib trailing
+# edge) [inf: photos]. Conflict recorded in SF50_FACTS.md (S5 / S11).
 TIP = dict(
     reach=0.30,        # horizontal (dihedral-plane) run of the tip body before the upturn, m [inf] (solved: see _tip_solve)
     bend=0.060,        # radius of the upturn, m [inf]
     cant=np.radians(70.0),   # fin angle from the wing plane (20 deg outward of vertical) [inf: photos]
-    rise=0.130,        # fin top above the tip chord plane, m: puts the top 0.06-0.07 m above the extrapolated upper-surface
-                       # line, as drawn in the AFM Fig 1-1 front view [obs: AFM front view; tests/test_models.mjs measures it]
+    rise=0.130,        # fin top above the tip chord plane, m: the top lands 0.058 m above the extrapolated upper-surface
+                       # line [inf: fitted to the AFM Fig 1-1 front view; tools/models/test_models.mjs checks it when the
+                       # local reference file is present]
     le_body=0.42,      # leading edge raked aft by this share of the rib chord over the body (rounded corner) [inf: AFM plan]
     le_top=1.10,       # ... and by this share at the fin top: past the rib trailing edge, so the fin ends in a point [inf: photos]
     te_top=0.16,       # trailing edge of the fin top behind the rib trailing edge, m (aft rake) [inf: photos]

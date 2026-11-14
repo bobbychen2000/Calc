@@ -34,6 +34,7 @@ MAX_FROM_OSM_M = 30.0     # added asphalt must lie within this of OSM pavement [
 # 27.3 % (25.2 %). The connectivity and distance rules carry the rest [inf].
 SAT_MAX, EG_MAX = 0.20, 6.5
 OUT = os.path.join(HWD, 'js', 'aircraft', 'pave_naip.js')
+HOLE_MAX_M2 = 150.0   # enclosed holes up to this area are filled (review round 3) [inf]
 
 
 def raster_polys(polys, x0, z0, nx, nz, dilate=0.0):
@@ -92,6 +93,13 @@ def main():
     # paint is not grey: hold bars, centrelines and tie-down tees punch 1-3 m holes into the grey test; a closing (5 x 5 m)
     # fills holes up to ~4 m across, then the airside rules are applied again
     full = ndimage.binary_closing(OSM | ADD, structure=np.ones((5, 5)))
+    # (review round 3) and holes up to HOLE_MAX_M2 that the pavement encloses completely - paint wider than the closing (a hold
+    # bar pair, an enhanced centreline) or a shadow: an aircraft's wheel in one was counted 'on grass' at the 28R run-up [inf]
+    holes = ndimage.binary_fill_holes(full) & ~full
+    hl, hn = ndimage.label(holes)
+    if hn:
+        size = ndimage.sum(holes, hl, index=np.arange(1, hn + 1)) * RES * RES
+        full |= np.isin(hl, 1 + np.where(size <= HOLE_MAX_M2)[0])
     ADD = full & ~OSM & AER & ~PK & ~BLD & ~FN
     # one cell of overlap with the OSM pavement: the site model rasterises its ribbons on its own 0.5-m grid, so a seam of
     # unpaved slivers would otherwise remain between the two masks

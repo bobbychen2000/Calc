@@ -128,11 +128,11 @@ def verify(parts):
         ("Overall height (static)", G.HEIGHT, V[:, 2].max(), "FAA ACD 10.9 ft / AFM Fig 1-1 / Cirrus 3.32 m"),
         ("Wing reference area (m^2)", G.WING_AREA, area, "EASA TCDS 18.18 m2 / AFM 195.7 sq ft"),
         ("Main-gear track (tyre contacts)", G.TRACK, track, "AFM Fig 1-1 front view 11.2 ft"),
-        ("Wheelbase (tyre contacts)", G.WHEELBASE, wb, "[inf] AFM Fig 1-1 side view, scaled (no published figure)"),
+        ("Wheelbase (tyre contacts)", 10.9 * G.FT, wb, "FAA ACD row 368 Wheelbase_ft 10.9 [obs]; the model's axles are fitted to the AFM Fig 1-1 side view [inf]"),
         ("V-tail span, tip to tip", G.VTAIL_SPAN, vt[:, 1].max() - vt[:, 1].min(), "AFM Fig 1-1 top view 14.7 ft"),
         ("Nose -> wing root LE", G.X_WING_LE_ROOT_FROM_NOSE, G.X_LE_FUS - G.X_NOSE, "AFM Fig 1-1 top view 11.1 ft"),
         ("Nose -> wing root TE (fillet)", G.X_WING_TE_ROOT_FROM_NOSE, te_root - G.X_NOSE, "AFM Fig 1-1 top view 18.3 ft"),
-        ("Fuselage max width (OML)", 66.8 * G.IN, 2 * float(G.half_w(4.4)), "[inf] AFM Fig 1-2 outline at uniform scale (cabin 61 in + walls)"),
+        ("Fuselage max width (OML)", G.CABIN_WIDTH, 2 * float(G.half_w(4.4)), "vs the cabin width 61 in (AFM Fig 1-2 table, Cirrus 5.1 ft) [obs]; the difference is the walls: OML fitted to the AFM Fig 1-2 outline [inf]"),
         ("Main tyre diameter", 18.0 * G.IN, G.MAIN_TIRE_D, "AFM 8-26: 18 x 5.5"),
     ]
     out = []

@@ -1,19 +1,453 @@
 {
  "_provenance": {
-  "source": "pc12's own builders (pc12/model, pc12/cad @ eb34f7d044286fbfb9dacc49ef97470a46eff974, unchanged files) run by hwd3d/tools/models/pc12/build_pc12_variant.py with the override set 'fr2' (docs/phase3_models.md section 4), output out/pc12_fr2/fr2/ (gitignored, rebuilt bit-for-bit by: python3 -B tools/models/pc12/build_pc12_variant.py --set=fr2)",
-  "commit": "eb34f7d044286fbfb9dacc49ef97470a46eff974",
-  "commit_date": "2026-11-13T16:32:47+00:00",
-  "glb_sha256": "9ccfd9a564c0ade4f816b2d2035f4465958db76be21e1693a0a6de039da7c630",
-  "meta_sha256": "25818abcf6e2fdf587dd2232ab11efc767eaeed28bf978e041d25c0306cf6cb7",
+  "source": "pc12's own builders (pc12/model, pc12/cad @ bd22c605c710972676f5ca82fc55ab1c82fac85e, unchanged files) run by hwd3d/tools/models/pc12/build_pc12_variant.py with the override set 'fr3' (docs/phase3_models.md section 4), output out/pc12_fr3/ (gitignored, rebuilt bit-for-bit by: python3 -B tools/models/pc12/build_pc12_variant.py --set=fr3)",
+  "commit": "bd22c605c710972676f5ca82fc55ab1c82fac85e",
+  "commit_date": "2026-11-13T20:58:55+00:00",
+  "glb_sha256": "6e3493299108b23235d0ec8534bc1a2443c403824b720427b4ab739fe649cf51",
+  "meta_sha256": "9e5cdc6f336712e62ead2f2c06f0b8c0f4aceb32c2757eb5862945e7076f5ec4",
   "licence": "own work (this repository)",
   "variant": {
-   "set": "fr2",
+   "set": "fr3",
    "overrides": {
+    "loft": {
+     "top": [
+      [
+       0.95,
+       1.945
+      ],
+      [
+       1.2,
+       1.985
+      ],
+      [
+       1.6,
+       2.035
+      ],
+      [
+       2.2,
+       2.1
+      ],
+      [
+       2.8,
+       2.16
+      ],
+      [
+       3,
+       2.175
+      ],
+      [
+       3.2,
+       2.231
+      ],
+      [
+       3.4,
+       2.338
+      ],
+      [
+       3.6,
+       2.444
+      ],
+      [
+       3.8,
+       2.552
+      ],
+      [
+       4,
+       2.659
+      ],
+      [
+       4.2,
+       2.741
+      ],
+      [
+       4.4,
+       2.77
+      ],
+      [
+       4.6,
+       2.769
+      ],
+      [
+       9,
+       2.771
+      ],
+      [
+       9.6,
+       2.749
+      ],
+      [
+       10.2,
+       2.707
+      ],
+      [
+       10.8,
+       2.662
+      ],
+      [
+       11.4,
+       2.602
+      ],
+      [
+       12,
+       2.52
+      ],
+      [
+       12.5,
+       2.421
+      ],
+      [
+       13,
+       2.369
+      ],
+      [
+       13.7,
+       2.3
+      ],
+      [
+       14.36,
+       2.2
+      ]
+     ],
+     "bot": [
+      [
+       0.95,
+       1.365
+      ],
+      [
+       1.2,
+       1.315
+      ],
+      [
+       1.6,
+       1.225
+      ],
+      [
+       2,
+       1.14
+      ],
+      [
+       2.6,
+       1.02
+      ],
+      [
+       3,
+       0.944
+      ],
+      [
+       3.4,
+       0.944
+      ],
+      [
+       5.5,
+       0.939
+      ],
+      [
+       7,
+       0.939
+      ],
+      [
+       8.23,
+       0.939
+      ],
+      [
+       8.6,
+       0.961
+      ],
+      [
+       9,
+       1.019
+      ],
+      [
+       9.4,
+       1.097
+      ],
+      [
+       9.75,
+       1.179
+      ],
+      [
+       10.25,
+       1.303
+      ],
+      [
+       10.75,
+       1.423
+      ],
+      [
+       11.5,
+       1.56
+      ],
+      [
+       12.2,
+       1.684
+      ],
+      [
+       12.9,
+       1.8
+      ],
+      [
+       13.57,
+       1.912
+      ],
+      [
+       14.36,
+       2.045
+      ]
+     ],
+     "hw": [
+      [
+       0.95,
+       0.29
+      ],
+      [
+       1.2,
+       0.37
+      ],
+      [
+       1.6,
+       0.462
+      ],
+      [
+       2.2,
+       0.58
+      ],
+      [
+       2.8,
+       0.68
+      ],
+      [
+       3,
+       0.726
+      ],
+      [
+       3.3,
+       0.769
+      ],
+      [
+       3.6,
+       0.805
+      ],
+      [
+       3.9,
+       0.829
+      ],
+      [
+       4.2,
+       0.843
+      ],
+      [
+       4.6,
+       0.845
+      ],
+      [
+       9,
+       0.847
+      ],
+      [
+       9.4,
+       0.822
+      ],
+      [
+       9.75,
+       0.774
+      ],
+      [
+       10.3,
+       0.685
+      ],
+      [
+       10.8,
+       0.605
+      ],
+      [
+       11.3,
+       0.513
+      ],
+      [
+       11.85,
+       0.421
+      ],
+      [
+       12.3,
+       0.322
+      ],
+      [
+       12.75,
+       0.21
+      ],
+      [
+       13.05,
+       0.146
+      ],
+      [
+       13.7,
+       0.1
+      ],
+      [
+       14.36,
+       0.045
+      ]
+     ],
+     "zmw": [
+      [
+       0.95,
+       1.655
+      ],
+      [
+       2,
+       1.662
+      ],
+      [
+       3.08,
+       1.579
+      ],
+      [
+       3.58,
+       1.699
+      ],
+      [
+       4.08,
+       1.852
+      ],
+      [
+       4.59,
+       1.873
+      ],
+      [
+       8.23,
+       1.873
+      ],
+      [
+       9,
+       1.889
+      ],
+      [
+       9.75,
+       2.007
+      ],
+      [
+       10.8,
+       2.039
+      ],
+      [
+       11.85,
+       2.08
+      ],
+      [
+       13,
+       2.09
+      ],
+      [
+       14.36,
+       2.12
+      ]
+     ],
+     "ntop": [
+      [
+       0.95,
+       2
+      ],
+      [
+       2,
+       2.12
+      ],
+      [
+       3.08,
+       2.45
+      ],
+      [
+       3.58,
+       2.38
+      ],
+      [
+       4.08,
+       2.22
+      ],
+      [
+       4.59,
+       2.2
+      ],
+      [
+       8.23,
+       2.2
+      ],
+      [
+       9,
+       2.17
+      ],
+      [
+       9.75,
+       2.02
+      ],
+      [
+       10.8,
+       2.37
+      ],
+      [
+       11.85,
+       2
+      ],
+      [
+       14.36,
+       2
+      ]
+     ],
+     "nbot": [
+      [
+       0.95,
+       2
+      ],
+      [
+       2,
+       2.18
+      ],
+      [
+       3.08,
+       2.74
+      ],
+      [
+       3.58,
+       2.98
+      ],
+      [
+       4.08,
+       3.24
+      ],
+      [
+       4.59,
+       3.23
+      ],
+      [
+       8.23,
+       3.23
+      ],
+      [
+       9,
+       3.74
+      ],
+      [
+       9.75,
+       3.25
+      ],
+      [
+       10.8,
+       2.52
+      ],
+      [
+       11.85,
+       2
+      ],
+      [
+       14.36,
+       2
+      ]
+     ]
+    },
     "layout": {
-     "WIN_HX": 0.1475,
-     "WIN_HZ": 0.19,
+     "WIN_HX": 0.15,
+     "WIN_HZ": 0.192,
      "WIN_R": 0.065,
-     "WIN_CZ": 2.047,
+     "WIN_CZ": 2.187,
      "FIXED_WINDOWS": {
       "1": [
        5.339,
@@ -30,7 +464,7 @@
      "AIRSTAIR": {
       "side": -1,
       "cx": 4.971,
-      "cz": 1.775,
+      "cz": 1.928,
       "hx": 0.305,
       "hz": 0.675,
       "r": 0.09
@@ -38,7 +472,7 @@
      "CARGO": {
       "side": -1,
       "cx": 8.242,
-      "cz": 1.78,
+      "cz": 1.892,
       "hx": 0.675,
       "hz": 0.66,
       "r": 0.1
@@ -46,7 +480,7 @@
      "EXIT": {
       "side": 1,
       "cx": 6.195,
-      "cz": 2.061,
+      "cz": 2.2,
       "hx": 0.24,
       "hz": 0.32,
       "r": 0.07
@@ -57,18 +491,278 @@
       "exit_hatch": 6.195
      }
     },
+    "glazing": {
+     "WS_PLAN": [
+      [
+       3.3,
+       0.034
+      ],
+      [
+       3.315,
+       0.25
+      ],
+      [
+       3.36,
+       0.45
+      ],
+      [
+       3.47,
+       0.625
+      ],
+      [
+       4.005,
+       0.51
+      ],
+      [
+       3.865,
+       0.034
+      ]
+     ],
+     "PILLAR": [
+      [
+       3.43,
+       2.165
+      ],
+      [
+       4,
+       2.55
+      ]
+     ],
+     "SW_CORE": [
+      [
+       3.878,
+       2.13
+      ],
+      [
+       4.228,
+       2.13
+      ],
+      [
+       4.312,
+       2.214
+      ],
+      [
+       4.312,
+       2.375
+      ],
+      [
+       4.205,
+       2.468
+      ],
+      [
+       4.04,
+       2.493
+      ],
+      [
+       3.812,
+       2.322
+      ]
+     ],
+     "SW_R": 0.04,
+     "SPLIT_FWD": 4.42
+    },
     "wing": {
      "DIHEDRAL_DEG": 6.2,
      "PIVOT_BL": 2.265,
+     "DZ": 0.121,
+     "KINK_BL": 0.85,
+     "GEAR_DZ": 0.104,
      "DIHEDRAL_deg": [
       4.5,
       6.2
      ],
-     "Z_QC0": 0.8372016246900535
+     "Z_QC0": 0.9582016246900535
+    },
+    "gear": {
+     "MAIN_TRUNNION": [
+      6.02,
+      2.265,
+      1.094
+     ],
+     "WELL_cy": 1.436
+    },
+    "winglet": {
+     "WL_MID_CHORD": 0.67,
+     "WL_TIP_CHORD": 0.4,
+     "WL_TE_SWEEP": 0.448,
+     "P_TE": 0.7,
+     "P_C": 1.17,
+     "WL_HEIGHT": 0.262,
+     "WL_SKIN": 0.0155
+    },
+    "nose_housing": {
+     "x0": 2.887,
+     "x1": 4.3,
+     "z_bottom": 0.793,
+     "half_width": 0.24,
+     "n": 3,
+     "r_end": 0.04,
+     "slot": {
+      "x0": 2.905,
+      "x1": 3.135,
+      "hy": 0.08,
+      "r": 0.03
+     }
+    },
+    "belly": {
+     "width": [
+      [
+       5.12,
+       0.12
+      ],
+      [
+       5.3,
+       0.45
+      ],
+      [
+       5.6,
+       0.66
+      ],
+      [
+       6.2,
+       0.72
+      ],
+      [
+       7,
+       0.66
+      ],
+      [
+       7.35,
+       0.4
+      ],
+      [
+       7.5,
+       0.12
+      ]
+     ],
+     "bottom": [
+      [
+       5.12,
+       0.99
+      ],
+      [
+       5.35,
+       0.927
+      ],
+      [
+       5.65,
+       0.88
+      ],
+      [
+       5.9,
+       0.872
+      ],
+      [
+       6.4,
+       0.879
+      ],
+      [
+       7,
+       0.91
+      ],
+      [
+       7.3,
+       0.95
+      ],
+      [
+       7.5,
+       0.985
+      ]
+     ],
+     "margin": 0.003,
+     "p": 2,
+     "n": 3.2,
+     "lowered_below_outline_mm": 0
+    },
+    "dorsal": {
+     "top": [
+      [
+       9,
+       2.771
+      ],
+      [
+       10,
+       2.904
+      ],
+      [
+       11,
+       3.038
+      ],
+      [
+       12.1,
+       3.185
+      ],
+      [
+       12.36,
+       3.249
+      ],
+      [
+       12.53,
+       3.39
+      ]
+     ],
+     "tc": 0.065
+    },
+    "fin_le": [
+     [
+      11.648,
+      2.35
+     ],
+     [
+      13.106,
+      4.07
+     ]
+    ],
+    "strakes": {
+     "root": [
+      [
+       9.77,
+       1.37
+      ],
+      [
+       12.19,
+       1.95
+      ]
+     ],
+     "outer": [
+      [
+       9.83,
+       1.33
+      ],
+      [
+       11.87,
+       1.53
+      ]
+     ],
+     "out": 0.15
+    },
+    "cabin": {
+     "rows": [
+      [
+       5.65,
+       -1
+      ],
+      [
+       6.95,
+       1
+      ],
+      [
+       8.05,
+       1
+      ]
+     ],
+     "seat_bl": 0.4,
+     "table_x": 6.3,
+     "net_x": 8.6,
+     "ledge": [
+      4.85,
+      8.05
+     ],
+     "door_clear": 0.05
     }
    },
    "builder": "hwd3d/tools/models/pc12/build_pc12_variant.py",
-   "builder_sha256": "25bb94a303373a915101aba4f74a7a83a33607becdb0d7f9adb40f15aa37f34a",
+   "builder_sha256": "93485d0a1651183eb8147a93397259fb76f23a05acc6a167586cee168a8f52c7",
    "pc12_sources_tree_sha256": "04893879d350d732abc09424959cffba786ccd7cbf2bff0c6c85e78005acaa01",
    "pc12_sources_dirty": false,
    "pc12_sources": {
@@ -95,7 +789,7 @@
     "pc12/model/powerplant.py": "7d09525cdef2f5d2b240c06c5676fc0e0a1637dcc84515dd038b21178d168532",
     "pc12/model/wing.py": "ce5cbfe415365860600acf8b0b596777f62280efe8779915723989749646c227"
    },
-   "built": "2026-11-13T20:21:56Z"
+   "built": "2026-11-13T23:24:12Z"
   },
   "imported_by": "hwd3d/tools/models/pc12/import_pc12.mjs",
   "imported": "2026-11-13",
@@ -131,33 +825,35 @@
   "bbox_local": [
    -8.36,
    -0.014,
-   -8.141,
+   -8.14,
    6.04,
    4.26,
-   8.141
+   8.14
   ],
   "length_m": 14.4,
-  "span_m": 16.281,
+  "span_m": 16.28,
   "height_m": 4.26,
   "nose_to_main_m": 6.04,
   "lights": {
    "navL": {
     "p": [
-     0.894,
-     1.711,
-     -7.827
+     0.893,
+     1.833,
+     -7.842
     ],
     "part": null,
-    "src": "lens cluster light_red (port tip)"
+    "src": "inf",
+    "basis": "lens cluster light_red (port tip)"
    },
    "navR": {
     "p": [
-     0.894,
-     1.711,
-     7.827
+     0.893,
+     1.833,
+     7.842
     ],
     "part": null,
-    "src": "lens cluster light_green (starboard tip)"
+    "src": "inf",
+    "basis": "lens cluster light_green (starboard tip)"
    },
    "tail": {
     "p": [
@@ -166,7 +862,8 @@
      0
     ],
     "part": null,
-    "src": "lens cluster light_white (aft-most)"
+    "src": "inf",
+    "basis": "lens cluster light_white (aft-most)"
    },
    "beaconTop": {
     "p": [
@@ -175,53 +872,59 @@
      0
     ],
     "part": null,
-    "src": "lens cluster light_red (centreline, upper)"
+    "src": "inf",
+    "basis": "lens cluster light_red (centreline, upper)"
    },
    "beaconBot": {
     "p": [
      -0.97,
-     0.738,
+     0.924,
      0
     ],
     "part": null,
-    "src": "lens cluster light_red (centreline, lower)"
+    "src": "inf",
+    "basis": "lens cluster light_red (centreline, lower)"
    },
    "strobeL": {
     "p": [
-     -0.121,
-     1.741,
-     -7.877
+     -0.12,
+     1.863,
+     -7.892
     ],
     "part": null,
-    "src": "lens cluster light_white (port tip)"
+    "src": "inf",
+    "basis": "lens cluster light_white (port tip)"
    },
    "strobeR": {
     "p": [
-     -0.121,
-     1.741,
-     7.877
+     -0.12,
+     1.863,
+     7.892
     ],
     "part": null,
-    "src": "lens cluster light_white (starboard tip)"
+    "src": "inf",
+    "basis": "lens cluster light_white (starboard tip)"
    },
    "strobeTail": null,
    "landL": {
     "p": [
      0.23,
-     1.027,
+     1.148,
      -3.15
     ],
     "part": null,
-    "src": "registry (js/aircraft/models.js): Pilatus PC-12 NGX Model Building Plan p.4 photo \"LANDING LIGHTS\" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]"
+    "src": "inf",
+    "basis": "registry (js/aircraft/models.js): Pilatus PC-12 NGX Model Building Plan p.4 photo \"LANDING LIGHTS\" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]"
    },
    "landR": {
     "p": [
      0.23,
-     1.027,
+     1.148,
      3.15
     ],
     "part": null,
-    "src": "registry (js/aircraft/models.js): Pilatus PC-12 NGX Model Building Plan p.4 photo \"LANDING LIGHTS\" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]"
+    "src": "inf",
+    "basis": "registry (js/aircraft/models.js): Pilatus PC-12 NGX Model Building Plan p.4 photo \"LANDING LIGHTS\" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]"
    },
    "taxi": {
     "p": [
@@ -230,13 +933,14 @@
      0
     ],
     "part": "gear_nose",
-    "src": "lens on the nose gear (strut lamp)"
+    "src": "inf",
+    "basis": "lens on the nose gear (strut lamp)"
    }
   },
   "excluded_parts": [
    "structure"
   ],
-  "tris_drawn": 410834
+  "tris_drawn": 423853
  },
  "checks": [
   {
@@ -248,8 +952,8 @@
   {
    "check": "Wing span (over winglets)",
    "official": 16.28,
-   "model": 16.281,
-   "delta_mm": 1.3
+   "model": 16.28,
+   "delta_mm": 0.2
   },
   {
    "check": "Overall height (static)",
@@ -294,27 +998,29 @@
    "delta_mm": 0
   },
   {
-   "check": "Cabin floor width (OML - lining)",
+   "check": "Cabin floor width (floor panel as built, WL 1.244)",
    "official": 1.3,
-   "model": 1.301,
-   "delta_mm": 0.8
+   "model": 1.3,
+   "delta_mm": 0,
+   "tolerance_mm": 26,
+   "pass": true
   }
  ],
  "wing": {
-  "semi_span": 7.856956443470179,
-  "root_chord": 2.189991352308809,
-  "tip_chord": 1.0949956761544044,
-  "mac": 1.7033266073512958,
-  "lemac": 5.323469760618404,
-  "x_qc": 5.749301412456228,
+  "semi_span": 7.872256443470179,
+  "root_chord": 2.185735029114699,
+  "tip_chord": 1.0928675145573494,
+  "mac": 1.7000161337558766,
+  "lemac": 5.324992578472297,
+  "x_qc": 5.749996611911266,
   "dihedral_deg": 6.2,
-  "z_qc0": 0.8372016246900535
+  "z_qc0": 0.9582016246900535
  },
  "stats": {
-  "triangles": 440661,
-  "vertices": 269931,
-  "glb_bytes": 6043144,
-  "parts": 69
+  "triangles": 454193,
+  "vertices": 276247,
+  "glb_bytes": 6201164,
+  "parts": 70
  },
  "parts": [
   {
@@ -323,7 +1029,7 @@
    "group": "Structure",
    "qty": 1,
    "note": "2024-T3 / 7075-T6, zinc-chromate primed",
-   "tris": 29827,
+   "tris": 30340,
    "materials": [
     "interior_green",
     "zinc_chromate"
@@ -339,7 +1045,7 @@
    "group": "Fuselage",
    "qty": 1,
    "note": "2024-T3 skin, 5.8 psi max differential",
-   "tris": 53564,
+   "tris": 52410,
    "materials": [
     "paint_accent",
     "paint_belly",
@@ -354,7 +1060,7 @@
    "group": "Fuselage",
    "qty": 1,
    "note": "2024-T3 skins, frames 10-14",
-   "tris": 14928,
+   "tris": 16088,
    "materials": [
     "paint_accent",
     "paint_belly",
@@ -365,12 +1071,24 @@
    "info": {}
   },
   {
+   "id": "nose_gear_housing",
+   "name": "Nose-gear housing (below the cockpit floor)",
+   "group": "Fuselage",
+   "qty": 1,
+   "note": "Housing for the retracted nose wheel, doors and a strut slot in its floor",
+   "tris": 6682,
+   "materials": [
+    "paint_belly"
+   ],
+   "info": {}
+  },
+  {
    "id": "fus_aft",
    "name": "Aft fuselage & tail cone",
    "group": "Fuselage",
    "qty": 1,
    "note": "Semi-monocoque, frames 29-38",
-   "tris": 29154,
+   "tris": 29198,
    "materials": [
     "paint_accent",
     "paint_belly",
@@ -385,7 +1103,7 @@
    "group": "Glazing",
    "qty": 7,
    "note": "Two-ply laminated stretched acrylic",
-   "tris": 17626,
+   "tris": 17673,
    "materials": [
     "glass",
     "seal"
@@ -398,7 +1116,7 @@
    "group": "Glazing",
    "qty": 4,
    "note": "Heated laminated glass windshield, acrylic side windows",
-   "tris": 26904,
+   "tris": 21876,
    "materials": [
     "glass",
     "glass_windshield",
@@ -412,7 +1130,7 @@
    "group": "Doors",
    "qty": 1,
    "note": "Downward-opening, integral steps",
-   "tris": 9050,
+   "tris": 8394,
    "materials": [
     "lining",
     "paint_accent",
@@ -427,7 +1145,7 @@
    "group": "Doors",
    "qty": 1,
    "note": "Upward-opening, gas-strut assisted",
-   "tris": 20366,
+   "tris": 19185,
    "materials": [
     "glass",
     "lining",
@@ -444,7 +1162,7 @@
    "group": "Doors",
    "qty": 1,
    "note": "Plug-type, removable inward",
-   "tris": 5598,
+   "tris": 5597,
    "materials": [
     "glass",
     "lining",
@@ -459,7 +1177,7 @@
    "group": "Doors",
    "qty": 1,
    "note": "Machined door frames",
-   "tris": 9554,
+   "tris": 9366,
    "materials": [
     "jamb",
     "seam"
@@ -472,16 +1190,16 @@
    "group": "Wing",
    "qty": 1,
    "note": "2024/7075 two-spar box, integral tank ribs 3-16",
-   "tris": 10446,
+   "tris": 10464,
    "materials": [
     "deice_boot",
     "paint_white"
    ],
    "info": {
-    "root chord": "2,190 mm, LS(1)-0417MOD",
-    "tip chord": "1,095 mm, LS(1)-0313",
-    "MAC": "1,703 mm, LEMAC STA 5,323",
-    "dihedral": "4.5 deg (est.)",
+    "root chord": "2,186 mm, LS(1)-0417MOD",
+    "tip chord": "1,093 mm, LS(1)-0313",
+    "MAC": "1,700 mm, LEMAC STA 5,325",
+    "dihedral": "6.2 deg (fitted to Pilatus drawing 190.10.40.432 (MBP sheet 1) front view), flat inboard of BL 0.85 [inf]",
     "incidence": "+2.0 root / -1.0 tip (est.)"
    }
   },
@@ -491,16 +1209,16 @@
    "group": "Wing",
    "qty": 1,
    "note": "2024/7075 two-spar box, integral tank ribs 3-16",
-   "tris": 10446,
+   "tris": 10464,
    "materials": [
     "deice_boot",
     "paint_white"
    ],
    "info": {
-    "root chord": "2,190 mm, LS(1)-0417MOD",
-    "tip chord": "1,095 mm, LS(1)-0313",
-    "MAC": "1,703 mm, LEMAC STA 5,323",
-    "dihedral": "4.5 deg (est.)",
+    "root chord": "2,186 mm, LS(1)-0417MOD",
+    "tip chord": "1,093 mm, LS(1)-0313",
+    "MAC": "1,700 mm, LEMAC STA 5,325",
+    "dihedral": "6.2 deg (fitted to Pilatus drawing 190.10.40.432 (MBP sheet 1) front view), flat inboard of BL 0.85 [inf]",
     "incidence": "+2.0 root / -1.0 tip (est.)"
    }
   },
@@ -510,7 +1228,7 @@
    "group": "Wing",
    "qty": 1,
    "note": "Composite fairing over the wing carry-through",
-   "tris": 5760,
+   "tris": 14336,
    "materials": [
     "paint_white"
    ],
@@ -634,15 +1352,14 @@
    "group": "Empennage",
    "qty": 1,
    "note": "Aluminium two-spar fin",
-   "tris": 5856,
+   "tris": 5932,
    "materials": [
     "paint_accent",
-    "paint_belly",
     "paint_stripe",
     "paint_white"
    ],
    "info": {
-    "LE sweep": "39 deg",
+    "LE sweep": "40 deg",
     "section": "NACA 0013 -> 0010 (est.)"
    }
   },
@@ -652,7 +1369,7 @@
    "group": "Flight controls",
    "qty": 1,
    "note": "Mass-balanced rudder",
-   "tris": 2394,
+   "tris": 2178,
    "materials": [
     "black",
     "paint_accent",
@@ -679,7 +1396,7 @@
    "group": "Empennage",
    "qty": 1,
    "note": "Glass-fibre fairing",
-   "tris": 2564,
+   "tris": 4910,
    "materials": [
     "paint_accent",
     "paint_stripe",
@@ -879,7 +1596,7 @@
    "group": "Powerplant installation",
    "qty": 1,
    "note": "Carbon/Nomex honeycomb, Cu mesh",
-   "tris": 10504,
+   "tris": 10314,
    "materials": [
     "paint_white"
    ],
@@ -891,7 +1608,7 @@
    "group": "Powerplant installation",
    "qty": 1,
    "note": "Carbon/Nomex honeycomb",
-   "tris": 13452,
+   "tris": 13646,
    "materials": [
     "paint_accent",
     "paint_belly",
@@ -1082,7 +1799,7 @@
    "group": "Landing gear",
    "qty": 1,
    "note": "Composite door",
-   "tris": 648,
+   "tris": 1884,
    "materials": [
     "paint_white"
    ],
@@ -1094,7 +1811,7 @@
    "group": "Landing gear",
    "qty": 1,
    "note": "Composite door",
-   "tris": 648,
+   "tris": 1884,
    "materials": [
     "paint_white"
    ],
@@ -1222,7 +1939,9 @@
    "info": {
     "cabin": "5.16 x 1.52 x 1.47 m",
     "floor width": "1.30 m",
-    "seats": "6 executive (up to 9)"
+    "seats": "6 executive (up to 9)",
+    "floor": "flat, WL 1.244 (pc12 1.120 carried by the loft map), 1.30 m wide (sourced 1.30)",
+    "layout": "pc12's, 0.40 m aft, port ledge clear of the airstair and cargo doors (hwd3d fr3) [inf]"
    }
   },
   {
@@ -1445,8 +2164,8 @@
    "kind": "brace",
    "role": "upper",
    "gear": "gear_main_R",
-   "L1": 0.17885249296295114,
-   "L2": 0.17885249296295114
+   "L1": 0.17885249296295117,
+   "L2": 0.17885249296295117
   },
   {
    "id": "brace_main_R_lo",
@@ -1459,8 +2178,8 @@
    "kind": "brace",
    "role": "upper",
    "gear": "gear_main_L",
-   "L1": 0.17885249296295114,
-   "L2": 0.17885249296295114
+   "L1": 0.17885249296295117,
+   "L2": 0.17885249296295117
   },
   {
    "id": "brace_main_L_lo",

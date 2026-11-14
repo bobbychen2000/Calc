@@ -12,7 +12,8 @@ Input (read only, never modified):
   Phase 1; that file is frozen and only imported here). Every row is written (388 in this edition), not only the 67 HWD
   on-field types of data/ga_types.json: the engine also draws overflights (OAK / SFO airliners) and itinerant bizjets.
   The ACD has no helicopter rows; helicopter sizes are ga_dims.js defaults marked inferred.
-  hwd3d/data/ga_types.json - only to check that each of its obs rows agrees with this export (same row, same values).
+  hwd3d/data/ga_types.json - only to check that each of its obs rows agrees with this export (same row, same values);
+  its rows without an ACD row (src null since fix round 3, formerly 'none'; dimensions null) are skipped, as before.
 
 Output row: ICAO -> [length_m, span_m (without winglets), span_with_winglets_m, tail_height_m, mtow_kg, engine class,
 engines, ACD row, "Manufacturer Model_FAA", approach_speed_kt (ACD Approach_Speed_knot; added in fix round 1 for the

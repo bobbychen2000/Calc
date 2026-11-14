@@ -54,21 +54,23 @@ def dist_nm(lat, lon):
     return math.hypot(dx, dy)
 
 
-def stream(base, secs, delta, history=0):
-    """-> list of (t, event, payload, state after it)."""
+def stream(base, secs, delta, history=0, headers=None, ids=None, max_events=None):
+    """-> list of (t, event, payload, state after it). ids (list): receives each event's 'id:' (None without one)."""
     evs, state = [], {}
     q = '?' + '&'.join(x for x in (('delta=1' if delta else ''), (f'history={history}' if history else '')) if x)
-    req = urllib.request.Request(base + '/api/stream' + (q if q != '?' else ''))
+    req = urllib.request.Request(base + '/api/stream' + (q if q != '?' else ''), headers=headers or {})
     t_end = time.time() + secs
     with NO_PROXY.open(req, timeout=secs + 30) as r:
-        ev, data = None, []
-        while time.time() < t_end:
+        ev, data, eid = None, [], None
+        while time.time() < t_end and (max_events is None or len(evs) < max_events):
             line = r.readline()
             if not line:
                 break
             line = line.decode().rstrip('\n')
             if line.startswith('event:'):
                 ev = line[6:].strip()
+            elif line.startswith('id:'):
+                eid = line[3:].strip()
             elif line.startswith('data:'):
                 data.append(line[5:].strip())
             elif line == '' and data:
@@ -81,6 +83,9 @@ def stream(base, secs, delta, history=0):
                     for k in j.get('gone', []):
                         state.pop(k, None)
                 evs.append((time.time(), ev, j, dict(state)))
+                if ids is not None:
+                    ids.append(eid)
+                eid = None
     return evs
 
 
@@ -141,7 +146,8 @@ def run(base, a):
                 pass
     import threading
     th = threading.Thread(target=sampler, daemon=True); th.start()
-    evs = stream(base, a.secs, True)
+    ids = []
+    evs = stream(base, a.secs, True, ids=ids)
     th.join(5)
     check(len(evs) >= 5, f'{len(evs)} stream events')
     kinds = {}
@@ -175,8 +181,28 @@ def run(base, a):
     print('   sources', {s: sum(1 for x in recs if x.get('_src') == s) for s in {x.get('_src') for x in recs}},
           ' with _mx', sum(1 for x in recs if x.get('_mx')), ' ground', sum(1 for x in recs if x.get('alt_baro') == 'ground'))
     print('history')
-    t0 = time.time(); h = stream(base, 1.5, False, history=60)
+    t0 = time.time(); hids = []; h = stream(base, 1.5, False, history=60, ids=hids)
     check(len(h) >= 2 if len(evs) > 3 else True, f'?history=60 sent {len(h)} payloads at once ({time.time() - t0:.1f} s)')
+    # fix round 3 (D1 forgets across reconnects): ids on the live picture only, Last-Event-ID / ?since= answered
+    print('event ids / Last-Event-ID / forget_horizon')
+    live = [(i, e) for i, e in zip(ids, evs) if e[1] in ('adsb', 'delta')]
+    check(bool(live) and all(i is not None and int(i) == e[2]['seq'] for i, e in live),
+          f'every adsb / delta event carries id == seq ({sum(1 for i, _ in live if i is not None)}/{len(live)})')
+    k = next((n for n, i in enumerate(hids) if i is not None), len(hids))     # the history (no ids), then the live picture
+    check(0 < len(hids) and k < len(hids) and all(i is not None for i in hids[k:]) and
+          all(e[2]['seq'] < h[k][2]['seq'] for e in h[:k]),
+          f'?history: the {k} history payloads carry no id, the current one and every later one do ({len(hids) - k})')
+    code, _, b = get(base, '/api/status'); fz = json.loads(b)['merge'].get('forget') or {}
+    base_seq = fz.get('seq_base') or 0
+    check(base_seq > 10 ** 12, f'seq base = process start time in ms ({base_seq})')
+    j1 = json.loads(get(base, '/api/adsb?since=1')[2])
+    check(isinstance(j1.get('forget_horizon'), dict) and j1['forget_horizon'].get('since') == 1 and 'ac' in j1,
+          f'/api/adsb?since=1 (an earlier process): forget_horizon {j1.get("forget_horizon")}')
+    jn = json.loads(get(base, f'/api/adsb?since={j1["seq"]}')[2])
+    check('forget_horizon' not in jn, '/api/adsb?since=<current seq>: no forget_horizon')
+    e1 = stream(base, 3, True, headers={'Last-Event-ID': '1'}, max_events=2)
+    check([e[1] for e in e1][:2] == ['forget_horizon', 'adsb'] and e1[0][2].get('upto') == e1[1][2]['seq'],
+          f'SSE reconnect with Last-Event-ID 1: {[e[1] for e in e1][:2]}')
     print('ident')
     if masked:
         code, _, b = get(base, '/api/ident?key=' + masked[0]['hex']); v = json.loads(b)

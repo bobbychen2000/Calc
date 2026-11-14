@@ -4,11 +4,14 @@ snapshot TTLs, static-serving rules, the HWD window, METAR (KHWD, replay cache) 
 
 Forked from sfo3d/tools/live/test_relay.py @ a967f9b. Kept: the merge/hygiene tests (adapted to the HWD module) and the
 scheduling tests. Changed: adsb.lol is on the 'budget' schedule (6.5-7.5 s, Quota). Dropped: gates, routes, FAA registry.
-Added: D1, Mictronics, Quota, TTL, denied(), window_filter, Metar, recio (.xz).
+Added: D1, Mictronics, Quota, TTL, denied(), window_filter, Metar, recio (.xz). Fix round 3 (D1 forgets across
+reconnects and pauses): SSE 'id: <seq>' + Last-Event-ID, ?since= after > FORGET_KEEP_S, forget_horizon, through a real
+in-process HTTP server on 127.0.0.1 (ephemeral port).
 
   python3 tools/live/test_relay.py
 """
-import glob, json, os, sys, tempfile, time, unittest
+import glob, http.client, json, os, sys, tempfile, threading, time, unittest
+from unittest import mock
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, 'tools', 'live'))
@@ -29,6 +32,76 @@ def ac(hx, lat=LAT + 0.01, lon=LON, seen_pos=0.5, **kw):
 def feed(hub, prov, now, lst, recv=None, ttl=None):
     hub.ingest(prov, now, recv or time.time(), {'now': now * 1000, 'ac': lst}, ttl=ttl)
     return {a['hex']: a for a in hub.latest['ac']}
+
+
+class Srv:
+    """The relay's real request handler (make_handler) on 127.0.0.1, an ephemeral port, around a test Hub."""
+    def __init__(self, hub):
+        app = {'hub': hub, 'metar': None, 'ident': None, 't_start': time.time(), 'quiet': True, 'radius': S.RADIUS_NM}
+        self.srv = S.ThreadingHTTPServer(('127.0.0.1', 0), S.make_handler(app))
+        self.srv.daemon_threads = True
+        self.port = self.srv.server_address[1]
+        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+
+    def get(self, path, headers=None):
+        c = http.client.HTTPConnection('127.0.0.1', self.port, timeout=5)
+        c.request('GET', path, headers=headers or {})
+        r = c.getresponse(); b = r.read(); c.close()
+        return r.status, b
+
+    def stream(self, path, headers=None):
+        return SSE(self.port, path, headers)
+
+    def sse(self, path, n, headers=None):
+        """The first n events of a new stream, then the connection is closed (a client that goes away)."""
+        st = self.stream(path, headers)
+        try:
+            return st.events(n)
+        finally:
+            st.close()
+
+    def close(self):
+        self.srv.shutdown(); self.srv.server_close()
+
+
+class SSE:
+    """A minimal EventSource: events as dicts {id, event, data, raw} (id None when the event has no 'id:' line)."""
+    def __init__(self, port, path, headers=None):
+        self.c = http.client.HTTPConnection('127.0.0.1', port, timeout=5)
+        self.c.request('GET', path, headers=headers or {})
+        self.r = self.c.getresponse()
+        assert self.r.status == 200 and self.r.getheader('Content-Type') == 'text/event-stream'
+
+    def events(self, n):
+        out, ev = [], {'id': None, 'event': 'message', 'data': [], 'raw': b''}
+        while len(out) < n:
+            line = self.r.fp.readline()
+            if not line:
+                break
+            ev['raw'] += line
+            t = line.decode().rstrip('\n')
+            if t == '':
+                if ev['data']:
+                    ev['data'] = json.loads('\n'.join(ev['data'])); out.append(ev)
+                ev = {'id': None, 'event': 'message', 'data': [], 'raw': b''}
+            elif t.startswith(':') or t.startswith('retry:'):
+                continue
+            else:
+                k, _, v = t.partition(':')
+                v = v[1:] if v.startswith(' ') else v
+                if k == 'data':
+                    ev['data'].append(v)
+                elif k in ('id', 'event'):
+                    ev[k] = v
+        return out
+
+    def close(self):
+        self.c.close()
+
+
+def at(t):
+    """The relay's clock at time t (FORGET_KEEP_S / IDENT_KEEP_S / snapshot TTLs follow it)."""
+    return mock.patch.object(S.time, 'time', return_value=t)
 
 
 class FakeMx:
@@ -153,6 +226,123 @@ class D1(unittest.TestCase):
         feed(h2, LOL, T + 2, [ac('bbbbbb', r='N2', dbFlags=8, seen_pos=0.1)])
         self.assertEqual(h2.forget_since(s_before), [])                    # last answer before bbbbbb was published
         self.assertEqual(h2.forget_since(s_before + 1), ['bbbbbb'])
+
+    def test_late_flag_reaches_clients_after_the_ident_keep(self):
+        # fix round 3: the app keeps a silent aircraft drawn (30 min; parked: up to 8 h) with its identity. A late flag that
+        # arrives after /api/ident's 10-min entry expired must still produce a forget for the clients that saw the key
+        h = S.Hub(); T = time.time()
+        feed(h, FI, T, [ac('a1b2c3', r='N999ZZ')]); s_seen = h.seq
+        with at(T + 1200):                                                  # 20 min silent: gone from the picture
+            feed(h, FI, T + 1200, [ac('d4e5f6', r='N888YY')])
+        self.assertIsNone(h.ident_of('a1b2c3')); self.assertNotIn(b'a1b2c3', h.full)
+        with at(T + 1260):
+            feed(h, LOL, T + 1260, [ac('a1b2c3', r='N999ZZ', dbFlags=8)])
+            self.assertEqual(json.loads(h.forget_ev[1])['forget'], ['a1b2c3'])
+            self.assertEqual(json.loads(h.adsb_answer(s_seen))['forget'], ['a1b2c3'])
+            self.assertNotIn(b'a1b2c3', h.adsb_answer(0))                  # never shown to a fresh client
+        self.assertNotIn('a1b2c3', h.pub_first)
+
+    def test_sse_ids_and_reconnect_with_last_event_id_after_a_flag(self):
+        # fix round 3: every live adsb / delta event carries 'id: <seq>'; a reconnect sends it back as Last-Event-ID and
+        # gets the forget events it missed while it was away (it used to start over and never hear them)
+        h = S.Hub(seq_base=5000); T = time.time()
+        feed(h, FI, T, [ac('a1b2c3', r='N999ZZ'), ac('d4e5f6', r='N888YY')])
+        srv = Srv(h)
+        try:
+            st = srv.stream('/api/stream?delta=1')
+            e = st.events(1)[0]
+            self.assertEqual((e['event'], int(e['id'])), ('adsb', h.seq)); self.assertGreater(h.seq, 5000)
+            feed(h, FI, T + 1, [ac('a1b2c3', r='N999ZZ', lat=LAT + 0.02), ac('d4e5f6', r='N888YY')])
+            e = st.events(1)[0]                                            # an open stream: delta with the new seq
+            self.assertEqual((e['event'], int(e['id'])), ('delta', h.seq))
+            last = int(e['id']); st.close()                                # the connection drops ...
+            feed(h, LOL, T + 2, [ac('a1b2c3', r='N999ZZ', dbFlags=8, seen_pos=0.1), ac('d4e5f6', r='N888YY', seen_pos=0.1)])
+            feed(h, LOL, T + 3, [ac('a1b2c3', dbFlags=8, seen_pos=0.1), ac('d4e5f6', r='N888YY', seen_pos=0.1, lat=LAT + 0.03)])
+            ev = srv.sse('/api/stream?delta=1', 2, {'Last-Event-ID': str(last)})    # ... the browser reconnects
+            self.assertEqual([x['event'] for x in ev], ['forget', 'adsb'])
+            self.assertEqual(ev[0]['data']['forget'], ['a1b2c3']); self.assertIsNone(ev[0]['id'])
+            self.assertEqual(int(ev[1]['id']), h.seq)
+            self.assertNotIn(b'a1b2c3', ev[1]['raw']); self.assertNotIn(b'N999ZZ', ev[1]['raw'])
+            self.assertNotIn('forget_horizon', [x['event'] for x in ev])
+            # a NEW EventSource cannot send headers: ?since= does the same; the header wins over the URL
+            ev = srv.sse(f'/api/stream?delta=1&since={last}', 2)
+            self.assertEqual([x['event'] for x in ev], ['forget', 'adsb'])
+            ev = srv.sse(f'/api/stream?delta=1&since={last}', 1, {'Last-Event-ID': str(h.seq)})
+            self.assertEqual([x['event'] for x in ev], ['adsb'])
+            # up to date, or a client that never saw the key: nothing to forget, and it does not learn the address
+            for hd in ({'Last-Event-ID': str(h.seq)}, {}, {'Last-Event-ID': 'abc'}):
+                ev = srv.sse('/api/stream?delta=1', 1, hd)
+                self.assertEqual([x['event'] for x in ev], ['adsb']); self.assertNotIn(b'a1b2c3', ev[0]['raw'])
+            # the poll path of the same reconnect
+            code, b = srv.get(f'/api/adsb?since={last}')
+            self.assertEqual((code, json.loads(b)['forget']), (200, ['a1b2c3']))
+        finally:
+            srv.close()
+
+    def test_poller_resuming_after_the_forget_keep(self):
+        # fix round 3: a poller away for longer than FORGET_KEEP_S cannot get the expired event's keys any more; it gets
+        # 'forget_horizon' (drop every identity that is not in this snapshot) instead of nothing
+        h = S.Hub(); T = time.time()
+        feed(h, FI, T, [ac('a1b2c3', r='N999ZZ')]); s_seen = h.seq
+        feed(h, LOL, T + 1, [ac('a1b2c3', r='N999ZZ', dbFlags=8, seen_pos=0.1)]); e_seq = h.seq
+        j = json.loads(h.adsb_answer(s_seen))
+        self.assertEqual(j['forget'], ['a1b2c3']); self.assertNotIn('forget_horizon', j)   # inside the keep: the key
+        with at(T + S.FORGET_KEEP_S + 5):
+            feed(h, LOL, T + S.FORGET_KEEP_S + 5, [ac('d4e5f6', r='N888YY')])           # the next merge expires it
+        self.assertEqual((len(h.forget_evs), h.forget_floor), (0, e_seq))
+        b = h.adsb_answer(s_seen); j = json.loads(b)
+        self.assertEqual(j['forget_horizon'], {'since': s_seen, 'seq': h.seq, 'floor': e_seq})
+        self.assertNotIn('forget', j); self.assertNotIn(b'a1b2c3', b); self.assertNotIn(b'N999ZZ', b)
+        self.assertEqual([a['hex'] for a in j['ac']], ['d4e5f6'])
+        for since in (e_seq, h.seq, 0):                                    # answered at or after the event / fresh
+            self.assertNotIn(b'forget', h.adsb_answer(since))
+        srv = Srv(h)
+        try:
+            code, b = srv.get(f'/api/adsb?since={s_seen}')
+            self.assertEqual(code, 200); self.assertIn('forget_horizon', json.loads(b))
+            code, b = srv.get('/api/adsb?since=-3')
+            self.assertEqual(code, 200); self.assertNotIn(b'forget', b)
+        finally:
+            srv.close()
+
+    def test_forget_horizon_signal(self):
+        # fix round 3: the horizon (SSE and polls) for a since below the floor (expired events), from an earlier relay process
+        # (below this process's seq base: main() starts seq at the start time in ms) or above any seq published here
+        h = S.Hub(seq_base=10_000); T = time.time()
+        feed(h, FI, T, [ac('a1b2c3', r='N999ZZ')]); s_seen = h.seq
+        feed(h, LOL, T + 1, [ac('a1b2c3', r='N999ZZ', dbFlags=8, seen_pos=0.1)]); e_seq = h.seq
+        for i in range(3):                                                  # 3 publications after the expiry (history)
+            with at(T + S.FORGET_KEEP_S + 5 + i):
+                feed(h, LOL, T + S.FORGET_KEEP_S + 5 + i, [ac('d4e5f6', r='N888YY', lat=LAT + 0.01 * i)])
+        self.assertTrue(h.horizon(s_seen)); self.assertFalse(h.horizon(e_seq)); self.assertFalse(h.horizon(h.seq))
+        self.assertFalse(h.horizon(0))
+        self.assertTrue(h.horizon(9_999)); self.assertTrue(h.horizon(h.seq + 7))   # another process
+        h2 = S.Hub(seq_base=h.seq + 1_000_000)                              # a restarted relay
+        feed(h2, LOL, T, [ac('d4e5f6', r='N888YY')])
+        self.assertIn('forget_horizon', json.loads(h2.adsb_answer(h.seq)))
+        self.assertNotIn(b'forget', h2.adsb_answer(h2.seq))
+        srv = Srv(h)
+        try:
+            ev = srv.sse('/api/stream?delta=1&history=120', 4, {'Last-Event-ID': str(s_seen)})
+            kinds = [x['event'] for x in ev]
+            self.assertEqual(kinds[0], 'forget_horizon'); self.assertIsNone(ev[0]['id'])
+            self.assertEqual(ev[0]['data'], {'since': s_seen, 'seq': h.seq, 'floor': e_seq, 'upto': h.seq})
+            cur = [x for x in ev if x['id'] is not None]
+            self.assertEqual(len(cur), 1); self.assertEqual(int(cur[0]['id']), h.seq)      # history events carry no id
+            self.assertEqual(cur[0]['data']['seq'], h.seq); self.assertIs(ev[-1], cur[0])
+            self.assertTrue(all(x['event'] == 'adsb' and x['data']['seq'] < h.seq for x in ev[1:-1]))
+            self.assertFalse(any(b'a1b2c3' in x['raw'] or b'N999ZZ' in x['raw'] for x in ev))
+            ev = srv.sse('/api/stream?delta=1', 1, {'Last-Event-ID': str(e_seq)})
+            self.assertEqual([x['event'] for x in ev], ['adsb'])
+            st = Srv(h2)
+            try:                                                           # Last-Event-ID of the earlier process
+                ev = st.sse('/api/stream', 2, {'Last-Event-ID': str(h.seq)})
+                self.assertEqual([x['event'] for x in ev], ['forget_horizon', 'adsb'])
+            finally:
+                st.close()
+        finally:
+            srv.close()
+        self.assertEqual(S.Hub(seq_base=123).latest['seq'], 123)
 
     def test_type_only_masks_everything_including_anonymous(self):
         h = S.Hub(d1=S.D1('type-only')); T = time.time()

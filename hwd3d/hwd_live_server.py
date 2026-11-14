@@ -29,11 +29,17 @@ Endpoints (contract: docs/phase2_fork_map.md 2.1; how to use them: docs/phase2_r
   /                  302 -> live.html (query kept)
   /api/ping          {"hwdlive": 1, "v", "mode", "stream", "delta", "dataNow", "center", "poll", "features",
                       "providers", "attribution"}  (the app accepts a relay only when hwdlive === 1)
-  /api/adsb          latest merged list, readsb jv2 shape {"now", "dataNow", "seq", "total", "_source", "msg", "ac"}
+  /api/adsb          latest merged list, readsb jv2 shape {"now", "dataNow", "seq", "total", "_source", "msg", "ac"};
+                     ?since=S (the seq of the client's last answer) adds "forget": [keys] (D1 late flags of keys it was
+                     shown) and, when forget events it should have had may be lost (S older than the oldest retained
+                     one, or S from another relay process), "forget_horizon": {"since", "seq", "floor"}.
   /api/stream        SSE: "adsb" full events; ?delta=1 adds "delta" events {now, dataNow, seq, ac, gone}; a full event
-                     on every seq gap and at least every 30 s; ": keepalive" every 15 s. ?history=S (S <= 120): first
-                     replays the full payloads published in the last S seconds, oldest first (so an app that displays
-                     `lookahead_s` behind has fixes on both sides of a hole at once, instead of after S seconds).
+                     on every seq gap and at least every 30 s; ": keepalive" every 15 s. Every adsb / delta event of the
+                     live picture carries "id: <seq>"; a reconnect's Last-Event-ID (or ?since=S for a new EventSource)
+                     is answered first with "forget" {forget, seq} and/or "forget_horizon" {since, seq, floor, upto}
+                     (fix round 3). ?history=S (S <= 120): first replays the full payloads published in the last S
+                     seconds, oldest first, without ids (so an app that displays `lookahead_s` behind has fixes on both
+                     sides of a hole at once, instead of after S seconds).
   /api/metar?ids=KHWD[&format=json]  aviationweather.gov KHWD METARs of the last 3 h, newest first (raw lines by
                      default); replay: only reports observed at or before the replay time, 502 when none within 90 min.
   /api/ident?key=K   identity of an aircraft that is in the relay's current picture (or was, within 10 min): broadcast
@@ -128,6 +134,10 @@ FULL_EVERY = 30.0     # delta streams get a full list at least this often (s)
 HISTORY_S = 120.0     # /api/stream?history=S keeps at most this much (s)
 IDENT_KEEP_S = 600.0  # /api/ident answers for keys seen in the last 10 min
 FORGET_KEEP_S = 600.0  # D1 late-flag forget events are offered to SSE streams / pollers (?since=) this long (fix round 2)
+# (fix round 3) an unmasked key's first-publication seq is remembered this long after its last publication, so a late flag
+# still reaches a client that keeps the aircraft drawn while it is silent (js/live/traffic.js: silent ground aircraft 30 min,
+# parked ones up to PARK_KEEP_MS = 8 h); it used to be dropped with /api/ident's 10-min entry [inf, design: > 8 h]
+PUB_KEEP_S = 86400.0
 
 ATTRIBUTION = {
     'adsb': 'Aircraft data: contains information from ADSB.lol (https://adsb.lol), which is made available here under '
@@ -734,7 +744,7 @@ class Hub:
             return None
         return int((self.clock.to_src(w) if self.clock is not None else w) * 1000)
 
-    def __init__(self, mode='live', ident=None, d1=None):
+    def __init__(self, mode='live', ident=None, d1=None, seq_base=0):
         self.mode = mode
         self.ident = ident               # Mictronics or None
         self.d1 = d1 or D1('full')
@@ -743,10 +753,13 @@ class Hub:
         self.snaps = {}          # provider id -> dict(t0, recv, now, scale, list, name, ttl)
         self.hist = {}           # key -> per-aircraft memory (last accepted position, last ADS-B time)
         self.vehicles = set()    # sticky vehicle keys
-        self.seq = 0
+        # seq: +1 per publication. The relay process starts it at its start time in ms (main(); fix round 3), so the seqs of
+        # two relay processes never overlap: a client's since / Last-Event-ID below this process's base comes from an earlier
+        # process whose forget events are lost (-> forget_horizon). The offline tools (build_stream.py, tests) start at 0.
+        self.seq_base = self.seq = int(seq_base)
         self.full = self.delta = b''
         self.prev_sig = {}
-        self.latest = {'ac': [], 'now': int(time.time() * 1000), 'seq': 0, 'total': 0, '_source': None,
+        self.latest = {'ac': [], 'now': int(time.time() * 1000), 'seq': self.seq, 'total': 0, '_source': None,
                        'msg': 'waiting for the first provider response'}
         self.full = json.dumps(self.latest, separators=(',', ':')).encode()
         self.history = deque()   # (wall, full payload bytes) of recent publishes, for /api/stream?history=S
@@ -754,7 +767,11 @@ class Hub:
         # FORGET_KEEP_S - SSE streams get all events they have not seen yet (not only the newest), /api/adsb?since=S gets
         # the keys a polling client could have seen (published at or before its last answer S)
         self.forget_evs = deque()
-        self.pub_first = {}      # unmasked output key -> seq of its first publication (kept while /api/ident holds the key)
+        # (fix round 3) the highest seq whose forget events may be lost: this process's seq base, then the seq of every event
+        # that expired. A client whose since is below it gets 'forget_horizon' (it may have missed a late flag).
+        self.forget_floor = self.seq
+        self.pub_first = {}      # unmasked output key -> [seq of its first publication, wall time of its last] (PUB_KEEP_S)
+        self._pub_prune = 0.0
         self.idents = {}         # output key -> (wall, identity subset) for /api/ident
         self.last_client = 0.0
         self.clients = 0
@@ -805,13 +822,13 @@ class Hub:
             self._merge()
 
     def reset(self):
+        # (replay --loop) the forget events and first-publication seqs are kept (fix round 3): they belong to the clients,
+        # whose seqs keep increasing across the restart, and expire on their own (FORGET_KEEP_S / PUB_KEEP_S)
         with self.lock:
             self.snaps.clear()
             self.hist.clear()
             self.prev_sig.clear()
             self.history.clear()
-            self.forget_evs.clear()
-            self.pub_first.clear()
 
     # -- merge
     def _merge(self):
@@ -865,7 +882,9 @@ class Hub:
         # of 78 records; readsb omits the field when it is 0), so this covers the providers' databases disagreeing.
         forget = []
         for hx in self.d1.newly:
-            pub = hx in self.prev_sig or hx in self.idents
+            # published before: in the last picture, in /api/ident (10 min) or, fix round 3, any time in the last PUB_KEEP_S
+            # (a client may still draw it silent / parked, with its identity)
+            pub = hx in self.prev_sig or hx in self.idents or hx in self.pub_first
             self.idents.pop(hx, None)
             tag = ('"hex":"%s"' % hx).encode()
             if any(tag in b for _, b in self.history):
@@ -875,10 +894,10 @@ class Hub:
                 forget.append(hx)
                 C['d1_late_flag'] = C.get('d1_late_flag', 0) + 1
         self.d1.newly = []
-        first = {hx: self.pub_first.pop(hx, 0) for hx in forget}
+        first = {hx: (self.pub_first.pop(hx, None) or [0])[0] for hx in forget}
         changed = [r for k, r in out if self.prev_sig.get(k) != sigs[k]]
         gone = [k for k in self.prev_sig if k not in sigs]
-        publish = bool(changed or gone or forget) or self.seq == 0
+        publish = bool(changed or gone or forget) or self.seq == self.seq_base
         if publish:                  # a duplicate snapshot (nothing new) is not pushed to streams
             self.seq += 1
         used = sorted({s['name'] for s in self.snaps.values() if wall - s['recv'] <= s.get('ttl', SNAP_TTL)})
@@ -891,14 +910,19 @@ class Hub:
             self.forget_ev = (self.seq, json.dumps({'forget': forget, 'seq': self.seq}, separators=(',', ':')).encode())
             self.forget_evs.append((self.seq, wall, first))
         while self.forget_evs and wall - self.forget_evs[0][1] > FORGET_KEEP_S:
-            self.forget_evs.popleft()
+            # (fix round 3) an expired event raises the floor: a client whose since is below it may have missed this event
+            self.forget_floor = max(self.forget_floor, self.forget_evs.popleft()[0])
         full = dict(head, ac=[r for _, r in out])
         self.latest = full
         self.full = json.dumps(full, separators=(',', ':')).encode()
         if publish:
             for k in sigs:
                 if not k.startswith('x'):
-                    self.pub_first.setdefault(k, self.seq)
+                    e = self.pub_first.get(k)
+                    if e is None:
+                        self.pub_first[k] = [self.seq, wall]
+                    else:
+                        e[1] = wall
             self.prev_sig = sigs
             self.delta = json.dumps(dict(head, ac=changed, gone=gone), separators=(',', ':')).encode()
             self.history.append((wall, self.full))
@@ -908,21 +932,39 @@ class Hub:
                 self.idents[k] = (wall, _ident_subset(k, r))
             for k in [k for k, v in self.idents.items() if wall - v[0] > IDENT_KEEP_S]:
                 del self.idents[k]
-            for k in [k for k in self.pub_first if k not in self.idents]:
-                del self.pub_first[k]
+            if wall - self._pub_prune > 60.0:
+                self._pub_prune = wall
+                for k in [k for k, e in self.pub_first.items() if wall - e[1] > PUB_KEEP_S]:
+                    del self.pub_first[k]
             self.cond.notify_all()
         else:
             self.counters['unchanged'] = self.counters.get('unchanged', 0) + 1
 
     def adsb_answer(self, since=0):
         """/api/adsb: the full snapshot; with ?since=S (the seq of the poller's last answer) plus 'forget', the keys it was
-        shown before a D1 late flag arrived (fix round 2: the poll fallback of js/live/feed.js never got the SSE event)."""
+        shown before a D1 late flag arrived (fix round 2: the poll fallback of js/live/feed.js never got the SSE event), and
+        'forget_horizon' when some of the events it should have had may be lost (fix round 3: horizon())."""
         with self.lock:
             b = self.full
             fk = self.forget_since(since) if since > 0 else []
+            hz = self.horizon_info(since) if self.horizon(since) else None
+        extra = b''
         if fk:
-            b = b[:-1] + b',"forget":' + json.dumps(fk, separators=(',', ':')).encode() + b'}'
-        return b
+            extra += b',"forget":' + json.dumps(fk, separators=(',', ':')).encode()
+        if hz:
+            extra += b',"forget_horizon":' + json.dumps(hz, separators=(',', ':')).encode()
+        return b[:-1] + extra + b'}' if extra else b
+
+    def horizon(self, since):
+        """(fix round 3) True when forget events a client whose last seq is `since` should get may be lost: an event after
+        `since` expired (FORGET_KEEP_S; forget_floor), or `since` was issued by another relay process (below this process's
+        seq base, or above any seq published here). since <= 0 is a client that has seen nothing: never."""
+        return since > 0 and (since < self.forget_floor or since > self.seq)
+
+    def horizon_info(self, since):
+        """The 'forget_horizon' payload (no keys): the client then drops the identity of every track that is not in the
+        snapshot it gets with it, and purges what it persisted (js/live/feed.js, traffic.js forgetHorizon)."""
+        return {'since': since, 'seq': self.seq, 'floor': self.forget_floor}
 
     def forget_since(self, since, upto=None, polled=True):
         """Keys of the forget events after seq `since` (up to `upto`, default now). polled=True (/api/adsb?since=S): only
@@ -1085,7 +1127,10 @@ class Hub:
                     'position_from': self.fresher, 'vehicles': len(self.vehicles), 'counters': dict(self.counters),
                     'masked_now': self.masked_now, 'masked_flagged_session': len(self.d1.flagged),
                     'd1_mode': self.d1.mode, 'clients': self.clients, 'polling': self.active(),
-                    'history_payloads': len(self.history)}
+                    'history_payloads': len(self.history),
+                    # (fix round 3) counts and seqs only, no keys
+                    'forget': {'events_kept': len(self.forget_evs), 'floor': self.forget_floor, 'seq_base': self.seq_base,
+                               'keep_s': FORGET_KEEP_S, 'published_keys_kept': len(self.pub_first)}}
 
 
 def _ident_subset(k, r):
@@ -1376,8 +1421,16 @@ def ping_payload(app):
                      'quota': lol.quota.status() if lol is not None and lol.quota is not None else None},
             'features': {'metar': STATION, 'taf': None, 'ident': ident.label() if ident else None,
                          'ident_endpoint': bool(ident and ident.ready), 'd1': 'dbFlags & 12', 'd1_mode': hub.d1.mode,
+                         # (fix round 3) D1 late-flag forgets: SSE 'id: <seq>' + Last-Event-ID, ?since=, forget_horizon
+                         'forget': {'keep_s': FORGET_KEEP_S, 'last_event_id': True, 'since': True, 'horizon': True},
                          'replay': app.get('replay_info')},
             'providers': providers, 'attribution': att}
+
+
+def parse_seq(v):
+    """A client's seq (?since=, Last-Event-ID): a non-negative decimal integer, else 0 (= has seen nothing)."""
+    v = (v or '').strip()
+    return int(v) if re.fullmatch(r'[0-9]{1,18}', v) else 0
 
 
 def make_handler(app):
@@ -1434,18 +1487,14 @@ def make_handler(app):
                     return self._json(ping_payload(app))
                 if u.path == '/api/adsb':
                     hub.touch()
-                    try:
-                        since = int(q.get('since', ['0'])[0] or 0)
-                    except ValueError:
-                        since = 0
-                    return self._json(hub.adsb_answer(since))
+                    return self._json(hub.adsb_answer(parse_seq(q.get('since', ['0'])[0])))
                 if u.path == '/api/stream':
                     try:
                         hist = float(q.get('history', ['0'])[0] or 0)
                     except ValueError:
                         hist = 0.0
                     return self._stream(q.get('delta', ['0'])[0] not in ('0', '', 'false'),
-                                        max(0.0, min(HISTORY_S, hist)))
+                                        max(0.0, min(HISTORY_S, hist)), self._since(q))
                 if u.path == '/api/status':
                     return self._json(app_status(app))
                 if u.path == '/api/ident':
@@ -1500,7 +1549,13 @@ def make_handler(app):
         def list_directory(self, path):
             self.send_error(404)       # no directory listings
 
-        def _stream(self, delta, history_s=0.0):
+        def _since(self, q):
+            """(fix round 3) The seq of the last payload this client was shown: the SSE reconnect's Last-Event-ID header (the
+            browser sends the newest 'id:' it got), else ?since=S (a new EventSource cannot set headers; js/live/feed.js
+            adds it). Anything that is not a non-negative integer counts as 0 (a client that has seen nothing)."""
+            return parse_seq((self.headers.get('Last-Event-ID') or '').strip() or q.get('since', ['0'])[0])
+
+        def _stream(self, delta, history_s=0.0, since=0):
             hub.touch()
             self.send_response(200)
             self.send_header('Content-Type', 'text/event-stream')
@@ -1512,12 +1567,21 @@ def make_handler(app):
                 seq, data = hub.seq, hub.full
                 now = time.time()
                 back = [b for (w, b) in hub.history if now - w <= history_s] if history_s > 0 else []
+                # (fix round 3) a reconnect (Last-Event-ID) or a client resuming (?since=): first the forget events it missed,
+                # for the keys it could have seen (first published at or before `since`), and 'forget_horizon' when some may
+                # be lost. Neither carries an id, so a connection that breaks before the snapshot below asks again.
+                fk = hub.forget_since(since) if since > 0 else []
+                hz = dict(hub.horizon_info(since), upto=seq) if hub.horizon(since) else None
             last_full = time.time()
             try:
                 head = b'retry: 2000\n\n'
-                for b in back[:-1]:          # the newest is `data` itself
+                if fk:
+                    head += b'event: forget\ndata: ' + json.dumps({'forget': fk, 'seq': seq}, separators=(',', ':')).encode() + b'\n\n'
+                if hz:
+                    head += b'event: forget_horizon\ndata: ' + json.dumps(hz, separators=(',', ':')).encode() + b'\n\n'
+                for b in back[:-1]:          # the newest is `data` itself; history payloads carry no id (they are older)
                     head += b'event: adsb\ndata: ' + b + b'\n\n'
-                self.wfile.write(head + b'event: adsb\ndata: ' + data + b'\n\n')
+                self.wfile.write(head + b'id: %d\nevent: adsb\ndata: ' % seq + data + b'\n\n')
                 self.wfile.flush()
                 while True:
                     with hub.lock:
@@ -1530,10 +1594,14 @@ def make_handler(app):
                             fk = hub.forget_since(seq, polled=False)
                             pre = (b'event: forget\ndata: ' + json.dumps({'forget': fk, 'seq': hub.seq}, separators=(',', ':')).encode()
                                    + b'\n\n') if fk else b''
+                            if hub.horizon(seq):     # only if this stream stalled for longer than FORGET_KEEP_S
+                                pre += (b'event: forget_horizon\ndata: ' + json.dumps(dict(hub.horizon_info(seq), upto=hub.seq),
+                                        separators=(',', ':')).encode() + b'\n\n')
+                            # (fix round 3) 'id: <seq>': the browser sends it back as Last-Event-ID when it reconnects
                             if delta and hub.seq == seq + 1 and time.time() - last_full < FULL_EVERY:
-                                msg = pre + b'event: delta\ndata: ' + hub.delta + b'\n\n'
+                                msg = pre + b'id: %d\nevent: delta\ndata: ' % hub.seq + hub.delta + b'\n\n'
                             else:
-                                msg = pre + b'event: adsb\ndata: ' + hub.full + b'\n\n'
+                                msg = pre + b'id: %d\nevent: adsb\ndata: ' % hub.seq + hub.full + b'\n\n'
                                 last_full = time.time()
                             seq = hub.seq
                     hub.touch()
@@ -1641,7 +1709,9 @@ def main():
     a = ap.parse_args()
 
     ident = None if a.no_ident else Mictronics()
-    hub = Hub('replay' if a.replay else 'live', ident=ident, d1=D1(a.ident))
+    # seq starts at this process's start time in ms (fix round 3): a since / Last-Event-ID from an earlier relay process is
+    # then below the base and is answered with forget_horizon (that process's forget events are gone)
+    hub = Hub('replay' if a.replay else 'live', ident=ident, d1=D1(a.ident), seq_base=int(time.time() * 1000))
     replay_clock = Clock() if a.replay else None
     if a.replay:
         replay_clock.src0 = replay_clock.wall0 = time.time()     # replaced when the replay starts

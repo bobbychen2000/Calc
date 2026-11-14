@@ -12,8 +12,9 @@
 //    Heli / Over / All;
 //  - the card shows the GA facts the brief asks for: registration, type and model, operator, phase (with an "inf" marker
 //    when the phase or the parking spot is inferred, and "provisional"), parking spot (the descriptive Phase 1 zone label,
-//    never an official number, D3), runway, HWD traffic vs overflight (D6), the tower state, altitude / height / speed,
-//    the data age, and the placeholder note (AircraftViews.modelNote);
+//    never an official number, D3), runway, HWD traffic vs overflight (D6), the tower state, altitude MSL / height above
+//    the field / speed (round-2 recheck m7: altitudeOf below, not the raw pressure altitude), the data age with the
+//    altitude method [inf], and the placeholder note (AircraftViews.modelNote);
 //  - the compact status line in the panel = the traffic counts by phase group (stats.js phaseCounts), always visible;
 //  - views: Overview, Tower, Green Ramp, West Hangars, 28L Final (+ settings, about);
 //  - the ATC sheet is the D2 link-out (atc.js); there is no audio-delay slider and no per-feed highlight.
@@ -22,6 +23,9 @@
 import { phaseLabel, category } from './traffic.js';
 import { atcHtml, towerAt } from './atc.js';
 import { statusLine } from './stats.js';
+import { RULES } from './classifier.js';
+import { INHG_HPA } from '../env/wx/metar.js';
+import { FIELD_ELEV_FT } from '../geo.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -40,7 +44,7 @@ const inf = (t) => `<span class="inf" title="${esc(t || 'inferred')}">inf</span>
 
 export class UI {
   constructor(root, opts) {
-    this.root = root; this.o = opts; // {onSelect(id, fly), onView(name), onFollow(mode), onSetting(k, v), showOthers(), idOf(key), trackOf(id), onAtcOpen(), onStatsOpen()}
+    this.root = root; this.o = opts; // {onSelect(id, fly), onView(name), onFollow(mode), onSetting(k, v), showOthers(), idOf(key), trackOf(id), onAtcOpen(), onStatsOpen(), altCtx()}
     this.tab = 'all'; this.q = ''; this.sel = null; this.labels = new Map(); this.showLabels = true; this.sheet = 'peek'; this.towerOpen = null;
     this.build();
   }
@@ -109,6 +113,15 @@ export class UI {
   }
   // phaseLabel with the tower suffix corrected to the DATA clock (fork map I3: P3 keys tower status off the engine
   // wall clock, wrong in replay / snapshot). open === true strips a false 'tower closed (CTAF)'.
+  // one altitude per track for the list, the card and the 3-D label, refreshed on the list's 1-s tick (altTick), so the three
+  // never print different numbers for the same aircraft at the same moment (m7); on the ground it is null at once
+  altFor(tr) {
+    if (!tr || !tr.disp || !tr.disp.valid || tr.disp.ground || tr.stale) return null;
+    const M = this._altC || (this._altC = new WeakMap()), g = this._altGen || 0; let c = M.get(tr);
+    if (!c || c.g !== g) { c = { g, r: altitudeOf(tr, this.o.altCtx ? this.o.altCtx() : null) }; M.set(tr, c); }
+    return c.r;
+  }
+  altTick() { this._altGen = (this._altGen || 0) + 1; }
   ph(tr, now) { let s = phaseLabel(tr, now); if (this.towerOpen === true) s = s.replace(' · tower closed (CTAF)', ''); return s; }
   toggle(p) { const show = p.hidden; for (const q of this.pops) q.hidden = true; p.hidden = !show; }
   statsOpen() { return !this.el.rstats.hidden; }
@@ -176,10 +189,10 @@ export class UI {
     for (const tr of tracks) { if (!this.shown(tr) || !tr.ident) continue; const t = TAB_OF[category(tr)]; if (!t) continue; counts[t]++; if (t !== 'over' || this.o.showOthers()) counts.all++; }
     this.root.querySelectorAll('#panel .tabs button').forEach(b => { b.classList.toggle('on', b.dataset.tab === this.tab); const bb = b.querySelector('b'); const v = String(counts[b.dataset.tab]); if (bb.textContent !== v) bb.textContent = v; });
     const rows = this.rowsFor(tracks);
-    const now = Date.now();
+    const now = Date.now(), AC = this.o.altCtx ? this.o.altCtx() : null;
     const html = rows.length ? rows.map(({ tr, cat }) => {
       const I = tr.ident, D = tr.disp, id = this.o.idOf(tr.key);
-      const alt = D.ground || tr.stale ? '' : altText(tr);
+      const alt = altShort(this.altFor(tr));                   // ft MSL at the display time (legend above the rows)
       const spd = tr.stale ? '' : D.gs > 1 ? `${fmtInt(D.gs / KT)} kt` : '';
       const sub = I.masked ? (I.typeName || 'type only') : [I.reg && I.reg !== I.label ? I.reg : null, I.operator, I.typeName].filter(Boolean).join(' · ');
       const ph = this.ph(tr, now);
@@ -187,7 +200,12 @@ export class UI {
   <div class="l1"><b>${esc(I.label)}</b><span class="ty mono">${esc(I.icaoType || '····')}</span>${I.masked ? `<span class="d1" title="${I.maskWhy === 'd1' ? 'LADD / PIA: type only' : 'type-only feed'}">type only</span>` : ''}<span class="ph">${esc(ph)}${isInf(tr) ? ' ' + inf('phase or spot inferred') : ''}</span></div>
   <div class="l2"><span class="rt">${esc(sub)}</span><span class="nums mono">${esc([alt, spd].filter(Boolean).join('  '))}</span></div></div>`;
     }).join('') : `<div class="empty">${this.q ? 'No matches.' : { air: 'No HWD traffic in the air right now.', ground: 'No aircraft on the ground yet.', heli: 'No helicopters right now.', over: 'No overflights right now.', all: 'No traffic yet.' }[this.tab]}</div>`;
-    if (force || html !== this._lastHtml) { const st = this.el.list.scrollTop; this.el.list.innerHTML = html; this.el.list.scrollTop = st; this._lastHtml = html; }
+    // the altitude legend (m7): the rows print '1,450 ft'; what that number is and how it was made, marked inferred
+    const anyAlt = rows.some(({ tr }) => tr.disp && tr.disp.valid && !tr.disp.ground && !tr.stale);
+    const M = anyAlt ? altMethod(null, AC) : null;
+    const legend = M ? `<div class="legend" title="${esc(M.title)}">Altitudes in ft MSL · ${esc(M.text)} ${inf(M.title)}</div>` : '';
+    const full = legend + html;
+    if (force || full !== this._lastHtml) { const st = this.el.list.scrollTop; this.el.list.innerHTML = full; this.el.list.scrollTop = st; this._lastHtml = full; }
   }
 
   // ------------------------------------------------------------ detail card (D1: the identity rows come from tr.ident only)
@@ -201,8 +219,8 @@ export class UI {
     const scope = tr.scope === 'hwd' ? 'HWD traffic' : tr.scope === 'overflight' ? 'Overflight, not HWD traffic' : 'Not yet classified (watching)';
     const T = towerAt(extra.tScene);
     const park = parkText(tr, extra);
-    const altFt = D.ground || tr.stale ? null : altText(tr);
-    const hAgl = !D.ground && !tr.stale && extra.hAglFt != null ? extra.hAglFt : null;
+    // altitude MSL + height above the field from the same rounded value; the method on the data line, marked inf (m7)
+    const AC = this.o.altCtx ? this.o.altCtx() : null, AR = this.altFor(tr), AT = AR ? altCard(AR) : null, AM = AR ? altMethod(AR, AC) : null;
     const vs = D.vs && !D.ground && !tr.stale ? D.vs / FT * 60 : null;
     C.className = 'c-' + cat;
     C.innerHTML = `
@@ -217,10 +235,10 @@ export class UI {
   ${park ? `<dt>Parking</dt><dd>${park}</dd>` : ''}
   ${P.rwy ? `<dt>Runway</dt><dd class="mono"><b>${esc(P.rwy)}</b>${P.leg ? ` <span class="dim">${esc(P.leg)}</span>` : ''}</dd>` : ''}
   <dt>Traffic</dt><dd>${esc(scope)}${tr.scope === 'overflight' ? '' : ''}</dd>
-  ${altFt ? `<dt>Altitude</dt><dd class="mono">${esc(altFt)}${hAgl != null ? ` <span class="dim">· ${fmtInt(Math.round(hAgl / 10) * 10)} ft AGL</span>` : ''}</dd>` : `<dt>Altitude</dt><dd>${D.ground || tr.stale ? 'On the ground' : '—'}</dd>`}
+  ${AT ? `<dt>Altitude</dt><dd class="mono"><span class="nw">${esc(AT.msl)}</span> <span class="dim nw">· ${esc(AT.above)}</span></dd>` : `<dt>Altitude</dt><dd>${D.ground || tr.stale ? 'On the ground' : '—'}</dd>`}
   <dt>Speed</dt><dd class="mono">${tr.stale ? '—' : fmtInt(D.gs / KT) + ' kt'}${vs != null && Math.abs(vs) > 150 ? ` <span class="dim">· ${vs > 0 ? '+' : ''}${fmtInt(Math.round(vs / 50) * 50)} ft/min</span>` : ''}</dd>
   <dt>Tower</dt><dd>${T.open == null ? '—' : T.open ? 'Open <span class="dim">(07:00–21:00)</span>' : 'Closed · <span class="mono">CTAF 120.2</span>'}</dd>
-  <dt>Data</dt><dd>${tr.stale ? 'last signal ' + ago(extra.staleMs) : extra.ageS == null ? '—' : `position <b class="mono">${extra.ageS < 10 ? extra.ageS.toFixed(1) : Math.round(extra.ageS)} s</b> old`}${extra.srcText ? ` <span class="dim">· ${esc(extra.srcText)}</span>` : ''}</dd>
+  <dt>Data</dt><dd>${tr.stale ? 'last signal ' + ago(extra.staleMs) : extra.ageS == null ? '—' : `position <b class="mono">${extra.ageS < 10 ? extra.ageS.toFixed(1) : Math.round(extra.ageS)} s</b> old`}${extra.srcText ? ` <span class="dim">· ${esc(extra.srcText)}</span>` : ''}${AM ? `<br><span class="dim small altm" title="${esc(AM.title)}">altitude: ${esc(AM.text)}${AR.interp ? ', between fixes' : ''}</span> ${inf(AM.title)}` : ''}</dd>
 </dl>
 ${extra.modelNote ? `<div class="model">${esc(extra.modelNote)}</div>` : ''}
 <div class="acts"><button data-act="follow" class="${extra.follow === 'follow' ? 'on' : ''}">Follow</button><button data-act="chase" class="${extra.follow === 'chase' ? 'on' : ''}">Chase</button><button data-act="free">Free camera</button></div>`;
@@ -254,10 +272,91 @@ ${extra.modelNote ? `<div class="model">${esc(extra.modelNote)}</div>` : ''}
   }
 }
 export const isInf = (tr) => !!((tr.phaseInfo && tr.phaseInfo.src === 'inf') || (tr.park && tr.park.src === 'inf'));
-function altText(tr) {
-  const L = tr.last; const a = L && L.altB != null ? L.altB : null;
-  if (a != null) return `${fmtInt(Math.round(a / 25) * 25)} ft`;     // the reported barometric altitude (readsb alt_baro, 25-ft steps)
-  return tr.disp && tr.disp.valid ? `${fmtInt(Math.round(tr.disp.y / FT / 25) * 25)} ft MSL` : '';
+// ------------------------------------------------------------ altitude (review round-2 recheck m7)
+// alt_baro is the transponder's PRESSURE altitude, referenced to 29.92 inHg (14 CFR 91.217(a)(2), LII copy read 2026-11-13),
+// not a height above sea level: with the KHWD altimeter at 30.13 a C172 on short final reports about -150 ft. Until this
+// round the list, the 3-D labels and the card printed it raw ('Final 28L -150 ft'), and the card set it beside a drawn
+// height from another datum ('Altitude 400 ft · 560 ft AGL'). Now every place shows ONE value, the altitude MSL at the
+// display time, and the card's height above the field is computed from that same rounded value:
+//  1. 'baro' (default): what an altimeter set to the current KHWD altimeter setting A would read. A barometric altimeter
+//     set to A reads H(p) - H(A), where H is the NWS pressure-altitude equation H(p) = (1 - (p / 1013.25)^0.190284) x
+//     145,366.45 ft (weather.gov/media/epz/wxcalc/pressureAltitude.pdf, read 2026-11-13) [V]; the NWS altimeter-setting
+//     equation (weather.gov/media/epz/wxcalc/altimeterSetting.pdf, read 2026-11-13) is the same relation solved for A at
+//     the station elevation [V]. So MSL = alt_baro - H(A). No temperature correction (indicated, not true, altitude)
+//     [inf]. (The cockpit rule of thumb 1 inHg ~ 1,000 ft gives 8 % more: dH/dA at 29.92 is 924 ft per inHg, computed.)
+//     A comes from the KHWD METAR at or before the scene time (data clock), at most STALE_MIN (90) min old (js/env/state.js,
+//     spec 3.3), and never from a QA weather override (?metar= / ?wx=: not the traffic's weather) - app.js qnhAt();
+//  2. 'geom' (no usable METAR, or no alt_baro): alt_geom - GEOM_OFF, the Phase 1 calibration of the GNSS height against the
+//     NASR runway surfaces (GEOM_OFF -108.09 ft, n 797, hwd_events.json `calibration`; classifier.js RULES) [obs calibration,
+//     inf use]. Over the five review windows the two agree to a median of -37..+9 ft (docs/phase2_app.md section 9);
+//  3. 'drawn': the engine's drawn height (D.y, NAVD 88 ~ MSL) where neither bracketing fix has a usable value (a take-off or
+//     landing reconstructed across a recorder hole) [inf].
+// The value is taken at the DISPLAY time, not from the newest fix (the replay display runs 60 s behind the newest fix): at a
+// fix it is that fix's report; between fixes it follows the drawn height, shifted by the report-minus-drawn offset of the two
+// fixes around the display time (interpolated in time) [inf] - see altitudeOf.
+// Plausibility (owner's rule): an airborne aircraft is not below the ground under it. A value more than PLAUS_FT below that
+// ground (a transponder off by more than the 125-ft tolerance, or a fix flagged airborne on the runway) falls to the next
+// method; within PLAUS_FT (the 25-ft report quantum) it is shown at the ground height (`clamped`) [inf].
+const STD_P0_HPA = 1013.25, STD_N = 0.190284, STD_K_FT = 145366.45;     // NWS pressure-altitude equation [V]
+export const hStdFt = (hPa) => (1 - Math.pow(hPa / STD_P0_HPA, STD_N)) * STD_K_FT;
+export const PLAUS_FT = 25;                     // [inf]
+const ALT_ROUND = 10;                            // display step, ft (reports come in 25- or 100-ft steps) [inf]
+const r10 = (v) => Math.round(v / ALT_ROUND) * ALT_ROUND + 0;   // + 0: no '-0'
+/** Altitude of an airborne track at the display time. A (app.js altCtx): {tD (engine ms), qnh: {inHg, obsMs} | null,
+ *  fieldFt, groundFt(x, z)}. -> null on the ground / no position, else {msl, mslR, above, fieldFt, method, interp, clamped, qnh}.
+ *  The value at a fix is the report itself (baro / geom); between fixes it is the DRAWN height plus the report-minus-drawn
+ *  offset of the fixes around the display time, interpolated in time - so the number follows the 3-D picture through a
+ *  recorder hole (a flare, a reconstructed take-off) and still equals the report at every fix. (A straight interpolation of
+ *  the reports printed '110 ft MSL' over a BL8 the engine drew touching down; review run below, docs/phase2_app.md 9.) */
+export function altitudeOf(tr, A) {
+  const D = tr && tr.disp; if (!D || !D.valid || D.ground || tr.stale) return null;
+  const ok = Number.isFinite; if (!ok(D.y)) return null;
+  const F = tr.fx || [], tD = A && A.tD != null ? A.tD : Infinity;
+  let i = F.length - 1; while (i >= 0 && F[i].t > tD) i--;
+  const a = i >= 0 ? F[i] : null, b = i + 1 < F.length ? F[i + 1] : null;
+  const yFt = D.y / FT;
+  // offset (report MSL - the fix's drawn target height) at a and b; interpolated when both exist, else the one that does
+  const anchored = (mslOf) => {
+    const off = (f) => { if (!f || !ok(f.y)) return null; const m = mslOf(f); return m != null && ok(m) ? m - f.y / FT : null; };
+    const oa = off(a), ob = off(b);
+    if (oa != null && ob != null) { const s = b.t - a.t, w = s > 0 ? Math.min(1, Math.max(0, (tD - a.t) / s)) : 0; return { v: yFt + oa + (ob - oa) * w, interp: s > 4000 && Math.min(tD - a.t, b.t - tD) > 1500 }; }
+    if (oa != null) return { v: yFt + oa, interp: tD - a.t > 1500 };
+    if (ob != null) return { v: yFt + ob, interp: b.t - tD > 1500 };
+    return null;
+  };
+  const C = [];
+  if (A && A.qnh) { const h = hStdFt(A.qnh.inHg * INHG_HPA); const p = anchored(f => f.altB != null ? f.altB - h : null); if (p) C.push({ msl: p.v, method: 'baro', interp: p.interp }); }
+  { const p = anchored(f => f.altG != null && !f.geomBad ? f.altG - RULES.GEOM_OFF : null); if (p) C.push({ msl: p.v, method: 'geom', interp: p.interp }); }
+  C.push({ msl: yFt, method: 'drawn', interp: false });
+  let gFt = A && A.groundFt && ok(D.x) && ok(D.z) ? A.groundFt(D.x, D.z) : 0; if (!ok(gFt)) gFt = 0;
+  const C1 = C.filter(q => ok(q.msl));
+  const c = C1.find(q => q.msl >= gFt - PLAUS_FT) || C1[C1.length - 1];
+  const clamped = c.msl < gFt, msl = Math.max(c.msl, gFt);
+  const mslR = r10(msl), fieldFt = A && A.fieldFt != null ? A.fieldFt : FIELD_ELEV_FT;
+  return { msl, mslR, above: r10(mslR - fieldFt), fieldFt, method: c.method, interp: c.interp, clamped, qnh: c.method === 'baro' ? A.qnh : null };
+}
+/** list rows and 3-D labels: '1,450 ft' (the list's legend and the card say 'ft MSL') */
+export const altShort = (r) => r ? `${fmtInt(r.mslR)} ft` : '';
+/** card: '1,450 ft MSL' + '1,400 ft above field' (from the same rounded value, so the two never disagree) */
+export function altCard(r) {
+  const ab = r.above >= ALT_ROUND ? `${fmtInt(r.above)} ft above field` : r.above <= -ALT_ROUND ? `${fmtInt(-r.above)} ft below field elevation` : 'at field elevation';
+  return { msl: `${fmtInt(r.mslR)} ft MSL`, above: ab };
+}
+const QNH_WHY = { override: 'the QA weather override is not used for altitudes', none: 'no KHWD METAR at or before this time', stale: 'the latest KHWD METAR is over 90 min old', noalt: 'the KHWD METAR has no altimeter setting' };
+const tLocal = (ms) => new Date(ms).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+/** the method, for the card's data line and the list legend: {text, title} */
+export function altMethod(r, A) {
+  const q = r ? r.qnh : A && A.qnh;
+  const m = r ? r.method : q ? 'baro' : 'geom';
+  const fe = `field elevation ${fmtInt(r ? r.fieldFt : (A && A.fieldFt) ?? FIELD_ELEV_FT)} ft (FAA NASR)`;
+  const base = m === 'baro' ? `pressure altitude corrected with the KHWD altimeter ${q.inHg.toFixed(2)} inHg (METAR ${tLocal(q.obsMs)})`
+    : m === 'geom' ? `GNSS height + ${fmtInt(-RULES.GEOM_OFF)} ft (HWD calibration${A && A.qnh ? ', no pressure altitude reported' : '; ' + (QNH_WHY[A && A.qnhWhy] || QNH_WHY.none)})`
+    : 'drawn height (no usable altitude report at this time)';
+  const why = m === 'baro' ? `MSL = alt_baro - H(A), H(p) = (1 - (p/1013.25 hPa)^0.190284) x 145,366.45 ft (NWS pressure-altitude and altimeter-setting equations); indicated altitude, no temperature correction; transponder altitude is within 125 ft of the altimeter (14 CFR 91.217)`
+    : m === 'geom' ? `alt_geom - (${RULES.GEOM_OFF.toFixed(2)} ft): the Phase 1 calibration of the GNSS height against the NASR runway surfaces (n 797)`
+    : 'the traffic engine\'s drawn height (NAVD 88), reconstructed between fixes';
+  const extra = r ? [r.interp ? 'between two fixes: the drawn path, shifted to match the reports at the fixes on either side' : '', r.clamped ? 'shown at the ground height (the report was up to 25 ft below it)' : ''].filter(Boolean) : [];
+  return { text: base, title: [why, fe, ...extra].join('; ') };
 }
 function parkText(tr, extra) {
   const p = tr.park; if (!p) return '';

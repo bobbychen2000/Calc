@@ -21,6 +21,10 @@
 //    masked track); the DOM, the QA hooks' track lists and every log line carry an opaque per-page id, never a track key;
 //  - views: Overview, Tower (eye at the cab, site.anchors.tower), Green Ramp, West Hangars (P2 dev/world.js framings) and
 //    28L Final (behind an aircraft on the published 4.0 deg VASI path, NASR); the status line counts traffic by phase.
+//  - altitudes (round-2 recheck m7): list, 3-D labels and card show ONE value per aircraft, altitude MSL at the display
+//    time (ui.js altitudeOf: alt_baro corrected with the KHWD altimeter setting of the METAR at the scene time; else alt_geom
+//    + 108 ft; else the drawn height), refreshed on the list's 1-s tick; the card adds the height above the NASR field
+//    elevation from the same rounded value and names the method on its data line [inf]. altCtx() / qnhAt() below.
 // Dropped (SFO only): jet bridges and the gate system, airfield-lighting fixtures, ALS structures, reservoirs and the shore
 // field, flysfo gates, routes, LiveATC feed tuning and the audio delay (D2: a link-out only), airliner models and markers.
 import { initGL, gl } from '../gl.js';
@@ -37,10 +41,12 @@ import { GroundPhysics } from './ground.js';
 import { AircraftViews } from './aircraft.js';
 import { StreamFeed, fetchMetar, parsePayload } from './feed.js';
 import { CameraRig } from './controls.js';
-import { UI, VIEW_NAMES } from './ui.js';
+import { UI, VIEW_NAMES, altitudeOf, altShort, altCard, altMethod } from './ui.js';
+import { indexReports, selectReport, STALE_MIN } from '../env/state.js';
+import { INHG_HPA } from '../env/wx/metar.js';
 import { hwdStats, statsLine, statsHtml, phaseCounts } from './stats.js';
 import { towerStatus } from './classifier.js';
-import { thrWorld, rwyAxis, FT } from '../geo.js';
+import { thrWorld, rwyAxis, FT, FIELD_ELEV_FT } from '../geo.js';
 
 const DEG = Math.PI / 180, KT = 1852 / 3600;
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
@@ -71,7 +77,7 @@ export async function startApp(cfg) {
   const idOf = (k) => { if (k == null) return null; let i = idByKey.get(k); if (i == null) { i = nextId++; idByKey.set(k, i); keyById.set(i, k); } return i; };
   const ui = new UI(root, {
     onSelect: (id, fly) => select(id == null ? null : keyById.get(id), fly), onView: (v) => view(v), onFollow: (m) => followCmd(m),
-    onSetting: (k, v) => setting(k, v), showOthers: () => showOthers, idOf,
+    onSetting: (k, v) => setting(k, v), showOthers: () => showOthers, idOf, altCtx: () => altCtx(),
     onStatsOpen: () => statsSheet(), onAtcOpen: () => ui.setAtc(sceneTime(), mode),
   });
   ui.root.querySelector('[data-set="light"]').value = lightMode; ui.root.querySelector('[data-set="others"]').checked = showOthers;
@@ -166,11 +172,10 @@ export async function startApp(cfg) {
     if (window.innerWidth < 760) ui.setSheet('peek');
   }
   function cardExtra(tr) {
-    const now = engineNow(); const D = tr.disp;
+    const now = engineNow();
     const spot = tr.park && tr.park.spotId ? parking.byId.get(tr.park.spotId) : null;
     return { modelNote: views.modelNote(tr), follow: tr.key === selected ? followMode : null, tScene: sceneTime(), parkLabel: spot ? spot.zone : null,
-      ageS: tr.lastFixT ? Math.max(0, (now - tr.lastFixT) / 1000) : null, staleMs: tr.stale ? now - tr.lastRecv : null, srcText: SRC_TXT(tr.info && tr.info.src),
-      hAglFt: D.valid ? (D.y - gy(D.x, D.z)) / FT : null };
+      ageS: tr.lastFixT ? Math.max(0, (now - tr.lastFixT) / 1000) : null, staleMs: tr.stale ? now - tr.lastRecv : null, srcText: SRC_TXT(tr.info && tr.info.src) };
   }
   function followCmd(m) {
     if (!selected) return;
@@ -198,6 +203,33 @@ export async function startApp(cfg) {
   // an engine-clock instant (event times) -> the data clock
   const toData = (t) => { const A = envCore.clock.anchor; return mode === 'replay' && A ? A.dataNow + (t - A.wall) * (envCore.clock.replaySpeed || 1) : t; };
   const hhmm = (t) => new Date(toData(t)).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
+  // ---------------------------------------------------------------- altitude reference (review round-2 recheck m7)
+  // The list, the 3-D labels and the card show altitude MSL at the display time (ui.js altitudeOf: alt_baro corrected with
+  // the KHWD altimeter setting; else alt_geom + 108 ft; else the drawn height) and the card the height above the field
+  // elevation from the same value. qnhAt(t): the altimeter setting of the latest KHWD report at or before the scene time t
+  // (data clock: the recording's in replay / snapshot) and at most STALE_MIN (90) min old, from the reports the environment
+  // holds (relay /api/metar, the shim's pack reports, the snapshot pack's). A QA weather override (?metar= / ?wx=) is not the
+  // traffic's weather and is never used for altitudes.
+  const FIELD_FT = (cfg.airport && cfg.airport.frame && cfg.airport.frame.field_elev_ft) ?? FIELD_ELEV_FT;   // NASR 52.1 ft
+  let qIdx = null, qReps = null;
+  // -> {qnh: {inHg, obsMs, ageMin} | null, why: null | 'override' | 'none' | 'stale' | 'noalt'}
+  function qnhAt(t) {
+    if (envCore.forced) return { qnh: null, why: 'override' };
+    if (t == null || !Number.isFinite(t)) return { qnh: null, why: 'none' };
+    if (qReps !== envCore.reports) { qReps = envCore.reports; qIdx = indexReports(qReps, t); }
+    const cur = selectReport(qIdx, t, false); if (!cur || cur.obsMs == null) return { qnh: null, why: 'none' };
+    const inHg = cur.d.altimeter_inhg ?? (cur.d.qnh_hpa ? cur.d.qnh_hpa / INHG_HPA : null);
+    const ageMin = (t - cur.obsMs) / 60000;
+    if (!inHg) return { qnh: null, why: 'noalt' };
+    return ageMin >= 0 && ageMin <= STALE_MIN ? { qnh: { inHg, obsMs: cur.obsMs, ageMin }, why: null } : { qnh: null, why: 'stale' };
+  }
+  const AC = { tD: 0, qnh: null, qnhWhy: null, fieldFt: FIELD_FT, groundFt: (x, z) => gy(x, z) / FT, qT: null, qR: null };
+  function altCtx() {
+    AC.tD = traffic.displayTime(engineNow());
+    const tS = sceneTime();
+    if (AC.qR !== envCore.reports || AC.qT == null || Math.abs(tS - AC.qT) > 5000) { const q = qnhAt(tS); AC.qnh = q.qnh; AC.qnhWhy = q.why; AC.qT = tS; AC.qR = envCore.reports; }
+    return AC;
+  }
   const towerOf = (e) => towerStatus(toData(e.t));                    // event tower state on the DATA clock (fork map I3)
   const towerAtScene = () => { const h = new Date(sceneTime()).toLocaleString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', hour12: false }); const n = +h % 24; return n >= 7 && n < 21; };
   // ---------------------------------------------------------------- data
@@ -276,8 +308,10 @@ export async function startApp(cfg) {
     const fr = scene.frame(simT, cam.pos);
     post.exposure = exposure;
     const C = R.render(fr, cam, simT, post); scene.commit(); R.present(canvas.width, canvas.height); lastC = C;
+    // the list tick refreshes the one altitude per track BEFORE the labels, so labels, list and card share it (m7)
+    const listTick = (tList += wall) > 1; if (listTick) { tList = 0; ui.altTick(); }
     labels(C);
-    if ((tList += wall) > 1) { tList = 0; ui.renderList(false, [...traffic.tracks.values()]); status(); }
+    if (listTick) { ui.renderList(false, [...traffic.tracks.values()]); status(); }
     if (selected && (tCard += wall) > 0.5) { tCard = 0; const tr = traffic.tracks.get(selected); if (tr && !tr.removed) ui.renderCard(tr, cardExtra(tr)); else select(null); }
     return performance.now() - tp;
   }
@@ -335,9 +369,9 @@ export async function startApp(cfg) {
       const I = tr.ident;
       let sub = null;
       if (sel || dist < 1800 || (!D.ground && dist < 6000)) {
-        // (fix round 1: Math.round(-30 / 100) * 100 is -0 -> '-0 ft'; + 0 turns negative zero into 0)
-        const alt = !D.ground && tr.last && tr.last.altB != null ? Math.round(tr.last.altB / 100) * 100 + 0 : null;
-        sub = [I.icaoType && I.icaoType !== I.label ? I.icaoType : null, alt != null ? alt.toLocaleString('en-US') + ' ft' : phaseLabel(tr).split(' · ')[0].replace(/ \(provisional\)$/, '')].filter(Boolean).join(' · ');
+        // altitude MSL at the display time, the same value and rounding as the list (m7: it printed the raw pressure altitude)
+        const alt = altShort(ui.altFor(tr));
+        sub = [I.icaoType && I.icaoType !== I.label ? I.icaoType : null, alt || phaseLabel(tr).split(' · ')[0].replace(/ \(provisional\)$/, '')].filter(Boolean).join(' · ');
       }
       items.push({ id: idOf(tr.key), x: pt[0], y: pt[1], depth: dist, cat, text: I.label, sub, sel: sel ? 1 : 0, stale: tr.stale });
     }
@@ -372,6 +406,10 @@ export async function startApp(cfg) {
     screen: (id) => { const k = keyById.get(+id); return k != null ? screenPts.get(k) || null : null; },
     tap: (x, y) => tap(x, y),
     sceneTime, frozen: () => frozenNow,
+    // altitude as the UI shows it (m7): {msl, mslR, above, method, interp, clamped, short, card, method text} | null (ground)
+    alt: (id) => { const tr = trackById(id); if (!tr) return undefined; const A = altCtx(), r = ui.altFor(tr); return r ? { ...r, short: altShort(r), card: altCard(r), how: altMethod(r, A).text } : null; },
+    altFresh: (id) => { const tr = trackById(id); return tr ? altitudeOf(tr, altCtx()) : undefined; },
+    altRef: () => { const A = altCtx(); return { qnh: A.qnh, why: A.qnhWhy, fieldFt: A.fieldFt, tD: A.tD, legend: altMethod(null, A).text }; },
     // a fast screenshot from the renderer's final framebuffer (P2 dev/world.js): avoids page.screenshot recompositing the
     // heavy SwiftShader scene. Returns a PNG data URL of the 3-D view only (no DOM HUD).
     shot: (n = 2) => { for (let i = 0; i < n; i++) frame(1 / 60); const px = R.readPixels(); const c = document.createElement('canvas'); c.width = R.W; c.height = R.H; const cx = c.getContext('2d'); const id = cx.createImageData(R.W, R.H); for (let y = 0; y < R.H; y++) id.data.set(px.subarray((R.H - 1 - y) * R.W * 4, (R.H - y) * R.W * 4), y * R.W * 4); cx.putImageData(id, 0, 0); return c.toDataURL('image/png'); },

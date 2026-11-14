@@ -69,8 +69,8 @@ The contract is `docs/phase2_fork_map.md` §2.1. The relay's header docstring re
 |---|---|
 | `GET /` | 302 to `live.html`, query kept. |
 | `GET /api/ping` | `{hwdlive: 1, v, mode: live\|replay, stream, delta, history, dataNow, center {lat, lon, radius_nm}, poll {adsblol_s, adsbfi, adsbfi_s, quota}, features {metar: 'KHWD', taf: null, ident, ident_endpoint, d1: 'dbFlags & 12', d1_mode, replay: null\|{src, from, until, speed, loop, lookahead_s}}, providers, attribution}` |
-| `GET /api/adsb` | readsb jv2: `{now, dataNow, seq, total, _source, msg, ac: [...]}`. |
-| `GET /api/stream[?delta=1][&history=S]` | SSE. `retry: 2000`; `event: adsb` (full); with delta, `event: delta` `{now, dataNow, seq, ac, gone}`; a full event on every seq gap and at least every 30 s; `: keepalive` every 15 s. `history=S` (S ≤ 120) first sends the full payloads of the last S s, oldest first. |
+| `GET /api/adsb[?since=S]` | readsb jv2: `{now, dataNow, seq, total, _source, msg, ac: [...]}`. With `since` (the seq of the client's last answer): `forget: [keys]` for D1 late flags of keys it was shown (fix round 2), and `forget_horizon: {since, seq, floor}` when some forget events it should have had may be lost (fix round 3, §4). |
+| `GET /api/stream[?delta=1][&history=S][&since=S]` | SSE. `retry: 2000`; `event: adsb` (full); with delta, `event: delta` `{now, dataNow, seq, ac, gone}`; a full event on every seq gap and at least every 30 s; `: keepalive` every 15 s. `history=S` (S ≤ 120) first sends the full payloads of the last S s, oldest first. Fix round 3: every adsb / delta event of the live picture carries `id: <seq>` (history payloads and forget events carry none); a reconnect's `Last-Event-ID` header (or `?since=S` for a new EventSource; the header wins) is answered first with `event: forget` and/or `event: forget_horizon` `{since, seq, floor, upto}`. |
 | `GET /api/metar?ids=KHWD[&format=json]` | KHWD METARs of the last 3 h, newest first. Header `X-Data-Now`. Replay serves only reports at or before the replay time, else 502. Any other station returns 400. |
 | `GET /api/ident?key=K` | Identity of an aircraft that is in the current picture or was within the last 10 min. Masked keys answer `{key, masked: true, t, desc, category}` only. Any other key returns 404, so this is not a registry look-up service. |
 | `GET /api/status` | Provider health, quota, latency, 429s, merge and hygiene counters, ident loader state, masked count, replay position. No identities. |
@@ -170,6 +170,44 @@ How the relay stays inside these limits:
   - Covered by `test_forget_reaches_pollers_and_every_pending_event`: two late flags, one poller, one stream, and a
     flag before publication. Against the spawned replay relay, `api/adsb?since=<seq>` and a malformed `since` both
     answer the snapshot (200), with 0 console errors.
+- **Late flag, fix round 3 (review m6).** Two more ways lost a forget, and one way never produced it:
+  - *Reconnects.* The SSE events had no `id:` and the server never read `Last-Event-ID`, so a stream that dropped and
+    reconnected started from the new snapshot and never heard the events of its gap. Now every adsb / delta event of the
+    live picture carries `id: <seq>`. A reconnect's `Last-Event-ID` (the browser sends the newest id it got), or `?since=S`
+    on a new EventSource (it cannot send headers; `feed.js` adds it), is answered first with the forget events after S
+    for the keys first published at or before S (`forget_since(S)`, as for pollers). Forget and horizon events carry no
+    id, so a connection that breaks before the snapshot asks again.
+  - *Pauses.* A poller (or stream) away for longer than `FORGET_KEEP_S` (600 s) found its events expired and was told
+    nothing. Each expired event now raises `forget_floor` to its seq. A `since` below the floor, below this process's seq
+    base, or above any seq published here gets `forget_horizon` `{since, seq, floor}` (plus `upto`, the seq of the
+    snapshot that follows, in the stream). The relay names no key in it: the client drops the identity of every track
+    that is not in the snapshot it gets with the horizon.
+  - *Seq base.* `main()` starts `seq` at the process start time in ms (`Hub(seq_base=…)`), so the seqs of two relay
+    processes never overlap and a `Last-Event-ID` from before a restart (whose forget events are gone with the process) is
+    below the base. The offline tools (`build_stream.py`, packs, tests) keep base 0.
+  - *Old publications.* `pub_first` (first-publication seq per unmasked key) used to be dropped with the 10-min
+    `/api/ident` entry, so a late flag arriving after 10 min of silence produced no forget at all, while the app still drew
+    the aircraft silent (30 min) or parked (up to 8 h) with its identity. It is now kept for `PUB_KEEP_S` (24 h after the
+    key's last publication) [inf, design: longer than every client-side keep], and a key in it counts as published.
+  - `reset()` (replay `--loop`) keeps the forget events and `pub_first`: the clients' seqs keep increasing across a
+    loop, and both expire on their own.
+  - `/api/ping` `features.forget` `{keep_s, last_event_id, since, horizon}`; `/api/status` `merge.forget` (counts and
+    seqs only, no keys).
+  - **Client** (`js/live/feed.js`, `js/live/traffic.js`): `StreamFeed` reads the ids, reopens a CLOSED EventSource
+    with `?since=`, polls with `?since=`, and applies a horizon after the snapshot it refers to (`upto`):
+    `onHorizon({present, absent, since, seq, floor})` when the app passes it (`traffic.forgetHorizon`: absent tracks
+    keep their bodies and show their type only, not claimed LADD / PIA, until the relay re-publishes the key unmasked;
+    persisted records purged), else `onForget(absent)`. **Open (P4):** `js/live/app.js` does not pass `onHorizon` yet
+    (`onHorizon: (h) => traffic.forgetHorizon(h)` beside `onForget`), so today the fallback runs: `traffic.forget`
+    drops the identities but labels those tracks `maskWhy: 'd1'` (a LADD / PIA claim that may be false) and fades them
+    out, and the horizon does not purge the persisted records. Persisted parked records (`hwdlive.parked.v1`, format v 2) are
+    written only for aircraft whose identity came unmasked from the relay and was not withheld since, with plain keys
+    only; at load they are restored with their type only (no N-number derived from the stored key) until the relay
+    re-publishes the key unmasked; v 1 records are purged at load.
+  - Covered by `test_sse_ids_and_reconnect_with_last_event_id_after_a_flag`, `test_poller_resuming_after_the_forget_keep`,
+    `test_forget_horizon_signal` and `test_late_flag_reaches_clients_after_the_ident_keep`, through the real request
+    handler on an in-process HTTP server (127.0.0.1, ephemeral port). Run against the committed relay of fix round 2, all
+    four fail (no `seq_base`, no `forget_floor`, and no forget event at all for the late flag after 20 min of silence).
 - **`--record` guard, fix round 2.** The fix-round-1 rule lower-cased the path. On a case-sensitive file system that
   let `Refs/Cache/Local/rec` (not gitignored) through.
   - `record_dir_check` now resolves the real path and compares it case-sensitively: inside hwd3d only
@@ -331,6 +369,10 @@ saturation 0.11–0.14 against a threshold of 0.16.
 
 | Test | Result |
 |---|---|
+| `test_relay.py` (fix round 3) | 26 / 26 OK (22 before + the four D1 forget tests of §4, fix round 3). |
+| `relay_smoke.py --url` (fix round 3; replay rec_pack 8 Nov 20Z, ×4, 40 s, relay on a 89xx port) | PASS, 39 / 39. New: 25 / 25 adsb / delta events carry `id` = seq; `?history=60`: 29 history payloads without id, then the current one and every later one with id; seq base = start time in ms; `/api/adsb?since=1` and an SSE reconnect with `Last-Event-ID: 1` get `forget_horizon` (then the snapshot); `since=<current seq>` gets none. |
+| In-app, live code path (scratch job; `livetest.mjs` 640 × 360, a scratch proxy that makes the replay relay's ping say `live`, so traffic persistence is on; no network) | A planted v 1 store: nothing restored, rewritten as v 2 with 0 records. A planted v 2 record (synthetic US-block address): restored as `C172`, registration "—", the derived N-number in neither DOM text nor attributes with its card open. After 45 s: 2 records stored, all plain keys, none masked, fields `k, t, c, f, r, p` only. Relay restarted under the page (the harness proxy answered 502 while it was down, so the browser closed the EventSource and `feed.js` reopened it with `?since=`): status back to "Live", 1 stream client on the new process, the horizon applied through the fallback (`d1Forget` 2: app.js passes no `onHorizon`), the restored record still type-only. Console: one 502 during the restart. |
+| Relay restart under an open page (scratch; headless Chromium, raw `EventSource` + `feed.js StreamFeed`, replay relay restarted on the same port) | The browser's own reconnect sent the last id of process A as `Last-Event-ID`; process B (seq base above A's last id) answered `forget_horizon` (no id) then the snapshot with `id` = `upto`; `StreamFeed` called `onHorizon` once, with process A's seq as `since`; `/api/adsb?since=<A's seq>` on B: `forget_horizon`. |
 | `test_relay.py` | 18 / 18 OK. Covers merge, hygiene, D1 (LADD/PIA masked, military not, sticky, flag from either provider, type-only), Mictronics fill, ident subset, Quota (rolling cap, period, persistence, Retry-After in full), snapshot TTL, serving rules (incl. `__pycache__`), window filter, METAR replay cache, xz reader. |
 | `relay_smoke.py` (replay rec_pack 8 Nov 20Z, ×4, 40 s) | PASS, 33 / 33 checks. 30 events (2 full + 28 delta). Median 24 aircraft per event; no event emptied the picture. Delta reconstruction equalled `/api/adsb` at 19 / 19 sampled seqs. 29 records inside 8 NM; 3 masked, all `x`+8 hex with no identity field. `?history=60` sent 33 payloads at once. ident masked → type only; unknown key 404. METAR 4 reports, none after the replay time. Removed endpoints 404; deny rules 404; pack 200. |
 | `relay_smoke.py --url` against a **live** relay (22 s) | PASS. adsb.lol 5 / 5 OK, p50 latency 193 ms, period 7.7 s, quota 466 of 475 left. adsb.fi 19 / 19 OK, p50 150 ms, every 2.0 s. 4 aircraft at 03:30 PST. Mictronics ready (455,928). Live METAR newest `METAR KHWD 131054Z AUTO …`. |

@@ -52,31 +52,69 @@ export function parsePayload(json, fallbackNow = Date.now()) {
 // Relay stream: Server-Sent Events from hwd_live_server.py /api/stream?delta=1 (full 'adsb' events, 'delta' events with
 // changed records and gone keys). Keeps the full aircraft list and hands it to onData after every event. Falls back to
 // polling /api/adsb when EventSource fails. (sfo3d design; the replay shim fakes both endpoints.)
+//
+// D1 late flags (fix rounds 1-3): the relay names keys it published unmasked before a LADD / PIA flag arrived ('forget';
+// onForget(keys) -> traffic.forget drops their identity at once). Fix round 3 (m6) closes the two ways a forget was lost:
+//  - reconnects: every live adsb / delta event carries 'id: <seq>'. The browser's own SSE reconnect sends it back as
+//    Last-Event-ID; a NEW EventSource (after the browser gave up, readyState CLOSED) carries it as ?since=<seq>, and so does
+//    every poll. The relay first answers the forget events this client missed (keys it was shown, first published at or
+//    before that seq).
+//  - pauses longer than the relay keeps forget events (FORGET_KEEP_S = 600 s), or a seq from another relay process: the
+//    relay sends 'forget_horizon' {since, seq, floor[, upto]} instead. The feed then drops the identity of every key it
+//    handed out that is not in the current snapshot: onHorizon({present, absent, since, seq, floor}) when given (the app
+//    wires traffic.forgetHorizon: absent tracks keep their bodies, show their type only until the relay re-publishes the
+//    key unmasked, and the persisted parked records are purged), else onForget(absent) (identity dropped, tracks faded out).
+//    In the stream the horizon comes BEFORE the snapshot it refers to (seq `upto`), so it is applied after that snapshot.
 export class StreamFeed {
-  constructor({ url = 'api/stream?delta=1', pollUrl = 'api/adsb', onData, onStatus, onForget = null, pollMs = 2000, history = 0 } = {}) {
+  constructor({ url = 'api/stream?delta=1', pollUrl = 'api/adsb', onData, onStatus, onForget = null, onHorizon = null, pollMs = 2000, history = 0 } = {}) {
     if (history > 0 && !/history=/.test(url)) url += (url.includes('?') ? '&' : '?') + 'history=' + Math.min(120, Math.round(history));
-    Object.assign(this, { url, pollUrl, onData, onStatus, onForget, pollMs });
+    Object.assign(this, { url, pollUrl, onData, onStatus, onForget, onHorizon, pollMs });
     this.map = new Map(); this.seq = 0; this.es = null; this.mode = null; this.lastOk = 0; this.fails = 0; this.timer = null; this.running = false; this.head = null;
+    // every key handed to onData since the last horizon (the identities this page may hold; memory only), the pending horizon
+    this.known = new Set(); this.horizonPending = null; this.retryT = null; this.counters = { forget: 0, horizon: 0, reopen: 0 };
   }
   start() { if (this.running) return; this.running = true; if (typeof EventSource !== 'undefined') this.sse(); else this.poll(); }
-  stop() { this.running = false; if (this.es) this.es.close(); this.es = null; clearTimeout(this.timer); }
+  stop() { this.running = false; if (this.es) this.es.close(); this.es = null; clearTimeout(this.timer); clearTimeout(this.retryT); }
+  withSince(u) { return this.seq > 0 ? u + (u.includes('?') ? '&' : '?') + 'since=' + encodeURIComponent(this.seq) : u; }
   emit(head) {
     this.lastOk = Date.now(); this.fails = 0; this.head = head;
+    for (const k of this.map.keys()) this.known.add(k);
     const json = { ac: [...this.map.values()], now: head.now, dataNow: head.dataNow, _source: head._source, msg: head.msg };
     const p = parsePayload(json);
     this.onStatus && this.onStatus({ ok: true, source: { name: head._source || 'local relay' }, count: p.aircraft.length, mode: this.mode });
     this.onData && this.onData(p, { name: 'local relay' });
   }
+  forget(keys) {
+    keys = (Array.isArray(keys) ? keys : []).filter(k => typeof k === 'string' && k); if (!keys.length) return;
+    for (const k of keys) { this.map.delete(k); this.known.delete(k); }
+    this.counters.forget += keys.length; this.onForget && this.onForget(keys);
+  }
+  // apply a pending horizon once the snapshot it refers to is in the map (stream: seq >= upto; poll: the same answer)
+  horizonCheck() {
+    const h = this.horizonPending; if (!h || !(this.seq >= (+h.upto || +h.seq || 0))) return;
+    this.horizonPending = null;
+    // (D1-masked 'x' keys are type-only already: nothing to drop)
+    const present = [...this.map.keys()], P = new Set(present), absent = [...this.known].filter(k => !P.has(k) && !/^x[0-9a-f]{8}$/.test(k));
+    this.known = new Set(present); this.counters.horizon++;
+    const info = { present, absent, since: h.since ?? null, seq: h.seq ?? null, floor: h.floor ?? null };
+    if (this.onHorizon) this.onHorizon(info); else if (this.onForget && absent.length) this.onForget(absent);
+  }
   sse() {
-    this.mode = 'stream'; const es = this.es = new EventSource(this.url);
-    es.addEventListener('adsb', (ev) => { try { const j = JSON.parse(ev.data); this.map.clear(); for (const a of j.ac || []) this.map.set(a.hex, a); this.seq = j.seq; this.emit(j); } catch (e) { } });
-    // D1 late flag (fix round 1): the relay names keys it published unmasked before a LADD/PIA flag arrived (open streams, and
-    // since fix round 2 the poll answers too); the app drops their identity at once (traffic.forget)
-    es.addEventListener('forget', (ev) => { try { const j = JSON.parse(ev.data); for (const k of j.forget || []) this.map.delete(k); this.onForget && this.onForget(j.forget || []); } catch (e) { } });
-    es.addEventListener('delta', (ev) => { try { const j = JSON.parse(ev.data); for (const a of j.ac || []) this.map.set(a.hex, a); for (const k of j.gone || []) this.map.delete(k); this.seq = j.seq; this.emit(j); } catch (e) { } });
+    // (fix round 3) a new EventSource carries the last seq as ?since= (it cannot send Last-Event-ID itself)
+    this.mode = 'stream'; const es = this.es = new EventSource(this.withSince(this.url));
+    es.addEventListener('adsb', (ev) => { try { const j = JSON.parse(ev.data); this.map.clear(); for (const a of j.ac || []) this.map.set(a.hex, a); this.seq = j.seq; this.emit(j); this.horizonCheck(); } catch (e) { } });
+    es.addEventListener('forget', (ev) => { try { this.forget(JSON.parse(ev.data).forget); } catch (e) { } });
+    es.addEventListener('forget_horizon', (ev) => { try { const j = JSON.parse(ev.data); if (j && typeof j === 'object') { this.horizonPending = j; this.horizonCheck(); } } catch (e) { } });
+    es.addEventListener('delta', (ev) => { try { const j = JSON.parse(ev.data); for (const a of j.ac || []) this.map.set(a.hex, a); for (const k of j.gone || []) this.map.delete(k); this.seq = j.seq; this.emit(j); this.horizonCheck(); } catch (e) { } });
     es.onerror = () => {
       this.fails++; this.onStatus && this.onStatus({ ok: false, source: { name: 'local relay' }, error: 'stream interrupted' });
-      if (this.fails >= 3 && !this.lastOk) { es.close(); this.es = null; this.poll(); } // no stream at all: poll instead
+      if (this.fails >= 3 && !this.lastOk) { es.close(); if (this.es === es) this.es = null; this.poll(); return; } // no stream at all: poll instead
+      // (fix round 3) the browser reconnects by itself (CONNECTING, with Last-Event-ID) except after an HTTP error / a wrong
+      // content type (CLOSED): then a new EventSource with ?since=, with back-off
+      if (es.readyState === 2 && this.es === es && this.running) {
+        this.es = null; clearTimeout(this.retryT);
+        this.retryT = setTimeout(() => { if (this.running && !this.es) { this.counters.reopen++; this.sse(); } }, Math.min(15000, 1000 * Math.pow(1.6, Math.min(this.fails, 8))));
+      }
     };
   }
   async poll() {
@@ -84,14 +122,14 @@ export class StreamFeed {
     let wait = this.pollMs;
     try {
       // ?since=<seq of the last answer>: the relay adds 'forget' (D1 late flags) for keys this client was shown (fix round 2:
-      // the forget event used to reach SSE streams only)
-      const u = this.seq ? this.pollUrl + (this.pollUrl.includes('?') ? '&' : '?') + 'since=' + encodeURIComponent(this.seq) : this.pollUrl;
-      const r = await fetch(u, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
+      // the forget event used to reach SSE streams only) and 'forget_horizon' when some may be lost (fix round 3)
+      const r = await fetch(this.withSince(this.pollUrl), { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status);
       const j = await r.json();
-      if (Array.isArray(j.forget) && j.forget.length) { for (const k of j.forget) this.map.delete(k); this.onForget && this.onForget(j.forget); }
+      if (Array.isArray(j.forget) && j.forget.length) this.forget(j.forget);
       this.map.clear(); for (const a of j.ac || []) this.map.set(a.hex, a); if (j.seq != null) this.seq = j.seq; this.emit(j);
+      if (j.forget_horizon && typeof j.forget_horizon === 'object') { this.horizonPending = Object.assign({}, j.forget_horizon, { upto: this.seq }); this.horizonCheck(); }
     } catch (e) { this.fails++; wait = Math.min(15000, 1000 * Math.pow(1.6, Math.min(this.fails, 8))); this.onStatus && this.onStatus({ ok: false, source: { name: 'local relay' }, error: e.message || 'failed' }); }
-    this.timer = setTimeout(() => this.poll(), wait);
+    if (this.running) this.timer = setTimeout(() => this.poll(), wait);
   }
 }
 

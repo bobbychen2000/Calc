@@ -37,11 +37,17 @@ def tyre(center, axis, D, W, n=48, rim_frac=0.56):
 
 
 # ------------------------------------------------------------------------------------------------ main gear
+LINK_DY, LINK_R = 0.092, 0.020   # trailing link: inboard offset of its axis from the wheel centre, tube radius [inf]
+
+
 def main_geometry(sgn):
     """Key points (right gear for sgn=+1; mirrored for -1)."""
     y0 = G.GEAR_BL
     T = np.array([5.085, y0, 0.820 + G.WING_DZ])       # trunnion (inside the wing) = retraction pivot; rides with the wing
-    L0 = np.array([5.095, y0 - 0.100, 0.380])          # trailing-link pivot at the strut foot (link inboard of the tyre)
+    # trailing-link pivot at the strut foot, link inboard of the tyre [inf]. Fix round 3: the link runs 0.092 m inboard of
+    # the wheel centre (was 0.100, radius 0.020 was 0.022): stowed, the inboard side faces up, and the old link end stood
+    # 3.5-4.5 mm above the wing upper skin at the root (BL 1.02); it now stays below it (test: no gear vertex above the skin)
+    L0 = np.array([5.095, y0 - LINK_DY, 0.380])
     A = np.array([G.X_MAIN_AXLE, y0, G.MAIN_TIRE_D / 2])  # axle centre (tyre on the ground)
     m = np.array([1, sgn, 1])
     return T * m, L0 * m, A * m
@@ -63,8 +69,8 @@ def build_main(parts, side, sgn):
     st.append(cylinder(T + [-0.10, 0, 0], T + [0.10, 0, 0], 0.030, n=16))              # trunnion tube (retraction axis)
     st.append(sweep_tube(np.array([foot + [0, sgn * 0.02, 0.02], L0]), 0.030, n=12))    # foot fitting -> link pivot
     # trailing link arm (inboard of the tyre) L0 -> axle end, axle stub to the hub
-    arm_end = A + [0, -sgn * 0.100, 0]
-    st.append(sweep_tube(np.array([L0, arm_end]), 0.022, n=14))
+    arm_end = A + [0, -sgn * LINK_DY, 0]
+    st.append(sweep_tube(np.array([L0, arm_end]), LINK_R, n=14))
     st.append(cylinder(arm_end, A - [0, sgn * 0.040, 0], 0.020, n=14))
     # shock absorber: strut collar -> link mid-point (inboard)
     s1 = T + [0.07, -sgn * 0.045, -0.10]

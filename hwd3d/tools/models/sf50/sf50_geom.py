@@ -5,9 +5,11 @@ Every number below is tagged:
   [obs: <source>]  stated by a primary / manufacturer source (see SF50_FACTS.md for the URL and quoted words)
   [inf: <method>]  inferred -- read off a drawing, derived from other numbers, or a modelling choice
 The reference drawings are the Cirrus AFM P/N 31452-001 figures (Figure 1-1 "Airplane Three View", Figure 1-2
-"Airplane Interior Dimensions", Figure 8-1); they are reference only and are never committed.  Distances read off
-them use the scales derived in SF50_FACTS.md section 3 (three-view side view 128.9 px/m along x, 127.2 px/m in z;
-interior figure 7.65 px/in from its FS ticks).
+"Airplane Interior Dimensions", Figure 8-1); they are reference only and are never committed.  Only the FITTED model
+parameters are kept here, each with a one-line basis; the readings of those figures (outlines, stations, scales) are local
+reference data in the gitignored refs/cache/local/models/afm_sf50_meas.json (fix round 3: orchestrator decision (b)
+2026-11-13 under the owner's delegation; the owner may overrule).  The printed dimension labels of the AFM (e.g. "11.1 ft")
+are published values and are quoted.
 
 Model axes (same convention as pc12/):
   x = fuselage station FS, metres aft of the type-certificate datum ("89 inches in front of the flat surface of the
@@ -40,17 +42,16 @@ X_WING_LE_ROOT_FROM_NOSE = 11.1 * FT   # 3.383 m [obs: AFM Fig 1-1 "11.1 ft (3.4
 X_WING_TE_ROOT_FROM_NOSE = 18.3 * FT   # 5.578 m [obs: AFM Fig 1-1 "18.3 ft (5.6 m)" nose -> wing root TE (fillet)]
 
 # ------------------------------------------------------------------------------------------------ datum / stations
-X_NOSE = 0.900           # [inf: AFM Fig 1-2 window stations (FS) vs the same windows on Fig 1-1, three windows agree to 4 cm]
+X_NOSE = 0.900           # [inf: fitted, AFM Fig 1-2 window stations (FS) registered on the same windows in Fig 1-1]
 X_TAIL = X_NOSE + LENGTH  # 10.257
 X_FWD_BULKHEAD = 89.0 * IN   # 2.261 [obs: TCDS datum definition]
 CABIN_LENGTH = 137.8 * IN    # [obs: AFM Fig 1-2 table]
 CABIN_WIDTH = 61.0 * IN      # [obs: AFM Fig 1-2 table; Cirrus 5.1 ft]
 CABIN_HEIGHT = 48.8 * IN     # [obs: AFM Fig 1-2 table; Cirrus 4.1 ft]
-FLOOR_Z = 0.99               # [inf: AFM Fig 1-2 window sill/head heights above the floor vs Fig 1-1 window heights]
+FLOOR_Z = 0.99               # [inf: fitted, AFM Fig 1-2 window heights above the floor vs Fig 1-1 window heights]
 
 # ------------------------------------------------------------------------------------------------ fuselage control lines
-# (FS m, value m).  Nose (FS < 2.3) and tail (FS > 7.6): AFM Fig 1-1 side/top view.  Cabin: AFM Fig 1-2 (OML outline,
-# uniform 7.65 px/in scale; its 66.8 in outer width = 61 in cabin + walls).  [inf: digitised, see SF50_FACTS.md 3]
+# (FS m, value m): fitted control lines [inf: nose / tail fitted to AFM Fig 1-1 side + plan, cabin to the AFM Fig 1-2 OML]
 _CROWN = [(0.900, 1.170), (0.905, 1.205), (0.915, 1.240), (0.94, 1.277), (0.97, 1.310), (1.00, 1.338), (1.06, 1.378),
           (1.125, 1.410), (1.28, 1.474), (1.435, 1.530), (1.59, 1.576), (1.746, 1.620), (1.90, 1.666), (2.056, 1.706),
           (2.21, 1.748), (2.30, 1.790), (2.40, 1.856), (2.46, 1.880), (2.595, 1.953), (2.728, 2.026), (2.86, 2.096),
@@ -63,7 +64,7 @@ _CROWN = [(0.900, 1.170), (0.905, 1.205), (0.915, 1.240), (0.94, 1.277), (0.97, 
 _KEEL = [(0.900, 1.170), (0.905, 1.130), (0.915, 1.095), (0.94, 1.057), (0.97, 1.026), (1.00, 1.000), (1.06, 0.966),
          (1.125, 0.940), (1.28, 0.885), (1.435, 0.837), (1.59, 0.800), (1.90, 0.760), (2.21, 0.727), (2.46, 0.712),
          (2.73, 0.695), (3.00, 0.688), (3.40, 0.690), (3.66, 0.695), (3.90, 0.690),
-         # belly / wing-root fairing (AFM Fig 1-1 side view: lowest belly 0.59-0.60 m between FS 4.7 and 5.8)
+         # belly / wing-root fairing [inf: fitted to the AFM Fig 1-1 side view]
          (4.15, 0.665), (4.45, 0.628), (4.80, 0.605), (5.30, 0.598), (5.70, 0.608), (6.00, 0.640), (6.30, 0.700),
          (6.60, 0.775), (6.90, 0.842), (7.33, 0.930), (7.64, 0.995), (7.95, 1.060), (8.42, 1.140), (8.88, 1.230),
          (9.30, 1.320), (9.70, 1.400), (10.00, 1.455), (10.15, 1.500), (10.23, 1.545), (10.25, 1.568), (10.257, 1.590)]
@@ -155,18 +156,17 @@ def station_grid():
 
 # ------------------------------------------------------------------------------------------------ glazing & openings
 # Windshield: two wrap-around panes with a centre post (Cirrus: "two panoramic pilot and copilot windows").
-# Outline from AFM Fig 1-1 (plan view: front edge at the centre FS 2.355, aft edge FS 3.055 at the centre and FS 3.49
-# at the sill; side view: sill line).  [inf: digitised]
+# Plan outline (FS, BL) and sill line (FS, WL) [inf: fitted to AFM Fig 1-1 plan + side].
 WS_PLAN = [(2.355, -0.20), (2.355, 0.0), (2.372, 0.15), (2.415, 0.30), (2.495, 0.44), (2.615, 0.56), (2.775, 0.66),
            (2.950, 0.74), (3.100, 0.80), (3.180, 0.98), (3.560, 0.98), (3.495, 0.77), (3.445, 0.65), (3.370, 0.51),
            (3.265, 0.35), (3.150, 0.19), (3.075, 0.06), (3.058, 0.0), (3.058, -0.20)]
 WS_SILL = [(2.25, 1.880), (2.40, 1.818), (2.55, 1.786), (2.75, 1.757), (3.00, 1.740), (3.25, 1.739), (3.45, 1.760),
            (3.60, 1.800)]
-WS_POST = 0.040          # half-width of the centre post [inf: AFM Fig 1-1 plan, 0.08 m post]
+WS_POST = 0.040          # half-width of the centre post [inf: fitted to AFM Fig 1-1 plan]
 z_sill = pchip(WS_SILL)
 
-# cabin windows: squircles in side projection (cx, cz, half-length, half-height, exponent) [inf: AFM Fig 1-1 side view,
-# window outlines measured row by row; same stations on the right side per the plan view]
+# cabin windows: squircles in side projection (cx, cz, half-length, half-height, exponent) [inf: fitted to AFM Fig 1-1
+# side view; same stations on the right side per the plan view]
 WINDOWS = {
     "w1": (3.935, 1.950, 0.240, 0.205, 3.2),    # port: in the cabin door; starboard: emergency egress window
     "w2": (4.617, 1.930, 0.220, 0.200, 3.0),
@@ -182,7 +182,7 @@ BAG_DOOR = dict(cx=6.43, cz=1.62, hx=0.316, hz=0.245, r=0.05)
 # registration panel: blank area on each side of the aft fuselage, filled by the runtime only for aircraft not flagged
 # LADD/PIA (D1).  [inf: position; FAA 14 CFR 45.29 marks >= 12 in high -> panel 0.32 m]
 REG_PANEL = dict(x0=7.05, x1=8.30, zc=1.635, h=0.30)
-# nose-gear bay in the keel (AFM Fig 1-1: the open nose-gear doors span FS 1.32-2.31)
+# nose-gear bay in the keel [inf: fitted to the open nose-gear doors of AFM Fig 1-1]
 NOSE_BAY = dict(x0=1.33, x1=2.30, hw=0.165, r=0.05)
 
 # ------------------------------------------------------------------------------------------------ wing
@@ -190,16 +190,16 @@ NOSE_BAY = dict(x0=1.33, x1=2.30, hw=0.165, r=0.05)
 # the Cirrus SR20/SR22 as "Roncz airfoil" and has no SF50 entry); the NACA 230xx family is the documented choice of a
 # contemporary light jet (Cessna 501 Citation I: NACA 23014 / 23012) and has an exact analytic definition. [inf]
 WING_SEMI_REF = SPAN / 2          # 5.898: reference trapezoid to the overall span [inf: convention]
-Y_TIPCAP = 5.500                  # start of the wing-tip fairing [inf: AFM Fig 1-1 plan, tip fairing ~0.40 m]
+Y_TIPCAP = 5.500                  # start of the wing-tip fairing [inf: fitted to AFM Fig 1-1 plan]
 Y_FUS = 0.848                     # fuselage half-breadth at the wing root [inf]
-LE_SWEEP = np.radians(5.65)       # [inf: AFM Fig 1-1 plan: LE FS +0.46 m between the root and the tip fairing]
-TAPER_DRAWING = 1.17 / 1.82       # [inf: AFM Fig 1-1 plan: chords at the fuselage side 1.82 m, at the tip fairing 1.17 m]
+LE_SWEEP = np.radians(5.65)       # [inf: fitted to AFM Fig 1-1 plan]
+TAPER_FIT = 0.6428571428571428   # model chord ratio, tip fairing / fuselage side [inf: fitted to AFM Fig 1-1 plan]
 
 
 def _solve_planform():
-    # chord law c(y) = c0 * (1 - k y), linear, with c(Y_FUS)/c(Y_TIPCAP) as drawn; scale so the reference trapezoid
+    # chord law c(y) = c0 * (1 - k y), linear, with c(Y_TIPCAP) / c(Y_FUS) = TAPER_FIT; scale so the reference trapezoid
     # (0..SPAN/2) has the TCDS area.
-    k = (1 - TAPER_DRAWING) / (Y_TIPCAP - TAPER_DRAWING * Y_FUS)
+    k = (1 - TAPER_FIT) / (Y_TIPCAP - TAPER_FIT * Y_FUS)
     area_unit = 2 * (WING_SEMI_REF - 0.5 * k * WING_SEMI_REF ** 2)
     c0 = WING_AREA / area_unit
     return c0, k
@@ -208,13 +208,9 @@ def _solve_planform():
 C0, K_CHORD = _solve_planform()
 X_LE_FUS = X_NOSE + X_WING_LE_ROOT_FROM_NOSE            # LE at the fuselage side, FS 4.283 [obs 11.1 ft]
 X_LE0 = X_LE_FUS - Y_FUS * np.tan(LE_SWEEP)            # LE at BL 0
-DIHEDRAL = np.radians(4.8)        # [inf: AFM Fig 1-1 front view: upper surface 3.9 deg, lower 5.7 deg]
-# chord-line LE height at BL 0 [inf]. Fix round 2 of Phase 3a: re-derived from the AFM Fig 1-1 front view (registered on
-# the main-wheel bottoms at 104.9 px/m, the scale of its fuselage width; its fuselage max-width line then reads WL
-# 1.56-1.58 m, the model's 1.555-1.565): the drawn wing upper / lower outline lies 0.12 / 0.08 m above the fix-round-1
-# wing (0.735, from 'belly 0.60 m = root lower surface') at BL 2.0-5.2, i.e. the mean (mid-line) 0.10 m; the remaining
-# +-0.02 m is the section thickness (the drawn outline is ~0.04 m thicker than NACA 230xx [inf]). The belly fairing
-# (keel 0.60 m, AFM side view) stays; the gear trunnion, wells and leg door move with the wing (WING_DZ).
+DIHEDRAL = np.radians(4.8)        # [inf: fitted to AFM Fig 1-1 front view (mean of the upper and lower outline slopes)]
+# chord-line LE height at BL 0 [inf: fitted to the AFM Fig 1-1 front view registered on the main wheels (fix round 2; fix
+# round 1 had 0.735 from 'belly = root lower surface', not drawn)]. The gear trunnion, wells and leg door move with it (WING_DZ).
 Z_LE0_FR1 = 0.735
 Z_LE0 = 0.835
 WING_DZ = Z_LE0 - Z_LE0_FR1       # 0.100: everything placed against the fix-round-1 wing moves up by this
@@ -233,7 +229,7 @@ def wing_z_le(y):
     return Z_LE0 + np.abs(y) * np.tan(DIHEDRAL)
 
 
-# root trailing-edge fillet (AFM Fig 1-1 plan: the TE curves aft into the fuselage, reaching FS 6.48 (18.3 ft))
+# root trailing-edge fillet: the TE curves aft into the fuselage to the AFM Fig 1-1 "18.3 ft" station [obs: dimension; inf: shape]
 def te_fillet(y):
     y = np.abs(y)
     u = np.clip((1.15 - y) / 0.30, 0, 1.25)
@@ -249,11 +245,11 @@ BOOT_Y = (0.90, 5.35)             # wing de-ice boots [obs: AFM "Wing Deicer and
 GEAR_BL = TRACK / 2               # 1.707
 
 # ------------------------------------------------------------------------------------------------ V-tail
-VT_DIHEDRAL = np.radians(38.0)    # [inf: AFM Fig 1-1 front view 37.4-39.5 deg (band edges); plan/side 37.5 deg]
+VT_DIHEDRAL = np.radians(38.0)    # [inf: fitted to AFM Fig 1-1 front, plan and side views]
 VT_ROOT_Y, VT_ROOT_Z = 0.11, 1.650  # root reference point (chord line), inside the tail cone [inf: tip top = 3.322 m]
 VT_TIP_Y = VTAIL_SPAN / 2 - 0.03    # tip chord station (tip cap adds ~0.03) [obs span]
 VT_S_TIP = (VT_TIP_Y - VT_ROOT_Y) / np.cos(VT_DIHEDRAL)   # span along the surface
-VT_LE_ROOT, VT_TE_ROOT = 8.64, 9.93   # [inf: AFM Fig 1-1 side + plan: root chord 1.29 m]
+VT_LE_ROOT, VT_TE_ROOT = 8.64, 9.93   # root chord 1.29 m [inf: fitted to AFM Fig 1-1 side + plan]
 VT_LE_TIP, VT_TE_TIP = 9.545, 10.248  # [inf: tip chord 0.70 m; TE tip = aft-most point (overall length)]
 RV_XH = 0.66                      # ruddervator hinge (chord fraction) [inf: AFM Fig 8-1]
 RV_S = (0.18, 2.40)               # ruddervator span along the surface [inf]
@@ -262,7 +258,7 @@ RV_S = (0.18, 2.40)               # ruddervator span along the surface [inf]
 # engine: length 42.7 in (108.5 cm), height 25.1 in, forward flange OD 18.4 in [obs: FAA TCDS E3GL]
 ENGINE_LEN = 42.7 * IN
 ENGINE_FLANGE_D = 18.4 * IN
-# nacelle stations / heights read off AFM Fig 1-1 side view (top line, inlet face) and plan (width) [inf]
+# nacelle stations / heights [inf: fitted to AFM Fig 1-1 side view (top line, inlet face) and plan (width)]
 NAC_X0, NAC_X1 = 5.865, 8.010     # inlet highlight, exhaust exit
 _NAC = [  # (FS, centre z, half-width, half-height); the lower part merges into the fuselage crown (pylon)
     (5.865, 2.445, 0.338, 0.182),
@@ -284,8 +280,8 @@ NAC_N = 2.4                       # super-ellipse exponent of the nacelle sectio
 # ------------------------------------------------------------------------------------------------ landing gear
 MAIN_TIRE_D, MAIN_TIRE_W = 18.0 * IN, 5.6 * IN      # [obs: AFM 8-26 "18 x 5.5, 8-ply rating tubeless"]
 NOSE_TIRE_D, NOSE_TIRE_W = 14.0 * IN, 5.0 * IN      # [obs: AFM 8-26 "5.00 x 5" -> 5.00-5 tyre, ~14 in OD]
-X_MAIN_AXLE = 5.353               # [inf: AFM Fig 1-1 side view wheel centre, 4.453 m aft of the nose]
-X_NOSE_AXLE = 2.048               # [inf: AFM Fig 1-1 side view wheel centre, 1.148 m aft of the nose]
-WHEELBASE = X_MAIN_AXLE - X_NOSE_AXLE   # 3.305 [inf]
+X_MAIN_AXLE = 5.353               # [inf: fitted to the AFM Fig 1-1 side-view wheel centre]
+X_NOSE_AXLE = 2.048               # [inf: fitted to the AFM Fig 1-1 side-view wheel centre]
+WHEELBASE = X_MAIN_AXLE - X_NOSE_AXLE   # 3.305 [inf]; FAA ACD Wheelbase_ft 10.9 = 3.322 m [obs] (build_sf50.py check)
 
 # light anchors (model coords) are defined in sf50_parts.py next to their lens geometry.

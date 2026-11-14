@@ -3,7 +3,7 @@ Assembly writer for the SF50: parts -> glTF 2.0 binary (KHR_mesh_quantization) w
   part node  : name = part id, translation = pivot origin relative to the parent part's origin (glTF axes),
                extras = {part, name, step, group, qty, note, tris, info, pivot?}
   mesh nodes : '<part>#<k>' children carrying the de-quantisation transform
-  light nodes: 'light:<kind>' children, extras.light = '<kind>' (+ colour, src) - js/aircraft/glb.js reads these
+  light nodes: 'light:<kind>' children, extras.light = '<kind>' (+ colour, src obs/inf, basis) - js/aircraft/glb.js reads these
   reg panels : part 'reg_panel_L/R', extras.info.reg_panel = {centre, normal, up, length, height} (model axes)
 """
 from __future__ import annotations
@@ -53,6 +53,17 @@ def _jsonable(o):
     return o
 
 
+def light_src(a):
+    """(src, basis) of a light anchor (fix round 3, finding V1): a 'src' field holds only 'obs' / 'inf' (the provenance rule
+    of tools/check_airport.py); the evidence text goes to 'basis'. An anchor is a model position, so it is 'inf' unless its
+    text says 'obs' and nothing inferred."""
+    text = a.get("basis") or a.get("src")
+    if text in ("obs", "inf"):
+        return text, None
+    src = "obs" if text and "[obs" in text and "inf" not in text else "inf"
+    return src, text
+
+
 def write_glb(parts, path, meta=None, quantize=True):
     gb = SF50GLB(quantize=quantize)
     used = sorted({mat for p in parts.values() for _, mat in p.meshes})
@@ -78,10 +89,11 @@ def write_glb(parts, path, meta=None, quantize=True):
         if la:
             for kind, a in la.items():
                 pt = np.asarray(a["p"], float)
+                src, basis = light_src(a)
                 kids.append(gb.node(f"light:{kind}", translation=to_gl(pt - origin_of[pid]),
-                                    extras={"light": kind, "colour": a.get("colour"), "src": a.get("src")}))
+                                    extras={"light": kind, "colour": a.get("colour"), "src": src, "basis": basis}))
                 anchors[kind] = {"p": pt.tolist(), "p_gl": to_gl(pt).tolist(), "part": pid, "colour": a.get("colour"),
-                                 "src": a.get("src")}
+                                 "src": src, "basis": basis}
         parent_origin = origin_of[p.parent] if p.parent else np.zeros(3)
         extras = dict(part=pid, name=p.name, step=p.step, group=p.group, qty=p.qty, note=p.material_note,
                       explode=to_gl(np.asarray(p.explode, float)).tolist(), tris=int(p.tri_count()), info=_jsonable(info))

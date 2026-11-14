@@ -1,11 +1,11 @@
 // Import the PC-12 model from pc12/ into the hwd3d runtime (hwd3d Phase 3, M2).
-//   node tools/models/pc12/import_pc12.mjs [--variant=out/pc12_fr2/fr2] [--sources-only]
+//   node tools/models/pc12/import_pc12.mjs [--variant=out/pc12_fr3] [--sources-only]
 // Default: copies pc12/out/pc12.glb unchanged (refuses an uncommitted pc12/out).
 // --variant=<dir> (review fix round 2): imports a build of pc12's own builders with the documented parameter override set
 //   of tools/models/pc12/build_pc12_variant.py (window / door layout, dihedral; outputs in hwd3d/out, gitignored). It
 //   refuses a variant whose recorded pc12 sources were dirty, whose pc12 source tree hash differs from the files on disk
 //   now, or whose builder hash differs from the script on disk, so the import can always be rebuilt bit-for-bit from the
-//   working tree: `python3 -B tools/models/pc12/build_pc12_variant.py --set=fr2` (1.5 s).
+//   working tree: `python3 -B tools/models/pc12/build_pc12_variant.py --set=fr3` (2 s; writes out/pc12_fr3).
 // Writes js/aircraft/models/pc12.glb (the GLB unchanged), js/aircraft/models/pc12_meta.json (the parts of the build's meta
 // the runtime and the docs use: BOM, dimension checks, wing data, build stats, plus provenance and the frame measured by
 // js/aircraft/glb.js) and the pc12 entries of js/aircraft/models/SOURCES.json (other entries are kept; the entries of the
@@ -46,6 +46,11 @@ if (!VARIANT) {
 }
 
 const SOURCES_ONLY = process.argv.includes('--sources-only');
+// what each override set of build_pc12_variant.py changes (the values and their basis are in the builder and in the meta)
+const OVERRIDE_TEXT = {
+  fr2: 'cabin window / door / exit layout from Pilatus drawing 190.10.40.432 + MBP p.5 livery (stations measured), wing dihedral 6.2 deg about BL 2.265 (fitted to the drawing front view)',
+  fr3: 'fr2 + fuselage loft aft of the nose (crown, keel, half-breadth, max-breadth WL, section exponents), cockpit glazing, window / door water lines, wing and main-gear trunnion height, nose-gear housing, belly fairing covering the wing, dorsal fin, fin leading edge, ventral strakes and winglet, all fitted to Pilatus drawing 190.10.40.432 (review fix round 3); iteration 2: flat cabin floor at the sourced 1.30 m width and a cabin layout clear of the doors, nose-gear housing with rounded edges and a strut slot, belly fairing section blended into the wing, belly antennas on the skin [inf: layout / shapes]',
+};
 // SOURCES.json entries of the other registered models (SF50: tools/models/sf50, M1), from their meta _provenance; the
 // file hash is recomputed and compared with the hash the builder recorded
 function otherSources(S) {
@@ -61,7 +66,9 @@ function otherSources(S) {
     S[name] = { url: null, source: src, sha256: h, builder_state: pv.builder_state || null, sources_tree_sha256: pv.sources_tree_sha256 || null, rebuild: pv.rebuild || null,
       sha256_recorded_by_builder: pv.glb_sha256 || null, sha256_match: pv.glb_sha256 ? pv.glb_sha256 === h : null, licence: pv.licence || null,
       facts: pv.facts || null, doc: pv.doc || null, note: `${type} detailed model (registry js/aircraft/models.js); provenance as recorded by its builder in ${mname} _provenance` };
-    S[mname] = { url: null, source: `${pv.made_by || 'unknown builder'}, ${pv.builder_state || '@ ' + (pv.repo_rev || '?')}`, sha256: sha(meta), licence: pv.licence || null };
+    // fix round 3 (finding V1): the meta entry names its maker and carries a note like every SOURCES entry
+    S[mname] = { url: null, source: `${pv.made_by || 'unknown builder'}, ${pv.builder_state || '@ ' + (pv.repo_rev || '?')}`, sha256: sha(meta), licence: pv.licence || null,
+      made_by: pv.made_by || null, note: `${type} model metadata written by its builder with the GLB (parts, pivots, light anchors, checks, frame, _provenance); facts and their sources: ${pv.facts || '?'}` };
     console.log(`${type}: ${name} sha256 ${h.slice(0, 12)}… ${pv.glb_sha256 ? (pv.glb_sha256 === h ? '= builder record' : '!= builder record ' + pv.glb_sha256.slice(0, 12)) : '(no builder record)'}`);
   }
 }
@@ -86,7 +93,10 @@ const out = {
     origin_gl: m.originGl.map(r3), contacts: Object.fromEntries(Object.entries(m.contacts).filter(([k]) => k !== 'parts').map(([k, v]) => [k, v && v.map(r3)])),
     wheelbase_m: r3(m.wheelbase), track_m: r3(m.track), bbox_local: m.bbox.map(r3),
     length_m: r3(m.bbox[3] - m.bbox[0]), span_m: r3(m.bbox[5] - m.bbox[2]), height_m: r3(m.bbox[4]), nose_to_main_m: r3(m.bbox[3]),
-    lights: Object.fromEntries(Object.entries(m.lights).map(([k, v]) => [k, v && { p: v.p.map(r3), part: v.part >= 0 ? m.parts[v.part].id : null, src: v.src }])),
+    // fix round 3 (finding V1): a 'src' field holds only obs / inf (tools/check_airport.py); the anchor's evidence text goes to
+    // 'basis'. An anchor is a model position: inf unless its text says [obs] and nothing inferred
+    lights: Object.fromEntries(Object.entries(m.lights).map(([k, v]) => [k, v && { p: v.p.map(r3), part: v.part >= 0 ? m.parts[v.part].id : null,
+      src: /\[obs/.test(v.src || '') && !/inf/.test(v.src || '') ? 'obs' : 'inf', basis: v.src || null }])),
     excluded_parts: m.stats.excluded, tris_drawn: m.stats.tris,
   },
   checks: meta.checks, wing: meta.wing, stats: meta.stats,
@@ -98,8 +108,8 @@ const SF = path.join(OUT, 'SOURCES.json'); const S = fs.existsSync(SF) ? JSON.pa
 S['pc12.glb'] = { url: null, source: VARIANT ? `pc12 builders @ ${commit} (pc12 sources unchanged, tree sha256 ${variant.pc12_sources_tree_sha256.slice(0, 16)}…) + override set '${variant.set}' of ${variant.builder} (sha256 ${variant.builder_sha256.slice(0, 16)}…, working tree), this repository` : `pc12/out/pc12.glb @ ${commit} (${date}), this repository`,
   sha256: sha(path.join(OUT, 'pc12.glb')), licence: 'own work (this repository); no third-party geometry or texture',
   made_by: VARIANT ? `pc12/model + pc12/cad builders run by ${variant.builder} --set=${variant.set}; copied unchanged by hwd3d/tools/models/pc12/import_pc12.mjs --variant` : 'pc12/model/build.py (loftkit, plain Python + numpy); copied unchanged by hwd3d/tools/models/pc12/import_pc12.mjs',
-  overrides: VARIANT ? 'cabin window / door / exit layout from Pilatus drawing 190.10.40.432 + MBP p.5 livery (stations measured), wing dihedral 6.2 deg about BL 2.265 (fitted to the drawing front view); docs/phase3_models.md section 4' : null,
-  note: 'Pilatus PC-12 PRO (NGX) parametric model, 69 parts, pivots in node extras. Sourced dimensions in pc12/CLAUDE.md; reconstructed contours marked there. Original neutral livery, no registration or logo (D1).' };
+  overrides: VARIANT ? (OVERRIDE_TEXT[variant.set] || `override set ${variant.set}`) + '; docs/phase3_models.md section 4' : null,
+  note: `Pilatus PC-12 PRO (NGX) parametric model, ${meta.stats.parts} parts (as built), pivots in node extras.` + ' Sourced dimensions in pc12/CLAUDE.md; reconstructed contours marked there. Original neutral livery, no registration or logo (D1).' };
 S['pc12_meta.json'] = { url: null, source: `subset of ${VARIANT ? path.relative(HWD, SRC_META) + ' (variant ' + variant.set + ', pc12 builders @ ' + commit + ')' : 'pc12/out/pc12_meta.json @ ' + commit} + the frame measured by js/aircraft/glb.js`, sha256: sha(path.join(OUT, 'pc12_meta.json')), licence: 'own work (this repository)', made_by: 'hwd3d/tools/models/pc12/import_pc12.mjs' };
 otherSources(S);
 fs.writeFileSync(SF, JSON.stringify(S, null, 1) + '\n');
