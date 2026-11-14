@@ -804,8 +804,13 @@ def main():
                             (pin['origin_nodes_check']['3336195147'][1] + pin['origin_nodes_check']['13556389849'][1]) / 2
                             - F.ORIGIN_LON))}
     checks['extent_km2'] = pin['extent']['area_km2']
-    checks['sensitive_filter'] = {'dropped_total': sum(pin['dropped_sensitive'].values()),
-                                  'by_class': pin['dropped_sensitive'], 'note': pin['dropped_note']}
+    # counts only (re-verify 2 R1): integer counts per class / rule, nothing that describes a dropped feature
+    by_class = {k: int(v) for k, v in sorted(pin['dropped_sensitive'].items())}
+    vrem = {k: int(v) for k, v in sorted(pin.get('vertices_removed', {}).items())}
+    checks['sensitive_filter'] = {'dropped_total': sum(by_class.values()), 'by_class': by_class,
+                                  'vertices_removed': vrem,
+                                  'note': 'counts per class and per rule only (rules: refs/cache/osm_pinned/'
+                                          'pin_summary.json dropped_rules)'}
     checks['k_dem'] = {'k_dem_m': F.K_DEM, 'sd_m': F.K_DEM_SD, 'note': 'frame.py header'}
 
     # ------------------------------------------------------------------ assemble

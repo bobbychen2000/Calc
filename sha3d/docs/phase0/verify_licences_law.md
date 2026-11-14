@@ -44,9 +44,9 @@ cited source, a fresh git clone, or an official copy on another host.
      by licensed surveyors/military" misreads it.
    * The 5 % height test is easy for a modelled building, so R3 is if anything understated.
 5. **Wrong: OSM military-object count (law).** On the cached extracts, `tools/law/osm_sensitive.py` finds **6
-   distinct elements**, not 5: 3 rail ways (1.41, 1.61, 2.18 km) and 3 `landuse=military` areas (1.21, 3.17, 3.31 km),
-   two of them named as armed-police units. That is also 4 features if the spur counts once. The distances and the
-   武警 naming are right. Ids are withheld here as well.
+   distinct elements**, not 5: 3 rail ways tagged `usage=military` and 3 `landuse=military` areas, two of them
+   armed police by name. That is also 4 features if the 3 rail ways count once. The class counts are right. Ids,
+   names, positions and distances are withheld here as well (details local only: refs/cache/osm/).
 6. **Wrong: radio-horizon "nearest non-PRC sites" (adsb).** Jeju (548 km) is not the nearest.
    * By great circle from the AIP ARP, the nearer sites are:
      * Gageodo (KR), about 476 km;
@@ -149,7 +149,7 @@ cited source, a fresh git clone, or an official copy on another host.
 | L19 | MSS 2026-10 open-map case | confirmed (as secondary) | stdaily, 2026-10-17, source "国家安全部微信公众号": both fragments verbatim; "依法对其开展审查"; "不转发、不扩散任何标注有涉密地理信息的地图内容". |
 | L20 | OSM blocked in mainland China | confirmed (as secondary) | GreatFire: quote verbatim; "interference … since 2012-06-12". |
 | L21 | OSM wiki legality view | confirmed (as secondary) | Wikitext (hash-identical) quote verbatim. The licence footer is CC BY-SA 2.0, as stated. |
-| L22 | Military-tagged OSM objects near ZSSS | **wrong** (count) | 6 distinct OSM elements (3 rail ways at 1.41-2.18 km; 3 landuse areas at 1.21, 3.17 and 3.31 km, 2 named as armed police), not 5. Distances and naming are right. |
+| L22 | Military-tagged OSM objects near ZSSS | **wrong** (count) | 6 distinct OSM elements (3 rail ways tagged `usage=military`; 3 `landuse=military` areas, 2 of them armed police by name), not 5. The class counts are right. |
 | L23 | Hongqiao civil/military status | confirmed (as secondary) | The re-downloaded wuhanqing AIP mirror shows "CIVIL/4E". Wikipedia: "From late 1963, it was rebuilt for civilian use and was reopened in April 1964." The 1963-1971 joint use is still unverified. |
 | L24 | Radio Regs Art. 27(2), 41, 72 | **wrong** (penalty) | As A33: Art. 72 rises to CNY 30k-100k plus licence revocation. Art. 75(2)/(3) is missed. |
 | L25 | LiveATC feeds for ZSSS | not_confirmed | KWSNote (fresh clone, commit 842c5b1) line 25 verbatim. liveatc.net/search/?icao=ZSSS still returns 403. The archive.org availability API confirms a snapshot `20190515050936` exists; its content could not be read. Whether a ZSSS feed exists today is not established. GreatFire says liveatc.net was reachable from the mainland on 2026-05-05. |

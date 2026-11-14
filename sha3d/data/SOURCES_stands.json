@@ -1,0 +1,72 @@
+{
+ "what": "sources and tools of task A2 (stands, jet bridges, taxi graph): data/sha_stands.json/.js, data/sha_taxigraph.json/.js, data/meas/stand_s2.json, data/meas/stand_sar.json, data/meas/sar_registration.json",
+ "date": "2026-11-14",
+ "inputs": {
+  "osm": {
+   "file": "refs/cache/osm_pinned/zsss_osm_pinned.geojson",
+   "what": "pinned, filtered OSM extract (A1), 2026-11-14T04:52-04:56Z",
+   "licence": "ODbL 1.0",
+   "url": "https://www.openstreetmap.org/copyright"
+  },
+  "airport": {
+   "file": "data/sha_airport.json",
+   "what": "A1 geometry (taxiways incl. re-fit, taxilanes, holds, runways, aprons, buildings, surfaces)"
+  },
+  "s2_stack": {
+   "dir": "refs/cache/s2_stack/ (local, SOURCES.json)",
+   "what": "Sentinel-2 L2A, 67 dates 2023-01-03..2026-10-14 (48 used), tile 51RUQ, Earth Search STAC + sentinel-cogs",
+   "licence": "Copernicus Sentinel data legal notice (free, full and open)",
+   "attribution": "Contains modified Copernicus Sentinel data 2023-2026"
+  },
+  "s2_pinned": {
+   "dir": "refs/cache/s2/",
+   "what": "S2B 2026-10-14 and S2C 2026-02-21 crops (phase 0), plate background and the H2 check"
+  },
+  "umbra": {
+   "dirs": [
+    "refs/cache/imagery/umbra_fullres_stands/ (local)",
+    "refs/cache/imagery/umbra_fullres_reg/ (local)"
+   ],
+   "what": "Umbra SAR Open Data, UMBRA-05 spotlight 2024-06-02T01:46:48Z GEC, full-resolution windows",
+   "licence": "CC BY 4.0",
+   "attribution": "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified"
+  },
+  "aip_mirror": {
+   "dir": "refs/cache/aip/ (local only, never committed)",
+   "what": "AIP China AD 2 ZSSS EFF 2026-07-08, unofficial mirror; AD 2.20 short facts probed in ad2_right_column.txt; stand table / VDGS list used for agreement COUNTS only",
+   "licence": "none published; short cited facts only (OD3)"
+  }
+ },
+ "tools": [
+  "tools/airport/stand_geom.py",
+  "tools/airport/acplan.py",
+  "tools/airport/s2_stack.py",
+  "tools/airport/stand_s2.py",
+  "tools/airport/umbra_stand_windows.py",
+  "tools/airport/sarwin.py",
+  "tools/airport/sar_registration.py",
+  "tools/airport/stand_sar.py",
+  "tools/airport/build_stands.py",
+  "tools/airport/build_taxigraph.py",
+  "tools/airport/stands_plates.py",
+  "tools/airport/write_sources_phase1.py",
+  "tools/verify/qa_c1/fix1/route_edge.py",
+  "tools/common/umbra_reg.py",
+  "tools/verify/qa_c1/fix2/sens_n1.py"
+ ],
+ "order": [
+  "python3 -I sha3d/tools/airport/s2_stack.py sha3d/refs/cache/s2_stack 20",
+  "python3 -I sha3d/tools/airport/umbra_stand_windows.py sha3d/refs/cache/imagery/umbra_fullres_stands",
+  "python3 -I sha3d/tools/airport/umbra_stand_windows.py sha3d/refs/cache/imagery/umbra_fullres_reg reg",
+  "python3 -I sha3d/tools/airport/sar_registration.py sha3d sha3d/data/meas/sar_registration.json",
+  "python3 -I sha3d/tools/airport/stand_s2.py sha3d sha3d/data/meas/stand_s2.json",
+  "python3 -I sha3d/tools/airport/stand_sar.py sha3d sha3d/data/meas/stand_sar.json sha3d/docs/phase1/bridges_sar",
+  "python3 -I sha3d/tools/airport/build_stands.py sha3d",
+  "python3 -I sha3d/tools/airport/build_taxigraph.py sha3d",
+  "python3 -I sha3d/tools/airport/stands_plates.py sha3d"
+ ],
+ "licence_outputs": "ODbL 1.0 (derivative databases of OpenStreetMap); measurements on Copernicus Sentinel and Umbra (CC BY 4.0) data, with attribution",
+ "fix_round_1": "2026-11-14, QA C1 (docs/phase1/qa_data.md): sensitive filter widened (H1), taxi graph routing rules + turn table (H2, M6), taxiway re-fit with the runway-band Umbra registration (M1), AIP values reduced to per-runway aip_facts blocks with their own notice and no per-stand AIP field (M2), bridges / classes / push-back reworked (M3-M5), provenance per record (M7), Sentinel-2 crops cut to the extent (M8), licences (L2), AIP probes to a local log (L5)",
+ "fix_round_2": "2026-11-14, re-verify N1-N5 (docs/phase1/qa_data.md, Fix round 2): dropped lines treated as sensitive geometry in the pinned extract (railway points, non-passenger railway, features along them); taxiway re-fit with an Umbra veto (BN not moved) and 40 m junction tapers; the single Umbra registration +3.07 m E (tools/common/umbra_reg.py) in every data tool; attribution blocks in data/meas/*.json; image SOURCES for docs/phase1/qa and the B1 / B3 / C2 images",
+ "fix_round_3": "2026-11-14, re-verify 2 R1-R5 (docs/phase1/qa_data.md, Fix round 3): reports and SOURCES notes give counts per class and per rule only for the dropped features; pinned extract rule (g): kept ways keep no vertex shared with a dropped line, railway way or tagged node except their ends; bytes and sha256 for the images of docs/phase1/SOURCES_sim.json"
+}

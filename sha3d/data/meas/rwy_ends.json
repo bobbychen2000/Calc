@@ -1,0 +1,567 @@
+{
+ "method": "usage: python3 -I sha3d/tools/airport/rwy_ends.py SHA3D_DIR OUT_JSON OUT_PNG",
+ "runways": {
+  "18L/36R": {
+   "osm_length_m": 3388.53,
+   "osm_north_node": [
+    31.2131135,
+    121.3354641
+   ],
+   "osm_south_node": [
+    31.1825842,
+    121.3371157
+   ],
+   "edges": [
+    {
+     "edge": "N end: blast pad -> CONC",
+     "end": "N",
+     "offset_from_end_m": 0.0,
+     "s": -7.46,
+     "s2_per_scene": {
+      "S2B": -6.21,
+      "S2C": -8.72
+     },
+     "s2_band_sd": 1.34,
+     "umbra": null,
+     "implied_end_s": -7.46,
+     "fits": {
+      "S2B_B02": {
+       "s0": -5.81,
+       "se": 0.42,
+       "sigma": 7.66,
+       "step": 1074.9,
+       "contrast": 18.1
+      },
+      "S2B_B03": {
+       "s0": -6.17,
+       "se": 0.35,
+       "sigma": 8.4,
+       "step": 1381.5,
+       "contrast": 23.9
+      },
+      "S2B_B04": {
+       "s0": -6.24,
+       "se": 0.28,
+       "sigma": 8.35,
+       "step": 1579.4,
+       "contrast": 29.2
+      },
+      "S2B_B08": {
+       "s0": -7.42,
+       "se": 0.21,
+       "sigma": 8.25,
+       "step": 1772.5,
+       "contrast": 39.7
+      },
+      "S2C_B02": {
+       "s0": -8.64,
+       "se": 0.35,
+       "sigma": 7.63,
+       "step": 1409.1,
+       "contrast": 22.4
+      },
+      "S2C_B03": {
+       "s0": -8.57,
+       "se": 0.32,
+       "sigma": 7.78,
+       "step": 1739.3,
+       "contrast": 25.5
+      },
+      "S2C_B04": {
+       "s0": -8.8,
+       "se": 0.24,
+       "sigma": 8.07,
+       "step": 1945.6,
+       "contrast": 35.9
+      },
+      "S2C_B08": {
+       "s0": -9.53,
+       "se": 0.19,
+       "sigma": 8.16,
+       "step": 2122.2,
+       "contrast": 47.6
+      }
+     }
+    },
+    {
+     "edge": "N: CONC -> ASPH (+100 m)",
+     "end": "N",
+     "offset_from_end_m": 100.0,
+     "s": 90.06,
+     "s2_per_scene": {
+      "S2B": 93.81,
+      "S2C": 83.97
+     },
+     "s2_band_sd": 14.95,
+     "umbra": 91.24,
+     "implied_end_s": -9.94,
+     "fits": {
+      "S2B_B02": {
+       "s0": 93.81,
+       "se": 0.67,
+       "sigma": 3.64,
+       "step": 368.0,
+       "contrast": 6.3
+      },
+      "S2B_B03": {
+       "s0": 125.93,
+       "se": 1.98,
+       "sigma": 2.51,
+       "step": -223.4,
+       "contrast": 3.7
+      },
+      "S2B_B08": {
+       "s0": 82.2,
+       "se": 3.06,
+       "sigma": 12.74,
+       "step": -812.3,
+       "contrast": 13.9
+      },
+      "S2C_B02": {
+       "s0": 79.91,
+       "se": 0.91,
+       "sigma": 4.45,
+       "step": -355.8,
+       "contrast": 7.7
+      },
+      "S2C_B03": {
+       "s0": 83.83,
+       "se": 0.51,
+       "sigma": 5.34,
+       "step": -675.7,
+       "contrast": 13.4
+      },
+      "S2C_B04": {
+       "s0": 84.1,
+       "se": 0.57,
+       "sigma": 7.16,
+       "step": -939.7,
+       "contrast": 18.3
+      },
+      "S2C_B08": {
+       "s0": 84.77,
+       "se": 0.56,
+       "sigma": 7.97,
+       "step": -1194.1,
+       "contrast": 21.5
+      },
+      "UMBRA": {
+       "s0": 91.24,
+       "se": 0.52,
+       "sigma": 2.19,
+       "step": 1.0,
+       "contrast": 6.0
+      }
+     }
+    },
+    {
+     "edge": "S: ASPH -> CONC (-100 m)",
+     "end": "S",
+     "offset_from_end_m": -100.0,
+     "s": 3289.78,
+     "s2_per_scene": {
+      "S2B": 3286.94,
+      "S2C": 3283.78
+     },
+     "s2_band_sd": 1.86,
+     "umbra": 3294.2,
+     "implied_end_s": 3389.78,
+     "fits": {
+      "S2B_B02": {
+       "s0": 3286.94,
+       "se": 0.24,
+       "sigma": 4.09,
+       "step": -673.2,
+       "contrast": 18.8
+      },
+      "S2B_B03": {
+       "s0": 3287.34,
+       "se": 0.44,
+       "sigma": 4.03,
+       "step": -442.8,
+       "contrast": 10.1
+      },
+      "S2B_B04": {
+       "s0": 3286.94,
+       "se": 0.68,
+       "sigma": 2.71,
+       "step": -245.9,
+       "contrast": 5.1
+      },
+      "S2C_B02": {
+       "s0": 3288.03,
+       "se": 0.59,
+       "sigma": 3.42,
+       "step": -188.9,
+       "contrast": 6.8
+      },
+      "S2C_B04": {
+       "s0": 3283.14,
+       "se": 0.19,
+       "sigma": 13.69,
+       "step": 446.3,
+       "contrast": 91.4
+      },
+      "S2C_B08": {
+       "s0": 3283.78,
+       "se": 0.33,
+       "sigma": 16.19,
+       "step": 807.7,
+       "contrast": 70.6
+      },
+      "UMBRA": {
+       "s0": 3294.2,
+       "se": 0.27,
+       "sigma": 0.93,
+       "step": -1.0,
+       "contrast": 7.0
+      }
+     }
+    },
+    {
+     "edge": "S end: CONC -> blast pad",
+     "end": "S",
+     "offset_from_end_m": 0.0,
+     "s": 3386.6,
+     "s2_per_scene": {
+      "S2B": 3384.57,
+      "S2C": 3375.57
+     },
+     "s2_band_sd": 7.72,
+     "umbra": 3393.12,
+     "implied_end_s": 3386.6,
+     "fits": {
+      "S2B_B02": {
+       "s0": 3389.62,
+       "se": 0.81,
+       "sigma": 2.42,
+       "step": 203.0,
+       "contrast": 4.0
+      },
+      "S2B_B08": {
+       "s0": 3379.51,
+       "se": 0.97,
+       "sigma": 12.66,
+       "step": -371.0,
+       "contrast": 19.4
+      },
+      "S2C_B03": {
+       "s0": 3368.27,
+       "se": 1.31,
+       "sigma": 2.82,
+       "step": -116.1,
+       "contrast": 3.2
+      },
+      "S2C_B08": {
+       "s0": 3382.87,
+       "se": 3.4,
+       "sigma": 41.07,
+       "step": -1052.4,
+       "contrast": 82.2
+      },
+      "UMBRA": {
+       "s0": 3393.12,
+       "se": 0.32,
+       "sigma": 3.6,
+       "step": 1.4,
+       "contrast": 13.2
+      }
+     }
+    }
+   ],
+   "north_end_s_m": -8.7,
+   "north_end_spread_m": 2.48,
+   "south_end_s_m": 3388.19,
+   "south_end_spread_m": 3.18,
+   "measured_length_m": 3396.89,
+   "aip_length_m": 3400.0,
+   "measured_minus_aip_m": -3.11,
+   "centred_alternative": {
+    "rule": "AIP length centred on the midpoint of the two measured ends",
+    "north_end_s_m": -10.25,
+    "south_end_s_m": 3389.74
+   },
+   "placed_rule": "north end: mean of the two measured north ends on the mean runway axis (AIP: \"their north ends aligned\"); south end = north end + AIP length [inf]",
+   "placed_north_end_s_m": -8.94,
+   "placed_south_end_s_m": 3391.06,
+   "placed_minus_osm_north_m": 8.94,
+   "placed_minus_osm_south_m": 2.53,
+   "placed_minus_measured_north_m": -0.24,
+   "placed_minus_measured_south_m": 2.87
+  },
+  "18R/36L": {
+   "osm_length_m": 3282.08,
+   "osm_north_node": [
+    31.2129628,
+    121.3316265
+   ],
+   "osm_south_node": [
+    31.1833933,
+    121.3332449
+   ],
+   "edges": [
+    {
+     "edge": "N blast pad outer edge (-120 m)",
+     "end": "N",
+     "offset_from_end_m": -120.0,
+     "s": -126.34,
+     "s2_per_scene": {
+      "S2B": -122.21,
+      "S2C": -126.05
+     },
+     "s2_band_sd": 5.79,
+     "umbra": -128.56,
+     "implied_end_s": -6.34,
+     "fits": {
+      "S2B_B02": {
+       "s0": -121.24,
+       "se": 0.92,
+       "sigma": 3.48,
+       "step": -185.4,
+       "contrast": 4.4
+      },
+      "S2B_B03": {
+       "s0": -122.32,
+       "se": 0.51,
+       "sigma": 4.09,
+       "step": -325.8,
+       "contrast": 8.8
+      },
+      "S2B_B04": {
+       "s0": -122.1,
+       "se": 0.43,
+       "sigma": 4.64,
+       "step": -432.6,
+       "contrast": 11.3
+      },
+      "S2B_B08": {
+       "s0": -128.51,
+       "se": 0.1,
+       "sigma": 9.57,
+       "step": -1267.4,
+       "contrast": 105.7
+      },
+      "S2C_B02": {
+       "s0": -138.82,
+       "se": 0.65,
+       "sigma": 3.34,
+       "step": 171.1,
+       "contrast": 7.0
+      },
+      "S2C_B04": {
+       "s0": -122.43,
+       "se": 0.47,
+       "sigma": 3.99,
+       "step": -232.9,
+       "contrast": 9.4
+      },
+      "S2C_B08": {
+       "s0": -126.05,
+       "se": 0.16,
+       "sigma": 6.35,
+       "step": -730.5,
+       "contrast": 40.4
+      },
+      "UMBRA": {
+       "s0": -128.56,
+       "se": 0.13,
+       "sigma": 3.39,
+       "step": -9.7,
+       "contrast": 30.3
+      }
+     }
+    },
+    {
+     "edge": "N end: blast pad -> runway",
+     "end": "N",
+     "offset_from_end_m": 0.0,
+     "s": -11.23,
+     "s2_per_scene": {
+      "S2B": -12.13,
+      "S2C": -10.34
+     },
+     "s2_band_sd": 1.79,
+     "umbra": null,
+     "implied_end_s": -11.23,
+     "fits": {
+      "S2B_B02": {
+       "s0": -10.58,
+       "se": 0.75,
+       "sigma": 11.71,
+       "step": 911.9,
+       "contrast": 23.3
+      },
+      "S2B_B03": {
+       "s0": -11.91,
+       "se": 0.59,
+       "sigma": 12.4,
+       "step": 1234.7,
+       "contrast": 37.0
+      },
+      "S2B_B04": {
+       "s0": -12.36,
+       "se": 0.45,
+       "sigma": 12.03,
+       "step": 1409.1,
+       "contrast": 47.3
+      },
+      "S2B_B08": {
+       "s0": -14.73,
+       "se": 0.53,
+       "sigma": 12.34,
+       "step": 1536.2,
+       "contrast": 53.8
+      },
+      "S2C_B02": {
+       "s0": -8.63,
+       "se": 0.78,
+       "sigma": 12.58,
+       "step": 1020.2,
+       "contrast": 22.4
+      },
+      "S2C_B03": {
+       "s0": -9.38,
+       "se": 0.35,
+       "sigma": 11.5,
+       "step": 1254.3,
+       "contrast": 43.6
+      },
+      "S2C_B04": {
+       "s0": -11.29,
+       "se": 0.39,
+       "sigma": 11.52,
+       "step": 1380.0,
+       "contrast": 45.2
+      },
+      "S2C_B08": {
+       "s0": -12.41,
+       "se": 0.42,
+       "sigma": 11.58,
+       "step": 1492.8,
+       "contrast": 47.6
+      }
+     }
+    },
+    {
+     "edge": "S end: runway -> blast pad",
+     "end": "S",
+     "offset_from_end_m": 0.0,
+     "s": 3294.89,
+     "s2_per_scene": {},
+     "s2_band_sd": null,
+     "umbra": 3294.89,
+     "implied_end_s": 3294.89,
+     "fits": {
+      "UMBRA": {
+       "s0": 3294.89,
+       "se": 0.15,
+       "sigma": 0.87,
+       "step": 1.4,
+       "contrast": 12.6
+      }
+     }
+    },
+    {
+     "edge": "S blast pad outer edge (+120 m)",
+     "end": "S",
+     "offset_from_end_m": 120.0,
+     "s": 3412.76,
+     "s2_per_scene": {
+      "S2B": 3414.2,
+      "S2C": 3413.52
+     },
+     "s2_band_sd": 5.26,
+     "umbra": 3411.67,
+     "implied_end_s": 3292.76,
+     "fits": {
+      "S2B_B02": {
+       "s0": 3412.51,
+       "se": 0.25,
+       "sigma": 6.84,
+       "step": -672.1,
+       "contrast": 29.8
+      },
+      "S2B_B03": {
+       "s0": 3414.2,
+       "se": 0.14,
+       "sigma": 6.95,
+       "step": -596.0,
+       "contrast": 56.5
+      },
+      "S2B_B04": {
+       "s0": 3415.8,
+       "se": 0.26,
+       "sigma": 7.22,
+       "step": -463.2,
+       "contrast": 35.6
+      },
+      "S2C_B02": {
+       "s0": 3412.66,
+       "se": 0.33,
+       "sigma": 6.88,
+       "step": -663.2,
+       "contrast": 22.3
+      },
+      "S2C_B03": {
+       "s0": 3414.39,
+       "se": 0.3,
+       "sigma": 6.73,
+       "step": -605.3,
+       "contrast": 25.2
+      },
+      "S2C_B04": {
+       "s0": 3416.86,
+       "se": 0.52,
+       "sigma": 6.29,
+       "step": -388.7,
+       "contrast": 15.3
+      },
+      "S2C_B08": {
+       "s0": 3399.95,
+       "se": 0.26,
+       "sigma": 7.64,
+       "step": 274.1,
+       "contrast": 28.0
+      },
+      "UMBRA": {
+       "s0": 3411.67,
+       "se": 0.06,
+       "sigma": 0.8,
+       "step": 8.6,
+       "contrast": 29.2
+      }
+     }
+    }
+   ],
+   "north_end_s_m": -8.79,
+   "north_end_spread_m": 4.89,
+   "south_end_s_m": 3293.82,
+   "south_end_spread_m": 2.13,
+   "measured_length_m": 3302.61,
+   "aip_length_m": 3300.0,
+   "measured_minus_aip_m": 2.61,
+   "centred_alternative": {
+    "rule": "AIP length centred on the midpoint of the two measured ends",
+    "north_end_s_m": -7.48,
+    "south_end_s_m": 3292.52
+   },
+   "placed_rule": "north end: mean of the two measured north ends on the mean runway axis (AIP: \"their north ends aligned\"); south end = north end + AIP length [inf]",
+   "placed_north_end_s_m": -8.55,
+   "placed_south_end_s_m": 3291.45,
+   "placed_minus_osm_north_m": 8.55,
+   "placed_minus_osm_south_m": 9.37,
+   "placed_minus_measured_north_m": 0.24,
+   "placed_minus_measured_south_m": -2.37
+  }
+ },
+ "north_end_alignment": {
+  "note": "along-track difference (west minus east, + = west end further south) of the north ends, on the mean axis",
+  "osm_nodes_m": -0.4,
+  "measured_m": -0.49,
+  "placed_m": -0.01,
+  "centreline_separation_m": 366.07,
+  "aip": "AIP (mirror) AD 2.12 remarks: \"The distance between RCL18R/36L and RCL18L/36R is 365m, and their north ends aligned.\""
+ },
+ "attribution": "Contains modified Copernicus Sentinel data 2026; Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified; (c) OpenStreetMap contributors (ODbL 1.0); AIP China AD 2 ZSSS (CAAC) via an unofficial mirror, EFF 2026-07-08: the runway lengths and the separation quote are short cited facts, not covered by ODbL",
+ "licence": "measurements derived from OSM: ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); Sentinel-2: Copernicus Sentinel data legal notice; Umbra: CC BY 4.0; AIP values: see attribution"
+}

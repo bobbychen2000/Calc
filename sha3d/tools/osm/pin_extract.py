@@ -11,30 +11,32 @@ Steps
 2. Extent = convex hull of aerodrome relation 21913346 + 1 km (tools/osm/extent.py), 23.5 km2.
 3. Sensitive-feature filter (tools/law/osm_sensitive.py): a tagged element that matches is dropped, and so are
    (a) untagged ways / nodes used only by dropped elements, (b) every feature ON / WITHIN 10 m of a dropped area: its
-   whole geometry lies inside the dropped areas buffered by SENS_BUFFER_M = 10 m (world metres, tools/common/frame.py;
-   e.g. buildings, walls and internal roads of a compound), and (c) every feature ALONG a dropped area: at least
-   ALONG_MIN_M = 25 m of its line (or polygon outline) runs within 10 m of a dropped outline (e.g. a perimeter wall
-   that continues outside, an adjacent landuse polygon sharing the edge, an admin boundary way). Exception to (c)
-   only: public lines that merely pass along (highway=* with a name or of a public road class, railway=*,
-   waterway=*) and the aerodrome boundary (aeroway=aerodrome). QA C1 H1
-   (docs/phase1/qa_data.md): the earlier rule (representative point strictly inside AND geometry inside a 1 cm buffer)
-   kept a perimeter wall.
-   Dropped LINES (e.g. military-usage railways) count as sensitive geometry too (re-verify N1,
-   docs/phase1/reverify_data.md; fix round 2 in qa_data.md):
+   whole geometry lies inside the dropped areas buffered by SENS_BUFFER_M = 10 m (world metres, tools/common/frame.py),
+   and (c) every feature ALONG a dropped area: at least ALONG_MIN_M = 25 m of its line (or polygon outline) runs
+   within 10 m of a dropped outline. Exempt from (c) only: public lines that merely pass along (highway=* with a name
+   or of a public road class, railway=*, waterway=*) and the aerodrome boundary (aeroway=aerodrome). QA C1 H1
+   (docs/phase1/qa_data.md): the earlier rule (representative point strictly inside AND geometry inside a 1 cm
+   buffer) was too narrow.
+   Dropped LINES count as sensitive geometry too (re-verify N1, docs/phase1/reverify_data.md; fix round 2 in
+   qa_data.md):
    (d) line ON / ALONG: a feature whose whole geometry lies within 10 m of a dropped line (not public roads,
        waterways, passenger railways), or of which >= ALONG_MIN_M of line / outline runs within 10 m of a dropped
-       line AND parallel to it (local direction within ALONG_ANG_DEG = 30 deg, so that a road crossing the line at
-       a point does not count). Public roads are not exempt here: a road that runs along a dropped line is dropped.
-       Exempt: waterways, the aerodrome boundary and passenger railway lines (no service=*, passenger usage).
-   (e) railway points: every node with a railway=* tag (level crossing, crossing, buffer stop, switch, ...) within
-       RAIL_POINT_M = 30 m of any dropped feature, and every railway point that is a vertex of a dropped railway way
-       and of no kept railway way; any other tagged node within 2 m of a dropped line.
+       line AND parallel to it (local direction within ALONG_ANG_DEG = 30 deg, so that a crossing does not count).
+       Public roads are not exempt here. Exempt: waterways, the aerodrome boundary and passenger railway lines (no
+       service=*, passenger usage).
+   (e) railway points: every node with a railway=* tag within RAIL_POINT_M = 30 m of any dropped feature, and every
+       railway point that is a vertex of a dropped railway way and of no kept railway way; any other tagged node
+       within 2 m of a dropped line.
    (f) non-passenger railway (service=*, a non-passenger usage, or a disused / abandoned / other non-passenger
        railway value) within RAIL_WAY_M = 100 m of a dropped line or area, and every non-passenger railway way
        connected to one of those through spur / yard / industrial / disused track. Main / high-speed / metro lines and
        the station tracks (sidings, crossovers) away from dropped features are kept.
-   Only counts per class are written; ids, names and positions of dropped elements appear in no output file, and
-   osm_elements.json lists no node that belongs only to dropped features.
+   (g) crossing vertices (re-verify 2 R2 / R3, fix round 3 in qa_data.md): a kept way keeps the vertices it shares
+       with a dropped line, a dropped railway way (any rule) or a dropped tagged node only where they are its end
+       point; every other such vertex is removed from the kept geometry (the way is kept, its other vertices are
+       unchanged) and its node id is not listed in osm_elements.json. Counted under vertices_removed.
+   Only counts per class and per rule are written; ids, names and positions of dropped elements appear in no output
+   file, and osm_elements.json lists no node that belongs only to dropped features and no rule (g) vertex.
 4. Geometry: tagged nodes -> Point; ways -> LineString, or Polygon for closed area ways (area rule below);
    multipolygon relations -> (Multi)Polygon (outer rings minus inner rings, from the member ways); other relations
    (routes, sites, ...) -> geometry null with their member list (members filtered to kept elements).
@@ -113,7 +115,7 @@ def line_exempt(tags):
 
 def parallel_len(line, dls, band_geom, ang_deg, step=1.0):
     """length of `line` (world metres) inside `band_geom` (the dropped lines `dls` buffered) and within `ang_deg` of
-    the local direction of the nearest dropped line (a road crossing the line at a point does not count)"""
+    the local direction of the nearest dropped line (a crossing at a point does not count)"""
     near = line.intersection(band_geom)
     if near.is_empty:
         return 0.0
@@ -390,22 +392,74 @@ def main(raw, out):
             (rail_nodes_kept if dec[0] == 'ok' else rail_nodes_dropped if dec[0] == 'drop' else set()).update(
                 W[i]['nds'])
 
+    node_dec = {}
     for i, n in N.items():
         if n['tags'] and ('node', i) not in drop_reason:
             dec = prepare(n, Point(n['lon'], n['lat']))
             if dec[0] == 'ok' and 'railway' in n['tags'] and i in rail_nodes_dropped and i not in rail_nodes_kept:
                 dec = ('drop', 'railway_point_of_dropped_railway', None)
-            emit('node', i, n, dec)
+            node_dec[i] = dec
+
+    # rule (g): crossing vertices. Trace nodes = nodes of dropped lines (tag rule), of dropped railway ways (any rule)
+    # and dropped tagged nodes (any rule). A kept way (tagged, or an untagged member of a kept multipolygon) loses every
+    # trace node that is not its end point (an end joins the network and is kept).
+    trace_nodes = set(rail_nodes_dropped)
+    for (typ, i), why in drop_reason.items():
+        if typ == 'way' and not why.endswith('_member') and not (W[i]['nds'][0] == W[i]['nds'][-1]):
+            trace_nodes.update(W[i]['nds'])
+        elif typ == 'node':
+            trace_nodes.add(i)
+    trace_nodes.update(i for i, dec in node_dec.items() if dec[0] == 'drop')
+    strip = {}                             # kept way id -> node ids removed from its geometry
+    for i, w in W.items():
+        if ('way', i) in drop_reason or (i in way_dec and way_dec[i][0] == 'drop'):
+            continue
+        nds = w['nds']
+        s = {n for k, n in enumerate(nds) if n in trace_nodes and 0 < k < len(nds) - 1 and n not in (nds[0], nds[-1])}
+        if s:
+            strip[i] = s
+
+    def way_line_kept(w):
+        s = strip.get(w)
+        if not s:
+            return way_line(w)
+        return [(N[n]['lon'], N[n]['lat']) for n in W[w]['nds'] if n in N and n not in s]
+
+    def way_nodes_kept(w):
+        s = strip.get(w)
+        return [n for n in W[w]['nds'] if not s or n not in s]
+
+    for i in sorted(strip):
+        if i not in way_dec:
+            continue                         # untagged member way: only its multipolygon geometry changes
+        pts = way_line_kept(i)
+        if len(pts) < 2:
+            way_dec[i] = ('empty', None, None)
+            counts['way_left_without_geometry'] += 1
+            continue
+        closed = W[i]['nds'][0] == W[i]['nds'][-1] and len(pts) >= 4
+        if is_area(W[i]['tags'], closed):
+            g = Polygon(pts)
+            if not g.is_valid:
+                g = g.buffer(0)
+        else:
+            g = LineString(pts)
+        way_dec[i] = prepare(W[i], g)
+    removed = set()                          # (way, node) pairs actually removed from emitted geometry
+
+    for i, n in N.items():
+        if i in node_dec:
+            emit('node', i, n, node_dec[i])
     for i, w in W.items():
         if i in way_dec and emit('way', i, w, way_dec[i]):
-            for n in w['nds']:
-                kept['node'].add(n)
+            kept['node'].update(way_nodes_kept(i))
+            removed.update((i, n) for n in strip.get(i, ()))
     # multipolygons; untagged member ways of kept multipolygons are kept as elements (no own feature)
     for i, r in R.items():
         if ('relation', i) in drop_reason or not r['tags']:
             continue
         if r['tags'].get('type') in ('multipolygon',):
-            g = mp_geometry(r, W, N, way_line)
+            g = mp_geometry(r, W, N, way_line_kept)
             if g is None:
                 counts['multipolygon_incomplete'] += 1
                 continue
@@ -413,7 +467,8 @@ def main(raw, out):
                 for t, ref, role in r['members']:
                     if t == 'way' and ref in W and ('way', ref) not in drop_reason:
                         kept['way'].add(ref)
-                        kept['node'].update(W[ref]['nds'])
+                        kept['node'].update(way_nodes_kept(ref))
+                        removed.update((ref, n) for n in strip.get(ref, ()))
     for i, r in R.items():
         if ('relation', i) in drop_reason or not r['tags'] or r['tags'].get('type') == 'multipolygon':
             continue
@@ -430,11 +485,18 @@ def main(raw, out):
     # tagged node, a vertex of a kept way (incl. kept multipolygon member ways) or a node member of a kept relation
     owners = {f['properties']['@id'] for f in feats if f['properties']['@type'] == 'node'}
     for wid in kept['way']:
-        owners.update(W[wid]['nds'])
+        owners.update(way_nodes_kept(wid))
     for rid in kept['relation']:
         owners.update(ref for t, ref, role in R[rid]['members'] if t == 'node')
     orphans = kept['node'] - owners
     assert not orphans, 'listed nodes without a kept owner: %d' % len(orphans)
+    # rule (g): no listed node is a trace node, unless it is the end point of a kept way
+    ends = set()
+    for wid in kept['way']:
+        ends.update((W[wid]['nds'][0], W[wid]['nds'][-1]))
+    listed_trace = (kept['node'] & trace_nodes) - ends
+    assert not listed_trace, 'listed rule (g) vertices: %d' % len(listed_trace)
+    vertices_removed = {'crossing_vertex': len(removed)}
 
     fc = {'type': 'FeatureCollection',
           'name': 'zsss_osm_pinned',
@@ -445,7 +507,9 @@ def main(raw, out):
                    'SOURCES.json), sensitive features removed (military, armed police, police, prison, GNSS), together with '
                    'every feature on, within %g m of, or running >= %g m along a dropped area or line, railway '
                    'points within %g m of a dropped feature and non-passenger railway within %g m of a dropped line '
-                   'or area (counts only, in pin_summary.json), clipped to the extent. Database: ODbL 1.0.'
+                   'or area; kept ways keep no vertex they shared with a dropped line, railway way or tagged node '
+                   'except their end points (counts only, in pin_summary.json), clipped to the extent. Database: '
+                   'ODbL 1.0.'
                    % (SENS_BUFFER_M, ALONG_MIN_M, RAIL_POINT_M, RAIL_WAY_M)),
           'features': feats}
     with open(os.path.join(out, 'zsss_osm_pinned.geojson'), 'w') as f:
@@ -498,11 +562,15 @@ def main(raw, out):
                                                   'non-passenger usage, disused, ...) within %g m of a dropped line or '
                                                   'area' % RAIL_WAY_M,
             'non_passenger_railway_connected': 'non-passenger railway way connected to a dropped one through spur / '
-                                               'yard / industrial / disused track (not station sidings or crossovers)'},
+                                               'yard / industrial / disused track (not station sidings or crossovers)',
+            'crossing_vertex': 'vertex that a kept way shares with a dropped line, a dropped railway way or a dropped '
+                               'tagged node, other than its end point: removed from the kept geometry and not listed '
+                               'in osm_elements.json (the way is kept)'},
+        'vertices_removed': vertices_removed,
         'osm_elements_check': {'listed_nodes_without_kept_owner': 0,
+                               'listed_crossing_vertices': len(listed_trace),
                                'note': 'every listed node is a kept tagged node, a vertex of a kept way or a member of '
-                                       'a kept relation; kept roads keep their vertex where they cross a dropped line '
-                                       '(a crossing point; no kept road runs along one)'},
+                                       'a kept relation (counts only)'},
         'origin_nodes_check': {str(i): [N[i]['lat'], N[i]['lon'], N[i]['version']] for i in (3336195147, 13556389849)
                                if i in N},
     }

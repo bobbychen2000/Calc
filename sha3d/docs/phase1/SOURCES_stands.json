@@ -1,0 +1,118 @@
+{
+ "topic": "docs/phase1 stand, jet-bridge and taxi-graph images (task A2; added in fix round 1 of QA C1, finding L1)",
+ "date": "2026-11-14",
+ "images": {
+  "bridges_sar_t1_north.jpg": {
+   "what": "contact sheet of stand-aligned Umbra SAR crops (nose up, 100 x 90 m) at the t1_north stands, with the OSM stop, the L1 door zone, the OSM gate node and the corridor score",
+   "generator": "tools/airport/stand_sar.py",
+   "attribution": [
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified",
+    "(c) OpenStreetMap contributors (ODbL 1.0)"
+   ],
+   "licence": "CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/; OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 170314,
+   "sha256": "07a35339bbcf811c9d4f0bee361a8360454bd0a85db93435099e4ecbb0786d7d"
+  },
+  "bridges_sar_t1_west.jpg": {
+   "what": "contact sheet of stand-aligned Umbra SAR crops (nose up, 100 x 90 m) at the t1_west stands, with the OSM stop, the L1 door zone, the OSM gate node and the corridor score",
+   "generator": "tools/airport/stand_sar.py",
+   "attribution": [
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified",
+    "(c) OpenStreetMap contributors (ODbL 1.0)"
+   ],
+   "licence": "CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/; OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 196208,
+   "sha256": "8b421a2b8e9962ff11de97ce7c26f82f4df7b9b95b70e8bdd1ba05f2b7e6b9bc"
+  },
+  "bridges_sar_t2_north.jpg": {
+   "what": "contact sheet of stand-aligned Umbra SAR crops (nose up, 100 x 90 m) at the t2_north stands, with the OSM stop, the L1 door zone, the OSM gate node and the corridor score",
+   "generator": "tools/airport/stand_sar.py",
+   "attribution": [
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified",
+    "(c) OpenStreetMap contributors (ODbL 1.0)"
+   ],
+   "licence": "CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/; OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 385156,
+   "sha256": "2045bd3b6b5f69b3823187eeea56c00e2f7ca5e3d30d98fb424f6989d5c94a96"
+  },
+  "bridges_sar_t2_middle_n.jpg": {
+   "what": "contact sheet of stand-aligned Umbra SAR crops (nose up, 100 x 90 m) at the t2_middle_n stands, with the OSM stop, the L1 door zone, the OSM gate node and the corridor score",
+   "generator": "tools/airport/stand_sar.py",
+   "attribution": [
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified",
+    "(c) OpenStreetMap contributors (ODbL 1.0)"
+   ],
+   "licence": "CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/; OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 345119,
+   "sha256": "3301af55d0c8641948d07545c2bff2565e412adabf9bb1d243adfc05f11cfa4f"
+  },
+  "bridges_sar_t2_west.jpg": {
+   "what": "contact sheet of stand-aligned Umbra SAR crops (nose up, 100 x 90 m) at the t2_west stands, with the OSM stop, the L1 door zone, the OSM gate node and the corridor score",
+   "generator": "tools/airport/stand_sar.py",
+   "attribution": [
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified",
+    "(c) OpenStreetMap contributors (ODbL 1.0)"
+   ],
+   "licence": "CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/; OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 141750,
+   "sha256": "99c5a7c4fcf8d414db4cfe7fe91ba88cb51bfc71e78ab4198c9c403b98ad96b6"
+  },
+  "bridges_sar_t2_middle_s.jpg": {
+   "what": "contact sheet of stand-aligned Umbra SAR crops (nose up, 100 x 90 m) at the t2_middle_s stands, with the OSM stop, the L1 door zone, the OSM gate node and the corridor score",
+   "generator": "tools/airport/stand_sar.py",
+   "attribution": [
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified",
+    "(c) OpenStreetMap contributors (ODbL 1.0)"
+   ],
+   "licence": "CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/; OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 339513,
+   "sha256": "67fd268e738224f98004c1cea32507cd9a7d9d2dcd7fd5494057e11660434003"
+  },
+  "bridges_sar_t2_south.jpg": {
+   "what": "contact sheet of stand-aligned Umbra SAR crops (nose up, 100 x 90 m) at the t2_south stands, with the OSM stop, the L1 door zone, the OSM gate node and the corridor score",
+   "generator": "tools/airport/stand_sar.py",
+   "attribution": [
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified",
+    "(c) OpenStreetMap contributors (ODbL 1.0)"
+   ],
+   "licence": "CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/; OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 366573,
+   "sha256": "ce679d381e684c1ba612d49ec3f84f231f470da23c62cfb31b632f54ca9c50bf"
+  },
+  "stands_overlay.jpg": {
+   "what": "all stands over Sentinel-2 2026-10-14 (class planforms, lead-ins) and three Umbra SAR zooms with names, classes, bridges and push paths",
+   "generator": "tools/airport/stands_plates.py",
+   "attribution": [
+    "Contains modified Copernicus Sentinel data 2026",
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified",
+    "(c) OpenStreetMap contributors (ODbL 1.0)"
+   ],
+   "licence": "Copernicus Sentinel data legal notice (free reproduction / distribution with the notice); CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/; OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 846117,
+   "sha256": "049602ac9026f3e30f958a7937b1fc54e84ae47aed349039f8bde4898d1efb6f"
+  },
+  "stands_s2_evidence.png": {
+   "what": "Sentinel-2 parked-aircraft evidence: wide-body fits vs spacing, occupancy, template histogram, example excess images",
+   "generator": "tools/airport/stands_plates.py",
+   "attribution": [
+    "Contains modified Copernicus Sentinel data 2023-2026"
+   ],
+   "licence": "Copernicus Sentinel data legal notice (free reproduction / distribution with the notice)",
+   "bytes": 167465,
+   "sha256": "5fcd3613953ed3bf4694308e4231c220e8f179637d827e86acd9aff665e62f83"
+  },
+  "taxigraph.png": {
+   "what": "the taxi graph by kind and use (rapid exits, one-way links, own lead-ins, apron lanes, push paths, holds) over a dimmed Sentinel-2 image",
+   "generator": "tools/airport/stands_plates.py",
+   "attribution": [
+    "Contains modified Copernicus Sentinel data 2026",
+    "(c) OpenStreetMap contributors (ODbL 1.0)",
+    "AIP China AD 2 ZSSS (CAAC) via an unofficial mirror, EFF 2026-07-08: short cited facts, not covered by ODbL"
+   ],
+   "licence": "Copernicus Sentinel data legal notice (free reproduction / distribution with the notice); OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 2409200,
+   "sha256": "33b6bbca5dbc7704f0272dc40192dbeae3ee201a39d6a15df3b602cc3066c889"
+  }
+ },
+ "note": "images show no imagery outside the detailed extent (QA C1 M8); attribution is also printed on each image"
+}

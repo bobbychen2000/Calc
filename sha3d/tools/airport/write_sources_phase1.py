@@ -1,0 +1,197 @@
+"""Write the SOURCES files of the Phase 1 images: docs/phase1/SOURCES_airport.json, SOURCES_stands.json (QA C1 L1) and,
+new in fix round 2 (re-verify N4), SOURCES_qa.json (the 8 QA C1 plates in docs/phase1/qa/) and SOURCES_research.json
+(the other docs/phase1 images of tasks B1, B3 and C2 that no SOURCES file listed): generator, attribution, licence,
+bytes and sha256 per image. Every image in docs/phase1/ (and qa/) is listed in exactly one docs/phase1/SOURCES_*.json
+(checked at the end; SOURCES_sim.json is task B2's, and since fix round 3, re-verify 2 R5, this script adds bytes and
+sha256 to its image entries). Also brings the Umbra attribution in data/SOURCES_airport.json and data/SOURCES_stands.json
+to the CC BY 4.0 form (QA C1 L2) and adds the fix-round notes.
+
+usage: python3 -I sha3d/tools/airport/write_sources_phase1.py SHA3D_DIR
+"""
+import hashlib
+import json
+import os
+import sys
+
+ROOT = sys.argv[1]
+D1 = os.path.join(ROOT, 'docs/phase1')
+S2 = 'Contains modified Copernicus Sentinel data 2026'
+S2S = 'Contains modified Copernicus Sentinel data 2023-2026'
+UMB = 'Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified'
+OSM = '(c) OpenStreetMap contributors (ODbL 1.0)'
+AIP = 'AIP China AD 2 ZSSS (CAAC) via an unofficial mirror, EFF 2026-07-08: short cited facts, not covered by ODbL'
+LIC_S2 = 'Copernicus Sentinel data legal notice (free reproduction / distribution with the notice)'
+LIC_UMB = 'CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/'
+LIC_OSM = 'OSM ODbL 1.0 (produced work: attribution)'
+DEM = ('produced using Copernicus WorldDEM-30 (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH 2014-2018 '
+       'provided under COPERNICUS by the European Union and ESA; all rights reserved')
+LIC_DEM = 'Copernicus DEM GLO-30 licence (refs/cache/dem/SOURCES.json): free use with the attribution above'
+ADSB = 'Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0'
+LIC_ADSB = 'ODbL 1.0 (produced work from the adsb.lol globe_history database: attribution)'
+VRS = 'routes: Virtual Radar Server standing data (CC0 1.0)'
+
+
+def entry(f, what, gen, attr, lic):
+    p = os.path.join(D1, f)
+    b = open(p, 'rb').read()
+    return f, {'what': what, 'generator': gen, 'attribution': attr, 'licence': '; '.join(lic),
+               'bytes': len(b), 'sha256': hashlib.sha256(b).hexdigest()}
+
+
+airport = [
+    entry('airport_overlay.jpg', 'data/sha_airport.json over Sentinel-2 L2A TCI (S2B 2026-10-14, cut to the detailed '
+          'extent), extent + zooms', 'tools/airport/overlay.py', [S2, OSM, AIP], [LIC_S2, LIC_OSM]),
+    entry('airport_overlay_umbra.jpg', 'data/sha_airport.json over the Umbra SAR GEC overview (2024-06-02), masked to '
+          'the extent, extent + zooms', 'tools/airport/overlay.py', [UMB, OSM, AIP], [LIC_UMB, LIC_OSM]),
+    entry('airport_rwy_ends.png', 'along-track runway profiles (S2 two scenes, Umbra) with the fitted edges and placed '
+          'ends', 'tools/airport/rwy_ends.py', [S2, UMB], [LIC_S2, LIC_UMB]),
+    entry('airport_twy_refit.png', 'taxiway run offsets (S2B vs S2C / Umbra) and S2 pavement widths',
+          'tools/airport/twy_refit.py', [S2, OSM], [LIC_S2, LIC_OSM]),
+    entry('airport_twy_checks.jpg', 'close-ups of the taxiway re-fit decisions (D not moved; A2, A1, H2, H7, N, an '
+          'unnamed taxiway moved, with 40 m junction tapers; BN not moved since fix round 2: Umbra veto) on S2 and '
+          'Umbra', 'tools/airport/twy_check_plate.py', [S2, UMB, OSM],
+          [LIC_S2, LIC_UMB, LIC_OSM]),
+]
+stands = [entry('bridges_sar_%s.jpg' % g, 'contact sheet of stand-aligned Umbra SAR crops (nose up, 100 x 90 m) at the '
+                '%s stands, with the OSM stop, the L1 door zone, the OSM gate node and the corridor score' % g,
+                'tools/airport/stand_sar.py', [UMB, OSM], [LIC_UMB, LIC_OSM])
+          for g in ('t1_north', 't1_west', 't2_north', 't2_middle_n', 't2_west', 't2_middle_s', 't2_south')]
+stands += [
+    entry('stands_overlay.jpg', 'all stands over Sentinel-2 2026-10-14 (class planforms, lead-ins) and three Umbra SAR '
+          'zooms with names, classes, bridges and push paths', 'tools/airport/stands_plates.py', [S2, UMB, OSM],
+          [LIC_S2, LIC_UMB, LIC_OSM]),
+    entry('stands_s2_evidence.png', 'Sentinel-2 parked-aircraft evidence: wide-body fits vs spacing, occupancy, template '
+          'histogram, example excess images', 'tools/airport/stands_plates.py', [S2S], [LIC_S2]),
+    entry('taxigraph.png', 'the taxi graph by kind and use (rapid exits, one-way links, own lead-ins, apron lanes, push '
+          'paths, holds) over a dimmed Sentinel-2 image', 'tools/airport/stands_plates.py', [S2, OSM, AIP],
+          [LIC_S2, LIC_OSM]),
+]
+QAG = 'tools/verify/qa_c1/%s (QA C1; copy the folder to a scratch directory and run with python3 -I)'
+QAN = ('QA C1 plate (docs/phase1/qa_data.md): a record of the state QA C1 checked before fix round 1; not regenerated by '
+       'the data chain')
+qa = [
+    entry('qa/qa_rwy_profiles.png', 'along-track profiles at the four runway ends (S2 two scenes, Umbra), QA step fits',
+          QAG % 'rwy_qa.py', [S2, UMB, OSM], [LIC_S2, LIC_UMB, LIC_OSM]),
+    entry('qa/qa_rwy_ends.jpg', 'S2 and Umbra crops of the four runway ends with the placed ends, DTHRs and blast pads',
+          QAG % 'rwy_crops.py', [S2, UMB, OSM, AIP], [LIC_S2, LIC_UMB, LIC_OSM]),
+    entry('qa/qa_twy_offsets.jpg', 'data vs pinned OSM taxiway centrelines on S2 and Umbra (A1, A2, T1, T6, B, H4)',
+          QAG % 'twy_crops.py', [S2, UMB, OSM], [LIC_S2, LIC_UMB, LIC_OSM]),
+    entry('qa/qa_bridges_t1.jpg', 'T1 north-up full-resolution Umbra SAR with the bridge records',
+          QAG % 'bridge_zoom.py', [UMB, OSM], [LIC_UMB, LIC_OSM]),
+    entry('qa/qa_bridges_t2_northface.jpg', 'full-resolution Umbra SAR at stands 226-231 with the bridge records',
+          QAG % 'bridge_zoom.py', [UMB, OSM], [LIC_UMB, LIC_OSM]),
+    entry('qa/qa_bridges_absent_check.jpg', 'full-resolution Umbra SAR at stands 112, 276, 277, 239, 258, 110',
+          QAG % 'bridge_zoom.py', [UMB, OSM], [LIC_UMB, LIC_OSM]),
+    entry('qa/qa_apron4_classes_push.jpg', 'west remote apron: class-max planform overlaps and push links on S2 and Umbra',
+          QAG % 'apron4_fig.py', [S2, UMB, OSM], [LIC_S2, LIC_UMB, LIC_OSM]),
+    entry('qa/qa_taxigraph_routes.jpg', 'QA route examples on the taxi graph over Sentinel-2 (the reversal example and '
+          'the 608 lead-in route)', QAG % 'route_fig.py', [S2, OSM], [LIC_S2, LIC_OSM]),
+]
+for f, e in qa:
+    e['note'] = QAN
+research = [
+    entry('observed_elsewhere.png', 'task B1: SHA movements identified from open ADS-B outside the coverage gap '
+          '(aggregates only: counts, shares, hourly profile; no per-flight data)', 'tools/adsb/report_observed_elsewhere.py',
+          [ADSB, VRS, 'airports: OurAirports (public domain)'],
+          [LIC_ADSB, 'VRS standing data CC0 1.0', 'OurAirports public domain']),
+    entry('photos_contact_sheet.jpg', 'task B3: contact sheet of 23 Wikimedia Commons photos (scaled down, whole frame, '
+          'captions added); per-photo author, title, file page and licence in docs/phase1/photos_credits.md',
+          'tools/photos/contact_sheet.py', ['Wikimedia Commons authors as listed in docs/phase1/photos_credits.md'],
+          ['compilation CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/); each photo under its own '
+           'licence (CC BY 4.0, CC BY-SA 3.0 / 4.0, public domain) as listed in photos_credits.md']),
+    entry('heights_dsm.png', 'task B3: Copernicus GLO-30 DSM excess over the airport with the OSM building outlines',
+          'tools/standards/dem_building_heights.py', [DEM, OSM], [LIC_DEM, LIC_OSM]),
+    entry('heights_sar_layover.png', 'task B3: Umbra SAR layover profiles at building walls (heights from layover)',
+          'tools/standards/umbra_layover.py', [UMB, OSM], [LIC_UMB, LIC_OSM]),
+    entry('heights_umbra_crops.jpg', 'task B3: Umbra SAR crops of the target buildings with the shifted OSM footprints',
+          'tools/standards/umbra_crops.py', [UMB, OSM], [LIC_UMB, LIC_OSM]),
+    entry('standards_markings.png', 'task B3: our own drawing of the ZSSS markings, signs and lights from the MH 5001-2021 '
+          '(CAAC) parameters (the figures of the standard are not reproduced); runway data from the AIP mirror',
+          'tools/standards/draw_markings.py', ['our drawing; parameters from MH 5001-2021 (CAAC), cited as short facts',
+                                               AIP], ['own work (no third-party image content)']),
+    entry('verify_research.png', 'task C2: summary figure of the adversarial check of B1-B3 (aggregates only)',
+          'tools/verify/plot_verify.py', [ADSB, VRS, 'Airport Authority Hong Kong via DATA.GOV.HK',
+                                          'Taipei Songshan Airport, Taiwan Open Government Data License v1.0',
+                                          'Iowa Environmental Mesonet METAR archive, Iowa State University'],
+          [LIC_ADSB, 'VRS standing data CC0 1.0', 'DATA.GOV.HK terms of use', 'Taiwan OGDL v1.0', 'IEM (public domain)']),
+]
+NOTE_IMG = 'images show no imagery outside the detailed extent (QA C1 M8); attribution is also printed on each image'
+NOTE_RES = ('aggregates only (no per-flight data); attribution is also printed on each image or, for the photo sheet, '
+            'in docs/phase1/photos_credits.md')
+for name, items, topic, note in (
+        ('SOURCES_airport.json', airport, 'docs/phase1 airport images (task A1; fix rounds 1-2 of QA C1)', NOTE_IMG),
+        ('SOURCES_stands.json', stands, 'docs/phase1 stand, jet-bridge and taxi-graph images (task A2; added in fix round 1 '
+                                        'of QA C1, finding L1)', NOTE_IMG),
+        ('SOURCES_qa.json', qa, 'docs/phase1/qa: the 8 QA C1 plates (added in fix round 2, re-verify N4)', NOTE_IMG),
+        ('SOURCES_research.json', research, 'docs/phase1 images of tasks B1, B3 and C2 that no SOURCES file listed (added in '
+                                            'fix round 2, re-verify N4)', NOTE_RES)):
+    json.dump({'topic': topic, 'date': '2026-11-14', 'images': dict(items), 'note': note},
+              open(os.path.join(D1, name), 'w'), indent=1, ensure_ascii=False)
+# SOURCES_sim.json (task B2's format, 'files' keyed by file name): bytes and sha256 of every image entry (re-verify 2
+# R5, fix round 3); the other fields are left as task B2 wrote them
+p_sim = os.path.join(D1, 'SOURCES_sim.json')
+if os.path.exists(p_sim):
+    d_sim = json.load(open(p_sim, encoding='utf-8'))
+    for f, fe in d_sim.get('files', {}).items():
+        fp = os.path.join(D1, f)
+        if f.lower().endswith(('.png', '.jpg', '.jpeg', '.svg', '.gif')) and os.path.exists(fp):
+            b = open(fp, 'rb').read()
+            fe['bytes'] = len(b); fe['sha256'] = hashlib.sha256(b).hexdigest()
+    with open(p_sim, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(d_sim, indent=1, ensure_ascii=False) + '\n')
+# every image of docs/phase1 (and qa/) must be listed in exactly one docs/phase1/SOURCES_*.json
+imgs = sorted(os.path.relpath(os.path.join(r, f), D1) for r, _, fs in os.walk(D1) for f in fs
+              if f.lower().endswith(('.png', '.jpg', '.jpeg', '.svg', '.gif')))
+listed = {}
+for name in sorted(f for f in os.listdir(D1) if f.startswith('SOURCES') and f.endswith('.json')):
+    d = json.load(open(os.path.join(D1, name), encoding='utf-8'))
+    if 'images' in d:
+        keys = set(d['images'])
+    else:                                    # SOURCES_sim.json (task B2): 'files' keyed by file name
+        fl = d.get('files', {})
+        keys = set(fl) if isinstance(fl, dict) else {fe.get('file') for fe in fl if isinstance(fe, dict)}
+    for i in imgs:
+        if i in keys:
+            listed.setdefault(i, []).append(name)
+missing = [i for i in imgs if i not in listed]
+double = {i: v for i, v in listed.items() if len(v) > 1}
+assert not missing and not double, (missing, double)
+
+# data/SOURCES_*.json: Umbra attribution (CC BY 4.0 licence URL + "modified"), cut S2 crops, fix-round note
+for name in ('data/SOURCES_airport.json', 'data/SOURCES_stands.json'):
+    p = os.path.join(ROOT, name)
+    txt = open(p, encoding='utf-8').read()
+    for old in ('Umbra SAR Open Data, Umbra Lab Inc (CC BY 4.0)', 'Umbra Lab Inc, Umbra SAR Open Data (CC BY 4.0)'):
+        txt = txt.replace(old, UMB)
+    txt = txt.replace('AIP values are short cited facts (AIP mirror, OD3)',
+                      'aip_facts blocks / AIP (mirror) values are short cited facts, not covered by ODbL (OD3)')
+    d = json.loads(txt)
+    for fe in d.get('files', []):
+        fp = os.path.join(ROOT, 'data', fe['file'])
+        if os.path.exists(fp):
+            b = open(fp, 'rb').read()
+            fe['bytes'] = len(b); fe['sha256'] = hashlib.sha256(b).hexdigest()
+    if isinstance(d.get('tools'), list):
+        for t in ('tools/airport/write_sources_phase1.py', 'tools/verify/qa_c1/fix1/route_edge.py',
+                  'tools/common/umbra_reg.py', 'tools/verify/qa_c1/fix2/sens_n1.py'):
+            if t not in d['tools']:
+                d['tools'].append(t)
+    if 'files_info' in d:
+        d.setdefault('tools_fix_round_1', ['tools/geo/s2_cut_extent.py (Sentinel-2 crops cut to the extent)',
+                                           'tools/airport/write_sources_phase1.py (image SOURCES with sha256)'])
+    d['fix_round_2'] = ('2026-11-14, re-verify N1-N5 (docs/phase1/qa_data.md, Fix round 2): dropped lines treated as '
+                        'sensitive geometry in the pinned extract (railway points, non-passenger railway, features along '
+                        'them); taxiway re-fit with an Umbra veto (BN not moved) and 40 m junction tapers; the single '
+                        'Umbra registration +3.07 m E (tools/common/umbra_reg.py) in every data tool; attribution blocks '
+                        'in data/meas/*.json; image SOURCES for docs/phase1/qa and the B1 / B3 / C2 images')
+    d['fix_round_3'] = ('2026-11-14, re-verify 2 R1-R5 (docs/phase1/qa_data.md, Fix round 3): reports and SOURCES notes '
+                        'give counts per class and per rule only for the dropped features; pinned extract rule (g): kept '
+                        'ways keep no vertex shared with a dropped line, railway way or tagged node except their ends; '
+                        'bytes and sha256 for the images of docs/phase1/SOURCES_sim.json')
+    d['fix_round_1'] = ('2026-11-14, QA C1 (docs/phase1/qa_data.md): sensitive filter widened (H1), taxi graph routing '
+                        'rules + turn table (H2, M6), taxiway re-fit with the runway-band Umbra registration (M1), AIP '
+                        'values reduced to per-runway aip_facts blocks with their own notice and no per-stand AIP field '
+                        '(M2), bridges / classes / push-back reworked (M3-M5), provenance per record (M7), Sentinel-2 '
+                        'crops cut to the extent (M8), licences (L2), AIP probes to a local log (L5)')
+    json.dump(d, open(p, 'w'), indent=1, ensure_ascii=False)
+print('ok')

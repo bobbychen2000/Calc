@@ -1,0 +1,172 @@
+{
+ "topic": "osm_pinned",
+ "what": "Pinned OpenStreetMap extract of the SHA Live 3D detailed extent (convex hull of aerodrome relation 21913346 + 1 km buffer, 23.55 km2), sensitive features removed, clipped to the extent",
+ "source": "OpenStreetMap API 0.6: /relation/21913346/full, /map in 12 tiles over the extent bbox, and /relation/<id>/full for 3 multipolygons the tiles left incomplete",
+ "requests": [
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/relation/21913346/full",
+   "start_utc": "2026-11-14T04:52:29Z",
+   "end_utc": "2026-11-14T04:52:30Z",
+   "http": 200,
+   "bytes": 105368,
+   "sha256": "29934eca166727f07b8651c46d94b5815f5b88b7e158273c5f555eefe3579dc2"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.309800,31.165500,121.326067,31.181575",
+   "start_utc": "2026-11-14T04:52:48Z",
+   "end_utc": "2026-11-14T04:52:50Z",
+   "http": 200,
+   "bytes": 1566895,
+   "sha256": "df1b93b75802c4807df98cb361f184dc5cda8fca70655965cc1d3114ce5d6acd"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.309800,31.181575,121.326067,31.197650",
+   "start_utc": "2026-11-14T04:52:51Z",
+   "end_utc": "2026-11-14T04:52:52Z",
+   "http": 200,
+   "bytes": 2632611,
+   "sha256": "d7ac293ff589dc130b2c2d1a24b5c61d821cea16ed8e487d98991f1da6959c74"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.309800,31.197650,121.326067,31.213725",
+   "start_utc": "2026-11-14T04:52:54Z",
+   "end_utc": "2026-11-14T04:52:55Z",
+   "http": 200,
+   "bytes": 1650372,
+   "sha256": "ab283ddb6e2e1ba56ace5b8eb4633ce6bb18515374a7bbae6abe4c5c179990a6"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.309800,31.213725,121.326067,31.229800",
+   "start_utc": "2026-11-14T04:52:57Z",
+   "end_utc": "2026-11-14T04:52:58Z",
+   "http": 200,
+   "bytes": 950428,
+   "sha256": "1dfedeb66876827355534409f7588c79b875d0e9b1fc41f6183a31b085829a27"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.326067,31.165500,121.342333,31.181575",
+   "start_utc": "2026-11-14T04:52:59Z",
+   "end_utc": "2026-11-14T04:53:00Z",
+   "http": 200,
+   "bytes": 1379437,
+   "sha256": "a5c003e6725e5387cf84886b5c90ad9a334c2c4dbec9e455e7660ffb8bc54baa"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.326067,31.181575,121.342333,31.197650",
+   "start_utc": "2026-11-14T04:53:02Z",
+   "end_utc": "2026-11-14T04:53:03Z",
+   "http": 200,
+   "bytes": 1531743,
+   "sha256": "307bbc3795ac7965b1668e087f197a4dbbd56eecf1ff444670a5537f09f6e958"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.326067,31.197650,121.342333,31.213725",
+   "start_utc": "2026-11-14T04:53:04Z",
+   "end_utc": "2026-11-14T04:53:05Z",
+   "http": 200,
+   "bytes": 1268743,
+   "sha256": "d97fdc1339de3ebe3821834ea37a1e60ae6ef1bffe1cae833c7af29d6985d986"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.326067,31.213725,121.342333,31.229800",
+   "start_utc": "2026-11-14T04:53:07Z",
+   "end_utc": "2026-11-14T04:53:08Z",
+   "http": 200,
+   "bytes": 1151066,
+   "sha256": "669e3a51e56bcf1ebc15dd64128d8a9c5bd6e04423a8d384a7467d84d5f4750a"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.342333,31.165500,121.358600,31.181575",
+   "start_utc": "2026-11-14T04:53:10Z",
+   "end_utc": "2026-11-14T04:53:11Z",
+   "http": 200,
+   "bytes": 1333640,
+   "sha256": "fcd66253170cf0207fac96410b346efdd15451572cf4907c331dc223d39daafc"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.342333,31.181575,121.358600,31.197650",
+   "start_utc": "2026-11-14T04:53:12Z",
+   "end_utc": "2026-11-14T04:53:13Z",
+   "http": 200,
+   "bytes": 1880019,
+   "sha256": "e90f90144a2346baf344bbaf14217ab5721386cd3e8da35705a725ab6308a4aa"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.342333,31.197650,121.358600,31.213725",
+   "start_utc": "2026-11-14T04:53:15Z",
+   "end_utc": "2026-11-14T04:53:16Z",
+   "http": 200,
+   "bytes": 963772,
+   "sha256": "e5fdb7f0178feec759998e63e038d5cbaf674330b67ebcc3cd01c5d87371ba3d"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/map?bbox=121.342333,31.213725,121.358600,31.229800",
+   "start_utc": "2026-11-14T04:53:17Z",
+   "end_utc": "2026-11-14T04:53:19Z",
+   "http": 200,
+   "bytes": 2005298,
+   "sha256": "a02bfdb6915fda12e88edd36aa6f48aabfda48a94ba0f778a25b3d6a447ac6e1"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/relation/4763175/full",
+   "start_utc": "2026-11-14T04:55:43Z",
+   "end_utc": "2026-11-14T04:55:44Z",
+   "http": 200,
+   "bytes": 6306,
+   "sha256": "03bfedac61d2dc1cd0d52388b8354f535b14c8c942ceb6c7eb64db9622f0de64"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/relation/4763176/full",
+   "start_utc": "2026-11-14T04:55:45Z",
+   "end_utc": "2026-11-14T04:55:46Z",
+   "http": 200,
+   "bytes": 101071,
+   "sha256": "58bd4552d35dab7f1469702c221fa3312cd24a904343b4ac5016511359f99c32"
+  },
+  {
+   "url": "https://api.openstreetmap.org/api/0.6/relation/13771244/full",
+   "start_utc": "2026-11-14T04:55:48Z",
+   "end_utc": "2026-11-14T04:55:48Z",
+   "http": 200,
+   "bytes": 8857,
+   "sha256": "7f65380387bb5cdcdfe97501bb2bea476ad58b1f18b8b1400f97592c9d9c104b"
+  }
+ ],
+ "downloaded_utc": [
+  "2026-11-14T04:52:29Z",
+  "2026-11-14T04:55:48Z"
+ ],
+ "database_state": "as served by the API at the download times above; the newest element in the download is dated 2026-11-12T14:49:04Z. Every kept element is listed with its version in osm_elements.json.",
+ "date_checked": "2026-11-14",
+ "licence": "ODbL 1.0 (Open Database License), https://opendatacommons.org/licenses/odbl/1-0/",
+ "licence_quote": "API response header (every file): copyright=\"OpenStreetMap and contributors\" attribution=\"http://www.openstreetmap.org/copyright\" license=\"http://opendatacommons.org/licenses/odbl/1-0/\"",
+ "attribution": "(c) OpenStreetMap contributors, https://www.openstreetmap.org/copyright",
+ "odbl_notice": "This extract is a Derivative Database of OpenStreetMap: (c) OpenStreetMap contributors, made available under the Open Database License 1.0. Any derived database made from it must also be offered under the ODbL 1.0; produced works (renders, images) need the attribution above.",
+ "redistributable": "yes, under ODbL 1.0 with attribution (share-alike for derived databases)",
+ "filter_note": "Sensitive-feature filter applied before anything was written (docs/PLAN.md s.6b Q3 default; tag and name rule in tools/law/osm_sensitive.py: military, armed police, police incl. surveillance cameras, prison / detention, GNSS / geodetic stations). Dropped: 57 element(s), 27 by the tag rule and 30 by the second-order rules of tools/osm/pin_extract.py (on / along a dropped area or line, railway points, non-passenger railway); 13 vertex(es) that kept ways shared with dropped features removed (rule g). Counts per class and per rule, the rule definitions and which classes each rule exempts are in pin_summary.json (dropped_sensitive, vertices_removed, dropped_rules). No id, name, position, size or distance of a dropped feature is written in this directory or in any committed file; osm_elements.json lists no node that belongs only to dropped features. docs/phase1/qa_data.md.",
+ "clip_note": "every geometry clipped to extent_hull1km.geojson; property clipped=true where cut",
+ "generator": "tools/osm/fetch_osm.py (download) + tools/osm/pin_extract.py (merge, filter, clip; python3 -I)",
+ "commit": "meant to be committed (redistributable, filtered)",
+ "files": [
+  {
+   "file": "extent_hull1km.geojson",
+   "bytes": 8760,
+   "sha256": "8a93725f9462899f00806963587baf9cb4b446cc7f806c4636036b4820b158b8"
+  },
+  {
+   "file": "osm_elements.json",
+   "bytes": 439887,
+   "sha256": "2654b7871680582bf319b3aa487c5817b9d1585ba04826e1f2bc929d01fb1b91"
+  },
+  {
+   "file": "pin_summary.json",
+   "bytes": 3254,
+   "sha256": "03df018263f0025ab1a4190a314ac347eed74e41db8f91fc0854964ddcdd6b7d"
+  },
+  {
+   "file": "zsss_osm_pinned.geojson",
+   "bytes": 2344336,
+   "sha256": "dafa1bf420523120794af643a5bf77d65d8bf336bdbba109e0a9b13112c8cccb"
+  }
+ ]
+}

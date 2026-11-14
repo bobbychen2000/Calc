@@ -1,0 +1,51 @@
+{
+ "topic": "sha3d/data (task A1)",
+ "date": "2026-11-14",
+ "files_info": {
+  "sha_airport.json": {
+   "generator": "tools/airport/build_airport.py",
+   "licence": "ODbL 1.0 (Derivative Database of OpenStreetMap); contains measurements on modified Copernicus Sentinel data 2026 and Umbra SAR Open Data (CC BY 4.0); aip_facts blocks / AIP (mirror) values are short cited facts, not covered by ODbL (OD3)"
+  },
+  "sha_airport.js": {
+   "generator": "tools/airport/build_airport.py",
+   "licence": "as sha_airport.json"
+  },
+  "meas/rwy_ends.json": {
+   "generator": "tools/airport/rwy_ends.py",
+   "licence": "ODbL 1.0 (OSM-derived positions) + measurements on Sentinel-2 / Umbra"
+  },
+  "meas/twy_refit.json": {
+   "generator": "tools/airport/twy_refit.py",
+   "licence": "ODbL 1.0 (OSM-derived positions) + measurements on Sentinel-2 / Umbra"
+  }
+ },
+ "files": [
+  {
+   "file": "sha_airport.js",
+   "bytes": 1243561,
+   "sha256": "2f0b64067cbedfc535c481e76d5b96b83058928596aecbb2b3dc0906e9a32393"
+  },
+  {
+   "file": "sha_airport.json",
+   "bytes": 1242849,
+   "sha256": "e6fda38ef50d0327128b9e5e4c469609f3ce15653ae99ad113f597fba30b38a9"
+  },
+  {
+   "file": "meas/rwy_ends.json",
+   "bytes": 12530,
+   "sha256": "650eba50105def7d2552dfeb8a5ed5317bce2092167922146d3330f8db8d2654"
+  },
+  {
+   "file": "meas/twy_refit.json",
+   "bytes": 161266,
+   "sha256": "109397fdbfeb0cbdf44bb8cc69e18a2e66626f22d8b012f3e77c814e8572e443"
+  }
+ ],
+ "fix_round_1": "2026-11-14, QA C1 (docs/phase1/qa_data.md): sensitive filter widened (H1), taxi graph routing rules + turn table (H2, M6), taxiway re-fit with the runway-band Umbra registration (M1), AIP values reduced to per-runway aip_facts blocks with their own notice and no per-stand AIP field (M2), bridges / classes / push-back reworked (M3-M5), provenance per record (M7), Sentinel-2 crops cut to the extent (M8), licences (L2), AIP probes to a local log (L5)",
+ "tools_fix_round_1": [
+  "tools/geo/s2_cut_extent.py (Sentinel-2 crops cut to the extent)",
+  "tools/airport/write_sources_phase1.py (image SOURCES with sha256)"
+ ],
+ "fix_round_2": "2026-11-14, re-verify N1-N5 (docs/phase1/qa_data.md, Fix round 2): dropped lines treated as sensitive geometry in the pinned extract (railway points, non-passenger railway, features along them); taxiway re-fit with an Umbra veto (BN not moved) and 40 m junction tapers; the single Umbra registration +3.07 m E (tools/common/umbra_reg.py) in every data tool; attribution blocks in data/meas/*.json; image SOURCES for docs/phase1/qa and the B1 / B3 / C2 images",
+ "fix_round_3": "2026-11-14, re-verify 2 R1-R5 (docs/phase1/qa_data.md, Fix round 3): reports and SOURCES notes give counts per class and per rule only for the dropped features; pinned extract rule (g): kept ways keep no vertex shared with a dropped line, railway way or tagged node except their ends; bytes and sha256 for the images of docs/phase1/SOURCES_sim.json"
+}

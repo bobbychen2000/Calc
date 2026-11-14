@@ -1,0 +1,65 @@
+{
+ "topic": "docs/phase1 airport images (task A1; fix rounds 1-2 of QA C1)",
+ "date": "2026-11-14",
+ "images": {
+  "airport_overlay.jpg": {
+   "what": "data/sha_airport.json over Sentinel-2 L2A TCI (S2B 2026-10-14, cut to the detailed extent), extent + zooms",
+   "generator": "tools/airport/overlay.py",
+   "attribution": [
+    "Contains modified Copernicus Sentinel data 2026",
+    "(c) OpenStreetMap contributors (ODbL 1.0)",
+    "AIP China AD 2 ZSSS (CAAC) via an unofficial mirror, EFF 2026-07-08: short cited facts, not covered by ODbL"
+   ],
+   "licence": "Copernicus Sentinel data legal notice (free reproduction / distribution with the notice); OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 909216,
+   "sha256": "816b719c2fd4f5c6cf8bf120f239b2e85403ea2832858b0844a98f4bd8709e89"
+  },
+  "airport_overlay_umbra.jpg": {
+   "what": "data/sha_airport.json over the Umbra SAR GEC overview (2024-06-02), masked to the extent, extent + zooms",
+   "generator": "tools/airport/overlay.py",
+   "attribution": [
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified",
+    "(c) OpenStreetMap contributors (ODbL 1.0)",
+    "AIP China AD 2 ZSSS (CAAC) via an unofficial mirror, EFF 2026-07-08: short cited facts, not covered by ODbL"
+   ],
+   "licence": "CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/; OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 1976073,
+   "sha256": "ccf51fbd8a890201d6ceb93753ba0f41d860b9b953c61761535a9c021db67aaf"
+  },
+  "airport_rwy_ends.png": {
+   "what": "along-track runway profiles (S2 two scenes, Umbra) with the fitted edges and placed ends",
+   "generator": "tools/airport/rwy_ends.py",
+   "attribution": [
+    "Contains modified Copernicus Sentinel data 2026",
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified"
+   ],
+   "licence": "Copernicus Sentinel data legal notice (free reproduction / distribution with the notice); CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/",
+   "bytes": 401632,
+   "sha256": "008afc276dcfd4fd61b8041ac37ae925742c5acf4835bcbbd85d4fb7b626377e"
+  },
+  "airport_twy_refit.png": {
+   "what": "taxiway run offsets (S2B vs S2C / Umbra) and S2 pavement widths",
+   "generator": "tools/airport/twy_refit.py",
+   "attribution": [
+    "Contains modified Copernicus Sentinel data 2026",
+    "(c) OpenStreetMap contributors (ODbL 1.0)"
+   ],
+   "licence": "Copernicus Sentinel data legal notice (free reproduction / distribution with the notice); OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 73175,
+   "sha256": "dc34e2400c18ca661bba2f9d14bf398a626ee86c189bec5c98dafaa22c6e3d5b"
+  },
+  "airport_twy_checks.jpg": {
+   "what": "close-ups of the taxiway re-fit decisions (D not moved; A2, A1, H2, H7, N, an unnamed taxiway moved, with 40 m junction tapers; BN not moved since fix round 2: Umbra veto) on S2 and Umbra",
+   "generator": "tools/airport/twy_check_plate.py",
+   "attribution": [
+    "Contains modified Copernicus Sentinel data 2026",
+    "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified",
+    "(c) OpenStreetMap contributors (ODbL 1.0)"
+   ],
+   "licence": "Copernicus Sentinel data legal notice (free reproduction / distribution with the notice); CC BY 4.0 (Umbra), https://creativecommons.org/licenses/by/4.0/; OSM ODbL 1.0 (produced work: attribution)",
+   "bytes": 1381228,
+   "sha256": "6e59444adcaf500243e8cf1847a13bd2479ae7f6eb1daab4c6555c2d69f6dead"
+  }
+ },
+ "note": "images show no imagery outside the detailed extent (QA C1 M8); attribution is also printed on each image"
+}

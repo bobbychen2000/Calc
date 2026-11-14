@@ -1,0 +1,88 @@
+{
+ "downloaded_utc": [
+  "2026-11-14T04:52:29Z",
+  "2026-11-14T04:55:48Z"
+ ],
+ "requests": 16,
+ "newest_element_timestamp": "2026-11-12T14:49:04Z",
+ "raw_elements": {
+  "node": 34550,
+  "way": 5206,
+  "relation": 593
+ },
+ "version_conflicts_between_tiles": 0,
+ "extent": {
+  "area_km2": 23.545,
+  "hull_area_km2": 8.49,
+  "bbox_ll": [
+   121.310301,
+   31.165982,
+   121.358137,
+   31.229318
+  ],
+  "relation": "21913346",
+  "relation_version": 1,
+  "relation_timestamp": "2026-11-06T12:00:40Z"
+ },
+ "kept_features": 5651,
+ "kept_elements": {
+  "node": 25043,
+  "way": 3796,
+  "relation": 439
+ },
+ "counts": {
+  "node_features": 1437,
+  "outside_extent": 2145,
+  "way_features": 3775,
+  "relation_features": 439,
+  "relations_without_kept_members": 121,
+  "boundary_relations_skipped": 22
+ },
+ "dropped_sensitive": {
+  "node:police": 22,
+  "node:railway_point_near_dropped": 14,
+  "node:railway_point_of_dropped_railway": 3,
+  "way:along_dropped_line": 3,
+  "way:along_sensitive_area": 4,
+  "way:armed_police": 1,
+  "way:inside_sensitive_area": 1,
+  "way:military": 3,
+  "way:non_passenger_railway_connected": 2,
+  "way:non_passenger_railway_near_dropped": 2,
+  "way:on_dropped_line": 1,
+  "way:prison": 1
+ },
+ "dropped_note": "counts only; ids, names and positions of dropped elements are not written anywhere",
+ "dropped_rules": {
+  "tags": "tools/law/osm_sensitive.py",
+  "inside_sensitive_area": "whole geometry within 10 m of a dropped area",
+  "along_sensitive_area": ">= 25 m of line / outline within 10 m of a dropped outline (public roads, railways, waterways and the aerodrome boundary exempt)",
+  "on_dropped_line": "whole geometry within 10 m of a dropped line (roads, waterways, passenger railways and the aerodrome boundary exempt), or a tagged node within 2 m of it",
+  "along_dropped_line": ">= 25 m of line / outline within 10 m of a dropped line and within 30 deg of its direction (crossings do not count; public roads NOT exempt; waterways, passenger railways and the aerodrome boundary exempt)",
+  "railway_point_near_dropped": "node with a railway=* tag within 30 m of any dropped feature",
+  "railway_point_of_dropped_railway": "railway=* node that is a vertex of a dropped railway way and of no kept railway way",
+  "non_passenger_railway_near_dropped": "railway way that is not a passenger line or station (service=*, non-passenger usage, disused, ...) within 100 m of a dropped line or area",
+  "non_passenger_railway_connected": "non-passenger railway way connected to a dropped one through spur / yard / industrial / disused track (not station sidings or crossovers)",
+  "crossing_vertex": "vertex that a kept way shares with a dropped line, a dropped railway way or a dropped tagged node, other than its end point: removed from the kept geometry and not listed in osm_elements.json (the way is kept)"
+ },
+ "vertices_removed": {
+  "crossing_vertex": 13
+ },
+ "osm_elements_check": {
+  "listed_nodes_without_kept_owner": 0,
+  "listed_crossing_vertices": 0,
+  "note": "every listed node is a kept tagged node, a vertex of a kept way or a member of a kept relation (counts only)"
+ },
+ "origin_nodes_check": {
+  "3336195147": [
+   31.2131135,
+   121.3354641,
+   3
+  ],
+  "13556389849": [
+   31.1825842,
+   121.3371157,
+   1
+  ]
+ }
+}

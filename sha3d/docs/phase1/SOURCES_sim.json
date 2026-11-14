@@ -9,7 +9,9 @@
    "attribution": [
     "Weather: NOAA/NWS Aviation Weather Center (aviationweather.gov). Not official NOAA material."
    ],
-   "licence": "NOAA/NWS data via the AWC Data API, whose page states no licence. NWS disclaimer (https://www.weather.gov/disclaimer): \"The information on National Weather Service (NWS) Web pages are in the public domain, unless specifically noted otherwise\". The reports originate with the CAAC aviation meteorological service (ICAO Annex 3 / WMO exchange); \"public domain\" is the US host's statement, not the originator's."
+   "licence": "NOAA/NWS data via the AWC Data API, whose page states no licence. NWS disclaimer (https://www.weather.gov/disclaimer): \"The information on National Weather Service (NWS) Web pages are in the public domain, unless specifically noted otherwise\". The reports originate with the CAAC aviation meteorological service (ICAO Annex 3 / WMO exchange); \"public domain\" is the US host's statement, not the originator's.",
+   "bytes": 127627,
+   "sha256": "79672918c6de03b9ac094b0f60fdfc86f39f606d95269541e54f83a21a1e5064"
   },
   "sources_sim_flow.png": {
    "what": "inferred share of north flow (RWY 36) by month and local hour, ZSSS METAR 2023-01-01 .. 2026-11-13",
@@ -18,7 +20,9 @@
    "attribution": [
     "Weather archive: Iowa Environmental Mesonet, Iowa State University"
    ],
-   "licence": "Iowa Environmental Mesonet (https://mesonet.agron.iastate.edu/disclaimer.php): \"The materials found on this website are in the public domain and may be used freely by anyone for any lawful purpose. Attributing the Iowa Environmental Mesonet of Iowa State University would be appreciated.\" Reports originate with the CAAC aviation meteorological service."
+   "licence": "Iowa Environmental Mesonet (https://mesonet.agron.iastate.edu/disclaimer.php): \"The materials found on this website are in the public domain and may be used freely by anyone for any lawful purpose. Attributing the Iowa Environmental Mesonet of Iowa State University would be appreciated.\" Reports originate with the CAAC aviation meteorological service.",
+   "bytes": 66194,
+   "sha256": "e173ae2e34e39ce2bacf21428e10050b8824f789324b1e3a376fb1a45d9cee89"
   },
   "sources_sim_wx_stats.json": {
    "what": "measured METAR stream statistics (AWC 24 h and 30 d, IEM 2023-2026), runway-rule climatology and its RVR/WS check; Fix round 1: in-sample and leave-one-day-out (out-of-sample) agreement of the runway rule, and the parameter-free \"into the wind\" fallback",
@@ -34,7 +38,9 @@
    "attribution": [
     "NOTAM: CAAC ATMB AIS, eAIP NOTAM Summary (www.eaipchina.cn); AIP China AD 2 ZSSS (unofficial mirror copy, EFF 2026-07-08)"
    ],
-   "licence": "no licence published; the plate carries only NOTAM ids, dates and a short paraphrase of each effect (short cited facts, OD3)"
+   "licence": "no licence published; the plate carries only NOTAM ids, dates and a short paraphrase of each effect (short cited facts, OD3)",
+   "bytes": 135675,
+   "sha256": "a8487bdbaac1f87140296d30feb0d98b80e0e66788e2c17e4f8d007578d7eeb5"
   },
   "sources_sim_hourly.png": {
    "what": "inferred hourly arrival/departure profile for ZSSS, scaled from the B1 observed-elsewhere hourly aggregates (re-run on the B1 Fix round 1 aggregates)",
@@ -43,7 +49,9 @@
    "attribution": [
     "Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL; routes: Virtual Radar Server standing data (CC0)"
    ],
-   "licence": "ODbL 1.0 (produced work from an ODbL database: attribution)"
+   "licence": "ODbL 1.0 (produced work from an ODbL database: attribution)",
+   "bytes": 93788,
+   "sha256": "388bdf9207728ad63de03300cf36af13fc35d1888de580f462eba6cfd7a76121"
   },
   "sources_sim_hourly.json": {
    "what": "the numbers behind sources_sim_hourly.png (identified per local hour, profiles for 783.4 and 802 movements/day)",

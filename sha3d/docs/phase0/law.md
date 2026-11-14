@@ -86,8 +86,8 @@ Related sibling reports:
    rail spurs and barracks, are** [verified, item 20(1)].
    - Item 20(5) also bars the important facilities of military-civil joint-use (军民合用) airports.
    - ZSSS is "CIVIL/4E" in the AIP [secondary via aip.md]. Its military use ended in 1963–64 [secondary: Wikipedia].
-   - **But OSM around ZSSS contains 6 military-tagged elements 1.2–3.3 km from the ARP** [obs, ids withheld on
-     purpose]: a military rail spur (3 ways) and 3 military / armed-police areas.
+   - **But OSM around ZSSS contains 6 military-tagged elements** [obs; ids, names, positions and distances withheld on
+     purpose]: 3 rail ways tagged `usage=military` and 3 military / armed-police areas.
    - These must be filtered out before anything is rendered, labelled or committed.
 5. **OSM is blocked in mainland China** (GreatFire, since 2012) [secondary].
    - The OSM wiki says the project is effectively illegal there [secondary].
@@ -305,11 +305,11 @@ Relevant 秘密/机密 (secret/confidential) entries:
   proof].
 - **OSM, observed** (`tools/law/osm_sensitive.py` on the OSM API extracts in `refs/cache/osm/`, dated 2024-01 to
   2026-02):
-  - **6 distinct elements tagged military within 1.2–3.3 km of the AIP ARP** (4 features if the spur counts once):
-    - a rail spur tagged `usage=military` (3 ways, 1.4–2.2 km);
-    - 3 `landuse=military` areas (1.2, 3.2 and 3.3 km), two of them named as armed-police (武警) units.
-  - Their names, ids and coordinates are **deliberately not reproduced in this public document**. Run the script on
-    the local cache.
+  - **6 distinct elements tagged military** (4 features if the 3 rail ways count once):
+    - 3 rail ways tagged `usage=military` (class military);
+    - 3 `landuse=military` areas: 2 armed police (by name), 1 military.
+  - Their names, ids, coordinates and distances are **deliberately not reproduced in this public document** (details
+    local only: refs/cache/osm/, via the script).
   - Under item 20(1) these must not appear on a public map of China.
   - The MSS October 2026 case (§4) shows that annotating such units is treated as a security matter [inferred].
   - **Filter before rendering:** `landuse=military`, `military=*`, `usage=military`, and names containing 部队 (army
@@ -501,7 +501,7 @@ Likelihood is our judgement [inferred]. "PRC" means mainland China.
 | # | Risk | Who it affects | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|---|
 | R1 | Someone in the PRC helps us (ADS-B receiver, ATC stream, photos, GNSS tracks, drone, stand measurements, OSM edits) | that person | **High if it happens** (cases 2021, 2024, 2025, 2026) | fines, confiscation, detention; espionage framing | Never solicit or accept PRC-side data collection. State it in CONTRIBUTING. No feeder programme, no "send us photos". |
-| R2 | Rendering, labelling or committing military / armed-police features near ZSSS (in OSM now) | owner, users who share screenshots, the repo | Medium (they are 1.2–3.3 km away) | complaint, block, takedown request | Filter by tag and name in the OSM import (§2.6). Never label. CI check with `osm_sensitive.py` logic. |
+| R2 | Rendering, labelling or committing military / armed-police features near ZSSS (in OSM now) | owner, users who share screenshots, the repo | Medium (they are in OSM near ZSSS) | complaint, block, takedown request | Filter by tag and name in the OSM import (§2.6). Never label. CI check with `osm_sensitive.py` logic. |
 | R3 | A metre-accurate WGS-84 3-D model of a PRC airport in a public repo | owner (mainly if travelling to the PRC), repo | Low (civil, public facility, data already public abroad); the verifier rates this as, if anything, understated: any modelled building meets the 5 % height test of catalogue item 24, and the "not made by licensed surveyors" argument is weak (§2.3) | entry refusal or questioning; repo block | Derive only from open foreign data. Keep the detailed extent ≤ aerodrome + margin (≤25 km² contiguous). No measured data from the PRC. No secret-catalogue shapes (DSM/point clouds of the city). |
 | R4 | The app is used inside the PRC and counts as an unreviewed public map or internet map service | owner; users in the PRC | Low (enforcement = blocking) | block; in theory Map Regs Art. 54 fines | Don't target the PRC: no PRC hosting/CDN, no ICP, no Chinese-language promotion. "Not a map; not for navigation" notice. |
 | R5 | Showing live and recorded PRC flight positions from foreign aggregators | owner (DSL Art. 2); data feeders | Low for the owner; high for feeders | as R1/R10 | Airport vicinity only, civil only, no long archives, no military/state highlighting. Crop recordings before committing (D5). See adsb.md. |
@@ -599,7 +599,7 @@ Likelihood is our judgement [inferred]. "PRC" means mainland China.
 | L52 | ZSSS military history | military until 1963; civil reopening April 1964 | https://en.wikipedia.org/w/index.php?title=Shanghai_Hongqiao_International_Airport&action=raw | 2026-11-13 | "From late 1963, it was rebuilt for civilian use and was reopened in April 1964." | secondary |
 | L53 | ZSSS joint-use history | 1963 joint military-civil, civil-only from about 1971 | https://www.sohu.com/a/15058612_119207 (search summary only) | 2026-11-13 | "将虹桥机场扩建为军民合用的国际机场" | unverified |
 | L54 | AIP withholds threshold coordinates | Nil for 18L/36R/18R/36L | aip.md row 21 | 2026-11-13 | "Nil" | secondary |
-| L55 | Military-tagged OSM objects near ZSSS | 6 distinct elements (rail spur in 3 ways; 3 `landuse=military`), 1.2–3.3 km from the ARP | `refs/cache/osm/` (OSM API extracts, ODbL) via `tools/law/osm_sensitive.py` | 2026-11-13 | ids, names and coordinates deliberately withheld | obs |
+| L55 | Military-tagged OSM objects near ZSSS | 6 distinct elements (3 rail ways tagged `usage=military`; 3 `landuse=military` areas, 2 of them armed police) | `refs/cache/osm/` (OSM API extracts, ODbL) via `tools/law/osm_sensitive.py` | 2026-11-13 | ids, names, coordinates and distances deliberately withheld | obs |
 | L56 | Radio Regs Art. 27(2) | receive-only stations need no licence | https://www.gov.cn/gongbao/content/2016/content_5148745.htm | 2026-11-13 | "（二）单收无线电台（站）" | verified |
 | L57 | Radio Regs Art. 41 | no deliberate reception outside the licence; no spreading, publishing or use of unintentionally received information | same | 2026-11-13 | "不得传播、公布或者利用无意接收的信息" | verified |
 | L58 | Radio Regs Art. 72(2) | fine up to CNY 30k; serious: licence revoked plus CNY 30k–100k | same | 2026-11-13 | "（二）故意收发无线电台执照许可事项之外的无线电信号，传播、公布或者利用无意接收的信息" (with "可以并处3万元以下的罚款；造成严重后果的，吊销无线电台执照，并处3万元以上10万元以下的罚款") | verified |
