@@ -1,0 +1,480 @@
+{
+ "what": "Building heights from Umbra GEC layover (B3)",
+ "incidence_deg": 38.0798,
+ "sensor_azimuth_deg": 275.4967,
+ "layover_m_per_m": 1.276273685052884,
+ "umbra_minus_osm": [
+  6.1,
+  0.9
+ ],
+ "results": [
+  {
+   "name": "China Eastern hangar (way 327613444)",
+   "id": "osm:way/327613444",
+   "wall": 0,
+   "wall_mid_xz": [
+    -862.5,
+    1478.4
+   ],
+   "wall_len_m": 149.3,
+   "lines": 59,
+   "foot_m": -2.2,
+   "onset_m": -44.9,
+   "contrast": 3.9,
+   "boot_ok": 200,
+   "height_m": 33.5,
+   "height_unc_m": 1.6,
+   "rule_height_m": 32.0
+  },
+  {
+   "name": "big hangar E (way 327473856)",
+   "id": "osm:way/327473856",
+   "wall": 0,
+   "wall_mid_xz": [
+    870.5,
+    -781.7
+   ],
+   "wall_len_m": 93.9,
+   "lines": 37,
+   "foot_m": -2.9,
+   "onset_m": -39.3,
+   "contrast": 2.77,
+   "boot_ok": 200,
+   "height_m": 28.5,
+   "height_unc_m": 4.8,
+   "rule_height_m": 32.0
+  },
+  {
+   "name": "hangar E small (way 327473860)",
+   "id": "osm:way/327473860",
+   "wall": 0,
+   "wall_mid_xz": [
+    766.2,
+    -766.8
+   ],
+   "wall_len_m": 71.2,
+   "lines": 28,
+   "foot_m": -7.8,
+   "onset_m": -94.6,
+   "contrast": 1.46,
+   "boot_ok": 200,
+   "height_m": 68.0,
+   "height_unc_m": 21.5,
+   "rule_height_m": 22.0
+  },
+  {
+   "name": "SW hangar (way 328013621)",
+   "id": "osm:way/328013621",
+   "wall": 0,
+   "wall_mid_xz": [
+    309.8,
+    -1393.0
+   ],
+   "wall_len_m": 59.1,
+   "lines": 23,
+   "foot_m": -2.2,
+   "onset_m": -22.5,
+   "contrast": 3.86,
+   "boot_ok": 200,
+   "height_m": 15.9,
+   "height_unc_m": 3.3,
+   "rule_height_m": 22.0
+  },
+  {
+   "name": "FBO terminal (way 469610770)",
+   "id": "osm:way/469610770",
+   "wall": 0,
+   "wall_mid_xz": [
+    529.4,
+    1017.7
+   ],
+   "wall_len_m": 41.4,
+   "lines": 16,
+   "foot_m": -6.4,
+   "onset_m": -14.1,
+   "contrast": 3.6,
+   "boot_ok": 200,
+   "height_m": 6.0,
+   "height_unc_m": 5.3,
+   "rule_height_m": 12.0
+  },
+  {
+   "name": "T1 (way 93184730)",
+   "id": "osm:way/93184730",
+   "wall": 0,
+   "wall_mid_xz": [
+    472.3,
+    324.9
+   ],
+   "wall_len_m": 33.6,
+   "lines": 13,
+   "foot_m": 3.4,
+   "onset_m": -5.7,
+   "contrast": 1.9,
+   "boot_ok": 200,
+   "height_m": 7.1,
+   "height_unc_m": 12.5,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T1 (way 93184730)",
+   "id": "osm:way/93184730",
+   "wall": 1,
+   "wall_mid_xz": [
+    474.3,
+    368.7
+   ],
+   "wall_len_m": 54.0,
+   "lines": 21,
+   "foot_m": 2.7,
+   "onset_m": -14.8,
+   "contrast": 2.38,
+   "boot_ok": 200,
+   "height_m": 13.7,
+   "height_unc_m": 8.9,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T1 (way 93184730)",
+   "id": "osm:way/93184730",
+   "wall": 2,
+   "wall_mid_xz": [
+    460.0,
+    69.3
+   ],
+   "wall_len_m": 36.0,
+   "lines": 14,
+   "foot_m": -8.5,
+   "onset_m": -12.0,
+   "contrast": 3.13,
+   "boot_ok": 200,
+   "height_m": 2.7,
+   "height_unc_m": 4.9,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T1 (way 93184730)",
+   "id": "osm:way/93184730",
+   "wall": 3,
+   "wall_mid_xz": [
+    462.0,
+    112.6
+   ],
+   "wall_len_m": 50.6,
+   "lines": 20,
+   "foot_m": -8.5,
+   "onset_m": -13.4,
+   "contrast": 2.15,
+   "boot_ok": 200,
+   "height_m": 3.8,
+   "height_unc_m": 7.2,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T1 (way 93184730)",
+   "id": "osm:way/93184730",
+   "wall": 4,
+   "wall_mid_xz": [
+    463.8,
+    153.2
+   ],
+   "wall_len_m": 30.7,
+   "lines": 12,
+   "foot_m": 3.4,
+   "onset_m": -5.0,
+   "contrast": 2.6,
+   "boot_ok": 200,
+   "height_m": 6.6,
+   "height_unc_m": 7.3,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 0,
+   "wall_mid_xz": [
+    -1178.5,
+    689.8
+   ],
+   "wall_len_m": 74.0,
+   "lines": 29,
+   "foot_m": -14.8,
+   "onset_m": -51.9,
+   "contrast": 2.22,
+   "boot_ok": 172,
+   "height_m": 29.1,
+   "height_unc_m": 1.6,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 1,
+   "wall_mid_xz": [
+    -1198.3,
+    606.8
+   ],
+   "wall_len_m": 92.5,
+   "lines": 36,
+   "foot_m": -4.3,
+   "onset_m": -8.5,
+   "contrast": 1.31,
+   "boot_ok": 200,
+   "height_m": 3.3,
+   "height_unc_m": 6.4,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 2,
+   "wall_mid_xz": [
+    -1139.5,
+    398.5
+   ],
+   "wall_len_m": 183.8,
+   "lines": 73,
+   "foot_m": -7.1,
+   "onset_m": -34.4,
+   "contrast": 2.4,
+   "boot_ok": 200,
+   "height_m": 21.4,
+   "height_unc_m": 3.3,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 3,
+   "wall_mid_xz": [
+    -1231.3,
+    398.0
+   ],
+   "wall_len_m": 68.9,
+   "lines": 27,
+   "foot_m": 14.6,
+   "onset_m": -40.0,
+   "contrast": 1.77,
+   "boot_ok": 200,
+   "height_m": 42.8,
+   "height_unc_m": 8.9,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 4,
+   "wall_mid_xz": [
+    -1232.3,
+    322.3
+   ],
+   "wall_len_m": 54.7,
+   "lines": 21,
+   "foot_m": 10.4,
+   "onset_m": -31.6,
+   "contrast": 1.91,
+   "boot_ok": 200,
+   "height_m": 32.9,
+   "height_unc_m": 7.2,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 5,
+   "wall_mid_xz": [
+    -1473.3,
+    184.4
+   ],
+   "wall_len_m": 88.8,
+   "lines": 35,
+   "foot_m": -14.1,
+   "onset_m": -44.2,
+   "contrast": 1.57,
+   "boot_ok": 199,
+   "height_m": 23.6,
+   "height_unc_m": 6.8,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 6,
+   "wall_mid_xz": [
+    -1157.8,
+    7.3
+   ],
+   "wall_len_m": 52.4,
+   "lines": 20,
+   "foot_m": 8.3,
+   "onset_m": -42.8,
+   "contrast": 2.02,
+   "boot_ok": 200,
+   "height_m": 40.0,
+   "height_unc_m": 10.0,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 7,
+   "wall_mid_xz": [
+    -1160.8,
+    -54.3
+   ],
+   "wall_len_m": 71.0,
+   "lines": 28,
+   "foot_m": -14.1,
+   "onset_m": -26.0,
+   "contrast": 2.13,
+   "boot_ok": 193,
+   "height_m": 9.3,
+   "height_unc_m": 8.9,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 8,
+   "wall_mid_xz": [
+    -1163.9,
+    -119.8
+   ],
+   "wall_len_m": 60.1,
+   "lines": 24,
+   "foot_m": -7.1,
+   "onset_m": null,
+   "contrast": null,
+   "boot_ok": 114,
+   "height_m": null,
+   "height_unc_m": 5.4,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 9,
+   "wall_mid_xz": [
+    -1238.4,
+    -261.5
+   ],
+   "wall_len_m": 92.9,
+   "lines": 37,
+   "foot_m": -4.3,
+   "onset_m": -71.5,
+   "contrast": 1.48,
+   "boot_ok": 200,
+   "height_m": 52.7,
+   "height_unc_m": 16.4,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "T2 (relation 21913345)",
+   "id": "osm:relation/21913345",
+   "wall": 10,
+   "wall_mid_xz": [
+    -1226.8,
+    -345.7
+   ],
+   "wall_len_m": 75.4,
+   "lines": 30,
+   "foot_m": -14.8,
+   "onset_m": -56.1,
+   "contrast": 2.88,
+   "boot_ok": 187,
+   "height_m": 32.4,
+   "height_unc_m": 16.1,
+   "rule_height_m": 25.0
+  },
+  {
+   "name": "MU office (relation 21913196)",
+   "id": "osm:relation/21913196",
+   "wall": 0,
+   "wall_mid_xz": [
+    -1190.9,
+    1050.0
+   ],
+   "wall_len_m": 113.4,
+   "lines": 45,
+   "foot_m": -4.3,
+   "onset_m": -79.9,
+   "contrast": 1.64,
+   "boot_ok": 183,
+   "height_m": 59.2,
+   "height_unc_m": 17.9,
+   "rule_height_m": 20.0
+  },
+  {
+   "name": "building next to MU hangar (way 861029093)",
+   "id": "osm:way/861029093",
+   "wall": 0,
+   "wall_mid_xz": [
+    -796.7,
+    1295.0
+   ],
+   "wall_len_m": 157.4,
+   "lines": 62,
+   "foot_m": -3.6,
+   "onset_m": -86.9,
+   "contrast": 2.03,
+   "boot_ok": 200,
+   "height_m": 65.3,
+   "height_unc_m": 2.6,
+   "rule_height_m": 12.0
+  },
+  {
+   "name": "MU hangar annex S (way 1257868692)",
+   "id": "osm:way/1257868692",
+   "wall": 0,
+   "wall_mid_xz": [
+    -854.3,
+    1611.9
+   ],
+   "wall_len_m": 45.7,
+   "lines": 18,
+   "foot_m": -4.3,
+   "onset_m": -28.8,
+   "contrast": 2.62,
+   "boot_ok": 200,
+   "height_m": 19.2,
+   "height_unc_m": 3.4,
+   "rule_height_m": 12.0
+  },
+  {
+   "name": "T1 south block (way 1443259951)",
+   "id": "osm:way/1443259951",
+   "wall": 0,
+   "wall_mid_xz": [
+    570.8,
+    402.2
+   ],
+   "wall_len_m": 108.8,
+   "lines": 43,
+   "foot_m": -8.5,
+   "onset_m": -13.4,
+   "contrast": 2.17,
+   "boot_ok": 200,
+   "height_m": 3.8,
+   "height_unc_m": 5.8,
+   "rule_height_m": 12.0
+  },
+  {
+   "name": "hotel by T2 (way 1576050065)",
+   "id": "osm:way/1576050065",
+   "wall": 0,
+   "wall_mid_xz": [
+    -1253.0,
+    -51.2
+   ],
+   "wall_len_m": 111.9,
+   "lines": 44,
+   "foot_m": 3.4,
+   "onset_m": -78.5,
+   "contrast": 2.5,
+   "boot_ok": 200,
+   "height_m": 64.2,
+   "height_unc_m": 6.1,
+   "rule_height_m": 40.0
+  }
+ ]
+}

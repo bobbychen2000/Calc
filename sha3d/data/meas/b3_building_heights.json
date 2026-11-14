@@ -1,0 +1,399 @@
+{
+ "what": "Airport building heights from open sources (B3), all src inf",
+ "method_notes": {
+  "osm": "no height / building:levels tags on any airport building (A1)",
+  "aip": "AIP (mirror) obstacles match only the tower among airport buildings (A1)",
+  "dsm": "Copernicus GLO-30 DSM minus the median of a 30-90 m ring; 30 m pixels; TanDEM-X Dec 2010 - Jan 2015; hangars on airport-edited planes",
+  "sar": "Umbra GEC 2024-06-02, incidence 38.08 deg, sensor azimuth 275.5 deg: h = layover / cot(38.08 deg) = layover / 1.2763 between the SAR wall foot and the layover onset",
+  "photo": "height ratio to the 44.5 m east tower in a 2023 Commons photo, distances from OSM"
+ },
+ "buildings": [
+  {
+   "id": "osm:way/327613444",
+   "name": "China Eastern hangar",
+   "proposed_m": 33.5,
+   "unc_m": 3.0,
+   "rule_m": 32,
+   "method": "Umbra layover: clean box profile (sharp onset, plateau, drop at the OSM wall foot)",
+   "dsm": {
+    "excess_med": -1.4,
+    "excess_p90": -1.4,
+    "excess_max": -1.2,
+    "n_px": 17,
+    "edm": {
+     "2": 1,
+     "5": 12,
+     "6": 4
+    },
+    "flm": {
+     "1": 16,
+     "5": 1
+    }
+   },
+   "layover": [
+    {
+     "wall": 0,
+     "wall_mid_xz": [
+      -862.5,
+      1478.4
+     ],
+     "wall_len_m": 149.3,
+     "layover_m": 42.7,
+     "height_m": 33.5,
+     "unc_m": 1.6,
+     "contrast": 3.9,
+     "verdict": "accepted (best case)"
+    }
+   ],
+   "note": "DSM unusable: airport-edited plane (EDM 5/6). AIP (mirror): hangar for two B747-400 + two narrow-bodies (B747-400 tail 19.4 m: consistent)."
+  },
+  {
+   "id": "osm:way/327473856",
+   "name": "big hangar (east)",
+   "proposed_m": 28.5,
+   "unc_m": 5.0,
+   "rule_m": 32,
+   "method": "Umbra layover, moderate (noisy plateau)",
+   "dsm": {
+    "excess_med": -2.2,
+    "excess_p90": -1.3,
+    "excess_max": -0.5,
+    "n_px": 16,
+    "edm": {
+     "1": 1,
+     "2": 1,
+     "5": 2,
+     "6": 12
+    },
+    "flm": {
+     "1": 14,
+     "2": 1,
+     "5": 1
+    }
+   },
+   "layover": [
+    {
+     "wall": 0,
+     "wall_mid_xz": [
+      870.5,
+      -781.7
+     ],
+     "wall_len_m": 93.9,
+     "layover_m": 36.4,
+     "height_m": 28.5,
+     "unc_m": 4.8,
+     "contrast": 2.77,
+     "verdict": "accepted, moderate"
+    }
+   ],
+   "note": "DSM unusable (EDM 6/5)."
+  },
+  {
+   "id": "osm:way/327473860",
+   "name": "hangar (east, small)",
+   "proposed_m": 22,
+   "unc_m": 6,
+   "rule_m": 22,
+   "method": "rule kept (A1)",
+   "dsm": {
+    "excess_med": -1.0,
+    "excess_p90": -0.3,
+    "excess_max": -0.1,
+    "n_px": 4,
+    "edm": {
+     "1": 1,
+     "4": 3
+    },
+    "flm": {
+     "1": 3,
+     "2": 1
+    }
+   },
+   "layover": [
+    {
+     "wall": 0,
+     "wall_mid_xz": [
+      766.2,
+      -766.8
+     ],
+     "wall_len_m": 71.2,
+     "layover_m": 86.8,
+     "height_m": 68.0,
+     "unc_m": 21.5,
+     "contrast": 1.46,
+     "verdict": "rejected: the big hangar and apron clutter overlap the profile"
+    }
+   ]
+  },
+  {
+   "id": "osm:way/328013621",
+   "name": "hangar north-east, near the 18L end (way 328013621)",
+   "proposed_m": 16,
+   "unc_m": 4,
+   "rule_m": 22,
+   "method": "Umbra layover, moderate; DSM small excess (+3 to +4 m, 2 px only)",
+   "dsm": {
+    "excess_med": 3.1,
+    "excess_p90": 3.8,
+    "excess_max": 4.0,
+    "n_px": 2,
+    "edm": {
+     "1": 2
+    },
+    "flm": {
+     "2": 2
+    }
+   },
+   "layover": [
+    {
+     "wall": 0,
+     "wall_mid_xz": [
+      309.8,
+      -1393.0
+     ],
+     "wall_len_m": 59.1,
+     "layover_m": 20.3,
+     "height_m": 15.9,
+     "unc_m": 3.3,
+     "contrast": 3.86,
+     "verdict": "accepted, moderate"
+    }
+   ]
+  },
+  {
+   "id": "osm:way/1257868692",
+   "name": "building south of the China Eastern hangar",
+   "proposed_m": 19,
+   "unc_m": 4,
+   "rule_m": 12,
+   "method": "Umbra layover, moderate",
+   "dsm": {
+    "excess_med": 1.3,
+    "excess_p90": 2.0,
+    "excess_max": 2.1,
+    "n_px": 6,
+    "edm": {
+     "1": 6
+    },
+    "flm": {
+     "2": 6
+    }
+   },
+   "layover": [
+    {
+     "wall": 0,
+     "wall_mid_xz": [
+      -854.3,
+      1611.9
+     ],
+     "wall_len_m": 45.7,
+     "layover_m": 24.5,
+     "height_m": 19.2,
+     "unc_m": 3.4,
+     "contrast": 2.62,
+     "verdict": "accepted, moderate"
+    }
+   ]
+  },
+  {
+   "id": "osm:way/93184730",
+   "name": "T1 (central hall roof / airside concourse)",
+   "proposed_m": 26,
+   "unc_m": 4,
+   "rule_m": 25,
+   "method": "photo ratio to the east tower in Commons 202309_Terminal_1 (CC BY-SA 4.0): hall roof 65 px vs tower 125 px at 570 / 500 m (OSM distances; tower 44.5 m) -> 26 m; airside concourse roof 27 px at 465 m -> 9 m",
+   "concourse_m": 9,
+   "concourse_unc_m": 2,
+   "dsm": {
+    "excess_med": 7.2,
+    "excess_p90": 12.9,
+    "excess_max": 16.1,
+    "n_px": 70,
+    "edm": {
+     "1": 66,
+     "3": 1,
+     "4": 3
+    },
+    "flm": {
+     "1": 4,
+     "2": 66
+    }
+   },
+   "layover": [
+    {
+     "wall": 1,
+     "wall_mid_xz": [
+      474.3,
+      368.7
+     ],
+     "wall_len_m": 54.0,
+     "layover_m": 17.5,
+     "height_m": 13.7,
+     "unc_m": 8.9,
+     "contrast": 2.38,
+     "verdict": "rejected: no clean plateau (canopies, roads, mixed heights)"
+    }
+   ],
+   "note": "DSM from TanDEM-X 2010-2015 shows the pre-renovation T1 (renovated 2014-2018), so its 7-16 m excess is outdated."
+  },
+  {
+   "id": "osm:relation/21913345",
+   "name": "T2 main hall",
+   "proposed_m": 22,
+   "unc_m": 4,
+   "rule_m": 25,
+   "method": "Umbra layover on the west wall at x -1140, z 307-490 (21.4 +- 3.3 m) agrees with the DSM p90 excess (22.2 m)",
+   "piers_m": null,
+   "dsm": {
+    "excess_med": 17.6,
+    "excess_p90": 22.2,
+    "excess_max": 28.9,
+    "n_px": 168,
+    "edm": {
+     "1": 30,
+     "2": 126,
+     "5": 12
+    },
+    "flm": {
+     "1": 12,
+     "2": 30,
+     "3": 35,
+     "5": 91
+    }
+   },
+   "layover": [
+    {
+     "wall": 2,
+     "wall_mid_xz": [
+      -1139.5,
+      398.5
+     ],
+     "wall_len_m": 183.8,
+     "layover_m": 27.3,
+     "height_m": 21.4,
+     "unc_m": 3.3,
+     "contrast": 2.4,
+     "verdict": "accepted (main hall)"
+    },
+    {
+     "wall": 0,
+     "wall_mid_xz": [
+      -1178.5,
+      689.8
+     ],
+     "wall_len_m": 74.0,
+     "layover_m": 37.1,
+     "height_m": 29.1,
+     "unc_m": 1.6,
+     "contrast": 2.22,
+     "verdict": "south block, 29 m: accepted with low confidence (foot 15 m off OSM)"
+    },
+    {
+     "wall": 5,
+     "wall_mid_xz": [
+      -1473.3,
+      184.4
+     ],
+     "wall_len_m": 88.8,
+     "layover_m": 30.1,
+     "height_m": 23.6,
+     "unc_m": 6.8,
+     "contrast": 1.57,
+     "verdict": "west end (transport centre side), 24 m: low confidence"
+    },
+    {
+     "wall": 9,
+     "wall_mid_xz": [
+      -1238.4,
+      -261.5
+     ],
+     "wall_len_m": 92.9,
+     "layover_m": 67.2,
+     "height_m": 52.7,
+     "unc_m": 16.4,
+     "contrast": 1.48,
+     "verdict": "rejected: clutter"
+    }
+   ],
+   "note": "126 of 168 DSM pixels are infill (FLM: 91 SRTM30, 35 ASTER), so the DSM is low confidence here. A T2 lounge is named \"21米贵宾厅\" (Commons file titles): a 21 m level is plausible but not verified. Piers: no measurement (rule)."
+  },
+  {
+   "id": "osm:way/469610770",
+   "name": "business aviation terminal (FBO)",
+   "proposed_m": 12,
+   "unc_m": 4,
+   "rule_m": 12,
+   "method": "rule kept; DSM +3.8 / +5.7 / +6.2 m (2 px); layover not clean (6 +- 5 m)",
+   "dsm": {
+    "excess_med": 3.8,
+    "excess_p90": 5.7,
+    "excess_max": 6.2,
+    "n_px": 2,
+    "edm": {
+     "1": 2
+    },
+    "flm": {
+     "2": 2
+    }
+   },
+   "layover": [
+    {
+     "wall": 0,
+     "wall_mid_xz": [
+      529.4,
+      1017.7
+     ],
+     "wall_len_m": 41.4,
+     "layover_m": 7.7,
+     "height_m": 6.0,
+     "unc_m": 5.3,
+     "contrast": 3.6,
+     "verdict": "rejected: profile too short and peaked"
+    }
+   ]
+  },
+  {
+   "id": "osm:node/3342630333",
+   "name": "control tower (east)",
+   "proposed_m": 44.5,
+   "unc_m": 1.5,
+   "rule_m": 44.5,
+   "method": "AIP (mirror) obstacle elevation 47 m - ground 2.5 m (A1); the photo scale is consistent: 125 px at f = 1386 px gives 494 m for 44.5 m, the expected distance from RWY 18L/36R",
+   "layover": [],
+   "dsm": null,
+   "note": "form from the 2023 photo: pale concrete shaft with a dark vertical slot, flared two-level head with small windows, cab with dark inclined glazing and a flat roof."
+  },
+  {
+   "id": "osm:way/1576039982",
+   "name": "SW tower 1 (untyped)",
+   "proposed_m": 35,
+   "unc_m": 10,
+   "rule_m": 35,
+   "method": "rule kept: no measurement (Umbra clutter, A1)",
+   "layover": [],
+   "dsm": {
+    "excess_med": null,
+    "excess_p90": null,
+    "excess_max": null,
+    "n_px": null,
+    "edm": null,
+    "flm": null
+   }
+  }
+ ],
+ "rejected": [
+  {
+   "id": "osm:way/861029093",
+   "note": "layover 83 m (65 m) is implausible for a 17 m wide block: neighbouring structures merge into the profile; rule kept"
+  },
+  {
+   "id": "osm:relation/21913196",
+   "note": "China Eastern office: no clean profile; DSM +3 / +6 / +8 m (11 px, mostly smoothed); rule 20 m kept"
+  },
+  {
+   "id": "osm:way/1576050065",
+   "note": "hotel by T2 (context): ramp-shaped layover to 78 m (~64 m) suggests a tall block; not used (context building, ramp not a box)"
+  }
+ ],
+ "licences": "Copernicus WorldDEM-30 notice; Umbra CC BY 4.0; OSM ODbL; Commons photo CC BY-SA 4.0 (MNXANL)"
+}

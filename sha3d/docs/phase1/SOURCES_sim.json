@@ -1,0 +1,58 @@
+{
+ "topic": "docs/phase1 simulator-facts images and numbers (task B2, sources_sim.md)",
+ "date": "2026-11-14",
+ "files": {
+  "sources_sim_metar24h.png": {
+   "what": "ZSSS METAR/SPECI of the 24 h to 2026-11-14 05:00Z: headwind on RWY 36, visibility with trend groups, QNH, inferred runway direction",
+   "generator": "tools/wx/metar_stats.py",
+   "inputs": "refs/cache/metar/awc_metar_zsss_24h.raw.txt (aviationweather.gov Data API)",
+   "attribution": [
+    "Weather: NOAA/NWS Aviation Weather Center (aviationweather.gov). Not official NOAA material."
+   ],
+   "licence": "NOAA/NWS data via the AWC Data API, whose page states no licence. NWS disclaimer (https://www.weather.gov/disclaimer): \"The information on National Weather Service (NWS) Web pages are in the public domain, unless specifically noted otherwise\". The reports originate with the CAAC aviation meteorological service (ICAO Annex 3 / WMO exchange); \"public domain\" is the US host's statement, not the originator's."
+  },
+  "sources_sim_flow.png": {
+   "what": "inferred share of north flow (RWY 36) by month and local hour, ZSSS METAR 2023-01-01 .. 2026-11-13",
+   "generator": "tools/wx/metar_stats.py (rule: tools/wx/metar_zsss.py RunwayDirection)",
+   "inputs": "refs/cache/metar/iem_zsss/zsss_metar_20{23,24,25,26}.csv",
+   "attribution": [
+    "Weather archive: Iowa Environmental Mesonet, Iowa State University"
+   ],
+   "licence": "Iowa Environmental Mesonet (https://mesonet.agron.iastate.edu/disclaimer.php): \"The materials found on this website are in the public domain and may be used freely by anyone for any lawful purpose. Attributing the Iowa Environmental Mesonet of Iowa State University would be appreciated.\" Reports originate with the CAAC aviation meteorological service."
+  },
+  "sources_sim_wx_stats.json": {
+   "what": "measured METAR stream statistics (AWC 24 h and 30 d, IEM 2023-2026), runway-rule climatology and its RVR/WS check; Fix round 1: in-sample and leave-one-day-out (out-of-sample) agreement of the runway rule, and the parameter-free \"into the wind\" fallback",
+   "generator": "tools/wx/metar_stats.py, tools/wx/rule_check_rvr.py",
+   "attribution": [
+    "NOAA/NWS AWC; Iowa Environmental Mesonet"
+   ],
+   "licence": "derived from the NOAA/NWS AWC and IEM data above (their statements quoted there); attribution given"
+  },
+  "sources_sim_notam.png": {
+   "what": "ZSSS NOTAM effects the simulator applies (F4551, F4552, F4313, F4301, F4275/76; AIRAC AMDT 12 marked), from the eAIP NOTAM Summary Nov 2026 (in force 2026-11-02 07:06Z), on a calendar, and the inferred runway availability of the night of 14/15 Nov 2026",
+   "generator": "tools/notam/notam_plate.py (input: local refs/cache/notam/zsss_notams_2026-11.json from tools/notam/notam_summary.py)",
+   "attribution": [
+    "NOTAM: CAAC ATMB AIS, eAIP NOTAM Summary (www.eaipchina.cn); AIP China AD 2 ZSSS (unofficial mirror copy, EFF 2026-07-08)"
+   ],
+   "licence": "no licence published; the plate carries only NOTAM ids, dates and a short paraphrase of each effect (short cited facts, OD3)"
+  },
+  "sources_sim_hourly.png": {
+   "what": "inferred hourly arrival/departure profile for ZSSS, scaled from the B1 observed-elsewhere hourly aggregates (re-run on the B1 Fix round 1 aggregates)",
+   "generator": "tools/sim/hourly_profile.py",
+   "inputs": "docs/phase1/observed_elsewhere_stats.json (aggregates only)",
+   "attribution": [
+    "Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL; routes: Virtual Radar Server standing data (CC0)"
+   ],
+   "licence": "ODbL 1.0 (produced work from an ODbL database: attribution)"
+  },
+  "sources_sim_hourly.json": {
+   "what": "the numbers behind sources_sim_hourly.png (identified per local hour, profiles for 783.4 and 802 movements/day)",
+   "generator": "tools/sim/hourly_profile.py",
+   "attribution": [
+    "Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL"
+   ],
+   "licence": "ODbL 1.0 (derived database: share-alike)"
+  }
+ },
+ "fix_round_1": "2026-11-14: METAR licence wording quotes the hosts; NOTAM plate trimmed to the applied NOTAMs; hourly profile re-run (docs/phase1/verify_research.md)"
+}

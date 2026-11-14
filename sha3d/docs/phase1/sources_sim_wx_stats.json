@@ -1,0 +1,380 @@
+{
+ "awc_24h": {
+  "first_utc": "2026-11-13T05:30:00+00:00",
+  "last_utc": "2026-11-14T05:00:00+00:00",
+  "span_h": 23.5,
+  "n_reports": 50,
+  "n_metar": 48,
+  "n_speci": 2,
+  "metar_per_day": 49.02,
+  "speci_per_day": 2.04,
+  "metar_minute_of_hour": {
+   "0": 24,
+   "30": 24
+  },
+  "metar_gap_minutes": {
+   "30": 47
+  },
+  "trend_groups": {
+   "NOSIG": 41,
+   "BECMG": 9
+  },
+  "wind_units": {
+   "MPS": 50
+  },
+  "wind_vrb": 15,
+  "wind_calm": 2,
+  "wind_gust": 0,
+  "qnh_hpa_min": 1015,
+  "qnh_hpa_max": 1020,
+  "qnh_from_inhg": 0,
+  "vis_m_min": 2500,
+  "vis_classes": {
+   "5000-9000": 17,
+   "9999": 16,
+   "1500-4999": 14,
+   "CAVOK": 3
+  },
+  "reports_with_rvr": 0
+ },
+ "awc_30d": {
+  "first_utc": "2026-10-15T01:00:00+00:00",
+  "last_utc": "2026-11-14T05:25:00+00:00",
+  "span_h": 724.42,
+  "n_reports": 1470,
+  "n_metar": 1449,
+  "n_speci": 21,
+  "metar_per_day": 48.01,
+  "speci_per_day": 0.7,
+  "metar_minute_of_hour": {
+   "0": 725,
+   "30": 724
+  },
+  "metar_gap_minutes": {
+   "30": 1448
+  },
+  "trend_groups": {
+   "NOSIG": 1294,
+   "BECMG": 176
+  },
+  "wind_units": {
+   "MPS": 1470
+  },
+  "wind_vrb": 99,
+  "wind_calm": 16,
+  "wind_gust": 28,
+  "qnh_hpa_min": 1011,
+  "qnh_hpa_max": 1035,
+  "qnh_from_inhg": 0,
+  "vis_m_min": 2500,
+  "vis_classes": {
+   "CAVOK": 677,
+   "9999": 518,
+   "5000-9000": 228,
+   "1500-4999": 47
+  },
+  "reports_with_rvr": 0
+ },
+ "iem": {
+  "first_utc": "2023-01-01T00:00:00+00:00",
+  "last_utc": "2026-11-13T23:50:00+00:00",
+  "span_h": 33911.83,
+  "n_reports": 69104,
+  "n_metar": 67817,
+  "n_speci": 1287,
+  "metar_per_day": 48.0,
+  "speci_per_day": 0.91,
+  "metar_minute_of_hour": {
+   "0": 33908,
+   "30": 33909
+  },
+  "metar_gap_minutes": {
+   "30": 67811,
+   "60": 4,
+   "120": 1
+  },
+  "trend_groups": {
+   "NOSIG": 64770,
+   "BECMG": 4325,
+   "TEMPO": 7,
+   "none": 1,
+   "BECMG+BECMG": 1
+  },
+  "wind_units": {
+   "MPS": 69104
+  },
+  "wind_vrb": 4743,
+  "wind_calm": 592,
+  "wind_gust": 1307,
+  "qnh_hpa_min": 980,
+  "qnh_hpa_max": 1044,
+  "qnh_from_inhg": 0,
+  "vis_m_min": 200,
+  "vis_classes": {
+   "CAVOK": 36773,
+   "9999": 21513,
+   "5000-9000": 8805,
+   "1500-4999": 1929,
+   "<1500": 84
+  },
+  "reports_with_rvr": 124
+ },
+ "awc_vs_iem_same_window": {
+  "window": [
+   "2026-10-15T01:00:00+00:00",
+   "2026-11-14T05:25:00+00:00"
+  ],
+  "awc_reports": 1470,
+  "iem_reports": 1457
+ },
+ "rule_24h": {
+  "36": 38,
+  "18": 10
+ },
+ "iem_wind": {
+  "n_with_direction": 63138,
+  "n_without_direction(VRB/calm)": 4679,
+  "pct_headwind_on_36": 47.0,
+  "pct_abs_along_runway_gt3": 42.6,
+  "pct_abs_along_runway_gt5": 13.3,
+  "mean_speed_ms": 3.88
+ },
+ "rule_iem": {
+  "pct_36": 48.3,
+  "changes": 774,
+  "days": 1413.0,
+  "changes_per_day": 0.55,
+  "pct_36_by_local_month": {
+   "1": 63.9,
+   "2": 62.9,
+   "3": 47.5,
+   "4": 42.3,
+   "5": 31.9,
+   "6": 27.2,
+   "7": 16.5,
+   "8": 26.7,
+   "9": 58.2,
+   "10": 72.0,
+   "11": 69.9,
+   "12": 70.3
+  },
+  "pct_36_by_local_hour": {
+   "0": 44.2,
+   "1": 44.5,
+   "2": 44.8,
+   "3": 45.5,
+   "4": 46.1,
+   "5": 47.0,
+   "6": 47.8,
+   "7": 48.7,
+   "8": 48.3,
+   "9": 49.1,
+   "10": 49.2,
+   "11": 49.2,
+   "12": 50.1,
+   "13": 51.3,
+   "14": 52.1,
+   "15": 53.0,
+   "16": 52.9,
+   "17": 51.9,
+   "18": 50.8,
+   "19": 48.9,
+   "20": 47.0,
+   "21": 45.9,
+   "22": 45.6,
+   "23": 44.7
+  },
+  "sensitivity": {
+   "keep1.0_max3.0": {
+    "pct_36": 47.7,
+    "changes_per_day": 0.65
+   },
+   "keep1.5_max4.0": {
+    "pct_36": 48.3,
+    "changes_per_day": 0.55
+   },
+   "keep2.0_max4.0": {
+    "pct_36": 51.2,
+    "changes_per_day": 0.43
+   },
+   "keep3.0_max5.0": {
+    "pct_36": 53.9,
+    "changes_per_day": 0.31
+   }
+  }
+ },
+ "note": "Measured by tools/wx/metar_stats.py on 2026-11-14 from the AWC Data API (24 h and 30 d) and the IEM archive (2023-01-01 .. 2026-11-13). Runway direction values are [inf] (rule, not observed).",
+ "rule_check_rvr_ws": {
+  "method": "rules stepped on every IEM report (METAR + SPECI) 2023-01-01..2026-11-13; compared at reports whose RVR / WS groups name a single runway direction",
+  "hints_by_direction": {
+   "36": 99,
+   "18": 70
+  },
+  "n_hints": 169,
+  "variants": {
+   "chosen: tail > 1.5 m/s twice or > 4 once (metar_zsss default)": {
+    "agree": 146,
+    "n": 169,
+    "pct": 86.4,
+    "counts": {
+     "RVR:agree": 101,
+     "WS:agree": 45,
+     "RVR:disagree": 23
+    },
+    "days": 60,
+    "days_all_agree": 52
+   },
+   "tail > 0.5 twice or > 2.0 once": {
+    "agree": 139,
+    "n": 169,
+    "pct": 82.2,
+    "counts": {
+     "RVR:agree": 94,
+     "RVR:disagree": 30,
+     "WS:agree": 45
+    },
+    "days": 60,
+    "days_all_agree": 51
+   },
+   "tail > 1.0 twice or > 3.0 once": {
+    "agree": 141,
+    "n": 169,
+    "pct": 83.4,
+    "counts": {
+     "RVR:agree": 96,
+     "RVR:disagree": 28,
+     "WS:agree": 45
+    },
+    "days": 60,
+    "days_all_agree": 50
+   },
+   "tail > 1.5 twice or > 5.0 once": {
+    "agree": 147,
+    "n": 169,
+    "pct": 87.0,
+    "counts": {
+     "RVR:agree": 102,
+     "WS:agree": 45,
+     "RVR:disagree": 22
+    },
+    "days": 60,
+    "days_all_agree": 52
+   },
+   "tail > 2.0 twice or > 4.0 once": {
+    "agree": 140,
+    "n": 169,
+    "pct": 82.8,
+    "counts": {
+     "RVR:agree": 97,
+     "RVR:disagree": 27,
+     "WS:agree": 43,
+     "WS:disagree": 2
+    },
+    "days": 60,
+    "days_all_agree": 49
+   },
+   "tail > 2.5 twice or > 5.0 once": {
+    "agree": 138,
+    "n": 169,
+    "pct": 81.7,
+    "counts": {
+     "RVR:agree": 96,
+     "RVR:disagree": 28,
+     "WS:agree": 42,
+     "WS:disagree": 3
+    },
+    "days": 60,
+    "days_all_agree": 48
+   },
+   "tail > 3.0 twice or > 5.0 once": {
+    "agree": 110,
+    "n": 169,
+    "pct": 65.1,
+    "counts": {
+     "RVR:agree": 69,
+     "RVR:disagree": 55,
+     "WS:agree": 41,
+     "WS:disagree": 4
+    },
+    "days": 60,
+    "days_all_agree": 44
+   },
+   "into the wind (|head| < 0.5 keeps)": {
+    "agree": 136,
+    "n": 169,
+    "pct": 80.5,
+    "counts": {
+     "RVR:agree": 92,
+     "RVR:disagree": 32,
+     "WS:agree": 44,
+     "WS:disagree": 1
+    },
+    "days": 60,
+    "days_all_agree": 50
+   },
+   "prefer 36 unless any tail wind": {
+    "agree": 135,
+    "n": 169,
+    "pct": 79.9,
+    "counts": {
+     "RVR:agree": 91,
+     "RVR:disagree": 33,
+     "WS:agree": 44,
+     "WS:disagree": 1
+    },
+    "days": 60,
+    "days_all_agree": 49
+   },
+   "prefer 18 unless any tail wind": {
+    "agree": 133,
+    "n": 169,
+    "pct": 78.7,
+    "counts": {
+     "RVR:agree": 89,
+     "RVR:disagree": 35,
+     "WS:agree": 44,
+     "WS:disagree": 1
+    },
+    "days": 60,
+    "days_all_agree": 50
+   },
+   "always 36": {
+    "agree": 99,
+    "n": 169,
+    "pct": 58.6,
+    "counts": {
+     "RVR:agree": 74,
+     "RVR:disagree": 50,
+     "WS:agree": 25,
+     "WS:disagree": 20
+    },
+    "days": 60,
+    "days_all_agree": 30
+   }
+  },
+  "note_in_sample": "every variant row is IN-SAMPLE: the chosen thresholds were picked on these same hints",
+  "out_of_sample": {
+   "leave_one_day_out": {
+    "agree": 132,
+    "n": 169,
+    "pct": 78.1,
+    "grid": "keep in (0.5..3.0) x max in (2..6) m/s, max > keep, 30 pairs",
+    "pairs_picked": {
+     "1.5/5.0": 57,
+     "2.0/3.0": 1,
+     "0.5/5.0": 1,
+     "1.5/4.0": 1
+    }
+   },
+   "chosen_in_sample_day_bootstrap_95ci_pct": [
+    78.3,
+    94.7
+   ],
+   "chosen_minus_into_wind_day_bootstrap_95ci_pp": [
+    -0.7,
+    13.1
+   ]
+  },
+  "recommendation": "chosen hysteresis rule as default; the parameter-free \"into the wind\" rule as the fallback (metar_zsss.RunwayDirectionIntoWind): out of sample the chosen rule is not shown to be better"
+ }
+}

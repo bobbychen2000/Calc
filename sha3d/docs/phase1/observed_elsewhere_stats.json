@@ -1,0 +1,4080 @@
+{
+ "what": "OD2 tier 2 \"observed elsewhere\": Hongqiao (ZSSS) movements identified from open ADS-B outside the Shanghai coverage gap. Aggregate counts only; per-flight data stays in refs/cache (local).",
+ "made_by": "tools/adsb/scan_callsigns.py + tools/adsb/observed_elsewhere.py",
+ "inputs": {
+  "adsb": "adsb.lol globe_history prod releases (ODbL 1.0)",
+  "routes": "VRS standing data 24ce54242aca9291432ec67b7bab4d39f038913c 2026-11-12T04:49:37+00:00 (CC0 1.0)",
+  "registry": "Mictronics aircraft-database 479e4d0 (ODC-By 1.0)",
+  "pair_check": "Wikipedia SHA rev 1385154959, PVG rev 1385155113 destination lists (CC BY-SA 4.0)"
+ },
+ "denominator": {
+  "movements_per_day": 783.4,
+  "source": "CAAC Jan-Sep 2026 mean (PLAN §1)",
+  "winter_plan_per_day": 802,
+  "mean_06_24_per_hour_inf": 44.6
+ },
+ "route_db": {
+  "callsigns_total": 628956,
+  "sha_callsigns": 1376,
+  "pvg_callsigns": 5075,
+  "sha_by_airline": {
+   "CES": 471,
+   "CSH": 209,
+   "CQH": 191,
+   "DKH": 122,
+   "CSN": 94,
+   "CCA": 74,
+   "CDG": 50,
+   "CXA": 46,
+   "CHH": 20,
+   "CSZ": 16,
+   "CUA": 12,
+   "AMU": 10,
+   "UEA": 8,
+   "CPA": 7,
+   "KAL": 7,
+   "ANA": 6,
+   "CRK": 6,
+   "TBA": 5,
+   "HBH": 4,
+   "JAL": 4,
+   "LKE": 4,
+   "AAR": 2,
+   "CAL": 2,
+   "EVA": 2,
+   "GCR": 2,
+   "YZR": 2
+  },
+  "pair_check_vs_wikipedia": {
+   "ZSPD:listed_here": 2453,
+   "ZSPD:listed_neither": 869,
+   "ZSPD:listed_other_airport_only": 166,
+   "ZSSS:listed_here": 1238,
+   "ZSSS:listed_neither": 51,
+   "ZSSS:listed_other_airport_only": 87
+  },
+  "last_change_age": {
+   "CCA": {
+    "other": {
+     "n": 2963,
+     "median_days": 1200,
+     "le_90d": 0.079,
+     "le_365d": 0.247,
+     "gt_730d": 0.639
+    },
+    "PVG": {
+     "n": 279,
+     "median_days": 1398,
+     "le_90d": 0.09,
+     "le_365d": 0.201,
+     "gt_730d": 0.692
+    },
+    "SHA": {
+     "n": 74,
+     "median_days": 1522,
+     "le_90d": 0.054,
+     "le_365d": 0.189,
+     "gt_730d": 0.811
+    }
+   },
+   "CDG": {
+    "other": {
+     "n": 1081,
+     "median_days": 1043,
+     "le_90d": 0.104,
+     "le_365d": 0.281,
+     "gt_730d": 0.582
+    },
+    "PVG": {
+     "n": 15,
+     "median_days": 1395,
+     "le_90d": 0.0,
+     "le_365d": 0.0,
+     "gt_730d": 1.0
+    },
+    "SHA": {
+     "n": 50,
+     "median_days": 1348,
+     "le_90d": 0.08,
+     "le_365d": 0.1,
+     "gt_730d": 0.82
+    }
+   },
+   "CES": {
+    "other": {
+     "n": 2946,
+     "median_days": 726,
+     "le_90d": 0.103,
+     "le_365d": 0.366,
+     "gt_730d": 0.498
+    },
+    "PVG": {
+     "n": 1021,
+     "median_days": 927,
+     "le_90d": 0.065,
+     "le_365d": 0.263,
+     "gt_730d": 0.546
+    },
+    "SHA": {
+     "n": 471,
+     "median_days": 953,
+     "le_90d": 0.096,
+     "le_365d": 0.248,
+     "gt_730d": 0.567
+    }
+   },
+   "CQH": {
+    "other": {
+     "n": 864,
+     "median_days": 778,
+     "le_90d": 0.078,
+     "le_365d": 0.25,
+     "gt_730d": 0.558
+    },
+    "SHA": {
+     "n": 191,
+     "median_days": 1297,
+     "le_90d": 0.105,
+     "le_365d": 0.23,
+     "gt_730d": 0.644
+    },
+    "PVG": {
+     "n": 438,
+     "median_days": 1012,
+     "le_90d": 0.071,
+     "le_365d": 0.215,
+     "gt_730d": 0.603
+    }
+   },
+   "CSH": {
+    "other": {
+     "n": 142,
+     "median_days": 1105,
+     "le_90d": 0.035,
+     "le_365d": 0.268,
+     "gt_730d": 0.577
+    },
+    "PVG": {
+     "n": 394,
+     "median_days": 1270,
+     "le_90d": 0.071,
+     "le_365d": 0.259,
+     "gt_730d": 0.668
+    },
+    "SHA": {
+     "n": 209,
+     "median_days": 1326,
+     "le_90d": 0.057,
+     "le_365d": 0.215,
+     "gt_730d": 0.679
+    }
+   },
+   "CSN": {
+    "other": {
+     "n": 3781,
+     "median_days": 1100,
+     "le_90d": 0.084,
+     "le_365d": 0.264,
+     "gt_730d": 0.618
+    },
+    "PVG": {
+     "n": 321,
+     "median_days": 1297,
+     "le_90d": 0.097,
+     "le_365d": 0.184,
+     "gt_730d": 0.673
+    },
+    "SHA": {
+     "n": 94,
+     "median_days": 1522,
+     "le_90d": 0.064,
+     "le_365d": 0.17,
+     "gt_730d": 0.745
+    }
+   },
+   "CSZ": {
+    "other": {
+     "n": 1683,
+     "median_days": 1009,
+     "le_90d": 0.049,
+     "le_365d": 0.19,
+     "gt_730d": 0.677
+    },
+    "PVG": {
+     "n": 26,
+     "median_days": 1325,
+     "le_90d": 0.0,
+     "le_365d": 0.077,
+     "gt_730d": 0.846
+    },
+    "SHA": {
+     "n": 16,
+     "median_days": 1522,
+     "le_90d": 0.125,
+     "le_365d": 0.125,
+     "gt_730d": 0.875
+    }
+   },
+   "CUA": {
+    "other": {
+     "n": 695,
+     "median_days": 742,
+     "le_90d": 0.046,
+     "le_365d": 0.21,
+     "gt_730d": 0.545
+    },
+    "PVG": {
+     "n": 41,
+     "median_days": 1009,
+     "le_90d": 0.098,
+     "le_365d": 0.098,
+     "gt_730d": 0.707
+    },
+    "SHA": {
+     "n": 12,
+     "median_days": 1522,
+     "le_90d": 0.0,
+     "le_365d": 0.0,
+     "gt_730d": 1.0
+    }
+   },
+   "CXA": {
+    "other": {
+     "n": 1000,
+     "median_days": 948,
+     "le_90d": 0.061,
+     "le_365d": 0.314,
+     "gt_730d": 0.57
+    },
+    "PVG": {
+     "n": 16,
+     "median_days": 590,
+     "le_90d": 0.25,
+     "le_365d": 0.375,
+     "gt_730d": 0.125
+    },
+    "SHA": {
+     "n": 46,
+     "median_days": 1522,
+     "le_90d": 0.0,
+     "le_365d": 0.174,
+     "gt_730d": 0.783
+    }
+   },
+   "DKH": {
+    "other": {
+     "n": 442,
+     "median_days": 641,
+     "le_90d": 0.1,
+     "le_365d": 0.41,
+     "gt_730d": 0.484
+    },
+    "PVG": {
+     "n": 493,
+     "median_days": 590,
+     "le_90d": 0.105,
+     "le_365d": 0.347,
+     "gt_730d": 0.391
+    },
+    "SHA": {
+     "n": 122,
+     "median_days": 497,
+     "le_90d": 0.139,
+     "le_365d": 0.402,
+     "gt_730d": 0.385
+    }
+   }
+  }
+ },
+ "days": [
+  {
+   "day": "2026-11-10",
+   "window_utc": [
+    "2026-11-09T20:00:00Z",
+    "2026-11-10T20:00:00Z"
+   ],
+   "archive_days": [
+    {
+     "date": "2026.11.09",
+     "source": "adsb.lol globe_history prod (ODbL 1.0), release v2026.11.09-planes-readsb-prod-0",
+     "n_traces_scanned": 71773,
+     "n_traces_box": 8620,
+     "n_skipped_flags": 248
+    },
+    {
+     "date": "2026.11.10",
+     "source": "adsb.lol globe_history prod (ODbL 1.0), release v2026.11.10-planes-readsb-prod-0",
+     "n_traces_scanned": 75360,
+     "n_traces_box": 8615,
+     "n_skipped_flags": 277
+    }
+   ],
+   "flights_in_box_both_days": 52809,
+   "identified_total": 558,
+   "by_db_check": {
+    "track_consistent": 410,
+    "far_end_match": 132,
+    "track_inconsistent": 9,
+    "sha_end_mismatch": 2,
+    "other_leg": 2,
+    "far_end_mismatch": 2,
+    "wrong_heading": 1
+   },
+   "consistent": 542,
+   "consistent_by_role": {
+    "dep": 260,
+    "arr": 282
+   },
+   "consistent_share_of_783": 0.692,
+   "consistent_share_of_802": 0.676,
+   "with_inferred_time": 542,
+   "distinct_aircraft": 232,
+   "by_local_hour": {
+    "0": {
+     "arr": 5,
+     "dep": 0
+    },
+    "1": {
+     "arr": 0,
+     "dep": 0
+    },
+    "2": {
+     "arr": 0,
+     "dep": 0
+    },
+    "3": {
+     "arr": 0,
+     "dep": 0
+    },
+    "4": {
+     "arr": 0,
+     "dep": 0
+    },
+    "5": {
+     "arr": 0,
+     "dep": 0
+    },
+    "6": {
+     "arr": 0,
+     "dep": 3
+    },
+    "7": {
+     "arr": 1,
+     "dep": 20
+    },
+    "8": {
+     "arr": 7,
+     "dep": 16
+    },
+    "9": {
+     "arr": 13,
+     "dep": 16
+    },
+    "10": {
+     "arr": 17,
+     "dep": 19
+    },
+    "11": {
+     "arr": 15,
+     "dep": 17
+    },
+    "12": {
+     "arr": 17,
+     "dep": 20
+    },
+    "13": {
+     "arr": 14,
+     "dep": 18
+    },
+    "14": {
+     "arr": 20,
+     "dep": 14
+    },
+    "15": {
+     "arr": 22,
+     "dep": 15
+    },
+    "16": {
+     "arr": 20,
+     "dep": 15
+    },
+    "17": {
+     "arr": 20,
+     "dep": 18
+    },
+    "18": {
+     "arr": 12,
+     "dep": 19
+    },
+    "19": {
+     "arr": 19,
+     "dep": 12
+    },
+    "20": {
+     "arr": 18,
+     "dep": 15
+    },
+    "21": {
+     "arr": 23,
+     "dep": 16
+    },
+    "22": {
+     "arr": 19,
+     "dep": 6
+    },
+    "23": {
+     "arr": 20,
+     "dep": 1
+    }
+   },
+   "by_airline": {
+    "CES": 211,
+    "CQH": 62,
+    "CSH": 60,
+    "DKH": 50,
+    "CCA": 40,
+    "CSN": 38,
+    "CXA": 17,
+    "CSZ": 12,
+    "CHH": 11,
+    "CDG": 9,
+    "CPA": 4,
+    "TBA": 4,
+    "CUA": 3,
+    "JAL": 2,
+    "ANA": 2,
+    "CRK": 2,
+    "AMU": 2,
+    "AAR": 2,
+    "KAL": 2,
+    "CAL": 2,
+    "UEA": 2,
+    "HBH": 2,
+    "GCR": 2,
+    "YZR": 1
+   },
+   "distinct_callsigns_by_airline": {
+    "CES": 211,
+    "CQH": 62,
+    "CSH": 60,
+    "DKH": 50,
+    "CCA": 40,
+    "CSN": 38,
+    "CXA": 17,
+    "CSZ": 12,
+    "CHH": 11,
+    "CDG": 9,
+    "CPA": 4,
+    "TBA": 4,
+    "CUA": 3,
+    "JAL": 2,
+    "ANA": 2,
+    "CRK": 2,
+    "AMU": 2,
+    "AAR": 2,
+    "KAL": 2,
+    "CAL": 2,
+    "UEA": 2,
+    "HBH": 2,
+    "GCR": 2,
+    "YZR": 1
+   },
+   "db_sha_callsigns_by_airline": {
+    "CSH": 209,
+    "JAL": 4,
+    "ANA": 6,
+    "CSN": 94,
+    "CES": 471,
+    "CQH": 191,
+    "DKH": 122,
+    "CPA": 7,
+    "CHH": 20,
+    "CRK": 6,
+    "AMU": 10,
+    "CSZ": 16,
+    "CXA": 46,
+    "AAR": 2,
+    "KAL": 7,
+    "CAL": 2,
+    "CCA": 74,
+    "TBA": 5,
+    "UEA": 8,
+    "CDG": 50,
+    "HBH": 4,
+    "CUA": 12,
+    "YZR": 2,
+    "GCR": 2
+   },
+   "by_family": {
+    "A320 family": 242,
+    "wide-body": 134,
+    "737 family": 129,
+    "C919": 37
+   },
+   "by_type": {
+    "B738": 115,
+    "A321": 93,
+    "A21N": 78,
+    "A333": 56,
+    "A320": 39,
+    "C919": 37,
+    "A20N": 28,
+    "A332": 28,
+    "B789": 19,
+    "A359": 19,
+    "B38M": 12,
+    "B77W": 10,
+    "A319": 4,
+    "B78X": 2,
+    "B737": 2
+   },
+   "type_from": {
+    "trace": 512,
+    "mictronics": 30
+   },
+   "by_far_end_top25": {
+    "ZGSZ": 91,
+    "ZBAA": 68,
+    "ZLXY": 42,
+    "ZUCK": 32,
+    "ZSAM": 30,
+    "ZUUU": 27,
+    "ZBAD": 23,
+    "ZUTF": 19,
+    "ZBYN": 18,
+    "ZJSY": 16,
+    "ZBTJ": 16,
+    "ZWWW": 14,
+    "ZGSD": 14,
+    "ZHHH": 14,
+    "VHHH": 12,
+    "ZPPP": 10,
+    "ZLLL": 9,
+    "ZGOW": 9,
+    "RJTT": 8,
+    "RCSS": 8,
+    "RKSS": 8,
+    "ZSQZ": 8,
+    "ZJHK": 7,
+    "VMMC": 6,
+    "ZBHH": 6
+   },
+   "far_end_coverage": {
+    "ZGGG": [
+     4,
+     116
+    ],
+    "ZGSZ": [
+     91,
+     105
+    ],
+    "ZBAA": [
+     68,
+     97
+    ],
+    "ZSAM": [
+     30,
+     59
+    ],
+    "ZLXY": [
+     42,
+     54
+    ],
+    "ZUCK": [
+     32,
+     53
+    ],
+    "ZSQD": [
+     0,
+     49
+    ],
+    "ZUTF": [
+     19,
+     44
+    ],
+    "ZUUU": [
+     27,
+     41
+    ],
+    "ZGSD": [
+     14,
+     37
+    ],
+    "ZWWW": [
+     14,
+     37
+    ],
+    "ZGOW": [
+     9,
+     35
+    ],
+    "ZBAD": [
+     23,
+     34
+    ],
+    "ZPPP": [
+     10,
+     33
+    ],
+    "ZJSY": [
+     16,
+     32
+    ],
+    "ZBYN": [
+     18,
+     30
+    ],
+    "ZGHA": [
+     0,
+     30
+    ],
+    "ZLLL": [
+     9,
+     29
+    ],
+    "ZBTJ": [
+     16,
+     28
+    ],
+    "ZHHH": [
+     14,
+     28
+    ],
+    "ZUGY": [
+     0,
+     27
+    ],
+    "ZJHK": [
+     7,
+     26
+    ],
+    "ZSQZ": [
+     8,
+     24
+    ],
+    "VHHH": [
+     12,
+     21
+    ],
+    "ZBSJ": [
+     4,
+     20
+    ],
+    "ZSFZ": [
+     0,
+     19
+    ],
+    "ZSYT": [
+     0,
+     17
+    ],
+    "VMMC": [
+     6,
+     16
+    ],
+    "ZGNN": [
+     0,
+     16
+    ],
+    "RJTT": [
+     8,
+     14
+    ],
+    "RKSS": [
+     8,
+     13
+    ],
+    "ZGKL": [
+     0,
+     13
+    ],
+    "ZLIC": [
+     4,
+     12
+    ],
+    "ZHCC": [
+     6,
+     12
+    ],
+    "RCSS": [
+     8,
+     10
+    ],
+    "ZSJN": [
+     0,
+     10
+    ],
+    "ZLXN": [
+     0,
+     9
+    ],
+    "ZBHH": [
+     6,
+     8
+    ],
+    "ZYTX": [
+     0,
+     8
+    ],
+    "ZYHB": [
+     0,
+     7
+    ],
+    "ZSCN": [
+     0,
+     6
+    ],
+    "ZUMY": [
+     0,
+     6
+    ],
+    "ZPJH": [
+     0,
+     5
+    ],
+    "ZBLA": [
+     0,
+     5
+    ],
+    "ZSWH": [
+     0,
+     4
+    ],
+    "ZYCC": [
+     0,
+     4
+    ],
+    "ZYTL": [
+     0,
+     4
+    ],
+    "ZWAT": [
+     0,
+     4
+    ],
+    "ZSSM": [
+     0,
+     4
+    ],
+    "ZJQH": [
+     0,
+     4
+    ],
+    "ZPDL": [
+     0,
+     4
+    ],
+    "ZGFS": [
+     1,
+     4
+    ],
+    "ZBDT": [
+     2,
+     4
+    ]
+   },
+   "far_end_event_observed": 132,
+   "far_end_event_observed_by_airport_top15": {
+    "ZGSZ": 46,
+    "ZLXY": 42,
+    "VHHH": 9,
+    "RJTT": 8,
+    "RCSS": 8,
+    "RKSS": 8,
+    "ZGSD": 6,
+    "VMMC": 5
+   },
+   "nearest_fix_region": {
+    "Hefei/Nanjing cluster": 205,
+    "Fujian-Zhejiang coast": 127,
+    "Beijing / North China": 112,
+    "Pearl River Delta": 79,
+    "Japan / East China Sea": 11,
+    "Korea / Yellow Sea": 5,
+    "other mainland China": 2,
+    "Xi'an / Guanzhong": 1
+   },
+   "nearest_fix_km_q10_q25_q50_q75_q90": [
+    213,
+    247,
+    588,
+    854,
+    1110
+   ],
+   "nearest_fix_km_max": 1238,
+   "nearest_fix_gt_900_1300_km": [
+    114,
+    0
+   ],
+   "sigma_min_q10_q25_q50_q75_q90": [
+    4.1,
+    4.1,
+    9.4,
+    11.8,
+    12.2
+   ],
+   "sigma_min_max": 18.6,
+   "share_with_1sigma_le_5_10_15_20_min": [
+    0.264,
+    0.506,
+    0.915,
+    1.0
+   ],
+   "sigma_note": "1-sigma uncertainties (1.4826 x median |out-of-sample error|), not error bounds: for normal errors about 32 % of movements are further off than their 1-sigma",
+   "checks_fix1": {
+    "gap_split": {
+     "flights_cut": 24,
+     "cuts": 25,
+     "rule": "cut a SHA/PVG-route flight at a coverage gap longer than the air time of its longest DB leg (M1 line) + 30 min, at most 4 h"
+    },
+    "wrong_heading_rejected": 1,
+    "resplit_records": 1,
+    "span_too_long_rejected": 0,
+    "heading_gt90_inside_far_terminal_not_tested": 3,
+    "heading_off_deg_q50_q90_max": [
+     14.0,
+     40.900000000000034,
+     115.0
+    ],
+    "max_span_over_leg_air_time": 0.99,
+    "records_from_split_pieces": 7
+   },
+   "m1_sigma_s": {
+    "cn_leave_one_route_out_s": 1244,
+    "other_hkg_tpe_s": 415,
+    "in_sample_s": {
+     "other": 698,
+     "cn": 979
+    },
+    "other_used_by_route_km": {
+     "0-800": 448,
+     "800-1500": 712,
+     "1500-2500": 1128,
+     "2500-20000": 1336
+    },
+    "other_route_kfold_by_km": {
+     "0-800": {
+      "n": 2128,
+      "median_min": -1.7,
+      "mae_min": 6.1,
+      "p10_min": -8.9,
+      "p90_min": 10.6,
+      "abs_p50_min": 5.0,
+      "abs_p90_min": 12.0
+     },
+     "800-1500": {
+      "n": 2870,
+      "median_min": -0.4,
+      "mae_min": 9.3,
+      "p10_min": -13.0,
+      "p90_min": 15.7,
+      "abs_p50_min": 8.0,
+      "abs_p90_min": 17.3
+     },
+     "1500-2500": {
+      "n": 1156,
+      "median_min": 0.4,
+      "mae_min": 14.6,
+      "p10_min": -20.7,
+      "p90_min": 25.0,
+      "abs_p50_min": 12.7,
+      "abs_p90_min": 28.0
+     },
+     "2500-20000": {
+      "n": 988,
+      "median_min": -1.4,
+      "mae_min": 18.6,
+      "p10_min": -27.6,
+      "p90_min": 33.1,
+      "abs_p50_min": 15.0,
+      "abs_p90_min": 39.3
+     }
+    }
+   },
+   "m2_bias_by_bin": {
+    "M2_arr_cn_loao": {
+     "40-120 km": {
+      "bias_min": -0.2,
+      "sigma_raw_min": 2.5,
+      "sigma_corrected_min": 2.4,
+      "bias_removed": false,
+      "n": 748
+     },
+     "120-200 km": {
+      "bias_min": -0.1,
+      "sigma_raw_min": 3.5,
+      "sigma_corrected_min": 4.5,
+      "bias_removed": false,
+      "n": 825
+     },
+     "200-300 km": {
+      "bias_min": -1.4,
+      "sigma_raw_min": 5.4,
+      "sigma_corrected_min": 10.3,
+      "bias_removed": false,
+      "n": 418
+     },
+     "300-450 km": {
+      "bias_min": 0.9,
+      "sigma_raw_min": 3.4,
+      "sigma_corrected_min": 6.9,
+      "bias_removed": false,
+      "n": 38
+     },
+     "450-650 km": {
+      "bias_min": 4.7,
+      "sigma_raw_min": 9.4,
+      "sigma_corrected_min": 18.5,
+      "bias_removed": false,
+      "n": 341
+     },
+     "650-900 km": {
+      "bias_min": -1.3,
+      "sigma_raw_min": 11.3,
+      "sigma_corrected_min": 20.7,
+      "bias_removed": false,
+      "n": 436
+     },
+     "900-1300 km": {
+      "bias_min": -6.6,
+      "sigma_raw_min": 15.9,
+      "sigma_corrected_min": 11.8,
+      "bias_removed": true,
+      "n": 381
+     },
+     "1300-2000 km": {
+      "bias_min": -10.3,
+      "sigma_raw_min": 22.4,
+      "sigma_corrected_min": 42.5,
+      "bias_removed": false,
+      "n": 252
+     },
+     "2000-3500 km": {
+      "bias_min": -13.2,
+      "sigma_raw_min": 20.4,
+      "sigma_corrected_min": 19.6,
+      "bias_removed": false,
+      "n": 35
+     }
+    },
+    "M2_arr_other_loao": {
+     "40-120 km": {
+      "bias_min": 0.5,
+      "sigma_raw_min": 4.7,
+      "sigma_corrected_min": 4.6,
+      "bias_removed": false,
+      "n": 8820
+     },
+     "120-200 km": {
+      "bias_min": 0.6,
+      "sigma_raw_min": 5.2,
+      "sigma_corrected_min": 5.0,
+      "bias_removed": false,
+      "n": 7868
+     },
+     "200-300 km": {
+      "bias_min": 0.6,
+      "sigma_raw_min": 5.5,
+      "sigma_corrected_min": 5.3,
+      "bias_removed": false,
+      "n": 7818
+     },
+     "300-450 km": {
+      "bias_min": 0.8,
+      "sigma_raw_min": 6.5,
+      "sigma_corrected_min": 6.2,
+      "bias_removed": false,
+      "n": 7894
+     },
+     "450-650 km": {
+      "bias_min": 1.1,
+      "sigma_raw_min": 9.8,
+      "sigma_corrected_min": 9.8,
+      "bias_removed": false,
+      "n": 5920
+     },
+     "650-900 km": {
+      "bias_min": 2.4,
+      "sigma_raw_min": 12.9,
+      "sigma_corrected_min": 12.2,
+      "bias_removed": true,
+      "n": 5106
+     },
+     "900-1300 km": {
+      "bias_min": 1.8,
+      "sigma_raw_min": 12.0,
+      "sigma_corrected_min": 11.6,
+      "bias_removed": false,
+      "n": 5330
+     },
+     "1300-2000 km": {
+      "bias_min": 2.1,
+      "sigma_raw_min": 17.3,
+      "sigma_corrected_min": 17.4,
+      "bias_removed": false,
+      "n": 4025
+     },
+     "2000-3500 km": {
+      "bias_min": 1.3,
+      "sigma_raw_min": 22.7,
+      "sigma_corrected_min": 23.1,
+      "bias_removed": false,
+      "n": 3227
+     }
+    },
+    "M2_dep_cn_loao": {
+     "40-120 km": {
+      "bias_min": 0.1,
+      "sigma_raw_min": 1.2,
+      "sigma_corrected_min": 1.8,
+      "bias_removed": false,
+      "n": 399
+     },
+     "120-200 km": {
+      "bias_min": 0.2,
+      "sigma_raw_min": 2.2,
+      "sigma_corrected_min": 2.4,
+      "bias_removed": false,
+      "n": 579
+     },
+     "200-300 km": {
+      "bias_min": -0.4,
+      "sigma_raw_min": 4.1,
+      "sigma_corrected_min": 4.0,
+      "bias_removed": false,
+      "n": 607
+     },
+     "300-450 km": {
+      "bias_min": 1.9,
+      "sigma_raw_min": 3.1,
+      "sigma_corrected_min": 1.9,
+      "bias_removed": false,
+      "n": 27
+     },
+     "450-650 km": {
+      "bias_min": 6.2,
+      "sigma_raw_min": 10.2,
+      "sigma_corrected_min": 17.5,
+      "bias_removed": false,
+      "n": 112
+     },
+     "650-900 km": {
+      "bias_min": 11.5,
+      "sigma_raw_min": 18.6,
+      "sigma_corrected_min": 24.2,
+      "bias_removed": false,
+      "n": 276
+     },
+     "900-1300 km": {
+      "bias_min": 4.8,
+      "sigma_raw_min": 12.2,
+      "sigma_corrected_min": 20.0,
+      "bias_removed": false,
+      "n": 238
+     },
+     "1300-2000 km": {
+      "bias_min": -1.2,
+      "sigma_raw_min": 23.2,
+      "sigma_corrected_min": 42.9,
+      "bias_removed": false,
+      "n": 244
+     },
+     "2000-3500 km": {
+      "bias_min": -27.2,
+      "sigma_raw_min": 40.3,
+      "sigma_corrected_min": 40.3,
+      "bias_removed": false,
+      "n": 21
+     }
+    },
+    "M2_dep_other_loao": {
+     "40-120 km": {
+      "bias_min": 0.4,
+      "sigma_raw_min": 1.8,
+      "sigma_corrected_min": 1.6,
+      "bias_removed": false,
+      "n": 8569
+     },
+     "120-200 km": {
+      "bias_min": 0.4,
+      "sigma_raw_min": 2.1,
+      "sigma_corrected_min": 2.0,
+      "bias_removed": false,
+      "n": 7832
+     },
+     "200-300 km": {
+      "bias_min": 0.5,
+      "sigma_raw_min": 3.1,
+      "sigma_corrected_min": 2.9,
+      "bias_removed": false,
+      "n": 7541
+     },
+     "300-450 km": {
+      "bias_min": 0.7,
+      "sigma_raw_min": 4.2,
+      "sigma_corrected_min": 4.0,
+      "bias_removed": false,
+      "n": 7547
+     },
+     "450-650 km": {
+      "bias_min": 1.1,
+      "sigma_raw_min": 7.8,
+      "sigma_corrected_min": 7.9,
+      "bias_removed": false,
+      "n": 6166
+     },
+     "650-900 km": {
+      "bias_min": 1.1,
+      "sigma_raw_min": 10.8,
+      "sigma_corrected_min": 11.0,
+      "bias_removed": false,
+      "n": 4714
+     },
+     "900-1300 km": {
+      "bias_min": 1.5,
+      "sigma_raw_min": 12.3,
+      "sigma_corrected_min": 11.8,
+      "bias_removed": false,
+      "n": 4576
+     },
+     "1300-2000 km": {
+      "bias_min": 2.4,
+      "sigma_raw_min": 14.3,
+      "sigma_corrected_min": 14.2,
+      "bias_removed": false,
+      "n": 3471
+     },
+     "2000-3500 km": {
+      "bias_min": 2.2,
+      "sigma_raw_min": 18.5,
+      "sigma_corrected_min": 19.3,
+      "bias_removed": false,
+      "n": 2615
+     }
+    }
+   },
+   "m2_bias_removed_movements": {
+    "arr other 650-900 km": 4,
+    "arr cn 900-1300 km": 56
+   },
+   "method": {
+    "M2": 537,
+    "M1": 5
+   },
+   "wiki_pair_observed": {
+    "listed_SHA": 161,
+    "listed_SHA_and_PVG": 367,
+    "listed_PVG_only": 8,
+    "not_listed": 6
+   },
+   "pvg_identified_consistent": 1046,
+   "rotation": {
+    "pairs": {
+     "ZSSS->ZSSS": 271,
+     "ZSPD->ZSPD": 344,
+     "ZSPD->ZSSS": 1
+    },
+    "sha_turn_min_q10_q50_q90": [
+     77.0,
+     107.0,
+     138.0
+    ],
+    "n_mixed": 1
+   },
+   "edge_altitude_nanjing": {
+    "sha_arr_n": 96,
+    "pvg_arr_n": 176,
+    "sha_alt_q10_q50_q90": [
+     25750,
+     26600,
+     27950
+    ],
+    "pvg_alt_q10_q50_q90": [
+     26600,
+     29388,
+     32938
+    ],
+    "in_band_25900_27300ft": {
+     "sha": 67,
+     "pvg": 22
+    }
+   },
+   "inverse_unexplained_db_end_top10": {
+    "ZYTL": 5,
+    "ZSQD": 5,
+    "ZYTX": 4,
+    "RKSI": 2,
+    "ZGSD": 2,
+    "ZUGY": 2,
+    "ZYHB": 1,
+    "ZBTJ": 1,
+    "ZGGG": 1,
+    "ZYCC": 1
+   },
+   "inverse": {
+    "rule": "coverage ends (begins) airborne within 60-450 km of ZSSS, track within 15 deg of the bearing to (from) ZSSS, no landing (take-off) seen",
+    "n": 640,
+    "by_db": {
+     "db_pvg": 177,
+     "db_other_unexplained": 27,
+     "db_other_in_gap_yrd": 324,
+     "not_in_db": 12,
+     "db_sha": 98,
+     "db_other_beyond_shanghai": 2
+    },
+    "not_in_db_by_airline_prefix": {
+     "DHK": 1,
+     "LUK": 1,
+     "CSC": 4,
+     "CSZ": 1,
+     "THY": 1,
+     "CSS": 1,
+     "DKH": 1,
+     "CBJ": 1,
+     "IRM": 1
+    },
+    "miss_rate_all_candidates": 0.019,
+    "miss_rate_if_all_missing_were_shanghai_bound": 0.042
+   },
+   "registry": {
+    "aircraft": 240,
+    "trace_has_reg": 228,
+    "trace_has_type": 228,
+    "in_mictronics": 240,
+    "reg_agree": 228,
+    "type_agree": 228,
+    "reg_B-": 236,
+    "reg_only_mictronics": 12,
+    "type_only_mictronics": 12
+   },
+   "calibration": {
+    "flights_both_ends": 7328,
+    "cn_domestic_both_ends": 72,
+    "samples": {
+     "arr": 59942,
+     "dep": 56059
+    },
+    "samples_cn": {
+     "arr": 3474,
+     "dep": 2503
+    },
+    "air_time_fit_all": {
+     "a_s": 1207,
+     "b_s_per_km": 4.428,
+     "sigma_s": 415
+    },
+    "air_time_fit_cn": {
+     "a_s": 673,
+     "b_s_per_km": 5.684,
+     "sigma_s": 1244
+    }
+   },
+   "validation": {
+    "sign": "errors are predicted - actual for M2 (negative = SHA event predicted too early for arrivals), actual - predicted air time for M1",
+    "M1_hkg_tpe_air_time": {
+     "n": 114,
+     "median_min": 4.6,
+     "mae_min": 6.7,
+     "p10_min": -3.4,
+     "p90_min": 13.1,
+     "abs_p50_min": 4.7,
+     "abs_p90_min": 13.1
+    },
+    "M1_cn_leave_one_route_out": {
+     "n": 72,
+     "median_min": 8.7,
+     "mae_min": 22.5,
+     "p10_min": -14.9,
+     "p90_min": 29.8,
+     "abs_p50_min": 14.0,
+     "abs_p90_min": 50.0
+    },
+    "M2_arr_hkg_tpe": {
+     "40-120 km": {
+      "n": 113,
+      "median_min": -1.7,
+      "mae_min": 4.2,
+      "p10_min": -7.2,
+      "p90_min": 3.9,
+      "abs_p50_min": 3.5,
+      "abs_p90_min": 7.2
+     },
+     "120-200 km": {
+      "n": 65,
+      "median_min": 1.3,
+      "mae_min": 5.3,
+      "p10_min": -9.9,
+      "p90_min": 4.7,
+      "abs_p50_min": 4.3,
+      "abs_p90_min": 9.9
+     },
+     "200-300 km": {
+      "n": 74,
+      "median_min": 0.1,
+      "mae_min": 4.5,
+      "p10_min": -8.2,
+      "p90_min": 5.5,
+      "abs_p50_min": 4.0,
+      "abs_p90_min": 8.2
+     },
+     "300-450 km": {
+      "n": 29,
+      "median_min": 1.5,
+      "mae_min": 5.1,
+      "p10_min": -7.6,
+      "p90_min": 7.6,
+      "abs_p50_min": 4.9,
+      "abs_p90_min": 9.0
+     },
+     "450-650 km": {
+      "n": 65,
+      "median_min": 1.1,
+      "mae_min": 4.2,
+      "p10_min": -7.0,
+      "p90_min": 4.3,
+      "abs_p50_min": 2.8,
+      "abs_p90_min": 7.0
+     },
+     "650-900 km": {
+      "n": 114,
+      "median_min": -18.2,
+      "mae_min": 19.7,
+      "p10_min": -35.6,
+      "p90_min": -8.1,
+      "abs_p50_min": 18.2,
+      "abs_p90_min": 35.6
+     }
+    },
+    "M2_dep_hkg_tpe": {
+     "40-120 km": {
+      "n": 113,
+      "median_min": -0.4,
+      "mae_min": 1.1,
+      "p10_min": -1.7,
+      "p90_min": 0.9,
+      "abs_p50_min": 1.1,
+      "abs_p90_min": 1.7
+     },
+     "120-200 km": {
+      "n": 101,
+      "median_min": -0.4,
+      "mae_min": 1.1,
+      "p10_min": -1.6,
+      "p90_min": 1.4,
+      "abs_p50_min": 1.1,
+      "abs_p90_min": 1.9
+     },
+     "200-300 km": {
+      "n": 62,
+      "median_min": -0.4,
+      "mae_min": 0.7,
+      "p10_min": -1.1,
+      "p90_min": 0.8,
+      "abs_p50_min": 0.6,
+      "abs_p90_min": 1.5
+     },
+     "300-450 km": {
+      "n": 55,
+      "median_min": 0.1,
+      "mae_min": 0.6,
+      "p10_min": -0.7,
+      "p90_min": 1.2,
+      "abs_p50_min": 0.5,
+      "abs_p90_min": 1.4
+     },
+     "450-650 km": {
+      "n": 80,
+      "median_min": 2.8,
+      "mae_min": 2.5,
+      "p10_min": -0.1,
+      "p90_min": 4.3,
+      "abs_p50_min": 2.8,
+      "abs_p90_min": 4.3
+     },
+     "650-900 km": {
+      "n": 114,
+      "median_min": -4.5,
+      "mae_min": 8.3,
+      "p10_min": -19.1,
+      "p90_min": 0.9,
+      "abs_p50_min": 4.5,
+      "abs_p90_min": 19.1
+     }
+    },
+    "M2_arr_hkg_tpe_corrected": {
+     "40-120 km": {
+      "n": 113,
+      "median_min": -1.7,
+      "mae_min": 4.2,
+      "p10_min": -7.2,
+      "p90_min": 3.9,
+      "abs_p50_min": 3.5,
+      "abs_p90_min": 7.2
+     },
+     "120-200 km": {
+      "n": 65,
+      "median_min": 1.3,
+      "mae_min": 5.3,
+      "p10_min": -9.9,
+      "p90_min": 4.7,
+      "abs_p50_min": 4.3,
+      "abs_p90_min": 9.9
+     },
+     "200-300 km": {
+      "n": 74,
+      "median_min": 0.1,
+      "mae_min": 4.5,
+      "p10_min": -8.2,
+      "p90_min": 5.5,
+      "abs_p50_min": 4.0,
+      "abs_p90_min": 8.2
+     },
+     "300-450 km": {
+      "n": 29,
+      "median_min": 1.5,
+      "mae_min": 5.1,
+      "p10_min": -7.6,
+      "p90_min": 7.6,
+      "abs_p50_min": 4.9,
+      "abs_p90_min": 9.0
+     },
+     "450-650 km": {
+      "n": 65,
+      "median_min": 1.1,
+      "mae_min": 4.2,
+      "p10_min": -7.0,
+      "p90_min": 4.3,
+      "abs_p50_min": 2.8,
+      "abs_p90_min": 7.0
+     },
+     "650-900 km": {
+      "n": 114,
+      "median_min": -20.6,
+      "mae_min": 22.1,
+      "p10_min": -37.9,
+      "p90_min": -10.4,
+      "abs_p50_min": 20.6,
+      "abs_p90_min": 37.9
+     }
+    },
+    "M2_dep_hkg_tpe_corrected": {
+     "40-120 km": {
+      "n": 113,
+      "median_min": -0.4,
+      "mae_min": 1.1,
+      "p10_min": -1.7,
+      "p90_min": 0.9,
+      "abs_p50_min": 1.1,
+      "abs_p90_min": 1.7
+     },
+     "120-200 km": {
+      "n": 101,
+      "median_min": -0.4,
+      "mae_min": 1.1,
+      "p10_min": -1.6,
+      "p90_min": 1.4,
+      "abs_p50_min": 1.1,
+      "abs_p90_min": 1.9
+     },
+     "200-300 km": {
+      "n": 62,
+      "median_min": -0.4,
+      "mae_min": 0.7,
+      "p10_min": -1.1,
+      "p90_min": 0.8,
+      "abs_p50_min": 0.6,
+      "abs_p90_min": 1.5
+     },
+     "300-450 km": {
+      "n": 55,
+      "median_min": 0.1,
+      "mae_min": 0.6,
+      "p10_min": -0.7,
+      "p90_min": 1.2,
+      "abs_p50_min": 0.5,
+      "abs_p90_min": 1.4
+     },
+     "450-650 km": {
+      "n": 80,
+      "median_min": 2.8,
+      "mae_min": 2.5,
+      "p10_min": -0.1,
+      "p90_min": 4.3,
+      "abs_p50_min": 2.8,
+      "abs_p90_min": 4.3
+     },
+     "650-900 km": {
+      "n": 114,
+      "median_min": -4.5,
+      "mae_min": 8.3,
+      "p10_min": -19.1,
+      "p90_min": 0.9,
+      "abs_p50_min": 4.5,
+      "abs_p90_min": 19.1
+     }
+    },
+    "M2_arr_cn_loao": {
+     "40-120 km": {
+      "n": 748,
+      "median_min": -0.2,
+      "mae_min": 2.3,
+      "p10_min": -4.6,
+      "p90_min": 3.0,
+      "abs_p50_min": 1.7,
+      "abs_p90_min": 4.8
+     },
+     "120-200 km": {
+      "n": 825,
+      "median_min": -0.1,
+      "mae_min": 2.7,
+      "p10_min": -4.6,
+      "p90_min": 4.1,
+      "abs_p50_min": 2.4,
+      "abs_p90_min": 5.5
+     },
+     "200-300 km": {
+      "n": 418,
+      "median_min": -1.4,
+      "mae_min": 3.8,
+      "p10_min": -6.5,
+      "p90_min": 5.2,
+      "abs_p50_min": 3.6,
+      "abs_p90_min": 7.0
+     },
+     "300-450 km": {
+      "n": 38,
+      "median_min": 0.9,
+      "mae_min": 2.8,
+      "p10_min": -4.2,
+      "p90_min": 4.2,
+      "abs_p50_min": 2.3,
+      "abs_p90_min": 5.1
+     },
+     "450-650 km": {
+      "n": 341,
+      "median_min": 4.7,
+      "mae_min": 6.3,
+      "p10_min": -8.1,
+      "p90_min": 8.9,
+      "abs_p50_min": 6.3,
+      "abs_p90_min": 9.8
+     },
+     "650-900 km": {
+      "n": 436,
+      "median_min": -1.3,
+      "mae_min": 7.9,
+      "p10_min": -10.9,
+      "p90_min": 12.3,
+      "abs_p50_min": 7.6,
+      "abs_p90_min": 13.8
+     },
+     "900-1300 km": {
+      "n": 381,
+      "median_min": -6.6,
+      "mae_min": 15.0,
+      "p10_min": -18.4,
+      "p90_min": 15.3,
+      "abs_p50_min": 10.7,
+      "abs_p90_min": 20.7
+     },
+     "1300-2000 km": {
+      "n": 252,
+      "median_min": -10.3,
+      "mae_min": 23.0,
+      "p10_min": -34.8,
+      "p90_min": 17.0,
+      "abs_p50_min": 15.1,
+      "abs_p90_min": 34.8
+     },
+     "2000-3500 km": {
+      "n": 35,
+      "median_min": -13.2,
+      "mae_min": 16.8,
+      "p10_min": -29.4,
+      "p90_min": 0.3,
+      "abs_p50_min": 13.7,
+      "abs_p90_min": 29.4
+     }
+    },
+    "M2_dep_cn_loao": {
+     "40-120 km": {
+      "n": 399,
+      "median_min": 0.1,
+      "mae_min": 1.1,
+      "p10_min": -1.8,
+      "p90_min": 1.2,
+      "abs_p50_min": 0.8,
+      "abs_p90_min": 1.9
+     },
+     "120-200 km": {
+      "n": 579,
+      "median_min": 0.2,
+      "mae_min": 1.8,
+      "p10_min": -3.2,
+      "p90_min": 2.6,
+      "abs_p50_min": 1.5,
+      "abs_p90_min": 3.3
+     },
+     "200-300 km": {
+      "n": 607,
+      "median_min": -0.4,
+      "mae_min": 3.1,
+      "p10_min": -5.9,
+      "p90_min": 3.4,
+      "abs_p50_min": 2.8,
+      "abs_p90_min": 5.9
+     },
+     "300-450 km": {
+      "n": 27,
+      "median_min": 1.9,
+      "mae_min": 2.2,
+      "p10_min": 0.3,
+      "p90_min": 3.2,
+      "abs_p50_min": 2.1,
+      "abs_p90_min": 3.3
+     },
+     "450-650 km": {
+      "n": 112,
+      "median_min": 6.2,
+      "mae_min": 7.5,
+      "p10_min": -6.2,
+      "p90_min": 10.9,
+      "abs_p50_min": 6.9,
+      "abs_p90_min": 11.4
+     },
+     "650-900 km": {
+      "n": 276,
+      "median_min": 11.5,
+      "mae_min": 14.6,
+      "p10_min": -1.9,
+      "p90_min": 20.9,
+      "abs_p50_min": 12.6,
+      "abs_p90_min": 22.4
+     },
+     "900-1300 km": {
+      "n": 238,
+      "median_min": 4.8,
+      "mae_min": 14.6,
+      "p10_min": -9.3,
+      "p90_min": 15.4,
+      "abs_p50_min": 8.2,
+      "abs_p90_min": 17.8
+     },
+     "1300-2000 km": {
+      "n": 244,
+      "median_min": -1.2,
+      "mae_min": 25.1,
+      "p10_min": -76.0,
+      "p90_min": 20.6,
+      "abs_p50_min": 15.7,
+      "abs_p90_min": 76.0
+     },
+     "2000-3500 km": {
+      "n": 21,
+      "median_min": -27.2,
+      "mae_min": 43.2,
+      "p10_min": -102.2,
+      "p90_min": -4.9,
+      "abs_p50_min": 27.2,
+      "abs_p90_min": 102.2
+     }
+    },
+    "M2_arr_other_loao": {
+     "40-120 km": {
+      "n": 8933,
+      "median_min": 0.5,
+      "mae_min": 3.9,
+      "p10_min": -7.2,
+      "p90_min": 4.8,
+      "abs_p50_min": 3.2,
+      "abs_p90_min": 7.4
+     },
+     "120-200 km": {
+      "n": 7933,
+      "median_min": 0.6,
+      "mae_min": 4.5,
+      "p10_min": -8.9,
+      "p90_min": 5.5,
+      "abs_p50_min": 3.5,
+      "abs_p90_min": 9.0
+     },
+     "200-300 km": {
+      "n": 7892,
+      "median_min": 0.5,
+      "mae_min": 4.9,
+      "p10_min": -9.7,
+      "p90_min": 6.1,
+      "abs_p50_min": 3.7,
+      "abs_p90_min": 9.9
+     },
+     "300-450 km": {
+      "n": 7923,
+      "median_min": 0.8,
+      "mae_min": 5.9,
+      "p10_min": -11.9,
+      "p90_min": 7.3,
+      "abs_p50_min": 4.4,
+      "abs_p90_min": 11.9
+     },
+     "450-650 km": {
+      "n": 5985,
+      "median_min": 1.1,
+      "mae_min": 7.9,
+      "p10_min": -13.9,
+      "p90_min": 10.6,
+      "abs_p50_min": 6.5,
+      "abs_p90_min": 14.5
+     },
+     "650-900 km": {
+      "n": 5220,
+      "median_min": 2.1,
+      "mae_min": 10.7,
+      "p10_min": -19.6,
+      "p90_min": 14.7,
+      "abs_p50_min": 8.8,
+      "abs_p90_min": 21.0
+     },
+     "900-1300 km": {
+      "n": 5330,
+      "median_min": 1.8,
+      "mae_min": 10.7,
+      "p10_min": -17.7,
+      "p90_min": 14.9,
+      "abs_p50_min": 8.1,
+      "abs_p90_min": 20.9
+     },
+     "1300-2000 km": {
+      "n": 4025,
+      "median_min": 2.1,
+      "mae_min": 14.5,
+      "p10_min": -23.3,
+      "p90_min": 21.7,
+      "abs_p50_min": 11.7,
+      "abs_p90_min": 28.4
+     },
+     "2000-3500 km": {
+      "n": 3227,
+      "median_min": 1.3,
+      "mae_min": 18.9,
+      "p10_min": -32.9,
+      "p90_min": 27.4,
+      "abs_p50_min": 15.3,
+      "abs_p90_min": 37.4
+     }
+    },
+    "M2_dep_other_loao": {
+     "40-120 km": {
+      "n": 8682,
+      "median_min": 0.4,
+      "mae_min": 1.5,
+      "p10_min": -2.7,
+      "p90_min": 1.7,
+      "abs_p50_min": 1.2,
+      "abs_p90_min": 2.7
+     },
+     "120-200 km": {
+      "n": 7933,
+      "median_min": 0.4,
+      "mae_min": 2.0,
+      "p10_min": -3.4,
+      "p90_min": 2.2,
+      "abs_p50_min": 1.4,
+      "abs_p90_min": 3.5
+     },
+     "200-300 km": {
+      "n": 7603,
+      "median_min": 0.5,
+      "mae_min": 3.0,
+      "p10_min": -5.2,
+      "p90_min": 3.4,
+      "abs_p50_min": 2.0,
+      "abs_p90_min": 5.4
+     },
+     "300-450 km": {
+      "n": 7602,
+      "median_min": 0.7,
+      "mae_min": 4.4,
+      "p10_min": -8.7,
+      "p90_min": 4.7,
+      "abs_p50_min": 2.9,
+      "abs_p90_min": 8.7
+     },
+     "450-650 km": {
+      "n": 6246,
+      "median_min": 1.1,
+      "mae_min": 6.4,
+      "p10_min": -11.2,
+      "p90_min": 7.9,
+      "abs_p50_min": 5.2,
+      "abs_p90_min": 11.4
+     },
+     "650-900 km": {
+      "n": 4828,
+      "median_min": 0.8,
+      "mae_min": 8.7,
+      "p10_min": -15.5,
+      "p90_min": 10.9,
+      "abs_p50_min": 7.2,
+      "abs_p90_min": 16.9
+     },
+     "900-1300 km": {
+      "n": 4576,
+      "median_min": 1.5,
+      "mae_min": 10.6,
+      "p10_min": -20.1,
+      "p90_min": 13.0,
+      "abs_p50_min": 8.3,
+      "abs_p90_min": 21.2
+     },
+     "1300-2000 km": {
+      "n": 3471,
+      "median_min": 2.4,
+      "mae_min": 11.8,
+      "p10_min": -20.1,
+      "p90_min": 16.9,
+      "abs_p50_min": 9.6,
+      "abs_p90_min": 23.1
+     },
+     "2000-3500 km": {
+      "n": 2615,
+      "median_min": 2.2,
+      "mae_min": 15.7,
+      "p10_min": -28.2,
+      "p90_min": 21.4,
+      "abs_p50_min": 12.5,
+      "abs_p90_min": 32.8
+     }
+    },
+    "M2_arr_cn_loao_used": {
+     "40-120 km": {
+      "n": 748,
+      "median_min": -0.2,
+      "mae_min": 2.3,
+      "p10_min": -4.6,
+      "p90_min": 3.0,
+      "abs_p50_min": 1.7,
+      "abs_p90_min": 4.8
+     },
+     "120-200 km": {
+      "n": 825,
+      "median_min": -0.1,
+      "mae_min": 2.7,
+      "p10_min": -4.6,
+      "p90_min": 4.1,
+      "abs_p50_min": 2.4,
+      "abs_p90_min": 5.5
+     },
+     "200-300 km": {
+      "n": 418,
+      "median_min": -1.4,
+      "mae_min": 3.8,
+      "p10_min": -6.5,
+      "p90_min": 5.2,
+      "abs_p50_min": 3.6,
+      "abs_p90_min": 7.0
+     },
+     "300-450 km": {
+      "n": 38,
+      "median_min": 0.9,
+      "mae_min": 2.8,
+      "p10_min": -4.2,
+      "p90_min": 4.2,
+      "abs_p50_min": 2.3,
+      "abs_p90_min": 5.1
+     },
+     "450-650 km": {
+      "n": 341,
+      "median_min": 4.7,
+      "mae_min": 6.3,
+      "p10_min": -8.1,
+      "p90_min": 8.9,
+      "abs_p50_min": 6.3,
+      "abs_p90_min": 9.8
+     },
+     "650-900 km": {
+      "n": 436,
+      "median_min": -1.3,
+      "mae_min": 7.9,
+      "p10_min": -10.9,
+      "p90_min": 12.3,
+      "abs_p50_min": 7.6,
+      "abs_p90_min": 13.8
+     },
+     "900-1300 km": {
+      "n": 381,
+      "median_min": -2.6,
+      "mae_min": 14.0,
+      "p10_min": -13.3,
+      "p90_min": 21.2,
+      "abs_p50_min": 8.0,
+      "abs_p90_min": 24.6
+     },
+     "1300-2000 km": {
+      "n": 252,
+      "median_min": -10.3,
+      "mae_min": 23.0,
+      "p10_min": -34.8,
+      "p90_min": 17.0,
+      "abs_p50_min": 15.1,
+      "abs_p90_min": 34.8
+     },
+     "2000-3500 km": {
+      "n": 35,
+      "median_min": -13.2,
+      "mae_min": 16.8,
+      "p10_min": -29.4,
+      "p90_min": 0.3,
+      "abs_p50_min": 13.7,
+      "abs_p90_min": 29.4
+     }
+    },
+    "M2_dep_cn_loao_used": {
+     "40-120 km": {
+      "n": 399,
+      "median_min": 0.1,
+      "mae_min": 1.1,
+      "p10_min": -1.8,
+      "p90_min": 1.2,
+      "abs_p50_min": 0.8,
+      "abs_p90_min": 1.9
+     },
+     "120-200 km": {
+      "n": 579,
+      "median_min": 0.2,
+      "mae_min": 1.8,
+      "p10_min": -3.2,
+      "p90_min": 2.6,
+      "abs_p50_min": 1.5,
+      "abs_p90_min": 3.3
+     },
+     "200-300 km": {
+      "n": 607,
+      "median_min": -0.4,
+      "mae_min": 3.1,
+      "p10_min": -5.9,
+      "p90_min": 3.4,
+      "abs_p50_min": 2.8,
+      "abs_p90_min": 5.9
+     },
+     "300-450 km": {
+      "n": 27,
+      "median_min": 1.9,
+      "mae_min": 2.2,
+      "p10_min": 0.3,
+      "p90_min": 3.2,
+      "abs_p50_min": 2.1,
+      "abs_p90_min": 3.3
+     },
+     "450-650 km": {
+      "n": 112,
+      "median_min": 6.2,
+      "mae_min": 7.5,
+      "p10_min": -6.2,
+      "p90_min": 10.9,
+      "abs_p50_min": 6.9,
+      "abs_p90_min": 11.4
+     },
+     "650-900 km": {
+      "n": 276,
+      "median_min": 11.5,
+      "mae_min": 14.6,
+      "p10_min": -1.9,
+      "p90_min": 20.9,
+      "abs_p50_min": 12.6,
+      "abs_p90_min": 22.4
+     },
+     "900-1300 km": {
+      "n": 238,
+      "median_min": 4.8,
+      "mae_min": 14.6,
+      "p10_min": -9.3,
+      "p90_min": 15.4,
+      "abs_p50_min": 8.2,
+      "abs_p90_min": 17.8
+     },
+     "1300-2000 km": {
+      "n": 244,
+      "median_min": -1.2,
+      "mae_min": 25.1,
+      "p10_min": -76.0,
+      "p90_min": 20.6,
+      "abs_p50_min": 15.7,
+      "abs_p90_min": 76.0
+     },
+     "2000-3500 km": {
+      "n": 21,
+      "median_min": -27.2,
+      "mae_min": 43.2,
+      "p10_min": -102.2,
+      "p90_min": -4.9,
+      "abs_p50_min": 27.2,
+      "abs_p90_min": 102.2
+     }
+    },
+    "M2_arr_other_loao_used": {
+     "40-120 km": {
+      "n": 8933,
+      "median_min": 0.5,
+      "mae_min": 3.9,
+      "p10_min": -7.2,
+      "p90_min": 4.8,
+      "abs_p50_min": 3.2,
+      "abs_p90_min": 7.4
+     },
+     "120-200 km": {
+      "n": 7933,
+      "median_min": 0.6,
+      "mae_min": 4.5,
+      "p10_min": -8.9,
+      "p90_min": 5.5,
+      "abs_p50_min": 3.5,
+      "abs_p90_min": 9.0
+     },
+     "200-300 km": {
+      "n": 7892,
+      "median_min": 0.5,
+      "mae_min": 4.9,
+      "p10_min": -9.7,
+      "p90_min": 6.1,
+      "abs_p50_min": 3.7,
+      "abs_p90_min": 9.9
+     },
+     "300-450 km": {
+      "n": 7923,
+      "median_min": 0.8,
+      "mae_min": 5.9,
+      "p10_min": -11.9,
+      "p90_min": 7.3,
+      "abs_p50_min": 4.4,
+      "abs_p90_min": 11.9
+     },
+     "450-650 km": {
+      "n": 5985,
+      "median_min": 1.1,
+      "mae_min": 7.9,
+      "p10_min": -13.9,
+      "p90_min": 10.6,
+      "abs_p50_min": 6.5,
+      "abs_p90_min": 14.5
+     },
+     "650-900 km": {
+      "n": 5106,
+      "median_min": 0.0,
+      "mae_min": 10.5,
+      "p10_min": -21.2,
+      "p90_min": 12.9,
+      "abs_p50_min": 8.2,
+      "abs_p90_min": 21.4
+     },
+     "900-1300 km": {
+      "n": 5330,
+      "median_min": 1.8,
+      "mae_min": 10.7,
+      "p10_min": -17.7,
+      "p90_min": 14.9,
+      "abs_p50_min": 8.1,
+      "abs_p90_min": 20.9
+     },
+     "1300-2000 km": {
+      "n": 4025,
+      "median_min": 2.1,
+      "mae_min": 14.5,
+      "p10_min": -23.3,
+      "p90_min": 21.7,
+      "abs_p50_min": 11.7,
+      "abs_p90_min": 28.4
+     },
+     "2000-3500 km": {
+      "n": 3227,
+      "median_min": 1.3,
+      "mae_min": 18.9,
+      "p10_min": -32.9,
+      "p90_min": 27.4,
+      "abs_p50_min": 15.3,
+      "abs_p90_min": 37.4
+     }
+    },
+    "M2_dep_other_loao_used": {
+     "40-120 km": {
+      "n": 8682,
+      "median_min": 0.4,
+      "mae_min": 1.5,
+      "p10_min": -2.7,
+      "p90_min": 1.7,
+      "abs_p50_min": 1.2,
+      "abs_p90_min": 2.7
+     },
+     "120-200 km": {
+      "n": 7933,
+      "median_min": 0.4,
+      "mae_min": 2.0,
+      "p10_min": -3.4,
+      "p90_min": 2.2,
+      "abs_p50_min": 1.4,
+      "abs_p90_min": 3.5
+     },
+     "200-300 km": {
+      "n": 7603,
+      "median_min": 0.5,
+      "mae_min": 3.0,
+      "p10_min": -5.2,
+      "p90_min": 3.4,
+      "abs_p50_min": 2.0,
+      "abs_p90_min": 5.4
+     },
+     "300-450 km": {
+      "n": 7602,
+      "median_min": 0.7,
+      "mae_min": 4.4,
+      "p10_min": -8.7,
+      "p90_min": 4.7,
+      "abs_p50_min": 2.9,
+      "abs_p90_min": 8.7
+     },
+     "450-650 km": {
+      "n": 6246,
+      "median_min": 1.1,
+      "mae_min": 6.4,
+      "p10_min": -11.2,
+      "p90_min": 7.9,
+      "abs_p50_min": 5.2,
+      "abs_p90_min": 11.4
+     },
+     "650-900 km": {
+      "n": 4828,
+      "median_min": 0.8,
+      "mae_min": 8.7,
+      "p10_min": -15.5,
+      "p90_min": 10.9,
+      "abs_p50_min": 7.2,
+      "abs_p90_min": 16.9
+     },
+     "900-1300 km": {
+      "n": 4576,
+      "median_min": 1.5,
+      "mae_min": 10.6,
+      "p10_min": -20.1,
+      "p90_min": 13.0,
+      "abs_p50_min": 8.3,
+      "abs_p90_min": 21.2
+     },
+     "1300-2000 km": {
+      "n": 3471,
+      "median_min": 2.4,
+      "mae_min": 11.8,
+      "p10_min": -20.1,
+      "p90_min": 16.9,
+      "abs_p50_min": 9.6,
+      "abs_p90_min": 23.1
+     },
+     "2000-3500 km": {
+      "n": 2615,
+      "median_min": 2.2,
+      "mae_min": 15.7,
+      "p10_min": -28.2,
+      "p90_min": 21.4,
+      "abs_p50_min": 12.5,
+      "abs_p90_min": 32.8
+     }
+    },
+    "note_used": "*_used: the estimate actually used: bias removed (nested, out of sample) only in bins where that cut sigma by >= 5 %; *_hkg_tpe_corrected: the held-out route with those same corrections"
+   }
+  },
+  {
+   "day": "2026-11-12",
+   "window_utc": [
+    "2026-11-11T20:00:00Z",
+    "2026-11-12T20:00:00Z"
+   ],
+   "archive_days": [
+    {
+     "date": "2026.11.11",
+     "source": "adsb.lol globe_history prod (ODbL 1.0), release v2026.11.11-planes-readsb-prod-0",
+     "n_traces_scanned": 75222,
+     "n_traces_box": 8719,
+     "n_skipped_flags": 286
+    },
+    {
+     "date": "2026.11.12",
+     "source": "adsb.lol globe_history prod (ODbL 1.0), release v2026.11.12-planes-readsb-prod-0",
+     "n_traces_scanned": 73533,
+     "n_traces_box": 8702,
+     "n_skipped_flags": 303
+    }
+   ],
+   "flights_in_box_both_days": 53636,
+   "identified_total": 562,
+   "by_db_check": {
+    "far_end_match": 118,
+    "track_consistent": 432,
+    "track_inconsistent": 4,
+    "sha_end_mismatch": 2,
+    "other_leg": 2,
+    "far_end_mismatch": 4
+   },
+   "consistent": 550,
+   "consistent_by_role": {
+    "dep": 263,
+    "arr": 287
+   },
+   "consistent_share_of_783": 0.702,
+   "consistent_share_of_802": 0.686,
+   "with_inferred_time": 550,
+   "distinct_aircraft": 248,
+   "by_local_hour": {
+    "0": {
+     "arr": 6,
+     "dep": 0
+    },
+    "1": {
+     "arr": 0,
+     "dep": 0
+    },
+    "2": {
+     "arr": 0,
+     "dep": 0
+    },
+    "3": {
+     "arr": 0,
+     "dep": 0
+    },
+    "4": {
+     "arr": 0,
+     "dep": 0
+    },
+    "5": {
+     "arr": 0,
+     "dep": 0
+    },
+    "6": {
+     "arr": 0,
+     "dep": 2
+    },
+    "7": {
+     "arr": 1,
+     "dep": 20
+    },
+    "8": {
+     "arr": 4,
+     "dep": 19
+    },
+    "9": {
+     "arr": 17,
+     "dep": 17
+    },
+    "10": {
+     "arr": 15,
+     "dep": 22
+    },
+    "11": {
+     "arr": 18,
+     "dep": 14
+    },
+    "12": {
+     "arr": 16,
+     "dep": 17
+    },
+    "13": {
+     "arr": 17,
+     "dep": 22
+    },
+    "14": {
+     "arr": 24,
+     "dep": 15
+    },
+    "15": {
+     "arr": 21,
+     "dep": 15
+    },
+    "16": {
+     "arr": 18,
+     "dep": 16
+    },
+    "17": {
+     "arr": 18,
+     "dep": 18
+    },
+    "18": {
+     "arr": 13,
+     "dep": 15
+    },
+    "19": {
+     "arr": 23,
+     "dep": 16
+    },
+    "20": {
+     "arr": 15,
+     "dep": 14
+    },
+    "21": {
+     "arr": 24,
+     "dep": 16
+    },
+    "22": {
+     "arr": 19,
+     "dep": 4
+    },
+    "23": {
+     "arr": 18,
+     "dep": 1
+    }
+   },
+   "by_airline": {
+    "CES": 212,
+    "CQH": 61,
+    "CSH": 57,
+    "DKH": 51,
+    "CSN": 41,
+    "CCA": 38,
+    "CXA": 23,
+    "CSZ": 12,
+    "CHH": 12,
+    "CDG": 7,
+    "CPA": 4,
+    "AMU": 4,
+    "TBA": 4,
+    "CUA": 3,
+    "ANA": 2,
+    "JAL": 2,
+    "CRK": 2,
+    "KAL": 2,
+    "AAR": 2,
+    "CAL": 2,
+    "UEA": 2,
+    "HBH": 2,
+    "EVA": 2,
+    "GCR": 2,
+    "YZR": 1
+   },
+   "distinct_callsigns_by_airline": {
+    "CES": 212,
+    "CQH": 61,
+    "CSH": 57,
+    "DKH": 51,
+    "CSN": 41,
+    "CCA": 38,
+    "CXA": 23,
+    "CSZ": 12,
+    "CHH": 12,
+    "CDG": 7,
+    "CPA": 4,
+    "AMU": 4,
+    "TBA": 4,
+    "CUA": 3,
+    "ANA": 2,
+    "JAL": 2,
+    "CRK": 2,
+    "KAL": 2,
+    "AAR": 2,
+    "CAL": 2,
+    "UEA": 2,
+    "HBH": 2,
+    "EVA": 2,
+    "GCR": 2,
+    "YZR": 1
+   },
+   "db_sha_callsigns_by_airline": {
+    "ANA": 6,
+    "CSH": 209,
+    "CES": 471,
+    "CSN": 94,
+    "CQH": 191,
+    "JAL": 4,
+    "DKH": 122,
+    "CPA": 7,
+    "CRK": 6,
+    "AMU": 10,
+    "CSZ": 16,
+    "CHH": 20,
+    "CXA": 46,
+    "CCA": 74,
+    "KAL": 7,
+    "AAR": 2,
+    "CAL": 2,
+    "UEA": 8,
+    "TBA": 5,
+    "CDG": 50,
+    "HBH": 4,
+    "EVA": 2,
+    "CUA": 12,
+    "GCR": 2,
+    "YZR": 2
+   },
+   "by_family": {
+    "A320 family": 239,
+    "wide-body": 146,
+    "737 family": 132,
+    "C919": 33
+   },
+   "by_type": {
+    "B738": 122,
+    "A321": 89,
+    "A21N": 85,
+    "A333": 60,
+    "A320": 38,
+    "C919": 33,
+    "A332": 28,
+    "A20N": 27,
+    "B789": 21,
+    "A359": 20,
+    "B77W": 13,
+    "B38M": 7,
+    "B78X": 4,
+    "B737": 3
+   },
+   "type_from": {
+    "trace": 510,
+    "mictronics": 40
+   },
+   "by_far_end_top25": {
+    "ZGSZ": 96,
+    "ZBAA": 70,
+    "ZLXY": 40,
+    "ZUCK": 31,
+    "ZUUU": 28,
+    "ZSAM": 23,
+    "ZUTF": 19,
+    "ZBAD": 19,
+    "ZWWW": 16,
+    "ZJSY": 16,
+    "ZGSD": 16,
+    "ZHHH": 16,
+    "ZBYN": 15,
+    "ZBTJ": 14,
+    "VHHH": 12,
+    "ZPPP": 12,
+    "ZGGG": 12,
+    "ZGOW": 10,
+    "ZSQZ": 10,
+    "RJTT": 8,
+    "VMMC": 8,
+    "ZJHK": 8,
+    "RKSS": 8,
+    "RCSS": 8,
+    "ZLLL": 7
+   },
+   "far_end_coverage": {
+    "ZGGG": [
+     12,
+     116
+    ],
+    "ZGSZ": [
+     96,
+     105
+    ],
+    "ZBAA": [
+     70,
+     97
+    ],
+    "ZSAM": [
+     23,
+     59
+    ],
+    "ZLXY": [
+     40,
+     54
+    ],
+    "ZUCK": [
+     31,
+     53
+    ],
+    "ZSQD": [
+     0,
+     49
+    ],
+    "ZUTF": [
+     19,
+     44
+    ],
+    "ZUUU": [
+     28,
+     41
+    ],
+    "ZGSD": [
+     16,
+     37
+    ],
+    "ZWWW": [
+     16,
+     37
+    ],
+    "ZGOW": [
+     10,
+     35
+    ],
+    "ZBAD": [
+     19,
+     34
+    ],
+    "ZPPP": [
+     12,
+     33
+    ],
+    "ZJSY": [
+     16,
+     32
+    ],
+    "ZBYN": [
+     15,
+     30
+    ],
+    "ZGHA": [
+     0,
+     30
+    ],
+    "ZLLL": [
+     7,
+     29
+    ],
+    "ZBTJ": [
+     14,
+     28
+    ],
+    "ZHHH": [
+     16,
+     28
+    ],
+    "ZUGY": [
+     1,
+     27
+    ],
+    "ZJHK": [
+     8,
+     26
+    ],
+    "ZSQZ": [
+     10,
+     24
+    ],
+    "VHHH": [
+     12,
+     21
+    ],
+    "ZBSJ": [
+     4,
+     20
+    ],
+    "ZSFZ": [
+     0,
+     19
+    ],
+    "ZSYT": [
+     0,
+     17
+    ],
+    "VMMC": [
+     8,
+     16
+    ],
+    "ZGNN": [
+     0,
+     16
+    ],
+    "RJTT": [
+     8,
+     14
+    ],
+    "RKSS": [
+     8,
+     13
+    ],
+    "ZGKL": [
+     0,
+     13
+    ],
+    "ZLIC": [
+     4,
+     12
+    ],
+    "ZHCC": [
+     6,
+     12
+    ],
+    "RCSS": [
+     8,
+     10
+    ],
+    "ZSJN": [
+     0,
+     10
+    ],
+    "ZLXN": [
+     0,
+     9
+    ],
+    "ZBHH": [
+     4,
+     8
+    ],
+    "ZYTX": [
+     0,
+     8
+    ],
+    "ZYHB": [
+     0,
+     7
+    ],
+    "ZSCN": [
+     0,
+     6
+    ],
+    "ZUMY": [
+     0,
+     6
+    ],
+    "ZPJH": [
+     0,
+     5
+    ],
+    "ZBLA": [
+     0,
+     5
+    ],
+    "ZSWH": [
+     0,
+     4
+    ],
+    "ZYCC": [
+     0,
+     4
+    ],
+    "ZYTL": [
+     0,
+     4
+    ],
+    "ZWAT": [
+     0,
+     4
+    ],
+    "ZSSM": [
+     0,
+     4
+    ],
+    "ZJQH": [
+     0,
+     4
+    ],
+    "ZPDL": [
+     0,
+     4
+    ],
+    "ZGFS": [
+     1,
+     4
+    ],
+    "ZBDT": [
+     2,
+     4
+    ]
+   },
+   "far_end_event_observed": 118,
+   "far_end_event_observed_by_airport_top15": {
+    "ZLXY": 40,
+    "ZGSZ": 30,
+    "VHHH": 10,
+    "RJTT": 8,
+    "RKSS": 8,
+    "RCSS": 8,
+    "ZGSD": 8,
+    "VMMC": 6
+   },
+   "nearest_fix_region": {
+    "Hefei/Nanjing cluster": 206,
+    "Fujian-Zhejiang coast": 116,
+    "Beijing / North China": 106,
+    "Pearl River Delta": 101,
+    "Japan / East China Sea": 11,
+    "Korea / Yellow Sea": 5,
+    "other mainland China": 5
+   },
+   "nearest_fix_km_q10_q25_q50_q75_q90": [
+    214,
+    245,
+    625,
+    907,
+    1113
+   ],
+   "nearest_fix_km_max": 1235,
+   "nearest_fix_gt_900_1300_km": [
+    143,
+    0
+   ],
+   "sigma_min_q10_q25_q50_q75_q90": [
+    4.0,
+    5.3,
+    8.0,
+    10.1,
+    11.4
+   ],
+   "sigma_min_max": 16.2,
+   "share_with_1sigma_le_5_10_15_20_min": [
+    0.184,
+    0.682,
+    0.944,
+    1.0
+   ],
+   "sigma_note": "1-sigma uncertainties (1.4826 x median |out-of-sample error|), not error bounds: for normal errors about 32 % of movements are further off than their 1-sigma",
+   "checks_fix1": {
+    "gap_split": {
+     "flights_cut": 28,
+     "cuts": 29,
+     "rule": "cut a SHA/PVG-route flight at a coverage gap longer than the air time of its longest DB leg (M1 line) + 30 min, at most 4 h"
+    },
+    "wrong_heading_rejected": 0,
+    "resplit_records": 0,
+    "span_too_long_rejected": 0,
+    "heading_gt90_inside_far_terminal_not_tested": 5,
+    "heading_off_deg_q50_q90_max": [
+     14.0,
+     42.10000000000002,
+     147.0
+    ],
+    "max_span_over_leg_air_time": 0.96,
+    "records_from_split_pieces": 6
+   },
+   "m1_sigma_s": {
+    "cn_leave_one_route_out_s": 1172,
+    "other_hkg_tpe_s": 412,
+    "in_sample_s": {
+     "other": 576,
+     "cn": 1144
+    },
+    "other_used_by_route_km": {
+     "0-800": 423,
+     "800-1500": 488,
+     "1500-2500": 1062,
+     "2500-20000": 1233
+    },
+    "other_route_kfold_by_km": {
+     "0-800": {
+      "n": 2063,
+      "median_min": -1.8,
+      "mae_min": 5.7,
+      "p10_min": -7.9,
+      "p90_min": 9.3,
+      "abs_p50_min": 4.7,
+      "abs_p90_min": 10.5
+     },
+     "800-1500": {
+      "n": 2580,
+      "median_min": -0.9,
+      "mae_min": 7.1,
+      "p10_min": -8.7,
+      "p90_min": 13.1,
+      "abs_p50_min": 5.5,
+      "abs_p90_min": 14.2
+     },
+     "1500-2500": {
+      "n": 1116,
+      "median_min": 0.1,
+      "mae_min": 12.8,
+      "p10_min": -18.1,
+      "p90_min": 22.9,
+      "abs_p50_min": 11.9,
+      "abs_p90_min": 25.0
+     },
+     "2500-20000": {
+      "n": 957,
+      "median_min": -1.1,
+      "mae_min": 17.4,
+      "p10_min": -22.4,
+      "p90_min": 29.9,
+      "abs_p50_min": 13.9,
+      "abs_p90_min": 36.2
+     }
+    }
+   },
+   "m2_bias_by_bin": {
+    "M2_arr_cn_loao": {
+     "40-120 km": {
+      "bias_min": 0.1,
+      "sigma_raw_min": 2.9,
+      "sigma_corrected_min": 3.0,
+      "bias_removed": false,
+      "n": 607
+     },
+     "120-200 km": {
+      "bias_min": -0.3,
+      "sigma_raw_min": 3.5,
+      "sigma_corrected_min": 5.2,
+      "bias_removed": false,
+      "n": 688
+     },
+     "200-300 km": {
+      "bias_min": -1.7,
+      "sigma_raw_min": 5.3,
+      "sigma_corrected_min": 10.0,
+      "bias_removed": false,
+      "n": 397
+     },
+     "300-450 km": {
+      "bias_min": 3.6,
+      "sigma_raw_min": 8.1,
+      "sigma_corrected_min": 16.0,
+      "bias_removed": false,
+      "n": 25
+     },
+     "450-650 km": {
+      "bias_min": 4.8,
+      "sigma_raw_min": 10.5,
+      "sigma_corrected_min": 20.6,
+      "bias_removed": false,
+      "n": 274
+     },
+     "650-900 km": {
+      "bias_min": 1.0,
+      "sigma_raw_min": 5.4,
+      "sigma_corrected_min": 6.8,
+      "bias_removed": false,
+      "n": 358
+     },
+     "900-1300 km": {
+      "bias_min": -4.5,
+      "sigma_raw_min": 11.2,
+      "sigma_corrected_min": 9.8,
+      "bias_removed": true,
+      "n": 353
+     },
+     "1300-2000 km": {
+      "bias_min": -16.6,
+      "sigma_raw_min": 31.1,
+      "sigma_corrected_min": 60.4,
+      "bias_removed": false,
+      "n": 218
+     },
+     "2000-3500 km": {
+      "bias_min": -24.1,
+      "sigma_raw_min": 35.7,
+      "sigma_corrected_min": 35.7,
+      "bias_removed": false,
+      "n": 25
+     }
+    },
+    "M2_arr_other_loao": {
+     "40-120 km": {
+      "bias_min": 0.3,
+      "sigma_raw_min": 4.7,
+      "sigma_corrected_min": 4.7,
+      "bias_removed": false,
+      "n": 8563
+     },
+     "120-200 km": {
+      "bias_min": 0.3,
+      "sigma_raw_min": 5.4,
+      "sigma_corrected_min": 5.3,
+      "bias_removed": false,
+      "n": 7522
+     },
+     "200-300 km": {
+      "bias_min": 0.5,
+      "sigma_raw_min": 5.6,
+      "sigma_corrected_min": 5.5,
+      "bias_removed": false,
+      "n": 7556
+     },
+     "300-450 km": {
+      "bias_min": 0.3,
+      "sigma_raw_min": 6.2,
+      "sigma_corrected_min": 6.2,
+      "bias_removed": false,
+      "n": 7660
+     },
+     "450-650 km": {
+      "bias_min": 1.1,
+      "sigma_raw_min": 7.9,
+      "sigma_corrected_min": 7.5,
+      "bias_removed": false,
+      "n": 5724
+     },
+     "650-900 km": {
+      "bias_min": 2.1,
+      "sigma_raw_min": 10.6,
+      "sigma_corrected_min": 10.0,
+      "bias_removed": true,
+      "n": 4876
+     },
+     "900-1300 km": {
+      "bias_min": 1.3,
+      "sigma_raw_min": 10.7,
+      "sigma_corrected_min": 10.5,
+      "bias_removed": false,
+      "n": 5143
+     },
+     "1300-2000 km": {
+      "bias_min": 2.4,
+      "sigma_raw_min": 16.4,
+      "sigma_corrected_min": 16.1,
+      "bias_removed": false,
+      "n": 3854
+     },
+     "2000-3500 km": {
+      "bias_min": 0.6,
+      "sigma_raw_min": 23.1,
+      "sigma_corrected_min": 23.3,
+      "bias_removed": false,
+      "n": 3099
+     }
+    },
+    "M2_dep_cn_loao": {
+     "40-120 km": {
+      "bias_min": 0.4,
+      "sigma_raw_min": 1.6,
+      "sigma_corrected_min": 2.8,
+      "bias_removed": false,
+      "n": 418
+     },
+     "120-200 km": {
+      "bias_min": 0.1,
+      "sigma_raw_min": 2.4,
+      "sigma_corrected_min": 2.5,
+      "bias_removed": false,
+      "n": 622
+     },
+     "200-300 km": {
+      "bias_min": -0.4,
+      "sigma_raw_min": 4.0,
+      "sigma_corrected_min": 3.8,
+      "bias_removed": false,
+      "n": 674
+     },
+     "300-450 km": {
+      "bias_min": 1.9,
+      "sigma_raw_min": 3.5,
+      "sigma_corrected_min": 2.9,
+      "bias_removed": false,
+      "n": 19
+     },
+     "450-650 km": {
+      "bias_min": 9.8,
+      "sigma_raw_min": 16.2,
+      "sigma_corrected_min": 30.3,
+      "bias_removed": false,
+      "n": 112
+     },
+     "650-900 km": {
+      "bias_min": 5.7,
+      "sigma_raw_min": 10.1,
+      "sigma_corrected_min": 21.2,
+      "bias_removed": false,
+      "n": 272
+     },
+     "900-1300 km": {
+      "bias_min": 5.3,
+      "sigma_raw_min": 11.4,
+      "sigma_corrected_min": 12.8,
+      "bias_removed": false,
+      "n": 250
+     },
+     "1300-2000 km": {
+      "bias_min": 2.2,
+      "sigma_raw_min": 27.8,
+      "sigma_corrected_min": 54.5,
+      "bias_removed": false,
+      "n": 261
+     },
+     "2000-3500 km": {
+      "bias_min": -37.2,
+      "sigma_raw_min": 55.1,
+      "sigma_corrected_min": 20.7,
+      "bias_removed": true,
+      "n": 24
+     }
+    },
+    "M2_dep_other_loao": {
+     "40-120 km": {
+      "bias_min": 0.3,
+      "sigma_raw_min": 1.5,
+      "sigma_corrected_min": 1.3,
+      "bias_removed": false,
+      "n": 8186
+     },
+     "120-200 km": {
+      "bias_min": 0.4,
+      "sigma_raw_min": 1.8,
+      "sigma_corrected_min": 1.7,
+      "bias_removed": false,
+      "n": 7725
+     },
+     "200-300 km": {
+      "bias_min": 0.5,
+      "sigma_raw_min": 2.7,
+      "sigma_corrected_min": 2.5,
+      "bias_removed": false,
+      "n": 7224
+     },
+     "300-450 km": {
+      "bias_min": 0.6,
+      "sigma_raw_min": 3.7,
+      "sigma_corrected_min": 3.5,
+      "bias_removed": false,
+      "n": 7356
+     },
+     "450-650 km": {
+      "bias_min": 1.2,
+      "sigma_raw_min": 6.0,
+      "sigma_corrected_min": 5.7,
+      "bias_removed": false,
+      "n": 5981
+     },
+     "650-900 km": {
+      "bias_min": 0.6,
+      "sigma_raw_min": 8.9,
+      "sigma_corrected_min": 9.3,
+      "bias_removed": false,
+      "n": 4466
+     },
+     "900-1300 km": {
+      "bias_min": 1.7,
+      "sigma_raw_min": 10.6,
+      "sigma_corrected_min": 10.2,
+      "bias_removed": false,
+      "n": 4447
+     },
+     "1300-2000 km": {
+      "bias_min": 1.7,
+      "sigma_raw_min": 13.7,
+      "sigma_corrected_min": 13.8,
+      "bias_removed": false,
+      "n": 3347
+     },
+     "2000-3500 km": {
+      "bias_min": 1.8,
+      "sigma_raw_min": 19.1,
+      "sigma_corrected_min": 19.9,
+      "bias_removed": false,
+      "n": 2610
+     }
+    }
+   },
+   "m2_bias_removed_movements": {
+    "arr other 650-900 km": 3,
+    "arr cn 900-1300 km": 71
+   },
+   "method": {
+    "M2": 534,
+    "M1": 16
+   },
+   "wiki_pair_observed": {
+    "listed_SHA_and_PVG": 373,
+    "listed_SHA": 164,
+    "listed_PVG_only": 7,
+    "not_listed": 6
+   },
+   "pvg_identified_consistent": 1067,
+   "rotation": {
+    "pairs": {
+     "ZSSS->ZSSS": 265,
+     "ZSPD->ZSPD": 334,
+     "ZSPD->ZSSS": 1
+    },
+    "sha_turn_min_q10_q50_q90": [
+     81.0,
+     106.0,
+     134.0
+    ],
+    "n_mixed": 1
+   },
+   "edge_altitude_nanjing": {
+    "sha_arr_n": 101,
+    "pvg_arr_n": 183,
+    "sha_alt_q10_q50_q90": [
+     26300,
+     26600,
+     27850
+    ],
+    "pvg_alt_q10_q50_q90": [
+     26990,
+     30250,
+     32875
+    ],
+    "in_band_25900_27300ft": {
+     "sha": 73,
+     "pvg": 15
+    }
+   },
+   "inverse_unexplained_db_end_top10": {
+    "RKSI": 4,
+    "ZYCC": 4,
+    "ZYTL": 4,
+    "ZYTX": 3,
+    "ZSQD": 3,
+    "ZYBS": 2,
+    "ZGSD": 2,
+    "ZGOW": 1,
+    "ZYHB": 1,
+    "ZSZS": 1
+   },
+   "inverse": {
+    "rule": "coverage ends (begins) airborne within 60-450 km of ZSSS, track within 15 deg of the bearing to (from) ZSSS, no landing (take-off) seen",
+    "n": 672,
+    "by_db": {
+     "not_in_db": 5,
+     "db_other_beyond_shanghai": 3,
+     "db_other_in_gap_yrd": 350,
+     "db_pvg": 180,
+     "db_other_unexplained": 32,
+     "db_sha": 102
+    },
+    "not_in_db_by_airline_prefix": {
+     "NCR": 1,
+     "YZR": 1,
+     "DHK": 1,
+     "IRM": 1,
+     "AHF": 1
+    },
+    "miss_rate_all_candidates": 0.007,
+    "miss_rate_if_all_missing_were_shanghai_bound": 0.017
+   },
+   "registry": {
+    "aircraft": 253,
+    "trace_has_reg": 239,
+    "trace_has_type": 239,
+    "in_mictronics": 253,
+    "reg_agree": 239,
+    "type_agree": 239,
+    "reg_B-": 249,
+    "reg_only_mictronics": 14,
+    "type_only_mictronics": 14
+   },
+   "calibration": {
+    "flights_both_ends": 6909,
+    "cn_domestic_both_ends": 71,
+    "samples": {
+     "arr": 57430,
+     "dep": 54539
+    },
+    "samples_cn": {
+     "arr": 2945,
+     "dep": 2652
+    },
+    "air_time_fit_all": {
+     "a_s": 1182,
+     "b_s_per_km": 4.411,
+     "sigma_s": 412
+    },
+    "air_time_fit_cn": {
+     "a_s": 2225,
+     "b_s_per_km": 4.449,
+     "sigma_s": 1172
+    }
+   },
+   "validation": {
+    "sign": "errors are predicted - actual for M2 (negative = SHA event predicted too early for arrivals), actual - predicted air time for M1",
+    "M1_hkg_tpe_air_time": {
+     "n": 122,
+     "median_min": 3.2,
+     "mae_min": 5.1,
+     "p10_min": -4.0,
+     "p90_min": 9.4,
+     "abs_p50_min": 4.6,
+     "abs_p90_min": 9.4
+    },
+    "M1_cn_leave_one_route_out": {
+     "n": 71,
+     "median_min": -5.6,
+     "mae_min": 16.9,
+     "p10_min": -14.5,
+     "p90_min": 19.7,
+     "abs_p50_min": 13.2,
+     "abs_p90_min": 20.2
+    },
+    "M2_arr_hkg_tpe": {
+     "40-120 km": {
+      "n": 120,
+      "median_min": 0.6,
+      "mae_min": 2.9,
+      "p10_min": -3.4,
+      "p90_min": 5.4,
+      "abs_p50_min": 2.7,
+      "abs_p90_min": 5.6
+     },
+     "120-200 km": {
+      "n": 74,
+      "median_min": 2.7,
+      "mae_min": 3.3,
+      "p10_min": -2.3,
+      "p90_min": 6.3,
+      "abs_p50_min": 2.9,
+      "abs_p90_min": 6.5
+     },
+     "200-300 km": {
+      "n": 71,
+      "median_min": 2.8,
+      "mae_min": 3.7,
+      "p10_min": -1.1,
+      "p90_min": 7.0,
+      "abs_p50_min": 3.3,
+      "abs_p90_min": 7.2
+     },
+     "300-450 km": {
+      "n": 33,
+      "median_min": 5.4,
+      "mae_min": 5.3,
+      "p10_min": 0.6,
+      "p90_min": 10.0,
+      "abs_p50_min": 5.4,
+      "abs_p90_min": 10.0
+     },
+     "450-650 km": {
+      "n": 68,
+      "median_min": 0.9,
+      "mae_min": 2.9,
+      "p10_min": -3.7,
+      "p90_min": 4.5,
+      "abs_p50_min": 2.2,
+      "abs_p90_min": 5.9
+     },
+     "650-900 km": {
+      "n": 122,
+      "median_min": -18.5,
+      "mae_min": 18.8,
+      "p10_min": -30.2,
+      "p90_min": -3.9,
+      "abs_p50_min": 18.5,
+      "abs_p90_min": 30.2
+     }
+    },
+    "M2_dep_hkg_tpe": {
+     "40-120 km": {
+      "n": 120,
+      "median_min": -1.4,
+      "mae_min": 1.3,
+      "p10_min": -2.3,
+      "p90_min": 0.7,
+      "abs_p50_min": 1.5,
+      "abs_p90_min": 2.3
+     },
+     "120-200 km": {
+      "n": 101,
+      "median_min": -1.2,
+      "mae_min": 1.4,
+      "p10_min": -2.2,
+      "p90_min": 0.9,
+      "abs_p50_min": 1.4,
+      "abs_p90_min": 2.2
+     },
+     "200-300 km": {
+      "n": 65,
+      "median_min": -1.3,
+      "mae_min": 1.4,
+      "p10_min": -2.3,
+      "p90_min": 0.2,
+      "abs_p50_min": 1.3,
+      "abs_p90_min": 2.4
+     },
+     "300-450 km": {
+      "n": 55,
+      "median_min": -0.9,
+      "mae_min": 1.2,
+      "p10_min": -2.3,
+      "p90_min": 0.3,
+      "abs_p50_min": 1.0,
+      "abs_p90_min": 2.3
+     },
+     "450-650 km": {
+      "n": 82,
+      "median_min": 1.9,
+      "mae_min": 2.3,
+      "p10_min": -1.3,
+      "p90_min": 4.0,
+      "abs_p50_min": 2.2,
+      "abs_p90_min": 4.5
+     },
+     "650-900 km": {
+      "n": 122,
+      "median_min": -5.3,
+      "mae_min": 8.1,
+      "p10_min": -19.4,
+      "p90_min": -0.4,
+      "abs_p50_min": 5.3,
+      "abs_p90_min": 19.4
+     }
+    },
+    "M2_arr_hkg_tpe_corrected": {
+     "40-120 km": {
+      "n": 120,
+      "median_min": 0.6,
+      "mae_min": 2.9,
+      "p10_min": -3.4,
+      "p90_min": 5.4,
+      "abs_p50_min": 2.7,
+      "abs_p90_min": 5.6
+     },
+     "120-200 km": {
+      "n": 74,
+      "median_min": 2.7,
+      "mae_min": 3.3,
+      "p10_min": -2.3,
+      "p90_min": 6.3,
+      "abs_p50_min": 2.9,
+      "abs_p90_min": 6.5
+     },
+     "200-300 km": {
+      "n": 71,
+      "median_min": 2.8,
+      "mae_min": 3.7,
+      "p10_min": -1.1,
+      "p90_min": 7.0,
+      "abs_p50_min": 3.3,
+      "abs_p90_min": 7.2
+     },
+     "300-450 km": {
+      "n": 33,
+      "median_min": 5.4,
+      "mae_min": 5.3,
+      "p10_min": 0.6,
+      "p90_min": 10.0,
+      "abs_p50_min": 5.4,
+      "abs_p90_min": 10.0
+     },
+     "450-650 km": {
+      "n": 68,
+      "median_min": 0.9,
+      "mae_min": 2.9,
+      "p10_min": -3.7,
+      "p90_min": 4.5,
+      "abs_p50_min": 2.2,
+      "abs_p90_min": 5.9
+     },
+     "650-900 km": {
+      "n": 122,
+      "median_min": -20.6,
+      "mae_min": 20.8,
+      "p10_min": -32.3,
+      "p90_min": -6.0,
+      "abs_p50_min": 20.6,
+      "abs_p90_min": 32.3
+     }
+    },
+    "M2_dep_hkg_tpe_corrected": {
+     "40-120 km": {
+      "n": 120,
+      "median_min": -1.4,
+      "mae_min": 1.3,
+      "p10_min": -2.3,
+      "p90_min": 0.7,
+      "abs_p50_min": 1.5,
+      "abs_p90_min": 2.3
+     },
+     "120-200 km": {
+      "n": 101,
+      "median_min": -1.2,
+      "mae_min": 1.4,
+      "p10_min": -2.2,
+      "p90_min": 0.9,
+      "abs_p50_min": 1.4,
+      "abs_p90_min": 2.2
+     },
+     "200-300 km": {
+      "n": 65,
+      "median_min": -1.3,
+      "mae_min": 1.4,
+      "p10_min": -2.3,
+      "p90_min": 0.2,
+      "abs_p50_min": 1.3,
+      "abs_p90_min": 2.4
+     },
+     "300-450 km": {
+      "n": 55,
+      "median_min": -0.9,
+      "mae_min": 1.2,
+      "p10_min": -2.3,
+      "p90_min": 0.3,
+      "abs_p50_min": 1.0,
+      "abs_p90_min": 2.3
+     },
+     "450-650 km": {
+      "n": 82,
+      "median_min": 1.9,
+      "mae_min": 2.3,
+      "p10_min": -1.3,
+      "p90_min": 4.0,
+      "abs_p50_min": 2.2,
+      "abs_p90_min": 4.5
+     },
+     "650-900 km": {
+      "n": 122,
+      "median_min": -5.3,
+      "mae_min": 8.1,
+      "p10_min": -19.4,
+      "p90_min": -0.4,
+      "abs_p50_min": 5.3,
+      "abs_p90_min": 19.4
+     }
+    },
+    "M2_arr_cn_loao": {
+     "40-120 km": {
+      "n": 607,
+      "median_min": 0.1,
+      "mae_min": 2.3,
+      "p10_min": -4.1,
+      "p90_min": 3.3,
+      "abs_p50_min": 1.9,
+      "abs_p90_min": 4.5
+     },
+     "120-200 km": {
+      "n": 688,
+      "median_min": -0.3,
+      "mae_min": 2.7,
+      "p10_min": -4.9,
+      "p90_min": 3.9,
+      "abs_p50_min": 2.4,
+      "abs_p90_min": 5.4
+     },
+     "200-300 km": {
+      "n": 397,
+      "median_min": -1.7,
+      "mae_min": 3.6,
+      "p10_min": -6.6,
+      "p90_min": 4.7,
+      "abs_p50_min": 3.6,
+      "abs_p90_min": 6.7
+     },
+     "300-450 km": {
+      "n": 25,
+      "median_min": 3.6,
+      "mae_min": 6.2,
+      "p10_min": -7.9,
+      "p90_min": 8.1,
+      "abs_p50_min": 5.4,
+      "abs_p90_min": 8.9
+     },
+     "450-650 km": {
+      "n": 274,
+      "median_min": 4.8,
+      "mae_min": 6.8,
+      "p10_min": -8.0,
+      "p90_min": 9.7,
+      "abs_p50_min": 7.1,
+      "abs_p90_min": 10.3
+     },
+     "650-900 km": {
+      "n": 358,
+      "median_min": 1.0,
+      "mae_min": 5.2,
+      "p10_min": -6.8,
+      "p90_min": 6.7,
+      "abs_p50_min": 3.6,
+      "abs_p90_min": 8.5
+     },
+     "900-1300 km": {
+      "n": 353,
+      "median_min": -4.5,
+      "mae_min": 11.2,
+      "p10_min": -14.7,
+      "p90_min": 14.7,
+      "abs_p50_min": 7.5,
+      "abs_p90_min": 20.2
+     },
+     "1300-2000 km": {
+      "n": 218,
+      "median_min": -16.6,
+      "mae_min": 26.1,
+      "p10_min": -38.1,
+      "p90_min": 21.2,
+      "abs_p50_min": 21.0,
+      "abs_p90_min": 38.1
+     },
+     "2000-3500 km": {
+      "n": 25,
+      "median_min": -24.1,
+      "mae_min": 25.3,
+      "p10_min": -36.9,
+      "p90_min": -14.8,
+      "abs_p50_min": 24.1,
+      "abs_p90_min": 36.9
+     }
+    },
+    "M2_dep_cn_loao": {
+     "40-120 km": {
+      "n": 418,
+      "median_min": 0.4,
+      "mae_min": 1.3,
+      "p10_min": -2.3,
+      "p90_min": 1.4,
+      "abs_p50_min": 1.1,
+      "abs_p90_min": 2.3
+     },
+     "120-200 km": {
+      "n": 622,
+      "median_min": 0.1,
+      "mae_min": 1.9,
+      "p10_min": -3.4,
+      "p90_min": 2.6,
+      "abs_p50_min": 1.6,
+      "abs_p90_min": 3.5
+     },
+     "200-300 km": {
+      "n": 674,
+      "median_min": -0.4,
+      "mae_min": 2.9,
+      "p10_min": -5.7,
+      "p90_min": 3.1,
+      "abs_p50_min": 2.7,
+      "abs_p90_min": 5.7
+     },
+     "300-450 km": {
+      "n": 19,
+      "median_min": 1.9,
+      "mae_min": 7.8,
+      "p10_min": -1.3,
+      "p90_min": 3.7,
+      "abs_p50_min": 2.3,
+      "abs_p90_min": 5.9
+     },
+     "450-650 km": {
+      "n": 112,
+      "median_min": 9.8,
+      "mae_min": 11.0,
+      "p10_min": -9.6,
+      "p90_min": 16.1,
+      "abs_p50_min": 11.0,
+      "abs_p90_min": 16.4
+     },
+     "650-900 km": {
+      "n": 272,
+      "median_min": 5.7,
+      "mae_min": 7.6,
+      "p10_min": -3.2,
+      "p90_min": 11.7,
+      "abs_p50_min": 6.8,
+      "abs_p90_min": 12.0
+     },
+     "900-1300 km": {
+      "n": 250,
+      "median_min": 5.3,
+      "mae_min": 12.3,
+      "p10_min": -11.8,
+      "p90_min": 13.0,
+      "abs_p50_min": 7.7,
+      "abs_p90_min": 16.3
+     },
+     "1300-2000 km": {
+      "n": 261,
+      "median_min": 2.2,
+      "mae_min": 25.6,
+      "p10_min": -45.5,
+      "p90_min": 22.6,
+      "abs_p50_min": 18.8,
+      "abs_p90_min": 45.5
+     },
+     "2000-3500 km": {
+      "n": 24,
+      "median_min": -37.2,
+      "mae_min": 48.2,
+      "p10_min": -113.7,
+      "p90_min": 0.9,
+      "abs_p50_min": 37.2,
+      "abs_p90_min": 113.7
+     }
+    },
+    "M2_arr_other_loao": {
+     "40-120 km": {
+      "n": 8683,
+      "median_min": 0.3,
+      "mae_min": 3.8,
+      "p10_min": -6.9,
+      "p90_min": 5.3,
+      "abs_p50_min": 3.2,
+      "abs_p90_min": 7.2
+     },
+     "120-200 km": {
+      "n": 7596,
+      "median_min": 0.4,
+      "mae_min": 4.5,
+      "p10_min": -8.7,
+      "p90_min": 5.7,
+      "abs_p50_min": 3.6,
+      "abs_p90_min": 8.8
+     },
+     "200-300 km": {
+      "n": 7627,
+      "median_min": 0.6,
+      "mae_min": 4.9,
+      "p10_min": -9.4,
+      "p90_min": 6.2,
+      "abs_p50_min": 3.8,
+      "abs_p90_min": 9.6
+     },
+     "300-450 km": {
+      "n": 7693,
+      "median_min": 0.4,
+      "mae_min": 5.5,
+      "p10_min": -10.6,
+      "p90_min": 7.2,
+      "abs_p50_min": 4.1,
+      "abs_p90_min": 11.0
+     },
+     "450-650 km": {
+      "n": 5792,
+      "median_min": 1.1,
+      "mae_min": 6.9,
+      "p10_min": -12.7,
+      "p90_min": 8.9,
+      "abs_p50_min": 5.3,
+      "abs_p90_min": 13.4
+     },
+     "650-900 km": {
+      "n": 4998,
+      "median_min": 1.8,
+      "mae_min": 9.2,
+      "p10_min": -16.2,
+      "p90_min": 12.0,
+      "abs_p50_min": 7.3,
+      "abs_p90_min": 17.5
+     },
+     "900-1300 km": {
+      "n": 5143,
+      "median_min": 1.3,
+      "mae_min": 9.6,
+      "p10_min": -15.2,
+      "p90_min": 13.4,
+      "abs_p50_min": 7.2,
+      "abs_p90_min": 18.1
+     },
+     "1300-2000 km": {
+      "n": 3854,
+      "median_min": 2.4,
+      "mae_min": 13.2,
+      "p10_min": -20.7,
+      "p90_min": 18.8,
+      "abs_p50_min": 11.0,
+      "abs_p90_min": 24.7
+     },
+     "2000-3500 km": {
+      "n": 3099,
+      "median_min": 0.6,
+      "mae_min": 18.6,
+      "p10_min": -29.7,
+      "p90_min": 28.1,
+      "abs_p50_min": 15.6,
+      "abs_p90_min": 36.1
+     }
+    },
+    "M2_dep_other_loao": {
+     "40-120 km": {
+      "n": 8306,
+      "median_min": 0.3,
+      "mae_min": 1.4,
+      "p10_min": -2.7,
+      "p90_min": 1.4,
+      "abs_p50_min": 1.0,
+      "abs_p90_min": 2.8
+     },
+     "120-200 km": {
+      "n": 7826,
+      "median_min": 0.3,
+      "mae_min": 1.8,
+      "p10_min": -3.0,
+      "p90_min": 2.0,
+      "abs_p50_min": 1.2,
+      "abs_p90_min": 3.2
+     },
+     "200-300 km": {
+      "n": 7289,
+      "median_min": 0.5,
+      "mae_min": 2.8,
+      "p10_min": -4.3,
+      "p90_min": 3.0,
+      "abs_p50_min": 1.8,
+      "abs_p90_min": 4.9
+     },
+     "300-450 km": {
+      "n": 7411,
+      "median_min": 0.5,
+      "mae_min": 4.0,
+      "p10_min": -7.6,
+      "p90_min": 3.9,
+      "abs_p50_min": 2.5,
+      "abs_p90_min": 7.6
+     },
+     "450-650 km": {
+      "n": 6063,
+      "median_min": 1.2,
+      "mae_min": 5.6,
+      "p10_min": -10.7,
+      "p90_min": 6.1,
+      "abs_p50_min": 4.0,
+      "abs_p90_min": 10.8
+     },
+     "650-900 km": {
+      "n": 4588,
+      "median_min": 0.4,
+      "mae_min": 7.6,
+      "p10_min": -13.2,
+      "p90_min": 9.8,
+      "abs_p50_min": 6.0,
+      "abs_p90_min": 15.6
+     },
+     "900-1300 km": {
+      "n": 4447,
+      "median_min": 1.7,
+      "mae_min": 9.5,
+      "p10_min": -16.9,
+      "p90_min": 12.0,
+      "abs_p50_min": 7.2,
+      "abs_p90_min": 19.1
+     },
+     "1300-2000 km": {
+      "n": 3347,
+      "median_min": 1.7,
+      "mae_min": 11.2,
+      "p10_min": -18.4,
+      "p90_min": 16.2,
+      "abs_p50_min": 9.2,
+      "abs_p90_min": 21.3
+     },
+     "2000-3500 km": {
+      "n": 2610,
+      "median_min": 1.8,
+      "mae_min": 15.6,
+      "p10_min": -26.8,
+      "p90_min": 21.7,
+      "abs_p50_min": 12.9,
+      "abs_p90_min": 31.1
+     }
+    },
+    "M2_arr_cn_loao_used": {
+     "40-120 km": {
+      "n": 607,
+      "median_min": 0.1,
+      "mae_min": 2.3,
+      "p10_min": -4.1,
+      "p90_min": 3.3,
+      "abs_p50_min": 1.9,
+      "abs_p90_min": 4.5
+     },
+     "120-200 km": {
+      "n": 688,
+      "median_min": -0.3,
+      "mae_min": 2.7,
+      "p10_min": -4.9,
+      "p90_min": 3.9,
+      "abs_p50_min": 2.4,
+      "abs_p90_min": 5.4
+     },
+     "200-300 km": {
+      "n": 397,
+      "median_min": -1.7,
+      "mae_min": 3.6,
+      "p10_min": -6.6,
+      "p90_min": 4.7,
+      "abs_p50_min": 3.6,
+      "abs_p90_min": 6.7
+     },
+     "300-450 km": {
+      "n": 25,
+      "median_min": 3.6,
+      "mae_min": 6.2,
+      "p10_min": -7.9,
+      "p90_min": 8.1,
+      "abs_p50_min": 5.4,
+      "abs_p90_min": 8.9
+     },
+     "450-650 km": {
+      "n": 274,
+      "median_min": 4.8,
+      "mae_min": 6.8,
+      "p10_min": -8.0,
+      "p90_min": 9.7,
+      "abs_p50_min": 7.1,
+      "abs_p90_min": 10.3
+     },
+     "650-900 km": {
+      "n": 358,
+      "median_min": 1.0,
+      "mae_min": 5.2,
+      "p10_min": -6.8,
+      "p90_min": 6.7,
+      "abs_p50_min": 3.6,
+      "abs_p90_min": 8.5
+     },
+     "900-1300 km": {
+      "n": 353,
+      "median_min": 3.3,
+      "mae_min": 11.4,
+      "p10_min": -11.2,
+      "p90_min": 21.8,
+      "abs_p50_min": 6.6,
+      "abs_p90_min": 25.9
+     },
+     "1300-2000 km": {
+      "n": 218,
+      "median_min": -16.6,
+      "mae_min": 26.1,
+      "p10_min": -38.1,
+      "p90_min": 21.2,
+      "abs_p50_min": 21.0,
+      "abs_p90_min": 38.1
+     },
+     "2000-3500 km": {
+      "n": 25,
+      "median_min": -24.1,
+      "mae_min": 25.3,
+      "p10_min": -36.9,
+      "p90_min": -14.8,
+      "abs_p50_min": 24.1,
+      "abs_p90_min": 36.9
+     }
+    },
+    "M2_dep_cn_loao_used": {
+     "40-120 km": {
+      "n": 418,
+      "median_min": 0.4,
+      "mae_min": 1.3,
+      "p10_min": -2.3,
+      "p90_min": 1.4,
+      "abs_p50_min": 1.1,
+      "abs_p90_min": 2.3
+     },
+     "120-200 km": {
+      "n": 622,
+      "median_min": 0.1,
+      "mae_min": 1.9,
+      "p10_min": -3.4,
+      "p90_min": 2.6,
+      "abs_p50_min": 1.6,
+      "abs_p90_min": 3.5
+     },
+     "200-300 km": {
+      "n": 674,
+      "median_min": -0.4,
+      "mae_min": 2.9,
+      "p10_min": -5.7,
+      "p90_min": 3.1,
+      "abs_p50_min": 2.7,
+      "abs_p90_min": 5.7
+     },
+     "300-450 km": {
+      "n": 19,
+      "median_min": 1.9,
+      "mae_min": 7.8,
+      "p10_min": -1.3,
+      "p90_min": 3.7,
+      "abs_p50_min": 2.3,
+      "abs_p90_min": 5.9
+     },
+     "450-650 km": {
+      "n": 112,
+      "median_min": 9.8,
+      "mae_min": 11.0,
+      "p10_min": -9.6,
+      "p90_min": 16.1,
+      "abs_p50_min": 11.0,
+      "abs_p90_min": 16.4
+     },
+     "650-900 km": {
+      "n": 272,
+      "median_min": 5.7,
+      "mae_min": 7.6,
+      "p10_min": -3.2,
+      "p90_min": 11.7,
+      "abs_p50_min": 6.8,
+      "abs_p90_min": 12.0
+     },
+     "900-1300 km": {
+      "n": 250,
+      "median_min": 5.3,
+      "mae_min": 12.3,
+      "p10_min": -11.8,
+      "p90_min": 13.0,
+      "abs_p50_min": 7.7,
+      "abs_p90_min": 16.3
+     },
+     "1300-2000 km": {
+      "n": 261,
+      "median_min": 2.2,
+      "mae_min": 25.6,
+      "p10_min": -45.5,
+      "p90_min": 22.6,
+      "abs_p50_min": 18.8,
+      "abs_p90_min": 45.5
+     },
+     "2000-3500 km": {
+      "n": 24,
+      "median_min": -9.8,
+      "mae_min": 30.2,
+      "p10_min": -76.5,
+      "p90_min": 38.0,
+      "abs_p50_min": 13.9,
+      "abs_p90_min": 76.5
+     }
+    },
+    "M2_arr_other_loao_used": {
+     "40-120 km": {
+      "n": 8683,
+      "median_min": 0.3,
+      "mae_min": 3.8,
+      "p10_min": -6.9,
+      "p90_min": 5.3,
+      "abs_p50_min": 3.2,
+      "abs_p90_min": 7.2
+     },
+     "120-200 km": {
+      "n": 7596,
+      "median_min": 0.4,
+      "mae_min": 4.5,
+      "p10_min": -8.7,
+      "p90_min": 5.7,
+      "abs_p50_min": 3.6,
+      "abs_p90_min": 8.8
+     },
+     "200-300 km": {
+      "n": 7627,
+      "median_min": 0.6,
+      "mae_min": 4.9,
+      "p10_min": -9.4,
+      "p90_min": 6.2,
+      "abs_p50_min": 3.8,
+      "abs_p90_min": 9.6
+     },
+     "300-450 km": {
+      "n": 7693,
+      "median_min": 0.4,
+      "mae_min": 5.5,
+      "p10_min": -10.6,
+      "p90_min": 7.2,
+      "abs_p50_min": 4.1,
+      "abs_p90_min": 11.0
+     },
+     "450-650 km": {
+      "n": 5792,
+      "median_min": 1.1,
+      "mae_min": 6.9,
+      "p10_min": -12.7,
+      "p90_min": 8.9,
+      "abs_p50_min": 5.3,
+      "abs_p90_min": 13.4
+     },
+     "650-900 km": {
+      "n": 4876,
+      "median_min": 0.0,
+      "mae_min": 8.9,
+      "p10_min": -17.1,
+      "p90_min": 10.2,
+      "abs_p50_min": 6.8,
+      "abs_p90_min": 17.7
+     },
+     "900-1300 km": {
+      "n": 5143,
+      "median_min": 1.3,
+      "mae_min": 9.6,
+      "p10_min": -15.2,
+      "p90_min": 13.4,
+      "abs_p50_min": 7.2,
+      "abs_p90_min": 18.1
+     },
+     "1300-2000 km": {
+      "n": 3854,
+      "median_min": 2.4,
+      "mae_min": 13.2,
+      "p10_min": -20.7,
+      "p90_min": 18.8,
+      "abs_p50_min": 11.0,
+      "abs_p90_min": 24.7
+     },
+     "2000-3500 km": {
+      "n": 3099,
+      "median_min": 0.6,
+      "mae_min": 18.6,
+      "p10_min": -29.7,
+      "p90_min": 28.1,
+      "abs_p50_min": 15.6,
+      "abs_p90_min": 36.1
+     }
+    },
+    "M2_dep_other_loao_used": {
+     "40-120 km": {
+      "n": 8306,
+      "median_min": 0.3,
+      "mae_min": 1.4,
+      "p10_min": -2.7,
+      "p90_min": 1.4,
+      "abs_p50_min": 1.0,
+      "abs_p90_min": 2.8
+     },
+     "120-200 km": {
+      "n": 7826,
+      "median_min": 0.3,
+      "mae_min": 1.8,
+      "p10_min": -3.0,
+      "p90_min": 2.0,
+      "abs_p50_min": 1.2,
+      "abs_p90_min": 3.2
+     },
+     "200-300 km": {
+      "n": 7289,
+      "median_min": 0.5,
+      "mae_min": 2.8,
+      "p10_min": -4.3,
+      "p90_min": 3.0,
+      "abs_p50_min": 1.8,
+      "abs_p90_min": 4.9
+     },
+     "300-450 km": {
+      "n": 7411,
+      "median_min": 0.5,
+      "mae_min": 4.0,
+      "p10_min": -7.6,
+      "p90_min": 3.9,
+      "abs_p50_min": 2.5,
+      "abs_p90_min": 7.6
+     },
+     "450-650 km": {
+      "n": 6063,
+      "median_min": 1.2,
+      "mae_min": 5.6,
+      "p10_min": -10.7,
+      "p90_min": 6.1,
+      "abs_p50_min": 4.0,
+      "abs_p90_min": 10.8
+     },
+     "650-900 km": {
+      "n": 4588,
+      "median_min": 0.4,
+      "mae_min": 7.6,
+      "p10_min": -13.2,
+      "p90_min": 9.8,
+      "abs_p50_min": 6.0,
+      "abs_p90_min": 15.6
+     },
+     "900-1300 km": {
+      "n": 4447,
+      "median_min": 1.7,
+      "mae_min": 9.5,
+      "p10_min": -16.9,
+      "p90_min": 12.0,
+      "abs_p50_min": 7.2,
+      "abs_p90_min": 19.1
+     },
+     "1300-2000 km": {
+      "n": 3347,
+      "median_min": 1.7,
+      "mae_min": 11.2,
+      "p10_min": -18.4,
+      "p90_min": 16.2,
+      "abs_p50_min": 9.2,
+      "abs_p90_min": 21.3
+     },
+     "2000-3500 km": {
+      "n": 2610,
+      "median_min": 1.8,
+      "mae_min": 15.6,
+      "p10_min": -26.8,
+      "p90_min": 21.7,
+      "abs_p50_min": 12.9,
+      "abs_p90_min": 31.1
+     }
+    },
+    "note_used": "*_used: the estimate actually used: bias removed (nested, out of sample) only in bins where that cut sigma by >= 5 %; *_hkg_tpe_corrected: the held-out route with those same corrections"
+   }
+  }
+ ],
+ "readings": {
+  "identified_share": "69-70 % of 783.4/day carry a real identity and a DB-consistent track; that is an upper figure. The SHA-vs-PVG label was checked externally only on the Hong Kong and Taipei Songshan routes (C2: HKIA 51/51 and TSA 12/12 DB labels, 23/23 listed B1 movements); domestic labels rest on the DB. About 65-70 % is the defensible share.",
+  "sigma": "sigma is a 1-sigma uncertainty from out-of-sample validation, not an error bound",
+  "registry_independence": "not independent: the readsb identity fields come from tar1090-db, which is built from the Mictronics database plus the ADS-B Exchange basic aircraft DB, so the 100 % agreement with Mictronics is circular (consistency, not truth)",
+  "fix_round_1": "docs/phase1/verify_research.md, section \"Fix round 1\""
+ },
+ "attribution": "Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL; routes: Virtual Radar Server standing data (CC0 1.0); aircraft data: Mictronics aircraft database (ODC-By 1.0)"
+}
