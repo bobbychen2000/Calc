@@ -360,6 +360,62 @@ Q0 and Q1 block everything else.
 - **Q11 (standards).** Can you provide ICAO Annex 14 Vol I and the CAAC aerodrome standard, or approve buying them?
   Without them, every marking and sign parameter stays `inf`.
 
+### 6a. Owner decisions (2026-11-14), binding
+
+- **OD0 (Q0):** the scene origin is the **centre of RWY 18L/36R computed from the OSM runway ends**: the midpoint of
+  OSM way 16714125's end nodes, 31.19785 N 121.33629 E. This follows the AIP ARP definition. All geometry stays in
+  WGS-84; the origin only defines the local metre grid.
+- **OD1 (Q1):** build a **simulated and inferred Hongqiao**. The owner briefly chose Hong Kong, then withdrew it.
+  Every simulated element is labelled *inferred* in the data and in the app.
+- **OD2 (Q1, follow-up):** "do your best to get as much info as possible". The simulation is driven by as much real
+  information as can legitimately be obtained, in this order of preference:
+  1. **Observed at ZSSS:** none today. Any rare adsb.lol overflight is shown as observed.
+  2. **Observed elsewhere:** real SHA flights seen by open ADS-B outside the Shanghai gap, for example at Beijing,
+     Hong Kong, Taipei, Tokyo, Seoul, or en route over the Hefei/Nanjing cluster. Each gives a real callsign,
+     registration, type and time; the SHA-side times are inferred from them. A route database is needed to tell SHA
+     from Pudong (PVG). It must be verified first.
+  3. **Published facts:** airline terminal lists, fleets, schedules where their terms allow, the real ZSSS METAR, and
+     NOTAMs (e.g. runway closures).
+  4. **Inferred:** SHA-side timing, stands, taxi paths and runway use, from AIP rules and the published statistics.
+- **OD3 (Q2):** the owner will not register an eAIP account. AIP values come from the unofficial mirror copy, as
+  **reference** labelled "AIP (mirror)". Only short cited facts are published (Q2 default); whole lists stay local.
+
+### 6b. Working defaults until the owner says otherwise (2026-11-14)
+
+The owner did not answer Q3–Q11. These recommended defaults apply, and each can be reversed.
+
+- **Q3 (legal posture):**
+  - detailed extent = the convex hull of the aerodrome plus a 1 km buffer (23.5 km²);
+  - filter military, armed-police, police, prison and GNSS-station features;
+  - a CONTRIBUTING rule: no data collection inside the PRC;
+  - no OSM edits from us;
+  - hosting outside the PRC; no Chinese-language promotion;
+  - no history rewrite;
+  - `gcj02.py` stays local;
+  - no takedown address published until the owner gives one;
+  - the local live recorder finishes its run and only aggregates are committed;
+  - per-flight data observed elsewhere (OD2.2) stays local until the owner sees a sample.
+- **Q4 (ATC audio):** no audio toggle.
+- **Q5 (models and liveries):**
+  - C919 and C909 come in Phase 4, fitted from public non-ACAP dimensions (Wikipedia), marked `inf`;
+  - no Sketchfab account;
+  - no "COMAC C919" title;
+  - liveries follow the sfo3d non-commercial posture.
+- **Q6 (imagery):** Sentinel-2 for ground colour, Umbra SAR for outlines, Google not used.
+- **Q7 (renderer and donors):** `live.html` first; sfo3d is the only code donor; phone-usable, as the brief says.
+- **Q8 (language):** English UI. Sign text follows the standards, marked `inf` until verified.
+- **Q9 (type mix):** the estimate, refined by the observed-elsewhere flights.
+- **Q10 (feeds, stands, definitions):**
+  - adsb.lol polled every 180 s;
+  - no contact with providers;
+  - stands chosen by type, terminal and airline rules;
+  - a movement means any take-off or landing;
+  - no scheduled flights 00–06, delays allowed;
+  - identity is shown only where observed (labelled "observed elsewhere"), otherwise airline and type only; no
+    invented registrations.
+- **Q11 (standards):** use public standards texts where they exist (e.g. CAAC MH standards, if CAAC publishes them).
+  Otherwise markings are `inf`.
+
 ## 7. Phased task list
 
 Each phase ends with a commit, a push and renders shown to you. No scored QA loop starts without your approval.
