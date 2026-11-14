@@ -89,43 +89,77 @@ void main(){
   col = applyFog(col, vWP);
   writeOut(col, vWP, alpha * clamp(uAlpha, 0.0, 1.0));
 }`;
-// Opaque aircraft surfaces ('acobj'): the obj shader's plain PBR path (js/shaders/objects.js mat 0) plus three aircraft
-// material ids set by js/aircraft/models.js (AC_MAT; ext.z): 21 = paint (a clear-coat lobe over the base: F0 0.04,
-// roughness 0.05 - glossy polyurethane topcoat [inf]; its back face, the inside of the skin seen through the glazing, is
-// occluded like the interior), 22 = avionics display (self-lit, ~0.2 scene units ~ 800 cd/m2 by day at the scale of the
-// aircraft_lights.js note "sunlit white paint ~17 kcd/m2" [inf]), 23 = cabin / flight-deck interior (closed volume:
-// ambient x 0.4, specular occlusion 0.35 [inf]). Unknown ids fall back to the plain path, and the obj program draws the
-// same vertices correctly (ids 21-23 are unused there) when 'acobj' is not installed.
+// Opaque aircraft surfaces ('acobj'). OD4 (owner request 2026-11-14: the PC-12 must look in hwd3d as it does in the pc12
+// project's own three.js viewer) replaced the obj shader's PBR path + the added clear-coat lobe by the glTF 2.0
+// metallic-roughness BRDF exactly as three.js r160 MeshStandardMaterial evaluates it for these glb materials (the reference
+// viewer): ONE specular lobe (GGX, Smith-GGX correlated visibility, Schlick Fresnel, F0 0.04 for dielectrics, the glb's own
+// roughness), Lambert diffuse, and the image-based part with three's DFG approximation and multiple-scattering energy
+// compensation (three.js r160 lights_physical_pars_fragment computeMultiscattering). Before (measured, out/pc12_look):
+// - a second clear-coat lobe (F0 0.04, roughness 0.05) on every paint_* / trim_* material doubled the sky reflection, so
+//   the glossy black windshield surround (trim_black, roughness 0.16) and the navy cheatline read grey-blue;
+// - the obj shader's hemisphere weighting (smoothstep(0, 0.55, (1 + N.y) / 2)) gave a vertical surface 98 % sky and 2 %
+//   ground, so a shaded side was lit by the blue sky alone (white paint (116, 128, 146) at the reference cockpit camera);
+//   now the sky / ground view factors of a plane, (1 + N.y) / 2 and (1 - N.y) / 2 (as three's HemisphereLight);
+// - the cabin and flight deck were lit by the full sun and sky (the glazing casts no shadow), so through glass of 20 %
+//   transmission the seats glowed; light reaches the cabin only through the glazing: sun x uCabinT (the type's glazing
+//   transmission, 1 - glass alpha, js/aircraft/glb.js stats.glazingT) where the shadow map lets it in, sky x uCabinT x
+//   0.35 (the windows' share of the cabin's view [inf]).
+// Material ids (js/aircraft/models.js AC_MAT / AC_PART_INTERIOR; ext.z): 21 paint / trim (plain glTF material since OD4),
+// 22 avionics display (self-lit, ~0.2 scene units ~ 800 cd/m2 by day at the scale of the aircraft_lights.js note "sunlit
+// white paint ~17 kcd/m2" [inf]), 23 cabin / flight-deck interior (lit through the glazing, above); the back face of any
+// skin (the inside of the fuselage seen through a window) counts as interior. uCabin = 0 switches the cabin rule off for a
+// group (an open door's lining faces the outside). Unknown ids take the plain path; the obj program draws the same vertices
+// (ids 21-23 unused there) when 'acobj' is not installed.
 export const ACOBJ_FS = `
 #include <common>
 #include <shadow>
 #include <fout>
 in vec3 vWP; in vec3 vN; in vec4 vCol; in vec4 vExt; in vec2 vUV;
 uniform float uEmissiveBoost; uniform float uNight; uniform float uGroundRef;
+uniform float uCabinT;   // glazing transmission of the type (1 - glass alpha): the share of sun / sky that reaches the cabin
+uniform float uCabin;    // 1: this group's interior surfaces are inside the closed cabin; 0: not (open door)
 // uAlpha: screen-door fade of one item, the obj shader's rule (js/shaders/objects.js, fix round 1): a 4x4 ordered-dither
 // threshold discards a growing share of fragments, so a re-placement fades instead of blinking (render item field 'alpha')
 uniform float uAlpha;
 float acBayer4(vec2 p){ ivec2 q = ivec2(mod(p, 4.0)); int i = q.x + q.y * 4; int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5); return (float(m[i]) + 0.5) / 16.0; }
+// three.js r160 DFGApprox (Karis, "Physically Based Shading on Mobile"): scale / bias of F0 for the pre-integrated GGX lobe
+vec2 acDFG(float NoV, float r){ const vec4 c0 = vec4(-1.0, -0.0275, -0.572, 0.022); const vec4 c1 = vec4(1.0, 0.0425, 1.04, -0.04);
+  vec4 q = r * c0 + c1; float a004 = min(q.x * q.x, exp2(-9.28 * NoV)) * q.x + q.y; return vec2(-1.04, 1.04) * a004 + q.zw; }
+// three.js r160 V_GGX_SmithCorrelated
+float acVis(float NoL, float NoV, float a){ float a2 = a * a; float gv = NoL * sqrt(a2 + (1.0 - a2) * NoV * NoV); float gl = NoV * sqrt(a2 + (1.0 - a2) * NoL * NoL); return 0.5 / max(gv + gl, 1e-6); }
+// sky radiance seen along R (the env map; below the horizon the ground), at the blur of roughness r
+vec3 acEnv(vec3 R, float r){ vec3 e = skyEnv(R.y < 0.0 ? vec3(R.x, -R.y * 0.3, R.z) : R, r * 7.0);
+  return R.y < 0.0 ? mix(e, uGroundBounce * 0.8, smoothstep(0.0, -0.25, R.y)) : e; }
 void main(){
   if (uAlpha < 0.999 && uAlpha >= 0.0 && acBayer4(gl_FragCoord.xy) > uAlpha) discard;
   vec3 V = uCamPos - vWP; float dist = length(V); V /= dist;
   vec3 N = normalize(vN); bool back = !gl_FrontFacing; if (back) N = -N;
-  vec3 albedo = vCol.rgb; float rough = vExt.x, metal = vExt.y; int mat = int(vExt.z + 0.5);
-  float ao = 1.0, specOcc = 1.0; vec3 emis = albedo * vExt.w * uEmissiveBoost;
-  if (mat == 23 || (mat == 21 && back)) { ao = 0.4; specOcc = 0.35; }
+  vec3 albedo = vCol.rgb; float rough = clamp(vExt.x, 0.03, 1.0), metal = vExt.y; int mat = int(vExt.z + 0.5);
+  vec3 emis = albedo * vExt.w * uEmissiveBoost;
+  // light that reaches a cabin surface: through the glazing only (header)
+  bool cabin = uCabin > 0.5 && (mat == 23 || mat == 22 || back);
+  float sunT = cabin ? uCabinT : 1.0, ambT = cabin ? uCabinT * 0.35 : 1.0;
   // ground-contact occlusion of belly / wells / gear near the pavement (item groundRef = ground y; -1e4 = off), a softer
   // version of the obj shader's building rule (0.55 over 4 m): 0.8 over 2 m [inf]
-  if (uGroundRef > -1000.0) ao *= mix(0.8, 1.0, smoothstep(0.0, 2.0, vWP.y - uGroundRef));
+  float ao = 1.0; if (uGroundRef > -1000.0) ao *= mix(0.8, 1.0, smoothstep(0.0, 2.0, vWP.y - uGroundRef));
   float sh = getShadow(vWP, N, dist) * cloudShadow(vWP);
-  vec3 col = shadePBR(albedo, N, V, rough, metal, sh, ao, specOcc);
-  if (mat == 21 && !back) {
-    float NoV = max(dot(N, V), 1e-3); float Fc = 0.04 + 0.96 * pow(1.0 - NoV, 5.0);
-    vec3 R = reflect(-V, N); vec3 env = skyEnv(R.y < 0.0 ? vec3(R.x, -R.y * 0.3, R.z) : R, 0.4);
-    env = R.y < 0.0 ? mix(env, uGroundBounce * 0.8, smoothstep(0.0, -0.25, R.y)) : env;
-    vec3 H = normalize(uSunDir + V); float NoL = max(dot(N, uSunDir), 0.0);
-    vec3 coat = env * Fc + D_GGX(max(dot(N, H), 0.0), 0.05) * V_Smith(NoV, NoL, 0.05) * Fc * uSunColor * NoL * sh;
-    col = col * (1.0 - Fc) + coat;
-  }
+  // glTF metallic-roughness: f0 = mix(0.04, base, metallic), diffuse = base x (1 - metallic), alpha = roughness^2
+  vec3 f0 = mix(vec3(0.04), albedo, metal); vec3 cdiff = albedo * (1.0 - metal); float a = rough * rough;
+  float NoV = clamp(dot(N, V), 1e-4, 1.0);
+  // sun (direct): GGX x Smith-correlated x Schlick + Lambert
+  vec3 L = uSunDir, H = normalize(L + V); float NoL = clamp(dot(N, L), 0.0, 1.0), NoH = clamp(dot(N, H), 0.0, 1.0), VoH = clamp(dot(V, H), 0.0, 1.0);
+  vec3 Fs = f0 + (1.0 - f0) * pow(1.0 - VoH, 5.0);
+  float a2 = a * a, dd = NoH * NoH * (a2 - 1.0) + 1.0, D = a2 / (PI * dd * dd);
+  vec3 direct = (cdiff / PI + Fs * acVis(NoL, NoV, a) * D) * uSunColor * NoL * sh * sunT;
+  // sky + ground (indirect): irradiance from the two view factors of a plane (header); specular from the env map with
+  // three's single + multiple scattering split
+  vec3 skyL = mix(uSkyHorizon, uSkyUp, clamp(N.y, 0.0, 1.0));
+  vec3 Lamb = mix(uGroundBounce, skyL, 0.5 + 0.5 * N.y) * ambT * ao;     // cosine-weighted radiance (irradiance / pi)
+  vec2 fab = acDFG(NoV, rough); vec3 FssEss = f0 * fab.x + fab.y; float Ess = fab.x + fab.y, Ems = 1.0 - Ess;
+  vec3 Favg = f0 + (1.0 - f0) * 0.047619; vec3 Fms = FssEss * Favg / (1.0 - Ems * Favg);
+  vec3 radiance = acEnv(reflect(-V, N), rough) * ambT * ao;
+  vec3 indirect = radiance * FssEss + Lamb * (Fms * Ems) + Lamb * cdiff * (1.0 - (FssEss + Fms * Ems));
+  vec3 col = direct + indirect;
   if (mat == 22) emis += albedo * 2.0 + vec3(0.04, 0.07, 0.11) * (1.0 + 5.0 * uNight);
   col = applyFog(col + emis, vWP);
   writeOut(min(col, vec3(30000.0)), vWP, 1.0);
@@ -277,6 +311,7 @@ export class DetailedAircraft {
     const spinning = (mv) => { if (res.spin < 0 || w < PROP_BLUR[0]) return false; for (let q = mv; q >= 0; q = res.kin.up[q]) if (q === res.spin) return true; return false; };
     this._cur.clear();
     const R = this.R, glassOK = this.glassProg && R;
+    const cabinT = m.stats && m.stats.glazingT != null ? m.stats.glazingT : 0.2;   // 1 - glass alpha (js/aircraft/glb.js stats.glazingT)
     // motion vectors: a group's prevModel is its previous-frame model; a group riding on a fast-spinning propeller / fan
     // takes the previous AIRCRAFT model times its CURRENT pose, so its velocity is the aircraft's (translation and attitude
     // change kept, the blade rotation left out: ~340 deg per 30-fps frame at 1,700 rpm is not a velocity a buffer can hold)
@@ -286,7 +321,12 @@ export class DetailedAircraft {
       if (prop && blur >= 1 && prop.blades.includes(g.mover)) continue;   // blades replaced by the disc
       const Mg = g.mover >= 0 && pose[g.mover] ? m4.mul(this.model, pose[g.mover]) : this.model;
       const prev = spinning(g.mover) ? m4.mul(prevBasis, pose[g.mover]) : (this._prev.get(g.key) || Mg); this._cur.set(g.key, Mg);
-      if (g.opaque) out.push({ mesh: g.opaque, prog: glassOK ? 'acobj' : 'obj', model: Mg, prevModel: prev, bbox: bb, castShadow: sh, noCull: true, uniforms: this.selected ? { uEmissiveBoost: 0.15 } : undefined,
+      // acobj uniforms are set on EVERY draw (GL keeps uniform values per program, so a value would leak to the next aircraft):
+      // the selection glow, the type's glazing transmission and whether this group's lining is inside the closed cabin (an open
+      // door's lining faces the outside; OD4)
+      const doorOpen = g.mover >= 0 && m.parts[g.mover].pivot && m.parts[g.mover].pivot.kind === 'door' && (this.doors[g.key] || 0) > 0.02;
+      if (g.opaque) out.push({ mesh: g.opaque, prog: glassOK ? 'acobj' : 'obj', model: Mg, prevModel: prev, bbox: bb, castShadow: sh, noCull: true,
+        uniforms: glassOK ? { uEmissiveBoost: this.selected ? 0.15 : 0, uCabinT: cabinT, uCabin: doorOpen ? 0 : 1 } : (this.selected ? { uEmissiveBoost: 0.15 } : undefined),
         groundRef: glassOK && this.groundRef != null ? this.groundRef : undefined });
       if (g.glass) {
         if (glassOK) { const c = xform(Mg, [(m.bbox[0] + m.bbox[3]) / 2, (m.bbox[1] + m.bbox[4]) / 2, (m.bbox[2] + m.bbox[5]) / 2]);

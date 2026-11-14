@@ -2,6 +2,8 @@
 //   node dev/model_shot.mjs [--model=PC12] [--set=standard|<name,...>] [--out=docs/phase3] [--prefix=pc12] [--world=0]
 //                           [--size=1920x1080] [--max-kb=600] [--port=8800..8899] [--t=<ISO>] [--jobs=<file.json>]
 //                           [--viewer=desktop|phone --cam=front34 --wait=15000]   (screenshot of the interactive viewer)
+//                           [--format=png]   (lossless PNG instead of the size-capped JPEG: pixel measurements, OD4 comparisons)
+//                           [--look=studio]  (dev/model.html look=studio: the pc12 reference viewer's lighting, OD4)
 // A static server on 127.0.0.1 (first free port in 8800-8899) serves hwd3d/; Chromium (SwiftShader: no GPU here) loads
 // the viewer ONCE per model and every shot is posed with window.HWDM.set() (no reload), rendered by the page and read
 // back from the renderer's final framebuffer, then saved as JPEG at the highest quality that fits --max-kb.
@@ -93,7 +95,8 @@ try {
       model: MODEL, model_sha256: MODEL_SHA, rendered_utc: new Date().toISOString(), made_by: 'dev/model_shot.mjs --viewer=' + VIEWER, licence: LICENCE(worldV) } });
     await vctx.close(); await browser.close(); server.close(); process.exit(0);
   }
-  const qs = new URLSearchParams({ shot: '1', model: MODEL, scale: '1' }); if (opt('world')) qs.set('world', opt('world')); if (opt('t')) qs.set('t', opt('t'));
+  const qs = new URLSearchParams({ shot: '1', model: MODEL, scale: '1' }); if (opt('world')) qs.set('world', opt('world')); if (opt('t')) qs.set('t', opt('t')); if (opt('look')) qs.set('look', opt('look'));
+  const PNG = opt('format') === 'png';
   const t0 = Date.now();
   await page.goto(`http://127.0.0.1:${port}/dev/model.html?${qs}`);
   await page.waitForFunction(() => window.__modelReady || window.__modelError, null, { timeout: 300000 });
@@ -103,9 +106,9 @@ try {
   for (const [name, params] of Object.entries(JOBS)) {
     const t1 = Date.now();
     const st = await page.evaluate((p) => window.HWDM.set(p), { ...BASE, ...params });
-    let url = await page.evaluate(() => window.HWDM.shot({ n: 3, jq: 0.92 }));
-    let jq = 0.92; while (Buffer.byteLength(url.split(',')[1], 'base64') > MAXKB * 1024 && jq > 0.4) { jq -= 0.06; url = await page.evaluate((j) => window.HWDM.reencode(j), jq); }
-    const buf = Buffer.from(url.split(',')[1], 'base64'); const file = path.join(OUT, `${PREFIX}_${name}.jpg`); fs.writeFileSync(file, buf);
+    let url = await page.evaluate((png) => window.HWDM.shot(png ? { n: 3, type: 'image/png' } : { n: 3, jq: 0.92 }), PNG);
+    let jq = 0.92; while (!PNG && Buffer.byteLength(url.split(',')[1], 'base64') > MAXKB * 1024 && jq > 0.4) { jq -= 0.06; url = await page.evaluate((j) => window.HWDM.reencode(j), jq); }
+    const buf = Buffer.from(url.split(',')[1], 'base64'); const file = path.join(OUT, `${PREFIX}_${name}.${PNG ? 'png' : 'jpg'}`); fs.writeFileSync(file, buf);
     report.push({ name, file: path.relative(ROOT, file), kb: Math.round(buf.length / 1024), jpeg_q: Math.round(jq * 100) / 100, ms: Date.now() - t1, params, state: st, model_sha256: MODEL_SHA });
     const P = { ...BASE, ...params }; const worldS = opt('world') !== '0';
     const pose = ['gear ' + P.gear, 'flaps ' + P.flaps, P.rpm ? P.rpm + ' rpm' : 'rotor stopped', P.alt ? `${P.alt} m up` : 'on the ground', P.apitch ? `pitch ${P.apitch} deg` : null, P.ctl ? 'controls ' + P.ctl : null, P.lights ? 'lights ' + P.lights : null, P.alpha != null && P.alpha !== 1 ? 'fade alpha ' + P.alpha : null].filter(Boolean).join(', ');

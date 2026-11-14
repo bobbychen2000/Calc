@@ -1,17 +1,17 @@
 {
  "pc12.glb": {
   "url": null,
-  "source": "pc12 builders @ b0d55c116e7efb103f89b358b065f46a767a5c16 (pc12 sources unchanged, tree sha256 04893879d350d732…) + override set 'fr3' of hwd3d/tools/models/pc12/build_pc12_variant.py (sha256 e4bf5221ac59826a…, working tree), this repository",
-  "sha256": "957b3c4e9ab17c4a6da51bc0fdcaeab71dbe98fc44e404630dbd6d39d7e9e01c",
+  "source": "pc12/out/pc12.glb @ f097de2fa548fa017d101e30e3b7b47f8dede813 (2026-11-08T12:47:05+00:00), this repository, copied unchanged (the original model; owner request 2026-11-14); reproduced bit for bit by python3 -B tools/models/pc12/build_pc12_variant.py --set=none (hwd3d; nothing written into pc12/)",
+  "sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
   "licence": "own work (this repository); no third-party geometry or texture",
-  "made_by": "pc12/model + pc12/cad builders run by hwd3d/tools/models/pc12/build_pc12_variant.py --set=fr3; copied unchanged by hwd3d/tools/models/pc12/import_pc12.mjs --variant",
-  "overrides": "fr2 + fuselage loft aft of the nose (crown, keel, half-breadth, max-breadth WL, section exponents), cockpit glazing, window / door water lines, wing and main-gear trunnion height, nose-gear housing, belly fairing covering the wing, dorsal fin, fin leading edge, ventral strakes and winglet, all fitted to Pilatus drawing 190.10.40.432 (review fix round 3); iteration 2: flat cabin floor at the sourced 1.30 m width and a cabin layout clear of the doors, nose-gear housing with rounded edges and a strut slot, belly fairing section blended into the wing, belly antennas on the skin; iteration 3: strut-slot doors closing the nose-gear housing with the gear up, bay-liner front wall notched over the slot, nose doors hinged on their outer face, wing carry-through upper skin held under the cabin floor [inf: layout / shapes / structure]; docs/phase3_models.md section 4",
-  "note": "Pilatus PC-12 PRO (NGX) parametric model, 72 parts (as built), pivots in node extras. Sourced dimensions in pc12/CLAUDE.md; reconstructed contours marked there. Original neutral livery, no registration or logo (D1)."
+  "made_by": "pc12/model/build.py (loftkit, plain Python + numpy); copied unchanged by hwd3d/tools/models/pc12/import_pc12.mjs",
+  "overrides": null,
+  "note": "Pilatus PC-12 PRO (NGX) parametric model, 69 parts (as built), pivots in node extras. Sourced dimensions in pc12/CLAUDE.md; reconstructed contours marked there. Original neutral livery, no registration or logo (D1)."
  },
  "pc12_meta.json": {
   "url": null,
-  "source": "subset of out/pc12_fr3/pc12_meta.json (variant fr3, pc12 builders @ b0d55c116e7efb103f89b358b065f46a767a5c16) + the frame measured by js/aircraft/glb.js",
-  "sha256": "760de443f9ddb2a74df8db4023dea4f6f6c13e2f22a2ebc657718217e9b0bf42",
+  "source": "subset of pc12/out/pc12_meta.json @ f097de2fa548fa017d101e30e3b7b47f8dede813 + the frame measured by js/aircraft/glb.js",
+  "sha256": "2f55cf8f4701e00745c2352f62b4128301d8d34154592b659b65cfbd900dd524",
   "licence": "own work (this repository)",
   "made_by": "hwd3d/tools/models/pc12/import_pc12.mjs"
  },

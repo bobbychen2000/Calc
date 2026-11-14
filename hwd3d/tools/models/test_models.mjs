@@ -55,7 +55,10 @@ const HWD = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const ACD = JSON.parse(fs.readFileSync(path.join(HWD, 'data/ga_types.json'), 'utf8')).types;
 const results = []; let fails = 0, known = 0;
 const check = (model, name, ok, detail) => {
-  const kn = !ok && KNOWN[model] && KNOWN[model][name]; const isKnown = !!(kn && detail && detail[kn.key] != null && detail[kn.key] <= kn.limit);
+  // a KNOWN entry bounds one measured value ({key, limit}) or several ({limits: {key: limit, ...}}, all must hold)
+  const kn = !ok && KNOWN[model] && KNOWN[model][name];
+  const within = (k, lim) => detail && detail[k] != null && detail[k] <= lim;
+  const isKnown = !!(kn && (kn.limits ? Object.entries(kn.limits).every(([k, lim]) => within(k, lim)) : within(kn.key, kn.limit)));
   const status = ok ? 'PASS' : isKnown ? 'KNOWN' : 'FAIL'; if (status === 'FAIL') fails++; if (isKnown) known++;
   results.push({ model, name, ok: !!ok, status, detail, known: isKnown ? kn.note : undefined });
   console.log(`${status} ${model} ${name}: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}${isKnown ? '\n      known: ' + kn.note : ''}`);
@@ -81,10 +84,40 @@ const REQUIRED = {
 };
 // Known deviations of a model from a check, measured and reported rather than hidden: the check prints KNOWN (not PASS)
 // while the measured value stays within `limit`; beyond it, it FAILS. Each one is an open item in docs/phase3_models.md.
+// OD4 (owner request 2026-11-14 "use whatever we had in the past"): hwd3d draws the ORIGINAL pc12/out/pc12.glb unchanged
+// (sha256 87731cce...). The checks the retired fix-round-2 / 3 variants were built to pass (tools/models/pc12/
+// build_pc12_variant.py, docs/phase3_models.md sections 4 and 10-14) now report the original model's deviations from the
+// Pilatus drawing / NGX documents as KNOWN, bounded by the values measured on that file (it is bit-identical, so they cannot
+// drift; a different file fails them). They are pc12 owner items (pc12/CLAUDE.md "Estimated / reconstructed"), not changed here.
+const ORIG = 'original pc12 model (pc12/out/pc12.glb, used unchanged since the owner request of 2026-11-14; the retired hwd3d variants fr2 / fr3 corrected it, docs/phase3_models.md section 4): ';
 const KNOWN = {
   PC12: {
     'gear retracted: only tyres protrude (documented amount)': { key: 'other_max_protrusion_mm', limit: 70,
-      note: 'pc12 model (not hwd3d): with the mains retracted, the trailing-link arm / axle near the trunnion (gear_leg material, STA ~6.03, BL ~1.74) hangs below the local wing lower skin (67 mm in pc12/out; 51 mm in the fix-round-2 build; 58 mm in the fix-round-3 build, whose trunnion rises 17 mm less than the wing so the tyre keeps its fr2 protrusion); the POH says only the tyres protrude (~1 in). Open item for pc12/ (owner), not changed here.' },
+      note: 'pc12 model (not hwd3d): with the mains retracted, the trailing-link arm / axle near the trunnion (gear_leg material, STA ~6.03, BL ~1.74) hangs below the local wing lower skin (67 mm in pc12/out, the current model; 51 / 58 mm in the retired fr2 / fr3 builds); the POH says only the tyres protrude (~1 in). Open item for pc12/ (owner), not changed here.' },
+    'cabin windows per side vs the Pilatus NGX drawings': { limits: { window_count_excess: 3 },
+      note: ORIG + 'port 4 fixed windows + airstair-door + cargo-door windows (6), starboard 5 + exit window (6); the Pilatus NGX drawings show port 4 (3 + cargo-door window, no airstair-door window) and starboard 5 incl. the exit: 3 windows too many (measured in review fix round 2).' },
+    'belly fairing covers the wing (no wing vertex below the fairing within its width)': { limits: { worst_mm: 52, below_fairing: 6 },
+      note: ORIG + '6 wing-skin vertices hang up to 51.7 mm below the belly fairing near STA 5.43, BL 0.60 (the fairing\'s forward lower edge).' },
+    'cabin floor: no other part rises through the carpet (floor footprint, up to 0.15 m above its top)': { limits: { worst_mm: 125, area_m2: 3.62 },
+      note: ORIG + 'the belly fairing\'s closed upper half (and the wing skins at the root) stand up to 125 mm above the carpet (WL 1.12) over 3.6 m2 of the floor footprint, inside the cabin; visible only through the cabin windows / open doors.' },
+    'cabin window / door / exit stations and water lines vs Pilatus drawing 190.10.40.432 + MBP p.5 (+-0.03 m)': { limits: { n_deviations: 27, max_dev_mm: 765 },
+      note: ORIG + 'pc12\'s own cabin layout: window centres WL 2.009 vs the drawn 2.187, windows 0.33 x 0.447 m vs 0.30 x 0.384, airstair door STA 4.715 vs 4.969, cargo door 8.925 vs 8.239 (its window 8.72 vs 7.959: the largest, 761 mm), exit 5.52 vs 6.203, window counts as in the windows check (review fix round 2 findings).' },
+    'fuselage profile (crown / keel) vs Pilatus drawing 190.10.40.432 side view': { limits: { max_mm: 141 },
+      note: ORIG + 'crown and keel 139-141 mm below the drawn profile along the cabin (fix round 2 finding P2).' },
+    'aft-fuselage underside vs Pilatus drawing 190.10.40.432 side view': { limits: { max_mm: 339 },
+      note: ORIG + 'aft underside up to 339 mm below the drawn line at FR38 (fix round 2 finding P2).' },
+    'fuselage half-breadth vs Pilatus drawing 190.10.40.432 plan view': { limits: { max_mm: 232 },
+      note: ORIG + 'aft fuselage up to 232 mm wider than drawn aft of FR33 (fix round 2 finding P2).' },
+    'fuselage sections vs Pilatus drawing 190.10.40.432 body plan': { limits: { worst_rms_mm: 180, worst_max_mm: 344 },
+      note: ORIG + 'body-plan sections FR10-FR38 30-180 mm rms off the drawn frames (the profile and half-breadth deviations above, plus pc12\'s rounder lower section).' },
+    'dorsal fin start and top edge vs Pilatus drawing 190.10.40.432 side view': { limits: { top_edge_max_mm: 449 },
+      note: ORIG + 'no dorsal fin above the crown before STA 10.4 (drawn from STA 9.07), top edge up to 449 mm below the drawn one (fix round 2 finding P2).' },
+    'winglet side view vs Pilatus drawing 190.10.40.432': { limits: { top_short_mm: 255 },
+      note: ORIG + 'winglet top at WL 1.86, 0.25 m below the drawn top chord (WL 2.11), so no drawn edge level is reached; the cabin / wing sit 0.14-0.21 m lower than drawn (fix round 2 finding P3).' },
+    'wing front-view silhouette (dihedral, winglet) vs Pilatus drawing 190.10.40.432': { limits: { shape_rms_mm: 55, top_line_dev_deg: 1.66, winglet_rise_dev_mm: 30 },
+      note: ORIG + 'pc12\'s estimated 4.5 deg dihedral: top line 3.66 deg in front view vs the drawn 5.31 deg, shape 55 mm rms (fix round 1 / 2 findings; the winglet rise agrees).' },
+    'cabin crown / wing height above the ground vs Pilatus drawing 190.10.40.432': { limits: { offset_max_mm: 277 },
+      note: ORIG + 'cabin crown 139 mm, wing 189-210 mm and winglet top 277 mm below the drawn heights (fix round 2 KNOWN item).' },
   },
 };
 const TYRE_PROTRUSION = { PC12: { max_m: 0.0254, src: 'POH NGX (pc12/CLAUDE.md sourced facts): main tyres protrude ~1 in when retracted' } };
@@ -550,7 +583,7 @@ for (const [type, e] of Object.entries(MODELS)) {
       meas.cargo_window = bCw && STA((bCw[0] + bCw[2]) / 2); meas.exit_window = bEw && STA((bEw[0] + bEw[2]) / 2);
       meas.airstair_wl = bAir && (bAir[1] + bAir[3]) / 2; meas.cargo_wl = bCargo && (bCargo[1] + bCargo[3]) / 2;
       const winWL = cl.map(c => (c.y0 + c.y1) / 2), winH = cl.map(c => c.y1 - c.y0), winW = cl.map(c => c.x1 - c.x0);
-      const dev = []; const cmp = (k, a, b, tol = 0.03) => { if (a == null || b == null || Math.abs(a - b) > tol) dev.push(`${k}: model ${a == null ? '-' : r3(a)} vs ${b}`); };
+      const dev = []; let maxDev = 0; const cmp = (k, a, b, tol = 0.03) => { if (a != null && b != null) maxDev = Math.max(maxDev, Math.abs(a - b)); if (a == null || b == null || Math.abs(a - b) > tol) dev.push(`${k}: model ${a == null ? '-' : r3(a)} vs ${b}`); };
       cmp('airstair door', meas.airstair, L.port.airstair); cmp('cargo door', meas.cargo, L.port.cargo); cmp('cargo-door window', meas.cargo_window, L.port.cargo_window); cmp('exit', meas.exit, L.stbd.exit); cmp('exit window', meas.exit_window, L.stbd.exit_window);
       if (meas.port_windows.length !== L.port.windows.length) dev.push('port windows ' + meas.port_windows.length); else L.port.windows.forEach((w, i) => cmp('port window ' + (i + 1), meas.port_windows[i], w));
       if (meas.stbd_windows.length !== L.stbd.windows.length) dev.push('starboard windows ' + meas.stbd_windows.length); else L.stbd.windows.forEach((w, i) => cmp('starboard window ' + (i + 1), meas.stbd_windows[i], w));
@@ -559,7 +592,7 @@ for (const [type, e] of Object.entries(MODELS)) {
       // the glass runs 10 mm under the seal all round (pc12 build_glazing: trim at the outline + 0.010)
       for (const v of winH) cmp('window outline height (glass - 0.02)', v - 0.02, L.window_h, 0.02); for (const v of winW) cmp('window outline width (glass - 0.02)', v - 0.02, L.window_w, 0.02);
       check('PC12', 'cabin window / door / exit stations and water lines vs Pilatus drawing 190.10.40.432 + MBP p.5 (+-0.03 m)', dev.length === 0,
-        { deviations: dev, measured: Object.fromEntries(Object.entries(meas).map(([k, v]) => [k, Array.isArray(v) ? v.map(r3) : v == null ? null : r3(v)])), window_centre_wl_m: [...new Set(winWL.map(r3))], window_glass_wh_m: [r3(Math.max(...winW)), r3(Math.max(...winH))], reference: LREF });
+        { n_deviations: dev.length, max_dev_mm: Math.round(maxDev * 1000), deviations: dev, measured: Object.fromEntries(Object.entries(meas).map(([k, v]) => [k, Array.isArray(v) ? v.map(r3) : v == null ? null : r3(v)])), window_centre_wl_m: [...new Set(winWL.map(r3))], window_glass_wh_m: [r3(Math.max(...winW)), r3(Math.max(...winH))], reference: LREF });
       // fuselage profile (fix round 3, finding P2): crown (BL 0) and keel (lowest skin within BL +-0.25: the nose-gear bay
       // is open at BL 0) at stations from the windshield to the tail cone vs the drawing's side view; 2 cm
       const stations = [3.3, 3.6, 3.9, 4.2, 4.6, 5.0, 6.0, 7.0, 8.0, 8.6, 9.0, 9.4, 9.75, 10.25, 10.8, 11.3, 11.85, 12.3, 12.9];
@@ -588,14 +621,14 @@ for (const [type, e] of Object.entries(MODELS)) {
         const rms = Math.sqrt(d.reduce((a, b) => a + b * b, 0) / d.length), dmax = Math.max(...d);
         secs[name] = { sta: r3(x), rms_mm: Math.round(rms * 1000), max_mm: Math.round(dmax * 1000), n: d.length }; worstRms = Math.max(worstRms, rms); worstSec = Math.max(worstSec, dmax); }
       check('PC12', 'fuselage sections vs Pilatus drawing 190.10.40.432 body plan', worstRms <= 0.015 && worstSec <= 0.04,
-        { sections: secs, limits_mm: { rms: 15, max: 40 }, note: 'drawn outline points (labels, dorsal fin and strakes removed) to the model section (fuselage skins + windshield); EF2 (pc12 cowling, kept) and FR40 (crowded) not scored; the keel inside the nose-gear bay opening skipped', reference: LREF });
+        { worst_rms_mm: Math.round(worstRms * 1000), worst_max_mm: Math.round(worstSec * 1000), sections: secs, limits_mm: { rms: 15, max: 40 }, note: 'drawn outline points (labels, dorsal fin and strakes removed) to the model section (fuselage skins + windshield); EF2 (pc12 cowling, kept) and FR40 (crowded) not scored; the keel inside the nose-gear bay opening skipped', reference: LREF });
       // dorsal fin (finding P2: started ~1.35 m too far aft): first station whose slice rises 1 cm above the crown, and the
       // top edge (highest dorsal / fin point) vs the drawn edge; 5 cm
       let start = null; for (let x = 8.8; x <= 10.5; x += 0.01) { const S = slice(['dorsal_fin'], x); if (S.length && Math.max(...S.map(p => p[0])) > lerp(D.side.crown, x) + 0.01) { start = x; break; } }
       let startD = null; for (let x = 8.8; x <= 10.5; x += 0.01) { const t = lerp(D.side.dorsal_top, x); if (t != null && t > lerp(D.side.crown, x) + 0.01) { startD = x; break; } }
       const dTop = {}; for (const x of [9.25, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 12.4]) { const S = slice(['dorsal_fin', 'fin'], x); if (S.length) dTop[x] = Math.round((Math.max(...S.map(p => p[0])) - lerp(D.side.dorsal_top, x)) * 1000); }
       check('PC12', 'dorsal fin start and top edge vs Pilatus drawing 190.10.40.432 side view', start != null && startD != null && Math.abs(start - startD) <= 0.05 && mx(dTop) <= 50,
-        { start_sta: start && r3(start), drawing_start_sta: startD && r3(startD), drawing_edge_leaves_crown_sta: r3(D.side.dorsal_start_sta), top_edge_dev_mm: dTop, limit_m: 0.05, note: 'start = first station 1 cm above the crown (model and drawing alike); fix round 2: no dorsal above the crown before STA 10.4, top edge up to 449 mm low', reference: LREF });
+        { top_edge_max_mm: mx(dTop), start_sta: start && r3(start), drawing_start_sta: startD && r3(startD), drawing_edge_leaves_crown_sta: r3(D.side.dorsal_start_sta), top_edge_dev_mm: dTop, limit_m: 0.05, note: 'start = first station 1 cm above the crown (model and drawing alike); fix round 2: no dorsal above the crown before STA 10.4, top edge up to 449 mm low', reference: LREF });
       // winglet in side view (finding P3: top chord 0.3-0.4 m forward, LE much less swept): leading / trailing edge of the
       // port winglet at absolute water lines (plane sections) vs the drawn edge lines, and the top chord ends at each one's
       // own top; 5 cm
@@ -612,7 +645,7 @@ for (const [type, e] of Object.entries(MODELS)) {
         if (dl != null) wdev['le_wl' + z] = le - dl; if (dt != null) wdev['te_wl' + z] = te - dt; }
       const wmax = Math.max(...Object.values(wdev).map(Math.abs));
       check('PC12', 'winglet side view vs Pilatus drawing 190.10.40.432', wmax <= 0.05,
-        { dev_mm: Object.fromEntries(Object.entries(wdev).map(([k, v]) => [k, Math.round(v * 1000)])), max_mm: Math.round(wmax * 1000), limit_mm: 50, model_top_wl: r3(top), model_chord_wl2_10: [r3(tLe), r3(tTe)], drawing_top: { wl: W8.top_wl, chord_sta: W8.top_chord }, note: 'fix round 2: top chord 0.29 / 0.38 m forward of the drawn one', reference: LREF });
+        { top_short_mm: Math.round((W8.top_wl - top) * 1000), dev_mm: Object.fromEntries(Object.entries(wdev).map(([k, v]) => [k, Math.round(v * 1000)])), max_mm: Math.round(wmax * 1000), limit_mm: 50, model_top_wl: r3(top), model_chord_wl2_10: [r3(tLe), r3(tTe)], drawing_top: { wl: W8.top_wl, chord_sta: W8.top_chord }, note: 'fix round 2: top chord 0.29 / 0.38 m forward of the drawn one', reference: LREF });
       // wing silhouettes in the front view (fix round 2): upper and lower outline of wing_R per butt line vs the drawing;
       // the SHAPE (each minus its mean offset) within 15 mm rms, the top-line slope within 0.3 deg, the winglet rise 0.03 m.
       // The skin's spanwise rows are sparse: every full section row (>= 30 vertices in a 1-cm butt-line bin) gives its
@@ -632,7 +665,7 @@ for (const [type, e] of Object.entries(MODELS)) {
       let wl = { y: -Infinity, bl: 0 }; { const d = part('winglet_R').opaque.pos; for (let i = 0; i < d.length; i += 3) if (d[i + 1] > wl.y) wl = { y: d[i + 1], bl: d[i + 2] }; }
       const wRise = wl.y - up[up.length - 1];
       check('PC12', 'wing front-view silhouette (dihedral, winglet) vs Pilatus drawing 190.10.40.432', rms <= 0.015 && Math.abs(slope - slopeD) <= 0.3 && Math.abs(wRise - F.winglet_rise_above_upper_at_last_bl) <= 0.03,
-        { limits: 'shape rms <= 15 mm, top line within 0.3 deg, winglet rise within 0.03 m', bl: BL, model_upper: up.map(r3), model_lower: lo.map(r3), shape_rms_mm: Math.round(rms * 1000), top_line_deg: Math.round(slope * 100) / 100, drawing_top_line_deg: Math.round(slopeD * 100) / 100, offset_upper_m: r3(oU), offset_lower_m: r3(oL), winglet_top: { bl: r3(wl.bl), wl: r3(wl.y), rise_m: r3(wRise), drawing_rise_m: F.winglet_rise_above_upper_at_last_bl }, reference: LREF });
+        { limits: 'shape rms <= 15 mm, top line within 0.3 deg, winglet rise within 0.03 m', top_line_dev_deg: Math.round(Math.abs(slope - slopeD) * 100) / 100, winglet_rise_dev_mm: Math.round(Math.abs(wRise - F.winglet_rise_above_upper_at_last_bl) * 1000), bl: BL, model_upper: up.map(r3), model_lower: lo.map(r3), shape_rms_mm: Math.round(rms * 1000), top_line_deg: Math.round(slope * 100) / 100, drawing_top_line_deg: Math.round(slopeD * 100) / 100, offset_upper_m: r3(oU), offset_lower_m: r3(oL), winglet_top: { bl: r3(wl.bl), wl: r3(wl.y), rise_m: r3(wRise), drawing_rise_m: F.winglet_rise_above_upper_at_last_bl }, reference: LREF });
       // absolute heights (fix round 2 KNOWN: cabin and wing ~0.12-0.14 m low): crown at STA 6, wing outline offsets, winglet top
       let crown = -Infinity; for (const p of slice(FUS, 6.0)) if (Math.abs(p[1]) < 0.03) crown = Math.max(crown, p[0]);
       const dc = lerp(D.side.crown, 6.0), offs = { crown: dc - crown, wing_upper: oU, wing_lower: oL, winglet_top: F.winglet_top_bl_wl[1] - wl.y }; const offMax = Math.max(...Object.values(offs).map(Math.abs));

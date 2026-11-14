@@ -1,807 +1,20 @@
 {
  "_provenance": {
-  "source": "pc12's own builders (pc12/model, pc12/cad @ b0d55c116e7efb103f89b358b065f46a767a5c16, unchanged files) run by hwd3d/tools/models/pc12/build_pc12_variant.py with the override set 'fr3' (docs/phase3_models.md section 4), output out/pc12_fr3/ (gitignored, rebuilt bit-for-bit by: python3 -B tools/models/pc12/build_pc12_variant.py --set=fr3)",
-  "commit": "b0d55c116e7efb103f89b358b065f46a767a5c16",
-  "commit_date": "2026-11-14T00:02:49+00:00",
-  "glb_sha256": "957b3c4e9ab17c4a6da51bc0fdcaeab71dbe98fc44e404630dbd6d39d7e9e01c",
-  "meta_sha256": "e307c9b26257135fea63e0e589423bb2c62a7a79e4f56d97cad9e68efc424795",
+  "source": "pc12/out/pc12.glb + pc12/out/pc12_meta.json (this repository: the from-scratch parametric PC-12 PRO model, pc12/CLAUDE.md), copied unchanged - the original model, owner request 2026-11-14 (the hwd3d-side variants fr2 / fr3 are retired)",
+  "commit": "f097de2fa548fa017d101e30e3b7b47f8dede813",
+  "commit_date": "2026-11-08T12:47:05+00:00",
+  "glb_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+  "meta_sha256": "bba8fa425b3da63d551f7f28a4edb0d387d5d3908ef63a3ad660f57e240d4826",
   "licence": "own work (this repository)",
-  "variant": {
-   "set": "fr3",
-   "overrides": {
-    "loft": {
-     "top": [
-      [
-       0.95,
-       1.945
-      ],
-      [
-       1.2,
-       1.985
-      ],
-      [
-       1.6,
-       2.035
-      ],
-      [
-       2.2,
-       2.1
-      ],
-      [
-       2.8,
-       2.16
-      ],
-      [
-       3,
-       2.175
-      ],
-      [
-       3.2,
-       2.231
-      ],
-      [
-       3.4,
-       2.338
-      ],
-      [
-       3.6,
-       2.444
-      ],
-      [
-       3.8,
-       2.552
-      ],
-      [
-       4,
-       2.659
-      ],
-      [
-       4.2,
-       2.741
-      ],
-      [
-       4.4,
-       2.77
-      ],
-      [
-       4.6,
-       2.769
-      ],
-      [
-       9,
-       2.771
-      ],
-      [
-       9.6,
-       2.749
-      ],
-      [
-       10.2,
-       2.707
-      ],
-      [
-       10.8,
-       2.662
-      ],
-      [
-       11.4,
-       2.602
-      ],
-      [
-       12,
-       2.52
-      ],
-      [
-       12.5,
-       2.421
-      ],
-      [
-       13,
-       2.369
-      ],
-      [
-       13.7,
-       2.3
-      ],
-      [
-       14.36,
-       2.2
-      ]
-     ],
-     "bot": [
-      [
-       0.95,
-       1.365
-      ],
-      [
-       1.2,
-       1.315
-      ],
-      [
-       1.6,
-       1.225
-      ],
-      [
-       2,
-       1.14
-      ],
-      [
-       2.6,
-       1.02
-      ],
-      [
-       3,
-       0.944
-      ],
-      [
-       3.4,
-       0.944
-      ],
-      [
-       5.5,
-       0.939
-      ],
-      [
-       7,
-       0.939
-      ],
-      [
-       8.23,
-       0.939
-      ],
-      [
-       8.6,
-       0.961
-      ],
-      [
-       9,
-       1.019
-      ],
-      [
-       9.4,
-       1.097
-      ],
-      [
-       9.75,
-       1.179
-      ],
-      [
-       10.25,
-       1.303
-      ],
-      [
-       10.75,
-       1.423
-      ],
-      [
-       11.5,
-       1.56
-      ],
-      [
-       12.2,
-       1.684
-      ],
-      [
-       12.9,
-       1.8
-      ],
-      [
-       13.57,
-       1.912
-      ],
-      [
-       14.36,
-       2.045
-      ]
-     ],
-     "hw": [
-      [
-       0.95,
-       0.29
-      ],
-      [
-       1.2,
-       0.37
-      ],
-      [
-       1.6,
-       0.462
-      ],
-      [
-       2.2,
-       0.58
-      ],
-      [
-       2.8,
-       0.68
-      ],
-      [
-       3,
-       0.726
-      ],
-      [
-       3.3,
-       0.769
-      ],
-      [
-       3.6,
-       0.805
-      ],
-      [
-       3.9,
-       0.829
-      ],
-      [
-       4.2,
-       0.843
-      ],
-      [
-       4.6,
-       0.845
-      ],
-      [
-       9,
-       0.847
-      ],
-      [
-       9.4,
-       0.822
-      ],
-      [
-       9.75,
-       0.774
-      ],
-      [
-       10.3,
-       0.685
-      ],
-      [
-       10.8,
-       0.605
-      ],
-      [
-       11.3,
-       0.513
-      ],
-      [
-       11.85,
-       0.421
-      ],
-      [
-       12.3,
-       0.322
-      ],
-      [
-       12.75,
-       0.21
-      ],
-      [
-       13.05,
-       0.146
-      ],
-      [
-       13.7,
-       0.1
-      ],
-      [
-       14.36,
-       0.045
-      ]
-     ],
-     "zmw": [
-      [
-       0.95,
-       1.655
-      ],
-      [
-       2,
-       1.662
-      ],
-      [
-       3.08,
-       1.579
-      ],
-      [
-       3.58,
-       1.699
-      ],
-      [
-       4.08,
-       1.852
-      ],
-      [
-       4.59,
-       1.873
-      ],
-      [
-       8.23,
-       1.873
-      ],
-      [
-       9,
-       1.889
-      ],
-      [
-       9.75,
-       2.007
-      ],
-      [
-       10.8,
-       2.039
-      ],
-      [
-       11.85,
-       2.08
-      ],
-      [
-       13,
-       2.09
-      ],
-      [
-       14.36,
-       2.12
-      ]
-     ],
-     "ntop": [
-      [
-       0.95,
-       2
-      ],
-      [
-       2,
-       2.12
-      ],
-      [
-       3.08,
-       2.45
-      ],
-      [
-       3.58,
-       2.38
-      ],
-      [
-       4.08,
-       2.22
-      ],
-      [
-       4.59,
-       2.2
-      ],
-      [
-       8.23,
-       2.2
-      ],
-      [
-       9,
-       2.17
-      ],
-      [
-       9.75,
-       2.02
-      ],
-      [
-       10.8,
-       2.37
-      ],
-      [
-       11.85,
-       2
-      ],
-      [
-       14.36,
-       2
-      ]
-     ],
-     "nbot": [
-      [
-       0.95,
-       2
-      ],
-      [
-       2,
-       2.18
-      ],
-      [
-       3.08,
-       2.74
-      ],
-      [
-       3.58,
-       2.98
-      ],
-      [
-       4.08,
-       3.24
-      ],
-      [
-       4.59,
-       3.23
-      ],
-      [
-       8.23,
-       3.23
-      ],
-      [
-       9,
-       3.74
-      ],
-      [
-       9.75,
-       3.25
-      ],
-      [
-       10.8,
-       2.52
-      ],
-      [
-       11.85,
-       2
-      ],
-      [
-       14.36,
-       2
-      ]
-     ]
-    },
-    "layout": {
-     "WIN_HX": 0.15,
-     "WIN_HZ": 0.192,
-     "WIN_R": 0.065,
-     "WIN_CZ": 2.187,
-     "FIXED_WINDOWS": {
-      "1": [
-       5.339,
-       6.967,
-       7.716,
-       8.469
-      ],
-      "-1": [
-       5.607,
-       6.201,
-       6.98
-      ]
-     },
-     "AIRSTAIR": {
-      "side": -1,
-      "cx": 4.971,
-      "cz": 1.928,
-      "hx": 0.305,
-      "hz": 0.675,
-      "r": 0.09
-     },
-     "CARGO": {
-      "side": -1,
-      "cx": 8.242,
-      "cz": 1.892,
-      "hx": 0.675,
-      "hz": 0.66,
-      "r": 0.1
-     },
-     "EXIT": {
-      "side": 1,
-      "cx": 6.195,
-      "cz": 2.2,
-      "hx": 0.24,
-      "hz": 0.32,
-      "r": 0.07
-     },
-     "DOOR_WINDOWS": {
-      "door_airstair": null,
-      "door_cargo": 7.961,
-      "exit_hatch": 6.195
-     }
-    },
-    "glazing": {
-     "WS_PLAN": [
-      [
-       3.3,
-       0.034
-      ],
-      [
-       3.315,
-       0.25
-      ],
-      [
-       3.36,
-       0.45
-      ],
-      [
-       3.47,
-       0.625
-      ],
-      [
-       4.005,
-       0.51
-      ],
-      [
-       3.865,
-       0.034
-      ]
-     ],
-     "PILLAR": [
-      [
-       3.43,
-       2.165
-      ],
-      [
-       4,
-       2.55
-      ]
-     ],
-     "SW_CORE": [
-      [
-       3.878,
-       2.13
-      ],
-      [
-       4.228,
-       2.13
-      ],
-      [
-       4.312,
-       2.214
-      ],
-      [
-       4.312,
-       2.375
-      ],
-      [
-       4.205,
-       2.468
-      ],
-      [
-       4.04,
-       2.493
-      ],
-      [
-       3.812,
-       2.322
-      ]
-     ],
-     "SW_R": 0.04,
-     "SPLIT_FWD": 4.42
-    },
-    "wing": {
-     "DIHEDRAL_DEG": 6.2,
-     "PIVOT_BL": 2.265,
-     "DZ": 0.121,
-     "KINK_BL": 0.85,
-     "GEAR_DZ": 0.104,
-     "CARRY": {
-      "y0": 0.66,
-      "y1": 0.75,
-      "clear": 0.005
-     },
-     "DIHEDRAL_deg": [
-      4.5,
-      6.2
-     ],
-     "Z_QC0": 0.9582016246900535,
-     "carry_through": {
-      "cap_wl": 1.209,
-      "vertices_lowered": 296,
-      "max_lowered_mm": 48.6
-     }
-    },
-    "gear": {
-     "MAIN_TRUNNION": [
-      6.02,
-      2.265,
-      1.094
-     ],
-     "WELL_cy": 1.436
-    },
-    "winglet": {
-     "WL_MID_CHORD": 0.67,
-     "WL_TIP_CHORD": 0.4,
-     "WL_TE_SWEEP": 0.448,
-     "P_TE": 0.7,
-     "P_C": 1.17,
-     "WL_HEIGHT": 0.262,
-     "WL_SKIN": 0.0155
-    },
-    "nose_housing": {
-     "x0": 2.887,
-     "x1": 4.3,
-     "z_bottom": 0.793,
-     "half_width": 0.24,
-     "n": 3,
-     "r_end": 0.04,
-     "slot": {
-      "x0": 2.905,
-      "x1": 3.135,
-      "hy": 0.08,
-      "r": 0.03
-     },
-     "notch_top": 1.15
-    },
-    "belly": {
-     "width": [
-      [
-       5.12,
-       0.12
-      ],
-      [
-       5.3,
-       0.45
-      ],
-      [
-       5.6,
-       0.66
-      ],
-      [
-       6.2,
-       0.72
-      ],
-      [
-       7,
-       0.66
-      ],
-      [
-       7.35,
-       0.4
-      ],
-      [
-       7.5,
-       0.12
-      ]
-     ],
-     "bottom": [
-      [
-       5.12,
-       0.99
-      ],
-      [
-       5.35,
-       0.927
-      ],
-      [
-       5.65,
-       0.88
-      ],
-      [
-       5.9,
-       0.872
-      ],
-      [
-       6.4,
-       0.879
-      ],
-      [
-       7,
-       0.91
-      ],
-      [
-       7.3,
-       0.95
-      ],
-      [
-       7.5,
-       0.985
-      ]
-     ],
-     "margin": 0.003,
-     "p": 2,
-     "n": 3.2,
-     "lowered_below_outline_mm": 0
-    },
-    "dorsal": {
-     "top": [
-      [
-       9,
-       2.771
-      ],
-      [
-       10,
-       2.904
-      ],
-      [
-       11,
-       3.038
-      ],
-      [
-       12.1,
-       3.185
-      ],
-      [
-       12.36,
-       3.249
-      ],
-      [
-       12.53,
-       3.39
-      ]
-     ],
-     "tc": 0.065
-    },
-    "fin_le": [
-     [
-      11.648,
-      2.35
-     ],
-     [
-      13.106,
-      4.07
-     ]
-    ],
-    "strakes": {
-     "root": [
-      [
-       9.77,
-       1.37
-      ],
-      [
-       12.19,
-       1.95
-      ]
-     ],
-     "outer": [
-      [
-       9.83,
-       1.33
-      ],
-      [
-       11.87,
-       1.53
-      ]
-     ],
-     "out": 0.15
-    },
-    "cabin": {
-     "rows": [
-      [
-       5.65,
-       -1
-      ],
-      [
-       6.95,
-       1
-      ],
-      [
-       8.05,
-       1
-      ]
-     ],
-     "seat_bl": 0.4,
-     "table_x": 6.3,
-     "net_x": 8.6,
-     "ledge": [
-      4.85,
-      8.05
-     ],
-     "door_clear": 0.05
-    }
-   },
-   "builder": "hwd3d/tools/models/pc12/build_pc12_variant.py",
-   "builder_sha256": "e4bf5221ac59826a8461e0dfd2347c3b4ed1c0156137ecaa48a0d20ce6ae5712",
-   "pc12_sources_tree_sha256": "04893879d350d732abc09424959cffba786ccd7cbf2bff0c6c85e78005acaa01",
+  "reproduced": {
+   "by": "python3 -B tools/models/pc12/build_pc12_variant.py --set=none (hwd3d; nothing written into pc12/)",
+   "glb_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+   "identical": true,
+   "pc12_commit": "62fc2f8a00445c292249ca704cd737f024003e51",
    "pc12_sources_dirty": false,
-   "pc12_sources": {
-    "pc12/cad/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "pc12/cad/glb.py": "dc6bedda99cbf85f138afbfacf88a420785a1b8df47320c96c23cc3b3577e1a6",
-    "pc12/cad/mesh.py": "7a24dd9bb4a32f2f6d86fd591e1e0363cf561e7cd5303992bc686f5e2cb73d6a",
-    "pc12/cad/sdf2d.py": "50ed4c2f2ecdbe48640366f6eb48f3b4b7a2bbeb89e074de2af969a8cd1dfc80",
-    "pc12/model/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "pc12/model/airfoil.py": "1badf3f43cb20c7278a61f6fd8176c6f02e2a1ba73acbd5930c64a6ea06b17ba",
-    "pc12/model/assemble.py": "43929a915b5c306cf94a23461fe11de874706d191d4de9a6607c2cfff0828d56",
-    "pc12/model/bays.py": "a04493caa9a31e9ff79d16cba3d77120362395f826e5141cfe44152a9cb1e202",
-    "pc12/model/brace.py": "f83bb61f80b01e276c028413ea161d592f5bc5268d4a3a44296f96469e4a7300",
-    "pc12/model/build.py": "51f14abdc731724ce0a82dfdb94a4dea5dc9fefc27bb370df818ffd413b4f7f6",
-    "pc12/model/cockpit_glazing.py": "8d0345966ccc529665454297e184c3b6f9503d7b009b0b3ff1c1df6ff40804c9",
-    "pc12/model/details.py": "3992ddd40935018d2cfb811302a7c94e19b80a3d602fb8832e080de6a8788073",
-    "pc12/model/empennage.py": "46c8116676836208e94f701fae499051105491c46c2cc562e0fae2594c1cb0cd",
-    "pc12/model/fuselage.py": "106ec5b9459b54a4caeca20d2edf9f3c918ea60666cc6321f6d771f2f733dfb7",
-    "pc12/model/fuselage_parts.py": "8ddfa1bc87a5b28c3fc17cfeccb80234279ebb98f269cd7d9f9d1d07c5d1fdc5",
-    "pc12/model/gear.py": "d80c90ccf10bfbf51e50b0c5782e6b78434415cbddc3e34e92970e541f07cd68",
-    "pc12/model/interior.py": "aba60defadd73438af75c29b6c7f0f1c6e5e0183ad8e1e3d2dbf767a2b20f629",
-    "pc12/model/lifting.py": "d7f881c5bc9b3568ac52b30410b6590f28b39c482ee10062cb0727053fa22ec1",
-    "pc12/model/livery.py": "f2d643db610412759d58dbad6b5b7ef95fd5652486c9a772addc0d378df479e3",
-    "pc12/model/parts.py": "41801a05d2135951fefcaeae6de66c07ebb83a945d0de2e23de5cd148c842db8",
-    "pc12/model/powerplant.py": "7d09525cdef2f5d2b240c06c5676fc0e0a1637dcc84515dd038b21178d168532",
-    "pc12/model/wing.py": "ce5cbfe415365860600acf8b0b596777f62280efe8779915723989749646c227"
-   },
-   "built": "2026-11-14T00:21:32Z"
+   "built": "2026-11-14T04:58:06Z"
   },
+  "variant": null,
   "imported_by": "hwd3d/tools/models/pc12/import_pc12.mjs",
   "imported": "2026-11-14",
   "facts": "dimensions and configuration facts with their sources: pc12/CLAUDE.md \"Sourced facts\" (Pilatus, POH NGX, EASA TCDS, Jane's); contours, airfoils, interior and livery are estimated / reconstructed (\"Estimated / reconstructed\" there)",
@@ -836,21 +49,21 @@
   "bbox_local": [
    -8.36,
    -0.014,
-   -8.14,
+   -8.141,
    6.04,
    4.26,
-   8.14
+   8.141
   ],
   "length_m": 14.4,
-  "span_m": 16.28,
+  "span_m": 16.281,
   "height_m": 4.26,
   "nose_to_main_m": 6.04,
   "lights": {
    "navL": {
     "p": [
-     0.893,
-     1.833,
-     -7.842
+     0.894,
+     1.543,
+     -7.827
     ],
     "part": null,
     "src": "inf",
@@ -858,9 +71,9 @@
    },
    "navR": {
     "p": [
-     0.893,
-     1.833,
-     7.842
+     0.894,
+     1.543,
+     7.827
     ],
     "part": null,
     "src": "inf",
@@ -889,7 +102,7 @@
    "beaconBot": {
     "p": [
      -0.97,
-     0.924,
+     0.738,
      0
     ],
     "part": null,
@@ -898,9 +111,9 @@
    },
    "strobeL": {
     "p": [
-     -0.12,
-     1.863,
-     -7.892
+     -0.121,
+     1.573,
+     -7.877
     ],
     "part": null,
     "src": "inf",
@@ -908,9 +121,9 @@
    },
    "strobeR": {
     "p": [
-     -0.12,
-     1.863,
-     7.892
+     -0.121,
+     1.573,
+     7.877
     ],
     "part": null,
     "src": "inf",
@@ -920,7 +133,7 @@
    "landL": {
     "p": [
      0.23,
-     1.148,
+     1,
      -3.15
     ],
     "part": null,
@@ -930,7 +143,7 @@
    "landR": {
     "p": [
      0.23,
-     1.148,
+     1,
      3.15
     ],
     "part": null,
@@ -951,7 +164,7 @@
   "excluded_parts": [
    "structure"
   ],
-  "tris_drawn": 427257
+  "tris_drawn": 422663
  },
  "checks": [
   {
@@ -963,8 +176,8 @@
   {
    "check": "Wing span (over winglets)",
    "official": 16.28,
-   "model": 16.28,
-   "delta_mm": 0.2
+   "model": 16.281,
+   "delta_mm": 1.3
   },
   {
    "check": "Overall height (static)",
@@ -1009,29 +222,25 @@
    "delta_mm": 0
   },
   {
-   "check": "Cabin floor width (floor panel as built, WL 1.244)",
+   "check": "Cabin floor width (OML - lining)",
    "official": 1.3,
-   "model": 1.3,
-   "delta_mm": 0,
-   "tolerance_mm": 26,
-   "pass": true
+   "model": 1.301,
+   "delta_mm": 0.8
   }
  ],
  "wing": {
-  "semi_span": 7.872256443470179,
-  "root_chord": 2.185735029114699,
-  "tip_chord": 1.0928675145573494,
-  "mac": 1.7000161337558766,
-  "lemac": 5.324992578472297,
-  "x_qc": 5.749996611911266,
-  "dihedral_deg": 6.2,
-  "z_qc0": 0.9582016246900535
+  "semi_span": 7.856956443470179,
+  "root_chord": 2.189991352308809,
+  "tip_chord": 1.0949956761544044,
+  "mac": 1.7033266073512958,
+  "lemac": 5.323469760618404,
+  "x_qc": 5.749301412456228
  },
  "stats": {
-  "triangles": 457597,
-  "vertices": 278795,
-  "glb_bytes": 6255744,
-  "parts": 72
+  "triangles": 452280,
+  "vertices": 278209,
+  "glb_bytes": 6215508,
+  "parts": 69
  },
  "parts": [
   {
@@ -1040,13 +249,13 @@
    "group": "Structure",
    "qty": 1,
    "note": "2024-T3 / 7075-T6, zinc-chromate primed",
-   "tris": 30340,
+   "tris": 29617,
    "materials": [
     "interior_green",
     "zinc_chromate"
    ],
    "info": {
-    "frames": "20 (representative)",
+    "frames": "19 (representative)",
     "wing": "2-spar box, ribs @ 550 mm"
    }
   },
@@ -1056,7 +265,7 @@
    "group": "Fuselage",
    "qty": 1,
    "note": "2024-T3 skin, 5.8 psi max differential",
-   "tris": 52410,
+   "tris": 52974,
    "materials": [
     "paint_accent",
     "paint_belly",
@@ -1071,7 +280,7 @@
    "group": "Fuselage",
    "qty": 1,
    "note": "2024-T3 skins, frames 10-14",
-   "tris": 16088,
+   "tris": 14928,
    "materials": [
     "paint_accent",
     "paint_belly",
@@ -1082,24 +291,12 @@
    "info": {}
   },
   {
-   "id": "nose_gear_housing",
-   "name": "Nose-gear housing (below the cockpit floor)",
-   "group": "Fuselage",
-   "qty": 1,
-   "note": "Housing for the retracted nose wheel, doors and a strut slot (with its own doors) in its floor",
-   "tris": 6682,
-   "materials": [
-    "paint_belly"
-   ],
-   "info": {}
-  },
-  {
    "id": "fus_aft",
    "name": "Aft fuselage & tail cone",
    "group": "Fuselage",
    "qty": 1,
    "note": "Semi-monocoque, frames 29-38",
-   "tris": 29198,
+   "tris": 29154,
    "materials": [
     "paint_accent",
     "paint_belly",
@@ -1110,11 +307,11 @@
   },
   {
    "id": "glazing_cabin",
-   "name": "Cabin windows (7 fixed, stretched acrylic)",
+   "name": "Cabin windows (9 fixed, stretched acrylic)",
    "group": "Glazing",
-   "qty": 7,
+   "qty": 9,
    "note": "Two-ply laminated stretched acrylic",
-   "tris": 17673,
+   "tris": 25575,
    "materials": [
     "glass",
     "seal"
@@ -1127,7 +324,7 @@
    "group": "Glazing",
    "qty": 4,
    "note": "Heated laminated glass windshield, acrylic side windows",
-   "tris": 21876,
+   "tris": 26904,
    "materials": [
     "glass",
     "glass_windshield",
@@ -1141,12 +338,14 @@
    "group": "Doors",
    "qty": 1,
    "note": "Downward-opening, integral steps",
-   "tris": 8394,
+   "tris": 11287,
    "materials": [
+    "glass",
     "lining",
     "paint_accent",
     "paint_stripe",
-    "paint_white"
+    "paint_white",
+    "seal"
    ],
    "info": {}
   },
@@ -1156,7 +355,7 @@
    "group": "Doors",
    "qty": 1,
    "note": "Upward-opening, gas-strut assisted",
-   "tris": 19185,
+   "tris": 20761,
    "materials": [
     "glass",
     "lining",
@@ -1173,10 +372,12 @@
    "group": "Doors",
    "qty": 1,
    "note": "Plug-type, removable inward",
-   "tris": 5597,
+   "tris": 6985,
    "materials": [
     "glass",
     "lining",
+    "paint_accent",
+    "paint_stripe",
     "paint_white",
     "seal"
    ],
@@ -1188,7 +389,7 @@
    "group": "Doors",
    "qty": 1,
    "note": "Machined door frames",
-   "tris": 9366,
+   "tris": 10001,
    "materials": [
     "jamb",
     "seam"
@@ -1201,18 +402,17 @@
    "group": "Wing",
    "qty": 1,
    "note": "2024/7075 two-spar box, integral tank ribs 3-16",
-   "tris": 11184,
+   "tris": 10448,
    "materials": [
     "deice_boot",
     "paint_white"
    ],
    "info": {
-    "root chord": "2,186 mm, LS(1)-0417MOD",
-    "tip chord": "1,093 mm, LS(1)-0313",
-    "MAC": "1,700 mm, LEMAC STA 5,325",
-    "dihedral": "6.2 deg (fitted to Pilatus drawing 190.10.40.432 (MBP sheet 1) front view), flat inboard of BL 0.85 [inf]",
-    "incidence": "+2.0 root / -1.0 tip (est.)",
-    "carry-through": "upper skin under the cabin floor (WL 1.209) inboard of BL 0.66 [inf]"
+    "root chord": "2,190 mm, LS(1)-0417MOD",
+    "tip chord": "1,095 mm, LS(1)-0313",
+    "MAC": "1,703 mm, LEMAC STA 5,323",
+    "dihedral": "4.5 deg (est.)",
+    "incidence": "+2.0 root / -1.0 tip (est.)"
    }
   },
   {
@@ -1221,18 +421,17 @@
    "group": "Wing",
    "qty": 1,
    "note": "2024/7075 two-spar box, integral tank ribs 3-16",
-   "tris": 11184,
+   "tris": 10448,
    "materials": [
     "deice_boot",
     "paint_white"
    ],
    "info": {
-    "root chord": "2,186 mm, LS(1)-0417MOD",
-    "tip chord": "1,093 mm, LS(1)-0313",
-    "MAC": "1,700 mm, LEMAC STA 5,325",
-    "dihedral": "6.2 deg (fitted to Pilatus drawing 190.10.40.432 (MBP sheet 1) front view), flat inboard of BL 0.85 [inf]",
-    "incidence": "+2.0 root / -1.0 tip (est.)",
-    "carry-through": "upper skin under the cabin floor (WL 1.209) inboard of BL 0.66 [inf]"
+    "root chord": "2,190 mm, LS(1)-0417MOD",
+    "tip chord": "1,095 mm, LS(1)-0313",
+    "MAC": "1,703 mm, LEMAC STA 5,323",
+    "dihedral": "4.5 deg (est.)",
+    "incidence": "+2.0 root / -1.0 tip (est.)"
    }
   },
   {
@@ -1241,7 +440,7 @@
    "group": "Wing",
    "qty": 1,
    "note": "Composite fairing over the wing carry-through",
-   "tris": 14336,
+   "tris": 5760,
    "materials": [
     "paint_white"
    ],
@@ -1365,14 +564,15 @@
    "group": "Empennage",
    "qty": 1,
    "note": "Aluminium two-spar fin",
-   "tris": 5932,
+   "tris": 5856,
    "materials": [
     "paint_accent",
+    "paint_belly",
     "paint_stripe",
     "paint_white"
    ],
    "info": {
-    "LE sweep": "40 deg",
+    "LE sweep": "39 deg",
     "section": "NACA 0013 -> 0010 (est.)"
    }
   },
@@ -1382,7 +582,7 @@
    "group": "Flight controls",
    "qty": 1,
    "note": "Mass-balanced rudder",
-   "tris": 2178,
+   "tris": 2394,
    "materials": [
     "black",
     "paint_accent",
@@ -1409,7 +609,7 @@
    "group": "Empennage",
    "qty": 1,
    "note": "Glass-fibre fairing",
-   "tris": 4910,
+   "tris": 2564,
    "materials": [
     "paint_accent",
     "paint_stripe",
@@ -1609,7 +809,7 @@
    "group": "Powerplant installation",
    "qty": 1,
    "note": "Carbon/Nomex honeycomb, Cu mesh",
-   "tris": 10314,
+   "tris": 10504,
    "materials": [
     "paint_white"
    ],
@@ -1621,7 +821,7 @@
    "group": "Powerplant installation",
    "qty": 1,
    "note": "Carbon/Nomex honeycomb",
-   "tris": 13646,
+   "tris": 13452,
    "materials": [
     "paint_accent",
     "paint_belly",
@@ -1812,7 +1012,7 @@
    "group": "Landing gear",
    "qty": 1,
    "note": "Composite door",
-   "tris": 1884,
+   "tris": 648,
    "materials": [
     "paint_white"
    ],
@@ -1824,31 +1024,7 @@
    "group": "Landing gear",
    "qty": 1,
    "note": "Composite door",
-   "tris": 1884,
-   "materials": [
-    "paint_white"
-   ],
-   "info": {}
-  },
-  {
-   "id": "gear_door_NSR",
-   "name": "Nose-gear strut-slot door (right)",
-   "group": "Landing gear",
-   "qty": 1,
-   "note": "Composite door: closes the strut slot with the gear up [inf]",
-   "tris": 980,
-   "materials": [
-    "paint_white"
-   ],
-   "info": {}
-  },
-  {
-   "id": "gear_door_NSL",
-   "name": "Nose-gear strut-slot door (left)",
-   "group": "Landing gear",
-   "qty": 1,
-   "note": "Composite door: closes the strut slot with the gear up [inf]",
-   "tris": 980,
+   "tris": 648,
    "materials": [
     "paint_white"
    ],
@@ -1860,7 +1036,7 @@
    "group": "Landing gear",
    "qty": 1,
    "note": "Primed aluminium liners",
-   "tris": 526,
+   "tris": 522,
    "materials": [
     "zinc_chromate"
    ],
@@ -1976,9 +1152,7 @@
    "info": {
     "cabin": "5.16 x 1.52 x 1.47 m",
     "floor width": "1.30 m",
-    "seats": "6 executive (up to 9)",
-    "floor": "flat, WL 1.244 (pc12 1.120 carried by the loft map), 1.30 m wide (sourced 1.30)",
-    "layout": "pc12's, 0.40 m aft, port ledge clear of the airstair and cargo doors (hwd3d fr3) [inf]"
+    "seats": "6 executive (up to 9)"
    }
   },
   {
@@ -2197,24 +1371,12 @@
    "open": -85
   },
   {
-   "id": "gear_door_NSR",
-   "kind": "gear_door",
-   "open": 85,
-   "seq": "down"
-  },
-  {
-   "id": "gear_door_NSL",
-   "kind": "gear_door",
-   "open": -85,
-   "seq": "down"
-  },
-  {
    "id": "brace_main_R_up",
    "kind": "brace",
    "role": "upper",
    "gear": "gear_main_R",
-   "L1": 0.17885249296295117,
-   "L2": 0.17885249296295117
+   "L1": 0.17885249296295114,
+   "L2": 0.17885249296295114
   },
   {
    "id": "brace_main_R_lo",
@@ -2227,8 +1389,8 @@
    "kind": "brace",
    "role": "upper",
    "gear": "gear_main_L",
-   "L1": 0.17885249296295117,
-   "L2": 0.17885249296295117
+   "L1": 0.17885249296295114,
+   "L2": 0.17885249296295114
   },
   {
    "id": "brace_main_L_lo",

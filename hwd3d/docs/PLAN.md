@@ -229,6 +229,14 @@ recorded here next to OD1–OD3 but did not come from the owner directly, and **
 - **(a) FAA DRS.** The FAA DRS public web viewer (no login, no key, no bot check) is the FAA's intended public interface
   for type certificate data sheets. Values read there from TCDS A00018CH (SF50) and E3GL (FJ33-5A) are **obs** with the
   TCDS citation, not "inf (DRS)" (`tools/models/sf50/SF50_FACTS.md`, `docs/phase3_sf50.md` §9).
+- **(c) Lookahead for recorded packs (2026-11-14).** Replay and snapshot packs are built with a **120-s lookahead**
+  (display 120 s behind the recording), so take-offs that cross a recorder hole can be timed on the runway instead of
+  hidden; there is no cost for recorded data. Live mode keeps 60 s and the M3 fallback (hidden until the first airborne
+  fix, shown there at its reported height) for take-offs that still cannot be timed.
+- **(d) D1 for dated windows (2026-11-14).** Committed text, captions and images never name a type together with a dated
+  window (by name or date) when every aircraft of that type in that hour within 8 nm is LADD/PIA-flagged; such aircraft
+  are named by class only ("a business jet", "a single-engine piston"), and type labels of such aircraft in committed
+  screenshots are masked. `tools/check_airport.py` checks it.
 - **(b) Digitised manufacturer-drawing measurements stay local.** Readings digitised from the Pilatus drawing
   190.10.40.432 / Model Building Plan sheets and from the Cirrus AFM figures (outline tables, per-butt-line water lines,
   window centres, raster registrations and scales) are never committed. They live in the gitignored

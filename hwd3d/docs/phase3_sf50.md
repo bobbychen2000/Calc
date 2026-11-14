@@ -188,7 +188,7 @@ off-axis point, builder sources = the recorded hashes, **nacelle** (lip 2.0 cm p
 half-width at FS 6.80), the traffic frame — all PASS (with the local file present; the 3 AFM checks SKIP without it).
 
 Model size: 43 parts, 463,121 triangles, 284,128 vertices, **7,051,212 bytes** (KHR_mesh_quantization; fix round 2:
-7,051,052 B; fix round 1: 463,845 / 7,059,280), comparable to pc12.glb (current, fix round 3 iteration 3: 957b3c4e…, 427,257 triangles drawn; iteration 2: 6e349329…, 423,853; fix round 3: c46fe4fb…, 415,703; M2's fix-round-2 import: 9ccfd9a5…, 410,834). (The size M1 reported for the reviewed build, 6,864,552 B, was wrong:
+7,051,052 B; fix round 1: 463,845 / 7,059,280), comparable to pc12.glb (current since 2026-11-14, OD4: the original `pc12/out/pc12.glb`, 87731cce…, 422,663 triangles drawn; the retired fix-round-3-iteration-3 variant: 957b3c4e…, 427,257; iteration 2: 6e349329…, 423,853; fix round 3: c46fe4fb…, 415,703; M2's fix-round-2 import: 9ccfd9a5…, 410,834). (The size M1 reported for the reviewed build, 6,864,552 B, was wrong:
 that file had 6,864,788 B; superseded.)
 
 ## 5. Check renders (`docs/phase3/`, numpy rasteriser, not the app renderer)

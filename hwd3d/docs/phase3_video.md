@@ -1,5 +1,7 @@
 # Phase 3 (OD3) — deterministic video pipeline
 
+**PC-12 parts SUPERSEDED (2026-11-14, OD4):** the PC-12 test clips and the case-P snapshot below hold `pc12.glb` 6e349329… (a retired fr3 build); the current PC-12 is the original `pc12/out/pc12.glb` (87731cce…, owner request 2026-11-14; `docs/phase3_models.md` section 4). Re-snapshot before the full case-P render.
+
 Status 2026-11-14, after **review fix round 1** of the video pipeline (findings F1–F13; section 12 maps each finding to
 its fix). OD3 (docs/PLAN.md §6b) asks for two follow-cam videos of real recorded HWD movements: a **Cirrus SF50 Vision
 Jet take-off** (case S) and a **Pilatus PC-12 landing** (case P), on runway 28L, with the full-quality renderer (OD1) and

@@ -194,7 +194,7 @@ function buildUI() {
 // ---------------------------------------------------------------- go
 // set({...}): merge parameters (same names as the URL; null deletes) and re-pose; a new `at` / `hdg` re-places the aircraft
 function set(o) { for (const k in o) { if (o[k] == null) delete P[k]; else P[k] = String(o[k]); } if ('at' in o || 'hdg' in o) place = placement(); setCam(); poseAircraft(); if ('t' in o) console.warn('t is read at load only'); return { gear: ac.gear, flaps: ac.flaps, rotor: ac.rotor }; }
-window.HWDM = { R, cam, PRESETS, P, set, render, shot, reencode, pause: (v = true) => { paused = !!v; }, hud: () => hudText(), applyEnv, get ac() { return ac; }, get scene() { return scene; }, get world() { return world; }, worldMode: () => worldMode };
+window.HWDM = { R, cam, PRESETS, P, post, set, render, shot, reencode, pause: (v = true) => { paused = !!v; }, hud: () => hudText(), applyEnv, get ac() { return ac; }, get scene() { return scene; }, get world() { return world; }, worldMode: () => worldMode };
 (async () => {
   try {
     await buildWorld();

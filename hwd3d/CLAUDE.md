@@ -110,43 +110,31 @@ aircraft), follow / chase / free camera, and About / statistics / ATC bottom she
 
 ## Status / next steps
 
-- **Phase 2 is in review** (not yet accepted): P1–P4 built a working app on recorded (shim / relay) and live data,
-  phone-first UI, D1 throughout, the ATC link-out (D2), the About panel with every ATTRIBUTION notice. Review fix round 1
-  (`docs/phase2_run.md` section 6) reworked the motion engine (`js/live/motion.js`: drivable ground profiles, a geometric
-  air-hole curve; take-off / landing plans from the fix's own speed; no ghost parking) and the relay's D1 / serving rules.
-  Review fix round 2 (`docs/phase2_run.md` section 7) counts a teleport across an absence of any length and gates it
-  at 0, keeps silent ground aircraft drawn at their last position ("No signal", [inf]), replaces the straight air-ground
-  chord with turn-limited aligned paths, and sends late-flag forgets to polling clients. The relay's `--record` guard is
-  now case-sensitive and checked with git. Phone controls are ≥ 44 px (`jobs/phone_ui.mjs`).
-  Review fix round 3 (`docs/phase2_traffic.md` §4 / §7) reconstructs take-offs and landings across recorder holes on
-  the runway (type performance, touchdown zone), never leaves a silent aircraft on a runway, keeps landing rolls on
-  their runway and routes around parked aircraft. Its recheck (round 3 iteration 2, `docs/phase2_run.md` section 8)
-  replaced the late join (take-offs drawn kilometres and minutes behind their reports) by a take-off timed backwards
-  from the first airborne fix - or, when none fits, the owner's M3 rule: hidden until that fix, shown there at its
-  reported height - keeps runway passes below ~100 ft on the centreline, stops drawing TIS-B echoes beside their
-  aircraft, makes the phase labels and the altitude label follow the drawn motion / height, and wires the relay's
-  forget horizon (`app.js` onHorizon, `jobs/horizon.mjs`).
-  Its second recheck (round 3 iteration 3, `docs/phase2_run.md` section 9) makes the strict harness ingest the opening
-  burst as the app does (`--open app`), never flies a reconstructed approach below the type's flying speed (landings
-  time-split against an air-speed floor, a roll-out with a U-turn when the next fix back-taxis, unseen touch-and-gos
-  across air holes, silent finals continued to an exit), labels the drawn state (no runway label in the air, vertical
-  sense, base → final, 'Stopped', debounced roll labels), keeps wings off hangar footprints on taxi routes, treats fast
-  ground fixes beside the runway as airborne and gives the card's height above the ground / runway below 300 ft.
-  `node tools/traffic/replay_engine.mjs <w> --strict` (windows heli, pat, night, weekday, weekend and the local OD3
-  windows od3s / od3p) fails on any teleport, ghost parking, slow lift-offs, hard stops, hops, hovering, helicopters in
-  buildings, label contradictions, route samples on grass, misaligned or off-runway lift-offs / touchdowns, silent
-  aircraft on runways, a drawn body > 150 m from its reports, low flight off the runways, close air pairs, air
-  overspeed / over-climb, fixed-wing planforms in buildings, sub-stall reconstructions, floats over a runway and the
-  iteration-3 label gates. It still FAILS on residuals (section 9.4): grass-route samples (1-33 per window), wings over
-  footprints (2-57 frames), 1-5 air-overspeed and 3-124 over-climb samples, 6 overlap frames (pat), 3 ghost-parked
-  frames (od3s), 1-2 touch-and-go events drawn without contact, 8 sub-stall / 9 float samples (weekend), 1 roll-label
-  flicker (weekday) and 3 M3 hidden take-offs whose runway is consistent - an owner decision (hidden fallback for
-  time-infeasible take-offs, or replay packs with a 120-s lookahead). See `docs/phase2_app.md` for the integration notes.
+- **Phase 2 is in review** (not yet accepted). P1–P4 built a working app on recorded (shim / relay) and live data:
+  phone-first UI, D1 throughout, the ATC link-out (D2), the About panel with every ATTRIBUTION notice. Three review fix
+  rounds followed (`docs/phase2_run.md` sections 6, 7 and 8):
+  - round 1 reworked the motion engine (`js/live/motion.js`) and the relay's D1 / serving rules;
+  - round 2 counts a teleport across an absence of any length, keeps silent ground aircraft drawn ("No signal", [inf]),
+    replaces the straight air-ground chord with aligned paths, and sends late-flag forgets to polling clients;
+  - round 3 (three iterations; WIP checkpoints, not accepted) reconstructs take-offs and landings across recorder
+    holes on the runway from type performance, with every sample inferred (`docs/phase2_run.md` 8.3). It moves silent
+    aircraft off runways, keeps landing rolls on their runway, labels the drawn state, and gives the card's height above
+    the ground / runway.
+
+  `node tools/traffic/replay_engine.mjs <w> --strict` (39 gates, limit 0; windows heli, pat, night, weekday, weekend and
+  the local OD3 windows od3s / od3p) still FAILS in all seven windows on residuals (`docs/phase2_run.md` 8.4). The
+  main ones are grass-route samples, wings over building footprints and over-climb samples. The final recheck left 9
+  findings open (`docs/phase2_run.md` 8.6):
+  - major: the unseen touch-and-go reconstruction (`planTouchGo`) rolls 20-34 s near lift-off speed, then accelerates
+    at 3-4.5 m/s² in the air;
+  - minor: three take-offs hidden although a runway is consistent, which the owner's M3 rule does not allow; snapshot
+    mode not frozen; ground bodies pivoting in place.
+
+  Integration notes: `docs/phase2_app.md`.
 - **Phase 3 — aircraft** (`docs/PLAN.md` §7): real GA models (C172, PA-28, SR22, C182, the PC-12 from `pc12/`, a bizjet
   set, three helicopters) with N-number decals, replacing the placeholders. Verify each model's licence.
 - **Phase 4 — airport fidelity**: hangar doors, FBO buildings, the fuel island, signs and light fixtures (positions not
   yet sourced), tie-down chains, GSE.
 - **Open owner decisions** (do not resolve without the owner): whether a published artifact may carry full identity for
   aircraft not flagged LADD/PIA (default type-only); LiveATC terms (Q2); the east-flow recording gap (every recorded
-  hour is west flow); whether a take-off whose runway is consistent but that cannot be timed may stay hidden until its
-  first airborne fix (M3), or replay / snapshot packs move to a 120-s lookahead (`docs/phase2_run.md` 9.4).
+  hour is west flow).

@@ -25,7 +25,7 @@
 // travel, brace A / B0 / K0 / bend; pc12/web/viewer/kinematics.js header): gl = (y, z, x), then the axis map above.
 //
 // AircraftModel {
-//   name, asset, stats {tris, verts, parts, groups, skipped[]},
+//   name, asset, stats {tris, verts, parts, groups, skipped[], glazingT (OD4: vertex-weighted 1 - alpha of the glass materials)},
 //   origin_gl [X, Y, Z] (the local origin in glTF coordinates), contacts {mainL, mainR, nose} (local), wheelbase, track,
 //   bbox [x0, y0, z0, x1, y1, z1] (local, rest pose, included parts),
 //   parts [{ id, name, group, parent (index | -1), node (glTF node index), pivot (local frame, see convertPivot) | null,
@@ -257,17 +257,21 @@ export function convertGLB(buf, opts = {}) {
   // groupBy 'mover' (default, the runtime: one group per moving part + 'static') or 'part' (tests: one group per part)
   const groups = new Map(); const byPart = opts.groupBy === 'part';
   const getG = (mv, pi) => { const k = byPart ? (pi >= 0 ? parts[pi].id : 'root') : mv < 0 ? 'static' : parts[mv].id; if (!groups.has(k)) groups.set(k, { key: k, mover: mv, part: byPart ? pi : -1, opaque: new Acc(), glass: new Acc() }); return groups.get(k); };
-  let tris = 0, verts = 0;
+  let tris = 0, verts = 0, glzW = 0, glzT = 0;
   for (const pr of prims) {
     const mv = pr.part >= 0 ? parts[pr.part].mover : -1; const G = getG(mv, pr.part);
     const m = pr.mat; const toGlass = m.blend && !opts.glassToOpaque; const A = toGlass ? G.glass : G.opaque;
     const base = A.nv, b = m.base;
+    // OD4: material id per part (opts.partMatId(matId, partId): e.g. every plain material of an interior part -> the cabin
+    // id), and the glazing transmission (1 - alpha of the 'glass' materials, vertex-weighted): the light that reaches the cabin
+    const mid = opts.partMatId ? opts.partMatId(m.matId, pr.part >= 0 ? parts[pr.part].id : null) : m.matId;
+    if (m.cls === 'glass') { glzW += pr.nv; glzT += pr.nv * (1 - b[3]); }
     for (let i = 0; i < pr.nv; i++) {
       const l = toLocalPt([pr.pos[i * 3], pr.pos[i * 3 + 1], pr.pos[i * 3 + 2]]); A.pos.push(l[0], l[1], l[2]);
       const n = glToLocalDir([pr.nrm[i * 3], pr.nrm[i * 3 + 1], pr.nrm[i * 3 + 2]]); A.nrm.push(n[0], n[1], n[2]);
       let c = [b[0], b[1], b[2], b[3]]; if (pr.col0) { const s = pr.col0.size; for (let k = 0; k < s; k++) c[k] *= pr.col0.data[i * s + k]; }
       if (m.blend && opts.glassToOpaque) c[3] = 1;
-      A.col.push(c[0], c[1], c[2], c[3]); A.ext.push(m.rough, m.metal, m.matId, m.emis); A.mat.push(pr.matIndex);
+      A.col.push(c[0], c[1], c[2], c[3]); A.ext.push(m.rough, m.metal, mid, m.emis); A.mat.push(pr.matIndex);
     }
     for (let t = 0; t < pr.idx.length; t++) A.idx.push(base + pr.idx[t]);
     A.nv += pr.nv; tris += pr.idx.length / 3; verts += pr.nv;
@@ -293,7 +297,8 @@ export function convertGLB(buf, opts = {}) {
     wheelbase: contacts && contacts.nose ? contacts.nose[0] : null, track: contacts ? contacts.mainR[2] - contacts.mainL[2] : null,
     bbox, parts: parts.map(({ pivotRaw, excluded, ...p }) => ({ ...p, excluded })), partIndex, groups: outGroups, lights, regPanels,
     materials: [...mats, defMat].map(m => ({ name: m.name, base: m.base, rough: m.rough, metal: m.metal, blend: m.blend, cls: m.cls, matId: m.matId, textured: m.textured })),
-    stats: { tris, verts, parts: parts.length, groups: outGroups.length, excluded: parts.filter(p => p.excluded).map(p => p.id), textured: mats.filter(m => m.textured).map(m => m.name) },
+    stats: { tris, verts, parts: parts.length, groups: outGroups.length, excluded: parts.filter(p => p.excluded).map(p => p.id), textured: mats.filter(m => m.textured).map(m => m.name),
+      glazingT: glzW ? glzT / glzW : null },
   };
 }
 

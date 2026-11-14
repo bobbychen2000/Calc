@@ -1,7 +1,10 @@
 // Import the PC-12 model from pc12/ into the hwd3d runtime (hwd3d Phase 3, M2).
 //   node tools/models/pc12/import_pc12.mjs [--variant=out/pc12_fr3] [--sources-only]
-// Default: copies pc12/out/pc12.glb unchanged (refuses an uncommitted pc12/out).
-// --variant=<dir> (review fix round 2): imports a build of pc12's own builders with the documented parameter override set
+// Default (the CURRENT PC-12 since the owner request of 2026-11-14 "use whatever we had in the past": the original model,
+//   the variants are retired): copies pc12/out/pc12.glb unchanged (refuses an uncommitted pc12/out); when
+//   out/pc12_none/pc12.glb exists (python3 -B tools/models/pc12/build_pc12_variant.py --set=none) its sha256 is compared and
+//   recorded, so the provenance shows that pc12's builders at the recorded commit reproduce the file bit for bit.
+// --variant=<dir> (review fix round 2; retired 2026-11-14, kept for the record): imports a build of pc12's own builders with the documented parameter override set
 //   of tools/models/pc12/build_pc12_variant.py (window / door layout, dihedral; outputs in hwd3d/out, gitignored). It
 //   refuses a variant whose recorded pc12 sources were dirty, whose pc12 source tree hash differs from the files on disk
 //   now, or whose builder hash differs from the script on disk, so the import can always be rebuilt bit-for-bit from the
@@ -45,6 +48,17 @@ if (!VARIANT) {
   commit = variant.pc12_commit; date = git('log', '-1', '--format=%cI', commit);
 }
 
+// default mode: the 'none' set of the variant builder (pc12's builders, no override) must reproduce pc12/out/pc12.glb
+let reproduced = null;
+if (!VARIANT) {
+  const NONE = path.join(HWD, 'out/pc12_none'), ng = path.join(NONE, 'pc12.glb'), nm = path.join(NONE, 'pc12_meta.json');
+  if (fs.existsSync(ng)) {
+    const v = fs.existsSync(nm) ? (JSON.parse(fs.readFileSync(nm, 'utf8'))._variant || {}) : {};
+    reproduced = { by: 'python3 -B tools/models/pc12/build_pc12_variant.py --set=none (hwd3d; nothing written into pc12/)', glb_sha256: sha(ng),
+      identical: sha(ng) === sha(SRC_GLB), pc12_commit: v.pc12_commit || null, pc12_sources_dirty: v.pc12_sources_dirty ?? null, built: v.built || null };
+    if (!reproduced.identical) throw new Error('out/pc12_none/pc12.glb differs from pc12/out/pc12.glb (rebuild with --set=none, or remove out/pc12_none)');
+  }
+}
 const SOURCES_ONLY = process.argv.includes('--sources-only');
 // what each override set of build_pc12_variant.py changes (the values and their basis are in the builder and in the meta)
 const OVERRIDE_TEXT = {
@@ -81,8 +95,9 @@ const r3 = (v) => Math.round(v * 1000) / 1000;
 const out = {
   _provenance: {
     source: VARIANT ? `pc12's own builders (pc12/model, pc12/cad @ ${commit}, unchanged files) run by ${variant.builder} with the override set '${variant.set}' (docs/phase3_models.md section 4), output ${path.relative(HWD, SRC_DIR)}/ (gitignored, rebuilt bit-for-bit by: python3 -B ${path.relative(REPO, path.join(REPO, variant.builder)).replace(/^hwd3d\//, '')} --set=${variant.set})`
-      : 'pc12/out/pc12.glb + pc12/out/pc12_meta.json (this repository: the from-scratch parametric PC-12 PRO model, pc12/CLAUDE.md)',
+      : 'pc12/out/pc12.glb + pc12/out/pc12_meta.json (this repository: the from-scratch parametric PC-12 PRO model, pc12/CLAUDE.md), copied unchanged - the original model, owner request 2026-11-14 (the hwd3d-side variants fr2 / fr3 are retired)',
     commit, commit_date: date, glb_sha256: sha(SRC_GLB), meta_sha256: sha(SRC_META), licence: 'own work (this repository)',
+    reproduced: reproduced,
     variant: variant ? { set: variant.set, overrides: variant.overrides, builder: variant.builder, builder_sha256: variant.builder_sha256, pc12_sources_tree_sha256: variant.pc12_sources_tree_sha256, pc12_sources_dirty: variant.pc12_sources_dirty, pc12_sources: variant.pc12_sources, built: variant.built } : null,
     imported_by: 'hwd3d/tools/models/pc12/import_pc12.mjs', imported: new Date().toISOString().slice(0, 10),
     facts: 'dimensions and configuration facts with their sources: pc12/CLAUDE.md "Sourced facts" (Pilatus, POH NGX, EASA TCDS, Jane\'s); contours, airfoils, interior and livery are estimated / reconstructed ("Estimated / reconstructed" there)',
@@ -105,7 +120,7 @@ const out = {
 };
 fs.writeFileSync(path.join(OUT, 'pc12_meta.json'), JSON.stringify(out, null, 1) + '\n');
 const SF = path.join(OUT, 'SOURCES.json'); const S = fs.existsSync(SF) ? JSON.parse(fs.readFileSync(SF, 'utf8')) : {};
-S['pc12.glb'] = { url: null, source: VARIANT ? `pc12 builders @ ${commit} (pc12 sources unchanged, tree sha256 ${variant.pc12_sources_tree_sha256.slice(0, 16)}…) + override set '${variant.set}' of ${variant.builder} (sha256 ${variant.builder_sha256.slice(0, 16)}…, working tree), this repository` : `pc12/out/pc12.glb @ ${commit} (${date}), this repository`,
+S['pc12.glb'] = { url: null, source: VARIANT ? `pc12 builders @ ${commit} (pc12 sources unchanged, tree sha256 ${variant.pc12_sources_tree_sha256.slice(0, 16)}…) + override set '${variant.set}' of ${variant.builder} (sha256 ${variant.builder_sha256.slice(0, 16)}…, working tree), this repository` : `pc12/out/pc12.glb @ ${commit} (${date}), this repository, copied unchanged (the original model; owner request 2026-11-14)` + (reproduced ? `; reproduced bit for bit by ${reproduced.by}` : ''),
   sha256: sha(path.join(OUT, 'pc12.glb')), licence: 'own work (this repository); no third-party geometry or texture',
   made_by: VARIANT ? `pc12/model + pc12/cad builders run by ${variant.builder} --set=${variant.set}; copied unchanged by hwd3d/tools/models/pc12/import_pc12.mjs --variant` : 'pc12/model/build.py (loftkit, plain Python + numpy); copied unchanged by hwd3d/tools/models/pc12/import_pc12.mjs',
   overrides: VARIANT ? (OVERRIDE_TEXT[variant.set] || `override set ${variant.set}`) + '; docs/phase3_models.md section 4' : null,
