@@ -2167,10 +2167,10 @@ export class Traffic {
       if (out === 'runway_taxi' && !rwS) return mk2('taxi', 'off the runway');
     }
     // (a 'landing roll' that has turned off the runway, or rolls on at taxi speed, is taxiing)
-    if (c && c.ground && out === 'landing_roll' && (Math.abs(c.v) < 7.7 || !this.onRunway(c.x, c.z, 0)) && !(tr.dims && tr.dims.cls === 'heli')) { tr._lr = null; return [this.onRunway(c.x, c.z, 0) ? 'runway_taxi' : 'taxi', { ...(r ? r[1] : pi), src: 'inf', rule: 'drawn state: the landing roll has slowed to taxi speed / left the runway', provisional: true }]; }
+    if (c && c.ground && out === 'landing_roll' && (Math.abs(c.v) < 7.7 || !this.onRunway(c.x, c.z, 0)) && !(tr.dims && tr.dims.cls === 'heli')) { tr._lr = null; return [this.runwayStrict(c.x, c.z) ? 'runway_taxi' : 'taxi', { ...(r ? r[1] : pi), src: 'inf', rule: 'drawn state: the landing roll has slowed to taxi speed / left the runway', provisional: true }]; }
     if (c && c.ground && out === 'landing_roll' && !(tr.dims && tr.dims.cls === 'heli')) {
       const v = Math.abs(c.v), kt = v / KT, q = tr._lr || (tr._lr = { vmin: v }); q.vmin = Math.min(q.vmin, v);
-      if (v > q.vmin + 2.0) { const rw = this.onRunway(c.x, c.z); return [rw && v > 0.75 * this.spd(tr).vr ? 'takeoff_roll' : rw ? 'runway_taxi' : 'taxi', { ...(r ? r[1] : pi), src: 'inf', rule: 'drawn state: rolling faster again after the landing roll', provisional: true }]; }
+      if (v > q.vmin + 2.0) { const rw = this.onRunway(c.x, c.z); return [rw && v > 0.75 * this.spd(tr).vr ? 'takeoff_roll' : this.runwayStrict(c.x, c.z) ? 'runway_taxi' : 'taxi', { ...(r ? r[1] : pi), src: 'inf', rule: 'drawn state: rolling faster again after the landing roll', provisional: true }]; }
     } else tr._lr = null;
     return r;
   }
@@ -2197,7 +2197,7 @@ export class Traffic {
     // (review round 3, m5) a body labelled taxiing / holding / running up at more than 35 kt is rolling for take-off or landing
     if (c.ground && kt > 35 && ['taxi', 'hold_short', 'runup', 'line_up', 'parked', 'runway_taxi'].includes(ph)) {
       const rw = this.onRunway(c.x, c.z), prev = tr._vPrev ?? v; tr._vPrev = v;
-      return mk(rw ? (v >= prev - 0.02 ? (v > 0.75 * this.spd(tr).vr ? 'takeoff_roll' : 'runway_taxi') : 'landing_roll') : 'taxi', 'rolling at ' + kt.toFixed(0) + ' kt');
+      return mk(rw ? (v >= prev - 0.02 ? (v > 0.75 * this.spd(tr).vr ? 'takeoff_roll' : this.runwayStrict(c.x, c.z) ? 'runway_taxi' : 'taxi') : 'landing_roll') : 'taxi', 'rolling at ' + kt.toFixed(0) + ' kt');
     }
     if (c.ground) {
       if (P.airborne && kt > 5) {
