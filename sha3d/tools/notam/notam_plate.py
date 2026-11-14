@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt  # noqa: E402
 import matplotlib.dates as mdates  # noqa: E402
 
 UTC = dt.timezone.utc
+# Fix round 1: the plate shows only the NOTAMs the simulator applies (sources_sim.md §4.2); the AIRAC AMDT 12 trigger is
+# drawn as a dashed line. Expired (F4548-50) and cosmetic (F3202) effects are left out.
+APPLIED = ('F4551/26', 'F4552/26', 'F4313/26', 'F4301/26', 'F4275/26', 'F4276/26')
 
 
 def t(s):
@@ -53,8 +56,8 @@ def runway_state(effs, when):
 
 def main(src, out, night='2026-11-14'):
     d = json.load(open(src, encoding='utf-8'))
-    effs = d['sim']
-    fig = plt.figure(figsize=(12, 7.6))
+    effs = [e for e in d['sim'] if e['notam'] in APPLIED]
+    fig = plt.figure(figsize=(12, 7.0))
     gs = fig.add_gridspec(2, 1, height_ratios=[1.25, 1.0], hspace=0.42)
     # ---- (A) calendar
     a = fig.add_subplot(gs[0])
@@ -80,15 +83,15 @@ def main(src, out, night='2026-11-14'):
     a.axvline(mdates.date2num(now), color='k', lw=1)
     a.text(mdates.date2num(now), len(rows) - 0.3, ' today 14 Nov', fontsize=7)
     a.axvline(mdates.date2num(dt.datetime(2026, 11, 25, 16, tzinfo=UTC)), color='#555', ls='--', lw=0.8)
-    a.text(mdates.date2num(dt.datetime(2026, 11, 25, 16, tzinfo=UTC)), -0.9, ' AIRAC AMDT 12 (WDI moves)', fontsize=7)
+    a.text(mdates.date2num(dt.datetime(2026, 11, 25, 16, tzinfo=UTC)), -0.9, ' AIRAC AMDT 12: wind-direction indicators move', fontsize=7)
     a.set_xlim(mdates.date2num(x0), mdates.date2num(x1))
     a.set_ylim(-1.2, len(rows))
     a.set_yticks([])
     a.invert_yaxis()
     a.xaxis.set_major_locator(mdates.DayLocator(bymonthday=[1, 10, 20]))
     a.xaxis.set_major_formatter(mdates.DateFormatter('%d %b'))
-    a.set_title('(A) ZSSS NOTAM effects a simulator can apply, from the eAIP NOTAM Summary (in force %s; issued later: '
-                'not covered) [obs text, inf reading]; hatched = daily window only' % d['in_force_at'], fontsize=8.5,
+    a.set_title('(A) ZSSS NOTAM effects the simulator applies, from the eAIP NOTAM Summary (in force %s; issued later: '
+                'not covered) [our paraphrase, inf reading]; hatched = daily window only' % d['in_force_at'], fontsize=8.5,
                 loc='left')
     a.grid(axis='x', alpha=0.3)
     # ---- (B) one night, 10-min resolution
@@ -120,8 +123,8 @@ def main(src, out, night='2026-11-14'):
                 'orange = AIP restriction, red = NOTAM closure; grey = no scheduled flights 00-06 local' % night,
                 fontsize=8.5, loc='left')
     b.text(0, -0.25, 'AIP (mirror) AD 2.20: 2.1.1 18R/36L mainly departures, 18L/36R mainly arrivals (departures by ATC '
-           'clearance); 2.1.6 no landing on 18R/36L 1600-2300 UTC except alternates. NOTAM F4551/26: 18L/36R CLSD '
-           '1700-2200 daily 10-29 Nov.', fontsize=6.8, transform=b.transAxes, color='#333')
+           'clearance); 2.1.6 no landing on 18R/36L 1600-2300 UTC except alternates. NOTAM F4551/26: 18L/36R closed '
+           '1700-2200 UTC daily, 10-29 Nov.', fontsize=6.8, transform=b.transAxes, color='#333')
     fig.savefig(out, dpi=110, bbox_inches='tight')
     plt.close(fig)
 

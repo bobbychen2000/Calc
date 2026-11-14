@@ -42,7 +42,7 @@ W('readsb_src', {
  'licence': 'GPL-3.0-or-later', 'licence_quote': 'LICENSE: "This version of readsb is licensed under the GPL, v3 or any later version."',
  'redistributable': 'yes under GPL-3.0 (not needed: reference only, nothing copied into sha3d)'})
 W('observed_elsewhere', {
- 'what': 'LOCAL ONLY. scan/: per-day flight summaries in East/South-East Asia (lat 0-60 N, lon 60-180 E) from adsb.lol globe_history, with thinned tracks of SHA/PVG-route and fully observed flights (tools/adsb/scan_callsigns.py); sha_observed_<day>.json/.csv: per-flight SHA movements identified elsewhere with inferred SHA-side times (tools/adsb/observed_elsewhere.py)',
+ 'what': 'LOCAL ONLY. scan/: per-day flight summaries in East/South-East Asia (lat 0-60 N, lon 60-180 E) from adsb.lol globe_history, with thinned tracks of SHA/PVG-route and fully observed flights (tools/adsb/scan_callsigns.py); sha_observed_<day>.json/.csv: per-flight SHA movements identified elsewhere with inferred SHA-side times, per-field src (obs|inf) and evidence (tools/adsb/observed_elsewhere.py, Fix round 1); sample_for_owner.csv + README_sample_for_owner.md: 40-row spread sample for the owner review (PLAN 6b); spot_checks_local.md: per-flight route and schedule spot checks moved out of the committed report',
  'source': 'adsb.lol globe_history daily archive, GitHub releases of adsblol/globe_history_2026',
  'release_tags': ['v2026.11.09-planes-readsb-prod-0', 'v2026.11.10-planes-readsb-prod-0', 'v2026.11.11-planes-readsb-prod-0', 'v2026.11.12-planes-readsb-prod-0'],
  'url': 'https://github.com/adsblol/globe_history_2026/releases', 'retrieved': D,

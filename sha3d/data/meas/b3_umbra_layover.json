@@ -476,5 +476,8 @@
    "height_unc_m": 6.1,
    "rule_height_m": 40.0
   }
- ]
+ ],
+ "attribution": "Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified; (c) OpenStreetMap contributors (ODbL 1.0)",
+ "licence": "Umbra: CC BY 4.0; OSM footprints: ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/)",
+ "registration_note": "umbra_minus_osm is the former A1 taxiway fit (+6.1 E / -0.9 N), not the single Phase-1 value +3.07 E / 0 N of tools/common/umbra_reg.py; see docs/phase1/qa_data.md, Fix round 2 (N4): left for task B3 to re-run"
 }

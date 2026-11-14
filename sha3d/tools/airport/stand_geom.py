@@ -61,6 +61,10 @@ class OsmStands:
     def __init__(self, root):
         self.root = root
         fc = json.load(open(os.path.join(root, 'refs/cache/osm_pinned/zsss_osm_pinned.geojson')))
+        # taxiway vertices moved by the A1 re-fit (data/meas/twy_refit.json, keyed by OSM lon/lat to 1e-7): lead-in
+        # vertices that coincide with them move too, so that lead-ins stay attached to the re-fitted taxiways
+        mp = os.path.join(root, 'data/meas/twy_refit.json')
+        self.moves = json.load(open(mp))['vertex_moves'] if os.path.exists(mp) else {}
         self.features = fc['features']
         T = lambda f: f['properties']['tags']  # noqa: E731
         self.ref_nodes = [f for f in self.features if T(f).get('aeroway') == 'parking_position'
@@ -86,6 +90,11 @@ class OsmStands:
             for c in f['geometry']['coordinates']:
                 self.twy_vertices.add(key(c))
 
+    def xz(self, c):
+        """world (x, z) of an OSM coordinate [lon, lat], after the A1 taxiway re-fit move if it is a moved vertex"""
+        m = self.moves.get(f'{c[0]:.7f},{c[1]:.7f}')
+        return wxz(m['to']) if m else wxz(c)
+
     # ------------------------------------------------------------------------------------------- polygons
     def terminal_polys(self):
         out = []
@@ -104,12 +113,12 @@ class OsmStands:
         for i, j in self.vert_ways[k]:
             cs = self.leadin_ways[i]['geometry']['coordinates']
             if j == len(cs) - 1:
-                out.append((i, [wxz(c) for c in cs]))
+                out.append((i, [self.xz(c) for c in cs]))
             elif j == 0:
-                out.append((i, [wxz(c) for c in cs[::-1]]))
+                out.append((i, [self.xz(c) for c in cs[::-1]]))
             else:      # inner vertex: two directions
-                out.append((i, [wxz(c) for c in cs[:j + 1]]))
-                out.append((i, [wxz(c) for c in cs[j:][::-1]]))
+                out.append((i, [self.xz(c) for c in cs[:j + 1]]))
+                out.append((i, [self.xz(c) for c in cs[j:][::-1]]))
         return out
 
     def _graph(self):
@@ -121,7 +130,7 @@ class OsmStands:
                     k0, k1 = key(c0), key(c1)
                     if k0 == k1:
                         continue
-                    G[k0].add(k1); G[k1].add(k0); P[k0] = wxz(c0); P[k1] = wxz(c1)
+                    G[k0].add(k1); G[k1].add(k0); P[k0] = self.xz(c0); P[k1] = self.xz(c1)
             self._G, self._P = G, P
         return self._G, self._P
 
@@ -151,6 +160,50 @@ class OsmStands:
                 if nd < dist.get(n, 1e18):
                     dist[n] = nd; prev[n] = v; heapq.heappush(hq, (nd, n))
         return None
+
+    def trace_back_keys(self, k, max_len=800.0):
+        """as trace_back, but returns the vertex keys (taxiway end first, stand vertex k last), or None"""
+        import heapq
+        G, P = self._graph()
+        refk = {key(f['geometry']['coordinates']) for f in self.ref_nodes}
+        if k not in G:
+            return None
+        dist = {k: 0.0}; prev = {}; hq = [(0.0, k)]
+        while hq:
+            d, v = heapq.heappop(hq)
+            if d > dist.get(v, 1e18) or d > max_len:
+                continue
+            if v in self.twy_vertices and v != k:
+                path = [v]
+                while path[-1] != k:
+                    path.append(prev[path[-1]])
+                return path
+            if v in refk and v != k:
+                continue
+            for n in G[v]:
+                nd = d + math.dist(P[v], P[n])
+                if nd < dist.get(n, 1e18):
+                    dist[n] = nd; prev[n] = v; heapq.heappush(hq, (nd, n))
+        return None
+
+    def own_leadin(self, k):
+        """the stand's OWN lead-in (QA C1 M5 / M6): its primary lead-in from the stop back to the first vertex where the
+        line meets anything else - a branch of the lead-in network (degree >= 3), another stand's stop, or a taxiway
+        vertex. Beyond that vertex the painted lines are apron lanes / shared trunks. Returns (keys, polyline (x, z)),
+        junction first, stop last; or (None, None)."""
+        G, P = self._graph()
+        path = self.trace_back_keys(k)
+        if not path:
+            return None, None
+        refk = {key(f['geometry']['coordinates']) for f in self.ref_nodes}
+        j = len(path) - 1
+        while j > 0:
+            v = path[j - 1]
+            j -= 1
+            if len(G[v]) >= 3 or v in self.twy_vertices or (v in refk and v != k):
+                break
+        own = path[j:]
+        return own, [P[q] for q in own]
 
     def stand_axis(self, k):
         """(stop (x, z), heading deg, final segment length, way ids) for a stand node k. For an inner vertex (five 33x
@@ -196,7 +249,8 @@ class OsmStands:
 
     def gate_points(self):
         return [dict(ref=f['properties']['tags'].get('ref'), node=f['properties']['@id'],
-                     version=f['properties']['@version'], xz=wxz(f['geometry']['coordinates']),
+                     version=f['properties']['@version'], timestamp=f['properties']['@timestamp'],
+                     xz=wxz(f['geometry']['coordinates']),
                      layer=f['properties']['tags'].get('layer')) for f in self.gates]
 
 

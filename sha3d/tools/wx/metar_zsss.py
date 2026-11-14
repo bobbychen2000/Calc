@@ -185,9 +185,11 @@ class RunwayDirection:
     exceeds TAIL_KEEP_MS in two consecutive reports, or exceeds TAIL_MAX_MS once, turn round. Calm or VRB keeps the
     current direction. Defaults 1.5 / 4.0 m/s were calibrated in task B2 against the only observed hint of the runway
     in use, the runway designators of RVR and windshear groups in ZSSS METARs 2023-2026 (169 reports on 60 days;
-    tools/wx/rule_check_rvr.py, rule stepped on every METAR and SPECI): 86.4 % agreement, against 65.1 % for a
-    3 / 5 m/s reading of the AIP text and 80.5 % for "always into the wind". The starting direction is a parameter (default '36'; no preferred direction is
-    published).
+    tools/wx/rule_check_rvr.py, rule stepped on every METAR and SPECI): 86.4 % agreement IN SAMPLE, against 65.1 % for
+    a 3 / 5 m/s reading of the AIP text and 80.5 % for "always into the wind". Out of sample (thresholds chosen
+    leave-one-day-out) the family scores about 78 %, so it is not shown to beat the parameter-free rule; use
+    RunwayDirectionIntoWind as the fallback (Fix round 1). The starting direction is a parameter (default '36'; no
+    preferred direction is published).
     """
     TAIL_KEEP_MS = 1.5
     TAIL_MAX_MS = 4.0
@@ -213,6 +215,26 @@ class RunwayDirection:
             self.pending += 1
             return self.dir, f'keep, tailwind {tail:.1f} m/s (1st report > {self.TAIL_KEEP_MS})'
         self.pending = 0
+        return self.dir, 'keep'
+
+
+class RunwayDirectionIntoWind:
+    """Parameter-free fallback [inf]: use the direction with a headwind; keep the current one while |headwind| < 0.5 m/s,
+    and when calm, VRB or missing. Gusts are ignored. 80.5 % agreement with the RVR/WS designators, with no parameter
+    fitted to them (tools/wx/rule_check_rvr.py)."""
+    DEAD_MS = 0.5
+
+    def __init__(self, start='36'):
+        self.dir = start
+
+    def step(self, wind):
+        c = components(wind, '36')
+        if c is None or abs(c[0]) < self.DEAD_MS:
+            return self.dir, 'keep'
+        new = '36' if c[0] > 0 else '18'
+        if new != self.dir:
+            self.dir = new
+            return self.dir, f'change (headwind on {new})'
         return self.dir, 'keep'
 
 

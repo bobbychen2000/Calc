@@ -392,7 +392,13 @@ Negative bias means the model puts the SHA event too early.
 - These are 1-σ values, not error bounds. For normal errors about 32 % of movements are further off than their σ,
   and 5 % beyond 2σ. Across the bins the P90 of |error| is 1–3σ (1.64σ for normal errors).
 - The two days differ, mostly in the China 650–900 km arrival bin (σ 11.3 against 5.4 min). This is itself a sign of
-  the small China calibration set.
+  the small China calibration set. One route (Shenzhen–Xi'an) holds about 74 % of it, so the China M1 σ moves by
+  about ±4 min with the line estimator (C2 re-verify, `reverify_research.md` §1.4: 16–23 min).
+- **Route-level offsets** (C2 re-verify, `reverify_research.md` §1.6, where both estimates exist): SHA → Shenzhen
+  departures, 76 movements over the two days, have a median M1 − M2 of −9.7 / −9.2 min (M2 is picked; its 900–1,300 km
+  departure bin carries a stated, unremoved +4.8 / +5.3 min bias of the same sign). Xi'an → SHA arrivals, 41 movements,
+  have +19.0 / +18.0 min (the China M1 line is suspect there; M1 is not picked, so no record is affected). Both are
+  within about 1 σ, but a per-bin σ does not show such route effects.
 
 **Check against published schedules** [sec]
 - 8 records of 4 flight numbers have a published schedule time. The per-flight table is local:
@@ -524,9 +530,9 @@ For those, the simulation stays at tier 3/4: published facts plus inferred traff
 
    The rotation test cannot catch correlated errors (a route pair moved between the airports). An official or licensed
    domestic schedule would settle it (Q9). Until then, 69–70 % is an upper figure and about 65–70 % is defensible.
-2. **The DB contradicts observations 3–5 %** of the time where an airport is seen; half of these are at the SHA end.
-   Unseen far ends cannot be checked. There, about 4 % of identities may belong to another route (still real flights,
-   possibly not SHA).
+2. **The DB contradicts observations 3–5 %** of the time where an airport is seen; 4 of the 10 contradictions (two
+   days) are at the SHA end. Unseen far ends cannot be checked. There, about 4 % of identities may belong to another
+   route (still real flights, possibly not SHA).
 3. **Timing beyond about 900 km of gap** is weak in Chinese airspace. At 900–1,300 km the median error is 7–8 min
    after the bias is removed, but the P90 is 25–26 min. Beyond 1,300 km arrivals are 10–17 min late (no SHA movement
    is there). The China calibration set seen at both ends is small (71–72 flights, mostly Shenzhen–Xi'an).
@@ -576,7 +582,8 @@ Airport, Taiwan OGDL v1.0.
 - Records are cut at gaps longer than the leg air time + 30 min (was 4 h). A heading check and a span check were
   added. The wrong-leg records found by C2 are gone.
 - M1 σ now comes from out-of-sample validation. China: 20.7 / 19.5 min, was 16.3 / 19.1 in-sample. Other far ends:
-  distance-dependent, 7–19 min, was 9.6–11.6 in-sample. Method choice re-run: M1 5 / 16 movements, was 16 a day.
+  distance-dependent, 7–19 min, was 9.6–11.6 in-sample (the > 2,500 km band, 20.6–22.3 min, is used by no SHA far
+  end that takes M1). Method choice re-run: M1 5 / 16 movements, was 16 a day.
 - The 900–1,300 km China arrival bias (−6.6 / −4.5 min) is removed under a nested out-of-sample rule, and the P90
   cost is stated.
 - σ statements reworded as 1-σ shares. The identified share is stated as an upper figure, with about 65–70 %

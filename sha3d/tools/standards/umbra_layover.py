@@ -2,8 +2,8 @@
 
 Geometry (metadata): incidence 38.08 deg, sensor azimuth 275.50 deg (seen from the scene), i.e. the sensor looks east
 from the west. In the ground-projected GEC a point at height h above the ground is displaced towards the sensor by
-L = h * cot(38.08 deg) = 1.2748 h, along azimuth 275.5 deg. So the roof edge above a west-facing wall appears L metres
-west of the wall foot (the wall foot itself shows the wall-ground double bounce), and h = L / 1.2748.
+L = h * cot(38.08 deg) = 1.2763 h (exact cotangent; Fix round 1 corrected the old docstring value 1.2748), along azimuth 275.5 deg. So the roof edge above a west-facing wall appears L metres
+west of the wall foot (the wall foot itself shows the wall-ground double bounce), and h = L / 1.2763.
 
 Method: for each target wall (a straight OSM footprint edge facing the sensor), sample the 4x overview (1.4 m) along
 range lines (direction 95.5 deg, i.e. away from the sensor) at 2 m spacing along the wall, align every line on the
@@ -11,7 +11,7 @@ OSM wall foot (shifted by the measured Umbra-OSM ground offset +6.1 E / -0.9 N),
  - the onset of the building's layover: the first point (coming from the west) where the smoothed median profile
    rises above the ground level west of it by half of the step to the layover plateau,
  - the double-bounce peak near the wall foot (checks the alignment).
-h = (wall foot - onset) / 1.2748. The uncertainty combines the edge-fit spread across lines (bootstrap), the 1.4 m
+h = (wall foot - onset) / K, K = 1/tan(38.0798 deg) = 1.2763. The uncertainty combines the edge-fit spread across lines (bootstrap), the 1.4 m
 pixel and +-2 m for the footprint / offset.
 
 usage: python3 -I sha3d/tools/standards/umbra_layover.py sha3d OUT.json OUT.png [id#wall,id#wall,...  (panels to plot)]
@@ -116,7 +116,14 @@ for name, bid in targets:
         res.append(r); plots.append((f"{name} w{wi} @({mid[0]:.0f},{mid[1]:.0f})", sm, on, f, h, unc, con, f'{bid}#{wi}'))
         print(r)
 json.dump(dict(what='Building heights from Umbra GEC layover (B3)', incidence_deg=INC, sensor_azimuth_deg=AZ,
-               layover_m_per_m=K, umbra_minus_osm=UMB.tolist(), results=res), open(outj, 'w'), indent=1)
+               layover_m_per_m=K, umbra_minus_osm=UMB.tolist(), results=res,
+               attribution=('Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), '
+                            'modified; (c) OpenStreetMap contributors (ODbL 1.0)'),
+               licence='Umbra: CC BY 4.0; OSM footprints: ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/)',
+               registration_note=('umbra_minus_osm is the former A1 taxiway fit (+6.1 E / -0.9 N), not the single Phase-1 '
+                                  'value +3.07 E / 0 N of tools/common/umbra_reg.py; see docs/phase1/qa_data.md, '
+                                  'Fix round 2 (N4): left for task B3 to re-run')),
+          open(outj, 'w'), indent=1)
 # plot
 sel = sys.argv[4].split(',') if len(sys.argv) > 4 else None
 if sel: plots = [p for k in sel for p in plots if p[7] == k]

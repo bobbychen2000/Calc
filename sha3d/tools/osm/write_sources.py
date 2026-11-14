@@ -48,8 +48,16 @@ json.dump({
                     'tools/law/osm_sensitive.py: military, armed police, police incl. surveillance cameras, prison / '
                     'detention, GNSS / geodetic stations; by tags, and by name for non-linear features). Dropped: %s '
                     'element(s) in total (counts per class in pin_summary.json). Their ids, names and positions are '
-                    'not written in this directory or in any committed file. Features inside a dropped area and '
-                    'untagged members used only by dropped elements are dropped too.'
+                    'not written in this directory or in any committed file. Also dropped: untagged members used '
+                    'only by dropped elements, every feature on or within 10 m of a dropped area, and every feature '
+                    'running >= 25 m along a dropped outline within 10 m of it (public roads, railways, waterways and '
+                    'the aerodrome boundary exempt from the last rule; QA C1 H1). Dropped lines count as sensitive '
+                    'geometry too (fix round 2, re-verify N1): features on or running >= 25 m along a dropped line '
+                    '(within 10 m and 30 deg; public roads not exempt; waterways, passenger railways and the aerodrome '
+                    'boundary exempt), railway point features within 30 m of any dropped feature, and non-passenger '
+                    'railway within 100 m of a dropped line or area plus the spur / yard track connected to it. '
+                    'osm_elements.json lists no node that belongs only to dropped features. Rules in pin_summary.json '
+                    'dropped_rules; docs/phase1/qa_data.md.'
                     % sum(summ['dropped_sensitive'].values())),
     'clip_note': 'every geometry clipped to extent_hull1km.geojson; property clipped=true where cut',
     'generator': 'tools/osm/fetch_osm.py (download) + tools/osm/pin_extract.py (merge, filter, clip; python3 -I)',

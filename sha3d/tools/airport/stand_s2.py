@@ -15,9 +15,13 @@ Method (all numbers are measured here; the templates are inferred sketches, tool
      brighter than the concrete); excess = brightness - background.
   4. Template fit: the planform templates (B, C38, C44, D, E, EL, F; nose tip at u = du), rasterised at 2 m and blurred
      (Gaussian sigma 4.5 m ~ the 10 m S2 pixel + resampling), are fitted to the excess (amplitude a >= 0, least squares)
-     inside the stand's own domain (|v| <= half the spacing to the nearest neighbour, at most 36 m; u in [-85, +10]),
-     for du in [-8, +6] m and dv in [-3, +3] m. A date counts as an aircraft call when the best template explains
-     R2 >= 0.75 of the (zero-mean) excess energy and a >= 0.035 (reflectance); the size call is the best template.
+     inside the stand's own domain, for du in [-12, +10] m and dv in [-5, +5] m. A date counts as an aircraft call
+     when the best template explains R2 >= 0.75 of the (zero-mean) excess energy and a >= 0.035 (reflectance); the
+     size call is the best template. Calls whose best du or dv sits on the search bound are discarded (counted).
+     Domain (QA C1 M4 fix, 2026-11-14): a FIXED half-width |v| <= 36 m and u in [-85, +10], with neighbour masking:
+     pixels nearer to a lateral neighbour's axis than to this stand's axis (beyond the mid-line, per side) are left
+     out. Before, the domain was |v| <= half the spacing to the nearest neighbour on either side, which built the
+     spacing into the wide / narrow result.
 Outputs per stand: dates valid / occupied, size calls per date, the largest size called on >= 2 dates, median nose
 offset du per size family, occupancy fraction (10:30-10:50 local overpasses).
 """
@@ -42,7 +46,8 @@ REF_OFF = (-3.09, -1.00)      # OSM - S2 (m east, north) for REF_ID, phase 0 geo
 RES = 2.0
 U = np.arange(10, -85, -RES)        # metres ahead of the stop (rows)
 V = np.arange(-36, 36.01, RES)      # metres right (cols)
-DU = np.arange(-8, 6.1, 1.0); DV = np.arange(-3, 3.1, 1.0)
+DU = np.arange(-12, 10.1, 1.0); DV = np.arange(-5, 5.1, 1.0)     # QA C1 M4: widened from -8..+6 / +-3 m
+V_DOMAIN = 36.0                                                   # fixed half-width of the fit domain (m)
 SIGMA = 4.5
 R2_MIN = 0.75; A_MIN = 0.035
 
@@ -119,16 +124,17 @@ def main(root, out_json, out_png=None):
             s['shift_px'] = xcorr_shift(a, b)
     tr = Transformer.from_crs('EPSG:4326', ref['crs'], always_xy=True)
     TPL, tu, tv = templates()
-    # neighbour half-spacing for the fit domain
+    # lateral neighbours (for the neighbour mask) and the half-spacing (reported only)
     for s in stands:
-        sp = 72.0
+        sp = 72.0; nb = []
         for t in stands:
             if t is s or abs(hdiff(s['hdg'], t['hdg'])) > 25:
                 continue
             u, v = to_local(t['stop'], s['stop'], s['hdg'])
             if abs(u) < 30 and 12 < abs(v) < 110:
-                sp = min(sp, abs(v))
+                sp = min(sp, abs(v)); nb.append(v)
         s['half_sp'] = min(36.0, sp / 2)
+        s['nb_v'] = nb
     res = {}
     f_sh = lambda p: p  # noqa: E731
     for s in stands:
@@ -149,7 +155,9 @@ def main(root, out_json, out_png=None):
         if ok.sum() < 8:
             res[s['name']] = {'n_valid': int(ok.sum())}; continue
         bg = np.percentile(stack[ok], 15, axis=0)
-        dom = (np.abs(VV) <= s['half_sp']) & (UU <= 10) & (UU >= -85)
+        dom = (np.abs(VV) <= V_DOMAIN) & (UU <= 10) & (UU >= -85)
+        for vt in s['nb_v']:                       # neighbour masking: beyond the mid-line towards each neighbour
+            dom &= ~(np.abs(VV - vt) < np.abs(VV))
         # shifted, domain-masked templates for this stand: matrix (n_models, n_pix)
         models, Tm = [], []
         for name, t in TPL.items():
@@ -162,7 +170,7 @@ def main(root, out_json, out_png=None):
         Tm = np.array(Tm); dm = dom.ravel(); nd = float(dm.sum())
         # zero-mean over the domain (a constant offset b is fitted together with the amplitude a)
         Tc = np.where(dm[None, :], Tm - (Tm[:, dm].sum(1) / nd)[:, None], 0.0); tt2 = (Tc * Tc).sum(1)
-        calls = []
+        calls = []; n_bound = 0
         for k in np.where(ok)[0]:
             ex = (stack[k] - bg).ravel()
             ex = np.where(dm, ex - ex[dm].mean(), 0.0)
@@ -172,7 +180,9 @@ def main(root, out_json, out_png=None):
             r2 = np.where(a_ > 0, dot * dot / np.maximum(tt2 * Ee, 1e-12), 0.0)
             j = int(np.argmax(r2))
             best = (float(r2[j]), float(a_[j])) + models[j]
-            if best[0] >= R2_MIN and best[1] >= A_MIN:
+            if best[0] >= R2_MIN and best[1] >= A_MIN and (best[3] in (DU[0], DU[-1]) or best[4] in (DV[0], DV[-1])):
+                n_bound += 1                       # best fit on the search bound: discarded (QA C1 M4)
+            elif best[0] >= R2_MIN and best[1] >= A_MIN:
                 calls.append({'scene': ids[k][:24], 'tpl': best[2], 'cls': TEMPLATE_CLASS[best[2]], 'r2': round(best[0], 3),
                               'a': round(best[1], 4), 'du': float(best[3]), 'dv': float(best[4])})
         n_ok = int(ok.sum())
@@ -190,17 +200,24 @@ def main(root, out_json, out_png=None):
             fam[famname] = {'n': len(d_), 'du_median': (float(np.median(d_)) if d_ else None)}
         res[s['name']] = {'n_valid': n_ok, 'n_occupied': len(calls), 'occupancy': round(len(calls) / n_ok, 3),
                           'calls_by_class': dict(cc), 'wide_calls': wide_n, 'max_class_2plus': max2,
-                          'nose_du': fam, 'calls': calls, 'half_spacing_m': s['half_sp']}
+                          'nose_du': fam, 'calls': calls, 'calls_discarded_on_bound': n_bound,
+                          'half_spacing_m': s['half_sp'], 'domain_px': int(dom.sum())}
         print(s['name'], n_ok, len(calls), dict(cc), max2, flush=True)
     meta = {'what': 'parked aircraft per stand in a Sentinel-2 L2A time stack (tools/airport/stand_s2.py)',
-            'attribution': 'Contains modified Copernicus Sentinel data 2023-2026',
+            'attribution': ('Contains modified Copernicus Sentinel data 2023-2026; (c) OpenStreetMap contributors '
+                            '(ODbL 1.0)'),
+            'licence': ('Sentinel-2: Copernicus Sentinel data legal notice (free reproduction / distribution with the notice); '
+                        'measurements on OSM stands: ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/)'),
             'scenes_total': len(scenes), 'scenes_used': len(good),
             'scenes': [{'id': s['id'], 'datetime': s['dt'], 'cloud_frac_window': round(s['cloud_frac'], 4),
                         'used': s in good, 'shift_px_row_col': [round(v, 2) for v in s.get('shift_px', (0, 0))] if s in good else None}
                        for s in scenes],
             'ref_scene': REF_ID, 'ref_offset_osm_minus_s2_m': REF_OFF,
             'params': {'res_m': RES, 'sigma_m': SIGMA, 'r2_min': R2_MIN, 'a_min': A_MIN, 'bg_percentile': 15,
-                       'du_range': [float(DU[0]), float(DU[-1])], 'dv_range': [float(DV[0]), float(DV[-1])]},
+                       'du_range': [float(DU[0]), float(DU[-1])], 'dv_range': [float(DV[0]), float(DV[-1])],
+                       'domain': 'fixed |v| <= %g m, u in [-85, +10], lateral neighbours masked beyond the mid-line; '
+                                 'calls on the du / dv search bound discarded' % V_DOMAIN},
+            'calls_discarded_on_bound': int(sum(r.get('calls_discarded_on_bound', 0) for r in res.values())),
             'stands': res}
     json.dump(meta, open(out_json, 'w'), indent=1)
 

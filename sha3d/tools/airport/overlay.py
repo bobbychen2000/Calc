@@ -5,7 +5,8 @@ usage: python3 -I sha3d/tools/airport/overlay.py SHA3D_DIR OUT_S2_JPG OUT_UMBRA_
 Each plate: the whole detailed extent (left) and four zooms (both runway north ends, both south ends, Terminal 1,
 Terminal 2). Images are resampled north-up into the world frame (tools/common/frame.py) through PROJ (topocentric
 inverse; drawing only) and shown in their own georeferencing (no shift applied: OSM minus S2 is about (-2.4, -0.6) m,
-Umbra minus OSM about (+4.4, -0.5) m - see docs/phase1/airport.md).
+Umbra minus OSM about (+3.1, 0) m from the runway bands - see docs/phase1/airport.md). Imagery outside the detailed
+extent polygon is not shown (QA C1 M8: the plates show no imagery beyond the extent).
 """
 import json
 import os
@@ -37,6 +38,16 @@ def world_grid_ll(x0, z0, x1, z1, res):
     return lon, lat
 
 
+from matplotlib.path import Path as _Path  # noqa: E402
+_EXT = _Path(D['extent']['ring'])
+
+
+def outside_extent(x0, z0, x1, z1, res):
+    xs = np.arange(x0, x1, res) + res / 2; zs = np.arange(z0, z1, res) + res / 2
+    X, Z = np.meshgrid(xs, zs)
+    return ~_EXT.contains_points(np.c_[X.ravel(), Z.ravel()]).reshape(X.shape)
+
+
 def s2_image(x0, z0, x1, z1, res):
     ds = rasterio.open(os.path.join(ROOT, 'refs/cache/s2/S2B_51RUQ_20261014_0_L2A/TCI.tif'))
     a = ds.read().astype(float); T = ds.transform
@@ -46,6 +57,7 @@ def s2_image(x0, z0, x1, z1, res):
     col = (E - T.c) / T.a - 0.5; row = (N - T.f) / T.e - 0.5
     rgb = np.stack([map_coordinates(a[k], [row, col], order=1, mode='nearest') for k in range(3)], -1)
     rgb = np.clip(255 * (np.clip(rgb, 0, 255) / 255) ** 0.9 * 1.1, 0, 255)   # mild stretch of the TCI
+    rgb[outside_extent(x0, z0, x1, z1, res)] = 40
     return Image.fromarray(rgb.astype(np.uint8))
 
 
@@ -56,6 +68,7 @@ def umbra_image(x0, z0, x1, z1, res):
     col, row = inv * (lon, lat)
     v = map_coordinates(a, [np.asarray(row) - 0.5, np.asarray(col) - 0.5], order=1, mode='constant', cval=0)
     v = np.clip(v / 40.0, 0, 1) ** 0.6 * 255
+    v[outside_extent(x0, z0, x1, z1, res)] = 40
     return Image.fromarray(v.astype(np.uint8)).convert('RGB')
 
 
@@ -111,7 +124,7 @@ def draw_data(img, x0, z0, res, scale_txt=True, detail=1):
             line(e['approach_lights']['line'], fill=(255, 200, 80, 200), width=1)
             px, pz = P(e['papi']['xz']); k = max(2, 3 / res)
             d.rectangle([px - k, pz - k, px + k, pz + k], outline=(255, 120, 255, 255))
-            u = r['axis_unit_xz']; n = (-u[1], u[0]); h = r['width_m'] / 2
+            u = r['axis_unit_xz']; n = (-u[1], u[0]); h = r['aip_facts']['width_m'] / 2
             for key, col in (('dthr', (255, 0, 255, 255)), ('end', (0, 255, 255, 255))):
                 c = e[key]['xz']
                 line([[c[0] - n[0] * h, c[1] - n[1] * h], [c[0] + n[0] * h, c[1] + n[1] * h]], fill=col, width=lw)
@@ -218,7 +231,7 @@ def plate(make_img, out, title, credit):
               'rail   cyan = airport buildings   grey = other buildings   red triangle = control tower   white triangle = '
               'glide-path antenna (inferred from AIP obstacle positions)   white = aerodrome boundary, extent')
     d.multiline_text((12, y + 30), legend, font=f, fill=(230, 230, 230), spacing=4)
-    d.text((12, y + 98), credit, font=f, fill=(255, 255, 160))
+    d.multiline_text((12, y + 98), credit, font=f, fill=(255, 255, 160), spacing=4)
     canvas.save(out, quality=88)
     print(out, canvas.size)
 
@@ -227,7 +240,9 @@ if __name__ == '__main__':
     OUT_S2, OUT_UM = sys.argv[2:4]
     plate(s2_image, OUT_S2, 'SHA Live 3D - airport data (sha_airport.json) over Sentinel-2 L2A true colour, S2B 2026-10-14 (10 m)',
           'Contains modified Copernicus Sentinel data 2026.   Map data (c) OpenStreetMap contributors (ODbL 1.0).   '
-          'AIP values: AIP (mirror), short facts.   Image shown in its own georeferencing (OSM - S2 = -2.4 m E, -0.6 m N).')
+          'AIP values: AIP (mirror), short facts, not ODbL.   Image shown in its own georeferencing (OSM - S2 = -2.4 m E, '
+          '-0.6 m N); no imagery outside the extent.')
     plate(umbra_image, OUT_UM, 'SHA Live 3D - airport data over Umbra SAR (X-band VV, GEC, 2024-06-02, 1.4 m overview of 0.35 m)',
-          'Umbra SAR Open Data, Umbra Lab Inc, CC BY 4.0.   Map data (c) OpenStreetMap contributors (ODbL 1.0).   '
-          'Radar: buildings lean west (towards the sensor); flat ground appears ~4.4 m east of OSM.')
+          'Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (creativecommons.org/licenses/by/4.0), modified.   Map data '
+          '(c) OpenStreetMap contributors (ODbL 1.0).\nRadar: buildings lean west (towards the sensor); flat ground '
+          'appears ~3.1 m east of OSM (runway bands); no imagery outside the extent.')

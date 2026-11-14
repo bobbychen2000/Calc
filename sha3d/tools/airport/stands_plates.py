@@ -2,8 +2,9 @@
 
 usage: python3 -I sha3d/tools/airport/stands_plates.py SHA3D_DIR
 Writes docs/phase1/stands_overlay.jpg, docs/phase1/taxigraph.png, docs/phase1/stands_s2_evidence.png.
-Imagery: Copernicus Sentinel-2 L2A (S2B 2026-10-14 TCI; the 2023-2026 stack), Umbra SAR Open Data 2024-06-02 (CC BY
-4.0, full-resolution windows, registration shift removed); data (c) OpenStreetMap contributors (ODbL).
+Imagery: Copernicus Sentinel-2 L2A (S2B 2026-10-14 TCI, cut to the extent; the 2023-2026 stack), Umbra Lab, Inc., Umbra
+SAR Open Data 2024-06-02 (CC BY 4.0, full-resolution windows, registration shift removed, modified); data (c)
+OpenStreetMap contributors (ODbL).
 """
 import json
 import math
@@ -20,6 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, '..', 'common'))
 import frame as F  # noqa: E402
 from acplan import class_planform, TEMPLATES, planform  # noqa: E402
+import umbra_reg as UR  # noqa: E402
 from sarwin import SarWindows  # noqa: E402
 from stand_geom import from_local  # noqa: E402
 
@@ -48,6 +50,9 @@ def s2_image(x0, z0, x1, z1, res):
     col = (E - T.c) / T.a - 0.5; row = (N - T.f) / T.e - 0.5
     rgb = np.stack([map_coordinates(a[k], [row, col], order=1, mode='nearest') for k in range(3)], -1)
     rgb = np.clip((rgb - 30) * 1.15, 0, 255) * 0.85
+    from matplotlib.path import Path as _P
+    out_ext = ~_P(A['extent']['ring']).contains_points(np.c_[X.ravel(), Z.ravel()]).reshape(X.shape)
+    rgb[out_ext] = 30                       # no imagery outside the detailed extent (QA C1 M8)
     return Image.fromarray(rgb.astype(np.uint8))
 
 
@@ -57,7 +62,7 @@ SAR = None
 def sar_image(x0, z0, x1, z1, res):
     global SAR
     if SAR is None:
-        SAR = SarWindows(ROOT, (3.4, 0.0))
+        SAR = SarWindows(ROOT, UR.UMBRA_MINUS_OSM_EN)     # the single Phase-1 Umbra registration (fix round 2)
     g = SAR.grid(x0, z0, x1, z1, res)
     g = np.sqrt(uniform_filter(np.nan_to_num(g) ** 2, 3))
     v = np.clip((np.log1p(g) - 2.2) / 3.0, 0, 1) ** 1.1 * 210
@@ -89,6 +94,8 @@ def draw_stands(img, x0, z0, res, names=True, bridges=True, fsize=12):
             d.polygon(pts, outline=col + (255,), fill=col + (40,))
         if s['leadin']:
             d.line([P(p) for p in s['leadin']], fill=(80, 160, 255, 150), width=1)
+        if bridges and s.get('push') and s['push'].get('pts'):
+            d.line([P(p) for p in s['push']['pts']], fill=(255, 255, 255, 140), width=1)
         nx, nz = P(s['nose']); k = max(2, 2.5 / res)
         d.ellipse([nx - k, nz - k, nx + k, nz + k], fill=(255, 255, 255, 255))
         if bridges:
@@ -156,7 +163,7 @@ def stands_overlay(out):
         tiles.append(im)
         d.rectangle([(zx0 - x0) / res, (zz0 - z0) / res, (zx0 + w - x0) / res, (zz0 + h - z0) / res], outline=(255, 255, 255), width=2)
     W = ov.width + max(t.width for t in tiles) + 12
-    H = max(ov.height, sum(t.height for t in tiles) + 8 * len(tiles)) + 70
+    H = max(ov.height, sum(t.height for t in tiles) + 8 * len(tiles)) + 92
     sheet = Image.new('RGB', (W, H), (20, 20, 20))
     sheet.paste(ov, (0, 0))
     y = 0
@@ -164,11 +171,14 @@ def stands_overlay(out):
         sheet.paste(t, (ov.width + 12, y)); y += t.height + 8
     dr = ImageDraw.Draw(sheet); f = ImageFont.truetype(FONT, 15)
     c = ST['counts']
-    dr.text((10, H - 62), 'Bridges (zooms): white = fixed walkway (facade -> OSM gate node), magenta = movable bridge to the '
-                          'L1 / L2 door of the class reference aircraft; solid magenta = seen on SAR (obs), pale = OSM gate '
-                          'only (inf). White squares = OSM positions without ref.', font=f, fill=(230, 230, 230))
+    dr.text((10, H - 84), 'Bridges (zooms): white = fixed walkway / fixed link (facade -> rotunda), magenta = movable bridge '
+                          'to the L1 door of the class reference aircraft; solid magenta = SAR corridor above the terminal '
+                          'null (obs),', font=f, fill=(230, 230, 230))
+    dr.text((10, H - 62), 'pale = inferred. Thin white = push path along the own lead-in. White squares = OSM positions '
+                          'without ref.', font=f, fill=(230, 230, 230))
     dr.text((10, H - 40), 'Stands %d (contact %d, remote %d), bridges %d (%d stands with 2).  Contains modified Copernicus '
-                          'Sentinel data 2026; Umbra SAR Open Data (CC BY 4.0); (c) OpenStreetMap contributors (ODbL).'
+                          'Sentinel data 2026; Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0, modified; (c) OpenStreetMap '
+                          'contributors (ODbL).'
             % (c['stands'], c['contact'], c['remote'], c['bridges'], c['stands_with_2_bridges']), font=f, fill=(230, 230, 230))
     sheet.save(out, quality=88)
     print(out, sheet.size)
@@ -182,19 +192,23 @@ def taxigraph_png(out):
     d = ImageDraw.Draw(im, 'RGBA')
     P = lambda p: ((p[0] - x0) / res, (p[1] - z0) / res)  # noqa: E731
     nodes = G['nodes']
-    col = {'taxiway': (255, 220, 0, 230), 'taxilane': (255, 245, 170, 200), 'leadin': (90, 160, 255, 190),
+    col = {'taxiway': (255, 220, 0, 230), 'taxilane': (255, 245, 170, 200), 'leadin': (90, 160, 255, 220),
            'runway': (255, 60, 60, 255), 'push': (255, 255, 255, 150)}
     for l in G['links']:
         c = col[l['kind']]
+        if l.get('osm_kind') == 'leadin':
+            c = (190, 150, 255, 170)                # apron lane drawn in OSM as a parking_position line (inf)
         if l['kind'] == 'push':
             pass
+        elif l.get('rule') == 'rapid_exit':
+            c = (0, 255, 255, 255)
         elif l['use'] == 'arrival':
             c = (0, 255, 120, 255)
         elif l['use'] == 'departure':
             c = (255, 120, 0, 255)
         if l['status'] != 'open':
             c = (150, 150, 150, 200)
-        wdt = 3 if l['kind'] == 'runway' else (2 if l['kind'] in ('taxiway',) or l['use'] != 'all' else 1)
+        wdt = 3 if l['kind'] == 'runway' else (2 if l['kind'] in ('taxiway',) or l['use'] not in ('all', 'stand') else 1)
         d.line([P(p) for p in l['pts']], fill=c, width=wdt)
         if l['dir'] == 'ab' and l['kind'] != 'push' and len(l['pts']) >= 2:
             # arrow at the middle
@@ -205,11 +219,6 @@ def taxigraph_png(out):
             d.polygon([(ax + k * math.cos(ang), az + k * math.sin(ang)),
                        (ax + k * math.cos(ang + 2.5), az + k * math.sin(ang + 2.5)),
                        (ax + k * math.cos(ang - 2.5), az + k * math.sin(ang - 2.5))], fill=c)
-    for r in G['runways']:
-        for cn in r['connections']:
-            if cn.get('rapid_exit_for'):
-                l = G['links'][cn['link']]
-                d.line([P(p) for p in l['pts']], fill=(0, 255, 255, 255), width=3)
     for n in nodes:
         if n['kind'] == 'hold':
             x, z = P((n['x'], n['z'])); d.ellipse([x - 4, z - 4, x + 4, z + 4], fill=(255, 0, 255, 255))
@@ -225,18 +234,26 @@ def taxigraph_png(out):
         if l['kind'] in ('taxiway',) and l['ref'] and l['ref'] not in seen and len(l['pts']) >= 2:
             p = l['pts'][len(l['pts']) // 2]; x, z = P(p)
             d.text((x + 3, z - 7), l['ref'], font=fb, fill=(255, 255, 255, 230)); seen.add(l['ref'])
-    label(im, 'ZSSS taxi graph: %d nodes, %d links; every stand reaches both runways (arrival and departure)' %
-          (G['counts']['nodes'], G['counts']['links']), size=16)
+    rc = G['checks_at_build']['reachability_edge_based']
+    label(im, 'ZSSS taxi graph: %d nodes, %d links, %d turns (<= 90+10 deg); %d / %d stands depart to all 4 ends, '
+              '%d / %d arrive' % (
+                  G['counts']['nodes'], G['counts']['links'], G['counts']['turn_pairs'],
+                  min(rc['departures_ok_per_takeoff_end'].values()), rc['stands_total'],
+                  min(rc['arrivals_ok_per_landing_end'].values()), rc['stands_total']), size=14)
     legend(im, (12, 40), [((255, 220, 0, 255), 'taxiway (OSM)'), ((255, 245, 170, 255), 'apron taxilane (OSM)'),
-                          ((90, 160, 255, 255), 'stand lead-in (OSM)'), ((255, 255, 255, 200), 'push-back link (inf)'),
+                          ((190, 150, 255, 255), 'apron lane = OSM lead-in line (inf)'),
+                          ((90, 160, 255, 255), 'own stand lead-in (stand legs only)'),
+                          ((255, 255, 255, 200), 'push-back along the lead-in (inf)'),
                           ((0, 255, 120, 255), 'arrival only (AIP: Y1-Y3, ROUTE N/S)'),
-                          ((255, 120, 0, 255), 'departure only (AIP: M1-M6, L11-L17)'),
-                          ((0, 255, 255, 255), 'rapid exit (angle < 50 deg)'), ((255, 60, 60, 255), 'runway centreline'),
+                          ((255, 120, 0, 255), 'departure only (AIP: M1-M6, L1x)'),
+                          ((0, 255, 255, 255), 'rapid exit: one-way, arrival'),
+                          ((255, 60, 60, 255), 'runway (not for taxi routing)'),
                           ((255, 0, 255, 255), 'hold: OSM (filled) / inferred 90 m (ring)')], 'links')
     scalebar(im, res, 500, (20, im.height - 22))
     dd = ImageDraw.Draw(im); f = ImageFont.truetype(FONT, 13)
     dd.text((10, im.height - 50), 'Background: Contains modified Copernicus Sentinel data 2026. Data (c) OpenStreetMap '
-                                  'contributors (ODbL); rules: AIP (mirror) short facts.', font=f, fill=(220, 220, 220))
+                                  'contributors (ODbL); rules: AIP (mirror) short facts (not ODbL).', font=f,
+            fill=(220, 220, 220))
     im.save(out)
     print(out, im.size)
 

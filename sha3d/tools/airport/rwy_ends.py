@@ -37,6 +37,8 @@ import imgsample as IS  # noqa: E402
 ROOT = sys.argv[1]
 OUT_JSON, OUT_PNG = sys.argv[2], sys.argv[3]
 AIP_LEN = {'18L/36R': 3400.0, '18R/36L': 3300.0}
+UMB_ATTR = ('Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), '
+            'modified')
 
 # edges: (name, which runway end it measures, offset of the edge from that end along s (south +), window half
 # width, images to use, polarity hint) ; s positions relative to the OSM ends are found by the fit
@@ -198,6 +200,11 @@ def main():
         'placed_m': round(float((pw - pe) @ um_), 2),
         'centreline_separation_m': round(float(abs((aw - ae) @ np.array([-um_[1], um_[0]]))), 2),
         'aip': 'AIP (mirror) AD 2.12 remarks: "The distance between RCL18R/36L and RCL18L/36R is 365m, and their north ends aligned."'}
+    out['attribution'] = ('Contains modified Copernicus Sentinel data 2026; %s; (c) OpenStreetMap contributors (ODbL 1.0); '
+                          'AIP China AD 2 ZSSS (CAAC) via an unofficial mirror, EFF 2026-07-08: the runway lengths and '
+                          'the separation quote are short cited facts, not covered by ODbL' % UMB_ATTR)
+    out['licence'] = ('measurements derived from OSM: ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/); '
+                      'Sentinel-2: Copernicus Sentinel data legal notice; Umbra: CC BY 4.0; AIP values: see attribution')
     json.dump(out, open(OUT_JSON, 'w'), indent=1)
     print(json.dumps({k: {kk: vv for kk, vv in v.items() if kk not in ('edges',)} for k, v in out['runways'].items()}, indent=1))
     print(json.dumps(out['north_end_alignment'], indent=1))

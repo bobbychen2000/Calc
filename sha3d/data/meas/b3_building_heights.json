@@ -395,5 +395,6 @@
    "note": "hotel by T2 (context): ramp-shaped layover to 78 m (~64 m) suggests a tall block; not used (context building, ramp not a box)"
   }
  ],
- "licences": "Copernicus WorldDEM-30 notice; Umbra CC BY 4.0; OSM ODbL; Commons photo CC BY-SA 4.0 (MNXANL)"
+ "licences": "Copernicus WorldDEM-30 notice; Umbra CC BY 4.0; OSM ODbL; Commons photo CC BY-SA 4.0 (MNXANL)",
+ "attribution": "produced using Copernicus WorldDEM-30 (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved; Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified; (c) OpenStreetMap contributors (ODbL 1.0); photo ratio: Wikimedia Commons photo by MNXANL, CC BY-SA 4.0 (docs/phase1/photos_credits.md); AIP (mirror) obstacle match: short cited fact"
 }

@@ -5,6 +5,8 @@ The licence, author and URLs come from the imageinfo/extmetadata that the API re
 search.json, saved beside the photos). Writes OUT_DIR/<n>_<slug>.jpg and OUT_DIR/SOURCES.json.
 """
 import json, sys, os, re, time, hashlib, urllib.request, urllib.parse
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from commons_meta import clean_author, clean_date   # noqa: E402  (Fix round 1)
 UA = "sha3d-airport-research/0.1 (non-commercial research; python-requests compatible)"
 out, walk, search = sys.argv[1], sys.argv[2], sys.argv[3]; titles = sys.argv[4:]
 os.makedirs(out, exist_ok=True)
@@ -36,9 +38,9 @@ for n, t in enumerate(titles, 1):
     reuse = lic in REUSE
     recs.append(dict(file=fn, title=t, page_url='https://commons.wikimedia.org/wiki/' + urllib.parse.quote(t.replace(' ', '_')),
                      original_url=ii['url'], fetched_url=url, original_size=[ii.get('width'), ii.get('height')],
-                     author=g('Artist'), credit=g('Credit')[:200], licence=lic, licence_url=g('LicenseUrl'),
+                     author=clean_author(g('Artist')), artist_raw=g('Artist')[:300], credit=g('Credit')[:200], licence=lic, licence_url=g('LicenseUrl'),
                      attribution_required=g('AttributionRequired'), usage_terms=g('UsageTerms'),
-                     date=g('DateTimeOriginal')[:19], description=g('ImageDescription')[:300], commons_categories=cats,
+                     date=clean_date(g('DateTimeOriginal'), t) or g('DateTimeOriginal')[:19], date_raw=g('DateTimeOriginal')[:60], description=g('ImageDescription')[:300], commons_categories=cats,
                      bytes=os.path.getsize(path), sha256=hashlib.sha256(open(path, 'rb').read()).hexdigest(),
                      reuse_in_repo='yes' if reuse else 'no',
                      reuse_note=('free licence; attribute author + licence (+ share-alike for BY-SA)' if reuse else

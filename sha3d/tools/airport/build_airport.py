@@ -45,65 +45,59 @@ R2 = lambda v: round(float(v), 2)  # noqa: E731
 # ------------------------------------------------------------------------------------------------ AIP short facts
 # AIP (mirror) = chart.wuhanqing.cn copy of AIP China EFF 2026-07-08, AD 2 ZSSS (OD3: reference only, short facts).
 # 'probe' strings must appear verbatim in the local mirror text when it is present (checks_at_build.aip_probes).
+AIP_NOTICE = ('AIP China AD 2 ZSSS (CAAC) via an unofficial mirror, EFF 2026-07-08; short cited facts; not covered by ODbL '
+              '(the ODbL licence of this file does not apply to this block)')
+# Only the values the simulator / renderer uses are kept (QA C1 M2, lead decision under OD3): lengths, widths,
+# shoulders and blast pads (rendered), the CONC / ASPH sections (rendered; also the measured edges of rwy_ends.py),
+# displaced thresholds / ends, declared distances (incl. intersection take-off), THR / DTHR elevations, PAPI side /
+# distance / angle, approach-light type and length (the ALS line is drawn). Not kept: strip, RESA, SWY / CWY,
+# grooving, slope chain, TDZ elevation, MEHT, REL taxiways, light remarks, bearings, PCR.
 AIP_RWY = {
     '18L/36R': dict(
-        length_m=3400, width_m=45, true_brg=(177.34, 357.34), mag_brg=(183, 3), shoulder_m=7.5,
-        surface='ASPH; CONC on the first and last 100 m', surface_segments=[[0, 100, 'CONC'], [100, 3300, 'ASPH'],
-                                                                             [3300, 3400, 'CONC']],
-        blast_pad_m=(60, 60), strip_m=(3320, 300), resa_m=(240, 120), swy=None, cwy=None, grooved=None,
-        slopes_from_first=[[100, -0.1], [2488, 0.03], [712, -0.03], [100, 0.1]],
-        rel_taxiways=['H1', 'T1', 'H4', 'H7', 'T6'],
-        lights_remarks=['REDL red over the last 100 m (3300-3400 m)', '4 upright red REDL 100 m before each DTHR (seen '
-                        'from the approach)', 'RCLL between DTHR and THR replaced by approach lights',
-                        'red RENL at the 3400 m runway end'],
-        probe=['3400×45', '(0-100m) PCR 880/R/B/W/T CONC (100-3300m) PCR 1030/R/A/W/T ASPH (3300-3400m)',
-               'Blast pad: 60×60m on the both ends', 'THR18L displaced 100m inwards', 'RWY shoulder: 7.5m on each side',
-               '18L | Nil | Nil | 3320×300 | 240×120', 'RELs(RWY18L/36R: TWY H1, T1, H4, H7, T6',
-               '-0.1%(100m)/0.0 3%(2488m)/-0.03 %(712m)/0.1%(1 00m)']),
+        length_m=3400, width_m=45, shoulder_m=7.5,
+        surface_segments=[[0, 100, 'CONC'], [100, 3300, 'ASPH'], [3300, 3400, 'CONC']],
+        blast_pad_m=(60, 60),
+        probe=['3400×45', 'CONC (100-3300m)', 'ASPH (3300-3400m)', 'Blast pad: 60×60m on the both ends',
+               'THR18L displaced 100m inwards', 'RWY shoulder: 7.5m on each side']),
     '18R/36L': dict(
-        length_m=3300, width_m=60, true_brg=(177.33, 357.33), mag_brg=(183, 3), shoulder_m=7.5,
-        surface='CONC', surface_segments=[[0, 3300, 'CONC']],
-        blast_pad_m=(120, 75), strip_m=(3420, 300), resa_m=(240, 150), swy=(150, 60), cwy=(60, 300),
-        grooved='full length, 60 m wide',
-        slopes_from_first=[[300, 0.0], [1505, 0.03], [1195, -0.03], [300, -0.03]],
-        rel_taxiways=['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7'],
-        lights_remarks=['stopway centreline lights red, 150 m'],
+        length_m=3300, width_m=60, shoulder_m=7.5,
+        surface_segments=[[0, 3300, 'CONC']],
+        blast_pad_m=(120, 75),
         probe=['3300×60', 'Blast pad: 120×75m on the both ends', 'ENDs of RWY18R/36L displaced 150m inwards',
-               'THR18R displaced 300m inwards', '18R | 150×60 | 60×300 | 3420×300 | 240×150',
-               'RWY18R/36L grooved at full length, 60m in width', 'RWY18R/36L: TWY H1-H7',
-               '0%(300m)/0.03% (1505m)/-0.03%( 1195m)/-0.03%(3 00m)']),
+               'THR18R displaced 300m inwards']),
 }
 AIP_END = {
-    '18L': dict(thr_disp_m=100, end_disp_m=100, elev=dict(thr=2.1, dthr=2.0, tdz=2.3),
+    '18L': dict(thr_disp_m=100, end_disp_m=100, elev=dict(thr=2.1, dthr=2.0),
                 declared=dict(TORA=3300, TODA=3300, ASDA=3300, LDA=3200),
                 intersection=[dict(from_twy='T1', TORA=3188, TODA=3188, ASDA=3188)],
-                papi=dict(side='left', inward_of_dthr_m=474, angle_deg=3.0, meht_m=22.3),
-                als=dict(type='PALS CAT I', length_m=900), thr_lights='green, wing bars',
-                probe=['THR 2.1m DTHR 2.0m TDZ 2.3m', '18L | 3300 | 3300 | 3300 | 3200', '18L | 3188 | 3188 | 3188 | - | FM T1',
-                       'PAPI LEFT 474m inward DTHR18L 3° 22.3m', '18L | PALS CAT Ⅰ SFL 900 m']),
-    '36R': dict(thr_disp_m=100, end_disp_m=100, elev=dict(thr=2.7, dthr=2.6, tdz=2.8),
+                papi=dict(side='left', inward_of_dthr_m=474, angle_deg=3.0),
+                als=dict(type='PALS CAT I', length_m=900),
+                probe=['THR 2.1m DTHR 2.0m', '18L | 3300 | 3300 | 3300 | 3200', '18L | 3188 | 3188 | 3188 | - | FM T1',
+                       'PAPI LEFT 474m inward DTHR18L 3°', '18L | PALS CAT Ⅰ SFL 900 m']),
+    '36R': dict(thr_disp_m=100, end_disp_m=100, elev=dict(thr=2.7, dthr=2.6),
                 declared=dict(TORA=3300, TODA=3300, ASDA=3300, LDA=3200),
                 intersection=[dict(from_twy='H7', TORA=3188, TODA=3188, ASDA=3188)],
-                papi=dict(side='right', inward_of_dthr_m=474, angle_deg=3.0, meht_m=22.3),
-                als=dict(type='PALS CAT I', length_m=900), thr_lights='green, wing bars',
-                probe=['THR 2.7m DTHR 2.6m TDZ 2.8m', '36R | 3300 | 3300 | 3300 | 3200', '36R | 3188 | 3188 | 3188 | - | FM H7',
-                       'PAPI RIGHT 474m inward DTHR36R 3° 22.3m', '36R | PALS CAT Ⅰ SFL 900 m']),
-    '18R': dict(thr_disp_m=300, end_disp_m=150, elev=dict(thr=2.6, dthr=2.6, tdz=2.6),
+                papi=dict(side='right', inward_of_dthr_m=474, angle_deg=3.0),
+                als=dict(type='PALS CAT I', length_m=900),
+                probe=['THR 2.7m DTHR 2.6m', '36R | 3300 | 3300 | 3300 | 3200', '36R | 3188 | 3188 | 3188 | - | FM H7',
+                       'PAPI RIGHT 474m inward DTHR36R 3°', '36R | PALS CAT Ⅰ SFL 900 m']),
+    '18R': dict(thr_disp_m=300, end_disp_m=150, elev=dict(thr=2.6, dthr=2.6),
                 declared=dict(TORA=3150, TODA=3210, ASDA=3300, LDA=2850),
                 intersection=[dict(from_twy='H2', TORA=2988, TODA=3048, ASDA=3138)],
-                papi=dict(side='left', inward_of_dthr_m=393, angle_deg=3.0, meht_m=19.5),
-                als=dict(type='PALS CAT I', length_m=840), thr_lights='green, wing bars',
-                probe=['THR 2.6m DTHR 2.6m TDZ 2.6m', '18R | 3150 | 3210 | 3300 | 2850', '18R | 2988 | 3048 | 3138 | - | FM H2',
-                       'PAPI LEFT 393m inward DTHR18R 3° 19.5m', '18R | PALS CAT Ⅰ SFL 840 m']),
-    '36L': dict(thr_disp_m=300, end_disp_m=150, elev=dict(thr=2.6, dthr=2.7, tdz=2.6),
+                papi=dict(side='left', inward_of_dthr_m=393, angle_deg=3.0),
+                als=dict(type='PALS CAT I', length_m=840),
+                probe=['THR 2.6m DTHR 2.6m', '18R | 3150 | 3210 | 3300 | 2850', '18R | 2988 | 3048 | 3138 | - | FM H2',
+                       'PAPI LEFT 393m inward DTHR18R 3°', '18R | PALS CAT Ⅰ SFL 840 m']),
+    '36L': dict(thr_disp_m=300, end_disp_m=150, elev=dict(thr=2.6, dthr=2.7),
                 declared=dict(TORA=3150, TODA=3210, ASDA=3300, LDA=2850),
                 intersection=[dict(from_twy='H6', TORA=2988, TODA=3048, ASDA=3138)],
-                papi=dict(side='right', inward_of_dthr_m=393, angle_deg=3.0, meht_m=19.5),
-                als=dict(type='PALS CAT I', length_m=900), thr_lights='green, wing bars',
-                probe=['THR 2.6m DTHR 2.7m TDZ 2.6m', '36L | 3150 | 3210 | 3300 | 2850', '36L | 2988 | 3048 | 3138 | - | FM H6',
-                       'PAPI RIGHT 393m inward DTHR36L 3° 19.5m', '36L | PALS CAT Ⅰ SFL 900 m']),
+                papi=dict(side='right', inward_of_dthr_m=393, angle_deg=3.0),
+                als=dict(type='PALS CAT I', length_m=900),
+                probe=['THR 2.6m DTHR 2.7m', '36L | 3150 | 3210 | 3300 | 2850', '36L | 2988 | 3048 | 3138 | - | FM H6',
+                       'PAPI RIGHT 393m inward DTHR36L 3°', '36L | PALS CAT Ⅰ SFL 900 m']),
 }
-AIP_GENERAL_PROBES = ['N31°11.8′ E121°20.1′ Center of RWY18L/36R', '3.0 m/32.0℃(JUL)/1.4℃(JAN)', '5°46′W(2017)/-42″',
+AIP_GENERAL_PROBES = ['N31°11.8′ E121°20.1′ Center of RWY18L/36R', 'ELEV/Reference temperature/Mean low temperature | 3.0 m/',
+                      '5°46′W(2017)/-42″',
                       'The distance between RCL18R/36L and RCL18L/36R is 365m, and their north ends aligned',
                       'Control TWR 031 | Control TWR | 111/520 | 47 | LGT',
                       'RWY holding positions(Pattern B) established at both ends of TWY A',
@@ -134,6 +128,31 @@ HEIGHT_RULES = {    # [inf] defaults when neither OSM nor an AIP obstacle gives 
     'house': 7.0, 'train_station': 25.0, 'transportation': 20.0, 'roof': 8.0, 'commercial': 20.0, 'hotel': 40.0,
     'default': 12.0}
 LEVEL_M = 3.5
+
+
+UMBRA_ATTR = ('Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), '
+              'modified')
+LICENCE = ('ODbL 1.0 - this file is a Derivative Database of OpenStreetMap ((c) OpenStreetMap contributors), made '
+           'available under the Open Database License 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). It also '
+           'contains measurements made on modified Copernicus Sentinel data 2026 and on Umbra SAR Open Data (Umbra '
+           'Lab, Inc., CC BY 4.0, modified). The aip_facts blocks and the other values labelled "AIP (mirror)" are '
+           'short cited facts from an unofficial copy of AIP China AD 2 ZSSS (CAAC), EFF 2026-07-08, used as reference '
+           '(owner decision OD3); they are not covered by the ODbL licence of this file, and no AIP list is reproduced.')
+ATTRIBUTION = ['(c) OpenStreetMap contributors (ODbL 1.0) - https://www.openstreetmap.org/copyright',
+               'Contains modified Copernicus Sentinel data 2026',
+               UMBRA_ATTR,
+               'Short facts: AIP China AD 2 ZSSS (CAAC), EFF 2026-07-08, read in an unofficial mirror ("AIP (mirror)"); '
+               'not covered by the ODbL licence']
+AIP_LOG_DIR = os.path.join(ROOT, 'refs/cache/aip_checks')
+AIP_LOG_NOTE = ('probed at build time only when the local AIP mirror text exists; the result goes to '
+                'refs/cache/aip_checks/%s (local only, never committed), so this file is byte-identical with or '
+                'without the mirror (QA C1 L5)')
+
+
+def write_local_log(name, obj):
+    os.makedirs(AIP_LOG_DIR, exist_ok=True)
+    with open(os.path.join(AIP_LOG_DIR, name), 'w', encoding='utf-8') as fh:
+        json.dump(obj, fh, indent=1, ensure_ascii=False)
 
 
 def w(lat, lon):
@@ -198,6 +217,7 @@ def main():
     # ------------------------------------------------------------------ runways
     runways = []
     rw_axes = {}
+    local = {}                    # AIP comparisons for the local-only log (L5): never written into the committed file
     for ref in ('18L/36R', '18R/36L'):
         f = next(f for f in feats if tags(f).get('aeroway') == 'runway' and tags(f).get('ref') == ref)
         m = rm['runways'][ref]
@@ -228,11 +248,8 @@ def main():
         bl, bw = A['blast_pad_m']
         blast = [{'end': first, 'ring': [at(sN - bl, -bw / 2), at(sN, -bw / 2), at(sN, bw / 2), at(sN - bl, bw / 2)]},
                  {'end': second, 'ring': [at(sS, -bw / 2), at(sS + bl, -bw / 2), at(sS + bl, bw / 2), at(sS, bw / 2)]}]
-        # profile from the AIP slope chain, starting at the first end's THR elevation
-        prof = [[0.0, AIP_END[first]['elev']['thr']]]
-        for seg, pct in A['slopes_from_first']:
-            prof.append([prof[-1][0] + seg, round(prof[-1][1] + seg * pct / 100, 3)])
         ends = []
+        prof = []
         for end_id, s_end, sgn in ((first, sN, +1), (second, sS, -1)):
             E = AIP_END[end_id]
             s_thr = s_end + sgn * E['thr_disp_m']
@@ -245,10 +262,10 @@ def main():
             als_end = s_thr - sgn * E['als']['length_m']
             meas_key = 'north_end_s_m' if sgn > 0 else 'south_end_s_m'
             osm_s = 0.0 if sgn > 0 else L
+            prof += [(s_end, E['elev']['thr']), (s_thr, E['elev']['dthr'])]
             ends.append({
                 'id': end_id,
                 'heading_true_deg': round(hdg, 3),
-                'aip_true_brg_deg': A['true_brg'][0 if sgn > 0 else 1], 'aip_mag_brg_deg': A['mag_brg'][0 if sgn > 0 else 1],
                 'osm_end_node': {'lat': [la0, la1][0 if sgn > 0 else 1], 'lon': [lo0, lo1][0 if sgn > 0 else 1],
                                  'xz': at(osm_s), 'src': 'obs', 'refs': ['osm'],
                                  'evidence': 'end node of the OSM runway way (pinned extract)'},
@@ -258,51 +275,59 @@ def main():
                         'evidence': ('physical runway end (start of the runway pavement, AIP "THR"): measured on '
                                      'Sentinel-2 / Umbra at s = %.1f m (data/meas/rwy_ends.json), placed by the rule: %s'
                                      % (m[meas_key], m['placed_rule']))},
-                'dthr': {'xz': at(s_thr), 'lat_lon': ll_at(s_thr), 's_m': R2(s_thr), 'displaced_m': E['thr_disp_m'],
+                'dthr': {'xz': at(s_thr), 'lat_lon': ll_at(s_thr), 's_m': R2(s_thr),
                          'src': 'inf', 'refs': ['aip_mirror', 'osm', 's2'],
-                         'evidence': 'AIP (mirror) "THR%s displaced %dm inwards", measured along the OSM centreline '
-                                     'from the placed runway end' % (end_id, E['thr_disp_m'])},
-                'end_of_tora': {'xz': at(s_far_end), 's_m': R2(s_far_end), 'end_displaced_m': E['end_disp_m'],
+                         'evidence': 'aip_facts.ends.%s.thr_displaced_m measured along the OSM centreline from the '
+                                     'placed runway end' % end_id},
+                'end_of_tora': {'xz': at(s_far_end), 's_m': R2(s_far_end),
                                 'src': 'inf', 'refs': ['aip_mirror'],
-                                'evidence': 'AIP (mirror) "END displaced %dm inwards" at the far end' % E['end_disp_m']},
-                'elev_m': dict(E['elev'], src='obs', refs=['aip_mirror'],
-                               note='AIP (mirror) AD 2.12: THR = runway end, DTHR = displaced threshold, TDZ = highest '
-                                    'point of the touchdown zone; metres in the AIP datum = world y'),
-                'declared_m': dict(E['declared'], intersection=E['intersection'], src='obs', refs=['aip_mirror']),
-                'papi': dict(E['papi'], xz=at(papi_s, papi_t), s_m=R2(papi_s), lateral_m=R2(papi_t),
-                             src='inf', refs=['aip_mirror'],
-                             evidence='side, distance from the DTHR, angle and MEHT: AIP (mirror) AD 2.14 [obs]; the '
-                                      'lateral offset (runway edge + 15 m) is a placeholder rule, not sourced [inf]'),
-                'approach_lights': dict(E['als'], line=[at(s_thr), at(als_end)], src='inf', refs=['aip_mirror'],
-                                        evidence='type and length: AIP (mirror) AD 2.14 [obs]; drawn from the DTHR '
-                                                 'outward along the extended centreline (AIP remark: RCLL between DTHR '
-                                                 'and THR replaced by approach lights) [inf]'),
-                'thr_lights': dict(text=E['thr_lights'], src='obs', refs=['aip_mirror']),
+                                'evidence': 'aip_facts.ends.%s.end_displaced_m at the far end' % end_id},
+                'papi': {'xz': at(papi_s, papi_t), 's_m': R2(papi_s), 'lateral_m': R2(papi_t),
+                         'src': 'inf', 'refs': ['aip_mirror'],
+                         'evidence': 'side and distance from the DTHR: aip_facts.ends.%s.papi; the lateral offset '
+                                     '(runway edge + 15 m) is a placeholder rule, not sourced [inf]' % end_id},
+                'approach_lights': {'line': [at(s_thr), at(als_end)], 'src': 'inf', 'refs': ['aip_mirror'],
+                                    'evidence': 'type and length: aip_facts.ends.%s.approach_lights; drawn from the DTHR '
+                                                'outward along the extended centreline [inf]' % end_id},
             })
+        aip_facts = {
+            'notice': AIP_NOTICE, 'src': 'obs', 'refs': ['aip_mirror'],
+            'length_m': A['length_m'], 'width_m': A['width_m'], 'shoulder_m': A['shoulder_m'],
+            'blast_pad_m': list(A['blast_pad_m']), 'surface_segments_m': A['surface_segments'],
+            'ends': {e_id: {'thr_displaced_m': AIP_END[e_id]['thr_disp_m'],
+                            'end_displaced_m': AIP_END[e_id]['end_disp_m'],
+                            'elev_m': dict(AIP_END[e_id]['elev']),
+                            'declared_m': dict(AIP_END[e_id]['declared'],
+                                               intersection=AIP_END[e_id]['intersection']),
+                            'papi': dict(AIP_END[e_id]['papi']),
+                            'approach_lights': dict(AIP_END[e_id]['als'])} for e_id in (first, second)},
+            'fields': ('AD 2.12 (dimensions, shoulders, blast pads, surface sections, displaced THR / END, THR / DTHR '
+                       'elevations: THR = runway end, DTHR = displaced threshold, metres in the AIP datum = world y), '
+                       'AD 2.13 (declared distances), AD 2.14 (PAPI, approach lights)'),
+            'used_by': 'runway outline / shoulders / blast pads / surface colour, DTHR and end-of-TORA points, PAPI and '
+                       'ALS drawing, declared distances and THR heights in the simulator'}
+        prof.sort()
         meas_edges = [{k: e[k] for k in ('edge', 's', 's2_per_scene', 'umbra', 'implied_end_s') if k in e}
                       for e in m['edges'] if e.get('s') is not None]
+        local[ref] = {'osm_heading_true_deg': round(hdg_s, 3)}
         runways.append({
             'id': ref, 'osm': {'way': f['properties']['@id'], 'version': f['properties']['@version'],
                                'width_tag': tags(f).get('width'), 'length_m': m['osm_length_m']},
             'heading_true_deg': round(hdg_s, 3), 'axis_unit_xz': [round(u[0], 6), round(u[1], 6)],
-            'length_m': A['length_m'], 'width_m': A['width_m'], 'surface': A['surface'],
-            'surface_segments_m': A['surface_segments'], 'shoulder_m': A['shoulder_m'],
-            'blast_pad_m': list(A['blast_pad_m']), 'strip_m': list(A['strip_m']), 'resa_m': list(A['resa_m']),
-            'stopway_m': list(A['swy']) if A['swy'] else None, 'clearway_m': list(A['cwy']) if A['cwy'] else None,
-            'grooved': A['grooved'], 'rel_taxiways': A['rel_taxiways'], 'lights_remarks': A['lights_remarks'],
-            'aip_src': 'obs', 'aip_refs': ['aip_mirror'],
-            'profile_y': {'points_s_y': [[R2(sN + s), y] for s, y in prof], 'src': 'inf', 'refs': ['aip_mirror'],
-                          'evidence': 'AIP (mirror) AD 2.12 slope chain from the %s THR elevation; s from the OSM '
-                                      'north end node' % first},
+            'aip_facts': aip_facts,
+            'profile_y': {'points_s_y': [[R2(sv), y] for sv, y in prof], 'src': 'inf', 'refs': ['aip_mirror'],
+                          'evidence': 'linear between the AIP (mirror) THR and DTHR elevations of both ends '
+                                      '(aip_facts; the AIP slope chain is not transcribed); s from the OSM north end '
+                                      'node'},
             'centreline': {'pts': [at(sN), at(sS)], 'src': 'obs', 'refs': ['osm', 's2', 'umbra'],
                            'evidence': 'OSM way axis (straight to < 0.1 m), extended to the placed ends'},
             'outline': {'ring': outline, 'src': 'inf', 'refs': ['aip_mirror', 'osm', 's2'],
-                        'evidence': 'rectangle: placed ends x AIP width %d m on the OSM axis' % A['width_m']},
+                        'evidence': 'rectangle: placed ends x aip_facts.width_m on the OSM axis'},
             'shoulders': {'ring': shoulders, 'src': 'inf', 'refs': ['aip_mirror'],
-                          'evidence': 'AIP "RWY shoulder: 7.5m on each side"'},
+                          'evidence': 'aip_facts.shoulder_m on each side'},
             'blast_pads': [dict(bp, src='inf', refs=['aip_mirror', 's2', 'umbra'],
-                                evidence='AIP blast pad %d x %d m beyond each end (18R/36L outer edges measured on S2/'
-                                         'Umbra 120 m beyond the ends, data/meas/rwy_ends.json)' % (bl, bw)) for bp in blast],
+                                evidence='aip_facts.blast_pad_m beyond each end (18R/36L outer edges measured on S2/'
+                                         'Umbra 120 m beyond the ends, data/meas/rwy_ends.json)') for bp in blast],
             'ends': ends,
             'measurement': {'edges': meas_edges, 'measured_length_m': m['measured_length_m'],
                             'measured_minus_aip_m': m['measured_minus_aip_m'],
@@ -311,38 +336,24 @@ def main():
                                                    '15.8 (18R), 11.5 (36L) m beyond the OSM end nodes; S2 showed the '
                                                    'north ends 9-13 m beyond. This build measures %.1f / %.1f m.'
                                                    % (-m['north_end_s_m'], m['south_end_s_m'] - m['osm_length_m']),
-                            'src': 'obs', 'refs': ['s2', 'umbra']},
+                            'src': 'obs', 'refs': ['s2', 'umbra'],
+                            'evidence': 'tools/airport/rwy_ends.py -> data/meas/rwy_ends.json'},
             'src': 'obs', 'refs': ['osm', 'aip_mirror', 's2', 'umbra'],
-            'evidence': 'OSM centreline (way %d v%d); dimensions, surfaces, declared distances, elevations and '
-                        'lighting are AIP (mirror) short facts; ends measured on Sentinel-2 and Umbra'
+            'evidence': 'OSM centreline (way %d v%d); dimensions, declared distances, elevations and lighting in '
+                        'aip_facts (AIP (mirror) short facts, own notice); ends measured on Sentinel-2 and Umbra'
                         % (f['properties']['@id'], f['properties']['@version'])})
-    # checks: separation, alignment, OSM azimuth vs AIP
+    # checks: separation, alignment
     (aE, uE, nEE, LE), (aW, uW, nEW, LW) = rw_axes['18L/36R'], rw_axes['18R/36L']
     sepN = (aE[0] - aW[0]) * nEW[0] + (aE[1] - aW[1]) * nEW[1]
     bS = (aE[0] + LE * uE[0], aE[1] + LE * uE[1])
     sepS = abs(((bS[0] - aW[0]) * nEW[0] + (bS[1] - aW[1]) * nEW[1]))
     checks['runways'] = {
-        'osm_heading_vs_aip_deg': {r['id']: [r['heading_true_deg'], AIP_RWY[r['id']]['true_brg'][0]] for r in runways},
-        'centreline_separation_m': {'at_18L_end': R2(sepN), 'at_36R_end': R2(sepS), 'aip': 365},
+        'centreline_separation_m': {'at_18L_end': R2(sepN), 'at_36R_end': R2(sepS),
+                                    'aip': 365, 'aip_note': 'AIP (mirror) AD 2.24: "365m, and their north ends aligned"'},
         'north_end_alignment_m': rm['north_end_alignment'],
         'ends_placed_beyond_osm_nodes_m': {e['id']: e['end']['beyond_osm_node_m'] for r in runways for e in r['ends']},
         'measured_minus_aip_length_m': {r['id']: r['measurement']['measured_minus_aip_m'] for r in runways},
-        'profile_vs_aip_points_m': {},
     }
-    for r in runways:
-        first, second = r['id'].split('/')
-        pts = r['profile_y']['points_s_y']
-
-        def yat(s):
-            for (s0, y0), (s1, y1) in zip(pts, pts[1:]):
-                if s0 - 1e-6 <= s <= s1 + 1e-6:
-                    return y0 + (y1 - y0) * (s - s0) / (s1 - s0)
-            return None
-        res = {}
-        for e in r['ends']:
-            res[e['id']] = {'thr': R2(yat(e['end']['s_m']) - e['elev_m']['thr']),
-                            'dthr': R2(yat(e['dthr']['s_m']) - e['elev_m']['dthr'])}
-        checks['runways']['profile_vs_aip_points_m'][r['id']] = res
 
     # ------------------------------------------------------------------ taxiways / taxilanes (with S2 re-fit)
     moves = tm['vertex_moves']
@@ -394,19 +405,41 @@ def main():
         refit = None
         own = any(r['refit'] for r in runs)
         if runs:
-            refit = {'runs': [{k: r[k] for k in ('v0', 'v1', 'length_m', 'measured', 'offset_m', 'sources_used',
-                                                  'source_spread_m', 'refit', 'width_s2_m')} for r in runs],
+            refit = {'runs': [{k: r.get(k) for k in ('v0', 'v1', 'length_m', 'measured', 'offset_m', 'sources_used',
+                                                      'source_spread_m', 'rule', 'refit', 'width_s2_m')} for r in runs],
                      'own_run_refit': own,
                      'rule': 'offset_m = imaged pavement centre minus OSM along the run normal (east/north '
-                             'positive), relative to the common OSM-S2 registration; moved when >= 2 of S2B / S2C / '
-                             'Umbra agree within 2 m and |offset| >= 3.5 m (tools/airport/twy_refit.py)'}
+                             'positive), relative to the common OSM-S2 registration and the runway-band Umbra '
+                             'registration; measured when >= 2 of S2B / S2C / Umbra agree within 2 m, or (runs >= 150 m) '
+                             'Umbra and one S2 scene within 2.5 m; moved when |offset| >= 3.5 m '
+                             '(tools/airport/twy_refit.py)',
+                     'src': 'obs', 'refs': ['s2', 'umbra'], 'evidence': 'data/meas/twy_refit.json'}
         flag = None
-        if wid in PHASE0_FLAGS:
-            rf, a_, b_ = PHASE0_FLAGS[wid]
-            done = any(r['refit'] for r in runs)
-            flag = {'phase0': 'docs/phase0/geo.md: OSM minus S2 %+.1f m (S2B) / %+.1f m (S2C) on run %s' % (a_, b_, rf),
-                    'status': 'moved onto the imaged pavement (see refit)' if done else
-                              'not moved: fewer than 2 sources gave an agreeing centre in this build'}
+        single = [r['single_source_flag'] for r in runs if r.get('single_source_flag')]
+        dissent = ['run v%d-v%d moved %+.2f m by %s; %s disagree%s by > 2.5 m' % (
+            r['v0'], r['v1'], r['offset_m'], '+'.join(r['sources_used']),
+            ', '.join('%s %+.1f m' % kv for kv in sorted(r['dissent'].items())), 's' if len(r['dissent']) == 1 else '')
+            for r in runs if r.get('refit') and r.get('dissent')]
+        veto = [r['umbra_veto'] for r in runs if r.get('umbra_veto')]
+        if wid in PHASE0_FLAGS or single or dissent or veto:
+            flag = {}
+            if veto:
+                flag['umbra_veto'] = veto
+                flag['umbra_veto_note'] = ('two S2 scenes agree on a move that the sharper Umbra centre contradicts: '
+                                           'left at the OSM position (re-verify N2); check on a better image')
+            if dissent:
+                flag['dissent'] = dissent
+                flag['dissent_note'] = 'a third source disagrees with the two that moved the run: check on a better image'
+            if wid in PHASE0_FLAGS:
+                rf, a_, b_ = PHASE0_FLAGS[wid]
+                done = any(r['refit'] for r in runs)
+                flag['phase0'] = 'docs/phase0/geo.md: OSM minus S2 %+.1f m (S2B) / %+.1f m (S2C) on run %s' % (a_, b_, rf)
+                flag['status'] = ('moved onto the imaged pavement (see refit)' if done else
+                                  'not moved: fewer than 2 sources gave an agreeing centre in this build')
+            if single:
+                flag['single_source'] = single
+                flag['single_source_note'] = ('one source sees an offset >= 3.5 m but no second source agrees: left at '
+                                              'the OSM position (QA C1 M1); candidates for a better image')
         rec = {'id': 'osm:way/%d' % wid, 'kind': kind, 'kind_rule': krule, 'ref': t.get('ref'), 'status': status,
                'oneway': t.get('oneway') == 'yes', 'bridge': t.get('bridge') == 'yes',
                'pts': pts_all[0] if len(pts_all) == 1 else None, 'parts': pts_all if len(pts_all) > 1 else None,
@@ -420,7 +453,9 @@ def main():
                'refit': refit, 'flag': flag,
                'vertices_moved': nmoved, 'max_move_m': R2(maxmove),
                'moved_note': (None if not nmoved else 'own straight run(s) re-fitted to the imaged pavement' if own else
-                              'only junction vertices shared with a re-fitted neighbouring way were moved'),
+                              'only vertices next to a re-fitted neighbouring way were moved: the shared junction '
+                              'vertex and, along this way, the move tapered to zero over 40 m '
+                              '(data/meas/twy_refit.json vertex_moves, kind run / taper)'),
                'src': 'obs', 'refs': ['osm'] + (['s2', 'umbra'] if nmoved else []),
                'evidence': osm_ev(f)}
         (taxiways if kind == 'taxiway' else taxilanes).append(rec)
@@ -496,7 +531,7 @@ def main():
     twy_surf = unary_union(twy_buf).difference(unary_union(rw_polys)).simplify(0.3)
     twy_sh = unary_union(sh_buf).difference(unary_union(rw_polys + [rw_sh, apron_w])).difference(twy_surf).simplify(0.3)
 
-    def rings_of(g):
+    def rings_of(g, src, refs, ev):
         gs = list(g.geoms) if hasattr(g, 'geoms') else [g]
         out = []
         for pg in gs:
@@ -504,19 +539,24 @@ def main():
                 continue
             out.append({'ring': [[R2(x), R2(z)] for x, z in list(pg.exterior.coords)[:-1]],
                         'holes': [[[R2(x), R2(z)] for x, z in list(h.coords)[:-1]] for h in pg.interiors if
-                                  Polygon(h).area > 5] or None})
+                                  Polygon(h).area > 5] or None, 'src': src, 'refs': refs, 'evidence': ev})
         return out
+    ev_rw = 'runway rectangle: placed ends x aip_facts.width_m on the OSM axis (runways[].outline)'
+    ev_sh = ('runway shoulders (aip_facts.shoulder_m) and blast pads (aip_facts.blast_pad_m) on the placed ends, minus '
+             'the runway rectangles')
+    ev_tw = ('OSM taxiway centrelines (after the re-fit, data/meas/twy_refit.json) buffered to %.0f m (AIP (mirror) '
+             'AD 2.8 main-designator width), minus the runways' % TWY_WIDTH)
+    ev_ts = ('taxiway shoulders to %.0f m total (ICAO code E [from memory]; Sentinel-2 median NDVI width of the measured '
+             'runs: %.1f m) minus runways, runway shoulders, aprons and taxiway pavement'
+             % (TWY_SHOULDER_TOTAL, tm['summary']['width_s2_median_m']))
     surfaces = {
-        'runway': [{'runway': r['id'], 'ring': r['outline']['ring']} for r in runways],
-        'runway_shoulders_blast_pads': rings_of(rw_sh.difference(unary_union(rw_polys))),
-        'taxiway': rings_of(twy_surf),
-        'taxiway_shoulders': rings_of(twy_sh),
-        'src': 'inf', 'refs': ['aip_mirror', 'osm'],
-        'evidence': ('runway rectangles / shoulders / blast pads from the AIP dimensions on the placed ends; taxiway '
-                     'surface = OSM taxiway centrelines (after the re-fit) buffered to %.0f m, minus the runways; '
-                     'shoulders to %.0f m total (ICAO code E [from memory]; Sentinel-2 median NDVI width of the '
-                     'measured runs: %.1f m) minus runways, aprons and pavement. Aprons are the OSM polygons.'
-                     % (TWY_WIDTH, TWY_SHOULDER_TOTAL, tm['summary']['width_s2_median_m']))}
+        'runway': [{'runway': r['id'], 'ring': r['outline']['ring'], 'src': 'inf', 'refs': ['aip_mirror', 'osm', 's2'],
+                    'evidence': ev_rw} for r in runways],
+        'runway_shoulders_blast_pads': rings_of(rw_sh.difference(unary_union(rw_polys)), 'inf', ['aip_mirror', 'osm'],
+                                                ev_sh),
+        'taxiway': rings_of(twy_surf, 'inf', ['osm', 'aip_mirror', 's2', 'umbra'], ev_tw),
+        'taxiway_shoulders': rings_of(twy_sh, 'inf', ['osm'], ev_ts),
+    }
 
     # ------------------------------------------------------------------ AIP obstacle positions (few rows)
     obst = []
@@ -613,9 +653,12 @@ def main():
                                                                           'business_terminal', 'vvip'):
             buildings.append(rec)
         else:
-            context_buildings.append({k: rec[k] for k in ('id', 'kind', 'name', 'name_en', 'ring', 'more_rings',
-                                                          'area_m2', 'height_m', 'height_src', 'height_evidence',
-                                                          'aip_obstacle_match', 'src')})
+            cb = {k: rec[k] for k in ('id', 'kind', 'name', 'name_en', 'ring', 'more_rings', 'area_m2', 'height_m',
+                                      'height_src', 'height_evidence', 'aip_obstacle_match', 'src')}
+            cb['evidence'] = {'osm': {k: rec['evidence']['osm'][k] for k in ('type', 'id', 'version')}}
+            if rec['evidence']['osm'].get('clipped_to_extent'):
+                cb['evidence']['osm']['clipped_to_extent'] = True
+            context_buildings.append(cb)
     # roles for named airport buildings
     roles = {
         'osm:way/93184730': ('T1', 'Terminal 1 (OSM building=hall, source=estimation)'),
@@ -711,43 +754,48 @@ def main():
         if g is None:
             continue
         pid = 'osm:%s/%d' % (f['properties']['@type'], f['properties']['@id'])
+        cev = {'osm': {'type': f['properties']['@type'], 'id': f['properties']['@id'],
+                       'version': f['properties']['@version']}}
+        if f['properties'].get('clipped'):
+            cev['osm']['clipped_to_extent'] = True
         if t.get('highway') in road_cls and g['type'] in ('LineString', 'MultiLineString'):
             ctx['roads'].append({'id': pid, 'class': t['highway'], 'ref': t.get('ref'), 'name': t.get('name'),
                                  'name_en': t.get('name:en'), 'layer': t.get('layer'), 'bridge': t.get('bridge'),
                                  'tunnel': t.get('tunnel'), 'oneway': t.get('oneway'), 'lanes': t.get('lanes'),
-                                 'lines': lines_xz(g), 'src': 'obs'})
+                                 'lines': lines_xz(g), 'src': 'obs', 'evidence': cev})
         elif t.get('railway') in rail_cls and g['type'] in ('LineString', 'MultiLineString') and \
                 (t['railway'] != 'construction' or t.get('construction') in rail_cls):
             ctx['rail'].append({'id': pid, 'railway': t['railway'], 'service': t.get('service'), 'name': t.get('name'),
                                 'name_en': t.get('name:en'), 'layer': t.get('layer'), 'bridge': t.get('bridge'),
-                                'tunnel': t.get('tunnel'), 'lines': lines_xz(g), 'src': 'obs'})
+                                'tunnel': t.get('tunnel'), 'lines': lines_xz(g), 'src': 'obs', 'evidence': cev})
         elif t.get('waterway') in ('river', 'canal', 'ditch', 'drain', 'stream') and g['type'] in ('LineString', 'MultiLineString'):
             ctx['water_lines'].append({'id': pid, 'waterway': t['waterway'], 'name': t.get('name'),
                                        'name_en': t.get('name:en'), 'tunnel': t.get('tunnel'), 'lines': lines_xz(g),
-                                       'src': 'obs'})
+                                       'src': 'obs', 'evidence': cev})
         elif (t.get('natural') == 'water' or t.get('water') or t.get('waterway') == 'riverbank') and \
                 g['type'] in ('Polygon', 'MultiPolygon'):
             gw = shapely.ops.transform(_vec_world, shape(g))
             for pg in (gw.geoms if gw.geom_type == 'MultiPolygon' else [gw]):
                 ctx['water_areas'].append({'id': pid, 'water': t.get('water'), 'name': t.get('name'),
                                            'ring': [[R2(x), R2(z)] for x, z in list(pg.exterior.coords)[:-1]],
-                                           'area_m2': round(pg.area, 1), 'src': 'obs'})
+                                           'area_m2': round(pg.area, 1), 'src': 'obs', 'evidence': cev})
         if (t.get('railway') == 'station' or t.get('public_transport') == 'station' or
                 t.get('building') in ('train_station', 'transportation')):
             c = shape(g).representative_point()
             ctx['hub'].append({'id': pid, 'name': t.get('name'), 'name_en': t.get('name:en'),
                                'kind': t.get('station') or t.get('building') or t.get('railway'),
-                               'xz': w(c.y, c.x), 'src': 'obs'})
+                               'xz': w(c.y, c.x), 'src': 'obs', 'evidence': cev})
 
     # ------------------------------------------------------------------ AIP probes (local mirror only)
+    probes = AIP_GENERAL_PROBES + [p for r in AIP_RWY.values() for p in r['probe']] + \
+        [p for e in AIP_END.values() for p in e['probe']] + [o['probe'] for o in AIP_OBSTACLES]
+    checks['aip_probes'] = {'n': len(probes), 'where': AIP_LOG_NOTE % 'build_airport.json'}
     if aip_txt:
-        probes = AIP_GENERAL_PROBES + [p for r in AIP_RWY.values() for p in r['probe']] + \
-                 [p for e in AIP_END.values() for p in e['probe']] + [o['probe'] for o in AIP_OBSTACLES]
         miss = [p for p in probes if p not in aip_txt]
-        checks['aip_probes'] = {'n': len(probes), 'found': len(probes) - len(miss), 'missing': miss,
-                                'file': 'refs/cache/aip/derived_aip_zsss/ad2_tables.txt (local, not committed)'}
-    else:
-        checks['aip_probes'] = 'not run: local AIP mirror text absent (it is never committed)'
+        write_local_log('build_airport.json', {'aip_probes': {'n': len(probes), 'found': len(probes) - len(miss),
+                                                              'missing': miss},
+                                               'osm_runway_headings_true_deg': local,
+                                               'mirror_text': 'refs/cache/aip/derived_aip_zsss/ad2_tables.txt'})
     checks['origin'] = {'frame_origin': [F.ORIGIN_LAT, F.ORIGIN_LON],
                         'osm_nodes': pin['origin_nodes_check'],
                         'midpoint_matches': all(abs(v) < 1e-12 for v in (
@@ -764,21 +812,16 @@ def main():
     out = {
         'what': ('Shanghai Hongqiao International Airport (ZSSS / SHA) airport geometry for SHA Live 3D: runways (OSM '
                  'centrelines; ends measured on Sentinel-2 and Umbra SAR; dimensions, displaced thresholds, declared '
-                 'distances, elevations and lighting as short facts from an unofficial AIP mirror), taxiways and '
+                 'distances, THR elevations and lighting as short facts from an unofficial AIP mirror, in one '
+                 'aip_facts block per runway with its own notice), taxiways and '
                  'taxilanes (OSM, re-fitted to Sentinel-2 where measured), holding positions, aprons, helipads, '
                  'derived surface polygons, buildings with heights (OSM / AIP obstacle / rule), the control tower, '
                  'inferred glide-path antennas, the aerodrome boundary, and context (Hongqiao transport hub, roads, '
                  'rail, canals, buildings) inside the detailed extent. No stands (task A2).'),
-        'licence': ('ODbL 1.0 - this file is a Derivative Database of OpenStreetMap ((c) OpenStreetMap contributors), '
-                    'made available under the Open Database License 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). '
-                    'It also contains measurements made on modified Copernicus Sentinel data 2026 and on Umbra SAR Open '
-                    'Data (CC BY 4.0). AIP values are short cited facts from an unofficial copy of AIP China, used as '
-                    'reference (owner decision OD3); no AIP list is reproduced.'),
-        'attribution': ['(c) OpenStreetMap contributors (ODbL 1.0) - https://www.openstreetmap.org/copyright',
-                        'Contains modified Copernicus Sentinel data 2026',
-                        'Umbra SAR Open Data, Umbra Lab Inc (CC BY 4.0)',
-                        'Short facts: AIP China AD 2 ZSSS (CAAC), EFF 2026-07-08, read in an unofficial mirror '
-                        '("AIP (mirror)")'],
+        'licence': LICENCE,
+        'attribution': ATTRIBUTION,
+        'build_note': ('built from committed inputs only; a clean checkout without the local AIP mirror gives the same '
+                       'bytes (the AIP probes go to a local log, checks_at_build.aip_probes; QA C1 L5)'),
         'generator': 'tools/airport/build_airport.py (deterministic; python3 -I tools/airport/build_airport.py)',
         'built_utc': None,
         'sources': {
@@ -791,11 +834,13 @@ def main():
                            'file': 'refs/cache/aip/ (local only, never committed)', 'licence': 'none published; '
                            'short cited facts only', 'status': 'AIP (mirror)',
                            'note': 'AMDT 12/2026 (effective 26 Nov 2026) changes the WDI positions at ZSSS; not reflected'},
-            's2': {'what': 'Sentinel-2 L2A tile 51RUQ, S2B 2026-10-14 and S2C 2026-02-21 (Earth Search COG crops)',
+            's2': {'what': 'Sentinel-2 L2A tile 51RUQ, S2B 2026-10-14 and S2C 2026-02-21 (Earth Search COG crops, cut '
+                           'to the detailed extent: tools/geo/s2_cut_extent.py)',
                    'file': 'refs/cache/s2/', 'licence': 'Copernicus Sentinel data legal notice',
                    'attribution': 'Contains modified Copernicus Sentinel data 2026'},
             'umbra': {'what': 'Umbra SAR Open Data, UMBRA-05 spotlight 2024-06-02T01:46:48Z, GEC (1.4 m overview)',
-                      'file': 'refs/cache/imagery/umbra_opendata/umbra_gec_ovr4.tif', 'licence': 'CC BY 4.0'},
+                      'file': 'refs/cache/imagery/umbra_opendata/umbra_gec_ovr4.tif (local)', 'licence': 'CC BY 4.0',
+                      'licence_url': 'https://creativecommons.org/licenses/by/4.0/', 'attribution': UMBRA_ATTR},
             'rwy_meas': {'file': 'data/meas/rwy_ends.json', 'tool': 'tools/airport/rwy_ends.py'},
             'twy_meas': {'file': 'data/meas/twy_refit.json', 'tool': 'tools/airport/twy_refit.py'},
         },
@@ -845,12 +890,15 @@ def main():
             {'what': 'piers of T1 / T2 as separate volumes, terminal roof shapes',
              'known': 'OSM has one outline per terminal (T1 source=estimation)', 'src': 'inf'},
             {'what': 'markings, signs, lighting fixture positions (PALS bars, edge / centreline lights, RWSL)',
-             'known': 'AIP (mirror) types, lengths, spacings and colours (runways[].ends[], lights_remarks)',
+             'known': 'AIP (mirror) ALS type / length and PAPI (runways[].aip_facts); light remarks, REL taxiways and '
+                      'colours are not transcribed (QA C1 M2: only values the simulator / renderer uses)',
              'candidates': 'ICAO Annex 14 / CAAC standards (Q11)', 'src': 'inf'},
             {'what': 'localizer antennas, DME, wind direction indicators, RVR / wind sensors',
              'known': 'AIP (mirror) gives WDI / sensor positions as offsets (not transcribed; WDI positions change with '
                       'AMDT 12 on 26 Nov 2026)', 'src': 'inf'},
             {'what': 'official runway threshold coordinates', 'known': 'AIP AD 2.12: "Nil"', 'src': 'inf'},
+            {'what': 'runway longitudinal profile', 'known': 'profile_y is linear between the THR and DTHR elevations; '
+                     'the AIP slope chain is not transcribed (QA C1 M2)', 'src': 'inf'},
         ],
         'checks_at_build': checks,
     }
@@ -875,7 +923,8 @@ def main():
         fh.write('// ODbL 1.0: contains information from OpenStreetMap (c) OpenStreetMap contributors '
                  '(https://www.openstreetmap.org/copyright), made available under the Open Database License 1.0\n'
                  '// (https://opendatacommons.org/licenses/odbl/1-0/). Contains modified Copernicus Sentinel data 2026. '
-                 'Umbra SAR Open Data (CC BY 4.0). AIP values: short facts, AIP (mirror).\n')
+                 + UMBRA_ATTR + '.\n// aip_facts / "AIP (mirror)": short cited facts from AIP China AD 2 ZSSS (CAAC) via an '
+                 'unofficial mirror, EFF 2026-07-08; not covered by ODbL.\n')
         fh.write('window.SHA_AIRPORT = ' + s + ';\n')
     print(json.dumps(out['counts'], indent=1, ensure_ascii=False))
     print(json.dumps(checks, indent=1, ensure_ascii=False)[:6000])

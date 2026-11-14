@@ -7,7 +7,8 @@ track deg, flags (1 stale, 2 new leg, 4 geom rate, 8 geom alt), vrate fpm, aircr
 Definitions used throughout (all [inf] rules of ours, not readsb's):
   segment  maximal run of positions with no gap > GAP_S (coverage segment: where the track enters / leaves coverage)
   flight   consecutive segments with one callsign, cut at a readsb new-leg flag, at a ground stop, at a callsign change
-           and at gaps > 4 h
+           and at gaps > 4 h (observed_elsewhere.split_gaps later cuts SHA/PVG-route flights at gaps longer than the
+           leg air time + 30 min, so a short round trip hidden in the coverage gap is not one record)
   dep/arr  observed take-off / landing: a ground->air (air->ground) transition inside a segment, or a segment that
            starts (ends) below LOW_AGL ft above an airport within NEAR_KM; time extrapolated with the vertical rate
 """

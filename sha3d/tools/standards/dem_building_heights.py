@@ -61,7 +61,12 @@ for it in items:
 # whole aerodrome: edit mask histogram inside the aerodrome polygon
 aer = A['aerodrome']
 json.dump(dict(what='GLO-30 DSM samples in/around airport building footprints (B3)', pixel_deg=[T.a, T.e],
-               edm_codes='EDM (handbook v5.0 table 6): 1 not edited, 2 infill of external elevation data, 3 interpolated, 4 smoothed, 5 airport editing, 6 raised negative, 10 river', flm_codes='FLM (table 7): 1 edited, 2 not edited/not filled, 3 ASTER, 4 SRTM90, 5 SRTM30, 6 GMTED2010, 7 SRTM30plus, 8 TerraSAR-X radargrammetric, 9 AW3D30', acquisition='TanDEM-X Dec 2010 - Jan 2015 (handbook): T1 was the pre-renovation building then (renovated 2014-2018)', buildings=res),
+               edm_codes='EDM (handbook v5.0 table 6): 1 not edited, 2 infill of external elevation data, 3 interpolated, 4 smoothed, 5 airport editing, 6 raised negative, 10 river', flm_codes='FLM (table 7): 1 edited, 2 not edited/not filled, 3 ASTER, 4 SRTM90, 5 SRTM30, 6 GMTED2010, 7 SRTM30plus, 8 TerraSAR-X radargrammetric, 9 AW3D30', acquisition='TanDEM-X Dec 2010 - Jan 2015 (handbook): T1 was the pre-renovation building then (renovated 2014-2018)', buildings=res,
+               attribution=('produced using Copernicus WorldDEM-30 (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space '
+                            'GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved; '
+                            '(c) OpenStreetMap contributors (ODbL 1.0)'),
+               licence=('Copernicus DEM GLO-30 licence (refs/cache/dem/SOURCES.json); OSM footprints: ODbL 1.0 '
+                        '(https://opendatacommons.org/licenses/odbl/1-0/)')),
           open(out, 'w'), indent=1, default=str)
 
 # ---- figure: DSM excess over the airport with building outlines (extent-limited) ----

@@ -17,6 +17,7 @@ from shapely.geometry import LineString
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, '..', 'common'))
 import frame as F  # noqa: E402
+import umbra_reg as UR  # noqa: E402
 from sarwin import SarWindows  # noqa: E402
 from imgsample import S2  # noqa: E402
 
@@ -70,10 +71,16 @@ def main(root, out):
         res['h2'].append(row)
     ew = [b['umbra_minus_osm_east_m'] for b in res['runway_bands']]
     res['summary'] = {'umbra_minus_osm_east_m_mean': round(float(np.mean(ew)), 2), 'range': [min(ew), max(ew)],
-                      'applied_shift_en_m': [3.4, 0.0],
+                      'applied_shift_en_m': list(UR.UMBRA_MINUS_OSM_EN),
+                      'applied_shift_note': ('fix round 2 (re-verify N4): every Phase-1 data tool applies the single '
+                                             'value of tools/common/umbra_reg.py (%s); this full-resolution mean agrees '
+                                             'within a third of the overview pixel' % UR.UMBRA_REG_NOTE),
                       'north_note': 'H2 band centre: Umbra and Sentinel-2 (registration within ~1 m of OSM north-south, '
                                     'phase 0) agree within their spread, so the OSM H2 line itself is off; 0 m applied N-S'}
-    res['attribution'] = 'Umbra SAR Open Data (CC BY 4.0); Contains modified Copernicus Sentinel data 2026; OSM (ODbL)'
+    res['attribution'] = ('Umbra Lab, Inc., Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), '
+                          'modified; Contains modified Copernicus Sentinel data 2026; (c) OpenStreetMap contributors (ODbL 1.0)')
+    res['licence'] = ('Umbra: CC BY 4.0; Sentinel-2: Copernicus Sentinel data legal notice; measurements on OSM ways: '
+                      'ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/)')
     json.dump(res, open(out, 'w'), indent=1)
     print(json.dumps(res['summary']), [r for r in res['h2']])
 

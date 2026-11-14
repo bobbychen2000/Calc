@@ -1437,5 +1437,7 @@
     "max": 28.937133312225342
    }
   }
- ]
+ ],
+ "attribution": "produced using Copernicus WorldDEM-30 (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved; (c) OpenStreetMap contributors (ODbL 1.0)",
+ "licence": "Copernicus DEM GLO-30 licence (refs/cache/dem/SOURCES.json); OSM footprints: ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/)"
 }

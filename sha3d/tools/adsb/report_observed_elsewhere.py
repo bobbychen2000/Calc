@@ -31,36 +31,162 @@ def local_hour(t):
     return (oe.utc(t) + dt.timedelta(hours=8)).hour
 
 
-def write_local(r):
+def evidence(m, A):
+    """per-record evidence: what was observed (obs) and what is inferred (inf), in words"""
+    near = m['last'] if m['role'] == 'arr' else m['first']
+    fe = m['obs_far']
+    e = {'adsb': f"adsb.lol globe_history prod {m['archive']} (ODbL 1.0): {m['nseg']} coverage segment(s), nearest fix to "
+                 f"ZSSS {m['near_km']} km away ({region(near[1], near[2])}), alt {near[3]} ft, track "
+                 f"{m['head_off_deg']} deg off the bearing {'to' if m['role'] == 'arr' else 'from'} ZSSS",
+         'route': f"VRS standing data route {m['route_db']}; check against the track: {m['consistency']}",
+         'far_end_event': (f"{'take-off from' if m['role'] == 'arr' else 'landing at'} {fe['ap']} observed ({fe['how']})"
+                           if fe else None),
+         'wiki_pair': m['wiki_pair'],
+         'split': (f"cut from a longer record at a gap > leg air time + 30 min (piece {m['split']['piece'] + 1} of "
+                   f"{m['split']['of']})" if m.get('split') else None),
+         'resplit': (f"{m['resplit_dropped_segments']} segment(s) on the neighbouring leg dropped (heading test)"
+                     if m.get('resplit_dropped_segments') else None)}
+    if m['pick']:
+        x = m['est'][m['pick']]
+        if m['pick'] == 'M2':
+            e['sha_time'] = (f"M2: {'last' if m['role'] == 'arr' else 'first'} fix "
+                             f"{'+ time to go' if m['role'] == 'arr' else '- time since take-off'} over {x['r_km']} km "
+                             f"({'Chinese domestic' if x['cn'] else 'other'} class"
+                             + (f", out-of-sample bias {x['bias_removed_s'] / 60:+.1f} min removed" if x['bias_removed_s'] else '')
+                             + f"); 1-sigma {x['sigma_s'] / 60:.1f} min (out of sample)")
+        else:
+            e['sha_time'] = (f"M1: observed far-end event {'+' if m['role'] == 'arr' else '-'} air time over {x['d_km']} km;"
+                             f" 1-sigma {x['sigma_s'] / 60:.1f} min (out of sample)")
+    else:
+        e['sha_time'] = f"none: record not used ({m['consistency']})"
+    return e
+
+
+def summary(e):
+    return '; '.join(f'[{k}] {v}' for k, v in e.items() if v)
+
+
+def write_local(r, A):
     os.makedirs(oe.OUT_LOCAL, exist_ok=True)
     base = os.path.join(oe.OUT_LOCAL, f"sha_observed_{r['day']}")
     keep = ('uid', 'cs', 'airline', 'operator', 'icao', 'r', 'r_src', 't', 't_src', 'desc', 'role', 'far', 'route_db',
-            'consistency', 'wiki_pair', 'first', 'last', 'segs', 'obs_far', 'est', 'pick', 't_sha', 'sigma_s', 'alt_max')
-    recs = [{k: m.get(k) for k in keep} for m in sorted(r['moves'], key=lambda m: m['t_sha'] or m['t_obs'])]
-    for x in recs:
-        x['src'] = {'identity': 'obs (callsign/address broadcast; reg/type from readsb db or Mictronics)',
-                    'far_segment': 'obs', 'route': 'VRS standing data (crowd-sourced)', 'sha_time': 'inf'}
+            'consistency', 'wiki_pair', 'first', 'last', 'segs', 'obs_far', 'est', 'pick', 't_sha', 'sigma_s', 'alt_max',
+            'near_km', 'head_off_deg', 'near_in_far_terminal', 'span_s', 'leg_air_s', 'split', 'resplit_dropped_segments')
+    ms = sorted(r['moves'], key=lambda m: m['t_sha'] or m['t_obs'])
+    recs = []
+    for m in ms:
+        x = {k: m.get(k) for k in keep}
+        # every field is 'obs' (broadcast, archived, or a database read as is) or 'inf' (our rule or model)
+        x['src'] = {'callsign': 'obs', 'icao24': 'obs', 'registration': 'obs', 'type': 'obs', 'operator': 'obs',
+                    'far_segment': 'obs', 'far_end_event': 'obs' if m['obs_far'] else None, 'route_db': 'obs',
+                    'role_at_ZSSS': 'inf', 'sha_airport': 'inf', 'sha_time': 'inf', 'sigma': 'inf'}
+        x['evidence'] = evidence(m, A)
+        recs.append(x)
     with open(base + '.json', 'w') as f:
         json.dump({'day': r['day'], 'window_utc': [iso(r['window'][0]), iso(r['window'][1])], 'n': len(recs),
                    'licence': 'derived from adsb.lol globe_history (ODbL 1.0), VRS standing data (CC0), Mictronics '
                               '(ODC-By 1.0); LOCAL ONLY per PLAN 6b (per-flight data observed elsewhere)',
+                   'src_legend': {'obs': 'broadcast ADS-B as archived by adsb.lol, or a database read as is',
+                                  'inf': 'inferred by a rule or model of ours (tools/adsb/observed_elsewhere.py)'},
                    'movements': recs}, f, separators=(',', ':'))
     cols = ['day', 'callsign', 'airline', 'operator', 'icao24', 'registration', 'reg_src', 'type', 'type_src', 'role_at_ZSSS',
             'far_end_db', 'route_db', 'db_check', 'wiki_pair', 'first_fix_utc', 'first_lat', 'first_lon', 'first_alt_ft',
             'last_fix_utc', 'last_lat', 'last_lon', 'last_alt_ft', 'n_segments', 'far_end_event', 'far_end_event_utc',
-            'sha_time_utc_inf', 'sha_time_local_inf', 'method', 'sigma_min', 'nearest_fix_region']
+            'sha_time_utc_inf', 'sha_time_local_inf', 'method', 'sigma_min', 'nearest_fix_region', 'nearest_fix_km',
+            'heading_off_deg', 'bias_removed_min', 'split_piece', 'resplit_dropped_segments', 'evidence_summary']
     with open(base + '.csv', 'w', newline='') as f:
         w = csv.writer(f); w.writerow(cols)
-        for m in sorted(r['moves'], key=lambda m: m['t_sha'] or m['t_obs']):
+        for m, x in zip(ms, recs):
             fe = m['obs_far']; near = m['last'] if m['role'] == 'arr' else m['first']
+            m2 = m['est'].get('M2') if m['pick'] == 'M2' else None
             w.writerow([r['day'], m['cs'], m['airline'], m.get('operator'), m['icao'], m['r'], m.get('r_src'), m['t'],
                         m.get('t_src'), m['role'], m['far'], m['route_db'], m['consistency'], m['wiki_pair'],
                         iso(m['first'][0]), m['first'][1], m['first'][2], m['first'][3], iso(m['last'][0]), m['last'][1],
                         m['last'][2], m['last'][3], m['nseg'], f"{fe['ap']} ({fe['how']})" if fe else '',
                         iso(fe['t']) if fe else '', iso(m['t_sha']),
                         (oe.utc(m['t_sha']) + dt.timedelta(hours=8)).strftime('%H:%M') if m['t_sha'] else '',
-                        m['pick'] or '', round(m['sigma_s'] / 60, 1) if m['sigma_s'] else '', region(near[1], near[2])])
+                        m['pick'] or '', round(m['sigma_s'] / 60, 1) if m['sigma_s'] else '', region(near[1], near[2]),
+                        m['near_km'], m['head_off_deg'], round(m2['bias_removed_s'] / 60, 1) if m2 else '',
+                        f"{m['split']['piece'] + 1}/{m['split']['of']}" if m.get('split') else '',
+                        m.get('resplit_dropped_segments') or 0, summary(x['evidence'])])
     return base
+
+
+def write_owner_sample(results, A, n=40):
+    """LOCAL ONLY: a small spread sample of identified movements for the owner's review (PLAN 6b: per-flight data
+    observed elsewhere stays local until the owner sees a sample). Greedy spread over airline, type and local hour."""
+    pool = []
+    for r in results:
+        for m in r['moves']:
+            if m['consistency'] in GOOD and m['t_sha']:
+                pool.append(m)
+    pool.sort(key=lambda m: m['uid'] + m['role'])
+    take, ca, ct, ch, cm, cr = [], collections.Counter(), collections.Counter(), collections.Counter(), \
+        collections.Counter(), collections.Counter()
+    while len(take) < min(n, len(pool)):
+        def cost(m):
+            h = local_hour(m['t_sha'])
+            return (3 * ca[m['airline']] + 2 * ct[m['t']] + 2 * ch[h] + cm[m['pick']] + cr[m['role']],
+                    hash_key(m))
+        best = min((m for m in pool if m not in take), key=cost)
+        take.append(best); ca[best['airline']] += 1; ct[best['t']] += 1; ch[local_hour(best['t_sha'])] += 1
+        cm[best['pick']] += 1; cr[best['role']] += 1
+    take.sort(key=lambda m: m['t_sha'])
+    path = os.path.join(oe.OUT_LOCAL, 'sample_for_owner.csv')
+    with open(path, 'w', newline='') as f:
+        w = csv.writer(f)
+        w.writerow(['callsign', 'registration', 'icao_type', 'operator', 'far_end_airport', 'direction',
+                    'sha_time_local_inferred', 'sigma_1_min', 'method', 'nearest_fix_km', 'evidence_summary'])
+        for m in take:
+            fa = A.get(m['far'])
+            far = f"{m['far']} ({fa[0]}, {fa[1]})" if fa else m['far']
+            w.writerow([m['cs'], m['r'], m['t'], m.get('operator') or '', far,
+                        'arrival at SHA' if m['role'] == 'arr' else 'departure from SHA',
+                        (oe.utc(m['t_sha']) + dt.timedelta(hours=8)).strftime('%Y-%m-%d %H:%M'),
+                        round(m['sigma_s'] / 60, 1), m['pick'], m['near_km'], summary(evidence(m, A))])
+    top3 = [a for a, _ in collections.Counter(m['airline'] for m in pool).most_common(3)]
+    with open(os.path.join(oe.OUT_LOCAL, 'README_sample_for_owner.md'), 'w') as f:
+        f.write(SAMPLE_README.format(n=len(take), days=', '.join(r['day'] for r in results),
+                                     na=len(ca), nt=len(ct), nh=len(ch),
+                                     nm1=sum(m['pick'] == 'M1' for m in take),
+                                     pm1=100.0 * sum(m['pick'] == 'M1' for m in pool) / len(pool), npool=len(pool),
+                                     ntop3=sum(m['airline'] in top3 for m in take),
+                                     ptop3=100.0 * sum(m['airline'] in top3 for m in pool) / len(pool)))
+    return path, take
+
+
+def hash_key(m):
+    import zlib
+    return zlib.crc32((m['uid'] + m['role']).encode())
+
+
+SAMPLE_README = """# sample_for_owner.csv (LOCAL ONLY: do not commit)
+
+This file holds {n} real Hongqiao (ZSSS) movements of the operating days {days}, picked to spread over {na} airlines, {nt}
+ICAO types and {nh} local hours. They are for the owner's review under PLAN §6b ("per-flight data observed elsewhere
+stays local until the owner sees a sample"). Each row is one flight seen by open ADS-B outside the Shanghai coverage
+gap (adsb.lol globe_history, ODbL 1.0). Observed [obs] means broadcast and archived as is, or read from a database as
+is. Inferred [inf] means computed by our rules in `tools/adsb/observed_elsewhere.py`. The columns: `callsign` is the
+ICAO callsign as broadcast [obs]. `registration` and `icao_type` come from the readsb database fields in the trace, or
+from the Mictronics database where the trace had none [obs]. `operator` is the Mictronics name for the callsign
+prefix [obs]. `far_end_airport` is the non-Shanghai airport of the crowd-sourced VRS route for that callsign
+[obs as a database entry]; that the flight used Hongqiao rather than Pudong rests on that entry [inf]. `direction` is
+arrival at or departure from SHA, from the route and the direction of the track [inf]. `sha_time_local_inferred` is
+the landing or take-off time at SHA in local time (UTC+8) [inf], never observed. `sigma_1_min` is its 1-sigma
+uncertainty in minutes, taken from out-of-sample validation [inf]: about one record in three will be further off than
+this. `method` is M2 (nearest observed fix plus a time-to-go or time-since-take-off model) or M1 (the far-end take-off
+or landing, which was observed, plus a modelled air time). `nearest_fix_km` is the great-circle distance from ZSSS to
+the observed fix nearest SHA [obs position, distance computed]. `evidence_summary` lists what each part rests on:
+[adsb] the coverage seen, [route] the database route and its check against the track, [far_end_event] an observed
+far-end take-off or landing, [wiki_pair] whether Wikipedia lists the airline on that city pair from SHA, from PVG or
+from both, [split] and [resplit] whether the record was cut from a longer one, and [sha_time] how the time was inferred.
+
+**A spread sample, not a random one.** The rows were picked greedily to cover as many airlines, types, local hours,
+methods and directions as possible, so rare cases are over-represented: {nm1} of {n} rows use M1, against {pm1:.1f} % of
+all {npool} identified movements of these days; the three largest airlines give {ntop3} of {n} rows, against {ptop3:.0f} %
+of all movements, so smaller and foreign carriers are over-represented too. Read the rows as examples of each case, not
+as the traffic mix; the aggregates are in docs/phase1/observed_elsewhere.md.
+"""
 
 
 def day_stats(r, vrs_sha_by_al, far_db):
@@ -114,8 +240,29 @@ def day_stats(r, vrs_sha_by_al, far_db):
         'far_end_event_observed_by_airport_top15': dict(far_obs.most_common(15)),
         'nearest_fix_region': dict(reg.most_common()),
         'nearest_fix_km_q10_q25_q50_q75_q90': [round(oe.q(rnear, p)) for p in (.1, .25, .5, .75, .9)],
+        'nearest_fix_km_max': round(max(rnear)), 'nearest_fix_gt_900_1300_km': [sum(x > 900 for x in rnear),
+                                                                              sum(x > 1300 for x in rnear)],
         'sigma_min_q10_q25_q50_q75_q90': [round(oe.q(sig, p), 1) for p in (.1, .25, .5, .75, .9)],
-        'sigma_le_5_10_20_min': [round(sum(x <= k for x in sig) / len(sig), 3) for k in (5, 10, 20)],
+        'sigma_min_max': round(max(sig), 1),
+        'share_with_1sigma_le_5_10_15_20_min': [round(sum(x <= k for x in sig) / len(sig), 3) for k in (5, 10, 15, 20)],
+        'sigma_note': '1-sigma uncertainties (1.4826 x median |out-of-sample error|), not error bounds: for normal '
+                      'errors about 32 % of movements are further off than their 1-sigma',
+        'checks_fix1': {
+            'gap_split': r['split'],
+            'wrong_heading_rejected': c.get('wrong_heading', 0),
+            'resplit_records': sum(1 for m in M if m.get('resplit_dropped_segments')),
+            'span_too_long_rejected': c.get('span_too_long', 0),
+            'heading_gt90_inside_far_terminal_not_tested': sum(1 for m in G if (m['head_off_deg'] or 0) > 90
+                                                               and m['near_in_far_terminal']),
+            'heading_off_deg_q50_q90_max': [oe.q([m['head_off_deg'] for m in G if m['head_off_deg'] is not None], p)
+                                            for p in (.5, .9, 1.0)],
+            'max_span_over_leg_air_time': round(max(m['span_s'] / m['leg_air_s'] for m in G), 2),
+            'records_from_split_pieces': sum(1 for m in G if m.get('split'))},
+        'm1_sigma_s': r['m1_sigma'],
+        'm2_bias_by_bin': r['bias_tab'],
+        'm2_bias_removed_movements': dict(collections.Counter(
+            f"{m['role']} {'cn' if m['est']['M2']['cn'] else 'other'} {m['est']['M2']['bin_km'][0]}-"
+            f"{m['est']['M2']['bin_km'][1]} km" for m in G if m['pick'] == 'M2' and m['est']['M2']['bias_removed_s'])),
         'method': dict(meth), 'wiki_pair_observed': dict(wiki),
         'pvg_identified_consistent': sum(1 for m in r['pvg'] if m['consistency'] in GOOD),
         'rotation': {'pairs': r['rot']['pairs'], 'sha_turn_min_q10_q50_q90':
@@ -129,7 +276,10 @@ def day_stats(r, vrs_sha_by_al, far_db):
             for x in r['inv'] if x['db'] == 'db_other_unexplained').most_common(10)),
         'inverse': {'rule': f'coverage ends (begins) airborne within 60-{oe.INV_R:.0f} km of ZSSS, track within '
                             f'{oe.INV_DEG:.0f} deg of the bearing to (from) ZSSS, no landing (take-off) seen',
-                    'n': len(r['inv']), 'by_db': dict(inv), 'not_in_db_by_airline_prefix': dict(inv_nodb_al)},
+                    'n': len(r['inv']), 'by_db': dict(inv), 'not_in_db_by_airline_prefix': dict(inv_nodb_al),
+                    'miss_rate_all_candidates': round(inv['not_in_db'] / len(r['inv']), 3) if r['inv'] else None,
+                    'miss_rate_if_all_missing_were_shanghai_bound': round(
+                        inv['not_in_db'] / max(1, inv['not_in_db'] + inv['db_sha'] + inv['db_pvg'] + inv['db_both']), 3)},
         'registry': r['reg'],
         'calibration': {'flights_both_ends': len(r['cal']), 'cn_domestic_both_ends': r['n_cal_cn'],
                         'samples': r['samples'], 'samples_cn': r['samples_cn'],
@@ -142,9 +292,15 @@ def day_stats(r, vrs_sha_by_al, far_db):
 
 
 def val_stats(V):
-    out = {'M1_hkg_tpe_air_time': oe.errstats(V['M1_hkg_tpe']), 'M1_cn_leave_one_route_out': oe.errstats(V['M1_cn_loro'])}
-    for k in ('M2_arr_hkg_tpe', 'M2_dep_hkg_tpe', 'M2_arr_cn_loao', 'M2_dep_cn_loao', 'M2_arr_other_loao', 'M2_dep_other_loao'):
+    out = {'sign': 'errors are predicted - actual for M2 (negative = SHA event predicted too early for arrivals), '
+                   'actual - predicted air time for M1',
+           'M1_hkg_tpe_air_time': oe.errstats(V['M1_hkg_tpe']), 'M1_cn_leave_one_route_out': oe.errstats(V['M1_cn_loro'])}
+    for k in ('M2_arr_hkg_tpe', 'M2_dep_hkg_tpe', 'M2_arr_hkg_tpe_corrected', 'M2_dep_hkg_tpe_corrected',
+              'M2_arr_cn_loao', 'M2_dep_cn_loao', 'M2_arr_other_loao', 'M2_dep_other_loao',
+              'M2_arr_cn_loao_used', 'M2_dep_cn_loao_used', 'M2_arr_other_loao_used', 'M2_dep_other_loao_used'):
         out[k] = {f'{oe.RBINS[i][0]}-{oe.RBINS[i][1]} km': oe.errstats(v) for i, v in sorted(V[k].items())}
+    out['note_used'] = ('*_used: the estimate actually used: bias removed (nested, out of sample) only in bins where '
+                        'that cut sigma by >= 5 %; *_hkg_tpe_corrected: the held-out route with those same corrections')
     return out
 
 
@@ -216,9 +372,9 @@ def chart(stats, path):
                 lo, hi = [int(x) for x in k.split(' ')[0].split('-')]
                 xs.append((lo + hi) / 2); ys.append(v[val])
         return xs, ys
-    for key, col, lab, mk in (('M2_arr_cn_loao', BLUE, 'arrivals, China domestic (leave-one-airport-out)', 'o'),
-                              ('M2_dep_cn_loao', ORANGE, 'departures, China domestic (leave-one-airport-out)', 's'),
-                              ('M2_arr_hkg_tpe', AQUA, 'arrivals, HKG-TPE held out', '^')):
+    for key, col, lab, mk in (('M2_arr_cn_loao_used', BLUE, 'arrivals, China domestic (leave-one-airport-out)', 'o'),
+                              ('M2_dep_cn_loao_used', ORANGE, 'departures, China domestic (leave-one-airport-out)', 's'),
+                              ('M2_arr_hkg_tpe_corrected', AQUA, 'arrivals, HKG-TPE route held out of every fit', '^')):
         xs, ys = series(key)
         a.plot(xs, ys, color=col, lw=2, marker=mk, ms=6, label=lab)
         xs9, ys9 = series(key, 'abs_p90_min')
@@ -227,7 +383,7 @@ def chart(stats, path):
     a.set_xscale('log'); a.set_xticks([60, 100, 200, 400, 800, 1600, 3000]); a.set_xticklabels(['60', '100', '200', '400', '800', '1600', '3000'])
     a.set_xlabel('distance (km) from the inferred end to the nearest observed fix')
     a.set_ylabel('|predicted - actual| time, minutes (median solid)')
-    a.set_title('D  Timing method M2: validated error vs gap length')
+    a.set_title('D  Timing method M2: out-of-sample error vs gap length (%s)' % days[-1]['day'])
     a.legend(frameon=False, fontsize=7.5, loc='upper left')
     fig.suptitle('SHA (ZSSS) movements identified from open ADS-B seen outside the Shanghai coverage gap  '
                  f'({", ".join(d["day"] for d in days)}; adsb.lol globe_history, ODbL; routes VRS standing data, CC0)',
@@ -249,8 +405,10 @@ def main(results):
                 if 0 <= j < len(aps): far_db[aps[j]] += 1
     days = []
     for r in results:
-        write_local(r)
+        write_local(r, vrs['airports'])
         days.append(day_stats(r, sha_by_al, far_db))
+    sp, take = write_owner_sample(results, vrs['airports'])
+    print('owner sample (local only):', sp, len(take), 'rows')
     blame = os.path.join(oe.CACHE, 'routes_vrs', 'blame_age.json')
     stats = {
         'what': 'OD2 tier 2 "observed elsewhere": Hongqiao (ZSSS) movements identified from open ADS-B outside the '
@@ -266,6 +424,16 @@ def main(results):
                      'pair_check_vs_wikipedia': results[0]['pairs'],
                      'last_change_age': oe.jload(blame) if os.path.exists(blame) else None},
         'days': days,
+        'readings': {
+            'identified_share': '69-70 % of 783.4/day carry a real identity and a DB-consistent track; that is an upper '
+                                'figure. The SHA-vs-PVG label was checked externally only on the Hong Kong and Taipei '
+                                'Songshan routes (C2: HKIA 51/51 and TSA 12/12 DB labels, 23/23 listed B1 movements); '
+                                'domestic labels rest on the DB. About 65-70 % is the defensible share.',
+            'sigma': 'sigma is a 1-sigma uncertainty from out-of-sample validation, not an error bound',
+            'registry_independence': 'not independent: the readsb identity fields come from tar1090-db, which is built '
+                                     'from the Mictronics database plus the ADS-B Exchange basic aircraft DB, so the 100 % '
+                                     'agreement with Mictronics is circular (consistency, not truth)',
+            'fix_round_1': 'docs/phase1/verify_research.md, section "Fix round 1"'},
         'attribution': 'Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL; routes: '
                        'Virtual Radar Server standing data (CC0 1.0); aircraft data: Mictronics aircraft database (ODC-By 1.0)',
     }

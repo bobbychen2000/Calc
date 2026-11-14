@@ -61,8 +61,13 @@ json.dump(dict(what='Airport building heights from open sources (B3), all src in
     osm='no height / building:levels tags on any airport building (A1)',
     aip='AIP (mirror) obstacles match only the tower among airport buildings (A1)',
     dsm='Copernicus GLO-30 DSM minus the median of a 30-90 m ring; 30 m pixels; TanDEM-X Dec 2010 - Jan 2015; hangars on airport-edited planes',
-    sar='Umbra GEC 2024-06-02, incidence 38.08 deg, sensor azimuth 275.5 deg: h = layover / 1.2748 between the SAR wall foot and the layover onset',
+    sar='Umbra GEC 2024-06-02, incidence 38.08 deg, sensor azimuth 275.5 deg: h = layover / cot(38.08 deg) = layover / 1.2763 between the SAR wall foot and the layover onset',
     photo='height ratio to the 44.5 m east tower in a 2023 Commons photo, distances from OSM'),
-    buildings=B, rejected=rej, licences='Copernicus WorldDEM-30 notice; Umbra CC BY 4.0; OSM ODbL; Commons photo CC BY-SA 4.0 (MNXANL)'),
+    buildings=B, rejected=rej, licences='Copernicus WorldDEM-30 notice; Umbra CC BY 4.0; OSM ODbL; Commons photo CC BY-SA 4.0 (MNXANL)',
+    attribution=('produced using Copernicus WorldDEM-30 (c) DLR e.V. 2010-2014 and (c) Airbus Defence and Space GmbH '
+                 '2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved; Umbra Lab, Inc., '
+                 'Umbra SAR Open Data, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/), modified; '
+                 '(c) OpenStreetMap contributors (ODbL 1.0); photo ratio: Wikimedia Commons photo by MNXANL, CC BY-SA 4.0 '
+                 '(docs/phase1/photos_credits.md); AIP (mirror) obstacle match: short cited fact')),
     open(os.path.join(M, 'b3_building_heights.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 for b in B: print(f"{b['name'][:42]:42s} {b['proposed_m']:5.1f} +- {b['unc_m']:4.1f}  (rule {b['rule_m']})")

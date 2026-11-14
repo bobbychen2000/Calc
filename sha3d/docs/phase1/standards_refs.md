@@ -272,6 +272,11 @@ DSM inside each footprint minus the median of a 30-90 m ring, with the editing (
 Umbra GEC 2024-06-02 (CC BY 4.0): incidence 38.08°, sensor azimuth 275.5° (looking east). A point at height h shifts
 towards the sensor by h·cot 38.08° = **1.2763 h** (exact cotangent; the code always used it, the earlier text said 1.2748). For every sensor-facing wall ≥ 30 m, range profiles at 2 m spacing
 (4× overview, 1.4 m) were aligned on the OSM wall (+ the Umbra − OSM ground offset +6.1 E / −0.9 N from A1) and medianed.
+*Note (data fix round 2, `qa_data.md`):* the data tools now use one Umbra registration, +3.07 E / 0 N on the runway bands
+(`tools/common/umbra_reg.py`); the +6.1 / −0.9 taxiway fit absorbed the OSM taxiway errors (QA C1 M1). This section still
+uses the old value. A scratch re-run with +3.07 / 0 changes the layover heights by a median of 0.6 m, but 5 of 25 walls
+by more than 5 m (the edge search window moves). The heights here are therefore registration-sensitive and should be
+re-run by task B3; they do not feed the data files.
 The wall foot is the steepest drop near the wall (the end of the facade layover); the onset is the steepest rise west of
 it whose plateau stays above half the step. h = (foot − onset) / 1.2763; ± from 200 bootstrap resamples of the lines
 and the pixel size. 30 walls were measured; each was accepted or rejected by eye:

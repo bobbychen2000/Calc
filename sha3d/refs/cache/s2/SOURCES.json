@@ -18,7 +18,7 @@
    "processing_baseline": "05.13",
    "tile_cloud_cover_pct": 1.98167,
    "epsg": 32651,
-   "window": "lon 121.300-121.370, lat 31.165-31.235 reprojected to the native UTM 51N grid (679 x 786 px at 10 m; SCL at 20 m)",
+   "window": "cut 2026-11-14 to the bounding box of the detailed extent (refs/cache/osm_pinned/extent_hull1km.geojson: convex hull of OSM relation 21913346 + 1 km, 23.545 km2) on the native UTM 51N grid: 458 x 702 px at 10 m (SCL at 20 m), bounds [339010.0, 3449190.0, 343590.0, 3456210.0]; pixels outside the extent polygon set to nodata 0 (23.54 km2 of valid pixels). Originally read as a window lon 121.300-121.370, lat 31.165-31.235 (679 x 786 px); the pre-cut crops are kept locally in refs/cache/s2_precut/ (not committed; they remain in git history up to the cut, owner decision Q2)",
    "band_urls": {
     "blue": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/10/S2B_51RUQ_20261014_0_L2A/B02.tif",
     "green": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/10/S2B_51RUQ_20261014_0_L2A/B03.tif",
@@ -28,14 +28,22 @@
     "scl": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/10/S2B_51RUQ_20261014_0_L2A/SCL.tif"
    },
    "files": {
+    "B02.tif": "e3d78c18f726b41f16dbe4e228f4ff1f61914264e218541373b684c187c5e163",
+    "B03.tif": "8a88ea2c349675f872448de8c6433c19f495e2cc9a526be71db27b212f12155e",
+    "B04.tif": "94fdc9a8950f9ae0a2a328ff815157c111a4b424a7d1adc2c8b1cb133ba402a0",
+    "B08.tif": "5aec0005357ba04602f7b10367162c93d205a16a72220107e053554ee3fb12b0",
+    "SCL.tif": "d339cb1c3e6610e21eca4700910eea5b54408ba55e3637bacb5e7b573c547238",
+    "TCI.tif": "9d3e6fbfb6e8cb656ba2d70833a6c032fdae448ceab156d8bad9c8e427fd4d57"
+   },
+   "values": "uint16 DN; reflectance = DN*0.0001 - 0.1 (STAC raster:bands scale/offset, earthsearch:boa_offset_applied=true); TCI uint8",
+   "files_precut_sha256": {
     "B02.tif": "18d25ec0ca67ea7e45c2defc6db8655efbd3fb5bd77a983d9ad99dee0e1c787b",
     "B03.tif": "e9c95a666719cb676e9deab522dcf1463eae9b60b014b4de8b863cbde11f9c46",
     "B04.tif": "582b55015f0fe1113c7d296d93a442c74a9b45db3bd8a58287c81bef92a72991",
     "B08.tif": "142fa23b680489dfca2fc5aa84585ae9b0dd0ecddecc0a31862e257baf776362",
     "SCL.tif": "5b9cc1886a3b8e08aeed49f7a7f4d398bac173fa49f08e1d95457fcb408e2b19",
     "TCI.tif": "563adb47c7ddee096ff8d3139b43df5bb33c9996539faa556a4feafe6ee14c08"
-   },
-   "values": "uint16 DN; reflectance = DN*0.0001 - 0.1 (STAC raster:bands scale/offset, earthsearch:boa_offset_applied=true); TCI uint8"
+   }
   },
   {
    "dir": "S2C_51RUQ_20260221_0_L2A",
@@ -46,7 +54,7 @@
    "processing_baseline": "05.12",
    "tile_cloud_cover_pct": 0.025276,
    "epsg": 32651,
-   "window": "lon 121.300-121.370, lat 31.165-31.235 reprojected to the native UTM 51N grid (679 x 786 px at 10 m; SCL at 20 m)",
+   "window": "cut 2026-11-14 to the bounding box of the detailed extent (refs/cache/osm_pinned/extent_hull1km.geojson: convex hull of OSM relation 21913346 + 1 km, 23.545 km2) on the native UTM 51N grid: 458 x 702 px at 10 m (SCL at 20 m), bounds [339010.0, 3449190.0, 343590.0, 3456210.0]; pixels outside the extent polygon set to nodata 0 (23.54 km2 of valid pixels). Originally read as a window lon 121.300-121.370, lat 31.165-31.235 (679 x 786 px); the pre-cut crops are kept locally in refs/cache/s2_precut/ (not committed; they remain in git history up to the cut, owner decision Q2)",
    "band_urls": {
     "blue": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/2/S2C_51RUQ_20260221_0_L2A/B02.tif",
     "green": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/2/S2C_51RUQ_20260221_0_L2A/B03.tif",
@@ -56,17 +64,217 @@
     "scl": "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/51/R/UQ/2026/2/S2C_51RUQ_20260221_0_L2A/SCL.tif"
    },
    "files": {
+    "B02.tif": "d4cabd5ffcba03f621c789034e507dc54bc0b32063677e05f23bdb24909032d4",
+    "B03.tif": "d64b3594b237fd65198ea2c5929c943440d3b23141635088d9e7ae7db1341b61",
+    "B04.tif": "5adeee816b6b3b1f576128be1b7f5e67eaa201a8614c4d262bc530077d9787de",
+    "B08.tif": "1ba00f1fd32df98e4156b295098fc446d0836663db33007280a19599fe7d31a5",
+    "SCL.tif": "2cf549b5ab1cca0717690a44fa08ecc82a779878b99dfc82444b45200ad69c61",
+    "TCI.tif": "f71bd1d3745fd2ed15d0f040d8c197f61e402f745f7d4f6316df11bfd2b96adb"
+   },
+   "values": "uint16 DN; reflectance = DN*0.0001 - 0.1 (STAC raster:bands scale/offset, earthsearch:boa_offset_applied=true); TCI uint8",
+   "files_precut_sha256": {
     "B02.tif": "364af7b70ffcd1955690a8d40c6dc8d1285f7bfc0e592ff6f2d15dcab09495d1",
     "B03.tif": "a2d28870c7c22622d7827f30f33df64810d10c95d0f773a305cc16e9812f4733",
     "B04.tif": "5f589f61ab983d6a69eff98191a4d5e5c2e22644edfca66a8fe69f724cfc79fa",
     "B08.tif": "83a31e2d111fed0982d0295909e57425705d4f5ba80d23490384a61c1cfeda89",
     "SCL.tif": "5e3b96f44fcf4183baa34d095674c52b211ffcc43fc2e99450f263ff67da9883",
     "TCI.tif": "c1e21fcca21ddbac87f95536cd217b48fea3f241154ed6398c65d374b3fc595f"
-   },
-   "values": "uint16 DN; reflectance = DN*0.0001 - 0.1 (STAC raster:bands scale/offset, earthsearch:boa_offset_applied=true); TCI uint8"
+   }
   }
  ],
  "extra_files": {
   "stac_collection_sentinel-2-l2a.json": "https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a"
+ },
+ "cut_to_extent": {
+  "date": "2026-11-14",
+  "tool": "tools/geo/s2_cut_extent.py",
+  "reason": "QA C1 M8 (docs/phase1/qa_data.md): the committed crops covered 53.4 km2, beyond the 23.5 km2 detailed extent (PLAN s.6b Q3, s.7 Phase 1)",
+  "nodata": 0,
+  "per_file": {
+   "S2B_51RUQ_20261014_0_L2A": {
+    "B02.tif": {
+     "res_m": 10.0,
+     "px_before": 533694,
+     "px_after": 321516,
+     "px_inside": 235420,
+     "km2_before": 53.37,
+     "km2_bbox_after": 32.15,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339010.0,
+      3449190.0,
+      343590.0,
+      3456210.0
+     ]
+    },
+    "B03.tif": {
+     "res_m": 10.0,
+     "px_before": 533694,
+     "px_after": 321516,
+     "px_inside": 235420,
+     "km2_before": 53.37,
+     "km2_bbox_after": 32.15,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339010.0,
+      3449190.0,
+      343590.0,
+      3456210.0
+     ]
+    },
+    "B04.tif": {
+     "res_m": 10.0,
+     "px_before": 533694,
+     "px_after": 321516,
+     "px_inside": 235420,
+     "km2_before": 53.37,
+     "km2_bbox_after": 32.15,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339010.0,
+      3449190.0,
+      343590.0,
+      3456210.0
+     ]
+    },
+    "B08.tif": {
+     "res_m": 10.0,
+     "px_before": 533694,
+     "px_after": 321516,
+     "px_inside": 235420,
+     "km2_before": 53.37,
+     "km2_bbox_after": 32.15,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339010.0,
+      3449190.0,
+      343590.0,
+      3456210.0
+     ]
+    },
+    "SCL.tif": {
+     "res_m": 20.0,
+     "px_before": 133227,
+     "px_after": 80960,
+     "px_inside": 58849,
+     "km2_before": 53.29,
+     "km2_bbox_after": 32.38,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339000.0,
+      3449180.0,
+      343600.0,
+      3456220.0
+     ]
+    },
+    "TCI.tif": {
+     "res_m": 10.0,
+     "px_before": 533694,
+     "px_after": 321516,
+     "px_inside": 235420,
+     "km2_before": 53.37,
+     "km2_bbox_after": 32.15,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339010.0,
+      3449190.0,
+      343590.0,
+      3456210.0
+     ]
+    }
+   },
+   "S2C_51RUQ_20260221_0_L2A": {
+    "B02.tif": {
+     "res_m": 10.0,
+     "px_before": 533694,
+     "px_after": 321516,
+     "px_inside": 235420,
+     "km2_before": 53.37,
+     "km2_bbox_after": 32.15,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339010.0,
+      3449190.0,
+      343590.0,
+      3456210.0
+     ]
+    },
+    "B03.tif": {
+     "res_m": 10.0,
+     "px_before": 533694,
+     "px_after": 321516,
+     "px_inside": 235420,
+     "km2_before": 53.37,
+     "km2_bbox_after": 32.15,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339010.0,
+      3449190.0,
+      343590.0,
+      3456210.0
+     ]
+    },
+    "B04.tif": {
+     "res_m": 10.0,
+     "px_before": 533694,
+     "px_after": 321516,
+     "px_inside": 235420,
+     "km2_before": 53.37,
+     "km2_bbox_after": 32.15,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339010.0,
+      3449190.0,
+      343590.0,
+      3456210.0
+     ]
+    },
+    "B08.tif": {
+     "res_m": 10.0,
+     "px_before": 533694,
+     "px_after": 321516,
+     "px_inside": 235420,
+     "km2_before": 53.37,
+     "km2_bbox_after": 32.15,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339010.0,
+      3449190.0,
+      343590.0,
+      3456210.0
+     ]
+    },
+    "SCL.tif": {
+     "res_m": 20.0,
+     "px_before": 133227,
+     "px_after": 80960,
+     "px_inside": 58849,
+     "km2_before": 53.29,
+     "km2_bbox_after": 32.38,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339000.0,
+      3449180.0,
+      343600.0,
+      3456220.0
+     ]
+    },
+    "TCI.tif": {
+     "res_m": 10.0,
+     "px_before": 533694,
+     "px_after": 321516,
+     "px_inside": 235420,
+     "km2_before": 53.37,
+     "km2_bbox_after": 32.15,
+     "km2_valid_after": 23.54,
+     "bounds_after": [
+      339010.0,
+      3449190.0,
+      343590.0,
+      3456210.0
+     ]
+    }
+   }
+  }
  }
 }

@@ -39,7 +39,7 @@ World frame (FRAME_ID 'ltp-wgs84-zsss')
 Height chain (y)
 ----------------
 y = height in metres in the AIP's height datum, i.e. numerically the AIP elevations. The AIP (mirror, EFF 2026-07-08,
-AD 2.2/2.12) gives AD ELEV 3.0 m and THR / DTHR / TDZ elevations 2.0-2.8 m, and states no datum ("Geoid undulation at
+AD 2.2/2.12) gives AD ELEV 3.0 m and THR / DTHR elevations 2.0-2.7 m, and states no datum ("Geoid undulation at
 AD ELEV PSN": blank). That the datum is Shanghai's local Wusong height (H_Wusong = H_1985 + 1.680 m, Shanghai planning
 bureau notice 2022, docs/phase0/terrain.md row 16) is inferred, not verified.
 * FIELD_ELEV_Y = 3.0 (AD ELEV, AIP mirror).
@@ -52,7 +52,9 @@ bureau notice 2022, docs/phase0/terrain.md row 16) is inferred, not verified.
   Read the other way, if the AIP is Wusong then EGM2008 heights ~ H_1985 + 0.4 m here (1.680 - 1.30) [inf].
 * EGM2008 -> ellipsoid: h_WGS84 = H_EGM2008 + N, N = +11.267 m at the origin (bilinear in the NGA 2.5' grid
   us_nga_egm08_25.tif from cdn.proj.org, public domain; terrain.md gave 11.24 at the nearest node). Over the detailed
-  extent N varies 11.07-11.47 m; geoid_n(x, z) is a plane fit to the grid, good to 4 mm within +-4 km.
+  extent N varies 11.16-11.35 m (bilinear in the node-registered grid, AREA_OR_POINT=Point, on the extent ring; QA C1
+  L3 corrected the earlier 11.07-11.47 m); geoid_n(x, z) is a plane fit to the grid, good to 4 mm within +-4 km (0.8 mm
+  on the extent ring).
 * Hence the ellipsoidal (GNSS / ADS-B alt_geom) height of a world point: h = y - K_DEM + N(x, z) ~ y + 9.97 m at the
   origin. The field (AD ELEV 3.0 m) is at h ~ 12.97 m HAE. (If the AIP is Wusong and EGM2008 equalled the 1985 datum,
   h = y - 1.680 + N would give 9.59 m: the 0.38 m difference is far inside the DEM's +-2 m.)
@@ -76,8 +78,8 @@ Y_REF = ('AIP height datum (metres, AIP mirror AD 2.2 / 2.12; datum not stated; 
 FIELD_ELEV_Y = 3.0
 GROUND_Y = 2.5
 AIP_RWY_POINTS = {   # AIP (mirror) AD 2.12 column 6 "THR elevation", m; thr = runway end, dthr = displaced threshold
-    '18L': dict(thr=2.1, dthr=2.0, tdz=2.3), '36R': dict(thr=2.7, dthr=2.6, tdz=2.8),
-    '18R': dict(thr=2.6, dthr=2.6, tdz=2.6), '36L': dict(thr=2.6, dthr=2.7, tdz=2.6)}
+    '18L': dict(thr=2.1, dthr=2.0), '36R': dict(thr=2.7, dthr=2.6),     # (TDZ not kept: QA C1 M2, values used only)
+    '18R': dict(thr=2.6, dthr=2.6), '36L': dict(thr=2.6, dthr=2.7)}
 K_DEM = 1.30          # y - H_EGM2008 (Copernicus GLO-30), measured at the 8 AIP runway points [obs, +-2 m]
 K_DEM_SD = 0.27
 WUSONG_MINUS_1985 = 1.680
@@ -207,8 +209,9 @@ def frame_block():
         'k_dem_note': ('y = H_EGM2008 (Copernicus GLO-30 DEM) + k_dem; measured at the 8 AIP runway points (all on '
                        'WorldDEM airport-edited planes) [obs]; DEM LE90 1.92 m, so +-2 m'),
         'geoid_egm2008': {'n0_m': GEOID_N0, 'dn_dx': GEOID_DN_DX, 'dn_dz': GEOID_DN_DZ,
+                          'extent_range_m': [11.16, 11.35],
                           'note': 'N(x,z) = n0 + dn_dx*x + dn_dz*z (plane fit to NGA us_nga_egm08_25.tif, +-4 mm '
-                                  'within 4 km); h_WGS84 = y - k_dem + N'},
+                                  'within 4 km); h_WGS84 = y - k_dem + N; N over the detailed extent 11.16-11.35 m'},
         'hae_minus_y_at_origin_m': round(GEOID_N0 - K_DEM, 3),
         'wusong_minus_1985_m': WUSONG_MINUS_1985,
         'qnh_note': 'altitude on QNH ~ y; ADS-B alt_baro needs QNH (frame.y_from_pressure_alt, ISA) [inf]',
