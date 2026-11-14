@@ -17,7 +17,8 @@
 //                                                               respects corner speeds (v <= sqrt(lat * r), v <= w * r),
 //                                                               per-section caps and the accel / brake limits, timed to
 //                                                               take D seconds: slack is taken by a lower cruise speed
-//                                                               (not below vTyp) and then by one stop (wait); a path that
+//                                                               (not below vTyp; both ends moving: down to max(vCont, half
+//                                                               the slower end speed)) and then by one stop (wait); a path that
 //                                                               cannot be driven in D (tmin > D) is reported (feasible)
 //   profAt(P, t)                     -> { s, v }                arc length and speed at time t in [0, D]
 //   geoHermite(p0, d0, s0, p1, d1, s1, D)                       an air-hole curve: the Hermite SHAPE between two fixes with
@@ -74,18 +75,29 @@ export function filletPath(pts, r, ok = null) {
 }
 
 // ---------------------------------------------------------------- ground speed profile
-// opt: { acc, dec, lat, w (rad/s), pivotW (rad/s), cap(s) -> m/s, vTyp (cruise floor before a stop is added) }
+// opt: { acc, dec, lat, w (rad/s), pivotW (rad/s), cap(s) -> m/s, vTyp (cruise floor before a stop is added), vCont (round 4),
+//        lu: { len (m), lat (m/s2), w (rad/s), vmax (m/s) } (round 4 iteration 2: a line-up section at the end of the path) }
 export function profilePath(R, D, v0, v1, opt) {
   const L = Math.max(R.len, 1e-3), n = Math.max(3, Math.min(1200, Math.ceil(L / 1.0) + 1)), h = L / (n - 1);
   const S = new Float64Array(n), cap = new Float64Array(n), dwell = new Float64Array(n);
   const hd = new Float64Array(n);
   for (let i = 0; i < n; i++) { S[i] = i * h; const p = polyAt(R, Math.min(L, S[i] + 1e-6)); hd[i] = Math.atan2(p.ux, -p.uz); }
   const w = Math.max(2, 2 * h), wi = Math.max(1, Math.round(w / h));
+  const rr = new Float64Array(n); let iM = -1;   // local radius; iM: the first sample of a line-up section (the speed only falls from there)
   for (let i = 0; i < n; i++) {
     const a = Math.max(0, i - wi), b = Math.min(n - 1, i + wi);
     const dth = Math.abs(wrapPi(hd[b] - hd[a])), span = (b - a) * h || h;
     const r = dth > 1e-3 ? span / dth : 1e6;
     cap[i] = Math.min(opt.cap ? opt.cap(S[i]) : 10, Math.sqrt(opt.lat * r), opt.w * r);
+    rr[i] = r;
+  }
+  // (round 4 iteration 2, F2) a LINE-UP section (a taxi onto the runway for a take-off): from the first turning sample (radius < 60 m)
+  // of the last opt.lu.len m of the path to its end - the turn onto the runway and whatever bends follow it. There: gentler corner speeds
+  // (lateral opt.lu.lat, turn rate opt.lu.w), at most opt.lu.vmax, and (run below) a speed that never rises again - case S turned 85 deg
+  // onto 28L at 10-14 kt with ~2 m/s2 lateral and a speed sawtooth
+  if (opt.lu) {
+    for (let k = 0; k < n; k++) if (S[k] >= L - opt.lu.len && rr[k] < 60) { iM = k; break; }
+    if (iM >= 0) for (let k = iM; k < n; k++) { const r = rr[k]; cap[k] = Math.min(cap[k], Math.sqrt(opt.lu.lat * r), opt.lu.w * r, opt.lu.vmax); }
   }
   // turn-arounds (sharp vertices > 150 deg kept by filletPath): stop and pivot there
   for (let k = 1; k < R.pts.length - 1; k++) {
@@ -105,6 +117,9 @@ export function profilePath(R, D, v0, v1, opt) {
     v[0] = Math.min(Math.max(v[0], start), start); v[n - 1] = Math.min(v[n - 1], end);
     for (let i = 1; i < n; i++) v[i] = Math.min(v[i], Math.sqrt(v[i - 1] * v[i - 1] + 2 * opt.acc * h));
     for (let i = n - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * opt.dec * h));
+    // (F2) monotonic line-up: from the first turn of the line-up section on, the speed never rises again (only lowers values, so the
+    // acceleration / braking limits above still hold)
+    if (iM >= 0) for (let i = Math.max(iM, stopAt) + 1; i < n; i++) v[i] = Math.min(v[i], v[i - 1]);
     let T = 0; const tA = new Float64Array(n);
     for (let i = 1; i < n; i++) { T += dwell[i - 1]; T += 2 * h / Math.max(0.05, v[i - 1] + v[i]); tA[i] = T; }
     T += dwell[n - 1];
@@ -115,7 +130,10 @@ export function profilePath(R, D, v0, v1, opt) {
   let pr = base;
   if (base.T < D) {
     // slack: lower cruise speed first (not below vTyp), then one stop
-    const vMax = Math.max(...base.v), vTyp = Math.min(opt.vTyp ?? 4, vMax);
+    // (round 4, E7: when BOTH ends move (> 1 m/s) the cruise may go down to half the slower end speed, >= opt.vCont (1.5 m/s) - a
+    // continuous taxi that fits the two fixes is preferred to a stop in the middle of the hole: case S stopped for ~16 s inside a
+    // 48-s hole whose two fixes both moved at 6-9 kt, nobody within 81 m) [inf: 0.5, 1.5 m/s]
+    const vMax = Math.max(...base.v), vC = start > 1 && end > 1 ? Math.max(opt.vCont ?? 1.5, 0.5 * Math.min(start, end)) : Infinity, vTyp = Math.min(opt.vTyp ?? 4, vMax, vC);
     const tTyp = run(vTyp, -1);
     if (tTyp.T >= D) {
       let lo = vTyp, hi = vMax;
@@ -126,7 +144,8 @@ export function profilePath(R, D, v0, v1, opt) {
       let k;
       if (start < 0.5) k = 0;
       else if (end < 0.5) k = n - 1;
-      else { let bi = Math.floor(n / 2), bv = 1e9; for (let i = 1; i < n - 1; i++) if (cap[i] < bv - 1e-6) { bv = cap[i]; bi = i; } k = bi; }
+      // (F2: never inside a line-up section - the speed there only falls - but before it)
+      else { const iEnd = iM > 1 ? iM : n - 1; let bi = Math.floor(iEnd / 2), bv = 1e9; for (let i = 1; i < iEnd; i++) if (cap[i] < bv - 1e-6) { bv = cap[i]; bi = i; } k = bi; }
       const pr2 = run(vTyp, k); const extra = Math.max(0, D - pr2.T); dwell[k] += extra; pr = run(vTyp, k);
       out.stop = { i: k, s: S[k], dur: extra };
     }

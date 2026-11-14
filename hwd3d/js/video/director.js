@@ -4,7 +4,8 @@
 //   const info = await (await import('/js/video/director.js')).installDirector(cfg)   -> window.__vd
 //   cfg: { t0 (virtual epoch ms, as given to installVClock), packUrl, type ('SF50' | 'PC12'), event ('takeoff' | 'landing'),
 //          window: {from, to} (data ms: the hero must be at HWD with its event inside), frames (js/video/timeline.js),
-//          preStep (s, engine step of the pre-roll), models (true: the hero is drawn with its detailed model),
+//          preStep (s, engine step of the pre-roll), models (kept for the job format: the app now draws every PC12 / SF50
+//          with its detailed model, and the director always preloads both models),
 //          cams (per-frame cameras [px, py, pz, tx, ty, tz, fovDeg] from js/video/camera.js, or null), cuts (frame indices
 //          where a shot starts), shutter (motion-blur shutter of captured frames, 0..1; 0 = off), fps, runway,
 //          overlay options { timeOnly, endDate } }
@@ -15,38 +16,35 @@
 //   __vd.overlay(state)   caption / end card for the frame about to be captured (state.cap: the planned caption of the
 //                         frame, js/video/provenance.js captionTrack; without it the live sample is used: preview only)
 //
-// Seams used (all from outside the app, nothing in js/live is edited):
-//  - the camera: app.js frame() calls HWD.rig.update(dt) then HWD.rig.camera() and hands the result to the renderer;
-//    both are replaced on the rig INSTANCE (the scripted camera of js/video/camera.js, or a plain follow camera);
-//  - the drawables: HWD.views.sync is wrapped so the hero (a type with a detailed model in js/aircraft/models.js) gets a
-//    DetailedAircraft instead of the GA placeholder (Phase 3b wires this into js/live/aircraft.js; docs/phase3_video.md);
-//  - frames that are not captured (scout runs, the skip-ahead before a frame range) stub R.render / R.present, so only the
-//    GPU work is skipped and the engine, drawables and camera state advance exactly as in a full run; the stub also sets the
-//    renderer's previous camera (R.prev, the motion vectors' reference), as R.render does, so the first DRAWN frame of a
-//    range, a resume or a pick blurs against the true previous frame;
-//  - motion blur: captured frames get post.shutter = cfg.shutter (the app's own blur pass, js/renderer.js; the app's own
-//    loop runs with 0); at a cut R.prev is cleared, so the first frame of a shot carries no camera motion from the last one;
-//  - the animation clock: the app's frame() advances its own clock (simT: propeller / fan angle, strobe and beacon phase,
-//    flap and gear lag) by the frame dt it reads from performance.now(), and hands the same dt to traffic.update /
-//    physics.resolve. The director advances performance.now() by one VIDEO frame (1 / fps) and, during that call only,
-//    hands the engine its own sub-step h (traffic.update / physics.resolve wrapped on the instances): the animation runs
-//    at video rate in every frame (it ran at h / (1 / fps), down to 52 %, inside 1x-2x speed ramps), the engine as before.
+// The app's own hooks (Phase 3b, js/live/app.js; docs/phase3_video.md section 8 items 2-6 - they replaced the director's
+// monkeypatches of the rig, the views, the engine and the renderer, 2026-11-14). The app's own loop is paused
+// (HWD.qa.pause): the director drives every frame itself.
+//  - the engine: HWD.stepEngine(now, dt) for the pre-roll and the sub-steps of a time-lapse frame;
+//  - a frame: HWD.qa.frame({ wall: 1 / fps, engineDt: h, render, cut }): the animation clock (simT: propeller / fan angle,
+//    strobe and beacon phase; flap, gear and control lags; the 30-s environment timer) advances by one VIDEO frame and the
+//    engine by its own sub-step h, so the animation runs at video rate in every frame, time-lapse ramps included;
+//    render: false is the app's no-draw frame (scout runs, the skip-ahead before a frame range): only the GPU work is
+//    skipped, the engine, drawables and camera advance exactly as in a drawn frame and the renderer keeps the camera as its
+//    previous camera (R.prev, the motion vectors' reference), so the first DRAWN frame of a range, a resume or a pick blurs
+//    against the true previous frame; cut: true at a shot start clears that reference (no camera motion from the last shot);
+//  - the camera: HWD.setCamera(fn) - the scripted camera of js/video/camera.js (or a plain chase camera without a plan);
+//  - motion blur: HWD.setPost({ shutter: cfg.shutter }) (the app's own blur pass, js/renderer.js; the app's own loop runs
+//    with 0);
+//  - the drawables: the app's own (js/live/aircraft.js AircraftViews): every PC12 / SF50 is a DetailedAircraft whose gear,
+//    flaps, propeller / fan, controls and lights the views drive from the drawn motion; the director only preloads the
+//    models before the first frame, so a model never appears at a load-dependent frame (determinism).
 // Hero selection BY RULE (D1): the pack's records of `type` with a ground fix within 2.5 km of the ARP and the case's event
 // (take-off: ground then airborne; landing: airborne then ground) inside cfg.window; the most such fixes wins. Its key
 // stays in this closure: it is never returned, logged or written (no UI text or log line may hold a key).
 import { phaseLabel } from '../live/traffic.js';
 import { wgs84ToWorld } from '../geo.js';
-import { hasModel, loadModel, createAircraft } from '../aircraft/models.js';
+import { MODELS, loadModel } from '../aircraft/models.js';
 import { Overlay } from './overlay.js';
 import { speedLabel } from './timeline.js';
 import { sampleSrc, pillText } from './provenance.js';
 
 const HWD_R = 2500;            // m from the ARP: "at HWD"
 const D2R = Math.PI / 180, KT = 1852 / 3600;
-// detailed-model drawing state [inf]: flap settings of the TCDS / pc12 pivots, propeller / fan speeds
-const FLAPS = { PC12: { takeoff: 15, landing: 40 }, SF50: { takeoff: 15, landing: 39 } };
-const ROTOR = { PC12: { ground: 110, air: 178 }, SF50: { ground: 100, air: 120 } };   // rad/s; PC-12 1,700 rpm = 178 (pc12 pivot)
-const TAKEOFF_PH = new Set(['line_up', 'takeoff_roll', 'initial_climb', 'upwind', 'runway_taxi', 'hold_short', 'runup']);
 
 async function fetchPack(url) {
   const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) throw new Error('pack HTTP ' + r.status);
@@ -88,7 +86,7 @@ export async function installDirector(cfg) {
 }
 
 class Director {
-  constructor(cfg, H, V) { this.cfg = cfg; this.H = H; this.V = V; this.f = -1; this.wallPrev = null; this.camLast = null; this.inFrame = false; this.frameH = 0; }
+  constructor(cfg, H, V) { this.cfg = cfg; this.H = H; this.V = V; this.f = -1; this.wallPrev = null; this.camLast = null; this.camNow = null; }
   async init() {
     const { cfg, H } = this;
     this.pack = await fetchPack(cfg.packUrl);
@@ -98,66 +96,28 @@ class Director {
     const sel = selectHero(this.pack, cfg);
     let heroKey = sel ? sel.key : null; this.heroStats = sel ? { fixesAtHwd: sel.n, fixes: sel.fixes } : null;
     this.hero = () => (heroKey != null ? H.traffic.tracks.get(heroKey) || null : null);
-    this.isHero = (k) => heroKey != null && k === heroKey;
+    this.heroView = () => (heroKey != null ? { v: H.views.get(heroKey), S: H.views.drive ? H.views.drive(heroKey) : null } : null);
     this.metars = (this.pack.metar || []).slice().sort((a, b) => a.obsTime - b.obsTime);
-    // detailed models: loaded BEFORE the first frame, so the swap below is synchronous and the same in every run
+    // detailed models: EVERY registered type loaded before the first frame (the app's views draw every PC12 / SF50 with its
+    // model; a load finishing during the run would put the model in at a load-dependent frame)
     this.modelOk = {};
-    if (cfg.models !== false && hasModel(cfg.type)) { try { await loadModel(cfg.type); this.modelOk[cfg.type] = true; } catch (e) { this.modelOk[cfg.type] = false; console.warn('video: model load failed', String(e && e.message || e)); } }
-    this.patchViews(); this.patchCamera(); this.patchEngineDt();
+    for (const ty of Object.keys(MODELS)) { try { await loadModel(ty); this.modelOk[ty] = true; } catch (e) { this.modelOk[ty] = false; console.warn('video: model load failed', ty, String(e && e.message || e)); } }
+    // the app's hooks (header): its own loop paused, the planned camera, the capture shutter
+    H.qa.pause(true);
+    H.setCamera(() => this.camNow);
     const oo = cfg.overlay || {};
     this.ov = new Overlay({ type: cfg.type, event: cfg.event, runway: cfg.runway || '28L', endDate: !!(oo.endDate ?? cfg.endDate), timeOnly: !!oo.timeOnly });
-    document.body.classList.add('qa');
+    H.qa.hideUI(true);
     this.frames = cfg.frames || null; this.cams = cfg.cams || null;
     this.fps = cfg.fps || 30; this.shutter = +cfg.shutter || 0; this.cuts = new Set(cfg.cuts || []);
+    H.setPost({ shutter: this.shutter });
   }
   info() { return { hero: !!this.heroStats, heroStats: this.heroStats, frames: this.frames ? this.frames.length : 0, models: this.modelOk, off: this.off, lookahead: this.L, f: this.f, shutter: this.shutter, cuts: this.cuts.size }; }
   setCams(c) { this.cams = c; return true; }
   wallOf(tData) { return (tData / 1000 + this.off + this.L) * 1000; }
   dataOf(wall) { return wall - this.L * 1000 - this.off * 1000; }   // the data time the app displays at virtual wall time `wall`
-  // ---------------------------------------------------------------- seams
-  patchViews() {
-    const { H, cfg } = this, views = H.views, orig = views.sync.bind(views), self = this;
-    views.sync = function (traffic, now, o = {}) {
-      orig(traffic, now, o);
-      for (const [k, v] of views.map) {
-        const tr = traffic.tracks.get(k); if (!tr || !tr.dims) continue;
-        if (!v.isVideoModel && self.isHero(k) && self.modelOk[tr.dims.type]) {
-          const d = createAircraft(tr.dims, { R: H.R, id: k, lodDist: 8000, shadowDist: 2500 }); d.isVideoModel = true;
-          for (const f of ['pos', 'fwd', 'pitch', 'roll', 'gear', 'rotor', 'lightsOn', 'selected', 'visible', 'alpha']) d[f] = v[f];
-          // the app's sync sets rotor = 0 for every fixed-wing drawable right before it calls step(dt) (js/live/aircraft.js:
-          // rotors are drawn for helicopters only), so the propeller / fan angle never advanced (a frozen disc in every
-          // earlier test clip): the hero's step puts the video's rotor speed back first
-          const step0 = d.step.bind(d); d.videoRotor = 0;
-          d.step = (dt) => { d.rotor = d.videoRotor; return step0(dt); };
-          H.scene.remove(v); v.dispose(); views.map.set(k, d); H.scene.add(d);
-        }
-        const dv = views.map.get(k);
-        if (dv && dv.isVideoModel) {
-          const D = tr.disp, ty = tr.dims.type;
-          dv.groundRef = H.site.groundY(D.x, D.z);
-          const run = !(tr.phase === 'parked' || tr.phase === 'hangared' || tr.phase === 'no_signal') || D.gs > 0.3;
-          dv.rotor = dv.videoRotor = run ? (D.ground ? ROTOR[ty].ground : ROTOR[ty].air) : 0;
-          const fl = D.flaps ? FLAPS[ty].landing : (TAKEOFF_PH.has(tr.phase) || (!D.ground && (D.y - dv.groundRef) < 150 && cfg.event === 'takeoff') ? FLAPS[ty].takeoff : 0);
-          dv.setFlaps(fl);
-        }
-      }
-    };
-  }
-  // the engine's dt inside the app's frame callback is the director's sub-step (see the header: the animation clock)
-  patchEngineDt() {
-    const T = this.H.traffic, Ph = this.H.physics, self = this;
-    const tu = T.update.bind(T), pr = Ph.resolve.bind(Ph);
-    T.update = function (now, dt) { return tu(now, self.inFrame ? self.frameH : dt); };
-    Ph.resolve = function (traffic, dt) { return pr(traffic, self.inFrame ? self.frameH : dt); };
-  }
-  patchCamera() {
-    const rig = this.H.rig, self = this;
-    this.rigOrig = { camera: rig.camera, update: rig.update };
-    rig.update = function () { };
-    rig.camera = function () { return self.camNow || self.rigOrig.camera.call(rig); };
-  }
   // ---------------------------------------------------------------- stepping
-  engine(now, dt) { this.H.traffic.update(now, dt); this.H.physics.resolve(this.H.traffic, dt); }
+  engine(now, dt) { this.H.stepEngine(now, dt); }
   async prepare({ preStep = this.cfg.preStep || 0.1 } = {}) {
     const V = this.V, F0 = this.frames[0];
     const end = this.wallOf(F0.t - F0.dt); let w = V.wall, n = 0;
@@ -178,12 +138,8 @@ class Director {
     for (let i = 1; i < F.n; i++) { const w = w0 + (w1 - w0) * i / F.n; V.advanceTo(w); this.engine(w, F.h); }
     V.advanceTo(w1); V.tickPerf(1000 / this.fps);
     this.camNow = this.cameraFor(f);
-    const R = H.R, rr = R.render, rp = R.present, shutter = this.shutter;
-    if (this.cuts.has(f)) R.prev = null;                 // a cut: no camera motion from the previous shot
-    if (!render) { R.render = function (fr, cam) { const C = this.computeCamera(cam); this.curCam = C; this.prev = C; return C; }; R.present = () => { }; }
-    else if (shutter > 0) R.render = function (fr, cam, t, post) { return rr.call(this, fr, cam, t, Object.assign({}, post, { shutter })); };
-    this.inFrame = true; this.frameH = F.h;
-    try { V.frame(); } finally { this.inFrame = false; R.render = rr; R.present = rp; }
+    // the app's frame: animation dt = one video frame, the engine's last sub-step h; a cut clears the blur reference
+    H.qa.frame({ wall: 1 / this.fps, engineDt: F.h, render: !!render, cut: this.cuts.has(f) });
     await V.settle(2);
     this.wallPrev = w1;
     return this.pose(f);
@@ -205,17 +161,27 @@ class Director {
     const F = this.frames[f], tr = this.hero(), out = { f, t: F.t, speed: F.speed };
     if (!tr) { out.found = false; return out; }
     const D = tr.disp, gy = this.H.site.groundY(D.x, D.z);
+    const dimsOf = (t) => (this.H.views.dimsOf ? this.H.views.dimsOf(t) : t.dims);   // the drawable's dims (the model's frame)
     const tDisp = this.H.traffic.displayTime(Date.now());
     Object.assign(out, { found: true, valid: !!D.valid, inView: !!tr.inView, x: D.x, y: D.y, z: D.z, hdg: D.hdg, pitch: (D.pitch || 0) / D2R, roll: (D.roll || 0) / D2R,
       gs: D.gs / KT, vs: D.vs, ground: !!D.ground, agl: D.y - gy, gy, alpha: D.alpha, gear: D.gear, flaps: D.flaps, phase: tr.phase,
-      label: phaseLabel(tr, Date.now()).replace(/ \(provisional\)$/, ''), stale: !!tr.stale, L: (tr.dims && tr.dims.L) || 10, span: (tr.dims && tr.dims.span) || 12 });
+      label: phaseLabel(tr, Date.now()).replace(/ \(provisional\)$/, ''), stale: !!tr.stale, L: (dimsOf(tr) && dimsOf(tr).L) || 10, span: (dimsOf(tr) && dimsOf(tr).span) || 12 });
     Object.assign(out, sampleSrc(tr.fx, tDisp, !!tr.stale));
+    // the drawable's driven state (js/live/aircraft.js: gear, flaps, propeller / fan, controls, lights - all inferred rules)
+    const hv = this.heroView(), v = hv && hv.v, S = hv && hv.S;
+    if (v) {
+      const L = v.lightsOn || {};
+      Object.assign(out, { detailed: !!v.loaded, vgear: +(+v.gear).toFixed(3), vflaps: v.flaps != null ? +(+v.flaps).toFixed(2) : null, flapsTgt: S ? S.flaps : null,
+        rotor: +(+v.rotor || 0).toFixed(1), running: S ? !!S.running : null, gearUp: S ? !!S.gearUp : null,
+        ctl: S ? [+S.ctl.roll.toFixed(3), +S.ctl.pitch.toFixed(3), +S.ctl.yaw.toFixed(3)] : null,
+        lights: ['nav', 'beacon', 'strobe', 'landing', 'taxi'].map(k => (L[k] ? k[0].toUpperCase() : '-')).join('') });
+    }
     // other drawn aircraft near the hero (the camera keeps clear of their bodies)
     const near = [];
     for (const o of this.H.traffic.tracks.values()) {
       if (o === tr || !o.disp.valid || !o.inView || o.hidden || !(o.disp.alpha > 0.02)) continue;
       const d = Math.hypot(o.disp.x - D.x, o.disp.z - D.z); if (d > 800) continue;
-      const T = o.dims || {}; near.push([+o.disp.x.toFixed(2), +o.disp.y.toFixed(2), +o.disp.z.toFixed(2), +(0.5 * Math.max(T.L || 9, T.span || 10)).toFixed(1)]);
+      const T = dimsOf(o) || {}; near.push([+o.disp.x.toFixed(2), +o.disp.y.toFixed(2), +o.disp.z.toFixed(2), +(0.5 * Math.max(T.L || 9, T.span || 10)).toFixed(1)]);
     }
     out.near = near;
     return out;

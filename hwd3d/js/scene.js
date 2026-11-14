@@ -5,6 +5,8 @@
 // items(camPos) -> RenderItem[], lightSprites(t) -> Sprite[], commit() and `visible` - added with scene.add() and removed
 // with scene.remove(); the scene imports nothing from js/aircraft/** and no gate system. scene.frame(t, camPos) calls
 // world.staticSprites(t) when the world provides it only through staticLights (the app pushes it, fork map 2.10).
+// OD4 iteration 3 (docs/phase3_models.md 15.7): put() packs a sprite's `pull` flag into iData.y (js/shaders/sprites.js:
+// lights of detailed aircraft are pulled toward the camera by 3 m so the airframe beside a lens does not cut its disc).
 // Dropped: parkAtGates (video era), the GateSystem / jet bridges, the procedural airliner programs ('aircraft', 'acr':
 // P3 registers its own programs), stDir (SFO airport grid).
 import { Mesh } from './gl.js';
@@ -44,6 +46,7 @@ export class Scene {
       if (n >= MAX_SPRITES) return; const o = n * 16;
       B[o] = s.p[0]; B[o + 1] = s.p[1]; B[o + 2] = s.p[2]; B[o + 3] = s.s; B[o + 4] = s.c[0]; B[o + 5] = s.c[1]; B[o + 6] = s.c[2]; B[o + 7] = s.i;
       const d = s.dir || [0, 1, 0]; B[o + 8] = d[0]; B[o + 9] = d[1]; B[o + 10] = d[2]; B[o + 11] = s.dir ? (s.k || 4) : 0; B[o + 12] = s.lens ? 1 : 0;
+      B[o + 13] = s.pull ? 1 : 0;   // OD4 it. 3: pulled toward the camera by its drawn radius (js/shaders/sprites.js; detailed aircraft)
       n++;
     };
     for (const d of this.drawables) { if (d.visible === false || !d.lightSprites) continue; const L = d.lightSprites(t); for (let i = 0; i < L.length; i++) put(L[i]); }

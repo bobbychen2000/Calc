@@ -17,7 +17,7 @@ THE 46-S HOLES (read this before using a pack). The recorder polled adsb.lol abo
 minute only ~14 s are observed, then nothing for ~46 s (up to ~53 s). A pack therefore has bursts of events 1.3 s apart
 and a hole of ~46 s every minute. The relay merge keeps a replay snapshot 75 s (REPLAY_SNAP_TTL), so aircraft do not
 vanish in a hole; their records simply stop changing. The app must NOT dead-reckon across a hole (at 70 kt an aircraft
-flies ~1.7 km in 46 s - a whole pattern leg) but display `lookahead_s` (60 s) behind the stream head, so that every hole
+flies ~1.7 km in 46 s - a whole pattern leg) but display `lookahead_s` (120 s since decision (c); 60 s before) behind the stream head, so that every hole
 up to ~55 s lies between two real fixes and is interpolated (Hermite on the air, along the taxi graph on the ground,
 data/hwd_taxigraph.json). The shim delivers the first `lookahead_s` of the window at once, so the first frame does not
 wait. Each pack's meta lists its measured holes (`sampling`).
@@ -55,7 +55,9 @@ PRESETS = {'weekend': ('2026-11-08T20:00Z', 60.0, 'Sunday 8 Nov 2026, 12:00-13:0
 DEFAULT_PACK = 'weekend'
 RADIUS_NM = 8.0          # = the relay's area (D6 ~5 NM + 3 NM lead-in) [inf]
 MAX_ALT_FT = 5000.0      # MSL; D6 shows < 3,000 ft AGL (= 3,052 ft MSL) - 1,950 ft of lead-in for descending traffic [inf]
-LOOKAHEAD_S = 60.0       # fork map 2.1 / 2.2: display this far behind the stream head
+LOOKAHEAD_S = 120.0      # display this far behind the stream head: 120 s for replay / snapshot packs (docs/PLAN.md 6b, orchestrator
+                         # decision (c), 2026-11-14 - a take-off across a recorder hole can then be timed on the runway instead of
+                         # hidden; there is no cost for recorded data). Was 60 (fork map 2.1 / 2.2); live mode keeps 60 s + the M3 rule
 # Record fields the app reads (fork map 2.1 contract; P3 normalizeAircraft)
 KEEP = ('hex', 'type', 'flight', 'r', 't', 'desc', 'category', 'lat', 'lon', 'lastPosition', 'alt_baro', 'alt_geom',
         'gs', 'track', 'true_heading', 'mag_heading', 'track_rate', 'roll', 'baro_rate', 'geom_rate', 'squawk',

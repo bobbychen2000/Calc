@@ -1,8 +1,18 @@
 # Phase 3 (OD3) — deterministic video pipeline
 
-**PC-12 parts SUPERSEDED (2026-11-14, OD4):** the PC-12 test clips and the case-P snapshot below hold `pc12.glb` 6e349329… (a retired fr3 build); the current PC-12 is the original `pc12/out/pc12.glb` (87731cce…, owner request 2026-11-14; `docs/phase3_models.md` section 4). Re-snapshot before the full case-P render.
+**Status 2026-11-14, fix round 4 iteration 2 (section 14):** the snapshots now hold the final traffic engine (renderer,
+models and data still frozen from Phase 3b); both cases re-scouted and re-planned, all gates pass, determinism and spot
+stills re-checked. **Phase 3b integration (section 13).** The app now has the hooks this pipeline needed (section 8:
+`HWD.stepEngine`, a separate engine dt, a no-draw frame, `HWD.setPost`, `HWD.setCamera`) and draws every PC-12 / SF50 with
+its detailed model itself, with gear, flaps, propeller / fan, control surfaces and lights driven from the motion
+(`js/live/aircraft.js`, `docs/phase2_app.md` section 11); the director's monkeypatches are gone. Both cases were
+re-scouted and re-planned on the current engine, with packs at the 120-s lookahead of decision (c), and 2-s spot clips
+were rendered at three key instants per case. Current models: SF50 `sf50.glb` **49242e41…**, PC-12 = the original
+`pc12/out/pc12.glb` **87731cce…** (OD4, `docs/phase3_models.md` section 15). The earlier test clips of section 10 show
+the models of their round (the PC-12 then was 6e349329…, a retired build). **The full videos are not rendered**: the
+orchestrator starts them after the recheck, from a new snapshot (section 11).
 
-Status 2026-11-14, after **review fix round 1** of the video pipeline (findings F1–F13; section 12 maps each finding to
+Before that: status after **review fix round 1** of the video pipeline (findings F1–F13; section 12 maps each finding to
 its fix). OD3 (docs/PLAN.md §6b) asks for two follow-cam videos of real recorded HWD movements: a **Cirrus SF50 Vision
 Jet take-off** (case S) and a **Pilatus PC-12 landing** (case P), on runway 28L, with the full-quality renderer (OD1) and
 the detailed models. This page describes the pipeline that makes them and the test clips that prove it. The full videos
@@ -27,7 +37,7 @@ Labels: **[obs]** measured here; **[inf]** a design choice.
 |---|---|
 | `js/video/vclock.js` | Virtual clock (classic script, injected by `page.addInitScript`): `Date`, `performance.now`, `requestAnimationFrame`, timers, seeded `Math.random` (section 2). |
 | `js/video/timeline.js` | Frame schedule from the job's segments (data time, speed); linear speed ramps; sub-steps ≤ 1/30 s; skip segments (cuts in data time). Pure module (Node + page). |
-| `js/video/director.js` | In-page director: hero by rule, pre-roll, per-frame stepping, the seams (camera, drawable, engine dt, no-draw frames, motion blur), hero pose + provenance of the current sample, overlay update. |
+| `js/video/director.js` | In-page director: hero by rule, the model preload, pre-roll, per-frame stepping through the app's hooks (section 2.4: camera, engine dt, no-draw frames, cuts, motion blur), the hero's pose + its driven state (gear, flaps, rotor, controls, lights) + the provenance of the current sample, overlay update. |
 | `js/video/camera.js` | Scripted cinematic camera: shot kinds, critically damped springs with feed-forward, rule-of-thirds aiming, constraints and the per-shot report (on-screen motion included). Pure module: planned in Node from the scout trace. |
 | `js/video/provenance.js` | Provenance class of each sample (obs / inf / rec / nos) and the per-frame caption track (pill + phase line, held ≥ 0.5 s). Pure module. |
 | `js/video/overlay.js` | Caption overlay and end card (DOM over the canvas; captured with the frame). |
@@ -86,21 +96,23 @@ runs; a 6–12-h render that is split or resumed must never mix versions. So **n
   `traffic.js` and `pc12.glb` since the snapshot was taken, half-way through their own work, so the pipeline fix went
   into the existing snapshot instead of freezing an engine in mid-edit.
 
-Current snapshots [obs]: case S tree `e26c545e9385…` (base `0df6b37af582…`), case P tree `90e710a5a07f…` (base
-`baa39ffc2f37…`); both from git `b0d55c1` + 1 modified path; models `sf50.glb` sha256 **49242e41…** and `pc12.glb`
-**6e349329…**. Before the full render, take a new snapshot of the then-current app (`snapshot --refresh`), scout and plan
-again (section 11).
+Current snapshots [obs] (Phase 3b, section 13): case S tree `73209bc0db88…`, case P tree `df19cf8c2cd0…`, both taken
+from the working tree (git `b6afcd3` + 10 modified paths) while the round-4 engine fix was in progress, so their engines
+differ (`js/live/traffic.js` sha256 `fc8d38d3…` in S, `f2cb1bdd…` in P); models `sf50.glb` **49242e41…** and `pc12.glb`
+**87731cce…** in both. (Earlier: S `e26c545e9385…`, P `90e710a5a07f…`, git `b0d55c1`, `pc12.glb` 6e349329….) Before the
+full render, take a new snapshot of the then-current app (`snapshot --refresh`), scout and plan again (section 11).
 
 ### 2.2 The app and the virtual clock
 
-**The app is not modified.** The driver opens `live.html?mode=replay&fixedres=1&pack=out/video/packs/pack_vS.json.gz` at
+**The pipeline does not modify the app**: it uses only the app's own hooks (section 2.4). The driver opens `live.html?mode=replay&fixedres=1&pack=out/video/packs/pack_vS.json.gz` at
 1920 × 1080, DPR 1 (`?fixedres=1` pins the render scale: no dynamic resolution, OD1 full quality), from the snapshot. The
 app runs its replay path: P1's in-page shim (`out/replay/replay_shim.js`) feeds the pack through the live code path
 (stream feed, engine, physics, drawables).
 
 **Virtual clock** (`js/video/vclock.js`, installed before any page script):
 - `Date.now()` / `new Date()` → a virtual **wall** clock. The epoch is `t0 = (pack.from + lookahead_s) × 1000`, so the
-  shim's offset is 0: the engine's wall clock IS the recording clock (+ the 60-s display lookahead). The tower state, the
+  shim's offset is 0: the engine's wall clock IS the recording clock (+ the pack's display lookahead: 120 s since Phase 3b,
+  decision (c); 60 s before). The tower state, the
   sun and the METAR follow the recording time.
 - `performance.now()` → a separate virtual **frame** clock; `app.js tick()` takes its frame dt from it.
 - `requestAnimationFrame` → a queue the driver runs once per output frame (`vclock.frame()`).
@@ -114,31 +126,38 @@ Pre-roll: the engine alone (`traffic.update` + `physics.resolve`) in 0.1-s steps
 9,871 steps). Each output frame `f` advances the wall clock by `speed / fps` in `n = ceil(speed)` sub-steps of
 `h ≤ 1/30 s`; sub-steps 1 … n−1 run the engine alone, the last one is the app's own frame callback (rAF). The director
 advances `performance.now()` by **one video frame (1/30 s)** for that callback and, during it only, hands the engine its
-own sub-step `h` (`traffic.update` / `physics.resolve` wrapped on the instances). So the app's per-frame clock (`simT`:
+own sub-step `h`, through the app's own frame call `HWD.qa.frame({ wall: 1/30, engineDt: h })` (Phase 3b; before, the
+director wrapped `traffic.update` / `physics.resolve` on the instances). So the app's per-frame clock (`simT`:
 propeller and fan angle, strobe and beacon phase; flap and gear lag; the 30-s environment refresh) runs at video rate in
 every frame, and the engine steps exactly as before. Before this round the frame dt was `h`, so inside the 1×–2× speed
 ramps (`h = speed / 60`) propellers and anti-collision lights ran at down to 52 % of their video-time rate. Probe [obs,
 case P, frames 270–320, the 2× → 1× ramp, h down to 0.633/30]: the engine received `h` in every sub-step, `views.sync`
 and the frame clock 1/30 s in all 51 frames, no mismatch.
 
-Frames that are not captured (the scout, the skip-ahead before a frame range, the opaque end card) run the same callback
-with `R.render` / `R.present` stubbed; the stub computes the camera and sets the renderer's previous camera (`R.prev`)
-exactly as `R.render` does, so the motion-blur reference of the first drawn frame of a range, a resume or a pick is the
-true previous frame. Everything else (engine, drawables, their motion-vector bookkeeping in `scene.frame` /
+Frames that are not captured (the scout, the skip-ahead before a frame range, the opaque end card) are the app's no-draw
+frame (`render: false`, Phase 3b; before: `R.render` / `R.present` stubbed by the director): it computes the camera and
+sets the renderer's previous camera (`R.prev`) exactly as `R.render` ends, so the motion-blur reference of the first drawn
+frame of a range, a resume or a pick is the true previous frame. Everything else (engine, drawables, their motion-vector bookkeeping in `scene.frame` /
 `scene.commit`) advances as in a drawn frame.
 
-### 2.4 Seams (all from outside the app, on instances; app changes wanted in section 8)
+### 2.4 The app's hooks (Phase 3b; before: seams on the app's instances)
 
-- *Camera*: `HWD.rig.update` → no-op, `HWD.rig.camera` → the planned camera of this frame.
-- *Detailed model*: `HWD.views.sync` is wrapped; the hero's GA placeholder is replaced by a `DetailedAircraft`
-  (`js/aircraft/models.js createAircraft`, model preloaded before the first frame), with `groundRef`, the rotor (PC-12
-  110 rad/s on the ground, 178 in the air = the pc12 pivot's 1,700 rpm; SF50 fan 100 / 120 rad/s [inf]) and flaps
-  (SF50 15 / 39°, PC-12 15 / 40° take-off / landing [inf]).
-- *Engine dt*: `traffic.update` / `physics.resolve` wrapped (section 2.3).
-- *Motion blur* (finding F4): captured frames get `post.shutter = 0.5` (a 180° shutter: the app's own blur pass,
-  `js/renderer.js`, clamped at 3 % of the width) by wrapping `R.render`'s `post` argument for that call; the app's own
-  loop keeps 0. At a cut `R.prev` is cleared, so the first frame of a shot carries no camera motion from the last one.
-- *UI*: `body.qa` hides the HUD; `#loading` is hidden by the overlay CSS.
+The app's own loop is paused (`HWD.qa.pause(true)`): the director drives every frame.
+
+- *Camera*: `HWD.setCamera(() => the planned camera of this frame)` (before: `HWD.rig.update` → no-op, `HWD.rig.camera`
+  replaced).
+- *Detailed models*: the app's own views draw every PC12 / SF50 with its `DetailedAircraft` and drive gear, flaps,
+  propeller / fan, control surfaces and lights from the motion (`js/live/aircraft.js`; the rules and their [inf] values
+  are in `docs/phase2_app.md` section 11). The director only loads both models before the first frame, so no model
+  appears at a load-dependent frame. (Before: the director wrapped `HWD.views.sync`, swapped the hero's placeholder for a
+  `DetailedAircraft` and set its rotor (PC-12 110 / 178 rad/s, SF50 100 / 120) and flaps (15 take-off, 40 / 39 landing);
+  other PC-12s and SF50s stayed placeholders.)
+- *Engine dt*: `HWD.qa.frame({ engineDt: h })`; the sub-steps and the pre-roll call `HWD.stepEngine(now, h)` (section 2.3).
+- *No-draw frames*: `HWD.qa.frame({ render: false })` (section 2.3).
+- *Motion blur* (finding F4): `HWD.setPost({ shutter: 0.5 })` (a 180° shutter: the app's own blur pass, `js/renderer.js`,
+  clamped at 3 % of the width), set once by the director; the app's own loop keeps 0. At a cut the frame call carries
+  `cut: true`, which clears `R.prev`, so the first frame of a shot carries no camera motion from the last one.
+- *UI*: `HWD.qa.hideUI(true)` (`body.qa`) hides the HUD; `#loading` is hidden by the overlay CSS.
 
 ### 2.5 Two passes
 
@@ -214,6 +233,7 @@ right.
 | case S taxi chase (8×), 3.0 s | 90 | 0 | 90 / 90 | 90 / 90 (C drew 6 earlier frames) | earlier round |
 | case S taxi chase (8×), the fastest whip pan (34 px/frame), 1.0 s | 30 | **0.5** | **30 / 30** | **30 / 30** (C drew 6 earlier frames) | this round, snapshot `0df6b37…` |
 | the same, after the pipeline refresh | 30 | **0.5** | **30 / 30** | **30 / 30** (C drew 6 earlier frames) | this round, snapshot `e26c545…` |
+| case S taxi chase (8×), job test `det3s`, 3.0 s, through the app's hooks with every PC-12 / SF50 drawn by the app | 90 | **0.5** | **90 / 90** | **90 / 90** (C drew 6 earlier frames) | Phase 3b, snapshot `73209bc0…` (A / B / C median 7.5 / 8.7 / 9.1 s per frame, load 8–11) |
 
 Sources of nondeterminism found and removed: `Math.random` drawable seeds (seeded PRNG); wall-clock timers and rAF
 (virtual); the dynamic resolution (`?fixedres=1`); real time leaking into the engine (the virtual epoch; boot under a
@@ -288,9 +308,9 @@ stand south of the runway with the sun behind them):
 | (b) `b-taxi-chase` | 181–958 | 0:06–0:32 | 1× → 8× | chase 40 m behind, 16 m up, aim 14 m ahead along the smoothed heading; heading spring 3.0 s (video) |
 | `hold-wide` | 959–1098 | 0:32–0:36.6 | 24× | (cut: 10 s of data skipped) wide static view of the hold / run-up stop, 85 m south-south-east, 14 m up |
 | `lineup-chase` | 1099–1514 | 0:36.6–0:50.5 | 4× → 1× | (cut: 34 s skipped) chase 34 m behind, 9 m up: to the runway end, line-up |
-| (c) `c-roll-dolly` | 1515–2295 | 0:50.5–1:16.5 | 1× | camera car 60 m south of the 28L centreline, **5.0 m** up, 12 m behind the hero (held: lag error ≤ 0.64 m), top speed 42 m/s: the whole (reconstructed) roll |
-| (e) `e-liftoff-edge` | 2296–2551 | 1:16.5–1:25.1 | 1× | fixed runway-edge camera 42 m south, 70 m past the lift-off point, **4.5 m** up; from lift-off − 3.5 s; pans, zooms 30–54° |
-| (d) `d-climb-chase` | 2552–3539 | 1:25.1–1:58.0 | 1× → 2× | chase 55 m behind, 7 m above, 10 m right, through the left turn; from lift-off + 5 s |
+| (c) `c-roll-dolly` | 1515–2219 | 0:50.5–1:14.0 | 1× | camera car 60 m south of the 28L centreline, **5.0 m** up, 12 m behind the hero (held: lag error ≤ 0.61 m), top speed 42 m/s: the end of the line-up wait (the roll now starts ~5 s into the shot) and the whole (reconstructed) roll |
+| (e) `e-liftoff-edge` | 2220–2475 | 1:14.0–1:22.5 | 1× | fixed runway-edge camera 42 m south, 70 m past the lift-off point, **4.5 m** up; from lift-off − 3.5 s; pans, zooms 30–54°: the rotation and the lift-off |
+| (d) `d-climb-chase` | 2476–3539 | 1:22.5–1:58.0 | 1× → 2× | chase 45 m behind, **3 m below**, 12 m right (Phase 3b: from below, so the gear retraction is seen; before 55 m behind, 7 m above, 10 m right), through the left turn; from lift-off + 5 s |
 | end card | 3540–3719 | 1:58–2:04 | — | credits (section 9) |
 
 The two skip segments cut out engine motion at rest (finding F5): the 10 s around the stop at the hold, where the SF50
@@ -301,14 +321,14 @@ the hold, where a one-frame yaw snap sits at a hole edge. `hold-wide` now starts
 
 | Shot | Frames | Video | Speed | What |
 |---|---|---|---|---|
-| (d) `d-final-chase` | 0–1001 | 0:00–0:33.4 | 2× → 1× | chase 60 m behind, 6 m up, 9 m left on final (from where the app labels it "Final 28L") |
-| (e) `e-touchdown-edge` | 1002–1302 | 0:33.4–0:43.4 | 1× | fixed runway-edge camera 42 m south, 70 m past the touchdown point, **4.5 m** up; from touchdown − 7 s |
-| (c) `c-roll-dolly` | 1303–1927 | 0:43.4–1:04.3 | 1× | camera car 60 m south of the centreline, **5.0 m** up, 8 m behind (held: lag error ≤ 1.25 m), from touchdown + 3 s through the roll-out |
+| (d) `d-final-chase` | 0–976 | 0:00–0:32.6 | 2× → 1× | chase 60 m behind, 6 m up, 9 m left on final (from where the app labels it "Final 28L") |
+| (e) `e-touchdown-edge` | 977–1277 | 0:32.6–0:42.6 | 1× | fixed runway-edge camera 42 m south, 70 m past the touchdown point, **4.5 m** up; from touchdown − 7 s: the flare and the touchdown |
+| (c) `c-roll-dolly` | 1278–1927 | 0:42.6–1:04.3 | 1× | camera car 60 m south of the centreline, **5.0 m** up, 8 m behind (held: lag error ≤ 1.22 m), from touchdown + 3 s through the roll-out |
 | (b) `b-taxi-chase` | 1928–2529 | 1:04.3–1:24.3 | 1× → 8× | chase 42 m behind, 16 m up: taxi-in to the T-hangar lane |
 | (a) `a-ramp-establish` | 2530–2926 | 1:24.3–1:37.6 | 2× → 1× | wide shot from the open end of the T-hangar lane, 75 m east-north-east of where it stops (`anchor: 'end'`), 16 m up: it taxis in and parks |
 | end card | 2927–3106 | 1:37.6–1:43.6 | — | credits |
 
-**Plan checks [obs, both cases, every frame]:** all gates pass; hero never off-screen (largest |NDC| 0.49), no line of
+**Plan checks [obs, both cases, every frame; the Phase 3b re-plan in section 13]:** all gates pass; hero never off-screen (largest |NDC| 0.49), no line of
 sight through a building, no constraint had to act, closest aircraft 13.4 m from the camera, closest light unit 16 m (the
 S dolly passes the 28L VASI boxes). On-screen motion of the hero (px/frame at 1920 × 1080): ≤ 1.9 in every shot except the
 P touchdown edge shot (≤ 9.7 at touchdown) — the 8× chases ≤ 1.5 (S) and ≤ 1.0 (P), the dollies ≤ 0.2 (S) and ≤ 1.9 (P);
@@ -335,6 +355,8 @@ detailed hero model, the motion-blur pass) + the overlay + `page.screenshot` (PN
 | this round: determinism A / B / C after the refresh, shutter 0.5 | 30 / 30 / 36 | 7.17 / 9.94 / 7.98 | 11.23 / 13.51 / 12.91 | 17.06 / 17.09 / 20.00 | 11.7 / 14.0 / 14.6 |
 | this round: S test clip (taxi chase 8×), shutter 0.5 | 105 | 8.25 | 11.47 | 16.57 | 14.0 |
 | this round: P test clip again (refreshed snapshot) | 90 | 7.47 | 13.43 | 16.99 | 14.3 |
+| Phase 3b: S spot clips (3 × 60 picks, one process; app hooks, detailed models in the app) | 180 | 3.72 | 7.42 | 14.24 | 9.1 |
+| Phase 3b: P spot clips (3 × 60 picks, one process) | 180 | 3.64 | **4.49** | 8.91 | 6.0 |
 
 The other two workflows kept the load at 6–16 for every run of this round (and up to three of these runs overlapped), so
 no quiet-machine figure with the blur pass exists; the blur pass is one full-screen pass (not timed separately). The end-card frames need no 3-D frame (0.1–0.5 s).
@@ -359,44 +381,35 @@ whip pan 1.38 MB, P final chase 1.90 MB on average), so the two full frame sets 
 long: trim the climb-out chase (33 s → 20 s) and the final chase (33 s → 22 s), which brings S to ~1:51 and P to ~1:33;
 render each case as two `--frames` halves.
 
-## 8. App changes wanted (for the orchestrator; nothing here was applied)
+## 8. App changes: status (Phase 3b, 2026-11-14)
 
-1. **Phase 3b model wiring** (`js/live/aircraft.js`, `js/live/traffic.js`; the diff is in `docs/phase3_models.md` §3):
-   until then the director swaps the hero's drawable from outside, and the engine still places it with the class-rule
-   dims (`gaDims`), so the drawn main gear sits 0.448 m (PC-12) / 0.693 m (SF50) off the engine's gear origin along the
-   axis (`modelDims` fixes it). The view should also drive `setFlaps` (degrees: `disp.flaps` is 0 / 1 today), `rotor`
-   for fixed-wing types (the app's sync sets `rotor = 0` for every fixed-wing drawable) and `groundRef`.
-2. **An engine-step hook** in `app.js`: `HWD.stepEngine(now, dt)` = the engine part of `frame()`. The director calls
-   `traffic.update` + `physics.resolve` directly for its sub-steps and the pre-roll; a system added to `frame()` later
-   would be missed silently.
-3. **A separate animation dt** in `app.js frame()` (finding F10): `frame(wall, { engineDt })` — the engine steps by
-   `engineDt`, `simT`, `views.sync`, the rig and the environment timer by `wall`. Today the director wraps
-   `traffic.update` / `physics.resolve` on the instances to get the same effect.
-4. **A no-draw frame**: `HWD.qa.frame({ render: false })` that computes the camera and sets `R.prev` like `R.render`, but
-   draws nothing (today the director stubs `R.render` / `R.present` for the call and sets `R.prev` itself).
-5. **Capture post settings**: `HWD.setPost({ shutter })` for captured frames (today the director wraps `R.render`'s
-   `post` argument).
-6. **A camera override**: `HWD.setCamera(fn | null)` used by `frame()` instead of `rig.camera()` (today the rig
-   instance's `camera` / `update` are replaced).
-7. **Sample provenance on the track**: `tr.disp.mode` (the target's `o.mode`) and the gap around the display time; the
-   director re-derives obs / inf / rec / nos from `tr.fx` with a copy of `HOLE_S` (8 s).
-8. **Rest pose stability** (Phase 2 owner, `js/live/traffic.js` / `GroundPhysics`; finding F5): no pose change while the
-   engine has an aircraft at rest unless a fix moves it. Seen in case S: the parked SF50 pivots ~45° on the spot with
-   0.07–0.14-m hops at 1× before the reconstructed taxi start (frames 56–143 of `a-establish`, gs ≤ 1.3 kt, single-frame
-   steps up to 0.138 m, i.e. ~8 kt); at the hold (the review's trace), "at rest" (mode `rest`, gs ≤ 0.66 kt), heading
-   120.9° → 112.4° → 111.3° → 120.5° over three frames with a 0.2-m sideways step, then a 0.16-m hop backwards (cut out by
-   a skip segment);
-   a one-frame yaw snap at the hole edge at the end of the hold (cut out). Check the GroundPhysics separation pushes at
-   the hold.
-9. **A stop in the middle of a moving hole** (Phase 2 owner, new): in case S the engine stops the taxiing SF50 for ~16 s
-   of data inside a 48-s hole whose two end fixes are both moving at 6–9 kt (nearest other aircraft 81 m), then moves on;
-   a slower continuous taxi over the hole would match the fixes as well. The video now labels such a hole "Reconstructed ·
-   the stop is inferred" (section 3).
-10. **Classifier labels seen in the videos** (`js/live/classifier.js`): case P is labelled "Overflight (not HWD traffic)"
-    on its base leg and the first part of final, until ~1.3 NM out (the video starts where the label turns "Final 28L");
-    case S is labelled "Taxiing" from the first frame of the video, while it still stands (~2 s) and through the
-    reconstructed pivot; case P is labelled "Taxiing" for the last 3.9 s while it stands at 0 kt in its parking spot (the
-    video shows "Stopped" there, a video rule [inf]; the app should say "Stopped" / "Parked" itself).
+Items 2-6 were applied in `js/live/app.js` and item 1 in `js/live/aircraft.js` (except the `traffic.js` part); the
+director now uses them (section 2.4). Items 7-10 belong to the Phase 2 owner (`js/live/traffic.js`, `classifier.js`).
+
+1. **Phase 3b model wiring.** *Done in the views:* every PC12 / SF50 is a `DetailedAircraft`, built from the dims record
+   with the model's frame (`withModelFrame`), with flaps (degrees, the model's own settings), rotor, control surfaces,
+   lights and `groundRef` driven from the motion (`docs/phase2_app.md` section 11). *Open (engine owner):* `js/live/traffic.js`
+   still makes its dims records with `gaDims` (two places), so the engine places the gear origin by the class rule and the
+   drawn main gear sits 0.448 m (PC-12) / 0.693 m (SF50) off it along the axis; the two-line change to `modelDims` is in
+   `docs/phase3_models.md` section 3.
+2. **Engine-step hook** - done: `HWD.stepEngine(now, dt)`.
+3. **Separate animation dt** - done: `frame(wall, { engineDt })`; `HWD.qa.frame({ wall, engineDt })`.
+4. **No-draw frame** - done: `HWD.qa.frame({ render: false })` (and `cut: true` for a camera cut).
+5. **Capture post settings** - done: `HWD.setPost({ shutter })`.
+6. **Camera override** - done: `HWD.setCamera(fn | null)`.
+7. **Sample provenance on the track** (open, engine): `tr.disp.mode` (the target's `o.mode`) and the gap around the display
+   time; the director re-derives obs / inf / rec / nos from `tr.fx` with a copy of `HOLE_S` (8 s).
+8. **Rest pose stability** (open, engine; finding F5): no pose change while the engine has an aircraft at rest unless a
+   fix moves it. Re-planned on the current engine (section 13), the opening shot of case S measures a rest jitter of
+   0 frames (the earlier 6-frame override is kept in the job but no longer needed); the hold is still cut by the two skip
+   segments.
+9. **A stop in the middle of a moving hole** (open, engine): in case S the engine stopped the taxiing SF50 for ~16 s of
+   data inside a 48-s hole whose two end fixes both move; the video labels such a hole "Reconstructed · the stop is
+   inferred" (section 3). Not re-checked in this round.
+10. **Classifier labels seen in the videos** (open, `js/live/classifier.js`): case S is labelled "Taxiing" from the first
+    frame while it still stands; case P "Taxiing" for the last seconds at 0 kt in its parking spot (the video shows
+    "Stopped", a video rule [inf]). With the detailed models in the app this also keeps the engine at idle until the phase
+    changes (the views shut it down only when parked, in a hangar or silent at rest).
 
 ## 9. Overlay and end card (findings F7, F8, F9)
 
@@ -470,25 +483,48 @@ What the stills and spot frames show (all looked at; spot frames by `render --pi
   so the preview's first frame can never blur against a camera the app rendered during boot (in the renders frame 0 is
   black under the fade-in).
 
+**Phase 3b spot clips** (section 13; 2 s = 60 frames each, all 1920 × 1080, 30 fps, shutter 0.5, the planned cameras
+of the Phase 3b plans, rendered as picks into `out/video/<case>/spots/` and encoded from there; hero vs scout 0.00000 m
+in both runs, 0 page errors; three stills each at 10 / 50 / 90 %, all looked at, plus crops of the aircraft):
+
+| Clip | Frames | Shot | Size | What the stills show |
+|---|---|---|---|---|
+| `out/video/S/spot_roll.mp4` | 1660–1719 | c-roll-dolly | 0.49 MB | the SF50 lined up at the 28L start (beside the chevrons), gear down, flaps 15, then the first metres of the roll; caption "Lined up" → "Take-off roll", pill "Reconstructed … 50 s between the last ground and the first airborne fix". The 5.4° yaw onto the runway heading at 3 kt (frames 1691–1697, section 11) is hard to see side-on |
+| `out/video/S/spot_rotation.mp4` | 2280–2339 | e-liftoff-edge | 0.89 MB | the SF50 at ~80 kt with both wing-tip landing lights lit, then nose up with the nose wheel off (rotation), the main wheels leaving the runway at frame 2325; flaps 15, gear down |
+| `out/video/S/spot_gear.mp4` | 2540–2599 | d-climb-chase (from below) | 1.05 MB | from behind and below, 15–25 m up: all three legs down at the start, then the main legs swinging inward and the nose leg folding (gear 0.94 → 0.6); the V-tail and the fan nacelle against the sky |
+| `out/video/P/spot_flare.mp4` | 1090–1149 | e-touchdown-edge | 0.81 MB | the PC-12 ~3 m above 28L, landing lights and beacon lit, gear down, flaps 40, the nose rising (pitch 3 → 5°); far (~300 m) in this shot, the crops show the attitude |
+| `out/video/P/spot_touchdown.mp4` | 1170–1229 | e-touchdown-edge | 1.14 MB | the main wheels on the runway with the nose still up and the propeller disc, then the nose lowering; the flaps' Fowler gap visible |
+| `out/video/P/spot_rollout.mp4` | 1820–1879 | c-roll-dolly | 0.93 MB | the PC-12 side-on at 40 → 30 kt, flaps 40, nose wheel down; caption "Landing roll 28L", pill "… no fix for 48 s: when it stops is inferred"; the landing light goes out at 30 kt (frame 1865) |
+
+Seen in the stills, not fixed here: the landing-light sprites are large white discs by day (the flare shot: each about a
+tenth of the wing span across at ~300 m; `js/env/aircraft_lights.js`, P2's day size, already noted in `docs/phase2_traffic.md` §6); the
+ground beside the runway is soft at the 4.5–5 m cameras (section 11, low cameras).
+
 ## 11. Open items / not verified
 
-- **The full videos are not rendered** (~7.5 h on a quiet machine, section 7). Before they are: wait until the fix rounds
-  have landed, take a new snapshot (`snapshot --refresh`), then `scout`, `plan` (check the gates and the report: shot
-  starts given as data times may need moving if the engine's timing changes), `render` (split into `--frames` ranges if
-  wanted), `encode`, `stills`.
+- **The full videos are not rendered** (~7.5 h on a quiet machine, section 7; the detailed models of every PC-12 / SF50
+  in view and the low climb-out chase add a little). Before they are: wait until the fix rounds have landed, take a new
+  snapshot of BOTH cases (`snapshot --refresh`: the Phase 3b snapshots hold two different mid-round engines, section 2.1),
+  then `scout`, `plan` (check the gates, the report and the events of section 13: the shot starts are data times or
+  events, and the c-roll-dolly of case S may want to start nearer the roll start), `render` (split into `--frames` ranges
+  if wanted), `encode`, `stills`. The packs are now the 120-s lookahead ones (decision (c)); the 60-s packs of the earlier
+  rounds are kept in `out/video/packs/old60/`.
 - **The plan is tied to the exact timeline** (finding F13): the engine is sensitive to its step grid. Runs on an aligned
   grid agree (the review: 1× vs 8× / 24× within 4.5 cm, same phase, label and provenance), but the job's timeline (ramps
   with h < 1/30, a different pre-roll end) differs from a 1× run by up to 0.78 m, and the P touchdown one-frame stall
   depends on the grid. Any change to a segment's speed or start changes the path: scout and plan again (the stamp chain
   enforces it: the job's segments are part of the scout key).
-- **Engine motion seen in the traces** (Phase 2 owner; section 8 items 8–10): (1) case P stands still for one frame
-  (1/30 s at 80 kt; frame 1213: 0.000 m against 1.38 m in the frames around it) at touchdown — a visible hitch; (2) case P
-  lands flat: pitch ≤ 0.3° in the flare; (3) case S lifts off flat: pitch 0.00° on the whole roll, 0.9° a third of a
-  second after lift-off (no rotation); (4) case S, at the start of the roll, yaws ~5° left on the spot and back over ~2 s
-  (299.2° → 294.4° → 299.7° at 0–6 kt); (5) the roll,
+- **Engine motion seen in the traces** (Phase 2 owner; section 8 items 8–10; re-measured on the Phase 3b scouts,
+  section 13): (1) the one-frame stand-still of case P at touchdown is gone; instead the roll slows from 1.28 to 1.03 m per
+  frame for one frame 1.3 s after touchdown and then speeds up from 74.6 to 76.0 kt (frames 1227–1240; 5.6 px/frame² on
+  screen in the edge shot); (2) and (3) were "lands flat" / "lifts off flat": the current engine flares case P (pitch
+  0 → 5° over the last 4.8 s, nose down 1.7 s after touchdown) and rotates case S (3 → 8° over the last 2.4 s of the roll,
+  9° in the climb); (4) case S stands lined up 5.4° off the runway heading (294.4° against 299.8°) and yaws onto it in
+  0.23 s at 3 kt as the roll starts (frames 1691–1697; seen in the roll spot clip); (5) the roll,
   lift-off, touchdown and roll-out of both cases lie in one recorder hole each (50 s / 47 s): all of it is reconstructed
   (the overlay says so) — the Phase 2 fixer's take-off / landing reconstruction will change them; (6) the parked pivot
-  with hops in the opening shot of case S (2–3 px at 72 m; the rest-jitter gate of that shot is raised with a reason);
+  with hops in the opening shot of case S (2–3 px at 72 m; the rest-jitter gate of that shot is raised with a reason;
+  the Phase 3b re-plan measures 0 frames);
   (7) the mid-hole stop of the S taxi.
 - **Independent check of the scouts** [obs]: the Phase 2 fixer's per-second traces (`out/od3/trace_case_{S,P}.json`, its
   own harness run on its own pack window and step grid, with an earlier engine version) agree with the scouts on
@@ -502,8 +538,9 @@ What the stills and spot frames show (all looked at; spot frames by `render --pi
   renders): a ground-texture item for the world owner. No z-fighting, shadow acne, LOD pop or fade dither was found by
   the review (the hero's `lodDist` is 8,000 m; alpha 1.0 on every frame); distant hangar edges crawl slightly at
   sub-pixel motion.
-- The hero is drawn with the detailed model but positioned with the class-rule dims (section 8, item 1); every other
-  aircraft is a GA placeholder (a blocky bizjet stands next to the detailed SF50 in the taxi shots).
+- Every PC-12 / SF50 is drawn with its detailed model (Phase 3b), but still positioned with the engine's class-rule dims
+  (section 8, item 1: `traffic.js` `modelDims` open); every other type is a GA placeholder (a blocky bizjet stands next
+  to the detailed SF50 in the taxi shots).
 - The S lift-off edge camera looks east into the low sun, so the SF50 lifts off as a silhouette against the glare (left for
   the owner). In the 8× taxi chase of case S a hangar wall fills the left third for a few seconds.
 - Not verified: `dev/video.html` on a real GPU (loaded headless in this round on the working tree: it boots, pre-rolls,
@@ -527,3 +564,114 @@ What the stills and spot frames show (all looked at; spot frames by `render --pi
 | F11 | low cameras smear the NAIP ground | edge 4.5 m, dolly 5.0 m | section 11, picks |
 | F12 | estimate used the minimum | median, encode time, disk budget | section 7 |
 | F13 | step-grid sensitivity | the scout key includes the segments; noted | section 11 |
+
+## 13. Phase 3b integration (2026-11-14): app hooks, detailed models in the app, re-scout and spot clips
+
+**What changed.**
+
+- `js/live/app.js`: the hooks of section 8 items 2-6 (`HWD.stepEngine`, `frame(wall, { engineDt, render, cut })`,
+  `HWD.qa.frame`, `HWD.setPost`, `HWD.setCamera`; `docs/phase2_app.md` section 11).
+- `js/live/aircraft.js`: every PC-12 / SF50 in the app is a `DetailedAircraft` with gear, flaps, propeller / fan,
+  control surfaces and lights driven from the drawn motion by inferred rules (`docs/phase2_app.md` section 11 lists them);
+  pitch and roll are the engine's `disp.pitch` / `disp.roll`.
+- `js/video/director.js`: the monkeypatches are gone (rig, views, engine dt, renderer stubs, the `post` wrap); it pauses
+  the app's own loop, preloads both models, and drives each frame through the hooks (section 2.4). The trace records the
+  drawable's driven state per frame (`detailed`, `vgear`, `gearUp`, `vflaps`, `flapsTgt`, `rotor`, `running`, `ctl`,
+  `lights` as N / B / S / L / T letters).
+- The packs `out/video/packs/pack_v{S,P}.json.gz` were rebuilt type-only with `build_replay.py --lookahead 120`
+  (decision (c); same windows, same payloads: 285 / 197 events, D1 leak check OK).
+- Job S (local): `d-climb-chase` moved below the hero (back 45 m, up -3 m, side 12 m, lead 40 m, fov 36°) so the gear
+  retraction is seen (section 6).
+
+**Re-scout on the current engine** (snapshots of section 2.1; the round-4 engine fix was in progress, so this is "the
+current engine" of the moment, not a final one). Events and the driven state, from the traces [obs, frames at 30 fps]:
+
+| | Case S (SF50 take-off) | Case P (PC-12 landing) |
+|---|---|---|
+| events | line-up frame 1452 (48.4 s), roll start 1676 (gs > 0.5 kt), "take-off roll" label 1730, lift-off 2325 (77.5 s) at 85 kt | touchdown 1187 (39.6 s) at 81 kt, stop 2101 |
+| before (round-1 snapshot, 60-s packs) | line-up 1416, roll 1549, lift-off 2401 | touchdown 1212 |
+| pitch | rotation from frame 2253: 3 → 8° over the last 2.4 s of the roll, 9° in the climb (max 11°) | flare from frame 1044 (8 m up): 0 → 5° over the last 4.8 s, nose down 1.7 s after touchdown |
+| gear | retraction commanded at frame 2525 (15 m up, 6.7 s after lift-off), fully up at 2704 (6.0 s later) | down throughout (frame 0 is on short final, 147 m up) |
+| flaps | 15° from the line-up (set while lining up, 11°/s), up from frame 2867 (122 m = 400 ft, 23.6 s after lift-off) | 40° on final (below 500 ft), kept through the roll, up from frame 2058 as it taxis (56 s after touchdown) |
+| fan / propeller | fan 100 rad/s taxiing, 120 on the roll and in the climb | propeller 178 rad/s on final and the roll, spooling to idle (110) below 30 kt |
+| lights | taxi: N B T; lined up: N B S; roll and climb: N B S L | final and roll: N B S L; below 30 kt: landing light off, taxi light on (frame 1865) |
+| controls | ailerons up to 0.35 of full travel in the climbing turn (bank to 27°); rudder with the nose-wheel steering on the ground | ailerons <= 0.21 on final |
+
+**Plans** (`plan`, both cases): all gates pass. Case S: rest jitter of the opening shot 0 frames (the 6-frame override of
+the job is no longer needed), c-roll-dolly lag error <= 0.61 m, hero px/frame <= 1.8 in every shot but the fast pans
+listed in section 6; the low climb-out chase is never lower than 8.4 m above the ground and keeps >= 40.8 m from every
+aircraft. Case P: the touchdown edge shot's largest hero acceleration is 5.6 px/frame² (was 12.3 with the one-frame
+stand-still of the earlier engine; the job's override of 13 is no longer needed), dolly lag error <= 1.22 m.
+
+**Spot clips** (section 10, "Phase 3b spot clips"): case S roll start, rotation, gear retraction; case P flare,
+touchdown, roll-out. They show the engine's rotation and flare attitudes, the gear cycle (from below), the take-off and
+landing flaps, the landing lights, beacon and strobes on the drawn model, and the propeller disc. Render: median 7.4 s
+(S, load ~9) and 4.5 s (P, load ~6) per frame; hero vs scout 0.00000 m; 0 page errors.
+
+**Determinism** (section 4, last row): the same 90 frames (case S taxi chase at 8×, shutter 0.5) rendered by two fresh
+browser runs and by a third that drew 6 earlier frames first: 90 / 90 and 90 / 90 PNGs identical (sha256), hero vs
+scout 0.00000 m in all three. The hooks, the no-draw frames, the cut flag and the app-side detailed models keep the
+pipeline deterministic.
+
+**After the snapshots** (working tree only, comments only, so the snapshots and their scouts / plans / spot clips
+stand): one comment in `js/live/aircraft.js` and the director's header comment on the `models` job option.
+
+**D1.** The packs are type-only (both heroes masked by the pack default); the hero is chosen in the page by rule; no
+committed text names a case's date or time (the instants above are video frames and event offsets); the livetest
+snapshots and the spot clips, which show the scene clock and the METAR day-time group, stay in `out/` (gitignored).
+`python3 -I -B tools/check_airport.py`: ALL HARD CHECKS PASSED (D1 and D1(d) dated-window scans clean, after one
+rewording in `docs/phase2_app.md`).
+
+**Open / wanted** (owners elsewhere): `traffic.js` `modelDims` (section 8 item 1); the roll-start yaw of case S and the
+one-frame speed dip with a 1.4-kt rise early in the case P roll (section 11); the landing-light day size; sections 8
+items 7-10.
+
+## 14. Fix round 4, iteration 2 (finding F9): the snapshots on the final engine (2026-11-14)
+
+**Finding.** The Phase 3b snapshots of section 13 (S tree 73209bc0db88, P df19cf8c2cd0) froze the traffic engine in the
+middle of fix round 4, so their scouts, plans and spot clips did not show the engine that round 4 ended with, let alone
+this iteration's.
+
+**What changed.** `node tools/video/render.mjs <job> snapshot --refresh=engine` replaces the traffic engine
+(`tools/video/lib.mjs` `ENGINE_FILES`: `js/live/{traffic,motion,ground,classifier,parking,feed,lookup}.js`) and the
+pipeline (`js/video/**`) from the working tree and keeps everything else of the snapshot frozen - renderer, shaders,
+models, data and the app shell - because another workflow (OD4) is editing the renderer and model runtime while this
+iteration runs. The manifest records the refresh (`refreshed`, `base` chain), and the stamp chain makes scout and plan
+mandatory again. (`--refresh=video` remains: the pipeline only.)
+
+**Snapshots now** (the engine was refreshed three times during the iteration as it changed; only the last is current,
+and every number below is from it): S tree **f9f6642666d0**, P tree **be6a2b90f71b**, both holding `traffic.js` sha256
+5fd978f57963… - the final engine of `docs/phase2_run.md` section 11 - over the frozen Phase 3b renderer, shaders, models
+(pc12.glb 87731cce…, sf50.glb 49242e41…) and data. The OD4 look fixes made since the Phase 3b snapshot are therefore NOT
+in these snapshots; a full render that should show them needs a full new snapshot (`--refresh`), then scout and plan.
+
+**Re-scout** (events from the traces; video frames at 30 fps):
+
+| | Case S (SF50 take-off) | Case P (PC-12 landing) |
+|---|---|---|
+| events now | line-up (label) frame 1523 (50.8 s) at 7.8 kt, roll start 1690 (56.3 s), lift-off 2362 (78.7 s) at 84.9 kt | touchdown 1187 (39.6 s) at 80.8 kt, stop 2101 |
+| section 13 (mid-round-4 engine) | line-up 1452, roll start 1676, lift-off 2325 at 85 kt | touchdown 1187 at 81 kt, stop 2101 |
+| line-up / roll-out | taxi onto 28L at a constant 7.7-7.8 kt, nose 290.8 → 299.9° monotonically in ~2 s while it joins the centreline, 'Lined up 28L' from frame 1530, 7.8 → 6.8 kt into the rolling start, then the roll | no speed rise in the roll; the observed roll-out runs ~0.9 m off the fix-following target and is pulled onto it near frame 1603 (below) |
+| hero not drawn | 0 frames | 0 frames |
+
+**Plans and gates** (`plan`): all gates pass in both cases. Case S: rest jitter 0 frames in every shot, including
+`a-establish` (the job's `restJitter: 6` override, written for the parked SF50's pivots of the round-1 engine, is no longer
+needed and was removed) and `lineup-chase` (hero ≤ 0.60 px/frame, ≤ 0.03 px/frame², rest jitter 0); c-roll-dolly lag
+error ≤ 0.62 m. Case P: `e-touchdown-edge` now ≤ 0.47 px/frame² (its `heroAcc: 13` override for the old one-frame
+stand-still at touchdown was removed); `c-roll-dolly` measures 2.52 px/frame² at frame 1603 (limit 1.5), where the
+observed roll-out body (51 kt) is pulled 0.9 m onto its fix-following target (braking 3 → 1.4 m/s² within 0.2 s): the job
+now carries `heroAcc: 3` for that shot with this reason (an engine residual, open). The job files stay local
+(`out/od3/video_{S,P}.json`, gitignored).
+
+**Determinism** (`determinism --frames=1683-1697`, case S at the roll start, shutter 0.5): 15 / 15 PNGs identical
+(sha256) between two fresh browser runs, and 15 / 15 identical in a third run that drew 6 earlier frames first.
+
+**Spot stills** (`render --pick=…`, 1920 × 1080, looked at; local in `out/video/{S,P}/picks_r4i2/`, they show the scene
+clock and the METAR day-time group): case S frames 1450 (taxi turn toward 28L, 4× time-lapse), 1530 (lined up, the
+nose still closing the last degrees onto the runway heading), 1690 (roll start on the centreline), 2300 (late roll,
+landing lights on, edge shot) and 2362 (lift-off, nose up, 'Climbing out'); case P frames 1067 (short final, landing
+lights), 1150 (flare), 1187 (touchdown), 1250 (landing roll) and 1603 (roll-out dolly, 'Recorded ADS-B position'). Hero vs
+scout 0.00000 m, 0 page errors; 4.5 s (S) and 9.4 s (P, load ~9.5) median per frame.
+
+**Not done here.** No clip was encoded (the spot clips of section 13 stand for the mid-round engine only); the full
+videos are still the orchestrator's (section 11).

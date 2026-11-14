@@ -316,3 +316,76 @@ showing the airport-elevation form; a desktop snapshot of OD3 case S (SF50 take-
 "70 ft MSL · 30 ft above the runway" (looked at; scratch, not committed). The phase line can now read "Stopped" /
 "Stopped on the runway" (`phaseInfo.label` of a `taxi` / `runway_taxi` body at rest for 10 s; `docs/phase2_traffic.md`
 §4 "Fix round 3, iteration 3").
+
+## 11. Phase 3b integration (2026-11-14): detailed models in the app, hooks for the video pipeline
+
+Files changed: `js/live/aircraft.js`, `js/live/app.js` (and, for the pipeline, `js/video/director.js`; section 8 of
+`docs/phase3_video.md`). `js/aircraft/**`, the renderer and `js/live/traffic.js` were not edited (other owners).
+
+**Detailed models.** `AircraftViews` creates, for every drawn track whose type has a model in `js/aircraft/models.js`
+(PC12, SF50), a `DetailedAircraft` (`createAircraft`, with the renderer so the `acobj` / `acglass` programs are
+installed), and the GA placeholder for every other type. Both are built from the track's dims record with the model's
+measured frame (`withModelFrame`: `xMain`, `xNose`, `track`, `L`, `span`, `H` of the model; `views.dimsOf(tr)`). The card
+says which: "Drawn with the detailed PC12 model (pc12/ parametric model (own work)); gear, flaps, propeller and lights
+follow the drawn motion by rule [inferred]". The model loads asynchronously on the first aircraft of its type (the
+placeholder is drawn until then, and kept if the load fails); a parked PC-12 is drawn detailed too (~430 k triangles per
+PC-12, ~460 k per SF50, shared per type; frame time on a laptop GPU not measured here, OD1).
+
+**What drives the model** (all [inf]: the ADS-B data says nothing about gear, flaps, power or lights; every rule is in the
+header of `js/live/aircraft.js`, every value there is marked):
+
+| Part | Rule |
+|---|---|
+| attitude | `disp.pitch` / `disp.roll` of the engine (rad; 0 when absent), about the main-gear contact. The engine fixer's round-4 work draws a rotation on the take-off roll and a flare (section 9 of `docs/phase3_video.md` measures both in the OD3 cases) |
+| gear (retractable types) | up once climbing: > 15 m above the ground, vertical speed (smoothed 2 s) > 0.75 m/s, 2 s after lift-off, not on an approach leg; down on an approach leg (downwind / base / final / arriving) below 2,000 ft or below 1,000 ft when descending > 1.5 m/s (each after >= 10 s up), and always below 400 ft when descending; a full cycle 6 s (as traffic.js); an aircraft first drawn in the air starts in its rule state; never drawn gear-up on the ground. Fixed gear: the engine's `disp.gear` as before |
+| flaps (deg, the model's own pivot settings) | take-off setting (PC-12 15, SF50 15) from the hold / run-up / line-up through the roll and the climb to 400 ft; the same on a downwind below 1,500 ft; approach setting (PC-12 30, SF50 15) on base and on final above 500 ft; landing setting (PC-12 40, SF50 39) on final below 500 ft, kept through the landing roll until the aircraft taxis; up otherwise |
+| propeller / fan | off when parked, in a hangar or silent at rest; spooling (2.5 s) to idle on the ground below 30 kt and to the run speed on a roll and in the air: PC-12 178 rad/s (the pc12 pivot's 1,700 rpm) / 110 idle; SF50 fan 120 / 100 (idle values and the fan speed not sourced). PC-12 blades feathered at rest, reverse (-15 deg) on a landing roll above 40 kt (drawn only below the disc blur, i.e. at start-up / shut-down) |
+| control surfaces | ailerons from the roll rate, elevator from the pitch rate, rudder from the nose-wheel steering angle on the ground (pedals centre at rest) and a little with the aileron in the air; smoothed, capped at 0.35 / 0.35 / 0.6 of full travel, then the drawable's own lag |
+| lights | `aircraftLightStates` (P2) as before: nav and beacon while the engine runs, strobes on the runway and in the air, landing lights on the take-off / landing roll and low in the air, taxi light while taxiing. Changed: a silent aircraft whose motion the engine continues (a take-off or roll-out after the signal ended) counts as operating; before, its lights went out at once |
+
+**Follow / chase camera.** The follow target and the 3-D label height use `views.dimsOf(tr)` (the drawn model's frame).
+Follow and Chase were checked on both types on the ground and in the air (below).
+
+**Hooks for the video pipeline** (`docs/phase3_video.md` section 8 items 2-6, now applied; the director's monkeypatches
+of the rig, the views, the engine and the renderer were removed):
+
+- `HWD.stepEngine(now, dt)` = the engine part of a frame (`traffic.update` + `physics.resolve`);
+- `frame(wall, { engineDt, render, cut })`: the animation dt (`wall`: simT, the drawables' lags, the rig, the 30-s
+  environment timer) and the engine's own step (`engineDt`) separate; `render: false` = a no-draw frame (everything advances,
+  the renderer only computes the camera and keeps it as `R.prev`, as `R.render` ends); `cut: true` clears `R.prev` first;
+- `HWD.qa.frame({ wall, engineDt, render, cut })` (with `HWD.qa.pause(true)` the caller owns the frames);
+- `HWD.setPost({ shutter, bloom, vignette, grain, sat })` (the exposure stays the environment's);
+- `HWD.setCamera(fn | null)`: `fn({ dt, now, simT })` replaces the rig (the rig is not updated while it is set).
+
+The app's own loop is unchanged (`frame(wall)` without options behaves as before).
+
+**Checks run** (2026-11-14, this machine, SwiftShader):
+
+- `livetest.mjs` desktop 1280 x 720, snapshot mode, RELAY=none, on the local type-only video packs (OD3 case S and case P
+  windows; instants and images local only, `out/p3b/lt/`, not committed). Looked at every image. SF50 taxiing (gear down,
+  flaps 0, fan 100 rad/s, nav + beacon + taxi light), SF50 climbing out (gear up, flaps 15, lights N/B/S/L), PC-12 on short
+  final (gear down, flaps 40, landing lights and strobes lit, propeller disc), PC-12 on its landing roll (flaps 40, reverse,
+  landing light above 30 kt); orbit views, then the card's Follow and Chase buttons on each: the camera frames the detailed
+  model, the card shows the model note; 0 console errors in both runs. Found and fixed while looking: a gear that extended
+  again right after the retraction (the "below 400 ft" rule fired while climbing) and an aircraft first drawn on its
+  landing roll with flaps up.
+- A scratch Node run of the engine plus `AircraftViews` on a fake scene (the model loads fail in Node, the rules run the
+  same) over the case S, case P and weekend packs, every retractable fixed-wing type (35 aircraft drawn, 7 lift-offs of
+  aircraft first seen on the ground): 0 touchdowns with the gear not fully down, 0 frames with the gear up below 10 m in the
+  air, 0 on the ground; the one PC-12 touchdown with landing flaps (40) and the one SF50 lift-off with take-off flaps (15);
+  1 gear cycle shorter than 20 s (a single-engine piston on final after a climb), down from 3 before the 2-s smoothing and the
+  10-s hold.
+- `node tools/models/test_models.mjs`: "placeholder sync covers every field js/live/aircraft.js sets" PASS (OD4 has since
+  added `groundRef` to `js/aircraft/detailed.js SYNC_KEYS`), every runtime and provenance check of the drawable PASS. The
+  last run reported one FAIL outside these files: a raster-reading token in `docs/phase3_models.md` (OD4's page,
+  decision (b)).
+
+**Not done / wanted** (owners elsewhere):
+
+- `js/live/traffic.js` still makes its dims records with `gaDims` (lines ~627 and ~2709 now): the engine and the ground
+  physics place a PC-12 / SF50 by the class-rule layout, so the drawn main gear stands 0.448 m (PC-12) / 0.693 m (SF50)
+  along the axis from the engine's gear origin, and `ground.js` separates the class-rule body. The two-line change to
+  `modelDims` is in `docs/phase3_models.md` section 3 (owner: the engine fixer).
+- Engine-side state the views would use if it existed: the sample provenance (`docs/phase3_video.md` section 8 item 7) and
+  a "parked" / "stopped" phase for an aircraft at rest that the classifier still calls "Taxiing" (its engine keeps idling
+  in the views until the phase changes).

@@ -98,7 +98,15 @@ const PL = { teleports: 0, teleports_hwd: 0, teleports_engine: 0, teleports_sign
   // touch-and-go drawn without ground contact; F6 M3 hidden take-offs although a runway is consistent
   air_float_runway_frames: 0, air_float_runway_reported: 0, recon_substall_samples: 0, air_substall_samples: 0, air_substall_reported: 0,
   label_vertical_sense: 0, label_vertical_info: 0, label_base_aligned: 0, label_taxi_stopped: 0, label_taxi_stopped_tracks: 0, label_roll_flicker: 0, tg_no_contact: 0, tg_checked: 0,
-  m3_hidden_runway_consistent: 0 };
+  m3_hidden_runway_consistent: 0,
+  // round 4 (E1-E8, docs/phase2_run.md section 10): see r4Frame / r4End
+  teleports_attitude: 0, air_accel_samples: 0, air_accel_reported: 0, ground_fast_roll_frames: 0, ground_fast_roll_reported: 0, tg_label_frames: 0,
+  fast_ground_fixes: 0, liftoff_plateau_frames: 0, liftoff_plateau_reported: 0, label_takeoff_slow: 0, label_climbout_leg: 0, label_runway_end: 0,
+  label_lineup_rolling: 0, rest_pose_change_frames: 0, label_lineup_misaligned: 0, label_hold_on_runway: 0, liftoff_pitch_low: 0, liftoffs_checked: 0,
+  touchdown_pitch_bad: 0, touchdowns_checked: 0, pitch_rate_frames: 0, pitch_phase_samples: 0, roll_turn_samples: 0, ground_stall_frames: 0,
+  roll_start_yaw_frames: 0, taxi_hole_stop_frames: 0, label_overflight_hwd: 0, label_taxi_still: 0, snapshot_drift: 0, r4Log: [],
+  // round 4 iteration 2: see r4i2Frame
+  low_bank_frames: 0, pivot_in_place: 0, ground_slow_fast_roll: 0, label_flicker: 0, label_final_arriving: 0 };
 // runway rectangle test (site.runways axes; m = extra half-width) - the pavement a take-off / landing roll uses
 const onRwy = (x, z, m = 3) => (site.runways || []).some(r => { const px = x - r.origin[0], pz = z - r.origin[1], al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; return al >= 0 && al <= r.length && Math.abs(ac) <= r.halfWidth + m; });
 const newLog = (...a) => { if (PL.newLog.length < 400) PL.newLog.push(a); };
@@ -123,11 +131,22 @@ function fixGap(tr, t0, t1) { const F = tr.fx; let g = 0; for (let k = 1; k < F.
 // from its last ground position until its first airborne fix, it appears THERE at its reported height. It is counted as
 // m3_hidden_takeoffs (listed), not as a teleport, only when the body appears within 60 m (+ what it flew since) of that fix
 // within 8 s of its time; any other ground -> air re-appearance is a failure.
+// (round 4, E2) an AIR -> AIR re-appearance is also a teleport when the body comes back at another height or heading than the one it
+// left with: more than 100 ft (+ 1 m/s x the absence) off the height its vertical speed carried it to, or more than 45 deg (+ a
+// standard-rate 3 deg/s x the absence) off its heading - a silent climb-out continuation vanished over its crosswind leg and
+// popped in elsewhere at another height, heading and speed, 82 m away (within the distance rule) [inf: 100 ft, 45 deg, the rates]
 function reappear(last, D, td, why, m3) {
   const g = (td - last.t) / 1000, d = Math.hypot(D.x - last.x, D.z - last.z, D.y - last.y);
   const gAir = !!last.ground && !D.ground && last.cls !== 'heli', allow = 1.5 * (gAir ? last.gs : Math.max(D.gs, last.gs)) * g + 10;
   const M = gAir && why.has('hideSeg') && (m3 || []).find(m => td >= m.t1 - 2000 && td <= m.t1 + 8000 && Math.hypot(D.x - m.x, D.z - m.z, D.y - m.y) < 60 + D.gs * Math.max(0, (td - m.t1) / 1000));
-  return { gAir, d, g, allow, jump: d > allow && d > 10, m3: !!M };
+  let dh = 0, dpsi = 0, att = false;
+  if (!last.ground && !D.ground && last.cls !== 'heli' && last.hdg != null) {
+    dh = Math.abs(D.y - (last.y + (last.vs || 0) * g)) / 0.3048; dpsi = Math.abs(((D.hdg - last.hdg) % 360 + 540) % 360 - 180);
+    // (round 4 iteration 2, F12: not for a track that was removed or out of the simulation range - an overflight re-entering after 526-1,000 s
+    // is a new appearance, not a continuation)
+    att = (dh > 100 + 3.28 * g || dpsi > 45 + 3 * g) && !why.has('removed') && !why.has('far');
+  }
+  return { gAir, d, g, allow, jump: (d > allow && d > 10) || att, att, dh, dpsi, m3: !!M };
 }
 function presence(now) {
   const td = traffic.displayTime(now);
@@ -150,11 +169,11 @@ function presence(now) {
             // the new one's first counts too)
             const f1 = tr.fx.find(f => f.t > (V.lastFixT || 0)), gap = Math.max(fixGap(tr, V.last.t, td), f1 && V.lastFixT ? (f1.t - V.lastFixT) / 1000 : 0), kind = gap > SIGNAL_LOSS_S ? 'signal' : 'engine';
             PL.teleports++; PL['teleports_' + kind]++; if (tr.scope === 'hwd') PL.teleports_hwd++;
-            if (PL.teleLog.length < 60) PL.teleLog.push([Math.round(td / 1000 - pack.from), tr.info.icao || '?', tr.scope, tr.phase, +d.toFixed(0), +g.toFixed(1), why.join('+'), kind, +gap.toFixed(0)]);
+            if (Rr.att) PL.teleports_attitude++; if (PL.teleLog.length < 60) PL.teleLog.push([Math.round(td / 1000 - pack.from), tr.info.icao || '?', tr.scope, tr.phase, +d.toFixed(0), +g.toFixed(1), why.join('+'), kind, +gap.toFixed(0), Rr.att ? 'att dh ' + Rr.dh.toFixed(0) + ' ft dpsi ' + Rr.dpsi.toFixed(0) : '']);
           }
         }
       }
-      V.absent = null; V.last = { t: td, x: D.x, y: D.y, z: D.z, gs: D.gs, ground: !!D.ground, cls: tr.dims ? tr.dims.cls : null }; V.lastFixT = tr.last ? tr.last.t : V.lastFixT;
+      V.absent = null; V.last = { t: td, x: D.x, y: D.y, z: D.z, gs: D.gs, vs: D.vs || 0, hdg: D.hdg, ground: !!D.ground, cls: tr.dims ? tr.dims.cls : null }; V.lastFixT = tr.last ? tr.last.t : V.lastFixT;
     } else if (V.last) { if (!V.absent) V.absent = { t: td, why: new Set() }; V.absent.why.add(absentWhy(tr)); }
   }
 }
@@ -290,6 +309,7 @@ function extraFrame(now) {
     }
     if (fw && !D.ground && Math.hypot(D.x, D.z) < 2500 && agl < 35 && !inRwyBox(D.x, D.z, 30, 300)) { PL.low_air_off_runway_frames++; if (s1) xLog('low_air_off_runway', t, lab, Math.round(agl), Math.round(D.x), Math.round(D.z), +kt.toFixed(0), tr.phase, site.surface(D.x, D.z)); }
     if (fw) iter3Frame(tr, D, td, t, s1, agl, kt, lab);
+    if (fw) r4Frame(tr, D, td, t, s1, agl, kt, lab);
   }
   for (let i = 0; i < air.length; i++) for (let j = i + 1; j < air.length; j++) {
     const A = air[i].disp, B = air[j].disp, d = Math.hypot(A.x - B.x, A.y - B.y, A.z - B.z); if (d >= 30) continue;
@@ -299,7 +319,7 @@ function extraFrame(now) {
 }
 // ---- iteration 3 of review round 3 (F1, F3, F4, F6), fixed-wing, drawn (alpha > 0.02) unless stated:
 //   air_float_runway_frames  airborne below 15 ft AGL over a runway (its rectangle + 3 m) for more than 6 s, the drawn speed
-//                            varying by < 2 kt over the last 6 s (the GLF4 held 2-12 ft up at 100.8 kt for 20 s); frames whose two
+//                            varying by < 2 kt over the last 6 s (a business jet held 2-12 ft up at 100.8 kt for 20 s); frames whose two
 //                            bracketing reports are themselves airborne below 25 ft over the runway are INFO (_reported)
 //   recon_substall_samples   1 Hz: a reconstructed (plan / xplan) airborne TARGET slower than the type's stall speed
 //                            spd(tr).vapp / 1.3 (the ACD approach speed is 1.3 x the landing-configuration stall speed [recalled,
@@ -376,12 +396,216 @@ function iter3End() {
   }
   for (const tr of EVER.values()) for (const m of tr.m3Log || []) if (m.t1 >= pack.from * 1000 && m.t1 <= (pack.until + 60) * 1000 && m.why !== 'plan fail 1') { PL.m3_hidden_runway_consistent++; xLog('m3_hidden_runway_consistent', Math.round(m.t1 / 1000 - pack.from), tr.info.icao || '?', m.why || ''); }
 }
+// ---- round 4 (docs/phase2_run.md section 10; E1-E8), fixed-wing, drawn (alpha > 0.02, in view) unless stated. 10-Hz frames
+// unless 'samples' (1 Hz). Limits are design values [inf]; '_reported' variants are INFO (the reports themselves show it).
+//   air_accel_samples       E1: airborne for the whole last 1 s and dV/dt over it > the type's take-off acceleration x 1.25
+//                           (traffic.spd accTO = VR^2 / 2 x ground roll; C172 1.27 m/s2; >= 1.0), or < -max(1.6, that) (a
+//                           deceleration: idle power and drag), on RECONSTRUCTED motion (plan / continuation / low-pass targets,
+//                           or <= 20 s after a drawn lift-off; fix-to-fix data: INFO air_accel_data) - reported when the two bracketing
+//                           airborne reports change speed that fast themselves
+//   ground_fast_roll_frames E1: on the ground at >= 0.9 VR for more than 8 s in a row (the unseen touch-and-go rolled 20-34 s at
+//                           44-59 kt); reported when both bracketing reports are ground fixes at >= 0.9 VR
+//   tg_label_frames         E1: a reconstructed touch-and-go roll (plan:touchgo) drawn on the ground not labelled 'Touch-and-go'
+//   teleports_attitude      E2: air -> air re-appearances with a height / heading jump (reappear(); counted in the teleports)
+//   fast_ground_fixes       E4: distinct fixes the engine keeps on the ground at >= 1.1 VR (within 3 km of the ARP) that accelerate
+//                           (faster than the ground fix before them) or are at >= 1.3 VR - a take-off roll, not a landing roll
+//   liftoff_plateau_frames  E4: within 25 s after a drawn lift-off, below 200 ft AGL, climbing < 100 ft/min for more than 3 s
+//                           (a level segment after lift-off); reported when both bracketing reports are airborne < 100 ft and level,
+//                           or descending (the data go down again: another touch-and-go / low pass)
+//   label_base_aligned      E5 (a): extended to the runway itself (was: 0-4 km before the threshold only)
+//   label_takeoff_slow      E5 (b): 'Take-off roll' on a body slower than 0.5 VR that has not gained 0.5 m/s in 2 s (0.5 s grace)
+//   label_climbout_leg      E5 (c), samples: 'Climbing out' / 'Upwind' more than 60 deg off its runway end's heading or more
+//                           than 800 m beside its extended centreline (a crosswind / downwind leg)
+//   label_runway_end        E5, samples: a roll / runway label on a body moving > 10 kt whose runway end points > 90 deg away
+//                           from the motion, or whose runway is not the one under the body
+//   label_lineup_rolling    E5: 'Lined up' while accelerating along the runway (> 5 kt, + 0.5 m/s in 1 s)
+//   rest_pose_change_frames E6: the engine target rests (a rest pose) in this and the previous frame, the rest pose has moved
+//                           < 3 m (no fix moved the aircraft beyond its position error), the body is below 0.3 m/s in both, and
+//                           the drawn pose changed (> 0.02 m or > 0.3 deg in one frame): pivots and hops at rest (a pivot toward
+//                           an OBSERVED true heading of the rest pose, a body still closing on its target from > 0.15 m, and a body whose target
+//                           rests > 3 m away - a fix moved it beyond its position error: it turns and drives there - are INFO;
+//                           so is a pivot toward the heading of a PLANNED wait, the plan's own turn: rest_turn_planned)
+//   label_lineup_misaligned E6, samples: 'Lined up' with the nose > 30 deg off the runway axis (round 4 iteration 2, F1: at any speed; was < 5 kt)
+//   label_hold_on_runway    E6, samples: 'Holding short' drawn with its main-gear origin on runway pavement
+//   liftoff_pitch_low       E7: a drawn lift-off at HWD with the pitch below 5 deg (no rotation); liftoffs_checked counts them
+//   touchdown_pitch_bad     E7: a drawn touchdown at HWD with the pitch outside 2-8 deg (no flare / no landing attitude)
+//   pitch_rate_frames       E7: the drawn pitch changing by more than 0.6 deg in one 0.1-s frame (6 deg/s)
+//   pitch_phase_samples     E7, samples: 'Climbing out' climbing > 300 ft/min below 1,500 ft AGL with the pitch < 4 deg; 'Final'
+//                           descending > 300 ft/min below 1,000 ft AGL with the pitch outside -5.5..+6 deg
+//   roll_turn_samples       E7, samples: airborne in a steady turn (> 2 deg/s over the last 1 s, within 2 deg/s of the second before)
+//                           and the bank more than 10 deg off the coordinated bank atan(v x omega / g)
+//   ground_stall_frames     E7: on the ground, moving > 10 m/s in the frame before, the body advanced < 20 % of v x dt in this
+//                           frame (the one-frame stall at touchdown: 0.000 m against 1.38 m/frame)
+//   roll_start_yaw_frames   E7: a take-off roll (label or a reconstructed roll) on a runway centreline (< 3 m), aligned (< 20 deg),
+//                           3-40 kt and accelerating (> 0.2 m/s in 1 s):
+//                           the nose more than 2 deg off the runway axis (OD3 case S yawed 299.2 -> 294.4 -> 299.7 deg)
+//   taxi_hole_stop_frames   E7: a ground hole (> 8 s) whose two reports both move >= 4 kt and are far enough apart for a continuous
+//                           taxi (chord / hole >= 2 m/s), the engine target stopped in it for more than 3 s (a stop in the middle of
+//                           a moving hole); a shorter chord - the aircraft stopped or wandered - is INFO (taxi_hole_stop_short)
+//   label_overflight_hwd    E7, samples: 'Overflight (not HWD traffic)' shown within 300 s (round 4 iteration 2, F6: was 120 s) before the track reaches an HWD runway
+//                           (its first fix in runway / ground contact on the field, or in the approach corridor <= 300 ft): its
+//                           track leads to an HWD runway
+//   label_taxi_still        E7, samples: 'Taxiing' / 'Taxiing on the runway' on a body standing still for more than 3 s
+//   snapshot_drift          E8 (end): the drawn state of any track changing while the engine clock stands still (30 updates at
+//                           the same time = snapshot mode's frozen clock)
+const R4 = new Map(), OVF = new Map(), RWYT = new Map();
+const D2Rh = Math.PI / 180, angDiff = (a, b) => Math.abs(((a - b) % 360 + 540) % 360 - 180);
+const r4Log = (...a) => { if (PL.r4Log.length < 900) PL.r4Log.push(a); };
+const rwyEnd = (end) => { for (const r of site.runways || []) { const [e1, e2] = r.id.split('/'); if (end === e1) return { r, sgn: 1 }; if (end === e2) return { r, sgn: -1 }; } return null; };
+const rwyUnder = (x, z, m = 0) => (site.runways || []).find(r => { const px = x - r.origin[0], pz = z - r.origin[1], al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; return al >= 0 && al <= r.length && Math.abs(ac) <= r.halfWidth + m; }) || null;
+const axOf = (r, x, z) => { const px = x - r.origin[0], pz = z - r.origin[1]; return [px * r.dir[0] + pz * r.dir[1], px * r.right[0] + pz * r.right[1]]; };
+const hdgOf = (r, sgn) => (Math.atan2(r.dir[0] * sgn, -r.dir[1] * sgn) * 180 / Math.PI + 360) % 360;
+const FASTFIX = new Set();
+// (a fast ground fix that is accelerating - faster than the ground fix before it, <= 30 s - or at >= 1.3 VR: a take-off roll; a
+// decelerating one at 1.1-1.3 VR is a landing roll at its touchdown speed)
+const fastAccel = (tr, f, VR) => { if ((f.gsm || 0) >= 1.3 * VR) return true; const i = tr.fx.indexOf(f), L = i > 0 ? tr.fx[i - 1] : null; return !!(L && L.ground && f.t - L.t < 30000 && (f.gsm || 0) > (L.gsm || 0) + 0.5); };
+function r4Frame(tr, D, td, t, s1, agl, kt, lab) {
+  const SP = traffic.spd(tr), VR = SP.vr, P = R4.get(tr.key) || { h: [] }; R4.set(tr.key, P);
+  const H = P.h; H.push([td, D.gs, D.ground, D.hdg, D.x, D.z, D.y]); while (H.length && H[0][0] < td - 2100) H.shift();
+  const at = (dtS) => { for (let k = H.length - 1; k >= 0; k--) if (H[k][0] <= td - dtS * 1000 + 1) return H[k]; return null; };
+  const near = Math.hypot(D.x, D.z) < 3000, R0 = repAt(tr, td), pitchD = (D.pitch || 0) / D2Rh, rollD = (D.roll || 0) / D2Rh;
+  const pv = P.prev, ok1 = pv && td - pv.t < 150 && pv.alpha > 0.99 && D.alpha > 0.99;
+  // E1 air acceleration over 1 s
+  if (s1 && !D.ground) { const q = at(1.0); if (q && H.every(z => z[0] < q[0] || !z[2])) { const a = (D.gs - q[1]) / Math.max(0.5, (td - q[0]) / 1000), lim = a >= 0 ? Math.max(1.0, 1.25 * SP.accTO) : Math.max(1.6, 1.25 * SP.accTO);
+    if (Math.abs(a) > lim) { const rep = R0 && R0.a !== R0.b && !R0.a.ground && !R0.b.ground && R0.a.gs != null && R0.b.gs != null && Math.abs(R0.b.gs - R0.a.gs) * 0.514444 / Math.max(1, (R0.b.t - R0.a.t) / 1000) >= 0.8 * lim;
+      // (the gate is the RECONSTRUCTED motion - a plan / continuation / low pass target, or the first 20 s after a drawn lift-off; a body
+      // following fix-to-fix data that change speed that fast is INFO, air_accel_data)
+      const recon = !!tr._recon || /^(plan|xplan|cont):/.test(tr._tgtMode || '') || (P.lot != null && td - P.lot < 20000);
+      if (rep) PL.air_accel_reported++; else if (!recon) PL.air_accel_data = (PL.air_accel_data || 0) + 1; else { PL.air_accel_samples++; r4Log('air_accel', t, lab, +a.toFixed(2), +lim.toFixed(2), Math.round(kt), Math.round(agl), tr.phase, tr._tgtMode || ''); } } } }
+  // E1 long fast ground roll
+  if (D.ground && D.gs >= 0.9 * VR) { if (P.fr0 == null) P.fr0 = td; if (td - P.fr0 > 8000) { const rep = R0 && R0.a !== R0.b && R0.a.ground && R0.b.ground && (R0.a.gsm || 0) >= 0.9 * VR && (R0.b.gsm || 0) >= 0.9 * VR;
+    if (rep) PL.ground_fast_roll_reported++; else { PL.ground_fast_roll_frames++; if (s1) r4Log('ground_fast_roll', t, lab, Math.round(kt), +((td - P.fr0) / 1000).toFixed(0), tr.phase, tr._tgtMode || ''); } } } else P.fr0 = null;
+  if (D.ground && /^plan:touchgo:roll/.test(tr._tgtMode || '') && tr.phase !== 'touch_and_go') { PL.tg_label_frames++; if (s1) r4Log('tg_label', t, lab, tr.phase, Math.round(kt)); }
+  // E4 fast ground fixes, level plateau after lift-off
+  if (s1 && near && R0) for (const f of [R0.a, R0.b]) if (f && f.ground && (f.gsm || 0) >= 1.1 * VR && !FASTFIX.has(f) && fastAccel(tr, f, VR)) { FASTFIX.add(f); PL.fast_ground_fixes++; r4Log('fast_ground_fix', Math.round(f.t / 1000 - pack.from), lab, +((f.gsm || 0) / 0.514444).toFixed(0), +(VR / 0.514444).toFixed(0)); }
+  if (pv && pv.ground && !D.ground && near) P.lo = P.lot = td;
+  if (D.ground) { P.lo = null; P.pl = 0; }
+  if (P.lo != null && !D.ground && td - P.lo < 25000 && agl < 200) { if (D.vs / 0.3048 * 60 < 100) { P.pl = (P.pl || 0) + 1 / HZ; if (P.pl > 3) { const rep = R0 && R0.a !== R0.b && !R0.a.ground && !R0.b.ground && ((aglOf(R0.a) < 100 && aglOf(R0.b) < 100 && Math.abs(R0.b.y - R0.a.y) < 6) || R0.b.y < R0.a.y - 3);
+    if (rep) PL.liftoff_plateau_reported++; else { PL.liftoff_plateau_frames++; if (s1) r4Log('liftoff_plateau', t, lab, Math.round(agl), Math.round(D.vs / 0.3048 * 60), tr.phase, tr._tgtMode || ''); } } } }
+  // E5 labels
+  { const q = at(2.0); if (tr.phase === 'takeoff_roll' && D.ground && D.gs < 0.5 * VR && q && D.gs - q[1] < 0.5) { P.ts = (P.ts || 0) + 1 / HZ; if (P.ts > 0.5) { PL.label_takeoff_slow++; if (s1) r4Log('label_takeoff_slow', t, lab, Math.round(kt), tr._tgtMode || ''); } } else P.ts = 0; }
+  { const q = at(1.0); if (tr.phase === 'line_up' && D.ground && kt > 5 && q && D.gs - q[1] > 0.5) { PL.label_lineup_rolling++; if (s1) r4Log('label_lineup_rolling', t, lab, Math.round(kt), tr._tgtMode || ''); } }
+  const rwyL = tr.phaseInfo && tr.phaseInfo.rwy, E = rwyL ? rwyEnd(rwyL) : null;
+  if (s1 && !D.ground && E && ['initial_climb', 'upwind'].includes(tr.phase)) { const [, ac] = axOf(E.r, D.x, D.z), dp = angDiff(D.hdg, hdgOf(E.r, E.sgn));
+    if (dp > 60 || Math.abs(ac) > 800) { PL.label_climbout_leg++; r4Log('label_climbout_leg', t, lab, tr.phase, rwyL, Math.round(dp), Math.round(ac), Math.round(agl)); } }
+  if (s1 && D.ground && kt > 10 && E && ['takeoff_roll', 'landing_roll', 'touch_and_go', 'stop_and_go', 'runway_taxi', 'line_up'].includes(tr.phase)) { const dp = angDiff(D.hdg, hdgOf(E.r, E.sgn)), U = rwyUnder(D.x, D.z, 3);
+    if (dp > 90 || (U && U !== E.r)) { PL.label_runway_end++; r4Log('label_runway_end', t, lab, tr.phase, rwyL, Math.round(dp), U ? U.id : '-'); } }
+  // E6 rest
+  if (ok1 && D.ground && pv.ground && tr.restPose && pv.rest && D.gs < 0.3 && pv.gs < 0.3 && Math.hypot(tr.restPose.x - pv.rest[0], tr.restPose.z - pv.rest[1]) < 3) {
+    const dp = Math.hypot(D.x - pv.x, D.z - pv.z), dh = angDiff(D.hdg, pv.hdg);
+    // (a pivot TOWARD an observed true heading of the rest pose, without moving, is the data turning it: INFO)
+    // (and a body still on its way to the target - > 0.5 m from it, the target moved by a fix beyond the position error - arriving)
+    // (round 4 iteration 2, F3: the pivot turns about a braked main wheel, so the reference point moves track / 2 x the turn per frame)
+    const dpPiv = 0.02 + ((tr.dims && tr.dims.track) || 2.4) / 2 * dh * D2Rh;
+    const obsTurn = tr.restPose.hdgReal && tr.restPose.hdg != null && dp <= Math.max(0.05, dpPiv) && angDiff(D.hdg, tr.restPose.hdg) < angDiff(pv.hdg, tr.restPose.hdg);
+    const tx = tr.restPose.x + (tr.physOff ? tr.physOff[0] : 0), tz = tr.restPose.z + (tr.physOff ? tr.physOff[1] : 0), dNow = Math.hypot(tx - D.x, tz - D.z), arriving = dNow > 3 || (dNow > 0.15 && dNow < (P.rd ?? 1e9) - 0.005); P.rd = dNow;
+    // (and a pivot toward the heading of a PLANNED wait - the turn a take-off plan schedules before it taxis off or at its line-up -
+    // is the plan's manoeuvre: INFO rest_turn_planned)
+    const planTurn = tr.restPose.planned && tr.restPose.hdg != null && /:wait$/.test(tr._tgtMode || '') && dp <= Math.max(0.05, dpPiv) && angDiff(D.hdg, tr.restPose.hdg) < angDiff(pv.hdg, tr.restPose.hdg);
+    if (obsTurn && dh > 0.3) PL.rest_turn_observed = (PL.rest_turn_observed || 0) + 1;
+    else if (planTurn && dh > 0.3) PL.rest_turn_planned = (PL.rest_turn_planned || 0) + 1;
+    else if (arriving) PL.rest_arriving = (PL.rest_arriving || 0) + 1;
+    else if (dp > 0.02 || dh > 0.3) { PL.rest_pose_change_frames++; if (!P.rlg || td - P.rlg > 1000) { P.rlg = td; r4Log('rest_pose_change', t, lab, tr.phase, +dp.toFixed(3), +dh.toFixed(2), tr._tgtMode || ''); } } }
+  // (round 4 iteration 2, F1: at any speed - 'Lined up 10L/28R' was shown at 10.5 kt 90 deg off the runway)
+  if (s1 && tr.phase === 'line_up' && D.ground) { const U = rwyUnder(D.x, D.z, 3) || (site.runways || [])[0]; const d0 = Math.min(angDiff(D.hdg, hdgOf(U, 1)), angDiff(D.hdg, hdgOf(U, -1)));
+    if (d0 > 30) { PL.label_lineup_misaligned++; r4Log('label_lineup_misaligned', t, lab, Math.round(d0)); } }
+  if (s1 && tr.phase === 'hold_short' && D.ground && rwyUnder(D.x, D.z, 0)) { PL.label_hold_on_runway++; r4Log('label_hold_on_runway', t, lab, Math.round(D.x), Math.round(D.z)); }
+  // E7 attitude
+  if (ok1 && near && pv.ground && !D.ground) { PL.liftoffs_checked++; if (pitchD < 5) { PL.liftoff_pitch_low++; r4Log('liftoff_pitch_low', t, lab, +pitchD.toFixed(1), Math.round(kt), tr._tgtMode || ''); } }
+  if (ok1 && near && !pv.ground && D.ground) { PL.touchdowns_checked++; if (pitchD < 2 || pitchD > 8) { PL.touchdown_pitch_bad++; r4Log('touchdown_pitch_bad', t, lab, +pitchD.toFixed(1), Math.round(kt), tr._tgtMode || ''); } }
+  if (ok1 && Math.abs(pitchD - pv.pitch) > 0.6) { PL.pitch_rate_frames++; if (!P.prl || td - P.prl > 1000) { P.prl = td; r4Log('pitch_rate', t, lab, +pv.pitch.toFixed(1), +pitchD.toFixed(1), D.ground ? 'G' : 'A', tr._tgtMode || ''); } }
+  if (s1 && !D.ground) { const vsf = D.vs / 0.3048 * 60;
+    if (tr.phase === 'initial_climb' && vsf > 300 && agl < 1500 && pitchD < 4) { PL.pitch_phase_samples++; r4Log('pitch_phase', t, lab, tr.phase, +pitchD.toFixed(1), Math.round(vsf)); }
+    if (tr.phase === 'final' && vsf < -300 && agl < 1000 && (pitchD < -5.5 || pitchD > 6)) { PL.pitch_phase_samples++; r4Log('pitch_phase', t, lab, tr.phase, +pitchD.toFixed(1), Math.round(vsf)); }
+    const q = at(1.0), q2 = at(2.0); if (q && q2 && !q[2] && !q2[2]) { const w = (((D.hdg - q[3]) % 360 + 540) % 360 - 180) / Math.max(0.5, (td - q[0]) / 1000), w2 = (((q[3] - q2[3]) % 360 + 540) % 360 - 180) / Math.max(0.5, (q[0] - q2[0]) / 1000);
+      if (Math.abs(w) > 2 && Math.abs(w - w2) < 2) { const bank = Math.atan(D.gs * w * D2Rh / 9.81) / D2Rh; if (Math.abs(bank - rollD) > 10 && Math.abs(rollD) < 34.5) { PL.roll_turn_samples++; r4Log('roll_turn', t, lab, +w.toFixed(1), +bank.toFixed(0), +rollD.toFixed(0)); } } } }
+  if (ok1 && D.ground && pv.ground && pv.gs > 10 && pv.adv != null && pv.adv > 0.8 * pv.gs / HZ) { const adv = Math.hypot(D.x - pv.x, D.z - pv.z); if (adv < 0.2 * pv.gs / HZ) { PL.ground_stall_frames++; r4Log('ground_stall', t, lab, +adv.toFixed(3), +(pv.gs / HZ).toFixed(2), tr._tgtMode || ''); } }
+  if (D.ground && kt >= 3 && kt <= 40) { const U = rwyUnder(D.x, D.z, 0); if (U) { const [, ac] = axOf(U, D.x, D.z), d1 = angDiff(D.hdg, hdgOf(U, 1)), d2 = angDiff(D.hdg, hdgOf(U, -1)), dd = Math.min(d1, d2), q = at(1.0);
+    if (Math.abs(ac) < 3 && dd < 20 && q && D.gs - q[1] > 0.2 && dd > 2 && (tr.phase === 'takeoff_roll' || /rollR$/.test(tr._tgtMode || ''))) { PL.roll_start_yaw_frames++; if (!P.yl || td - P.yl > 1000) { P.yl = td; r4Log('roll_start_yaw', t, lab, +dd.toFixed(1), Math.round(kt), tr._tgtMode || ''); } } } }
+  if (D.ground && /^(route|chord)$/.test(tr._tgtMode || '') && (tr._tgtV || 0) < 0.05 && R0 && R0.a !== R0.b && R0.a.ground && R0.b.ground && R0.gap > 8000 && (R0.a.gs || 0) >= 4 && (R0.b.gs || 0) >= 4) {
+    P.hs = (P.hs || 0) + 1 / HZ; const chV = Math.hypot(R0.b.px - R0.a.px, R0.b.pz - R0.a.pz) / (R0.gap / 1000);
+    if (P.hs > 3 && chV < 2.0) PL.taxi_hole_stop_short = (PL.taxi_hole_stop_short || 0) + 1;
+    else if (P.hs > 3) { PL.taxi_hole_stop_frames++; if (s1) r4Log('taxi_hole_stop', t, lab, +P.hs.toFixed(0), +(R0.a.gs).toFixed(0), +(R0.b.gs).toFixed(0)); } } else P.hs = 0;
+  if (s1 && tr.phase === 'overflight') { let a = OVF.get(tr.key); if (!a) OVF.set(tr.key, a = []); a.push(td); }
+  if (s1 && R0) for (const f of [R0.a, R0.b]) if (f && (((f.st === 'R' || f.st === 'G') && f.r <= 1500) || (f.st === 'L' && f.h != null && f.h <= 300))) { const q = RWYT.get(tr.key); if (q == null || f.t < q) RWYT.set(tr.key, f.t); }
+  if (s1 && D.ground) { const L0 = tr.phaseInfo && tr.phaseInfo.label, q = STILL.get(tr.key); if ((L0 === PHASES.taxi.label || L0 === PHASES.runway_taxi.label) && q && q.t0 != null && td - q.t0 > 3000) { PL.label_taxi_still++; if (!tr._lgT3) { tr._lgT3 = 1; r4Log('label_taxi_still', t, lab, Math.round((td - q.t0) / 1000)); } } }
+  r4i2Frame(tr, D, td, t, s1, agl, kt, lab, P, R0, VR, near, rollD);
+  P.prev = { t: td, x: D.x, z: D.z, hdg: D.hdg, gs: D.gs, ground: D.ground, alpha: D.alpha, pitch: pitchD, rest: tr.restPose ? [tr.restPose.x, tr.restPose.z] : null, adv: pv && td - pv.t < 150 ? Math.hypot(D.x - pv.x, D.z - pv.z) : null };
+}
+// ---- round 4 iteration 2 (docs/phase2_run.md section 11; findings F1-F12 of the recheck), fixed-wing, drawn, 10-Hz frames unless 'samples'
+//   low_bank_frames        F1: airborne within 3 km of the ARP below 300 ft AGL, banked more than max(25 deg, 15 deg at 100 ft rising linearly to
+//                          35 deg at 300 ft) (+ 0.5 deg), on PLANNED motion (take-off / landing / touch-and-go plans and continuations; a 35-deg turn through
+//                          180 deg at 29-49 ft over the grass) - the engine's climb-out rule (traffic.js bankLimAt); curves between two reported
+//                          fixes (aa:geo, the low-pass retiming aa:low): INFO low_bank_data_frames; INFO low_bank_400_frames: planned, > 15.5
+//                          deg below 400 ft (the recheck's suggested limit, which also rejects ordinary 20-30-deg crosswind turns at 300 ft)
+//   pivot_in_place         F3, events: the body turns by more than 30 deg on the ground while its reference point moves less than min(0.5 m,
+//                          0.2 x its main-gear track) - an aircraft turns about a braked main wheel, never about its own centre (bodies turned
+//                          90-174 deg with 0.00 m of movement); helicopters excluded
+//   ground_slow_fast_roll  F5: on the ground at >= 0.75 VR for more than 12 s in a row on PLANNED motion (a reconstructed touch-and-go rolled
+//                          22 s at a constant 0.88 VR, just under the 0.9-VR gate); reported (INFO) when both bracketing reports are ground
+//                          fixes at >= 0.75 VR or the body follows ground fixes (gg:*)
+//   label_flicker          F7: a label (any, the runway events take-off / landing roll, touch-and-go excluded) shown for less than 1 s between
+//                          two others; and 'Parked' -> 'Stopped' / 'Taxiing' without the body moving (> 0.3 m)
+//   label_final_arriving   F6, samples: 'Arriving' / 'Overflight' on a body lined up with an HWD runway's final (<= 15 deg, <= 100 m beside
+//                          the extended centreline, 0.5-5 km before the threshold), descending, below 2,000 ft AGL - it is 'Final'
+const PIV = new Map(), LBL = new Map();
+function r4i2Frame(tr, D, td, t, s1, agl, kt, lab, P, R0, VR, near, rollD) {
+  const SP = traffic.spd(tr);
+  if (!D.ground && near && agl < 300) { const lim = Math.max(25, 15 + 20 * Math.min(1, Math.max(0, (agl - 100) / 200))), recon = /^(plan|xplan|cont):/.test(tr._tgtMode || '');
+    if (Math.abs(rollD) > lim + 0.5) { if (recon) { PL.low_bank_frames++; if (s1) r4Log('low_bank', t, lab, Math.round(agl), Math.round(rollD), tr.phase, tr._tgtMode || ''); } else PL.low_bank_data_frames = (PL.low_bank_data_frames || 0) + 1; }
+    if (recon && agl < 400 && Math.abs(rollD) > 15.5) PL.low_bank_400_frames = (PL.low_bank_400_frames || 0) + 1; }
+  // pivots: an anchor pose and the unwrapped heading turned since; the anchor moves on once the body has moved more than the limit
+  { let q = PIV.get(tr.key); const lim = Math.min(0.5, 0.2 * ((tr.dims && tr.dims.track) || 2.4));
+    if (!D.ground || !(D.alpha > 0.99) || tr.inHangarRest) { PIV.delete(tr.key); }
+    else { if (!q) PIV.set(tr.key, q = { x: D.x, z: D.z, h: D.hdg, turn: 0, t0: td });
+      else { const dh = ((D.hdg - q.h) % 360 + 540) % 360 - 180; q.turn += dh; q.h = D.hdg;
+        if (Math.hypot(D.x - q.x, D.z - q.z) > lim) { q.x = D.x; q.z = D.z; q.turn = 0; q.t0 = td; }
+        else if (Math.abs(q.turn) > 30) { PL.pivot_in_place++; r4Log('pivot_in_place', t, lab, Math.round(q.turn), +((td - q.t0) / 1000).toFixed(1), +Math.hypot(D.x - q.x, D.z - q.z).toFixed(2), tr.phase, tr._tgtMode || ''); q.x = D.x; q.z = D.z; q.turn = 0; q.t0 = td; } } } }
+  // long roll above 0.75 VR
+  // (a body following ground fixes - gg:* fix-to-fix, the data's own roll-out - is INFO with the reported ones)
+  if (D.ground && D.gs >= 0.75 * VR) { if (P.fr75 == null) P.fr75 = td; if (td - P.fr75 > 12000) { const rep = (R0 && R0.a !== R0.b && R0.a.ground && R0.b.ground && (R0.a.gsm || 0) >= 0.75 * VR && (R0.b.gsm || 0) >= 0.75 * VR) || !/^(plan|xplan|cont):/.test(tr._tgtMode || '');
+    if (rep) PL.ground_slow_fast_roll_reported = (PL.ground_slow_fast_roll_reported || 0) + 1; else { PL.ground_slow_fast_roll++; if (s1) r4Log('ground_slow_fast_roll', t, lab, Math.round(kt), +((td - P.fr75) / 1000).toFixed(0), tr.phase, tr._tgtMode || ''); } } } else P.fr75 = null;
+  // label runs (the label text the UI shows)
+  { const L0 = phaseLabel(tr, td); let q = LBL.get(tr.key); if (!q) LBL.set(tr.key, q = { cur: L0, t0: td, prev: null, x: D.x, z: D.z, ph: tr.phase });
+    if (L0 !== q.cur) { const dur = td - q.t0, ev = /^(Take-off roll|Landing roll|Touch-and-go|Stop-and-go)/.test(q.cur), base = (x) => x.replace(/ \(provisional\)/, '');
+      // (a change of the '(provisional)' mark alone - the drawn state's label handing over to the fix label - is INFO label_provisional_flips)
+      if (q.prev != null && dur < 1000 && !ev) { if (base(q.prev) === base(q.cur) || base(q.cur) === base(L0)) PL.label_provisional_flips = (PL.label_provisional_flips || 0) + 1; else { PL.label_flicker++; r4Log('label_flicker', t, lab, q.prev, q.cur, +(dur / 1000).toFixed(1), L0); } }
+      if (q.ph === 'parked' && (tr.phase === 'taxi' || tr.phase === 'runway_taxi') && Math.hypot(D.x - q.x, D.z - q.z) < 0.3 && !tr.stale) { PL.label_flicker++; r4Log('label_parked_stopped', t, lab, q.cur, L0); }
+      q.prev = q.cur; q.cur = L0; q.t0 = td; q.x = D.x; q.z = D.z; q.ph = tr.phase; } }
+  if (s1 && !D.ground && (tr.phase === 'arriving' || tr.phase === 'overflight') && agl < 2000 && D.vs < -0.5) for (const r of site.runways || []) for (const sg of [1, -1]) {
+    const px = D.x - r.origin[0], pz = D.z - r.origin[1], al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1], before = ((sg > 0 ? 0 : r.length) - al) * sg;
+    if (before >= 500 && before <= 5000 && Math.abs(ac) <= 100 && angDiff(D.hdg, hdgOf(r, sg)) <= 15) { PL.label_final_arriving++; r4Log('label_final_arriving', t, lab, tr.phase, Math.round(before), Math.round(ac), Math.round(agl)); }
+  }
+}
+function r4End(lastNow) {
+  for (const [k, a] of OVF) { const tr = EVER.get(k), T1 = RWYT.get(k); if (!tr || T1 == null) continue; for (const td of a) if (td <= T1 && T1 - td <= 300000) { PL.label_overflight_hwd++; if (PL.label_overflight_hwd <= 20) r4Log('label_overflight_hwd', Math.round(td / 1000 - pack.from), tr.info.icao || '?', Math.round((T1 - td) / 1000)); } }
+  // E8: snapshot mode as js/live/app.js runs it - a fresh engine, the PRE_S (600) s before the instant S on the pack's own payloads
+  // at 0.2-s steps, the clock frozen at S + lookahead - at 25 / 50 / 75 % of the window; then 30 frames of 0.1 s at the frozen
+  // clock: nothing drawn may move (position, heading, speed, pitch, roll, alpha) and no label may change
+  PL.snapshot_drift_worst = [];
+  for (const fr of [0.25, 0.5, 0.75]) {
+    const S = pack.from + Math.max(Math.min(600, (pack.until - pack.from) / 3), (pack.until - pack.from) * fr), t1 = S + L, t0 = Math.max(pack.from, S - 600);
+    const tq = new Traffic({ airport: HWD_AIRPORT, taxigraph: TAXIGRAPH, site, parking: new ParkingModel({ airport: HWD_AIRPORT, taxigraph: TAXIGRAPH, site }), persist: false }); tq.setLookahead(L);
+    const ph = new GroundPhysics({ site, net: tq.net, parking: tq.parking }), st2 = {}; let i = 0;
+    const ex2 = (p) => ({ now: p.now, dataNow: p.dataNow, _source: p._source, msg: p.msg, ac: p.d.map(r => { const a = st2[r[0]] || (st2[r[0]] = { hex: r[0] }); for (const k in r[1]) a[k] = r[1][k]; if (r[2]) for (const k of r[2]) delete a[k]; return { ...a }; }) });
+    const fr2 = []; for (const e of pack.events) { if (e.T > t1) break; const pj = ex2(e.p); if (e.T >= t0) fr2.push({ T: e.T, j: pj }); }
+    for (let t = t0; t <= t1 + 1e-6; t += 0.2) { while (i < fr2.length && fr2[i].T <= t) { const f = fr2[i++]; tq.ingest(parsePayload(f.j, f.T * 1000), f.T * 1000); } tq.update(t * 1000, 0.2); ph.resolve(tq, 0.2); }
+    const snap = (q) => ({ x: q.disp.x, y: q.disp.y, z: q.disp.z, hdg: q.disp.hdg, gs: q.disp.gs, pitch: q.disp.pitch || 0, roll: q.disp.roll || 0, alpha: q.disp.alpha || 0, lab: phaseLabel(q, t1 * 1000) });
+    tq.update(t1 * 1000, 0.1); ph.resolve(tq, 0.1);   // the app's first frame: the clock reaches S + lookahead exactly (the pre-roll's last step is up to 0.2 s short)
+    const S0 = new Map(); for (const q of tq.tracks.values()) if (q.disp.valid && q.inView && q.disp.alpha > 0.02) S0.set(q.key, snap(q));
+    for (let k = 0; k < 30; k++) { tq.update(t1 * 1000, 0.1); ph.resolve(tq, 0.1); }
+    let worst = 0, who = null, nAir = 0; for (const q of tq.tracks.values()) { const A = S0.get(q.key); if (!A) continue; const B = snap(q); if (!q.disp.ground) nAir++;
+      const d = Math.max(Math.hypot(B.x - A.x, B.y - A.y, B.z - A.z), angDiff(B.hdg, A.hdg) * 0.1, Math.abs(B.gs - A.gs), Math.abs(B.pitch - A.pitch) * 10, Math.abs(B.roll - A.roll) * 10, Math.abs(B.alpha - A.alpha), A.lab !== B.lab ? 1 : 0);
+      if (d > worst) { worst = d; who = (q.info.icao || '?') + (q.disp.ground ? ' G' : ' A'); } }
+    if (worst > 1e-6) PL.snapshot_drift++; PL.snapshot_drift_worst.push([fr, S0.size, nAir, +worst.toFixed(3), who]);
+  }
+}
 const pct = (a, q) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(q * s.length))].toFixed(2); };
 
 // ---- run: wall clock = data clock (the shim's offset is 0 here)
 const evs = pack.events; let ei = 0;
 const tStart = pack.from + L, tEnd = Math.min(pack.until + L + 20, opt('minutes') ? pack.from + L + 60 * +opt('minutes') : 1e12);
-let firstBatch = true;
+let firstBatch = true, lastNowMs = tStart * 1000;
 // (iteration 3, F2) the opening burst as app.js onData ingests it: a payload older than 3 s at its arrival is history and is
 // ingested at its own send time (p.now); the rest at the arrival time. --open tstart: the round-3 harness (all at tStart)
 const recvOf = (p, T, first) => first ? (OPEN !== 'tstart' && p.now != null && p.now < tStart * 1000 - 3000 ? p.now : tStart * 1000) : T * 1000;
@@ -392,17 +616,18 @@ for (let t = tStart; t <= tEnd; t += DT) {
   }
   firstBatch = false;
   const a = performance.now();
-  traffic.update(t * 1000, DT); physics.resolve(traffic, DT);
+  traffic.update(t * 1000, DT); physics.resolve(traffic, DT); lastNowMs = t * 1000;
   M.updMs.push(performance.now() - a);
   sampleFrame(t * 1000); extraFrame(t * 1000);
 }
 iter3End();
+r4End(lastNowMs);
 // plausibility from the 1-Hz series of the drawn fixed-wing bodies
 for (const S of SER.values()) {
   const a = S.s;
   for (let k = 1; k < a.length; k++) { if (a[k][0] - a[k - 1][0] > 1.5) continue;
     if (a[k - 1][3] === 1 && a[k][3] === 0 && Math.max(a[k - 1][4], a[k][4]) < 0.65 * S.va) { PL.slow_liftoff++; if (PL.liftLog.length < 20) PL.liftLog.push([Math.round(a[k][0] - pack.from - L), S.type, +(Math.max(a[k - 1][4], a[k][4]) / 0.514444).toFixed(0)]); } }
-  for (let k = 3; k < a.length; k++) if (a[k][3] === 1 && a[k - 3][3] === 1 && a[k - 3][4] > 40 * 0.514444 && a[k][4] < 8 * 0.514444 && a[k][0] - a[k - 3][0] < 3.5) PL.hard_stops++;
+  for (let k = 3; k < a.length; k++) if (a[k][3] === 1 && a[k - 3][3] === 1 && a[k - 3][4] > 40 * 0.514444 && a[k][4] < 8 * 0.514444 && a[k][0] - a[k - 3][0] < 3.5) { PL.hard_stops++; (PL.hardLog || (PL.hardLog = [])).length < 10 && PL.hardLog.push([Math.round(a[k][0] - pack.from - L), S.type, +(a[k - 3][4] / 0.514444).toFixed(0), +(a[k][4] / 0.514444).toFixed(0)]); }
   // (fix round 2: a hop stays near and low - < 600 m from the lift-off point and < 300 ft AGL; a 140-s touch-and-go circuit
   // of an aerobatic single that lands within 200 m of where it lifted off is not one)
   for (let k = 1; k < a.length; k++) if (a[k - 1][3] === 1 && a[k][3] === 0) { let j = k, far = 0, hi = 0; while (j < a.length && a[j][3] === 0 && a[j][0] - a[j - 1][0] < 3) { far = Math.max(far, Math.hypot(a[j][1] - a[k - 1][1], a[j][2] - a[k - 1][2])); hi = Math.max(hi, a[j][5] || 0); j++; }
@@ -439,13 +664,26 @@ const CHECKS = { teleports_engine: [PL.teleports_engine, 0], teleports_signal_hw
   // review round 3, iteration 3 (see iter3Frame / iter3End)
   air_float_runway_frames: [PL.air_float_runway_frames, 0], recon_substall_samples: [PL.recon_substall_samples, 0], air_substall_samples: [PL.air_substall_samples, 0],
   label_vertical_sense: [PL.label_vertical_sense, 0], label_base_aligned: [PL.label_base_aligned, 0], label_taxi_stopped: [PL.label_taxi_stopped, 0], label_roll_flicker: [PL.label_roll_flicker, 0],
-  tg_no_contact: [PL.tg_no_contact, 0], m3_hidden_runway_consistent: [PL.m3_hidden_runway_consistent, 0] };
+  tg_no_contact: [PL.tg_no_contact, 0], m3_hidden_runway_consistent: [PL.m3_hidden_runway_consistent, 0],
+  // round 4 (E1-E8; r4Frame / r4End)
+  air_accel_samples: [PL.air_accel_samples, 0], ground_fast_roll_frames: [PL.ground_fast_roll_frames, 0], tg_label_frames: [PL.tg_label_frames, 0], teleports_attitude: [PL.teleports_attitude, 0],
+  fast_ground_fixes: [PL.fast_ground_fixes, 0], liftoff_plateau_frames: [PL.liftoff_plateau_frames, 0], label_takeoff_slow: [PL.label_takeoff_slow, 0], label_climbout_leg: [PL.label_climbout_leg, 0],
+  label_runway_end: [PL.label_runway_end, 0], label_lineup_rolling: [PL.label_lineup_rolling, 0], rest_pose_change_frames: [PL.rest_pose_change_frames, 0], label_lineup_misaligned: [PL.label_lineup_misaligned, 0],
+  label_hold_on_runway: [PL.label_hold_on_runway, 0], liftoff_pitch_low: [PL.liftoff_pitch_low, 0], touchdown_pitch_bad: [PL.touchdown_pitch_bad, 0], pitch_rate_frames: [PL.pitch_rate_frames, 0],
+  pitch_phase_samples: [PL.pitch_phase_samples, 0], roll_turn_samples: [PL.roll_turn_samples, 0], ground_stall_frames: [PL.ground_stall_frames, 0], roll_start_yaw_frames: [PL.roll_start_yaw_frames, 0],
+  taxi_hole_stop_frames: [PL.taxi_hole_stop_frames, 0], label_overflight_hwd: [PL.label_overflight_hwd, 0], label_taxi_still: [PL.label_taxi_still, 0], snapshot_drift: [PL.snapshot_drift, 0],
+  low_bank_frames: [PL.low_bank_frames, 0], pivot_in_place: [PL.pivot_in_place, 0], ground_slow_fast_roll: [PL.ground_slow_fast_roll, 0], label_flicker: [PL.label_flicker, 0], label_final_arriving: [PL.label_final_arriving, 0] };
 // (iteration 2, F4) planted cases: each gate below must FIRE on its planted input and must NOT fire on its planted
 // exception - a gate that cannot fire is dead code (ground_air_reappear read a field that was never stored)
 { const last = { t: 0, x: 0, y: 12, z: 0, gs: 0, ground: true, cls: 'single_hw' }, Dp = { x: -800, y: 45, z: -400, gs: 36, ground: false };
   const why = new Set(['hideSeg']), r1 = reappear(last, Dp, 48000, why, null), r2 = reappear(last, Dp, 48000, why, [{ t1: 47500, x: -790, y: 44, z: -405 }]);
   const r3 = reappear({ ...last, ground: false, gs: 36 }, { ...Dp, x: 40, z: -20 }, 1000, new Set(['cut']), null);
-  const ok = r1.gAir && r1.jump && !r1.m3 && r2.m3 && !r3.jump;
+  // (round 4, E2) an air -> air re-appearance 2 s later 164 ft higher, or 70 deg off its heading, is a jump; one level and on
+  // heading is not
+  const La = { t: 0, x: 0, y: 100, z: 0, gs: 40, vs: 0, hdg: 270, ground: false, cls: 'single_hw' };
+  const r4 = reappear(La, { x: -80, y: 150, z: 0, gs: 40, hdg: 270, ground: false }, 2000, new Set(['cut']), null), r5 = reappear(La, { x: -80, y: 100, z: 0, gs: 40, hdg: 200, ground: false }, 2000, new Set(['cut']), null),
+    r6 = reappear(La, { x: -80, y: 101, z: 0, gs: 40, hdg: 272, ground: false }, 2000, new Set(['cut']), null);
+  const ok = r1.gAir && r1.jump && !r1.m3 && r2.m3 && !r3.jump && r4.jump && r5.jump && !r6.jump;
   CHECKS.planted_reappear = [ok ? 0 : 1, 0]; }
 { const okLow = !inRwyBox(0, -700, 30, 300) && inRwyBox(site.runways[0].origin[0], site.runways[0].origin[1], 30, 300);
   CHECKS.planted_low_air_box = [okLow ? 0 : 1, 0]; }
@@ -558,13 +796,14 @@ console.log('pavement', JSON.stringify(out.pavement)); console.log('overlaps', J
 console.log('motion', JSON.stringify(out.motion)); console.log('parking', JSON.stringify(park)); console.log('scope', JSON.stringify(scope)); console.log('d1', JSON.stringify(d1));
 console.log('counters', JSON.stringify(traffic.counters), 'net', JSON.stringify(out.run.net), 'flow', JSON.stringify(out.run.flow));
 console.log('visible phases', JSON.stringify(M.phaseFrames));
-console.log('plausibility', JSON.stringify({ ...PL, teleLog: undefined, ghostLog: undefined, liftLog: undefined, hopLog: undefined, alignLog: undefined, newLog: undefined, m3Log: undefined, xLog: undefined }));
+console.log('plausibility', JSON.stringify({ ...PL, r4Log: undefined, teleLog: undefined, ghostLog: undefined, liftLog: undefined, hopLog: undefined, alignLog: undefined, newLog: undefined, m3Log: undefined, xLog: undefined }));
 if (PL.m3Log.length) console.log('m3 hidden take-offs [t s, type, m from the last drawn ground pose, absent s, ft AGL at the fix, why]', JSON.stringify(PL.m3Log));
 if (PL.teleLog.length) console.log('teleports [t s, type, scope, phase, m, absent s, why, engine|signal, longest fix gap s]', JSON.stringify(PL.teleLog));
 if (PL.alignLog.length) console.log('misaligned [t s, type, kind, deg off the runway]', JSON.stringify(PL.alignLog));
 if (PL.hopLog.length) console.log('hops [t s, type, max m from lift-off, max ft AGL]', JSON.stringify(PL.hopLog));
 if (PL.newLog.length && args.includes('--log')) for (const r of PL.newLog) console.log('log', JSON.stringify(r));
 if (PL.xLog.length && args.includes('--log')) for (const r of PL.xLog) console.log('xlog', JSON.stringify(r));
+if (PL.r4Log.length && args.includes('--log')) for (const r of PL.r4Log) console.log('r4log', JSON.stringify(r));
 console.log('INFO', JSON.stringify(INFO));
 console.log('CHECKS', Object.entries(CHECKS).map(([k, [v, lim]]) => `${k} ${v} (<= ${lim}) ${v > lim ? 'FAIL' : 'ok'}`).join(' | '));
 console.log(FAILED.length ? 'RESULT: FAILED ' + FAILED.join(', ') : 'RESULT: ALL PLAUSIBILITY CHECKS PASSED');

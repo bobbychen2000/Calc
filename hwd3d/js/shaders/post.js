@@ -1,4 +1,4 @@
-// Forked from sfo3d/js/shaders/post.js @ a967f9b. Kept: motion blur, bloom down/up, final grade (ACES). Changed: nothing. Dropped: nothing.
+// Forked from sfo3d/js/shaders/post.js @ a967f9b. Kept: motion blur, bloom down/up, final grade (ACES). Changed: the edge chromatic aberration is scaled by uCA (post.ca, js/renderer.js; default 0 = off since OD4 iteration 2, docs/phase3_models.md section 15.6); bloom knee (uKnee: DOWN_FS weights each first-pass tap by v^2 / (v^2 + K^2), FINAL_FS gives the left-out share of a uniform field back as the pixel's gain; OD4 iteration 3, section 15.7). Dropped: nothing.
 export const POST_VS = `
 layout(location=0) in vec3 aPos; out vec2 vUV;
 void main(){ vUV = aPos.xy * 0.5 + 0.5; gl_Position = vec4(aPos.xy, 0.0, 1.0); }`;
@@ -30,7 +30,10 @@ void main(){
 
 export const DOWN_FS = `
 in vec2 vUV; out vec4 o; uniform sampler2D uSrc; uniform vec2 uTexel; uniform float uFirst;
-vec3 s(vec2 uv){ vec3 c = texture(uSrc, uv).rgb; return c; }
+uniform float uKnee; uniform float uExpo;   // bloom knee (post.bloomKnee, display-referred luminance; 0 = off) and the frame's exposure
+// first pass: each tap weighted by a soft knee v^2 / (v^2 + K^2) of its display-referred luminance v = lum x exposure, so the
+// bloom comes from highlights (lights, glints, the sun) and not from diffuse surfaces (OD4 iteration 3, docs/phase3_models.md 15.7)
+vec3 s(vec2 uv){ vec3 c = texture(uSrc, uv).rgb; if (uFirst > 0.5 && uKnee > 0.0) { float v = dot(c, vec3(0.2126, 0.7152, 0.0722)) * uExpo; c *= v * v / (v * v + uKnee * uKnee); } return c; }
 void main(){
   vec2 t = uTexel;
   vec3 a = s(vUV + t * vec2(-2, 2)), b = s(vUV + t * vec2(0, 2)), c = s(vUV + t * vec2(2, 2));
@@ -58,6 +61,8 @@ in vec2 vUV; out vec4 o;
 uniform sampler2D uColor; uniform sampler2D uBloom; uniform sampler2D uOverlay;
 uniform float uExposure; uniform float uBloomMix; uniform float uTime; uniform float uVignette; uniform float uGrain;
 uniform vec3 uLift; uniform vec3 uGain; uniform float uSat; uniform float uFade; uniform vec2 uRes;
+uniform float uKnee; uniform float uBloomLevels;   // bloom knee (post.bloomKnee; 0 = off) and the number of pyramid levels summed in uBloom
+uniform float uCA;   // chromatic-aberration strength (post.ca; OD4 2026-11-14). Default 0 since OD4 it. 2 (review F8: 1-px purple / red fringes on high-contrast aircraft edges); 1 = sfo3d's constant
 float hash12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 vec3 RRTAndODTFit(vec3 v){ vec3 a = v * (v + 0.0245786) - 0.000090537; vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081; return a / b; }
 vec3 ACES(vec3 c){
@@ -71,9 +76,14 @@ void main(){
   // subtle chromatic aberration at edges
   vec2 dc = uv - 0.5; float r2 = dot(dc, dc);
   vec3 col;
-  col.r = texture(uColor, uv - dc * 0.0012 * r2).r;
+  col.r = texture(uColor, uv - dc * 0.0012 * r2 * uCA).r;
   col.g = texture(uColor, uv).g;
-  col.b = texture(uColor, uv + dc * 0.0012 * r2).b;
+  col.b = texture(uColor, uv + dc * 0.0012 * r2 * uCA).b;
+  // bloom knee (OD4 iteration 3): the down pass leaves out the share (1 - w) of each pixel's bloom below the knee; that share of a
+  // uniform field (uBloomLevels pyramid levels x uBloomMix x the first pass's compression) is given back here as the pixel's own
+  // gain, so a uniform area keeps its brightness while a dark detail no longer takes a veil of its bright surroundings
+  if (uKnee > 0.0) { float lum = dot(col, vec3(0.2126, 0.7152, 0.0722)); float v = lum * uExposure; float w = v * v / (v * v + uKnee * uKnee);
+    col *= 1.0 + uBloomMix * uBloomLevels * (1.0 - w) / (1.0 + lum * 0.02); }
   col += texture(uBloom, uv).rgb * uBloomMix;
   col *= uExposure;
   // grade

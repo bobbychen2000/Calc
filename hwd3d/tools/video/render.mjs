@@ -7,7 +7,8 @@
 //   stages:  snapshot   copy the app (live.html, live.css, js/**, data/**, the replay shim, the job's pack and anything else a
 //                       probe boot requested) to out/video/<case>/app/ + MANIFEST.json (sha256 per file, tree hash);
 //                       refuses to replace an existing snapshot without --refresh (a new snapshot = scout + plan again);
-//                       --refresh=video replaces only js/video/** (the pipeline) and keeps the frozen engine, data and models
+//                       --refresh=video replaces only js/video/** (the pipeline) and keeps the frozen engine, data and models;
+//                       --refresh=engine replaces the traffic engine (lib.mjs ENGINE_FILES) and js/video/**, keeps renderer, data, models
 //            scout      engine-only run of the whole timeline (no GPU frames): the hero's pose per frame
 //                       -> out/video/<case>/trace.json (+ the derived events, printed)
 //            plan       the camera and the caption of every frame from the trace and the shot list (js/video/camera.js,
@@ -32,7 +33,7 @@
 // D1: the hero is chosen in the page by rule (type + event in the window) from a type-only pack; no key, registration or
 // callsign is printed, written or shown. Ports 8700-8749 only.
 import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'; import zlib from 'node:zlib'; import { spawnSync } from 'node:child_process'; import { pathToFileURL } from 'node:url';
-import { ROOT, log, startServer, launch, bootApp, readPack, epochOf, VIDEO_SEED, sha256, SNAP_BASE, listFiles, makeSnapshot, verifySnapshot, refreshSnapshot } from './lib.mjs';
+import { ROOT, log, startServer, launch, bootApp, readPack, epochOf, VIDEO_SEED, sha256, SNAP_BASE, listFiles, makeSnapshot, verifySnapshot, refreshSnapshot, ENGINE_FILES } from './lib.mjs';
 
 const argv = process.argv.slice(2); const opt = (k, d) => { const a = argv.find(x => x.startsWith('--' + k + '=')); return a ? a.slice(k.length + 3) : (argv.includes('--' + k) ? true : d); };
 const jobFile = argv[0], stage = argv[1] || 'all';
@@ -149,6 +150,13 @@ async function snapshotStage() {
   if (opt('refresh') === 'video') {
     const M = refreshSnapshot(SNAP, 'js/video');
     log(`snapshot ${path.relative(ROOT, SNAP)}: js/video/** refreshed from the working tree, everything else kept from tree ${M.base.tree.slice(0, 12)} (${M.base.made}); new tree ${M.tree.slice(0, 12)}`);
+    return;
+  }
+  // --refresh=engine (round 4 iteration 2, F9): the traffic engine (ENGINE_FILES) and the pipeline (js/video/**) from the working tree; the
+  // renderer, shaders, models and data stay frozen (another workflow is editing them)
+  if (opt('refresh') === 'engine') {
+    const M = refreshSnapshot(SNAP, [...ENGINE_FILES, 'js/video']);
+    log(`snapshot ${path.relative(ROOT, SNAP)}: the engine (${ENGINE_FILES.length} files) and js/video/** refreshed from the working tree, everything else kept from tree ${M.base.tree.slice(0, 12)} (${M.base.made}); new tree ${M.tree.slice(0, 12)}`);
     return;
   }
   if (fs.existsSync(path.join(SNAP, 'MANIFEST.json')) && !opt('refresh')) {

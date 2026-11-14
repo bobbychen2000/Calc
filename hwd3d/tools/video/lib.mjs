@@ -133,10 +133,13 @@ export function makeSnapshot(dir, rels, info = {}) {
 /** replace ONE subtree of an existing snapshot (e.g. 'js/video': a fix of the video pipeline itself) by the working tree's
  *  copy, keeping every other file - the engine, renderer, data and models - exactly as frozen; the manifest records the base
  *  snapshot it came from. The tree hash changes, so scout and plan must run again (the stamps chain refuses old ones). */
+// (round 4 iteration 2, F9) rel may be a list: --refresh=engine replaces the traffic engine modules only (ENGINE_FILES), keeping the
+// renderer, shaders, models and data of the snapshot frozen while another workflow edits them
+export const ENGINE_FILES = ['js/live/traffic.js', 'js/live/motion.js', 'js/live/ground.js', 'js/live/classifier.js', 'js/live/parking.js', 'js/live/feed.js', 'js/live/lookup.js'];
 export function refreshSnapshot(dir, rel) {
-  const M0 = verifySnapshot(dir); const keep = {}, files = {};
-  for (const [k, h] of Object.entries(M0.files)) if (k === rel || k.startsWith(rel + '/')) fs.rmSync(path.join(dir, k)); else keep[k] = h;
-  for (const r of listFiles(ROOT, rel)) { const buf = fs.readFileSync(path.join(ROOT, r)); fs.mkdirSync(path.dirname(path.join(dir, r)), { recursive: true }); fs.writeFileSync(path.join(dir, r), buf); files[r] = sha256(buf); }
+  const M0 = verifySnapshot(dir); const keep = {}, files = {}, rels = [].concat(rel), inR = (k) => rels.some(r => k === r || k.startsWith(r + '/'));
+  for (const [k, h] of Object.entries(M0.files)) if (inR(k)) fs.rmSync(path.join(dir, k)); else keep[k] = h;
+  for (const r of rels.flatMap(q => listFiles(ROOT, q))) { const buf = fs.readFileSync(path.join(ROOT, r)); fs.mkdirSync(path.dirname(path.join(dir, r)), { recursive: true }); fs.writeFileSync(path.join(dir, r), buf); files[r] = sha256(buf); }
   Object.assign(files, keep);
   const sorted = Object.fromEntries(Object.keys(files).sort().map(k => [k, files[k]]));
   const M = { ...M0, made: new Date().toISOString(), base: { tree: M0.tree, made: M0.made, git_head: M0.git_head, base: M0.base || null }, refreshed: rel,

@@ -4,6 +4,8 @@
 //                           [--viewer=desktop|phone --cam=front34 --wait=15000]   (screenshot of the interactive viewer)
 //                           [--format=png]   (lossless PNG instead of the size-capped JPEG: pixel measurements, OD4 comparisons)
 //                           [--look=studio]  (dev/model.html look=studio: the pc12 reference viewer's lighting, OD4)
+//                           [--palette=glb]  (dev/model.html palette=glb: the glb's colour factors as written, OD4 it. 2)
+//                           [--paint=<material>:r,g,b]  (dev/model.html paint=: a linear colour experiment, OD4 it. 2)
 // A static server on 127.0.0.1 (first free port in 8800-8899) serves hwd3d/; Chromium (SwiftShader: no GPU here) loads
 // the viewer ONCE per model and every shot is posed with window.HWDM.set() (no reload), rendered by the page and read
 // back from the renderer's final framebuffer, then saved as JPEG at the highest quality that fits --max-kb.
@@ -34,7 +36,9 @@ export const STANDARD = {
   flaps40: { cam: 'rear34', gear: 1, flaps: 40, rpm: 0, alt: 0, at: 'ramp', hdg: 135, apitch: 0, lights: null, desc: 'rear 3/4 on the Green Ramp, flaps fully down (the pivot clamps 40 to the type maximum)' },
 };
 // every job starts from BASE (set() merges parameters: anything a job does not name is reset here)
-export const BASE = { eye: null, tgt: null, fov: null, gear: 1, flaps: 0, rpm: 0, rotor: null, bpitch: null, alt: 0, apitch: 0, aroll: 0, ctl: null, trim: null, doors: null, lights: null, at: 'ramp', hdg: 135, alpha: null };
+// (doors: dev/model.js closes every door pivot the job does not name - review F7; lseed: the light-flash phase, null = the
+// viewer's fixed default, so the strobes / beacon of a docs still do not depend on a random phase - review F9)
+export const BASE = { eye: null, tgt: null, fov: null, gear: 1, flaps: 0, rpm: 0, rotor: null, bpitch: null, alt: 0, apitch: 0, aroll: 0, ctl: null, trim: null, doors: null, lights: null, at: 'ramp', hdg: 135, alpha: null, lseed: null };
 const sets = opt('set', opt('jobs') ? '' : 'standard');
 const JOBS = sets === 'standard' ? { ...STANDARD } : Object.fromEntries(sets.split(',').filter(Boolean).map(n => [n, STANDARD[n] || { cam: n }]));
 if (opt('jobs')) Object.assign(JOBS, JSON.parse(fs.readFileSync(opt('jobs'), 'utf8')));
@@ -95,7 +99,7 @@ try {
       model: MODEL, model_sha256: MODEL_SHA, rendered_utc: new Date().toISOString(), made_by: 'dev/model_shot.mjs --viewer=' + VIEWER, licence: LICENCE(worldV) } });
     await vctx.close(); await browser.close(); server.close(); process.exit(0);
   }
-  const qs = new URLSearchParams({ shot: '1', model: MODEL, scale: '1' }); if (opt('world')) qs.set('world', opt('world')); if (opt('t')) qs.set('t', opt('t')); if (opt('look')) qs.set('look', opt('look'));
+  const qs = new URLSearchParams({ shot: '1', model: MODEL, scale: '1' }); if (opt('world')) qs.set('world', opt('world')); if (opt('t')) qs.set('t', opt('t')); if (opt('look')) qs.set('look', opt('look')); if (opt('palette')) qs.set('palette', opt('palette')); if (opt('paint')) qs.set('paint', opt('paint'));
   const PNG = opt('format') === 'png';
   const t0 = Date.now();
   await page.goto(`http://127.0.0.1:${port}/dev/model.html?${qs}`);

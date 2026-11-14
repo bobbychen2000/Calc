@@ -47,6 +47,12 @@ export const RULES = {
   // new for the live display [inf]: see the header
   END_GS: 15, GEOM_BAD_FT: 500,   // fix round 1 [inf]
     // fix round 1: runway-end direction only from episode fixes at >= 15 kt [inf]
+  FIN_ALIGN: 20,   // round 4 (E7): final-approach evidence for the D6 scope [inf]
+  UPW_M: 800,      // round 4 (E5): the upwind leg lies within this of the runway's extended centreline [inf]
+  // round 4 iteration 2 (F6): an aircraft descending (< -300 ft/min) toward the field - its track within ARR_DEG of the bearing to the ARP,
+  // closing by > 300 m in 60 s - within ARR_R_M and below ARR_H_FT is an arrival that has not joined yet: not 'overflight' (case P was
+  // 'Overflight (not HWD traffic)' for 120 s, 5,055 -> 3,067 ft, 8 km out); an overflight decision waits ARR_HOLD_S after the last such fix [inf]
+  ARR_R_M: 10000, ARR_H_FT: 6000, ARR_DEG: 30, ARR_HOLD_S: 60,
   PARK_S: 60, SCOPE_S: 90, WIN_S: 900, LEG_ALIGN: 30, LEG_MAX_NM: 4, LEG_ABOVE_TPA_FT: 700, CL_M: 300, VISIT_GAP_S: 1800,
 };
 const R = RULES;
@@ -340,6 +346,19 @@ export class PhaseClassifier {
     return this.label(f, 'taxi', { src: 'obs', rule: place ? 'stopped while taxiing' : 'stopped on a taxiway', stopped: true, tower: tw });
   }
   // pattern leg of an airborne fix [inf thresholds]: the pattern of the runway pair on whose side the aircraft is
+  onFinalFix(f) {
+    for (const rid of RIDS) { const A = AX[rid], [al, ac] = f.Rf[rid], L = A.length;
+      for (const [end, sg] of [[rid.split('/')[0], 1], [rid.split('/')[1], -1]]) {
+        const thr = sg > 0 ? thrDispM(end) : L - thrDispM(end), before = (thr - al) * sg, hdg = sg > 0 ? A.hdg : (A.hdg + 180) % 360;
+        if (before < 556 || before > 4 * 1852 || Math.abs(ac) > Math.max(150, 0.06 * before) || angd(f.mtrk, hdg) > R.FIN_ALIGN) continue;
+        if (f.h <= before * Math.tan(4.5 * Math.PI / 180) / FT + 150) return end;
+      } }
+    return null;
+  }
+  // (round 4, E2 / E5) the pattern leg of a DRAWN body (x, z m; hFt above the runway surface; trkDeg its direction of motion, deg true) -
+  // the same rule as a fix's: traffic.js labels a climbing-out / crosswind / downwind body by where it is and where it flies, not by the
+  // label of the fix before a hole -> { ph, end } | null
+  legOf(x, z, hFt, trkDeg) { return this.leg({ x, z, h: hFt, mtrk: trkDeg, r: Math.hypot(x, z), Rf: rwyFrame(x, z) }); }
   leg(f) {
     if (f.h == null || f.mtrk == null || f.r > R.LEG_MAX_NM * 1852) return null;
     // which pair: south of the midline of the two runways -> 10R/28L (its pattern sides are south: 10R right, 28L left);
@@ -356,7 +375,8 @@ export class PhaseClassifier {
     const thr = thrDispM(end);
     if (Math.abs(rel) <= R.LEG_ALIGN) {
       if (Math.abs(ac) <= R.CL_M) return { ph: al < thr ? 'final' : 'initial_climb', end };
-      return { ph: 'upwind', end };
+      // (round 4, E5: no 'upwind' leg 3-4 km beside the runway - a parallel track that far off is not the departure leg) [inf: UPW_M]
+      return Math.abs(ac) <= R.UPW_M ? { ph: 'upwind', end } : null;
     }
     if (Math.abs(rel) >= 180 - R.LEG_ALIGN) {
       if (ac * side > 0.25 * 1852 && ac * side < 2.5 * 1852) return { ph: 'downwind', end };
@@ -610,6 +630,13 @@ export class PhaseClassifier {
         a = null; }
     }
   }
+  // (round 4 iteration 2, F6) descending toward the field (RULES ARR_*)
+  arrivingField(F, L) {
+    if (L.g || L.h == null || L.h > R.ARR_H_FT || L.r > R.ARR_R_M || L.mtrk == null || !(L.vs != null && L.vs < -300)) return false;
+    const brg = (Math.atan2(-L.x, L.z) * 180 / Math.PI + 360) % 360; if (angd(L.mtrk, brg) > R.ARR_DEG) return false;
+    let i = F.length - 1; while (i > 0 && L.t - F[i - 1].t <= 60000) i--;
+    return F[i] !== L && F[i].r - L.r > 300;
+  }
   // closing on HWD below 2,000 ft AGL within 5 NM (an arrival that has not joined yet stays 'pending') [inf]
   closing(F, L) {
     if (L.g || L.h == null || L.h > 2000 || L.r > 9260) return false;
@@ -627,13 +654,22 @@ export class PhaseClassifier {
       // an aircraft that low on an HWD approach / climb-out corridor uses HWD (fix round 1: documented, not implemented; a
       // departure first heard just after lift-off was tagged overflight)
       if (!K.hwd && f.st === 'L' && f.h != null && f.h <= R.H_PASS && f.r <= R.R_FIELD) K.hwd = f.t;
+      // (round 4, E7) on FINAL for an HWD runway: aligned with a landing direction (<= FIN_ALIGN), on its extended centreline (<=
+      // max(150 m, 6 % of the distance)), 0.3-4 NM before the threshold, at or below a 4.5-deg path + 150 ft (<= 1,600 ft) and not
+      // climbing - its track leads to an HWD runway (case P was 'Overflight (not HWD traffic)' on base and early final, until ~1.3 NM
+      // out, where its first corridor fix at <= 300 ft arrived) [inf: every value]
+      if (!K.hwd && !f.g && f.h != null && f.h <= 1600 && f.mtrk != null && !(f.vs != null && f.vs > 300) && this.onFinalFix(f)) { K.hwd = f.t; K.hwdWhy = 'final'; }
+      // (round 4 iteration 2, F6: a fix on an HWD pattern leg holds the overflight decision for ARR_HOLD_S, like a descent toward the field -
+      // a single on the 28R downwind at its pattern altitude flipped 'Downwind 28R' <-> 'Overflight (not HWD traffic)')
+      if (!f.g && ['downwind', 'base', 'final'].includes(f.ph)) K.legT = Math.max(K.legT ?? -Infinity, f.t);
       if (['crosswind', 'downwind', 'base'].includes(f.ph)) { const lg = K.legs; if (!lg.length || lg[lg.length - 1][1] !== f.ph) lg.push([f.t, f.ph]); while (lg.length && f.t - lg[0][0] > 600e3) lg.shift(); if (new Set(lg.map(q => q[1])).size >= 2) K.hwd = K.hwd || f.t; }
     }
     if (K.seenT0 == null) K.seenT0 = L.t;
     const cat = tr.info && tr.info.category;
     if (K.hwd) {
       if (tr.scope !== 'hwd') { tr.scope = 'hwd'; if (!K.scopeEv) { K.scopeEv = true; ev.push({ t: K.hwd, kind: 'scope_hwd', type: 'scope_hwd', rwy: null, src: 'obs', rule: 'D6: HWD runway / taxiway / ramp contact or pattern legs' }); } }
-    } else if (['A3', 'A4', 'A5'].includes(cat) || (L.t - K.seenT0 >= R.SCOPE_S * 1000 && !this.closing(F, L))) {
+    } else if (!['A3', 'A4', 'A5'].includes(cat) && this.arrivingField(F, L)) { K.arrT = L.t; if (tr.scope !== 'pending') { tr.scope = 'pending'; this.counters_arr = (this.counters_arr || 0) + 1; } }
+    else if (['A3', 'A4', 'A5'].includes(cat) || (L.t - K.seenT0 >= R.SCOPE_S * 1000 && !this.closing(F, L) && !(K.arrT != null && L.t - K.arrT < R.ARR_HOLD_S * 1000) && !(K.legT != null && L.t - K.legT < R.ARR_HOLD_S * 1000))) {
       if (tr.scope !== 'overflight') { tr.scope = 'overflight'; if (!K.ofEv) { K.ofEv = true; ev.push({ t: L.t, kind: 'overflight', type: 'overflight', rwy: null, src: 'inf', rule: ['A3', 'A4', 'A5'].includes(cat) ? `D6: emitter category ${cat}` : `D6: no HWD evidence in ${R.SCOPE_S} s` }); } }
     } else tr.scope = tr.scope || 'pending';
   }

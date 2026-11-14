@@ -1,5 +1,5 @@
 {
- "_note": "Captions and licence notices of every image in docs/phase3 (fix round 1 of Phase 3a). Written by dev/model_shot.mjs (pc12_*, viewer_*), tools/models/sf50/render_checks.py (sf50_*) and once by hand for the render-check images (render_*). model_sha256 = the model file the image shows; tools/models/test_models.mjs fails a caption that claims the current model with another hash (superseded images say so). Fix round 2: every pc12_*, viewer_* and sf50_* image re-rendered on PC-12 9ccfd9a5 (override set fr2) / SF50 37e2952f; all render_* images (render-check package) are marked superseded. Fix round 3: pc12_{side,front34,rear34,port,chase,flaps40,gear_closeup} re-rendered and pc12_belly_low added on PC-12 c46fe4fb (override set fr3); the other pc12_* and the viewer_desktop / viewer_phone stills show the fix-round-2 PC-12 and are marked superseded.",
+ "_note": "Captions and licence notices of every image in docs/phase3 (fix round 1 of Phase 3a). Written by dev/model_shot.mjs (pc12_*, viewer_*), tools/models/sf50/render_checks.py (sf50_*) and once by hand for the render-check images (render_*). model_sha256 = the model file the image shows; tools/models/test_models.mjs fails a caption that claims the current model with another hash (superseded images say so). Fix round 2: every pc12_*, viewer_* and sf50_* image re-rendered on PC-12 9ccfd9a5 (override set fr2) / SF50 37e2952f; all render_* images (render-check package) are marked superseded. Fix round 3: pc12_{side,front34,rear34,port,chase,flaps40,gear_closeup} re-rendered and pc12_belly_low added on PC-12 c46fe4fb (override set fr3); the other pc12_* and the viewer_desktop / viewer_phone stills show the fix-round-2 PC-12 and are marked superseded. OD4 (2026-11-14): the PC-12 is again the original pc12/out/pc12.glb (87731cce...), and the aircraft programs shade the glb's materials as the pc12 project's own three.js viewer does (glTF metallic-roughness, docs/phase3_models.md section 15): pc12_{front34,side,rear34,chase,cockpit,port,rear,flaps40,gear_closeup} and the viewer_sf50_* stills re-rendered (SF50 49242e41); the fr3-only stills (belly_low, cabin_aisle, cabin_door, gearup_housing, nose_housing) are marked superseded.",
  "pc12_belly_low.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), low from port: nose-gear housing with its strut slot, belly fairing blended into the wing root (fix round 3 iteration 2), main gear and the raised wing; gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
@@ -27,7 +27,9 @@
    "alpha": null,
    "desc": "low from port: nose-gear housing with its strut slot, belly fairing blended into the wing root (fix round 3 iteration 2), main gear and the raised wing"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
+  "superseded": true,
+  "superseded_note": "shows the retired fix-round-3-iteration-3 variant fr3 (957b3c4e...): since OD4 (owner request 2026-11-14) hwd3d draws the original pc12/out/pc12.glb unchanged (87731cce...), which has none of fr3's nose-gear housing, strut-slot doors, flat cabin floor or re-lofted belly; not re-shot (docs/phase3_models.md section 15)"
  },
  "pc12_cabin_aisle.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), inside the cabin over the aisle (doors open for light), looking down-forward at the carpet over the wing carry-through, STA 5.6-6.7: no wing skin through the floor (fix round 3 iteration 3, finding F4; the rechecker's camera); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST). The soft light patch on the aisle carpet is sunlight through a starboard cabin window (it moves with the sun); the former light-blue hexagonal wing patch is gone.",
@@ -56,7 +58,9 @@
    "alpha": null,
    "desc": "inside the cabin over the aisle (doors open for light), looking down-forward at the carpet over the wing carry-through, STA 5.6-6.7: no wing skin through the floor (fix round 3 iteration 3, finding F4; the rechecker's camera)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
+  "superseded": true,
+  "superseded_note": "shows the retired fix-round-3-iteration-3 variant fr3 (957b3c4e...): since OD4 (owner request 2026-11-14) hwd3d draws the original pc12/out/pc12.glb unchanged (87731cce...), which has none of fr3's nose-gear housing, strut-slot doors, flat cabin floor or re-lofted belly; not re-shot (docs/phase3_models.md section 15)"
  },
  "pc12_cabin_door.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), airstair door open: the flat 1.30 m cabin floor with the seats and side ledges standing on it, the doorway clear (fix round 3 iteration 2, finding F2); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
@@ -85,13 +89,15 @@
    "alpha": null,
    "desc": "airstair door open: the flat 1.30 m cabin floor with the seats and side ledges standing on it, the doorway clear (fix round 3 iteration 2, finding F2)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
+  "superseded": true,
+  "superseded_note": "shows the retired fix-round-3-iteration-3 variant fr3 (957b3c4e...): since OD4 (owner request 2026-11-14) hwd3d draws the original pc12/out/pc12.glb unchanged (87731cce...), which has none of fr3's nose-gear housing, strut-slot doors, flat cabin floor or re-lofted belly; not re-shot (docs/phase3_models.md section 15)"
  },
  "pc12_chase.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), low chase camera on runway 28L, 300 m past the threshold; gear 1, flaps 15, 1700 rpm, on the ground, lights nav,beacon,strobe,landing; at rwy28L; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "c46fe4fb382c458e13dc5271f5076dd40e698e33be9e78bafebc9835d694a314",
-  "rendered_utc": "2026-11-13T22:02:52.891Z",
+  "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+  "rendered_utc": "2026-11-14T09:57:43.077Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -112,18 +118,17 @@
    "at": "rwy28L",
    "hdg": null,
    "alpha": null,
+   "lseed": null,
    "cam": "chase",
    "desc": "low chase camera on runway 28L, 300 m past the threshold"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "pc12_cockpit.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: windshield and side windows over the flight deck; gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "9ccfd9a564c0ade4f816b2d2035f4465958db76be21e1693a0a6de039da7c630",
-  "rendered_utc": "2026-11-13T20:18:53.986Z",
+  "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+  "rendered_utc": "2026-11-14T09:58:07.271Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -144,12 +149,11 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "cam": "nose",
    "desc": "close range: windshield and side windows over the flight deck"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": true,
-  "superseded_note": "shows the fix-round-2 PC-12 (9ccfd9a5…, override set fr2); fix round 3 changed the fuselage loft, glazing, openings, wing / gear height, fairings, dorsal fin, strakes and winglet (docs/phase3_models.md section 4) and re-shot only side, front34, rear34, port, chase, flaps40, gear_closeup and the new belly_low"
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "pc12_fade.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), front 3/4 at a screen-door fade of alpha 0.5; fix round 2: the shadow is dithered by the same alpha (acobj shadow pass); gear 1, flaps 0, rotor stopped, on the ground, fade alpha 0.5; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
@@ -186,8 +190,8 @@
  "pc12_flaps40.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), rear 3/4 on the Green Ramp, flaps fully down (the pivot clamps 40 to the type maximum); gear 1, flaps 40, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "c46fe4fb382c458e13dc5271f5076dd40e698e33be9e78bafebc9835d694a314",
-  "rendered_utc": "2026-11-13T22:03:17.600Z",
+  "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+  "rendered_utc": "2026-11-14T09:58:45.528Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -208,18 +212,17 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "cam": "rear34",
    "desc": "rear 3/4 on the Green Ramp, flaps fully down (the pivot clamps 40 to the type maximum)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "pc12_front34.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), front 3/4 on the Green Ramp (overall shape, livery, glazing, shadow); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "c46fe4fb382c458e13dc5271f5076dd40e698e33be9e78bafebc9835d694a314",
-  "rendered_utc": "2026-11-13T22:01:12.379Z",
+  "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+  "rendered_utc": "2026-11-14T09:57:03.830Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -240,18 +243,17 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "cam": "front34",
    "desc": "front 3/4 on the Green Ramp (overall shape, livery, glazing, shadow)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "pc12_gear_closeup.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: right main gear (trailing link, leg door, side brace), radar pod; gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "957b3c4e9ab17c4a6da51bc0fdcaeab71dbe98fc44e404630dbd6d39d7e9e01c",
-  "rendered_utc": "2026-11-14T00:23:22.449Z",
+  "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+  "rendered_utc": "2026-11-14T09:59:10.065Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -272,6 +274,7 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "cam": "gear",
    "desc": "close range: right main gear (trailing link, leg door, side brace), radar pod"
   },
@@ -336,7 +339,9 @@
    "alpha": null,
    "desc": "gear up, 1.5 m up, from below and behind the nose-gear housing: closed clamshell doors on its rounded floor and the closed strut-slot doors ahead of them, no liner or strut showing (fix round 3 iteration 3, finding F3)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
+  "superseded": true,
+  "superseded_note": "shows the retired fix-round-3-iteration-3 variant fr3 (957b3c4e...): since OD4 (owner request 2026-11-14) hwd3d draws the original pc12/out/pc12.glb unchanged (87731cce...), which has none of fr3's nose-gear housing, strut-slot doors, flat cabin floor or re-lofted belly; not re-shot (docs/phase3_models.md section 15)"
  },
  "pc12_lights_dusk.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), runway 28L at dusk from ahead / right: wing landing-light anchors under the wing (sprites; position inferred, WL follows the fix-round-2 wing), nose-strut taxi lamp, nav lights; gear 1, flaps 15, 1700 rpm, on the ground, lights nav,beacon,strobe,landing,taxi; at rwy28L; time 2026-11-14T01:05:00Z.",
@@ -397,13 +402,15 @@
    "alpha": null,
    "desc": "close range, low from the front left: nose gear down through the slot in the nose-gear housing floor, the two strut-slot doors hanging open beside the strut, rounded housing edges, closed clamshell doors (fix round 3 iterations 2-3, findings F5 / F3)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
+  "superseded": true,
+  "superseded_note": "shows the retired fix-round-3-iteration-3 variant fr3 (957b3c4e...): since OD4 (owner request 2026-11-14) hwd3d draws the original pc12/out/pc12.glb unchanged (87731cce...), which has none of fr3's nose-gear housing, strut-slot doors, flat cabin floor or re-lofted belly; not re-shot (docs/phase3_models.md section 15)"
  },
  "pc12_port.jpg": {
-  "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), port profile on the Green Ramp (fix round 3: fuselage loft, glazing, openings at their drawn water lines, wing height, belly fairing, dorsal fin, strakes and winglet fitted to Pilatus drawing 190.10.40.432); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
+  "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), port profile on the Green Ramp (the original pc12 model, OD4); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "c46fe4fb382c458e13dc5271f5076dd40e698e33be9e78bafebc9835d694a314",
-  "rendered_utc": "2026-11-13T22:02:20.750Z",
+  "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+  "rendered_utc": "2026-11-14T09:58:22.301Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "-0.5,1.7,-24",
@@ -424,17 +431,16 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
-   "desc": "port profile on the Green Ramp (fix round 3: fuselage loft, glazing, openings at their drawn water lines, wing height, belly fairing, dorsal fin, strakes and winglet fitted to Pilatus drawing 190.10.40.432)"
+   "lseed": null,
+   "desc": "port profile on the Green Ramp (the original pc12 model, OD4)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "pc12_rear.jpg": {
-  "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), from straight behind on the Green Ramp (fix round 2: 6.2 deg dihedral, wing top line 5.4 deg vs the drawing's 5.3); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
+  "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), from straight behind on the Green Ramp (pc12 dihedral 4.5 deg, estimated in pc12/); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "9ccfd9a564c0ade4f816b2d2035f4465958db76be21e1693a0a6de039da7c630",
-  "rendered_utc": "2026-11-13T20:19:45.321Z",
+  "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+  "rendered_utc": "2026-11-14T09:58:33.000Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "-32,1.7,0",
@@ -455,17 +461,16 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
-   "desc": "from straight behind on the Green Ramp (fix round 2: 6.2 deg dihedral, wing top line 5.4 deg vs the drawing's 5.3)"
+   "lseed": null,
+   "desc": "from straight behind on the Green Ramp (pc12 dihedral 4.5 deg, estimated in pc12/)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": true,
-  "superseded_note": "shows the fix-round-2 PC-12 (9ccfd9a5…, override set fr2); fix round 3 changed the fuselage loft, glazing, openings, wing / gear height, fairings, dorsal fin, strakes and winglet (docs/phase3_models.md section 4) and re-shot only side, front34, rear34, port, chase, flaps40, gear_closeup and the new belly_low"
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "pc12_rear34.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), rear 3/4 on the Green Ramp (tail, wing tips, nacelle / bullet fairing); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "c46fe4fb382c458e13dc5271f5076dd40e698e33be9e78bafebc9835d694a314",
-  "rendered_utc": "2026-11-13T22:01:49.648Z",
+  "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+  "rendered_utc": "2026-11-14T09:57:29.258Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -486,18 +491,17 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "cam": "rear34",
    "desc": "rear 3/4 on the Green Ramp (tail, wing tips, nacelle / bullet fairing)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "pc12_side.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), starboard side on the Green Ramp (profile, windows, gear); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "c46fe4fb382c458e13dc5271f5076dd40e698e33be9e78bafebc9835d694a314",
-  "rendered_utc": "2026-11-13T22:00:31.658Z",
+  "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
+  "rendered_utc": "2026-11-14T09:57:17.096Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -518,12 +522,11 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "cam": "side",
    "desc": "starboard side on the Green Ramp (profile, windows, gear)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "render_pc12_chase_final.jpg": {
   "caption": "PC-12 on final, close chase from behind / above, flaps 40, 1,700 rpm (prop disc), 4 m up. Independent render check of Phase 3a (docs/phase3_render.md), SwiftShader 1920x1080, MSAA 4, 4096 shadow cascades.",
@@ -932,8 +935,8 @@
  "viewer_sf50_chase.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), low chase camera on runway 28L, 300 m past the threshold; gear 1, flaps 15, 1700 rpm, on the ground, lights nav,beacon,strobe,landing; at rwy28L; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:21:26.315Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T09:59:40.109Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -954,17 +957,17 @@
    "at": "rwy28L",
    "hdg": null,
    "alpha": null,
+   "lseed": null,
    "cam": "chase",
    "desc": "low chase camera on runway 28L, 300 m past the threshold"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_fade.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), front 3/4 at a screen-door fade of alpha 0.5; fix round 2: the shadow is dithered by the same alpha; gear 1, flaps 0, rotor stopped, on the ground, fade alpha 0.5; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:23:14.084Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:00:03.822Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -985,17 +988,17 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": 0.5,
+   "lseed": null,
    "cam": "front34",
    "desc": "front 3/4 at a screen-door fade of alpha 0.5; fix round 2: the shadow is dithered by the same alpha"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_flaps40.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), rear 3/4 on the Green Ramp, flaps fully down (the pivot clamps 40 to the type maximum); gear 1, flaps 40, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:21:58.897Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:00:25.051Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1016,17 +1019,17 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "cam": "rear34",
    "desc": "rear 3/4 on the Green Ramp, flaps fully down (the pivot clamps 40 to the type maximum)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_front.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), from straight ahead on the Green Ramp (fix round 2: wing root 0.10 m higher, matching the AFM Fig 1-1 front view); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:23:30.677Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:00:43.746Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "22,1.3,0",
@@ -1047,16 +1050,16 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "desc": "from straight ahead on the Green Ramp (fix round 2: wing root 0.10 m higher, matching the AFM Fig 1-1 front view)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_front34.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), front 3/4 on the Green Ramp (overall shape, livery, glazing, shadow); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:20:33.244Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:01:01.909Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1077,17 +1080,17 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "cam": "front34",
    "desc": "front 3/4 on the Green Ramp (overall shape, livery, glazing, shadow)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_gear_half.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), from below, 9 m up over 28L, gear half way (doors, legs, braces); gear 0.5, flaps 15, 1700 rpm, 9 m up, pitch 6 deg, lights nav,beacon,strobe,landing; at rwy28L; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:21:42.305Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:01:17.087Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1108,17 +1111,17 @@
    "at": "rwy28L",
    "hdg": null,
    "alpha": null,
+   "lseed": null,
    "cam": "under",
    "desc": "from below, 9 m up over 28L, gear half way (doors, legs, braces)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_gearup_root_top.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), fix round 3 (S1): SF50 gear up, starboard wing root from above; gear 0, flaps 0, rotor stopped, 9 m up; at rwy28L; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-13T21:15:53.731Z",
+  "rendered_utc": "2026-11-14T10:01:30.725Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "1.6,3.2,2.6",
@@ -1139,15 +1142,16 @@
    "at": "rwy28L",
    "hdg": null,
    "alpha": null,
+   "lseed": null,
    "desc": "fix round 3 (S1): SF50 gear up, starboard wing root from above"
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_lights_dusk.jpg": {
-  "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), runway 28L at dusk from ahead / right: wing-tip landing and position lights behind the flush lenses, nose-gear lamp; gear 1, flaps 15, rotor stopped, on the ground, lights nav,strobe,landing,taxi; at rwy28L; time 2026-11-14T01:05:00Z.",
+  "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), runway 28L at dusk from ahead / right: wing-tip landing and position lights behind the flush lenses, nose-gear lamp (light-flash phase pinned, lseed 0.378: the wing-tip strobes flash in the final frame); gear 1, flaps 15, rotor stopped, on the ground, lights nav,strobe,landing,taxi; at rwy28L; time 2026-11-14T01:05:00Z.",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:23:51.567Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:03:16.618Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "15,1.8,6.5",
@@ -1168,17 +1172,17 @@
    "at": "rwy28L",
    "hdg": null,
    "alpha": null,
+   "lseed": 0.378,
    "cam": "front",
-   "desc": "runway 28L at dusk from ahead / right: wing-tip landing and position lights behind the flush lenses, nose-gear lamp"
+   "desc": "runway 28L at dusk from ahead / right: wing-tip landing and position lights behind the flush lenses, nose-gear lamp (light-flash phase pinned, lseed 0.378: the wing-tip strobes flash in the final frame)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_nacelle.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: dorsal nacelle from ahead / port (raised D inlet lip, cowl faired into the spine); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:22:54.813Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:01:51.736Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "2.6,3.4,-2.4",
@@ -1199,16 +1203,16 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "desc": "close range: dorsal nacelle from ahead / port (raised D inlet lip, cowl faired into the spine)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_rear34.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), rear 3/4 on the Green Ramp (tail, wing tips, nacelle / bullet fairing); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:20:51.567Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:02:08.660Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1229,17 +1233,17 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "cam": "rear34",
    "desc": "rear 3/4 on the Green Ramp (tail, wing tips, nacelle / bullet fairing)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_side.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), starboard side on the Green Ramp (profile, windows, gear); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:21:08.631Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:02:24.125Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1260,17 +1264,17 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "cam": "side",
    "desc": "starboard side on the Green Ramp (profile, windows, gear)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_tip_front.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: right wing tip from ahead / outboard (fix round 2: short pointed fin, top 0.06 m above the upper-surface line as in the AFM front view; flush lens with landing + position lights); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:22:17.356Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:02:41.782Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "3.0,2.3,8.2",
@@ -1291,16 +1295,16 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "desc": "close range: right wing tip from ahead / outboard (fix round 2: short pointed fin, top 0.06 m above the upper-surface line as in the AFM front view; flush lens with landing + position lights)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_tip_rear.jpg": {
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: right wing tip from behind / outboard (the pointed, aft-raked upturn; strobe lens on its outboard face); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
-  "model_sha256": "37e2952f1a97f96ed0e66b0adde379ca22e2ed5846b6a55756649f56a2839f14",
-  "rendered_utc": "2026-11-13T20:22:32.973Z",
+  "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
+  "rendered_utc": "2026-11-14T10:02:57.888Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "-3.6,1.9,7.6",
@@ -1321,9 +1325,9 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
+   "lseed": null,
    "desc": "close range: right wing tip from behind / outboard (the pointed, aft-raked upturn; strobe lens on its outboard face)"
   },
-  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
-  "superseded": "rendered from SF50 build 37e2952f... (fix round 2). The current build 49242e41... (fix round 3) differs from it only in the main-gear trailing link (axis 0.092 m instead of 0.100 m inboard of the wheel centre, tube radius 0.020 instead of 0.022 m; finding S1) and in light-anchor metadata (src obs / inf + basis; finding V1); not re-rendered in fix round 3 (CPU budget). The shapes shown are otherwise those of the current build."
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  }
 }

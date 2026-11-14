@@ -15,7 +15,7 @@
 //   Until the model is ready (or if it fails to load) the drawable delegates to a GaAircraft placeholder of the same
 //   dims record, so an aircraft is never invisible.
 //   installAircraftPrograms(R)   registers 'acglass' (alpha-blended glass / clear lenses / propeller disc) and 'acobj'
-//     (opaque aircraft surfaces: clear-coat paint, occluded interior, self-lit displays). Without them everything is drawn
+//     (opaque aircraft surfaces: the glTF metallic-roughness BRDF, cabin lit through its openings, self-lit displays; OD4). Without them everything is drawn
 //     with the obj program and the glass is opaque (dark, glossy: still reflective, no interior).
 //
 // Rendering: per mover group one 'acobj' item (opaque, all materials of glTF doubleSided -> noCull) and, when the group
@@ -23,13 +23,40 @@
 // rule of js/env/render_env.js, sorted back to front by distance). Propeller: when it turns faster than PROP_BLUR
 // rad/s, the blade groups fade out and a blurred disc (radial profile + five soft blade sectors that drift at a slow
 // apparent rate) fades in - a picture of a 30-fps camera, not physics [inf]; the hub / spinner keeps its true angle.
-import { Mesh, Program } from '../gl.js';
+import { Mesh, Program, defineChunk } from '../gl.js';
 import { m4 } from '../math.js';
 import { GaAircraft } from './placeholder.js';
 import { Kinematics, DEFAULT_STATE, xform, xdir } from './kinematics.js';
 import { aircraftSprites } from '../env/aircraft_lights.js';
 import '../shaders/common.js';   // shader chunks 'common', 'shadow' (side effect: defineChunk)
 import '../shaders/ground.js';   // shader chunks 'vout', 'fout' (camera-relative clip + the colour / aux outputs)
+
+// ---------------------------------------------------------------- shared BRDF pieces of 'acobj' and 'acglass' (OD4)
+// The glTF 2.0 metallic-roughness BRDF as three.js r160 evaluates it (the pc12 reference viewer), on hwd3d's sun / sky /
+// env-map lighting ('common' chunk uniforms). acDFG: three's DFGApprox (Karis, "Physically Based Shading on Mobile"), the
+// scale / bias of F0 for the pre-integrated GGX lobe; acVis: three's V_GGX_SmithCorrelated; acEnv: the sky radiance along R
+// (the env map, the ground below the horizon; uEnvSphere 1 = a full-sphere studio map, dev/studio.js) at the blur of
+// roughness r (as js/shaders/common.js shadePBR); acSky: the
+// cosine-weighted sky + ground radiance on a plane of normal N - view factors (1 + N.y) / 2 and (1 - N.y) / 2.
+defineChunk('acbrdf', `
+vec2 acDFG(float NoV, float r){ const vec4 c0 = vec4(-1.0, -0.0275, -0.572, 0.022); const vec4 c1 = vec4(1.0, 0.0425, 1.04, -0.04);
+  vec4 q = r * c0 + c1; float a004 = min(q.x * q.x, exp2(-9.28 * NoV)) * q.x + q.y; return vec2(-1.04, 1.04) * a004 + q.zw; }
+float acVis(float NoL, float NoV, float a){ float a2 = a * a; float gv = NoL * sqrt(a2 + (1.0 - a2) * NoV * NoV); float gl = NoV * sqrt(a2 + (1.0 - a2) * NoL * NoL); return 0.5 / max(gv + gl, 1e-6); }
+float acD(float NoH, float a){ float a2 = a * a, d = NoH * NoH * (a2 - 1.0) + 1.0; return a2 / (PI * d * d); }
+uniform float uEnvSphere;   // 1: the env map holds the whole sphere (dev/studio.js); 0 (default): the sky, ground below the horizon
+uniform float uEnvLod0;     // minimum env-map blur (dev/studio.js: three's PMREM base blur); 0 in the app
+// the ground an aircraft sees: the HWD pavement (js/shaders/ground.js 'asph', albedo 0.295 / 0.285 / 0.258 - the world's
+// own pavement, NAIP-calibrated) lit by the sun (x 0.8: the aircraft's own shadow on it [inf]) and the sky; the renderer's
+// uGroundBounce assumes albedo 0.16 (generic terrain) and is kept for the world
+vec3 acGround(){ return vec3(0.295, 0.285, 0.258) * (uSunColor * max(uSunDir.y, 0.0) * 0.8 / PI + uSkyUp); }
+vec3 acEnv(vec3 R, float r){ float lod = max(r * 7.0, uEnvLod0); if (uEnvSphere > 0.5) return skyEnv(R, lod);
+  vec3 e = skyEnv(R.y < 0.0 ? vec3(R.x, -R.y * 0.3, R.z) : R, lod);
+  return R.y < 0.0 ? mix(e, acGround(), smoothstep(0.0, -0.25, R.y)) : e; }
+uniform vec3 uAmbSH[9];   // studio (uEnvSphere 1): E(N) / pi on [1, x, y, z, xy, yz, 3z^2 - 1, xz, x^2 - y^2], fitted to the room (dev/studio.js)
+vec3 acSky(vec3 N){ if (uEnvSphere > 0.5) return max(uAmbSH[0] + uAmbSH[1] * N.x + uAmbSH[2] * N.y + uAmbSH[3] * N.z + uAmbSH[4] * N.x * N.y
+    + uAmbSH[5] * N.y * N.z + uAmbSH[6] * (3.0 * N.z * N.z - 1.0) + uAmbSH[7] * N.x * N.z + uAmbSH[8] * (N.x * N.x - N.y * N.y), vec3(0.0));
+  return mix(acGround(), mix(uSkyHorizon, uSkyUp, clamp(N.y, 0.0, 1.0)), 0.5 + 0.5 * N.y); }
+`);
 
 // ---------------------------------------------------------------- glass / disc program (own shader, same chunks as obj)
 export const GLASS_VS = `
@@ -48,6 +75,7 @@ export const GLASS_FS = `
 #include <common>
 #include <shadow>
 #include <fout>
+#include <acbrdf>
 in vec3 vWP; in vec3 vN; in vec4 vCol; in vec4 vExt; in vec2 vUV;
 uniform vec2 uRange;      // view-depth range of this pass (renderer curRange), as the cloud shader
 uniform float uKind;      // 0 = glass / clear lens, 1 = propeller disc
@@ -56,6 +84,7 @@ uniform float uDiscAng;   // apparent blade angle (rad) of the disc sectors
 uniform float uHub;       // hub radius / tip radius
 uniform vec3 uDiscCol; uniform vec3 uTipCol;
 uniform float uAlpha;     // item fade (render item field 'alpha', set by the renderer like the obj shader's): scales the blend alpha
+uniform float uVeilSun;   // glazing (mat 24): share of the direct sun in the pane's diffuse return (GLASS_VEIL_SUN); sky part always 1
 void main(){
   if (vClip.w < uRange.x || vClip.w > uRange.y) discard;
   vec3 V = uCamPos - vWP; float dist = length(V); V /= dist;
@@ -63,18 +92,30 @@ void main(){
   float sh = getShadow(vWP, N, dist) * cloudShadow(vWP);
   vec3 col; float alpha;
   if (uKind < 0.5) {
-    // thin dielectric sheet: Fresnel reflection of the sky + sun glint, tinted absorption (vCol.a = material opacity)
-    float NoV = max(dot(N, V), 1e-3); float r = max(vExt.x, 0.02);
-    float F = 0.04 + 0.96 * pow(1.0 - NoV, 5.0);
-    vec3 R = reflect(-V, N);
-    vec3 env = skyEnv(R.y < 0.0 ? vec3(R.x, -R.y * 0.3, R.z) : R, r * 7.0);
-    env = R.y < 0.0 ? mix(env, uGroundBounce * 0.8, smoothstep(0.0, -0.25, R.y)) : env;
-    vec3 H = normalize(uSunDir + V); float NoL = max(dot(N, uSunDir), 0.0);
-    vec3 spec = D_GGX(max(dot(N, H), 0.0), r) * V_Smith(NoV, NoL, r) * F_Schlick(vec3(0.04), max(dot(V, H), 0.0)) * uSunColor * NoL * sh;
+    // glazing (OD4): a thin tinted sheet - ONE specular lobe at the glb's roughness (the sun glint: GGX, shadowed; the sky /
+    // ground reflection: env map with three's DFG term), not reduced by the opacity; the pane's own diffuse return (the
+    // glb's tint, Lambert, at 'opacity' coverage - three.js r160's rule for the glb's BLEND glass, i.e. the reference
+    // viewer's); and transmission: alpha = F + (1 - F) x opacity, so the cabin shows through (1 - F)(1 - opacity).
+    // OD4 iteration 2 (review F2 / F5): the first OD4 version had NO diffuse term on the glazing (mat 24; "clear glass
+    // scatters nothing"); with the cabin also lit through tau twice, the panes read as black holes (door window (17, 23, 29)
+    // in shade vs the reference's (45, 48, 50)) and the black seal ring around them vanished. Restored as the reference
+    // shades it; physically it stands for the scatter of a tinted acrylic pane (haze, the tint's diffuse return) at an
+    // albedo of tint x opacity = 0.024-0.044 [inf]. Lens covers ('clear', mat 0) take the same term. Before OD4: the tint was
+    // lit by the sky and by the sun at 0.15 [inf], and the reflection used a plain Schlick term.
+    // OD4 iteration 3 (review F1): the glazing's diffuse return takes the sky / ground light only, not the direct sun
+    // (uVeilSun = GLASS_VEIL_SUN = 0): a clear tinted pane does not scatter the direct beam into a grey veil [inf]; in sun
+    // the veil (a 3.6 % grey card in full sun) and the sunlit cabin made the sunlit panes milky grey-beige ((99, 97, 90) at
+    // the hwd_front34 cabin windows vs the reference's (53, 59, 60)). Lens covers keep the sun (diffuse translucent plastic).
+    float NoV = clamp(dot(N, V), 1e-4, 1.0); float r = clamp(vExt.x, 0.02, 1.0), a = r * r;
+    vec2 fab = acDFG(NoV, r); float Fe = 0.04 * fab.x + fab.y;            // directional albedo of the specular lobe
+    vec3 L = uSunDir, H = normalize(L + V); float NoL = clamp(dot(N, L), 0.0, 1.0);
+    vec3 spec = acEnv(reflect(-V, N), r) * Fe
+      + (0.04 + 0.96 * pow(1.0 - clamp(dot(V, H), 0.0, 1.0), 5.0)) * acVis(NoL, NoV, a) * acD(clamp(dot(N, H), 0.0, 1.0), a) * uSunColor * NoL * sh;
     float a0 = vCol.a;
-    vec3 body = vCol.rgb * (mix(uSkyHorizon, uSkyUp, 0.5 + 0.5 * N.y) + uSunColor * NoL * sh * 0.15);
-    vec3 pre = env * F + spec + body * (1.0 - F) * a0;
-    alpha = clamp(F + (1.0 - F) * a0, 0.0, 1.0);
+    bool glz = int(vExt.z + 0.5) == 24;
+    vec3 body = vCol.rgb * (uSunColor * NoL * sh / PI * (glz ? uVeilSun : 1.0) + acSky(N));
+    alpha = clamp(Fe + (1.0 - Fe) * a0, 0.0, 1.0);
+    vec3 pre = spec + body * (1.0 - Fe) * a0;
     col = min(pre / max(alpha, 1e-3), vec3(30000.0));
   } else {
     // propeller disc: radial coverage profile, soft blade sectors, white tip band
@@ -100,45 +141,52 @@ void main(){
 // - the obj shader's hemisphere weighting (smoothstep(0, 0.55, (1 + N.y) / 2)) gave a vertical surface 98 % sky and 2 %
 //   ground, so a shaded side was lit by the blue sky alone (white paint (116, 128, 146) at the reference cockpit camera);
 //   now the sky / ground view factors of a plane, (1 + N.y) / 2 and (1 - N.y) / 2 (as three's HemisphereLight);
-// - the cabin and flight deck were lit by the full sun and sky (the glazing casts no shadow), so through glass of 20 %
-//   transmission the seats glowed; light reaches the cabin only through the glazing: sun x uCabinT (the type's glazing
-//   transmission, 1 - glass alpha, js/aircraft/glb.js stats.glazingT) where the shadow map lets it in, sky x uCabinT x
-//   0.35 (the windows' share of the cabin's view [inf]).
+// - the cabin and flight deck were lit by the full sun and sky as if the skin were not there (the obj shader has no notion
+//   of an enclosed cabin), so through the glass the seats glowed; light now reaches the cabin only through its openings:
+//   the sun where the shadow map lets it in (the skin casts, the glazing does not), the sky x uCabinAmb (the openings'
+//   share of the cabin's view of the sky: 0.35 with the doors closed [inf], 1 with a cabin door open).
+//   OD4 iteration 2 (review F2): the first version also multiplied both by the glass transmission tau = 1 - glass alpha
+//   (0.196): the glb's opacity (0.8) is the pc12 viewer's coverage of the pane as seen from outside - three.js blends 0.8
+//   of the pane over 0.2 of what is behind it - not a measured transmission, and the view path ('acglass') already applies
+//   it; applying it to the light coming in as well left 1.4-4 % of the light (reference viewer: 20 %), so the windows read
+//   as black holes, the black seal ring vanished against them and the interior was gone. It is now applied once.
+//   OD4 iteration 3 (review F1): iteration 2 let the direct sun in with no glass factor at all, so in sun the light lining
+//   (albedo 0.86) shone through the panes. The direct beam crosses the pane on its way in, so it is now multiplied by the
+//   type's glazing transmission tau (uCabinSun = glb.js stats.glazingT: PC-12 0.196, SF50 0.232; the view path applies it
+//   again on the way out, as a real pane does); the sky keeps the share 0.35 without tau (it stands for the light the
+//   windows let in AND its inter-reflection in a light cabin, which restored the shaded side in iteration 2) [inf].
 // Material ids (js/aircraft/models.js AC_MAT / AC_PART_INTERIOR; ext.z): 21 paint / trim (plain glTF material since OD4),
 // 22 avionics display (self-lit, ~0.2 scene units ~ 800 cd/m2 by day at the scale of the aircraft_lights.js note "sunlit
 // white paint ~17 kcd/m2" [inf]), 23 cabin / flight-deck interior (lit through the glazing, above); the back face of any
-// skin (the inside of the fuselage seen through a window) counts as interior. uCabin = 0 switches the cabin rule off for a
-// group (an open door's lining faces the outside). Unknown ids take the plain path; the obj program draws the same vertices
-// (ids 21-23 unused there) when 'acobj' is not installed.
+// skin (the inside of the fuselage seen through a window) counts as interior. uCabinAmb = 1 switches the cabin rule off for a
+// group: an open door's own group (its lining faces the outside) and, while any cabin door is open, every group (review F6:
+// the cabin seen through the opening was black - the door opening, 0.61 x 1.35 m airstair / 1.35 x 1.32 m cargo, lets in
+// far more sky than the windows; the cabin is then lit as the pc12 viewer lights it, sky unoccluded, sun through the
+// shadow map). Unknown ids take the plain path; the obj program draws the same vertices (ids 21-23 unused there) when
+// 'acobj' is not installed.
 export const ACOBJ_FS = `
 #include <common>
 #include <shadow>
 #include <fout>
 in vec3 vWP; in vec3 vN; in vec4 vCol; in vec4 vExt; in vec2 vUV;
 uniform float uEmissiveBoost; uniform float uNight; uniform float uGroundRef;
-uniform float uCabinT;   // glazing transmission of the type (1 - glass alpha): the share of sun / sky that reaches the cabin
-uniform float uCabin;    // 1: this group's interior surfaces are inside the closed cabin; 0: not (open door)
+uniform float uCabinAmb; // share of the sky that reaches this group's interior surfaces: 0.35 closed cabin [inf], 1 = rule off (door open)
+uniform float uCabinSun; // share of the direct sun that reaches them: the glazing transmission tau of the type (closed cabin), 1 = rule off
 // uAlpha: screen-door fade of one item, the obj shader's rule (js/shaders/objects.js, fix round 1): a 4x4 ordered-dither
 // threshold discards a growing share of fragments, so a re-placement fades instead of blinking (render item field 'alpha')
 uniform float uAlpha;
 float acBayer4(vec2 p){ ivec2 q = ivec2(mod(p, 4.0)); int i = q.x + q.y * 4; int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5); return (float(m[i]) + 0.5) / 16.0; }
-// three.js r160 DFGApprox (Karis, "Physically Based Shading on Mobile"): scale / bias of F0 for the pre-integrated GGX lobe
-vec2 acDFG(float NoV, float r){ const vec4 c0 = vec4(-1.0, -0.0275, -0.572, 0.022); const vec4 c1 = vec4(1.0, 0.0425, 1.04, -0.04);
-  vec4 q = r * c0 + c1; float a004 = min(q.x * q.x, exp2(-9.28 * NoV)) * q.x + q.y; return vec2(-1.04, 1.04) * a004 + q.zw; }
-// three.js r160 V_GGX_SmithCorrelated
-float acVis(float NoL, float NoV, float a){ float a2 = a * a; float gv = NoL * sqrt(a2 + (1.0 - a2) * NoV * NoV); float gl = NoV * sqrt(a2 + (1.0 - a2) * NoL * NoL); return 0.5 / max(gv + gl, 1e-6); }
-// sky radiance seen along R (the env map; below the horizon the ground), at the blur of roughness r
-vec3 acEnv(vec3 R, float r){ vec3 e = skyEnv(R.y < 0.0 ? vec3(R.x, -R.y * 0.3, R.z) : R, r * 7.0);
-  return R.y < 0.0 ? mix(e, uGroundBounce * 0.8, smoothstep(0.0, -0.25, R.y)) : e; }
+#include <acbrdf>
 void main(){
   if (uAlpha < 0.999 && uAlpha >= 0.0 && acBayer4(gl_FragCoord.xy) > uAlpha) discard;
   vec3 V = uCamPos - vWP; float dist = length(V); V /= dist;
   vec3 N = normalize(vN); bool back = !gl_FrontFacing; if (back) N = -N;
   vec3 albedo = vCol.rgb; float rough = clamp(vExt.x, 0.03, 1.0), metal = vExt.y; int mat = int(vExt.z + 0.5);
   vec3 emis = albedo * vExt.w * uEmissiveBoost;
-  // light that reaches a cabin surface: through the glazing only (header)
-  bool cabin = uCabin > 0.5 && (mat == 23 || mat == 22 || back);
-  float sunT = cabin ? uCabinT : 1.0, ambT = cabin ? uCabinT * 0.35 : 1.0;
+  // light that reaches a cabin surface (header): the sun through the openings (shadow map) x the glazing transmission, the sky
+  // x the openings' share of the cabin's view
+  bool cabin = mat == 23 || mat == 22 || back;
+  float sunT = cabin ? clamp(uCabinSun, 0.0, 1.0) : 1.0, ambT = cabin ? clamp(uCabinAmb, 0.0, 1.0) : 1.0;
   // ground-contact occlusion of belly / wells / gear near the pavement (item groundRef = ground y; -1e4 = off), a softer
   // version of the obj shader's building rule (0.55 over 4 m): 0.8 over 2 m [inf]
   float ao = 1.0; if (uGroundRef > -1000.0) ao *= mix(0.8, 1.0, smoothstep(0.0, 2.0, vWP.y - uGroundRef));
@@ -149,12 +197,10 @@ void main(){
   // sun (direct): GGX x Smith-correlated x Schlick + Lambert
   vec3 L = uSunDir, H = normalize(L + V); float NoL = clamp(dot(N, L), 0.0, 1.0), NoH = clamp(dot(N, H), 0.0, 1.0), VoH = clamp(dot(V, H), 0.0, 1.0);
   vec3 Fs = f0 + (1.0 - f0) * pow(1.0 - VoH, 5.0);
-  float a2 = a * a, dd = NoH * NoH * (a2 - 1.0) + 1.0, D = a2 / (PI * dd * dd);
-  vec3 direct = (cdiff / PI + Fs * acVis(NoL, NoV, a) * D) * uSunColor * NoL * sh * sunT;
+  vec3 direct = (cdiff / PI + Fs * acVis(NoL, NoV, a) * acD(NoH, a)) * uSunColor * NoL * sh * sunT;
   // sky + ground (indirect): irradiance from the two view factors of a plane (header); specular from the env map with
   // three's single + multiple scattering split
-  vec3 skyL = mix(uSkyHorizon, uSkyUp, clamp(N.y, 0.0, 1.0));
-  vec3 Lamb = mix(uGroundBounce, skyL, 0.5 + 0.5 * N.y) * ambT * ao;     // cosine-weighted radiance (irradiance / pi)
+  vec3 Lamb = acSky(N) * ambT * ao;     // cosine-weighted radiance (irradiance / pi)
   vec2 fab = acDFG(NoV, rough); vec3 FssEss = f0 * fab.x + fab.y; float Ess = fab.x + fab.y, Ems = 1.0 - Ess;
   vec3 Favg = f0 + (1.0 - f0) * 0.047619; vec3 Fms = FssEss * Favg / (1.0 - Ems * Favg);
   vec3 radiance = acEnv(reflect(-V, N), rough) * ambT * ao;
@@ -188,6 +234,10 @@ export function installAircraftPrograms(R) {
 export const PROP_BLUR = [25, 60];   // rad/s: blades fade out / disc fades in over this range (~240-570 rpm) [inf]
 export const FLAP_RATE = 11;         // deg/s (pc12 viewer: 0 -> 40 in ~3.6 s) [inf]
 export const CONTROL_LAG = 7;        // 1/s first-order lag of roll / pitch / yaw commands (pc12 viewer) [inf]
+export const CABIN_SKY_SHARE = 0.35; // share of the sky that reaches the closed cabin through its windows (ACOBJ_FS header) [inf]
+export const CABIN_SUN_T = 0.2;      // direct sun into the closed cabin when the model gives no glazing transmission (ACOBJ_FS header)
+export const GLASS_VEIL_SUN = 0.0;   // share of the direct sun in the glazing's diffuse return (GLASS_FS header)
+export const cabinSunT = (model) => { const t = model && model.stats && model.stats.glazingT; return t != null && isFinite(t) ? Math.max(0, Math.min(1, t)) : CABIN_SUN_T; };
 const RES = new WeakMap();
 function resources(model) {
   let r = RES.get(model); if (r) return r;
@@ -241,7 +291,8 @@ function gpu(res, model) {
 // ---------------------------------------------------------------- drawable
 // fields copied to the GaAircraft placeholder every frame while the model loads (or after it failed): every field
 // js/live/aircraft.js sets on a drawable (fix round 1: 'alpha' was missing, so a loading aircraft blinked)
-export const SYNC_KEYS = ['pos', 'fwd', 'pitch', 'roll', 'gear', 'rotor', 'lightsOn', 'selected', 'visible', 'alpha'];
+// (OD4, 2026-11-14: + 'groundRef', which js/live/aircraft.js now sets on every drawable - Phase 3b wiring; the placeholder ignores it)
+export const SYNC_KEYS = ['pos', 'fwd', 'pitch', 'roll', 'gear', 'rotor', 'lightsOn', 'selected', 'visible', 'alpha', 'groundRef'];
 export class DetailedAircraft {
   constructor(T, { model = null, R = null, id = null, colour = null, lodDist = 8000, shadowDist = 2500, propBlur = true } = {}) {
     this.T = T; this.id = id; this.colour = colour; this.lodDist = lodDist; this.shadowDist = shadowDist; this.R = R; this.propBlur = propBlur;
@@ -311,7 +362,11 @@ export class DetailedAircraft {
     const spinning = (mv) => { if (res.spin < 0 || w < PROP_BLUR[0]) return false; for (let q = mv; q >= 0; q = res.kin.up[q]) if (q === res.spin) return true; return false; };
     this._cur.clear();
     const R = this.R, glassOK = this.glassProg && R;
-    const cabinT = m.stats && m.stats.glazingT != null ? m.stats.glazingT : 0.2;   // 1 - glass alpha (js/aircraft/glb.js stats.glazingT)
+    // cabin rule (ACOBJ_FS header): the openings' share of the sky - 0.35 with every cabin door closed [inf]; 1 (rule off) for
+    // an open door's own group and, while any cabin door is open, for every group (review F6)
+    const doorPart = (g) => g.mover >= 0 && m.parts[g.mover].pivot && m.parts[g.mover].pivot.kind === 'door';
+    const anyDoorOpen = G.groups.some(g => doorPart(g) && (this.doors[g.key] || 0) > 0.02);
+    const tauSun = cabinSunT(m);
     // motion vectors: a group's prevModel is its previous-frame model; a group riding on a fast-spinning propeller / fan
     // takes the previous AIRCRAFT model times its CURRENT pose, so its velocity is the aircraft's (translation and attitude
     // change kept, the blade rotation left out: ~340 deg per 30-fps frame at 1,700 rpm is not a velocity a buffer can hold)
@@ -322,16 +377,14 @@ export class DetailedAircraft {
       const Mg = g.mover >= 0 && pose[g.mover] ? m4.mul(this.model, pose[g.mover]) : this.model;
       const prev = spinning(g.mover) ? m4.mul(prevBasis, pose[g.mover]) : (this._prev.get(g.key) || Mg); this._cur.set(g.key, Mg);
       // acobj uniforms are set on EVERY draw (GL keeps uniform values per program, so a value would leak to the next aircraft):
-      // the selection glow, the type's glazing transmission and whether this group's lining is inside the closed cabin (an open
-      // door's lining faces the outside; OD4)
-      const doorOpen = g.mover >= 0 && m.parts[g.mover].pivot && m.parts[g.mover].pivot.kind === 'door' && (this.doors[g.key] || 0) > 0.02;
+      // the selection glow and the share of the sky that reaches this group's interior surfaces (OD4; door open: rule off)
       if (g.opaque) out.push({ mesh: g.opaque, prog: glassOK ? 'acobj' : 'obj', model: Mg, prevModel: prev, bbox: bb, castShadow: sh, noCull: true,
-        uniforms: glassOK ? { uEmissiveBoost: this.selected ? 0.15 : 0, uCabinT: cabinT, uCabin: doorOpen ? 0 : 1 } : (this.selected ? { uEmissiveBoost: 0.15 } : undefined),
+        uniforms: glassOK ? { uEmissiveBoost: this.selected ? 0.15 : 0, uCabinAmb: anyDoorOpen ? 1 : CABIN_SKY_SHARE, uCabinSun: anyDoorOpen ? 1 : tauSun } : (this.selected ? { uEmissiveBoost: 0.15 } : undefined),
         groundRef: glassOK && this.groundRef != null ? this.groundRef : undefined });
       if (g.glass) {
         if (glassOK) { const c = xform(Mg, [(m.bbox[0] + m.bbox[3]) / 2, (m.bbox[1] + m.bbox[4]) / 2, (m.bbox[2] + m.bbox[5]) / 2]);
           out.push({ mesh: g.glass, prog: 'acglass', blend: 'alpha', bothPasses: true, model: Mg, prevModel: prev, bbox: bb, castShadow: false, noCull: true,
-            sortKey: (cp) => Math.hypot(cp[0] - c[0], cp[1] - c[1], cp[2] - c[2]) - 0.01, uniforms: () => ({ uRange: R.curRange || [0, 1e9], uKind: 0 }) }); }
+            sortKey: (cp) => Math.hypot(cp[0] - c[0], cp[1] - c[1], cp[2] - c[2]) - 0.01, uniforms: () => ({ uRange: R.curRange || [0, 1e9], uKind: 0, uVeilSun: GLASS_VEIL_SUN }) }); }
         else out.push({ mesh: g.glass, prog: 'obj', model: Mg, prevModel: prev, bbox: bb, castShadow: false, noCull: true });
       }
     }
@@ -364,6 +417,10 @@ export class DetailedAircraft {
       // a tail strobe (SF50: AFM anti-collision lights 3 = 2 tips + tail): js/env/aircraft_lights.js draws strobeL / strobeR
       // only, so the third one goes through the same function as a 'strobeL' with the same seed -> the same flash phase
       if (on.strobe && W.strobeTail) for (const sp of aircraftSprites({ strobeL: W.strobeTail }, axes, { strobe: true }, this.seed, t, this.gear)) S.push(sp);
+      // OD4 iteration 3 (review F7): every light of a detailed aircraft is drawn pulled toward the camera by 3 m or its drawn
+      // radius (js/shaders/sprites.js iData.y, packed by js/scene.js), so its glow disc is not cut by the airframe next to the
+      // lens (the dusk still: the tail-strobe disc cut by the fin, the wing edge through a tip disc)
+      for (const sp of S) sp.pull = true;
       return S;
     } catch (e) { return []; }
   }

@@ -89,7 +89,24 @@ Checks
      SOURCES licence names the ODbL carries the ODbL URI itself - hard; src / *_src values in every committed JSON are
      obs / inf / null (field-documentation maps skipped) - hard; no exception since Phase 2 fix round 3 (data/ga_types.json
      wrote 'none' for its 23 types without an FAA ACD row and was listed, not failed; its builder now writes null).
-usage: python3 hwd3d/tools/check_airport.py [--data FILE] [--paint-only]
+     D1 decision (d) (docs/PLAN.md 6b, 2026-11-14; d1_dated_windows): committed text never names a type together with a
+     dated window when every aircraft of that type in that hour within 8 nm of the ARP is LADD / PIA-flagged (dbFlags & 12).
+     Window registry: the window names the docs use -> recording hours (D1W_WINDOWS; the two local OD3 windows from the
+     gitignored pack metadata only, D1W_LOCAL, SKIPPED in a clean clone) plus every explicit recording hour written
+     in committed text ('<day> Nov <HH>Z', ISO, rec_pack stem, '<day> Nov <h:mm> PST'). Per hour and type the flagged / total
+     count of distinct aircraft within 8 nm is read from sfo3d/refs/cache/rec_pack (adsb.lol `t`; with the local Mictronics
+     lookup also with untyped aircraft filled; '?' is never nameable), cached in out/d1_windows/hour_types.json keyed by each
+     hour file's sha256. A (window, type) pair is identifying when flagged == total > 0. Every committed text file under
+     hwd3d is cut into units (markdown paragraph / list item with its parent items / table cell with its column header, row
+     and row group, or the whole table when neither header nor first column names a window; one JSON top-level entry's
+     strings, e.g. a SOURCES caption; code comments and Python docstrings; other text by blank lines) and an identifying type
+     (designator, 'XX-00' spelling, plural, model or family name, D1W_ALIASES / D1W_FAMILIES) in a unit that names the
+     window is a hit - hard; hits print file:line, the window and the class only. Planted cases built at run time from the
+     counts must classify correctly - hard. A class phrase ('a twin turboprop') counts like a type when every aircraft of that
+     class in the hour is flagged. Images are not read: every app screenshot (docs/phase2/, or a SOURCES entry naming
+     livetest or a replay / snapshot pack) carries a by-eye review note d1_labels ('checked ...' / 'masked ...') - hard; the
+     masked ones say so in their caption ('MASKED'). The check alone: --d1-windows (seconds once the counts are cached).
+usage: python3 hwd3d/tools/check_airport.py [--data FILE] [--paint-only] [--d1-windows]
 """
 import json, math, os, re, subprocess, sys
 from collections import Counter
@@ -297,6 +314,453 @@ def sources_coverage():
     nouri = [f for f in odbl if 'opendatacommons.org/licenses/odbl' not in open(os.path.join(HWD, f), encoding='utf-8', errors='replace').read()]
     say('   text / JSON files whose SOURCES licence names the ODbL: %d; without the ODbL URI in the file itself: %d %s' % (len(odbl), len(nouri), nouri))
     return miss + ['SOURCES entry without made_by / note: %s' % (x,) for x in nomaker] + ['no ODbL URI: %s' % f for f in nouri]
+
+
+# ------------------------------------------------------------------------------------------------ D1 decision (d)
+# docs/PLAN.md 6b (d): committed text, captions and images never name a type together with a dated window (by name or by
+# date) when every aircraft of that type in that hour within 8 nm of the ARP is LADD / PIA-flagged (dbFlags & 12).
+# The windows the committed docs use, by name -> recording hours (rec_pack file stems, UTC). Their dates are already in the
+# committed docs (docs/phase2_run.md sections 1 and 7, tools/live/build_replay.py). The local OD3 windows od3s / od3p are
+# named in committed docs WITHOUT their times (D1: the hour of an individual aircraft's event); their hours are read from
+# the gitignored pack metadata (D1W_LOCAL) and never written into a committed file; SKIPPED in a clean clone.
+D1W_WINDOWS = {'A': ['20261107_20'], 'B': ['20261104_23'], 'heli': ['20261105_19'], 'pat': ['20261108_22'],
+               'night': ['20261105_05'], 'weekday': ['20261109_21'], 'weekend': ['20261108_20']}
+D1W_LOCAL = {'od3s': 'out/od3/packs/pack_od3s_meta.json', 'od3p': 'out/od3/packs/pack_od3p_meta.json'}
+D1W_PACKS = {'weekday': 'out/replay/pack_weekday_meta.json', 'weekend': 'out/replay/pack_weekend_meta.json',      # cross-check of
+             'heli': 'out/review_traffic/pack_heli_meta.json', 'pat': 'out/review_traffic/pack_pat_meta.json',     # the registry
+             'night': 'out/review_traffic/pack_night_meta.json'}                                                  # (when present)
+D1W_RADIUS_M = 8 * 1852.0
+D1W_CACHE = os.path.join(HWD, 'out', 'd1_windows', 'hour_types.json')   # gitignored; per hour, keyed by the file's sha256
+D1W_MX = os.path.join(HWD, 'refs', 'cache', 'local', 'registry', 'mictronics_lookup.json')   # local only (gitignored)
+D1W_TEXT_EXT = ('md', 'json', 'txt', 'csv', 'js', 'mjs', 'py', 'html', 'css', 'sh', 'yml', 'yaml', 'toml')
+# Window references by name. A / B are window names only in these constructs (a bare capital A / B is an article, a hangar
+# row, a taxiway or an anonymous case label); the common words are references wherever they stand as a word (conservative:
+# a hit needs an identifying type in the same unit as well). od3s / od3p in any case.
+_AB = (r'\b[Ww]indows?\s+(?:[AB]\s*(?:,|and|/|&)\s*)?{X}\b', r'\b[Ww]indows?\s+{X}\s*(?:,|and|/|&)\s*[AB]\b',
+       r'\(\s*{X}\s*/\s*[AB]\s*\)', r'\(\s*[AB]\s*/\s*{X}\s*\)', r'(?<![A-Za-z0-9]){run}{X}(?![A-Za-z0-9])',
+       r'\({X}[,;)]', r'\b[Ii]n {X}(?=[,:;)]|\s+(?:and|the|desktop|phone|runs?)\b)', r'\bboth {X} runs\b', r"\b{X}'s\b",
+       r'(?<![A-Za-z0-9-]){X}\s+(?:desktop|phone|runs?|live|window|from)\b', r'\*\*{X}\*\*', r'(?<![A-Za-z0-9-]){X}:\s', r'(?:^|\|)\s*{X},\s')
+_AB_NOT = re.compile(r'\b(?:hangar|taxiway|twy|row|case|type|gate|part|table|figure|image|category|class|spot|phase|option|'
+                     r'step|item|annex|appendix|section|zone|adg|group|level|apron|pad|ramp|lane|plan|model|variant|f\d+)\s*$', re.I)
+D1W_NAME_RE = {X: [re.compile(p.format(X=X, run={'A': 'sat', 'B': 'wed'}[X])) for p in _AB] for X in ('A', 'B')}
+for _n in ('heli', 'pat', 'night', 'weekday', 'weekend'):
+    D1W_NAME_RE[_n] = [re.compile(r'(?<![A-Za-z0-9])[%s%s]%s(?![A-Za-z0-9_])' % (_n[0], _n[0].upper(), _n[1:]))]
+for _n in D1W_LOCAL:   # also by their anonymous case labels: the docs define od3s / od3p as the windows around OD3 case S / P
+    D1W_NAME_RE[_n] = [re.compile(r'(?<![A-Za-z0-9])%s(?![A-Za-z0-9])' % _n, re.I), re.compile(r"\b[Cc]ase %s\b" % _n[-1].upper())]
+# Window references by date: an explicit recording hour or hour range ("Sat 7 Nov 20Z", "7 Nov 2026 20:00Z", "Sun 8 Nov
+# 20:00-21:00Z", "Nov 8 12:00 PST", "2026-11-07T20:12Z", "20261107_20", "Sunday 8 Nov 2026, 12:00-13:00 PST"); a date outside
+# the recording (4-11 Nov 2026) is no window.
+_MON = r'Nov(?:ember|\.)?'
+_HM = (r'(?P<h>[0-2]?\d)(?::(?P<m>[0-5]\d))?(?::[0-5]\d)?(?:\.\d+)?'
+       r'(?:\s*[-–]\s*(?P<h2>[0-2]?\d)(?::(?P<m2>[0-5]\d))?(?::[0-5]\d)?)?')
+D1W_DATE_RE = [
+    re.compile(r'\b(?P<d>[0-3]?\d)\s+' + _MON + r',?\s+(?:2026,?\s+)?' + _HM + r'\s?(?P<tz>Z|UTC|PST)\b'),
+    re.compile(r'\b' + _MON + r'\s+(?P<d>[0-3]?\d),?\s+(?:2026,?\s+)?' + _HM + r'\s?(?P<tz>Z|UTC|PST)\b'),
+    re.compile(r'\b2026-11-(?P<d>[0-3]\d)[T ]' + _HM.replace('[0-2]?', '[0-2]') + r'(?P<tz>Z)?'),
+    re.compile(r'(?<![0-9])202611(?P<d>[0-3]\d)_(?P<h>[0-2]\d)(?![0-9])'),
+]
+# Type names besides the ICAO designator itself (also matched with a hyphen after the letters, 'PA-28', and with a plural s).
+# Model names -> one designator; family names -> every designator of the family present in the hour (a family is
+# identifying only when all of its aircraft in the hour are flagged).
+D1W_ALIASES = {
+    'GLF4': [r'Gulfstream IV(?:SP)?', r'G-?IV(?:SP)?', r'G4[05]0'], 'GLF5': [r'Gulfstream V', r'G-V', r'G550'],
+    'GLF6': [r'G650(?:ER)?'], 'G280': [r'Gulfstream G280'], 'GALX': [r'G200', r'Astra Galaxy'],
+    'C680': [r'Citation Sovereign', r'Citation 680'], 'C68A': [r'Citation Latitude'], 'C56X': [r'Citation (?:Excel|XLS\+?)', r'XLS\+?'],
+    'C25M': [r'Citation M2'], 'C72R': [r'172RG', r'Cutlass RG'], 'M20P': [r'M-?20[A-HJLRS]?'],
+    'T206': [r'Turbo Stationair', r'TU206[A-H]?', r'T206H'], 'BE20': [r'(?:Super )?King Air (?:200|250|B200|B250)', r'B200', r'Super King Air'],
+    'EC30': [r'EC130', r'H130'], 'B407': [r'Bell 407'], 'FA7X': [r'Falcon 7X'], 'FA8X': [r'Falcon 8X'], 'F900': [r'Falcon 900\w*'],
+    'F2TH': [r'Falcon 2000\w*'], 'TBM9': [r'TBM ?9[0-6]0', r'TBM 9'], 'E295': [r'E195-E2'], 'E135': [r'ERJ[- ]?135', r'Legacy 6[05]0'],
+    'CL35': [r'Challenger 3[05]0'], 'CL60': [r'Challenger 6[0-5]\d'], 'LJ35': [r'Learjet 35\w?'], 'L8': [r'Luscombe(?: 8\w?)?'],
+    'SF50': [r'Vision Jet'], 'PC12': [r'PC-12'], 'P180': [r'Avanti'], 'C208': [r'Caravan'], 'PA46': [r'Malibu', r'M350', r'M500', r'M600'],
+}
+D1W_FAMILIES = [(r'Gulfstreams?', r'^(GLF\d|G150|G280|GALX|ASTR|GA[5-8]C)$'), (r'Falcons?', r'^(FA\d\w|F900|F2TH|FA50|FA10|FA20)$'),
+                (r'Challengers?', r'^CL\d\d$'), (r'Learjets?', r'^LJ\d\d$'), (r'King ?Airs?', r'^(BE9L|BE9T|BE10|BE20|BE30|B350)$'),
+                (r'Mooneys?', r'^M20\w$'), (r'Stationairs?', r'^(C206|T206|P206|C207|T207)$'), (r'Citations?(?! (?:Sovereign|680|Excel|XLS|M2|Latitude))',
+                 r'^(C25[A-CM]|C500|C501|C510|C525|C526|C550|C551|C55B|C560|C56X|C650|C680|C68A|C700|C750)$'),
+                (r'Bonanzas?', r'^(BE33|BE35|BE36)$'), (r'Barons?', r'^(BE55|BE58)$'), (r'Global (?:Express|XRS|[5-8]\d{3})s?', r'^(GLEX|GL5T|GL7T|GL8T)$'),
+                (r'Phenoms?', r'^(E50P|E55P)$'), (r'Embraers?', r'^(E\d{3}|E\d\dP|E35L|E545|E550)$')]
+D1W_CLASSES = [(r'twin[- ]turboprops?', ['a twin turboprop']), (r'single[- ]engine\s+turboprops?', ['a single-engine turboprop']),
+               (r'(?<!twin )(?<!twin-)(?<!engine )turboprops?', ['a twin turboprop', 'a single-engine turboprop']),
+               (r'business\s+jets?|bizjets?', ['a business jet']), (r'(?:jet\s+)?airliners?', ['a jet airliner']),
+               (r'single[- ]engine\s+pistons?|piston\s+singles?|light\s+singles?', ['a single-engine piston']),
+               (r'twin\s+pistons?|piston\s+twins?', ['a twin piston']), (r'helicopters?', ['a helicopter'])]
+
+
+def _d1w_sha(p):
+    import hashlib
+    h = hashlib.sha256()
+    with open(p, 'rb') as f:
+        for b in iter(lambda: f.read(1 << 20), b''): h.update(b)
+    return h.hexdigest()
+
+
+def _d1w_hours_of(meta_path):
+    """recording hours (file stems) covered by a pack's [from, until] (pack metadata written by tools/live/build_replay.py)"""
+    import time as _t
+    m = json.load(open(meta_path)); a, b = float(m['from']), float(m['until'])
+    return [_t.strftime('%Y%m%d_%H', _t.gmtime(h * 3600)) for h in range(int(a // 3600), int((b - 1e-6) // 3600) + 1)]
+
+
+def _d1w_counts(stems):
+    """per recording hour and type: [flagged, total] distinct aircraft that reported a position within 8 nm of the ARP
+    (adsb.lol `t`; '?' = no type). With the local Mictronics lookup also 'mx_types': the same with an untyped aircraft's
+    type filled from it. Cached in out/d1_windows/hour_types.json keyed by the hour file's sha256 (and the lookup's size /
+    mtime). Counts only; no hex, registration or callsign is written."""
+    import lzma
+    pack = os.path.join(os.path.dirname(HWD), 'sfo3d', 'refs', 'cache', 'rec_pack')
+    try: cache = json.load(open(D1W_CACHE))
+    except (OSError, ValueError): cache = {}
+    if cache.get('v') != 1: cache = {'v': 1, 'hours': {}}
+    mx_key = None; mx = None
+    if os.path.exists(D1W_MX):
+        st = os.stat(D1W_MX); mx_key = '%d:%d' % (st.st_size, int(st.st_mtime))
+    out = {}; dirty = False; missing = []
+    for s in sorted(set(stems)):
+        f = os.path.join(pack, 'adsblol_%s.jsonl.xz' % s)
+        if not os.path.exists(f): missing.append(s); continue
+        sha = _d1w_sha(f); c = cache['hours'].get(s)
+        if not c or c.get('sha256') != sha or c.get('mx_key') != mx_key:
+            if mx_key and mx is None: mx = json.load(open(D1W_MX)).get('aircraft', {})
+            tot, fl = {}, {}
+            for line in lzma.open(f, 'rt'):
+                try: r = json.loads(line)
+                except ValueError: continue
+                if r.get('code') != 200 or not isinstance(r.get('d'), dict): continue
+                for a in r['d'].get('ac') or []:
+                    if a.get('lat') is None or a.get('lon') is None: continue
+                    x, z = F.wgs84_to_world(a['lat'], a['lon'])
+                    if math.hypot(x, z) > D1W_RADIUS_M: continue
+                    k = str(a.get('hex', '')).lower(); t = (a.get('t') or '').strip().upper() or '?'
+                    tot[k] = t if tot.get(k, '?') == '?' else tot[k]
+                    if (a.get('dbFlags') or 0) & 12: fl[k] = 1
+            def agg(typ):
+                n = {}
+                for k, t in typ.items():
+                    e = n.setdefault(t, [0, 0]); e[1] += 1; e[0] += 1 if k in fl else 0
+                return n
+            c = {'sha256': sha, 'mx_key': mx_key, 'types': agg(tot)}
+            if mx is not None:
+                c['mx_types'] = agg({k: (t if t != '?' else ((mx.get(k.lstrip('~')) or [None, None])[1] or '?').upper()) for k, t in tot.items()})
+            cache['hours'][s] = c; dirty = True
+        out[s] = c
+    if dirty:
+        os.makedirs(os.path.dirname(D1W_CACHE), exist_ok=True)
+        json.dump(cache, open(D1W_CACHE, 'w'), indent=0, sort_keys=True)
+    return out, missing, mx_key is not None
+
+
+def _d1w_classes():
+    """ICAO designator -> class phrase for the report and for the docs ('a business jet', 'a single-engine piston' ...),
+    from the committed FAA ACD module (js/aircraft/ga_acd.js) and HELI_TYPES (js/aircraft/ga_dims.js), as classOf does"""
+    acd = {}; heli = set()
+    try:
+        for line in open(os.path.join(HWD, 'js', 'aircraft', 'ga_acd.js'), encoding='utf-8'):
+            if line.startswith('export const ACD = '): acd = json.loads(line[len('export const ACD = '):].rstrip().rstrip(';'))
+        src = open(os.path.join(HWD, 'js', 'aircraft', 'ga_dims.js'), encoding='utf-8').read()
+        m = re.search(r'HELI_TYPES = new Set\(\[(.*?)\]\)', src, re.S)
+        if m: heli = set(re.findall(r"'([A-Z0-9]+)'", m.group(1)))
+    except OSError: pass
+
+    def cls(t):
+        if t in heli: return 'a helicopter'
+        a = acd.get(t) or (acd.get('C' + t[1:]) if re.fullmatch(r'[TP]2\d\d\w?', t) else None)   # T206 -> C206 (turbo / pressurised)
+        if a and a[5]:
+            n = a[6] or 1
+            if a[5] == 'Piston': return 'a twin piston' if n >= 2 else 'a single-engine piston'
+            if a[5] == 'Turboprop': return 'a twin turboprop' if n >= 2 else 'a single-engine turboprop'
+            if a[5] == 'Jet': return 'a jet airliner' if (a[4] or 0) > 50000 else 'a business jet'
+        return 'a single-engine piston'   # no ACD row: a light single, as classOf assumes [inf]
+    return cls
+
+
+def _d1w_units(rel_, txt, names):
+    """split a committed text file into checking units: [(lines, ctx_text, line0, cell_ctx)], where lines are (line number,
+    text) pairs whose type names are checked against the windows named in ctx_text (markdown: a paragraph, a list item with
+    its parent items, or one table cell with its column header, its row and the window of its row group; JSON: one
+    top-level entry's string values, e.g. a SOURCES.json caption; other files: blocks between blank lines)"""
+    ext = rel_.rsplit('.', 1)[-1].lower(); L = txt.split('\n'); units = []
+    if ext == 'json':
+        try: o = json.loads(txt)
+        except ValueError: return units
+        ents = list(o.items()) if isinstance(o, dict) else list(enumerate(o)) if isinstance(o, list) else []
+        def strs(v, acc):
+            if isinstance(v, str): acc.append(v)
+            elif isinstance(v, dict):
+                for w in v.values(): strs(w, acc)
+            elif isinstance(v, list):
+                for w in v: strs(w, acc)
+            return acc
+        pos = 0
+        for k, v in ents:
+            ss = strs(v, [])
+            if not ss: continue
+            kk = json.dumps(k) + ':' if isinstance(k, str) else None
+            pos = next((i for i in range(pos, len(L)) if kk and kk in L[i]), pos); lines = []
+            for s_ in ss:
+                e1, e2 = json.dumps(s_)[1:61], json.dumps(s_, ensure_ascii=False)[1:61]
+                lines.append((next((i for i in range(pos, len(L)) if e1 in L[i] or e2 in L[i]), pos) + 1, s_))
+            units.append((lines, ' '.join(ss), None))
+        return units
+    if ext in ('py', 'js', 'mjs', 'sh', 'yml', 'yaml', 'toml'):
+        # code: comments and (py) triple-quoted strings only; a run of consecutive comment lines is one unit, a docstring is
+        # split at blank lines. Code (string literals, data lines of generated modules) is not prose.
+        com = {}   # line number -> comment text
+        if ext == 'py':
+            import io, tokenize
+            try:
+                for tk in tokenize.generate_tokens(io.StringIO(txt).readline):
+                    if tk.type == tokenize.COMMENT: com[tk.start[0]] = tk.string
+                    elif tk.type == tokenize.STRING and re.match(r'^[rbuRBU]{0,2}("""|\'\'\')', tk.string):
+                        blk = []
+                        for k, l in enumerate(tk.string.split('\n') + ['']):
+                            if l.strip(): blk.append((tk.start[0] + k, l)); continue
+                            if blk: units.append((blk, ' '.join(t for _, t in blk), None)); blk = []
+            except (tokenize.TokenError, IndentationError, SyntaxError): com = {i + 1: l for i, l in enumerate(L)}
+        elif ext in ('js', 'mjs'):
+            inblock = False
+            for i, l in enumerate(L):
+                if inblock:
+                    e = l.find('*/'); com[i + 1] = l if e < 0 else l[:e]; inblock = e < 0; continue
+                q, j = None, 0
+                while j < len(l):   # outside string literals (one line; template literals spanning lines are rare here)
+                    ch = l[j]
+                    if q:
+                        if ch == '\\': j += 2; continue
+                        if ch == q: q = None
+                    elif ch in '\'"`': q = ch
+                    elif l.startswith('//', j): com[i + 1] = l[j:]; break
+                    elif l.startswith('/*', j):
+                        e = l.find('*/', j + 2); com[i + 1] = l[j:] if e < 0 else l[j:e]
+                        if e < 0: inblock = True; break
+                        j = e + 2; continue
+                    j += 1
+        else:
+            com = {i + 1: l[l.index('#'):] for i, l in enumerate(L) if '#' in l}
+        run = []
+        for ln in sorted(com) + [None]:
+            if run and (ln is None or ln != run[-1][0] + 1): units.append((run, ' '.join(t for _, t in run), None)); run = []
+            if ln is not None: run.append((ln, com[ln]))
+        return units
+    if ext != 'md':
+        blk = []
+        for i, l in enumerate(L + ['']):
+            if l.strip(): blk.append((i + 1, l)); continue
+            if blk: units.append((blk, ' '.join(t for _, t in blk), None)); blk = []
+        return units
+    i, n, prev = 0, len(L), ''
+    item_re = re.compile(r'^(\s*)(?:[-*+]|\d+[.)])\s+')
+    while i < n:
+        l = L[i]
+        if not l.strip(): i += 1; continue
+        if l.lstrip().startswith('```'):
+            j = i + 1
+            while j < n and not L[j].lstrip().startswith('```'): j += 1
+            blk = [(k + 1, L[k]) for k in range(i, min(j + 1, n))]; units.append((blk, ' '.join(t for _, t in blk), None)); i = j + 1; continue
+        if l.lstrip().startswith('#'):
+            units.append(([(i + 1, l)], l, None)); prev = l; i += 1; continue
+        if l.lstrip().startswith('|'):
+            rows = []
+            while i < n and L[i].lstrip().startswith('|'):
+                cells = [c.strip() for c in re.split(r'(?<!\\)\|', L[i].strip().strip('|'))]
+                if not all(re.fullmatch(r':?-{2,}:?', c) or not c for c in cells) or not rows: rows.append((i + 1, cells))
+                i += 1
+            ab = lambda c: re.sub(r'^\**\s*([AB])\s*\**$', r'window \1', c)     # a bare 'A' / 'B' header or row-group cell
+            head = [ab(h) for h in rows[0][1]]; cap = prev if prev.rstrip().endswith(':') and len(prev) < 600 else ''
+            has_col = any(_d1w_windows_in(h, names) for h in head)
+            has_first = any(_d1w_windows_in(ab(c[0]), names) for _, c in rows[1:] if c)
+            whole = ' | '.join(' | '.join(c) for _, c in rows)   # neither: the whole table is the unit (e.g. a list of screenshots)
+            carry = ''
+            for r, (ln, cells) in enumerate(rows):
+                if r and cells and _d1w_windows_in(ab(cells[0]), names): carry = ab(cells[0])
+                for j, c in enumerate(cells):
+                    if r == 0: ctx = ' | '.join(head)
+                    elif has_col or has_first: ctx = ' | '.join([head[j] if j < len(head) else '', carry, ' | '.join(cells)])
+                    else: ctx = whole
+                    units.append(([(ln, c)], ctx + ' | ' + cap, None))
+            prev = ''; continue
+        blk = []
+        while i < n and L[i].strip() and not L[i].lstrip().startswith(('|', '```', '#')): blk.append((i + 1, L[i])); i += 1
+        items = []   # [indent, lines, parent]
+        for ln, t in blk:
+            m = item_re.match(t)
+            if m or not items:
+                ind = len(m.group(1)) if m else -1; par = None
+                for q in range(len(items) - 1, -1, -1):
+                    if items[q][0] < ind: par = q; break
+                items.append([ind, [(ln, t)], par])
+            else: items[-1][1].append((ln, t))
+        for q, (ind, lines, par) in enumerate(items):
+            ctx = ' '.join(t for _, t in lines); p = par
+            while p is not None:
+                pt = ' '.join(t for _, t in items[p][1])
+                if items[p][0] >= 0 or pt.rstrip().endswith(':'): ctx += ' ' + pt
+                p = items[p][2]
+            units.append((lines, ctx, None))
+        prev = ' '.join(t for _, t in blk)
+    return units
+
+
+def _d1w_dates(s):
+    """recording hours (file stems) named by explicit dates in s"""
+    import datetime as _dt
+    hrs = []
+    for rx in D1W_DATE_RE:
+        for m in rx.finditer(s):
+            g = m.groupdict(); d, h = int(g['d']), int(g['h'])
+            if not (1 <= d <= 30 and 0 <= h <= 23): continue
+            t0 = _dt.datetime(2026, 11, d, h) + _dt.timedelta(hours=8 if g.get('tz') == 'PST' else 0); n = 1
+            if g.get('h2') is not None and int(g['h2']) <= 24:   # a range: every hour it touches (end exclusive)
+                e = _dt.datetime(2026, 11, d, 0) + _dt.timedelta(hours=int(g['h2']) + (8 if g.get('tz') == 'PST' else 0), minutes=int(g.get('m2') or 0))
+                n = 1 if e <= t0 else min(24, -(-int((e - t0).total_seconds()) // 3600))   # (no wrap: '-08:00' is an offset)
+            for k in range(n): hrs.append((m.group(0).strip(), (t0 + _dt.timedelta(hours=k)).strftime('%Y%m%d_%H')))
+    return hrs
+
+
+def _d1w_windows_in(s, names):
+    """[(label, [stems])] of the windows named (by name or date) in the text s"""
+    out = []
+    for nm, hrs in names.items():
+        for rx in D1W_NAME_RE.get(nm, []):
+            hit = None
+            for m in rx.finditer(s):
+                if nm in ('A', 'B') and _AB_NOT.search(s[max(0, m.start() - 24):m.start()]) and not re.match(r'[Ww]indow|sat|wed|\(|\*', m.group(0)): continue
+                hit = m; break
+            if hit: out.append((nm, hrs)); break
+    for lab, stem in _d1w_dates(s): out.append((lab, [stem]))
+    return out
+
+
+def d1_dated_windows():
+    """D1 decision (d) (docs/PLAN.md 6b): no committed text names a type together with a dated window when every aircraft of
+    that type in that hour within 8 nm of the ARP is LADD / PIA-flagged. Builds the window registry (names -> hours; local
+    od3 windows from the gitignored pack metadata), counts flagged / total aircraft per hour and type from the committed
+    adsb.lol recording (cached), and scans every committed text file under hwd3d for an identifying type (ICAO designator,
+    model or family name) in the same unit as a window's name or date. Prints file:line, the window and the class only
+    (no type, hex or registration). Returns the list of hits (and registry problems)."""
+    probs = []
+    names = {k: list(v) for k, v in D1W_WINDOWS.items()}
+    for nm, p in D1W_LOCAL.items():
+        p = os.path.join(HWD, p)
+        if os.path.exists(p): names[nm] = _d1w_hours_of(p)
+        else: say('   D1(d) window %s: local pack metadata not present (gitignored) - its references are not checked (SKIPPED)' % nm)
+    for nm, p in D1W_PACKS.items():   # the registry against the packs it names, where they exist locally
+        p = os.path.join(HWD, p)
+        if os.path.exists(p) and _d1w_hours_of(p) != names[nm]: probs.append('D1(d) registry: window %s hours differ from its pack' % nm)
+    root = os.path.dirname(HWD)
+    allf = sorted(subprocess.run(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '--', 'hwd3d'], capture_output=True, text=True, check=True).stdout.split())
+    texts = {}
+    for f in allf:
+        rel_ = os.path.relpath(os.path.join(root, f), HWD)
+        if rel_.rsplit('.', 1)[-1].lower() not in D1W_TEXT_EXT or rel_.startswith('out/'): continue
+        try: texts[rel_] = open(os.path.join(HWD, rel_), encoding='utf-8').read()
+        except (OSError, UnicodeDecodeError): continue
+    dated = sorted({st for t in texts.values() for _, st in _d1w_dates(t)})
+    stems = sorted({s for v in names.values() for s in v} | set(dated))
+    C, missing, have_mx = _d1w_counts(stems)
+    ident = {}
+    for s, c in C.items():
+        ids = {t for t, (f_, n_) in c['types'].items() if t != '?' and f_ and f_ == n_}
+        ids |= {t for t, (f_, n_) in c.get('mx_types', {}).items() if t != '?' and f_ and f_ == n_}
+        ident[s] = ids
+    say('   D1(d) window registry: %s; dated hours named in committed text: %d (%d outside the recording)' % (
+        ', '.join('%s %d h' % (k, len(v)) for k, v in sorted(names.items())), len(dated), len(missing)))
+    say('   D1(d) per-hour type counts (adsb.lol t, within 8 nm; %s): %d hours; identifying (hour, type) pairs: %d, of them in the named windows: %d; untyped (?) never nameable; flagged untyped aircraft in these hours: %d' % (
+        'with the local Mictronics lookup filling untyped aircraft' if have_mx else 'Mictronics lookup not present: adsb.lol types only',
+        len(C), sum(len(v) for v in ident.values()), sum(len(ident.get(s, ())) for v in names.values() for s in v),
+        sum(c['types'].get('?', [0, 0])[0] for c in C.values())))
+    cls = _d1w_classes()
+    pats = {}   # pattern -> designators it names
+    for t in sorted({t for v in ident.values() for t in v}):   # only an identifying designator can be a hit
+        alts = [re.escape(t)]
+        m = re.fullmatch(r'([A-Z]+)(\d\w*)', t)
+        if m: alts.append(re.escape(m.group(1)) + '-' + re.escape(m.group(2)))
+        alts += [a.replace(' ', r'\s+') for a in D1W_ALIASES.get(t, [])]
+        pats.setdefault(re.compile(r'(?<![A-Za-z0-9])(?:%s)(?:e?s)?(?![A-Za-z0-9])' % '|'.join(alts)), set()).add(t)
+    fams = [(re.compile(r'(?<![A-Za-z0-9])(?:%s)(?![A-Za-z0-9])' % a.replace(' ', r'\s+')), re.compile(rx)) for a, rx in D1W_FAMILIES]
+    # class phrases too: a class whose every aircraft in the hour is flagged identifies as well as a type does
+    fams += [(re.compile(r'(?<![A-Za-z0-9-])(?:%s)(?![A-Za-z0-9])' % a), (lambda ks: lambda x: cls(x) in ks)(set(k))) for a, k in D1W_CLASSES]
+    def identifying(types_named, stems_):
+        for s in stems_:
+            c = C.get(s)
+            if not c: continue
+            for key in ('types', 'mx_types'):
+                tc = c.get(key)
+                if not tc: continue
+                f_ = sum(tc.get(t, [0, 0])[0] for t in types_named); n_ = sum(tc.get(t, [0, 0])[1] for t in types_named)
+                if f_ and f_ == n_: return True
+        return False
+    memo = {}
+
+    def scan(rel_, txt):   # -> ([(file, line, col, window, class)], units)
+        out = []; nu = 0
+        for lines, ctx, _ in _d1w_units(rel_, txt, names):
+            nu += 1
+            W = memo.get(ctx)
+            if W is None: W = memo[ctx] = _d1w_windows_in(ctx, names)
+            if not W: continue
+            for ln, t in lines:
+                found = []
+                for rx, ts in pats.items():
+                    for m in rx.finditer(t): found.append((m.start(), ts))
+                for rx, frx in fams:
+                    for m in rx.finditer(t): found.append((m.start(), None, frx))
+                for f in found:
+                    for lab, st in W:
+                        ts = f[1] if f[1] is not None else {x for s in st for x in C.get(s, {}).get('types', {}) if x != '?' and (f[2](x) if callable(f[2]) else f[2].match(x))}
+                        if ts and identifying(ts, st):
+                            out.append((rel_, ln, f[0] + 1, lab, ' / '.join(sorted({cls(x) for x in ts})) if len(ts) < 4 else 'a type family'))
+        return out, nu
+    # planted cases (the scanner itself): built at run time from the counts, so no type is written here. Each 'hit' case must
+    # be found, each 'clean' case must not.
+    plant = []
+    for nm in ('A', 'B', 'weekend'):
+        ids = sorted(t for s in names.get(nm, []) for t in ident.get(s, ()))
+        fine = sorted(t for s in names.get(nm, []) for t, (f_, n_) in C.get(s, {}).get('types', {}).items() if t != '?' and not f_ and re.fullmatch(r'[A-Z]{1,2}\d{2,3}', t))
+        if not ids or not fine: continue
+        t, u, lab = ids[0], fine[0], {'A': 'window A', 'B': 'window B'}.get(nm, nm)
+        hr = names[nm][0]; dt = '%d Nov %sZ' % (int(hr[6:8]), hr[9:11])
+        plant += [('hit', 'p.md', 'Text.\n\nIn %s a %s taxied in.\n' % (lab, t)),
+                  ('hit', 'p.md', '| Measure | %s desktop | other |\n|---|---|---|\n| speed | 5 (%s) | 3 |\n' % (nm, t)),
+                  ('hit', 'p.md', '- Results for %s:\n  - two %ss parked, one %s\n' % (lab, t, u)),
+                  ('hit', 'p.md', 'On %s a %s turned.\n' % (dt, t.replace(t.rstrip('0123456789X'), t.rstrip('0123456789X') + '-', 1) if re.fullmatch(r'[A-Z]+\d+', t) else t)),
+                  ('hit', 'p.json', json.dumps({'x.jpg': {'caption': 'Overview, %s.' % lab, 'note': 'shows a %s' % t}}, indent=1)),
+                  ('hit', 'p.py', 'x = 1\n# the %s case:\n#   a %s held short\ny = 2\n' % (lab, t)),
+                  ('clean', 'p.md', 'In %s a %s taxied in.\n\nA %s parked.\n' % (lab, u, t)),
+                  ('clean', 'p.md', 'Hangar %s: a %s.\n' % (nm, t) if nm in ('A', 'B') else 'A %s parked.\n' % t),
+                  ('clean', 'p.js', 'const s = "%s %s";\n' % (lab, t))]
+    for nm, hrs in sorted(names.items()):   # a class whose every aircraft in the hour is flagged (if any window has one)
+        agg = {}
+        for t, (f_, n_) in C.get(hrs[0], {}).get('types', {}).items():
+            if t != '?': e = agg.setdefault(cls(t), [0, 0]); e[0] += f_; e[1] += n_
+        full = sorted(k for k, (f_, n_) in agg.items() if f_ and f_ == n_)
+        if full and nm not in ('A', 'B'):
+            plant += [('hit', 'p.md', 'In the %s window %s held short.\n' % (nm, full[0])), ('clean', 'p.md', '%s held short.\n' % full[0].capitalize())]
+            break
+    bad = [i for i, (want, f, txt) in enumerate(plant) if bool(scan(f, txt)[0]) != (want == 'hit')]
+    say('   D1(d) planted cases (built at run time from the counts): %d, wrongly classified: %d %s - hard' % (len(plant), len(bad), bad))
+    if not plant or bad: probs.append('D1(d) planted cases: %d of %d wrong' % (len(bad), len(plant)))
+    hits = []; nunits = 0
+    for rel_, txt in sorted(texts.items()):
+        h_, n_ = scan(rel_, txt); hits += h_; nunits += n_
+    hits = sorted(set(hits))
+    # images: pixels are not read here. Every committed app screenshot (docs/phase2/, or an image whose SOURCES entry names
+    # livetest or a replay / snapshot pack) carries a by-eye review note 'd1_labels' ('checked ...' or 'masked ...') saying its
+    # type labels were compared with the identifying types of the window it documents - hard.
+    noreview = []; nimg = 0
+    for rel_ in sorted(t for t in texts if os.path.basename(t) == 'SOURCES.json'):
+        try: sj = json.loads(texts[rel_])
+        except ValueError: continue
+        for k, v in sj.items():
+            if not isinstance(v, dict) or not re.search(r'\.(jpe?g|png|webp)$', k, re.I): continue
+            here = os.path.join(os.path.dirname(rel_), k)
+            if not (here.startswith('docs/phase2/') or re.search(r'livetest|replay|snapshot|\bpack\b', json.dumps(v), re.I)): continue
+            nimg += 1
+            if not str(v.get('d1_labels', '')).startswith(('checked', 'masked')): noreview.append(here)
+    say('   D1(d) app screenshots with a SOURCES entry: %d; without a by-eye label review (d1_labels): %d %s - hard' % (nimg, len(noreview), noreview))
+    probs += ['D1(d) image without a label review: %s' % f for f in noreview]
+    say('   D1(d) committed text files scanned: %d (%d units); identifying type named with its dated window: %d - hard' % (len(texts), nunits, len(hits)))
+    for h in hits: say('   D1(d) HIT %s:%d:%d  window %s  class %s' % h)
+    return probs + ['%s:%d window %s (%s)' % (h[0], h[1], h[3], h[4]) for h in hits]
 
 
 def pave_path(x, z, FE, res=1.0):
@@ -719,6 +1183,9 @@ def session_check_local(ST, L=None, T=None, polls=None):
 def main():
     data = sys.argv[sys.argv.index('--data') + 1] if '--data' in sys.argv else os.path.join(HWD, 'data', 'hwd_airport.json')
     D = json.load(open(data))
+    if '--d1-windows' in sys.argv:      # D1 decision (d) alone (seconds; the full run takes ~2 min)
+        say('D1 decision (d): types named with a dated window (docs/PLAN.md 6b)'); h = d1_dated_windows()
+        say('RESULT (D1 dated windows only): %s' % ('passed' if not h else 'FAILED: %d hits' % len(h))); return 1 if h else 0
     if '--paint-only' in sys.argv:      # check 3's paint part alone, e.g. against an older build (--data)
         FE = json.load(open(os.path.join(HWD, 'refs', 'cache', 'osm', 'khwd_features.json')))['features']
         h = paint_check(D, FE) + topology_check(D, FE); say('RESULT (paint only): %s' % ('passed' if not h else 'FAILED: ' + '; '.join(h))); return 1 if h else 0
@@ -1127,6 +1594,8 @@ def main():
     if not same: hard.append('js twin')
     d1 = d1_scan()
     if d1: hard.append('D1')
+    d1w = d1_dated_windows()   # D1 decision (d), 2026-11-14
+    if d1w: hard.append('D1 dated windows (decision (d))')
     # session numbers (round 1) must not link an aircraft's separate presences: per session <= 1 signal start, <= 1 end, and
     # all its events within 2 x SESSION_R_M of each other
     import collections

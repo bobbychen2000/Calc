@@ -1,11 +1,12 @@
 {
  "phase2_run_1_overview_desktop.jpg": {
-  "caption": "Window A (Sat 7 Nov 2026, scene 12:10 PST = 20:10Z), desktop 1280x720, Overview view with the full HUD: side panel (phase line, runway line, list), 3-D labels (type + phase / altitude), feed pill 'Replay - 60 s behind', ATC pill 'TWR' at the scene time. Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Airfield data (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright). Ground texture: USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain.",
+  "caption": "Window A (Sat 7 Nov 2026, scene 12:10 PST = 20:10Z), desktop 1280x720, Overview view with the full HUD: side panel (phase line, runway line, list), 3-D labels (type + phase / altitude), feed pill 'Replay - 60 s behind', ATC pill 'TWR' at the scene time. MASKED (D1 decision (d), docs/PLAN.md 6b; 2026-11-14): the type and model text of one list row (a taxiing single-engine piston) is pixelated in the committed JPEG (Pillow, from the 2026-11-13 render). Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Airfield data (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright). Ground texture: USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain.",
   "source_render": "hwd3d/out/phase2/run_satA_t2_overview_m2_2_desktop.png (gitignored), converted to JPEG",
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b, adsb.lol API answers 4-11 Nov 2026), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) replayed through hwd_live_server.py. A Produced Work under ODbL 4.3: the notice is in this caption and, where the HUD is shown, in the image's credit line.",
   "d1": "D1: rendered with the relay in --ident type-only (every aircraft shown by type only; no registration, callsign, operator or address in the image).",
-  "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 1280x720, 284491 bytes",
+  "d1_labels": "masked 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): the list row of one aircraft (window A); the other labels checked by eye",
+  "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 1280x720, 284491 bytes; masked copy 293803 bytes",
   "note": "QA render for docs/phase2_run.md; placeholder aircraft; not for navigation"
  },
  "phase2_run_2_overview_phone.jpg": {
@@ -14,6 +15,7 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b, adsb.lol API answers 4-11 Nov 2026), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) replayed through hwd_live_server.py. A Produced Work under ODbL 4.3: the notice is in this caption and, where the HUD is shown, in the image's credit line.",
   "d1": "D1: rendered with the relay in --ident type-only (every aircraft shown by type only; no registration, callsign, operator or address in the image).",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): window A; no label of a type whose every aircraft in that hour is LADD / PIA-flagged",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 390x844, 80141 bytes",
   "note": "QA render for docs/phase2_run.md; placeholder aircraft; not for navigation"
  },
@@ -23,25 +25,28 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b, adsb.lol API answers 4-11 Nov 2026), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) replayed through hwd_live_server.py. A Produced Work under ODbL 4.3: the notice is in this caption and, where the HUD is shown, in the image's credit line.",
   "d1": "D1: rendered with the relay in --ident type-only (every aircraft shown by type only; no registration, callsign, operator or address in the image).",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): window A; the card and the label show a type that is not identifying in that hour",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 390x844, 59306 bytes",
   "note": "QA render for docs/phase2_run.md; placeholder aircraft; not for navigation | Re-captioned in fix round 2 (2026-11-13): the header text and the parking / altitude rows shown are pre-fix behaviour; nothing in this image describes the current app."
  },
  "phase2_run_4_hangar_clipping_desktop.jpg": {
-  "caption": "Finding F3a: an M20P stopped at the end of a taxi route between two T-hangar rows; its nose is inside the Hangar B footprint (drawn 4.5 m tall, closed; no door modelled) shortly before its signal ends and it is shown 'In hangar'. Window A, scene 12:11 PST (20:11:57Z), desktop, camera 28 m, 55 deg down. Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Airfield data (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright). Ground texture: USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain.",
+  "caption": "Finding F3a: a single-engine piston stopped at the end of a taxi route between two T-hangar rows; its nose is inside the Hangar B footprint (drawn 4.5 m tall, closed; no door modelled) shortly before its signal ends and it is shown 'In hangar'. Window A, desktop, camera 28 m, 55 deg down. MASKED (D1 decision (d), docs/PLAN.md 6b; 2026-11-14): its 3-D type label, its list row (type and model) and the HUD clock are pixelated in the committed JPEG (Pillow, from the 2026-11-13 render). Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Airfield data (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright). Ground texture: USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain.",
   "source_render": "hwd3d/out/phase2/run_satA_t2_clip_0_desktop.png (gitignored), converted to JPEG",
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b, adsb.lol API answers 4-11 Nov 2026), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) replayed through hwd_live_server.py. A Produced Work under ODbL 4.3: the notice is in this caption and, where the HUD is shown, in the image's credit line.",
   "d1": "D1: rendered with the relay in --ident type-only (every aircraft shown by type only; no registration, callsign, operator or address in the image).",
-  "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 1280x720, 106694 bytes",
+  "d1_labels": "masked 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): the 3-D label and the list row of the aircraft in the hangar footprint, and the HUD clock (window A); the other labels checked by eye",
+  "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 1280x720, 106694 bytes; masked copy 108086 bytes",
   "note": "QA render for docs/phase2_run.md; placeholder aircraft; not for navigation"
  },
  "phase2_run_5_type_only_bizjet_standin_desktop.jpg": {
-  "caption": "Finding F5: in type-only mode a bizjet parked on the West Hangars ramp has no type (its type came only from the Mictronics _mx record, which masking removes), so it is labelled 'Aircraft' and drawn with the emitter-category A3 stand-in (airliner shape, 34.3 m span) instead of its 28.7 m bizjet placeholder. Window A, scene 12:10 PST, desktop. Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Airfield data (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright). Ground texture: USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain.",
+  "caption": "Finding F5: in type-only mode a bizjet parked on the West Hangars ramp has no type (its type came only from the Mictronics _mx record, which masking removes), so it is labelled 'Aircraft' and drawn with the emitter-category A3 stand-in (airliner shape, 34.3 m span) instead of its 28.7 m bizjet placeholder. Window A, scene 12:10 PST, desktop. MASKED (D1 decision (d), docs/PLAN.md 6b; 2026-11-14): the type and model text of one list row (a taxiing single-engine piston) is pixelated in the committed JPEG (Pillow, from the 2026-11-13 render). Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Airfield data (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright). Ground texture: USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain.",
   "source_render": "hwd3d/out/phase2/run_satA_t2_close_parked_m2_2_desktop.png (gitignored), converted to JPEG",
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b, adsb.lol API answers 4-11 Nov 2026), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) replayed through hwd_live_server.py. A Produced Work under ODbL 4.3: the notice is in this caption and, where the HUD is shown, in the image's credit line.",
   "d1": "D1: rendered with the relay in --ident type-only (every aircraft shown by type only; no registration, callsign, operator or address in the image).",
-  "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 1280x720, 143031 bytes",
+  "d1_labels": "masked 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): the list row of one aircraft (window A); the other labels checked by eye",
+  "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 1280x720, 143031 bytes; masked copy 147970 bytes",
   "note": "QA render for docs/phase2_run.md; placeholder aircraft; not for navigation"
  },
  "phase2_run_6_runup_pad_clean_desktop.jpg": {
@@ -50,6 +55,7 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b, adsb.lol API answers 4-11 Nov 2026), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) replayed through hwd_live_server.py. A Produced Work under ODbL 4.3: the notice is in this caption and, where the HUD is shown, in the image's credit line.",
   "d1": "D1: framebuffer render without the HUD (no labels, list or card): no registration, callsign, operator or address in the image.",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): window B; framebuffer without labels",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 1280x720, 104474 bytes",
   "note": "QA render for docs/phase2_run.md; placeholder aircraft; not for navigation"
  },
@@ -59,6 +65,7 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b, adsb.lol API answers 4-11 Nov 2026), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) replayed through hwd_live_server.py. A Produced Work under ODbL 4.3: the notice is in this caption and, where the HUD is shown, in the image's credit line.",
   "d1": "D1: rendered with the relay in --ident type-only (every aircraft shown by type only; no registration, callsign, operator or address in the image).",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): window A; no aircraft label (ATC sheet)",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 390x844, 71670 bytes",
   "note": "QA render for docs/phase2_run.md; placeholder aircraft; not for navigation"
  },
@@ -68,6 +75,7 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b, adsb.lol API answers 4-11 Nov 2026), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) replayed through hwd_live_server.py. A Produced Work under ODbL 4.3: the notice is in this caption and, where the HUD is shown, in the image's credit line.",
   "d1": "D1: rendered with the relay in --ident type-only (every aircraft shown by type only; no registration, callsign, operator or address in the image).",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): window A; the event list shows only types that are not identifying in that hour",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + docs/phase2/phase2_run_job.mjs; JPEG 390x844, 68384 bytes",
   "note": "QA render for docs/phase2_run.md; placeholder aircraft; not for navigation"
  },
@@ -77,6 +85,7 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2 review fix round 1, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) through the in-page replay pack. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "d1": "D1: rendered from the committed-default type-only replay pack (every aircraft by type only); labels hidden except where stated.",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): default replay pack (weekend window); no label legible (night, labels hidden)",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + a scratch QA job (HWD.qa.look); JPEG 1280x720, 37768 bytes",
   "note": "QA render for docs/phase2_run.md section 6 (review fix round 1); placeholder aircraft; not for navigation"
  },
@@ -86,6 +95,7 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2 review fix round 1, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) through the in-page replay pack. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "d1": "D1: rendered from the committed-default type-only replay pack (every aircraft by type only); labels hidden except where stated.",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): default replay pack (weekend window); no aircraft label",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + a scratch QA job (HWD.qa.look); JPEG 1280x720, 103457 bytes",
   "note": "QA render for docs/phase2_run.md section 6 (review fix round 1); placeholder aircraft; not for navigation"
  },
@@ -95,6 +105,7 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2 review fix round 1, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) through the in-page replay pack. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "d1": "D1: rendered from the committed-default type-only replay pack (every aircraft by type only); labels hidden except where stated.",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): default replay pack (weekend window); no aircraft label",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + the review's tile job (scratch) and a Pillow composite; JPEG 640x1152, 120102 bytes",
   "note": "QA render for docs/phase2_run.md section 6 (review fix round 1); placeholder aircraft; not for navigation"
  },
@@ -104,16 +115,18 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2 review fix round 1, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) through the in-page replay pack. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "d1": "D1: rendered from the committed-default type-only replay pack (every aircraft by type only); labels hidden except where stated.",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): default replay pack (weekend window); the card's type is not identifying in that hour",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs + hwd3d/jobs/views.mjs; JPEG 390x844, 89614 bytes",
   "note": "QA render for docs/phase2_run.md section 6 (review fix round 1); placeholder aircraft; not for navigation"
  },
  "phase2_fix2_13_phone_view_row.jpg": {
-  "caption": "Fix round 2, finding 8: phone 390x844 (DPR 1, touch), Overview in replay. The five view buttons and the Settings / About icons WRAP onto two rows (no horizontal scroll, nothing under the icons); every control is a 44-px touch target (top-bar pills 44 px high, list grab 44 px, the phase / runway lines are one 44-px button) - jobs/phone_ui.mjs: 53 controls checked in three states, 0 violations. Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Airfield data (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright). Ground texture: USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain.",
+  "caption": "Fix round 2, finding 8: phone 390x844 (DPR 1, touch), Overview in replay. The five view buttons and the Settings / About icons WRAP onto two rows (no horizontal scroll, nothing under the icons); every control is a 44-px touch target (top-bar pills 44 px high, list grab 44 px, the phase / runway lines are one 44-px button) - jobs/phone_ui.mjs: 53 controls checked in three states, 0 violations. MASKED (D1 decision (d), docs/PLAN.md 6b; 2026-11-14): two 3-D labels (business jets: type, and the phase of one of them) are pixelated in the committed JPEG (Pillow, from the 2026-11-13 render). Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL 1.0 (https://opendatacommons.org/licenses/odbl/1-0/). Airfield data (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright). Ground texture: USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain.",
   "source_render": "out/phase2/app_phoneui_default.png (MOBILE=1 RELAY=none livetest jobs/phone_ui.mjs), converted to JPEG",
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2 review fix round 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) through the in-page replay pack. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "d1": "D1: rendered from the committed-default type-only replay pack (every aircraft by type only).",
-  "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs; JPEG 390x844, 95172 bytes",
+  "d1_labels": "masked 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): two 3-D labels (default replay pack, weekend window); the other labels checked by eye",
+  "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs; JPEG 390x844, 95172 bytes; masked copy 100510 bytes",
   "note": "QA render for docs/phase2_run.md section 7 (review fix round 2); placeholder aircraft; not for navigation"
  },
  "phase2_fix2_14_card_no_signal_phone.jpg": {
@@ -122,6 +135,7 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2 review fix round 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) through the in-page replay pack. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "d1": "D1: rendered from the committed-default type-only replay pack (every aircraft by type only).",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): default replay pack (weekend window); the card's type is not identifying in that hour",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs; JPEG 390x844, 65340 bytes",
   "note": "QA render for docs/phase2_run.md section 7 (review fix round 2); placeholder aircraft; not for navigation"
  },
@@ -131,6 +145,7 @@
   "url": "own render; inputs: https://adsb.lol (recording sfo3d/refs/cache/rec_pack @ a967f9b), https://www.openstreetmap.org/copyright (data/hwd_airport.json), USDA NAIP 2024 (js/world/tex/naip2024_*.jpg)",
   "licence": "Own render of the hwd3d app (Phase 2 review fix round 2, this repository). Base texture USDA NAIP 2024, public domain; airfield geometry from data/hwd_airport.json (OpenStreetMap, ODbL 1.0) and FAA NASR (public domain); aircraft positions from the adsb.lol recording (sfo3d rec_pack, ODbL 1.0) through the in-page replay pack. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "d1": "D1: rendered from the committed-default type-only replay pack (every aircraft by type only).",
+  "d1_labels": "checked by eye 2026-11-14 (D1 decision (d), docs/PLAN.md 6b): default replay pack (weekend window); framebuffer without labels",
   "made": "2026-11-13, headless Chromium (SwiftShader) via hwd3d/livetest.mjs; JPEG 390x844, 37432 bytes",
   "note": "QA render for docs/phase2_run.md section 7 (review fix round 2); placeholder aircraft; not for navigation"
  }

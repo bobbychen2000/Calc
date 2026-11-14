@@ -48,7 +48,7 @@ import { initGL, Program } from '../../js/gl.js';
 import { convertGLB, parseGLB, KINDS } from '../../js/aircraft/glb.js';
 import { Kinematics, xform, rotAbout } from '../../js/aircraft/kinematics.js';
 import { MODELS, MODEL_LOAD_OPTS, withModelFrame } from '../../js/aircraft/models.js';
-import { DetailedAircraft, SYNC_KEYS, ACOBJ_FS, ACOBJ_SHADOW_FS, GLASS_FS, PROP_BLUR } from '../../js/aircraft/detailed.js';
+import { DetailedAircraft, SYNC_KEYS, ACOBJ_FS, ACOBJ_SHADOW_FS, GLASS_FS, PROP_BLUR, CABIN_SKY_SHARE, GLASS_VEIL_SUN, cabinSunT } from '../../js/aircraft/detailed.js';
 import { gaDims } from '../../js/aircraft/ga_dims.js';
 
 const HWD = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -732,7 +732,55 @@ for (const [type, e] of Object.entries(MODELS)) {
       { acobj_alpha_0_3: sAc3, acobj_alpha_0: sAc0, obj_alpha_0_3: sObj3, obj_alpha_0_7: sObj7, placeholder_alpha_0_3_casting: pIt.filter(i => i.castShadow).length, acobj_shadow_program_fades: !!(fakeR.progs.acobj && fakeR.progs.acobj.fadeShadow) });
     const released = m2.groups.every(g => (!g.opaque || g.opaque.released) && (!g.glass || g.glass.released));
     check(type, 'drawable: CPU vertex arrays released after the GPU upload (keepCpu false)', released && it1.length > 0, { groups: m2.groups.length, released });
+    // OD4 iteration 3 (review F1; iteration 2: F2 / F6): the cabin rule - the direct sun that reaches interior surfaces through
+    // the openings (shadow map) is multiplied by the type's glazing transmission tau (glb.js stats.glazingT; it crosses the pane
+    // on its way in), the sky by the share CABIN_SKY_SHARE without a glass factor; both 1 (rule off) on EVERY group while any
+    // cabin door is open
+    const cab = async (doors) => { const x = new DetailedAircraft(T, { model: m2, R: fakeR }); await x.ready; x.pos = [0, 0, 0]; x.fwd = [0, 0, -1]; x.setControls({ doors }, true); x.step(1 / 30);
+      const it = x.items([20, 5, 0]).filter(i => i.prog === 'acobj'); return { amb: [...new Set(it.map(i => i.uniforms.uCabinAmb))], sun: [...new Set(it.map(i => i.uniforms.uCabinSun))] }; };
+    const doorIds = m2.parts.filter(pt => pt.pivot && pt.pivot.kind === 'door').map(pt => pt.id);
+    const cClosed = await cab({}), cOpen = doorIds.length ? await cab({ [doorIds[0]]: 1 }) : null;
+    const lightPath = ACOBJ_FS.split('void main')[1] || '';
+    const tau = cabinSunT(m2);
+    const cabOK = cClosed.amb.length === 1 && cClosed.amb[0] === CABIN_SKY_SHARE && cClosed.sun.length === 1 && Math.abs(cClosed.sun[0] - m2.stats.glazingT) < 1e-9 && tau > 0.1 && tau < 0.5
+      && (cOpen === null || (cOpen.amb.length === 1 && cOpen.amb[0] === 1 && cOpen.sun.length === 1 && cOpen.sun[0] === 1))
+      && /float sunT = cabin \? clamp\(uCabinSun/.test(lightPath) && /ambT = cabin \? clamp\(uCabinAmb/.test(lightPath);
+    check(type, 'drawable: cabin rule - direct sun x glazing tau, sky x share 0.35 (no glass factor) closed, both 1 on every group with a cabin door open (review F1; it. 2 F2 / F6)', cabOK,
+      { closed_uCabinAmb: cClosed.amb, closed_uCabinSun: cClosed.sun, glazingT: m2.stats.glazingT, door: doorIds[0] || null, door_open: cOpen });
+    // OD4 iteration 3 (review F1): the glazing's diffuse return (the pane veil of OD4 it. 2) takes no direct sun (GLASS_VEIL_SUN 0),
+    // only the sky / ground part; lens covers (mat 0) keep the sun; every glass draw sets uVeilSun
+    const gIt = new DetailedAircraft(T, { model: m2, R: fakeR }); await gIt.ready; gIt.pos = [0, 0, 0]; gIt.fwd = [0, 0, -1]; gIt.step(1 / 30);
+    const gU = gIt.items([20, 5, 0]).filter(i => i.prog === 'acglass' && typeof i.uniforms === 'function').map(i => i.uniforms());
+    const veilOK = GLASS_VEIL_SUN === 0 && gU.length > 0 && gU.every(u => u.uVeilSun === GLASS_VEIL_SUN && u.uKind === 0)
+      && /glz \? uVeilSun : 1\.0/.test(GLASS_FS) && /bool glz = int\(vExt\.z \+ 0\.5\) == 24/.test(GLASS_FS);
+    check(type, 'drawable: glazing veil without the direct sun (GLASS_VEIL_SUN 0; lens covers keep it) (review F1)', veilOK, { GLASS_VEIL_SUN, glass_draws: gU.length });
+    // OD4 iteration 2 (review F1): paintFit materials take the registry's fitted linear colour at load (alpha kept, the glb's
+    // factor recorded as baseGlb), every other factor is the glb's; with palette false every factor is the glb's
+    const raw = convertGLB(models[type].buf, MODEL_LOAD_OPTS(type, { palette: false })), fit = MODELS[type].paintFit || {};
+    const palBad = [];
+    for (const mt of m2.materials) { const r0 = raw.materials.find(q => q.name === mt.name); if (!r0) continue;
+      const want = fit[mt.name] ? [...fit[mt.name], r0.base[3]] : r0.base;
+      if (want.some((v, k) => Math.abs(v - mt.base[k]) > 1e-6)) palBad.push(mt.name);
+      if (fit[mt.name] && !(mt.baseGlb && mt.baseGlb.every((v, k) => v === r0.base[k]))) palBad.push(mt.name + ' (baseGlb)'); }
+    const pal = Object.fromEntries(m2.materials.filter(mt => fit[mt.name]).map(mt => [mt.name, { glb: mt.baseGlb && mt.baseGlb.map(r3), drawn: mt.base.map(r3) }]));
+    check(type, 'palette: paintFit colours replace the named glb factors at load, every other factor = the glb (review F1)', palBad.length === 0 && Object.keys(fit).every(n => pal[n]), { paintFit: fit, materials: pal, mismatches: palBad });
   }
+  // OD4 iteration 2 (review F8): the final pass's chromatic aberration is off unless a caller sets post.ca
+  const rsrc = fs.readFileSync(path.join(HWD, 'js/renderer.js'), 'utf8');
+  check('runtime', 'renderer: chromatic aberration off by default (post.ca ?? 0; review F8)', /uCA: post\.ca \?\? 0(\.0)?\b/.test(rsrc), (rsrc.match(/uCA: post\.ca \?\? [\d.]+/) || ['no uCA'])[0]);
+  // OD4 iteration 3 (review F1 / F3): bloom knee - the down pass weights each tap by v^2 / (v^2 + K^2) (v = display-referred
+  // luminance), the final pass gives the left-out share of a uniform field back as the pixel's own gain; default K = BLOOM_KNEE
+  const psrc = fs.readFileSync(path.join(HWD, 'js/shaders/post.js'), 'utf8');
+  const kneeM = rsrc.match(/export const BLOOM_KNEE = ([\d.]+)/); const knee = kneeM ? +kneeM[1] : null;
+  const kneeOK = knee > 0 && /uKnee: post\.bloomKnee \?\? BLOOM_KNEE, uExpo: post\.exposure/.test(rsrc) && /uKnee: post\.bloomKnee \?\? BLOOM_KNEE, uBloomLevels: this\.down\.length/.test(rsrc)
+    && /c \*= v \* v \/ \(v \* v \+ uKnee \* uKnee\)/.test(psrc) && /col \*= 1\.0 \+ uBloomMix \* uBloomLevels \* \(1\.0 - w\) \/ \(1\.0 \+ lum \* 0\.02\)/.test(psrc);
+  check('runtime', 'renderer: bloom knee on by default (highlights bloom, diffuse surfaces keep their brightness as a gain; review F1 / F3)', kneeOK, { BLOOM_KNEE: knee });
+  // OD4 iteration 3 (review F7): lights of a detailed aircraft are pulled toward the camera by their drawn radius (scene.js packs
+  // s.pull into iData.y, sprites.js uses it); other sprites keep the sfo3d pull
+  const ssrc = fs.readFileSync(path.join(HWD, 'js/scene.js'), 'utf8'), spsrc = fs.readFileSync(path.join(HWD, 'js/shaders/sprites.js'), 'utf8');
+  const dsrc = fs.readFileSync(path.join(HWD, 'js/aircraft/detailed.js'), 'utf8');
+  const pullOK = /B\[o \+ 13\] = s\.pull \? 1 : 0/.test(ssrc) && /iData\.y > 0\.5 \? min\(max\(s, 3\.0\), d \* 0\.5\) : 0\.0/.test(spsrc) && /for \(const sp of S\) sp\.pull = true/.test(dsrc);
+  check('runtime', 'sprites: detailed-aircraft lights pulled by 3 m (or their drawn radius), other sprites unchanged (review F7)', pullOK, 'scene.js iData.y, sprites.js pull, detailed.js lightSprites');
 }
 
 // ---- 12. provenance: SOURCES.json hashes, docs/phase3 captions

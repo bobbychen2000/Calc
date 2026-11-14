@@ -3,7 +3,7 @@
 //   python3 -I tools/qa/phase2_run_ref.py satA 2026-11-07T20:00Z 12 out/phase2/ref_satA.json   # local-only D1 reference
 //   RELAY=spawn REPLAY_FROM=2026-11-07T20:00Z WIN=satA SIM_MIN=12.5 SHOT_AT=6,11 PREFIX=run_satA REF=out/phase2/ref_satA.json \
 //     node livetest.mjs docs/phase2/phase2_run_job.mjs
-//   (+ MOBILE=1 for 390x844; RELAY_ARGS="--ident type-only" for commit-safe HUD shots; WATCH_TYPE=M20P WATCH_DIST/PITCH to
+//   (+ MOBILE=1 for 390x844; RELAY_ARGS="--ident type-only" for commit-safe HUD shots; WATCH_TYPE=<ICAO type> WATCH_DIST/PITCH to
 //   shoot a type whose fuselage enters a building footprint)
 // It opens the app ON THE RELAY's own port (the real deployment path: the relay's static serving, gzip) unless DIRECT=0,
 // samples the drawn traffic in-page at ~10 Hz of engine time (the same measures as P3's tools/traffic/replay_engine.mjs,

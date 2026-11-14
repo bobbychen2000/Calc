@@ -2,8 +2,14 @@
 // aux, sky precompute + env map, far / near split passes, motion blur, bloom, final grade, present, resize, readPixels,
 // setOverlay) and its API (fork map 2.5). Changed: default shadow cascade ends [60, 400, 2500] m for 8-15 m GA aircraft
 // on a 2 km field (sfo3d [120, 700, 3500]; [inf]); new optional render-item field `groundRef` (ground y under an object,
-// fed to the obj shader's contact AO, reset for every draw). Dropped: nothing.
+// fed to the obj shader's contact AO, reset for every draw); post.ca scales the final pass's edge chromatic aberration
+// (OD4, 2026-11-14), default 0 = off since OD4 iteration 2 (review F8; sfo3d's constant = 1); bloom knee (post.bloomKnee,
+// default BLOOM_KNEE = 4; OD4 iteration 3, docs/phase3_models.md 15.7): the bloom comes from highlights, diffuse surfaces keep
+// their brightness as a gain instead of veiling their dark neighbours (0 = sfo3d's bloom). Dropped: nothing.
 import { gl, Program, FBO, texture, fullscreen } from './gl.js';
+// bloom knee (post.bloomKnee; OD4 iteration 3, docs/phase3_models.md section 15.7): display-referred luminance at which a pixel
+// gives half its bloom; 0 = no knee (sfo3d: every pixel blooms)
+export const BLOOM_KNEE = 4;
 import { m4, v3, clamp } from './math.js';
 import { SKY_PRECOMPUTE_FS, FS_VERT } from './shaders/common.js';
 import { POST_VS, MBLUR_FS, DOWN_FS, UP_FS, FINAL_FS } from './shaders/post.js';
@@ -299,7 +305,7 @@ export class Renderer {
     this._sync('mblur');
     // bloom
     let s = src;
-    for (let i = 0; i < this.down.length; i++) { const f = this.down[i]; f.bind(); this.post.down.use().setAll({ uSrc: s, uTexel: [1 / (i === 0 ? this.W : this.down[i - 1].w), 1 / (i === 0 ? this.H : this.down[i - 1].h)], uFirst: i === 0 ? 1 : 0 }); fullscreen(); s = f.tex[0]; }
+    for (let i = 0; i < this.down.length; i++) { const f = this.down[i]; f.bind(); this.post.down.use().setAll({ uSrc: s, uTexel: [1 / (i === 0 ? this.W : this.down[i - 1].w), 1 / (i === 0 ? this.H : this.down[i - 1].h)], uFirst: i === 0 ? 1 : 0, uKnee: post.bloomKnee ?? BLOOM_KNEE, uExpo: post.exposure }); fullscreen(); s = f.tex[0]; }
     let u = this.down[this.down.length - 1].tex[0];
     for (let i = this.down.length - 2; i >= 0; i--) { const f = this.up[i]; f.bind(); this.post.up.use().setAll({ uSrc: u, uBase: this.down[i].tex[0], uTexel: [1 / this.down[i + 1].w, 1 / this.down[i + 1].h], uMix: 1.0 }); fullscreen(); u = f.tex[0]; }
     this._sync('bloom');
@@ -307,7 +313,7 @@ export class Renderer {
     this.final.bind();
     this.post.final.use().setAll({
       uColor: src, uBloom: u, uOverlay: this.overlayTex, uExposure: post.exposure, uBloomMix: post.bloom ?? 0.012, uTime: t,
-      uVignette: post.vignette ?? 0.25, uGrain: post.grain ?? 0.012, uLift: post.lift || [0, 0, 0], uGain: post.gain || [1, 1, 1], uSat: post.sat ?? 1.0, uFade: post.fade ?? 1.0, uRes: [this.W, this.H],
+      uVignette: post.vignette ?? 0.25, uGrain: post.grain ?? 0.012, uLift: post.lift || [0, 0, 0], uGain: post.gain || [1, 1, 1], uSat: post.sat ?? 1.0, uFade: post.fade ?? 1.0, uRes: [this.W, this.H], uCA: post.ca ?? 0.0, uKnee: post.bloomKnee ?? BLOOM_KNEE, uBloomLevels: this.down.length,
     });
     fullscreen();
     this._sync('final');

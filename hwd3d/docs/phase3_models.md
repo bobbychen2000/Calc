@@ -1,15 +1,16 @@
 # Phase 3 (M2) — detailed-model runtime and the PC-12
 
-Status 2026-11-14, after **review fix round 3, iteration 3** (section 14; earlier rounds: sections 10–13). Package M2 of
-Phase 3a: the glTF runtime for the hwd3d renderer (parser, kinematics, a drawable with the GaAircraft interface, a registry),
-the PC-12 built from `pc12/`'s own builders, a dev viewer with headless stills, and Node tests. The SF50 (package M1,
-`tools/models/sf50/**`, `docs/phase3_sf50.md`) uses the same conventions. **Every test of this page is of SF50 build sha256
-49242e41… (7,051,212 B; fix round 3, `docs/phase3_sf50.md`) and of the fix-round-3-iteration-3 PC-12 build (sha256
-957b3c4e…, 6,255,744 B: pc12's own builders with the override set 'fr3', section 4)**; each image's caption in
-`docs/phase3/SOURCES.json` names the model hash it shows (stills of earlier builds are marked superseded there), and
-`tools/models/test_models.mjs` fails when a caption that claims the current model names another hash, or when
-`js/aircraft/models/SOURCES.json` disagrees with the files (the first round presented a superseded SF50 build, 1806b9ea…,
-as the tested one). Nothing here is wired into `js/live/**`: that is Phase 3b (exact diff in section 3).
+Status 2026-11-14, after **OD4** (section 15: the owner asked for the original pc12 model at the pc12 viewer's fidelity;
+earlier: review fix round 3 iteration 3, section 14, and sections 10–13). Package M2 of Phase 3a: the glTF runtime for the
+hwd3d renderer (parser, kinematics, a drawable with the GaAircraft interface, a registry), the PC-12, a dev viewer with
+headless stills, and Node tests. The SF50 (package M1, `tools/models/sf50/**`, `docs/phase3_sf50.md`) uses the same
+conventions. **Current models: SF50 build sha256 49242e41… (7,051,212 B; fix round 3, `docs/phase3_sf50.md`) and the
+PC-12 = the original `pc12/out/pc12.glb` @ f097de2, unchanged (sha256 87731cce…, 6,215,508 B; OD4, section 15)**; the
+hwd3d-side variants fr2 / fr3 (sections 4, 10–14) are retired. Each image's caption in `docs/phase3/SOURCES.json` names
+the model hash it shows (stills of earlier builds are marked superseded there), and `tools/models/test_models.mjs` fails
+when a caption that claims the current model names another hash, or when `js/aircraft/models/SOURCES.json` disagrees with
+the files (the first round presented a superseded SF50 build, 1806b9ea…, as the tested one). Nothing here is wired into
+`js/live/**`: that is Phase 3b (exact diff in section 3).
 
 ## 1. Files (all new, M2)
 
@@ -19,13 +20,15 @@ as the tested one). Nothing here is wired into `js/live/**`: that is Phase 3b (e
 | `js/aircraft/kinematics.js` | pivots → animation (Node-pure): gear + braces + doors, Fowler flaps, ailerons + tabs, elevators, rudder, ruddervators, stabiliser trim, propeller spin + blade pitch |
 | `js/aircraft/detailed.js` | `DetailedAircraft` (GaAircraft interface + `setFlaps`, `setControls`), own programs `acobj` / `acglass` |
 | `js/aircraft/models.js` | registry ICAO type → `{url, meta, groundGl, lightAnchors, frame}` (PC12, SF50), `MODEL_LOAD_OPTS`, `loadModel`, `createAircraft` (placeholder fallback), `withModelFrame` (traffic frame of a detailed type) |
-| `js/aircraft/models/pc12.glb` | build of pc12's unchanged builders with the override set `fr3` (fix round 3 iteration 3: sha256 957b3c4e…; iteration 2: 6e349329…; fix round 3: c46fe4fb…; fix round 2, set `fr2`: 9ccfd9a5…); until fix round 1 an unchanged copy of `pc12/out/pc12.glb` @ f097de2 (87731cce…) |
-| `tools/models/pc12/build_pc12_variant.py` | (fix round 2) runs pc12's builders (python3 -B, nothing written into pc12/) with a documented override set, writes `out/pc12_<set>/` (gitignored) with the pc12 commit, a dirty flag and the sha256 of every pc12 source + of itself; `--set=none` reproduces `pc12/out/pc12.glb` bit for bit (checked: 87731cce…) |
-| `js/aircraft/models/pc12_meta.json` | subset of the build's meta (BOM, checks, wing, stats; since fix round 3 `out/pc12_fr3/pc12_meta.json`) + provenance (incl. `_provenance.variant`: overrides, builder and pc12-source hashes) + the frame measured with the runtime's own options |
+| `js/aircraft/models/pc12.glb` | **since OD4 (2026-11-14) again the unchanged copy of `pc12/out/pc12.glb` @ f097de2 (87731cce…)**, as until fix round 1; in between (retired) builds of pc12's unchanged builders with the override sets `fr2` / `fr3` (fix round 3 iteration 3: 957b3c4e…; iteration 2: 6e349329…; fix round 3: c46fe4fb…; fix round 2: 9ccfd9a5…) |
+| `tools/models/pc12/build_pc12_variant.py` | (fix round 2; **its override sets retired by OD4**, kept for the record and for `--set=none`, which reproduces the current model bit for bit) runs pc12's builders (python3 -B, nothing written into pc12/) with a documented override set, writes `out/pc12_<set>/` (gitignored) with the pc12 commit, a dirty flag and the sha256 of every pc12 source + of itself; `--set=none` reproduces `pc12/out/pc12.glb` bit for bit (checked: 87731cce…) |
+| `js/aircraft/models/pc12_meta.json` | subset of `pc12/out/pc12_meta.json` (BOM, checks, wing, stats; OD4) + provenance (`_provenance.source` / `glb_sha256` name `pc12/out/pc12.glb`; `_provenance.reproduced`: the `--set=none` rebuild, identical) + the frame measured with the runtime's own options |
 | `js/aircraft/models/SOURCES.json` | provenance of every model file (pc12 from the import; SF50 from its builder's `_provenance`, hash re-computed; refreshed after every SF50 build with `--sources-only`; checked by the test) |
 | `tools/models/pc12/import_pc12.mjs` | the copy / subset / provenance step (refuses an uncommitted `pc12/out`); `--variant=out/pc12_fr3` (since fix round 2) imports a variant build and refuses it if its recorded pc12 sources were dirty or differ from the files on disk, or the builder changed; `--sources-only` refreshes the other models' SOURCES entries (now with the SF50 builder state and source-tree hash) |
 | `tools/models/test_models.mjs` | Node tests (section 6) |
-| `dev/model.html`, `dev/model.js` | viewer: one model, HWD world (or neutral pad), URL parameters, orbit / pinch, sliders |
+| `dev/model.html`, `dev/model.js` | viewer: one model, HWD world (or neutral pad), URL parameters, orbit / pinch, sliders; OD4: `look=studio`, the app's post grade |
+| `dev/studio.js` | (OD4) `look=studio`: the pc12 reference viewer's lighting (RoomEnvironment env map + SH irradiance, sun, hemisphere, exposure, backdrop) on the hwd3d renderer, for 1:1 comparisons (section 15) |
+| `tools/models/pc12/look_compare.py` | (OD4) side-by-sides reference \| hwd3d and same-pixel colour read-backs (section 15) |
 | `dev/model_shot.mjs` | headless 1920×1080 stills (JPEG ≤ 600 kB), viewer screenshots; writes each image's caption (pose, time, model sha256, OSM / NAIP notice) into `docs/phase3/SOURCES.json` |
 | `docs/phase3/pc12_*.jpg`, `docs/phase3/viewer_*.jpg` | renders (section 7; the SF50 stills from the hwd3d renderer are `viewer_sf50_*.jpg`, since `sf50_*` belongs to M1) |
 | `docs/phase3/SOURCES.json` | (fix round 1) caption + licence notice + model hash of **every** image in `docs/phase3`; written by `dev/model_shot.mjs` (pc12_*, viewer_*), `tools/models/sf50/render_checks.py` (sf50_*), and once by hand for the render-check package's `render_*` |
@@ -33,8 +36,9 @@ as the tested one). Nothing here is wired into `js/live/**`: that is Phase 3b (e
 Run:
 ```bash
 python3 -B tools/models/pc12/build_pc12_variant.py --set=fr3   # 2.5 s -> out/pc12_fr3/ (gitignored); bit-identical rebuilds
-node tools/models/pc12/import_pc12.mjs --variant=out/pc12_fr3     # the current PC-12 (fix round 3 iteration 3, 957b3c4e…)
-node tools/models/pc12/import_pc12.mjs                  # plain pc12/out copy (committed state only; before fix round 2)
+node tools/models/pc12/import_pc12.mjs                  # the CURRENT PC-12 (OD4): plain pc12/out copy (committed state only), 87731cce…
+python3 -B tools/models/pc12/build_pc12_variant.py --set=none   # optional: proves pc12's builders reproduce it (the import records it)
+node tools/models/pc12/import_pc12.mjs --variant=out/pc12_fr3     # retired (fix round 3 iteration 3, 957b3c4e…)
 node tools/models/pc12/import_pc12.mjs --sources-only   # after EVERY SF50 rebuild (SOURCES.json hashes)
 node tools/models/test_models.mjs --json=out/test_models.json
 node dev/model_shot.mjs --model=PC12 --out=docs/phase3 --prefix=pc12 [--set=standard] [--jobs=jobs.json] [--t=<ISO>]
@@ -149,6 +153,10 @@ Sign convention of every surface: + = trailing edge down (toward the surface's l
 viewer uses 0.8 s + 4 s].
 
 ### detailed.js — `DetailedAircraft`
+**OD4 (2026-11-14):** the `acobj` / `acglass` shading described below (clear-coat lobe, interior ambient × 0.4, glass
+tint lit at 0.15) was replaced by the glTF metallic-roughness BRDF, hemisphere view factors with the pavement ground,
+the cabin lit through the glazing and glazing as a thin sheet (section 15.3); items carry `uCabinT` / `uCabin` /
+`uEmissiveBoost` on every draw; `SYNC_KEYS` includes `groundRef`.
 Same public interface as `GaAircraft` (`js/aircraft/placeholder.js`): constructor `(T, {model, R, id, colour, lodDist,
 shadowDist, propBlur})`; fields `pos, fwd, pitch, roll, gear (1 = down), rotor (rad/s), rotorAng, visible, selected,
 alpha, lightsOn, T, ready, lodDist, shadowDist, model, prevModel`; methods `items(camPos)`, `lightSprites(t)`, `step(dt)`,
@@ -251,6 +259,10 @@ separates the drawn body (nose / tail / gear contacts from `xMain`, `L`, `track`
 `xMain − ant` of the model.
 
 ## 4. The PC-12 import
+**OD4 (2026-11-14): the current PC-12 is again `pc12/out/pc12.glb` @ f097de2, unchanged (87731cce…; section 15).** The
+override sets described below (fr2, fr3) are retired; the text is kept as the record of what they changed and why (their
+measured deviations of the original from the Pilatus drawing are now the KNOWN items of `tools/models/test_models.mjs`).
+
 **Until fix round 1** `pc12/out/pc12.glb` @ **f097de2** (2026-11-08) was copied unchanged. **Since fix round 2** the PC-12 is
 a build of **pc12's own, unchanged builders** (pc12/model, pc12/cad @ HEAD; `git status --porcelain pc12` empty) run by
 `tools/models/pc12/build_pc12_variant.py` with a documented override set (module constants and a few builder functions
@@ -380,9 +392,14 @@ module fails, a 300-m concrete pad and the same sky are used (`world=0` forces i
 `rwy28L` = 300 m past the 28L threshold on the centreline, runway heading. Presets are framed for the PC-12 and scaled by
 the model's length for other types (a custom `eye` / `tgt` is not). `window.HWDM.set({...})` re-poses without a reload;
 `HWDM.itemProgs()` lists the draw items. Interaction: drag = orbit, wheel / pinch = zoom, preset buttons, sliders for gear
-/ flaps / rpm / roll / pitch / yaw, "cycle gear" (6-s ramp like traffic.js).
+/ flaps / rpm / roll / pitch / yaw, "cycle gear" (6-s ramp like traffic.js). OD4: `look=studio` (`dev/studio.js`) draws
+the aircraft under the pc12 reference viewer's lighting instead of the world (section 15.2); the post grade is the app's
+(sat 1.05, grain 0); `dev/model_shot.mjs --format=png` writes lossless stills and `--look=studio` passes the look.
 
 ## 6. Tests (`node tools/models/test_models.mjs`), results 2026-11-14 after fix round 3 iteration 3
+
+**OD4 (2026-11-14; PC-12 = original 87731cce…, SF50 49242e41…): see section 15.4 for the current result.** The table
+below is of the retired fr3 build.
 
 **Fix round 3 iteration 3 (current models: PC-12 957b3c4e…, override set fr3; SF50 49242e41…, `docs/phase3_sf50.md`).**
 Result: **85 PASS, 1 KNOWN** (the retracted trailing-link arm, 58 mm, pc12 gear geometry; limit 70), **0 FAIL**, 4 INFO,
@@ -468,6 +485,9 @@ skin point within ±0.6 m fore-aft on the same butt line (±5 cm); this bridges 
 conservative (low).
 
 ## 7. Renders (`docs/phase3/`, 1920×1080 JPEG, SwiftShader, HWD world, 2026-11-13 12:30 PST unless noted)
+
+**OD4 (2026-11-14):** the current PC-12 and SF50 stills and the comparison with the pc12 reference viewer are in section
+15.5; the paragraphs below describe earlier builds.
 
 **Fix round 3 iteration 3 (PC-12 957b3c4e…, 2026-11-14):** re-shot `pc12_belly_low`, `pc12_gear_closeup`,
 `pc12_nose_housing`, `pc12_gearup_housing` and `pc12_cabin_door` with the iteration-2 cameras, plus the new
@@ -555,6 +575,30 @@ per 1080p still.
 
 ## 8. Renderer / shared-file changes wanted (Phase 3b or the file owners)
 
+**Made in OD4 (2026-11-14), the first renderer-file change of this package (more in OD4 iteration 3, below):** `js/shaders/post.js` FINAL_FS takes
+`uniform float uCA` (chromatic-aberration strength) and `js/renderer.js` sets it from `post.ca`; `dev/studio.js` passes 0.
+**OD4 iteration 2 (review F8): the default is now 0** (`post.ca ?? 0.0`; it was `?? 1.0`, sfo3d's constant): at a fifth to
+half a pixel the effect was invisible except as 1-px purple / red fringes on high-contrast aircraft edges (17-41 such pixels
+on the aircraft in each world still, e.g. (115, 77, 103) between white and navy at the front34 wing tip) and on 1-px dark
+seams. The app (`js/live/app.js`, not this package's) never set `post.ca`, so it, the video pipeline and the dev viewers
+all render without it now; a caller can still pass `ca: 1`. Everything else in the airport world renders as before
+(section 15.6: livetest before / after). The aircraft shading changes of OD4 live in `js/aircraft/detailed.js` (aircraft
+programs only; section 15).
+
+**Made in OD4 iteration 3 (2026-11-14, section 15.7):**
+- **Bloom knee** (review F1 / F3): `js/shaders/post.js` DOWN_FS weights each first-pass tap by w = v² / (v² + K²) of its
+  display-referred luminance (v = lum × `post.exposure`); FINAL_FS multiplies the frame by 1 + `post.bloom` × levels × (1 − w)
+  / (1 + 0.02 lum) before adding the bloom, so a uniform area keeps its brightness while dark details lose the 7.2 % veil
+  of their bright surroundings that sfo3d's un-thresholded six-level bloom laid on them. `js/renderer.js`: `BLOOM_KNEE = 4`
+  (exported), `uKnee: post.bloomKnee ?? BLOOM_KNEE`, `uExpo`, `uBloomLevels: this.down.length`. `post.bloomKnee: 0` restores
+  sfo3d's bloom. Every caller (app, video pipeline, dev viewers) takes the default; `js/live/app.js` is not changed.
+  World check (knee 0 vs 4, same frames): median pixel change 0, 5th–95th percentile within ±1 sRGB level, night and dusk
+  within ±1 / −2 at the 1st percentile; lights bloom as before.
+- **Aircraft-light pull** (review F7): `js/scene.js` put() packs `s.pull` into iData.y; `js/shaders/sprites.js` pulls a
+  flagged sprite toward the camera by max(3 m, its drawn radius), at most half the distance, and scales it by
+  (d − pull) / d so its angular size is kept; `js/aircraft/detailed.js lightSprites` flags every sprite of a detailed
+  aircraft. Unflagged sprites (airfield lights, placeholders) keep the sfo3d pull min(2 m, 5 % of the distance).
+
 None is needed for the models to render: the aircraft programs live in `js/aircraft/detailed.js`. Wanted:
 
 1. **`scene.js` PRI**: add `acobj: 0` (aircraft first for early-z, like the old `aircraft` entry).
@@ -567,7 +611,11 @@ None is needed for the models to render: the aircraft programs live in `js/aircr
    not proposed, the disc covers it.
 3. **Lit light lenses at night**: the lens geometry stays unlit; the glow comes from the `aircraft_lights.js` sprites.
 4. **`js/env/aircraft_lights.js`**: a native `strobeTail` (and optional `iceLight`) kind, so `detailed.js` need not call
-   `aircraftSprites` twice for the SF50's tail strobe.
+   `aircraftSprites` twice for the SF50's tail strobe. **And (OD4 iteration 2, review F9) the daylight sprite size of the
+   strobes / beacon**: a flash caught by a still at 30-40 m draws a saturated disc 61-91 pixels across over a tail or a wing
+   tip by daylight (`docs/phase3/viewer_sf50_chase.jpg` before this iteration). Not changed here (the file's owner); the
+   dev viewer now pins the flash phase (`lseed`, section 15.6) so docs stills are reproducible and show no flash unless a
+   job asks for one.
 5. **`docs/ATTRIBUTION.md`** (fix rounds 1 and 2, the licence-notice finding; not edited here: not an M1 / M2 file; the test
    reports it as KNOWN until it is done; **needed before the artifact is published**). Add after the `docs/phase2/*.jpg`
    row (line 89 today):
@@ -598,6 +646,10 @@ None is needed for the models to render: the aircraft programs live in `js/aircr
    no `alpha` keep 1 (`it.alpha ?? 1`).
 
 ## 9. Open items / not verified
+
+- **OD4 (2026-11-14): the first bullet below describes the retired fr3 build.** The original model's measured deviations
+  from drawing 190.10.40.432 / the NGX documents are the KNOWN items of section 15.1 (pc12 owner items); the open look
+  items are in section 15.5.
 
 - **PC-12 fidelity (pc12 owner)**: fix round 3 fitted the fuselage loft, glazing, openings, wing / gear height, fairings,
   dorsal fin, strakes and winglet to drawing 190.10.40.432 in the hwd3d build (section 4; proposed to the pc12 owner). Still
@@ -755,3 +807,337 @@ page belongs to the video pipeline and was not edited here). `python3 -B tools/c
 0 without an entry; D1 clean in every `docs/phase3_*.md`); its scope list needed no change (the new image is under
 `docs/phase3/`, already scanned). Not changed / open: `docs/phase3_video.md` (Phase 3b's write-up, rewritten concurrently,
 not edited here) names the PC-12 of its frozen snapshot (6e349329…) and needs the current hash or a SUPERSEDED line.
+
+## 15. OD4 (2026-11-14): the original pc12 model, at the pc12 viewer's fidelity
+
+**Owner request (2026-11-14, binding; `docs/PLAN.md` OD4):** "The pc12 modeling doesn't look as high fidelity. Do you mind
+using whatever we had in the past." Two parts: (1) hwd3d draws the **original model of our own pc12/ project,
+`pc12/out/pc12.glb`, unchanged**; (2) it must **look** in hwd3d as it does in the pc12 project's own three.js viewer.
+
+### 15.1 The model: `pc12/out/pc12.glb`, unchanged
+- `js/aircraft/models/pc12.glb` = `pc12/out/pc12.glb` @ f097de2, **sha256 87731cce…, bit-identical** (`cmp`), 69 parts,
+  452,280 triangles as built (422,663 drawn: the internal `structure` stays excluded, as the pc12 viewer shows it only in
+  X-ray), 31 draw groups. `node tools/models/pc12/import_pc12.mjs` (default mode, now documented as the current one) copied
+  it and wrote `pc12_meta.json` from `pc12/out/pc12_meta.json` with `_provenance.source` naming `pc12/out/pc12.glb`, its
+  commit and sha256, and `_provenance.reproduced`: `python3 -B tools/models/pc12/build_pc12_variant.py --set=none` (pc12's
+  builders, no override, nothing written into pc12/) gives the same bytes (87731cce…, checked by the import, which refuses
+  a differing `out/pc12_none`). `js/aircraft/models/SOURCES.json` says the same.
+- **Variants retired**: the override sets fr2 / fr3 (re-lofted fuselage, moved windows / doors, dihedral, belly fairing,
+  nose-gear housing, cabin floor; sections 4 and 10–14) are no longer used. `build_pc12_variant.py` and
+  `import_pc12.mjs --variant` stay in the repository for the record. Sections 4 and 10–14 describe the retired builds.
+- `js/aircraft/models.js`: header and frame basis name the original; frame constants re-measured (span 16.281); the
+  registry landing-light anchors (pc12 has no lamp there) moved to **WL 1.000**, 4.6 cm under the original wing's lower
+  surface at BL 3.15 / STA 6.20 (WL 1.047, measured on the GLB; fr3: 1.148 under its raised wing) [inf: position].
+- `tools/models/test_models.mjs`: the checks the variants were built to pass (Pilatus drawing 190.10.40.432 / NGX
+  documents) are kept and now report the original model's documented deviations as **KNOWN**, each bounded by the value
+  measured on the unchanged file (bit-identical, so they cannot drift; any other file fails them) — the KNOWN mechanism
+  now takes several bounds (`limits: {key: limit}`) and the drawing checks report numeric summaries (`n_deviations`,
+  `max_dev_mm`, `worst_rms_mm`, `top_edge_max_mm`, `top_short_mm`, `top_line_dev_deg`): window count (+3 windows: airstair-
+  door and cargo-door windows to port, exit window to starboard), belly fairing vs wing (51.7 mm), the belly fairing's
+  upper half inside the cabin over the floor (125 mm, 3.6 m²), window / door stations and water lines (27 deviations, up
+  to 761 mm), crown / keel −139…−141 mm, aft underside −339 mm, half-breadth +232 mm, body-plan sections rms ≤ 180 mm,
+  dorsal fin (none before STA 10.4, top edge −449 mm), winglet top 254 mm under the drawn chord, wing top line 3.66° vs
+  5.31°, crown / wing / winglet heights −139 / −189…−210 / −277 mm; the retracted trailing-link arm (67 mm, KNOWN since
+  fix round 1). These are pc12 owner items (pc12/CLAUDE.md "Estimated / reconstructed"), not changed here.
+- Docs: `docs/phase3_video.md` carries a "PC-12 parts SUPERSEDED" banner (its clips / snapshot hold fr3 6e349329…);
+  `docs/phase3_sf50.md` names the current PC-12 hash. The five stills that show fr3-only features (`pc12_belly_low`,
+  `pc12_cabin_aisle`, `pc12_cabin_door`, `pc12_gearup_housing`, `pc12_nose_housing`) are marked superseded in
+  `docs/phase3/SOURCES.json` (not re-shot: the original has no nose-gear housing, slot doors or flat floor to show).
+
+### 15.2 How the look was compared
+The reference is `out/pc12_ref_viewer/` (gitignored; made by the previous step from the unchanged GLB with the pc12
+project's own `pc12/web/dev.html` + three.js r160 — the harness that made `pc12/out/n_all.png` — at 11 cameras,
+`cameras.json`; its `viewer_settings.md` records how that viewer lights and shades). hwd3d renders the same cameras with
+`node dev/model_shot.mjs --jobs=out/pc12_look/jobs_ref.json --format=png` (new: `--format=png`, lossless) in two settings:
+- **HWD ramp, noon** (the usual stills: Green Ramp, heading 135, 2026-11-13 12:30 PST, sun az 191° el 33.5°);
+- **`look=studio`** (new, `dev/studio.js`, dev viewer only): the reference viewer's own lighting rebuilt on the hwd3d
+  renderer — three r160 `RoomEnvironment` (black room, six emissive panels of radiance 17–100) rendered into hwd3d's
+  equirect env map, its cosine-weighted irradiance fitted with second-order spherical harmonics (rms 0.037 of the exact
+  integral), the dev.html sun (1.6 from (5, 10, −6)) and hemisphere (0.6, white / 0x8899aa), exposure 1 / 0.6 (three's
+  ACES scaling), a backdrop that tone-maps to (223, 227, 230), no shadows, no fog, no bloom / vignette / grain / chromatic
+  aberration. With the light the same, any difference left is a material / shading difference.
+`python3 -I -B tools/models/pc12/look_compare.py` (new) writes the side-by-sides `out/pc12_look/cmp_<tag>_<cam>.jpg`
+(reference | hwd3d) and reads back the sRGB of every material class at the **same pixels** in both images (the classes are
+found by colour in the reference, whose background is uniform; masks eroded twice): navy cheatline, gold pin-stripe,
+near-black trim / glass / seals, white paint.
+
+### 15.3 Differences seen, root causes, fixes
+Before (original GLB, hwd3d runtime as of fix round 3; `out/pc12_look/before/`, `cmp_before_*`), every image looked at:
+
+| # | seen (hwd3d vs reference) | measured | root cause (hwd3d runtime) | fix |
+|---|---|---|---|---|
+| 1 (revised in 15.6, F2, and 15.7, F1: direct sun × τ) | glass transparent, cabin brightly lit (seats glowing grey-brown behind the windshield and side window), little reflection | seats ~(120, 110, 100) through 20 %-transmission glass | the cabin and flight deck were lit by the full sun (the glazing casts no shadow) and by the sky × 0.4; seen through glass of opacity 0.8 they still read mid-grey | light reaches the cabin only through the glazing: interior surfaces (mat 23; every plain material of the interior parts, `AC_PART_INTERIOR`; the back face of any skin) get sun × τ and sky × τ × 0.35, τ = 1 − glass alpha of the type (`glb.js stats.glazingT`: PC-12 0.196, SF50 0.232) [physics; 0.35 = windows' share of the cabin's view, inf]; an open door's group switches it off (`uCabin`) |
+| 2 | glossy black windshield surround and the cheatline read grey-blue | trim lit side ~(60, 65, 75) | `acobj` added a clear-coat lobe (F0 0.04, roughness 0.05) on top of the base layer's own specular for every `paint_*` / `trim_*` material: the sky was reflected twice; the glb asks for one lobe (glTF metallic-roughness) | `acobj` = the glTF metallic-roughness BRDF as three.js r160 evaluates it: one GGX lobe with Smith-correlated visibility and Schlick Fresnel at the glb's roughness, Lambert diffuse, image-based part with three's DFG approximation and multiple-scattering compensation |
+| 3 | shaded side of the white paint dull blue-grey | white (116, 128, 146) | the obj shader's hemisphere weight `smoothstep(0, 0.55, (1 + N.y) / 2)` gives a vertical surface 98 % sky, 2 % ground; the ground term used albedo 0.16 | sky / ground view factors of a plane, (1 ± N.y) / 2 (three's HemisphereLight rule), and the ground the aircraft stands on: the world's own pavement albedo (0.295, 0.285, 0.258; `js/shaders/ground.js`, NAIP-calibrated) lit by sun (× 0.8, own shadow [inf]) and sky → shade white (128, 131, 135), neutral **on vertical faces** (half ground, half sky); faces turned up take the clear sky's colour (15.6, F4) |
+| 4 (revised in 15.6, F2 / F5, and 15.7, F1: no veil under the direct sun) | grey veil over the glass in sunlight, glass "flat" | glass body ~35 sRGB in sun | the glass tint was shaded as a diffuse layer (sun × 0.15 [inf] + sky) | glazing (`AC_MAT` 24) = thin tinted sheet: specular (env + sun glint, DFG) + transmission (1 − F)(1 − opacity), no diffuse veil; lens covers keep the Lambert term |
+| 5 (default 0 since 15.6, F8) | magenta dashes on thin dark seams near the image edge (studio) | G = 0, R ≈ B ≈ 50 at the cargo-door top seam; HDR value there (0.002, 0.002, 0.003) | the final pass's chromatic aberration shifts R and B by about a fifth of a pixel at the frame edge; on a 1-px dark line on a bright ground R and B sample the bright neighbour | `post.ca` (new, default 1 = unchanged); 0 in studio. Not seen in the HWD-world stills (0 magenta pixels in all of them) |
+| 6 | the selection glow could leak between aircraft | — | `uEmissiveBoost` was set only for a selected aircraft; GL keeps uniform values per program | every `acobj` draw sets it (0 / 0.15), with `uCabinT` / `uCabin` |
+| 7 | dev stills graded differently from the app | — | dev viewer post had sat 1.0, grain 0.006; the app (js/live/app.js) sat 1.05, grain 0 | dev viewer uses the app's values |
+
+Not causes (checked): **colour space** — `baseColorFactor` is linear in the GLB, glb.js keeps it linear, the renderer
+lights in linear, tone-maps once (the same ACES fit as three) and encodes sRGB once (no double conversion: the
+reference's hint does not hold); **parts dropped** — only `structure` (by design), every material of the reference is
+drawn (`trim_black` 1,615 vertices in fus_fwd, `seal` 12,042, `paint_accent` 18,074, `paint_stripe` 3,251); **z-fighting /
+depth** — the livery and the surround are cut into the skins (shared boundary vertices), the seals sit 7.5–9 mm off the
+glass, the depth buffer is 32-bit float, near plane ≤ 0.3 m in the dev viewer: no fighting at any reference camera;
+**normals** — smooth per-vertex normals from the file, unit length (test "parse": 0 non-unit); **MSAA** 4 in both; **the
+dashed gold pin-stripe** is in the model (51 pieces in fus_aft), the reference shows the same dashes.
+
+### 15.4 Result
+Same-pixel read-backs (sRGB 8-bit medians; `out/pc12_look/measure_{before,studio,world}.json`; "white" = the white paint
+just above the cheatline, the same surface; port cameras are in the shade at the HWD noon setting, starboard ones in sun):
+
+| camera (side, light at HWD) | reference navy / white | hwd3d **studio** navy / white | hwd3d HWD before | hwd3d HWD after |
+|---|---|---|---|---|
+| cockpit (port, shade) | (20, 36, 54) / 157 | (24, 40, 60) / 163 | (31, 44, 63) / (124, 134, 146) | (33, 44, 58) / (128, 130, 133) |
+| side (port, shade) | (34, 55, 72) / 164 | (37, 59, 83) / 173 | (32, 48, 74) / (119, 131, 146) | (32, 45, 64) / (128, 131, 135) |
+| tail (port, shade) | (35, 56, 78) / 168 | (41, 64, 89) / 178 | (34, 49, 72) / (117, 130, 147) | (31, 45, 63) / (127, 131, 136) |
+| nose (port, sun on the nose) | (15, 28, 44) / 229 | (13, 25, 40) / 224 | — | (49, 56, 65) / (221, 219, 215) |
+| hwd_front34 (starboard, sun) | (42, 66, 92) / 203 | (45, 69, 96) / 203 | (101, 121, 139) / (225, 222, 218) | (106, 126, 142) / (228, 225, 219) |
+| hwd_side (starboard, sun) | (57, 85, 114) / 207 | (62, 91, 121) / 207 | (108, 130, 146) / (227, 225, 221) | (109, 131, 146) / (229, 226, 221) |
+| gold pin-stripe, cockpit | (115, 106, 49) | (114, 105, 51) | (93, 91, 54) | (100, 91, 46) |
+| windshield surround (trim_black), cockpit | (24, 27, 30) | — | (13, 18, 27) | (8, 13, 20)–(23, 26, 29) |
+
+- **Under the reference's own light (studio) hwd3d now reproduces the reference** within 0–11 levels on every class and
+  camera (navy, gold, white; all 11 cameras in `cmp_studio_*`), with the same glossy black surround and soft-box
+  reflections in the windshield. Remaining studio differences, all expected: the glass is darker (no diffuse veil, the
+  cabin lit through the glazing: the reference viewer lights its cabin as if the skin were transparent — it has no
+  shadows); the reference's grid lines and its `structure` part (seen through its windows) are absent; the soft-box
+  reflections are smaller and crisper (equirect mip chain vs three's PMREM); the port-side navy is up to ~10 levels
+  lighter (second-order irradiance fit of the room).
+- **In the HWD world, shade** (every port camera): the cheatline is navy as in the reference, the trim black, the glass
+  near-black with the cabin faint, the white paint a neutral grey (128–135 instead of the bluish 116–146 before; the
+  reference's studio fill is brighter, 157–229).
+- **In the HWD world, direct sun** (starboard cameras): the cheatline reads a mid steel blue, (104–117, 125–137, 140–152)
+  vs the reference (38–62, 60–90, 84–120). This is the light, not the material (the studio rows prove the material path):
+  the HWD noon sun puts ~6× the shade's light on that side, and the world's exposure (0.45, sfo3d's, kept: lowering it to
+  0.36 / 0.29 was tried on the ramp and made the airport dull, `out/pc12_look/expo/`) maps sunlit white paint to ~230,
+  where the glb's navy factor (0.10, 0.17, 0.27 linear = sRGB (89, 115, 142) at full reflectance, a light slate blue)
+  falls in the mid-tones; the pc12 viewer shows its sunlit side at NoL 0.39 under a key of 1.6 with a fill of similar
+  size, so the same paint stays in ACES's toe (navy). The warm sun (R / B 1.46 at 33.5° elevation) desaturates it further.
+  Changing that would mean a darker world or different paint factors in the glb (pc12 owner); neither is done here.
+
+### 15.5 SF50, renders, tests, open items
+- **SF50** (same programs, no model change; 49242e41…): every `viewer_sf50_*` still re-rendered (the 13 of the set, with
+  their recorded poses and times; `lights_dusk` at its 2026-11-14T01:05Z). Its accent colour is a dark linear navy
+  (0.025, 0.064, 0.147) and stays navy in the same noon sun next to sunlit white — the paint factor, not the renderer,
+  decides the PC-12 cheatline's tone in direct sun. Its `reg_panel` material (same white as the paint but id 0) and its
+  paint now take the same single-lobe BRDF (before: paint with the extra clear coat, the panel without: a visible step).
+  Glazing τ 0.232, interior parts `cabin_lining` / `cabin_seats` / `flight_deck` lit through it.
+- **Renders** (`docs/phase3/`, 1920×1080 JPEG, HWD world, 2026-11-13 12:30 PST unless noted): `pc12_{front34, side,
+  rear34, chase, cockpit, port, rear, flaps40, gear_closeup}` and all 13 `viewer_sf50_*` re-rendered
+  (`node dev/model_shot.mjs --jobs=out/pc12_look/jobs_docs_pc12.json --prefix=pc12`, `…jobs_docs_sf50.json
+  --prefix=viewer_sf50`, `--t=2026-11-14T01:05:00Z` for the dusk still); captions name 87731cce… / 49242e41…. Seen (every
+  image looked at): dark windshield with its black surround and centre post, black-framed cabin windows, near-black glass
+  with the flight deck faint behind it, navy cheatline on the shaded side and a steel-blue one in direct sun, dashed gold
+  pin-stripe, neutral grey shade on the white paint, propeller blades with a sun sheen, the SF50's navy accent, dark
+  glazing and fan; the dusk still with lit lenses / sprites over a dark aircraft. Still superseded (not in the requested
+  set, show older builds): `pc12_fade`, `pc12_gear_half`, `pc12_lights_dusk`, `viewer_desktop`, `viewer_phone`, and the five
+  fr3-only stills (15.1).
+- **Comparison set** (`out/pc12_look/`, gitignored): `before/`, `studio/`, `world/` — the 11 reference cameras as PNG;
+  `cmp_{before,studio,world}_<cam>.jpg`; `measure_*.json`; `crops/` (windshield, cockpit, door seam);
+  `expo/` (the exposure trial); `livetest/` (the app snapshot below).
+- **App snapshot**: `RELAY=none PORT=8756 OUT=out/pc12_look/livetest PREFIX=od4 node livetest.mjs jobs/views.mjs`
+  (desktop): ready in 3.0 s, 0 console errors / warnings, D1 type-only (27 masked), every view and sheet shot and looked
+  at — the airport renders as before (the only renderer-file change is `uCA`, default 1 = the old constant; the app still
+  draws placeholders, Phase 3b wiring is in progress elsewhere).
+- **Tests**: `node tools/models/test_models.mjs` → **72 PASS, 13 KNOWN, 0 FAIL**, 4 INFO (local reference data present).
+  New since the fr3 runs: the 12 PC-12 drawing / NGX checks report KNOWN on the original (15.1); `SYNC_KEYS` gained
+  `groundRef`, which `js/live/aircraft.js` (Phase 3b, edited concurrently) now sets on every drawable — the placeholder
+  ignores it, the sync check needed it. `python3 -I -B tools/check_airport.py` → **RESULT: ALL HARD CHECKS PASSED**.
+- **Performance**: per-shot render time in SwiftShader unchanged (12–22 s for three frames at 1920×1080, as before);
+  `acobj` now evaluates one GGX lobe and one env lookup per fragment (two of each with the old clear coat). Laptop GPU
+  frame time not measured (no GPU here).
+
+Open / not verified:
+- **[Superseded by 15.6: the band takes an appearance-fitted navy in the HWD world (`paintFit`).]** The **sunlit cheatline** stays lighter than the reference (15.4) — a property of the glb's paint factor under outdoor
+  sun at the world's exposure; options for the owner: keep (physically consistent), a darker navy factor in `pc12/`
+  (pc12 owner), or a darker world exposure (rejected here: dull airport).
+- **[Superseded by 15.6: no τ on the light path any more; sky × 0.35, 1 with a door open.]** The **cabin rule** constants (sky × τ × 0.35, sun × τ) and the ground's 0.8 sun factor are inferred; the reference
+  viewer lights its cabin unshadowed, so hwd3d's cabin is darker than the reference's in every setting.
+- **Studio mode** approximates three's PMREM with hwd3d's box-filtered equirect mips (crisper soft-box reflections; the
+  overhead panel near the pole is spread differently) and the room's irradiance with second-order harmonics (port-side
+  navy up to ~10 levels lighter). The reference viewer's grid and its `structure` part are not drawn.
+- **Depth at airport range**: no z-fighting at the 11 reference cameras (near ≤ 0.3 m in the dev viewer); at the app's
+  overview (near up to 5 m, aircraft ~1.5 km away) the 7.5–9 mm seal offsets are below the depth resolution, but the
+  seals are sub-pixel there; not checked in the app (it draws placeholders until Phase 3b).
+- **[Superseded by 15.6: the renderer's default is 0 now.]** **`post.ca`** stays 1 in the app (js/live/app.js is not this package's); proposed 0 (section 8).
+
+### 15.6 OD4 iteration 2 (review of 2026-11-14, findings F1–F9): dispositions
+The review (its renders `out/pc12_look_rc1/`, gitignored; reference shots of `pc12/web/dev.html` = the `n_all.png` harness
+and of the production stage viewer) found the owner's main complaint still visible: a pale steel-blue cheatline on every
+sunlit side, and cabin windows that read as black holes. Every number below is a same-pixel median (sRGB 8-bit) at the 11
+reference cameras, classes found by colour in the dev.html shot (masks eroded by two pixels), read in the review's renders (= the
+state before this iteration, "rc1") and in this iteration's (`out/pc12_look_it2/final_world`, `final_studio`,
+`final_studio_glb`; `measure_final.json`; script `out/pc12_look_it2/tools/measure_fin.py`). World = HWD Green Ramp,
+2026-11-13 12:30 PST (sun az 191°, el 33.6°); starboard cameras (`hwd_*`) in sun, port cameras in shade.
+
+| # | finding | root cause | fix (file) | result |
+|---|---|---|---|---|
+| F1 major (factor refitted in 15.7, F2: (0.035, 0.086, 0.181)) | navy cheatline reads pale steel blue in sun | the glb's paint_accent (0.10, 0.17, 0.27), glTF linear, is a light slate blue as a reflectance; the pc12 viewer keeps it in the toe of ACES (studio key at NoL ~0.4, no sun), the HWD noon sun puts it in the mid-tones (white paint ~230 in both) | `js/aircraft/models.js` `paintFit: { paint_accent: [0.017, 0.059, 0.137] }` (PAINT_FIT header): the drawn LINEAR colour of the band, replaced at load; glb bytes unchanged; `MODEL_LOAD_OPTS(type, { palette: false })` / dev `palette=glb` draw the file's factor [inf: appearance fit] | sunlit band (5 cameras) rc1 (104–117, 125–137, 140–152) → **(42–61, 73–84, 99–111)**, reference (38–62, 60–90, 84–120); shaded band rc1 (31–36, 44–47, 58–64) → (14–21, 24–28, 37–41), reference (20–35, 36–56, 54–79) |
+| F2 major (revised in 15.7, F1: direct sun × τ, no veil under the sun, bloom knee) | cabin windows black holes, no seal contrast, interior gone; ~10× darker than the reference under its own light | (a) the cabin rule multiplied the light coming IN by τ = 1 − glass alpha (0.196) and the view path multiplied it again: 1.4–4 % effective; the glb's opacity is the pc12 viewer's pane coverage, not a measured transmission; (b) the glazing had no diffuse term (three.js shades the glb's BLEND glass with a Lambert layer of the tint at 'opacity' coverage) | `js/aircraft/detailed.js`: interior surfaces take the sun through the openings (shadow map) with no glass factor and the sky × `uCabinAmb` (0.35, `CABIN_SKY_SHARE` [inf]); `GLASS_FS` glazing gets the pane's diffuse return (tint × opacity, as three.js) | cockpit camera, world rc1 → it2 (dev): door window (11, 18, 24) → **(22, 30, 38)** (45, 48, 50); cabin window 2 (15, 21, 29) → (27, 34, 41) (35, 38, 41); side window (4, 9, 17) → (14, 21, 30) (23, 27, 31); door seal (16, 20, 25) now darker than its glass, as in dev (seal 32 < glass 47). Studio (the reference's own light) rc1 → it2: door window (5, 5, 4) → **(52, 51, 51)**, cabin window (1, 1, 0) → (29, 31, 33), windshield (31, 34, 38) → (42, 49, 54) (39, 48, 55), seal (24, 24, 26) < glass. Seats, panel and lining visible through every pane |
+| F3 minor | sunlit white in the ACES shoulder, warm cast | the world's exposure 0.45 (sfo3d's) and the sun's colour at 33.6° elevation (renderer sun CCT 5,276 K, sky model) | **not changed** (owner decision: a lower exposure or a softer shoulder changes the whole world; a darker exposure was tried in OD4 and rejected as a dull airport). The navy no longer depends on it (F1) | white unchanged: hwd_side p5 / p50 / p95 220 / 227 / 232 (dev 198 / 217 / 236) |
+| F4 minor | shaded faces turned up read blue | physical under a clear sky: such a face sees mostly sky. Checked: the renderer's sky radiance (cosine-weighted upper hemisphere, `R.light.skyUp`) is (0.326, 0.489, 0.809) = CCT 14,500 K; the shade light on a face with N.y 0.7 is ~9,900 K, on a vertical face ~6,900 K (half pavement 5,700 K, half sky). Measured clear-sky skylight spans ~0–263 mired, i.e. CCT ≳ 3,800 K to infinity (Peyvandi, Hernández-Andrés et al., JOSA A 33, 1049 (2016), as summarised by a web search of the paper, not read in full); 14,500 K = 69 mired lies inside | none; 15.3 row 3 now says "neutral on vertical faces" | upper fuselage in shade unchanged (106, 121, 143) |
+| F5 minor | glass flat dark in the world, no glossy highlights | the world's sky has no bright panels to reflect (the reference's soft-box blobs are its RoomEnvironment); with the glazing's diffuse term missing, the panes also lacked the reference's grey tint | the F2 fix (pane diffuse return, cabin light) | windshield in sun (hwd_front34) (26, 26, 27) → **(74, 75, 75)** (dev (57, 65, 73)); in shade (cockpit) (23, 22, 21) → (33, 35, 36) (dev (39, 48, 55)); sky / ground gradients in the side panes as before; a sun glint only at aligned angles (physics) |
+| F6 minor | cabin black through an open door | the rule was off only for the door's own group | `detailed.js`: while any cabin door is open (> 0.02), `uCabinAmb` = 1 on every group (sky unoccluded, sun through the shadow map, as the pc12 viewer lights its cabin) | `pose_doors_open` (`out/pc12_look_it2/final_pose/`, `cmp/pose_doors_gearup.jpg`): seat, lining and floor visible through the airstair opening. Seen: through the open cargo door the inner side of the starboard skin shows the exterior livery (pc12's skin is one double-sided surface; the pc12 viewer shows the same) - a pc12 model item, not changed |
+| F7 minor | a model_shot job inherited doors opened by an earlier job | `setControls` merges `doors`; BASE `doors: null` passed `{}` | `dev/model.js poseAircraft`: every door pivot is closed first, then the named ones applied; stale keys zeroed | after the `doors_open` job, `flaps40_cove`, `gearup_bay`, `nacelle_intake` render with every door closed (rc1: both open) |
+| F8 minor | 1-px purple / red fringes (chromatic aberration) in world and app | `post.ca` defaulted to 1 (sfo3d's constant) and the app never sets it | `js/renderer.js` default `post.ca ?? 0.0` (section 8; `js/live/app.js` not touched) | fringe pixels on the aircraft (R − G > 25 and B − G > 15) rc1 9–41 per still → **0–1**. Airport background outside the aircraft (mask grown by three pixels): 78–85 % of pixels identical, mean change 0.18–0.30 levels, all of it on edges near the frame border (the removed radial shift; `bgdiff` checked on hwd_tail) |
+| F9 minor | SF50 chase still caught a strobe / beacon flash (discs 61–91 pixels across) | `DetailedAircraft.seed = Math.random()`: the flash phase differed per page load | `dev/model.js` `lseed` (default 0.5: beacon and strobes between flashes in the final frame of `shot()`, t = 1.033–1.066 s); `dev/model_shot.mjs` BASE `lseed: null`. The daylight sprite size is `js/env/aircraft_lights.js`'s (section 8 item 4, not changed) | `viewer_sf50_chase.jpg`: saturated discs of 20 pixels or more before (82×81, 62×64, 55×56) → none; `viewer_sf50_gear_half` likewise. `viewer_sf50_lights_dusk` pins `lseed` 0.378 (tip + tail strobes flash in the final frame) so the dusk still shows them reproducibly |
+
+**F1 in detail.** Three options were rendered at the 11 cameras (plus four candidates at four cameras,
+`out/pc12_look_it2/navy_*`):
+- the glb factor as written (rc1): shade right, sun steel blue (above);
+- the review's option b, the factor read as sRGB-encoded (decoded (0.010, 0.025, 0.059)): sun a grey navy (36–55, 46–61,
+  64–73), shade near black and neutral (13–20, 16–22, 23–27), and under the reference's own light (studio) black (0–4,
+  2–17, 8–39) where the reference shows (15–62, 28–90, 44–120) - the pc12 author tuned the palette in that viewer, so the
+  factor is not an sRGB-typed value; rejected;
+- **the fitted factor (taken)**: per channel, the linear value whose sunlit band in the world has the reference's median
+  at the same pixels (cameras hwd_front34 and hwd_side; renders at factors 0.010 / 0.020 / 0.025 / 0.030 / 0.10 for R,
+  0.025 / 0.040 / 0.060 / 0.064 / 0.17 for G, 0.059 / 0.090 / 0.130 / 0.147 / 0.27 for B, interpolated in log factor):
+  (0.017, 0.059, 0.137) - sRGB #23466A at full reflectance, next to this repository's SF50 accent (0.025, 0.064, 0.147).
+  Checked on all five sunlit cameras: (50, 74, 100), (61, 84, 111), (47, 76, 106), (50, 74, 99), (42, 73, 104) against the
+  reference (42, 66, 92), (60, 89, 118), (57, 85, 114), (38, 60, 84), (62, 90, 120). In shade the band is darker than the
+  reference's, (14–21, 24–28, 37–41) vs (20–35, 36–56, 54–79): the world's shade is darker overall (white paint in shade
+  126–129 vs the reference's 173–226, which has a studio fill and no shadow); it stays blue (B − R 20–26), not black.
+- Cost: under the pc12 viewer's own light (`look=studio`) the fitted band is darker than the reference (1–4, 7–40, 21–77);
+  `look=studio&palette=glb` still reproduces the reference band exactly as in 15.4 (navy (24, 40, 60) / (37, 59, 83) / …
+  at the cockpit / side cameras), so the material path is unchanged and the difference is the documented colour only.
+- The gold pin-stripe (0.72, 0.60, 0.18) and the white / belly paints keep the glb's factors: gold in sun (hwd_nose)
+  (111, 100, 54) vs reference (109, 100, 46), in shade (cockpit) (99, 91, 46) vs (115, 106, 49).
+- Owner decision: this is a hwd3d-side colour for the pc12 band, chosen by appearance; the pc12 owner may retune pc12's
+  palette instead (then `paintFit` goes), or the owner may prefer the file's factor (`palette: false`).
+
+**Renderer / shared files changed** (all documented above and in section 8): `js/renderer.js` (`post.ca` default 0) and
+`js/shaders/post.js` (comment). Not changed: `js/gl.js`, `js/scene.js`, the world shaders, `js/live/**`, `js/env/**`.
+Aircraft runtime: `js/aircraft/detailed.js` (cabin rule, glazing diffuse, door rule, `CABIN_SKY_SHARE`), `js/aircraft/
+models.js` (`paintFit`, `paletteLook`, `MODEL_LOAD_OPTS(type, {palette})`, `loadModel(..., {palette})`), `js/aircraft/glb.js`
+(materials keep `baseGlb` when the look hook replaced the factor). Dev: `dev/model.js` (`palette=glb`, `paint=` (a dev-only
+linear-colour experiment), `lseed`, door reset), `dev/model_shot.mjs` (`--palette`, `--paint`, BASE `lseed`).
+
+**Renders** (every image looked at): `docs/phase3/pc12_{front34, side, rear34, chase, cockpit, port, rear, flaps40,
+gear_closeup}.jpg` and all 13 `viewer_sf50_*.jpg` re-rendered (jobs `out/pc12_look_it2/jobs_docs_*.json`; dusk at
+2026-11-14T01:05Z); before / after sheets `out/pc12_look_it2/cmp/docs_pc12_{1,2}.jpg`, `docs_sf50_{1,2}.jpg`. Seen: a navy
+band on the sunlit sides and a dark navy one in shade, the gold pin-stripe, tinted panes with the seats, panel and cabin
+lining visible behind them, dark seal rings around every cabin window, the windshield's black surround; no strobe discs in
+the daylight stills; the SF50's cabin now faintly visible through its windows, its navy and fan unchanged.
+
+**Tests**: `node tools/models/test_models.mjs` → **77 PASS, 13 KNOWN, 0 FAIL**, 4 INFO (local reference data present). New
+checks: the cabin rule (no glass factor on the light path; 0.35 closed, 1 on every group with a cabin door open; PC12 and
+SF50), the palette (`paintFit` replaces only the named factors, `baseGlb` recorded, `palette: false` = the file), and the
+renderer's chromatic-aberration default.
+
+**App** (`RELAY=none PORT=8778 OUT=out/pc12_look_it2/livetest PREFIX=it2 node livetest.mjs jobs/views.mjs`, desktop):
+ready in 3.8 s, 0 console errors / warnings, every view and sheet shot and looked at; side by side with the review's run
+(`out/pc12_look_it2/cmp/livetest_rc1_it2.jpg`) the airport world renders the same (overview, tower, Green Ramp, West
+Hangars, 28L final; the traffic differs because the replay instant and the concurrently edited traffic engine differ). The
+PC-12 in the app (the review's job, one parked track switched to the PC12 type: `out/pc12_look_it2/app_pc12/`, 0 errors):
+navy band, flight-deck seats visible through the side window, cabin windows still small dark slots at 25 m on a
+1280 × 720 frame (about ten pixels wide; their interior is too small to read there).
+
+**`python3 -I -B tools/check_airport.py`** → **RESULT: ALL HARD CHECKS PASSED** (SOURCES coverage 165 files, 0 without an
+entry; D1 clean in every `docs/phase3_*.md`; D1(d): 0 types named with a dated window). An earlier run during this
+iteration failed on one D1(d) hit in `js/live/traffic.js` (a comment of the concurrent Phase 2 traffic workflow, edited at
+07:28Z); that workflow has since changed it; not touched here.
+
+**Open / not verified (iteration 2)**: the fitted navy is an appearance choice for the HWD world (owner / pc12 owner may
+prefer the file's factor or a retuned palette); the cabin's sky share 0.35 and the pane's diffuse return are inferred
+(they reproduce the reference's dark-grey tinted panes in the studio, (52, 51, 51) vs (45, 48, 50)); in the world the
+panes stay about half as bright as the reference's in shade because the world's shade is darker (white 126–129 vs
+173–226); no soft-box highlights in the world glass (a clear sky has none); sunlit white stays in the ACES shoulder (F3,
+owner); the inside of the pc12 skin shows the exterior livery through an open cargo door (pc12 model); laptop-GPU frame
+time not measured (SwiftShader only; the shaders gained no passes: one Lambert term on the glazing, one uniform less).
+
+
+### 15.7 OD4 iteration 3 (review of 2026-11-14, findings F1–F7): dispositions
+The review (its renders `out/pc12_look_rc2/`, gitignored, = the state after iteration 2, "rc2") found the sunlit glazing a
+regression: flat, milky grey-beige panes in direct sun. Numbers below are same-pixel sRGB medians at the 11 reference cameras
+(classes and boxes from the review's `tools/windows.py`, `measure.py`, `boxes.json`; masks from the dev.html reference
+shot, eroded by two pixels), read in rc2 and in this iteration's renders (`out/pc12_look_it3/final_world`, HWD Green Ramp
+2026-11-13 12:30 PST, sun az 191° el 33.6°: starboard `hwd_*` cameras in sun, port cameras in shade). Experiment renders,
+the scripts that measured them and the side-by-sides are in `out/pc12_look_it3/exp/` and `out/pc12_look_it3/cmp/`.
+
+**The main root cause: the bloom veil (`js/renderer.js`, `js/shaders/post.js`, sfo3d's, unchanged until now).** The bloom
+pyramid has six levels; its first down pass takes every pixel of the frame (no threshold, only a soft compression
+1 / (1 + 0.02 lum)), the up pass adds every level back at weight 1, and the final pass adds the sum × `post.bloom` (0.012).
+A uniform field therefore gains 6 × 1.2 % = 7.2 %, and a small dark detail takes 7.2 % of its blurred surroundings: a
+veiling glare that lifts every dark aircraft detail next to sunlit white paint. Decomposition of the sunlit cabin windows
+at hwd_front34 (iteration-2 code with the cabin sun × τ and no veil under the sun): (56, 56, 58) with the bloom,
+(25, 29, 34) without it; reflection alone (black interior, no veil) (41, 42, 42) with it, (5, 10, 16) without. About 30
+sRGB levels of every sunlit window, trim edge and tyre were bloom. The pc12 reference viewer has no bloom.
+
+| # | finding | root cause | fix (file) | result (rc2 → it3; reference dev / stage) |
+|---|---|---|---|---|
+| F1 major | sunlit glazing milky grey-beige, no tinted-glass contrast | (a) the bloom veil (above); (b) iteration 2 let the direct sun into the cabin with no glass factor, so the light lining (0.86) shone through the panes; (c) the pane's diffuse veil (tint × opacity, a 3.6 % grey card) was lit by the full sun | (a) bloom knee with gain compensation (`js/shaders/post.js`, `js/renderer.js` `BLOOM_KNEE` 4; below); (b) `js/aircraft/detailed.js`: direct sun on interior surfaces × the type's glazing transmission τ (`uCabinSun` = `glb.js stats.glazingT`: PC-12 0.196, SF50 0.232; it crosses the pane on the way in, the view path applies it again on the way out), the sky keeps the share 0.35 without τ (the review's suggestion; it stands for the windows' light and its inter-reflection in a light cabin, which restored the shaded side in iteration 2) [inf]; (c) `GLASS_FS`: the glazing's (mat 24) diffuse return takes the sky / ground light only, `GLASS_VEIL_SUN` 0 (a clear tinted pane does not scatter the direct beam into a grey veil [inf]); lens covers keep the sun | sunlit cabin windows hwd_front34 (99, 97, 90) → **(32, 35, 40)** (53, 59, 60) / (36, 39, 42); hwd_side (76, 79, 81) → **(39, 42, 46)** (35, 42, 49) / (24, 29, 34); cool, dark tinted glass with the sky's gradient in it (`cmp/half_hwd_front34.jpg`, `exp/cmp_side_K.png`). Shaded windows 2–5 levels darker than rc2 (the veil of the sunlit ground is gone): side (31, 34, 36) → (27, 29, 32) (23, 28, 33); cockpit door (22, 30, 39) → (20, 28, 37) (45, 48, 50); cabin window 2 (26, 34, 42) → (24, 32, 39) (35, 38, 40); window 3 (32, 38, 43) → (30, 35, 40) (33, 35, 38); front34 (28, 34, 41) → (23, 30, 36) (37, 41, 41). White beside them unchanged (232, 229, 225) / (122–128, 128–132, 137–138) |
+| F2 minor | shaded cheatline near-black navy (cost of the sun-only fit) | no single reflectance matches both sides: the world's noon sun puts ~6× the shade's light on the sunlit side, the pc12 viewer's studio ~2–3× | `js/aircraft/models.js` `paintFit` refitted on ALL 11 cameras together (the review's suggestion): per channel, the linear factor minimising the squared sRGB error of the band median against dev.html over the five sunlit, five shaded cameras and the nose, each camera interpolated in log factor between renders at five factors on the line from the glb's (0.10, 0.17, 0.27) to iteration 2's (0.017, 0.059, 0.137) (`exp/v6`, `exp/tools/fitnavy.py`): **(0.035, 0.086, 0.181)** [inf: appearance fit] (sRGB #345376 at full reflectance) | rms error over the 11 cameras (all with the bloom knee): glb factor 33.2, iteration 2's 21.5, **joint 17**. Sunlit band (49–68, 80–95, 110–124) (dev (38–62, 60–90, 84–120); rc2 (42–61, 73–84, 99–111)): a little lighter than the reference now. Shaded band (14–18, 26–28, 42–46) (dev (20–35, 36–56, 54–79); rc2 (14–21, 24–28, 37–41)): bluer than rc2, still darker than the reference (L* ~9 vs ~22). The bloom knee darkened the shaded band by ~4 levels at a given factor (it no longer takes the veil of the sunlit ground), so the joint fit only holds rc2's shade level. Left to the owner / pc12 owner (palette, or which side to favour). Comparisons under the pc12 viewer's own light need `look=studio&palette=glb` (models.js PAINT_FIT header) |
+| F3 minor | black trim, seals, tyres, prop blades ~50 in sun | partly the bloom veil; the rest is physics: a 4.5 % albedo tyre / blade (`tire`, `prop_blade` (0.045, 0.045, 0.05)) in the same sun as 92.5 % white paint reflects ~5 % of its light, ~45–50 sRGB with this tone curve; the warm cast is the warm sun and the pavement (acEnv / acGround) | the bloom knee (F1 a) | dark class (very dark in dev and stage): hwd_side (47, 44, 41) → **(28, 27, 25)**, hwd_rear34 (30, 28, 26) → (18, 17, 16), front34 (32, 31, 29) → (26, 24, 23), cockpit (20, 22, 26) → (16, 18, 22), side (16, 16, 17) → (10, 10, 11); hwd_front34 (56, 52, 48) → (50, 45, 42) and hwd_nose (54, 50, 46) → (49, 45, 42) - those pixels are mostly tyres and blades in direct sun: with `trim_black` at albedo 0 they are unchanged (50, 45, 42), with that and every material's env reflection off (43, 39, 37) (`exp/v4` trim0 / trimEnv0), i.e. sunlit diffuse dark paint, not trim. Windshield surround in shade (cockpit box) (13, 18, 24) → (9, 14, 21) (dev (24, 27, 30)). The side-window frame of hwd_front34 at x 1060: its inner lip still reads (69, 65, 63) / (37, 39, 42) (rc2 (83, 78, 74) / (62, 62, 61); dev (46, 47, 50) / (15, 16, 18)): a glossy edge (roughness 0.16) at a grazing angle mirrors the sunlit pavement - physics in an outdoor scene, a black room in the reference. Accepted |
+| F4 minor | glass neutral / warm, no cool sheen or highlight bands | the bloom veil and the sun-lit veil warmed the panes; the world's clear sky has no soft-box panels | F1 (a)–(c) | the panes are cool now: cabin windows (32, 35, 40) / (39, 42, 46); the reflected sky gradient (bluer at the top of each pane, paler toward the horizon) is in every cabin window (`exp/v1/dbgEnv_hwd_side.png`: the env term alone). Sunlit windshield (hwd_front34) (74, 75, 75) → **(21, 24, 31)**, now darker than the reference (57, 65, 73) / (48, 55, 62): it faces up (N.y 0.45–0.85) and mirrors the deep-blue upper sky at F ≈ 0.05–0.09, where the reference mirrors its room's ceiling panels. Shaded windshield (cockpit) (33, 35, 36) → (29, 30, 31) (39, 48, 55). A veil share of 0.25 / 0.5 under the sun was rendered (`exp/v9`): windshield (30, 33, 39) / (37, 42, 48), but the hwd_side cabin windows then (44, 48, 52) / (48, 55, 59) - not taken (it is the grey veil of F1). No horizon / sheen term added: the sky the panes mirror is the world's own |
+| F5 minor | shaded faces turned up read blue | physical under a clear sky (15.6 F4) | none (owner decision) | unchanged: the knee leaves uniform areas as they were (below); bluish shaded faces of the review's `pose_win_shade` (104, 124, 154) → (103, 124, 154) at the same pixels |
+| F6 minor | sunlit white in the ACES shoulder, warm | world exposure 0.45 and the sun's colour (15.6 F3) | none (owner decision) | unchanged: sunlit white (228–231, 225–229, 220–224), shaded white (126–129, 130–133, 137–140) (white class, rc2 identical) |
+| F7 minor | SF50 dusk still: strobe discs cut by the fin and a wing edge | sprites are depth-tested; the sfo3d pull toward the camera (min(2 m, 5 % of the distance), 0.75 m at 15 m) is less than the distance from a lens to the airframe beside it | `js/aircraft/detailed.js lightSprites` flags its sprites (`pull: true`), `js/scene.js` packs the flag (iData.y), `js/shaders/sprites.js` pulls a flagged sprite toward the camera by 3 m or its drawn radius (at most half the distance) and keeps its angular size (s × (d − pull) / d); 3 m ≈ the depth of the airframe around an extremity light [inf]; an occluder farther from the lens (the fuselage in front of the far wing tip: 5.9 m on the SF50) still hides it. Other sprites (airfield lights, placeholders) unchanged | `docs/phase3/viewer_sf50_lights_dusk.jpg` (lseed 0.378): tail-strobe disc and right-tip disc whole, no fin / wing edge through them, same disc sizes as before (`exp/cmp_dusk3.png`: docs before / now). The two discs at the left tip are two lights (landing + strobe) |
+
+**Bloom knee, the renderer change (all callers: app, video pipeline, dev viewers).** `js/shaders/post.js` DOWN_FS, first
+pass: each tap is weighted by w = v² / (v² + K²) of its display-referred luminance v = lum × exposure (K = `post.bloomKnee`
+?? `BLOOM_KNEE` = 4 in `js/renderer.js`; 0 = sfo3d's behaviour): highlights (lights, glints, the sun; v ≫ K) bloom as
+before, diffuse surfaces (sunlit white paint v ≈ 2: w 0.2; pavement v ≈ 1: w 0.06) hardly. FINAL_FS gives the left-out share
+of a uniform field back as the pixel's own gain, col × (1 + `post.bloom` × levels × (1 − w) / (1 + 0.02 lum)), so a uniform
+area keeps its brightness exactly while a dark detail no longer takes a veil of its bright surroundings. Checked in the HWD
+world (`exp/v4`, `exp/v7`, knee 0 vs 4, same frame): a wide ramp view, a hangar view and the hwd_side / side cameras - median
+pixel change 0, 5th–95th percentile −1…+1 sRGB level, 1st percentile −4…−10 (dark details beside bright ones); the night
+ramp (2026-11-14 05:00Z) 1st–99th percentile within ±1; the dusk still 1st percentile −2, median 0 (`exp/cmp_knee_wide.png`,
+`cmp_knee_hangars.png`, `cmp_night_wide.png`). Bloom around lights and the sun is unchanged. 4 rather than 2: at K = 2 the
+sunlit windows read (40, 43, 46) / (45, 47, 50) and the dark details keep more veil; both are inside the review's target.
+
+**Under the pc12 viewer's own light (`look=studio`, `out/pc12_look_it3/final_studio{,_glb}`).** `palette=glb` still
+reproduces the reference band exactly as in 15.4 / 15.6 (cockpit (24, 40, 60), side (37, 59, 83), hwd_front34
+(45, 69, 96), hwd_side (62, 91, 121): unchanged), so the material path is unchanged. The studio has no bloom (the knee does
+nothing there). The glazing is darker than the reference there now, by design: the reference viewer lights its cabin as if
+the skin were transparent and lays its pane veil under its key light; hwd3d's cabin takes the key × τ and its panes no
+veil under a direct light. Cockpit door window (52, 51, 51) → (30, 32, 34) (reference (45, 48, 50)); hwd_front34 cabin
+windows (48, 52, 55) → (29, 32, 35) ((53, 59, 60)); hwd_front34 windshield (44, 52, 58) → (29, 34, 39) ((57, 65, 73));
+shaded side windows unchanged (43, 49, 55); cockpit windshield (42, 49, 54) → (40, 46, 52) ((39, 48, 55)). With the
+default palette the studio band is the fitted navy (cockpit (5, 21, 42), hwd_side (20, 53, 92)): studio comparisons of the
+band need `palette=glb`.
+
+**Renders** (every image looked at): `docs/phase3/pc12_{front34, side, rear34, chase, cockpit, port, rear, flaps40,
+gear_closeup}.jpg` and all 13 `viewer_sf50_*.jpg` re-rendered (`node dev/model_shot.mjs --jobs=out/pc12_look_it3/jobs_docs_pc12.json
+--prefix=pc12 --port=8761`, `--model=SF50 --jobs=…jobs_docs_sf50.json --prefix=viewer_sf50`, the dusk still with
+`--t=2026-11-14T01:05:00Z`); captions in `docs/phase3/SOURCES.json` rewritten by the tool (model hashes 87731cce… /
+49242e41…). Before / after sheets `out/pc12_look_it3/cmp/docs_pc12_{1..3}.jpg`, `docs_sf50_{1..5}.jpg`. Seen: dark,
+cool tinted cabin windows and windshield on the sunlit side with the flight deck faint behind them (no milky panes), the
+black surround and frames, the navy band a little lighter in sun and dark navy in shade, the gold pin-stripe, tyres and
+blades darker; the SF50 unchanged apart from crisper dark glazing; the dusk still with whole strobe discs. The 11 reference
+cameras (`final_world`, `final_studio`, `final_studio_glb`, PNG) and the review's poses (`final_pose`) were rendered for the
+numbers above; side-by-sides with dev.html / the stage viewer / rc2 in `cmp/full_*.png`.
+
+**App** (`RELAY=none PORT=8763 OUT=out/pc12_look_it3/livetest PREFIX=it3 node livetest.mjs jobs/views.mjs`, desktop): ready
+in 6.0 s, 0 console errors / warnings, D1 type-only (27 masked), every view and sheet shot and looked at. Against the
+review's run (`cmp/livetest_rc2_it3.jpg`; the replay instant differs by two minutes, so the traffic and the sun differ
+slightly): overview / tower / Green Ramp / West Hangars / 28L final look the same; per view the median pixel change is 0
+(−0.3 on the overview), the mean −0.3…−0.7 levels, the 1st percentile −5…−8 (fine dark details: building edges, shadows,
+texture detail lose the veil). The review's PC-12 job (one parked track switched to PC12; `out/pc12_look_it3/app_pc12/`,
+0 errors, `pc12.glb` served with sha256 87731cce…): port side in sun at 12 m, cabin panes **(88, 90, 90) → (43, 44, 47)**
+at the same pixels next to white (237, 235, 231) unchanged (`cmp/app_fl_d12_windows.png`); starboard side in shade
+(33, 41, 47) → (28, 36, 40).
+
+**Tests**: `node tools/models/test_models.mjs` → **81 PASS, 13 KNOWN, 0 FAIL**, 4 INFO. New / changed checks: the cabin rule
+(closed: `uCabinSun` = the type's glazingT, `uCabinAmb` 0.35; any door open: both 1; PC12 and SF50), the glazing veil without
+the direct sun (PC12 and SF50), the bloom knee default, the aircraft-light pull. **`python3 -I -B tools/check_airport.py`**
+→ **RESULT: ALL HARD CHECKS PASSED** (SOURCES coverage 165 files, 0 without an entry; D1 clean in every `docs/phase3_*.md`).
+
+**Files changed in this iteration**: renderer / shared - `js/renderer.js` (`BLOOM_KNEE`, knee uniforms, header),
+`js/shaders/post.js` (DOWN_FS knee, FINAL_FS gain, header), `js/scene.js` (iData.y pull flag, header),
+`js/shaders/sprites.js` (pull of flagged sprites, header); aircraft runtime - `js/aircraft/detailed.js` (`uCabinSun`,
+`cabinSunT`, `CABIN_SUN_T`, `uVeilSun` / `GLASS_VEIL_SUN`, sprite `pull`, comments), `js/aircraft/models.js` (`paintFit`
+(0.035, 0.086, 0.181), PAINT_FIT header); `tools/models/test_models.mjs`; this file; `docs/phase3/*.jpg` + `SOURCES.json`.
+Not changed: `js/gl.js`, the world shaders, `js/live/**`, `js/env/**`, `dev/**`, the glb files.
+
+**Open / not verified (iteration 3)**: the shaded navy band stays darker than the reference (L* ~9 vs ~22) and the sunlit
+band a little lighter: no single reflectance matches the world's sun / shade ratio (owner / pc12 owner: palette, or which
+side to favour); the bloom knee K = 4 and the gain compensation are a renderer-wide look change (uniform areas unchanged,
+dark details crisper; `post.bloomKnee: 0` restores sfo3d's bloom) - owner to confirm; the sunlit windshield is darker than
+the reference (it mirrors the deep-blue upper sky, the reference its ceiling panels); under the pc12 viewer's own light the
+glazing is now darker than the reference (by design, above); the cabin constants (τ on the direct sun, sky share 0.35, no
+veil under the sun) and the 3 m sprite pull are inferred; tyres / blades in direct sun ~45–50 and the bright grazing lip of
+glossy trim are physics of the outdoor scene; F5 / F6 unchanged (owner decisions); laptop-GPU frame time not measured
+(SwiftShader only; the bloom knee adds one luminance weight per first-pass tap and one gain term per final-pass pixel, no
+pass); a video-determinism comparison that spans this change (renderer files edited 08:45–09:55Z) will see the knee.

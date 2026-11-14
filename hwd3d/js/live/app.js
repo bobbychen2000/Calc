@@ -27,6 +27,11 @@
 //    list's 1-s tick; the card adds the height above the NASR field elevation from the same rounded value (or above the
 //    ground for a body drawn airborne lower than the field elevation) and names the method on its data line [inf]; the
 //    altimeter-equivalent value (alt_baro with the KHWD altimeter setting) is only in the method note. altCtx() / qnhAt() below.
+//  - Phase 3b (2026-11-14): the aircraft drawables are the detailed models for PC12 / SF50 (js/live/aircraft.js drives their
+//    gear, flaps, propeller, controls and lights); the follow / chase target and the labels use the drawable's dims record
+//    (the model's frame); hooks for the video pipeline (docs/phase3_video.md section 8): HWD.stepEngine(now, dt),
+//    frame(wall, {engineDt, render, cut}) with a separate engine dt, a no-draw frame and a camera cut, HWD.qa.frame(opts),
+//    HWD.setPost({shutter, ...}), HWD.setCamera(fn | null).
 // Dropped (SFO only): jet bridges and the gate system, airfield-lighting fixtures, ALS structures, reservoirs and the shore
 // field, flysfo gates, routes, LiveATC feed tuning and the audio delay (D2: a link-out only), airliner models and markers.
 import { initGL, gl } from '../gl.js';
@@ -164,7 +169,8 @@ export async function startApp(cfg) {
     return true;
   }
   let currentView = null;
-  const followFn = (key) => () => { const tr = traffic.tracks.get(key); if (!tr || !tr.disp.valid || tr.removed) return null; const D = tr.disp, T = tr.dims || {}; return { p: [D.x, D.y + (T.Hc || 1.5), D.z], hdg: D.hdg * DEG, L: T.L || 9 }; };
+  // follow / chase target: the drawn body (Phase 3b: the drawable's dims record, i.e. the detailed model's frame for PC12 / SF50)
+  const followFn = (key) => () => { const tr = traffic.tracks.get(key); if (!tr || !tr.disp.valid || tr.removed) return null; const D = tr.disp, T = views.dimsOf(tr) || {}; return { p: [D.x, D.y + (T.Hc || 1.5), D.z], hdg: D.hdg * DEG, L: T.L || 9 }; };
   function select(key, fly) {
     const tr = key != null ? traffic.tracks.get(key) : null;
     if (!tr) { selected = null; ui.renderCard(null); if (followMode) { rig.stopFollow(); followMode = null; } ui.renderList(true, [...traffic.tracks.values()]); return; }
@@ -302,19 +308,35 @@ export async function startApp(cfg) {
   const post = { exposure: 0.45, shutter: 0, bloom: 0.012, vignette: 0.18, grain: 0.0, sat: 1.05 };
   function onResize() { S = size(); if (canvas.width !== S.cw || canvas.height !== S.ch) { canvas.width = S.cw; canvas.height = S.ch; } R.resize(S.rw, S.rh); rig.resize(canvas.clientWidth, canvas.clientHeight); }
   window.addEventListener('resize', onResize); onResize();
-  let lastC = null, qaPaused = false;
-  function frame(wall) {
+  let lastC = null, qaPaused = false, camOverride = null;
+  // the engine part of a frame (Phase 3b, docs/phase3_video.md section 8 item 2): the video director's sub-steps and its
+  // pre-roll call this, so a system added to the engine step is never missed
+  function stepEngine(now, dt) { traffic.update(now, dt); physics.resolve(traffic, dt); }
+  // one frame. wall: the frame's animation dt (s): simT (propellers, strobes, beacon), the drawables' lags (flaps, gear,
+  // controls), the camera rig and the 30-s environment timer. opts (Phase 3b, the video pipeline's hooks):
+  //   engineDt  the engine's own step (s) when it differs from the animation dt (a time-lapse frame: the director runs the
+  //             engine in sub-steps and only the last one inside the frame); default = the animation dt
+  //   render    false: a no-draw frame - everything advances as in a drawn frame (engine, drawables and their motion-vector
+  //             bookkeeping, camera, labels) but the renderer only computes the camera and keeps it as the previous camera
+  //             (R.prev, the motion-blur reference), exactly as R.render ends; nothing is drawn or presented
+  //   cut       true: a camera cut - no motion-blur reference from the previous frame (R.prev cleared first)
+  function frame(wall, opts = {}) {
     const tp = performance.now(); let dt = Math.min(wall, 0.1); simT += dt;
     const now = engineNow();
-    traffic.update(now, dt); physics.resolve(traffic, dt);
+    stepEngine(now, opts.engineDt != null ? opts.engineDt : dt);
     views.sync(traffic, now, { nightF, selectedKey: selected, dt });
-    rig.update(dt);
     if ((tEnv += wall) > 30) { tEnv = 0; applyEnv(Date.now(), false); }
-    const cam = rig.camera();
+    // the camera: an override (HWD.setCamera, the video director's planned camera) instead of the rig, else the rig
+    let cam = camOverride ? camOverride({ dt, now, simT }) : null;
+    if (!cam) { rig.update(dt); cam = rig.camera(); }
     setLightViewer(cam.pos, 2 * Math.tan((cam.fov || 0.8) / 2) / Math.max(1, R.H)); setLightFrame(simT);
     const fr = scene.frame(simT, cam.pos);
     post.exposure = exposure;
-    const C = R.render(fr, cam, simT, post); scene.commit(); R.present(canvas.width, canvas.height); lastC = C;
+    if (opts.cut) R.prev = null;
+    let C;
+    if (opts.render === false) { C = R.computeCamera(cam); R.curCam = C; R.prev = C; scene.commit(); }
+    else { C = R.render(fr, cam, simT, post); scene.commit(); R.present(canvas.width, canvas.height); }
+    lastC = C;
     // the list tick refreshes the one altitude per track BEFORE the labels, so labels, list and card share it (m7)
     const listTick = (tList += wall) > 1; if (listTick) { tList = 0; ui.altTick(); }
     labels(C);
@@ -367,7 +389,7 @@ export async function startApp(cfg) {
       const cat = category(tr); if (cat === 'vehicle') continue;
       const sel = tr.key === selected;
       if (cat === 'overflight' && !showOthers && !sel) continue;
-      const T = tr.dims || {}; const top = (T.H || 3) + 1.2;
+      const T = views.dimsOf(tr) || {}; const top = (T.H || 3) + 1.2;
       const x = D.x - cp[0], z = D.z - cp[2];
       const pt = proj(x, D.y + top - cp[1], z); if (!pt) continue;
       const dist = Math.hypot(x, D.y - cp[1], z);
@@ -419,9 +441,20 @@ export async function startApp(cfg) {
     altRef: () => { const A = altCtx(); return { qnh: A.qnh, why: A.qnhWhy, fieldFt: A.fieldFt, tD: A.tD, legend: altMethod(null, A).text }; },
     // a fast screenshot from the renderer's final framebuffer (P2 dev/world.js): avoids page.screenshot recompositing the
     // heavy SwiftShader scene. Returns a PNG data URL of the 3-D view only (no DOM HUD).
+    // one frame driven by the caller (the app's own loop should be paused: qa.pause): {wall (s, default 1/60), engineDt,
+    // render (false = no-draw frame), cut} - see frame() above (Phase 3b, docs/phase3_video.md section 8 items 3-4)
+    frame: ({ wall = 1 / 60, engineDt = null, render = true, cut = false } = {}) => { last = performance.now(); return frame(wall, { engineDt, render, cut }); },
     shot: (n = 2) => { for (let i = 0; i < n; i++) frame(1 / 60); const px = R.readPixels(); const c = document.createElement('canvas'); c.width = R.W; c.height = R.H; const cx = c.getContext('2d'); const id = cx.createImageData(R.W, R.H); for (let y = 0; y < R.H; y++) id.data.set(px.subarray((R.H - 1 - y) * R.W * 4, (R.H - y) * R.W * 4), y * R.W * 4); cx.putImageData(id, 0, 0); return c.toDataURL('image/png'); },
   };
+  // Phase 3b hooks for the video pipeline (docs/phase3_video.md section 8): stepEngine(now, dt) = the engine part of a frame;
+  // setPost({shutter, bloom, vignette, grain, sat}) = post settings of the following frames (the exposure stays the
+  // environment's) -> the current settings; setCamera(fn | null): fn({dt, now, simT}) -> a renderer camera used by frame()
+  // instead of the rig (the rig is not updated while it is set; null or a null result = the rig again)
+  const POST_KEYS = ['shutter', 'bloom', 'vignette', 'grain', 'sat'];
+  const setPost = (o = {}) => { for (const k of POST_KEYS) if (o[k] != null && Number.isFinite(+o[k])) post[k] = +o[k]; return { ...post }; };
+  const setCamera = (fn) => { camOverride = typeof fn === 'function' ? fn : null; return !!camOverride; };
   window.HWD = { R, scene, world, site, traffic, physics, parking, views, rig, ui, env: envCore, qa, VIEWS, select: (key, fly) => select(key, fly), view, applyEnv: () => applyEnv(Date.now(), true),
+    stepEngine, setPost, setCamera,
     stats: () => hwdStats(traffic.events, traffic.displayTime(engineNow())), frameNow: () => { last = performance.now() - 16; return frame(1 / 60); }, lastCamera: () => lastC,
     feed: () => streamFeed };   // (the relay feed, live mode only - jobs/horizon.mjs reconnects it with a foreign seq)
   return window.HWD;

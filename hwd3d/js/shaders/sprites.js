@@ -1,4 +1,5 @@
-// Forked from sfo3d/js/shaders/sprites.js @ a967f9b. Kept: additive light sprites, smoke puffs. Changed: nothing. Dropped: nothing.
+// Forked from sfo3d/js/shaders/sprites.js @ a967f9b. Kept: additive light sprites, smoke puffs. Changed: a per-sprite depth pull
+// for lights on detailed aircraft (iData.y; hwd3d OD4 iteration 3, docs/phase3_models.md section 15.7). Dropped: nothing.
 // Additive light sprites (instanced billboards)
 export const SPRITE_VS = `
 #include <common>
@@ -22,7 +23,17 @@ void main(){
   float minPx = 2.2; float s = size;
   if (pxSize < minPx) { float k = minPx / max(pxSize, 1e-4); s *= k; I /= (k * k); }
   float glow = 1.6; s *= glow; I /= glow * glow * 0.35;
-  vec3 wp = p + (uCamRight * aPos.x + uCamUp * aPos.y) * s + toCam * min(2.0, d * 0.05);
+  // iData.y (hwd3d OD4 iteration 3, review F7; js/scene.js put() packs s.pull): a light on a detailed aircraft
+  // (js/aircraft/detailed.js lightSprites) is pulled toward the camera by 3 m or its drawn radius s if larger (at most half
+  // the distance), so the glow disc is not cut by the airframe next to the lens - the dusk still showed the tail-strobe disc
+  // cut by the fin and the wing edge running through a tip disc, both within ~2 m of the lens; 3 m is about the depth of the
+  // airframe around an extremity light (tip, tail) [inf]. An occluder farther from the lens (the fuselage in front of the far
+  // wing tip: 5.9 m on the SF50, 8 m on the PC-12) still hides it. Every other sprite (airfield lights, placeholders) keeps
+  // the sfo3d pull min(2 m, 5 % of the distance).
+  // (the pulled disc keeps its angular size: s x (d - pull) / d)
+  float pull = max(min(2.0, d * 0.05), iData.y > 0.5 ? min(max(s, 3.0), d * 0.5) : 0.0);
+  if (iData.y > 0.5) s *= (d - pull) / d;
+  vec3 wp = p + (uCamRight * aPos.x + uCamUp * aPos.y) * s + toCam * pull;
   vQ = aPos.xy; vCol = iM1.rgb; vI = I;
   emitClip(wp, wp);
 }`;

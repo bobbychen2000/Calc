@@ -47,7 +47,7 @@ for cam in [c for c in a.cams.split(',') if c]:
         print('skip', cam, 'missing', fr if not os.path.exists(fr) else fh); continue
     R = np.asarray(Image.open(fr).convert('RGB')); H = np.asarray(Image.open(fh).convert('RGB'))
     # the cameras are identical, so the reference (uniform background (223,227,230) / grid) classifies the aircraft's
-    # pixels and the SAME pixels are read in the hwd3d image. Masks are eroded by 2 px (no edge pixels); the background
+    # pixels and the SAME pixels are read in the hwd3d image. Masks are eroded twice (no edge pixels); the background
     # and the grid are excluded from 'white' (exact background colour +-3 and the low-saturation grid greys)
     cr = classes(R)
     bg = (np.abs(R.astype(np.int32) - np.array([223, 227, 230])).max(-1) <= 3)

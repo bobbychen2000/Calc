@@ -14,6 +14,16 @@
 //   t=<ISO UTC> (default 2026-11-13T20:30Z, 12:30 PST)   metar=<raw>   lights=nav,beacon,strobe,landing,taxi
 //   world=0 (neutral pad)   scale=<render scale>   shot=1 (no HUD; window.HWDM.shot(opts) returns a JPEG / PNG data URL)
 //   alpha=0..1               the screen-door fade js/live/aircraft.js sets on a re-placement (default 1)
+//   look=studio              (OD4) the pc12 project's own three.js viewer lighting (pc12/web/dev.html: room environment,
+//                            sun 1.6, hemisphere 0.6, ACES exposure 1, background (223, 227, 230), no shadows, no world):
+//                            dev/studio.js; for 1:1 comparisons with out/pc12_ref_viewer
+//   palette=glb              (OD4 it. 2) the glb's colour factors exactly as written (no js/aircraft/models.js paintFit),
+//                            to compare the material path with the reference viewer 1:1
+//   paint=<material>:r,g,b[;<material>:r,g,b]   (OD4 it. 2) dev-only experiment: replace a material's LINEAR base colour
+//                            in the loaded model (e.g. paint=paint_accent:0.03,0.06,0.13); never used by the app
+//   lseed=<s>                (OD4 it. 2, review F9) the aircraft's light-flash phase seed (DetailedAircraft.seed, random in
+//                            the app); default 0.5: beacon and strobes are between flashes in the final frame of shot()
+//                            (t = 1.033..1.066 s), so a still does not depend on a random flash phase
 import { initGL, Mesh } from '../js/gl.js';
 import { Renderer } from '../js/renderer.js';
 import { Scene } from '../js/scene.js';
@@ -27,6 +37,7 @@ import { gaDims } from '../js/aircraft/ga_dims.js';
 import { DetailedAircraft } from '../js/aircraft/detailed.js';
 import { loadModel, MODELS, withModelFrame } from '../js/aircraft/models.js';
 import { m4 } from '../js/math.js';
+import { applyStudio } from './studio.js';
 
 const q = new URLSearchParams(location.search);
 const SHOT = q.has('shot'); if (SHOT) document.body.classList.add('shot');
@@ -45,10 +56,16 @@ window.ANISO = 8;
 initGL(canvas);
 const R = new Renderer(W, H, { msaa: 4, shadowRes: 4096 });   // one quality level (OD1)
 const TYPE = (q.get('model') || 'PC12').toUpperCase();
+const STUDIO = q.get('look') === 'studio';
 
 // ---------------------------------------------------------------- world (HWD) or neutral pad
 let world = null, site = null, worldMode = 'pad', worldErr = null;
 async function buildWorld() {
+  if (STUDIO) {   // no world, no pad: the reference viewer draws the aircraft on its background colour (dev/studio.js)
+    const { makeCloudTexture, makeNoiseTexture } = await import('../js/world/textures.js');
+    world = { items: [], textures: { clouds: makeCloudTexture(11), noise: makeNoiseTexture() }, site: null, staticSprites: () => [], ready: Promise.resolve(), stats: {} };
+    worldMode = 'studio'; return world;
+  }
   if (q.get('world') !== '0') {
     try {
       const [{ buildSite }, { buildHwdWorld }, { HWD_AIRPORT }] = await Promise.all([import('../js/world/site.js'), import('../js/live/world.js'), import('../data/hwd_airport.js')]);
@@ -89,8 +106,11 @@ const T = q.get('t') || '2026-11-13T20:30:00Z';
 const env = new AppEnv({ mode: 'live', search: '?t=' + T + (q.get('metar') ? '&metar=' + encodeURIComponent(q.get('metar')) : ''), station: 'KHWD' });
 const obsT = Date.parse(T) - 36 * 60e3, iso = new Date(obsT).toISOString();
 if (!q.get('metar')) env.setReports([{ rawOb: 'METAR KHWD ' + iso.slice(8, 10) + iso.slice(11, 13) + '54Z 29008KT 10SM FEW060 19/12 A2974', obsTime: obsT / 1000 }]);
-const post = { exposure: 0.45, shutter: 0, bloom: 0.012, vignette: 0.18, grain: 0.006, sat: 1.0 };
-function applyEnv(force) { const E = env.update(Date.now()); const r = applyEnvToRenderer(R, world, E, { quality: 'high', force }); post.exposure = r.exposure; if (r.changed) setLightEnv(E, DAY_GAIN / 258); return E; }
+// the app's post settings (js/live/app.js; OD4: grain 0.006 / sat 1.0 before, so the stills did not show the app's grade)
+const post = { exposure: 0.45, shutter: 0, bloom: 0.012, vignette: 0.18, grain: 0.0, sat: 1.05 };
+function applyEnv(force) { const E = env.update(Date.now()); const r = applyEnvToRenderer(R, world, E, { quality: 'high', force }); post.exposure = r.exposure; if (r.changed) setLightEnv(E, DAY_GAIN / 258);
+  if (STUDIO && ac) { const st = applyStudio(R, ac.fwd, ac.pos, post); if (!world.items.includes(st.item)) world.items.push(st.item); window.HWDM.studio = { bg: st.bgL, room: st.room, light: R.light }; }
+  return E; }
 
 // ---------------------------------------------------------------- aircraft
 const PRESETS = {
@@ -112,14 +132,20 @@ setCam();
 let ac = null, place = null;
 function poseAircraft() {
   const p = place, alt = num('alt', 0);
-  ac.pos = [p.x, gy(p.x, p.z) + alt, p.z]; ac.groundRef = gy(p.x, p.z); ac.fwd = [Math.sin(p.hdg * D2R), 0, -Math.cos(p.hdg * D2R)];
+  ac.pos = [p.x, gy(p.x, p.z) + alt, p.z]; ac.groundRef = STUDIO ? null : gy(p.x, p.z); ac.fwd = [Math.sin(p.hdg * D2R), 0, -Math.cos(p.hdg * D2R)];
+  if (STUDIO) ac.shadowDist = 0;   // dev.html casts no shadows
   ac.pitch = num('apitch', 0) * D2R; ac.roll = num('aroll', 0) * D2R;
   ac.gear = num('gear', 1); ac.alpha = Math.max(0, Math.min(1, num('alpha', 1)));
   ac.rotor = has('rotor') ? num('rotor', 0) : num('rpm', 0) / 60 * 2 * Math.PI;
   ac.setFlaps(num('flaps', 0), true);
   const c = vec('ctl') || [0, 0, 0];
-  const doors = {}; for (const kv of String(P.doors || '').split(',').filter(Boolean)) { const [k, v] = kv.split(':'); doors[k] = +v; }
+  // every door pivot starts closed (review F7: setControls merges doors, so a door opened by one model_shot job stayed open
+  // in every later job that did not name it), then the named ones
+  const doors = {}; if (ac.loaded) for (const pt of ac.m.parts) if (pt.pivot && pt.pivot.kind === 'door') doors[pt.id] = 0;
+  for (const kv of String(P.doors || '').split(',').filter(Boolean)) { const [k, v] = kv.split(':'); doors[k] = +v; }
   ac.setControls({ roll: c[0], pitch: c[1], yaw: c[2], stabTrim: num('trim', 0), bladePitch: num('bpitch', 0), doors }, true);
+  for (const k of Object.keys(ac.doors)) if (!(k in doors)) ac.doors[k] = 0;
+  ac.seed = num('lseed', 0.5);   // light-flash phase (header)
   const L = String(P.lights || '').split(',');
   ac.lightsOn = { nav: L.includes('nav'), beacon: L.includes('beacon'), strobe: L.includes('strobe'), landing: L.includes('landing'), taxi: L.includes('taxi') };
 }
@@ -193,7 +219,7 @@ function buildUI() {
 }
 // ---------------------------------------------------------------- go
 // set({...}): merge parameters (same names as the URL; null deletes) and re-pose; a new `at` / `hdg` re-places the aircraft
-function set(o) { for (const k in o) { if (o[k] == null) delete P[k]; else P[k] = String(o[k]); } if ('at' in o || 'hdg' in o) place = placement(); setCam(); poseAircraft(); if ('t' in o) console.warn('t is read at load only'); return { gear: ac.gear, flaps: ac.flaps, rotor: ac.rotor }; }
+function set(o) { for (const k in o) { if (o[k] == null) delete P[k]; else P[k] = String(o[k]); } if ('at' in o || 'hdg' in o) place = placement(); setCam(); poseAircraft(); if (STUDIO) applyEnv(true); if ('t' in o) console.warn('t is read at load only'); return { gear: ac.gear, flaps: ac.flaps, rotor: ac.rotor }; }
 window.HWDM = { R, cam, PRESETS, P, post, set, render, shot, reencode, pause: (v = true) => { paused = !!v; }, hud: () => hudText(), applyEnv, get ac() { return ac; }, get scene() { return scene; }, get world() { return world; }, worldMode: () => worldMode };
 (async () => {
   try {
@@ -203,9 +229,13 @@ window.HWDM = { R, cam, PRESETS, P, post, set, render, shot, reencode, pause: (v
     place = placement();
     // the dims record with the model's measured gear / length layout (withModelFrame), as Phase 3b will hand it to traffic
     const dims = withModelFrame(gaDims(TYPE)) || { type: TYPE, L: 10, span: 10, H: 3, cls: 'jet', wing: { span: 10, rootLE: 3, rootC: 2, tipC: 1, pos: 'low' }, hstab: { x: 8, span: 4, rootC: 1 }, xMain: 5, xNose: 1, R: 0.7, Hc: 1.2, track: 3, gearKind: 'tricycle' };
-    ac = new DetailedAircraft(dims, { R, model: MODELS[TYPE] ? loadModel(TYPE, { keepCpu: true }) : null, lodDist: 1e9, shadowDist: 1e9 });
+    ac = new DetailedAircraft(dims, { R, model: MODELS[TYPE] ? loadModel(TYPE, { keepCpu: true, palette: q.get('palette') !== 'glb' }) : null, lodDist: 1e9, shadowDist: 1e9 });
     poseAircraft(); scene.add(ac);
     await Promise.all([ac.ready, world.ready.catch((e) => { worldErr = 'textures: ' + e; })]);
+    // paint=...: dev-only colour experiment (header) - patches the CPU vertex colours before the first upload
+    if (ac.loaded && q.get('paint')) for (const e of q.get('paint').split(';').filter(Boolean)) { const [name, v] = e.split(':'); const c = v.split(',').map(Number);
+      const mi = ac.m.materials.findIndex(mt => mt.name === name); if (mi < 0 || c.length < 3) continue;
+      for (const g of ac.m.groups) { const d = g.opaque; if (!d || !d.mat) continue; for (let i = 0; i < d.mat.length; i++) if (d.mat[i] === mi) { d.col[i * 4] = c[0]; d.col[i * 4 + 1] = c[1]; d.col[i * 4 + 2] = c[2]; } } }
     poseAircraft(); applyEnv(true);
     window.HWDM.info = ac.info; window.HWDM.error = ac.error;
     window.HWDM.itemProgs = () => { const c = {}; for (const it of ac.items(camera().pos)) c[it.prog] = (c[it.prog] || 0) + 1; return c; };

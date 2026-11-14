@@ -37,7 +37,7 @@
 //            src } | null; plus any other kind a node names in extras.light (e.g. the SF50's iceLight), kept, not drawn },
 //   regPanels [{ part, mover, centre, normal, up, textDir, length, height, note }] (blank registration areas, local frame;
 //            D1: never filled by this module),
-//   materials [{ name, base [r, g, b, a], rough, metal, blend, cls }],
+//   materials [{ name, base [r, g, b, a], rough, metal, blend, cls, (when opts.look replaced the factor: baseGlb = the file's, palette) }],
 //   partIndex Map id -> index
 // }
 // Material channel (js/shaders/objects.js OBJ_FS): per-vertex colour = baseColorFactor (linear RGB, alpha) x COLOR_0, and
@@ -296,7 +296,7 @@ export function convertGLB(buf, opts = {}) {
     name: opts.name || (json.asset && json.asset.generator) || 'glb', asset: json.asset || {}, originGl, contacts,
     wheelbase: contacts && contacts.nose ? contacts.nose[0] : null, track: contacts ? contacts.mainR[2] - contacts.mainL[2] : null,
     bbox, parts: parts.map(({ pivotRaw, excluded, ...p }) => ({ ...p, excluded })), partIndex, groups: outGroups, lights, regPanels,
-    materials: [...mats, defMat].map(m => ({ name: m.name, base: m.base, rough: m.rough, metal: m.metal, blend: m.blend, cls: m.cls, matId: m.matId, textured: m.textured })),
+    materials: [...mats, defMat].map(m => ({ name: m.name, base: m.base, rough: m.rough, metal: m.metal, blend: m.blend, cls: m.cls, matId: m.matId, textured: m.textured, ...(m.baseGlb ? { baseGlb: m.baseGlb, palette: m.palette } : {}) })),
     stats: { tris, verts, parts: parts.length, groups: outGroups.length, excluded: parts.filter(p => p.excluded).map(p => p.id), textured: mats.filter(m => m.textured).map(m => m.name),
       glazingT: glzW ? glzT / glzW : null },
   };

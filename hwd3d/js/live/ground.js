@@ -31,7 +31,7 @@ export function naipPaved(x, z) {
 }
 // the pavement the physics uses: the site model's (P2) united with the NAIP-seen airside asphalt
 export const pavedWith = (site) => (x, z) => (site ? site.paved(x, z) : false) || naipPaved(x, z);
-export const PHYS_RULES = { PARK_GAP_M: 1.0, OTHER_GAP_M: 3.0, MOVING_M: 1.5, SCATTER_M: 6, SEEK_MAX_M: 25, ROTOR_M: 0.0 };   // SEEK_MAX_M 15 -> 25 m (fix round 1: a GNSS pose 15-20 m off the runway end pavement stayed on the grass) [inf]
+export const PHYS_RULES = { PARK_GAP_M: 1.0, OTHER_GAP_M: 3.0, MOVING_M: 1.5, SCATTER_M: 6, SEEK_MAX_M: 25, ROTOR_M: 0.0, LOCK_M: 3.0, PUSH_M: 6.0 };   // LOCK_M = traffic.js REST_LOCK_M (round 4)   // SEEK_MAX_M 15 -> 25 m (fix round 1: a GNSS pose 15-20 m off the runway end pavement stayed on the grass) [inf]
 
 // planform sample points of an aircraft whose main-gear origin is at (x, z), nose heading hdg (deg). Local: a = metres
 // ahead of the origin along the nose, s = metres to the right.
@@ -137,14 +137,40 @@ export class GroundPhysics {
     const gapOf = () => PHYS_RULES.PARK_GAP_M;
     // stationary: place in firstSeen order against those already placed (parked at a headed spot first: the layout is
     // the painted one)
-    free.sort((a, b) => ((b.park && b.park.spotId && b.park.pose && b.park.headed) ? 1 : 0) - ((a.park && a.park.spotId && a.park.pose && a.park.headed) ? 1 : 0) || (a.firstSeen || 0) - (b.firstSeen || 0));
+    // (round 4, E6) a body the engine holds at rest (traffic.js ctlGround rest lock: tr.ctl.lock) is placed where it is DRAWN, first,
+    // and its offset is the one that puts its target there (within the lock radius) - the physics no longer re-places a resting
+    // aircraft (a new seek whenever the list of aircraft placed before it changed moved it by up to a few m: the hold twitch of case
+    // S, a 0.2-m sideways step and a 0.16-m hop); the others are placed around it
+    const locked = (tr) => !!(tr.ctl && tr.ctl.lock && tr.ctl.ground);
+    free.sort((a, b) => (locked(b) ? 1 : 0) - (locked(a) ? 1 : 0) || ((b.park && b.park.spotId && b.park.pose && b.park.headed) ? 1 : 0) - ((a.park && a.park.spotId && a.park.pose && a.park.headed) ? 1 : 0) || (a.firstSeen || 0) - (b.firstSeen || 0));
     let moved = 0, unresolved = 0;
     const placed = [];
     for (const tr of free) {
-      const P = tr.restPose || tr._heliRest; const base = bodyOf(tr.dims, P.x, P.z, P.hdg); base.tr = tr;
+      const P = tr.restPose || tr._heliRest;
+      if (locked(tr)) {
+        // (round 4 iteration 2, F3: a wheel pivot moves the body by up to its track, so the lock keeps an offset up to track + 1 m)
+        const L = tr.ctl.lock, ox = L.x - P.x, oz = L.z - P.z, keep = Math.hypot(ox, oz) < Math.max(PHYS_RULES.LOCK_M || 3, (tr.dims.track || 0) + 1);
+        // (round 4 iteration 2, F4) ONCE per lock: a body that came to rest with a wing over a building or overlapping an aircraft placed
+        // before it is pushed clear - the nearest valid pose AHEAD along its nose (0.5-6 m: it rolls on a few metres, never sideways or
+        // backwards), released from the lock and driven there by the engine, which locks it again on arrival (traffic.js ctlGround c.push);
+        // REST LOCK had stopped every push (wings over T-hangar rows, a parked pair overlapping) [inf: 6 m, forward only]
+        if (!L.chk) { L.chk = true; const B0 = bodyOf(tr.dims, L.x, L.z, tr.disp.hdg); B0.tr = tr;
+          if (!this.valid(B0, placed, gapOf)) { const f = hv(tr.disp.hdg); let off = null;
+            for (let d = 0.5; d <= PHYS_RULES.PUSH_M && !off; d += 0.5) { const Bq = bodyOf(tr.dims, L.x + f[0] * d, L.z + f[1] * d, tr.disp.hdg); Bq.tr = tr; if (this.valid(Bq, placed, gapOf)) off = [ox + f[0] * d, oz + f[1] * d]; }
+            if (off) { const c = tr.ctl; c.lock = null; c.trail = { x: [c.x], z: [c.z], s: [0] }; c.s = 0; c.hw = 0; c.po = [0, 0]; c.push = true;
+              const key = Math.round(P.x * 4) + ',' + Math.round(P.z * 4) + ',' + Math.round(P.hdg) + '|' + placed.map(b => b.tr.key).join(',');
+              tr.phys = { key, off, ok: true }; tr.physOff = off; this.pushed = (this.pushed || 0) + 1;
+              const B = bodyOf(tr.dims, P.x + off[0], P.z + off[1], P.hdg); B.tr = tr; placed.push(B); tr._B = B; continue; } } }
+        tr.physOff = keep && (Math.abs(ox) + Math.abs(oz) > 1e-6) ? [ox, oz] : null; tr.phys = { key: 'lock', off: tr.physOff || [0, 0], ok: true };
+        const B = bodyOf(tr.dims, L.x, L.z, tr.disp.hdg); B.tr = tr; placed.push(B); tr._B = B; continue;
+      }
+      const base = bodyOf(tr.dims, P.x, P.z, P.hdg); base.tr = tr;
       const key = Math.round(P.x * 4) + ',' + Math.round(P.z * 4) + ',' + Math.round(P.hdg) + '|' + placed.map(b => b.tr.key).join(',');
       if (!tr.phys || tr.phys.key !== key || (!tr.phys.ok && this.frame % 100 === 0)) {
-        let o = this.seek(base, placed, gapOf, PHYS_RULES.SCATTER_M);
+        // (round 4, E6) the offset found before is kept while it is still valid - a new seek only when it no longer is
+        const prevOff = tr.phys && tr.phys.ok && tr.phys.key !== 'lock' ? tr.phys.off : null, Bp = prevOff ? bodyOf(base.T, base.x + prevOff[0], base.z + prevOff[1], base.hdg) : null;
+        if (Bp) Bp.tr = tr;
+        let o = Bp && this.valid(Bp, placed, gapOf) ? prevOff : this.seek(base, placed, gapOf, PHYS_RULES.SCATTER_M);
         if (!o) o = this.seek(base, placed, gapOf, PHYS_RULES.SEEK_MAX_M);
         tr.phys = { key, off: o || [0, 0], ok: !!o };
       }
@@ -166,7 +192,10 @@ export class GroundPhysics {
         if (o.tr && o.tr.stale && !o.tr.park && !(B.tr && B.tr.stale) && overlaps(B, o, 0)) { o.tr.staleOverrun = true; continue; }
         ov++; const vx = B.x - o.x, vz = B.z - o.z, l = Math.hypot(vx, vz) || 1; push[0] += vx / l; push[1] += vz / l;
       }
-      const decay = Math.exp(-dt / 3); cur[0] = cur[0] * decay + push[0] * dt * 1.5; cur[1] = cur[1] * decay + push[1] * dt * 1.5;
+      // (round 4, E7: the offset fades with the distance driven - 25 m - and at least over 30 s, not over 3 s of time: a 0.3-1 m offset of
+      // a body leaving its rest pose (the seek offset at the line-up point) faded under a slow take-off roll start and yawed the nose
+      // 5 deg on the centreline, 299.2 -> 294.4 -> 299.7 deg) [inf]
+      const decay = Math.exp(-Math.max(dt / 30, (tr.disp.gs || 0) * dt / 25)); cur[0] = cur[0] * decay + push[0] * dt * 1.5; cur[1] = cur[1] * decay + push[1] * dt * 1.5;
       const pl = Math.hypot(cur[0], cur[1]); if (pl > 6) { cur[0] *= 6 / pl; cur[1] *= 6 / pl; }
       tr.physOff = pl > 0.05 ? cur : null;
     }
