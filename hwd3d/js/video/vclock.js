@@ -13,8 +13,10 @@
 //   Math.random              -> a seeded PRNG (mulberry32): the drawables' animation seeds (placeholder.js /
 //       detailed.js `seed`) are then the same in every run.
 // The two clocks are decoupled on purpose: a time-lapse frame advances `wall` by k x dt (the engine and the shim follow
-// it, in sub-steps) but `perf` by one dt only, so the app's frame callback gets dt = the last sub-step and its own
-// per-frame state (prop / lights animation time simT, the 30-s environment refresh) runs at video rate.
+// it, in sub-steps) but `perf` by one VIDEO frame (1 / fps) only (js/video/director.js step), so the app's frame callback
+// gets dt = 1 / fps and its own per-frame state (prop / lights animation time simT, flap / gear lag, the 30-s environment
+// refresh) runs at video rate at every speed, ramps included; the director hands the engine inside that callback its own
+// sub-step instead (traffic.update / physics.resolve wrapped on the instances).
 // Nothing here talks to the network or writes anything; no identity passes through it.
 (function () {
   'use strict';

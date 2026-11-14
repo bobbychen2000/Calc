@@ -18,14 +18,16 @@
 //      fuselage / wing / gear-door skin point within +-0.6 m fore-aft on the same butt line +-5 cm, which bridges the
 //      wheel-well openings); only tyres may protrude, by at most the documented amount (PC12: POH, tyres protrude ~1 in
 //      = 25.4 mm; tolerance 10 mm), anything else <= 10 mm; also the lowest retracted point of the whole aircraft; and
-//      (fix round 3) upward: no gear vertex above the topmost upward-facing skin at its plan position (SF50: stowed link)
+//      (fix round 3) upward: no gear vertex above the topmost upward-facing skin at its plan position (SF50: stowed link);
+//      (iteration 3) PC-12: from below, no liner / gear area within the nose-gear housing's footprint (closed strut slot)
 //   7. light anchors: every light node the GLB names reaches model.lights (fix round 1: strobeTail / iceLight were
 //      dropped); the anti-collision lights drawn = the documented count; landing lights where the type has them
 //   8. registration panels: every field the builder wrote is kept (fix round 1: text_dir was dropped)
 //   9. traffic frame: js/aircraft/models.js frame = the measured model (5 mm), withModelFrame(gaDims(type)) hands traffic /
 //      ground physics the model's gear layout (fix round 1: gaDims' class rule was off by up to 0.72 m for the SF50)
 //  10. type-specific shape checks: SF50 upswept wing tip at the 38.7 ft span with flush lenses, nacelle fillets and a raised
-//      D inlet lip; PC-12 cabin window count, belly-fairing coverage of the wing and the flat 1.30 m cabin floor (geometry), and vs Pilatus drawing
+//      D inlet lip; PC-12 cabin window count, belly-fairing coverage of the wing, the flat 1.30 m cabin floor and nothing
+//      rising through it (geometry), and vs Pilatus drawing
 //      190.10.40.432 (local reference data, SKIP when absent): window / door stations and water lines, crown / keel /
 //      aft underside / half-breadth / body-plan sections, dorsal fin, winglet side view, wing front view, absolute heights
 //  11. the drawable (js/aircraft/detailed.js, Node with a stub WebGL context): every item carries the screen-door alpha in
@@ -33,7 +35,8 @@
 //      aircraft programs read uAlpha, spinning groups keep the aircraft's motion in their prevModel, CPU arrays released
 //  12. provenance: js/aircraft/models/SOURCES.json hashes = the files on disk (and = the builder's own record); every image
 //      in docs/phase3 has a caption in docs/phase3/SOURCES.json, and every caption that claims to show the current model
-//      names the current file hash (fix round 1: stills and SOURCES of a superseded SF50 build were presented as current)
+//      names the current file hash (fix round 1: stills and SOURCES of a superseded SF50 build were presented as current);
+//      no raster-reading tokens (px/m, px/in, <n> px, <n> dpi) in the Phase 3a write-ups, builders, metas, captions (decision (b))
 // Checks against digitised manufacturer-drawing readings (Pilatus / Cirrus AFM) use the gitignored local reference files
 // (loadLocalRef below) and print SKIP when they are absent - a clean clone never fails on them (fix round 3, decision (b)).
 // Exit code 1 when a check fails. Read-only: no file under pc12/ or js/ is written.
@@ -281,6 +284,43 @@ for (const [type, e] of Object.entries(MODELS)) {
   let low = { y: Infinity };
   for (const g of mp.groups) { const d = g.opaque; if (!d) continue; const Mx = g.mover >= 0 ? P0[g.mover] : null; for (let i = 0; i < d.pos.length; i += 3) { const v = Mx ? xform(Mx, [d.pos[i], d.pos[i + 1], d.pos[i + 2]]) : [d.pos[i], d.pos[i + 1], d.pos[i + 2]]; if (v[1] < low.y) low = { y: v[1], part: g.key, at: v.map(r3) }; } }
   info(type, 'gear retracted: lowest point (report)', { lowest_y_m: r3(low.y), part: low.part, at: low.at });
+  // PC-12 nose-gear housing closed with the gear up (fix round 3 iteration 3, finding F3; geometry only): seen from below
+  // within the housing's plan footprint (1 cm cells, gear 0), no zinc-chromate liner and no gear part is the lowest surface
+  // over an area - a bad cell whose four neighbours are bad too (an opening >= 3 cm across) fails; door gaps (4 mm, lines
+  // one cell wide) are reported only. Iteration 2 failed it: its open strut slot (STA 2.905-3.135, +-0.08 m) showed the
+  // bay liner (67 cells) and the stowed strut (143 cells)
+  if (type === 'PC12' && mp.groups.some(q => q.key === 'nose_gear_housing')) {
+    const H = mp.groups.find(q => q.key === 'nose_gear_housing').opaque.pos; let hx0 = Infinity, hx1 = -Infinity, hz = 0;
+    for (let i = 0; i < H.length; i += 3) { hx0 = Math.min(hx0, H[i]); hx1 = Math.max(hx1, H[i]); hz = Math.max(hz, Math.abs(H[i + 2])); }
+    const C = 0.01, nx = Math.floor((hx1 - hx0) / C), nz = Math.floor(2 * hz / C), N = nx * nz;
+    const lowY = new Float64Array(N).fill(Infinity), bad = new Uint8Array(N), who = new Array(N).fill(null);
+    for (const g of mp.groups) {
+      const d = g.opaque; if (!d) continue; const Mx = g.mover >= 0 ? P0[g.mover] : null, gearPart = gearMover(g.mover);
+      const V = (i) => Mx ? xform(Mx, [d.pos[3 * i], d.pos[3 * i + 1], d.pos[3 * i + 2]]) : [d.pos[3 * i], d.pos[3 * i + 1], d.pos[3 * i + 2]];
+      for (let t = 0; t < d.idx.length; t += 3) {
+        const A = V(d.idx[t]), B = V(d.idx[t + 1]), Cc = V(d.idx[t + 2]);
+        const i0 = Math.max(0, Math.ceil((Math.min(A[0], B[0], Cc[0]) - hx0) / C - 0.5)), i1 = Math.min(nx - 1, Math.floor((Math.max(A[0], B[0], Cc[0]) - hx0) / C - 0.5));
+        const j0 = Math.max(0, Math.ceil((Math.min(A[2], B[2], Cc[2]) + hz) / C - 0.5)), j1 = Math.min(nz - 1, Math.floor((Math.max(A[2], B[2], Cc[2]) + hz) / C - 0.5));
+        if (i1 < i0 || j1 < j0) continue;
+        const den = (B[2] - Cc[2]) * (A[0] - Cc[0]) + (Cc[0] - B[0]) * (A[2] - Cc[2]); if (Math.abs(den) < 1e-12) continue;
+        const isBad = gearPart || m.materials[d.mat[d.idx[t]]].name === 'zinc_chromate';
+        for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+          const x = hx0 + (i + 0.5) * C, z = -hz + (j + 0.5) * C;
+          const l1 = ((B[2] - Cc[2]) * (x - Cc[0]) + (Cc[0] - B[0]) * (z - Cc[2])) / den, l2 = ((Cc[2] - A[2]) * (x - Cc[0]) + (A[0] - Cc[0]) * (z - Cc[2])) / den, l3 = 1 - l1 - l2;
+          if (l1 < -1e-9 || l2 < -1e-9 || l3 < -1e-9) continue;
+          const y = l1 * A[1] + l2 * B[1] + l3 * Cc[1], k = i * nz + j;
+          if (y < lowY[k]) { lowY[k] = y; bad[k] = isBad ? 1 : 0; who[k] = g.key; }
+        }
+      }
+    }
+    const og = m.originGl[2]; let nBad = 0, nInner = 0; const byPart = {}, ext = { sta: [Infinity, -Infinity], bl: [Infinity, -Infinity] };
+    for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) { const k = i * nz + j; if (!bad[k]) continue; nBad++; byPart[who[k]] = (byPart[who[k]] || 0) + 1;
+      const sta = og - (hx0 + (i + 0.5) * C), bl = -hz + (j + 0.5) * C; ext.sta = [Math.min(ext.sta[0], sta), Math.max(ext.sta[1], sta)]; ext.bl = [Math.min(ext.bl[0], bl), Math.max(ext.bl[1], bl)];
+      if (i > 0 && i < nx - 1 && j > 0 && j < nz - 1 && bad[k - nz] && bad[k + nz] && bad[k - 1] && bad[k + 1]) nInner++; }
+    check(type, 'gear retracted: nose-gear housing closed from below (no liner / gear area in its footprint)', nInner === 0,
+      { cells_1cm: N, bad_cells: nBad, bad_cells_inside_an_area: nInner, by_part: byPart, extent: nBad ? { sta: ext.sta.map(r3), bl: ext.bl.map(r3) } : null,
+        footprint_sta: [r3(og - hx1), r3(og - hx0)], footprint_half_width_m: r3(hz), note: 'bad = the lowest surface is zinc_chromate or a gear / brace part; single-cell lines are door gaps (4 mm)' });
+  }
   // ---- 7. light anchors: nothing the GLB names is dropped; the documented anti-collision count is drawn
   const { json } = parseGLB(buf);
   const named = new Set(); for (const n of json.nodes || []) { const e = n.extras && n.extras.light; if (e) named.add(typeof e === 'string' ? e : e.kind); }
@@ -464,6 +504,36 @@ for (const [type, e] of Object.entries(MODELS)) {
       check('PC12', 'cabin floor: one flat panel, sourced 1.30 m wide (2 %), no cabin item below its top; meta floor-width check within 2 %', flat <= 0.002 && Math.abs(width - 1.30) <= tol && n === 0 && metaOK,
         { floor_top_wl: r3(yTop), top_face_spread_mm: Math.round(flat * 10000) / 10, width_at_sta6_m: r3(width), sourced_m: 1.30, tolerance_m: r3(tol), cabin_vertices_below_floor_top: n, worst_mm: Math.round(worst * 1000), worst_at_sta_bl_wl: at,
           meta_check: mc ? { check: mc.check, model: mc.model, delta_mm: mc.delta_mm } : 'missing', src: 'pc12/CLAUDE.md sourced facts: cabin 5.16 x 1.52 x 1.47 m, floor 1.30 m' });
+      // F4 (iteration 3): nothing else rises through the carpet - inside the floor's plan footprint (2 cm cells, rest pose) no
+      // opaque surface of a non-cabin part lies between the floor top and 0.15 m above it. Iteration 2 failed it: the wing's
+      // carry-through upper skin came up to 14 mm through the carpet over STA 5.80-6.46, |BL| <= 0.64 (0.74 m2, 0.32 m2 in the aisle)
+      {
+        const C2 = 0.02, fx = face.map(v => v[0]), fz = face.map(v => v[2]), X0 = Math.min(...fx), X1 = Math.max(...fx), Z0 = Math.min(...fz), Z1 = Math.max(...fz);
+        const hit = new Map(); let tris = 0;
+        for (const q of mp.groups) {
+          if (q.key === 'cabin_interior' || !q.opaque) continue; const P = q.opaque.pos, I = q.opaque.idx;
+          for (let t = 0; t < I.length; t += 3) {
+            const A = [P[3 * I[t]], P[3 * I[t] + 1], P[3 * I[t] + 2]], B = [P[3 * I[t + 1]], P[3 * I[t + 1] + 1], P[3 * I[t + 1] + 2]], Cc = [P[3 * I[t + 2]], P[3 * I[t + 2] + 1], P[3 * I[t + 2] + 2]];
+            if (Math.max(A[1], B[1], Cc[1]) <= yTop || Math.min(A[1], B[1], Cc[1]) > yTop + 0.15) continue;
+            const i0 = Math.ceil((Math.max(X0, Math.min(A[0], B[0], Cc[0])) - X0) / C2), i1 = Math.floor((Math.min(X1, Math.max(A[0], B[0], Cc[0])) - X0) / C2);
+            const j0 = Math.ceil((Math.max(Z0, Math.min(A[2], B[2], Cc[2])) - Z0) / C2), j1 = Math.floor((Math.min(Z1, Math.max(A[2], B[2], Cc[2])) - Z0) / C2);
+            if (i1 < i0 || j1 < j0) continue; tris++;
+            const den = (B[2] - Cc[2]) * (A[0] - Cc[0]) + (Cc[0] - B[0]) * (A[2] - Cc[2]); if (Math.abs(den) < 1e-12) continue;
+            for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+              const x = X0 + i * C2, z = Z0 + j * C2;
+              const l1 = ((B[2] - Cc[2]) * (x - Cc[0]) + (Cc[0] - B[0]) * (z - Cc[2])) / den, l2 = ((Cc[2] - A[2]) * (x - Cc[0]) + (A[0] - Cc[0]) * (z - Cc[2])) / den, l3 = 1 - l1 - l2;
+              if (l1 < -1e-9 || l2 < -1e-9 || l3 < -1e-9 || !isFinite(highAt(x, z))) continue;
+              const h = l1 * A[1] + l2 * B[1] + l3 * Cc[1] - yTop; if (h <= 0.0005 || h > 0.15) continue;
+              const k = i + ',' + j, o = hit.get(k); if (!o || h > o.h) hit.set(k, { h, part: q.key, at: [r3(STA(x)), r3(z)] });
+            }
+          }
+        }
+        const hv = [...hit.values()], byP = {}; for (const v of hv) byP[v.part] = (byP[v.part] || 0) + 1;
+        const worstH = hv.reduce((a, v) => (v.h > a.h ? v : a), { h: 0 }), aisle = hv.filter(v => Math.abs(v.at[1]) < 0.25).length;
+        check('PC12', 'cabin floor: no other part rises through the carpet (floor footprint, up to 0.15 m above its top)', hv.length === 0,
+          { cells_2cm: hv.length, area_m2: Math.round(hv.length * C2 * C2 * 1000) / 1000, aisle_cells: aisle, by_part: byP, worst_mm: Math.round(worstH.h * 10000) / 10, worst_at_sta_bl: worstH.at || null,
+            candidate_triangles: tris, floor_top_wl: r3(yTop) });
+      }
     }
     if (!D) {
       for (const name of ['cabin window / door / exit stations and water lines vs Pilatus drawing 190.10.40.432 + MBP p.5 (+-0.03 m)', 'wing front-view silhouette (dihedral, winglet) vs Pilatus drawing 190.10.40.432',
@@ -679,6 +749,22 @@ for (const [type, e] of Object.entries(MODELS)) {
   check('provenance', 'docs/phase3 in docs/ATTRIBUTION.md and in tools/check_airport.py SOURCES coverage', plumb.attribution_row && plumb.check_airport_scope,
     { ...plumb, missing: Object.values(plumb).filter(v => !v).length, closed: 'fix round 3 (finding V1): docs/ATTRIBUTION.md Phase 3 row, check_airport.py scans docs/phase3' });
   check('provenance', 'docs/phase3_*.md name the current model hashes (or are marked SUPERSEDED)', mdBad.length === 0, mdBad.length ? mdBad : { result: 'every write-up current or marked', marked_superseded: mdMarked });
+  // decision (b) token grep (fix round 3 iteration 3, finding F1): no raster-registration / digitising token (px/m, px/in,
+  // "<n> px", "<n> dpi") in the Phase 3a write-ups, the model builders and facts, the model metas / SOURCES and the image
+  // captions - the readings live in refs/cache/local/models/. Iteration 2 missed docs/phase3_render.md (its D3 quoted the raster
+  // resolution and registration scale). docs/phase3_video.md (Phase 3b: screen pixels of the video frames) is not in scope
+  {
+    const TOK = /px\/m|px\/in|\b\d+(\.\d+)? ?px\b|\b\d+[- ]?dpi\b/;
+    const walk = (d) => fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]) : [];
+    const files = ['docs/phase3_models.md', 'docs/phase3_sf50.md', 'docs/phase3_render.md', 'docs/phase3/SOURCES.json'].map(f => path.join(HWD, f))
+      .concat(walk(path.join(HWD, 'tools/models')).filter(f => /\.(py|md|mjs|json)$/.test(f)))
+      .concat(walk(path.join(HWD, 'js/aircraft/models')).filter(f => /\.json$/.test(f))).filter(f => fs.existsSync(f));
+    const hits = [];
+    const SELF = /\(px\/m, px\/in|const TOK = /;   // this check's own lines (its token list) in this file
+    for (const f of files) fs.readFileSync(f, 'utf8').split('\n').forEach((l, i) => { const mm = l.match(TOK); if (mm && !SELF.test(l)) hits.push(`${path.relative(HWD, f)}:${i + 1}: ${mm[0]}`); });
+    check('provenance', 'no digitised raster readings (px/m, px/in, <n> px, <n> dpi) in the committed Phase 3a files (decision (b))', hits.length === 0,
+      hits.length ? hits.slice(0, 20) : { files_scanned: files.length, tokens: String(TOK) });
+  }
 }
 
 // ---- 13. a synthetic glb exercising the generic paths the pc12 file does not use (FLOAT positions in an interleaved

@@ -1,10 +1,10 @@
 {
  "_provenance": {
-  "source": "pc12's own builders (pc12/model, pc12/cad @ bd22c605c710972676f5ca82fc55ab1c82fac85e, unchanged files) run by hwd3d/tools/models/pc12/build_pc12_variant.py with the override set 'fr3' (docs/phase3_models.md section 4), output out/pc12_fr3/ (gitignored, rebuilt bit-for-bit by: python3 -B tools/models/pc12/build_pc12_variant.py --set=fr3)",
-  "commit": "bd22c605c710972676f5ca82fc55ab1c82fac85e",
-  "commit_date": "2026-11-13T20:58:55+00:00",
-  "glb_sha256": "6e3493299108b23235d0ec8534bc1a2443c403824b720427b4ab739fe649cf51",
-  "meta_sha256": "9e5cdc6f336712e62ead2f2c06f0b8c0f4aceb32c2757eb5862945e7076f5ec4",
+  "source": "pc12's own builders (pc12/model, pc12/cad @ b0d55c116e7efb103f89b358b065f46a767a5c16, unchanged files) run by hwd3d/tools/models/pc12/build_pc12_variant.py with the override set 'fr3' (docs/phase3_models.md section 4), output out/pc12_fr3/ (gitignored, rebuilt bit-for-bit by: python3 -B tools/models/pc12/build_pc12_variant.py --set=fr3)",
+  "commit": "b0d55c116e7efb103f89b358b065f46a767a5c16",
+  "commit_date": "2026-11-14T00:02:49+00:00",
+  "glb_sha256": "957b3c4e9ab17c4a6da51bc0fdcaeab71dbe98fc44e404630dbd6d39d7e9e01c",
+  "meta_sha256": "e307c9b26257135fea63e0e589423bb2c62a7a79e4f56d97cad9e68efc424795",
   "licence": "own work (this repository)",
   "variant": {
    "set": "fr3",
@@ -567,11 +567,21 @@
      "DZ": 0.121,
      "KINK_BL": 0.85,
      "GEAR_DZ": 0.104,
+     "CARRY": {
+      "y0": 0.66,
+      "y1": 0.75,
+      "clear": 0.005
+     },
      "DIHEDRAL_deg": [
       4.5,
       6.2
      ],
-     "Z_QC0": 0.9582016246900535
+     "Z_QC0": 0.9582016246900535,
+     "carry_through": {
+      "cap_wl": 1.209,
+      "vertices_lowered": 296,
+      "max_lowered_mm": 48.6
+     }
     },
     "gear": {
      "MAIN_TRUNNION": [
@@ -602,7 +612,8 @@
       "x1": 3.135,
       "hy": 0.08,
       "r": 0.03
-     }
+     },
+     "notch_top": 1.15
     },
     "belly": {
      "width": [
@@ -762,7 +773,7 @@
     }
    },
    "builder": "hwd3d/tools/models/pc12/build_pc12_variant.py",
-   "builder_sha256": "93485d0a1651183eb8147a93397259fb76f23a05acc6a167586cee168a8f52c7",
+   "builder_sha256": "e4bf5221ac59826a8461e0dfd2347c3b4ed1c0156137ecaa48a0d20ce6ae5712",
    "pc12_sources_tree_sha256": "04893879d350d732abc09424959cffba786ccd7cbf2bff0c6c85e78005acaa01",
    "pc12_sources_dirty": false,
    "pc12_sources": {
@@ -789,10 +800,10 @@
     "pc12/model/powerplant.py": "7d09525cdef2f5d2b240c06c5676fc0e0a1637dcc84515dd038b21178d168532",
     "pc12/model/wing.py": "ce5cbfe415365860600acf8b0b596777f62280efe8779915723989749646c227"
    },
-   "built": "2026-11-13T23:24:12Z"
+   "built": "2026-11-14T00:21:32Z"
   },
   "imported_by": "hwd3d/tools/models/pc12/import_pc12.mjs",
-  "imported": "2026-11-13",
+  "imported": "2026-11-14",
   "facts": "dimensions and configuration facts with their sources: pc12/CLAUDE.md \"Sourced facts\" (Pilatus, POH NGX, EASA TCDS, Jane's); contours, airfoils, interior and livery are estimated / reconstructed (\"Estimated / reconstructed\" there)",
   "livery": "original neutral scheme (pc12/model/livery.py: white, cool-grey belly, navy swoosh, brass pinstripe); no registration, no logo"
  },
@@ -940,7 +951,7 @@
   "excluded_parts": [
    "structure"
   ],
-  "tris_drawn": 423853
+  "tris_drawn": 427257
  },
  "checks": [
   {
@@ -1017,10 +1028,10 @@
   "z_qc0": 0.9582016246900535
  },
  "stats": {
-  "triangles": 454193,
-  "vertices": 276247,
-  "glb_bytes": 6201164,
-  "parts": 70
+  "triangles": 457597,
+  "vertices": 278795,
+  "glb_bytes": 6255744,
+  "parts": 72
  },
  "parts": [
   {
@@ -1075,7 +1086,7 @@
    "name": "Nose-gear housing (below the cockpit floor)",
    "group": "Fuselage",
    "qty": 1,
-   "note": "Housing for the retracted nose wheel, doors and a strut slot in its floor",
+   "note": "Housing for the retracted nose wheel, doors and a strut slot (with its own doors) in its floor",
    "tris": 6682,
    "materials": [
     "paint_belly"
@@ -1190,7 +1201,7 @@
    "group": "Wing",
    "qty": 1,
    "note": "2024/7075 two-spar box, integral tank ribs 3-16",
-   "tris": 10464,
+   "tris": 11184,
    "materials": [
     "deice_boot",
     "paint_white"
@@ -1200,7 +1211,8 @@
     "tip chord": "1,093 mm, LS(1)-0313",
     "MAC": "1,700 mm, LEMAC STA 5,325",
     "dihedral": "6.2 deg (fitted to Pilatus drawing 190.10.40.432 (MBP sheet 1) front view), flat inboard of BL 0.85 [inf]",
-    "incidence": "+2.0 root / -1.0 tip (est.)"
+    "incidence": "+2.0 root / -1.0 tip (est.)",
+    "carry-through": "upper skin under the cabin floor (WL 1.209) inboard of BL 0.66 [inf]"
    }
   },
   {
@@ -1209,7 +1221,7 @@
    "group": "Wing",
    "qty": 1,
    "note": "2024/7075 two-spar box, integral tank ribs 3-16",
-   "tris": 10464,
+   "tris": 11184,
    "materials": [
     "deice_boot",
     "paint_white"
@@ -1219,7 +1231,8 @@
     "tip chord": "1,093 mm, LS(1)-0313",
     "MAC": "1,700 mm, LEMAC STA 5,325",
     "dihedral": "6.2 deg (fitted to Pilatus drawing 190.10.40.432 (MBP sheet 1) front view), flat inboard of BL 0.85 [inf]",
-    "incidence": "+2.0 root / -1.0 tip (est.)"
+    "incidence": "+2.0 root / -1.0 tip (est.)",
+    "carry-through": "upper skin under the cabin floor (WL 1.209) inboard of BL 0.66 [inf]"
    }
   },
   {
@@ -1818,12 +1831,36 @@
    "info": {}
   },
   {
+   "id": "gear_door_NSR",
+   "name": "Nose-gear strut-slot door (right)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Composite door: closes the strut slot with the gear up [inf]",
+   "tris": 980,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
+   "id": "gear_door_NSL",
+   "name": "Nose-gear strut-slot door (left)",
+   "group": "Landing gear",
+   "qty": 1,
+   "note": "Composite door: closes the strut slot with the gear up [inf]",
+   "tris": 980,
+   "materials": [
+    "paint_white"
+   ],
+   "info": {}
+  },
+  {
    "id": "gear_bays",
    "name": "Wheel wells (zinc-chromate liners)",
    "group": "Landing gear",
    "qty": 1,
    "note": "Primed aluminium liners",
-   "tris": 522,
+   "tris": 526,
    "materials": [
     "zinc_chromate"
    ],
@@ -2158,6 +2195,18 @@
    "id": "gear_door_NL",
    "kind": "gear_door",
    "open": -85
+  },
+  {
+   "id": "gear_door_NSR",
+   "kind": "gear_door",
+   "open": 85,
+   "seq": "down"
+  },
+  {
+   "id": "gear_door_NSL",
+   "kind": "gear_door",
+   "open": -85,
+   "seq": "down"
   },
   {
    "id": "brace_main_R_up",

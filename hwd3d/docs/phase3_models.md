@@ -1,11 +1,11 @@
 # Phase 3 (M2) — detailed-model runtime and the PC-12
 
-Status 2026-11-13, after **review fix round 3, iteration 2** (section 13; earlier rounds: sections 10–12). Package M2 of
+Status 2026-11-14, after **review fix round 3, iteration 3** (section 14; earlier rounds: sections 10–13). Package M2 of
 Phase 3a: the glTF runtime for the hwd3d renderer (parser, kinematics, a drawable with the GaAircraft interface, a registry),
 the PC-12 built from `pc12/`'s own builders, a dev viewer with headless stills, and Node tests. The SF50 (package M1,
 `tools/models/sf50/**`, `docs/phase3_sf50.md`) uses the same conventions. **Every test of this page is of SF50 build sha256
-49242e41… (7,051,212 B; fix round 3, `docs/phase3_sf50.md`) and of the fix-round-3-iteration-2 PC-12 build (sha256
-6e349329…, 6,201,164 B: pc12's own builders with the override set 'fr3', section 4)**; each image's caption in
+49242e41… (7,051,212 B; fix round 3, `docs/phase3_sf50.md`) and of the fix-round-3-iteration-3 PC-12 build (sha256
+957b3c4e…, 6,255,744 B: pc12's own builders with the override set 'fr3', section 4)**; each image's caption in
 `docs/phase3/SOURCES.json` names the model hash it shows (stills of earlier builds are marked superseded there), and
 `tools/models/test_models.mjs` fails when a caption that claims the current model names another hash, or when
 `js/aircraft/models/SOURCES.json` disagrees with the files (the first round presented a superseded SF50 build, 1806b9ea…,
@@ -19,7 +19,7 @@ as the tested one). Nothing here is wired into `js/live/**`: that is Phase 3b (e
 | `js/aircraft/kinematics.js` | pivots → animation (Node-pure): gear + braces + doors, Fowler flaps, ailerons + tabs, elevators, rudder, ruddervators, stabiliser trim, propeller spin + blade pitch |
 | `js/aircraft/detailed.js` | `DetailedAircraft` (GaAircraft interface + `setFlaps`, `setControls`), own programs `acobj` / `acglass` |
 | `js/aircraft/models.js` | registry ICAO type → `{url, meta, groundGl, lightAnchors, frame}` (PC12, SF50), `MODEL_LOAD_OPTS`, `loadModel`, `createAircraft` (placeholder fallback), `withModelFrame` (traffic frame of a detailed type) |
-| `js/aircraft/models/pc12.glb` | build of pc12's unchanged builders with the override set `fr3` (fix round 3 iteration 2: sha256 6e349329…; fix round 3: c46fe4fb…; fix round 2, set `fr2`: 9ccfd9a5…); until fix round 1 an unchanged copy of `pc12/out/pc12.glb` @ f097de2 (87731cce…) |
+| `js/aircraft/models/pc12.glb` | build of pc12's unchanged builders with the override set `fr3` (fix round 3 iteration 3: sha256 957b3c4e…; iteration 2: 6e349329…; fix round 3: c46fe4fb…; fix round 2, set `fr2`: 9ccfd9a5…); until fix round 1 an unchanged copy of `pc12/out/pc12.glb` @ f097de2 (87731cce…) |
 | `tools/models/pc12/build_pc12_variant.py` | (fix round 2) runs pc12's builders (python3 -B, nothing written into pc12/) with a documented override set, writes `out/pc12_<set>/` (gitignored) with the pc12 commit, a dirty flag and the sha256 of every pc12 source + of itself; `--set=none` reproduces `pc12/out/pc12.glb` bit for bit (checked: 87731cce…) |
 | `js/aircraft/models/pc12_meta.json` | subset of the build's meta (BOM, checks, wing, stats; since fix round 3 `out/pc12_fr3/pc12_meta.json`) + provenance (incl. `_provenance.variant`: overrides, builder and pc12-source hashes) + the frame measured with the runtime's own options |
 | `js/aircraft/models/SOURCES.json` | provenance of every model file (pc12 from the import; SF50 from its builder's `_provenance`, hash re-computed; refreshed after every SF50 build with `--sources-only`; checked by the test) |
@@ -33,7 +33,7 @@ as the tested one). Nothing here is wired into `js/live/**`: that is Phase 3b (e
 Run:
 ```bash
 python3 -B tools/models/pc12/build_pc12_variant.py --set=fr3   # 2.5 s -> out/pc12_fr3/ (gitignored); bit-identical rebuilds
-node tools/models/pc12/import_pc12.mjs --variant=out/pc12_fr3     # the current PC-12 (fix round 3 iteration 2, 6e349329…)
+node tools/models/pc12/import_pc12.mjs --variant=out/pc12_fr3     # the current PC-12 (fix round 3 iteration 3, 957b3c4e…)
 node tools/models/pc12/import_pc12.mjs                  # plain pc12/out copy (committed state only; before fix round 2)
 node tools/models/pc12/import_pc12.mjs --sources-only   # after EVERY SF50 rebuild (SOURCES.json hashes)
 node tools/models/test_models.mjs --json=out/test_models.json
@@ -81,12 +81,13 @@ its plain PBR path when the aircraft programs are not installed. `alphaMode: BLE
 mesh per group.
 
 **Groups.** One mesh per *mover* (a part with a pivot; parts below it ride on it) plus one `static` mesh, each split
-opaque / glass, all baked in the local frame at rest (gear down, surfaces neutral, doors closed). PC-12: 31 groups
-(static 286,269 opaque + 31,735 glass triangles; door_airstair, door_cargo, 2 flaps, 2 ailerons, 2 aileron tabs, rudder,
-rudder tab, stabiliser, 2 elevators, propeller hub, 5 blades, 3 gear legs, 2 nose doors, 6 brace links). The pc12
+opaque / glass, all baked in the local frame at rest (gear down, surfaces neutral, doors closed). PC-12: 33 groups
+(static 287,713 opaque + 31,735 glass triangles; door_airstair, door_cargo, 2 flaps, 2 ailerons, 2 aileron tabs, rudder,
+rudder tab, stabiliser, 2 elevators, propeller hub, 5 blades, 3 gear legs, 2 nose doors, 2 strut-slot doors (iteration 3),
+6 brace links). The pc12
 `structure` part (frames / stringers / spars, inside the skins; the pc12 viewer shows it only in X-ray) is excluded by
-the registry; everything else is drawn: **423,853 triangles, 257,009 vertices** (fix round 3 iteration 2, 70 parts; fix
-round 2: 410,834 / 250,968; fix round 1: 422,663 / 259,430) per type (shared by every aircraft of the type). SF50: 22 groups, 463,121 triangles, 284,128 vertices.
+the registry; everything else is drawn: **427,257 triangles, 259,557 vertices** (fix round 3 iteration 3, 72 parts;
+iteration 2: 423,853 / 257,009, 70 parts; fix round 2: 410,834 / 250,968; fix round 1: 422,663 / 259,430) per type (shared by every aircraft of the type). SF50: 22 groups, 463,121 triangles, 284,128 vertices.
 
 **Light anchors** (drawn kinds, `glb.js KINDS`: `navL navR tail beaconTop beaconBot strobeL strobeR strobeTail landL landR
 taxi`; any other kind a model names, e.g. the SF50's `iceLight`, is kept in `model.lights`, not drawn), in order:
@@ -137,7 +138,7 @@ local posed; parents first). `state = {gear 0..1 (1 down), flaps deg, rotorAng r
 | `trim` | `stabTrim` within `range` (PC-12 −4 / +2: LE down = nose up) |
 | `door` | `open` (rad) × eased door fraction |
 | `gear` | `retract` (deg) × `gearSequence(gear).leg` |
-| `gear_door` | `open` (deg) × door; `seq: 'transit'` (default; PC-12 nose clamshells: open only between the locks) or `'down'` (open whenever the leg is out; SF50 nose doors) |
+| `gear_door` | `open` (deg) × door; `seq: 'transit'` (default; PC-12 nose clamshells: open only between the locks) or `'down'` (open whenever the leg is out; SF50 nose doors, PC-12 strut-slot doors since fix round 3 iteration 3) |
 | `brace` | upper link about A, lower link about the knee; B = `B0` carried by the gear leg's pose; knee = `solveKnee` (port of `pc12/model/brace.py`) on the `bend` side |
 
 Sign convention of every surface: + = trailing edge down (toward the surface's lower side); since fix round 1 the test
@@ -255,9 +256,9 @@ a build of **pc12's own, unchanged builders** (pc12/model, pc12/cad @ HEAD; `git
 `tools/models/pc12/build_pc12_variant.py` with a documented override set (module constants and a few builder functions
 replaced before the build; nothing written into `pc12/`, Python run with `-B`), output in the gitignored `out/pc12_<set>/`,
 imported with `node tools/models/pc12/import_pc12.mjs --variant=out/pc12_<set>`. **Current: set `fr3` as revised in review fix
-round 3 iteration 2, `js/aircraft/models/pc12.glb` sha256 6e349329…** (fix round 3: c46fe4fb…; fix round 2: `fr2`,
-9ccfd9a5…). The `none` set still reproduces `pc12/out/pc12.glb` bit for bit (87731cce…) and `fr3` rebuilds bit-identically
-(6e349329… twice), so the overrides are the only difference. Provenance in `pc12_meta.json` `_provenance.variant` and `SOURCES.json`: the override values, the
+round 3 iteration 3, `js/aircraft/models/pc12.glb` sha256 957b3c4e…** (iteration 2: 6e349329…; fix round 3: c46fe4fb…; fix
+round 2: `fr2`, 9ccfd9a5…). The `none` set still reproduces `pc12/out/pc12.glb` bit for bit (87731cce…, re-checked in
+iteration 3) and `fr3` rebuilds bit-identically (957b3c4e… twice), so the overrides are the only difference. Provenance in `pc12_meta.json` `_provenance.variant` and `SOURCES.json`: the override values, the
 builder's sha256, the sha256 of every pc12 source it ran and their tree hash, `pc12_sources_dirty: false`; the test fails if
 any of them changes on disk. pc12's own method (drawings first, owner review) applies to `pc12/`; the overrides are
 hwd3d's corrections, proposed to the pc12 owner for adoption. Livery: pc12's original neutral scheme (white, cool-grey belly,
@@ -272,8 +273,8 @@ lines, residuals < 0.05 mm on the sheet; station from the spinner tip at STA 0.3
 on which both tyres stand), plan view, front view (track dimension, WL 0 = the tyre bottoms; its propeller disc then sits on
 the side view's prop axis) and the body-plan sections EF2 … FR40 (same scale; their common reference line is the side view's
 WL reference, so the FR16-30 section spans exactly the side view's keel-to-crown). Starboard windows: MBP p.5 livery sheet
-(fix round 2; the two Pilatus documents disagree on the starboard side, the livery is used). **Owner decision (b),
-2026-11-13 (orchestrator, under the owner's delegation; the owner may overrule): the digitised readings and the
+(fix round 2; the two Pilatus documents disagree on the starboard side, the livery is used). **Decision (b), 2026-11-13
+(orchestrator, under the owner's delegation; the owner may overrule; `docs/PLAN.md` §6b): the digitised readings and the
 registration numbers are not committed.** They live in the gitignored `refs/cache/local/models/pilatus_pc12_meas.json`
 (written by the local `refs/cache/local/models/tools/measure_pc12_mbp.py --pdf <the PDF>`, also gitignored; PDF sha256 in the
 file); `tools/models/test_models.mjs` compares the model with it and prints SKIP when it is absent (a clean clone never
@@ -296,7 +297,12 @@ fails). The builder holds only the fitted model parameters (knots, stations, siz
   seat rails 65 mm and ledges 40 mm under its top, the port ledge across both doorways). `pc12/test/fit_check.py`'s check
   passes on the build (interior and engine inside the skin). pc12's floor-width proxy (OML at WL 1.12 − 2 × 45 mm) does not
   hold for the flatter section: the meta's check measures the floor panel as built (1.300 m) and records a 2 % tolerance,
-  which `tools/models/test_models.mjs` enforces.
+  which `tools/models/test_models.mjs` enforces. **Carry-through under the floor (iteration 3, finding F4)**: the raised
+  wing's upper skin came up to 14 mm through the carpet (STA 5.80–6.46, |BL| ≤ 0.64, 0.74 m², 0.32 m² of it in the aisle);
+  inside the fuselage the wing's upper skin and pc12's spar tops (structure) are now held 5 mm under the floor panel's
+  underside (WL 1.209 = floor top 1.244 − 30 mm panel − 5 mm) inboard of BL 0.66, blending linearly back to the unchanged
+  wing by BL 0.75 (extra skin stations at BL 0.66 / 0.705 / 0.75), inside the fuselage side (OML BL ≈ 0.77 at that
+  height), so nothing changes outside [inf: structure]; 296 vertices lowered, by up to 48.6 mm.
 - **Cockpit glazing**: windshield plan outline and A-pillar line, side window (a rounded polygon) fitted to the drawing's
   side and plan views; the PRO has no pilot DV window (the NGX drawing shows one: not modelled); fwd / centre skin joint
   moved to STA 4.42 so the side window lies in the forward skin.
@@ -316,7 +322,18 @@ fails). The builder holds only the fitted model parameters (knots, stations, siz
   the drawn one so the bay opening lies on the flat floor and the end wall no longer coincides with the bay liner [inf], the
   doors follow the curved floor, and a slot (STA 2.905–3.135, ±0.08 m) through the housing floor and the doors' forward
   inner corners lets pc12's strut and taxi lamp pass with the gear down (fix round 3: 104 edge crossings at gear 1);
-  the liner's lower edge sits 3 mm inside the housing skin (fix round 3: 6 mm below it, a lime line).
+  the liner's lower edge sits 3 mm inside the housing skin (fix round 3: 6 mm below it, a lime line). **Iteration 3
+  (finding F3)**: the slot was a permanent hole - with the gear up the zinc-chromate liner and the stowed strut showed
+  through it from below. Two **strut-slot doors** (`gear_door_NSL` / `gear_door_NSR`: the slot outline less 4 mm, split at
+  the centre line, 18 mm solid on the housing's curved floor) now close it with the gear up; hinged on their outer edges
+  (BL ±0.076), they open 85° whenever the leg is out of the well (pivot `seq: 'down'`, like the SF50's nose doors) and hang
+  beside the strut (nearest strut vertex 8.6 mm away at gear 1, 12 mm at gear 0.75; no crossing) [inf: the PC-12's slot closure is not documented; POH: the nose gear is "enclosed by
+  doors"]. The clamshells' notch is now the slot outline itself (4 mm from the slot doors, as the doors are from the bay
+  opening). The bay liner's front wall (STA 3.02) gets a notch over the slot width up to WL 1.15, so neither the closed slot
+  doors nor the strut (gear down; pc12's own crossing, 90 edges at gear 1) pass through it. All four nose doors hinge on
+  their outer face (pc12 / iteration 2: mid-thickness, so the hinge-side edge swung 9 mm outboard into the housing floor
+  while open in transit: 876 edge crossings at gear 0.75 / 0.5). Strut, braces, doors, housing and liner: 0 crossings at
+  gear 1 / 0.75 / 0.5 / 0.25 / 0 (`out/fr3i3/probe/edge_hits.py`, both directions).
 - **Belly fairing (finding P1)**: pc12's `details.belly_fairing` (fixed heights) replaced: drawn extent STA 5.12–7.50 and
   centre-line lower outline (side view). Section (iteration 2, finding F6): the lower surface runs from the drawn bottom on
   the centre line (or 3 mm under the surface it covers where that is lower) to 3 mm under the surface it covers (wing lower
@@ -365,10 +382,21 @@ the model's length for other types (a custom `eye` / `tgt` is not). `window.HWDM
 `HWDM.itemProgs()` lists the draw items. Interaction: drag = orbit, wheel / pinch = zoom, preset buttons, sliders for gear
 / flaps / rpm / roll / pitch / yaw, "cycle gear" (6-s ramp like traffic.js).
 
-## 6. Tests (`node tools/models/test_models.mjs`), results 2026-11-13 after fix round 3 iteration 2
+## 6. Tests (`node tools/models/test_models.mjs`), results 2026-11-14 after fix round 3 iteration 3
 
-**Fix round 3 iteration 2 (current models: PC-12 6e349329…, override set fr3; SF50 49242e41…, `docs/phase3_sf50.md`).**
-Result: **82 PASS, 1 KNOWN** (the retracted trailing-link arm, 58 mm, pc12 gear geometry; limit 70), **0 FAIL**, 4 INFO,
+**Fix round 3 iteration 3 (current models: PC-12 957b3c4e…, override set fr3; SF50 49242e41…, `docs/phase3_sf50.md`).**
+Result: **85 PASS, 1 KNOWN** (the retracted trailing-link arm, 58 mm, pc12 gear geometry; limit 70), **0 FAIL**, 4 INFO,
+with the local reference data present; clean clone (a copy of the test pointed at an empty local-reference directory,
+deleted after the run): **72 PASS, 13 SKIP, 1 KNOWN, 0 FAIL** (2026-11-14 00:30Z). **Since 00:32Z 1 FAIL that is not a
+Phase 3a item**: the video pipeline's rewrite of `docs/phase3_video.md` (Phase 3b, edited concurrently, not touched here)
+records its frozen app snapshot with `pc12.glb` 6e349329… and no longer carries the iteration-2 SUPERSEDED line for the
+PC-12, so "docs/phase3_*.md name the current model hashes" fails on it (84 PASS / 71 PASS + 13 SKIP, 1 KNOWN, 1 FAIL). Fix
+on that page: name the current 957b3c4e… (e.g. "the current pc12.glb is 957b3c4e…; re-snapshot before the full render")
+or a "PC-12 … SUPERSEDED" line in its head, or take the new snapshot it already plans. New in iteration 3: "gear retracted: nose-gear housing closed
+from below" (F3), "cabin floor: no other part rises through the carpet" (F4) and the decision-(b) token grep (F1); the
+iteration-2 PC-12 build (6e349329…) fails the first two (202 bad cells, 138 inside an area: liner 76 + strut 126 cells,
+STA 3.03–4.26; wing through the carpet in 1,798 cells of 2 cm = 0.72 m², 748 in the aisle, up to 13.5 mm at STA 6.16).
+Iteration 2 (PC-12 6e349329…): **82 PASS, 1 KNOWN, 0 FAIL**, 4 INFO,
 with the local reference data present. The checks against digitised manufacturer drawings read the gitignored local
 reference files (`refs/cache/local/models/pilatus_pc12_meas.json`, `afm_sf50_meas.json`; decision (b), section 4) and print
 **SKIP** without them: a clean-clone run (the test pointed at an empty local-reference directory) gives 69 PASS, 13 SKIP
@@ -380,17 +408,18 @@ quote deviations only (decision (b)).
 
 | Check | PC-12 | SF50 |
 |---|---|---|
-| parse + convert | **423,853 tris, 257,009 verts, 70 parts (+ nose-gear housing)**, 31 groups, 0 bad indices / normals | 463,121 tris, 284,128 verts, 43 parts, 22 groups |
+| parse + convert | **427,257 tris, 259,557 verts, 72 parts (+ nose-gear housing; iteration 3: + 2 strut-slot doors)**, 33 groups, 0 bad indices / normals | 463,121 tris, 284,128 verts, 43 parts, 22 groups |
 | ACD length / span / height (2 %) | 14.400 (−0.12 %) / **16.280** (+0.21 %) / 4.260 (−0.16 %) | 9.357 (0.00 %) / 11.793 (−0.03 %) / 3.325 (+0.10 %) |
 | origin on the main contact, at minus the static deflection | y −14.5 mm (pc12 gear.py), track 4.530 | y 0, track 3.414 |
 | nose wheel on the ground (within its deflection) | y −10.5 mm, wheelbase 3.480 | y 0, wheelbase 3.305 |
 | nothing but tyres below the ground; tyres within their deflection | lowest non-tyre +0.136 m | +0.083 m |
 | propeller clearance vs sourced 0.32 m | **0.321 m** | — |
-| pivots present / pivot origin = node origin / brace closure / L-R symmetry | PASS (30 movers; braces 4e-7 m) | PASS (8 pairs) |
+| pivots present / pivot origin = node origin / brace closure / L-R symmetry | PASS (**32 movers: 4 gear_door**, the strut-slot doors `seq: 'down'`; braces 4e-7 m; 7 L/R pairs incl. `gear_door_NSL/NSR`) | PASS (8 pairs) |
 | control travel vs certificate, sign measured | — | ailerons 15 / 11.5, LH trim tab 10 / 10, ruddervators 20 / 15, ruddervator tabs 7 / 18, yaw SAS 15 / 15; pull −20, push +15, yaw ±9, roll 15 / 11.5, geared tab +8 / −6 unclamped — **values obs**: FAA TCDS A00018CH Rev. 7, read in the FAA DRS public web viewer (orchestrator decision (a) 2026-11-13 under the owner's delegation; the owner may overrule; `docs/phase3_sf50.md`) |
 | gear sweep: deepest point ≤ 0.05 m below the down contact | 5 mm (nose, gear 0.75) | 0 |
 | gear retracted: only tyres protrude | **KNOWN** tyres 11 mm (POH ~1 in), trailing-link arm **58 mm** (fr2 51; trunnion +0.104 m with the wing +0.121 m) | PASS (flush; trunnion / wells moved with the wing) |
 | gear retracted: no gear vertex above the upper skin (fix round 3, finding S1) | **PASS** (closest −5.2 mm, main shock rod, gear_main_R chrome) | PASS (closest −5.5 mm) |
+| **gear retracted: nose-gear housing closed from below (iteration 3, F3)**: in the housing's footprint (1 cm cells, gear 0) no liner / gear area — a bad cell with four bad neighbours fails | **PASS: 0 inside an area**; 22 single-cell gap lines (liner 18, strut 4: the 4-mm door gaps); iteration 2: 202 bad, 138 inside an area | — |
 | light anchors: none dropped; anti-collision = documented; wing landing lights | 10 drawn; landL / R at BL ±3.15, **WL 1.148** (with the raised wing) | 9 drawn + iceLight kept; 3 anti-collision |
 | registration panels keep every field | — | textDir kept |
 | registry frame = measured (5 mm); withModelFrame(gaDims) = model | PASS | PASS |
@@ -399,6 +428,7 @@ quote deviations only (decision (b)).
 | wing front-view silhouette vs drawing 190.10.40.432 | shape rms 4 mm, top-line slope within 0.06° of the drawn one, **winglet rise within 17 mm** | — |
 | cabin crown / wing height vs the drawing | **PASS: offsets crown 0, wing −0.002 / +0.007 m, winglet top +0.018** (fr2 KNOWN: 0.138 / 0.117 / 0.126 / 0.107 m) | — |
 | **belly fairing covers the wing (P1)** | **no wing vertex below the fairing within its width (closest 1.7 mm inside; iteration 2: blended section, ≤ 3 mm step at its edge)**; fr2: 65.6 mm below at STA 5.9 | — |
+| **cabin floor: no other part rises through the carpet (iteration 3, F4)**: floor footprint, 2 cm cells, nothing of a non-cabin part between the floor top and 0.15 m above it | **PASS: 0 cells** (wing carry-through under the floor, WL 1.209); iteration 2: 1,798 cells (0.72 m², 748 in the aisle), up to 13.5 mm (wing_L / wing_R) | — |
 | **cabin floor (iteration 2, F2): one flat panel, sourced 1.30 m wide ± 2 %, no cabin item below its top; meta floor-width check within 2 %** | **PASS: WL 1.244, flat (0 mm spread), 1.300 m, 0 vertices below; meta 1.300 (Δ 0)**; the fix-round-3 build fails it (warp 127 mm, 118 vertices up to 65 mm below, meta 1.257 m); pc12's own `none` build passes (1.281 m panel, OML − lining 1.301) | — |
 | **fuselage profile / aft underside / half-breadth vs the drawing (P2), limits 20 / 50 / 20 mm** | **crown and keel ≤ 3 mm (STA 3.3–12.9), aft underside ≤ 1 mm, half-breadth ≤ 9 mm**; fr2 −141 / −339 / +232 mm | — |
 | **body-plan sections FR10 … FR38 (rms ≤ 15, max ≤ 40 mm)** | **rms 3–9 mm, max ≤ 25 mm**; fr2 rms 30 … 180 mm | — |
@@ -414,6 +444,7 @@ quote deviations only (decision (b)).
 | **Phase 3b diff covers every gaDims call in js/live (fix round 2)** | both `traffic.js` sites in section 3 (fix round 3: the restore site's arguments are now `(icao, cat)` after the Phase 2 workflow's edit; diff line updated) | |
 | provenance: SOURCES.json = files; **builder sources = recorded hashes (fix round 2)**; every docs/phase3 image captioned, current-model claims match; **docs/phase3_*.md name the current hashes or are marked SUPERSEDED (fix round 2; iteration 2: a banner line naming a type marks only that type, e.g. the PC-12 clips of `docs/phase3_video.md`)** | PASS | PASS |
 | docs/phase3 in ATTRIBUTION.md / check_airport.py scope | PASS (closed in fix round 3, finding V1; was KNOWN) | |
+| **no raster-reading tokens (px/m, px/in, "<n> px", "<n> dpi") in the Phase 3a write-ups, builders / facts, model metas / SOURCES, image captions (iteration 3, F1; decision (b))** | PASS (23 files incl. the test itself; the committed bd22c60 `docs/phase3_render.md` and `sf50_geom.py` would fail it) | |
 | synthetic glb (FLOAT stride 24, quaternion, matrix, UINT indices, no normals, light extras incl. an unknown kind) | PASS | |
 
 **Fix round 2 mutation check** (in place, file restored from a copy right after; `grep` confirms the fixed line): the
@@ -437,6 +468,20 @@ skin point within ±0.6 m fore-aft on the same butt line (±5 cm); this bridges 
 conservative (low).
 
 ## 7. Renders (`docs/phase3/`, 1920×1080 JPEG, SwiftShader, HWD world, 2026-11-13 12:30 PST unless noted)
+
+**Fix round 3 iteration 3 (PC-12 957b3c4e…, 2026-11-14):** re-shot `pc12_belly_low`, `pc12_gear_closeup`,
+`pc12_nose_housing`, `pc12_gearup_housing` and `pc12_cabin_door` with the iteration-2 cameras, plus the new
+**`pc12_cabin_aisle.jpg`** {eye −1.2,1.95,0.0 tgt 0.3,1.24,0.0 fov 62, airstair and cargo doors open: the rechecker's aisle
+camera}: `node dev/model_shot.mjs --model=PC12 --set= --jobs=out/fr3i3/pc12_jobs.json --out=docs/phase3 --prefix=pc12
+--port=8863` (23–47 s per still on the shared CPU). The six fix-round-3 stills stay superseded (their notes now name what
+iteration 3 changed: nothing visible there but two small plates beside the nose strut). Seen (every image looked at):
+gear up, the housing floor is closed — the slot doors sit flush ahead of the clamshells with 4-mm gap lines, no lime
+rectangle and no strut (a lime glint in the clamshells' forward corner gap at close range, as at the other door gaps);
+gear down, the two slot doors hang beside the strut at the housing's front with the taxi lamp between them; in the aisle
+the carpet is uniform over the wing carry-through (the iteration-2 build showed a bright, hard-edged hexagonal patch there:
+the rechecker's `out/recheck3c_2/shots/pc12_rc2_aisle_floor.jpg` with the same camera), only the soft sun patch from a
+window remains; the nose-bay liner roof still shows as a lime rectangle between the cockpit seats (pc12 owner item,
+section 9). `pc12_cabin_door`, `pc12_belly_low` and `pc12_gear_closeup` look as in iteration 2. No new defect seen.
 
 **Fix round 3 iteration 2 (PC-12 6e349329…):** re-shot `pc12_belly_low` and `pc12_gear_closeup` with the same cameras, new
 **`pc12_nose_housing.jpg`** {eye 5.4,0.32,−2.2 tgt 2.9,0.78,0 fov 30, gear down}, **`pc12_gearup_housing.jpg`** {eye
@@ -481,8 +526,9 @@ nav / strobe / landing / taxi.
 | `pc12_front34.jpg`, `pc12_rear34.jpg`, `pc12_side.jpg` | Green Ramp, hdg 135, gear down | fix round 3: the re-fitted loft, glazing, dorsal fin, winglet; starboard: 4 windows + the exit window |
 | `pc12_port.jpg`; `pc12_rear.jpg` (fix round 2, superseded) | Green Ramp | port: airstair door without window, 3 windows, cargo door with its window, all at their drawn heights (fix round 3); from behind: the 6.2° dihedral |
 | `pc12_belly_low.jpg` (new in fix round 3, re-shot in iteration 2) | Green Ramp, low from port | nose-gear housing, belly fairing over the wing root (P1, F6), main gear, raised wing |
-| `pc12_nose_housing.jpg`, `pc12_gearup_housing.jpg` (new, iteration 2) | ramp, gear down / 1.5 m up with the gear up | nose-gear housing: rounded edges, strut slot, doors on the curved floor (F5) |
+| `pc12_nose_housing.jpg`, `pc12_gearup_housing.jpg` (new, iteration 2; re-shot in iteration 3) | ramp, gear down / 1.5 m up with the gear up | nose-gear housing: rounded edges, strut slot, doors on the curved floor (F5); iteration 3: strut-slot doors open beside the strut / closed flush with the gear up (F3) |
 | `pc12_cabin_door.jpg` (new, iteration 2) | ramp, airstair door open | flat cabin floor, doorway clear (F2) |
+| `pc12_cabin_aisle.jpg` (new, iteration 3) | ramp, inside the cabin over the aisle, both doors open | carpet uniform over the wing carry-through (F4); far end: the nose-bay liner roof between the cockpit seats (pc12 owner item) |
 | `pc12_chase.jpg` | runway 28L, 1,700 rpm, flaps 15, lights on | low chase-cam; faint prop disc |
 | `pc12_gear_half.jpg` | 9 m up, gear 0.5, pitch 6°, flaps 15 | mains folding inward with leg doors and side braces, nose aft with clamshells open |
 | `pc12_flaps40.jpg` | ramp, flaps 40 | Fowler flap |
@@ -574,18 +620,28 @@ None is needed for the models to render: the aircraft programs live in `js/aircr
   the side-view-only fit. (7) **weather-radar pod position (F9)**: the drawing shows a pod at the starboard wing tip (plan
   and front views) and nothing at mid-span; the model keeps pc12's pod at mid-span, BL 3.7–4.1 (pc12 "estimated"). To be confirmed from PC-12 PRO photos or the drawing before the Phase 3b
   videos. The two Pilatus documents disagree on the starboard windows (section 4). Inferred in fr3: the nose-gear housing
-  width, rounded section and rear end (5 cm aft of the drawn end), the strut slot, the flat wing centre section inboard of
-  BL 0.85, the strakes' outward offset, the dorsal-fin base thickness (no fillet radii), the tail-cone end aft of STA 13.0,
+  width, rounded section and rear end (5 cm aft of the drawn end), the strut slot, its two slot doors (open whenever the
+  leg is out, 85°) and the notch in the bay liner's front wall (iteration 3), the flat wing centre section inboard of
+  BL 0.85 and its upper skin held under the cabin floor inboard of BL 0.66 (iteration 3), the strakes' outward offset, the dorsal-fin base thickness (no fillet radii), the tail-cone end aft of STA 13.0,
   the belly fairing's section law, the antennas mounted normal to the skin, the cabin layout (0.40 m aft of pc12's, ledge
   clear of the doors; the aft seat pair now stands in front of the forward half of the cargo door and the starboard club
   table near the over-wing exit, as in many executive layouts, unverified) and the flight-deck floor, which follows the
   loft map and slopes ~7° up aft.
-- **pc12 nose strut vs its bay (pc12 geometry, unchanged)**: with the gear down (gear 1 / 0.75) pc12's strut crosses the
-  front wall of its own bay liner at STA 3.02 (90 / 32 edge crossings) and the keel skin ahead of the bay opening at STA
-  3.00–3.02 (24 at gear 1) — as in pc12's own build (`none`: 164 crossings with liner and doors). The bay opening would
-  have to start ~0.1 m further forward, into the lower cowling; left to the pc12 owner. The housing and the doors no
-  longer cross it (0 at every gear position).
-- **pc12 nose doors closed with the gear down** follow the pc12 model and its viewer [inf].
+- **pc12 nose strut vs its bay (pc12 geometry)**: with the gear down (gear 1) pc12's strut crosses the keel skin ahead of
+  the bay opening at STA 3.00–3.02 (24 edge crossings, inside the housing, not visible) — as in pc12's own build
+  (`none`: 164 crossings with liner and doors). The bay opening would have to start ~0.1 m further forward, into the lower
+  cowling; left to the pc12 owner. Its crossing with the bay liner's front wall (90 / 32 at gear 1 / 0.75) is gone since
+  iteration 3 (notch over the slot width up to WL 1.15); the housing, the liner and all four nose doors no longer cross the
+  strut or braces (0 at gear 1 / 0.75 / 0.5 / 0.25 / 0).
+- **pc12 nose-bay liner roof above the flight-deck floor (pc12 owner item, iteration 3 finding F4)**: pc12 closes the
+  nose-bay liner with a flat roof at WL 1.300; the flight-deck floor (loft-mapped, sloping ~7° up aft) is lower than that
+  over STA ~3.0–3.9, so the lime roof is the top-most surface over STA 3.04–3.88, |BL| ≤ 0.13 (416 cells of 2 cm,
+  0.17 m²; pc12's own `none` build has the same, larger) and shows as a lime rectangle between the cockpit seats
+  (`pc12_cabin_aisle.jpg`, far end). Not fixed here: the retracted nose wheel's top is at WL 1.291, above the floor plate
+  where it dips to WL 1.284, so lowering the roof would put the wheel through the floor; the pc12 owner decides between a
+  raised flight-deck floor or a wheel-well hump over the bay [inf either way].
+- **pc12 nose doors closed with the gear down** follow the pc12 model and its viewer [inf]; the strut-slot doors (hwd3d,
+  iteration 3) stay open whenever the leg is out of the well and close with it [inf].
 - **Timing** (gear 0.72 + 4.6 s, flaps 11°/s, control lag) and the **prop-disc thresholds** are inferred, not sourced.
 - **Clear-coat / interior / display constants** of `acobj` are visual choices [inf], not measured.
 - **PC-12 landing-light position** is inferred (photo shows the lamp, not its span station); the pc12 model has no lamp
@@ -667,8 +723,35 @@ rechecker's `out/recheck3c_1/`): `fit_check` logic (interior / engine inside the
 | F2 | cabin floor 43 mm narrower than the sourced 1.30 m, warped up to WL 1.37 aft, seat rails 65 mm / lining 40 mm below it; floor check redefined | **fixed**: cabin built at one floor height (the loft map's at STA 6.0, WL 1.244), floor one flat panel **1.300 m** wide (sourced 1.30; narrower only where the section is), **0** cabin vertices below its top (fix round 3: 118, up to 65 mm); `fit_check` OK. The meta check records a 2 % tolerance and its result; new test "cabin floor: one flat panel, sourced 1.30 m wide (2 %), no cabin item below its top; meta floor-width check within 2 %" (PASS; the fix-round-3 build fails it: 127 mm warp, 118 vertices, meta 1.257 m; pc12's `none` passes). Seen in `pc12_cabin_door.jpg`. **Also fixed (found in that render)**: fr2's door stations had put pc12's port side ledge across the airstair doorway (and the forward part of the cargo door) and the forward club seat in the airstair doorway: seats, tables and the baggage net 0.40 m aft, port ledge between the doors (`FR3_CABIN`, [inf: layout]); 0 cabin vertices in the airstair doorway band. The flight deck keeps the per-vertex loft map (its floor slopes ~7° [inf], nothing below it) |
 | F3 | clean-clone run: 1 FAIL from `docs/phase3_video.md` naming a superseded PC-12 | **fixed**: the write-up check takes a per-type SUPERSEDED banner (a banner line naming PC-12 / pc12.glb marks only that type's parts); `docs/phase3_video.md` carries one for its PC-12 test clips (they show c46fe4fb…; re-render case P before publishing; the SF50 clips stay current). Clean-clone run (empty local-reference directory): 69 PASS, 13 SKIP, 1 KNOWN, **0 FAIL**; with the local reference: 82 PASS, 1 KNOWN, 0 FAIL |
 | F4 | winglet plan view / blend, documented whole-wing offset exceeded; drawing prints span 16.114 m and a 4-blade prop | **recorded for the owner** (section 9 item 6): the fit stays limited to the side view on purpose — the sheet's printed span and propeller are not the PRO's (16.28 m, 5 blades: sourced), so its plan-view tip may not be either, and fitting it would move the planform away from the sourced span. Owner (or pc12 owner) decides whether to fit the plan view too (with a plan-view test). Not changed |
-| F5 | nose strut through the housing's forward floor (gear down), housing end wall z-fighting the bay liner, sharp-edged tray | **fixed**: strut slot through the housing floor and the doors' forward inner corners — strut × housing **0** crossings and strut × doors **0** at gear 1 / 0.75 / 0.5 / 0.25 / 0 (fix round 3: housing 88 / 44 at gear 1 / 0.75 on c46fe4fb… with the rechecker's probe, doors 48 at gear 1); housing rear end 5 cm aft so its end wall clears the liner (liner × housing 0 crossings; no speckle in `pc12_gearup_housing.jpg`), liner edge 3 mm inside the housing skin (the lime line along the housing in the first render of this round is gone), rounded lower edges (section exponent 3) with the doors on the curved floor. Still crossing (pc12's own geometry, as in `none`): the strut × the liner's front wall at STA 3.02 (90 / 32 at gear 1 / 0.75) and × the keel skin at STA 3.00–3.02 (24 at gear 1) — section 9 |
+| F5 | nose strut through the housing's forward floor (gear down), housing end wall z-fighting the bay liner, sharp-edged tray | **fixed**: strut slot through the housing floor and the doors' forward inner corners — strut × housing **0** crossings and strut × doors **0** at gear 1 / 0.75 / 0.5 / 0.25 / 0 (fix round 3: housing 88 / 44 at gear 1 / 0.75 on c46fe4fb… with the rechecker's probe, doors 48 at gear 1); housing rear end 5 cm aft so its end wall clears the liner (liner × housing 0 crossings; no speckle in `pc12_gearup_housing.jpg` — **correction (iteration 3, finding F3)**: the gear-up
+housing was not clean, the open strut slot showed the lime liner and the stowed strut from below, as the iteration-2 still
+showed at the housing's forward end; closed in iteration 3, section 14, and re-shot), liner edge 3 mm inside the housing skin (the lime line along the housing in the first render of this round is gone), rounded lower edges (section exponent 3) with the doors on the curved floor. Still crossing (pc12's own geometry, as in `none`): the strut × the liner's front wall at STA 3.02 (90 / 32 at gear 1 / 0.75; resolved in iteration 3 by a notch) and × the keel skin at STA 3.00–3.02 (24 at gear 1) — section 9 |
 | F6 | belly fairing a slab with vertical side walls (lip up to ~5 cm aft) | **fixed**: blended section (section 4): from below, within STA 5.12–7.50 and \|BL\| < 0.75, cells with the wing below the fairing **0** (fix round 3: 9 cells up to 59 mm at the edge), fairing lowest WL 0.872 (wing 0.885); the step at its edge is the 3 mm margin; P1 test closest 1.7 mm inside; centre-line outline unchanged where the drawn bottom is visible (lowered below it by 0 mm) |
 | F7 | VHF 2 belly antenna root floating under the up-sloping aft belly | **fixed**: centre-line blades turned to the local skin slope; root − skin along the chord: transponder +4 / +4 / +4 / +4 mm, DME +4 / +4 / +4 / +4, VHF 2 +4 / +4 / +4 / +3 mm (fix round 3: VHF 2 +4 → −28 mm; positive = root inside the skin by pc12's 4 mm) |
 | F8 | docs stale against fix round 3 / decision (a); SOURCES note "69 parts" | **fixed**: header, sections 1, 2 (counts, light anchors), 4, 6 (counts, closest −5.2 mm, travels obs under decision (a), ATTRIBUTION row PASS), 7, 9 (decision (a); video credits need the inf marker only for the gear motion), sections 10 / 11 rows annotated; `import_pc12.mjs` writes the part count from the build's meta ("70 parts (as built)") and the iteration-2 override text |
 | F9 | open items vs drawing 190.10.40.432: radar pod drawn at the starboard tip, rudder TE, tailplane LE, lower cowl, whole wing | **recorded for the owner** (section 9 items 1–7): confirm the radar-pod position from PC-12 PRO photos or the drawing before the Phase 3b videos; the retracted trailing-link arm 58 mm (KNOWN) explained (trunnion raised 17 mm less than the wing). Not changed |
+
+## 14. Review fix round 3, iteration 3 (2026-11-14): dispositions (provenance, PC-12 nose-gear housing and cabin floor)
+
+Current PC-12: sha256 **957b3c4e…** (6,255,744 B, 72 parts, 427,257 triangles drawn; override set `fr3` as revised here;
+rebuilt twice bit-identically; `none` still 87731cce… = `pc12/out`; `git status pc12` clean). SF50 rebuilt for its
+provenance only (GLB bit-identical, 49242e41…; `docs/phase3_sf50.md` end). Probes (gitignored `out/fr3i3/probe/`, copies
+of the rechecker's `dump_pose.mjs`, `below_lab.py`, `edge_hits.py`, `floor_patch.py` plus `cabin_top.py`). This iteration
+was restarted after a container restart: the first attempt's F1 / F2 doc edits (committed since in b0d55c1) were checked
+and kept; everything else below was done and measured in the restarted run.
+
+| # | finding | status |
+|---|---|---|
+| F1 | digitised readings and raster-registration numbers of drawing 190.10.40.432 and of the MBP p.2 three-view still in the committed `docs/phase3_render.md` (D3, section 8 note) | **fixed**: D3 gives deviations only (crown 0.10–0.16 m low depending on the anchor, dorsal fairing starting ~1.35 m further forward than the model's, nose and cowling within 2 cm) and says it is superseded by fix round 3; the section 8 note keeps only the accuracy (±2 cm). The removed text is kept, with a `src` note, in the gitignored `refs/cache/local/models/pilatus_pc12_meas.json` (`phase3_render_D3`). New provenance check in `test_models.mjs` (the "fixers' token grep", now automatic): no raster token (pixels per metre or inch, pixel or dpi counts) in `docs/phase3_{models,sf50,render}.md`, `docs/phase3/SOURCES.json`, `tools/models/**` (incl. the test) and `js/aircraft/models/*.json` — PASS, 23 files; the committed bd22c60 `docs/phase3_render.md` (its raster resolution, registration scale and line width) and `sf50_geom.py` header (its scales) fail it |
+| F2 | SF50 docs quoting AFM Fig 1-1 readings (SF50_FACTS nacelle row; `docs/phase3_sf50.md` §3 item 4 drawn chords) | **fixed**: the nacelle row gives the model parameters (`NAC_X0` / `NAC_X1` / `_NAC`: inlet FS 5.865, exit 8.010, cowl half-width 0.356 m at FS 6.10–6.30, top 2.635 m) labelled as fitted to Fig 1-1 with the readings in the local file; §3 item 4 names the chord ratio 0.643 fitted to Fig 1-1 and the model chords 1.838 / 1.181 m (after the scaling to the area), not the drawn chords. The SF50 question text now marks the pixel scales as history. Token grep and a value grep of `afm_sf50_meas.json`'s readings over the SF50 files: only model values / fitted parameters remain (allowed by decision (b)) |
+| F3 | the strut slot (STA 2.905–3.135, ±0.08 m) open with the gear up: from below the zinc-chromate liner (67 cells) and the stowed strut (143 cells) showed through it; the F5 note called the gear-up housing clean | **fixed** (section 4): two strut-slot doors `gear_door_NSL` / `NSR` (slot outline − 4 mm, 18 mm solid, on the housing floor), hinged on their outer edges, `seq: 'down'` (open 85° whenever the leg is out, closed with the gear up) [inf]; clamshell notch = the slot outline; the bay liner's front wall notched over the slot up to WL 1.15; all nose doors hinge on their outer face. From below at gear 0 (`below_lab.py`, 1 cm): liner 67 → **14** cells and strut 143 → **3** cells, all on the 4-mm door gap lines; new test "gear retracted: nose-gear housing closed from below" (fails on a bad area ≥ 3 cm across: iteration 2 build 138 such cells, now **0**; 22 gap-line cells reported). Crossings strut / braces × doors / housing / liner: **0** at gear 1 / 0.75 / 0.5 / 0.25 / 0 in both directions (the closed slot doors × the liner's front wall had been 74 before the notch; the clamshells × housing in transit 876 before the hinge move; the strut × liner front wall, pc12's own, 90 / 32 at gear 1 / 0.75 → 0). Renders: `pc12_gearup_housing.jpg` (closed floor), `pc12_nose_housing.jpg` (slot doors beside the strut). The F5 row of section 13 is corrected |
+| F4 | the flat 1.30 m floor (top WL 1.244, 30 mm panel) did not clear the wing carry-through: the upper skin up to 13.6 mm through the carpet, 0.74 m² (0.32 m² in the aisle), a bright patch in the aisle | **fixed** (section 4): inside the fuselage the wing's upper skin and pc12's spar tops are held 5 mm under the floor panel's underside (WL 1.209) inboard of BL 0.66, blending back to the unchanged wing by BL 0.75 (inside the fuselage side) [inf: structure]; 296 vertices lowered by up to 48.6 mm; nothing changes outside the fuselage. `floor_patch.py`: wing above the carpet in **0** cells (aisle and outboard); top-down map: the wing is the top-most surface only behind the cabin lining (|BL| ≥ 0.67). The floor stays at WL 1.244 (cabin height and door sills unchanged). New test "cabin floor: no other part rises through the carpet" (iteration 2 build: 1,798 cells of 2 cm, 0.72 m², 748 in the aisle, max 13.5 mm at STA 6.16; now **0**). Render `pc12_cabin_aisle.jpg` (the rechecker's camera): no patch. The nose-bay liner roof above the flight-deck floor is listed as a pc12 owner item (section 9; not fixable here without the wheel going through the floor) |
+| F5 | decisions (a) and (b) not in `docs/PLAN.md` §6a/6b | **fixed**: `docs/PLAN.md` §6b has a paragraph "Orchestrator decisions under the owner's delegation (2026-11-13)" with (a) and (b), each marked as not from the owner directly and "the owner may overrule" (the file is shared; the edit is that paragraph only) |
+
+Runs: `node tools/models/test_models.mjs` — 85 PASS, 1 KNOWN, 0 FAIL, 4 INFO (local reference present); clean clone
+72 PASS, 13 SKIP, 1 KNOWN, 0 FAIL — until the concurrent rewrite of `docs/phase3_video.md` at 00:32Z, which makes the
+write-up hash check FAIL on that page (section 6: it names the snapshot's PC-12 6e349329… without a SUPERSEDED line; the
+page belongs to the video pipeline and was not edited here). `python3 -B tools/check_airport.py` — all hard checks passed (SOURCES coverage 165 files,
+0 without an entry; D1 clean in every `docs/phase3_*.md`); its scope list needed no change (the new image is under
+`docs/phase3/`, already scanned). Not changed / open: `docs/phase3_video.md` (Phase 3b's write-up, rewritten concurrently,
+not edited here) names the PC-12 of its frozen snapshot (6e349329…) and needs the current hash or a SUPERSEDED line.

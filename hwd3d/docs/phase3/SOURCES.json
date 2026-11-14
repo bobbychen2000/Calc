@@ -3,8 +3,8 @@
  "pc12_belly_low.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), low from port: nose-gear housing with its strut slot, belly fairing blended into the wing root (fix round 3 iteration 2), main gear and the raised wing; gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "6e3493299108b23235d0ec8534bc1a2443c403824b720427b4ab739fe649cf51",
-  "rendered_utc": "2026-11-13T23:11:28.071Z",
+  "model_sha256": "957b3c4e9ab17c4a6da51bc0fdcaeab71dbe98fc44e404630dbd6d39d7e9e01c",
+  "rendered_utc": "2026-11-14T00:22:59.554Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "1.6,0.30,-7.6",
@@ -29,11 +29,40 @@
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
+ "pc12_cabin_aisle.jpg": {
+  "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), inside the cabin over the aisle (doors open for light), looking down-forward at the carpet over the wing carry-through, STA 5.6-6.7: no wing skin through the floor (fix round 3 iteration 3, finding F4; the rechecker's camera); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST). The soft light patch on the aisle carpet is sunlight through a starboard cabin window (it moves with the sun); the former light-blue hexagonal wing patch is gone.",
+  "model": "PC12",
+  "model_sha256": "957b3c4e9ab17c4a6da51bc0fdcaeab71dbe98fc44e404630dbd6d39d7e9e01c",
+  "rendered_utc": "2026-11-14T00:25:47.573Z",
+  "made_by": "dev/model_shot.mjs",
+  "params": {
+   "eye": "-1.2,1.95,0.0",
+   "tgt": "0.3,1.24,0.0",
+   "fov": 62,
+   "gear": 1,
+   "flaps": 0,
+   "rpm": 0,
+   "rotor": null,
+   "bpitch": null,
+   "alt": 0,
+   "apitch": 0,
+   "aroll": 0,
+   "ctl": null,
+   "trim": null,
+   "doors": "door_airstair:1,door_cargo:1",
+   "lights": null,
+   "at": "ramp",
+   "hdg": 135,
+   "alpha": null,
+   "desc": "inside the cabin over the aisle (doors open for light), looking down-forward at the carpet over the wing carry-through, STA 5.6-6.7: no wing skin through the floor (fix round 3 iteration 3, finding F4; the rechecker's camera)"
+  },
+  "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
+ },
  "pc12_cabin_door.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), airstair door open: the flat 1.30 m cabin floor with the seats and side ledges standing on it, the doorway clear (fix round 3 iteration 2, finding F2); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "6e3493299108b23235d0ec8534bc1a2443c403824b720427b4ab739fe649cf51",
-  "rendered_utc": "2026-11-13T23:13:04.874Z",
+  "model_sha256": "957b3c4e9ab17c4a6da51bc0fdcaeab71dbe98fc44e404630dbd6d39d7e9e01c",
+  "rendered_utc": "2026-11-14T00:24:42.703Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "2.0,2.45,-1.45",
@@ -88,7 +117,7 @@
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door"
+  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
  },
  "pc12_cockpit.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: windshield and side windows over the flight deck; gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
@@ -184,7 +213,7 @@
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door"
+  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
  },
  "pc12_front34.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), front 3/4 on the Green Ramp (overall shape, livery, glazing, shadow); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
@@ -216,13 +245,13 @@
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door"
+  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
  },
  "pc12_gear_closeup.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: right main gear (trailing link, leg door, side brace), radar pod; gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "6e3493299108b23235d0ec8534bc1a2443c403824b720427b4ab739fe649cf51",
-  "rendered_utc": "2026-11-13T23:11:57.120Z",
+  "model_sha256": "957b3c4e9ab17c4a6da51bc0fdcaeab71dbe98fc44e404630dbd6d39d7e9e01c",
+  "rendered_utc": "2026-11-14T00:23:22.449Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -281,10 +310,10 @@
   "superseded_note": "shows the fix-round-2 PC-12 (9ccfd9a5…, override set fr2); fix round 3 changed the fuselage loft, glazing, openings, wing / gear height, fairings, dorsal fin, strakes and winglet (docs/phase3_models.md section 4) and re-shot only side, front34, rear34, port, chase, flaps40, gear_closeup and the new belly_low"
  },
  "pc12_gearup_housing.jpg": {
-  "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), gear up, 1.5 m up, from below and behind the nose-gear housing: closed clamshell doors on its rounded floor, the strut slot ahead of them, the housing's aft end clear of the bay liner (fix round 3 iteration 2, finding F5); gear 0, flaps 0, rotor stopped, 1.5 m up; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
+  "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), gear up, 1.5 m up, from below and behind the nose-gear housing: closed clamshell doors on its rounded floor and the closed strut-slot doors ahead of them, no liner or strut showing (fix round 3 iteration 3, finding F3); gear 0, flaps 0, rotor stopped, 1.5 m up; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "6e3493299108b23235d0ec8534bc1a2443c403824b720427b4ab739fe649cf51",
-  "rendered_utc": "2026-11-13T23:13:26.598Z",
+  "model_sha256": "957b3c4e9ab17c4a6da51bc0fdcaeab71dbe98fc44e404630dbd6d39d7e9e01c",
+  "rendered_utc": "2026-11-14T00:25:08.570Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "1.2,0.25,-1.0",
@@ -305,7 +334,7 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
-   "desc": "gear up, 1.5 m up, from below and behind the nose-gear housing: closed clamshell doors on its rounded floor, the strut slot ahead of them, the housing's aft end clear of the bay liner (fix round 3 iteration 2, finding F5)"
+   "desc": "gear up, 1.5 m up, from below and behind the nose-gear housing: closed clamshell doors on its rounded floor and the closed strut-slot doors ahead of them, no liner or strut showing (fix round 3 iteration 3, finding F3)"
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
@@ -342,10 +371,10 @@
   "superseded_note": "shows the fix-round-2 PC-12 (9ccfd9a5…, override set fr2); fix round 3 changed the fuselage loft, glazing, openings, wing / gear height, fairings, dorsal fin, strakes and winglet (docs/phase3_models.md section 4) and re-shot only side, front34, rear34, port, chase, flaps40, gear_closeup and the new belly_low"
  },
  "pc12_nose_housing.jpg": {
-  "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range, low from the front left: nose gear down through the slot in the nose-gear housing floor, rounded housing edges, closed clamshell doors (fix round 3 iteration 2, finding F5); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
+  "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range, low from the front left: nose gear down through the slot in the nose-gear housing floor, the two strut-slot doors hanging open beside the strut, rounded housing edges, closed clamshell doors (fix round 3 iterations 2-3, findings F5 / F3); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
-  "model_sha256": "6e3493299108b23235d0ec8534bc1a2443c403824b720427b4ab739fe649cf51",
-  "rendered_utc": "2026-11-13T23:12:27.039Z",
+  "model_sha256": "957b3c4e9ab17c4a6da51bc0fdcaeab71dbe98fc44e404630dbd6d39d7e9e01c",
+  "rendered_utc": "2026-11-14T00:23:56.148Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "5.4,0.32,-2.2",
@@ -366,7 +395,7 @@
    "at": "ramp",
    "hdg": 135,
    "alpha": null,
-   "desc": "close range, low from the front left: nose gear down through the slot in the nose-gear housing floor, rounded housing edges, closed clamshell doors (fix round 3 iteration 2, finding F5)"
+   "desc": "close range, low from the front left: nose gear down through the slot in the nose-gear housing floor, the two strut-slot doors hanging open beside the strut, rounded housing edges, closed clamshell doors (fix round 3 iterations 2-3, findings F5 / F3)"
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
@@ -399,7 +428,7 @@
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door"
+  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
  },
  "pc12_rear.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), from straight behind on the Green Ramp (fix round 2: 6.2 deg dihedral, wing top line 5.4 deg vs the drawing's 5.3); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
@@ -462,7 +491,7 @@
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door"
+  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
  },
  "pc12_side.jpg": {
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), starboard side on the Green Ramp (profile, windows, gear); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
@@ -494,7 +523,7 @@
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption.",
   "superseded": true,
-  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door"
+  "superseded_note": "shows the fix-round-3 PC-12 (c46fe4fb…); fix round 3 iteration 2 (6e349329…) changed only the cabin interior (flat 1.30 m floor, seats / ledges moved clear of the doors), the nose-gear housing (rounded section, strut slot, liner edge), the belly fairing's section edges (blended into the wing) and the belly antenna roots - none of it visible in this view, so it was not re-shot (docs/phase3_models.md section 13); re-shot: belly_low, gear_closeup, new nose_housing, gearup_housing, cabin_door. Fix round 3 iteration 3 (957b3c4e…) changed only the nose-gear strut slot (two small slot doors, closed with the gear up and hanging open beside the strut with the gear down: at most a few pixels here), the nose-bay liner's front wall and the nose-door hinge lines, and the wing carry-through inside the fuselage (not visible from outside); re-shot: belly_low, gear_closeup, nose_housing, gearup_housing, cabin_door, new cabin_aisle (docs/phase3_models.md section 14)."
  },
  "render_pc12_chase_final.jpg": {
   "caption": "PC-12 on final, close chase from behind / above, flaps 40, 1,700 rpm (prop disc), 4 m up. Independent render check of Phase 3a (docs/phase3_render.md), SwiftShader 1920x1080, MSAA 4, 4096 shadow cascades.",

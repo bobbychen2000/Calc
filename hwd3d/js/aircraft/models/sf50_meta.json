@@ -1,7 +1,7 @@
 {
  "_provenance": {
   "made_by": "hwd3d/tools/models/sf50/build_sf50.py (python3 -B; pc12/cad loftkit kernel, read-only)",
-  "repo_rev": "bd22c605c710972676f5ca82fc55ab1c82fac85e",
+  "repo_rev": "b0d55c116e7efb103f89b358b065f46a767a5c16",
   "repo_rev_note": "git HEAD when built; the builder itself is identified by builder_state / sources_tree_sha256",
   "sources_sha256": {
    "hwd3d/tools/models/sf50/build_sf50.py": "b920191babed3e33ebdc16fb52d415615dd2a8d6531153bcadabfae54f0d63f5",
@@ -10,7 +10,7 @@
    "hwd3d/tools/models/sf50/sf50_assemble.py": "d71b6f4293ac861682634c2e84a67d9c2ab3d90c11d9689eba01b62229ba6e91",
    "hwd3d/tools/models/sf50/sf50_fuselage.py": "050ac84f15857b394927a5bce9e901e911d2586a9f7cf9882bf62655abad2fe3",
    "hwd3d/tools/models/sf50/sf50_gear.py": "8005a769d8d71c6d3a9ed1c6224ecfb9ae81d477d81fcd36ede19c86d8e40cc3",
-   "hwd3d/tools/models/sf50/sf50_geom.py": "fd260bf2640e36af5657cb0c74b307a4235db59e3c0fec62c3d789ed82b92519",
+   "hwd3d/tools/models/sf50/sf50_geom.py": "44fce7446bf265ee5fc8c78612392d031002fedcccc4518c0f144b01b513b3f5",
    "hwd3d/tools/models/sf50/sf50_interior.py": "9b3e3cb327b3ed55513c9ebea96ea2f24c6349f65fc4848c289c000c1f9242f0",
    "hwd3d/tools/models/sf50/sf50_kernel.py": "2442ff6ee32b7b2977495780cad65a46bc48ab49dfb2b5cce2111b4f3bdcb1e3",
    "hwd3d/tools/models/sf50/sf50_nacelle.py": "0366a4bea9ef43aada604504f7875466f62688482cf63798f6d2ff5dbfcd6129",
@@ -25,13 +25,13 @@
    "pc12/model/lifting.py": "d7f881c5bc9b3568ac52b30410b6590f28b39c482ee10062cb0727053fa22ec1",
    "pc12/model/parts.py": "41801a05d2135951fefcaeae6de66c07ebb83a945d0de2e23de5cd148c842db8"
   },
-  "sources_tree_sha256": "48ac26baee2ecfe9717e0c3962ee1545576fda9da0e9dbbbc4aa6886634d0a5e",
-  "builder_state": "working tree (modified since HEAD)",
-  "builder_dirty": true,
+  "sources_tree_sha256": "e4adfda73a54d9a849cfd713482009591b273e5fac649c46d4eca171201a9d8e",
+  "builder_state": "committed (= HEAD)",
+  "builder_dirty": false,
   "pc12_kernel_dirty": false,
   "rebuild": "cd hwd3d && python3 -B tools/models/sf50/build_sf50.py (deterministic: the same sources give the same GLB bytes)",
   "glb_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "built": "2026-11-13T21:13:45Z",
+  "built": "2026-11-14T00:21:53Z",
   "facts": "hwd3d/tools/models/sf50/SF50_FACTS.md",
   "doc": "hwd3d/docs/phase3_sf50.md",
   "licence": "own work (this repository); no third-party geometry or texture"

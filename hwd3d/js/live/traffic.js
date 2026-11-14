@@ -339,6 +339,19 @@ function retimePath(C, D, s0, acc, s1 = null) {
   return { at, len: L, vc, dubins: C.dubins, k: C.k };
 }
 
+// the vertical profile of an approach to a touchdown (iteration 2 of review round 3): from the reported vertical speed into one
+// steady glide over <= 4 s, the glide, and a flare to vy1 over the last <= 5 s (constant vertical accelerations). The cubic
+// Hermite of fix round 3 dived early at the fix's -512 ft/min and then dragged in flat - 34 ft up 330 m before the threshold,
+// over the approach apron [inf: 4 s, 5 s] -> { y, vy }
+function glideY(S, tau, D) {
+  const tb = Math.min(4, 0.2 * D), tf = Math.min(5, 0.25 * D), v0 = S.vy0, v1 = S.vy1, dY = S.y1 - S.y0;
+  const g = (dY - (v0 * tb + v1 * tf) / 2) / Math.max(0.5, D - (tb + tf) / 2);
+  if (tau <= tb) { const a = (g - v0) / Math.max(1e-3, tb); return { y: S.y0 + v0 * tau + 0.5 * a * tau * tau, vy: v0 + a * tau }; }
+  const yb = S.y0 + (v0 + g) / 2 * tb, tm = D - tf;
+  if (tau <= tm) return { y: yb + g * (tau - tb), vy: g };
+  const ym = yb + g * (tm - tb), a = (v1 - g) / Math.max(1e-3, tf), u = tau - tm; return { y: ym + g * u + 0.5 * a * u * u, vy: g + a * u };
+}
+
 // a landing roll of length d from v0 to v1 that must take T s, longer than its natural 2 d / (v0 + v1) (review round 3):
 // a full stop (aUp = 0) brakes to v1 early - at the deceleration a (<= aMax) that makes the time fit - and rolls on at v1;
 // a touch-and-go (aUp > 0) brakes at aMax to a lower vm, rolls at vm and accelerates at aUp back to v1 -> [{ s0, v0, acc,
@@ -460,7 +473,6 @@ export class Traffic {
       // a parked aircraft that moves away from its parking pose while transmitting has left it: the spot is free again and
       // the record no longer describes it (fix round 1; it used to be released only by silence or removal)
       if (tr.park && !tr.park.inside && tr.park.pose) { const dp = Math.hypot(f.x - tr.park.pose.x, f.z - tr.park.pose.z); if (dp > REACQ_PARK_M || !f.ground) this.releasePark(tr, f.t, 'left the spot'); }
-      if (String(tr.key)[0] === '~') this.dupCheck(tr, f);
       // rest poses of the newest still runs now (not lazily at display time): a segment that ends at a still fix then
       // already ends at the pose drawn there (spot pose / median), so arriving at a spot is continuous
       for (let q = Math.max(0, tr.fx.length - 3); q < tr.fx.length; q++) if (tr.fx[q].ground && tr.fx[q].stillRun) this.restOf(tr, tr.fx[q]);
@@ -479,19 +491,42 @@ export class Traffic {
     tr.anchor = A; this.counters.anchors = (this.counters.anchors || 0) + 1;
     return A;
   }
-  // a TIS-B trackfile ('~' key: the ground station's own track of a target, e.g. a radar return) right beside an ADS-B track
-  // of the same aircraft is an echo, not a second aircraft: it is not drawn while it stays within 150 m / 300 ft of a track
-  // heard within 10 s [inf]
-  dupCheck(tr, f) {
-    let dup = null;
+  // a TIS-B trackfile ('~' key, or a TIS-B source type: the ground station's own track of a target, e.g. a radar return) right
+  // beside an ADS-B track of the same aircraft is an echo, not a second aircraft: it is not drawn while it stays within 150 m (+
+  // 0.3 x its speed x the time between the two fixes) / 300 ft of a track heard within 10 s, flying the same way (groundspeed
+  // within 12 kt, track within 25 deg) [inf]. (iteration 2 of review round 3, F3: a published pack masks every key to 'x...', so
+  // the '~' test alone never ran - a tisb_other copy of a TF19, same speed and pressure altitude, a garbled geometric one, was
+  // drawn 21-103 m beside it for 100 s; another one beside an R44 29 m away. The comparison also extrapolates the ADS-B fix
+  // to the echo's time: at 94 kt a 10-s-old fix is 480 m back)
+  isEchoSrc(tr) { return String(tr.key)[0] === '~' || /^tisb/.test(tr.info.src || ''); }
+  // the echo decision at display time t, per fix (it used to be one flag set when a report ARRIVED, i.e. lookahead_s ahead of the
+  // drawing, and cleared whenever the ADS-B track had no fix in the last 10 s - an echo was drawn again in its primary's recorder
+  // hole). A fix is an echo of track o when o has a fix within 10 s of it (before or after) that matches; a fix with no o fix
+  // that near keeps the decision of the echo's previous fix while o has fixes within 60 s (o is in a hole, the echo is not).
+  // The decision is final once the data are 15 s past the fix (every fix around it is in).
+  echoAt(tr, t) {
+    const F = tr.fx; let i = F.length - 1; while (i > 0 && F[i].t > t) i--;
+    const f = F[i]; if (!f) return null;
+    if (f._dupFinal) return f._dup;
+    let dup = null, near = false;
     for (const o of this.tracks.values()) {
-      if (o === tr || String(o.key)[0] === '~' || o.vehicle) continue; const L = o.last; if (!L || Math.abs(L.t - f.t) > 10000) continue;
-      if (Math.hypot(L.x - f.x, L.z - f.z) > 150) continue;
-      if (f.altB != null && L.altB != null && Math.abs(f.altB - L.altB) > 300) continue;
-      dup = o.key; break;
+      if (o === tr || o.vehicle || this.isEchoSrc(o) || !o.fx.length) continue;
+      const G = o.fx; let lo = 0, hi = G.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (G[m].t <= f.t) lo = m; else hi = m; }
+      for (const L of [G[lo], G[hi]]) { if (!L || Math.abs(L.t - f.t) > 10000) continue; near = true;
+        const dts = (f.t - L.t) / 1000, ex = L.x + (L.ground ? 0 : (L.vx || 0) * dts), ez = L.z + (L.ground ? 0 : (L.vz || 0) * dts);
+        if (Math.hypot(ex - f.x, ez - f.z) > 150 + 0.3 * (f.gsm || 0) * Math.abs(dts)) continue;
+        if (!!f.ground !== !!L.ground) continue;
+        if (f.altB != null && L.altB != null && Math.abs(f.altB - L.altB) > 300) continue;
+        if (!f.ground && f.gs != null && L.gs != null && Math.abs(f.gs - L.gs) > 12) continue;
+        if (!f.ground && f.trk != null && L.trk != null && Math.abs(wrapPi((f.trk - L.trk) * D2R)) > 25 * D2R) continue;
+        dup = o.key; break; }
+      if (dup) break;
     }
+    if (!dup && i > 0) { const p = F[i - 1], o = p._dup ? this.tracks.get(p._dup) : null;
+      if (o && o.fx.some(q => Math.abs(q.t - f.t) < 60000) && !o.fx.some(q => Math.abs(q.t - f.t) <= 10000)) dup = p._dup; }
+    f._dup = dup; if (this.dataNow - f.t > 15000) f._dupFinal = true;
     if (dup && !tr.dupOf) this.counters.tisbEcho = (this.counters.tisbEcho || 0) + 1;
-    tr.dupOf = dup;
+    return dup;
   }
   // live persistence: a remembered (restored) parked aircraft and a new track standing at the same place with the same type
   // are one aircraft (its key can change: D1-masked keys are salted per relay process) - the remembered one is dropped
@@ -660,6 +695,27 @@ export class Traffic {
     }
     if (f.px == null) { f.px = x; f.pz = z; }
     const v = hvR(f.dir); f.vx = v[0] * f.gsm; f.vz = v[1] * f.gsm;
+    // (iteration 2 of review round 3) an airborne fix <= 3 s after an airborne one whose position disagrees with both reported
+    // velocities (the chord implies > 1.3 x / < 0.7 x the reported speed - ADS-R / TIS-B positions 0.2-0.4 s apart and 40 m
+    // apart, i.e. 'flying' at 200 kt, of a C172 reported at 75 kt): it is drawn half way between its position and where the
+    // previous fix's position and the two velocities put it (an alpha filter, alpha 0.5: the error halves at each fix, no
+    // lasting lag). The drawn target zig-zagged 49-101 kt there [inf: 3 s, 1.3 x, 0.5]
+    if (!f.ground && L && !L.ground && !tr.vehicle && dtL > 0.05 && dtL <= 3 && f.gs != null && L.gs != null && f.gsm > 10) {
+      const ex = L.px + (L.vx + f.vx) / 2 * dtL, ez = L.pz + (L.vz + f.vz) / 2 * dtL, cs = Math.hypot(x - L.px, z - L.pz) / dtL, vr = (L.gsm + f.gsm) / 2;
+      if (cs > 1.3 * vr || cs < 0.7 * vr) { f.px = ex + (x - ex) * 0.5; f.pz = ez + (z - ez) * 0.5; f.airSmooth = true; this.counters.airSmooth = (this.counters.airSmooth || 0) + 1; }
+    }
+    // (iteration 2 of review round 3, F2) a fixed-wing fix flying lower than 100 ft over a runway or its extended centreline (<= 60 m
+    // beside the axis, from 300 m before the runway to 300 m past it, track within 30 deg of the runway) is drawn on the axis -
+    // fully below 35 ft, fading to its own position at 100 ft: a GA aircraft that low beside the runway is GNSS / ADS-B position
+    // error (a TAYD's low pass along 28R was drawn at 0-50 ft over the grass between the runways). f.lowPass marks it for the
+    // hole that follows / precedes it (airCurveFor: the low part stays on the centreline) [inf: 100 / 35 ft, 60 m, 300 m]
+    if (!f.ground && !heli && !tr.vehicle && Math.hypot(x, z) < GROUND_VIEW_M && f.dir != null) {
+      const hA = (f.y - gy) / FT;
+      if (hA < 100) { const B = this.rwyFor(f.px, f.pz, f.dir, 60);
+        if (B && B.al >= -300 && B.al <= B.r.length + 300) { const w = clamp((100 - hA) / 65, 0, 1), d = B.ac * w;
+          f.px -= B.r.right[0] * d; f.pz -= B.r.right[1] * d; f.lowPass = { rid: B.r.id, sgn: B.sgn, al: B.al, h: hA }; if (Math.abs(d) > 1) f.lowSnap = d;
+          this.counters.lowSnap = (this.counters.lowSnap || 0) + 1; } }
+    }
     f.turn = 0; if (L && L.dir != null && dtL > 0.3 && dtL < 6) { const w = wrapPi(f.dir - L.dir) / dtL; f.turn = Math.abs(w) < (f.ground ? 20 : 6) * D2R ? w : 0; }
     return f;
   }
@@ -694,6 +750,7 @@ export class Traffic {
       else if (tr.airHidden) { tr.airHidden = false; tr.reacquire = true; }
       // simulate bodies near HWD only (SIM_NM); others keep their fixes but are not drawn
       // (ground tracks only on and around HWD: aircraft on the ground at OAK, 6 NM away, are outside the D6 window)
+      if (this.isEchoSrc(tr) && !tr.vehicle) tr.dupOf = this.echoAt(tr, tDisp);
       const rl = Math.hypot(lf.x, lf.z);
       const near = (lf.ground ? rl < 4000 : rl < SIM_NM * NM) || (tr.ctl && !tr.ctl.ground && Math.hypot(tr.ctl.x, tr.ctl.z) < SIM_NM * NM);
       tr._far = !near;
@@ -704,6 +761,44 @@ export class Traffic {
     }
     for (const tr of removed) this.remove(tr);
     this.staleAhead(tDisp);
+    this.airSeparate(tDisp, el || dt);
+  }
+  // the reported position of a track at display time t: its two fixes around t, linearly (raw positions) -> { x, y, z, gapS }
+  // (gapS: seconds to the nearer fix) | null
+  repAt(tr, t) {
+    const F = tr.fx; if (!F.length) return null; let i = F.length - 1; while (i > 0 && F[i - 1].t > t) i--;
+    const b = F[i], a = i > 0 ? F[i - 1] : null;
+    if (!a || t >= b.t) return { x: b.x, y: b.y, z: b.z, gapS: Math.abs(t - b.t) / 1000 };
+    const u = clamp((t - a.t) / Math.max(1, b.t - a.t), 0, 1);
+    return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u, z: a.z + (b.z - a.z) * u, gapS: Math.min(t - a.t, b.t - t) / 1000 };
+  }
+  // (iteration 2 of review round 3, F3) two airborne bodies drawn closer than a planform clearance (half the sum of the two spans
+  // + 15 m) while their reports, interpolated at the display time, are at least twice that apart, are pushed apart along their
+  // separation: a separation offset (tr.sepOff, added to the target in step()) grows at <= 3 m/s where it is needed and decays at
+  // 1 m/s where it is not; the body farther from a real fix (inside a recorder hole) takes the larger share. Two pattern
+  // aircraft on base / final were drawn 9 m apart inside a hole whose reports kept them 270-600 m apart. [inf: 15 m, 3 / 1 m/s]
+  airSeparate(tDisp, dt) {
+    const A = []; for (const tr of this.tracks.values()) { const D = tr.disp; if (D.valid && !D.ground && tr.inView && !tr.hidden && D.alpha > 0.02 && tr.dims && !tr.vehicle) A.push(tr); else if (tr.sepOff) tr.sepOff = null; }
+    if (A.length < 2 && !A.some(t => t.sepOff)) return;
+    const need = new Map();
+    for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
+      const p = A[i], q = A[j], P = p.disp, Q = q.disp, dx = P.x - Q.x, dy = P.y - Q.y, dz = P.z - Q.z, d = Math.hypot(dx, dy, dz);
+      const clr = 0.5 * ((p.dims.span || 11) + (q.dims.span || 11)) + 15; if (d >= clr) continue;
+      const rp = this.repAt(p, tDisp), rq = this.repAt(q, tDisp); if (!rp || !rq) continue;
+      if (Math.hypot(rp.x - rq.x, rp.y - rq.y, rp.z - rq.z) < 2 * clr) continue;      // reported that close: formation / an unresolved echo
+      const wp = rp.gapS + rq.gapS > 0.1 ? rp.gapS / (rp.gapS + rq.gapS) : 0.5, ex = clr - d + 2;
+      const u = d > 0.5 ? [dx / d, dy / d, dz / d] : [1, 0, 0];
+      const np = need.get(p) || [0, 0, 0], nq = need.get(q) || [0, 0, 0];
+      for (let k = 0; k < 3; k++) { np[k] += u[k] * ex * wp; nq[k] -= u[k] * ex * (1 - wp); }
+      need.set(p, np); need.set(q, nq); this.counters.airSeparate = (this.counters.airSeparate || 0) + 1;
+    }
+    for (const tr of A) {
+      const n = need.get(tr), o = tr.sepOff || [0, 0, 0];
+      const tgt = n ? [o[0] + n[0], o[1] + n[1], o[2] + n[2]] : [0, 0, 0], lim = (n ? 3 : 1) * dt;
+      const dv = [tgt[0] - o[0], tgt[1] - o[1], tgt[2] - o[2]], m = Math.hypot(...dv), f = m > lim ? lim / m : 1;
+      const nx = [o[0] + dv[0] * f, o[1] + dv[1] * f, o[2] + dv[2] * f];
+      tr.sepOff = Math.hypot(...nx) > 0.01 ? nx : null;
+    }
   }
   // (review round 3, M1 / m4) a SILENT aircraft (stale: drawn where it was last placed, inferred) that lies in the way of a heard
   // ground aircraft's next 5 s of motion - its own target path, sampled - is faded out before the two touch (planforms within
@@ -848,7 +943,7 @@ export class Traffic {
     // a reconstructed take-off / landing that runs past the fix it was planned to (late join, review round 3): the plan, until
     // it has joined the track again
     if (tr.xplan) { const X = tr.xplan;
-      if (t >= X.t0 && (t <= X.t1 || X.lazy)) { if (X.lazy) this.xplanAir(tr, X, t); this.samplePlan(X, t, o); o.mode = 'xplan:' + X.kind + ':' + o.seg; o.recon = true; if (X.hideSeg) o.hideSeg = true; return o; }
+      if (t >= X.t0 && t <= X.t1) { this.samplePlan(X, t, o); o.mode = 'xplan:' + X.kind + ':' + o.seg; o.recon = true; if (X.hideSeg || X.hidden) o.hideSeg = true; return o; }
       if (t > X.t1 + 2000) tr.xplan = null; }
     let i = n - 1; while (i > 0 && F[i - 1].t > t) i--;
     if (t <= F[0].t) {   // before the first fix: hidden (alpha stays 0); airborne: back along its velocity (sfo3d), <= 10 s
@@ -893,9 +988,11 @@ export class Traffic {
     }
     // an air hole: the Hermite shape with the reported directions, travelled at the reported speeds (motion.js geoHermite) -
     // the drawn speed stays between the two reports instead of bulging to 1.5 x in the middle of a 46-s hole
-    if (!a.ground && !b.ground && dt > HOLE_S && a.gsm > 10 && b.gsm > 10 && Math.max(a.gsm, b.gsm) < 2.5 * Math.min(a.gsm, b.gsm)) {
+    // (iteration 2, F1: a helicopter accelerating out of a hover-taxi - 17 -> 63 kt across a hole - is no exception: the plain
+    // Hermite below dropped its end direction and kinked 75 deg at the next fix; the body lagged 175 m behind its reports)
+    if (!a.ground && !b.ground && dt > HOLE_S && a.gsm > (heli ? 4 : 10) && b.gsm > (heli ? 4 : 10) && Math.max(a.gsm, b.gsm) < (heli ? 6 : 2.5) * Math.min(a.gsm, b.gsm)) {
       const G = this.airCurveFor(tr, a, b, dt);
-      if (G) { const q = G.at((t - a.t) / 1000); Object.assign(o, { x: q.x, z: q.z, vx: q.vx, vz: q.vz, gs: q.v, ground: false, ex: 0, mode: 'aa:geo' }); this.vertHermite(o, a, b, dt, u); o.y = Math.max(o.y, this.groundY(o.x, o.z) + 0.3); o.hd = null; return o; }
+      if (G) { const q = G.at((t - a.t) / 1000); Object.assign(o, { x: q.x, z: q.z, vx: q.vx, vz: q.vz, gs: q.v, ground: false, ex: 0, mode: 'aa:geo' + (G.lowA ? ':pass' : '') }); this.vertHermite(o, a, b, dt, u, G.lowA); o.y = Math.max(o.y, this.groundY(o.x, o.z) + 0.3); o.hd = null; if (G.lowA || b.lowPass) o.recon = true; return o; }
     }
     // Hermite between real reports (sfo3d sampleReps)
     const [apx, apz] = a.ground ? this.endPt(tr, a) : [a.px, a.pz], [bpx, bpz] = b.ground ? this.endPt(tr, b) : [b.px, b.pz];
@@ -930,17 +1027,32 @@ export class Traffic {
     o.hd = ha != null && hb != null ? ha + wrapPi(hb - ha) * u : null;
     return o;
   }
-  vertHermite(o, a, b, dt, u) {
+  vertHermite(o, a, b, dt, u, lowA = false) {
     const u2 = u * u, u3 = u2 * u, h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
     const cy = (b.y - a.y) / dt; let sa = a.vsm ?? cy, sb = b.vsm ?? cy;
     if (Math.abs(sa - cy) > Math.max(3, Math.abs(cy))) sa = cy; if (Math.abs(sb - cy) > Math.max(3, Math.abs(cy))) sb = cy;
+    // (a runway pass climbing away from a low fix levels off, it does not sink on to the ground first - F2)
+    if (lowA && cy > 0) sa = Math.max(sa, 0);
     o.y = h00 * a.y + h10 * dt * sa + h01 * b.y + h11 * dt * sb; o.vy = sa + (sb - sa) * u;
   }
   airCurveFor(tr, a, b, dt) {
     const k = 'h' + a.t; if (tr.routeCache.has(k)) return tr.routeCache.get(k);
     const sa = Math.hypot(a.vx, a.vz), sb = Math.hypot(b.vx, b.vz);
-    const G = sa > 1 && sb > 1 ? this.flightCurve(tr, [a.px, a.pz], [a.vx / sa, a.vz / sa], sa, [b.px, b.pz], [b.vx / sb, b.vz / sb], sb, dt) : null;
-    this.cacheSet(tr, k, G); return G;
+    let dA = sa > 1 ? [a.vx / sa, a.vz / sa] : null, dB = sb > 1 ? [b.vx / sb, b.vz / sb] : null; const opt = {};
+    // (iteration 2 of review round 3, F2) a runway pass inside the hole - a low pass, touch-and-go or go-around: the part below
+    // ~100 ft stays a straight on the runway centreline (f.lowPass, report()) and the lateral join to the other fix is flown
+    // above it (it was a Hermite S-curve over the infield grass at 0-50 ft, drifting toward the parallel runway). From a low fix
+    // a: along the runway to its far end, but no closer than 400 m to b's abeam point; into a low fix b: a straight final of up
+    // to 400 m [inf]
+    const rwOf = (f) => f.lowPass ? (this.site.runways || []).find(r => r.id === f.lowPass.rid) : null;
+    const rA = rwOf(a), rB = rwOf(b);
+    if (rA && dA) { const sg = a.lowPass.sgn, dir = [rA.dir[0] * sg, rA.dir[1] * sg], rem = sg > 0 ? rA.length - a.lowPass.al : a.lowPass.al;
+      const toB = (b.px - a.px) * dir[0] + (b.pz - a.pz) * dir[1], L0 = Math.max(0, Math.min(rem + 100, toB - 400, 0.8 * toB));
+      dA = dir; if (L0 > 30) { opt.initial = L0; opt.keepInitial = L0; } }
+    if (rB && dB) { const sg = b.lowPass.sgn, dir = [rB.dir[0] * sg, rB.dir[1] * sg], back = (b.px - a.px) * dir[0] + (b.pz - a.pz) * dir[1], L1 = Math.max(0, Math.min(400, 0.6 * back));
+      dB = dir; if (L1 > 30) { opt.final = L1; opt.keepFinal = L1; } }
+    const G = dA && dB ? this.flightCurve(tr, [a.px, a.pz], dA, sa, [b.px, b.pz], dB, sb, dt, opt) : null;
+    if (G) G.lowA = !!rA; this.cacheSet(tr, k, G); return G;
   }
   // the air path between two poses (fix round 2): geoHermite, unless its tightest turn needs more than ~30 deg of bank at the
   // flown speed - then a Dubins turn-straight-turn path at a 25-deg-bank radius, lengthened on the initial heading to the
@@ -1246,6 +1358,8 @@ export class Traffic {
     if (!P.feasible && !force) return null;
     return { kind, R, P, t0: a ? a.t : 0, v0, v1 };
   }
+  // on a runway's own pavement (no margin: the runway rectangle) - what a 'runway taxi' / 'lined up' label claims
+  runwayStrict(x, z) { for (const r of (this.site && this.site.runways) || []) { const px = x - r.origin[0], pz = z - r.origin[1]; const al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; if (al >= 0 && al <= r.length && Math.abs(ac) <= r.halfWidth) return true; } return false; }
   onRunway(x, z, m = 3) { for (const r of (this.site && this.site.runways) || []) { const px = x - r.origin[0], pz = z - r.origin[1]; const al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; if (al >= -30 && al <= r.length + 30 && Math.abs(ac) <= r.halfWidth + m) return true; } return false; }
   sampleGround(G, tRel, o) {
     o.ex = 0; o.route = true; o.hd = null;
@@ -1271,7 +1385,11 @@ export class Traffic {
     if (P && P.recon) tr.xplan = P;   // (review round 3: a reconstruction may run past b - target() follows it until it joins)
     // (review round 3, M3) a take-off that no runway explains (or that cannot be drawn on one) is NOT drawn rolling or lifting
     // off anywhere else: the aircraft stays hidden until its first airborne fix and appears there, at its reported height
+    // (iteration 2, F1: also every take-off whose taxi, roll and climb-out cannot be timed to reach b - a silent aircraft heard
+    // again airborne - instead of a climb-out that pursued the track for minutes. tr.m3Log lists where and when it reappears:
+    // tools/traffic/replay_engine.mjs checks that the body appears THERE, not as a teleport)
     if (!P && a.ground) { P = { segs: [{ kind: 'wait', t0: a.t, t1: b.t, x: a.px, z: a.pz, hd: a.dir }], kind: 'takeoff', rwy: null, hidden: true, fallback: true, t0: a.t, t1: b.t };
+      (tr.m3Log || (tr.m3Log = [])).push({ t0: a.t, t1: b.t, x: b.px, y: b.y, z: b.pz, why: this._why || 'no plan' }); if (tr.m3Log.length > 20) tr.m3Log.shift();
       this.counters.takeoffHidden = (this.counters.takeoffHidden || 0) + 1; this.cacheSet(tr, k, P); return P; }
     if (P) this.counters.transitionPlans = (this.counters.transitionPlans || 0) + 1;
     else {
@@ -1383,9 +1501,9 @@ export class Traffic {
   // that first airborne fix is consistent with (departureRunway): taxi to the line-up point, a roll along the centreline at the
   // type's mean take-off acceleration (speedsOf accTO = VR^2 / 2 x ground roll), lift-off at VR inside the runway, a straight
   // climb-out on the runway heading, then a bank-limited join to the airborne track (flightCurve). Every sample is inferred.
-  // When the hole is too short for that (a silent aircraft heard again airborne: the display is only lookahead_s behind), the
-  // ground part is still drawn in full and the climb-out joins the track LATE, at the first later airborne fix it can reach at
-  // <= 1.2 x the reported speeds (tr.xplan, xplanAir) - never a roll that is shorter or faster than the type can do.
+  // When the hole is too short for that (a silent aircraft heard again airborne: the display is only lookahead_s behind), no
+  // plan is returned and the take-off is hidden until its first airborne fix (transitionFor, the owner's M3 rule) - never a
+  // roll that is shorter or faster than the type can do, and (iteration 2) never a climb-out minutes late behind the track.
   planTakeoff(tr, a0, b, dt, t0 = a0.t) {
     const T = tr.dims, SP = this.spd(tr), VR = SP.vr;
     const ep = this.endPt(tr, a0); const a = ep[0] === a0.px && ep[1] === a0.pz ? a0 : { ...a0, px: ep[0], pz: ep[1] };
@@ -1398,7 +1516,11 @@ export class Traffic {
     const vAlong = a.gsm > 0.5 ? a.gsm * Math.cos(a.dir - hR) : 0;
     const onR = Math.abs(acA) <= r.halfWidth + 6 && pa >= -5 && pa <= r.length + 5;
     let alE, taxi = null, v0 = 0, tPiv = 0, rolling = false;
-    if (onR && vAlong > 3 && left(pa) > SP.roll * 0.5 + 40) { alE = clamp(pa, 0, r.length); v0 = Math.min(vAlong, VR); rolling = true; }   // rolling start (touch-and-go / seen mid-roll)
+    // rolling start (touch-and-go / seen mid-roll). (iteration 2 of review round 3, F1: an aircraft rolling at >= 0.9 VR is never
+    // stopped, turned round and launched again - it lifts off on the runway it is on, ahead of it, at its own speed, as long as
+    // it can still reach VR at 1.3 x the table acceleration >= 30 m before the end; the case-A C152, 64 kt and 112 m before
+    // the 28R end, was braked to 1 kt, back-taxied 740 m and launched a second time) [inf]
+    if (onR && vAlong > 3 && (left(pa) > SP.roll * 0.5 + 40 || (vAlong >= 0.9 * VR && left(pa) >= this.dToVR(SP, vAlong) + 30))) { alE = clamp(pa, 0, r.length); v0 = Math.min(vAlong, VR); rolling = true; }
     else if (onR && a.gsm < 1.5 && left(pa) >= need) {
       // standing on the runway (lined up / holding in position): pivot onto the centreline heading if needed, then roll from rest
       alE = clamp(pa, 0, r.length); const hA = a.hdReal ? a.hd : a.hd ?? a.dir; const turnA = hA != null ? Math.abs(wrapPi(hR - hA)) : 0;
@@ -1411,47 +1533,84 @@ export class Traffic {
       const hA = a.hdReal ? a.hd : a.hd ?? a.dir;
       if (a.gsm < 0.5 && hA != null && taxi.R.pts.length > 1) { const q = polyAt(taxi.R, Math.min(8, taxi.R.len)); const turnA = Math.abs(wrapPi(bearR(q.x - taxi.R.pts[0][0], q.z - taxi.R.pts[0][1]) - hA)); if (turnA > 45 * D2R) tPiv = turnA / (LIM.wPivot * D2R) + 1.5; }
     }
-    // (the table acceleration is at maximum weight; a lighter aircraft rolls shorter - up to 1.3 x the acceleration, used only
-    // as far as the hole needs it [inf: C172S POH ~0.7 x the ground roll at 2,200 vs 2,550 lb, recalled; SF50 AFM 1,483 ft at
-    // 5,000 lb -20 C vs 2,036 ft at 6,000 lb ISA = 1.37 x])
-    const budget0 = (b.t - t0) / 1000;
-    let ACC = SP.accTO;
-    for (const f of [1, 1.15, 1.3]) { ACC = SP.accTO * f; const tR = (VR - v0) / ACC, dR = Math.max(0, (VR * VR - v0 * v0) / (2 * ACC));
-      if ((taxi ? taxi.P.tmin : 0) + tPiv + tR + Math.max(0, Math.hypot(b.px - this.axisPt(r, alE)[0], b.pz - this.axisPt(r, alE)[1]) - dR) / ((VR + Math.max(b.gsm || 0, VR)) / 2) <= budget0) break; }
-    const dRoll = Math.max(0, (VR * VR - v0 * v0) / (2 * ACC)), alLO = alE + sgn * dRoll;
-    if (left(alLO) < 30) return this.why(2);                       // lift-off inside the runway, >= 30 m before its end
-    const E = this.axisPt(r, alE), LO = this.axisPt(r, alLO), gyLO = this.groundY(LO[0], LO[1]);
-    const tTaxi = (taxi ? taxi.P.tmin : 0) + tPiv, tRoll = (VR - v0) / ACC;
-    const vb = Math.max(b.gsm || 0, VR), sb = Math.max(1, Math.hypot(b.vx, b.vz)), dB = [b.vx / sb, b.vz / sb];
-    const dLB = Math.hypot(b.px - LO[0], b.pz - LO[1]), ini = Math.min(T.cls === 'jet' ? 1500 : 500, 0.5 * dLB);
-    const tAirNom = Math.max(2, this.flightCurve(tr, LO, dirR, VR, [b.px, b.pz], dB, vb, Math.max(2, dLB / ((VR + vb) / 2)), { initial: ini }).len / ((VR + vb) / 2));
-    const budget = (b.t - t0) / 1000, slack = budget - (tTaxi + tRoll + tAirNom);
-    if (this.debugPlan) console.log('planTakeoff', JSON.stringify({ rw: r.id, sgn, cost: +D.cost.toFixed(2), rolling, alE: +alE.toFixed(0), alLO: +alLO.toFixed(0), v0: +v0.toFixed(1), dRoll: +dRoll.toFixed(0), acc: +ACC.toFixed(2), tTaxi: +tTaxi.toFixed(1), tRoll: +tRoll.toFixed(1), tAir: +tAirNom.toFixed(1), budget: +budget.toFixed(1) }));
-    const segs = []; let t = t0;
-    const late = slack < 0;
-    let wait = 0, tTx = taxi ? taxi.P.tmin : 0;
-    // spare time: a taxiing aircraft lines up and waits on the runway for up to 30 s ('line up and wait'; it then rolls from
-    // rest), any more is spent in the taxi profile (a hold where it stood, or at a slow point of the route); standing on the
-    // runway it waits there [inf]
-    let v0r = v0, tRollR = tRoll, dRollR = dRoll;
-    if (!late) {
-      if (taxi && slack >= 3 / ACC + 1.5) { const dR0 = VR * VR / (2 * ACC); if (left(alE + sgn * dR0) >= 30) { v0r = 0; tRollR = VR / ACC; dRollR = dR0; const s2 = slack - (tRollR - tRoll); wait = Math.min(30, s2); tTx += s2 - wait; } else tTx += slack; }
-      else if (taxi) tTx += slack; else if (!rolling) wait = slack;
+    // ---- timing (iteration 2 of review round 3, F1): planned BACKWARDS from the first airborne fix b. The late join of round 3
+    // (a climb-out that could not reach b pursued the track for up to 4 min, kilometres behind its reports) is gone. For each
+    // ground option, in this order: the table acceleration, then 1.15 x and 1.3 x (a lighter aircraft rolls shorter [inf: C172S
+    // POH ~0.7 x the ground roll at 2,200 vs 2,550 lb, recalled; SF50 AFM 1,483 ft at 5,000 lb -20 C vs 2,036 ft at 6,000 lb ISA
+    // = 1.37 x]); the straight climb-out of 400 m (jets 800 m), then 250 m and 150 m (an early crosswind turn); last, a faster taxi
+    // (TAXI_V_FAST) with a climb-out at up to 1.3 x the reported speed - the earliest lift-off (no wait) is tried first, and the
+    // climb-out must then reach b at <= kMax x its reported speed (takeoffAir). Spare time is spent on the ground, as long as
+    // the climb-out still flies no faster than reported: lined up and waiting <= 30 s, the rest in the taxi (standing on the
+    // runway: waiting there; rolling: none). No option fits -> null: transitionFor hides the take-off (the owner's M3 rule -
+    // hidden from its last ground position until the first airborne fix, drawn there at its reported height) [inf: all values]
+    const budget = (b.t - t0) / 1000, keepDef = T.cls === 'jet' ? 800 : 400, E = this.axisPt(r, alE);
+    // (1.6 x: the class table is one row per class - an RV-4 rolls far shorter than a PA-28 - and wind is not modelled: a 12-kt
+    // headwind shortens a 55-kt ground roll to ~0.6 x [inf: ground roll ~ (1 - Vw / VLOF)^1.85, recalled]. Used only when the
+    // data leave no other way)
+    // (2.0 x, last: a bizjet reported at 148 kt 44 ft up 824 m from its line-up point - ADS-B position latency of 1-2 s, i.e.
+    // 75-150 m at that speed, is not modelled either) [inf]
+    const OPTS = [[1, keepDef, 1.2, 0], [1.15, keepDef, 1.2, 0], [1.3, keepDef, 1.2, 0], [1, 250, 1.2, 0], [1.3, 250, 1.2, 0], [1.3, 150, 1.2, 0], [1.6, 150, 1.2, 0], [1.6, 150, 1.3, 1], [2.0, 150, 1.3, 1]];
+    // the first airborne fix on the climb-out (aligned within 45 deg, <= 150 m beside the extended centreline): the lift-off must
+    // lie BEFORE it, by at least the distance to climb to its height at twice the type's climb rate + 30 m (a GLF4's 1,000-m
+    // table roll ended 180 m past such a fix - the body flew on and the plan turned back to the fix behind it) [inf]
+    const bAl = (b.px - r.origin[0]) * r.dir[0] + (b.pz - r.origin[1]) * r.dir[1], bAc = (b.px - r.origin[0]) * r.right[0] + (b.pz - r.origin[1]) * r.right[1];
+    const bOnCl = Math.abs(bAc) <= 150 && Math.abs(wrapPi((b.trk != null ? b.trk * D2R : b.dir) - hR)) < 45 * D2R;
+    const bH = Math.max(0, b.y - this.groundY(b.px, b.pz));
+    // (a fix that is already much faster than VR, low on the climb-out: the roll may run on to 1.2 x VR before the wheels leave)
+    const vTops = [VR]; if (bOnCl && bH < 100 && (b.gsm || 0) > 1.1 * VR) vTops.push(Math.min(1.2 * VR, b.gsm));
+    let pick = null;
+    for (const [f, keep, kMax, fast] of OPTS) for (const VT of vTops) {
+      if (pick) break;
+      const ACC = SP.accTO * f, DEC = 1.5;   // DEC: the roll-out braking of a touch-and-go that has time to spare [inf]
+      const tx = taxi && fast ? (this.profiled(tr, taxi.R.pts, 1e-3, a, null, 'taxi', true, { v1: 3, taxiV: TAXI_V_FAST }) || taxi) : taxi;
+      const vE = taxi ? 3 : v0;
+      // the roll as parts [{v0, acc, dt}]: from v up to VR at ACC; a rolling start with W s to spare first slows down (DEC, to >=
+      // half its speed) and holds that speed, then accelerates - the touch-and-go roll-out (a TF19 at 44 kt whose climb-out would
+      // otherwise have been flown at 43 kt, below its minimum speed)
+      const rollOf = (v, W = 0) => { const q = Math.min(v, VT); let parts;
+        if (W > 0.01 && rolling) { const c = 1 / DEC + 1 / ACC, dv = Math.min(W / c, 0.5 * q), vm = q - dv, hold = W - dv * c;
+          parts = [{ v0: q, acc: -DEC, dt: dv / DEC }, { v0: vm, acc: 0, dt: hold }, { v0: vm, acc: ACC, dt: (VT - vm) / ACC }]; }
+        else parts = [{ v0: q, acc: ACC, dt: (VT - q) / ACC }];
+        parts = parts.filter(p => p.dt > 0.01); let s0 = 0, tR = 0; for (const p of parts) { p.s0 = s0; s0 += p.v0 * p.dt + 0.5 * p.acc * p.dt * p.dt; tR += p.dt; }
+        return { tR, dR: s0, parts }; };
+      const R0 = rollOf(vE); if (left(alE + sgn * R0.dR) < 30) continue;              // lift-off >= 30 m before the runway end
+      const Tg = tPiv + (tx ? tx.P.tmin : 0) + R0.tR; if (Tg > budget - 2) continue;
+      const Wmax = budget - Tg - 2;
+      // (from rest: standing on the runway, or a taxi that has the time to stop on the line-up point - it then rolls from 0)
+      const fromRest = (W) => !rolling && (!taxi || (W >= 3 / ACC + 1.5 && left(alE + sgn * VT * VT / (2 * ACC)) >= 30));
+      const evalW = (W) => { const rest = fromRest(W), R = rest ? rollOf(0) : rolling ? rollOf(v0, W) : R0, alLO = alE + sgn * R.dR, LO = this.axisPt(r, alLO);
+        if (left(alLO) < 30) return null;
+        if (bOnCl && (bAl - alLO) * sgn < 30 + bH / (2 * SP.climb) * VT) return null;
+        // (the climb-out starts at the speed the roll ended at: a rolling start already above VR lifts off at its own speed; after
+        // lift-off it accelerates no harder than it rolled, <= 2.5 m/s2 - case S gained 24 kt in 6 s right after lift-off)
+        const air = { LO, dirR, vLO: rolling && W < 0.01 ? Math.max(VT, Math.min(vAlong, 1.3 * VR)) : VT, gyLO: this.groundY(LO[0], LO[1]), tL: t0 + (Tg + W) * 1000, ini: keep, keep, climb: SP.climb, accA: Math.min(2.5, Math.max(1.0, ACC)) };
+        const S = this.takeoffAir(tr, air, b, false, kMax); return S ? { W, S, rest, R, alLO } : null; };
+      const N = Wmax > 0.5 ? 12 : 0, C = [];
+      for (let j = 0; j <= N; j++) { const q = evalW(N ? Wmax * j / N : 0); if (q) C.push(q); }
+      if (!C.length) continue;
+      // the latest lift-off whose climb-out flies no faster than reported (k <= 1); none: the earliest that fits
+      const slow = C.filter(q => q.S.k <= 1.0); let P0 = slow.length ? slow[slow.length - 1] : C[0];
+      if (slow.length && N) { let lo = P0.W, hi = Math.min(Wmax, P0.W + Wmax / N); for (let it = 0; it < 6; it++) { const m = (lo + hi) / 2, q = evalW(m); if (q && q.S.k <= 1.0) { lo = m; P0 = q; } else hi = m; } }
+      pick = { ...P0, ACC, tx, f, keep, kMax, fast, VT };
     }
+    if (this.debugPlan) console.log('planTakeoff', JSON.stringify({ rw: r.id, sgn, cost: +D.cost.toFixed(2), rolling, alE: +alE.toFixed(0), v0: +v0.toFixed(1), tPiv, taxi: taxi ? +taxi.P.tmin.toFixed(1) : null, budget: +budget.toFixed(1), pick: pick ? { f: pick.f, keep: pick.keep, fast: pick.fast, VT: +pick.VT.toFixed(1), W: +pick.W.toFixed(1), k: +pick.S.k.toFixed(2) } : null }));
+    if (!pick) return this.why(11);
+    const { W, rest, R, alLO, S, ACC } = pick; let tx = pick.tx;
+    const segs = []; let t = t0, wait = 0, tTx = tx ? tx.P.tmin : 0;
+    if (rest && taxi) { const s2 = W - 3 / ACC; wait = Math.min(30, s2); tTx += s2 - wait; }
+    else if (taxi) tTx += W;
+    else if (!rolling) wait = W;
     if (tPiv > 0) { const t1 = t + tPiv * 1000; segs.push({ kind: 'wait', t0: t, t1, x: taxi ? a.px : E[0], z: taxi ? a.pz : E[1], hd: taxi ? bearR(taxi.R.pts[Math.min(1, taxi.R.pts.length - 1)][0] - taxi.R.pts[0][0], taxi.R.pts[Math.min(1, taxi.R.pts.length - 1)][1] - taxi.R.pts[0][1]) : hR }); t = t1; }
-    if (taxi) { taxi = this.profiled(tr, taxi.R.pts, Math.max(1e-3, tTx), a, null, 'taxi', true, { v1: 3 }); const t1 = t + tTx * 1000; segs.push({ kind: 'prof', t0: t, t1, G: taxi }); t = t1; }
+    if (tx) { tx = this.profiled(tr, tx.R.pts, Math.max(1e-3, tTx), a, null, 'taxi', true, { v1: 3, ...(pick.fast ? { taxiV: TAXI_V_FAST } : {}) }); const t1 = t + tTx * 1000; segs.push({ kind: 'prof', t0: t, t1, G: tx }); t = t1; }
     if (wait > 0.05) { const t1 = t + wait * 1000; segs.push({ kind: 'wait', t0: t, t1, x: E[0], z: E[1], hd: hR }); t = t1; }
-    const alLO2 = alE + sgn * dRollR, LO2 = this.axisPt(r, alLO2);
-    { const t1 = t + tRollR * 1000; segs.push({ kind: 'roll', t0: t, t1, R: polyOf([E, this.axisPt(r, alLO2 + sgn * 1)]), s0: 0, v0: v0r, acc: ACC, takeoff: true }); t = t1; }
-    const P = { segs, kind: 'takeoff', rwy: r.id, end: sgn > 0 ? r.id.split('/')[0] : r.id.split('/')[1], rolling, t0, t1: b.t, recon: true, roll: dRollR, alLO: alLO2, alE, rLen: r.length, sgn };
-    // (the climb-out starts at the speed the roll ended at: a rolling start already above VR lifts off at its own speed - it
-    // used to drop from 77 to 60 kt at the wheels)
-    const air = { LO: LO2, dirR, vLO: Math.max(VR, rolling ? Math.min(vAlong, 1.3 * VR) : v0r), gyLO: this.groundY(LO2[0], LO2[1]), tL: t, ini: Math.min(T.cls === 'jet' ? 1500 : 500, 600), climb: SP.climb };
-    { const S = this.takeoffAir(tr, air, b, false, late ? 1.15 : 1.2); if (S) { segs.push(S); return P; } }
-    // the take-off cannot reach b in time: it joins the airborne track at a later fix (xplanAir, built when it lifts off)
-    P.late = true; P.t1 = Infinity; P.lazy = air; this.counters.takeoffLate = (this.counters.takeoffLate || 0) + 1;
-    return P;
+    const RP = polyOf([E, this.axisPt(r, alLO + sgn * 1)]), v0r = rest ? 0 : null;
+    for (const q of R.parts) { const t1 = t + q.dt * 1000; segs.push({ kind: 'roll', t0: t, t1, R: RP, s0: q.s0, v0: v0r ?? q.v0, acc: q.acc, takeoff: q.acc > 0, landing: q.acc < 0 }); t = t1; }
+    S.t0 = t; segs.push(S);
+    if (pick.f > 1 || pick.keep < keepDef || pick.fast || (rolling && W > 0.01)) this.counters.takeoffCompressed = (this.counters.takeoffCompressed || 0) + 1;
+    return { segs, kind: 'takeoff', rwy: r.id, end: sgn > 0 ? r.id.split('/')[0] : r.id.split('/')[1], rolling, t0, t1: b.t, recon: true, roll: R.dR, alLO, alE, rLen: r.length, sgn, acc: ACC, k: S.k };
   }
+  // the distance to reach VR from v at 1.3 x the table take-off acceleration (the shortest roll the plans allow) [inf]
+  dToVR(SP, v) { return Math.max(0, (SP.vr * SP.vr - v * v) / (2 * 1.3 * SP.accTO)); }
   // the climb-out from the lift-off point to an airborne fix c over [air.tL, c.t]: straight on the runway heading first (air.ini),
   // then a bank-limited join; the height climbs monotonically from the runway to c's (at most the type's climb rate at the
   // start) -> an air segment, or null when it would need more than 1.2 x / less than 0.75 x the reported speeds [inf]
@@ -1459,52 +1618,27 @@ export class Traffic {
     const D = (c.t - air.tL) / 1000; if (!(D > 1.5)) return null;
     const sc = Math.max(1, Math.hypot(c.vx, c.vz)), dC = [c.vx / sc, c.vz / sc], vc = Math.max(c.gsm || 0, 0.8 * air.vLO);
     const dist = Math.hypot(c.px - air.LO[0], c.pz - air.LO[1]), ini = Math.max(0, Math.min(air.ini - (air.flown || 0), 0.5 * dist));
-    const keep = Math.max(0, (tr.dims && tr.dims.cls === 'jet' ? 800 : 400) - (air.flown || 0));
+    const keep = Math.max(0, (air.keep ?? (tr.dims && tr.dims.cls === 'jet' ? 800 : 400)) - (air.flown || 0));
     // (the path is sized for the climb speed at both ends - the re-timing below adds the acceleration from the lift-off speed;
     // sized for a linear VR -> vc profile it came out short and was flown below the minimum flying speed)
     const C0 = this.flightCurve(tr, air.LO, air.dirR, vc, [c.px, c.pz], dC, vc, D, { initial: Math.max(ini, Math.min(keep, 0.7 * dist)), keepInitial: Math.min(keep, 0.7 * dist) });
     // (re-timed: after lift-off the aircraft accelerates at <= 1.2 m/s2 from its lift-off speed and then flies the path at one
     // speed vc'; k = vc' / the reported speed at c - the linear VR -> vc profile of the curve made a late, slow start look like a
     // too-long path) [inf: 1.2 m/s2]
-    const C = retimePath(C0, D, air.vLO, 1.2, vc), k = C.vc / Math.max(1, vc);
-    if (!force && C.vc < 0.98 * this.spd(tr).vmin) return null;
+    const C = retimePath(C0, D, air.vLO, air.accA ?? 1.2, vc), k = C.vc / Math.max(1, vc);
+    this._taWhy = null;
+    if (!force && C.vc < 0.98 * this.spd(tr).vmin) { this._taWhy = 'slow ' + C.vc.toFixed(1); return null; }
     // the straight climb-out is really there: over the first `keep` metres the path stays within 5 m (+ 3 %) of the runway
     // heading line through the lift-off point (flightCurve may have had to drop it)
-    if (!force && keep > 30) { const tK = Math.min(D, keep / Math.max(10, air.vLO)); for (let j = 1; j <= 12; j++) { const q = C.at(tK * j / 12), ax = q.x - air.LO[0], az = q.z - air.LO[1], al = ax * air.dirR[0] + az * air.dirR[1];
-      if (Math.abs(ax * air.dirR[1] - az * air.dirR[0]) > 5 + 0.03 * Math.max(0, al) || al < -1) return null; } }
-    const y0 = air.y ?? air.gyLO, dy = c.y - y0, vsMax = LIM.airVs[tr.dims && tr.dims.cls] || LIM.airVs.default;
-    if (!force && (k > kMax || k < 0.75 || dy / D > vsMax)) return null;
+    if (!force && keep > 30) { const tK = Math.min(D, Math.min(keep, 0.5 * dist) / Math.max(10, air.vLO)); for (let j = 1; j <= 12; j++) { const q = C.at(tK * j / 12), ax = q.x - air.LO[0], az = q.z - air.LO[1], al = ax * air.dirR[0] + az * air.dirR[1];
+      if (Math.abs(ax * air.dirR[1] - az * air.dirR[0]) > 5 + 0.03 * Math.max(0, al) || al < -1) { this._taWhy = 'straight ' + j + ' k ' + k.toFixed(2) + ' len ' + C.len.toFixed(0) + ' dist ' + dist.toFixed(0); return null; } } }
+    // (iteration 2, F1: the mean climb from the lift-off to c is at most twice the type's take-off climb rate, or 1.25 x the climb
+    // reported at c - an RV-4 lifted off 2.8 s before a fix 75 ft up; the class limit LIM.airVs alone allowed 2,400 ft/min) [inf]
+    const y0 = air.y ?? air.gyLO, dy = c.y - y0, vsMax = Math.min(LIM.airVs[tr.dims && tr.dims.cls] || LIM.airVs.default, Math.max(2 * (air.climb || 3), 1.25 * (c.vsm || 0)));
+    if (!force && (k > kMax || k < 0.75 || dy / D > vsMax)) { this._taWhy = 'k ' + k.toFixed(2) + ' vs ' + (dy / D).toFixed(1) + ' len ' + C.len.toFixed(0) + ' dist ' + dist.toFixed(0); return null; }
     // (monotone cubic: both end slopes within 3 x the mean climb - Fritsch-Carlson - so the height never dips or overshoots)
     const sec = Math.max(0, dy) / D, vy0 = Math.min(air.vy ?? air.climb, 3 * sec), vy1 = clamp(c.vsm ?? sec, 0, 3 * sec);
     return { kind: 'air', t0: air.tL, t1: c.t, C, y0, y1: Math.max(c.y, y0), vy0, vy1, k };
-  }
-  // late join of a reconstructed take-off (tr.xplan with P.lazy): at lift-off time, the first later airborne fix the climb-out
-  // reaches at <= 1.2 x the reported speeds (takeoffAir). Until one is reachable the aircraft climbs on: straight ahead on the
-  // runway heading for the first air.ini metres while it accelerates (<= 1 m/s2) to its climb speed, then in a standard-rate
-  // turn (3 deg/s) toward the newest known airborne fix at up to 1.15 x its reported speed - a pursuit that closes on the
-  // track - in 2-s pieces [inf: all rates]
-  xplanAir(tr, X, t) {
-    const A = X.lazy; if (!A || t < A.tL - 100) return;
-    // (only airborne fixes before the next ground fix: a pattern aircraft that lands again before the join ends its climb-out
-    // there - forced onto the last airborne fix before that landing)
-    const gN = tr.fx.find(q => q.ground && q.t > A.tL), tLim = gN ? gN.t : Infinity;
-    for (let guard = 0; guard < 400 && X.lazy && t > A.tL - 100; guard++) {
-      for (const c of tr.fx) { if (c.ground || c.t <= A.tL + 3000 || c.t >= tLim) continue; const S = this.takeoffAir(tr, A, c); if (S) { X.segs.push(S); X.t1 = c.t; X.lazy = null; X.joined = c.t; return; } }
-      const known = tr.fx.filter(q => !q.ground && q.t > A.tL - 120000 && q.t < tLim), tgt = known[known.length - 1];
-      if ((A.ext || 0) > 240 || !tgt || (gN && A.tL > gN.t - 30000)) {   // (4 min without a join, a landing ahead, or no airborne fix: end at the newest one, forced)
-        if (tgt && tgt.t > A.tL + 3000) { const S = this.takeoffAir(tr, A, tgt, true); if (S) { X.segs.push(S); X.t1 = tgt.t; X.lazy = null; return; } }
-        X.hideSeg = true; X.t1 = A.tL; X.lazy = null; return;
-      }
-      if (A.vR == null) A.vR = A.vLO;
-      const v0 = A.v ?? A.vLO, vT = 1.15 * Math.max(tgt.gsm || 0, A.vR), v1 = v0 < vT ? Math.min(vT, v0 + 2 * 1.0) : Math.max(vT, v0 - 2 * 1.0);
-      const h0 = bearR(A.dirR[0], A.dirR[1]), flown = (A.flown || 0);
-      const dh = flown < A.ini ? 0 : clamp(wrapPi(bearR(tgt.px - A.LO[0], tgt.pz - A.LO[1]) - h0), -6 * D2R, 6 * D2R);
-      const d1 = hvR(h0 + dh), len = (v0 + v1);   // 2 s at the mean speed
-      const P1 = [A.LO[0] + (A.dirR[0] + d1[0]) / 2 * len, A.LO[1] + (A.dirR[1] + d1[1]) / 2 * len];
-      const y0 = A.y ?? A.gyLO, vy = Math.min(A.climb, LIM.airVs[tr.dims && tr.dims.cls] || LIM.airVs.default), y1 = Math.min(y0 + vy * 2, Math.max(y0, tgt.y));
-      X.segs.push({ kind: 'air', t0: A.tL, t1: A.tL + 2000, C: geoHermite(A.LO, A.dirR, v0, P1, d1, v1, 2), y0, y1, vy0: A.vy ?? 1.5, vy1: (y1 - y0) / 2 });
-      Object.assign(A, { LO: P1, dirR: d1, v: v1, vLO: v1, tL: A.tL + 2000, y: y1, vy: (y1 - y0) / 2, ext: (A.ext || 0) + 2, flown: flown + len });
-    }
   }
   // the runway (and direction) a take-off from ground fix a toward airborne fix b used. An aircraft already on a runway - rolling
   // along it, or standing lined up - takes off on that one, the way it points (a touch-and-go). Otherwise the runway end the
@@ -1517,7 +1651,7 @@ export class Traffic {
     if (RWa) { const r = RWa.r, hR = bearR(r.dir[0], r.dir[1]), h = a.gsm > 1.5 ? a.dir : (a.hdReal ? a.hd : null);
       if (h != null && Math.abs(Math.cos(h - hR)) > Math.cos(30 * D2R)) { const sgn = Math.cos(h - hR) >= 0 ? 1 : -1, left = sgn > 0 ? r.length - RWa.al : RWa.al;
         const vAl = a.gsm * Math.abs(Math.cos(h - hR));
-        if ((vAl > 3 && left > SP.roll * 0.5 + 40) || left >= SP.roll * 1.1 + 40) return { r, sgn, cost: 0, onRunway: true }; } }
+        if ((vAl > 3 && left > SP.roll * 0.5 + 40) || left >= SP.roll * 1.1 + 40 || (vAl >= 0.9 * SP.vr && left >= this.dToVR(SP, vAl) + 30)) return { r, sgn, cost: 0, onRunway: true }; } }
     for (const r of (this.site && this.site.runways) || []) for (const sgn of [1, -1]) {
       const hR = bearR(r.dir[0] * sgn, r.dir[1] * sgn), dpsi = Math.abs(wrapPi((b.trk != null ? b.trk * D2R : b.dir) - hR));
       if (dpsi > 150 * D2R) continue;
@@ -1655,6 +1789,7 @@ export class Traffic {
       const fin = Math.min(T.cls === 'jet' ? 800 : 400, alongA > 0 ? 0.6 * alongA : 400);
       const S = this.airSeg(a.t, b.t, [a.px, a.pz], [a.vx / sa, a.vz / sa], Math.max(a.gsm, 10), [b.px, b.pz], dirB, Math.max(b.gsm, SP.vr), a.y, this.groundY(b.px, b.pz), a.vsm || -3, -0.8, tr, { final: fin, keepFinal: Math.min(fin, 0.6 * dAir) });
       if (!(S.C.k != null ? S.C.k <= 1.35 : S.C.len / Math.max(1e-3, S.C.Ld) <= 1.35)) return this.why(10);
+      S.vglide = true;
       return { segs: [S], kind: 'landing', rwy: r.id, bOn, recon: true, t0: a.t, t1: b.t, tdAtB: true };
     }
     if (bOn) {
@@ -1714,11 +1849,12 @@ export class Traffic {
     // touchdown is aligned with the runway; keepFinal)
     const dTD = Math.hypot(TD[0] - a.px, TD[1] - a.pz);
     segs.push(this.airSeg(a.t, t1, [a.px, a.pz], [a.vx / sa, a.vz / sa], Math.max(a.gsm, 10), TD, dirR, vTDa, a.y, this.groundY(TD[0], TD[1]), a.vsm || -3, -1.0, tr, { final: fin, keepFinal: Math.min(fin, 0.6 * dTD) }));
+    segs[segs.length - 1].vglide = true;
     if (G.roll) { let tq = t1; G.parts.forEach((q, k) => { const t2 = k === G.parts.length - 1 ? b.t : tq + q.dt * 1000; segs.push({ kind: 'roll', t0: tq, t1: t2, R: G.R, s0: q.s0, v0: q.v0, acc: q.acc, landing: q.acc <= 0, takeoff: q.acc > 0 }); tq = t2; }); }
     else segs.push({ kind: 'prof', t0: t1, t1: b.t, G });
     return { segs, kind: 'landing', rwy: r.id, bOn, recon: true, t0: a.t, t1: b.t };
   }
-  why(k) { this.counters['planFail' + k] = (this.counters['planFail' + k] || 0) + 1; if (this.debugPlan) console.log('plan fail', k); return null; }
+  why(k) { this._why = 'plan fail ' + k; this.counters['planFail' + k] = (this.counters['planFail' + k] || 0) + 1; if (this.debugPlan) console.log('plan fail', k); return null; }
   samplePlan(P, t, o) {
     let S = P.segs.find(q => t >= q.t0 && t <= q.t1) || (t < P.segs[0].t0 ? P.segs[0] : P.segs[P.segs.length - 1]); o.seg = S.kind + (S.takeoff ? 'R' : '');
     const D = Math.max(1e-3, (S.t1 - S.t0) / 1000), tau = clamp((t - S.t0) / 1000, 0, D), u = tau / D;
@@ -1726,7 +1862,9 @@ export class Traffic {
     // the phase the plan is drawing (drawnPhase uses it where the fix label lags the drawn motion)
     o.planPh = S.kind === 'air' ? (P.kind === 'takeoff' ? 'initial_climb' : 'final') : S.kind === 'roll' ? (S.landing ? 'landing_roll' : 'takeoff_roll') : S.kind === 'wait' ? (this.onRunway(S.x, S.z) ? 'line_up' : 'hold_short') : null;
     if (S.kind === 'wait') { Object.assign(o, { x: S.x, z: S.z, y: this.groundY(S.x, S.z), vx: 0, vz: 0, vy: 0, gs: 0, ground: true, stop: true, hd: S.hd, rest: S.rest || (S.rest = { x: S.x, z: S.z, hdg: S.hd != null ? toDeg(S.hd) : 0, planned: true }) }); return o; }
-    if (S.kind === 'prof') { this.sampleGround(S.G, tau, o); o.planPh = P.kind === 'landing' ? (this.onRunway(o.x, o.z) ? 'landing_roll' : 'taxi') : (this.onRunway(o.x, o.z) && o.gs > 3 ? 'line_up' : 'taxi'); return o; }
+    // (iteration 2, F6: a roll-out / exit continuation on the runway is a landing roll; taxiing on to the runway is 'lined up' only
+    // while it is slow - a back-taxi along it at 20 kt is 'runway taxi')
+    if (S.kind === 'prof') { this.sampleGround(S.G, tau, o); const rw = this.onRunway(o.x, o.z); o.planPh = P.kind === 'landing' || P.kind === 'exit' ? (rw ? (o.gs > 7.7 ? 'landing_roll' : 'runway_taxi') : 'taxi') : (rw && o.gs > 3 ? (o.gs > 4 ? 'runway_taxi' : 'line_up') : 'taxi'); return o; }
     if (S.kind === 'roll') {
       const s = S.s0 + S.v0 * tau + 0.5 * S.acc * tau * tau, v = S.v0 + S.acc * tau;
       const p = polyAt(S.R, s); Object.assign(o, { x: p.x, z: p.z, y: this.groundY(p.x, p.z), vx: p.ux * v, vz: p.uz * v, vy: 0, gs: v, ground: true, rollSeg: true });
@@ -1735,7 +1873,8 @@ export class Traffic {
     const q = S.C.at(tau);
     const u2 = u * u, u3 = u2 * u, h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
     o.x = q.x; o.z = q.z; o.vx = q.vx; o.vz = q.vz; o.gs = q.v;
-    o.y = h00 * S.y0 + h10 * D * S.vy0 + h01 * S.y1 + h11 * D * S.vy1; o.vy = S.vy0 + (S.vy1 - S.vy0) * u;
+    if (S.vglide) { const V = glideY(S, tau, D); o.y = V.y; o.vy = V.vy; }
+    else { o.y = h00 * S.y0 + h10 * D * S.vy0 + h01 * S.y1 + h11 * D * S.vy1; o.vy = S.vy0 + (S.vy1 - S.vy0) * u; }
     o.ground = false; o.y = Math.max(o.y, this.groundY(o.x, o.z) + 0.3);
     return o;
   }
@@ -1755,6 +1894,7 @@ export class Traffic {
     const o = this.target(tr, tDisp, this._tgt); const D = tr.disp; const T = tr.dims; if (this.debugCtl) this._dbgT = tDisp;
     const rawX = o.x, rawZ = o.z, rawPrev = tr._raw; tr._raw = o.ground ? [rawX, rawZ] : null;
     if (tr.physOff && o.ground) { o.x += tr.physOff[0]; o.z += tr.physOff[1]; }
+    if (tr.sepOff && !o.ground) { o.x += tr.sepOff[0]; o.z += tr.sepOff[2]; o.y = Math.max(this.groundY(o.x, o.z) + 0.3, o.y + tr.sepOff[1]); }
     let c = tr.ctl;
     // hidden (OAK ground part): re-created where it reappears (also on the first visible step), no cut
     if (c && (o.hideSeg || tr._hidPrev) && !(D.alpha > 0.01)) { c = null; }
@@ -1991,7 +2131,13 @@ export class Traffic {
     let f = F[i];
     let ph = tr.vehicle ? 'vehicle' : (f && f.ph) || 'unknown', pi = (f && f.pi) || {};
     if (tr.stale && tr.park) { ph = tr.park.inside ? 'hangared' : 'parked'; pi = { src: tr.park.inside ? 'inf' : 'obs', rule: tr.park.inside ? 'signal ended at a hangar' : 'parked, no signal' }; }
-    else if (tr.stale) { ph = 'no_signal'; pi = { src: 'inf', rule: 'signal ended here; drawn at its last position (' + ((tr.stalePose && tr.stalePose.rule) || 'newest fix') + ')' }; }
+    else if (tr.stale) {
+      // (iteration 2 of review round 3, F6: a silent aircraft whose take-off / roll-out is being continued (runwayCont) is not
+      // 'No signal - last position': it is labelled by the drawn motion, inferred)
+      const c = tr.ctl, mv = !!c && (Math.abs(c.v) > 1 || !c.ground);
+      if (mv) { ph = tr._planPh || (c.ground ? (this.runwayStrict(c.x, c.z) ? 'runway_taxi' : 'taxi') : 'initial_climb'); pi = { src: 'inf', rule: 'signal ended; the motion is continued (reconstructed)', provisional: true }; }
+      else { ph = 'no_signal'; pi = { src: 'inf', rule: 'signal ended here; drawn at its last position (' + ((tr.stalePose && tr.stalePose.rule) || 'newest fix') + ')' }; }
+    }
     else if (tr.inHangarRest) { ph = 'hangared'; pi = { src: 'inf', rule: 'standing inside ' + tr.inHangarRest }; }
     else if (!tr.vehicle && tr.ctl) { const r = this.drawnPhase(tr, ph, pi); if (r) { ph = r[0]; pi = r[1]; } }
     if (tr.scope === 'overflight' && PHASES[ph] && PHASES[ph].airborne && !['heli_hover_taxi', 'heli_hover'].includes(ph)) ph = 'overflight';
@@ -2009,7 +2155,16 @@ export class Traffic {
     // (review round 3) a landing roll does not speed up: a body shown as 'landing_roll' that rolls more than 1 m/s faster than
     // the slowest it has been in this roll is re-accelerating (a touch-and-go, or a fast taxi along the runway) - neither the
     // label of the fix before it (shown until the next fix) nor a landing plan's roll-out describes that
-    const out = r ? r[0] : ph;
+    let out = r ? r[0] : ph;
+    // (iteration 2 of review round 3, F6) the label follows the drawn motion: a fixed-wing body holding short / running up / in a
+    // hangar that moves faster than 3 kt is taxiing; 'lined up' faster than 15 kt is running along the runway; 'runway taxi' off
+    // the runway pavement is taxiing [inf: 3 / 15 kt]
+    if (c && c.ground && !(tr.dims && tr.dims.cls === 'heli')) {
+      const kt = Math.abs(c.v) / KT, rwS = this.runwayStrict(c.x, c.z), mk2 = (p2, why) => [p2, { ...(r ? r[1] : pi), src: 'inf', rule: 'drawn state: ' + why, provisional: true }];
+      if (['hold_short', 'runup', 'hangared'].includes(out) && kt > 3) return mk2(rwS ? 'runway_taxi' : 'taxi', 'moving at ' + kt.toFixed(0) + ' kt');
+      if (out === 'line_up' && kt > 15) return mk2(rwS ? 'runway_taxi' : 'taxi', 'moving at ' + kt.toFixed(0) + ' kt');
+      if (out === 'runway_taxi' && !rwS) return mk2('taxi', 'off the runway');
+    }
     // (a 'landing roll' that has turned off the runway, or rolls on at taxi speed, is taxiing)
     if (c && c.ground && out === 'landing_roll' && (Math.abs(c.v) < 7.7 || !this.onRunway(c.x, c.z, 0)) && !(tr.dims && tr.dims.cls === 'heli')) { tr._lr = null; return [this.onRunway(c.x, c.z, 0) ? 'runway_taxi' : 'taxi', { ...(r ? r[1] : pi), src: 'inf', rule: 'drawn state: the landing roll has slowed to taxi speed / left the runway', provisional: true }]; }
     if (c && c.ground && out === 'landing_roll' && !(tr.dims && tr.dims.cls === 'heli')) {

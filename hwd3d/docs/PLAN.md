@@ -217,6 +217,23 @@ prompt that says "everything must work on a phone" or asks for phone performance
   full-quality renderer, and they need detailed SF50 and PC-12 models. This moves those two types to the front of
   Phase 3. D1 still applies to anything shown in the videos.
 
+**Orchestrator decisions under the owner's delegation (2026-11-13).** The owner delegated these judgements; they are
+recorded here next to OD1–OD3 but did not come from the owner directly, and **the owner may overrule them**.
+
+- **(a) FAA DRS.** The FAA DRS public web viewer (no login, no key, no bot check) is the FAA's intended public interface
+  for type certificate data sheets. Values read there from TCDS A00018CH (SF50) and E3GL (FJ33-5A) are **obs** with the
+  TCDS citation, not "inf (DRS)" (`tools/models/sf50/SF50_FACTS.md`, `docs/phase3_sf50.md` §9).
+- **(b) Digitised manufacturer-drawing measurements stay local.** Readings digitised from the Pilatus drawing
+  190.10.40.432 / Model Building Plan sheets and from the Cirrus AFM figures (outline tables, per-butt-line water lines,
+  window centres, raster registrations and scales) are never committed. They live in the gitignored
+  `refs/cache/local/models/{pilatus_pc12_meas,afm_sf50_meas}.json` (each with a `src` note). Committed files keep only
+  the fitted model parameters with a one-line basis, as `pc12/` does, and published dimensions (type certificates, FAA
+  ACD, manufacturer spec pages). `tools/models/test_models.mjs` reports the checks that need the local files as SKIP in a
+  clean clone (`docs/phase3_models.md` §12–14). **Scope in time:** (b) applies to the tree from Phase 3a fix round 3
+  (commit b0d55c1) on. The earlier pushed checkpoint bd22c60 still holds a few such readings (raster scales and
+  registration numbers, a handful of per-butt-line water lines) in its history; history is not rewritten without the
+  owner's explicit permission (no force-push), so that is left to the owner.
+
 ## 7. Phased task list
 
 Each phase ends with commits, a push, and renders shown to the owner. No scored QA loop starts without the owner's

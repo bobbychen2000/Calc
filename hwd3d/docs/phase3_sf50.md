@@ -188,7 +188,7 @@ off-axis point, builder sources = the recorded hashes, **nacelle** (lip 2.0 cm p
 half-width at FS 6.80), the traffic frame — all PASS (with the local file present; the 3 AFM checks SKIP without it).
 
 Model size: 43 parts, 463,121 triangles, 284,128 vertices, **7,051,212 bytes** (KHR_mesh_quantization; fix round 2:
-7,051,052 B; fix round 1: 463,845 / 7,059,280), comparable to pc12.glb (current, fix round 3 iteration 2: 6e349329…, 423,853 triangles drawn; fix round 3: c46fe4fb…, 415,703; M2's fix-round-2 import: 9ccfd9a5…, 410,834). (The size M1 reported for the reviewed build, 6,864,552 B, was wrong:
+7,051,052 B; fix round 1: 463,845 / 7,059,280), comparable to pc12.glb (current, fix round 3 iteration 3: 957b3c4e…, 427,257 triangles drawn; iteration 2: 6e349329…, 423,853; fix round 3: c46fe4fb…, 415,703; M2's fix-round-2 import: 9ccfd9a5…, 410,834). (The size M1 reported for the reviewed build, 6,864,552 B, was wrong:
 that file had 6,864,788 B; superseded.)
 
 ## 5. Check renders (`docs/phase3/`, numpy rasteriser, not the app renderer)
@@ -241,12 +241,13 @@ Questions for the owner (resolved in fix round 3 by orchestrator decisions (a) a
    (record the decision in PLAN.md 6a/6b), or a work-around under your rule? If the latter, the control-surface travels
    and the FJ33-5A envelope have no other public source we found and stay "not independently verified".
 2. **Digitised drawing data.** `sf50_geom.py` commits control lines and stations fitted to the third-party-hosted Cirrus
-   AFM drawings (pixel scales in SF50_FACTS §3). pc12 keeps "data extracted from" manufacturer drawings in a gitignored
+   AFM drawings (at the time, pixel scales in SF50_FACTS §3; local reference data since fix round 3). pc12 keeps "data extracted from" manufacturer drawings in a gitignored
    cache but commits its fitted parameters. May these SF50 tables stay committed, or should they move to
    `refs/cache/local/` (the build would then need that cache)?
 3. **Fix round 2 addendum.** The digitised numbers now also include the AFM Fig 1-1 front-view wing outline (7 butt
    lines, upper / lower WL), the tip-top height and the wing-top-to-fuselage-line distance in
-   `tools/models/test_models.mjs` (`AFM_SF50`), as measured facts with their source; they fall under question 2.
+   `tools/models/test_models.mjs` (`AFM_SF50`), as measured facts with their source; they fall under question 2. (Since
+   fix round 3 all of them are in the local reference file; `test_models.mjs` keeps only the loader.)
 
 ## 8. Review fix round 2 (2026-11-13)
 
@@ -287,3 +288,14 @@ without made_by / note); "src values" still FAILS on the committed `pc12_meta.js
 import (`import_pc12.mjs` now writes `src` obs / inf + `basis`; dry run: all 10 anchors `inf`); `sf50_meta.json` is clean.
 (Those three FAILs were closed by M2's PC-12 fix-round-3 build and doc updates; after fix round 3 iteration 2 the whole
 suite has 0 FAIL, with and without the local reference data: `docs/phase3_models.md` section 6.)
+
+**Fix round 3 iteration 3 (2026-11-14).** Docs only for the SF50 (findings F1 / F2 / F5 of that iteration): the nacelle row
+of SF50_FACTS gives model values (inlet / exit FS, cowl half-width, top), labelled as fitted model parameters, and §3 item 4
+names the chord ratio fitted to Fig 1-1 and the model chords instead of the drawn ones; `sf50_geom.py` / `sf50_wing.py`
+comments name fitted parameters and their basis without the AFM readings or raster scales. The SF50 was rebuilt only to
+refresh its provenance after that comment edit: the GLB is **bit-identical (49242e41…)**; `sf50_meta.json` `_provenance`
+now records the edited `sf50_geom.py` (its sha256 had changed: the test's "builder sources = recorded" check failed until
+the rebuild) and the builder state "committed (= HEAD)". Decisions (a) and (b) are now also recorded in `docs/PLAN.md` §6b.
+A new provenance check in `test_models.mjs` greps the Phase 3a write-ups, builders, facts, metas and captions for raster
+tokens (px/m, px/in, "<n> px", "<n> dpi"): 0 hits (it would have caught the old `docs/phase3_render.md` D3 and the old
+`sf50_geom.py` header).

@@ -9,31 +9,34 @@
 //   inf  a recorder hole (HOLE_S < gap <= NOSIG_S), no start / stop / take-off / landing inside, or after the newest fix
 //                                                                            "Interpolated between ADS-B fixes · recorder gap of N s"
 //   rec  a ground <-> air transition inside a hole (the roll and lift-off / touchdown have no fix at all), or a hole in
-//        which the aircraft starts or stops moving (when it does is the engine's guess)
+//        which the aircraft starts or stops moving (when it does is the engine's guess): from the two fixes (sampleSrc), or,
+//        when both fixes say "moving" (or both "standing"), from the drawn motion itself - the engine stops the aircraft
+//        inside the hole and moves it on (or moves a standing one and stops it again): captionTrack, 'pause' / 'shift'
 //                                                                            "Reconstructed (no ADS-B fix) · ..."
 //   nos  a gap far longer than the recorder's duty-cycle hole (> NOSIG_S): the transponder itself was silent
 //                                                                            "No ADS-B signal for N s · position inferred"
 export const HOLE_S = 8;          // s: js/live/classifier.js HOLE_S (a gap longer than this is a recorder hole)
 export const NOSIG_S = 90;        // s: the recorder saw ~14 s of every minute (holes ~46 s); a gap this long is a silence
 export const STILL_KT = 1, MOVING_KT = 3;
-/** the fixes `F` (tr.fx: {t, g|ground, gs (kt), x, z}) around display time t -> { src, gapS, kind } */
+/** the fixes `F` (tr.fx: {t, g|ground, gs (kt), x, z}) around display time t -> { src, gapS, kind, h0 } (h0: the time of the
+ *  fix that opens the gap, ms - it names the hole, so captionTrack can tell two holes of the same length apart) */
 export function sampleSrc(F, t, stale = false) {
   const n = F ? F.length : 0; if (!n) return { src: 'inf', gapS: null, kind: 'nofix' };
   if (stale) return { src: 'inf', gapS: null, kind: 'stale' };
   if (t >= F[n - 1].t) return { src: 'inf', gapS: null, kind: 'after' };
   if (t <= F[0].t) return { src: 'inf', gapS: null, kind: 'before' };
   let i = n - 1; while (i > 0 && F[i - 1].t > t) i--;
-  const a = F[i - 1], b = F[i], gap = (b.t - a.t) / 1000;
+  const a = F[i - 1], b = F[i], gap = (b.t - a.t) / 1000, h0 = a.t;
   if (gap <= HOLE_S) return { src: 'obs', gapS: +gap.toFixed(1), kind: 'fix' };
   const ga = a.ground ?? a.g, gb = b.ground ?? b.g, G = Math.round(gap);
-  if (ga !== gb) return { src: 'rec', gapS: G, kind: ga ? 'takeoff' : 'landing' };
+  if (ga !== gb) return { src: 'rec', gapS: G, kind: ga ? 'takeoff' : 'landing', h0 };
   if (ga && gb) {
     const sa = a.gs ?? 0, sb = b.gs ?? 0;
-    if (sa < STILL_KT && sb > MOVING_KT) return { src: 'rec', gapS: G, kind: 'start' };
-    if (sa > MOVING_KT && sb < STILL_KT) return { src: 'rec', gapS: G, kind: 'stop' };
+    if (sa < STILL_KT && sb > MOVING_KT) return { src: 'rec', gapS: G, kind: 'start', h0 };
+    if (sa > MOVING_KT && sb < STILL_KT) return { src: 'rec', gapS: G, kind: 'stop', h0 };
   }
-  if (gap > NOSIG_S) return { src: 'nos', gapS: G, kind: 'silent' };
-  return { src: 'inf', gapS: G, kind: 'hole' };
+  if (gap > NOSIG_S) return { src: 'nos', gapS: G, kind: 'silent', h0 };
+  return { src: 'inf', gapS: G, kind: 'hole', h0 };
 }
 /** pill text of a classified sample */
 export function pillText(p) {
@@ -45,6 +48,8 @@ export function pillText(p) {
       if (p.kind === 'landing') return ['Reconstructed (no ADS-B fix)', `${g} s between the last airborne and the first ground fix`];
       if (p.kind === 'start') return ['Reconstructed (no ADS-B fix)', `no fix for ${g} s: when it starts to move is inferred`];
       if (p.kind === 'stop') return ['Reconstructed (no ADS-B fix)', `no fix for ${g} s: when it stops is inferred`];
+      if (p.kind === 'pause') return ['Reconstructed (no ADS-B fix)', `no fix for ${g} s: the stop is inferred`];
+      if (p.kind === 'shift') return ['Reconstructed (no ADS-B fix)', `no fix for ${g} s: the movement is inferred`];
       return ['Reconstructed (no ADS-B fix)', g ? `no fix for ${g} s` : ''];
     case 'nos': return [`No ADS-B signal for ${g} s`, 'position inferred'];
     default:
@@ -89,7 +94,17 @@ export function captionTrack(trace, { fps = 30, minS = 0.5, stillS = 2, cuts = [
     if (L === 'Taxiing' && st && still[f] >= stillS) L = 'Stopped';
     phase[f] = L;
   }
-  const pill = trace.map(p => { const [t, s] = pillText(p || {}); return { cls: (p && p.src) || 'inf', text: t, sub: s }; });
+  // a recorder hole ('inf' / 'nos': both fixes moving, or both standing) in which the DRAWN aircraft stands still for
+  // >= stillS s of data time AND moves (> MOVING_KT): the stop (or the move) is the engine's choice, not a fact -> 'rec'
+  // ('pause' when the hole starts moving, 'shift' when it starts standing); the whole hole, since its timing follows it
+  const src = trace.map(p => p || {});
+  for (let f = 0; f < n;) {
+    const p = src[f]; if (!((p.kind === 'hole' || p.kind === 'silent') && p.h0 != null && p.ground)) { f++; continue; }
+    let j = f, standS = 0, moved = false; while (j < n && src[j].h0 === p.h0 && src[j].kind === p.kind) { if (still[j] >= stillS) standS = still[j]; if ((src[j].gs ?? 0) > MOVING_KT) moved = true; j++; }
+    if (standS >= stillS && moved) { const k = (src[f].gs ?? 0) > STILL_KT ? 'pause' : 'shift'; for (let q = f; q < j; q++) src[q] = { ...src[q], src: 'rec', kind: k }; }
+    f = j;
+  }
+  const pill = src.map(p => { const [t, s] = pillText(p); return { cls: p.src || 'inf', text: t, sub: s }; });
   const pk = (i) => pill[i].cls + '|' + pill[i].text + '|' + pill[i].sub;
   const ip = holdRuns(n, pk, minF, cuts), il = holdRuns(n, (i) => phase[i], minF, cuts);
   const out = new Array(n);

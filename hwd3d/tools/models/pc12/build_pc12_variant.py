@@ -15,11 +15,13 @@ pc12 source file used and of this script).
                                                                     #   dorsal fin, strakes, winglet (fix round 3, default);
                                                                     #   iteration 2: flat 1.30 m cabin floor + layout clear
                                                                     #   of the doors, housing slot / rounded edges, blended
-                                                                    #   belly-fairing section, antennas on the skin
+                                                                    #   belly-fairing section, antennas on the skin;
+                                                                    #   iteration 3: strut-slot doors, wing carry-through
+                                                                    #   under the cabin floor
 Every fitted value below is a model parameter (knot, station, size) with a one-line basis; the drawing readings it was
-fitted to are NOT in this repository (owner decision (b), 2026-11-13): they live in the gitignored
-refs/cache/local/models/pilatus_pc12_meas.json, which tools/models/test_models.mjs compares the model with (SKIP when
-absent).  See docs/phase3_models.md section 4.
+fitted to are NOT in this repository (orchestrator decision (b), 2026-11-13, under the owner's delegation; the owner may
+overrule): they live in the gitignored refs/cache/local/models/pilatus_pc12_meas.json, which tools/models/test_models.mjs
+compares the model with (SKIP when absent).  See docs/phase3_models.md section 4.
 """
 from __future__ import annotations
 
@@ -119,15 +121,21 @@ FR3_LAYOUT = dict(FR2_LAYOUT, WIN_HX=0.150, WIN_HZ=0.192, WIN_CZ=2.187,
 # fairing [inf].  The main-gear trunnion (in the wing at BL 2.265) rises 0.104 m, 17 mm less than the wing, so the
 # retracted tyre still protrudes (11 mm as in fr2; POH ~1 in) [inf]; the wheel well moves inboard by the same
 # amount (the longer leg folds the wheel further in)
-FR3_WING = dict(FR2_WING, DZ=0.121, KINK_BL=0.85, GEAR_DZ=0.104)
+FR3_WING = dict(FR2_WING, DZ=0.121, KINK_BL=0.85, GEAR_DZ=0.104,
+                # carry-through under the cabin floor (iteration 3, finding F4): inside the fuselage the raised wing's upper
+                # skin (and pc12's spar tops) is held 5 mm below the floor panel's underside inboard of BL 0.66 (the floor is
+                # 1.30 m wide), blending back to the unchanged wing by BL 0.75, inside the fuselage side (OML BL ~0.77 at
+                # that height); extra skin stations at BL 0.66 / 0.705 / 0.75 [inf: structure]
+                CARRY=dict(y0=0.66, y1=0.75, clear=0.005))
 # Nose-gear housing below the keel: the box DWG's side view draws under the cockpit (front station and bottom WL fitted to
 # it), needed once the keel is at the drawn height (pc12's retracted nose wheel reaches below it).  Width not drawn: nose bay
 # + 0.10 m each side [inf]; rounded lower edges (section exponent 3) [inf]; rear end aft of the drawn one so the whole bay
 # opening lies on the flat floor and the housing's end wall clears the bay liner [inf]; a slot for the strut and the taxi
 # lamp, which (pc12 gear geometry) pass the floor ahead of the bay with the gear down, through the housing floor and the
-# doors' forward inner corners [inf]
+# doors' forward inner corners, closed with the gear up by two strut-slot doors (open while the leg is out); the bay liner's
+# front wall notched over the slot width up to WL 1.15 (the strut reaches WL 1.13 there with the gear down) [inf]
 FR3_NOSE_HOUSING = dict(x0=2.887, x1=4.300, z_bottom=0.793, half_width=0.240, n=3.0, r_end=0.04,
-                        slot=dict(x0=2.905, x1=3.135, hy=0.080, r=0.03))
+                        slot=dict(x0=2.905, x1=3.135, hy=0.080, r=0.03), notch_top=1.15)
 # Belly fairing: drawn extent STA 5.12-7.50 and centre-line lower outline (side view) [knots fitted to DWG]; plan
 # half-width: pc12's table compressed to the drawn extent [inf].  Section (fix round 3 iteration 2, finding F6): the lower
 # surface runs from the drawn bottom on the centre line (or 3 mm under the surface it covers, where that is lower; P1) out
@@ -233,7 +241,49 @@ def apply_wing(o, dihedral_deg):
                 s.le = s.le + np.array([0.0, 0.0, (yk - y) * np.tan(W.DIHEDRAL)])
             return s
         W.section_at = section_at
+    if o.get("CARRY"):
+        # skin stations for the carry-through blend (apply_carry_through) in pc12's root panel (BL 0 -> flap start)
+        c = o["CARRY"]
+        orig_ss = W.span_stations
+
+        def span_stations(a, b, step=0.25):
+            s = orig_ss(a, b, step)
+            if a == 0.0 and abs(b - W.Y_FLAP[0]) < 1e-9:
+                s = np.unique(np.concatenate([s, [c["y0"], 0.5 * (c["y0"] + c["y1"]), c["y1"]]]))
+            return s
+        W.span_stations = span_stations
     return out
+
+
+def apply_carry_through(parts, c):
+    """Finding F4 of fix round 3 iteration 3: the flat 1.30 m cabin floor (top WL zf, 30 mm panel) sat below the raised
+    wing's carry-through, whose upper skin came up to 14 mm through the carpet over STA 5.80-6.46.  Inside the fuselage the
+    wing's upper skin and pc12's spar tops (structure) are held `clear` below the floor panel's underside inboard of BL y0,
+    blending linearly back to the unchanged surface at BL y1 (skin stations at y0 / mid / y1, apply_wing) [inf: structure].
+    Returns the lowering statistics."""
+    zc = cabin_floor_z() - CABIN_FLOOR_T - c["clear"]
+    y0, y1 = c["y0"], c["y1"]
+    stats = {"cap_wl": round(zc, 4), "vertices_lowered": 0, "max_lowered_mm": 0.0}
+
+    def clamp(m):
+        y, z = np.abs(m.V[:, 1]), m.V[:, 2]
+        w = np.clip((y - y0) / (y1 - y0), 0.0, 1.0)
+        zn = np.minimum(z, zc)
+        znew = zn + w * (z - zn)
+        d = z - znew
+        if (d > 1e-9).any():
+            m.V = m.V.copy()
+            m.V[:, 2] = znew
+            m.compute_normals()
+            stats["vertices_lowered"] += int((d > 1e-9).sum())
+            stats["max_lowered_mm"] = max(stats["max_lowered_mm"], round(1000 * float(d.max()), 1))
+    for pid in ("wing_L", "wing_R"):
+        for m, _ in parts[pid].meshes:
+            clamp(m)
+    for m, mat in parts["structure"].meshes:     # pc12's spars / ribs (interior_green), not the frames or stringers
+        if mat == "interior_green":
+            clamp(m)
+    return stats
 
 
 # --------------------------------------------------------------------------------------------
@@ -375,7 +425,8 @@ def apply_gear(dz):
 def apply_nose_housing(o):
     """A rounded box under the keel around the nose-gear bay (DWG side view) + the nose doors and bay liner moved to its
     bottom (pc12 builds them on the fuselage keel), with a slot for the strut ahead of the bay (finding F5 of fix round 3,
-    iteration 2: with the gear down pc12's strut and taxi lamp pass the floor at STA 2.92-3.11)."""
+    iteration 2: with the gear down pc12's strut and taxi lamp pass the floor at STA 2.92-3.11), closed with the gear up by
+    two strut-slot doors (finding F3 of iteration 3)."""
     from cad.mesh import Mesh, grid_surface, trim, solidify
     from cad import sdf2d
     from model import gear as G
@@ -422,7 +473,8 @@ def apply_nose_housing(o):
 
     def door_mesh(sgn):
         # pc12's clamshell door (gear.build_nose: rounded-rectangle bay outline less 4 mm, split at the centre line, 18 mm
-        # solid) on the housing's curved bottom, with the strut slot notched out of its forward inner corner
+        # solid) on the housing's curved bottom, with the strut slot notched out of its forward inner corner (to the slot
+        # outline itself, so the slot door below sits 4 mm from it as the doors sit from the bay opening)
         b = G.NOSE_BAY
         xs = np.linspace(b["cx"] - b["hx"] - 0.02, b["cx"] + b["hx"] + 0.02, 40)
         ys = sgn * np.linspace(0.0, b["hy"] + 0.02, 12)
@@ -432,7 +484,23 @@ def apply_nose_housing(o):
             m = m.flipped()
         f = lambda mm: np.maximum(np.maximum(sdf2d.rrect(mm.V[:, 0], mm.V[:, 1], b["cx"], b["cy"], b["hx"] - 0.004,
                                                          b["hy"] - 0.004, b["r"]), -sgn * mm.V[:, 1] - 0.002),
-                                  -(slot_sdf(mm.V[:, 0], mm.V[:, 1]) - 0.004))
+                                  -slot_sdf(mm.V[:, 0], mm.V[:, 1]))
+        m = trim(m, f(m), "negative")
+        return solidify(m.offset(-0.001), 0.018)
+
+    def slot_door_mesh(sgn):
+        # strut-slot door (iteration 3, finding F3): the slot outline less 4 mm, split at the centre line, 18 mm solid, on
+        # the housing's curved bottom like the clamshells; it closes the slot with the gear up and hangs open beside the
+        # strut whenever the leg is out of the well (pivot seq 'down') [inf: the PC-12's slot closure is not documented]
+        xs = np.linspace(sl["x0"] - 0.01, sl["x1"] + 0.01, 26)
+        ys = sgn * np.linspace(0.0, sl["hy"] + 0.01, 10)
+        P = np.array([[[x, y, bottom_z(x, y) + 0.001] for y in ys] for x in xs])
+        m = grid_surface(P)
+        if m.N[:, 2].mean() > 0:
+            m = m.flipped()
+        f = lambda mm: np.maximum(sdf2d.rrect(mm.V[:, 0], mm.V[:, 1], 0.5 * (sl["x0"] + sl["x1"]), 0.0,
+                                              0.5 * (sl["x1"] - sl["x0"]) - 0.004, sl["hy"] - 0.004, sl["r"]),
+                                  -sgn * mm.V[:, 1] - 0.002)
         m = trim(m, f(m), "negative")
         return solidify(m.offset(-0.001), 0.018)
 
@@ -447,7 +515,23 @@ def apply_nose_housing(o):
             dp.meshes = [(m, mat) for _, mat in dp.meshes[:1]]
             hy = sgn * (G.NOSE_BAY["hy"] - 0.004)
             near = np.abs(m.V[:, 1] - hy) < 0.02
-            dp.pivot["origin"][2] = float(np.mean(m.V[near, 2])) if near.any() else dp.pivot["origin"][2]
+            # hinge line on the door's outer face (iteration 3; pc12 and iteration 2 used the mid-thickness, so the hinge-side
+            # edge swung 9 mm outboard into the housing floor while the doors were open in transit)
+            dp.pivot["origin"][2] = float(np.min(m.V[near, 2])) if near.any() else dp.pivot["origin"][2]
+        # strut-slot doors (finding F3 of iteration 3: with the gear up the open slot showed the bay liner and the stowed
+        # strut from below): hinged on their outer edges like the clamshells, open 85 deg while the leg is out of the well
+        for side, sgn in (("R", 1), ("L", -1)):
+            m = slot_door_mesh(sgn)
+            hy = sgn * (sl["hy"] - 0.004)
+            near = np.abs(m.V[:, 1] - hy) < 0.01
+            hz = float(np.min(m.V[near, 2]))      # hinge line on the door's outer face: its edge swings inboard, not into the floor
+            sp = Part(f"gear_door_NS{side}", f"Nose-gear strut-slot door ({'right' if sgn > 0 else 'left'})", "gear",
+                      pivot=dict(origin=[0.5 * (sl["x0"] + sl["x1"]), hy, hz], axis=[1.0, 0, 0], kind="gear_door",
+                                 open=float(85.0 * sgn), seq="down"),
+                      explode=(0, sgn * 0.2, -0.35), group="Landing gear",
+                      material_note="Composite door: closes the strut slot with the gear up [inf]")
+            sp.add(m, "paint_white")
+            parts[sp.id] = sp
         hm = housing_mesh()
         b = G.NOSE_BAY
         V = hm.V
@@ -455,21 +539,52 @@ def apply_nose_housing(o):
         f = np.where(V[:, 2] < keel(V[:, 0]) - 0.01, cut, 1.0)   # open the floor / lower end wall only, not the rim
         hm = trim(hm, f, "positive")
         p = Part("nose_gear_housing", "Nose-gear housing (below the cockpit floor)", "fuselage_fwd", explode=(-0.4, 0, -0.6),
-                 group="Fuselage", material_note="Housing for the retracted nose wheel, doors and a strut slot in its floor")
+                 group="Fuselage", material_note="Housing for the retracted nose wheel, doors and a strut slot (with its own "
+                                                  "doors) in its floor")
         p.add(hm, "paint_white")
         parts[p.id] = p
 
     def bay_tubs(parts):
         # pc12 hangs the nose-bay liner from the keel (z_bot + 0.01): hang it from the housing floor instead, 3 mm inside the
-        # floor's outer surface at every outline point (fr3 hung it 6 mm below that surface: a lime line under the housing)
+        # floor's outer surface at every outline point (fr3 hung it 6 mm below that surface: a lime line under the housing).
+        # Iteration 3 (finding F3): the liner's front wall gets a notch over the strut slot's width up to WL notch_top, so
+        # neither the closed strut-slot doors nor the strut (gear down, pc12's own crossing) pass through it [inf]
         orig_tubs(parts)
         b = G.NOSE_BAY
+        x_lo, x_hi = b["cx"] - b["hx"] - 0.01, b["cx"] + b["hx"] + 0.01
         for m, _ in parts["gear_bays"].meshes:
-            sel = (m.V[:, 0] > b["cx"] - b["hx"] - 0.01) & (m.V[:, 0] < b["cx"] + b["hx"] + 0.01) & (m.V[:, 2] < 1.2)
+            sel = (m.V[:, 0] > x_lo) & (m.V[:, 0] < x_hi) & (m.V[:, 2] < 1.2)
             for i in np.nonzero(sel)[0]:
                 m.V[i, 2] = bottom_z(m.V[i, 0], m.V[i, 1]) + 0.003
             if sel.any():
                 m.compute_normals()
+        if not o.get("notch_top"):
+            return
+        # replace the nose liner's wall (pc12: one ring of quads, outline -> WL 1.30; its cap stays) by the same wall with
+        # the notch: outline points added on the front edge at the slot's half-width
+        from cad.sdf2d import rrect_outline
+        ol = rrect_outline(b["cx"], b["cy"], b["hx"], b["hy"], b["r"], n_corner=8)
+        xf, hyn, ztop = b["cx"] - b["hx"], sl["hy"], 1.30
+        k = [i for i in range(len(ol)) if abs(ol[i, 0] - xf) < 1e-9 and abs(ol[(i + 1) % len(ol), 0] - xf) < 1e-9
+             and ol[i, 1] > 0 > ol[(i + 1) % len(ol), 1]][0]
+        ring = np.vstack([ol[k + 1:], ol[:k + 1], [[xf, hyn]]])           # from the front edge's lower end round to +hyn
+        ring = np.vstack([[[xf, -hyn]], ring])                              # open strip: -hyn ... +hyn the long way round
+        lo = np.array([[x, y, bottom_z(x, y) + 0.003] for x, y in ring])
+        hi = np.column_stack([ring, np.full(len(ring), ztop)])
+        n = len(ring)
+        kk = np.arange(n - 1)
+        Fw = np.vstack([np.stack([kk, kk + 1, kk + 1 + n], 1), np.stack([kk, kk + 1 + n, kk + n], 1)])
+        wall = Mesh(np.vstack([lo, hi]), Fw)
+        zn = o["notch_top"]
+        lintel = Mesh(np.array([[xf, hyn, zn], [xf, -hyn, zn], [xf, -hyn, ztop], [xf, hyn, ztop]]), [[0, 1, 2], [0, 2, 3]])
+        new = []
+        for m, mat in parts["gear_bays"].meshes:
+            nose = (m.V[:, 0] > x_lo) & (m.V[:, 0] < x_hi)
+            capv = np.abs(m.V[:, 2] - ztop) < 1e-9
+            wallf = nose[m.F].all(1) & ~capv[m.F].all(1)
+            new.append((Mesh(m.V, m.F[~wallf]) if wallf.any() else m, mat))
+        new.append((Mesh.merge([wall, lintel]), new[0][1]))
+        parts["gear_bays"].meshes = new
     G.build_nose, G.bay_tubs = build_nose, bay_tubs
     from model import livery as LV
     if "nose_gear_housing" not in LV.PAINTED:
@@ -685,6 +800,13 @@ def apply_winglet(o):
 
 
 CABIN_FLOOR_W = 1.30   # sourced cabin floor width (pc12/CLAUDE.md "Sourced facts": cabin floor 1.30 m)
+CABIN_FLOOR_T = 0.03   # floor panel thickness (pc12 interior.build_cabin's panel) [inf]
+
+
+def cabin_floor_z():
+    """Top of the flat cabin floor: pc12's FLOOR_Z carried by the loft map at STA 6.0 (constant over the cabin)."""
+    from model import interior as I
+    return float(loft_map(np.array([[6.0, 0.0, I.FLOOR_Z]]))[0, 2])
 
 
 def apply_interior_livery(cab):
@@ -719,12 +841,12 @@ def apply_interior_livery(cab):
         from model import fuselage_parts as FP
         from model.parts import Part
         o = cab
-        zf = float(loft_map(np.array([[6.0, 0.0, I.FLOOR_Z]]))[0, 2])
+        zf = cabin_floor_z()
         leather, frame, wood, lin = [], [], [], []
         xs = np.linspace(4.46, 9.52, 24)          # pc12's floor extent and sampling (interior.build_cabin)
-        hw = np.minimum(CABIN_FLOOR_W / 2, [min(I.section_limit(x, zf, 0.055), I.section_limit(x, zf - 0.03, 0.055)) for x in xs])
+        hw = np.minimum(CABIN_FLOOR_W / 2, [min(I.section_limit(x, zf, 0.055), I.section_limit(x, zf - CABIN_FLOOR_T, 0.055)) for x in xs])
         top = np.vstack([np.stack([xs, hw, np.full(len(xs), zf)], 1), np.stack([xs[::-1], -hw[::-1], np.full(len(xs), zf)], 1)])
-        floor = Mesh.merge([planar_cap(top, (0, 0, 1)), planar_cap(top - [0, 0, 0.03], (0, 0, -1))])
+        floor = Mesh.merge([planar_cap(top, (0, 0, 1)), planar_cap(top - [0, 0, CABIN_FLOOR_T], (0, 0, -1))])
         for sgn in (-1, 1):
             x0, x1 = o["ledge"]
             for d in (FP.AIRSTAIR, FP.CARGO):      # keep each side's ledge clear of the doors on that side
@@ -876,11 +998,20 @@ def main():
     from model.assemble import write_glb
     t0 = time.time()
     parts = B.build_parts()
+    carry = None
+    if "wing" in ov and ov["wing"].get("CARRY") and "loft" in ov:
+        carry = apply_carry_through(parts, ov["wing"]["CARRY"])
+        applied.setdefault("wing", {})["carry_through"] = carry
+        print(f"  carry-through under the cabin floor: upper skin / spar tops held at WL {carry['cap_wl']:.3f} inboard of "
+              f"BL {ov['wing']['CARRY']['y0']}, {carry['vertices_lowered']} vertices lowered by up to {carry['max_lowered_mm']} mm")
     if "wing" in ov:
         for side in ("L", "R"):
             if f"wing_{side}" in parts and parts[f"wing_{side}"].info:
                 parts[f"wing_{side}"].info["dihedral"] = (f"{np.degrees(W.DIHEDRAL):.1f} deg (fitted to {DWG} front view)"
                                                           + (f", flat inboard of BL {ov['wing']['KINK_BL']} [inf]" if ov["wing"].get("KINK_BL") else ""))
+                if carry:
+                    parts[f"wing_{side}"].info["carry-through"] = (f"upper skin under the cabin floor (WL {carry['cap_wl']:.3f}) inboard "
+                                                                   f"of BL {ov['wing']['CARRY']['y0']} [inf]")
     checks = B.verify(parts)
     for c in checks:
         print(f"  {c['check']:52s} official {c['official']:7.3f}  model {c['model']:7.3f}  delta {c['delta_mm']:+7.1f} mm")

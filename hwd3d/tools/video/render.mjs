@@ -6,7 +6,8 @@
 //   node tools/video/render.mjs <job.json> <stage> [options]
 //   stages:  snapshot   copy the app (live.html, live.css, js/**, data/**, the replay shim, the job's pack and anything else a
 //                       probe boot requested) to out/video/<case>/app/ + MANIFEST.json (sha256 per file, tree hash);
-//                       refuses to replace an existing snapshot without --refresh (a new snapshot = scout + plan again)
+//                       refuses to replace an existing snapshot without --refresh (a new snapshot = scout + plan again);
+//                       --refresh=video replaces only js/video/** (the pipeline) and keeps the frozen engine, data and models
 //            scout      engine-only run of the whole timeline (no GPU frames): the hero's pose per frame
 //                       -> out/video/<case>/trace.json (+ the derived events, printed)
 //            plan       the camera and the caption of every frame from the trace and the shot list (js/video/camera.js,
@@ -20,7 +21,7 @@
 //                       sha256 of every PNG must match
 //   options: --frames=a-b  --test=<name>  --pick=f1,f2,.. [--dir=picks]  --force (re-render frames of THIS plan)
 //            --clean (empty a frames directory that holds another plan's frames)  --nogate (render a plan whose gates fail)
-//            --refresh (snapshot: replace)  --out=<dir>  --name=<clip>  --lead=<n> (determinism)
+//            --refresh (snapshot: replace; =video: the pipeline only)  --out=<dir>  --name=<clip>  --lead=<n> (determinism)  --dir=<frames dir>
 // Stamps, chained: trace.json carries scoutKey = sha256(snapshot tree + the job's scout fields); cams.json carries
 // planKey = sha256(scoutKey + sha256(trace.json) + the job's plan fields); a frames directory's PLAN_STAMP =
 // sha256(planKey + the render fields: size, shutter, overlay options). Every stage recomputes the key it builds on and
@@ -30,8 +31,8 @@
 // The job (out/od3/video_<case>.json, gitignored: it holds the window times) is described in docs/phase3_video.md.
 // D1: the hero is chosen in the page by rule (type + event in the window) from a type-only pack; no key, registration or
 // callsign is printed, written or shown. Ports 8700-8749 only.
-import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'; import { spawnSync } from 'node:child_process'; import { pathToFileURL } from 'node:url';
-import { ROOT, log, startServer, launch, bootApp, readPack, epochOf, VIDEO_SEED, sha256, SNAP_BASE, listFiles, makeSnapshot, verifySnapshot } from './lib.mjs';
+import fs from 'node:fs'; import path from 'node:path'; import os from 'node:os'; import zlib from 'node:zlib'; import { spawnSync } from 'node:child_process'; import { pathToFileURL } from 'node:url';
+import { ROOT, log, startServer, launch, bootApp, readPack, epochOf, VIDEO_SEED, sha256, SNAP_BASE, listFiles, makeSnapshot, verifySnapshot, refreshSnapshot } from './lib.mjs';
 
 const argv = process.argv.slice(2); const opt = (k, d) => { const a = argv.find(x => x.startsWith('--' + k + '=')); return a ? a.slice(k.length + 3) : (argv.includes('--' + k) ? true : d); };
 const jobFile = argv[0], stage = argv[1] || 'all';
@@ -48,6 +49,22 @@ const P = (f) => path.join(OUTD, f);
 const rd = (f) => JSON.parse(fs.readFileSync(P(f), 'utf8'));
 const wr = (f, o) => fs.writeFileSync(P(f), typeof o === 'string' ? o : JSON.stringify(o));
 const pick = (o, ks) => Object.fromEntries(ks.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
+// a complete, undamaged PNG: the signature, every chunk's CRC, and IEND as the last chunk. A frame cut short by a crash or
+// a full disk fails this; ffmpeg 6.1 would log a decode error, repeat the previous frame and still exit 0 with the full
+// frame count (tried: a truncated PNG in the middle of a 90-frame range gave a 90-frame clip), so render re-draws such a
+// frame and encode refuses it
+const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+function pngOk(file) {
+  let b; try { b = fs.readFileSync(file); } catch (e) { return false; }
+  if (b.length < 57 || !b.subarray(0, 8).equals(PNG_SIG)) return false;
+  for (let o = 8; o + 12 <= b.length;) {
+    const n = b.readUInt32BE(o); if (o + 12 + n > b.length) return false;
+    if (zlib.crc32(b.subarray(o + 4, o + 8 + n)) !== b.readUInt32BE(o + 8 + n)) return false;
+    const type = b.toString('latin1', o + 4, o + 8); o += 12 + n;
+    if (type === 'IEND') return o === b.length;
+  }
+  return false;
+}
 
 // ---------------------------------------------------------------- the snapshot, its modules and the chained keys
 let SN = null;        // { M (manifest), m (modules imported from the snapshot) }
@@ -127,6 +144,13 @@ async function installDirector(S, TL, extra = {}) {
 
 // ---------------------------------------------------------------- stages
 async function snapshotStage() {
+  // --refresh=video: only the video pipeline (js/video/**) from the working tree, the engine / renderer / data / models of
+  // the existing snapshot kept as they are (a pipeline fix while the fix rounds are half-way through an engine edit)
+  if (opt('refresh') === 'video') {
+    const M = refreshSnapshot(SNAP, 'js/video');
+    log(`snapshot ${path.relative(ROOT, SNAP)}: js/video/** refreshed from the working tree, everything else kept from tree ${M.base.tree.slice(0, 12)} (${M.base.made}); new tree ${M.tree.slice(0, 12)}`);
+    return;
+  }
   if (fs.existsSync(path.join(SNAP, 'MANIFEST.json')) && !opt('refresh')) {
     const M = JSON.parse(fs.readFileSync(path.join(SNAP, 'MANIFEST.json'), 'utf8'));
     throw new Error(`a snapshot exists (${M.n} files, tree ${M.tree.slice(0, 12)}, ${M.made}); --refresh replaces it (then scout and plan again)`);
@@ -265,7 +289,10 @@ async function render({ dir = 'frames', range = null, quiet = false } = {}) {
   const [a, b] = range || (picks ? [picks[0], picks[picks.length - 1]] : rangeOf(TL)); const FD = P(picks ? opt('dir', 'picks') : dir); fs.mkdirSync(FD, { recursive: true });
   const name = (f) => path.join(FD, String(f).padStart(5, '0') + '.png');
   guardDir(FD, stamp);
-  const force = !!opt('force'); const todo = []; for (const f of (picks || Array.from({ length: b - a + 1 }, (_, i) => a + i))) if (force || !fs.existsSync(name(f))) todo.push(f);
+  // a frame on disk is kept only when it is a complete PNG (a resume after a crash re-draws a frame cut short)
+  const force = !!opt('force'); const todo = []; let damaged = 0;
+  for (const f of (picks || Array.from({ length: b - a + 1 }, (_, i) => a + i))) { const ex = fs.existsSync(name(f)); if (force || !ex || !pngOk(name(f))) { todo.push(f); if (ex && !force) damaged++; } }
+  if (damaged) log(`render: ${damaged} damaged frame(s) on disk in ${a}-${b}: drawn again`);
   const todoSet = new Set(todo);
   if (!todo.length) { log(`render: frames ${a}-${b} already on disk`); return { a, b, times: [] }; }
   const S = await openPage({ manifest: M }); const times = [], loads = []; let maxDev = 0, maxDevAt = null;
@@ -292,7 +319,7 @@ async function render({ dir = 'frames', range = null, quiet = false } = {}) {
       S.check('frame ' + f);
       if (!draw) continue;
       const png = await S.page.screenshot({ type: 'png' });
-      fs.writeFileSync(name(f), png);
+      fs.writeFileSync(name(f) + '.part', png); fs.renameSync(name(f) + '.part', name(f));   // never a half-written frame under its name
       const dt = (Date.now() - t1) / 1000; times.push(dt); loads.push(os.loadavg()[0]);
       if (!quiet) log(`frame ${f} (${f - a + 1}/${b - a + 1}) ${dt.toFixed(2)} s  ${cap.phase} · ${cap.cls} ${pose.gs != null ? pose.gs.toFixed(0) + ' kt' : ''}`);
     }
@@ -308,18 +335,29 @@ async function render({ dir = 'frames', range = null, quiet = false } = {}) {
   return { a, b, times, maxDev };
 }
 const median = (v) => { const s = v.slice().sort((x, y) => x - y); return s.length ? s[s.length >> 1] : NaN; };
-function ffmpeg(args) { const r = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...args], { stdio: 'inherit' }); if (r.status !== 0) throw new Error('ffmpeg failed'); }
+// any message at -loglevel error fails the step: ffmpeg 6.1 exits 0 after a decode error (it repeats the previous frame)
+function ffmpeg(args) {
+  const r = spawnSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-nostdin', '-y', ...args], { stdio: ['ignore', 'inherit', 'pipe'] });
+  const err = r.stderr ? r.stderr.toString().trim() : '';
+  if (err) console.error(err.split('\n').slice(0, 8).join('\n'));
+  if (r.status !== 0 || err) throw new Error(`ffmpeg failed (exit ${r.status}${err ? ', ' + err.split('\n').length + ' error line(s)' : ''})`);
+}
 const clipName = () => opt('name', opt('test') ? 'test_' + opt('test') : job.case.toLowerCase() === 's' ? 'sf50_takeoff' : 'pc12_landing');
 async function encode() {
   const { TL, stamp } = await checkedPlan(); const [a, b] = rangeOf(TL); const nm = clipName(); const FD = P(opt('dir', 'frames'));
   // every frame of the range must be on disk and belong to this plan: the image2 demuxer stops at the first gap and exits 0
   const sf = path.join(FD, 'PLAN_STAMP');
   if (!fs.existsSync(sf) || fs.readFileSync(sf, 'utf8').trim().split('\n')[0] !== stamp) throw new Error(`${path.relative(ROOT, FD)} holds no frames of this plan (PLAN_STAMP): render first`);
-  const miss = []; for (let f = a; f <= b; f++) if (!fs.existsSync(path.join(FD, String(f).padStart(5, '0') + '.png'))) miss.push(f);
+  const miss = [], bad = []; const tc = Date.now();
+  for (let f = a; f <= b; f++) { const fn = path.join(FD, String(f).padStart(5, '0') + '.png'); if (!fs.existsSync(fn)) miss.push(f); else if (!pngOk(fn)) bad.push(f); }
   if (miss.length) throw new Error(`${miss.length} of ${b - a + 1} frames missing (first ${miss.slice(0, 6).join(', ')}): render them first`);
+  if (bad.length) throw new Error(`${bad.length} of ${b - a + 1} frames damaged (not a complete PNG; first ${bad.slice(0, 6).join(', ')}): render the range again (damaged frames are re-drawn)`);
+  log(`encode: frames ${a}-${b} all present and complete (PNG CRCs checked in ${((Date.now() - tc) / 1000).toFixed(1)} s)`);
   const out = P(nm + '.mp4'); const t = Date.now();
-  ffmpeg(['-framerate', String(FPS), '-start_number', String(a), '-i', path.join(FD, '%05d.png'), '-frames:v', String(b - a + 1),
-    '-c:v', 'libx264', '-crf', '16', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-r', String(FPS), '-movflags', '+faststart', out]);
+  try {
+    ffmpeg(['-framerate', String(FPS), '-start_number', String(a), '-i', path.join(FD, '%05d.png'), '-frames:v', String(b - a + 1),
+      '-c:v', 'libx264', '-crf', '16', '-preset', 'slow', '-pix_fmt', 'yuv420p', '-r', String(FPS), '-movflags', '+faststart', out]);
+  } catch (e) { if (fs.existsSync(out)) fs.renameSync(out, out + '.failed'); throw new Error(`${e.message}: nothing encoded under ${path.basename(out)} (kept as ${path.basename(out)}.failed)`); }
   const pr = spawnSync('ffprobe', ['-v', 'error', '-count_frames', '-select_streams', 'v:0', '-show_entries', 'stream=nb_read_frames', '-of', 'csv=p=0', out]).stdout.toString().trim();
   const got = parseInt(pr, 10);
   if (got !== b - a + 1) { fs.renameSync(out, out + '.short'); throw new Error(`encoded ${got} frames, expected ${b - a + 1}: kept as ${path.basename(out)}.short`); }

@@ -130,6 +130,20 @@ export function makeSnapshot(dir, rels, info = {}) {
   fs.writeFileSync(path.join(dir, 'MANIFEST.json'), JSON.stringify(M, null, 1));
   return M;
 }
+/** replace ONE subtree of an existing snapshot (e.g. 'js/video': a fix of the video pipeline itself) by the working tree's
+ *  copy, keeping every other file - the engine, renderer, data and models - exactly as frozen; the manifest records the base
+ *  snapshot it came from. The tree hash changes, so scout and plan must run again (the stamps chain refuses old ones). */
+export function refreshSnapshot(dir, rel) {
+  const M0 = verifySnapshot(dir); const keep = {}, files = {};
+  for (const [k, h] of Object.entries(M0.files)) if (k === rel || k.startsWith(rel + '/')) fs.rmSync(path.join(dir, k)); else keep[k] = h;
+  for (const r of listFiles(ROOT, rel)) { const buf = fs.readFileSync(path.join(ROOT, r)); fs.mkdirSync(path.dirname(path.join(dir, r)), { recursive: true }); fs.writeFileSync(path.join(dir, r), buf); files[r] = sha256(buf); }
+  Object.assign(files, keep);
+  const sorted = Object.fromEntries(Object.keys(files).sort().map(k => [k, files[k]]));
+  const M = { ...M0, made: new Date().toISOString(), base: { tree: M0.tree, made: M0.made, git_head: M0.git_head, base: M0.base || null }, refreshed: rel,
+    refreshed_git_head: spawnSync('git', ['-C', ROOT, 'rev-parse', 'HEAD']).stdout.toString().trim(), n: Object.keys(sorted).length, tree: treeOf(sorted), files: sorted };
+  fs.writeFileSync(path.join(dir, 'MANIFEST.json'), JSON.stringify(M, null, 1));
+  return M;
+}
 /** re-hash every file of the snapshot against its manifest; throws on any difference (a missing, changed or added file) */
 export function verifySnapshot(dir) {
   const mf = path.join(dir, 'MANIFEST.json');

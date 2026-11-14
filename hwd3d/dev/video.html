@@ -57,7 +57,8 @@ async function getPack(u) {
   const { installDirector } = await import('./js/video/director.js');
   const info = await installDirector({ t0, packUrl, type: job.type, event: job.event, runway: job.runway || '28L', models: job.models !== false,
     window: job.window ? { from: T(job.window.from), to: T(job.window.to) } : null, frames: TL.frames, cams, preStep: job.preStep || 0.1, fps: job.fps || 30,
-    cuts: plan ? plan.cuts : [], shutter: job.shutter ?? 0.5, overlay: { timeOnly: !!job.timeOnly, endDate: !!job.endDate } });
+    // frame 0 is a cut too: its blur reference would otherwise be the app's boot camera (in the renders frame 0 is black)
+    cuts: [0, ...(plan ? plan.cuts : [])], shutter: job.shutter ?? 0.5, overlay: { timeOnly: !!job.timeOnly, endDate: !!job.endDate } });
   if (!info.hero) { st('no hero found by the rule'); return; }
   // the overlay is laid out for the 1920 x 1080 frames: scaled to this window for the preview
   const fit = () => { const o = document.getElementById('vov'); if (!o) return; const k = Math.min(innerWidth / 1920, innerHeight / 1080);
