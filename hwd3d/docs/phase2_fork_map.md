@@ -409,6 +409,25 @@ python3 hwd_live_server.py [--port 8000] [--host 127.0.0.1] [--radius NM] [--no-
   `seq` (not only the newest), and a polling client that sends `GET /api/adsb?since=<seq of its last answer>` gets
   `"forget": [keys]` in the answer for the keys it could have seen (first published at or before that `seq`). `feed.js`
   polls with `?since=` and calls `onForget` before the new list. `traffic.forget` sets `maskWhy: 'd1'`.
+  (amended, fix round 3, m6; contract written down in review round 3 iteration 2) **Reconnects and horizons:**
+  - every live `event: adsb` / `event: delta` carries `id: <seq>` (`?history` payloads carry none). The relay's seq base
+    is the process start time in ms, so the seqs of two relay processes never overlap;
+  - `GET /api/stream?since=<seq>` and the browser's `Last-Event-ID` header (its own SSE reconnect) both mean "the client
+    has everything up to this seq": the stream first sends the forget events after it, for keys first published at or
+    before it;
+  - when that cannot be answered - the seq is older than the oldest kept forget event (`FORGET_KEEP_S` 600 s), below this
+    process's seq base (another relay process), or above any seq published here - the relay sends
+    `event: forget_horizon` `{since, seq, floor[, upto]}` on the stream (before the snapshot `upto` refers to) and
+    `"forget_horizon": {...}` in `/api/adsb?since=` answers. `/api/ping` `features.forget` = `{keep_s, last_event_id,
+    since, horizon}`; `/api/status` `merge.forget` holds counts only;
+  - `StreamFeed({..., onForget, onHorizon})`: a horizon is applied once the map holds the snapshot it refers to; every
+    key handed out since the last horizon that the snapshot does not contain (masked `x` keys excepted) is `absent`, and
+    `onHorizon({present, absent, since, seq, floor})` is called - without `onHorizon` the feed falls back to
+    `onForget(absent)`. **P4 must pass `onHorizon: (h) => traffic.forgetHorizon(h)`** (`js/live/app.js`, review round 3
+    iteration 2, F7): `forgetHorizon` keeps every body and shows the absent tracks by type only (`ident.withheld =
+    'horizon'`, not claimed LADD / PIA) until the relay re-publishes the key unmasked, and purges the persisted parked
+    records. The fallback marked every silent and parked aircraft LADD / PIA and faded it out on each relay restart.
+    Checked end to end by `jobs/horizon.mjs` (a foreign `?since=` through the page's real reconnect path).
 - **Consequences:**
   - Tracks stay continuous within a relay session.
   - A masked parked aircraft is a new track after a relay restart [inf, accepted].
@@ -424,8 +443,8 @@ python3 hwd_live_server.py [--port 8000] [--host 127.0.0.1] [--radius NM] [--no-
 |---|---|
 | `GET /` | 302 → `live.html` (query kept) |
 | `GET /api/ping` | `{"hwdlive": 1, "v": "0.1", "mode": "live"\|"replay", "stream": true, "delta": true, "dataNow": ms\|null, "center": {"lat": 37.6589317, "lon": -122.1217389, "radius_nm": N}, "poll": {"adsblol_s": s, "adsbfi": bool}, "features": {"metar": "KHWD", "taf": null, "ident": "mictronics 479e4d0"\|null, "d1": "dbFlags & 12", "replay": null \| {"src", "from": ms, "until": ms, "speed", "loop", "lookahead_s": 60}}, "providers": ["adsb.lol", …], "attribution": {"adsb": "…", "metar": "…", "ident": "…"}}`. P4 detects the relay by `j.hwdlive === 1`; an sfo3d relay (`sfolive`) is not accepted. |
-| `GET /api/adsb[?since=seq]` | readsb jv2: `{"now": ms (relay wall clock), "dataNow": ms (data clock: recording time in replay), "seq": n, "total": n, "_source": "adsb.lol+adsb.fi", "msg": "No error", "ac": [record…]}`; with `since` (fix round 2) also `"forget": [keys]` when a D1 late flag hit keys that client was shown |
-| `GET /api/stream[?delta=1]` | SSE as sfo3d. `retry: 2000`, then `event: adsb` (full payload as `/api/adsb`). With delta: `event: delta` `{"now", "dataNow", "seq", "ac": [changed records], "gone": [keys]}`; a full event on every seq gap and at least every 30 s; `: keepalive` every 15 s. |
+| `GET /api/adsb[?since=seq]` | readsb jv2: `{"now": ms (relay wall clock), "dataNow": ms (data clock: recording time in replay), "seq": n, "total": n, "_source": "adsb.lol+adsb.fi", "msg": "No error", "ac": [record…]}`; with `since` (fix round 2) also `"forget": [keys]` when a D1 late flag hit keys that client was shown, and (fix round 3) `"forget_horizon": {since, seq, floor}` when the relay cannot answer that seq |
+| `GET /api/stream[?delta=1][&history=S][&since=seq]` | SSE as sfo3d. `retry: 2000`, then `event: adsb` (full payload as `/api/adsb`). With delta: `event: delta` `{"now", "dataNow", "seq", "ac": [changed records], "gone": [keys]}`; a full event on every seq gap and at least every 30 s; `: keepalive` every 15 s. (amended, fix round 3) Live adsb / delta events carry `id: <seq>`; `since` / `Last-Event-ID` first replay the forget events after that seq, or send `event: forget_horizon` when they cannot (see the late-flag paragraph above). |
 | `GET /api/metar?ids=KHWD[&format=json]` | Raw lines by default, newest first, for the last 3 h; `format=json` gives the aviationweather.gov objects (`icaoId`, `obsTime` epoch s, `reportTime`, `rawOb`, …). Header `X-Data-Now`. Replay: only reports observed at or before the replay time; HTTP 502 `{"error"}` when none is within 90 min (never today's weather in a replay). Only `KHWD` is accepted. |
 | `GET /api/status` | provider health, latency and 429 counts, merge counters, ident loader state, masked count, replay position. No identities. |
 | removed | `/api/gates`, `/api/routeset`, `/api/taf` (404). |
@@ -757,10 +776,14 @@ export class Traffic {
   onEvent: (e) => void
   delay, delayTarget, adaptDelay
   net: TaxiNet            // .match(x, z, hdgRad, prevWay), .paved(x, z), .route(fromNode, toNode) -> { nodes, len, pts }
+                          // (amended, round 3 iteration 3: new TaxiNet(taxigraph, site) - each link carries its building
+                          // clearance .clr (m); routes with opt.span penalise links narrower than span / 2 + 1 m)
   counters: { … }
   remove(tr)
   clearParked()
   forget(keys /* string[] */)   // (amended, fix round 1) drop these tracks and their identity at once (relay 'forget' event)
+  // (amended, round 3 iteration 3) Track.phaseInfo.label may differ from PHASES[phase].label: 'Stopped' / 'Stopped on the
+  // runway' for a taxi / runway_taxi body at rest > 10 s (inferred, provisional); the phase key is unchanged
 }
 // js/live/motion.js (new, fix round 1; Node-pure) - the motion primitives traffic.js plans with
 export function polyOf(pts) -> { pts, s /* cumulative */, len }

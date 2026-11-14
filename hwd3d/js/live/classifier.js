@@ -251,7 +251,18 @@ export class PhaseClassifier {
     this.counters.events += ev.length;
     return ev;
   }
-  emit(K, key, ev, e) { if (K.done.has(key)) return false; K.done.add(key); ev.push(e); if (K.done.size > 400) { const it = K.done.values(); for (let i = 0; i < 100; i++) K.done.delete(it.next().value); } return true; }
+  // (review round 3, iteration 2, F10) one event is emitted once: an episode re-detected after its key left K.done (pruned at
+  // 400 keys) or after older fixes left the buffer (the key holds its first fix's time) came out a second time - the weekday
+  // window's '7 take-offs live vs 6 offline' was one C172 take-off emitted twice, 15 min apart. Events are also identified by
+  // type, runway and time (5-s buckets, +-1), kept for 2 h of event time [inf]
+  emit(K, key, ev, e) {
+    if (K.done.has(key)) return false; K.done.add(key);
+    if (K.done.size > 400) { const it = K.done.values(); for (let i = 0; i < 100; i++) K.done.delete(it.next().value); }
+    const M = K.evIds || (K.evIds = new Map()), b = Math.round((e.t || 0) / 5000), base = (e.type || e.kind || '') + ':' + (e.rwy || '') + ':';
+    if (M.has(base + b) || M.has(base + (b - 1)) || M.has(base + (b + 1))) return false;
+    M.set(base + b, e.t || 0); for (const [k, t] of M) if (t < (e.t || 0) - 7200e3) M.delete(k);
+    ev.push(e); return true;
+  }
   noteFlow(e) {
     if (!e.rwy) return; this.flowEv.push([e.t, e.rwy.startsWith('28') ? '28' : '10']);
     while (this.flowEv.length && e.t - this.flowEv[0][0] > 1800e3) this.flowEv.shift();

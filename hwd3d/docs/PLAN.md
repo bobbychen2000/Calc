@@ -217,6 +217,12 @@ prompt that says "everything must work on a phone" or asks for phone performance
   full-quality renderer, and they need detailed SF50 and PC-12 models. This moves those two types to the front of
   Phase 3. D1 still applies to anything shown in the videos.
 
+- **OD4 (2026-11-14, PC-12 model):** "The pc12 modeling doesn't look as high fidelity. Do you mind using whatever we
+  had in the past." hwd3d uses the **original `pc12/out/pc12.glb` unchanged** (our own pc12 project's model); the
+  hwd3d-side fr2/fr3 variants (re-lofted fuselage, moved windows, dihedral) are retired. The hwd3d renderer must show it
+  at the fidelity of the pc12 project's own three.js viewer (dark windshield surround, framed windows, glossy glass,
+  navy cheatline with gold pin-stripe).
+
 **Orchestrator decisions under the owner's delegation (2026-11-13).** The owner delegated these judgements; they are
 recorded here next to OD1–OD3 but did not come from the owner directly, and **the owner may overrule them**.
 

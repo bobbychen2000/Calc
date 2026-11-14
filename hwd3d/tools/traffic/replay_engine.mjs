@@ -13,6 +13,14 @@
 //   - D1: masked tracks show type only; no identity string of a LADD/PIA aircraft (out/traffic/leak_<name>.json, local
 //     only) anywhere in the engine output; no key used as a label; a synthetic unmasked LADD record is masked.
 // usage: node tools/traffic/replay_engine.mjs <name> [--hz 10] [--pack PATH] [--minutes M] [--json out/traffic/run_<name>.json]
+//        [--open app|tstart] [--lookahead S] [--strict] [--log]
+//   --open app (default, round 3 iteration 3, F2): the opening burst is ingested as js/live/app.js ingests it - every history
+//          payload (older than 3 s at the start) at its OWN send time, the freshest at the start time - so a track first heard
+//          in the burst keeps its older fixes (traffic.js drops a new track's fix older than 45 s at its receive time). The
+//          harness of round 3 ingested the whole first batch at the start time (--open tstart): every gate was blind to what
+//          the app draws in the first minute of a session (a landing reconstructed from those fixes floated and was re-placed)
+//   --lookahead S: display S s behind the stream head instead of the pack's lookahead_s (what a pack built with
+//          build_replay.py --lookahead S would do; the same payloads)
 import fs from 'node:fs'; import zlib from 'node:zlib'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 import { buildSite } from '../../js/world/site.js';
 import { HWD_AIRPORT } from '../../data/hwd_airport.js';
@@ -30,7 +38,7 @@ const name = args.find(a => !a.startsWith('--') && !args[args.indexOf(a) - 1]?.s
 const HZ = +opt('hz', 10), DT = 1 / HZ;
 const packPath = opt('pack', path.join(ROOT, 'out', 'replay', `pack_${name}.json.gz`));
 const pack = JSON.parse(zlib.gunzipSync(fs.readFileSync(packPath)).toString());
-const L = pack.lookahead_s || 60;
+const L = +opt('lookahead', pack.lookahead_s || 60), OPEN = opt('open', 'app');
 const refPath = path.join(ROOT, 'out', 'traffic', `ref_${name}.json`), leakPath = path.join(ROOT, 'out', 'traffic', `leak_${name}.json`);
 const REF = fs.existsSync(refPath) ? JSON.parse(fs.readFileSync(refPath)) : null;
 const LEAK = fs.existsSync(leakPath) ? JSON.parse(fs.readFileSync(leakPath)).ids : [];
@@ -84,7 +92,13 @@ const PL = { teleports: 0, teleports_hwd: 0, teleports_engine: 0, teleports_sign
   // contradictions; M3 hidden take-offs (the owner's fallback) declared by the engine and checked separately
   off_reports_samples: 0, air_overspeed_samples: 0, air_climb_samples: 0, low_air_off_runway_frames: 0, air_pair_close_frames: 0, air_pair_close_reported: 0,
   label_hold_moving: 0, label_lineup_fast: 0, label_runway_taxi_off: 0, label_no_signal_moving: 0, label_runway_in_air: 0,
-  m3_hidden_takeoffs: 0, m3Log: [], xLog: [] };
+  m3_hidden_takeoffs: 0, m3Log: [], xLog: [],
+  // review round 3, iteration 3: F1 floating over the runway / reconstruction targets and drawn speeds below the stall speed;
+  // F3 / F4 labels against the drawn vertical sense, a base leg flown on final, 'Taxiing' while stopped, roll-label flicker, a
+  // touch-and-go drawn without ground contact; F6 M3 hidden take-offs although a runway is consistent
+  air_float_runway_frames: 0, air_float_runway_reported: 0, recon_substall_samples: 0, air_substall_samples: 0, air_substall_reported: 0,
+  label_vertical_sense: 0, label_vertical_info: 0, label_base_aligned: 0, label_taxi_stopped: 0, label_taxi_stopped_tracks: 0, label_roll_flicker: 0, tg_no_contact: 0, tg_checked: 0,
+  m3_hidden_runway_consistent: 0 };
 // runway rectangle test (site.runways axes; m = extra half-width) - the pavement a take-off / landing roll uses
 const onRwy = (x, z, m = 3) => (site.runways || []).some(r => { const px = x - r.origin[0], pz = z - r.origin[1], al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; return al >= 0 && al <= r.length && Math.abs(ac) <= r.halfWidth + m; });
 const newLog = (...a) => { if (PL.newLog.length < 400) PL.newLog.push(a); };
@@ -119,7 +133,9 @@ function presence(now) {
   const td = traffic.displayTime(now);
   for (const [k, V] of PRES) if (!traffic.tracks.has(k) && V.last) { if (!V.absent) V.absent = { t: td, why: new Set() }; V.absent.why.add('removed'); }
   for (const tr of traffic.tracks.values()) {
-    const D = tr.disp, present = !!(D.valid && tr.inView && !tr.hidden && D.alpha > 0.02 && tr.dims);
+    // (iteration 3, F1: a re-placement fade - tr.cutting - is an absence too: the body fades to ~0.25 and is drawn again
+    // elsewhere; with alpha > 0.02 alone a 411-m re-placement of a floating GLF4 in 0.4 s was never tested by the teleport rule)
+    const D = tr.disp, present = !!(D.valid && tr.inView && !tr.hidden && D.alpha > 0.02 && tr.dims && !tr.cutting);
     let V = PRES.get(tr.key); if (!V) PRES.set(tr.key, V = { last: null, absent: null });
     if (present) {
       if (V.absent && V.last) {
@@ -268,10 +284,12 @@ function extraFrame(now) {
         if (tr.phase === 'line_up' && kt > 15) { PL.label_lineup_fast++; xLog('label_lineup_fast', t, lab, +kt.toFixed(0)); }
         if (tr.phase === 'runway_taxi' && D.ground && !onRwy(D.x, D.z, 0)) { PL.label_runway_taxi_off++; xLog('label_runway_taxi_off', t, lab, site.surface(D.x, D.z)); }
         if (tr.phase === 'no_signal' && kt > 2) { PL.label_no_signal_moving++; xLog('label_no_signal_moving', t, lab, +kt.toFixed(0), D.ground ? 'G' : Math.round(agl) + 'ft'); }
-        if (!D.ground && agl > 50 && ['takeoff_roll', 'landing_roll', 'runway_taxi'].includes(tr.phase)) { PL.label_runway_in_air++; xLog('label_runway_in_air', t, lab, tr.phase, Math.round(agl)); }
+        // (iteration 3, F4: > 15 ft, was 50 ft - 'Landing roll' was shown on bodies 34-50 ft up; line-up too)
+        if (!D.ground && agl > 15 && ['takeoff_roll', 'landing_roll', 'runway_taxi', 'line_up'].includes(tr.phase)) { PL.label_runway_in_air++; xLog('label_runway_in_air', t, lab, tr.phase, Math.round(agl)); }
       }
     }
     if (fw && !D.ground && Math.hypot(D.x, D.z) < 2500 && agl < 35 && !inRwyBox(D.x, D.z, 30, 300)) { PL.low_air_off_runway_frames++; if (s1) xLog('low_air_off_runway', t, lab, Math.round(agl), Math.round(D.x), Math.round(D.z), +kt.toFixed(0), tr.phase, site.surface(D.x, D.z)); }
+    if (fw) iter3Frame(tr, D, td, t, s1, agl, kt, lab);
   }
   for (let i = 0; i < air.length; i++) for (let j = i + 1; j < air.length; j++) {
     const A = air[i].disp, B = air[j].disp, d = Math.hypot(A.x - B.x, A.y - B.y, A.z - B.z); if (d >= 30) continue;
@@ -279,15 +297,97 @@ function extraFrame(now) {
     if (dr < 60) PL.air_pair_close_reported++; else { PL.air_pair_close_frames++; if (s1) xLog('air_pair_close', t, air[i].info.icao || '?', air[j].info.icao || '?', Math.round(d), Math.round(A.y - B.y), Math.round(dr)); }
   }
 }
+// ---- iteration 3 of review round 3 (F1, F3, F4, F6), fixed-wing, drawn (alpha > 0.02) unless stated:
+//   air_float_runway_frames  airborne below 15 ft AGL over a runway (its rectangle + 3 m) for more than 6 s, the drawn speed
+//                            varying by < 2 kt over the last 6 s (the GLF4 held 2-12 ft up at 100.8 kt for 20 s); frames whose two
+//                            bracketing reports are themselves airborne below 25 ft over the runway are INFO (_reported)
+//   recon_substall_samples   1 Hz: a reconstructed (plan / xplan) airborne TARGET slower than the type's stall speed
+//                            spd(tr).vapp / 1.3 (the ACD approach speed is 1.3 x the landing-configuration stall speed [recalled,
+//                            verify]; spd() already scales it to an aircraft observed flying slower) and slower than 0.95 x the
+//                            slower airborne report around the display time (a groundspeed that slow is in the data)
+//   air_substall_samples     1 Hz: the drawn airborne body below that stall speed and below 0.95 x that report; data-supported
+//                            samples are INFO (_reported)
+//   label_vertical_sense     1 Hz, > 50 ft AGL: 'final' / 'base' climbing > 300 ft/min; 'initial_climb' descending > 300 ft/min
+//                            (F3: a silent touch-and-go drawn climbing out labelled 'Final'); upwind / crosswind / departing legs
+//                            flown descending are INFO (label_vertical_info)
+//   label_base_aligned       1 Hz: 'base' within 15 deg of a runway heading and 100 m of its extended centreline, 0-4 km before
+//                            its threshold (a final)
+//   label_taxi_stopped       1 Hz: 'Taxiing' / 'Taxiing on the runway' on a body that has stood still > 30 s (every frame below
+//                            0.5 m/s since it fell below 0.3 m/s)
+//   label_roll_flicker       a take-off / landing roll / touch-and-go label shown < 2 s between two spells of one other label
+//   tg_no_contact            (end) a touch-and-go event at HWD drawn (present at its time) without ground contact on a runway
+//                            within 30 s of it (pat 'case E': 'Touch-and-go 28L' on a body never below 11 ft)
+//   m3_hidden_runway_consistent  an M3 hidden take-off (owner's fallback) although a departure runway WAS consistent with the
+//                            first airborne fix (the owner's rule allows hiding only when none is): tr.m3Log 'why' other than
+//                            'plan fail 1' (no runway)
+// The limits are design values [inf].
+const FL = new Map(), STILL = new Map(), PHH = new Map(), CONTACT = new Map(), DRAWN = new Map();
+const aglOf = (f) => (f.y - site.groundY(f.x, f.z)) / 0.3048;
+const ROLL_PH = ['takeoff_roll', 'landing_roll', 'touch_and_go'];
+function iter3Frame(tr, D, td, t, s1, agl, kt, lab) {
+  const vstall = traffic.spd(tr).vapp / 1.3;
+  // float over a runway
+  if (!D.ground && agl < 15 && onRwy(D.x, D.z, 3)) {
+    let q = FL.get(tr.key); if (!q || q.tLast < td - 250) FL.set(tr.key, q = { t0: td, s: [] });
+    q.tLast = td; q.s.push([td, kt]); while (q.s.length && q.s[0][0] < td - 6000) q.s.shift();
+    if (td - q.t0 > 6000) { let lo = 1e9, hi = -1e9; for (const z of q.s) { lo = Math.min(lo, z[1]); hi = Math.max(hi, z[1]); }
+      if (hi - lo < 2) { const R = repAt(tr, td), rep = !!R && R.a !== R.b && !R.a.ground && !R.b.ground && aglOf(R.a) < 25 && aglOf(R.b) < 25 && onRwy(R.a.x, R.a.z, 3) && onRwy(R.b.x, R.b.z, 3);
+        if (rep) PL.air_float_runway_reported++; else { PL.air_float_runway_frames++; if (s1 || !q.lg) { q.lg = 1; xLog('air_float_runway', t, lab, Math.round(agl), +kt.toFixed(1), tr.phase, tr._tgtMode || ''); } } } }
+  } else FL.delete(tr.key);
+  // stillness, per frame: still below 0.3 m/s, moving again above 0.5 m/s (a start of taxi that the 1-Hz samples miss - a
+  // 0.5-m/s creep and pivot between two samples - ends the stop)
+  { const q = STILL.get(tr.key) || { t0: null }; if (D.ground && D.gs < 0.3) { if (q.t0 == null) q.t0 = td; } else if (!D.ground || D.gs > 0.5) q.t0 = null; STILL.set(tr.key, q); }
+  // roll-label flicker (every frame)
+  { let h = PHH.get(tr.key); if (!h) PHH.set(tr.key, h = { cur: tr.phase, t0: td, prev: null });
+    if (tr.phase !== h.cur) { if (ROLL_PH.includes(h.cur) && td - h.t0 < 2000 && h.prev === tr.phase) { PL.label_roll_flicker++; xLog('label_roll_flicker', t, lab, h.cur, +((td - h.t0) / 1000).toFixed(1), tr.phase); }
+      h.prev = h.cur; h.cur = tr.phase; h.t0 = td; } }
+  if (!s1) return;
+  const sec = Math.round(td / 1000);
+  { let S = DRAWN.get(tr.key); if (!S) DRAWN.set(tr.key, S = new Set()); S.add(sec); }
+  if (D.ground && onRwy(D.x, D.z, 3)) { let S = CONTACT.get(tr.key); if (!S) CONTACT.set(tr.key, S = new Set()); S.add(sec); }
+  // (the slower AIRBORNE report around the display time - an aircraft reported slower than the table stall speed, a
+  // groundspeed into a headwind, supports a drawn speed down to 0.95 x that report)
+  const R0 = repAt(tr, td), vRepAir = R0 ? Math.min(...[R0.a, R0.b].filter(f => f && !f.ground && f.gs != null).map(f => f.gs * 0.514444), 1e9) : 1e9;
+  if (tr._recon && tr._tgtAir && tr._tgtV < vstall && tr._tgtV < 0.95 * vRepAir) { PL.recon_substall_samples++; xLog('recon_substall', t, lab, +(tr._tgtV / 0.514444).toFixed(0), +(vstall / 0.514444).toFixed(0), tr._tgtMode || '', +(Math.min(vRepAir, 999) / 0.514444).toFixed(0)); }
+  if (!D.ground && D.gs < vstall) { const slowRep = D.gs >= 0.95 * vRepAir;
+    if (slowRep) PL.air_substall_reported++; else { PL.air_substall_samples++; xLog('air_substall', t, lab, +kt.toFixed(0), +(vstall / 0.514444).toFixed(0), Math.round(agl), tr.phase, tr._tgtMode || ''); } }
+  if (!D.ground && agl > 50) { const vsf = D.vs / 0.3048 * 60;
+    if ((tr.phase === 'final' || tr.phase === 'base') && vsf > 300) { PL.label_vertical_sense++; xLog('label_vertical_sense', t, lab, tr.phase, Math.round(agl), Math.round(vsf), tr.stale ? 'stale' : ''); }
+    if (tr.phase === 'initial_climb' && vsf < -300) { PL.label_vertical_sense++; xLog('label_vertical_sense', t, lab, tr.phase, Math.round(agl), Math.round(vsf), tr.stale ? 'stale' : ''); }
+    // (INFO: a departure / pattern leg flown descending - upwind, crosswind, departing - is not a contradiction of the leg itself)
+    if (['upwind', 'crosswind', 'departing'].includes(tr.phase) && vsf < -300) PL.label_vertical_info++; }
+  if (!D.ground && tr.phase === 'base') for (const r of site.runways || []) for (const sg of [1, -1]) {
+    const px = D.x - r.origin[0], pz = D.z - r.origin[1], al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1], thr = sg > 0 ? 0 : r.length, before = (thr - al) * sg;
+    const hR = Math.atan2(r.dir[0] * sg, -r.dir[1] * sg) * 180 / Math.PI, dh = Math.abs(((D.hdg - hR) % 360 + 540) % 360 - 180);
+    if (before >= 0 && before <= 4000 && Math.abs(ac) <= 100 && dh <= 15) { PL.label_base_aligned++; xLog('label_base_aligned', t, lab, Math.round(before), Math.round(ac), Math.round(dh), Math.round(agl)); }
+  }
+  { const L0 = tr.phaseInfo && tr.phaseInfo.label, taxiL = L0 === PHASES.taxi.label || L0 === PHASES.runway_taxi.label;
+    const q = STILL.get(tr.key), n = q && q.t0 != null ? Math.round((td - q.t0) / 1000) : 0;
+    if (n > 30 && taxiL) { PL.label_taxi_stopped++; if (!tr._lgTS) { PL.label_taxi_stopped_tracks++; tr._lgTS = 1; xLog('label_taxi_stopped', t, lab, n, tr.phase); } } }
+}
+// (end of run) touch-and-go events drawn without ground contact; M3 hides with a consistent runway
+function iter3End() {
+  for (const e of traffic.events) {
+    if (e.kind !== 'touch_and_go' || e.t < pack.from * 1000 || e.t > pack.until * 1000) continue;
+    const tr = EVER.get(e.key); if (!tr || !tr.dims || tr.dims.cls === 'heli' || tr.vehicle) continue;
+    const sec = Math.round(e.t / 1000), Dn = DRAWN.get(e.key); if (!Dn || !Dn.has(sec)) continue;
+    PL.tg_checked++; const C = CONTACT.get(e.key); let ok = false; if (C) for (let k = -30; k <= 30 && !ok; k++) if (C.has(sec + k)) ok = true;
+    if (!ok) { PL.tg_no_contact++; xLog('tg_no_contact', Math.round(e.t / 1000 - pack.from), tr.info.icao || '?', e.rwy || ''); }
+  }
+  for (const tr of EVER.values()) for (const m of tr.m3Log || []) if (m.t1 >= pack.from * 1000 && m.t1 <= (pack.until + 60) * 1000 && m.why !== 'plan fail 1') { PL.m3_hidden_runway_consistent++; xLog('m3_hidden_runway_consistent', Math.round(m.t1 / 1000 - pack.from), tr.info.icao || '?', m.why || ''); }
+}
 const pct = (a, q) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); return +s[Math.min(s.length - 1, Math.floor(q * s.length))].toFixed(2); };
 
 // ---- run: wall clock = data clock (the shim's offset is 0 here)
 const evs = pack.events; let ei = 0;
 const tStart = pack.from + L, tEnd = Math.min(pack.until + L + 20, opt('minutes') ? pack.from + L + 60 * +opt('minutes') : 1e12);
 let firstBatch = true;
+// (iteration 3, F2) the opening burst as app.js onData ingests it: a payload older than 3 s at its arrival is history and is
+// ingested at its own send time (p.now); the rest at the arrival time. --open tstart: the round-3 harness (all at tStart)
+const recvOf = (p, T, first) => first ? (OPEN !== 'tstart' && p.now != null && p.now < tStart * 1000 - 3000 ? p.now : tStart * 1000) : T * 1000;
 for (let t = tStart; t <= tEnd; t += DT) {
   while (ei < evs.length && evs[ei].T <= t) {
-    const p = expand(evs[ei].p); const recv = firstBatch ? tStart * 1000 : evs[ei].T * 1000;
+    const p = expand(evs[ei].p); const recv = recvOf(p, evs[ei].T, firstBatch);
     traffic.ingest(parsePayload(p, recv), recv); ei++;
   }
   firstBatch = false;
@@ -296,6 +396,7 @@ for (let t = tStart; t <= tEnd; t += DT) {
   M.updMs.push(performance.now() - a);
   sampleFrame(t * 1000); extraFrame(t * 1000);
 }
+iter3End();
 // plausibility from the 1-Hz series of the drawn fixed-wing bodies
 for (const S of SER.values()) {
   const a = S.s;
@@ -334,7 +435,11 @@ const CHECKS = { teleports_engine: [PL.teleports_engine, 0], teleports_signal_hw
   landing_roll_speed_rise: [PL.landing_roll_speed_rise, 0], liftoff_off_runway: [PL.liftoff_off_runway, 0], touchdown_off_runway: [PL.touchdown_off_runway, 0], ground_air_reappear: [PL.ground_air_reappear, 0],
   ground_overlap_frames: [M.ovl.parked + M.ovl.mixed + M.ovl.moving, 0], fw_in_building_frames: [M.inBld, 0], taxi_label_fast_frames: [PL.taxi_label_fast_frames, 0],
   // review round 3, iteration 2: F1 / F2 / F3 (see extraFrame)
-  off_reports_samples: [PL.off_reports_samples, 0], air_overspeed_samples: [PL.air_overspeed_samples, 0], air_climb_samples: [PL.air_climb_samples, 0], low_air_off_runway_frames: [PL.low_air_off_runway_frames, 0], air_pair_close_frames: [PL.air_pair_close_frames, 0] };
+  off_reports_samples: [PL.off_reports_samples, 0], air_overspeed_samples: [PL.air_overspeed_samples, 0], air_climb_samples: [PL.air_climb_samples, 0], low_air_off_runway_frames: [PL.low_air_off_runway_frames, 0], air_pair_close_frames: [PL.air_pair_close_frames, 0],
+  // review round 3, iteration 3 (see iter3Frame / iter3End)
+  air_float_runway_frames: [PL.air_float_runway_frames, 0], recon_substall_samples: [PL.recon_substall_samples, 0], air_substall_samples: [PL.air_substall_samples, 0],
+  label_vertical_sense: [PL.label_vertical_sense, 0], label_base_aligned: [PL.label_base_aligned, 0], label_taxi_stopped: [PL.label_taxi_stopped, 0], label_roll_flicker: [PL.label_roll_flicker, 0],
+  tg_no_contact: [PL.tg_no_contact, 0], m3_hidden_runway_consistent: [PL.m3_hidden_runway_consistent, 0] };
 // (iteration 2, F4) planted cases: each gate below must FIRE on its planted input and must NOT fire on its planted
 // exception - a gate that cannot fire is dead code (ground_air_reappear read a field that was never stored)
 { const last = { t: 0, x: 0, y: 12, z: 0, gs: 0, ground: true, cls: 'single_hw' }, Dp = { x: -800, y: 45, z: -400, gs: 36, ground: false };
@@ -344,8 +449,18 @@ const CHECKS = { teleports_engine: [PL.teleports_engine, 0], teleports_signal_hw
   CHECKS.planted_reappear = [ok ? 0 : 1, 0]; }
 { const okLow = !inRwyBox(0, -700, 30, 300) && inRwyBox(site.runways[0].origin[0], site.runways[0].origin[1], 30, 300);
   CHECKS.planted_low_air_box = [okLow ? 0 : 1, 0]; }
+// (iteration 3, F2) planted opening burst: a track first heard in the history burst - fixes 58 s, 50 s and 0 s old at the start
+// - keeps all three when the burst is ingested as app.js does (recvOf, --open app); ingested at the start time (--open tstart)
+// the two old ones are dropped (traffic.js: a new track's fix older than 45 s at its receive time). Must hold for the gate to see
+// what the app draws in the first minute
+{ const T0 = 1.8e12, fixesWith = (mode) => { const t3 = new Traffic({ airport: HWD_AIRPORT, taxigraph: TAXIGRAPH, site, parking: null, persist: false }); t3.setLookahead(60);
+    const pay = (tt, lon) => ({ now: tt, ac: [{ hex: 'b0f001', t: 'C172', category: 'A1', lat: 37.662, lon, alt_baro: 1500, gs: 90, track: 270, _pt: tt / 1000 }] });
+    for (const p of [pay(T0 - 58000, -122.110), pay(T0 - 50000, -122.1142), pay(T0, -122.1405)]) { const recv = mode === 'app' && p.now < T0 - 3000 ? p.now : T0; t3.ingest(parsePayload(p, recv), recv); }
+    const tr = t3.tracks.get('b0f001'); return tr ? tr.fx.length : 0; };
+  const nApp = fixesWith('app'), nOld = fixesWith('tstart'), okB = nApp === 3 && nOld === 1;
+  CHECKS.planted_open_burst = [okB ? 0 : 1, 0]; PL.planted_open_burst = [nApp, nOld]; }
 // reported, not gated: transitions without a take-off / landing plan (the straight fallback chord) - review round 2, finding 5
-const INFO = { m3_hidden_takeoffs: PL.m3_hidden_takeoffs, air_pair_close_reported: PL.air_pair_close_reported, transition_linear: traffic.counters.transitionLinear || 0, transition_plans: traffic.counters.transitionPlans || 0, transition_fallback: traffic.counters.transitionFallback || 0, teleports_per_h: +(PL.teleports / hrs).toFixed(1), window_reentries: PL.window_reentries };
+const INFO = { open: OPEN, lookahead_s: L, label_vertical_info: PL.label_vertical_info, air_float_runway_reported: PL.air_float_runway_reported, air_substall_reported: PL.air_substall_reported, label_taxi_stopped_tracks: PL.label_taxi_stopped_tracks, tg_checked: PL.tg_checked, m3_hidden_takeoffs: PL.m3_hidden_takeoffs, air_pair_close_reported: PL.air_pair_close_reported, transition_linear: traffic.counters.transitionLinear || 0, transition_plans: traffic.counters.transitionPlans || 0, transition_fallback: traffic.counters.transitionFallback || 0, teleports_per_h: +(PL.teleports / hrs).toFixed(1), window_reentries: PL.window_reentries };
 const FAILED = Object.entries(CHECKS).filter(([k, [v, lim]]) => v > lim).map(([k]) => k);
 // end of the window: decide what is still open (contexts that would time out after it)
 for (const tr of traffic.tracks.values()) for (const e of traffic.classifier.flush(tr, tEnd * 1000 + 3600e3)) traffic.event(e);

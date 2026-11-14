@@ -238,7 +238,7 @@ export class UI {
   ${AT ? `<dt>Altitude</dt><dd class="mono"><span class="nw">${esc(AT.msl)}</span> <span class="dim nw">· ${esc(AT.above)}</span></dd>` : `<dt>Altitude</dt><dd>${D.ground || tr.stale ? 'On the ground' : '—'}</dd>`}
   <dt>Speed</dt><dd class="mono">${tr.stale ? '—' : fmtInt(D.gs / KT) + ' kt'}${vs != null && Math.abs(vs) > 150 ? ` <span class="dim">· ${vs > 0 ? '+' : ''}${fmtInt(Math.round(vs / 50) * 50)} ft/min</span>` : ''}</dd>
   <dt>Tower</dt><dd>${T.open == null ? '—' : T.open ? 'Open <span class="dim">(07:00–21:00)</span>' : 'Closed · <span class="mono">CTAF 120.2</span>'}</dd>
-  <dt>Data</dt><dd>${tr.stale ? 'last signal ' + ago(extra.staleMs) : extra.ageS == null ? '—' : `position <b class="mono">${extra.ageS < 10 ? extra.ageS.toFixed(1) : Math.round(extra.ageS)} s</b> old`}${extra.srcText ? ` <span class="dim">· ${esc(extra.srcText)}</span>` : ''}${AM ? `<br><span class="dim small altm" title="${esc(AM.title)}">altitude: ${esc(AM.text)}${AR.interp ? ', between fixes' : ''}</span> ${inf(AM.title)}` : ''}</dd>
+  <dt>Data</dt><dd>${tr.stale ? 'last signal ' + ago(extra.staleMs) : extra.ageS == null ? '—' : `position <b class="mono">${extra.ageS < 10 ? extra.ageS.toFixed(1) : Math.round(extra.ageS)} s</b> old`}${extra.srcText ? ` <span class="dim">· ${esc(extra.srcText)}</span>` : ''}${AM ? `<br><span class="dim small altm" title="${esc(AM.title)}">altitude: ${esc(AM.text)}</span> ${inf(AM.title)}` : ''}</dd>
 </dl>
 ${extra.modelNote ? `<div class="model">${esc(extra.modelNote)}</div>` : ''}
 <div class="acts"><button data-act="follow" class="${extra.follow === 'follow' ? 'on' : ''}">Follow</button><button data-act="chase" class="${extra.follow === 'chase' ? 'on' : ''}">Chase</button><button data-act="free">Free camera</button></div>`;
@@ -272,91 +272,80 @@ ${extra.modelNote ? `<div class="model">${esc(extra.modelNote)}</div>` : ''}
   }
 }
 export const isInf = (tr) => !!((tr.phaseInfo && tr.phaseInfo.src === 'inf') || (tr.park && tr.park.src === 'inf'));
-// ------------------------------------------------------------ altitude (review round-2 recheck m7)
-// alt_baro is the transponder's PRESSURE altitude, referenced to 29.92 inHg (14 CFR 91.217(a)(2), LII copy read 2026-11-13),
-// not a height above sea level: with the KHWD altimeter at 30.13 a C172 on short final reports about -150 ft. Until this
-// round the list, the 3-D labels and the card printed it raw ('Final 28L -150 ft'), and the card set it beside a drawn
-// height from another datum ('Altitude 400 ft · 560 ft AGL'). Now every place shows ONE value, the altitude MSL at the
-// display time, and the card's height above the field is computed from that same rounded value:
-//  1. 'baro' (default): what an altimeter set to the current KHWD altimeter setting A would read. A barometric altimeter
-//     set to A reads H(p) - H(A), where H is the NWS pressure-altitude equation H(p) = (1 - (p / 1013.25)^0.190284) x
-//     145,366.45 ft (weather.gov/media/epz/wxcalc/pressureAltitude.pdf, read 2026-11-13) [V]; the NWS altimeter-setting
-//     equation (weather.gov/media/epz/wxcalc/altimeterSetting.pdf, read 2026-11-13) is the same relation solved for A at
-//     the station elevation [V]. So MSL = alt_baro - H(A). No temperature correction (indicated, not true, altitude)
-//     [inf]. (The cockpit rule of thumb 1 inHg ~ 1,000 ft gives 8 % more: dH/dA at 29.92 is 924 ft per inHg, computed.)
-//     A comes from the KHWD METAR at or before the scene time (data clock), at most STALE_MIN (90) min old (js/env/state.js,
-//     spec 3.3), and never from a QA weather override (?metar= / ?wx=: not the traffic's weather) - app.js qnhAt();
-//  2. 'geom' (no usable METAR, or no alt_baro): alt_geom - GEOM_OFF, the Phase 1 calibration of the GNSS height against the
-//     NASR runway surfaces (GEOM_OFF -108.09 ft, n 797, hwd_events.json `calibration`; classifier.js RULES) [obs calibration,
-//     inf use]. Over the five review windows the two agree to a median of -37..+9 ft (docs/phase2_app.md section 9);
-//  3. 'drawn': the engine's drawn height (D.y, NAVD 88 ~ MSL) where neither bracketing fix has a usable value (a take-off or
-//     landing reconstructed across a recorder hole) [inf].
-// The value is taken at the DISPLAY time, not from the newest fix (the replay display runs 60 s behind the newest fix): at a
-// fix it is that fix's report; between fixes it follows the drawn height, shifted by the report-minus-drawn offset of the two
-// fixes around the display time (interpolated in time) [inf] - see altitudeOf.
-// Plausibility (owner's rule): an airborne aircraft is not below the ground under it. A value more than PLAUS_FT below that
-// ground (a transponder off by more than the 125-ft tolerance, or a fix flagged airborne on the runway) falls to the next
-// method; within PLAUS_FT (the 25-ft report quantum) it is shown at the ground height (`clamped`) [inf].
+// ------------------------------------------------------------ altitude (review round-2 recheck m7; review round 3, iteration 2, F5)
+// ONE source for the 3-D picture and every number shown: the engine's DRAWN height (D.y, NAVD 88 ~ MSL [inf: the datum
+// difference at HWD is not modelled]). At a fix the drawn height is that fix's report as the engine reads it: alt_geom minus the
+// Phase 1 calibration GEOM_OFF (-108.09 ft, n 797, against the NASR runway surfaces; hwd_events.json `calibration`,
+// classifier.js RULES) [obs calibration], or alt_baro mapped on to that calibration by the unit's own baro-geom offset when
+// the GNSS height is missing or off (classifier.js prep; f.hSrc) [inf]; between fixes, and in a take-off / landing
+// reconstructed across a recorder hole, it is the drawn path [inf] (the card says which).
+// Fix round 3 showed alt_baro corrected with the KHWD altimeter setting instead (what a cockpit altimeter would read) and
+// shifted it on to the drawn path between fixes. The review (iteration 2, F5) measured the label and the drawn height more than
+// 100 ft apart in 11-19 % of the airborne samples within 3 km, and 'Altitude 40 ft MSL · 10 ft below field elevation' on an
+// SF50 drawn 23 ft above the runway just after lift-off: the two sources disagree (pressure vs GNSS height, temperature,
+// transponder error) and the number contradicted the picture. The altimeter-equivalent value is still given, in the card's
+// method note, when a KHWD altimeter setting and the fix's alt_baro exist (MSL = alt_baro - H(A), H(p) = (1 - (p / 1013.25
+// hPa)^0.190284) x 145,366.45 ft, NWS pressure-altitude and altimeter-setting equations, read 2026-11-13 [V]; no temperature
+// correction [inf]); it is never the headline number. A METAR from a QA weather override (?metar= / ?wx=) is never used.
+// The card's second value is the height above the field elevation (FAA NASR 52 ft), from the same rounded number - or, for an
+// aircraft drawn airborne lower than that (the 10R end lies 24 ft below the field elevation), its height above the ground
+// under it: an airborne body is never 'below field elevation' (owner's rule: the label never contradicts the picture).
 const STD_P0_HPA = 1013.25, STD_N = 0.190284, STD_K_FT = 145366.45;     // NWS pressure-altitude equation [V]
 export const hStdFt = (hPa) => (1 - Math.pow(hPa / STD_P0_HPA, STD_N)) * STD_K_FT;
-export const PLAUS_FT = 25;                     // [inf]
+export const PLAUS_FT = 25;                     // [inf] (kept for the jobs; the drawn height is never below the ground)
 const ALT_ROUND = 10;                            // display step, ft (reports come in 25- or 100-ft steps) [inf]
+const AT_FIX_MS = 1500;                          // within this of a fix the drawn height is that fix's report [inf]
 const r10 = (v) => Math.round(v / ALT_ROUND) * ALT_ROUND + 0;   // + 0: no '-0'
 /** Altitude of an airborne track at the display time. A (app.js altCtx): {tD (engine ms), qnh: {inHg, obsMs} | null,
- *  fieldFt, groundFt(x, z)}. -> null on the ground / no position, else {msl, mslR, above, fieldFt, method, interp, clamped, qnh}.
- *  The value at a fix is the report itself (baro / geom); between fixes it is the DRAWN height plus the report-minus-drawn
- *  offset of the fixes around the display time, interpolated in time - so the number follows the 3-D picture through a
- *  recorder hole (a flare, a reconstructed take-off) and still equals the report at every fix. (A straight interpolation of
- *  the reports printed '110 ft MSL' over a BL8 the engine drew touching down; review run below, docs/phase2_app.md 9.) */
+ *  fieldFt, groundFt(x, z)}. -> null on the ground / no position, else {msl, mslR, above, agl, fieldFt, method, interp,
+ *  recon, src, baroMsl}: msl = the drawn height (ft); method 'geom' / 'baro' = at a fix, the report as the engine reads it
+ *  (obs), 'drawn' = between fixes / reconstructed (inf); baroMsl = the altimeter-equivalent value of the nearest fix (info). */
 export function altitudeOf(tr, A) {
   const D = tr && tr.disp; if (!D || !D.valid || D.ground || tr.stale) return null;
   const ok = Number.isFinite; if (!ok(D.y)) return null;
   const F = tr.fx || [], tD = A && A.tD != null ? A.tD : Infinity;
   let i = F.length - 1; while (i >= 0 && F[i].t > tD) i--;
   const a = i >= 0 ? F[i] : null, b = i + 1 < F.length ? F[i + 1] : null;
+  const near = [a, b].filter(f => f && !f.ground && Math.abs(f.t - tD) <= AT_FIX_MS).sort((p, q) => Math.abs(p.t - tD) - Math.abs(q.t - tD))[0] || null;
+  const recon = !!tr._recon;
   const yFt = D.y / FT;
-  // offset (report MSL - the fix's drawn target height) at a and b; interpolated when both exist, else the one that does
-  const anchored = (mslOf) => {
-    const off = (f) => { if (!f || !ok(f.y)) return null; const m = mslOf(f); return m != null && ok(m) ? m - f.y / FT : null; };
-    const oa = off(a), ob = off(b);
-    if (oa != null && ob != null) { const s = b.t - a.t, w = s > 0 ? Math.min(1, Math.max(0, (tD - a.t) / s)) : 0; return { v: yFt + oa + (ob - oa) * w, interp: s > 4000 && Math.min(tD - a.t, b.t - tD) > 1500 }; }
-    if (oa != null) return { v: yFt + oa, interp: tD - a.t > 1500 };
-    if (ob != null) return { v: yFt + ob, interp: b.t - tD > 1500 };
-    return null;
-  };
-  const C = [];
-  if (A && A.qnh) { const h = hStdFt(A.qnh.inHg * INHG_HPA); const p = anchored(f => f.altB != null ? f.altB - h : null); if (p) C.push({ msl: p.v, method: 'baro', interp: p.interp }); }
-  { const p = anchored(f => f.altG != null && !f.geomBad ? f.altG - RULES.GEOM_OFF : null); if (p) C.push({ msl: p.v, method: 'geom', interp: p.interp }); }
-  C.push({ msl: yFt, method: 'drawn', interp: false });
   let gFt = A && A.groundFt && ok(D.x) && ok(D.z) ? A.groundFt(D.x, D.z) : 0; if (!ok(gFt)) gFt = 0;
-  const C1 = C.filter(q => ok(q.msl));
-  const c = C1.find(q => q.msl >= gFt - PLAUS_FT) || C1[C1.length - 1];
-  const clamped = c.msl < gFt, msl = Math.max(c.msl, gFt);
-  const mslR = r10(msl), fieldFt = A && A.fieldFt != null ? A.fieldFt : FIELD_ELEV_FT;
-  return { msl, mslR, above: r10(mslR - fieldFt), fieldFt, method: c.method, interp: c.interp, clamped, qnh: c.method === 'baro' ? A.qnh : null };
+  const msl = Math.max(yFt, gFt), mslR = r10(msl), fieldFt = A && A.fieldFt != null ? A.fieldFt : FIELD_ELEV_FT;
+  const overRwy = !!(A && A.surface && ok(D.x) && ok(D.z) && A.surface(D.x, D.z) === 'runway');
+  const method = near && !recon && (near.hSrc === 'geom' || near.hSrc === 'baro') ? near.hSrc : 'drawn';
+  const ref = near || a || b;
+  const baroMsl = A && A.qnh && ref && ref.altB != null ? ref.altB - hStdFt(A.qnh.inHg * INHG_HPA) : null;
+  return { msl, mslR, above: r10(mslR - fieldFt), agl: r10(msl - gFt), overRwy, fieldFt, method, interp: method === 'drawn', recon, clamped: false, src: method === 'drawn' ? 'inf' : 'obs', baroMsl, qnh: baroMsl != null ? A.qnh : null };
 }
 /** list rows and 3-D labels: '1,450 ft' (the list's legend and the card say 'ft MSL') */
 export const altShort = (r) => r ? `${fmtInt(r.mslR)} ft` : '';
-/** card: '1,450 ft MSL' + '1,400 ft above field' (from the same rounded value, so the two never disagree) */
+/** card: '1,450 ft MSL' + its height. (iteration 3 of review round 3, F8) Below AGL_CARD_FT the height is above the ground or
+ *  runway under the aircraft, as drawn ('60 ft above the runway' / '60 ft above the ground', AGL) - the 52-ft field elevation
+ *  understated it by up to 27 ft over the west half of 10R/28L, which lies up to ~24 ft lower; higher up it is above the
+ *  airport elevation, so labelled ('1,400 ft above airport elevation (52 ft)') - never read as height above the ground. Never
+ *  'below field elevation' on an airborne body (owner's rule: the label never contradicts the picture) [inf: 300 ft] */
+const AGL_CARD_FT = 300;
 export function altCard(r) {
-  const ab = r.above >= ALT_ROUND ? `${fmtInt(r.above)} ft above field` : r.above <= -ALT_ROUND ? `${fmtInt(-r.above)} ft below field elevation` : 'at field elevation';
+  const ab = r.agl < AGL_CARD_FT ? (r.agl >= ALT_ROUND ? `${fmtInt(r.agl)} ft above the ${r.overRwy ? 'runway' : 'ground'}` : `just above the ${r.overRwy ? 'runway' : 'ground'}`)
+    : r.above >= ALT_ROUND ? `${fmtInt(r.above)} ft above airport elevation (${fmtInt(r.fieldFt)} ft)` : `${fmtInt(r.agl)} ft above the ground`;
   return { msl: `${fmtInt(r.mslR)} ft MSL`, above: ab };
 }
 const QNH_WHY = { override: 'the QA weather override is not used for altitudes', none: 'no KHWD METAR at or before this time', stale: 'the latest KHWD METAR is over 90 min old', noalt: 'the KHWD METAR has no altimeter setting' };
 const tLocal = (ms) => new Date(ms).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
 /** the method, for the card's data line and the list legend: {text, title} */
 export function altMethod(r, A) {
-  const q = r ? r.qnh : A && A.qnh;
-  const m = r ? r.method : q ? 'baro' : 'geom';
+  const m = r ? r.method : 'geom';
   const fe = `field elevation ${fmtInt(r ? r.fieldFt : (A && A.fieldFt) ?? FIELD_ELEV_FT)} ft (FAA NASR)`;
-  const base = m === 'baro' ? `pressure altitude corrected with the KHWD altimeter ${q.inHg.toFixed(2)} inHg (METAR ${tLocal(q.obsMs)})`
-    : m === 'geom' ? `GNSS height + ${fmtInt(-RULES.GEOM_OFF)} ft (HWD calibration${A && A.qnh ? ', no pressure altitude reported' : '; ' + (QNH_WHY[A && A.qnhWhy] || QNH_WHY.none)})`
-    : 'drawn height (no usable altitude report at this time)';
-  const why = m === 'baro' ? `MSL = alt_baro - H(A), H(p) = (1 - (p/1013.25 hPa)^0.190284) x 145,366.45 ft (NWS pressure-altitude and altimeter-setting equations); indicated altitude, no temperature correction; transponder altitude is within 125 ft of the altimeter (14 CFR 91.217)`
-    : m === 'geom' ? `alt_geom - (${RULES.GEOM_OFF.toFixed(2)} ft): the Phase 1 calibration of the GNSS height against the NASR runway surfaces (n 797)`
-    : 'the traffic engine\'s drawn height (NAVD 88), reconstructed between fixes';
-  const extra = r ? [r.interp ? 'between two fixes: the drawn path, shifted to match the reports at the fixes on either side' : '', r.clamped ? 'shown at the ground height (the report was up to 25 ft below it)' : ''].filter(Boolean) : [];
-  return { text: base, title: [why, fe, ...extra].join('; ') };
+  const base = !r ? `the drawn height: GNSS height + ${fmtInt(-RULES.GEOM_OFF)} ft (HWD calibration) at the fixes`
+    : m === 'geom' ? `reported GNSS height + ${fmtInt(-RULES.GEOM_OFF)} ft (HWD calibration), as drawn`
+    : m === 'baro' ? `reported pressure altitude mapped on to the HWD GNSS calibration, as drawn`
+    : r.recon ? 'drawn height of a take-off / landing reconstructed between fixes' : 'drawn height between two fixes';
+  const why = m === 'drawn' ? 'the traffic engine\'s drawn height (NAVD 88), reconstructed between the reports [inf]'
+    : `alt_geom - (${RULES.GEOM_OFF.toFixed(2)} ft): the Phase 1 calibration of the GNSS height against the NASR runway surfaces (n 797); the 3-D aircraft is drawn at this height`;
+  const q = r ? r.qnh : null;
+  const baro = r && r.baroMsl != null && q ? `altimeter-equivalent ${fmtInt(r10(r.baroMsl))} ft (alt_baro corrected with the KHWD altimeter ${q.inHg.toFixed(2)} inHg, METAR ${tLocal(q.obsMs)}; NWS pressure-altitude equation, no temperature correction)`
+    : (A && !A.qnh ? 'no altimeter-equivalent value: ' + (QNH_WHY[A.qnhWhy] || QNH_WHY.none) : '');
+  return { text: base, title: [why, fe, baro].filter(Boolean).join('; ') };
 }
 function parkText(tr, extra) {
   const p = tr.park; if (!p) return '';

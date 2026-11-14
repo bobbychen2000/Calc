@@ -267,3 +267,52 @@ Single aircraft can differ by more. In the weekend window, case D (a C152) reads
 - Observed in passing, not changed: in snapshot mode, airborne aircraft keep moving and slowing after the engine
   clock is frozen (about 1 kt and 5 m per 10 frames). §2 says only rotors and lights move.
 
+
+## 10. Review round 3, iteration 2 (2026-11-14): one altitude source, forget horizon
+
+**Altitude (F5).** The baro method of section 9 printed a number that contradicted the 3-D picture: the engine draws the
+calibrated GNSS height (alt_geom - GEOM_OFF), the label showed alt_baro with the KHWD altimeter setting, shifted on to the
+drawn path between fixes. The recheck measured the two more than 100 ft apart in 11-19 % of the airborne samples within
+3 km and an SF50 drawn 23 ft above the runway just after lift-off labelled "40 ft MSL · 10 ft below field elevation".
+Now (`js/live/ui.js altitudeOf / altCard / altMethod`):
+
+- **One source.** List, 3-D labels and card show the DRAWN height (D.y, NAVD 88 ~ MSL [inf]). At a fix (within 1.5 s)
+  that is the fix's report as the engine reads it (`method` 'geom', or 'baro' = the pressure altitude mapped on to the
+  GNSS calibration by the unit's own offset, classifier.js prep); between fixes or in a reconstructed take-off / landing
+  it is the drawn path (`method` 'drawn', inf). The data line says which.
+- **Never 'below field elevation' for a body drawn airborne.** When the rounded value is at or below the field elevation
+  (the 10R end lies 24 ft below it), the card gives the height above the ground under the aircraft ("20 ft above the
+  ground", or "just above the ground").
+- **The altimeter-equivalent value** (alt_baro - H(A), NWS equations as in section 9, no temperature correction) is kept
+  only in the method note's tooltip, with the METAR it used; it is never the headline number.
+- **Measured** (the reviewer's scratch probe, 1 Hz, airborne fixed-wing within 3 km): 0 samples labelled below the field
+  elevation and 0 whose label differs from the drawn height by > 100 ft, of 10,397 (weekend), 10,518 (pat), 281 (od3s)
+  and 1,320 (od3p) samples. In the app (desktop 1280 × 720, snapshot mode on the local od3s pack, RELAY=none): OD3 case S
+  1 s after lift-off reads "Altitude 50 ft MSL · just above the ground" (drawn 5 ft above the runway; round 3 read
+  "10 ft below field elevation" there) and 3 s later "60 ft MSL · 10 ft above field" (drawn 22 ft up, over a part of 28L
+  that lies below the field elevation); the list row and the 3-D label show the same 50 / 60 ft; 0 console errors.
+  Both images were looked at (scratch, not committed: the pack is local).
+- `about.js` still describes the section-9 method (not changed here; noted for P4).
+
+**Forget horizon (F7).** `js/live/app.js` now passes `onHorizon: (h) => traffic.forgetHorizon(h)` to `StreamFeed` (the
+feed fell back to `onForget(absent)`, which marked every silent and parked aircraft LADD / PIA and faded it out on each
+relay restart) and exposes the feed as `HWD.feed()`. `jobs/horizon.mjs` (RELAY = a full-ident replay relay; WAIT ms)
+reconnects the page's feed with a seq from another relay process and checks: every parked / silent body is kept and
+drawn, the silent ones show their type only (`ident.withheld = 'horizon'`), nothing is marked LADD / PIA by the horizon
+(`counters.d1Forget` unchanged). Run on this machine against `hwd_live_server.py --replay rec_pack --from 2026-11-08T20:00Z`
+on a local 89xx port: PASS (5 bodies kept, 1 silent aircraft with an identity → type only, 2 tracks withheld,
+0 console errors). The job prints counts only; its JSON goes to `out/phase2/` (or `OUT`).
+
+**Card height (review round 3, iteration 3, F8).** The card's second value was the height above the NASR field elevation
+(52.1 ft); over the west half of 10R/28L, which lies up to ~24 ft lower, it understated the drawn height above the
+runway by up to 27 ft ('60 ft MSL · 10 ft above field' on a body drawn 20 ft above the runway). `ui.js altCard` now
+gives, below 300 ft drawn above the ground (`AGL_CARD_FT` [inf]), the height above the ground or runway under the
+aircraft - "30 ft above the runway" / "30 ft above the ground" / "just above the runway" - from the drawn height and
+`site.groundY` (`app.js altCtx().surface` = `site.surface`, so the card knows a runway is beneath); higher up it says
+"1,110 ft above airport elevation (52 ft)", so it is not read as a height above the ground. MSL, the list rows and the
+3-D labels are unchanged. Checked: a scratch probe (1 Hz, airborne fixed-wing within 3 km; pat / weekend / od3s /
+od3p) found 0 card heights above the ground / runway more than 15 ft from the drawn height and 0 samples below 290 ft
+showing the airport-elevation form; a desktop snapshot of OD3 case S (SF50 take-off) just after lift-off reads
+"70 ft MSL · 30 ft above the runway" (looked at; scratch, not committed). The phase line can now read "Stopped" /
+"Stopped on the runway" (`phaseInfo.label` of a `taxi` / `runway_taxi` body at rest for 10 s; `docs/phase2_traffic.md`
+§4 "Fix round 3, iteration 3").

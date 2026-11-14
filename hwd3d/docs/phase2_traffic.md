@@ -116,7 +116,9 @@ with a per-unit altitude bias was drawn rolling over the grass of the approach.
 ## 4. Motion
 
 - **Display delay.**
-  - Replay: `traffic.setLookahead(lookahead_s)`, fixed at 60 s for the P1 packs.
+  - Replay: `traffic.setLookahead(lookahead_s)`, fixed at 60 s for the P1 packs. (Iteration 3, F6: a pack built with
+    `tools/live/build_replay.py --lookahead 120` gives the planner 120 s; measured with the harness's `--lookahead 120` it
+    plans the take-off of heli 'case B' instead of hiding it. The default stays 60 s pending the owner, `phase2_run.md` 9.4.)
   - Live: the delay adapts to the p90 report age + 0.5 s, between 1.5 and 65 s.
   - A first payload more than 5 s old is history, so it does not set the clock offset.
 - **Air:**
@@ -253,10 +255,13 @@ with a per-unit altitude bias was drawn rolling over the grass of the approach.
       climb-out on the runway heading for 400 m (jets 800 m) [inf], then a bank-limited join to the first airborne fix,
       re-timed so that speed changes stay ≤ 1.2 m/s² and the height climbs monotonically. A rolling start (seen mid-roll
       or a touch-and-go) lifts off at its own speed, not at VR (it used to drop from 77 to 60 kt at the wheels).
-    - *Late join*: when the climb-out cannot reach the first airborne fix in time (`takeoffAir` returns null), the
-      plan is kept (`tr.xplan`) and the air segment is built lazily at lift-off (`xplanAir`): the climb-out pursues the
-      track at ≤ 1.15 × the reported speed with standard-rate turns until it reaches a later fix [inf]. Ground joins
-      that need it do the same (`lateGround`).
+    - *Late join* (*withdrawn in iteration 2, F1*): when the climb-out could not reach the first airborne fix in time
+      (`takeoffAir` returned null), the plan was kept (`tr.xplan`) and the air segment built lazily at lift-off
+      (`xplanAir`): the climb-out pursued the track at ≤ 1.15 × the reported speed with standard-rate turns until it
+      reached a later fix. The recheck measured this drawing the aircraft up to 4.8 km and about 5 min behind its own
+      reports (heli C172 'case B', weekday C152 'case A', heli C172 'case C', a weekend GLF4). `xplanAir` is removed;
+      the take-off is now timed backwards from the first airborne fix or hidden (iteration 2 below). Ground joins
+      (`lateGround`) are unchanged; the new gate `off_reports_samples` shows no late ground join off its reports.
     - *Landing*: touchdown in the touchdown zone - 150 m past the landing threshold for pistons, 200 m turboprops,
       300 m jets [inf: the aiming-point marking is 1,020 ft past the threshold, FAA AC 150/5340-1M; light aircraft touch
       down before it], never before the threshold; a straight final of 400 m (jets 800 m) is kept; one constant
@@ -272,7 +277,10 @@ with a per-unit altitude bias was drawn rolling over the grass of the approach.
       and 'hop' off the ground-flag flicker of the roll (the pat hop).
   - **m4 - routes around parked aircraft.** `routeBlock` adds a cost to taxi links whose swept planform would overlap a
     parked / resting / silent aircraft (0.3 m margin [inf]); `staleAhead` (M1) fades a silent aircraft before a mover
-    reaches it. Gates `ground_overlap_frames` (moving vs parked or stale) and `fw_in_building_frames`, both 0.
+    reaches it. Gates `ground_overlap_frames` (moving vs parked or stale) and `fw_in_building_frames`. (*Correction,
+    iteration 2, F8:* this line read "both 0" as if achieved; they were 6 (pat) and 2 / 29 (weekday / weekend) at the
+    end of round 3, see §7 - and with the iteration-2 gate, which also tests the wing / tail outline, 179 / 2 / 225 / 30
+    in heli / weekday / weekend / od3p.)
   - **m5 - fast fixes flagged on the ground.** A fixed-wing fix flagged on the ground faster than any taxiing is a
     take-off / landing roll: it is drawn on the centreline of the runway its track follows when one is within 60 m
     (GNSS drift of ~38 m beside a runway at ~60 kt was drawn taxiing across the grass), and at ≥ 0.8 VR with no
@@ -281,11 +289,122 @@ with a per-unit altitude bias was drawn rolling over the grass of the approach.
     (baro and geometric both present, within 200 ft, ≥ 150 ft above the field) is never turned into a ground fix by the
     slow-over-a-runway rule.
   - **Body controller.** Braking at walking speed no longer applies both the speed limit and the misalignment limit in
-    one step (-6 m/s² at a taxi start); in the air the speed itself changes by at most `LIM.airAcc` (4.5 m/s² [inf])
-    whatever the bank allowance (a -5.1 m/s² step at a plan hand-over).
+    one step (-6 m/s² at a taxi start); in the air the controller limits the along-track change of its own speed to
+    `LIM.airAcc` (4.5 m/s² [inf]) whatever the bank allowance (a -5.1 m/s² step at a plan hand-over). (*Correction,
+    iteration 2, F8:* this is a limit on the controller step, not a bound on the drawn motion: the harness's drawn
+    along-track acceleration in the air has p99 ≤ 4.5 m/s² in every window but a maximum of 9.0-9.8 m/s² - mostly
+    helicopters, plus fixed-wing spikes of 2-3 frames on final, e.g. a weekday C182 and the TF19 - where the speed cap
+    and the minimum-speed floor of `ctlAir` act in the same step.)
   - **Pavement mask.** `tools/traffic/build_pave_mask.py` also fills holes up to 150 m² that the pavement encloses
     completely (`HOLE_MAX_M2` [inf]: painted hold bars and enhanced centrelines are not grey; a wheel in one was counted
     on grass); `js/aircraft/pave_naip.js` regenerated (added area 154,828 → 155,950 m²).
+
+- **Fix round 3, iteration 2 (recheck of round 3) - what changed and why** (`js/live/traffic.js` unless named; the
+  gates are in `tools/traffic/replay_engine.mjs`, results in §7 "Iteration 2 results"; every constant carries its basis
+  in the code, [inf] = design value). Cases are named by window, type and an anonymous label, never by time.
+  - **F1 - take-offs timed backwards from the first airborne fix; no late join.** `planTakeoff` searches, for each
+    ground option, the earliest lift-off first and then spends spare time on the ground (lined up and waiting ≤ 30 s,
+    the rest in the taxi; standing on the runway: waiting there; a rolling start: slowing down on the runway at 1.5 m/s²
+    and accelerating again - the touch-and-go roll-out) while the climb-out still flies no faster than reported. The
+    options, in order: the table acceleration, 1.15 × and 1.3 × (lighter aircraft), climb-out straights of 400 m (jets
+    800 m), then 250 m and 150 m (an early crosswind turn), 1.6 × (one table row per class - an RV-4 rolls far shorter
+    than a PA-28 - and no wind model: a 12-kt headwind shortens a 55-kt ground roll to ~0.6 ×, recalled), and last a
+    faster taxi with a climb-out at ≤ 1.3 × the reported speed and 2.0 × (ADS-B position latency of 1-2 s is not
+    modelled either) [inf: all]. The climb-out must also: lift off ≥ 30 m + the distance to climb to the fix's height at
+    twice the type climb rate *before* a first fix that lies on the climb-out (a GLF4's table roll ended 180 m past such
+    a fix and the plan turned back to it); keep its mean climb ≤ 2 × the type's take-off climb rate or 1.25 × the fix's
+    reported climb; accelerate after lift-off no harder than it rolled (≤ 2.5 m/s²; `retimePath` now limits its final
+    blend like its first ramp - the fixed min(0.25 D, 6) s blend gave 2.7-6 m/s²); and start its climb level (vertical
+    speed 0 at the wheels). An aircraft rolling at ≥ 0.9 VR is never stopped and launched again: it lifts off ahead of it
+    on the runway it is on, at its own speed (weekday C152 'case A' was braked to 1 kt 112 m before the 28R end,
+    back-taxied 740 m and launched a second time). No option fits → `transitionFor`'s M3 fallback: hidden from its last
+    ground position until its first airborne fix, drawn there at its reported height; `tr.m3Log` lists where and when,
+    and the harness checks the body appears there (`m3_hidden_takeoffs`, INFO). `xplanAir` (the pursuit) is removed.
+    A helicopter accelerating out of a hover-taxi across a hole flies the geometric curve (speed ratio ≤ 6, it was 2.5:
+    the plain Hermite dropped the end direction and kinked 75° at the next fix, the body lagged 175 m). An airborne fix
+    ≤ 3 s after an airborne one whose position disagrees with both reported velocities (chord > 1.3 × / < 0.7 × the
+    reported speed: ADS-R / TIS-B positions 0.2-0.4 s and 40 m apart) is drawn half way to where the velocities put it
+    (alpha 0.5) - the drawn target zig-zagged 49-101 kt there.
+  - **F2 - runway passes stay on the runway.** A fixed-wing fix lower than 100 ft over a runway or its extended
+    centreline (≤ 60 m beside the axis, 300 m before to 300 m past it, track within 30°) is drawn on the axis - fully
+    below 35 ft, fading to its own position at 100 ft - and marked `f.lowPass` (weekend TAYD 'case D' was drawn at 0 ft
+    over the grass between the runways, 45-115 m off 28R). A hole that starts at such a fix flies along the runway to its
+    far end (no closer than 400 m to the other fix's abeam point) before it turns (`airCurveFor`: `flightCurve` with a
+    kept initial straight) and levels off instead of sinking (pat C152 'case E' S-curved 77 m north of 28L at 6-54 ft);
+    one that ends at such a fix flies a straight final of ≤ 400 m into it. Approach plans use a glide-path vertical
+    profile (`glideY`: blend from the fix's vertical speed over ≤ 4 s, one steady glide, a flare over the last ≤ 5 s;
+    the cubic dived at the fix's rate and dragged in at 34 ft 330 m before the 28R threshold). Gate
+    `low_air_off_runway_frames`.
+  - **F3 - echoes and close pairs.** TIS-B echo detection (`echoAt`) now runs for every TIS-B source type, not only '~'
+    keys (a published pack masks every key to 'x...'), per fix at the display time (it was one flag set when a report
+    arrived, 60 s ahead of the drawing), extrapolating the ADS-B fix to the echo's time and requiring the same
+    groundspeed (± 12 kt), track (± 25°) and pressure altitude (± 300 ft); an echo stays an echo through its primary's
+    recorder hole. `airSeparate` pushes two airborne bodies apart (an offset on the target, ≤ 3 m/s, decaying at
+    1 m/s; the one farther from a fix takes the larger share) when they are drawn closer than half their spans + 15 m
+    while their reports are at least twice that apart [inf]. Gate `air_pair_close_frames` (< 30 m drawn, ≥ 60 m reported).
+  - **F6 - labels follow the drawn motion.** Holding short / run-up / in a hangar above 3 kt → taxi (or runway taxi);
+    'lined up' above 15 kt → runway taxi; 'runway taxi' off the runway pavement (2 m inside its edges, since
+    GroundPhysics may move the body ~1 m after the label is decided) → taxi; a silent aircraft whose take-off / roll-out
+    is continued shows the plan's phase, not 'No signal · last position'; a roll-out continuation is a landing roll.
+    Gates `label_hold_moving`, `label_lineup_fast`, `label_runway_taxi_off`, `label_no_signal_moving`,
+    `label_runway_in_air` (inside `label_contradictions`).
+  - **F9 - small motion blemishes.** A taxi route that crosses a runway runs straight across it from where it enters the
+    runway band to where it leaves it (`straightCrossings`; OD3 case P slowed to 0.5 kt on 28R and swung its nose
+    2 → 347 → 71 → 30°). Air holes longer than `HOLE_S` use a ramp - steady rate - ramp vertical profile (`vTrap`, ramps
+    ≤ 1 m/s²) instead of the cubic, which peaked at 1.5 × the mean rate; quantised (25-ft) airborne heights ≤ 5 s apart
+    are drawn 70 % of the way to where the two reported vertical speeds put them (within one step) [inf].
+  - **F10 - events.** `PhaseClassifier.emit` also identifies an event by type, runway and time (5-s buckets ± 1, kept 2 h):
+    the weekday '7 take-offs live vs 6 offline' was one C172 take-off emitted twice, 15 min apart (its episode key - the
+    first fix's time - changed when older fixes left the buffer / the key was pruned from `K.done`).
+  - **Not changed (tried, reverted):** a sideways building push for moving bodies in `GroundPhysics` (wings over hangar
+    walls) made the counts worse (od3p 30 → 59, and 321 when limited to taxi speed); `js/live/ground.js` is unchanged.
+
+- **Fix round 3, iteration 3 (second recheck) - what changed and why** (`js/live/traffic.js` unless named; results and
+  the full gate table in `docs/phase2_run.md` section 9 and in §7 "Iteration 3 results"; every new constant carries its
+  basis in the code, [inf] = design value). Cases are named by window, type and an anonymous label, never by time.
+  - **F1 - no reconstructed airborne segment below the type's flying speed.** `planLanding` gave the roll-out its natural
+    time and the whole rest of the hole to the approach, unbounded: with the next fix back-taxiing at 9 kt, the weekend
+    GLF4's approach was planned at 23 kt and the body floated at its 100.8-kt floor 2-12 ft over 28L until it was
+    re-placed. Now `airFloor(tr, vRep)` = VR (~1.1 x the stall speed: VR = 0.85 x the ACD approach speed, which is 1.3 x
+    the stall speed [recalled]) or 0.97 x the reported speed when the aircraft was observed slower, never below `vmin`;
+    for each touchdown point (touchdown zone, then 25-m steps to 10 m past the threshold and on to twice the TDZ
+    distance) the approach takes [L / 1.1 x the faster speed, L / floor] (L x 1.12 when the fix is not lined up), the
+    ground part the rest within its shortest and longest drivable times (`rollParts` / `profiled`; a fast straight roll
+    cannot take longer than braking early to the fix's speed), and the air curve is sampled (`segMinV`) to stay ≥ 0.93 x
+    the floor. A next fix moving against the landing direction (its direction from the fixes after it) gets a roll-out,
+    a U-turn on the runway (`uTurnPts`: half circle as wide as the runway allows, wheels ≥ 1.5 m inside the edge) and the
+    back-taxi; firm braking (3.6 / 3.0 m/s²) only when the normal braking does not fit. A low fix (< 100 ft) touches down
+    where a 3.5° path plus a 2.5-s flare ends and bleeds 4.5 % of its speed in the flare. `farTransition` /
+    `fallbackTransition` touch down earlier (the hidden or drawn roll takes the rest) instead of flying slower.
+  - **F1 / F4 - unseen touch-and-go (`touchGoFor` / `planTouchGo`).** Two airborne fixes lined up with one runway whose
+    air curve would be flown below the floor (the chord is < 0.95 x their mean speed x the hole), or that the classifier
+    has labelled a touch-and-go / stop-and-go: approach (glide 5°, then 6.5° / 8°), touchdown, a roll that brakes, rolls
+    and accelerates (`rollParts`), lift-off at VR (or the climb-out fix's own speed when slower) far enough before the
+    second fix to climb to its height at the type's climb rate, and the climb-out (`takeoffAir`). Pat 'case E' now
+    touches down, rolls and lifts off on 28L instead of passing at its 43-kt floor, never below 84 ft.
+  - **F1 - silent final (`airLandCont`).** A fixed-wing aircraft last heard ≤ 150 ft above a runway (≤ 300 ft and
+    descending), lined up within 25° and 100 m, continues its landing to the first exit it can make; it used to fly on
+    level at its last speed a few feet over the runway.
+  - **F3 - silent touch-and-go continuation.** The continuation's segments carry their phase ('climbing out', then
+    'crosswind'); a pattern aircraft turns crosswind on its runway's FAA NASR pattern side (28L / 10L left, 28R / 10R
+    right [obs]) at a 25° bank, climbing toward the TPA (600 ft AGL, 800 ft for 10L/28R [obs NASR]) for up to 40 s more
+    before it is hidden; a fix heard during the continuation is joined by an airborne anchor (`anchorAt`).
+  - **F4 - labels follow the drawn body (`labelPost`, `displayPhase`).** A runway or ground label on an airborne body is
+    its flight phase (the plan's, else climbing out / final / low pass by its vertical speed); 'final' climbing > 300
+    ft/min above 50 ft is a go-around, 'base' climbing a crosswind leg, 'climbing out' descending a final (lined up) or an
+    arrival; 'base' lined up with a final (15°, 100 m, 0-4 km before the threshold, `onFinal`) is 'final'; a slow
+    'take-off roll' that does not speed up is runway taxi; 'Taxiing' at rest for 10 s is shown 'Stopped' ('Stopped on the
+    runway'; `phaseInfo.label` only, the phase stays `taxi` / `runway_taxi`); a change into a landing roll / touch-and-go
+    (or into a take-off roll from taxiing / lined up) is shown after 2 s, a roll label stays ≥ 2 s unless the body speeds
+    up into a take-off roll or a landing roll re-accelerates.
+  - **F5 - wings and buildings.** `TaxiNet(G, site)` stores each link's building clearance (the closest footprint either
+    side of its line, 2-m samples, 25-m search); `dijkstra` / `projLinks` add 400 m to a link narrower than the aircraft's
+    half span + 1 m (a C172 used to take an apron connector 3 m from a T-hangar row). A slow body (< 2.5 m/s) with any
+    planform point in a hangar footprint is in its door and faded like one inside.
+  - **F7 - fast ground fixes beside the runway.** A fixed-wing ground fix ≥ 0.9 VR more than the runway half-width beside
+    the runway it moves along is airborne, low over the runway (3 m + 2 m per m/s above 0.9 VR, ≤ 15 m); weekday C152
+    'case A' lifts off with ~400 m of 28R left instead of 96 m.
+  - **F2 (harness) / F6 (owner decision) / F8 (`ui.js`)**: see `docs/phase2_run.md` 9.1, 9.4 and `docs/phase2_app.md`.
 
 ## 5. Parking, hangars, physics
 
@@ -581,7 +700,9 @@ OD3 case P (PC-12 landing) (window definitions in `out/od3/windows.json`, gitign
   6 s at a constant 75 kt and 5.7 m/s² braking into the next fix. After: touchdown on the 28L centreline 433 m down the
   runway at 80 kt, one steady deceleration (~1 m/s²) into the next fix, roll offset ≤ 0.4 m over 229 samples, no sample off pavement or on grass, no height rise in the 40 s before touchdown, largest deceleration
   3.6 m/s² (rounded gs; the limit is 3.5).
-- **Residuals.** Each one was traced and is data-driven, as far as I could establish:
+- **Residuals.** Each one was traced and is data-driven, as far as I could establish (*correction, iteration 2, F8:*
+  this list omitted the late-join lags of finding F1 - take-offs drawn up to 4.8 km and about 5 min behind their own
+  reports in the heli, weekday and weekend windows, which no gate measured; see "Iteration 2 results"):
   - *grass_route_frames*: wheels of routed bodies over gaps of the NAIP-derived pavement mask - taxiway corners
     without the fillet in the mask (weekend: a GLF4 and a C680 at about (108, 223) and (189, 278)), 1-2-m notches at
     a pavement edge (pat: a C172 standing at about (-212, -290); heli / od3p: a BL8 holding short at about (-32, -190)),
@@ -604,6 +725,87 @@ OD3 case P (PC-12 landing) (window definitions in `out/od3/windows.json`, gitign
   Same weekend replay, 4 min each, `debugCuts` on: before 33 cuts (bodies 1-4 km off their targets); after 3 cuts (the
   errors at their limits, 150-415 m) although the sandbox stalled five times for 10-36 s; console errors 0. The app's
   own `dt = min(wall, 0.1)` (P4's `app.js`) is unchanged: the engine measures the elapsed time itself.
+
+
+**Iteration 2 results** (recheck of round 3; `node tools/traffic/replay_engine.mjs <w> --strict`, 10 Hz, deterministic,
+the same seven windows and packs). "Before" is the round-3 engine as it stood at the start of the iteration, measured
+with the iteration-2 harness (the new gates included), "after" the iteration-2 engine. 1-Hz samples where named so, else
+10-Hz frames.
+
+| Gate (limit 0) | heli | pat | night | weekday | weekend | od3s | od3p |
+|---|---|---|---|---|---|---|---|
+| off_reports_samples (> 150 m from bracketed reports, 1 Hz) | 91 → 0 | 0 → 0 | 0 → 0 | 63 → 0 | 13 → 0 | 0 → 0 | 5 → 0 |
+| air_overspeed_samples (> 1.15 × reported, 1 Hz) | 169 → **1** | 2 → **3** | 3 → **1** | 64 → 0 | 9 → **3** | 2 → 0 | 0 → 0 |
+| air_climb_samples (> 1.25 × type and > data + 1 m/s, 1 Hz) | 74 → **61** | 77 → **76** | 5 → **5** | 48 → **30** | 167 → **121** | 8 → **3** | 25 → **24** |
+| low_air_off_runway_frames | 0 → 0 | 35 → 0 | 0 → 0 | 0 → 0 | 109 → 0 | 0 → 0 | 0 → 0 |
+| air_pair_close_frames | 0 → 0 | 0 → 0 | 0 → 0 | 17 → 0 | 44 → 0 | 0 → 0 | 0 → 0 |
+| label_contradictions (incl. the five new label gates) | 220 → 0 | 107 → 0 | 54 → 0 | 269 → 0 | 329 → 0 | 23 → 0 | 37 → 0 |
+| grass_route_frames | 9 → **9** | 7 → **7** | 1 → **1** | 1 → **1** | 33 → **33** | 0 → 0 | 6 → **6** |
+| fw_in_building_frames (now fuselage + outline) | 179 → **179** | 0 → 0 | 0 → 0 | 2 → **2** | 225 → **225** | 0 → 0 | 30 → **30** |
+| ground_overlap_frames | 0 → 0 | 6 → **6** | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| ghost_parked_frames | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 3 → **3** | 0 → 0 |
+| planted_reappear / planted_low_air_box (must be 0: the planted cases fire) | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| teleports, ghost park, slow lift-offs, hard stops, hops, misaligned, lift-off / touchdown off runway, ground → air re-appearance, stale / fast-off-runway / roll-rise / taxi-label gates | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| m3_hidden_takeoffs (INFO) | 0 → 2 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 1 | 0 → 0 | 0 → 0 |
+| take-offs live / offline (INFO) | 3 / – | 5 / – | 6 / – | 7 / 6 → **6 / 6** | 7 / 9 → 7 / 9 | 2 / – | 2 / – |
+
+- **The hidden take-offs (M3 fallback)**: heli C172 'case B' (a silent aircraft heard again 1.2 km away in its crosswind
+  turn - the taxi to the runway (47 s) and the table roll (21 s) alone exceed its 59-s hole) and heli C172 'case C' (taxi 13 s + roll 21 s leaves 15 s
+  for 1.3 km); weekend GLF4 (its first airborne fix, 148 kt at 44 ft 824 m from its line-up point, needs ≥ 3.5 m/s² from
+  rest - no option up to 2 × the table fits). Each is drawn at its last ground position, faded, and appears at its first
+  airborne fix at its reported height; the harness found each body there (no teleport, no ground → air re-appearance).
+  Weekday C152 'case A' now lifts off ahead of it on 28R at its own speed (no back-taxi); the weekday TF19 touch-and-gos
+  slow down on the runway and accelerate again before lifting off.
+- **Reviewer's scratch harness (harness2), same packs, round-3 engine → iteration 2**: weekday `a_overspeed` 119 → 0,
+  air pairs closer than 150 m 1,503 → 131 frames (the 100-s TIS-B echo of the TF19 and the R44's echo are no longer
+  drawn; a two-fix TIS-B target at 166-212 kt, 80-145 m from the TF19 for ~3 s, still is - it matches neither speed nor
+  track) and the closest drawn pair 29 → 79 m; weekend air pairs 557 → 452 frames, closest pair 9 → 48 m; weekday `g_back` 89 → 10.
+  Unchanged: `g_in_bld` (heli 179, weekend 17,754 - its count includes hangar-door spots), `fw_off`.
+- **Residuals (gates still failing, kept failing):**
+  - *air_climb_samples*: 85 % of them lie in short holes (fixes < 5 s apart, `aa:herm`) where 25-ft altitude steps and
+    the vertical follower make the drawn rate exceed both 1.25 × the type climb and the reported rate + 1 m/s for 1-3 s;
+    the rest in long air holes (`aa:geo`). Measured with a scratch probe on weekend / pat.
+  - *air_overspeed_samples*: 1-3 per window, 1.16-1.2 × the faster of the two reports, inside air holes.
+  - *grass_route_frames, ground_overlap_frames (pat), ghost_parked_frames (od3s)*: unchanged from round 3 (see above).
+  - *fw_in_building_frames*: with the outline tested, aircraft taxiing or manoeuvring 3-6 m from walls - a C172 in a
+    T-hangar row (heli; its right wingtip over the OSM footprint while its wheels are at the edge of the taxilane), a
+    DA40 leaving a maintenance hangar door at walking pace (od3p, heli), a TAYD beside Hangar L / P (weekend). The
+    footprints or the taxilane widths do not fit an 11-12 m span; a physics push made it worse (reverted).
+  - *weekend take-offs 7 live vs 9 offline (traced)*: an RV4 first heard rolling on 28L is a take-off offline ('taxi-out
+    unobserved') and a touch-and-go live (the live classifier has no earlier context for a track that starts on the
+    runway); a C152 heard again on 28R after a silence at its tie-down is a take-off offline and an unresolved low pass
+    live (the silence breaks the ground context). Not changed in this iteration.
+- **OD3 case S (SF50 take-off), `out/od3/trace_case_S.{json,csv}` (local, gitignored).** Lines up at the 28L end, waits,
+  rolls from rest on the centreline (offset 0 m), lifts off 477 m down 28L at 85.5 kt with 1,258 m left (mean roll
+  acceleration 2.0 m/s² - 1.3 × the AFM-derived table value; the AFM's ground roll spans 452-680 m over 5,000-6,000 lb
+  and -20 to +20 °C, so inside it), then accelerates at ≤ 2 m/s² to the first airborne fix (85.5 → 111 kt over 8 s) and
+  climbs monotonically from level (0 → 63 ft over 8 s, then ~1,300 ft/min). Round 3 rolled 619 m at 1.55 m/s² and then
+  had to gain 27 kt in 6 s in the air; with the first airborne fix where it is (112 kt, 900 m down the runway) a
+  1.55-m/s² roll cannot be followed by a gentler climb-out. No sample off pavement or on grass.
+- **OD3 case P (PC-12 landing), `out/od3/trace_case_P.{json,csv}`.** Touchdown 412 m down 28L at 80.7 kt on the
+  centreline (offset ≤ 0.4 m on the roll), then the round-3 roll-out; crossing 28R northbound it now runs straight at
+  8.8 kt with its heading at 30° on the runway (no stop on it), slows from the north edge and stands for ~2 s just past
+  it on the taxiway (spare time of the hole, placed by the speed profile at the next corner). No sample off
+  pavement or on grass; height never rises before the touchdown.
+- **Altitude label (ui.js, F5)**: the reviewer's scratch probe (1 Hz, airborne fixed-wing within 3 km) found 0 samples
+  labelled below the field elevation (round 3 measured on the probe's own threshold: weekend 57, pat 86, od3s 1) and 0
+  whose label differs from the drawn height by > 100 ft (round 3: weekend 1,156, pat 1,996) - of 10,397 (weekend),
+  10,518 (pat), 281 (od3s) and 1,320 (od3p) samples.
+
+**Iteration 3 results** (second recheck; `node tools/traffic/replay_engine.mjs <w> --strict`, now `--open app` - the
+opening burst ingested as `app.js` does - 10 Hz, deterministic, the same seven windows and packs; "before" is the
+iteration-2 engine with the iteration-3 harness). Full table and the residuals: `docs/phase2_run.md` 9.3 / 9.4.
+
+| Gate (limit 0) | heli | pat | night | weekday | weekend | od3s | od3p |
+|---|---|---|---|---|---|---|---|
+| teleports_engine | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 2 → 0 | 0 → 0 | 0 → 0 |
+| recon_substall / air_substall (1 Hz) | 58 / 57 → 0 / 0 | 213 / 220 → 0 / 0 | 56 / 54 → 0 / 0 | 277 / 258 → 0 / 0 | 174 / 181 → 0 / **8** | 0 / 0 | 26 / 25 → 0 / 0 |
+| air_float_runway_frames | 0 | 48 → 0 | 0 | 16 → 0 | 138 → **9** | 0 | 0 |
+| label_contradictions + vertical sense + base aligned + taxi stopped | 638 → 0 | 732 → 0 | 84 → 0 | 865 → 0 | 1,424 → 0 | 79 → 0 | 306 → 0 |
+| label_roll_flicker / tg_no_contact | 0 / 1 → 0 / **1** | 2 / 2 → 0 / **1** | 2 / 0 → 0 / 0 | 4 / 3 → **1** / **1** | 2 / 5 → 0 / **2** | 0 / 0 | 0 / 0 |
+| m3_hidden_runway_consistent | **2** | 0 | 0 | 0 | **1** | 0 | 0 |
+| fw_in_building_frames | 179 → **11** | 0 | 0 | 2 → **2** | 225 → **57** | 0 | 30 → **11** |
+| grass / overlap / ghost / air_overspeed / air_climb | 9 / 0 / 0 / 1 / 61 | 7 / 6 / 0 / 3 / 76 → 80 | 1 / 0 / 0 / 1 / 5 | 1 / 0 / 0 / 0 / 24 → 31 | 33 / 0 / 0 / 4 → 5 / 122 → 124 | 0 / 0 / 3 / 0 / 3 | 6 / 0 / 0 / 0 / 24 |
 
 ## 8. What I could not verify, and limits
 

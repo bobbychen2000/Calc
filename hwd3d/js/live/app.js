@@ -21,10 +21,12 @@
 //    masked track); the DOM, the QA hooks' track lists and every log line carry an opaque per-page id, never a track key;
 //  - views: Overview, Tower (eye at the cab, site.anchors.tower), Green Ramp, West Hangars (P2 dev/world.js framings) and
 //    28L Final (behind an aircraft on the published 4.0 deg VASI path, NASR); the status line counts traffic by phase.
-//  - altitudes (round-2 recheck m7): list, 3-D labels and card show ONE value per aircraft, altitude MSL at the display
-//    time (ui.js altitudeOf: alt_baro corrected with the KHWD altimeter setting of the METAR at the scene time; else alt_geom
-//    + 108 ft; else the drawn height), refreshed on the list's 1-s tick; the card adds the height above the NASR field
-//    elevation from the same rounded value and names the method on its data line [inf]. altCtx() / qnhAt() below.
+//  - altitudes (round-2 recheck m7; review round 3 iteration 2, F5): list, 3-D labels and card show ONE value per aircraft,
+//    the DRAWN height at the display time (ui.js altitudeOf: at a fix the report as the engine reads it - alt_geom + 108 ft,
+//    the HWD calibration - between fixes the drawn path), so the number never contradicts the 3-D picture; refreshed on the
+//    list's 1-s tick; the card adds the height above the NASR field elevation from the same rounded value (or above the
+//    ground for a body drawn airborne lower than the field elevation) and names the method on its data line [inf]; the
+//    altimeter-equivalent value (alt_baro with the KHWD altimeter setting) is only in the method note. altCtx() / qnhAt() below.
 // Dropped (SFO only): jet bridges and the gate system, airfield-lighting fixtures, ALS structures, reservoirs and the shore
 // field, flysfo gates, routes, LiveATC feed tuning and the audio delay (D2: a link-out only), airliner models and markers.
 import { initGL, gl } from '../gl.js';
@@ -204,9 +206,9 @@ export async function startApp(cfg) {
   const toData = (t) => { const A = envCore.clock.anchor; return mode === 'replay' && A ? A.dataNow + (t - A.wall) * (envCore.clock.replaySpeed || 1) : t; };
   const hhmm = (t) => new Date(toData(t)).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
   // ---------------------------------------------------------------- altitude reference (review round-2 recheck m7)
-  // The list, the 3-D labels and the card show altitude MSL at the display time (ui.js altitudeOf: alt_baro corrected with
-  // the KHWD altimeter setting; else alt_geom + 108 ft; else the drawn height) and the card the height above the field
-  // elevation from the same value. qnhAt(t): the altimeter setting of the latest KHWD report at or before the scene time t
+  // The list, the 3-D labels and the card show the drawn height MSL at the display time (ui.js altitudeOf; review round 3
+  // iteration 2, F5) and the card the height above the field elevation from the same value; the altimeter setting below
+  // only gives the altimeter-equivalent value of the card's method note. qnhAt(t): the altimeter setting of the latest KHWD report at or before the scene time t
   // (data clock: the recording's in replay / snapshot) and at most STALE_MIN (90) min old, from the reports the environment
   // holds (relay /api/metar, the shim's pack reports, the snapshot pack's). A QA weather override (?metar= / ?wx=) is not the
   // traffic's weather and is never used for altitudes.
@@ -223,7 +225,8 @@ export async function startApp(cfg) {
     if (!inHg) return { qnh: null, why: 'noalt' };
     return ageMin >= 0 && ageMin <= STALE_MIN ? { qnh: { inHg, obsMs: cur.obsMs, ageMin }, why: null } : { qnh: null, why: 'stale' };
   }
-  const AC = { tD: 0, qnh: null, qnhWhy: null, fieldFt: FIELD_FT, groundFt: (x, z) => gy(x, z) / FT, qT: null, qR: null };
+  // (iteration 3, F8: surface(x, z) lets the card say 'above the runway' for a low body over one)
+  const AC = { tD: 0, qnh: null, qnhWhy: null, fieldFt: FIELD_FT, groundFt: (x, z) => gy(x, z) / FT, surface: (x, z) => site.surface(x, z), qT: null, qR: null };
   function altCtx() {
     AC.tD = traffic.displayTime(engineNow());
     const tS = sceneTime();
@@ -233,7 +236,7 @@ export async function startApp(cfg) {
   const towerOf = (e) => towerStatus(toData(e.t));                    // event tower state on the DATA clock (fork map I3)
   const towerAtScene = () => { const h = new Date(sceneTime()).toLocaleString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', hour12: false }); const n = +h % 24; return n >= 7 && n < 21; };
   // ---------------------------------------------------------------- data
-  let feedState = { state: 'wait', text: 'Connecting…' }; let lastSrc = null;
+  let feedState = { state: 'wait', text: 'Connecting…' }; let lastSrc = null; let streamFeed = null;
   const feat = (cfg.relayInfo && cfg.relayInfo.features) || {};
   const lookahead = (feat.replay && feat.replay.lookahead_s) || (cfg.replayInfo && cfg.replayInfo.lookahead_s) || (snap && snap.pack.lookahead_s) || 60;
   if (snap) {
@@ -281,7 +284,11 @@ export async function startApp(cfg) {
     };
     let fails = 0;
     const onStatus = (s) => { if (s.ok) { fails = 0; feedState = { state: replay ? 'replay' : 'live', text: replay ? 'Replay' : 'Live', src: s.source && s.source.name }; } else { fails++; feedState = { state: fails > 3 ? 'err' : 'wait', text: fails > 3 ? 'Feed unavailable' : 'Reconnecting…', err: s.error }; } };
-    const feed = new StreamFeed({ onData, onStatus, onForget: (keys) => traffic.forget(keys), history: hist }); feed.start();
+    // (review round 3, iteration 2, F7) a relay 'forget_horizon' (this page was away longer than the relay keeps forget events,
+    // or the relay restarted - its seq starts at the process start time) withholds the identity of every track the relay does
+    // not publish now: the bodies stay, type only (traffic.forgetHorizon). Without onHorizon the feed fell back to onForget for
+    // every absent key - each silent or parked aircraft was marked LADD / PIA and faded out at once on every relay restart.
+    const feed = new StreamFeed({ onData, onStatus, onForget: (keys) => traffic.forget(keys), onHorizon: (h) => { const n = traffic.forgetHorizon(h); if (window.HWD) window.HWD.lastHorizon = { absent: (h.absent || []).length, withheld: n }; }, history: hist }); feed.start(); streamFeed = feed;
     const wx = async () => { const L = await fetchMetar('KHWD'); if (L) { envCore.setReports(L); applyEnv(Date.now(), false); } };
     if (!replay) setInterval(async () => { try { const r = await fetch('api/ping', { cache: 'no-store' }); if (r.ok) { const j = await r.json(); relayPoll = j && j.poll; } } catch (e) { } }, 60000);
     wx(); setInterval(wx, 60000);
@@ -415,6 +422,7 @@ export async function startApp(cfg) {
     shot: (n = 2) => { for (let i = 0; i < n; i++) frame(1 / 60); const px = R.readPixels(); const c = document.createElement('canvas'); c.width = R.W; c.height = R.H; const cx = c.getContext('2d'); const id = cx.createImageData(R.W, R.H); for (let y = 0; y < R.H; y++) id.data.set(px.subarray((R.H - 1 - y) * R.W * 4, (R.H - y) * R.W * 4), y * R.W * 4); cx.putImageData(id, 0, 0); return c.toDataURL('image/png'); },
   };
   window.HWD = { R, scene, world, site, traffic, physics, parking, views, rig, ui, env: envCore, qa, VIEWS, select: (key, fly) => select(key, fly), view, applyEnv: () => applyEnv(Date.now(), true),
-    stats: () => hwdStats(traffic.events, traffic.displayTime(engineNow())), frameNow: () => { last = performance.now() - 16; return frame(1 / 60); }, lastCamera: () => lastC };
+    stats: () => hwdStats(traffic.events, traffic.displayTime(engineNow())), frameNow: () => { last = performance.now() - 16; return frame(1 / 60); }, lastCamera: () => lastC,
+    feed: () => streamFeed };   // (the relay feed, live mode only - jobs/horizon.mjs reconnects it with a foreign seq)
   return window.HWD;
 }
