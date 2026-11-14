@@ -1359,7 +1359,8 @@ export class Traffic {
     return { kind, R, P, t0: a ? a.t : 0, v0, v1 };
   }
   // on a runway's own pavement (no margin: the runway rectangle) - what a 'runway taxi' / 'lined up' label claims
-  runwayStrict(x, z) { for (const r of (this.site && this.site.runways) || []) { const px = x - r.origin[0], pz = z - r.origin[1]; const al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; if (al >= 0 && al <= r.length && Math.abs(ac) <= r.halfWidth) return true; } return false; }
+  // (inset: m inside the edges - the label is decided before GroundPhysics places the body, which may move it ~1 m)
+  runwayStrict(x, z, inset = 2) { for (const r of (this.site && this.site.runways) || []) { const px = x - r.origin[0], pz = z - r.origin[1]; const al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; if (al >= inset && al <= r.length - inset && Math.abs(ac) <= r.halfWidth - inset) return true; } return false; }
   onRunway(x, z, m = 3) { for (const r of (this.site && this.site.runways) || []) { const px = x - r.origin[0], pz = z - r.origin[1]; const al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; if (al >= -30 && al <= r.length + 30 && Math.abs(ac) <= r.halfWidth + m) return true; } return false; }
   sampleGround(G, tRel, o) {
     o.ex = 0; o.route = true; o.hd = null;
