@@ -575,7 +575,7 @@ per 1080p still.
 
 ## 8. Renderer / shared-file changes wanted (Phase 3b or the file owners)
 
-**Made in OD4 (2026-11-14), the first renderer-file change of this package (more in OD4 iteration 3, below):** `js/shaders/post.js` FINAL_FS takes
+**Made in OD4 (2026-11-14), the first renderer-file change of this package (more in OD4 iterations 3 and 4, below):** `js/shaders/post.js` FINAL_FS takes
 `uniform float uCA` (chromatic-aberration strength) and `js/renderer.js` sets it from `post.ca`; `dev/studio.js` passes 0.
 **OD4 iteration 2 (review F8): the default is now 0** (`post.ca ?? 0.0`; it was `?? 1.0`, sfo3d's constant): at a fifth to
 half a pixel the effect was invisible except as 1-px purple / red fringes on high-contrast aircraft edges (17-41 such pixels
@@ -598,6 +598,20 @@ programs only; section 15).
   flagged sprite toward the camera by max(3 m, its drawn radius), at most half the distance, and scales it by
   (d − pull) / d so its angular size is kept; `js/aircraft/detailed.js lightSprites` flags every sprite of a detailed
   aircraft. Unflagged sprites (airfield lights, placeholders) keep the sfo3d pull min(2 m, 5 % of the distance).
+
+**Made in OD4 iteration 4 (2026-11-20, section 15.8):**
+- **Lens occlusion of aircraft lights** (review G1): `js/renderer.js` `copyDepth()` resolves the near pass's MSAA depth
+  (DEPTH_COMPONENT32F renderbuffer) into a single-sample DEPTH_COMPONENT32F texture (`blitFramebuffer` DEPTH_BUFFER_BIT,
+  NEAREST) after the opaque near draws and before the blended ones, `R.sceneDepth`; only in frames whose items ask for it
+  (render-item field `needsDepth`), otherwise no copy and a 1 × 1 `R.noDepth` stays bound; a GL error on the first blit
+  turns the test off (warning, light drawn as before). `js/scene.js`: the sprite batch sets `needsDepth` when it holds a
+  flagged (`pull`) sprite and passes `uSceneDepth` / `uOcclude`. `js/shaders/sprites.js` `lensVisible()`: a flagged sprite's
+  intensity × the share of 3 × 3 depth taps over the lamp's footprint whose scene depth lies behind the lens centre moved
+  toward the camera by 0.09 m + 0.0008 m per metre of distance; a hidden lens hides the whole disc (zero-size quad).
+  Unflagged sprites (airfield lights, placeholders) are drawn exactly as before.
+- **Render-item field `cullFront`** (review G4): `drawItems` culls FRONT faces for such an item (draws only its back faces)
+  and restores BACK culling after it; `js/aircraft/detailed.js` draws each glass group as two items, back faces first, as
+  three.js r160 draws a transparent double-sided material.
 
 None is needed for the models to render: the aircraft programs live in `js/aircraft/detailed.js`. Wanted:
 
@@ -649,7 +663,8 @@ None is needed for the models to render: the aircraft programs live in `js/aircr
 
 - **OD4 (2026-11-14): the first bullet below describes the retired fr3 build.** The original model's measured deviations
   from drawing 190.10.40.432 / the NGX documents are the KNOWN items of section 15.1 (pc12 owner items); the open look
-  items are in section 15.5.
+  items are in sections 15.5–15.8 (iteration 4, 2026-11-20: lens occlusion of aircraft lights, the cabin back-face rule,
+  the flight-deck glazing and the two-pass glass; its open items close section 15.8).
 
 - **PC-12 fidelity (pc12 owner)**: fix round 3 fitted the fuselage loft, glazing, openings, wing / gear height, fairings,
   dorsal fin, strakes and winglet to drawing 190.10.40.432 in the hwd3d build (section 4; proposed to the pc12 owner). Still
@@ -1141,3 +1156,69 @@ veil under the sun) and the 3 m sprite pull are inferred; tyres / blades in dire
 glossy trim are physics of the outdoor scene; F5 / F6 unchanged (owner decisions); laptop-GPU frame time not measured
 (SwiftShader only; the bloom knee adds one luminance weight per first-pass tap and one gain term per final-pass pixel, no
 pass); a video-determinism comparison that spans this change (renderer files edited 08:45–09:55Z) will see the knee.
+
+### 15.8 OD4 iteration 4 (recheck of 2026-11-14, findings G1–G4): dispositions
+The recheck (its renders `out/pc12_look_rc3/`, gitignored: the state after iteration 3, commit 65de1d9) found the four
+issues below. The first attempt at this iteration was stopped part-way by the account's usage limit (its edits are in the
+WIP checkpoint 9672e31); the restart checked every WIP change, finished G3, and rendered and measured everything again.
+**Before** = 65de1d9 (its runtime files served from copies, `out/pc12_look_it4/head/`, through the shot tool's
+`--override`), **after** = this tree; PNG renders `out/pc12_look_it4/{before,after2}/`, side-by-sides `out/pc12_look_it4/cmp/`
+(`sbs_<cam>.jpg`: dev.html | stage / world before | after / studio (palette=glb) before | after), measurements
+`measure_final_{world,extra,studio,studio_extra}.json` (same-pixel sRGB medians, the classes and boxes of 15.7). Cameras:
+the 11 reference cameras and the recheck's three close-ups (`ws_close`, `sidewin_close_port`, `winglet_close`), HWD Green
+Ramp 2026-11-13 12:30 PST (sun az 191°, el 33.6°: starboard `hwd_*` cameras and the nose in sun, port cameras in shade) and
+`look=studio`; the recheck's four light-leak cameras (`jobs_leak.json`) by day and at dusk (2026-11-14 01:05Z) for both
+types, its SF50 dusk still, its gear-well poses, and two night airfield views (05:00Z, aircraft lights on / off). Every
+image was looked at.
+
+| # | finding | root cause | fix (file) | result (before → after) |
+|---|---|---|---|---|
+| G1 major | light sprites of a detailed aircraft show through the airframe (PC-12 belly beacon as a red disc on the wing root / fuselage side from any camera above the belly; under-wing landing lamp through the wing) | iteration 3's pull alone: a flagged sprite was depth-tested at its position pulled 3 m toward the camera, so no airframe less than 3 m in front of a lens could hide it | **lens-centre occlusion test**: `js/renderer.js` `copyDepth()` resolves the near pass's MSAA depth into a single-sample DEPTH_COMPONENT32F texture after the opaque near draws and before the blended ones, only in frames whose items set `needsDepth`; `js/scene.js` sets it on the sprite batch when it holds a flagged (aircraft) sprite and binds `uSceneDepth` / `uOcclude`; `js/shaders/sprites.js` `lensVisible()` scales a flagged sprite by the share of 3 × 3 depth taps over the lamp's footprint (spacing 0.7 × 0.04 m) whose scene depth lies behind the lens centre moved toward the camera by **0.09 m + 0.0008 m per metre** [inf] (the anchors sit inside their lamp bodies or under flush lenses: PC-12 lamp bodies reach 22–68 mm from their anchors along the sight lines measured, the SF50 anchors lie 1–16 mm under their lenses; per metre: about one pixel of a 45° surface at fov 40° / 1080 lines plus the depth resolution); a hidden lens hides the whole disc (zero-size quad), a half-hidden one draws it at reduced intensity, and the disc's fragments keep the pull, so the airframe beside a visible lens does not cut it. Unflagged sprites (airfield lights, placeholders) are not tested; airfield-only frames make no copy | PC-12, dusk, peak sRGB at the belly-beacon anchor (`out/pc12_look_it4/tools/sprite_check.py`): `leak_side_high` / `leak_follow` / `leak_front_high` **255 → 18 / 12 / 17** (hidden; a CPU replica of the test on the rest-pose mesh, `out/pc12_look_it4/tools/lens_taps.mjs`, gives 0 of 9 taps visible, 0.67–2.57 m of airframe in front of the lens, `out/pc12_look_it4/tools/light_los.mjs`), `leak_low_rear` 255 → 255 (seen from below, 6/9); right landing lamp under the wing at `leak_front_high` **255 → 29** (0/9, the wing 0.85 m in front); every other anchor within ±4 levels (top beacon, tail light, strobes; the top beacon is 4/9 at `leak_follow` and `leak_low_rear`, at the edge of the tail bullet, and is drawn there at reduced intensity, still saturated in its core). By day the same lights (`cmp/leak_day.jpg`): the red disc on the wing root is gone. SF50 dusk still (`cmp/sf50_dusk.jpg`): the tail-strobe disc and both tip-strobe discs are gone — from that side their lenses are hidden by the tail cone (0.35 m in front) and the tips (0.21 / 0.91 m) — landing / position lights and the nose lamp unchanged; the SF50 at the four leak cameras: nothing leaked before, anchors within ±14 levels (dim position lights). Airfield lights unchanged: night views with the aircraft lights off, 136 / 429 pixels change by more than 2 levels (max 8), all on the aircraft's glazing; with them on, changes only inside the aircraft's box: the belly beacon hidden from above (`ab_night_wide`), the top beacon hidden behind the T-tail's stabilizer from the low camera (`ab_night_low`, 0/9, stabilizer 2.59 m in front; `cmp/night_ab_crop.jpg`) |
+| G2 minor | `ACOBJ_FS` applied the cabin light (sky 0.35, sun × τ) to every back face, e.g. the main-gear well | `bool cabin = mat == 23 \|\| mat == 22 \|\| back` | `js/aircraft/models.js` `AC_PART_CABIN` (PC-12 `fus_fwd`, `fus_center`, `fus_aft`, `door_airstair`, `door_cargo`, `exit_hatch`, `door_frames`, `glazing_cabin`, `glazing_flightdeck`; SF50 `fuselage`, `windshield`, `cabin_windows`, `door_upper`, `door_lower`, `door_baggage`): their opaque plain / paint materials take id **25** (same glTF material); `ACOBJ_FS`: `cabin = mat == 23 \|\| (back && mat == 25)`; `js/aircraft/glb.js` passes the material record to `partMatId` so blended materials keep their ids | gear-well walls through the opening, gear half way from below (`pose_gearhalf_under`): (84, 95, 88) → **(105, 108, 93)**, zinc-chromate wall (108, 107, 56) → (109, 110, 64) (`cmp/well_crop.jpg`); the black disc in the retracted well is the tyre (pc12: protrudes ~1 in when retracted). Cabin side unchanged: door / cabin windows at the cockpit camera (20, 28, 36) / (24, 32, 39) before and after. Loader check (the proposed tests below): 29 (PC-12) / 18 (SF50) part-material pairs take 25, all on cabin-enclosing parts; none on `gear_bays`, wings, belly fairing, `nose_bay` |
+| G3 minor | flight-deck glazing darker than both references: a near-black navy visor in sun, the flight deck behind the side window darker in shade, seats unlit | (a) the flight deck took the cabin's light (sky × 0.35, sun × τ 0.196) although the windshield and the side windows wrap around it and are most of what it sees (PC-12: ~1.3 m² of glazing around a ~1.1 × 1.2 × 1.4 m flight deck; the cabin ~2.1 m² of windows for 5.16 × 1.52 × 1.47 m); (b) since iteration 3 no pane took the direct sun in its diffuse return (`GLASS_VEIL_SUN` 0), while the reference viewer lights every glb BLEND pane like any surface (0.82 coverage of the tint) | (a) `models.js` `AC_PART_DECK`: the flight deck's plain / interior materials take id **26** (displays keep 22), lit by `uDeckAmb` / `uDeckSun` = `DECK_SKY_SHARE` 1 / `DECK_SUN_T` 1 [inf] (the sky unoccluded, the sun where the shadow map lets it in — as the pc12 viewer lights it; 1 with a door open as before); (b) `models.js` `AC_PART_DECK_GLASS`: the flight-deck glazing (PC-12 `glazing_flightdeck`: windshield and crew side windows; SF50 `windshield`) takes id **27**, whose diffuse return takes the sun at `GLASS_VEIL_SUN_DECK` = **0.8** [inf: appearance fit] (`GLASS_FS` `uVeilSunDeck`); the cabin windows (24) keep 0 (iteration 3: with a veil they read above the references, hwd_side veil 0.25 (44, 48, 52) vs (35, 42, 49) / (24, 29, 34)). 0.8 minimises the mean distance outside the dev–stage range over the 11 windshield / side-window boxes of the six glazing cameras (renders at 0, 0.5 and 1, interpolated in linear light; `g3/m_V_*.json`): 15.5 sRGB levels at 0 (deck rule only), 7.4 at 0.5, **5.3 at 0.8**, 5.7 at 1 | world, flight-deck boxes (dev / stage reference): **sun** — hwd_front34 windshield (21, 24, 31) → **(57, 61, 63)** ((57, 65, 73) / (48, 55, 62)); hwd_nose side window (20, 24, 32) → (60, 63, 66) ((51, 60, 67) / (38, 44, 50)), windshield (30, 36, 42) → (46, 54, 63) ((59, 68, 69) / (53, 62, 69)); ws_close side window (15, 20, 29) → (59, 62, 65) ((49, 56, 63) / (37, 43, 49)), windshield (11, 16, 25) → (39, 47, 53) ((43, 53, 60) / (41, 51, 59)); nose windshield L (19, 25, 35) → (50, 55, 61) ((45, 56, 62) / (42, 52, 60)), R (20, 22, 29) → (38, 43, 49) ((53, 61, 65) / (55, 64, 70)); cockpit windshield (29, 30, 31) → (39, 46, 54) ((39, 48, 55) / (44, 54, 62)). **Shade** — cockpit side window (12, 20, 29) → (18, 25, 34) ((23, 27, 31) / (38, 44, 50)); sidewin_close_port side window (19, 23, 26) → (20, 23, 29), wrap-around windshield (30, 31, 31) → (39, 42, 47) ((43, 48, 53) / (45, 53, 60)). The seats are visible through every flight-deck pane in sun and in shade (`cmp/sbs_cockpit.jpg`, `sbs_hwd_nose.jpg`, `sbs_nose.jpg`, `cmp/g4_sidewin_close_port_crop.jpg`). The shaded side window stays below dev in absolute terms by the world's shade level (owner-taste F5 / F6, unchanged): relative to the white paint beside it, 23 / 130 = 0.18 at sidewin_close_port, as dev's 35 / 195. Under `look=studio`: hwd_front34 windshield (29, 34, 39) → (45, 51, 57), nose L / R (22, 29, 34) / (27, 31, 35) → (38, 46, 52) / (37, 44, 49), ws_close side window (25, 30, 35) → (43, 49, 55); the cockpit windshield (40, 46, 52) → (52, 62, 69) and sidewin_close_port (33, 38, 42) → (48, 55, 61) now above the references there (the studio is a comparison aid; the world is the product) |
+| G4 minor | dotted hatch / moiré on the wrap-around windshield at grazing angles, also under `look=studio` | the glass was ONE blended pass with culling off: its triangles blended in index order, so where the view crosses the glazing twice (the near pane of the wrap-around windshield over the inside of the far one, thin slivers at that angle) near and far triangles alternated strip by strip. Ruled out on the way (`out/pc12_look_it4/crops/g4_variants.png`, `g4_d12.png`): a flat constant colour shows no hatch (coverage / depth fine; the order of equal layers is invisible), the face normal from derivatives keeps it (not normal interpolation / quantization), no alpha-to-coverage anywhere in the renderer | each glass group is drawn as **two items**, back faces first (render-item field `cullFront`, `js/renderer.js` `drawItems`), then front faces (back faces culled), as three.js r160 draws a transparent double-sided material; and the glazing / opaque roughness as three.js sets it (max(r, 0.0525) + the geometric roughness of the interpolated normal, at most 1; was the glb's 0.02–0.03) | hatch gone in the world and under `look=studio` (`cmp/g4_sidewin_close_port_crop.jpg`, `sbs_sidewin_close_port.jpg`, `sbs_ws_close.jpg`). Side effect, as in the reference: where two panes overlap the near one now covers the far one (shaded side window at sidewin_close_port (27, 28, 29) in the one-pass WIP render → (20, 23, 29)) |
+
+**Docs stills** re-rendered (every image looked at; captions in `docs/phase3/SOURCES.json` rewritten by the tool): the nine
+PC-12 stills `docs/phase3/pc12_{front34, side, rear34, chase, cockpit, port, rear, flaps40, gear_closeup}.jpg` and the 13
+`viewer_sf50_*.jpg` (`node dev/model_shot.mjs --jobs=out/pc12_look_it4/jobs_docs_pc12.json --prefix=pc12 --port=8761`,
+`--model=SF50 --jobs=out/pc12_look_it4/jobs_docs_sf50.json --prefix=viewer_sf50 --port=8762`, the dusk still with
+`--jobs=out/pc12_look_it4/jobs_sf50_dusk.json --t=2026-11-14T01:05:00Z`; its caption now says that the strobe lenses are
+hidden from that side). Before / after sheets `out/pc12_look_it4/cmp/docs_*.jpg`.
+
+**Tests**: `node tools/models/test_models.mjs` (unchanged: `tools/models/` is not in this iteration's file list) → **81
+PASS, 13 KNOWN, 0 FAIL**, 4 INFO (`out/pc12_look_it4/test_models_final.txt`); `GLASS_FS` keeps the iteration-3 expression
+the veil check reads (`bool glz = … == 24`, `glz ? uVeilSun : 1.0`), with the flight-deck case in front of it (`dglz ?
+uVeilSunDeck : glz ? uVeilSun : 1.0`). **Proposed checks** for the test file's owner, `out/pc12_look_it4/test_models_it4_checks.patch`
+(gitignored; `git apply --check` clean; with it **88 PASS, 13 KNOWN, 0 FAIL**, `test_models_it4_checks_run.txt`): (G1,
+runtime) a Scene with only airfield lights asks for no depth copy, one with a detailed aircraft's light does, `uOcclude` 0 / 1
+without / with the copy, the copy sits between the opaque and the blended near draws, the depth blit and the shader's test
+and constants; (G2, per type) every part-material pair with id 25 lies on a cabin-enclosing part, none on the gear wells /
+wings / belly fairing / nose bay, and the shader's back-face rule; (G3, per type) the flight deck's materials take 26
+(displays 22), the flight-deck glazing 27 and the cabin windows 24, the deck uniforms closed / with a door open,
+`uVeilSunDeck` on every glass draw, the glazing expression; (G4, per type) every glass group drawn as two items, back faces
+first, and the renderer's `cullFront` handling. **`python3 -I -B tools/check_airport.py`** → **RESULT: ALL HARD CHECKS
+PASSED** (SOURCES coverage 165 files, 0 without an entry; D1 clean in every `docs/phase3_*.md`;
+`out/pc12_look_it4/check_airport_final.txt`). The final `GLASS_FS` was re-rendered at two cameras: pixel-identical to the
+`after2` renders, no console errors.
+
+**Files changed in this iteration**: renderer / shared — `js/renderer.js` (`copyDepth`, `sceneDepth` / `noDepth`,
+`cullFront`, header), `js/scene.js` (`needsDepth`, `uSceneDepth` / `uOcclude`, header), `js/shaders/sprites.js`
+(`lensVisible`, header); aircraft runtime — `js/aircraft/detailed.js` (ids 25 / 26 / 27 in `ACOBJ_FS` / `GLASS_FS`,
+`DECK_SKY_SHARE`, `DECK_SUN_T`, `GLASS_VEIL_SUN_DECK`, three.js roughness, two-pass glass, comments), `js/aircraft/models.js`
+(`AC_PART_CABIN`, `AC_PART_DECK`, `AC_PART_DECK_GLASS`, `AC_PART_MAT`), `js/aircraft/glb.js` (`partMatId` gets the material
+record); this file (sections 8, 9 and 15.8); `docs/phase3/*.jpg` (22 stills) + `SOURCES.json`. Not changed: `js/gl.js`,
+the world shaders, `js/live/**`, `js/env/**`, `dev/**`, `tools/**`, the glb files.
+
+**Open / not verified (iteration 4)**: the lens allowance (0.09 m + 0.0008 m per metre), the tap layout and the lamp radius
+are inferred; a lens at the edge of an occluder (the PC-12 top beacon behind the tail bullet from behind / below, 4 of 9
+taps) is drawn at reduced intensity with a saturated core — a judgement of "partly visible", not a hard cut. The flight-deck
+glazing's sun veil (0.8) is an appearance fit to the reference viewer, not physics; after it the nose camera's starboard
+windshield pane stays ~15 levels below both references, the sunlit side windows at hwd_nose / ws_close read 3–10 levels
+above dev, and under `look=studio` the cockpit windshield and the shaded close-up side window now read above the references.
+The flight deck takes the full sky under its roof (`DECK_SKY_SHARE` 1, as the reference viewer lights it) [inf]. The SF50
+follows the same rules (its panel and windshield; no SF50 reference viewer to compare with). The app (`livetest.mjs`) was
+not re-run in this iteration (`js/live/**` is being changed by a parallel workflow); it draws the same items, so the hidden
+lights and the lighter flight-deck glazing apply there too, and a video-determinism comparison spanning this change will
+see them. Cost (SwiftShader only, laptop GPU not measured): one depth blit per frame while a detailed aircraft shows a
+light, nine depth fetches per sprite vertex of a flagged sprite, and two glass draws per glass group instead of one.
+Owner-taste items F2 (navy in shade), F5 / F6 (shaded / sunlit white) and the bloom knee at night are unchanged.

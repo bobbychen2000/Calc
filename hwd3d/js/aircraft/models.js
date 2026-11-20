@@ -2,7 +2,8 @@
 // type and shared by every aircraft of that type. Types without a model fall back to the GA placeholder
 // (js/aircraft/placeholder.js). Provenance of every file: js/aircraft/models/SOURCES.json.
 //
-//   MODELS {PC12, SF50}: { url, meta, exclude, note, groundGl, lightAnchors, frame }
+//   MODELS {PC12, SF50}: { url, meta, exclude, note, groundGl, lightAnchors, frame, deck: { xAft, src } (OD4 iteration 5: the
+//        flight-deck region, js/aircraft/detailed.js) }
 //   hasModel(type) -> bool
 //   loadModel(type, { fetchFn, keepCpu }) -> Promise<AircraftModel>   (js/aircraft/glb.js convertGLB; cached per type)
 //   createAircraft(T, opts) -> DetailedAircraft (type has a model) | GaAircraft     T = dims record (T.type = ICAO type)
@@ -34,7 +35,7 @@ const here = (p) => new URL(p, import.meta.url).href;
 // sheet (reflection, the pane's diffuse return at its opacity as three.js shades it - OD4 iteration 2 - and transmission);
 // 'clear' lens covers keep 0 (diffuse translucent plastic). OD4 iteration 4: 25 = a plain / paint material of a part that
 // encloses the cabin (AC_PART_CABIN below; set per part by AC_PART_MAT), 26 = a plain material of the flight deck
-// (AC_PART_DECK below).
+// (AC_PART_DECK below), 27 = the glazing of the flight deck (AC_PART_DECK_GLASS below; 24 stays the cabin windows).
 export const AC_MAT = (info) => /^(paint_|trim_)/.test(info.name) ? 21 : /^screen/.test(info.name) ? 22
   : /^(leather|carpet|lining|wood|panel_black|interior|seat|cabin)/.test(info.name) ? 23 : info.cls === 'glass' ? 24 : 0;
 // OD4: parts whose every plain material is cabin / flight-deck interior (id 23: lit only through the glazing, js/aircraft/
@@ -55,7 +56,12 @@ export const AC_PART_CABIN = /^(fus_fwd|fus_center|fus_aft|door_airstair|door_ca
 // DECK_SKY_SHARE / DECK_SUN_T): the windshield and side windows are most of what the flight deck sees, the cabin's few
 // windows a small part of what the cabin sees. Displays keep 22.
 export const AC_PART_DECK = /^(flight_deck|cockpit_interior)$/;
+// OD4 iteration 4 (review G3): the GLAZING of the flight deck - the windshield and the crew side windows (PC-12 part
+// glazing_flightdeck: glass_windshield + glass; SF50 part windshield: glass_windshield) - takes id 27, the cabin windows keep
+// 24: the flight-deck panes take the direct sun in their diffuse return (js/aircraft/detailed.js GLASS_FS, GLASS_VEIL_SUN_DECK).
+export const AC_PART_DECK_GLASS = /^(glazing_flightdeck|windshield)$/;
 export const AC_PART_MAT = (id, part, mat) => (part && AC_PART_DECK.test(part) && (id === 0 || id === 23) && !(mat && mat.blend) ? 26
+  : id === 24 && part && AC_PART_DECK_GLASS.test(part) ? 27
   : id === 0 && part && AC_PART_INTERIOR.test(part) ? 23
   : (id === 0 || id === 21) && part && AC_PART_CABIN.test(part) && !(mat && mat.blend) ? 25 : id);
 export const MODELS = {
@@ -82,6 +88,12 @@ export const MODELS = {
       landL: { p: [6.20, -3.15, 1.000], src: 'Pilatus PC-12 NGX Model Building Plan p.4 photo "LANDING LIGHTS" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]' },
       landR: { p: [6.20, 3.15, 1.000], src: 'Pilatus PC-12 NGX Model Building Plan p.4 photo "LANDING LIGHTS" (lamp under the wing beside a flap-track fairing) [obs]; station BL 3.15 / STA 6.20 [inf]' },
     },
+    // flight-deck region (OD4 iteration 5, review F4; js/aircraft/detailed.js ACOBJ_FS uDeckPlane): local x of its aft
+    // boundary - forward of it, the cabin interior (id 23) and the back faces of the cabin-enclosing parts (id 25: the inside
+    // of fus_fwd, the windshield / side-window frames) take the flight deck's shares of sky and sun, as its crew seats and
+    // panel (id 26) do. 2.00 = the aft end of the 'flight_deck' part (crew seats, x 2.03-3.17) ahead of 'cabin_interior'
+    // (x <= 1.97), measured in this file's frame [inf: boundary]
+    deck: { xAft: 2.00, src: 'aft end of the flight_deck part (crew seat backs) in js/aircraft/models/pc12.glb, measured 2026-11-20 [inf]' },
     // drawn colour of the navy livery band (OD4 iterations 2-3, review F1 / F2; PAINT_FIT below): linear, fitted so that the band
     // in the HWD world, in sun AND in shade together, looks as in the pc12 viewer [inf: appearance fit]; the glb's own factor is
     // (0.10, 0.17, 0.27)
@@ -94,6 +106,10 @@ export const MODELS = {
   // own work: hwd3d/tools/models/sf50 (procedural, from published dimensions; M1, Phase 3)
   SF50: { url: here('./models/sf50.glb'), meta: here('./models/sf50_meta.json'), exclude: [], note: 'tools/models/sf50 procedural model (own work)',
     groundGl: 0,   // the SF50 builder's ground (z = 0 static on the gear); its tyres touch it (no deflection modelled)
+    // flight-deck region (OD4 iteration 5, review F4; see PC12): the SF50's crew seats are the front row of 'cabin_seats'
+    // (x 1.5-2.33; the second row ends at ~1.0) and its cockpit lining is the forward part of 'cabin_lining' - forward of x
+    // 1.40 both take the flight deck's shares, with the back faces of the windshield frame / fuselage there [inf: boundary]
+    deck: { xAft: 1.40, src: 'between the front row (x 1.5-2.33) and the second row (x <= 1.0) of cabin_seats in js/aircraft/models/sf50.glb, measured 2026-11-20 [inf]' },
     frame: { L: 9.357, span: 11.793, H: 3.325, xMain: 4.453, xNose: 1.148, track: 3.414, wheelbase: 3.305,
       basis: 'measured from js/aircraft/models/sf50.glb by js/aircraft/glb.js; L / span / H / track from FAA ACD + AFM Fig 1-1 (tools/models/sf50/SF50_FACTS.md), wheelbase read off AFM Fig 1-1 [inf]' },
   },
@@ -159,7 +175,7 @@ export function loadModel(type, { fetchFn = defaultFetch, keepCpu = false, palet
     const [buf, meta] = await Promise.all([fetchFn(e.url), fetchFn(e.meta).then(b => JSON.parse(new TextDecoder().decode(b))).catch(() => null)]);
     // keepCpu false (the app): js/aircraft/detailed.js drops the vertex / index arrays once they are on the GPU (~21 MB of
     // JS heap per type); the dev viewer and the tests keep them
-    const m = convertGLB(buf, MODEL_LOAD_OPTS(type, { palette })); m.meta = meta; m.type = type; m.keepCpu = !!keepCpu; return m;
+    const m = convertGLB(buf, MODEL_LOAD_OPTS(type, { palette })); m.meta = meta; m.type = type; m.keepCpu = !!keepCpu; m.deck = e.deck || null; return m;
   })());
   const p = CACHE.get(key); p.catch(() => CACHE.delete(key)); return p;
 }

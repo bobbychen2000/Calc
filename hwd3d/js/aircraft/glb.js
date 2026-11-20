@@ -284,6 +284,7 @@ export function convertGLB(buf, opts = {}) {
 
   // ---- light anchors
   const lights = lightAnchors(prims, parts, toLocalPt, partIndex, nodes, world, opts.lightAnchors);
+  for (const k in lights) if (lights[k]) lights[k].occ = lampShape(lights[k], prims, parts, toLocalPt);
   // ---- registration panels (SF50 builder: part extras info.reg_panel {centre, normal, up, length, height}, model axes):
   // blank areas the runtime may fill for aircraft not flagged LADD / PIA (D1); never filled here
   const regPanels = [];
@@ -351,4 +352,75 @@ function lightAnchors(prims, parts, toLocalPt, partIndex, nodes, world, extra) {
   const lamps = clusters(pr => pr.mat.name === 'lens' && pr.part >= 0 && parts[pr.part].pivotRaw && /gear/.test(parts[pr.part].pivotRaw.kind));
   if (lamps.length) { const c = lamps.sort((u, v) => v.p[0] - u.p[0])[0]; set('taxi', c, 'lens on the nose gear (strut lamp)'); set('landL', { p: [c.p[0], c.p[1], c.p[2] - 0.02], part: c.part }, 'lens on the nose gear (strut lamp)'); set('landR', { p: [c.p[0], c.p[1], c.p[2] + 0.02], part: c.part }, 'lens on the nose gear (strut lamp)'); }
   return L;
+}
+
+// OD4 iteration 5 (review F1 / F3, docs/phase3_models.md 15.9): the lamp's OWN shape around each anchor, for the lens
+// occlusion test of its light sprite (js/shaders/sprites.js lensVisible, js/aircraft/detailed.js lightSprites):
+//   occ { c: [x, y, z] (local; the shape centre, not always the anchor), ax: [3 unit axes, local], h: [3 half extents, m],
+//         shape: 'ellipsoid' | 'box', geom: true (the lamp surface is opaque, so it is in the scene depth) | false,
+//         face: { n: [x, y, z] local unit, cos } | null (a one-sided lamp patch: hidden where dot(toCam, n) <= cos), mat, n, cover }
+// The lamp = the vertices of one lamp material connected to the anchor: seed = the vertex of an opaque lamp material ('light'
+// class: light_red / light_green / light_white) nearest to the anchor within LAMP_SEED, grown by single linkage (LAMP_LINK)
+// over vertices of the same material on the same mover within LAMP_REACH; failing that the same with a clear lens cover
+// ('clear' class: pc12's nose-strut 'lens'), which is blended and NOT in the depth (geom false); failing that (a registry
+// anchor with no lamp geometry: the PC-12 wing landing lights) a sphere of LAMP_VIRTUAL_R around the anchor (geom false).
+// Fit: principal axes of the vertices, the bounding box in that frame; an ellipsoid through the farthest vertex when it is
+// smaller than the box (pc12/model/details.py lens(): superellipsoids, e = 0.9 - nearly ellipsoids), else the box (the
+// SF50's lamp patches under their lens covers, tools/models/sf50/sf50_wing.py); + LAMP_MARGIN. Measured per anchor
+// (docs/phase3_models.md 15.9); the shapes are inferred from the geometry, not sourced [inf].
+const LAMP_SEED = 0.08, LAMP_LINK = 0.06, LAMP_REACH = 0.35, LAMP_COVER = 0.02, LAMP_PATCH = 0.5, LAMP_VIRTUAL_R = 0.02, LAMP_MARGIN = 0.002, LAMP_MIN_H = 0.003;
+function jacobi3(A) {   // symmetric 3 x 3 -> { vals, vecs: unit eigenvectors }
+  const a = A.map(r => r.slice()), v = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  for (let sweep = 0; sweep < 40; sweep++) {
+    if (Math.abs(a[0][1]) + Math.abs(a[0][2]) + Math.abs(a[1][2]) < 1e-22) break;
+    for (const [p, q] of [[0, 1], [0, 2], [1, 2]]) {
+      if (Math.abs(a[p][q]) < 1e-24) continue;
+      const th = (a[q][q] - a[p][p]) / (2 * a[p][q]), t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1)), c = 1 / Math.sqrt(t * t + 1), s = t * c;
+      for (let k = 0; k < 3; k++) { const kp = a[k][p], kq = a[k][q]; a[k][p] = c * kp - s * kq; a[k][q] = s * kp + c * kq; }
+      for (let k = 0; k < 3; k++) { const pk = a[p][k], qk = a[q][k]; a[p][k] = c * pk - s * qk; a[q][k] = s * pk + c * qk; }
+      for (let k = 0; k < 3; k++) { const kp = v[k][p], kq = v[k][q]; v[k][p] = c * kp - s * kq; v[k][q] = s * kp + c * kq; }
+    }
+  }
+  return { vals: [a[0][0], a[1][1], a[2][2]], vecs: [0, 1, 2].map(j => norm([v[0][j], v[1][j], v[2][j]])) };
+}
+export function lampShape(a, prims, parts, toLocalPt) {
+  const moverOf = (pr) => (pr.part >= 0 ? parts[pr.part].mover : -1);
+  const localDir = (N, i) => [-N[i * 3 + 2], N[i * 3 + 1], N[i * 3]];   // glTF -> local (the axis map of toLocalPt)
+  const d3 = (u, w) => Math.hypot(u[0] - w[0], u[1] - w[1], u[2] - w[2]);
+  for (const [cls, geom] of [['light', true], ['clear', false]]) {
+    const V = [];
+    for (const pr of prims) { if (pr.mat.cls !== cls || moverOf(pr) !== a.part) continue;
+      for (let i = 0; i < pr.nv; i++) { const p = toLocalPt([pr.pos[i * 3], pr.pos[i * 3 + 1], pr.pos[i * 3 + 2]]); const r = d3(p, a.p); if (r < LAMP_REACH) V.push({ p, r, mat: pr.mat.name, n: localDir(pr.nrm, i) }); } }
+    if (!V.length) continue;
+    const seed = V.reduce((b, v) => (v.r < b.r ? v : b)); if (seed.r > LAMP_SEED) continue;
+    const pool = V.filter(v => v.mat === seed.mat), inC = new Uint8Array(pool.length), stack = [pool.indexOf(seed)]; inC[stack[0]] = 1;
+    while (stack.length) { const q = pool[stack.pop()].p; for (let j = 0; j < pool.length; j++) if (!inC[j] && d3(pool[j].p, q) < LAMP_LINK) { inC[j] = 1; stack.push(j); } }
+    const P = pool.filter((_, j) => inC[j]).map(v => v.p), Nn = pool.filter((_, j) => inC[j]).map(v => v.n), nLamp = P.length;
+    // the clear lens cover over an opaque lamp (SF50: the tip lens 14 / 10 mm above its lamp patches, the tail-light lens bump
+    // over a lamp the tail-cone skin covers): its vertices within LAMP_COVER of the lamp join the fit, so the skin under the
+    // lens (the surface the depth holds there) lies inside the shape
+    let nCover = 0;
+    if (geom) for (const pr of prims) { if (pr.mat.cls !== 'clear' || moverOf(pr) !== a.part) continue;
+      for (let i = 0; i < pr.nv; i++) { const p = toLocalPt([pr.pos[i * 3], pr.pos[i * 3 + 1], pr.pos[i * 3 + 2]]); if (d3(p, a.p) > LAMP_REACH) continue;
+        for (let j = 0; j < nLamp; j++) if (d3(p, P[j]) < LAMP_COVER) { P.push(p); Nn.push(localDir(pr.nrm, i)); nCover++; break; } } }
+    const n = P.length;
+    // facing: a lamp that is a one-sided patch (|mean vertex normal| > LAMP_PATCH; the SF50's lamps under their lens covers,
+    // not pc12's closed lamp bodies) emits only to the side its surface faces. Seen from where no part of it faces the camera
+    // (dot(toCam, n) <= -sqrt(1 - cmin^2), cmin = the smallest dot of a vertex normal with the mean one) it is hidden
+    // whatever the depth says - from behind, the airframe's far skin can lie within the lamp's shape (the SF50's thin upturn)
+    const nm = [0, 1, 2].map(k => Nn.reduce((s2, v) => s2 + v[k], 0) / n), nmL = Math.hypot(nm[0], nm[1], nm[2]);
+    let face = null;
+    if (nmL > LAMP_PATCH) { const f = nm.map(v => v / nmL), cmin = Math.min(...Nn.map(v => v[0] * f[0] + v[1] * f[1] + v[2] * f[2])); if (cmin > 0) face = { n: f, cos: -Math.sqrt(1 - cmin * cmin) }; }
+    const m = [0, 1, 2].map(k => P.reduce((s, p) => s + p[k], 0) / n);
+    const C = [0, 1, 2].map(i => [0, 1, 2].map(j => P.reduce((s, p) => s + (p[i] - m[i]) * (p[j] - m[j]), 0) / n));
+    const ax = jacobi3(C).vecs, lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+    const U = P.map(p => ax.map(e => (p[0] - m[0]) * e[0] + (p[1] - m[1]) * e[1] + (p[2] - m[2]) * e[2]));
+    for (const u of U) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], u[k]); hi[k] = Math.max(hi[k], u[k]); }
+    const mid = [0, 1, 2].map(k => (lo[k] + hi[k]) / 2), h = [0, 1, 2].map(k => Math.max((hi[k] - lo[k]) / 2, LAMP_MIN_H));
+    const se = Math.max(...U.map(u => Math.hypot((u[0] - mid[0]) / h[0], (u[1] - mid[1]) / h[1], (u[2] - mid[2]) / h[2])));
+    const ell = se * se * se < 6 / Math.PI;   // the ellipsoid through the farthest vertex is smaller than the box
+    const c = [0, 1, 2].map(k => m[k] + ax[0][k] * mid[0] + ax[1][k] * mid[1] + ax[2][k] * mid[2]);
+    return { c, ax, h: h.map(v => (ell ? v * se : v) + LAMP_MARGIN), shape: ell ? 'ellipsoid' : 'box', geom, face, mat: seed.mat, n: nLamp, cover: nCover };
+  }
+  return { c: a.p.slice(), ax: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], h: [LAMP_VIRTUAL_R, LAMP_VIRTUAL_R, LAMP_VIRTUAL_R], shape: 'ellipsoid', geom: false, face: null, mat: null, n: 0, cover: 0 };
 }

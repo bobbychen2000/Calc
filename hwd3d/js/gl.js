@@ -1,4 +1,5 @@
-// Forked from sfo3d/js/gl.js @ a967f9b. Kept: everything (WebGL2 context, Program with chunk preprocessor and fixed texture units, Mesh, texture, FBO, fullscreen). Changed: nothing. Dropped: nothing.
+// Forked from sfo3d/js/gl.js @ a967f9b. Kept: everything (WebGL2 context, Program with chunk preprocessor and fixed texture units, Mesh, texture, FBO, fullscreen). Changed: Mesh.setInstances takes the number of vec4 attributes per
+// instance (default 4 = sfo3d's 16 floats; hwd3d OD4 iteration 5, docs/phase3_models.md 15.9: the light-sprite batch uses 8). Dropped: nothing.
 // WebGL2 helpers
 export let gl;
 export function initGL(canvas) {
@@ -109,13 +110,15 @@ export class Mesh {
     this.bbox = data.bbox || null;
     gl.bindVertexArray(null);
   }
-  // instance data: array of Float32 per-instance 16 floats: 3 rows of mat (12) + data(4)
-  setInstances(f32, n) {
+  // instance data: array of Float32 per-instance 16 floats: 3 rows of mat (12) + data(4); nVec4 (default 4) vec4 attributes
+  // per instance at locations 5 .. 4 + nVec4 (hwd3d OD4 iteration 5: the light-sprite batch uses 8, js/scene.js - the lamp
+  // shape of a light on a detailed aircraft for the lens occlusion test, js/shaders/sprites.js)
+  setInstances(f32, n, nVec4 = 4) {
     gl.bindVertexArray(this.vao);
     if (!this.ibuf) this.ibuf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.ibuf); gl.bufferData(gl.ARRAY_BUFFER, f32, gl.DYNAMIC_DRAW);
-    for (let i = 0; i < 4; i++) {
-      gl.enableVertexAttribArray(5 + i); gl.vertexAttribPointer(5 + i, 4, gl.FLOAT, false, 64, i * 16); gl.vertexAttribDivisor(5 + i, 1);
+    for (let i = 0; i < nVec4; i++) {
+      gl.enableVertexAttribArray(5 + i); gl.vertexAttribPointer(5 + i, 4, gl.FLOAT, false, nVec4 * 16, i * 16); gl.vertexAttribDivisor(5 + i, 1);
     }
     this.instanced = true; this.nInst = n; gl.bindVertexArray(null);
   }

@@ -88,6 +88,7 @@ uniform float uHub;       // hub radius / tip radius
 uniform vec3 uDiscCol; uniform vec3 uTipCol;
 uniform float uAlpha;     // item fade (render item field 'alpha', set by the renderer like the obj shader's): scales the blend alpha
 uniform float uVeilSun;   // glazing (mat 24): share of the direct sun in the pane's diffuse return (GLASS_VEIL_SUN); sky part always 1
+uniform float uVeilSunDeck; // flight-deck glazing (mat 27; OD4 iteration 4, review G3): the same share (GLASS_VEIL_SUN_DECK)
 void main(){
   float gRough = acGeomRough(normalize(vN));   // three.js r160 geometric roughness (below), before the discard
   if (vClip.w < uRange.x || vClip.w > uRange.y) discard;
@@ -114,14 +115,23 @@ void main(){
     // 0.0525) + the geometric roughness max(|dFdx(n)|, |dFdy(n)|) of the interpolated normal (its specular anti-aliasing),
     // at most 1 - the reference viewer's rule; before, the glb's 0.02-0.03 was used as written. (Not the cause of the dotted
     // hatch of review G4: that was the blend order of the glass, see the two-pass draw in DetailedAircraft.items.)
+    // OD4 iteration 4 (review G3): the FLIGHT-DECK glazing (mat 27: windshield and crew side windows, js/aircraft/models.js
+    // AC_PART_DECK_GLASS) takes the direct sun in its diffuse return at GLASS_VEIL_SUN_DECK = 0.8 (uVeilSunDeck) [inf:
+    // appearance fit]; the cabin windows (24) keep GLASS_VEIL_SUN = 0. The pc12 viewer shades every glb BLEND pane with the
+    // full sun in it (three.js: 0.82 coverage of the tint, lit like any surface); without it the flight-deck panes in sun read
+    // 15-30 sRGB levels below both reference renders (a near-black visor: hwd_front34 windshield (33, 34, 38) vs dev (57, 65,
+    // 73) / stage (48, 55, 62)). 0.8 minimises the distance outside the dev-stage range over 11 windshield / side-window
+    // boxes at six cameras (5.3 levels; 0: 15.5, 0.5: 7.4, 1: 5.7 - docs/phase3_models.md 15.8). The cabin windows keep 0:
+    // there iteration 3 measured the veil above the references (hwd_side, veil 0.25: (44, 48, 52) vs (35, 42, 49) / (24, 29, 34)).
     float NoV = clamp(dot(N, V), 1e-4, 1.0); float r = min(max(vExt.x, 0.0525) + gRough, 1.0), a = r * r;
     vec2 fab = acDFG(NoV, r); float Fe = 0.04 * fab.x + fab.y;            // directional albedo of the specular lobe
     vec3 L = uSunDir, H = normalize(L + V); float NoL = clamp(dot(N, L), 0.0, 1.0);
     vec3 spec = acEnv(reflect(-V, N), r) * Fe
       + (0.04 + 0.96 * pow(1.0 - clamp(dot(V, H), 0.0, 1.0), 5.0)) * acVis(NoL, NoV, a) * acD(clamp(dot(N, H), 0.0, 1.0), a) * uSunColor * NoL * sh;
     float a0 = vCol.a;
-    bool glz = int(vExt.z + 0.5) == 24;
-    vec3 body = vCol.rgb * (uSunColor * NoL * sh / PI * (glz ? uVeilSun : 1.0) + acSky(N));
+    bool glz = int(vExt.z + 0.5) == 24;     // cabin windows (iteration 3 rule: no sun in the veil)
+    bool dglz = int(vExt.z + 0.5) == 27;    // flight-deck glazing (iteration 4, review G3: GLASS_VEIL_SUN_DECK)
+    vec3 body = vCol.rgb * (uSunColor * NoL * sh / PI * (dglz ? uVeilSunDeck : glz ? uVeilSun : 1.0) + acSky(N));
     alpha = clamp(Fe + (1.0 - Fe) * a0, 0.0, 1.0);
     vec3 pre = spec + body * (1.0 - Fe) * a0;
     col = min(pre / max(alpha, 1e-3), vec3(30000.0));
@@ -192,6 +202,7 @@ uniform float uCabinAmb; // share of the sky that reaches this group's interior 
 uniform float uCabinSun; // share of the direct sun that reaches them: the glazing transmission tau of the type (closed cabin), 1 = rule off
 uniform float uDeckAmb;  // flight deck (id 26, displays 22; OD4 iteration 4, review G3): share of the sky (DECK_SKY_SHARE closed, 1 = rule off)
 uniform float uDeckSun;  // flight deck: share of the direct sun through the windshield / side windows (DECK_SUN_T closed, 1 = rule off)
+uniform vec4 uDeckPlane; // flight-deck region (OD4 iteration 5, review F4): dot(xyz, world pos) + w > 0 forward of the deck's aft boundary
 // uAlpha: screen-door fade of one item, the obj shader's rule (js/shaders/objects.js, fix round 1): a 4x4 ordered-dither
 // threshold discards a growing share of fragments, so a re-placement fades instead of blinking (render item field 'alpha')
 uniform float uAlpha;
@@ -211,7 +222,12 @@ void main(){
   // enclose the cabin (id 25, js/aircraft/models.js AC_PART_CABIN) - before, every back face did (the main-gear wells, the
   // belly fairing and wing skins seen through the well openings took the cabin's light); the flight deck (id 26 and its
   // displays, 22) has its own shares (G3, header)
-  bool cabin = mat == 23 || (back && mat == 25), deck = mat == 26 || mat == 22;
+  // OD4 iteration 5 (review F4): inside the flight-deck region (uDeckPlane, js/aircraft/models.js deck.xAft) the cabin-rule
+  // surfaces take the deck's shares too - the back faces of the cabin-enclosing parts there are the flight deck's own walls,
+  // roof and window frames (PC-12 fus_fwd, glazing_flightdeck), and the SF50's crew seats / cockpit lining are cabin parts
+  // (cabin_seats, cabin_lining); with the cabin's shares the walls behind the PC-12 crew seats read near black through the
+  // shaded side window while the seats in front of them were lit
+  bool cabin = mat == 23 || (back && mat == 25), deck = mat == 26 || mat == 22 || (cabin && dot(uDeckPlane.xyz, vWP) + uDeckPlane.w > 0.0);
   float sunT = cabin ? clamp(uCabinSun, 0.0, 1.0) : 1.0, ambT = cabin ? clamp(uCabinAmb, 0.0, 1.0) : 1.0;
   if (deck) { sunT = clamp(uDeckSun, 0.0, 1.0); ambT = clamp(uDeckAmb, 0.0, 1.0); }
   // ground-contact occlusion of belly / wells / gear near the pavement (item groundRef = ground y; -1e4 = off), a softer
@@ -264,6 +280,7 @@ export const CONTROL_LAG = 7;        // 1/s first-order lag of roll / pitch / ya
 export const CABIN_SKY_SHARE = 0.35; // share of the sky that reaches the closed cabin through its windows (ACOBJ_FS header) [inf]
 export const CABIN_SUN_T = 0.2;      // direct sun into the closed cabin when the model gives no glazing transmission (ACOBJ_FS header)
 export const GLASS_VEIL_SUN = 0.0;   // share of the direct sun in the glazing's diffuse return (GLASS_FS header)
+export const GLASS_VEIL_SUN_DECK = 0.8; // the same for the flight-deck glazing (mat 27; GLASS_FS header, OD4 it. 4, G3) [inf: appearance fit]
 export const DECK_SKY_SHARE = 1.0;   // share of the sky that reaches the closed flight deck (ACOBJ_FS header, OD4 it. 4, G3) [inf]
 export const DECK_SUN_T = 1.0;       // share of the direct sun on the flight deck where the shadow map lets it in (OD4 it. 4, G3) [inf]
 export const cabinSunT = (model) => { const t = model && model.stats && model.stats.glazingT; return t != null && isFinite(t) ? Math.max(0, Math.min(1, t)) : CABIN_SUN_T; };
@@ -396,6 +413,11 @@ export class DetailedAircraft {
     const doorPart = (g) => g.mover >= 0 && m.parts[g.mover].pivot && m.parts[g.mover].pivot.kind === 'door';
     const anyDoorOpen = G.groups.some(g => doorPart(g) && (this.doors[g.key] || 0) > 0.02);
     const tauSun = cabinSunT(m);
+    // OD4 iteration 5 (review F4): the flight-deck region as a world plane (ACOBJ_FS uDeckPlane: forward of the model's
+    // deck.xAft, js/aircraft/models.js); (0, 0, 0, -1) = no region
+    let deckPlane = [0, 0, 0, -1];
+    if (m.deck && Number.isFinite(m.deck.xAft)) { const f = m4.xdir(this.model, [1, 0, 0]), fl = Math.hypot(f[0], f[1], f[2]) || 1, P0 = m4.xform(this.model, [m.deck.xAft, 0, 0]);
+      deckPlane = [f[0] / fl, f[1] / fl, f[2] / fl, -(f[0] * P0[0] + f[1] * P0[1] + f[2] * P0[2]) / fl]; }
     // motion vectors: a group's prevModel is its previous-frame model; a group riding on a fast-spinning propeller / fan
     // takes the previous AIRCRAFT model times its CURRENT pose, so its velocity is the aircraft's (translation and attitude
     // change kept, the blade rotation left out: ~340 deg per 30-fps frame at 1,700 rpm is not a velocity a buffer can hold)
@@ -409,7 +431,7 @@ export class DetailedAircraft {
       // the selection glow and the share of the sky that reaches this group's interior surfaces (OD4; door open: rule off)
       if (g.opaque) out.push({ mesh: g.opaque, prog: glassOK ? 'acobj' : 'obj', model: Mg, prevModel: prev, bbox: bb, castShadow: sh, noCull: true,
         uniforms: glassOK ? { uEmissiveBoost: this.selected ? 0.15 : 0, uCabinAmb: anyDoorOpen ? 1 : CABIN_SKY_SHARE, uCabinSun: anyDoorOpen ? 1 : tauSun,
-          uDeckAmb: anyDoorOpen ? 1 : DECK_SKY_SHARE, uDeckSun: anyDoorOpen ? 1 : DECK_SUN_T } : (this.selected ? { uEmissiveBoost: 0.15 } : undefined),
+          uDeckAmb: anyDoorOpen ? 1 : DECK_SKY_SHARE, uDeckSun: anyDoorOpen ? 1 : DECK_SUN_T, uDeckPlane: deckPlane } : (this.selected ? { uEmissiveBoost: 0.15 } : undefined),
         groundRef: glassOK && this.groundRef != null ? this.groundRef : undefined });
       if (g.glass) {
         // OD4 iteration 4 (review G4): the glass is drawn in TWO passes, back faces first (cullFront), then front faces (the
@@ -418,7 +440,7 @@ export class DetailedAircraft {
         // wrap-around windshield over the inside of the far one, thin slivers at that angle - near and far triangles
         // alternated strip by strip, a dotted hatch in vertical columns (also under look=studio)
         if (glassOK) { const c = xform(Mg, [(m.bbox[0] + m.bbox[3]) / 2, (m.bbox[1] + m.bbox[4]) / 2, (m.bbox[2] + m.bbox[5]) / 2]);
-          const gU = () => ({ uRange: R.curRange || [0, 1e9], uKind: 0, uVeilSun: GLASS_VEIL_SUN });
+          const gU = () => ({ uRange: R.curRange || [0, 1e9], uKind: 0, uVeilSun: GLASS_VEIL_SUN, uVeilSunDeck: GLASS_VEIL_SUN_DECK });
           const key = (cp) => Math.hypot(cp[0] - c[0], cp[1] - c[1], cp[2] - c[2]) - 0.01;
           out.push({ mesh: g.glass, prog: 'acglass', blend: 'alpha', bothPasses: true, model: Mg, prevModel: prev, bbox: bb, castShadow: false, cullFront: true,
             sortKey: (cp) => key(cp) + 0.001, uniforms: gU });   // back faces (inner sides), drawn first (farther key)
@@ -439,6 +461,13 @@ export class DetailedAircraft {
   }
   // world position of a local point riding on part `mover` (-1 = airframe)
   worldPt(p, mover = -1) { const P = this._pose; const q = mover >= 0 && P && P[mover] ? xform(P[mover], p) : p; return m4.xform(this.model, q); }
+  // a light anchor's lamp shape (glb.js lampShape, local) in the world, for the sprite's lens test (OD4 iteration 5)
+  lampWorld(L) {
+    const o = L.occ, P = this._pose, M = L.part >= 0 && P && P[L.part] ? m4.mul(this.model, P[L.part]) : this.model;
+    const un = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+    return { c: m4.xform(M, o.c), a0: un(m4.xdir(M, o.ax[0])), a1: un(m4.xdir(M, o.ax[1])), h: o.h, shape: o.shape === 'box' ? 2 : 1, geom: o.geom ? 1 : 0,
+      face: o.face ? { n: un(m4.xdir(M, o.face.n)), cos: o.face.cos } : null };
+  }
   lightSprites(t) {
     if (!this.loaded) { const p = this.syncPlaceholder(); return p ? p.lightSprites(t) : []; }
     const on = this.lightsOn; if (!on || !(on.nav || on.beacon || on.strobe || on.landing || on.taxi)) return [];
@@ -458,8 +487,18 @@ export class DetailedAircraft {
       if (on.strobe && W.strobeTail) for (const sp of aircraftSprites({ strobeL: W.strobeTail }, axes, { strobe: true }, this.seed, t, this.gear)) S.push(sp);
       // OD4 iteration 3 (review F7): every light of a detailed aircraft is drawn pulled toward the camera by 3 m or its drawn
       // radius (js/shaders/sprites.js iData.y, packed by js/scene.js), so its glow disc is not cut by the airframe next to the
-      // lens (the dusk still: the tail-strobe disc cut by the fin, the wing edge through a tip disc)
+      // lens (the dusk still: the tail-strobe disc cut by the fin, the wing edge through a tip disc). OD4 iteration 4 (review
+      // G1): the same flag makes the sprite shader fade the whole sprite by an occlusion test of the LENS CENTRE against the
+      // scene depth (js/shaders/sprites.js lensVisible; js/scene.js needsDepth, js/renderer.js copyDepth), so a lens hidden by
+      // the airframe hides its disc (the pull alone let the belly beacon show through the wing root, the landing lamp through
+      // the wing)
       for (const sp of S) sp.pull = true;
+      // OD4 iteration 5 (review F1 / F3, docs/phase3_models.md 15.9): the test now uses the LAMP'S OWN SHAPE (js/aircraft/
+      // glb.js lampShape: an ellipsoid / box fitted to its vertices, whether its surface is in the depth, the facing cone of
+      // a one-sided patch), placed in the world with the anchor's mover (js/scene.js packs it, js/shaders/sprites.js tests it)
+      const occ = {};
+      for (const sp of S) { let k = null; for (const kk in W) if (W[kk] && W[kk] === sp.p) { k = kk; break; }
+        if (k && Lc[k] && Lc[k].occ) sp.occ = occ[k] || (occ[k] = this.lampWorld(Lc[k])); }
       return S;
     } catch (e) { return []; }
   }

@@ -97,7 +97,7 @@
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), low chase camera on runway 28L, 300 m past the threshold; gear 1, flaps 15, 1700 rpm, on the ground, lights nav,beacon,strobe,landing; at rwy28L; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
   "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
-  "rendered_utc": "2026-11-14T09:57:43.077Z",
+  "rendered_utc": "2026-11-20T21:19:59.924Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -128,7 +128,7 @@
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: windshield and side windows over the flight deck; gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
   "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
-  "rendered_utc": "2026-11-14T09:58:07.271Z",
+  "rendered_utc": "2026-11-20T21:20:34.641Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -191,7 +191,7 @@
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), rear 3/4 on the Green Ramp, flaps fully down (the pivot clamps 40 to the type maximum); gear 1, flaps 40, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
   "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
-  "rendered_utc": "2026-11-14T09:58:45.528Z",
+  "rendered_utc": "2026-11-20T21:21:59.204Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -222,7 +222,7 @@
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), front 3/4 on the Green Ramp (overall shape, livery, glazing, shadow); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
   "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
-  "rendered_utc": "2026-11-14T09:57:03.830Z",
+  "rendered_utc": "2026-11-20T21:18:26.864Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -253,7 +253,7 @@
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: right main gear (trailing link, leg door, side brace), radar pod; gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
   "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
-  "rendered_utc": "2026-11-14T09:59:10.065Z",
+  "rendered_utc": "2026-11-20T21:22:36.268Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -410,7 +410,7 @@
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), port profile on the Green Ramp (the original pc12 model, OD4); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
   "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
-  "rendered_utc": "2026-11-14T09:58:22.301Z",
+  "rendered_utc": "2026-11-20T21:21:02.843Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "-0.5,1.7,-24",
@@ -440,7 +440,7 @@
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), from straight behind on the Green Ramp (pc12 dihedral 4.5 deg, estimated in pc12/); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
   "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
-  "rendered_utc": "2026-11-14T09:58:33.000Z",
+  "rendered_utc": "2026-11-20T21:21:31.475Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "-32,1.7,0",
@@ -470,7 +470,7 @@
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), rear 3/4 on the Green Ramp (tail, wing tips, nacelle / bullet fairing); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
   "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
-  "rendered_utc": "2026-11-14T09:57:29.258Z",
+  "rendered_utc": "2026-11-20T21:19:25.315Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -501,7 +501,7 @@
   "caption": "PC12 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), starboard side on the Green Ramp (profile, windows, gear); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "PC12",
   "model_sha256": "87731ccee221de967c80f3743d4f6acd724fdbfbb0bd7c3c6a1ef0142d0bed60",
-  "rendered_utc": "2026-11-14T09:57:17.096Z",
+  "rendered_utc": "2026-11-20T21:18:54.791Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -936,7 +936,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), low chase camera on runway 28L, 300 m past the threshold; gear 1, flaps 15, 1700 rpm, on the ground, lights nav,beacon,strobe,landing; at rwy28L; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T09:59:40.109Z",
+  "rendered_utc": "2026-11-20T21:18:23.793Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -967,7 +967,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), front 3/4 at a screen-door fade of alpha 0.5; fix round 2: the shadow is dithered by the same alpha; gear 1, flaps 0, rotor stopped, on the ground, fade alpha 0.5; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:00:03.822Z",
+  "rendered_utc": "2026-11-20T21:19:00.767Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -998,7 +998,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), rear 3/4 on the Green Ramp, flaps fully down (the pivot clamps 40 to the type maximum); gear 1, flaps 40, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:00:25.051Z",
+  "rendered_utc": "2026-11-20T21:19:33.860Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1029,7 +1029,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), from straight ahead on the Green Ramp (fix round 2: wing root 0.10 m higher, matching the AFM Fig 1-1 front view); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:00:43.746Z",
+  "rendered_utc": "2026-11-20T21:20:03.552Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "22,1.3,0",
@@ -1059,7 +1059,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), front 3/4 on the Green Ramp (overall shape, livery, glazing, shadow); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:01:01.909Z",
+  "rendered_utc": "2026-11-20T21:20:39.337Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1090,7 +1090,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), from below, 9 m up over 28L, gear half way (doors, legs, braces); gear 0.5, flaps 15, 1700 rpm, 9 m up, pitch 6 deg, lights nav,beacon,strobe,landing; at rwy28L; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:01:17.087Z",
+  "rendered_utc": "2026-11-20T21:21:06.488Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1121,7 +1121,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), fix round 3 (S1): SF50 gear up, starboard wing root from above; gear 0, flaps 0, rotor stopped, 9 m up; at rwy28L; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:01:30.725Z",
+  "rendered_utc": "2026-11-20T21:21:49.007Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "1.6,3.2,2.6",
@@ -1148,10 +1148,10 @@
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
  "viewer_sf50_lights_dusk.jpg": {
-  "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), runway 28L at dusk from ahead / right: wing-tip landing and position lights behind the flush lenses, nose-gear lamp (light-flash phase pinned, lseed 0.378: the wing-tip strobes flash in the final frame); gear 1, flaps 15, rotor stopped, on the ground, lights nav,strobe,landing,taxi; at rwy28L; time 2026-11-14T01:05:00Z.",
+  "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), runway 28L at dusk from ahead / right: wing-tip landing and position lights behind the flush lenses, nose-gear lamp (light-flash phase pinned, lseed 0.378: the strobes flash in this frame, but from this side the wing-tip strobe lenses and the tail strobe are hidden by the tips and the tail cone, so their discs are not drawn - lens occlusion, OD4 iteration 4); gear 1, flaps 15, rotor stopped, on the ground, lights nav,strobe,landing,taxi; at rwy28L; time 2026-11-14T01:05:00Z.",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:03:16.618Z",
+  "rendered_utc": "2026-11-20T21:24:42.097Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "15,1.8,6.5",
@@ -1174,7 +1174,7 @@
    "alpha": null,
    "lseed": 0.378,
    "cam": "front",
-   "desc": "runway 28L at dusk from ahead / right: wing-tip landing and position lights behind the flush lenses, nose-gear lamp (light-flash phase pinned, lseed 0.378: the wing-tip strobes flash in the final frame)"
+   "desc": "runway 28L at dusk from ahead / right: wing-tip landing and position lights behind the flush lenses, nose-gear lamp (light-flash phase pinned, lseed 0.378: the strobes flash in this frame, but from this side the wing-tip strobe lenses and the tail strobe are hidden by the tips and the tail cone, so their discs are not drawn - lens occlusion, OD4 iteration 4)"
   },
   "licence": "Own render of the hwd3d dev model viewer (dev/model.html, this repository) of an own aircraft model (original neutral livery; no manufacturer logo, no registration: D1). Base: HWD world of this repository: airfield geometry from data/hwd_airport.json (c) OpenStreetMap contributors, ODbL 1.0 (https://www.openstreetmap.org/copyright), and FAA NASR (public domain); ground texture USDA NAIP 2024 (USDA FPAC Business Center, Geospatial Enterprise Operations), public domain. A Produced Work under ODbL 4.3: the notice is in this caption."
  },
@@ -1182,7 +1182,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: dorsal nacelle from ahead / port (raised D inlet lip, cowl faired into the spine); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:01:51.736Z",
+  "rendered_utc": "2026-11-20T21:22:31.348Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "2.6,3.4,-2.4",
@@ -1212,7 +1212,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), rear 3/4 on the Green Ramp (tail, wing tips, nacelle / bullet fairing); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:02:08.660Z",
+  "rendered_utc": "2026-11-20T21:22:52.986Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1243,7 +1243,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), starboard side on the Green Ramp (profile, windows, gear); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:02:24.125Z",
+  "rendered_utc": "2026-11-20T21:23:16.100Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1274,7 +1274,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: right wing tip from ahead / outboard (fix round 2: short pointed fin, top 0.06 m above the upper-surface line as in the AFM front view; flush lens with landing + position lights); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:02:41.782Z",
+  "rendered_utc": "2026-11-20T21:23:43.901Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "3.0,2.3,8.2",
@@ -1304,7 +1304,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: right wing tip from behind / outboard (the pointed, aft-raked upturn; strobe lens on its outboard face); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-14T10:02:57.888Z",
+  "rendered_utc": "2026-11-20T21:24:08.388Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "-3.6,1.9,7.6",
