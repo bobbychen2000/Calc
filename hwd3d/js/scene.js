@@ -7,6 +7,11 @@
 // world.staticSprites(t) when the world provides it only through staticLights (the app pushes it, fork map 2.10).
 // OD4 iteration 3 (docs/phase3_models.md 15.7): put() packs a sprite's `pull` flag into iData.y (js/shaders/sprites.js:
 // lights of detailed aircraft are pulled toward the camera by 3 m so the airframe beside a lens does not cut its disc).
+// OD4 iteration 4 (review G1, docs/phase3_models.md 15.8): the pull alone let a light show through the airframe (the PC-12
+// belly beacon on the wing root / fuselage side from any camera above the belly, the under-wing landing lamp through the
+// wing): the sprite batch now asks the renderer for a copy of the scene depth (`needsDepth`, js/renderer.js copyDepth) when
+// it holds a flagged sprite, and the sprite shader fades each flagged sprite by an occlusion test of its lens centre against
+// that depth (js/shaders/sprites.js lensVisible). Unflagged sprites (airfield lights, placeholders) are drawn as before.
 // Dropped: parkAtGates (video era), the GateSystem / jet bridges, the procedural airliner programs ('aircraft', 'acr':
 // P3 registers its own programs), stDir (SFO airport grid).
 import { Mesh } from './gl.js';
@@ -41,12 +46,13 @@ export class Scene {
     items.sort((a, b) => (PRI[a.prog] ?? 5) - (PRI[b.prog] ?? 5));
     for (const fn of this.extraItemFns) items.push(...fn(t));
     // light sprites
-    let n = 0; const B = this.spriteBuf;
+    let n = 0, nPull = 0; const B = this.spriteBuf;
     const put = (s) => {
       if (n >= MAX_SPRITES) return; const o = n * 16;
       B[o] = s.p[0]; B[o + 1] = s.p[1]; B[o + 2] = s.p[2]; B[o + 3] = s.s; B[o + 4] = s.c[0]; B[o + 5] = s.c[1]; B[o + 6] = s.c[2]; B[o + 7] = s.i;
       const d = s.dir || [0, 1, 0]; B[o + 8] = d[0]; B[o + 9] = d[1]; B[o + 10] = d[2]; B[o + 11] = s.dir ? (s.k || 4) : 0; B[o + 12] = s.lens ? 1 : 0;
       B[o + 13] = s.pull ? 1 : 0;   // OD4 it. 3: pulled toward the camera by its drawn radius (js/shaders/sprites.js; detailed aircraft)
+      if (s.pull) nPull++;          // OD4 it. 4 (G1): ... and faded by the lens-centre occlusion test against the scene depth
       n++;
     };
     for (const d of this.drawables) { if (d.visible === false || !d.lightSprites) continue; const L = d.lightSprites(t); for (let i = 0; i < L.length; i++) put(L[i]); }
@@ -64,8 +70,9 @@ export class Scene {
       items.push({ mesh: this.smokeMesh, prog: 'smoke', blend: 'alpha', bbox: null, castShadow: false, noCull: true,
         uniforms: () => { const C = R.curCam; const right = v3.norm(v3.cross(C.dir, C.up)); const up = v3.cross(right, C.dir); return { uCamRight: right, uCamUp: up }; } });
     }
-    if (n) items.push({ mesh: this.spriteMesh, prog: 'sprite', blend: 'add', bbox: null, castShadow: false, noCull: true,
-      uniforms: () => { const C = R.curCam; const right = v3.norm(v3.cross(C.dir, C.up)); const up = v3.cross(right, C.dir); return { uCamRight: right, uCamUp: up, uFovScale: 2 * Math.tan(C.fov / 2) / R.H }; } });
+    if (n) items.push({ mesh: this.spriteMesh, prog: 'sprite', blend: 'add', bbox: null, castShadow: false, noCull: true, needsDepth: nPull > 0,
+      uniforms: () => { const C = R.curCam; const right = v3.norm(v3.cross(C.dir, C.up)); const up = v3.cross(right, C.dir);
+        return { uCamRight: right, uCamUp: up, uFovScale: 2 * Math.tan(C.fov / 2) / R.H, uSceneDepth: R.sceneDepth || R.noDepth, uOcclude: R.sceneDepth ? 1 : 0 }; } });
     return { items };
   }
   commit() { for (const d of this.drawables) if (d.commit) d.commit(); }

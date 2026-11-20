@@ -264,7 +264,8 @@ export function convertGLB(buf, opts = {}) {
     const base = A.nv, b = m.base;
     // OD4: material id per part (opts.partMatId(matId, partId): e.g. every plain material of an interior part -> the cabin
     // id), and the glazing transmission (1 - alpha of the 'glass' materials, vertex-weighted): the light that reaches the cabin
-    const mid = opts.partMatId ? opts.partMatId(m.matId, pr.part >= 0 ? parts[pr.part].id : null) : m.matId;
+    // (OD4 iteration 4: the material record is passed too, so a part rule can leave blended materials alone)
+    const mid = opts.partMatId ? opts.partMatId(m.matId, pr.part >= 0 ? parts[pr.part].id : null, m) : m.matId;
     if (m.cls === 'glass') { glzW += pr.nv; glzT += pr.nv * (1 - b[3]); }
     for (let i = 0; i < pr.nv; i++) {
       const l = toLocalPt([pr.pos[i * 3], pr.pos[i * 3 + 1], pr.pos[i * 3 + 2]]); A.pos.push(l[0], l[1], l[2]);

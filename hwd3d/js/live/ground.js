@@ -31,7 +31,7 @@ export function naipPaved(x, z) {
 }
 // the pavement the physics uses: the site model's (P2) united with the NAIP-seen airside asphalt
 export const pavedWith = (site) => (x, z) => (site ? site.paved(x, z) : false) || naipPaved(x, z);
-export const PHYS_RULES = { PARK_GAP_M: 1.0, OTHER_GAP_M: 3.0, MOVING_M: 1.5, SCATTER_M: 6, SEEK_MAX_M: 25, ROTOR_M: 0.0, LOCK_M: 3.0, PUSH_M: 6.0 };   // LOCK_M = traffic.js REST_LOCK_M (round 4)   // SEEK_MAX_M 15 -> 25 m (fix round 1: a GNSS pose 15-20 m off the runway end pavement stayed on the grass) [inf]
+export const PHYS_RULES = { PARK_GAP_M: 1.0, OTHER_GAP_M: 3.0, MOVING_M: 1.5, SCATTER_M: 6, SEEK_MAX_M: 25, ROTOR_M: 0.0, LOCK_M: 3.0, PUSH_M: 6.0, BLD_PUSH_V: 8.0 };   // BLD_PUSH_V m/s (round 4 iteration 3, F9): taxi bodies below it are pushed clear of building footprints [inf]   // LOCK_M = traffic.js REST_LOCK_M (round 4)   // SEEK_MAX_M 15 -> 25 m (fix round 1: a GNSS pose 15-20 m off the runway end pavement stayed on the grass) [inf]
 
 // planform sample points of an aircraft whose main-gear origin is at (x, z), nose heading hdg (deg). Local: a = metres
 // ahead of the origin along the nose, s = metres to the right.
@@ -192,6 +192,15 @@ export class GroundPhysics {
         if (o.tr && o.tr.stale && !o.tr.park && !(B.tr && B.tr.stale) && overlaps(B, o, 0)) { o.tr.staleOverrun = true; continue; }
         ov++; const vx = B.x - o.x, vz = B.z - o.z, l = Math.hypot(vx, vz) || 1; push[0] += vx / l; push[1] += vz / l;
       }
+      // (round 4 iteration 3, F9) a TAXIING fixed-wing body (< BLD_PUSH_V) whose wing tip / tail is over a building footprint (a T-hangar row
+      // beside a narrow taxilane) is pushed sideways away from it, as from an aircraft - only while that keeps every wheel on the pavement
+      // (the push of round 4 iteration 2 acted on bodies at rest only; weekend: 42 frames of taxiing wings over the west T-hangars) [inf]
+      if (B.T.cls !== 'heli' && (tr.disp.gs || 0) < PHYS_RULES.BLD_PUSH_V && !(tr.park && tr.park.spotId && this.parking && (this.parking.byId.get(tr.park.spotId) || {}).door)) {
+        const S = B.S || (B.S = samples(B.T, B.x, B.z, B.hdg)); let side = 0, nh = 0;
+        for (const p of S.outline.concat(S.fus)) if (this.building(p[0], p[1])) { side += (p[0] - B.x) * B.r[0] + (p[1] - B.z) * B.r[1]; nh++; }
+        if (nh && Math.abs(side) > 1e-6) { const sg = side > 0 ? -1 : 1, px = B.r[0] * sg, pz = B.r[1] * sg;
+          const Bq = bodyOf(B.T, B.x + px * 1.0, B.z + pz * 1.0, B.hdg);
+          if (this.gearOk(Bq)) { push[0] += px; push[1] += pz; this.bldPush = (this.bldPush || 0) + 1; } else this.bldPushBlocked = (this.bldPushBlocked || 0) + 1; } }
       // (round 4, E7: the offset fades with the distance driven - 25 m - and at least over 30 s, not over 3 s of time: a 0.3-1 m offset of
       // a body leaving its rest pose (the seek offset at the line-up point) faded under a slow take-off roll start and yawed the nose
       // 5 deg on the centreline, 299.2 -> 294.4 -> 299.7 deg) [inf]
@@ -200,6 +209,6 @@ export class GroundPhysics {
       tr.physOff = pl > 0.05 ? cur : null;
     }
     this.frame++;
-    this.stats = { fixed: fixed.length, free: free.length, moving: moving.length, moved, unresolved, overlapsMoving: ov };
+    this.stats = { fixed: fixed.length, free: free.length, moving: moving.length, moved, unresolved, overlapsMoving: ov, bldPush: this.bldPush || 0, bldPushBlocked: this.bldPushBlocked || 0 };
   }
 }

@@ -117,7 +117,7 @@ export class AircraftViews {
         v.rotor = S.rotor;
         // flaps
         const set = this.flapSet(T.type, v);
-        S.flaps = this.flapRule(set, fresh ? null : S.flaps, D, agl, tr.phase);
+        S.flaps = this.flapRule(set, fresh ? null : S.flaps, D, agl, tr.phase, S, tr);
         v.setFlaps(S.flaps, fresh);
         // control surfaces from the drawn motion
         this.controls(S, D, T, dt, fresh);
@@ -156,10 +156,18 @@ export class AircraftViews {
     if (set) { this.flapSets.set(type, set); return set; }
     return FLAP_FALLBACK[type] || [0, 15, 30];
   }
-  flapRule(set, prev, D, agl, phase) {
+  flapRule(set, prev, D, agl, phase, S = null, tr = null) {
     const n = set.length, to = set[Math.min(1, n - 1)], ap = set[Math.max(1, n - 2)], ld = set[n - 1];
+    // (round 4 iteration 3, F4) the take-off setting, once set at a hold / run-up / line-up, stays set while the aircraft taxis on to
+    // the runway ('taxi' / 'runway_taxi' between the hold and the line-up): the SF50 of video S set them at the hold, retracted them to 0
+    // on the taxi onto 28L and extended them again lined up - both moves filmed. The latch ends at a landing roll, parking, a hangar,
+    // no signal or in the air (the climb-out rule takes over); a planned take-off (the engine target xplan:takeoff:* / plan:takeoff*:*)
+    // also keeps it
+    if (S) { if (D.ground && TO_GROUND.has(phase)) S.toSet = true;
+      else if (!D.ground || phase === 'landing_roll' || OFF_PHASE.has(phase)) S.toSet = false; }
     if (D.ground) {
       if (TO_GROUND.has(phase)) return to;
+      if ((phase === 'taxi' || phase === 'runway_taxi') && ((S && S.toSet) || /^x?plan:takeoff/.test((tr && tr._tgtMode) || '')) && prev != null && prev >= to - 0.01) return to;
       // kept from the landing (or the take-off setting) until the aircraft taxis; first drawn on a landing roll: landing flaps
       if (phase === 'landing_roll') return prev != null ? prev : ld;
       if (phase === 'runway_taxi') return prev != null ? prev : 0;

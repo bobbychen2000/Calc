@@ -20,7 +20,9 @@ export const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 export const VIDEO_SEED = 0x5eed;
 export const sha256 = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
 
-export async function freePort(lo = 8700, hi = 8749) {
+// (round 4 iteration 3) the port range can be moved with HWD_VIDEO_PORTS=lo-hi (another workflow may hold 87xx); default 8700-8749
+const PORTS = (() => { const m = /^(\d+)-(\d+)$/.exec(process.env.HWD_VIDEO_PORTS || ''); return m ? [+m[1], +m[2]] : [8700, 8749]; })();
+export async function freePort(lo = PORTS[0], hi = PORTS[1]) {
   for (let p = lo; p <= hi; p++) {
     const ok = await new Promise(r => { const s = net.createServer(); s.once('error', () => r(false)); s.listen(p, '127.0.0.1', () => s.close(() => r(true))); });
     if (ok) return p;
@@ -34,7 +36,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
  *  Every request is logged: `served` (path -> sha256 of the bytes sent; `manifest` given: a byte mismatch is a `bad` entry)
  *  and `missed` (404s): the driver aborts a run with a miss or a mismatch, so a page never falls back to anything that is
  *  not in the snapshot. */
-export async function startServer({ root = ROOT, manifest = null, lo = 8700, hi = 8749 } = {}) {
+export async function startServer({ root = ROOT, manifest = null, lo = PORTS[0], hi = PORTS[1] } = {}) {
   const served = new Map(), missed = [], bad = [];
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://x');
@@ -135,7 +137,9 @@ export function makeSnapshot(dir, rels, info = {}) {
  *  snapshot it came from. The tree hash changes, so scout and plan must run again (the stamps chain refuses old ones). */
 // (round 4 iteration 2, F9) rel may be a list: --refresh=engine replaces the traffic engine modules only (ENGINE_FILES), keeping the
 // renderer, shaders, models and data of the snapshot frozen while another workflow edits them
-export const ENGINE_FILES = ['js/live/traffic.js', 'js/live/motion.js', 'js/live/ground.js', 'js/live/classifier.js', 'js/live/parking.js', 'js/live/feed.js', 'js/live/lookup.js'];
+// (round 4 iteration 3, F4: and js/live/aircraft.js, whose flap / gear / power rules drive the detailed models from the engine's motion -
+// its only dependency on the frozen model runtime is js/aircraft/models.js createAircraft / withModelFrame, unchanged since the snapshot)
+export const ENGINE_FILES = ['js/live/traffic.js', 'js/live/motion.js', 'js/live/ground.js', 'js/live/classifier.js', 'js/live/parking.js', 'js/live/feed.js', 'js/live/lookup.js', 'js/live/aircraft.js'];
 export function refreshSnapshot(dir, rel) {
   const M0 = verifySnapshot(dir); const keep = {}, files = {}, rels = [].concat(rel), inR = (k) => rels.some(r => k === r || k.startsWith(r + '/'));
   for (const [k, h] of Object.entries(M0.files)) if (inR(k)) fs.rmSync(path.join(dir, k)); else keep[k] = h;

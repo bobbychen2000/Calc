@@ -206,9 +206,11 @@ lead equals the adaptive delay (up to 65 s).
   ended (`hangar_in`, "In hangar · Hangar B"): 66 / 149 samples. It is real behaviour (entering its T-hangar), but no door
   is modelled and no door spot exists there, so the render shows the nose through the wall (image 4). Reproduced in a
   third, type-only run at the same scene time.
-- **b. Two taxiing aircraft pass through each other (B, both B runs).** At 23:05:16–23:05:22Z an untyped high-wing single
-  taxiing at ~2.3 m/s (4.5 kt) on a taxi route crossed a C172 that was in phase "runup" but creeping at 0.7–2 m/s, at
-  about (394, 24), north-east of the 28R end; centre distance down to 0.4 m; 56 / 60 overlapping samples (1 pair). GroundPhysics only
+- **b. Two taxiing aircraft pass through each other (B, both B runs; 'case B1').** A few minutes into window B, for about
+  6 s, an untyped high-wing single taxiing at ~2.3 m/s (4.5 kt) on a taxi route crossed a second high-wing single that was
+  in phase "runup" but creeping at 0.7–2 m/s, north-east of the 28R end; centre distance down to 0.4 m; 56 / 60
+  overlapping samples (1 pair). *(Round 4 iteration 3, F3: the clock times, the second aircraft's type and the position
+  given here before were removed - D1, no committed time of an individual aircraft's event.)* GroundPhysics only
   nudges moving bodies with a fading offset, which did not separate them.
 - **c. Touchdown drawn short of the runway, then stop-and-pivot (B).** A PA46 was drawn on the ground at 79 kt
   (40.8 m/s), 37 m before the 28R threshold on the extended centreline (all 3 wheels off pavement), while its recorded
@@ -237,9 +239,10 @@ stand-in (airliner shape, 34.3 m span; image 5) instead of its 28.7 m bizjet pla
 Since published packs default to type-only (D1), the artifact will show this. The type is not identity under D1, so
 keeping `_mx.t` / `_mx.d` as `t` / `desc` before masking would fix it (owner/P1 decision).
 
-**F6 — One HWD departure tagged overflight (window edge, P3 classifier).** In A, a PA24 that had been taxiing on the
-field at 19:56Z was first seen by the run at 20:00:01Z just after lift-off (alt_geom −100 ft → h ≈ 0 ft AGL, 83 kt, track
-305°, 537 m north-west of the ARP), then 4 km away climbing. The run never saw its ground part and D6 tagged it
+**F6 — One HWD departure tagged overflight (window edge, P3 classifier; 'case F6a').** In A, a single-engine piston
+that had been taxiing on the field shortly before the window began was first seen by the run in the window's first
+seconds, just after lift-off (h ≈ 0 ft AGL, 83 kt), then 4 km away climbing. *(Round 4 iteration 3, F3: its type, clock
+times, track and position were removed - D1.)* The run never saw its ground part and D6 tagged it
 overflight after 90 s; the "L corridor fix" rule did not fire on that first low fix (cause not verified). The same will
 happen whenever the live relay starts, or coverage begins, during a take-off.
 

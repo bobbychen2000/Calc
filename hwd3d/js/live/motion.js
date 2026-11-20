@@ -105,6 +105,8 @@ export function profilePath(R, D, v0, v1, opt) {
     const th = Math.abs(wrapPi(Math.atan2(C[0] - B[0], -(C[1] - B[1])) - Math.atan2(B[0] - A[0], -(B[1] - A[1]))));
     if (th > 150 * Math.PI / 180) { const i = clamp(Math.round(R.cum[k] / h), 0, n - 1); cap[i] = 0; dwell[i] += th / opt.pivotW; }
   }
+  // (round 4 iteration 3, F10) a pivot before the start: the body stands at rest heading away from the path's first direction
+  if (opt.dwell0 > 0) dwell[0] += opt.dwell0;
   const start = Math.max(0, v0), end = Math.max(0, v1);
   const run = (vc, stopAt) => {
     const v = new Float64Array(n);

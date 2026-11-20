@@ -106,7 +106,10 @@ const PL = { teleports: 0, teleports_hwd: 0, teleports_engine: 0, teleports_sign
   touchdown_pitch_bad: 0, touchdowns_checked: 0, pitch_rate_frames: 0, pitch_phase_samples: 0, roll_turn_samples: 0, ground_stall_frames: 0,
   roll_start_yaw_frames: 0, taxi_hole_stop_frames: 0, label_overflight_hwd: 0, label_taxi_still: 0, snapshot_drift: 0, r4Log: [],
   // round 4 iteration 2: see r4i2Frame
-  low_bank_frames: 0, pivot_in_place: 0, ground_slow_fast_roll: 0, label_flicker: 0, label_final_arriving: 0 };
+  low_bank_frames: 0, pivot_in_place: 0, ground_slow_fast_roll: 0, label_flicker: 0, label_final_arriving: 0,
+  // round 4 iteration 3: see r4i3All / r4i3Frame
+  roll_yaw_rate_frames: 0, roll_speed_mismatch_frames: 0, hard_stops_fade: 0, hidden_rolling: 0, liftoff_pitch_dip: 0, label_landing_roll_rotating: 0,
+  off_pavement_moving_frames: 0, low_bank_landing_frames: 0, r4i3Log: [] };
 // runway rectangle test (site.runways axes; m = extra half-width) - the pavement a take-off / landing roll uses
 const onRwy = (x, z, m = 3) => (site.runways || []).some(r => { const px = x - r.origin[0], pz = z - r.origin[1], al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; return al >= 0 && al <= r.length && Math.abs(ac) <= r.halfWidth + m; });
 const newLog = (...a) => { if (PL.newLog.length < 400) PL.newLog.push(a); };
@@ -310,6 +313,7 @@ function extraFrame(now) {
     if (fw && !D.ground && Math.hypot(D.x, D.z) < 2500 && agl < 35 && !inRwyBox(D.x, D.z, 30, 300)) { PL.low_air_off_runway_frames++; if (s1) xLog('low_air_off_runway', t, lab, Math.round(agl), Math.round(D.x), Math.round(D.z), +kt.toFixed(0), tr.phase, site.surface(D.x, D.z)); }
     if (fw) iter3Frame(tr, D, td, t, s1, agl, kt, lab);
     if (fw) r4Frame(tr, D, td, t, s1, agl, kt, lab);
+    if (fw) r4i3Frame(tr, D, td, t, s1, agl, kt, lab);
   }
   for (let i = 0; i < air.length; i++) for (let j = i + 1; j < air.length; j++) {
     const A = air[i].disp, B = air[j].disp, d = Math.hypot(A.x - B.x, A.y - B.y, A.z - B.z); if (d >= 30) continue;
@@ -501,7 +505,8 @@ function r4Frame(tr, D, td, t, s1, agl, kt, lab) {
     const tx = tr.restPose.x + (tr.physOff ? tr.physOff[0] : 0), tz = tr.restPose.z + (tr.physOff ? tr.physOff[1] : 0), dNow = Math.hypot(tx - D.x, tz - D.z), arriving = dNow > 3 || (dNow > 0.15 && dNow < (P.rd ?? 1e9) - 0.005); P.rd = dNow;
     // (and a pivot toward the heading of a PLANNED wait - the turn a take-off plan schedules before it taxis off or at its line-up -
     // is the plan's manoeuvre: INFO rest_turn_planned)
-    const planTurn = tr.restPose.planned && tr.restPose.hdg != null && /:wait$/.test(tr._tgtMode || '') && dp <= Math.max(0.05, dpPiv) && angDiff(D.hdg, tr.restPose.hdg) < angDiff(pv.hdg, tr.restPose.hdg);
+    // (round 4 iteration 3, F10: and the planned pivot dwell of a taxi profile - its start pivot or a turn-around, mode route / chord)
+    const planTurn = tr.restPose.planned && tr.restPose.hdg != null && /:wait$|^(route|chord|late)$|:prof$/.test(tr._tgtMode || '') && dp <= Math.max(0.05, dpPiv) && angDiff(D.hdg, tr.restPose.hdg) < angDiff(pv.hdg, tr.restPose.hdg);
     if (obsTurn && dh > 0.3) PL.rest_turn_observed = (PL.rest_turn_observed || 0) + 1;
     else if (planTurn && dh > 0.3) PL.rest_turn_planned = (PL.rest_turn_planned || 0) + 1;
     else if (arriving) PL.rest_arriving = (PL.rest_arriving || 0) + 1;
@@ -577,6 +582,74 @@ function r4i2Frame(tr, D, td, t, s1, agl, kt, lab, P, R0, VR, near, rollD) {
     if (before >= 500 && before <= 5000 && Math.abs(ac) <= 100 && angDiff(D.hdg, hdgOf(r, sg)) <= 15) { PL.label_final_arriving++; r4Log('label_final_arriving', t, lab, tr.phase, Math.round(before), Math.round(ac), Math.round(agl)); }
   }
 }
+// ---- round 4 iteration 3 (docs/phase2_run.md section 12; recheck findings F1-F10), fixed-wing, 10-Hz frames:
+//   roll_yaw_rate_frames        F1: on the ground on a runway (its rectangle + 3 m), faster than 30 kt in both frames, the drawn heading
+//                               turning faster than 3 deg/s over the last 0.3 s (case P's landing roll yawed 301.3 -> 298.3 -> 302.2 deg
+//                               at 50 kt, up to 12.6 deg/s)
+//   roll_speed_mismatch_frames  F1: the same bodies, the drawn position's speed over the last 0.3 s differing from the shown speed (disp.gs,
+//                               mean of the two frames) by more than 3 kt (case P: the body moved at 37-52 kt while showing 50-51 kt)
+//   hard_stops_fade             F2: a body drawn (alpha > 0.5) on the ground faster than 20 kt whose drawn speed falls below 2 kt within 2 s
+//                               whatever its alpha (the hidden take-off fallback 'wait' stopped a rolling single from 47 to 0 kt in 0.2 s
+//                               while it faded out); counted with hard_stops in the gate
+//   hidden_rolling              F2: a body drawn on the ground faster than 20 kt that is faded out (alpha 1 -> 0) by a HIDDEN target (a hidden
+//                               plan / segment - not a re-placement, a hangar or the end of the view): an aircraft rolling on a runway
+//                               vanished mid-runway for 47 s
+//   liftoff_pitch_dip           F5: within 3 s after a drawn lift-off at HWD, the pitch more than 1.5 deg below its highest value since the
+//                               lift-off (case S: 8.2 -> 5.4 deg at 0-1 ft)
+//   label_landing_roll_rotating F6: 'Landing roll' shown on a body on the ground that is accelerating (> 0.3 m/s over 1 s) with the nose up
+//                               (> 2 deg): a rotation for a take-off
+//   off_pavement_moving_frames  F8: a moving (> 0.5 m/s) fixed-wing ground body with a wheel off pavement, in ANY target mode (grass_route_frames
+//                               counts only route mode; a planned taxi out of a run-up area crossed grass at 9 kt); the target mode is logged
+//   low_bank_landing_frames     F9: a PLANNED landing / approach body (xplan / plan landing or touch-and-go approach) below 200 ft AGL banked
+//                               more than 15 deg (+ 0.5): a reconstructed final at 26 deg bank at 73 ft
+// The limits are design values [inf].
+const R43 = new Map();
+const r43Log = (...a) => { if (PL.r4i3Log.length < 900) PL.r4i3Log.push(a); };
+function r4i3Frame(tr, D, td, t, s1, agl, kt, lab) {
+  const P = R43.get(tr.key) || { h: [] }; R43.set(tr.key, P);
+  const H = P.h; H.push([td, D.gs, D.ground, D.hdg, D.x, D.z, D.alpha, (D.pitch || 0) * 180 / Math.PI]); while (H.length && H[0][0] < td - 3100) H.shift();
+  const at = (s) => { for (let k = H.length - 1; k >= 0; k--) if (H[k][0] <= td - s * 1000 + 1) return H[k]; return null; };
+  const near = Math.hypot(D.x, D.z) < 3000, mode = tr._tgtMode || '';
+  // F1
+  if (D.ground && near && onRwy(D.x, D.z, 3)) { const q = at(0.3);
+    if (q && q[2] && td - q[0] < 400 && q[1] > 30 * 0.514444 && D.gs > 30 * 0.514444 && q[6] > 0.99 && D.alpha > 0.99) { const dtq = (td - q[0]) / 1000;
+      const w = angDiff(D.hdg, q[3]) / dtq; if (w > 3) { PL.roll_yaw_rate_frames++; if (!P.yw || td - P.yw > 1000) { P.yw = td; r43Log('roll_yaw_rate', t, lab, +w.toFixed(1), Math.round(kt), tr.phase, mode); } }
+      const vp = Math.hypot(D.x - q[4], D.z - q[5]) / dtq, vs = 0.5 * (D.gs + q[1]);
+      if (Math.abs(vp - vs) > 3 * 0.514444) { PL.roll_speed_mismatch_frames++; if (!P.sm || td - P.sm > 1000) { P.sm = td; r43Log('roll_speed_mismatch', t, lab, +(vp / 0.514444).toFixed(1), +(vs / 0.514444).toFixed(1), tr.phase, mode); } } } }
+  // F5
+  if (P.pv && P.pv.ground && !D.ground && near && P.pv.alpha > 0.99) P.lo = { t: td, max: P.pv.pitch };
+  if (D.ground) P.lo = null;
+  if (P.lo && !D.ground && td - P.lo.t <= 3000) { const pd = (D.pitch || 0) * 180 / Math.PI; P.lo.max = Math.max(P.lo.max, pd);
+    if (P.lo.max - pd > 1.5) { PL.liftoff_pitch_dip++; if (!P.lo.lg) { P.lo.lg = 1; r43Log('liftoff_pitch_dip', t, lab, +P.lo.max.toFixed(1), +pd.toFixed(1), Math.round(agl), mode); } } }
+  // F6
+  if (D.ground && tr.phase === 'landing_roll') { const q = at(1.0), pd = (D.pitch || 0) * 180 / Math.PI; if (q && q[2] && D.gs - q[1] > 0.3 && pd > 2) { PL.label_landing_roll_rotating++; r43Log('label_landing_roll_rotating', t, lab, Math.round(kt), +pd.toFixed(1), mode); } }
+  // F8
+  if (D.ground && D.gs > 0.5 && tr.dims && !tr.inHangarRest && samples(tr.dims, D.x, D.z, D.hdg).gear.some(g => !PAV(g[0], g[1]))) { PL.off_pavement_moving_frames++;
+    const m0 = mode.split(':').slice(0, 2).join(':'); PL.off_pave_moving_by_mode = PL.off_pave_moving_by_mode || {}; PL.off_pave_moving_by_mode[m0] = (PL.off_pave_moving_by_mode[m0] || 0) + 1;
+    if (!P.op || td - P.op > 1000) { P.op = td; r43Log('off_pavement_moving', t, lab, Math.round(kt), tr.phase, mode, site.surface(D.x, D.z)); } }
+  // F9
+  if (!D.ground && near && agl < 200 && /^x?plan:(landing|touchgo)/.test(mode) && (D.vs || 0) < -0.5 && Math.abs((D.roll || 0) * 180 / Math.PI) > 15.5) {
+    PL.low_bank_landing_frames++; if (s1) r43Log('low_bank_landing', t, lab, Math.round(agl), +((D.roll || 0) * 180 / Math.PI).toFixed(0), tr.phase, mode); }
+  P.pv = { t: td, ground: D.ground, alpha: D.alpha, pitch: (D.pitch || 0) * 180 / Math.PI };
+}
+// every track every frame, whatever its alpha (F2: a stop or a hide during a fade-out)
+const R43A = new Map();
+function r4i3All(now) {
+  const td = traffic.displayTime(now), t = Math.round(td / 1000 - pack.from);
+  for (const tr of traffic.tracks.values()) {
+    const D = tr.disp, T = tr.dims; if (!T || tr.vehicle || T.cls === 'heli' || !D.valid || !tr.inView) { R43A.delete(tr.key); continue; }
+    let q = R43A.get(tr.key); if (!q) R43A.set(tr.key, q = { arm: null, hid: null });
+    const lab = tr.info.icao || '?';
+    // arm on a drawn fast ground frame; fire when the speed has fallen below 2 kt within 2 s (any alpha > 0 or the frame it vanished)
+    if (D.ground && D.alpha > 0.5 && D.gs > 20 * 0.514444) q.arm = { t: td, v: D.gs };
+    else if (q.arm && td - q.arm.t <= 2000 && D.ground && D.gs < 2 * 0.514444) { PL.hard_stops_fade++; r43Log('hard_stop_fade', t, lab, +(q.arm.v / 0.514444).toFixed(0), +(D.gs / 0.514444).toFixed(1), +D.alpha.toFixed(2), tr._tgtMode || ''); q.arm = null; }
+    else if (q.arm && td - q.arm.t > 2000) q.arm = null;
+    // hidden while rolling
+    if (D.ground && D.alpha > 0.99 && D.gs > 20 * 0.514444) q.hid = { t: td, v: D.gs };
+    else if (q.hid && td - q.hid.t <= 2000 && D.alpha <= 0.02 && tr._hideSeg && !tr.cutting && !tr.inHangarRest) { PL.hidden_rolling++; r43Log('hidden_rolling', t, lab, +(q.hid.v / 0.514444).toFixed(0), +(D.gs / 0.514444).toFixed(1), tr._tgtMode || '', D.ground ? 'G' : 'A'); q.hid = null; }
+    else if (q.hid && td - q.hid.t > 2000) q.hid = null;
+  }
+}
 function r4End(lastNow) {
   for (const [k, a] of OVF) { const tr = EVER.get(k), T1 = RWYT.get(k); if (!tr || T1 == null) continue; for (const td of a) if (td <= T1 && T1 - td <= 300000) { PL.label_overflight_hwd++; if (PL.label_overflight_hwd <= 20) r4Log('label_overflight_hwd', Math.round(td / 1000 - pack.from), tr.info.icao || '?', Math.round((T1 - td) / 1000)); } }
   // E8: snapshot mode as js/live/app.js runs it - a fresh engine, the PRE_S (600) s before the instant S on the pack's own payloads
@@ -618,7 +691,7 @@ for (let t = tStart; t <= tEnd; t += DT) {
   const a = performance.now();
   traffic.update(t * 1000, DT); physics.resolve(traffic, DT); lastNowMs = t * 1000;
   M.updMs.push(performance.now() - a);
-  sampleFrame(t * 1000); extraFrame(t * 1000);
+  sampleFrame(t * 1000); extraFrame(t * 1000); r4i3All(t * 1000);
 }
 iter3End();
 r4End(lastNowMs);
@@ -672,7 +745,9 @@ const CHECKS = { teleports_engine: [PL.teleports_engine, 0], teleports_signal_hw
   label_hold_on_runway: [PL.label_hold_on_runway, 0], liftoff_pitch_low: [PL.liftoff_pitch_low, 0], touchdown_pitch_bad: [PL.touchdown_pitch_bad, 0], pitch_rate_frames: [PL.pitch_rate_frames, 0],
   pitch_phase_samples: [PL.pitch_phase_samples, 0], roll_turn_samples: [PL.roll_turn_samples, 0], ground_stall_frames: [PL.ground_stall_frames, 0], roll_start_yaw_frames: [PL.roll_start_yaw_frames, 0],
   taxi_hole_stop_frames: [PL.taxi_hole_stop_frames, 0], label_overflight_hwd: [PL.label_overflight_hwd, 0], label_taxi_still: [PL.label_taxi_still, 0], snapshot_drift: [PL.snapshot_drift, 0],
-  low_bank_frames: [PL.low_bank_frames, 0], pivot_in_place: [PL.pivot_in_place, 0], ground_slow_fast_roll: [PL.ground_slow_fast_roll, 0], label_flicker: [PL.label_flicker, 0], label_final_arriving: [PL.label_final_arriving, 0] };
+  low_bank_frames: [PL.low_bank_frames, 0], pivot_in_place: [PL.pivot_in_place, 0], ground_slow_fast_roll: [PL.ground_slow_fast_roll, 0], label_flicker: [PL.label_flicker, 0], label_final_arriving: [PL.label_final_arriving, 0],
+  roll_yaw_rate_frames: [PL.roll_yaw_rate_frames, 0], roll_speed_mismatch_frames: [PL.roll_speed_mismatch_frames, 0], hard_stops_fade: [PL.hard_stops_fade, 0], hidden_rolling: [PL.hidden_rolling, 0], liftoff_pitch_dip: [PL.liftoff_pitch_dip, 0],
+  label_landing_roll_rotating: [PL.label_landing_roll_rotating, 0], off_pavement_moving_frames: [PL.off_pavement_moving_frames, 0], low_bank_landing_frames: [PL.low_bank_landing_frames, 0] };
 // (iteration 2, F4) planted cases: each gate below must FIRE on its planted input and must NOT fire on its planted
 // exception - a gate that cannot fire is dead code (ground_air_reappear read a field that was never stored)
 { const last = { t: 0, x: 0, y: 12, z: 0, gs: 0, ground: true, cls: 'single_hw' }, Dp = { x: -800, y: 45, z: -400, gs: 36, ground: false };
@@ -796,7 +871,7 @@ console.log('pavement', JSON.stringify(out.pavement)); console.log('overlaps', J
 console.log('motion', JSON.stringify(out.motion)); console.log('parking', JSON.stringify(park)); console.log('scope', JSON.stringify(scope)); console.log('d1', JSON.stringify(d1));
 console.log('counters', JSON.stringify(traffic.counters), 'net', JSON.stringify(out.run.net), 'flow', JSON.stringify(out.run.flow));
 console.log('visible phases', JSON.stringify(M.phaseFrames));
-console.log('plausibility', JSON.stringify({ ...PL, r4Log: undefined, teleLog: undefined, ghostLog: undefined, liftLog: undefined, hopLog: undefined, alignLog: undefined, newLog: undefined, m3Log: undefined, xLog: undefined }));
+console.log('plausibility', JSON.stringify({ ...PL, r4Log: undefined, r4i3Log: undefined, teleLog: undefined, ghostLog: undefined, liftLog: undefined, hopLog: undefined, alignLog: undefined, newLog: undefined, m3Log: undefined, xLog: undefined }));
 if (PL.m3Log.length) console.log('m3 hidden take-offs [t s, type, m from the last drawn ground pose, absent s, ft AGL at the fix, why]', JSON.stringify(PL.m3Log));
 if (PL.teleLog.length) console.log('teleports [t s, type, scope, phase, m, absent s, why, engine|signal, longest fix gap s]', JSON.stringify(PL.teleLog));
 if (PL.alignLog.length) console.log('misaligned [t s, type, kind, deg off the runway]', JSON.stringify(PL.alignLog));
@@ -804,6 +879,7 @@ if (PL.hopLog.length) console.log('hops [t s, type, max m from lift-off, max ft 
 if (PL.newLog.length && args.includes('--log')) for (const r of PL.newLog) console.log('log', JSON.stringify(r));
 if (PL.xLog.length && args.includes('--log')) for (const r of PL.xLog) console.log('xlog', JSON.stringify(r));
 if (PL.r4Log.length && args.includes('--log')) for (const r of PL.r4Log) console.log('r4log', JSON.stringify(r));
+if (PL.r4i3Log.length && args.includes('--log')) for (const r of PL.r4i3Log) console.log('r43log', JSON.stringify(r));
 console.log('INFO', JSON.stringify(INFO));
 console.log('CHECKS', Object.entries(CHECKS).map(([k, [v, lim]]) => `${k} ${v} (<= ${lim}) ${v > lim ? 'FAIL' : 'ok'}`).join(' | '));
 console.log(FAILED.length ? 'RESULT: FAILED ' + FAILED.join(', ') : 'RESULT: ALL PLAUSIBILITY CHECKS PASSED');

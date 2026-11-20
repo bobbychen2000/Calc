@@ -32,14 +32,32 @@ const here = (p) => new URL(p, import.meta.url).href;
 // builder (pc12/cad material table); anything else keeps id 0 (plain PBR).
 // OD4: 24 = glazing (alpha-blended 'glass' class, js/aircraft/glb.js): the 'acglass' program shades it as a thin tinted
 // sheet (reflection, the pane's diffuse return at its opacity as three.js shades it - OD4 iteration 2 - and transmission);
-// 'clear' lens covers keep 0 (diffuse translucent plastic).
+// 'clear' lens covers keep 0 (diffuse translucent plastic). OD4 iteration 4: 25 = a plain / paint material of a part that
+// encloses the cabin (AC_PART_CABIN below; set per part by AC_PART_MAT), 26 = a plain material of the flight deck
+// (AC_PART_DECK below).
 export const AC_MAT = (info) => /^(paint_|trim_)/.test(info.name) ? 21 : /^screen/.test(info.name) ? 22
   : /^(leather|carpet|lining|wood|panel_black|interior|seat|cabin)/.test(info.name) ? 23 : info.cls === 'glass' ? 24 : 0;
 // OD4: parts whose every plain material is cabin / flight-deck interior (id 23: lit only through the glazing, js/aircraft/
 // detailed.js ACOBJ_FS), whatever the material is called - e.g. pc12's metal_dark seat frames in 'cabin_interior' and the
 // panel hardware in 'flight_deck', the SF50's 'cabin_lining' / 'cabin_seats'. Paint (21) and displays (22) keep their ids.
 export const AC_PART_INTERIOR = /^(flight_deck|cabin_interior|cabin_lining|cabin_seats|cockpit_interior)$/;
-export const AC_PART_MAT = (id, part) => (id === 0 && part && AC_PART_INTERIOR.test(part) ? 23 : id);
+// OD4 iteration 4 (review G2): the parts that ENCLOSE the cabin and flight deck - the fuselage skins, the doors and hatches,
+// the door frames and the window / windshield frames and seals (PC-12: fus_fwd, fus_center, fus_aft, door_airstair,
+// door_cargo, exit_hatch, door_frames, glazing_cabin, glazing_flightdeck; SF50: fuselage, windshield, cabin_windows,
+// door_upper, door_lower, door_baggage). Their opaque plain / paint materials (ids 0 and 21) take id 25: the same plain glTF
+// material, whose BACK face is the inside of the cabin (lit through the glazing, js/aircraft/detailed.js ACOBJ_FS). Until
+// iteration 3 every back face of every part counted as cabin, so the inside of the main-gear wells, the belly fairing and the
+// wing skins seen through the well openings took the cabin's light (near black). Glazing (24), interior (23), displays (22)
+// and blended lens covers keep their ids.
+export const AC_PART_CABIN = /^(fus_fwd|fus_center|fus_aft|door_airstair|door_cargo|exit_hatch|door_frames|glazing_cabin|glazing_flightdeck|fuselage|windshield|cabin_windows|door_upper|door_lower|door_baggage)$/;
+// OD4 iteration 4 (review G3): the flight-deck part (PC-12: crew seats, panel, glareshield, yokes; SF50: the panel) - its
+// interior materials (ids 0 and 23) take id 26, lit by the flight deck's own shares of sky and sun (js/aircraft/detailed.js
+// DECK_SKY_SHARE / DECK_SUN_T): the windshield and side windows are most of what the flight deck sees, the cabin's few
+// windows a small part of what the cabin sees. Displays keep 22.
+export const AC_PART_DECK = /^(flight_deck|cockpit_interior)$/;
+export const AC_PART_MAT = (id, part, mat) => (part && AC_PART_DECK.test(part) && (id === 0 || id === 23) && !(mat && mat.blend) ? 26
+  : id === 0 && part && AC_PART_INTERIOR.test(part) ? 23
+  : (id === 0 || id === 21) && part && AC_PART_CABIN.test(part) && !(mat && mat.blend) ? 25 : id);
 export const MODELS = {
   // own work: pc12/ parametric model - the ORIGINAL model of this repository's pc12/ project, pc12/out/pc12.glb copied
   // unchanged (sha256 87731cce..., pc12 @ f097de2; owner request 2026-11-14 "use whatever we had in the past": the hwd3d-side

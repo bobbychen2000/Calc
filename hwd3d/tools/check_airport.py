@@ -106,6 +106,11 @@ Checks
      class in the hour is flagged. Images are not read: every app screenshot (docs/phase2/, or a SOURCES entry naming
      livetest or a replay / snapshot pack) carries a by-eye review note d1_labels ('checked ...' / 'masked ...') - hard; the
      masked ones say so in their caption ('MASKED'). The check alone: --d1-windows (seconds once the counts are cached).
+     D1 event clock times (round 4 iteration 3; d1_event_times): no committed text gives the clock time (hh:mm[:ss]Z / UTC / PST
+     / PDT) of an individual aircraft's event - a time in the same sentence or table row as an event word (taxied, took off,
+     landing roll, touchdown, lift-off, touch-and-go, departed, parked, crossed, first seen, signal ended, ...) - hard; window
+     labels on the hour, either end of a span of >= 5 min and a screenshot's 'scene hh:mm' are not events; planted cases -
+     hard. Also run by --d1-windows.
 usage: python3 hwd3d/tools/check_airport.py [--data FILE] [--paint-only] [--d1-windows]
 """
 import json, math, os, re, subprocess, sys
@@ -763,6 +768,77 @@ def d1_dated_windows():
     return probs + ['%s:%d window %s (%s)' % (h[0], h[1], h[3], h[4]) for h in hits]
 
 
+# ------------------------------------------------------------------------------------------------ D1: event clock times
+# (round 4 iteration 3, F3) 'no committed time of an individual aircraft's event' (docs/PLAN.md 6a D1 / 6b (d)): a clock time
+# (hh:mm[:ss[.s]]Z / UTC / PST / PDT, optionally ISO-dated) in the same sentence (or table cell) of committed text as an aircraft-event word (taxied,
+# took off, landing roll, touchdown, lift-off, touch-and-go, low pass, departed, arrived, parked, held short, lined up, crossed,
+# first seen / heard, signal ended, vanished, re-appeared, ...) is a hit - hard. Window-scale times are not events: a time on the hour
+# (hh:00Z, hh:00:00Z - a window or hour label), either end of a range of >= 5 min (a run's or window's span, 'T1 -> T2') and a
+# screenshot's 'scene hh:mm' (the instant an image shows, not an event; an image caption must not give the minute of a case the
+# text describes - phase2_run_6, round 4 iteration 3). The
+# units are the D1(d) units (_d1w_units: markdown paragraphs / list items / table cells, code comments, JSON entries). Two
+# committed lines of docs/phase2_run.md (round 1) gave a window-B taxi crossing and a window-A take-off to the second.
+D1T_TIME = re.compile(r'(?<![\d:])(?:(\d{4}-\d\d-\d\d)T)?([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d)(?:\.\d+)?)?(\s?Z|\s(?:UTC|PST|PDT))?(?![A-Za-z0-9:])')
+D1T_EVENT = re.compile(r'\b(taxi(?:ed|ing)|took off|take-?offs?|land(?:ed|s)|landing rolls?|touch(?:ed)?[- ]?downs?|lift(?:ed|s)?[- ]?offs?|'
+                       r'touch-and-gos?|stop-and-gos?|low pass(?:es)?|go-arounds?|depart(?:ed|ures?|ing)|arriv(?:al|als|ed|ing)|parked|'
+                       r'held short|holding short|lined up|rolled|crossed|first (?:seen|heard)|was (?:seen|heard)|heard again|'
+                       r'signal (?:ended|lost|came back)|vanish\w*|re-?appear\w*|teleport\w*|climbing out|on final|hovered|hover-taxi\w*)\b', re.I)
+D1T_RANGE = re.compile(r'\s*(?:→|->|–|—|-|\.\.|to)\s*')
+def _d1t_sec(m): return int(m.group(2)) * 3600 + int(m.group(3)) * 60 + int(m.group(4) or 0)
+def _d1t_hits(txt_unit):
+    """-> [(offset, time text, event word)] for one unit's joined text"""
+    out = []; ms0 = list(D1T_TIME.finditer(txt_unit)); ms = []
+    # a time without 'Z' counts only as the first end of a range whose other end has one ('23:05:16-23:05:22Z')
+    for k, m in enumerate(ms0):
+        if m.group(5) or (k + 1 < len(ms0) and ms0[k + 1].group(5) and D1T_RANGE.fullmatch(txt_unit[m.end():ms0[k + 1].start()] or 'x')): ms.append(m)
+    for k, m in enumerate(ms):
+        if m.group(3) == '00' and (m.group(4) in (None, '00')): continue          # on the hour: a window / hour label
+        span = None
+        for a, b in ((ms[k - 1], m) if k else (None, None), (m, ms[k + 1]) if k + 1 < len(ms) else (None, None)):
+            if a is None: continue
+            if D1T_RANGE.fullmatch(txt_unit[a.end():b.start()] or 'x'): span = abs(_d1t_sec(b) - _d1t_sec(a)); span = min(span, 86400 - span); break
+        if span is not None and span >= 300: continue                               # a run's / window's span
+        if re.search(r'\bscene(?: time)?(?: about| at| =)?\s*$', txt_unit[max(0, m.start() - 24):m.start()]): continue   # a screenshot's scene time
+        # the sentence (or table cell) around the time
+        a0 = max(txt_unit.rfind('. ', 0, m.start()), txt_unit.rfind('; ', 0, m.start()))
+        b0 = [q for q in (txt_unit.find('. ', m.end()), txt_unit.find('; ', m.end())) if q >= 0]
+        sent = txt_unit[a0 + 1:min(b0) if b0 else len(txt_unit)]
+        e = D1T_EVENT.search(sent)
+        if e: out.append((m.start(), m.group(0), e.group(0)))
+    return out
+def d1_event_times():
+    root = os.path.dirname(HWD)
+    allf = sorted(subprocess.run(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '--', 'hwd3d'], capture_output=True, text=True, check=True).stdout.split())
+    hits = []; nf = 0; nu = 0
+    for f in allf:
+        rel_ = os.path.relpath(os.path.join(root, f), HWD)
+        if rel_.rsplit('.', 1)[-1].lower() not in D1W_TEXT_EXT or rel_.startswith('out/'): continue
+        try: txt = open(os.path.join(HWD, rel_), encoding='utf-8').read()
+        except (OSError, UnicodeDecodeError): continue
+        nf += 1
+        L = txt.split('\n')
+        for lines, ctx, _ in _d1w_units(rel_, txt, {}):
+            nu += 1
+            md = rel_.endswith('.md')
+            for ln, t in lines:
+                # (markdown: a paragraph / list item is joined; a table cell is checked with its whole row)
+                u = (L[ln - 1] if L[ln - 1].lstrip().startswith('|') else ' '.join(x for _, x in lines)) if md else t
+                for off, tt, ev in _d1t_hits(u):
+                    lnh = next((l2 for l2, x in lines if tt in x), ln); hits.append((rel_, lnh, tt, ev))
+                if md: break
+    hits = sorted(set(hits))
+    # planted cases: an event time must be found; window labels, run spans and build stamps must not
+    plant = [('hit', 'At 23:05:16-23:05:22Z an untyped single taxiing on a route crossed another.'), ('hit', 'first seen by the run at 20:00:01Z just after lift-off'),
+             ('hit', '| case | 19:56Z | taxied to the hold |'), ('clean', 'Window B, Wed 4 Nov 2026 23:00Z, pattern work: 5 touch-and-goes.'),
+             ('clean', 'the run 19:59:08 -> 20:13:13Z (desktop); 3 landings'), ('clean', 'current build 2026-11-13T21:13:45Z, sha256 49242e41'),
+             ('clean', 'dusk still (--t=2026-11-14T01:05:00Z): wing landing-light glare'), ('hit', 'a C172 taxied out at 12:13 PST'),
+             ('clean', 'statistics sheet (scene 12:13 PST): 28L: 1 departure, 4 touch-and-goes')]
+    bad = [i for i, (w, t) in enumerate(plant) if bool(_d1t_hits(t)) != (w == 'hit')]
+    say('   D1 event times: %d committed text files (%d units) scanned; planted cases %d, wrongly classified %d %s; clock times next to an aircraft event: %d - hard' % (nf, nu, len(plant), len(bad), bad, len(hits)))
+    for h in hits: say('   D1 event time HIT %s:%d  %s  (%s)' % h)
+    return ['%s:%d' % (h[0], h[1]) for h in hits] + (['D1 event-time planted cases: %d wrong' % len(bad)] if bad else [])
+
+
 def pave_path(x, z, FE, res=1.0):
     """shortest path (m) from an open OSM taxiway / taxilane centreline (+1 m) to (x, z) over OSM pavement (aprons and
     taxi-line buffers of build_airport.PAVE_TWY) around OSM buildings / hangars (+1 m): Dijkstra on an 8-neighbour 1 m grid
@@ -1184,7 +1260,7 @@ def main():
     data = sys.argv[sys.argv.index('--data') + 1] if '--data' in sys.argv else os.path.join(HWD, 'data', 'hwd_airport.json')
     D = json.load(open(data))
     if '--d1-windows' in sys.argv:      # D1 decision (d) alone (seconds; the full run takes ~2 min)
-        say('D1 decision (d): types named with a dated window (docs/PLAN.md 6b)'); h = d1_dated_windows()
+        say('D1 decision (d): types named with a dated window (docs/PLAN.md 6b)'); h = d1_dated_windows() + d1_event_times()
         say('RESULT (D1 dated windows only): %s' % ('passed' if not h else 'FAILED: %d hits' % len(h))); return 1 if h else 0
     if '--paint-only' in sys.argv:      # check 3's paint part alone, e.g. against an older build (--data)
         FE = json.load(open(os.path.join(HWD, 'refs', 'cache', 'osm', 'khwd_features.json')))['features']
@@ -1596,6 +1672,8 @@ def main():
     if d1: hard.append('D1')
     d1w = d1_dated_windows()   # D1 decision (d), 2026-11-14
     if d1w: hard.append('D1 dated windows (decision (d))')
+    d1t = d1_event_times()   # D1: no clock time of an individual aircraft's event (round 4 iteration 3, F3)
+    if d1t: hard.append('D1 event clock times')
     # session numbers (round 1) must not link an aircraft's separate presences: per session <= 1 signal start, <= 1 end, and
     # all its events within 2 x SESSION_R_M of each other
     import collections

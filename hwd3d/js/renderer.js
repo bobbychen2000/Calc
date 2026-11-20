@@ -5,7 +5,11 @@
 // fed to the obj shader's contact AO, reset for every draw); post.ca scales the final pass's edge chromatic aberration
 // (OD4, 2026-11-14), default 0 = off since OD4 iteration 2 (review F8; sfo3d's constant = 1); bloom knee (post.bloomKnee,
 // default BLOOM_KNEE = 4; OD4 iteration 3, docs/phase3_models.md 15.7): the bloom comes from highlights, diffuse surfaces keep
-// their brightness as a gain instead of veiling their dark neighbours (0 = sfo3d's bloom). Dropped: nothing.
+// their brightness as a gain instead of veiling their dark neighbours (0 = sfo3d's bloom); scene-depth copy for the lens
+// occlusion of aircraft light sprites (OD4 iteration 4, review G1, docs/phase3_models.md 15.8) and render-item field `cullFront` (draw
+// only back faces; G4: two-pass double-sided glass, as three.js draws transparent double-sided materials): when a frame's items ask for it
+// (render-item field `needsDepth`), the near pass's MSAA depth is resolved into a single-sample texture (R.sceneDepth) after
+// the opaque near draws, before the blended ones; frames without such items do no copy. Dropped: nothing.
 import { gl, Program, FBO, texture, fullscreen } from './gl.js';
 // bloom knee (post.bloomKnee; OD4 iteration 3, docs/phase3_models.md section 15.7): display-referred luminance at which a pixel
 // gives half its bloom; 0 = no knee (sfo3d: every pixel blooms)
@@ -57,6 +61,25 @@ export class Renderer {
     this.pixels = null;
     this.frameUniforms = {};
     this.prev = null;
+    // OD4 iteration 4 (G1): single-sample copy of the near pass's depth (created on first use; copyDepth) and the 1 x 1 'far'
+    // texture bound in its place when no copy was made this frame (a sampler never left without a texture)
+    this.depthCopy = null; this.depthCopyOK = undefined; this.sceneDepth = null;
+    this.noDepth = texture(1, 1, { internal: gl.R8, format: gl.RED, data: new Uint8Array([255]), nearest: true });
+  }
+  // OD4 iteration 4 (review G1): resolve the main target's MSAA depth (DEPTH_COMPONENT32F renderbuffer) into a single-sample
+  // DEPTH_COMPONENT32F texture (glBlitFramebuffer DEPTH_BUFFER_BIT, NEAREST: one sample per pixel), then re-bind the main
+  // target. Returns the texture, or null when the blit is not supported here (checked once: the occlusion test is then off).
+  copyDepth() {
+    if (this.depthCopyOK === false) return null;
+    try {
+      if (!this.depthCopy) this.depthCopy = new FBO(this.W, this.H, [], 'tex');
+      if (this.depthCopyOK === undefined) for (let k = 0; k < 8 && gl.getError() !== gl.NO_ERROR; k++);   // first use: clear older error flags
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.ms.fb); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this.depthCopy.fb);
+      gl.blitFramebuffer(0, 0, this.W, this.H, 0, 0, this.W, this.H, gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+      this.ms.bind();
+      if (this.depthCopyOK === undefined) { const e = gl.getError(); this.depthCopyOK = e === gl.NO_ERROR; if (!this.depthCopyOK) { console.warn('renderer: depth copy unsupported (GL error ' + e + '), light occlusion off'); return null; } }
+      return this.depthCopy.depth;
+    } catch (e) { this.depthCopyOK = false; this.ms.bind(); console.warn('renderer: depth copy failed, light occlusion off:', e && e.message); return null; }
   }
   addProgram(name, vs, fs, defines = {}) {
     this.progs[name] = { main: new Program(vs, fs, defines), shadow: new Program(vs, SHADOW_FS, Object.assign({ SHADOW_PASS: 1 }, defines)) };
@@ -205,9 +228,11 @@ export class Renderer {
       if (it.blend === 'add') { gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.depthMask(false); }
       else if (it.blend === 'alpha') { gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE); gl.depthMask(false); }
       if (it.polyOffset && passName !== 'shadow') { gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(it.polyOffset[0], it.polyOffset[1]); }
-      if (it.noCull) gl.disable(gl.CULL_FACE);
+      // render-item field `cullFront` (OD4 iteration 4, review G4): draw only the BACK faces (a two-pass double-sided
+      // transparent item, back faces first - js/aircraft/detailed.js glass); the main passes cull back faces otherwise
+      if (it.noCull) gl.disable(gl.CULL_FACE); else if (it.cullFront) gl.cullFace(gl.FRONT);
       it.mesh.draw();
-      if (it.noCull) { if (this.cull) gl.enable(gl.CULL_FACE); }
+      if (it.noCull) { if (this.cull) gl.enable(gl.CULL_FACE); } else if (it.cullFront) gl.cullFace(gl.BACK);
       if (it.polyOffset) gl.disable(gl.POLYGON_OFFSET_FILL);
       if (it.blend) { gl.disable(gl.BLEND); gl.depthMask(true); }
     }
@@ -283,6 +308,9 @@ export class Renderer {
     const planesNear = this.frustumPlanes(C.vpNear);
     this.drawItems(scene.items, 'main', C.vpNear, C.pos, planesNear, it => !it.blend && distMin(it.bbox) < C.split * 1.08);
     this.curRange = [0, C.split];
+    // OD4 iteration 4 (G1): the opaque near pass is complete - copy its depth for items that test against it (the lens occlusion
+    // of aircraft light sprites, js/shaders/sprites.js); the blended items below (glass, smoke, sprites) do not write depth
+    this.sceneDepth = scene.items.some(it => it.needsDepth) ? this.copyDepth() : null;
     const blended = scene.items.filter(it => !!it.blend).map(it => ({ it, key: it.sortKey ? it.sortKey(C.pos) : -1e9 })).sort((a, b) => b.key - a.key).map(o => o.it);
     this.drawItems(blended, 'main', C.vpNear, C.pos, planesNear, it => !it.farOnly && distMin(it.bbox) < C.split * 1.08);
     this._sync('near');
@@ -337,6 +365,7 @@ export class Renderer {
     for (let i = 0; i < 6; i++) { w = Math.max(1, w >> 1); h = Math.max(1, h >> 1); this.down.push(new FBO(w, h, [HF()], null)); this.up.push(new FBO(w, h, [HF()], null)); }
     this.final = new FBO(W, H, [{ internal: gl.RGBA8 }], null);
     this.overlayTex = texture(W, H, { internal: gl.RGBA8 });
+    if (this.depthCopy) { this.depthCopy.dispose(); this.depthCopy = null; } this.sceneDepth = null;
     this.pixels = null; this.prev = null;
   }
   readPixels() {

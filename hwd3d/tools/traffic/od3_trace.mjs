@@ -74,7 +74,10 @@ for (let k = 1; k < all.length; k++) { const p = all[k - 1], q = all[k]; if (p.a
   // (at rest = the body below 0.6 kt AND its target resting in both frames, as the harness's rest_pose_change_frames; a body that
   // turns on a braked wheel as its target taxis off is moving, not at rest)
   if (p.ground && q.ground && p.gs_kt < 0.6 && q.gs_kt < 0.6 && p.tRest && q.tRest && (adv > 0.02 || Math.abs(((q.hdg - p.hdg) % 360 + 540) % 360 - 180) > 0.3)) {
-    if (/:wait$/.test(q.mode || '') && adv <= 0.02) { restPlanned++; restPlannedT.push(q.t); } else { restMoves++; restMovesT.push(q.t); } } }
+    // (round 4 iteration 3, F10: a planned pivot dwell of a taxi profile - mode route / chord / prof - too; a pivot about the inner main
+    // wheel moves the reference point by <= track / 2 x the turn, <= 2.3 m / rad for these types)
+    const dhR = Math.abs(((q.hdg - p.hdg) % 360 + 540) % 360 - 180) * Math.PI / 180;
+    if (/:wait$|^(route|chord|late)$|:prof$/.test(q.mode || '') && adv <= 0.02 + 2.3 * dhR) { restPlanned++; restPlannedT.push(q.t); } else { restMoves++; restMovesT.push(q.t); } } }
 chk.max_ground_accel_ms2 = +aG.toFixed(2); chk.max_ground_accel_at = aGt; chk.max_air_accel_ms2 = +aA.toFixed(2); chk.max_air_accel_at = aAt; chk.ground_stall_frames = stall; chk.max_pitch_step_deg_per_frame = +dPitch.toFixed(2); chk.rest_pose_change_frames = restMoves; chk.rest_pose_change_at = restMovesT.slice(0, 20); chk.planned_pivot_frames = restPlanned; chk.planned_pivot_at = restPlannedT.length ? [restPlannedT[0], restPlannedT[restPlannedT.length - 1]] : null;
 chk.ground_off_pavement_samples = all.filter(r => r.ground && r.offPave).length;
 if (C.kind === 'lift-off') {
