@@ -557,7 +557,10 @@ const PIV = new Map(), LBL = new Map();
 function r4i2Frame(tr, D, td, t, s1, agl, kt, lab, P, R0, VR, near, rollD) {
   const SP = traffic.spd(tr);
   if (!D.ground && near && agl < 300) { const lim = Math.max(25, 15 + 20 * Math.min(1, Math.max(0, (agl - 100) / 200))), recon = /^(plan|xplan|cont):/.test(tr._tgtMode || '');
-    if (Math.abs(rollD) > lim + 0.5) { if (recon) { PL.low_bank_frames++; if (s1) r4Log('low_bank', t, lab, Math.round(agl), Math.round(rollD), tr.phase, tr._tgtMode || ''); } else PL.low_bank_data_frames = (PL.low_bank_data_frames || 0) + 1; }
+    // (round 4 iteration 3: a FORCED take-off plan - an aircraft already rolling on a runway, drawn with the least implausible climb-out
+    // instead of being hidden, F2 - is INFO low_bank_forced_frames: its excess over the limits is the plan's design, logged as low_bank_forced)
+    if (Math.abs(rollD) > lim + 0.5) { if (recon && tr._tgtForced) { PL.low_bank_forced_frames = (PL.low_bank_forced_frames || 0) + 1; if (s1) r4Log('low_bank_forced', t, lab, Math.round(agl), Math.round(rollD), tr.phase, tr._tgtMode || ''); }
+      else if (recon) { PL.low_bank_frames++; if (s1) r4Log('low_bank', t, lab, Math.round(agl), Math.round(rollD), tr.phase, tr._tgtMode || ''); } else PL.low_bank_data_frames = (PL.low_bank_data_frames || 0) + 1; }
     if (recon && agl < 400 && Math.abs(rollD) > 15.5) PL.low_bank_400_frames = (PL.low_bank_400_frames || 0) + 1; }
   // pivots: an anchor pose and the unwrapped heading turned since; the anchor moves on once the body has moved more than the limit
   { let q = PIV.get(tr.key); const lim = Math.min(0.5, 0.2 * ((tr.dims && tr.dims.track) || 2.4));
@@ -568,8 +571,11 @@ function r4i2Frame(tr, D, td, t, s1, agl, kt, lab, P, R0, VR, near, rollD) {
         else if (Math.abs(q.turn) > 30) { PL.pivot_in_place++; r4Log('pivot_in_place', t, lab, Math.round(q.turn), +((td - q.t0) / 1000).toFixed(1), +Math.hypot(D.x - q.x, D.z - q.z).toFixed(2), tr.phase, tr._tgtMode || ''); q.x = D.x; q.z = D.z; q.turn = 0; q.t0 = td; } } } }
   // long roll above 0.75 VR
   // (a body following ground fixes - gg:* fix-to-fix, the data's own roll-out - is INFO with the reported ones)
-  if (D.ground && D.gs >= 0.75 * VR) { if (P.fr75 == null) P.fr75 = td; if (td - P.fr75 > 12000) { const rep = (R0 && R0.a !== R0.b && R0.a.ground && R0.b.ground && (R0.a.gsm || 0) >= 0.75 * VR && (R0.b.gsm || 0) >= 0.75 * VR) || !/^(plan|xplan|cont):/.test(tr._tgtMode || '');
-    if (rep) PL.ground_slow_fast_roll_reported = (PL.ground_slow_fast_roll_reported || 0) + 1; else { PL.ground_slow_fast_roll++; if (s1) r4Log('ground_slow_fast_roll', t, lab, Math.round(kt), +((td - P.fr75) / 1000).toFixed(0), tr.phase, tr._tgtMode || ''); } } } else P.fr75 = null;
+  // (round 4 iteration 3: the 12 s count the PLANNED frames of the run only - a run of 6 s of observed roll fixes at 47-48 kt between a planned
+  // re-acceleration and a planned lift-off was counted as 16 s of planned motion)
+  if (D.ground && D.gs >= 0.75 * VR) { if (P.fr75 == null) { P.fr75 = td; P.fr75p = 0; } const rep = (R0 && R0.a !== R0.b && R0.a.ground && R0.b.ground && (R0.a.gsm || 0) >= 0.75 * VR && (R0.b.gsm || 0) >= 0.75 * VR) || !/^(plan|xplan|cont):/.test(tr._tgtMode || '');
+    if (!rep) P.fr75p += DT * 1000;
+    if (td - P.fr75 > 12000) { if (rep || P.fr75p <= 12000) PL.ground_slow_fast_roll_reported = (PL.ground_slow_fast_roll_reported || 0) + 1; else { PL.ground_slow_fast_roll++; if (s1) r4Log('ground_slow_fast_roll', t, lab, Math.round(kt), +((td - P.fr75) / 1000).toFixed(0), tr.phase, tr._tgtMode || ''); } } } else P.fr75 = null;
   // label runs (the label text the UI shows)
   { const L0 = phaseLabel(tr, td); let q = LBL.get(tr.key); if (!q) LBL.set(tr.key, q = { cur: L0, t0: td, prev: null, x: D.x, z: D.z, ph: tr.phase });
     if (L0 !== q.cur) { const dur = td - q.t0, ev = /^(Take-off roll|Landing roll|Touch-and-go|Stop-and-go)/.test(q.cur), base = (x) => x.replace(/ \(provisional\)/, '');

@@ -1,6 +1,9 @@
 # Phase 3 (OD3) — deterministic video pipeline
 
-**Status 2026-11-14, fix round 4 iteration 2 (section 14):** the snapshots now hold the final traffic engine (renderer,
+**Status 2026-11-20, fix round 4 iteration 3 (section 15):** both snapshots refreshed with the iteration-3 engine; case P's roll-out
+stutter and yaw are gone (drawn speed = shown speed within 0.14 kt, 0°/s of yaw on the roll), its `c-roll-dolly` passes the 1.5-px/frame²
+gate with no override (the job's `heroAcc: 3` was removed), the SF50 keeps its take-off flaps from the hold to the climb, and its nose no
+longer dips after the lift-off. **Before that, 2026-11-14, fix round 4 iteration 2 (section 14):** the snapshots now hold the final traffic engine (renderer,
 models and data still frozen from Phase 3b); both cases re-scouted and re-planned, all gates pass, determinism and spot
 stills re-checked. **Phase 3b integration (section 13).** The app now has the hooks this pipeline needed (section 8:
 `HWD.stepEngine`, a separate engine dt, a no-draw frame, `HWD.setPost`, `HWD.setCamera`) and draws every PC-12 / SF50 with
@@ -675,3 +678,58 @@ scout 0.00000 m, 0 page errors; 4.5 s (S) and 9.4 s (P, load ~9.5) median per fr
 
 **Not done here.** No clip was encoded (the spot clips of section 13 stand for the mid-round engine only); the full
 videos are still the orchestrator's (section 11).
+
+## 15. Fix round 4, iteration 3 (findings F1, F4, F5, F10): the snapshots on the iteration-3 engine (2026-11-20)
+
+**Findings.** F1 (major): in case P's roll-out (frames 1601-1630, 13-16 s after touchdown) the drawn position moved at 52 → 43 → 37 →
+50 kt while the shown speed stayed at 50-51 kt, and the nose swung 4° in 0.3 s (up to 12.6°/s); iteration 2 had covered it with a plan-gate
+override (`heroAcc: 3` on `c-roll-dolly`, 2.52 px/frame² measured against the 1.5 limit). F4: the SF50 set its take-off flaps at the hold,
+retracted them on the taxi onto 28L (frames 1123-1163, filmed in `lineup-chase`) and extended them again lined up. F5: its nose dropped
+8.2 → 5.4° in the first second after the lift-off (`e-liftoff-edge`). F10: the 8x taxi chase out of the FBO showed 12.5 kt, a 3.1-m/s²
+stop into a 25°/s turn and ~2 m/s² of lateral acceleration. The engine causes and changes are in `docs/phase2_run.md` section 12 and
+`docs/phase2_traffic.md` §4.
+
+**What changed in the pipeline.** `tools/video/lib.mjs`: `ENGINE_FILES` now include `js/live/aircraft.js` (its flap / gear / power
+rules drive the detailed models from the engine's motion; its only dependency on the frozen model runtime is `js/aircraft/models.js`
+`createAircraft` / `withModelFrame`, unchanged since the snapshot), so `snapshot --refresh=engine` carries the F4 rule; the static
+server's port range can be moved with `HWD_VIDEO_PORTS=lo-hi` (default 8700-8749; this iteration used 8650-8699 because another workflow
+held 87xx). The job of case P (`out/od3/video_P.json`, local) no longer carries the `heroAcc` override; nothing else in either job
+changed.
+
+**Snapshots now** (refreshed with `--refresh=engine` on the final engine files of `docs/phase2_run.md` 12.1 and the final
+`aircraft.js`; renderer, shaders, models and data still frozen from Phase 3b, so the OD4 look fixes are NOT in them): P tree
+**d89d78cfaff9**, S tree **5dabbf8e2640**; both re-scouted and re-planned. Events are unchanged (P: touchdown frame 1187 at 80.8 kt,
+stop 2101; S: line-up 1509, roll 1686, lift-off 2362 at 84.9 kt); hero not drawn 0 frames.
+
+**Plans and gates** (`plan`, both cases): **all gates pass with no override**. Case P `c-roll-dolly` hero ≤ 0.34 px/frame,
+≤ 0.22 px/frame² (was 2.52 with the override), lag error ≤ 1.2 m; case S `c-roll-dolly` ≤ 0.11 px/frame², lag error ≤ 0.62 m,
+`e-liftoff-edge` ≤ 0.47 px/frame².
+
+**Checked on the scout traces** (every frame, [obs]):
+
+| | Case P | Case S |
+|---|---|---|
+| F1: ground frames above 30 kt, drawn speed (over 3 frames) - shown speed | ≤ 0.14 kt (frames 1187-1930; was 8.9-13 kt at 1603-1629) | ≤ 0.06 kt (1500-2362) |
+| F1: yaw rate on those frames | 0°/s (was up to 12.6°/s, 40 frames > 4°/s) | 0°/s |
+| F4: flaps | 40° on final and through the roll (unchanged) | 0 → 15° at the hold (frames 959-999), 15° held through the taxi onto 28L and the line-up to 400 ft in the climb (2867), then up |
+| F5: pitch in the first 3 s after the lift-off | - | 8.3° at the lift-off, 8.36-9.0° after (no dip; was 8.2 → 5.4°) |
+| F10: the taxi out of the FBO (frames 76-958) | - | ≤ 9.8 kt; the gentle profile itself brakes ≤ 1.5 m/s² and corners at ≤ 1 m/s², but the drawn BODY still brakes at 3.0 m/s² for ~0.3 s and turns at its 25°/s limit (1.7 m/s² lateral at 7.7 kt) in the first FBO turn (frames 156-184, the follower's corner rule; open, `docs/phase2_run.md` 12.7) |
+
+**Determinism.** Case P at the F1 roll-out (`determinism --frames=1597-1611`, shutter 0.5): 15 / 15 PNGs identical between two fresh
+browser runs and 15 / 15 after rendering earlier frames first, hero vs scout 0.00000 m (on tree c39fd5f32a86, the engine of 12.1 before the
+final one-line `aircraft.js` change; re-run on the final trees below). On the final trees (d89d78cfaff9 / 5dabbf8e2640): case P frames 1597-1611 and case S frames 1445-1459 (the taxi onto 28L with the
+take-off flaps, F4), shutter 0.5: 15 / 15 identical between two fresh browser runs and 15 / 15 after rendering earlier frames, in both
+cases; hero vs scout 0.00000 m, 0 page errors (10-13 s per frame at a load of ~11).
+
+**Spot stills** (`render --pick`, 1920 × 1080, looked at; local in `out/video/{P,S}/picks_r4i3/`, they show the scene clock and the
+METAR day-time group; rendered on trees c39fd5f32a86 / a5ae138379cb, the same hero motion as the final scouts): case P frames 1250
+(landing roll, reconstructed), 1603 and 1625 (the F1 roll-out in the dolly: the PC-12 on the centreline, nose on the runway heading, at
+the same screen place in both); case S frames 170 (taxi out of the FBO), 1000 (holding short, 24x), 1450 (the taxi onto 28L at 4x, flaps
+down - looked at in a crop) and 2380 (just after the lift-off: nose up, gear down, landing lights). 4.2-6.8 s per frame, 0 page errors.
+
+**App check (F4).** The app's own views (`js/live/aircraft.js`, snapshot mode on the type-only video pack, the reviewer's livetest job,
+local): the SF50 draws 15° of flaps at the hold, on the taxi onto 28L (was 0°), lined up and in the climb; the PC-12 40° on its landing
+roll; the E8 freeze test unchanged (no field or card change at the frozen clock).
+
+**Not done here.** No clip was encoded; the full videos are still the orchestrator's (section 11), from a full new snapshot
+(`--refresh`) once OD4's look fixes are to be in them.

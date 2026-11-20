@@ -167,7 +167,9 @@ export class AircraftViews {
       else if (!D.ground || phase === 'landing_roll' || OFF_PHASE.has(phase)) S.toSet = false; }
     if (D.ground) {
       if (TO_GROUND.has(phase)) return to;
-      if ((phase === 'taxi' || phase === 'runway_taxi') && ((S && S.toSet) || /^x?plan:takeoff/.test((tr && tr._tgtMode) || '')) && prev != null && prev >= to - 0.01) return to;
+      // (and the engine's own latch tr._toFl - set at a hold / run-up / line-up, cleared by a landing roll, parking, a hangar, no signal or
+      // the air - for a view created after the hold: a snapshot opened on the taxi onto the runway drew the SF50 with its flaps up)
+      if ((phase === 'taxi' || phase === 'runway_taxi') && ((S && S.toSet && prev != null && prev >= to - 0.01) || (tr && tr._toFl) || /^x?plan:takeoff/.test((tr && tr._tgtMode) || ''))) return to;
       // kept from the landing (or the take-off setting) until the aircraft taxis; first drawn on a landing roll: landing flaps
       if (phase === 'landing_roll') return prev != null ? prev : ld;
       if (phase === 'runway_taxi') return prev != null ? prev : 0;

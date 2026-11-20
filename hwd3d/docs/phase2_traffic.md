@@ -554,73 +554,106 @@ with a per-unit altitude bias was drawn rolling over the grass of the approach.
 
 - **Fix round 4, iteration 3 (recheck findings F1-F10) - what changed and why** (`js/live/{traffic,motion,ground,aircraft}.js`;
   gates, method and the before → after tables in `docs/phase2_run.md` section 12; every constant [inf] unless it says otherwise).
-  Cases are named by window, class and an anonymous label.
-  - **F1 - runway rolls on observed fixes** (`rollRunOf`, `rollKernel`, `rollSmoothAt`, `rollSmoothTarget`; target mode `gg:roll`).
-    Between two ground fixes on one runway (within the runway rectangle + 3 m, track within `ROLLSM_ALIGN` 15° of the axis, both at
-    ≥ `ROLLSM_V` 10 m/s) the target is no longer the Hermite through each fix: it is the integral of the REPORTED along-track
-    speed (linear between the fixes) plus the biweight-kernel mean of the fixes' along-track residuals (half-width `ROLLSM_H` 3 s,
-    or 0.75 x the run's longest gap + 0.5 s), and the kernel mean of their lateral offsets; at both ends of the run of such fixes
-    the correction blends (smoothstep, `ROLLSM_RAMP` 2.5 s) to the end fix's own residual, so the roll passes exactly through the
-    first and the last roll fix and joins the plan / Hermite / route before and after it without a step. A residual that is a
-    spike (> 15 m from its neighbours' mean) is left out. The fix TIMES of a roll jitter by 0.1-0.3 s: in case P's roll-out three
-    fixes 0.44-0.70 s apart had chords of 41.7 / 45.5 / 49.5 kt while reporting 50.5 kt, and the Hermite (whose speed was the reported
-    one) held the body against its trail end: it moved at 37-52 kt showing 50 kt, and its heading followed the last 3.6 m of an
-    S-shaped curve (301.2 → 298.4 → 302.1° in 0.8 s). Two joins were smoothed too: a body that touched down level with its target
-    leaves the 'behind' mode only once the target leads by more than the follower's own lead (1.5 frames of travel, ≥ 1 m; released
-    at 1 m, the new trail held case P's body to 1 m in one frame, 20 kt shown against 69 kt), and a planned ROLLING start begins
-    at the fix beside the centreline and merges onto the axis over max(40 m, 3 s) of the roll (a 6.7-°/s yaw at 42 kt). A
-    roll part squeezed into a slot much shorter than its natural duration ran its warped clock BACKWARD (the warp
-    1 + (dN / D) x 6u(1 - u) is negative below dN = -2/3 D): a weekday fallback landing roll drew its target at -7 kt, the body
-    stopped and turned round on the runway. Beyond dN / D < -0.45 the clock keeps rate 1 over smoothstep edges at both ends and
-    runs at one slower rate between (`samplePlan`, `counters.rollWarpEdge`).
-  - **F2 - hidden take-offs** (`transitionFor`, `planTakeoffForced`, `forceCost`, `HIDE_FADE_S`, `FORCE_V`). An aircraft ALREADY
-    ROLLING on a runway (≥ 8 m/s, within 20° of its axis) is never hidden: when no take-off plan fits the limits, `planTakeoff1`
-    runs in forced mode over the table / 1.15 x / 1.3 x accelerations and the 400 / 250 / 150-m straight climb-outs, flies every
-    lift-off time of its grid (`takeoffAir` force) and keeps the one with the smallest excess over the limits (bank over the
-    low-height rule per 10°, acceleration over the air limit per 0.5 m/s², the climb-out speed outside 0.75-1.2 x the reported
-    one per 0.2, the climb over twice the type's rate per 2 m/s; `counters.takeoffForced`, `takeoffForcedCost`). Weekend 'case H'
-    (an aerobatic single after a touchdown) now rolls on, lifts off at ~48 kt, climbs straight to ~200 ft and turns crosswind
-    at 21-25° bank to its first fix at 380 ft; it used to stop from 47 kt to 0 in 0.2 s mid-runway while it faded out, and
-    re-appeared 944 m away 47 s later. Every other M3 hide (the aircraft was not rolling: holding short, taxiing) keeps the
-    owner's rule but never stops: the body goes on at its own speed and direction (on a runway along its axis) while it fades
-    out over `HIDE_FADE_S` = 1.5 s (was a 'wait' at its last fix and a 0.4-s fade). Weekend 'case J' (a business jet at the
-    hold at 7 kt) now fades out over 1.5 s while taxiing on; whether such a take-off should be drawn with the least implausible
-    plan instead is the owner question of `docs/phase2_run.md` section 12.
-  - **F4 - take-off flaps through the taxi onto the runway** (`aircraft.js flapRule`, `attitude` `tr._toFl`). Once the take-off
-    setting is set at a hold / run-up / line-up it stays set while the aircraft taxis on to the runway ('taxi' / 'runway_taxi'),
-    until a landing roll, parking, a hangar, no signal or the air (the climb-out rule takes over); the engine's `disp.flapsF`
-    follows the same latch and now also sets the take-off flaps at the hold and run-up. The SF50 of video S no longer retracts and
-    re-extends them on its taxi onto 28L.
-  - **F5 - pitch after lift-off** (`attitude`, `LO_HOLD_S` 4 s). After a lift-off the nose stays at least at the lift-off attitude
-    for 4 s while the body does not descend, then blends over 4 s to the climb attitude of the rule (it needed vy > 0.3 m/s,
-    which a planned climb-out starting level at the wheels reaches ~1 s after the lift-off: case S's nose dropped 8.2 → 5.4° at
-    0-1 ft). Case S: 7.4 → 8.4 → 9.0° held, no dip.
-  - **F6 - labels at the lift-off** (`labelPost`). The lift-off latch `tr._toT` is set on the first airborne frame of a body that
-    was rolling at ≥ 0.6 VR, whatever label it had (a fix-following lift-off carried the fix's 'runway_taxi' / 'taxi' label and
-    the latch was not set); inside the latch a runway / ground label on an airborne body that does not descend is 'Climbing out'
-    (was 'Low pass' below 150 ft/min); 'Landing roll' on a body accelerating (> 0.3 m/s over 1 s) with the nose up (> 2°) is
-    'Take-off roll'. Weekday 'case A' now reads Take-off roll → Climbing out 28R → Climbing out → Crosswind, with no 'Low pass'.
-  - **F7 - touch-and-go rolls without a plateau** (`planTouchGo`, `vFit`, `TG_PLATEAU_S` 3 s). The first planning pass refuses a
-    roll whose steady part lasts more than 3 s: it is replaced by a gentler braking straight into the re-acceleration (the braking
-    rate ≥ 0.3 m/s² and the lowest speed solved for the distance and the time, 3 s at the bottom); when none fits, later
-    touchdowns and other splits are tried, and only a second pass accepts a plateau (`counters.touchGoVfit`, `touchGoPlateau`).
-  - **F8 - planned taxi paths on grass** (`profiled` → `pavedEnds`; `labelPost`). The connector between a fix and its route (the
-    first / last leg) that crosses grass is replaced by the shortest paved straight to a route point up to 150 m along (tested
-    from 4 m past the fix, whose GNSS position may itself be off the pavement; `counters.paveConn`). A body still turning onto the
-    runway axis (> 10° off, rolling) is 'Taxiing on the runway', not 'Lined up' (case W1: 'Lined up 28R' 18° off at 2 kt for 10 s).
-  - **F9 - taxiing wings over buildings, landing bank** (`GroundPhysics.resolve`, `PHYS_RULES.BLD_PUSH_V`; `planLanding`,
-    `LAND_BANK_FT` / `LAND_BANK_DEG`). A taxiing fixed-wing body (< 8 m/s) whose wing tip / tail is over a building footprint is
-    pushed sideways away from it, like from an aircraft, while every wheel stays on the pavement. A reconstructed landing approach
-    may bank at most 15° below 200 ft (above: the climb-out rule); longer finals (1.5 / 2 / 2.5 / 3 x) are tried before the least
-    steep is kept (`counters.landingBankOver`).
+  Cases are named by window, class and an anonymous label, never by time.
+  - **F1 - runway rolls: one speed, no yaw.**
+    - *Roll smoothing on observed fixes* (`rollRunOf`, `rollKernel`, `rollSmoothAt`, `rollSmoothTarget`; target mode `gg:roll`). Between
+      two ground fixes on one runway (its rectangle + 3 m, track within `ROLLSM_ALIGN` 15° of the axis, both ≥ `ROLLSM_V` 10 m/s) the
+      target is no longer the Hermite through each fix: it is the integral of the REPORTED along-track speed - itself smoothed with a
+      biweight kernel of half-width max(`ROLLSM_VH` 2.5 s, 0.75 x the longest gap), the end fixes keeping their own speeds - plus the
+      kernel mean of the fixes' along-track residuals (half-width max(`ROLLSM_H` 5 s, 0.75 x the longest gap + 0.5 s)) and of their
+      lateral offsets; at both ends of the run the correction blends (smoothstep, `ROLLSM_RAMP` 2.5 s) to the end fix's own residual, so
+      the roll passes exactly through its first and last fix and joins the plan / Hermite / route around it without a step. A residual
+      spike (> 15 m from its neighbours' mean) is left out. Cause: the fix TIMES of a roll jitter by 0.1-0.3 s - in case P's roll-out
+      three fixes 0.44-0.70 s apart had chords of 41.7 / 45.5 / 49.5 kt while reporting 50.5 kt, and the Hermite (whose speed was the
+      reported one) moved the body at 37-52 kt showing 50 kt, its heading following an S-curve (301.2 → 298.4 → 302.1° in 0.8 s). The
+      fixes' residuals still swing ± 2.5 m over 3 s in that roll-out (timing, not position, error): with 3-s kernels the drawn braking
+      went 0 → 3.6 → 1 m/s² within 1 s; with 5 / 2.5 s it stays ≤ ~2 m/s².
+    - *Nose on the runway axis* (`ctlGround`). On a runway roll above `ROLLSM_V` whose path runs within 15° of the axis the nose holds
+      the runway heading (below 8° off it IS the axis; 8-15° blends to the path direction; above that it follows the path - a turn-off).
+      The trail's wiggles where a route / plan / fix-following target joins the axis yawed rolling bodies at 3-14°/s (a route landing
+      roll 299.9 → 303.7 → 299.9° in 0.3 s at 32 kt joining the axis from 0.2 m beside it; a fix-to-fix Hermite swinging 1.8 m
+      sideways between two runway fixes, 299.9 → 305.9 → 298.2° at 39 kt). The position still follows the trail (a crab ≤ 3-4° for a
+      second or two). `counters.rollAxisHold`.
+    - *Release from 'behind' on a roll*: a body that touched down beside its target's line (0.5-1 m) used to restart its trail at
+      itself, so the first metre pointed 15-30° at the centreline (4° of yaw in 0.3 s, 0.7 m sideways at 51 kt). The new trail starts on
+      the target's line and the lateral offset rides on `c.po` with a fade of max(30 m, 1.5 s) of roll (`c.poFade`, `counters.behindLatFade`).
+    - *Turn-offs at roll speed* (`profiled`, `ROLL_YAW_V` 15 m/s, `ROLL_YAW_W` 3°/s): on a path's runway head / tail (a roll-out turning
+      off, a roll start turning on) the profile drives above 15 m/s (~29 kt) only where the path turns at ≤ 3°/s; route roll-outs used to
+      keep their roll speed into the exit fillet and turn off at 32-35 kt and 6.7°/s (the lateral limit).
+    - *Speed shown = speed drawn*: a rolling body (> 5 m/s) that reached its trail end was held there while it still showed its speed
+      (23 kt drawn against 32 kt shown on a planned landing roll); its speed is now the distance it moves (`counters.rollTrailEnd`).
+    - Joins smoothed earlier in this iteration and kept: a body that touched down level with its target leaves 'behind' only once the
+      target leads by more than the follower's own lead (1.5 frames of travel, ≥ 1 m); a planned ROLLING start begins at the fix beside
+      the centreline and merges onto the axis over max(40 m, 3 s) of the roll; a roll squeezed into a much shorter slot runs its warped
+      clock at one slower rate between smoothstep edges instead of backward (`samplePlan`, `counters.rollWarpEdge`; a weekday fallback
+      landing roll drew its target at -7 kt).
+  - **F2 - hidden take-offs** (`transitionFor`, `planTakeoffForced`, `forceCost`, `HIDE_FADE_S` 1.5 s, `FORCE_V` 8 m/s). An aircraft
+    ALREADY ROLLING on a runway (≥ 8 m/s, within 20° of its axis) is never hidden: when no take-off plan fits the limits,
+    `planTakeoff1` runs in forced mode over the table and 1.15 x / 1.3 x accelerations and the straight climb-outs, flies every lift-off
+    time of its grid (`takeoffAir` force) and keeps the one with the smallest excess over the limits (bank over the low-height rule per
+    10°, acceleration over the air limit per 0.5 m/s², the climb-out speed outside 0.75-1.2 x the reported one per 0.2, the climb over
+    twice the type's rate per 2 m/s; `counters.takeoffForced`, `takeoffForcedCost`). The plan is flagged (`P.forcedPlan` → `o.forced`
+    → `tr._tgtForced`) so the harness can tell its low-height bank apart. Weekend 'case H' (an aerobatic single after a touchdown) now
+    rolls on, lifts off at ~46 kt with 7° of rotation, climbs straight to ~190 ft and turns crosswind at 20-24° bank to its first fix
+    at ~380 ft; it used to stop from 47 kt to 0 in 0.2 s mid-runway while it faded out and re-appear 944 m away 47 s later. Every other
+    M3 hide (the aircraft was not rolling: holding short, taxiing) keeps the owner's rule but never stops: the body goes on at its own
+    speed and direction (on a runway along its axis) for `HIDE_FADE_S` + 0.5 s while it fades out over `HIDE_FADE_S` (was a 'wait' at
+    its last fix and a 0.4-s fade). Weekend 'case J' (a business jet at the hold, 7 kt) now fades out over 1.5 s while taxiing on and
+    re-appears airborne over 28L 47 s later; whether such a take-off should be drawn with a forced plan too is the owner question of
+    `docs/phase2_run.md` section 12.
+  - **F4 - take-off flaps through the taxi onto the runway** (`aircraft.js flapRule`; `attitude` `tr._toFl`). Once the take-off setting
+    is set at a hold / run-up / line-up it stays set while the aircraft taxis on to the runway ('taxi' / 'runway_taxi'), until a landing
+    roll, parking, a hangar, no signal or the air (the climb-out rule takes over). The view keeps its own latch (`S.toSet`) and also
+    reads the engine's (`tr._toFl`, set in `attitude`), so a view created after the hold - a snapshot opened on the taxi onto the runway
+    - draws the take-off flaps too; the engine's `disp.flapsF` follows the same latch and now also sets them at the hold and run-up.
+  - **F5 - pitch after lift-off** (`attitude`, `LO_HOLD_S` 4 s, `LO_PEAK_S` 3 s). After a lift-off the nose stays at least at the
+    lift-off attitude for 4 s while the body does not descend, then blends over 4 s to the climb attitude of the rule (it needed
+    vy > 0.3 m/s, which a planned climb-out starting level at the wheels reaches ~1 s after the lift-off: case S's nose dropped
+    8.2 → 5.4° at 0-1 ft); and for the first 3 s the attitude reached is held within 1° (data-following lift-offs dropped 10.7 → 9° in
+    1-2 s as the fixes' climb rate eased). Case S: 8.3 → 8.5 → 9.0° and held.
+  - **F6 - labels at the lift-off** (`labelPost`). The lift-off latch `tr._toT` is set on the first airborne frame of a body that was
+    rolling at ≥ 0.6 VR, whatever label it had (a fix-following lift-off carried the fix's 'runway_taxi' / 'taxi' label and the latch
+    was not set); inside the latch a runway / ground label on an airborne body that does not descend is 'Climbing out' (was 'Low pass'
+    below 150 ft/min); 'Landing roll' on a body accelerating (> 0.3 m/s over 1 s) with the nose up (> 2°) is 'Take-off roll'. Weekday
+    'case A' now reads Lined up 28R → Take-off roll 28R → Climbing out 28R → Climbing out → Crosswind 28R, with no 'Low pass' and no
+    'Landing roll'.
+  - **F7 - touch-and-go rolls without a plateau** (`planTouchGo`, `vFit`, `TG_PLATEAU_S` 3 s, `TG_FLOAT_S` 6 s). The first planning
+    pass refuses a roll whose steady part lasts more than 3 s: it is replaced by a gentler braking straight into the re-acceleration
+    (the braking rate ≥ 0.3 m/s² and the lowest speed solved for the distance and the time, 3 s at the bottom); when none fits, later
+    touchdowns and other splits are tried, and only a second pass accepts a plateau (`counters.touchGoVfit`, `touchGoPlateau`). The
+    later touchdowns made some approaches FLOAT (a weekday light twin glided from a low fix to 8 ft within 2 s and floated 10 s at
+    4-9 ft and 47 kt): an approach that spends more than 6 s below 15 ft is refused (`counters.touchGoFloatRefused`). Weekday 'case T2'
+    now brakes 43 → 30 kt, stays 3 s at the bottom and accelerates to its lift-off (was ~20 s at a constant 41.4-41.7 kt). Also fixed:
+    the stop-and-go wait was a local `W` that shadowed the reason counter `W()` in `rollFit` - `W('slow75')` threw (temporal dead
+    zone), `touchGoFor` caught it and the touch-and-go became a low pass.
+  - **F8 - planned taxi paths on grass** (`profiled` → `pavedEnds`; `labelPost`). A connector between a fix and its route (the first /
+    last leg) that crosses unpaved ground is replaced by the shortest paved straight to a route point up to 150 m along (tested from
+    4 m past the fix, whose GNSS position may itself be off the pavement; `counters.paveConn`). Pavement here is the physics' own:
+    OSM ∪ the NAIP-seen airside asphalt (`ground.js pavedWith`); case W1's connector out of the run-up area runs over a NAIP-seen paved
+    shoulder of the OSM taxiway, which `site.surface()` (OSM only) reports as 'grass' - every wheel is on that pavement and the speed
+    there now peaks at 8.2 kt (was 9.4). A body still turning onto the runway axis (> 10° off, rolling) is 'Taxiing on the runway', not
+    'Lined up'. After a plan's own pivot wait the taxi profile no longer adds a second pivot dwell (`o2.h0`): W1 stood 8 s 'Stopped'
+    after its pivot.
+  - **F9 - taxiing wings over buildings, landing bank** (`GroundPhysics.resolve`, `PHYS_RULES.BLD_PUSH_V` 8 m/s; `ctlGround` rest wait;
+    `planLanding` / `fallbackTransition`, `LAND_BANK_FT` 200 / `LAND_BANK_DEG` 15). A taxiing fixed-wing body (< 8 m/s) whose wing tip /
+    tail is over a building footprint is pushed sideways away from it, like from an aircraft, while every wheel stays on the pavement.
+    A fixed-wing body AT REST whose target starts to move from 1-4 m behind or beside it along its nose (a route that begins at the fix
+    behind the parked pose) waits where it is - nose held, no trail laid - until the target is ahead (`counters.restWaitBehind`): the
+    trail used to run back to the target first, and a C182 leaving its hangar pivoted 80° right and 80° back with its wings over the
+    hangar for ~6 s (not for helicopters: a hover-taxiing R44 then re-appeared 41 m away after a 765-s silence). A reconstructed
+    landing approach - planned or fallback - may bank at most 15° below 200 ft (above: the climb-out rule); longer straight finals
+    (1.5 / 2 / 2.5 / 3 x) are tried and the least steep is kept (`counters.landingLongFinal`, `landingBankOver`, `fallbackLongFinal`,
+    `fallbackBankOver`).
   - **F10 - taxi profile** (`profiled`, `TAXI_LAT_G` 1.0 m/s², `TAXI_W_G` 20°/s, `TAXI_DEC_G` 1.5 m/s², `RAMP_V` 10 kt; `motion.js
     profilePath opt.dwell0`; `ctlGround` `PIV_ACC` 40°/s²). A taxi (not a roll-out, not a line-up rung) is profiled gently first -
-    corners at ≤ 1 m/s² lateral and 20°/s, braking ≤ 1.5 m/s², ≤ 10 kt on an apron - and with the old limits (2 m/s², 25°/s,
-    2.0 m/s²) only when the hole leaves no time for that (`counters.taxiGentle`, `taxiGentleNo`). A start from rest with the nose
-    more than 30° off the path pivots first, as a planned dwell at the start of the profile (the target is a planned wait with the
-    path's heading, so the body turns about its inner wheel there instead of catching up afterwards), and a pivot at walking
-    speed starts and stops at ≤ 40°/s² (the reference point used to jump 0 → 0.5 m/s in one frame). Case S leaves the FBO at
-    ≤ 8.8 kt with ~1 m/s² of acceleration and ~0.9 m/s² lateral in its turns (was 12.5 kt, 3.1 m/s² braking, ~2 m/s² lateral).
+    corners at ≤ 1 m/s² lateral and 20°/s, braking ≤ 1.5 m/s², ≤ 10 kt on an apron - and with the old limits (2 m/s², 25°/s, 2.0 m/s²)
+    only when the hole leaves no time for that (`counters.taxiGentle`, `taxiGentleNo`). A start from rest with the nose more than 30°
+    off the path pivots first, as a planned dwell at the start of the profile (the body turns about its inner wheel there instead of
+    catching up afterwards), and a pivot at walking speed starts and stops at ≤ 40°/s² (the reference point used to jump 0 → 0.5 m/s
+    in one frame). Case S's FBO exit (10-Hz trace): ≤ 8.8 kt, braking ≤ 2.1 m/s², ≤ 1.3 m/s² lateral and ≤ 21°/s (was 12.5 kt,
+    3.1 m/s², ~2 m/s², 25°/s). The BODY still turns at up to 25°/s (1.7 m/s² lateral at 7.7 kt) and brakes at up to 3.0 m/s² for
+    ~0.3 s in the video's 30-fps grid: the follower's corner rule uses the 2-m/s² body limits, not the gentle profile's (open,
+    `docs/phase2_run.md` section 12).
 
 ## 5. Parking, hangars, physics
 

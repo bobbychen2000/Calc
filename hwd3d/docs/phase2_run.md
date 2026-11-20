@@ -1763,3 +1763,218 @@ in two fresh runs and 15 / 15 after rendering earlier frames, and ten spot still
   ~400 ft, ≤ 30° in the pattern), not read from a handbook.
 - **Not run:** live mode; the app in a browser beyond the video pipeline's frames; a real phone; the reviewer's probes
   for F8 (case A) and F12 on the final engine (F12 is measured by `teleports_attitude` at 60 s).
+
+## 12. Fix round 4, iteration 3 - recheck findings F1-F10 (2026-11-14 / 2026-11-20)
+
+The recheck of iteration 2 (section 11) raised ten findings: three major (F1 the PC-12 video's landing-roll stutter, F2 hidden
+take-offs that make an aircraft vanish, F3 clock times of individual aircraft events in this file) and seven minor (F4-F10). This
+iteration changed `js/live/{traffic,motion,ground,aircraft}.js`, `tools/traffic/{replay_engine,od3_trace}.mjs`, `tools/video/lib.mjs`,
+`tools/check_airport.py` and the docs (`js/live/classifier.js`, `parking.js`, the app shell and every OD4-owned file were not changed).
+It was interrupted once by the account usage limit (its partial work was checkpointed as WIP) and finished in a restart, which
+re-measured everything below on the final files. Every change and constant is written up in `docs/phase2_traffic.md` §4 ("Fix round 4,
+iteration 3"); the video part in `docs/phase3_video.md` section 15. Cases are named by window, class and an anonymous label, never by
+time (D1): 'case P' / 'case S' (the OD3 heroes), weekend 'case H' (an aerobatic single) and 'case J' (a business jet), weekday 'case A'
+(a single of iteration 2's F8), 'case T2' (a light twin's touch-and-go), weekend 'case W1' (iteration 2's F1 single).
+
+### 12.1 Method
+
+- **Before** = the engine at the end of section 11 (sha256 prefix of `traffic.js` 5fd978f57963), measured with the FINAL harness of
+  this iteration; **after** = the final engine. Both at `--lookahead 120` (decision (c), the primary result) and at 60 s;
+  `node tools/traffic/replay_engine.mjs <w> --strict --open app --lookahead 120|60`, 10-Hz frames, deterministic. Every harness run
+  used a frozen copy of the engine (the working tree kept changing during the measurement); the final files are `traffic.js`
+  56d24f9f7e91, `motion.js` b7a2c919ef7b, `ground.js` d793ac304a27, `classifier.js` f963f8f7cf95 (unchanged), `parking.js`
+  24d5c0f2d885 (unchanged), harness `replay_engine.mjs` 3369690e691c (`aircraft.js` changed once more after the runs - one flap rule
+  line, which the harness does not load; F4 below).
+- **Reproduce first.** Each finding was reproduced in the before engine with a gate (new where none counted it, 12.2) or a 0.1-s probe
+  of the case, its cause found in the code, fixed and re-measured. The probes are local scripts in the scratch directory (they print
+  types and times and are not committed).
+- **Looked at like a pilot**: cases P, S, H, J, A, T2 and W1 per 0.1 s (height, speed, heading, pitch, bank, flaps, label, target
+  mode); the OD3 traces (`node tools/traffic/od3_trace.mjs S|P`); the two video scouts frame by frame (drawn speed against shown speed,
+  yaw rate, flaps, pitch); spot stills of both videos and app snapshots of the SF50's flaps (all looked at; local only).
+
+### 12.2 New and changed gates (harness `r4i3Frame` / `r4i3All`, all limit 0)
+
+- `roll_yaw_rate_frames` (F1): on the ground on a runway (rectangle + 3 m), faster than 30 kt in both frames, the drawn heading turning
+  faster than 3°/s over 0.3 s. `roll_speed_mismatch_frames` (F1): the same bodies, the drawn position's speed over 0.3 s differing from
+  the shown speed (`disp.gs`) by more than 3 kt.
+- `hard_stops_fade` (F2): a body drawn on the ground faster than 20 kt whose drawn speed falls below 2 kt within 2 s, WHATEVER its
+  alpha (a fade-out does not excuse a stop). `hidden_rolling` (F2): a body drawn on the ground faster than 20 kt faded out by a hidden
+  target (not a re-placement, a hangar or the edge of the view).
+- `liftoff_pitch_dip` (F5): within 3 s after a drawn lift-off at HWD, the pitch more than 1.5° below its highest value since the
+  lift-off. `label_landing_roll_rotating` (F6): 'Landing roll' on a ground body accelerating (> 0.3 m/s over 1 s) with the nose up
+  (> 2°).
+- `off_pavement_moving_frames` (F8): a moving fixed-wing ground body with a wheel off the physics' pavement in ANY target mode
+  (`grass_route_frames` counts route mode only; the target mode is logged, `off_pave_moving_by_mode`).
+- `low_bank_landing_frames` (F9): a planned landing / touch-and-go approach below 200 ft banked more than 15° (+ 0.5).
+- Changed: `low_bank_frames` counts a FORCED take-off plan (F2: an aircraft already rolling on a runway, drawn with the least
+  implausible climb-out instead of being hidden) as INFO `low_bank_forced_frames` - its excess over the limits is that plan's design
+  and the owner question of 12.6; `ground_slow_fast_roll` counts only the PLANNED frames of a run above 0.75 VR (a run of 6 s of
+  observed roll fixes between a planned re-acceleration and a planned lift-off was counted as 16 s of planned motion; the rest is INFO
+  `ground_slow_fast_roll_reported`).
+
+### 12.3 Findings: reproduction, cause, change, status
+
+| # | Finding | Reproduced (before, 120 s) | Cause | Change | Status (after) |
+|---|---|---|---|---|---|
+| F1 (major) | Case P's landing roll stutters (52 → 43 → 37 → 50 kt drawn while 50 kt is shown) and yaws 4° at 50 kt; covered by a `heroAcc 3` plan-gate override | `roll_yaw_rate_frames` 131 / 650 / 65 / 470 / 546 / 0 / 47, `roll_speed_mismatch_frames` 81 / 231 / 39 / 111 / 185 / 0 / 34; video P plan gate 2.52 px/frame² | the fix-to-fix Hermite between roll fixes whose times jitter by 0.1-0.3 s (its speed is the reported one, its length the chord's); trail kinks where routes / plans / fixes join the axis; the release from 'behind' restarting the trail at a body beside the centreline; route roll-outs turning off at roll speed; a body held at its trail end still showing its speed | roll smoothing on observed fixes (reported speed integrated + kernel-mean residual corrections, smoothed speeds), nose held on the runway axis on a roll, lateral fade after 'behind', yaw-limited roll-out profile, shown speed = drawn speed at the trail end (`docs/phase2_traffic.md`) | **fixed**: both gates 0 in every window except `roll_yaw_rate_frames` night 3, weekday 6 (12.7); case P's roll-out in the video: drawn - shown ≤ 0.14 kt and yaw 0°/s over frames 1187-1930; the plan gate of `c-roll-dolly` 0.22 px/frame² with NO override (the job's `heroAcc 3` is removed) |
+| F2 (major) | Hidden take-offs rose to 8; case H stops from 47 to 0 kt in 0.2 s mid-runway while it fades, case J vanishes at the hold and re-appears airborne | `m3_hidden_runway_consistent` 1 / 2 / 0 / 2 / 3, `hard_stops` weekend 1, `hard_stops_fade` 0 / 2 / 0 / 1 / 2, `hidden_rolling` 0 / 2 / 0 / 1 / 2 | the M3 fallback was a 'wait' at the last fix with a 0.4-s fade, also for aircraft already rolling | an aircraft already rolling on a runway is never hidden (forced least-implausible plan); any other M3 hide fades over 1.5 s while the body keeps its speed and direction | **fixed for rolling aircraft**: case H rolls on and climbs out (12.5); `hard_stops`, `hard_stops_fade`, `hidden_rolling` 0 everywhere; `m3_hidden_runway_consistent` 1 / 0 / 0 / 1 / 1 at 120 s (heli 2 at 60 s) - none rolling, **owner question** (12.6) |
+| F3 (major, D1) | This file gave clock times of individual aircraft events in dated windows, one with a type; `check_airport.py` did not look for event times | lines of section 3 (findings b and F6 of the first run) | the D1(d) scan tested flagged-type / window pairs only | the two passages reworded by window and an anonymous label ('case B1', 'case F6a'; type, clock times, track and position removed); new hard check `d1_event_times` (12.8) | **fixed**: `python3 -I -B tools/check_airport.py` ALL HARD CHECKS PASSED, 0 clock times next to an aircraft event in 235 committed text files (13,254 units), 9 / 9 planted cases right |
+| F4 | The SF50 retracts its take-off flaps on the taxi onto the runway and extends them again lined up (filmed) | video S trace: 0 → 15 at the hold, 15 → 0 taxiing, 0 → 15 lined up; app snapshot on that taxi: 0° | `flapRule` returned 0 for 'taxi'; no hold-to-runway state | take-off setting latched from the hold / run-up / line-up through 'taxi' / 'runway_taxi' (view latch + the engine's `tr._toFl`) | **fixed**: video S 0 → 15° at the hold (frames 959-999), held to 400 ft in the climb (frame 2867); the app snapshot on the taxi onto 28L draws 15° (was 0°) |
+| F5 | The SF50's nose drops 2.8° just after lift-off at 0-1 ft | `liftoff_pitch_dip` 0 / 2 / 0 / 0 / 12 / 10 / 0 | the rotation hold needed vy > 0.3 m/s | lift-off attitude held 4 s while not descending, then blended; the attitude reached held within 1° for 3 s | **fixed**: 0 in every window; case S 8.3 → 8.5 → 9.0° and held (video and trace) |
+| F6 | 'Low pass' at and after lift-offs (case A 2.2 s at 46-50 ft), 'Landing roll' flashes on take-off rolls | probe; `label_landing_roll_rotating` 0 / 0 / 0 / 0 / 7 / 0 / 0 (60 s: heli 3, od3p 3) | the lift-off latch was set only from roll labels, not from a fix-following lift-off | latch on the first airborne frame after a roll ≥ 0.6 VR; inside it 'Climbing out' when not descending; no 'Landing roll' on an accelerating, rotating body | **fixed**: case A reads Lined up → Take-off roll 28R → Climbing out 28R → Climbing out → Crosswind 28R; `label_landing_roll_rotating` 0; `label_flicker` 15 / 41 / 8 / 33 / 39 / 0 / 6 → 11 / 24 / 4 / 19 / 34 / 1 / 7 (no 'Take-off roll / Touch-and-go → Low pass → Climbing out' run left among the logged ones; one pat 'Climbing out → Low pass (~1 s) → Climbing out' on a fix-following climb remains) |
+| F7 | Case T2 rolls ~20 s at a constant 41.4-41.7 kt | probe | the plateau of the 0.75-VR rule | no steady part > 3 s in the first pass (`vFit`); no approach floating > 6 s below 15 ft (the later touchdowns floated: weekday `air_float_runway_frames` 50 in a mid-iteration build) | **fixed**: T2 brakes 43 → 30 kt, 3 s at the bottom, accelerates to its lift-off; every touch-and-go of the weekday probe has a plateau ≤ 3 s; `ground_slow_fast_roll` 0 everywhere |
+| F8 | Case W1's planned taxi out of the run-up area 'on grass' at 9.4 kt; 'Lined up' 18° off the axis | probe; `off_pavement_moving_frames` 9 / 6 / 1 / 0 / 71 / 0 / 11 | no pavement check on planned taxi connectors | paved connector search (`pavedEnds`), 'Taxiing on the runway' while > 10° off the axis, no second pivot dwell after a plan's pivot wait | **partly**: W1's connector crosses a NAIP-seen paved shoulder of the OSM taxiway (every wheel on the physics' pavement; `site.surface()`, OSM only, says 'grass'; looked at over NAIP), at ≤ 8.2 kt; no 'Lined up' while misaligned. `off_pavement_moving_frames` 9 / 0 / 1 / 0 / 92 / 0 / 11 - route-mode turns of large aircraft and rest poses (12.7) |
+| F9 | Regressions against the round-3 final: wings over buildings while taxiing, low bank on reconstructed finals | `fw_in_building_frames` 6 / 0 / 0 / 24 / 60 / 0 / 6; `low_bank_landing_frames` 0 / 91 / 0 / 19 / 78 / 0 / 0 | the building push acted on bodies at rest only; landings used the climb-out bank rule; a resting body turned back toward a target starting behind it | sideways building push for taxiing bodies; rest wait for a target starting behind; 15° below 200 ft with longer finals for planned and fallback landings | **partly**: buildings weekday 24 → 16, weekend 60 → 61, heli / od3p 6 → 12 (one aircraft entering a maintenance hangar door at 2-3 kt, 12.7); `low_bank_landing_frames` 0 / 12 / 0 / 16 / 42 / 0 / 0 (`landingBankOver` 3 / 1 / 4 plans: no final within 15° fits the hole) |
+| F10 | Case S leaves the FBO at 12.5 kt, brakes at 3.1 m/s² into a 25°/s turn, turns at ~2 m/s² lateral (filmed at 8x) | OD3 trace | the taxi profile's corner limits were 2 m/s² / 25°/s, braking 2-3 m/s² | gentle taxi profile first (1 m/s² lateral, 20°/s, 1.5 m/s² braking, 10 kt on aprons), start pivot as a dwell, pivot onset ≤ 40°/s² | **partly**: 10-Hz trace ≤ 8.8 kt, braking ≤ 2.1 m/s², lateral ≤ 1.3 m/s², ≤ 21°/s; in the video's 30-fps grid the BODY still brakes at 3.0 m/s² for ~0.3 s and turns at 25°/s (1.7 m/s² lateral at 7.7 kt) - the follower's own corner rule (12.7) |
+
+### 12.4 Results: strict harness, before → after, all seven windows
+
+Cells: before → after at 120 s (after **bold** = still failing) (before → after at 60 s). `--open app`, 10-Hz frames unless the gate
+says samples (1 Hz). "(new)" = gate added in this iteration (the before column is the before engine under the new gate).
+
+| Gate (limit 0) | heli | pat | night | weekday | weekend | od3s | od3p |
+|---|---|---|---|---|---|---|---|
+| `hard_stops` | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 1 → 0 (1 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `grass_route_frames` | 0 → 0 (0 → 0) | 6 → 0 (8 → 2) | 1 → **1** (1 → 1) | 0 → 0 (0 → 0) | 32 → **54** (30 → 47) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `ground_overlap_frames` | 0 → 0 (0 → 0) | 10 → **2** (12 → 1) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `fw_in_building_frames` | 6 → **12** (6 → 12) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 24 → **16** (24 → 16) | 60 → **61** (60 → 61) | 0 → 0 (0 → 0) | 6 → **12** (6 → 12) |
+| `off_reports_samples` | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 4 → 0 (4 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `air_overspeed_samples` | 0 → 0 (0 → 0) | 7 → **3** (7 → 3) | 1 → **1** (1 → 1) | 1 → **1** (1 → 1) | 2 → **2** (2 → 2) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `air_climb_samples` | 59 → **59** (59 → 59) | 65 → **65** (65 → 65) | 3 → **3** (3 → 3) | 21 → **16** (21 → 16) | 103 → **101** (106 → 104) | 3 → **3** (3 → 3) | 23 → **23** (23 → 23) |
+| `air_float_runway_frames` | 0 → 0 (0 → 0) | 4 → **4** (4 → 4) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `air_substall_samples` | 2 → **2** (2 → 2) | 2 → **2** (2 → 2) | 0 → 0 (0 → 0) | 2 → **2** (2 → 2) | 2 → **3** (2 → 3) | 0 → 0 (0 → 0) | 1 → **1** (1 → 1) |
+| `label_roll_flicker` | 0 → 0 (0 → 0) | 1 → **1** (1 → 1) | 0 → 0 (0 → 0) | 1 → **2** (2 → 2) | 0 → **1** (0 → 1) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `tg_no_contact` | 3 → **3** (3 → 3) | 4 → **4** (4 → 4) | 0 → 0 (0 → 0) | 2 → **2** (2 → 2) | 5 → **5** (5 → 5) | 0 → 0 (0 → 0) | 1 → **1** (1 → 1) |
+| `m3_hidden_runway_consistent` | 1 → **1** (2 → 2) | 2 → 0 (2 → 0) | 0 → 0 (0 → 0) | 2 → **1** (2 → 1) | 3 → **1** (3 → 1) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `air_accel_samples` | 13 → **13** (13 → 13) | 8 → **8** (8 → 8) | 5 → **5** (5 → 5) | 9 → **9** (9 → 9) | 28 → **27** (28 → 27) | 0 → 0 (0 → 0) | 3 → **3** (3 → 3) |
+| `ground_fast_roll_frames` | 22 → **19** (22 → 19) | 20 → **5** (20 → 5) | 0 → 0 (0 → 0) | 4 → **4** (4 → 4) | 33 → **25** (33 → 25) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `liftoff_plateau_frames` | 18 → **18** (18 → 18) | 21 → **21** (21 → 21) | 0 → 0 (0 → 0) | 9 → **9** (9 → 9) | 7 → **7** (7 → 7) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `label_takeoff_slow` | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 1 → **2** (1 → 2) | 10 → **11** (10 → 11) | 13 → **10** (10 → 8) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `label_runway_end` | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 2 → 0 (2 → 0) | 1 → 0 (1 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `label_lineup_rolling` | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 1 → **1** (1 → 1) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `rest_pose_change_frames` | 0 → 0 (0 → 1) | 1 → 0 (0 → 1) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 2 → 0 (2 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `pitch_phase_samples` | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 1 → **1** (1 → 1) | 1 → **1** (2 → 2) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `roll_turn_samples` | 1 → **1** (1 → 1) | 1 → **1** (1 → 1) | 0 → 0 (0 → 0) | 1 → **1** (1 → 1) | 3 → **3** (3 → 3) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `ground_stall_frames` | 1 → **1** (1 → 1) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 1 → **1** (1 → 1) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `roll_start_yaw_frames` | 18 → **16** (18 → 16) | 47 → **7** (47 → 7) | 56 → **52** (56 → 52) | 41 → **27** (41 → 27) | 56 → **45** (59 → 51) | 0 → 0 (0 → 0) | 19 → **16** (19 → 16) |
+| `taxi_hole_stop_frames` | 0 → 0 (0 → 0) | 92 → **79** (92 → 79) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `label_overflight_hwd` | 0 → 0 (59 → 59) | 122 → **122** (173 → 173) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 154 → **154** (235 → 235) | 0 → 0 (0 → 0) | 0 → 0 (58 → 58) |
+| `low_bank_frames` | 24 → **24** (0 → 0) | 1 → 0 (1 → 0) | 0 → 0 (0 → 0) | 13 → **13** (13 → 13) | 7 → **15** (7 → 15) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `pivot_in_place` | 3 → **5** (2 → 6) | 6 → **1** (3 → 2) | 2 → **2** (2 → 2) | 3 → **1** (3 → 1) | 3 → **1** (5 → 3) | 1 → 0 (1 → 0) | 0 → **3** (0 → 3) |
+| `ground_slow_fast_roll` | 52 → 0 (52 → 0) | 9 → 0 (9 → 0) | 0 → 0 (0 → 0) | 2 → 0 (2 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `label_flicker` | 15 → **11** (13 → 9) | 41 → **24** (45 → 27) | 8 → **4** (8 → 4) | 33 → **19** (33 → 19) | 39 → **34** (38 → 33) | 0 → **1** (0 → 1) | 6 → **7** (6 → 7) |
+| `roll_yaw_rate_frames` (new) | 131 → 0 (131 → 0) | 650 → 0 (650 → 0) | 65 → **3** (65 → 3) | 470 → **6** (473 → 6) | 546 → 0 (547 → 0) | 0 → 0 (0 → 0) | 47 → 0 (47 → 0) |
+| `roll_speed_mismatch_frames` (new) | 81 → 0 (81 → 0) | 231 → 0 (224 → 0) | 39 → 0 (39 → 0) | 111 → 0 (111 → 0) | 185 → 0 (184 → 0) | 0 → 0 (0 → 0) | 34 → 0 (34 → 0) |
+| `hard_stops_fade` (new) | 0 → 0 (0 → 0) | 2 → 0 (2 → 0) | 0 → 0 (0 → 0) | 1 → 0 (1 → 0) | 2 → 0 (2 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `hidden_rolling` (new) | 0 → 0 (0 → 0) | 2 → 0 (2 → 0) | 0 → 0 (0 → 0) | 1 → 0 (1 → 0) | 2 → 0 (2 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+| `liftoff_pitch_dip` (new) | 0 → 0 (0 → 0) | 2 → 0 (2 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 12 → 0 (12 → 0) | 10 → 0 (10 → 0) | 0 → 0 (0 → 0) |
+| `label_landing_roll_rotating` (new) | 0 → 0 (3 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) | 7 → 0 (7 → 0) | 0 → 0 (0 → 0) | 0 → 0 (3 → 0) |
+| `off_pavement_moving_frames` (new) | 9 → **9** (9 → 9) | 6 → 0 (8 → 0) | 1 → **1** (1 → 1) | 0 → 0 (0 → 0) | 71 → **92** (79 → 97) | 0 → 0 (0 → 0) | 11 → **11** (11 → 11) |
+| `low_bank_landing_frames` (new) | 0 → 0 (0 → 0) | 91 → **12** (91 → 12) | 0 → 0 (0 → 0) | 19 → **16** (19 → 16) | 78 → **42** (78 → 42) | 0 → 0 (0 → 0) | 0 → 0 (0 → 0) |
+
+Zero before and after in every window at both lookaheads: `teleports_engine`, `teleports_signal_hwd`, `ghost_parked_frames`, `slow_liftoff`, `hops`, `air_hover_frames`, `heli_in_bldg_frames`, `label_contradictions`, `misaligned_transitions`, `stale_on_runway_frames`, `stale_overlap_frames`, `fast_off_runway_frames`, `landing_roll_speed_rise`, `liftoff_off_runway`, `touchdown_off_runway`, `ground_air_reappear`, `taxi_label_fast_frames`, `low_air_off_runway_frames`, `air_pair_close_frames`, `recon_substall_samples`, `label_vertical_sense`, `label_base_aligned`, `label_taxi_stopped`, `tg_label_frames`, `teleports_attitude`, `fast_ground_fixes`, `label_climbout_leg`, `label_lineup_misaligned`, `label_hold_on_runway`, `liftoff_pitch_low`, `touchdown_pitch_bad`, `pitch_rate_frames`, `label_taxi_still`, `snapshot_drift`, `label_final_arriving`, `planted_reappear`, `planted_low_air_box`, `planted_open_burst`, `d1_late_flag_forget`.
+
+Failed gates (120 s): heli 18 → 15, pat 28 → 17, night 12 → 11, weekday 25 → 19, weekend 30 → 22, od3s 3 → 2, od3p 10 → 9 (60 s:
+heli 19 → 16, pat 27 → 19, night 12 → 11, weekday 25 → 19, weekend 30 → 22, od3s 3 → 2, od3p 12 → 10); the before counts include the
+eight new gates. **RESULT: FAIL in all seven windows, before and after** (residuals: 12.7). INFO at 120 s: `low_bank_forced_frames` 0 /
+18 / 0 / 34 / 16 / 0 / 0 (forced take-offs, 12.6); `ground_slow_fast_roll_reported` 61 / 132 / 0 / 70 / 95 / 0 / 7. New engine counters
+at 120 s (per window, heli / pat / night / weekday / weekend): `takeoffForced` 0 / 2 / 0 / 1 / 2, `touchGoFloatRefused` 0 / 0 / 0 / 240 /
+0 (planning candidates), `restWaitBehind` 42-388 frames per window, `fallbackBankOver` weekday 1, `rollSmoothRuns` 7-30, `behindLatFade` 1-9, `landingBankOver`
+0 / 3 / 1 / 0 / 4.
+
+Against the round-3 final (section 9.3, the reviewer's F9 list), at 120 s: `tg_no_contact` 3 / 4 / 0 / 2 / 5 / 0 / 1 (unchanged by
+this iteration), `m3_hidden_runway_consistent` 1 / 0 / 0 / 1 / 1 (round-3 final 2 / 0 / 0 / 0 / 1), `fw_in_building_frames` weekday
+16 (2), weekend 61 (57), `ground_overlap_frames` pat 2 (6), `air_overspeed_samples` pat 3 (3), weekday 1 (0), `off_reports_samples`
+weekday 0 (0), `air_substall_samples` heli / pat / weekday 2, weekend 3, od3p 1 (0 / 0 / 0 / 8 / 0), `air_float_runway_frames` pat 4 (0),
+`hard_stops` 0 (0).
+
+### 12.5 Cases, per 0.1 s, checked like a pilot (final engine, 120 s)
+
+- **Case P (single-turboprop landing, 28L).** Touchdown unchanged: 411 m past the threshold on the centreline at 80.7 kt, 5.0° nose
+  up, -223 ft/min, no height rise before it. The roll-out on observed fixes (`gg:roll` from +8.6 s) holds 299.9° to the turn-off and
+  decelerates smoothly (61.9 → 39 kt over 12 s, ≤ ~2 m/s²; the largest ground deceleration of the trace, 3.1 m/s² at +21 s, is the
+  planned route braking into the exit after the last roll fix). In the video scout: drawn - shown speed ≤ 0.14 kt and yaw 0°/s at
+  every ground frame above 30 kt (frames 1187-1930; was 8.9-13 kt and up to 12.6°/s at frames 1601-1634). Labels unchanged (Arriving →
+  Final 28R (provisional) 3.6 s → Final 28L → Landing roll 28L → Taxiing on the runway 28L → Taxiing → Holding short → Taxiing →
+  Stopped → Stopped · no signal), no label run under 1 s.
+- **Case S (light-jet take-off, 28L).** FBO exit ≤ 8.8 kt (10-Hz trace; video grid 8.4 kt, 12.7); take-off flaps from the hold
+  through the taxi onto 28L and the line-up to 400 ft in the climb; constant 7.7-7.8-kt line-up, roll from 6 kt at ~1.75 m/s² to
+  85 kt in 535 m on the centreline (≤ 0.1 m off); rotation 1.6° (-2 s) → 8.4° at the lift-off, then 8.5 → 9.0° held, 887 ft/min
+  10 s after the lift-off, no height drop. The largest ground deceleration, 3.1 m/s² at -47.8 s, is a fix-to-fix Hermite between two
+  taxi fixes near the hold (9.3 → 5.2 kt in 0.6 s; data-following, 12.7).
+- **Case H (weekend aerobatic single, touch-and-go 28R; F2).** Touches down on observed fixes at 54 kt, rolls 6.9 s on the
+  centreline to 46 kt, rotates 0 → 6.9° and lifts off at 46 kt (forced plan), climbs straight ahead at ~470 ft/min to ~190 ft, turns
+  crosswind at 20-24° bank and joins its first fix on the downwind at ~380 ft. Labels: Final 28R → Touch-and-go 28R → Climbing out 28R
+  (provisional) → Crosswind 28R (provisional) → Downwind 28R (provisional) → Downwind 28R. Before: 47 → 0 kt in 0.2 s while fading,
+  absent 47 s, re-appearing 944 m away.
+- **Case J (weekend business jet at the hold; F2, owner question).** Taxis to the hold at 7 kt, keeps taxiing at 7 kt while it fades
+  out over 1.5 s (was 7 → 0 kt within 1 s), hidden ~45 s, re-appears airborne over 28L at ~20 ft and 148 kt (fades in over 0.5 s).
+- **Case A (weekday single, take-off 28R; F6).** Lined up 28R → Take-off roll 28R (27.7 s) → Climbing out 28R (lift-off at 58 kt,
+  7.6°) → Climbing out → Crosswind 28R; no 'Low pass', no 'Landing roll'.
+- **Case T2 (weekday light twin, touch-and-go 28L; F7).** 26 s on the ground: 43 → 30.3 kt at ~0.5 m/s², 3 s at 30.3 kt,
+  accelerates at ~1.4 m/s² to its lift-off. The approach to it (fix-following, before the plan) dives at 1,100-1,300 ft/min with
+  -3 to -5° pitch between 93 and 41 ft and then floats ~4 s at 0-5 ft (12.7).
+- **Case W1 (weekend single, take-off 28R; F8).** Run-up pivot to the path heading in the plan's own wait, then taxi (no second
+  8-s 'Stopped' dwell in the final engine), ≤ 8.2 kt over the NAIP-seen paved shoulder (all wheels on the physics' pavement), 'Taxiing
+  on the runway 28R' while turning on, 'Lined up 28R' once aligned; the take-off itself as in section 11.5.
+
+### 12.6 Owner question (F2): take-offs that are still hidden
+
+The owner's M3 rule hides a take-off only when no runway is consistent. Three take-offs are still hidden at 120 s although a runway is
+consistent (`m3_hidden_runway_consistent` 1 / 0 / 0 / 1 / 1): heli 'case C' (a single-engine piston, silent on a taxilane and heard
+again at ~400 ft in the crosswind turn), a weekday single turboprop (heard again at ~200 ft) and weekend 'case J' (a business jet at the
+hold, heard again at ~20 ft and 148 kt 885 m away 47 s later). None was rolling on a runway: each was taxiing or holding when it fell
+silent, and no take-off within the plan limits reaches its next fix in the time left (`plan fail 11`). They fade out over 1.5 s while
+they keep moving and fade in at their first airborne fix. Every aircraft that WAS rolling on a runway is now drawn with the least
+implausible plan instead (forced: 5 take-offs in the five hour windows, `low_bank_forced_frames` 18 / 34 / 16 frames in pat / weekday /
+weekend - e.g. a light twin turning crosswind at 26-29° bank at 190-215 ft, 3-4° over the low-height rule). **Question:** should the
+three non-rolling ones also be drawn with a forced plan (taxi, line-up and roll compressed, climb-out turn without the bank limit), or
+stay hidden under M3? The engine supports both (`planTakeoffForced` is limited to rolling aircraft by `FORCE_V`).
+
+### 12.7 Residuals (not fixed; all measured above)
+
+- `roll_yaw_rate_frames` night 3, weekday 6: a planned landing roll-out turning onto an exit (night, 4°/s at 35 kt) and a fix-to-fix
+  Hermite on 28L between two roll fixes, one of which fails the roll-run test (weekday, 6.7°/s at 40 kt, a 1.8-m S-curve beyond the
+  15° axis hold).
+- F10 in the video grid: the follower body turns at its 25°/s limit and brakes at 3.0 m/s² for ~0.3 s in case S's first FBO turn
+  (frames 156-184, 7.7-8.4 kt): the follower's look-ahead uses the 2-m/s² body limits while the profile uses the gentle 1-m/s² ones.
+  Case S also brakes 9.3 → 5.2 kt in 0.6 s near the hold on a fix-to-fix Hermite (data).
+- F9: `fw_in_building_frames` heli / od3p 12 (a single entering a maintenance hangar door at 2-3 kt, its wing tips over the door
+  jamb for ~1.2 s before the door rule fades it), weekday 16 (a high-wing single leaving its hangar, 'case C1'), weekend 61 (an
+  observed single turning round in front of the west T-hangars at 0.5-3 kt, wings over the row for ~5 s); `low_bank_landing_frames`
+  pat 12, weekday 16, weekend 42 (no final within 15° fits the hole; the least steep is drawn, 19-25° at 55-165 ft).
+- F8: `off_pavement_moving_frames` weekend 92 (route mode 49: two business jets' route turns at taxi speed with one main wheel over
+  a fillet edge - the same turns as before, more frames now that the gentle profile drives them slower, and `grass_route_frames`
+  weekend 32 → 54 is the same; rest 36: a business jet settling onto its hold pose; landing plans 5, fix-following 2), heli / od3p
+  9 / 11 (one aircraft's fix-following taxi past a grass corner), night 1.
+- `pivot_in_place` 5 / 1 / 2 / 1 / 1 / 0 / 3: 30-32° turns with 0.29-0.5 m of movement in fix-following taxi (`gg:herm`, `extrap`) and
+  routes, just under the gate's movement limit.
+- `label_roll_flicker` pat 1, weekday 2, weekend 1 (a 'Landing roll' label held 0.3-1.8 s between two other labels: rolls that turn
+  into a take-off roll or into runway taxi); `air_substall_samples` weekend 2 → 3 (a forced take-off's climb-out at 50 kt against a 54-kt estimate for 1 s);
+  `low_bank_frames` weekend 7 → 15 (the one logged case: an aerobatic single's planned final at 27° at 214 ft, 0.1° over the
+  rule; the weekend climb-outs of section 11.7 are forced plans now, INFO); heli 24 and weekday 13 as in section 11.7; case T2's dive and short float before its touchdown (data-following air hole before the plan).
+- The other gates of section 11.7 (`air_climb_samples`, `air_accel_samples`, `liftoff_plateau_frames`, `roll_start_yaw_frames`,
+  `taxi_hole_stop_frames`, `label_overflight_hwd`, `tg_no_contact`, ...) are unchanged or lower and were not worked on.
+- Section 2.3's table (the first run's traffic counts every 2 min in windows A and B) gives the runway-movement counts of the moment
+  ("28R ↑1 ↓0 (last 3 min)"), i.e. how many departures and landings happened in a 3-minute span, without a type; `d1_event_times`
+  does not flag it (no event word next to the time) and it was left as it is - the reviewer may want it coarsened.
+
+### 12.8 Other checks, wanted, inferred, not verified
+
+- `python3 -I -B tools/check_airport.py`: ALL HARD CHECKS PASSED, including D1(d) (types with dated windows) and the new
+  `d1_event_times` hard check (F3): a clock time (hh:mm[:ss]Z / UTC / PST / PDT) in the same sentence or table row of committed text
+  as an aircraft-event word (taxied, took off, landing roll, touchdown, lift-off, touch-and-go, crossed, first seen, signal ended,
+  ...) is a hit; times on the hour, either end of a span of ≥ 5 min and a screenshot's 'scene hh:mm' are not; 9 planted cases
+  (`--d1-windows` runs it alone in seconds). The window B caption in `docs/phase2/SOURCES.json` no longer gives the scene minute of
+  case B1.
+- `node --check` on every edited JS file: OK. OD3 traces refreshed (`out/od3/trace_case_{S,P}.{json,csv}`, local). App snapshots of the
+  SF50 at the hold, on the taxi onto 28L, lined up and climbing (`livetest.mjs` with the reviewer's job, local): flaps 15° at each,
+  0 page errors.
+- **Wanted** (packages this iteration does not own): none new; the round-4 wants (section 10.7: `modelDims`) stand.
+- **Inferred, not sourced** [inf]: every new constant - `ROLLSM_V` 10 m/s, `ROLLSM_ALIGN` 15°, `ROLLSM_H` 5 s, `ROLLSM_VH` 2.5 s,
+  `ROLLSM_RAMP` 2.5 s, the 15-m spike rule, the 8 / 15° axis hold, the max(30 m, 1.5 s) lateral fade, `ROLL_YAW_V` 15 m/s / `ROLL_YAW_W`
+  3°/s, `HIDE_FADE_S` 1.5 s, `FORCE_V` 8 m/s, the forced-plan cost weights, `LO_HOLD_S` 4 s, `LO_PEAK_S` 3 s / 1°, `TG_PLATEAU_S` 3 s,
+  `TG_FLOAT_S` 6 s, the 0.3-m/s² minimum braking of `vFit`, the 150-m paved-connector search, `BLD_PUSH_V` 8 m/s, the rest wait's
+  REST_LOCK_M + 1 m and 60°, `LAND_BANK_FT` 200 / `LAND_BANK_DEG` 15, `TAXI_LAT_G` 1.0 m/s², `TAXI_W_G` 20°/s, `TAXI_DEC_G` 1.5 m/s²,
+  `RAMP_V` 10 kt, `PIV_ACC` 40°/s², and the gate limits of 12.2.
+- **Not run:** live mode; a real phone; the full videos (the orchestrator's).
