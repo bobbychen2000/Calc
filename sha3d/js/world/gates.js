@@ -1,194 +1,19 @@
-// Jet bridges (instanced unit parts, animatable) and ground service vehicles
+// forked from sfo3d@e3218d6 js/world/gates.js
+// Ground service vehicle meshes for SHA Live 3D (instanced): belt loaders, baggage tug + carts, catering trucks, fuel
+// truck, GPU, cones (sfo3d, unchanged) and, new for sha3d, self-propelled passenger stairs and an apron bus for the remote
+// stands (no ZSSS ground-handling source: their dimensions and use are inferred, see STAIRS / BUS below).
+// sha3d changes: the SFO airport-grid import (stToWorld) and sfo3d's legacy offline GateSystem class (the old renderer's
+// fixed-mesh bridges, js/scene.js) are removed - the jet bridges are js/live/gate_system.js; vehicleSettings() also lists
+// the stair platform heights (stairsNNN keys, one mesh per 0.1 m of door sill).
 import { Mesh } from '../gl.js';
 import { Geo } from '../geom.js';
-import { m4, v3, rng, lerp, smoother } from '../math.js';
-import { stToWorld, GROUND_Y } from '../geo.js';
+import { m4 } from '../math.js';
 import { TYPES } from '../aircraft/model.js';
-import { bellowsShape, bellowsGeo, BELLOWS } from '../aircraft/dock.js'; // the closure fitted to the drawn fuselage skin
-
-const G = GROUND_Y;
-const stW = (p, h = 0) => stToWorld(p[0], p[1], h);
-const stD = (d) => { const a = stToWorld(d[0], d[1], 0), o = stToWorld(0, 0, 0); return v3.norm([a[0] - o[0], 0, a[2] - o[2]]); };
-
-// unit meshes
-function unitBox(col, ext, uvLen = true) { const g = new Geo(); g.box([0, -0.5, -0.5], [1, 0.5, 0.5], col, ext); // uv: x along, y vertical 0..1
-  for (let i = 0; i < g.nv; i++) { g.uv[i * 2] = g.pos[i * 3]; g.uv[i * 2 + 1] = g.pos[i * 3 + 1] + 0.5; } return g; }
-function unitCyl(col, ext, seg = 20) { const g = new Geo(); g.cylinder(1, 1, seg, col, ext, null, true); return g; }
 
 function inst(M, data = [0, 0, 0, 0]) { // 3x4 rows + data
   return [M[0], M[4], M[8], M[12], M[1], M[5], M[9], M[13], M[2], M[6], M[10], M[14], ...data];
 }
-// unit cylinder (axis y 0..1, radius 1) -> centered at c, axis direction ax, radius r, length l
-function cylMat(c, ax, r, l) {
-  const y = v3.norm(ax); const x = v3.norm(Math.abs(y[1]) > 0.9 ? v3.cross([1, 0, 0], y) : v3.cross(y, [0, 1, 0])); const z = v3.cross(x, y);
-  const B = new Float32Array([x[0] * r, x[1] * r, x[2] * r, 0, y[0] * l, y[1] * l, y[2] * l, 0, z[0] * r, z[1] * r, z[2] * r, 0, c[0] - y[0] * l / 2, c[1] - y[1] * l / 2, c[2] - y[2] * l / 2, 1]);
-  return B;
-}
-// matrix mapping unit box (x:0..1, y,z: -0.5..0.5) onto segment a->b with height h (y) and width w, keeping y up
-function segBox(a, b, h, w, roll = 0) {
-  const d = v3.sub(b, a); const L = v3.len(d); const f = v3.mul(d, 1 / L);
-  const r = v3.norm(v3.cross(f, [0, 1, 0])); const u = v3.cross(r, f);
-  const B = new Float32Array([f[0], f[1], f[2], 0, u[0], u[1], u[2], 0, r[0], r[1], r[2], 0, a[0], a[1], a[2], 1]);
-  return { M: m4.mul(B, m4.scale(L, h, w)), L };
-}
-
 export { inst };
-export class GateSystem {
-  constructor(gates) {
-    this.gates = gates;
-    const light = [0.82, 0.83, 0.84, 1], dark = [0.08, 0.08, 0.09, 1], gray = [0.45, 0.46, 0.48, 1];
-    this.meshes = {
-      tunnel: new Mesh(unitBox(light, [0.5, 0.2, 9, 0]).data()),
-      cab: new Mesh(unitBox([0.7, 0.71, 0.72, 1], [0.45, 0.2, 9, 0]).data()),
-      bellows: new Mesh(unitBox(dark, [0.9, 0, 0, 0]).data()),
-      column: new Mesh(unitCyl(gray, [0.5, 0.6, 0, 0], 12).data()),
-      rotunda: new Mesh(unitCyl([0.78, 0.79, 0.8, 1], [0.5, 0.3, 0, 0], 24).data()),
-      wheel: new Mesh(unitCyl([0.06, 0.06, 0.06, 1], [0.9, 0, 0, 0], 12).data()),
-      beam: new Mesh(unitBox(gray, [0.5, 0.6, 0, 0]).data()),
-    };
-    this.vehicleMeshes = buildVehicleMeshes(LEGACY_SET);
-    this.animated = {}; // gateId -> k
-    this.buildStatic();
-  }
-  bridgePose(g, k) {
-    // k: 1 docked at L1 door, 0 retracted
-    const f = stD(g.dir); const r = v3.norm(v3.cross(f, [0, 1, 0])); const left = v3.mul(r, -1);
-    const outW = stD(g.outN);
-    const T = TYPES[g.acType || (g.wide ? 'wide' : 'narrow')];
-    const attach = stW(g.attach, G);
-    const rc = v3.add(v3.add(attach, v3.mul(outW, 3.2)), v3.mul(left, g.wide ? 7 : 5));
-    const floorY = G + 5.4;
-    const nose = stW(g.nose, G);
-    const doorX = T.doors[0];
-    const sill = G + (T.dockSill ?? T.Hc - 0.3 * T.R); // published door-1 sill (js/aircraft/fit.js; docs/requests/aircraft_docking_fields.md)
-    const door = v3.add(v3.sub(nose, v3.mul(f, T.dockX1 ?? doorX)), v3.mul(left, (T.dockHW ?? T.R) + 0.15)); // door CENTRE station
-    door[1] = sill;
-    // docked cab center (cab depth 3.4 m, away from fuselage along left): its front 0.6 m off the cab stop, the bellows'
-    // depth (js/aircraft/dock.js BELLOWS rest + ext), so the closure's flat front lies on the skin at the door station
-    const cabDock = v3.add(door, v3.mul(left, 1.95));
-    // retracted: cab pulled back toward pier, swung along pier face
-    const along = v3.norm(v3.add(v3.mul(outW, 0.6), v3.mul(left, 0.8)));
-    const cabPark = v3.add([rc[0], G + 4.2, rc[2]], v3.mul(along, 14));
-    const kk = smoother(k);
-    const cab = v3.lerp(cabPark, cabDock, kk);
-    const cabFacing = v3.norm(v3.lerp(along, v3.mul(left, -1), kk)); // direction cab faces (toward aircraft when docked)
-    return { rc, floorY, cab, cabFacing, left, door, T };
-  }
-  // fit: a Geo collecting the fitted closure (js/aircraft/dock.js bellowsGeo, as js/live/gates.js draws it) - close-out
-  // round 3 bridges-9: the old flat block reached 0.4 m past the cab stop (0.25 m into the skin at the door) and stood off
-  // or cut into the tapering skin elsewhere; this scene has one bridge per gate, at door 1 (no second-bridge door).
-  // opt (animated bridges, items()): kFit - the k the closure is deployed for (the cache step; default k); local - build
-  // the closure in the cab frame (drawn with the returned model matrix M); cached - the fitted closure for this
-  // (gate, type, kFit) is already built: neither build it again nor push the flat block (close-out round 5: on every
-  // cache hit fit was null, so the flat block came back on top of the cached fitted mesh). Returns {M, fitted}.
-  bridgeInstances(g, k, out, fit = null, opt = {}) {
-    const P = this.bridgePose(g, k); const M = this.meshes;
-    const rc = P.rc; const rot = [rc[0], P.floorY - 0.2, rc[2]];
-    // rotunda + column
-    out.rotunda.push(inst(m4.mul(m4.translate(rc[0], P.floorY - 0.3, rc[2]), m4.scale(2.3, 3.3, 2.3))));
-    out.column.push(inst(m4.mul(m4.translate(rc[0], G, rc[2]), m4.scale(0.55, P.floorY - G - 0.3, 0.55))));
-    // tunnel from rotunda edge to cab back
-    const cabBack = v3.sub(P.cab, v3.mul(P.cabFacing, 1.7));
-    const startC = [rc[0], P.floorY + 1.3, rc[2]];
-    const endC = [cabBack[0], P.cab[1] + 1.4, cabBack[2]];
-    const dir = v3.norm(v3.sub(endC, startC));
-    const s0 = v3.add(startC, v3.mul(dir, 2.0));
-    const Lt = v3.dist(s0, endC);
-    // three telescoping sections
-    const secs = [[0, 0.42, 2.9, 2.5], [0.36, 0.74, 3.05, 2.65], [0.68, 1.0, 3.2, 2.8]];
-    for (const [a, b, h, w] of secs) {
-      const A = v3.add(s0, v3.mul(dir, Lt * a)), B = v3.add(s0, v3.mul(dir, Lt * b));
-      const { M: mm, L } = segBox(A, B, h, w); out.tunnel.push(inst(mm, [L, 0, 0, 0]));
-    }
-    // cab
-    const cabA = v3.sub(P.cab, v3.mul(P.cabFacing, 1.7)), cabB = v3.add(P.cab, v3.mul(P.cabFacing, 1.5));
-    const cA = [cabA[0], P.cab[1] + 1.55, cabA[2]], cB = [cabB[0], P.cab[1] + 1.55, cabB[2]];
-    out.cab.push(inst(segBox(cA, cB, 3.3, 3.4).M, [3.2, 0, 0, 0]));
-    // bellows closure at the aircraft side, deployed over the last 15 % of the docking: fitted to the drawn skin where the
-    // type has a measured door-1 footprint (data/models/dock_foot.js), else flat with its front at the cab stop
-    const dep = (kx) => Math.max(0, Math.min(1, (kx - 0.85) / 0.15)); const kk = dep(k), kf = dep(opt.kFit ?? k);
-    const Mc = m4.basis(P.cabFacing, [0, 1, 0], [cabB[0], P.cab[1], cabB[2]]);
-    const shp = (fit || opt.cached) && kf > 0 ? bellowsShape(P.T, 1, kf) : null;
-    if (shp) { if (fit) bellowsGeo(fit, opt.local ? m4.ident() : Mc, 0, BELLOWS.rest + BELLOWS.ext * kf, shp, [0.08, 0.08, 0.09, 1], [0.9, 0, 0, 0]); }
-    else { const bA = [cabB[0], P.cab[1] + 1.525, cabB[2]], bB = v3.add(bA, v3.mul(P.cabFacing, BELLOWS.rest + BELLOWS.ext * kk)); out.bellows.push(inst(segBox(bA, bB, 2.95, 3.1).M)); }
-    // drive unit: legs + wheels under the outer tunnel near cab
-    const du = v3.add(s0, v3.mul(dir, Lt * 0.84)); const yb = du[1] - 1.5;
-    const side = v3.norm(v3.cross(dir, [0, 1, 0]));
-    for (const sg of [-1, 1]) {
-      const leg = v3.add(du, v3.mul(side, sg * 1.3));
-      out.column.push(inst(m4.mul(m4.translate(leg[0], G + 0.45, leg[2]), m4.scale(0.18, yb - G - 0.45, 0.18))));
-      out.wheel.push(inst(cylMat([leg[0], G + 0.45, leg[2]], side, 0.45, 0.35)));
-    }
-    const beamA = v3.add(du, v3.mul(side, -1.4)), beamB = v3.add(du, v3.mul(side, 1.4));
-    out.beam.push(inst(segBox([beamA[0], G + 0.5, beamA[2]], [beamB[0], G + 0.5, beamB[2]], 0.4, 0.5).M));
-    return { M: Mc, fitted: !!shp };
-  }
-  buildStatic() {
-    const R = rng(99);
-    this.staticBuckets = { tunnel: [], cab: [], bellows: [], column: [], rotunda: [], wheel: [], beam: [] };
-    this.vehicleBuckets = {}; for (const k in this.vehicleMeshes) this.vehicleBuckets[k] = [];
-    for (const g of this.gates) {
-      if (g.dynamic) continue;
-      const docked = !g.empty;
-      this.bridgeInstances(g, docked ? 1 : 0.0, this.staticBuckets, this._fitStatic || (this._fitStatic = new Geo()));
-      if (docked) this.placeServiceVehicles(g, R, this.vehicleBuckets);
-    }
-    // staging: rows of baggage carts/containers near each pier root
-    for (const g of this.gates) { if (R() > 0.3) continue; const f = stD(g.dir); const r = v3.norm(v3.cross(f, [0, 1, 0])); const base = stW(g.attach, G);
-      const p0 = v3.add(base, v3.add(v3.mul(f, -9), v3.mul(r, (R() < 0.5 ? -1 : 1) * (g.wide ? 22 : 15))));
-      for (let i = 0; i < 4; i++) { const p = v3.add(p0, v3.mul(r, i * 3.3)); this.vehicleBuckets.cart.push(inst(m4.basis(r, [0, 1, 0], [p[0], G, p[2]]), [0.3 + R() * 0.4, 0.3, 0.35, 1])); } }
-    this.fitStaticMesh = this._fitStatic && this._fitStatic.nv ? new Mesh(this._fitStatic.data()) : null; this._fitStatic = null;
-    this.bbox = [-2000, 0, -2000, 2000, 60, 2000];
-    const all = this.gates.map(g => stW(g.nose, 0)); if (all.length) { this.bbox = [1e9, 0, 1e9, -1e9, 30, -1e9]; all.forEach(p => { this.bbox[0] = Math.min(this.bbox[0], p[0] - 120); this.bbox[2] = Math.min(this.bbox[2], p[2] - 120); this.bbox[3] = Math.max(this.bbox[3], p[0] + 120); this.bbox[5] = Math.max(this.bbox[5], p[2] + 120); }); }
-  }
-  // per-frame items; dyn: [{gate, k}] animated bridges; extraVehicles: {meshName: [instances]}
-  items(dyn = [], extraVehicles = {}) {
-    const out = [];
-    const buckets = {}; for (const k in this.staticBuckets) buckets[k] = this.staticBuckets[k].slice();
-    // (fitted closures of the animated bridges: one mesh per gate, type and 0.05 step of k, cached - the offline renderer
-    // animates one bridge per shot; built in the cab frame and drawn at this frame's cab pose (before round 5 it was built
-    // in world space at the first frame of each step and stayed there while the cab moved on), deployed for the cached step,
-    // and on a cache hit the flat block is not pushed as well - close-out round 5)
-    const fits = []; this._fitDyn = this._fitDyn || new Map(); this._fitPrev = this._fitPrev || new Map();
-    for (const d of dyn) { const kq = Math.round(Math.max(0, Math.min(1, d.k)) * 20) / 20, gid = d.gate.id ?? d.gate.name, key = gid + ':' + (d.gate.acType || (d.gate.wide ? 'wide' : 'narrow')) + ':' + kq;
-      let fm = this._fitDyn.get(key); const geo = fm === undefined ? new Geo() : null;
-      const r = this.bridgeInstances(d.gate, d.k, buckets, geo, { kFit: kq, local: true, cached: !!fm });
-      if (geo) { fm = geo.nv ? new Mesh(geo.data()) : null; this._fitDyn.set(key, fm); }
-      if (fm && r.fitted) { fits.push({ m: fm, M: r.M, P: this._fitPrev.get(gid) || r.M }); this._fitPrev.set(gid, r.M); } }
-    const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    if (this.fitStaticMesh) out.push({ mesh: this.fitStaticMesh, prog: 'obj', model: I4, bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
-    for (const f of fits) out.push({ mesh: f.m, prog: 'obj', model: f.M, prevModel: f.P, bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
-    for (const k in buckets) { const m = this.meshes[k]; m.setInstances(new Float32Array(buckets[k].flat()), buckets[k].length); out.push({ mesh: m, prog: 'objI', bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } }); }
-    for (const k in this.vehicleBuckets) { const list = this.vehicleBuckets[k].concat(extraVehicles[k] || []); const m = this.vehicleMeshes[k]; m.setInstances(new Float32Array(list.flat()), list.length); out.push({ mesh: m, prog: 'objI', bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 }, shadowMaxCascade: 2 }); }
-    return out;
-  }
-  placeServiceVehicles(g, R, B) {
-    const T = TYPES[g.acType || (g.wide ? 'wide' : 'narrow')];
-    const f = stD(g.dir); const r = v3.norm(v3.cross(f, [0, 1, 0]));
-    const nose = stW(g.nose, G);
-    const at = (along, side, yaw = 0) => { // along: meters behind nose, side: + right
-      const p = v3.add(v3.sub(nose, v3.mul(f, along)), v3.mul(r, side));
-      const c = Math.cos(yaw), s = Math.sin(yaw); const d = v3.norm(v3.add(v3.mul(f, c), v3.mul(r, s)));
-      return m4.basis(d, [0, 1, 0], [p[0], G, p[2]]);
-    };
-    const tint = () => { const cs = [[0.95, 0.95, 0.95], [0.9, 0.75, 0.1], [0.15, 0.3, 0.6], [0.85, 0.3, 0.1], [0.4, 0.42, 0.45]]; return [...cs[Math.floor(R() * cs.length)], 1]; };
-    // belt loader at forward cargo door (right side)
-    if (R() < 0.8) B.beltLoader.push(inst(at(T.L * 0.22, T.R + 3.0, -1.35), tint()));
-    // baggage tug + carts
-    if (R() < 0.75) {
-      const base = T.L * 0.3; B.tug.push(inst(at(base, T.R + 11, Math.PI), tint()));
-      for (let i = 0; i < 3; i++) B.cart.push(inst(at(base + 3.2 + i * 3.4, T.R + 11, Math.PI), [0.3 + R() * 0.5, 0.3, 0.35, 1]));
-    }
-    // catering truck at R2 door
-    if (R() < 0.45) B.catering.push(inst(at(T.doors[1] + 1, T.R + 3.5, -Math.PI / 2), [0.95, 0.95, 0.95, 1]));
-    // fuel truck outboard of the right engine
-    if (R() < 0.35 && T.eng.length) B.fuel.push(inst(at(T.xMain - 6, T.eng[T.eng.length - 1].z + 6.5, 0), [0.85, 0.85, 0.85, 1]));
-    // GPU near nose
-    if (R() < 0.6) B.gpu.push(inst(at(2.5, -3.5, 0.3), tint()));
-    // cones at wingtips & nose
-    for (const [a, s] of [[-1.5, 0], [T.L * 0.5, T.R + 0.2 + (g.wide ? 30 : 16.5)], [T.L * 0.5, -(T.R + 0.2 + (g.wide ? 30 : 16.5))], [T.L + 1.5, 0]]) B.cone.push(inst(at(a, s)));
-  }
-}
 
 // ----- vehicle meshes -----
 // Belt loaders (close-out round 3, bridges-3): the conveyor's top end on the lower-deck cargo-door sill of the door it
@@ -259,20 +84,62 @@ export function cateringFloor(T) {
 export const cateringKey = (F) => 'catering' + Math.round(F * 100);
 // catering truck hull (local boxes [x0, x1, z0, z1, y0, y1], x towards the aircraft): chassis, cab, lifted box, column
 export const cateringBoxes = (F) => [[-3.5, 3.0, -1.1, 1.1, 0, 1.6], [3.0, 4.55, -1.1, 1.1, 0, 2.6], [-3.4, 2.8, -1.2, 1.2, F, F + 2.6], [-3.0, 2.4, -0.3, 0.3, 1.6, F]];
-// every conveyor / box setting the types at the contact stands need (the meshes are built once, before any placement;
-// memoised, so a checker that rebuilds the meshes later - jobs/extract2d.mjs - gets the same keys even after a model was
-// re-seated by fit.js seatType: placeVehicles snaps such a type to the nearest setting)
+// every conveyor / box / stair setting the types need (the meshes are built once, before any placement; memoised, so a
+// checker that rebuilds the meshes later gets the same keys even after a model was re-seated by fit.js seatType:
+// placeVehicles snaps such a type to the nearest setting)
 let VSET = null;
 export function vehicleSettings() {
   if (VSET) return VSET;
-  const belts = {}, caterings = {};
+  const belts = {}, caterings = {}, stairs = {};
   for (const [k, T] of Object.entries(TYPES)) { if (!T || !T.wing || !T.doors || k.startsWith('biz_')) continue;
     const fam = beltFamily(k); if (fam) for (const d of ['fwd', 'aft']) { const D = beltDoor(T, fam, d); if (D) belts[beltKey(D.S)] = D.S; }
-    const F = cateringFloor(T); if (F != null) caterings[cateringKey(F)] = F; }
-  return (VSET = { belts, caterings });
+    const F = cateringFloor(T); if (F != null) caterings[cateringKey(F)] = F;
+    for (const D of stairDoors(T)) stairs[stairKey(D.S)] = D.S; }
+  return (VSET = { belts, caterings, stairs });
 }
-// (the old offline renderer's GateSystem, js/scene.js, keeps its two fixed meshes)
-const LEGACY_SET = { belts: { beltLoader: 1.55 }, caterings: { catering: 3.6 } };
+// ---------------------------------------------------------------- passenger stairs and apron bus (sha3d, remote stands)
+// Self-propelled passenger stairs (sha3d; no ZSSS ground-handling source: the unit, its size and the two-stair practice
+// are INFERRED from common practice): platform 1.8 m deep x 1.7 m wide with 1.0 m handrails, floor at the door sill;
+// flight 1.3 m wide at 38 deg down to a 1.0 m bottom step over a truck chassis (0.4-0.95 m, 2.2 m wide); driver cab at
+// the front left under the platform where the platform is high enough (sill >= 2.35 m). Local frame: x forward (towards
+// the fuselage), z right, y up; the platform's front edge at x = xFront = 0.
+// The doors a remote stand boards through: door 1L and the last left door (narrow bodies: front + rear boarding), or door
+// 1L and the second-bridge door (door 2L, wide bodies). x = station from the nose tip, S = sill above the apron (door 1:
+// the fitted dockSill; aft: the door-1 sill + the model's pitch over the door spacing, as cateringFloor), hw = the widest
+// rendered skin half width over the door opening (the stair's front edge stops 0.15 m outside it, as the bridge cab).
+export function stairDoors(T) {
+  if (!T || !T.doors || !T.doors.length) return [];
+  const p = T.fit && T.fit.pitch ? Math.sin(T.fit.pitch.a) : 0; const s1 = T.dockSill ?? T.sill ?? (T.Hc - 0.3 * T.R);
+  const x1 = T.dockX1 ?? T.doors[0]; const wide = T.dock2 != null || T.R > 2.6;
+  const skin = (x, S, fb) => { if (!(T.fit && T.fit.skinHW)) return fb; let w = null; for (let y = S; y <= S + 1.9; y += 0.1) { const v = T.fit.skinHW(x, y); if (v != null && (w == null || v > w)) w = v; } return w ?? fb; };
+  const out = [{ x: x1, S: q10(s1), hw: T.dockHW ?? T.R, door: 1 }];
+  let xa = null, Sa = null, hwa = null;
+  if (wide && T.dockX2 != null) { xa = T.dockX2; Sa = T.dockSill2 ?? (s1 + p * (xa - x1)); hwa = T.dockHW2 ?? null; }
+  else { xa = wide ? T.doors[1] : T.doors[T.doors.length - 1]; if (xa != null) Sa = s1 + p * (xa - x1); }
+  if (xa != null && xa - x1 > 6) out.push({ x: xa, S: q10(Sa), hw: hwa ?? skin(xa, Sa, T.R), door: 2 });
+  return out;
+}
+const q10 = (S) => Math.max(1.0, Math.round(S * 10) / 10);
+export const stairKey = (S) => 'stairs' + Math.round(S * 100);
+const STAIR_ANGLE = 38 * Math.PI / 180;
+export function stairShape(S) {
+  const xFront = 0, xP0 = xFront - 1.8, run = Math.max(0.6, (S - 1.0) / Math.tan(STAIR_ANGLE));
+  const x0 = Math.min(xP0 - run - 0.3, xFront - 5.0);
+  return { S, xFront, xP0, run, x0, cab: S >= 2.35, cabTop: Math.min(2.3, S - 0.3) };
+}
+// hull (local boxes [x0, x1, z0, z1, y0, y1, closure]): chassis, cab, the flight in three steps of height, the platform;
+// the platform's front 0.6 m is the closure (it may meet the fuselage skin: placeVehicles tests it with no margin)
+export function stairHull(S) {
+  const h = stairShape(S); const out = [[h.x0, h.xFront - 0.4, -1.1, 1.1, 0, 0.95]];
+  if (h.cab) out.push([h.xFront - 2.4, h.xFront - 0.4, -1.1, -0.2, 0, h.cabTop]);
+  for (let k = 0; k < 3; k++) out.push([h.xP0 - h.run * (1 - k / 3), h.xP0 - h.run * (1 - (k + 1) / 3), -0.75, 0.75, 0, 1.0 + (S - 1.0) * (k + 1) / 3 + 1.0]);
+  out.push([h.xP0, h.xFront - 0.6, -0.9, 0.9, 0.95, S + 1.05]);
+  out.push([h.xFront - 0.6, h.xFront, -0.9, 0.9, S - 0.4, S + 1.05, 1]);
+  return out;
+}
+// apron bus (inferred: a 14 m low-floor airside bus, 3.0 m wide, 3.1 m high, doors on the right side; no ZSSS fleet
+// source). Local frame as above: x forward, z right.
+export const BUS_HULL = [[-7.0, 7.0, -1.5, 1.5, 0, 3.1]];
 // local shape (x forward to the aircraft end, y up, z right): conveyor box from (x0, y0) tilted by th about z; its top
 // surface ends at (xe, S); chassis -2.5..2.4 m up to chassisTop; cab on the left (-z) side up to 2.05 m
 export function beltShape(S) {
@@ -305,5 +172,28 @@ export function vehicleGeos(set = vehicleSettings()) {
   { const g = new Geo(); g.box([2.5, 0.5, -1.2], [4.5, 2.8, 1.2], paint, E_PAINT); g.box([3.9, 1.7, -1.15], [4.55, 2.6, 1.15], glass, E_GLASS); g.cylinder(1.2, 6.0, 16, [0.85, 0.85, 0.86, 1], [0.35, 0.6, 0, 0], m4.mul(m4.translate(-3.8, 2.0, 0), m4.rotZ(-Math.PI / 2))); wheels(g, [-3, -1.5, 3.5], 1.2, 0.5); M.fuel = g; }
   { const g = new Geo(); g.box([-1.2, 0.3, -0.7], [1.2, 1.5, 0.7], paint, E_PAINT); wheels(g, [-0.8, 0.8], 0.7, 0.28); M.gpu = g; }
   { const g = new Geo(); g.lathe([[0.22, 0], [0.05, 0.75]], 10, [0.95, 0.35, 0.05, 1], [0.6, 0, 0, 0], null, true); M.cone = g; }
+  // passenger stairs (sha3d): one mesh per platform height (stairShape)
+  const steel = [0.42, 0.43, 0.45, 1], rail = [0.92, 0.72, 0.1, 1], E_STEP = [0.55, 0.3, 0, 0];
+  for (const [k, S] of Object.entries(set.stairs || {})) { const h = stairShape(S); const g = new Geo();
+    g.box([h.x0, 0.4, -1.1], [h.xFront - 0.4, 0.95, 1.1], paint, E_PAINT);                                   // chassis
+    if (h.cab) { g.box([h.xFront - 2.4, 0.95, -1.1], [h.xFront - 0.4, h.cabTop - 0.5, -0.2], paint, E_PAINT); g.box([h.xFront - 2.35, h.cabTop - 0.5, -1.08], [h.xFront - 0.45, h.cabTop, -0.22], glass, E_GLASS); }
+    g.box([h.xP0, S - 0.15, -0.85], [h.xFront, S, 0.85], steel, E_STEP);                                    // platform
+    for (const z of [-0.85, 0.85]) { g.box([h.xP0, S + 0.95, z - 0.03], [h.xFront - 0.1, S + 1.0, z + 0.03], rail, E_PAINT); for (const x of [h.xP0 + 0.05, h.xFront - 0.15]) g.box([x - 0.03, S, z - 0.03], [x + 0.03, S + 1.0, z + 0.03], rail, E_PAINT); }
+    g.box([h.xP0, 0.95, -0.6], [h.xP0 + 0.5, S - 0.15, 0.6], steel, E_METAL);                               // platform column
+    // flight: stringers, steps (0.2 m risers), handrails
+    const nS = Math.max(2, Math.round((S - 1.0) / 0.2)), dx = h.run / nS, dy = (S - 1.0) / nS;
+    for (let i = 0; i < nS; i++) { const x = h.xP0 - h.run + i * dx, y = 1.0 + i * dy; g.box([x, y, -0.65], [x + dx + 0.02, y + 0.06, 0.65], steel, E_STEP); }
+    const sl = Math.hypot(h.run, S - 1.0), fl = m4.mul(m4.translate(h.xP0 - h.run, 1.0, 0), m4.rotZ(STAIR_ANGLE));
+    for (const z of [-0.68, 0.68]) { g.box([0, -0.3, z - 0.04], [sl, 0.05, z + 0.04], steel, E_METAL, fl); g.box([0, 0.95, z - 0.03], [sl, 1.0, z + 0.03], rail, E_PAINT, fl); }
+    for (const t of [0.35, 0.7]) { const x = h.xP0 - h.run * (1 - t); g.box([x - 0.12, 0.95, -0.5], [x + 0.12, 1.0 + (S - 1.0) * t - 0.25, 0.5], steel, E_METAL); }
+    wheels(g, [h.x0 + 1.0, h.xFront - 1.6], 1.0, 0.4, 0.28); M[k] = g; }
+  // apron bus (sha3d): lower body, window band with pillars, roof, two double doors on the right (+z) side
+  { const g = new Geo(); const body = [0.93, 0.94, 0.95, 1];
+    g.box([-7.0, 0.35, -1.5], [7.0, 1.05, 1.5], body, E_PAINT); g.box([-6.95, 1.05, -1.48], [6.95, 2.55, 1.48], glass, E_GLASS);
+    for (let x = -6.9; x <= 6.9; x += 1.38) for (const z of [-1.5, 1.45]) g.box([x - 0.06, 1.05, z], [x + 0.06, 2.55, z + 0.05], body, E_PAINT);
+    g.box([-7.0, 2.55, -1.5], [7.0, 3.1, 1.5], body, E_PAINT); g.box([-5.0, 3.1, -1.0], [-2.6, 3.3, 1.0], body, E_PAINT); // roof + A/C pod
+    for (const x of [-3.2, 3.2]) g.box([x - 0.75, 0.3, 1.5], [x + 0.75, 2.5, 1.53], [0.25, 0.27, 0.3, 1], E_GLASS);   // doors (right side)
+    g.box([-0.4, 0.5, 1.5], [0.4, 0.9, 1.52], [0.85, 0.65, 0.1, 1], E_PAINT);
+    wheels(g, [-5.3, 5.3], 1.35, 0.5, 0.32); M.bus = g; }
   return M;
 }

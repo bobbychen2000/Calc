@@ -9,21 +9,25 @@
 //    bridges and 3-D asset tiers do not exist here: those indexes are empty (inAsset / solidInAsset always miss).
 //  - World coordinates throughout: g.nose, g.dir and every bridge point are world [x, z] (sfo3d: the SFO s,t grid);
 //    stW / stD are the identity (x east, z south).
-//  - Bridge model and rest pose are not in the SHA data: autoModel() picks the smallest-retracting sell-sheet model that
-//    covers the docked extensions of the stand's accepted types, autoRest() a retracted rest pose clear of every accepted
-//    aircraft (1 m), its push-back / taxi-in sweep, the neighbours (0.5 m), the buildings and the other bridges (both inf).
-//    The Oshkosh AT2 / AT3 table stays as an inf PLACEHOLDER: the bridge make at ZSSS is unknown (PLAN §4).
+//  - Bridge model and rest pose are not in the SHA data: autoModel() picks the sell-sheet model covering the docked
+//    extensions of the stand's accepted types (weighted: class reference, common SHA types, others), the shortest-
+//    retracting among equals; a bridge without a data rest pose (all of them) rests fully retracted towards the class
+//    reference's door 1, turned (up to 80 deg) / extended (up to 3 m) where that pose meets the stand's accepted aircraft
+//    (3.75 m: MH 5001-2021 table 4.13.5 note a), the neighbours' aircraft (0.5 m), the fixed parts or the buildings
+//    (autoRest in finishPrep). The Oshkosh AT2 / AT3 table stays as an INF PLACEHOLDER: the bridge make at ZSSS is unknown.
+//  - The rotunda floor is fitted to the common SHA types' door sills (SHA_MAIN) where the bridge docks any of them.
 //  - Departure level per terminal (DEPARTURE_LEVELS, inf); the cab sense CW = sfo3d's inferred sense unless the data has
 //    a cab_convention; the class reference airframes (REF_TYPE) are the SHA class references where a model exists.
 //  - Signs: js/live/gate_signs.js atlas (CAAC MH 5001-2021 8.5 stand-number sign: yellow face, black numerals, internally
-//    lit) on the VDGS unit and as a bridge-mounted triangular prism on the rotunda roof (8.5; replaces sfo3d's FAA-style
-//    gate numbers on the tunnel); remote stands get a post-mounted stand-number sign (photos 17 / 09 of
+//    lit) above the VDGS display (8.5.3: on the stand centreline extension) and as a bridge-mounted triangular prism on the
+//    rotunda roof (8.5.2 / 8.5.8: on the bridge's fixed end; replaces sfo3d's FAA-style gate numbers on the tunnel); remote
+//    stands and the alternative positions get a post-mounted stand-number sign (remoteGeo; photos 17 / 09 / 14 of
 //    docs/phase1/photos_credits.md show yellow boards with black digits at ZSSS).
 //  - Remote stands (no bridge): self-propelled passenger stairs at the doors and an apron bus beside a parked aircraft,
-//    an idle stair unit at the stand head as a cue (all inf), plus sfo3d's GSE set (belt loaders, baggage train, catering,
-//    fuel, GPU, cones), every hull tested as in sfo3d.
-//  - The FAA references below (AC 150/5220-21C slopes and sizes) are aircraft-boarding-equipment design values carried
-//    from the donor as inf placeholders; no FAA marking / sign / lighting constant is used in this file.
+//    an idle stair unit at the stand head as a cue (all inf; js/world/gates.js stairDoors / stairShape / BUS_HULL), plus
+//    sfo3d's GSE set (belt loaders, baggage train, catering, fuel, GPU, cones), every hull tested as in sfo3d.
+//  - The US references below (FAA AC 150/5220-21C slopes and sizes, 36 CFR 1191 ramps) are aircraft-boarding-equipment
+//    design values carried from the donor as inf placeholders; no FAA marking / sign / lighting constant is used here.
 // The donor's header follows unchanged (its SFO stand / pier notes describe sfo3d, not ZSSS).
 //
 // Contact-gate equipment driven by live occupancy:
@@ -110,8 +114,8 @@ import { GROUND_Y } from '../geo.js';
 import { TYPES, ICAO_TYPES } from '../aircraft/types.js';
 import '../aircraft/fit.js'; // fits the imported models to the published dimensions: T.dockX1/2, T.dockSill/2, T.dockHW
 import { bellowsShape, bellowsGeo } from '../aircraft/dock.js'; // the bellows closure fitted to the drawn fuselage skin
-import { inst, buildVehicleMeshes, beltShape, beltFamily, beltDoor, beltEndY, BELT_RAIL_GAP, cateringFloor, cateringBoxes, stairShape, stairKey, stairHull, BUS_HULL, STAIR_SET } from '../world/gates.js';
-import { makeGateAtlas, newSignGeo, signQuad, meshOfSign } from './gate_signs.js';
+import { inst, buildVehicleMeshes, beltShape, beltFamily, beltDoor, beltEndY, BELT_RAIL_GAP, cateringFloor, cateringBoxes, stairShape, stairHull, stairDoors, BUS_HULL } from '../world/gates.js';
+import { makeGateAtlas } from './gate_signs.js';
 // sha3d: the SHA stand data has no per-family stop offsets (sfo3d type_stops, keyed by traffic.js familyOf): every type
 // stops with its nose tip at the stand's stop point (data nose_note, inf)
 const familyOf = () => null;
@@ -223,15 +227,17 @@ const LIFT_RATE = 1.09 / 60;                              // m/s
 const DRIVE_V = 27 / 60;                                  // m/s, maximum horizontal travel
 const APPROACH_V = 0.15;                                  // m/s final creep to the door (inferred, ~1/3 of the maximum)
 const STANDOFF = 1.5;                                     // m, pre-dock point on the door normal (inferred)
-const SLOPE_TARGET = 1 / 12, SLOPE_MAX = 1 / 4;           // AC 150/5220-21C Figure 6 (unassisted / assisted), §3.4.b(6)
+const SLOPE_TARGET = 1 / 12, SLOPE_MAX = 1 / 4;           // AC 150/5220-21C Figure 6 (unassisted / assisted), §3.4.b(6) (sha3d: inf placeholder - US boarding-equipment design values, no CAAC value transcribed)
 // floor of the fixed walkway where it leaves the building (the terminal's bridge level), m above the apron, per terminal
-// (g.terminal). sha3d: NO source yet - one inferred level for both terminals: the T1 airside concourse roof reads 8.9 m
-// (7.3-10.8) on photo 02 (docs/phase1/standards_refs.md §3.4), so a bridge level of 4.5 m leaves the 3.0 m walkway
-// (WALK_H) under it; photo 09 (T2, 2013) shows the T2 fixed links one storey above the apron. Both inf.
+// (g.terminal), and the steepest the fixed walkway may slope (slope; default 1:12). sha3d: no published level.
+//  T1 4.5 m [inf]: the T1 airside concourse roof reads 8.9 m (7.3-10.8) on photo 02 (docs/phase1/standards_refs.md §3.4),
+//     so 4.5 m leaves the 3.0 m walkway (WALK_H) under it; 1:12 as sfo3d
+//  T2 5.0 m, near level (1:60) [obs-low]: photo 09 (T2 airside, 2013) shows the long glazed fixed links running level, one
+//     storey up, over the apron service road and its vehicles to the rotundas (eye estimate of the clearance, ~4.5 m)
 const DEPARTURE_LEVEL = 4.5;                              // m, the default (inferred)
 export const DEPARTURE_LEVELS = {
   T1: { h: 4.5, tag: 'inf', src: 'one storey over the apron, under the 8.9 m T1 concourse roof (photo 02 ratio, standards_refs.md 3.4); no published level' },
-  T2: { h: 4.5, tag: 'inf', src: 'one storey over the apron (photo 09, T2 2013: fixed links one storey up); no published level' },
+  T2: { h: 5.0, slope: 1 / 60, tag: 'obs-low', src: 'photo 09 (T2 airside, 2013): level glazed fixed links one storey up over the service road (clearance ~4.5 m, eye estimate); no published level' },
 };
 const departureLevel = (g) => DEPARTURE_LEVELS[g && g.terminal] || { h: DEPARTURE_LEVEL, tag: 'inf', src: 'default' };
 const OVERLAP = 1.0, STAGGER = 0.3;                       // m, minimum tunnel overlap at full extension / retracted stagger (inferred)
@@ -261,6 +267,8 @@ const EXPECT_HOLD_S = 600;
 // reported stop is not the stop mark -- DAL672 B763 stopped 2.6 m short and 1.4 m off C9V's line (4 Nov 21:42Z) with C9 L1's
 // data rest 0.5+ m clear of the mark pose and touching the aircraft [inferred: EXPECT_MG]
 const EXPECT_MG = 3.0;
+// (sha3d: CAAC MH 5001-2021 4.13.5, table 4.13.5 gives the same minimum clearances by code letter: A / B 3.0, C 4.5,
+// D-F 7.5 m; the code letter is taken from the span as here)
 const icaoClear = (span) => span < 24 ? 3.0 : span < 36 ? 4.5 : 7.5;
 // exterior cross-sections (width, height) of tunnel sections A (rotunda) .. C (cab): AC 150/5220-21C §3.5.a(1) minimum
 // interior 50 in corridor / 80 in height; sheet minimum A tunnel interior 1.47 x 2.13 m; exterior inferred
@@ -350,6 +358,10 @@ const C = {
   yellow: [0.9, 0.7, 0.08, 1], yellowE: [0.5, 0, 0, 0], tyre: [0.05, 0.05, 0.05, 1], tyreE: [0.9, 0, 0, 0],
   unit: [0.74, 0.75, 0.76, 1], unitE: [0.5, 0.2, 0, 0], lamp: [1, 0.93, 0.82, 1], lampE: [0.15, 0, 14, 0], amber: [1, 0.55, 0.05, 1], amberE: [0.2, 0, 14, 0],
   walk: [0.84, 0.85, 0.86, 1], neck: [0.78, 0.79, 0.8, 1],
+  // (sha3d) glazed tunnel and fixed-link sides: the objects shader's curtain-wall glass (mat 1: 1.8 m mullions). ZSSS
+  // photos 09 / 14 / 15 / 16 (docs/phase1/photos_credits.md) show glass-walled bridge tunnels and two-level glazed fixed
+  // links at T2 (obs, appearance only); T1 is assumed alike (inf)
+  glassE: [0.1, 0, 1, 0],
 };
 
 // rectangular tube along a->b (floor on the a->b line), with window-strip UVs (mat 9: u = metres along, v = 0..1)
@@ -376,6 +388,8 @@ function cyl(g, p, r, h, col, ext, seg = 16) { g.cylinder(r, h, seg, col, ext, m
 // box spanning a -> b (floor on the line a -> b, sloping allowed), width w, height h
 function slab(g, a, b, w, h, col, ext) {
   const d = v3.sub(b, a); const L = v3.len(d); if (L < 0.05) return;
+  // (sha3d: a glazed side material - mat 1 - only on the two long sides; roof, floor and ends stay plain panel)
+  if (ext[2] === 1) { const M = m4.basis(d, [0, 1, 0], a); g.box([0, 0, -w / 2], [L, h, w / 2], col, ext, M, ['pz', 'nz']); g.box([0, 0, -w / 2], [L, h, w / 2], col, [ext[0], ext[1], 0, 0], M, ['px', 'nx', 'py', 'ny']); return; }
   g.box([0, 0, -w / 2], [L, h, w / 2], col, ext, m4.basis(d, [0, 1, 0], a));
 }
 // the full-width rotunda corridor a -> b (floor on the line a -> b, width w, height h square to that line, as slab()) with
@@ -418,6 +432,9 @@ function neckSlab(g, a, b, T, w, h, col, ext) {
 // (sha3d: the SHA class references of data/sha_stands.json class_ref - C909 / A321 / 757-300 / 767-300ER / A330-300 /
 // 777-300ER / 747-8 - on the nearest modelled airframe: the C909 is not modelled yet (Phase 4), CRJ900 stands in for B)
 const REF_TYPE = { B: 'crj9', C: 'a321', CL: 'b753', D: 'b763', E: 'a333', EL: 'b77w', F: 'b748' };
+// (sha3d) the types that make up most of the SHA mix (docs/PLAN.md §1 fleet row: A320 family 45-55 %, 737 23-37 %,
+// wide-bodies 14-26 %, an estimate - inf): autoModel weights them above the rare accepted types (regional jets)
+const SHA_MAIN = new Set(['a319', 'a320', 'a321', 'a20n', 'a21n', 'b737', 'b738', 'b739', 'b38m', 'a332', 'a333', 'a339', 'a359', 'b788', 'b789', 'b78x', 'b772', 'b77w', 'b763', 'b744', 'b748']);
 const ICAO_OF = {}; for (const [icao, k] of Object.entries(ICAO_TYPES)) if (!ICAO_OF[k]) ICAO_OF[k] = icao;
 // Where the bridge cab meets the aircraft (js/aircraft/fit.js): door `which` = 1 is door 1L, 2 the door the second bridge
 // of a wide-body stand docks to (T.dock2, from the manufacturers' documents), 3 the A380 upper-deck door U1L (upper-deck
@@ -639,6 +656,7 @@ export class LiveGateSystem {
     // at rest)
     let nT, opR, opE, mechE, spacer;
     if (spec) { [nT, , , opE, opR] = spec; spacer = spec[2] - spec[4]; mechE = spec[1] - spacer; }
+    else if (!b.upper && !b.extRange && (spec = this.autoModel(g, b, rot))) { [nT, , , opE, opR] = spec; spacer = spec[2] - spec[4]; mechE = spec[1] - spacer; } // (sha3d)
     else { nT = 3; [opR, opE] = b.extRange || [10.276, 41.381]; spacer = 2.225; mechE = opE + 2.3; }
     const stowL = stowW ? Math.hypot(stowW[0] - rot[0], stowW[1] - rot[2]) : null;
     if (!spec && b.upper) { // upper-deck bridge (no model in the data): the smallest AT3 covering the rest length and the U1L docking
@@ -665,11 +683,39 @@ export class LiveGateSystem {
     // rest pose (data stowW: the cab pivot at rest; cab straight on the tunnel)
     const f = stD(g.dir);
     if (stowW) { b.a0 = yawOf(stowW[0] - rot[0], stowW[1] - rot[2]); b.e0 = clampN(stowL, opR, mechE); }
-    else { const dp = doorOf(nose, f, TYPES[REF_TYPE[g.cls] || 'b38m'], b.door).door; b.a0 = yawOf(dp[0] - rot[0], dp[2] - rot[2]); b.e0 = opR; }
+    // (sha3d: no data rest pose - fully retracted towards the class reference's door; finishPrep turns it clear of the
+    // aircraft, the fixed parts and the building where it is not: autoRest)
+    else { const dp = doorOf(nose, f, TYPES[REF_TYPE[g.cls] || 'b38m'], b.door).door; b.a0 = yawOf(dp[0] - rot[0], dp[2] - rot[2]); b.e0 = opR; b.autoRest = true; }
     b.stairSide = b.stairSide || 1;
     // legacy fields read by tools (jobs/extract2d.mjs, tools/live/invariants.mjs)
     b.attachW = att; b.attachW3 = att; const lu = [rot[0] - walk[Math.max(0, n - 2)][0], 0, rot[2] - walk[Math.max(0, n - 2)][2]]; b.u = Math.hypot(lu[0], lu[2]) > 0.05 ? v3.norm(lu) : dirOf(b.acWalk);
     b.fixedLen = wl; b.rc = [rot[0], G, rot[2]]; b.parkDir = dirOf(b.a0); b.reach = b.e0;
+  }
+  // sha3d autoModel: the bridge model is not in the SHA data (the make at ZSSS is unknown, PLAN §4), so it is inferred as
+  // the sfo3d stand builder inferred SFO's: per sell-sheet model the docked pivot distances (door + the model's cab
+  // spacer, from the rotunda) of the stand's accepted types at its stop are tested against its range (operational
+  // retraction .. max(operational extension, mechanical stop - 0.3 m), as jointOk); the model covering the most weight
+  // wins - the stand's class reference type (REF_TYPE) 100, the common SHA types (SHA_MAIN, PLAN §1 fleet row) 10, any
+  // other accepted type 1 - and among equals the one that retracts shortest (the rest pose stays clear), then the shorter
+  // extension. b.modelUsed / b.modelWhy record it (inf). null: no type at all (the default AT3 range is used).
+  autoModel(g, b, rot) {
+    const pts = []; const ref = REF_TYPE[g.cls];
+    for (const { s } of this.standPoses(g)) for (const A of this.acceptedTypes(s)) {
+      if (b.door === 2 && A.T.dockX2 == null) continue;
+      const { door, left } = doorOf(stW(s.nose, G), stD(s.dir), A.T, b.door);
+      pts.push({ key: A.key, door, left, w: A.key === ref ? 100 : SHA_MAIN.has(A.key) ? 10 : 1 });
+    }
+    if (!pts.length) return null;
+    let best = null;
+    for (const [name, m] of Object.entries(PBB)) {
+      const sp = m[2] - m[4], mech = m[1] - sp, hi = Math.max(m[3], mech - 0.3); let score = 0, n = 0;
+      for (const P of pts) { const q = v3.add(P.door, v3.mul(P.left, sp)); const e = Math.hypot(q[0] - rot[0], q[2] - rot[2]); if (e >= m[4] - 1e-6 && e <= hi) { score += P.w; n++; } }
+      if (!best || score > best.score || (score === best.score && (m[4] < best.m[4] - 1e-9 || (Math.abs(m[4] - best.m[4]) < 1e-9 && m[3] < best.m[3])))) best = { name, m, score, n };
+    }
+    // (no model reaches any type: the longest unit - it rests and looks like the long bridge the data maps)
+    if (!best.score) { const L = Object.entries(PBB).sort((a, c) => c[1][1] - a[1][1])[0]; best = { name: L[0], m: L[1], score: 0, n: 0 }; }
+    b.modelUsed = best.name; b.modelSrc = 'inf'; b.modelWhy = `autoModel: ${best.n} of ${pts.length} accepted types in range` + (pts.some(P => P.w === 100) ? (best.score >= 100 ? ', class reference covered' : ', class reference NOT covered') : '');
+    return best.m;
   }
   // clearance limits of a drum centred at (x, z): the terminal outline (0.2 m), other bridges' mapped fixed walkways
   // (half width + 0.1 m; segments that start or end at this drum - a twin head's connector - or that this bridge's
@@ -725,8 +771,10 @@ export class LiveGateSystem {
         for (const s of this.solidsQ(o, { a: o.a0, e: o.e0, t: 0, h: o.h0 }, 0, true)) if ((s.part === 'walkway' || s.part === 'rotunda') && W.some(w => solidOverlap(w, s, 0.3))) top = Math.max(top, s.hi - G); }
       b.Hb = +(top + 0.6).toFixed(3); b.HbTag = 'inf'; b.HbSrc = 'upper deck: main-deck walkway / drum roofs it crosses + 0.6 m (inferred; pier ' + DL.tag + ')'; }
     else { b.Hb = DL.h; b.HbTag = DL.tag; b.HbSrc = DL.src; }
-    const dh = b.upper ? 0 : b.walkLen / 12;
-    b._tgH = tg;
+    const dh = b.upper ? 0 : b.walkLen * (DL.slope ?? 1 / 12);
+    // (sha3d: the height targets are the common SHA types the bridge docks, SHA_MAIN, where it docks any - the regional
+    // jets' low sills otherwise pull a C stand's rotunda floor down to ~2.5 m; the other types still dock within 1:4)
+    b._tgH = tg.some(t => SHA_MAIN.has(t.key)) ? tg.filter(t => SHA_MAIN.has(t.key)) : tg;
     const Hr = this.pickHr(g, [b], b._tgH, b.Hb - dh, b.Hb + dh);
     this.applyHeights(b, Hr, tg, b._tgH);
     // (HrPinned: the rotunda floor sits on the edge of the walkway's 1:12 band from the pier's bridge level - the level,
@@ -812,23 +860,29 @@ export class LiveGateSystem {
     // (0.5 m) and the other bridges at rest; where none does, the data pose stays (b.restBlocked)
     { const restS = new Map(all.map(({ b }) => [b, this.solidsQ(b, { a: b.a0, e: b.e0, t: 0, h: b.h0 }, 0, true)]));
       for (const { g, b } of all) {
-        const q0 = { a: b.a0, e: b.e0, t: 0, h: b.h0 }; if (!this.fixedHit(b, q0, 0) && !this.bldHit(b, q0, 0)) continue;
+        const q0 = { a: b.a0, e: b.e0, t: 0, h: b.h0 }; if (!b.autoRest && !this.fixedHit(b, q0, 0) && !this.bldHit(b, q0, 0)) continue;
         const own = this.standAircraft(g); const nb = [];
         for (const o of this.gates) { if (o === g || !o.bridge && !(o.sharesBridgesOf)) continue; const on = stW(o.nose, G); if (Math.hypot(on[0] - b.rot[0], on[2] - b.rot[2]) > 120) continue; for (const A of this.standAircraft(o)) nb.push(A); }
         const others = all.filter(x => x.b !== b && Math.hypot(x.b.rot[0] - b.rot[0], x.b.rot[2] - b.rot[2]) < 80).map(x => restS.get(x.b)).flat();
         const clear = (q) => { if (this.fixedHit(b, q, 0) || this.bldHit(b, q, 0)) return false; const S = this.solidsQ(b, q, 0);
-          for (const bx of S) { if (own.some(A => boxHitsAc(bx, A.T, A.nose, A.f, 1.0)) || nb.some(A => boxHitsAc(bx, A.T, A.nose, A.f, 0.5))) return false;
+          // (sha3d autoRest: 3.75 m to the stand's own aircraft - MH 5001-2021 table 4.13.5 note a: at a nose-in VDGS stand
+          // the clearance from the nose to the movable end of a bridge at its return point may be reduced to 3.75 m)
+          for (const bx of S) { if (own.some(A => boxHitsAc(bx, A.T, A.nose, A.f, b.autoRest ? 3.75 : 1.0)) || nb.some(A => boxHitsAc(bx, A.T, A.nose, A.f, 0.5))) return false;
             if (others.some(o => bx.hi > o.lo && o.hi > bx.lo && solidOverlap(bx, o, 0.3))) return false;
             if (bx.part !== 'stair' && [[0, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]].some(([i, j]) => inBuilding(bx.c[0] + bx.u[0] * bx.hl * i - bx.u[1] * bx.hw * j, bx.c[1] + bx.u[1] * bx.hl * i + bx.u[0] * bx.hw * j, false, false, b._strip))) return false; }
           return true; };
-        let pick = null; for (let d = 1; d <= 60 && !pick; d++) for (const sg of [1, -1]) { const q = { ...q0, a: b.a0 + sg * d * DEG }; if (clear(q)) { pick = { q, d: sg * d }; break; } }
-        if (pick) { b.restTurn = pick.d; b.a0 = pick.q.a; b.parkDir = dirOf(b.a0); restS.set(b, this.solidsQ(b, pick.q, 0, true)); } else b.restBlocked = true;
+        // (sha3d autoRest: the inferred rest pose is kept when it is clear, else turned by up to 80 deg - the rotunda
+        // swings 87.5 deg either way - and, failing that, also extended by up to 3 m)
+        if (b.autoRest && clear(q0)) continue;
+        let pick = null; const dMax = b.autoRest ? 80 : 60;
+        for (const de of (b.autoRest ? [0, 1, 2, 3] : [0])) { if (pick) break; for (let d = 1; d <= dMax && !pick; d++) for (const sg of [1, -1]) { const q = { ...q0, a: b.a0 + sg * d * DEG, e: Math.min(b.m.mechE, q0.e + de) }; if (clear(q)) { pick = { q, d: sg * d }; break; } } }
+        if (pick) { b.restTurn = pick.d; b.a0 = pick.q.a; b.e0 = pick.q.e; b.parkDir = dirOf(b.a0); b.reach = b.e0; restS.set(b, this.solidsQ(b, pick.q, 0, true)); } else b.restBlocked = true;
       } }
     for (const { g, b } of all) this.prepKin(g, b);
     // twin heads (a walkway branching through one rotunda to a second one 3.4 m away: F15, G12): both drums on one floor
     // level (the connector between them is level; before, it met the first drum 0.7 m above its floor)
     for (const { g, b } of all) if (b.twinOf) {
-      const o = b.twinOf; const dh = o.walkLen / 12;
+      const o = b.twinOf; const dh = o.walkLen * (departureLevel(g).slope ?? 1 / 12);
       const Hr = this.pickHr(g, [o, b], o._tgH.concat(b._tgH), o.Hb - dh, o.Hb + dh);
       this.applyHeights(o, Hr, o._tg, o._tgH); this.applyHeights(b, Hr, b._tg, b._tgH);
     }
@@ -1257,7 +1311,7 @@ export class LiveGateSystem {
     // trace (ownStrip: the Boarding Area B tip strips, which the 3-D domestic asset leaves to the bridges) the columns
     // stay (review round 2: the Museum strips had dropped 27 of the 72 columns, B26 / B27 L1 spans of 42-53 m)
     const segs = this.ownWalk(b);
-    segs.forEach((S, n) => { if (n === 0) tube(geo, S.first ? v3.add(S.A, v3.mul(S.d, -0.3)) : S.drawA, S.B, WALK_W, WALK_H, C.walk, C.panelE); else slab(geo, S.A, S.B, WALK_W, WALK_H, C.walk, C.panelE); });
+    segs.forEach((S, n) => { if (n === 0) tube(geo, S.first ? v3.add(S.A, v3.mul(S.d, -0.3)) : S.drawA, S.B, WALK_W, WALK_H, C.walk, C.glassE); else slab(geo, S.A, S.B, WALK_W, WALK_H, C.walk, C.glassE); });
     let run = 0;
     for (const S of segs) {
       const L = Math.hypot(S.B[0] - S.A[0], S.B[2] - S.A[2]);
@@ -1288,7 +1342,7 @@ export class LiveGateSystem {
           K.l.forEach((l, i) => { const v = arr[i]; if (lo ? v - s0 > 0.005 : top - v > 0.005) run.push([l, v]); else flush(); }); flush(); } } }
     // telescoping tunnel sections (fixed lengths, nested: largest nearest the aircraft), floors on the rotunda -> cab line
     const secs = this.sections(b, q.e); let last = null;
-    secs.forEach(([s0, s1, w, h], i) => { const dy = (h - secs[0][3]) / 2; last = tube(geo, at(s0, fl(s0) - dy), at(s1, fl(s1) - dy), w, h, C.panel, C.panelE); });
+    secs.forEach(([s0, s1, w, h], i) => { const dy = (h - secs[0][3]) / 2; last = tube(geo, at(s0, fl(s0) - dy), at(s1, fl(s1) - dy), w, h, C.panel, C.glassE); });
     // drive column on the outer tunnel: two legs, cross beam, bogie with two wheels, control box
     const dcs = this.driveAt(b, q.e); const du = at(dcs, fl(dcs) - 0.15); const hdir = [u[0], 0, u[2]];
     for (const sg of [-1, 1]) {
@@ -1477,8 +1531,70 @@ export class LiveGateSystem {
     // numerals, lit; 1.4 m face: numerals ~0.77 m >= 600 mm)
     const gr = this.atlas.map['stand:' + gname]; const gh = 1.4, gw = gh * gr.aspect;
     const g0 = v3.add([face[0], G + H0 + 3.1, face[2]], v3.mul(outW, 0.1));
-    if (post) geo.box([-gw / 2 - 0.1, -gh / 2 - 0.1, -0.12], [gw / 2 + 0.1, gh / 2 + 0.1, 0.02], [0.2, 0.21, 0.22, 1], [0.5, 0.4, 0, 0], m4.basis(v3.mul(tW, -1), [0, 1, 0], g0));
+    // (sha3d: the housing behind the face - the basis' local z is outW, so z <= -0.02; sfo3d's [-0.12, 0.02] hid the face)
+    if (post) geo.box([-gw / 2 - 0.1, -gh / 2 - 0.1, -0.16], [gw / 2 + 0.1, gh / 2 + 0.1, -0.02], [0.2, 0.21, 0.22, 1], [0.5, 0.4, 0, 0], m4.basis(v3.mul(tW, -1), [0, 1, 0], g0));
     signQuad(sgn, [v3.add(g0, v3.add(v3.mul(tW, gw / 2), [0, -gh / 2, 0])), v3.add(g0, v3.add(v3.mul(tW, -gw / 2), [0, -gh / 2, 0])), v3.add(g0, v3.add(v3.mul(tW, -gw / 2), [0, gh / 2, 0])), v3.add(g0, v3.add(v3.mul(tW, gw / 2), [0, gh / 2, 0]))], outW, gr, true);
+  }
+  // ------------------------------------------------------------ stands without a bridge of their own (sha3d)
+  // Remote stands and the alternative positions sharing a base stand's bridge: a post-mounted stand-number sign
+  // (MH 5001-2021 8.5.1 / 8.5.3: on the extension of the stand centreline ahead of the stop, else offset to the left of
+  // the centreline as the aircraft enters; 8.5.4 yellow / black, internally lit; 8.5.6 numerals >= 600 mm). Position, post
+  // and mounting height are inferred (photo 17, T2 2018: "213" on a yellow board on a post). Parked aircraft: the GSE
+  // (placeVehicles: stairs + bus at remote stands); empty remote stand: an idle stair unit at the stand head (cue, inf).
+  remoteSpot(g) {
+    if (g._sign) return g._sign;
+    const nose = stW(g.nose, G), f = stD(g.dir), left = v3.norm(v3.cross([0, 1, 0], f)); // (aircraft's left: up x forward)
+    const nb = this.neighbourPrints(g);
+    const okAt = (p, rad) => !inBuilding(p[0], p[2]) && nearestBuilding(p[0], p[2]).d > rad && laneClear(p[0], p[2]) > rad
+      && !nb.some(fp => hitsAircraft(fp, [p[0], p[2]], 6)); // (pavement or grass: a sign post stands on either)
+    let pick = null;
+    if (g.sharesBridgesOf) { const V = this.vdgsSpot(g); pick = { p: v3.add(nose, v3.mul(f, V.t)), t: V.t, lat: 0, post: V.post, H0: V.H0 }; }
+    for (const t of [10, 8, 12, 14, 6, 16, 18, 20, 24]) { if (pick) break; const p = v3.add(nose, v3.mul(f, t)); if (okAt(p, 1.5)) pick = { p, t, lat: 0, post: true }; }
+    for (const lat of [4, 6, 8, 10]) { if (pick) break; for (const t of [6, 10, 3, 14]) { const p = v3.add(v3.add(nose, v3.mul(f, t)), v3.mul(left, lat)); if (okAt(p, 1.5)) { pick = { p, t, lat, post: true }; break; } } }
+    if (!pick) pick = { p: v3.add(nose, v3.mul(f, 10)), t: 10, lat: 0, post: true, blocked: true };
+    return (g._sign = pick);
+  }
+  // footprints of the class reference aircraft at the stands within 120 m (for sign / idle-equipment placement)
+  neighbourPrints(g) {
+    if (g._nbp) return g._nbp; const n0 = stW(g.nose, G); const out = [];
+    for (const o of this.gates) { if (o === g) continue; const on = stW(o.nose, G); if (Math.hypot(on[0] - n0[0], on[2] - n0[2]) > 120) continue;
+      const T = TYPES[REF_TYPE[o.cls]] || TYPES.a320; if (T) out.push(footprint(on, stD(o.dir), T, o)); }
+    { const T = TYPES[REF_TYPE[g.cls]] || TYPES.a320; if (T) out.push(footprint(n0, stD(g.dir), T, g)); }
+    return (g._nbp = out);
+  }
+  remoteGeo(g, geo, sgn) {
+    const f = stD(g.dir); const S = this.remoteSpot(g);
+    const r = this.atlas.map['stand:' + g.name];
+    if (r) {
+      const outW = v3.mul(f, -1), tW = v3.norm(v3.cross(outW, [0, 1, 0]));
+      const Fh = 1.1, w = Fh * r.aspect;                       // numerals 0.55 x 1.1 = 0.6 m (8.5.6 >= 600 mm)
+      const yb = G + (S.post ? 3.2 : (S.H0 || 5.2) + 2.6);     // face bottom (inf)
+      const c = [S.p[0], yb, S.p[2]];
+      if (S.post) { cyl(geo, [S.p[0], G, S.p[2]], 0.09, yb - G + 0.1, C.steel, C.steelE, 8); geo.box([-0.35, 0, -0.35], [0.35, 0.2, 0.35], [0.55, 0.55, 0.55, 1], [0.5, 0.3, 0, 0], m4.basis(tW, [0, 1, 0], [S.p[0], G, S.p[2]])); }
+      geo.box([-w / 2 - 0.06, -0.06, -0.16], [w / 2 + 0.06, Fh + 0.06, -0.02], C.dark, C.darkE, m4.basis(v3.mul(tW, -1), [0, 1, 0], c)); // (local z = outW: behind the face)
+      const d0 = c;
+      signQuad(sgn, [v3.add(d0, v3.mul(tW, w / 2)), v3.add(d0, v3.mul(tW, -w / 2)), v3.add(v3.add(d0, v3.mul(tW, -w / 2)), [0, Fh, 0]), v3.add(v3.add(d0, v3.mul(tW, w / 2)), [0, Fh, 0])], outW, r, true);
+    }
+    if (g.acType && g.dock) { this.placeVehicles(g, []); return; }
+    if (!g.remote || g.service === 'business' || !this.vehicleBuckets) return;
+    // idle stair unit at the stand head, parallel to the stand axis (cue that the stand boards by stairs; inf)
+    const nose = stW(g.nose, G), left = v3.norm(v3.cross([0, 1, 0], f)); const nb = this.neighbourPrints(g);
+    const st = Object.keys(this.vehicleBuckets).filter(k => /^stairs\d+$/.test(k)).map(k => [k, +k.slice(6) / 100]).sort((a, b) => Math.abs(a[1] - 3.2) - Math.abs(b[1] - 3.2))[0];
+    if (!st) return; const hull = stairHull(st[1]);
+    const R = rng(hash(g.id + ':idle'));
+    // (the stand head first; where it is grass or a lane - many remote rows end at the apron edge - beside the forward
+    // fuselage's stop position, outside the class reference's planform)
+    for (const a of [6, 9, 3, 12, -3, -6]) for (const l of (R() < 0.5 ? [-10, 10, -14, 14, -18, 18] : [10, -10, 14, -14, 18, -18])) {
+      const p = v3.add(v3.add(nose, v3.mul(f, a)), v3.mul(left, l)); const d = f; const rt = [-d[2], d[0]];
+      const W = (x, z) => [p[0] + d[0] * x + rt[0] * z, p[2] + d[2] * x + rt[1] * z];
+      let good = true;
+      for (const [x0, x1, z0, z1] of hull) { for (const [x, z] of [[x0, z0], [x0, z1], [x1, z0], [x1, z1], [(x0 + x1) / 2, (z0 + z1) / 2]]) { const q = W(x, z);
+        if (inBuilding(q[0], q[1]) || laneClear(q[0], q[1]) < 1.5 || (PAVED && PAVED(q[0], q[1]) < 0.5) || nb.some(fp => hitsAircraft(fp, q, 4))) { good = false; break; } } if (!good) break; }
+      if (good && this._idleBoxes) for (const o of this._idleBoxes) if (Math.hypot(o[0] - p[0], o[1] - p[2]) < 9) { good = false; break; }
+      if (!good) continue;
+      (this._idleBoxes || (this._idleBoxes = [])).push([p[0], p[2]]);
+      this.vehicleBuckets[st[0]].push(inst(m4.basis(d, [0, 1, 0], [p[0], G, p[2]]), [0.9, 0.9, 0.9, 1])); return;
+    }
   }
   // ------------------------------------------------------------ occupancy and animation
   // does bridge b dock the current occupant: L1 docks door 1, the second bridge only a type with a documented
@@ -1856,7 +1972,7 @@ export class LiveGateSystem {
       this.staticSprites = [];
       const geo = new Geo(), sgn = newSignGeo();
       this.vehicleBuckets = {}; for (const k in this.vehicleMeshes) this.vehicleBuckets[k] = [];
-      this.keepOut = this.aircraftFootprints ? this.aircraftFootprints() : [];
+      this.keepOut = this.aircraftFootprints ? this.aircraftFootprints() : []; this._idleBoxes = [];
       this.sprites = this.staticSprites;
       for (const g of this.gates) {
         // (sha3d: stands without a bridge of their own - remote stands and the alternative positions sharing a base
@@ -1914,8 +2030,11 @@ export class LiveGateSystem {
     this._hadDyn = moving;
     const I4 = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     const out = [];
-    if (this.staticMesh) out.push({ mesh: this.staticMesh, prog: 'obj', model: I4, bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
-    if (this.dynMesh) out.push({ mesh: this.dynMesh, prog: 'obj', model: I4, bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 } });
+    // (sha3d: objProg / objUniforms - the gates extension draws the bridges with its own instance of the object program so
+    // that it can dim the glazed sides' night glow without touching the other buildings' uniforms)
+    const OP = this.objProg || 'obj', OU = this.objUniforms || { uEmissiveBoost: 1 };
+    if (this.staticMesh) out.push({ mesh: this.staticMesh, prog: OP, model: I4, bbox: this.bbox, castShadow: true, uniforms: OU });
+    if (this.dynMesh) out.push({ mesh: this.dynMesh, prog: OP, model: I4, bbox: this.bbox, castShadow: true, uniforms: OU });
     if (this.signMesh) out.push({ mesh: this.signMesh, prog: 'gsign', bbox: this.bbox, castShadow: false, noCull: true, nearOnly: true, uniforms: { uAtlas: this.atlas.tex } });
     if (this.dynSign) out.push({ mesh: this.dynSign, prog: 'gsign', bbox: this.bbox, castShadow: false, noCull: true, nearOnly: true, uniforms: { uAtlas: this.atlas.tex } });
     for (const k in this.vehicleMeshes) out.push({ mesh: this.vehicleMeshes[k], prog: 'objI', bbox: this.bbox, castShadow: true, uniforms: { uEmissiveBoost: 1 }, shadowMaxCascade: 2 });
@@ -1992,21 +2111,18 @@ export class LiveGateSystem {
     // wing, parallel to it. Positions, the two-stair practice and the vehicles are inferred (no ZSSS ground-handling source).
     if (!Ps.length && g.remote && g.service !== 'business') {
       const left = v3.mul(r, -1), d = r; // (the stair faces the fuselage from the left side: forward = towards the aircraft)
-      const p1 = T.fit && T.fit.pitch ? Math.sin(T.fit.pitch.a) : 0; const s1 = T.dockSill ?? T.sill ?? (T.Hc - 0.3 * T.R);
-      const wide = T.dock2 != null || T.R > 2.6; const xs = [T.dockX1 ?? T.doors[0]];
-      const xa = wide ? T.doors[1] : T.doors[T.doors.length - 1]; if (xa != null && xa - xs[0] > 6) xs.push(xa);
-      for (const [i, x] of xs.entries()) {
-        const S = Math.round(Math.max(1.0, i === 0 ? s1 : (i === 1 && wide && T.dockSill2 != null ? T.dockSill2 : s1 + p1 * (x - xs[0]))) * 20) / 20;
-        const st = setting('stairs', S); if (!st) continue; const [sk, S2] = st; const sh = stairShape(S2);
-        const hw = i === 0 ? (T.dockHW ?? T.R) : ((wide ? T.dockHW2 : null) ?? T.dockHW ?? T.R);
-        const front = v3.add(v3.sub(nose, v3.mul(f, x)), v3.mul(left, hw + 0.15)); const p = v3.sub(front, v3.mul(d, sh.xFront));
+      for (const D of stairDoors(T)) {
+        const st = setting('stairs', D.S); if (!st) continue; const [sk, S2] = st; const sh = stairShape(S2);
+        const front = v3.add(v3.sub(nose, v3.mul(f, D.x)), v3.mul(left, D.hw + 0.15)); const p = v3.sub(front, v3.mul(d, sh.xFront));
         const v = { M: m4.basis(d, [0, 1, 0], [p[0], G, p[2]]), p, d };
         if (ok(v, stairHull(S2), null, sk)) B[sk].push(inst(v.M, [0.9, 0.9, 0.9, 1]));
       }
-      // apron bus (doors on its right side, towards the aircraft): beside the forward fuselage, ahead of the wing root
-      const busAt = (along, lat, fwd) => { const p = v3.add(v3.sub(nose, v3.mul(f, along)), v3.mul(left, lat)); const dd = fwd ? f : v3.mul(f, -1); return { M: m4.basis(dd, [0, 1, 0], [p[0], G, p[2]]), p, d: dd }; };
+      // apron bus (doors on its right side, towards the aircraft): beside the forward fuselage, ahead of the wing root,
+      // parallel to it (one for a narrow body, two for a wide body; inf)
+      const wide = T.R > 2.6; const x1 = T.dockX1 ?? T.doors[0];
+      const busAt = (along, lat) => { const p = v3.add(v3.sub(nose, v3.mul(f, along)), v3.mul(left, lat)); return { M: m4.basis(f, [0, 1, 0], [p[0], G, p[2]]), p, d: f }; };
       let nb = 0; const nbus = wide ? 2 : 1;
-      for (const lat of [T.R + 9, T.R + 11.5, T.R + 14, T.R + 17]) { for (const along of [xs[0] + 8, xs[0] + 5, xs[0] + 11, xs[0] + 2, xs[0] + 15, xs[0] + 20]) { if (nb >= nbus) break; if (put('bus', busAt(along, lat, true), [0.92, 0.93, 0.94, 1])) nb++; } if (nb >= nbus) break; }
+      for (const lat of [T.R + 9, T.R + 11.5, T.R + 14, T.R + 17]) { for (const along of [x1 + 8, x1 + 5, x1 + 11, x1 + 2, x1 + 15, x1 + 20]) { if (nb >= nbus) break; if (put('bus', busAt(along, lat), [0.92, 0.93, 0.94, 1])) nb++; } if (nb >= nbus) break; }
     }
     const tk = this.typeKeyOf(T); const fam = beltFamily(tk);
     if (fam) {
