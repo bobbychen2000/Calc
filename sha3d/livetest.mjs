@@ -10,6 +10,8 @@
 // Environment: SOFTGL=1 Mesa llvmpipe via ANGLE/EGL (this sandbox has no GPU), SWS=1 SwiftShader; W, H, DPR (default 1),
 // MOBILE=1 (iPhone UA + touch), OUT (default sha3d/out/live), METAR (mock relay report; observed 10 min before T if T is
 // set, else before now - the app's ?t= environment time only uses reports at or before it).
+// P2e: DEVICE='iPhone 15' uses that Playwright device descriptor (viewport, UA, touch) with deviceScaleFactor DPR (default 1);
+// the mock relay also answers /api/taf and (MOCK_ADSB=1) /api/adsb with one observed record.
 import http from 'http'; import fs from 'fs'; import path from 'path'; import { fileURLToPath } from 'url'; import { createRequire } from 'module';
 let chromium;
 try { ({ chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright')); }
@@ -33,7 +35,9 @@ const server = http.createServer((req, res) => {
   if (api && RELAY) return proxy(req, res, api + url.search);
   if (api && MOCK) {
     res.setHeader('Content-Type', 'application/json');
-    if (api === '/api/ping') return res.end(JSON.stringify({ shalive: 1, mock: true, features: {} }));
+    if (api === '/api/ping') return res.end(JSON.stringify({ shalive: 1, mock: true, mode: 'live', features: { metar: true, taf: true, adsb: !!process.env.MOCK_ADSB } }));
+    if (api === '/api/taf') return res.end(JSON.stringify([{ rawTAF: process.env.TAF || 'TAF ZSSS 140306Z 1406/1512 35004MPS 6000 BKN015 TX20/1406Z TN16/1421Z', issueTime: '2026-11-14T03:06:00.000Z' }]));
+    if (api === '/api/adsb') return res.end(JSON.stringify({ enabled: !!process.env.MOCK_ADSB, ac: process.env.MOCK_ADSB ? [{ hex: 'mock01', type: 'adsb_icao', src: 'obs', lat: 31.6, lon: 122.0, alt_baro: 35000 }] : [], excluded: {} }));
     if (api === '/api/metar') { const raw = process.env.METAR || 'METAR ZSSS 140300Z 34004MPS 9999 FEW020 SCT040 17/09 Q1022 NOSIG'; return res.end(JSON.stringify([{ rawOb: raw, obsTime: Math.floor((process.env.T ? Date.parse(process.env.T) : Date.now()) / 1000) - 600 }])); }
     res.statusCode = 404; return res.end('[]');
   }
@@ -48,8 +52,10 @@ const base = `http://127.0.0.1:${server.address().port}${APP}`;
 const gpuArgs = process.env.SWS ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : process.env.SOFTGL ? ['--use-gl=angle', '--use-angle=gl-egl'] : [];
 const browser = await chromium.launch({ args: [...gpuArgs, '--ignore-gpu-blocklist', '--js-flags=--max-old-space-size=4000', '--disable-gpu-watchdog', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-gpu-process-crash-limit'],
   env: process.env.SOFTGL ? { ...process.env, LIBGL_ALWAYS_SOFTWARE: '1', GALLIUM_DRIVER: 'llvmpipe', LP_NUM_THREADS: process.env.LP_NUM_THREADS || '4' } : process.env });
-const W = +(process.env.W || 1280), H = +(process.env.H || 720);
-const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: +(process.env.DPR || 1), isMobile: !!process.env.MOBILE, hasTouch: !!process.env.MOBILE,
+const { devices } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const DEV = process.env.DEVICE ? devices[process.env.DEVICE] : null; if (process.env.DEVICE && !DEV) { console.error('unknown DEVICE', process.env.DEVICE); process.exit(1); }
+const W = +(process.env.W || (DEV ? DEV.viewport.width : 1280)), H = +(process.env.H || (DEV ? DEV.viewport.height : 720));
+const ctx = DEV ? await browser.newContext({ ...DEV, defaultBrowserType: undefined, viewport: { width: W, height: H }, deviceScaleFactor: +(process.env.DPR || 1) }) : await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: +(process.env.DPR || 1), isMobile: !!process.env.MOBILE, hasTouch: !!process.env.MOBILE,
   userAgent: process.env.MOBILE ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1' : undefined });
 const page = await ctx.newPage();
 page.setDefaultTimeout(0);

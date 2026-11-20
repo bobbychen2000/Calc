@@ -8,6 +8,8 @@
 //     detail on top; outside the 23.5 km2 detailed extent everything fades to one neutral ground colour.
 // Paint (markings) is NOT drawn here: the chunk `sha_ground_paint` is a hook (default: none) that js/live/markings.js may
 // redefine (gl.js defineChunk) before the world compiles the ground program - see js/live/ext.js.
+// The chunk `sha_ground_far` (added by package P2d, js/live/terminals.js redefines it) is the hook for the ground BEYOND
+// the detailed extent: its default returns the neutral colour and no haze, i.e. exactly the core behaviour above.
 // Every material value below is an inferred rendering default [inf], not a measured property.
 import { defineChunk } from '../gl.js';
 
@@ -16,6 +18,15 @@ defineChunk('sha_ground_paint', `
 // fw = world size of a pixel (m), apt = airfield-map sample (r paved, g concrete, b shoulder, a landside road; raw, not
 // sharpened), paved = sharpened airside-pavement coverage. May lower rough (paint is smoother).
 vec4 shaGroundPaint(vec3 wp, float fw, vec4 apt, float paved, inout float rough){ return vec4(0.0); }
+`);
+
+defineChunk('sha_ground_far', `
+// Far-ground hook (default: the core's neutral ground, no water, no glow, no haze). shaGroundFar returns the albedo beyond
+// the detailed extent (it is mixed in where the extent mask ext < 1) and may set water (0..1, sky-reflecting water) and glow
+// (0..1, night urban glow); shaGroundFarHaze is applied to the lit colour after applyFog (V = unit vector to the camera,
+// night = uNight). Redefined by js/live/terminals.js (ESA WorldCover far ground + distance haze, package P2d).
+vec3 shaGroundFar(vec3 wp, float dist, vec3 neutral, inout float water, inout float glow){ return neutral; }
+vec3 shaGroundFarHaze(vec3 col, vec3 wp, float dist, vec3 V, float ext, float night){ return col; }
 `);
 
 export const GROUND_VS = `
@@ -30,6 +41,7 @@ export const GROUND_FS = `
 #include <shadow>
 #include <fout>
 #include <sha_ground_paint>
+#include <sha_ground_far>
 in vec3 vWP; in vec3 vN;
 uniform sampler2D uAptMap; uniform vec4 uAptRect;     // airfield map, rect = (x0, z0, w, h) in world metres
 uniform sampler2D uCtxMap; uniform vec4 uCtxRect;     // context map
@@ -64,6 +76,8 @@ void main(){
   alb *= 1.0 - 0.3 * smoothstep(0.08, 0.4, ctx.r) * (1.0 - smoothstep(0.45, 0.55, ctx.r)) * ext;   // ditches / drains: damp ground (js/world/ground.js)
   // ---- beyond the detailed extent: neutral ground with a large-scale variation only
   vec3 neutral = uNeutral * (0.95 + 0.1 * nzA.r) * (0.97 + 0.06 * nzB.g);
+  float farWater = 0.0, farGlow = 0.0;
+  if (ext < 0.999) neutral = shaGroundFar(wp, dist, neutral, farWater, farGlow);   // hook (default: neutral)
   alb = mix(neutral, alb, ext);
   // ---- landside roads (fine map inside its rect, the context map elsewhere) and rail ballast
   float road = max(inApt ? sharp(apt.a, 0.0, 1.0) : 0.0, sharp(ctx.g, 0.0, 1.0) * ext);
@@ -100,11 +114,12 @@ void main(){
   col += uSunColor * spec * (1.0 - rough) * 2.0 * max(paved, road);
   // ---- water (canals, rivers, ponds: OSM context): dark body + sky reflection with Fresnel [inf]
   float water = sharp(ctx.r, 0.0, 1.0) * ext;
+  float farW = farWater * (1.0 - ext); water = max(water, farW);
   if (water > 0.001) {
     vec2 rp = (texture(uNoise, wp.xz * 0.05 + uTime * 0.01).rg - 0.5) * 0.06 * near;
     vec3 Nw = normalize(vec3(rp.x, 1.0, rp.y)); vec3 R = reflect(-V, Nw);
     float F = 0.02 + 0.98 * pow(1.0 - max(dot(Nw, V), 0.0), 5.0);
-    F *= smoothstep(0.55, 0.9, ctx.r);   // narrow ditches / drains (3-5 m, peak coverage < 1 in the 4 m map): mostly the dark body, little sky
+    F *= max(smoothstep(0.55, 0.9, ctx.r) * step(farW, 0.0), farW);   // narrow ditches / drains (3-5 m, peak coverage < 1 in the 4 m map): mostly the dark body, little sky; far water: its fraction
     vec3 body = vec3(0.016, 0.022, 0.016) * (uSkyUp + uSunColor * NoL * sh / PI);
     vec3 wc = body + skyEnv(R, 1.0) * F;
     col = mix(col, wc, water);
@@ -115,7 +130,9 @@ void main(){
     col += alb * vec3(1.0, 0.75, 0.5) * urbanN * (0.3 + 0.7 * nzB.g * nzC.b) * 0.10 * uNight;
     float apronN = paved * smoothstep(0.86, 0.95, apt.g);   // apron = G 255 (js/world/ground.js)
     col += alb * vec3(1.0, 0.92, 0.8) * apronN * (0.6 + 0.4 * nzB.r) * 0.06 * uNight;
+    col += alb * vec3(1.0, 0.75, 0.5) * farGlow * (1.0 - ext) * (1.0 - water) * 0.10 * uNight;   // far-ground hook glow (default 0)
   }
   col = applyFog(col, wp);
+  col = shaGroundFarHaze(col, wp, dist, V, ext, uNight);   // hook (default: unchanged)
   writeOut(col, wp, 1.0);
 }`;

@@ -609,5 +609,7 @@ export function metarSummary(d) {
     visSM: d.visibility ? d.visibility.sm : null, visPrefix: d.visibility ? d.visibility.prefix : null,
     clouds: (d.sky || []).filter(s => s.height_ft != null && s.cover !== 'VV').map(s => ({ cover: s.cover, ft: s.height_ft })),
     vvFt: ((d.sky || []).find(s => s.cover === 'VV') || {}).height_ft ?? null,
-    tempC: d.temp_c_best, dewC: d.dewpoint_c_best, altim: d.altimeter_inhg ?? null, category: d.flight_category };
+    tempC: d.temp_c_best, dewC: d.dewpoint_c_best, altim: d.altimeter_inhg ?? null, category: d.flight_category,
+    // sha3d: ICAO QNH (Q group, hPa; ZSSS never reports A) and the trend text (not applied to the observation)
+    qnhHpa: d.qnh_hpa ?? null, trend: d.trend ?? null };
 }

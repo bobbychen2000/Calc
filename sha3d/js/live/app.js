@@ -6,6 +6,8 @@
 // from the extensions (js/live/ext.js); views come from the data (runway ends, terminal and tower anchors). Kept from
 // sfo3d: quality tiers, dynamic resolution, the EnvState glue (applyEnv), clouds, camera rig, the QA hooks pattern
 // (window.SHA.qa, as sfo3d's window.SFO.qa). Storage prefix 'shalive.'.
+// P2e (relay / modes / UI shell): cfg.mode 'live' | 'snapshot' (js/live/entry.js), the snapshot's recorded reports feed
+// AppEnv; app.hooks.status lets js/live/shell.js own the status pill and clock line; app.cfg / app.mode for extensions.
 import { initGL, gl, Mesh } from '../gl.js';
 import '../shaders/common.js';
 import '../shaders/ground.js';
@@ -51,8 +53,10 @@ function pickQuality(pref) {
 const nextFrame = () => new Promise(r => setTimeout(r, 0));
 const FIXED_RES = new URLSearchParams(location.search).has('fixedres');
 
-// cfg: { mode, relay, relayInfo, airport, stands, taxigraph, s2, models: {key: source}, about, attrib }
+// cfg: { mode ('live' | 'snapshot'), relay, relayInfo, snapshot ({now, metars, tafs, traffic} | null), modeInfo, airport, stands,
+//        taxigraph, s2, models: {key: source}, about, attrib }   (js/live/entry.js)
 export async function startApp(cfg) {
+  const hooks = {};   // P2e UI shell (js/live/shell.js): hooks.status(now) replaces the status / clock line below
   const root = document.getElementById('app');
   const canvas = document.createElement('canvas'); canvas.id = 'gl'; root.prepend(canvas);
   const qPref = store.get('quality', 'auto'); const Q = pickQuality(qPref);
@@ -87,7 +91,8 @@ export async function startApp(cfg) {
   scene.staticLights.push(() => world.sprites);
   ui.progress(0.6, 'Sun, sky and weather…'); await nextFrame();
   // ---------------------------------------------------------------- environment (EnvState glue as sfo3d's applyEnv)
-  const envCore = new AppEnv({ mode: cfg.mode, relayInfo: cfg.relayInfo, snapshotNow: null, snapshotMetar: '', search: location.search, groundY: GROUND_Y });
+  // snapshot mode (P2e): the recorded reports of data/sha_snapshot.js (js/env/presets.js setSnapshotWx) at its instant
+  const envCore = new AppEnv({ mode: cfg.mode, relayInfo: cfg.relayInfo, snapshotNow: cfg.snapshot ? cfg.snapshot.now : null, snapshotMetar: '', search: location.search, groundY: GROUND_Y });
   GEO.onRunwayHeadings(setRunwayHeadings);
   envCore.rendererNote = 'live.html (WebGL2) renderer: fog = one exponential, one cloud deck (sfo3d old-renderer limits)';
   envCore.setLightMode(lightMode); envCore.attachHud(root);
@@ -179,7 +184,7 @@ export async function startApp(cfg) {
   ui.emptyText = 'No traffic yet. Open ADS-B does not cover Hongqiao; simulated traffic (labelled inferred) comes in Phase 3.';
   ui.setNote('Static scene · Phase 2 core · no traffic yet'); ui.renderList(true, []);
   document.body.classList.add('no-traffic');   // (the Phase 3 traffic engine removes it when it starts)
-  if (new URLSearchParams(location.search).get('legend') === '1') ui.setLegend('<b>Observed / inferred</b><br>Outlines: OpenStreetMap (observed). Widths, heights, surface types: inferred unless the AIP (mirror) gives them.');
+  // (the Observed / Inferred legend is the UI shell's, js/live/shell.js; ?legend=1 opens it)
   // ---------------------------------------------------------------- loop
   { const V = VIEWS.overview; rig.anim = null; rig.target = V.target.slice(); rig.dist = V.dist; rig.yaw = V.yaw * DEG; rig.pitch = V.pitch * DEG; rig.fov = V.fov * DEG; }
   ui.root.querySelectorAll('#views [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === 'overview'));
@@ -207,6 +212,7 @@ export async function startApp(cfg) {
     requestAnimationFrame(tick);
   }
   function status(now) {
+    if (hooks.status) { try { return hooks.status(now); } catch (e) { console.warn('[shell] status', e); } }
     ui.setStatus({ state: 'snap', text: cfg.relay ? 'Relay · no traffic yet' : 'Static scene', sub: '', title: 'Phase 2 core: airfield, sun, sky and weather; the traffic engine comes in Phase 3' + (cfg.relay ? ' (relay connected: METAR)' : ' (no relay: no live weather)') });
     const M = metar; const wx = M ? `${M.windDir != null ? String(M.windDir).padStart(3, '0') + '°' : 'VRB'} ${M.windKt ?? 0} kt${M.clouds.length ? ' · ' + M.clouds.map(c => c.cover + String(c.ft / 100).padStart(3, '0')).join(' ') : ''}` : '';
     ui.setClock(new Date(now), wx + envCore.clockNote());
@@ -246,7 +252,8 @@ export async function startApp(cfg) {
     clearModels() { for (const a of qaModels.splice(0)) { const i = scene.aircraft.indexOf(a); if (i >= 0) scene.aircraft.splice(i, 1); } },
     info: () => ({ world: world.info, anchors: world.anchors, quality: Q.name, extensions: extensions().map(e => e.name), runways: GEO.RUNWAYS.map(r => ({ id: r.id, hdg: r.hdg, len: +r.len.toFixed(1), width: r.width })) }),
   };
-  const app = { R, scene, rig, ui, world, view, applyEnv, qa, env: () => envCore.state, envCore, geo: GEO, data, extensions, frameNow: () => { last = performance.now() - 16; tick(); } };
+  const app = { R, scene, rig, ui, world, view, applyEnv, qa, env: () => envCore.state, envCore, geo: GEO, data, extensions, frameNow: () => { last = performance.now() - 16; tick(); },
+    cfg, mode: cfg.mode, hooks, quality: Q };
   window.SHA = app;
   // extensions: start hooks (live systems), per-frame items and lights
   for (const e of extensions()) {
