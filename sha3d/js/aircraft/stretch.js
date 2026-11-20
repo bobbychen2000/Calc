@@ -1,0 +1,134 @@
+// forked from sfo3d@e3218d6 js/aircraft/stretch.js
+// Model stretch (js/aircraft/fit.js T.fit.stretch) applied to the vertex positions of an imported model. Pure arithmetic
+// (no WebGL), shared by js/live/models.js (renderer) and the node tools (tools/models/dock_foot.mjs, check_dims), so
+// the tools measure exactly the geometry that is drawn. Python port: tools/liveries/common.py apply_stretch.
+import { plugShift } from './fit.js';
+
+// stretch (js/aircraft/fit.js), all in model units of the unstretched model (x forward, nose = 0, aft negative; y up; z right):
+//   cut1, cut2, d1, d2, bl2  fuselage plugs at cut1 / cut2 of length d1 / d2 (negative: section removed, the aft one
+//                        blended over bl2), see js/aircraft/fit.js plugShift. The atlas (tools/liveries/atlas.py) splits the
+//                        mesh at the stations, so only a 2 cm band of triangles is stretched by a plug. Engines and pylons
+//                        (zones 2, 7) inside a removed section move rigidly with the wing they hang on (the full shift): the
+//                        737-600's 4.37 m forward removal reaches 1.3 m into the nacelles (close-out round 3, fix round 2: the
+//                        nacelle rendered 2.35 m long instead of 3.57 m)
+//   wing {z0, z1, dz, xMin}  span fit: outboard of z0 the wing is stretched spanwise, linearly up to z1, and everything
+//                        outboard of z1 (the tip device) moves rigidly by dz (only vertices ahead of xMin: not the tailplane)
+//   tipCut {z0, y0, zTo, yTo}  vertices outboard of z0 and above y0 (the model's winglet) folded to (zTo, yTo)
+//   tipFold {z0, zTo, x, lo, up}  plain tip (js/aircraft/fit.js TIP_FOLD): every vertex outboard of z0 folded onto the wing's
+//                        own tip section: |z| -> zTo, x clamped to the knots' range, y clamped between lo(x) and up(x)
+//                        (piecewise linear through the knots x): the winglet collapses onto the tip edge, nothing above it
+//   tipScale {z0, y0, k, xMin}  the model's own wing-tip device (outboard of z0, above y0, ahead of xMin; not engines /
+//                        gear / pylons) scaled vertically about y0 by k (737NG blended winglet height, js/aircraft/fit.js TIP_H)
+//   tipShear {z0, y0, yt, k, p, xMin}  winglet cant: vertices ahead of xMin, outboard of z0 and above y0 move out by
+//                        k (y - y0) ((y - y0) / (yt - y0))^(p - 1): k (yt - y0) at the tip height yt
+//   engScale {k, keep, dy}  nacelles (zone 2) scaled radially by k about their axis, the lowest line kept (keep 'low',
+//                        default) or the top line (keep 'top': the pylon attachment; 737 MAX LEAP-1B), then moved up by dy
+//                        (fitted to the engine ground-clearance row, js/aircraft/fit.js ENG_SCALE; close-out round 3, fix
+//                        round 2). The FG 737-800's inlet lips, left fan cowl, inlet ducts, core cowls and tail pipes are in
+//                        zone 2 since that round (tools/convert_models.py zoneOverride), so the whole nacelle scales as one
+//   wingLift {z0, t, xMin} / htLift {z0, t, xMax}  wing / tailplane sheared up by t per unit |z| outboard of z0
+//   squash {y0, k}       everything below y0 compressed vertically by k (engine ground clearance fit)
+//   fairing {y0, k, zMax}  after squash: body vertices (not engines, pylons, gear: zones 2, 3, 7) below the keel line y0
+//                        within |z| <= zMax compressed towards it by k (the wing-body fairing; js/aircraft/fit.js belly fit)
+//   gearUp               model units the model's own gear (zone 3) is moved up (oleo compression); dims.low (the main
+//                        tyres, where placement() seats the model) rises by the same amount
+//   noseExt {xMin, yTop, yBot, e}  nose-leg length change (737 family stance, js/aircraft/fit.js NOSE_LEG / STANCE_FIT): gear
+//                        vertices (zone 3) ahead of xMin and below yTop move down by e (y - yTop) / (yBot - yTop), clamped
+//                        to [0, e]: the leg between yTop and yBot is scaled, the wheels below yBot move rigidly (e > 0:
+//                        extension, MAX; e < 0: compression, NG; monotonic while |e| < yTop - yBot). dims.low (the main
+//                        tyres: placement() seats the model on them) is kept
+//   fin {yF, xF, k, zMax}  fin height fit: vertices aft of xF and above the fuselage top yF (not engines, pylons, gear)
+//                        within |z| <= zMax (the tailplane's semi-span: a T-tail rides with the fin; close-out round 3 fix
+//                        round 2: without it the 737NG's swept wing tips, aft of xF and above yF, were scaled too) are
+//                        scaled vertically about yF by k
+const ZONE_NOFIN = new Set([2, 3, 7]); // engine, gear, pylon (tools/convert_models.py ZONE)
+// plug shift of an engine / pylon vertex: like plugShift, but inside a removed section (d < 0) the full shift, as for the
+// wing aft of it (the nacelle keeps its length)
+function rigidShift(x, c, d) { return d >= 0 ? (x < c ? -d : 0) : (x >= c ? 0 : -d); }
+export function applyStretch(pos, zone, nv, st, dims) {
+  const W = st.wing, Fn = st.fin;
+  if (st.tipCut) {                    // fold the model's own tip device onto the wing tip (a procedural one replaces it)
+    const { z0, y0, zTo, yTo } = st.tipCut;
+    for (let i = 0; i < nv; i++) { const z = pos[i * 3 + 2]; if (Math.abs(z) > z0 && pos[i * 3 + 1] > y0) { pos[i * 3 + 1] = yTo; pos[i * 3 + 2] = Math.sign(z) * Math.min(Math.abs(z), zTo); } }
+  }
+  if (st.tipFold) {                  // plain tip: the model's winglet folded onto the wing's own tip section (no device)
+    const { z0, zTo, x: kx, lo, up } = st.tipFold, n = kx.length;
+    const at = (tab, x) => { if (x <= kx[0]) return tab[0]; if (x >= kx[n - 1]) return tab[n - 1]; let k = 0; while (k < n - 2 && x > kx[k + 1]) k++; return tab[k] + (tab[k + 1] - tab[k]) * (x - kx[k]) / (kx[k + 1] - kx[k]); };
+    for (let i = 0; i < nv; i++) { const z = pos[i * 3 + 2]; if (Math.abs(z) <= z0) continue;
+      const x = Math.min(Math.max(pos[i * 3], kx[0]), kx[n - 1]); pos[i * 3] = x;
+      pos[i * 3 + 1] = Math.min(Math.max(pos[i * 3 + 1], at(lo, x)), at(up, x)); pos[i * 3 + 2] = Math.sign(z) * zTo; }
+  }
+  if (st.tipScale) {                 // wing-tip device height (737NG blended winglet, js/aircraft/fit.js TIP_H): scaled vertically about y0
+    const { z0, y0, k, xMin } = st.tipScale;
+    for (let i = 0; i < nv; i++) { const y = pos[i * 3 + 1]; if (pos[i * 3] >= xMin && Math.abs(pos[i * 3 + 2]) > z0 && y > y0 && !(zone && ZONE_NOFIN.has(zone[i]))) pos[i * 3 + 1] = y0 + (y - y0) * k; }
+  }
+  if (st.engScale && zone) {          // nacelles (zone 2) scaled radially about their own axis, lowest (or top) line kept, then raised by dy
+    const k = st.engScale.k, top = st.engScale.keep === 'top', dy = st.engScale.dy || 0;
+    for (const sg of [-1, 1]) {
+      let y0 = 1e9, y1 = -1e9, zs = 0, n = 0;
+      for (let i = 0; i < nv; i++) if (zone[i] === 2 && Math.sign(pos[i * 3 + 2]) === sg) { const y = pos[i * 3 + 1]; if (y < y0) y0 = y; if (y > y1) y1 = y; zs += pos[i * 3 + 2]; n++; }
+      if (!n) continue; const yc = (y0 + y1) / 2, zc = zs / n, lift = (k - 1) * (yc - (top ? y1 : y0)) + dy;
+      for (let i = 0; i < nv; i++) if (zone[i] === 2 && Math.sign(pos[i * 3 + 2]) === sg) { pos[i * 3 + 1] = yc + (pos[i * 3 + 1] - yc) * k + lift; pos[i * 3 + 2] = zc + (pos[i * 3 + 2] - zc) * k; }
+    }
+  }
+  if (W) {
+    const { z0, z1, dz, xMin } = W; const sc = dz / (z1 - z0);
+    for (let i = 0; i < nv; i++) {
+      if (pos[i * 3] < xMin) continue;
+      const z = pos[i * 3 + 2], az = Math.abs(z); if (az <= z0) continue;
+      pos[i * 3 + 2] = z + Math.sign(z) * (az >= z1 ? dz : (az - z0) * sc);
+    }
+    dims.span += 2 * dz;
+  }
+  if (st.tipShear) {                 // winglet cant (js/aircraft/fit.js WINGLET): outboard of z0 and above y0, |z| grows by k per unit height
+    const { z0, y0, yt, k, xMin } = st.tipShear; const e = st.tipShear.p ?? 1;   // e: 2 = the cant grows from 0 at y0 (no kink at the blend)
+    for (let i = 0; i < nv; i++) { if (pos[i * 3] < xMin) continue; const z = pos[i * 3 + 2], y = pos[i * 3 + 1]; if (Math.abs(z) > z0 && y > y0) pos[i * 3 + 2] = z + Math.sign(z) * k * (y - y0) * Math.pow((y - y0) / (yt - y0), e - 1); }
+    dims.span += 2 * k * (yt - y0);
+  }
+  if (Fn) {
+    const { yF, xF, k } = Fn, zM = Fn.zMax ?? Infinity; let top = -1e9;
+    for (let i = 0; i < nv; i++) {
+      const y = pos[i * 3 + 1];
+      if (pos[i * 3] < xF && y > yF && Math.abs(pos[i * 3 + 2]) <= zM && !(zone && ZONE_NOFIN.has(zone[i]))) pos[i * 3 + 1] = yF + (y - yF) * k;
+      if (pos[i * 3 + 1] > top) top = pos[i * 3 + 1];
+    }
+    dims.H = top;
+  }
+  if (st.wingLift) {                  // wing dihedral fit: outboard of z0 (fuselage side) the wing, pylons and nacelles rise by t per unit |z|
+    const { z0, t, xMin } = st.wingLift;
+    for (let i = 0; i < nv; i++) { const az = Math.abs(pos[i * 3 + 2]); if (az > z0 && pos[i * 3] >= xMin && !(zone && (zone[i] === 1 || zone[i] === 3))) pos[i * 3 + 1] += t * (az - z0); }
+  }
+  if (st.htLift) {                    // tailplane dihedral fit (aft of xMax)
+    const { z0, t, xMax } = st.htLift;
+    for (let i = 0; i < nv; i++) { const az = Math.abs(pos[i * 3 + 2]); if (az > z0 && pos[i * 3] < xMax && !(zone && zone[i] === 1)) pos[i * 3 + 1] += t * (az - z0); }
+  }
+  if (st.squash) {                    // vertical compression below the fuselage centre line (js/aircraft/fit.js engine clearance)
+    const { y0, k } = st.squash;
+    for (let i = 0; i < nv; i++) { const y = pos[i * 3 + 1]; if (y < y0) pos[i * 3 + 1] = y0 + (y - y0) * k; }
+    if (dims.low != null) dims.low = y0 + (dims.low - y0) * k;
+  }
+  if (st.fairing) {                   // belly-fairing depth fit (js/aircraft/fit.js; FAM A330: 0.35 model m below the keel)
+    const { y0, k, zMax } = st.fairing;
+    for (let i = 0; i < nv; i++) { const y = pos[i * 3 + 1]; if (y < y0 && Math.abs(pos[i * 3 + 2]) <= zMax && !(zone && ZONE_NOFIN.has(zone[i]))) pos[i * 3 + 1] = y0 + (y - y0) * k; }
+  }
+  if (st.noseExt && zone) {          // nose-leg length change (the nose tyre moves down by e; the main gear and dims.low stay)
+    const { xMin, yTop, yBot, e } = st.noseExt;
+    for (let i = 0; i < nv; i++) { const y = pos[i * 3 + 1]; if (zone[i] !== 3 || pos[i * 3] <= xMin || y >= yTop) continue; pos[i * 3 + 1] = y - e * Math.min(1, (yTop - y) / (yTop - yBot)); }
+  }
+  if (st.gearUp) {                    // oleo compression of a model's own gear (js/aircraft/fit.js): the gear moves up
+    // (dims.low follows the main tyres: before close-out round 3 it was re-measured as the lowest vertex, which with a nose
+    // leg extended below the main tyres in the unpitched frame - 737 MAX - would have seated the model on its nose tyre)
+    let low = 1e9;
+    for (let i = 0; i < nv; i++) { if (zone && zone[i] === 3) pos[i * 3 + 1] += st.gearUp; if (pos[i * 3 + 1] < low) low = pos[i * 3 + 1]; }
+    dims.low = dims.low != null ? dims.low + st.gearUp : low;
+  }
+  if (st.cut1 != null) {
+    const { cut1, cut2, d1, d2 } = st; const bl2 = st.bl2 || 0;
+    for (let i = 0; i < nv; i++) {
+      const x = pos[i * 3];
+      if (zone && (zone[i] === 2 || zone[i] === 7)) { pos[i * 3] = x + rigidShift(x, cut1, d1) + rigidShift(x, cut2, d2); continue; }
+      pos[i * 3] = x + plugShift(x, cut1, d1) + plugShift(x, cut2, d2, bl2);
+    }
+    dims.L += d1 + d2; dims.tailX -= d1 + d2;
+  }
+}

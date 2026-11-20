@@ -1,0 +1,121 @@
+// sha3d ground shader (new). Replaces sfo3d@e3218d6 js/shaders/ground.js, which is NOT forked: its procedural runway
+// markings are FAA AC 150/5340-1 geometry and its city bakes are SFO's. Here the ground is:
+//   - the airfield map (js/world/ground.js, CPU-painted from data/sha_airport.js surfaces / runways / aprons): R airside
+//     pavement, G concrete fraction, B shoulder / blast pad, A landside road; edges are re-sharpened at magnification
+//     (threshold at 0.5 with a derivative-width smoothstep), so a 1 m map gives crisp edges up close;
+//   - the context map (extent bbox, coarse): R water, G road, B rail, A = 0.5 x extent mask + 0.5 x aerodrome mask;
+//   - the Sentinel-2 colour hint (data/sha_ground_s2.js, 10 m surface reflectance) for unpaved ground, with procedural
+//     detail on top; outside the 23.5 km2 detailed extent everything fades to one neutral ground colour.
+// Paint (markings) is NOT drawn here: the chunk `sha_ground_paint` is a hook (default: none) that js/live/markings.js may
+// redefine (gl.js defineChunk) before the world compiles the ground program - see js/live/ext.js.
+// Every material value below is an inferred rendering default [inf], not a measured property.
+import { defineChunk } from '../gl.js';
+
+defineChunk('sha_ground_paint', `
+// Ground paint hook (default: no paint). Return rgb = paint albedo (linear), a = coverage 0..1. Inputs: wp world position,
+// fw = world size of a pixel (m), apt = airfield-map sample (r paved, g concrete, b shoulder, a landside road; raw, not
+// sharpened), paved = sharpened airside-pavement coverage. May lower rough (paint is smoother).
+vec4 shaGroundPaint(vec3 wp, float fw, vec4 apt, float paved, inout float rough){ return vec4(0.0); }
+`);
+
+export const GROUND_VS = `
+#include <common>
+#include <vout>
+layout(location=0) in vec3 aPos; layout(location=1) in vec3 aNrm;
+out vec3 vWP; out vec3 vN;
+void main(){ vWP = aPos; vN = aNrm; emitClip(aPos, aPos); }`;
+
+export const GROUND_FS = `
+#include <common>
+#include <shadow>
+#include <fout>
+#include <sha_ground_paint>
+in vec3 vWP; in vec3 vN;
+uniform sampler2D uAptMap; uniform vec4 uAptRect;     // airfield map, rect = (x0, z0, w, h) in world metres
+uniform sampler2D uCtxMap; uniform vec4 uCtxRect;     // context map
+uniform sampler2D uS2; uniform vec4 uS2Rect; uniform float uHasS2; uniform float uS2Mix;
+uniform vec2 uGridDir;                                // runway axis (world x, z), for the concrete slab grid
+uniform vec3 uNeutral;                                // ground albedo beyond the detailed extent
+uniform float uNight;
+float sharp(float v, float lo, float hi){ float w = clamp(fwidth(v) * 0.75, 0.004, 0.5); return smoothstep(0.5 - w, 0.5 + w, v); }
+vec3 srgb2lin(vec3 c){ return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
+bool inRect(vec2 uv){ return uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0; }
+void main(){
+  vec3 wp = vWP; vec3 V = uCamPos - wp; float dist = length(V); V /= dist;
+  vec3 N = vec3(0.0, 1.0, 0.0);
+  float fw = length(fwidth(wp.xz)) * 0.7 + 0.001;
+  vec2 cuv = (wp.xz - uCtxRect.xy) / uCtxRect.zw; vec4 ctx = inRect(cuv) ? texture(uCtxMap, cuv) : vec4(0.0);
+  vec2 auv = (wp.xz - uAptRect.xy) / uAptRect.zw; bool inApt = inRect(auv); vec4 apt = inApt ? texture(uAptMap, auv) : vec4(0.0);
+  float ext = clamp(ctx.a * 2.0, 0.0, 1.0), aero = clamp(ctx.a * 2.0 - 1.0, 0.0, 1.0);
+  vec4 nzA = texture(uNoise, wp.xz * (1.0 / 1900.0)), nzB = texture(uNoise, wp.xz * (1.0 / 150.0)), nzC = texture(uNoise, wp.xz * (1.0 / 11.0));
+  float near = 1.0 - smoothstep(150.0, 900.0, dist);
+  // ---- unpaved ground: procedural grass (inside the aerodrome) / urban-green mix (outside) [inf], S2 colour on top
+  vec3 grass = mix(vec3(0.115, 0.125, 0.060), vec3(0.150, 0.140, 0.080), nzA.g) * (0.86 + 0.28 * nzB.r);
+  vec3 urban = mix(vec3(0.115, 0.112, 0.100), vec3(0.085, 0.105, 0.055), nzA.b) * (0.82 + 0.36 * nzB.g);
+  vec3 alb = mix(urban, grass, aero);
+  if (uHasS2 > 0.5) {
+    vec2 suv = (wp.xz - uS2Rect.xy) / uS2Rect.zw;
+    if (inRect(suv)) { vec4 s = texture(uS2, suv); vec3 rho = srgb2lin(s.rgb) * 0.5;
+      // inside the aerodrome the 10 m pixels next to pavement are mixed with concrete: keep the hint's brightness but cap it
+      rho = mix(rho, min(rho, vec3(0.16)), aero);
+      alb = mix(alb, rho * mix(1.0, 0.82 + 0.36 * nzC.r, near), uS2Mix * s.a); }
+  }
+  alb *= mix(1.0, 0.9 + 0.2 * nzC.g, near * 0.6);
+  alb *= 1.0 - 0.3 * smoothstep(0.08, 0.4, ctx.r) * (1.0 - smoothstep(0.45, 0.55, ctx.r)) * ext;   // ditches / drains: damp ground (js/world/ground.js)
+  // ---- beyond the detailed extent: neutral ground with a large-scale variation only
+  vec3 neutral = uNeutral * (0.95 + 0.1 * nzA.r) * (0.97 + 0.06 * nzB.g);
+  alb = mix(neutral, alb, ext);
+  // ---- landside roads (fine map inside its rect, the context map elsewhere) and rail ballast
+  float road = max(inApt ? sharp(apt.a, 0.0, 1.0) : 0.0, sharp(ctx.g, 0.0, 1.0) * ext);
+  alb = mix(alb, vec3(0.085, 0.086, 0.09) * (0.9 + 0.2 * nzB.b), road);
+  float rail = sharp(ctx.b, 0.0, 1.0) * ext * (1.0 - road);
+  alb = mix(alb, vec3(0.11, 0.10, 0.09) * (0.85 + 0.3 * nzC.b), rail);
+  // ---- airside pavement
+  float paved = inApt ? sharp(apt.r, 0.0, 1.0) : 0.0;
+  float rough = 0.95;
+  if (paved > 0.001) {
+    float conc = sharp(apt.g, 0.0, 1.0), shoulder = sharp(apt.b, 0.0, 1.0);
+    vec2 g = vec2(dot(wp.xz, vec2(-uGridDir.y, uGridDir.x)), dot(wp.xz, uGridDir));   // (across, along) the runway axis
+    vec3 asph = vec3(0.085, 0.087, 0.092) * (0.86 + 0.28 * nzB.b) * (0.94 + 0.12 * nzC.g);
+    // concrete: 5 m slabs on the runway grid [inf: slab size not sourced], per-slab tone, stains
+    vec2 slab = floor(g / 5.0);
+    vec3 cc = vec3(0.30, 0.295, 0.275) * (0.9 + 0.2 * nzB.a) * (0.96 + 0.08 * ihashf(ivec2(slab), 5));
+    cc *= 1.0 - 0.14 * smoothstep(0.6, 0.9, nzB.r) * nzC.r;
+    float jw = max(fw, 0.004); vec2 jf = abs(fract(g / 5.0 + 0.5) - 0.5) * 5.0;
+    float joint = (1.0 - smoothstep(0.012, 0.012 + jw, min(jf.x, jf.y))) * min(1.0, 0.03 / jw) * (1.0 - smoothstep(80.0, 300.0, dist));
+    cc *= 1.0 - 0.35 * joint;
+    vec3 sh = vec3(0.12, 0.118, 0.11) * (0.88 + 0.24 * nzB.g);
+    vec3 pav = mix(asph, cc, conc);
+    pav = mix(pav, sh, shoulder * (1.0 - conc));
+    alb = mix(alb, pav, paved);
+    rough = mix(0.95, mix(0.82, 0.88, conc), paved);
+  }
+  vec4 paint = shaGroundPaint(wp, fw, apt, paved, rough);
+  alb = mix(alb, paint.rgb, paint.a);
+  // ---- light
+  float sh = getShadow(wp, N, dist) * cloudShadow(wp);
+  float NoL = max(uSunDir.y, 0.0);
+  vec3 col = alb / PI * uSunColor * NoL * sh + alb * uSkyUp;
+  vec3 H = normalize(uSunDir + V); float spec = D_GGX(max(H.y, 0.0), rough) * 0.03 * NoL * sh;
+  col += uSunColor * spec * (1.0 - rough) * 2.0 * max(paved, road);
+  // ---- water (canals, rivers, ponds: OSM context): dark body + sky reflection with Fresnel [inf]
+  float water = sharp(ctx.r, 0.0, 1.0) * ext;
+  if (water > 0.001) {
+    vec2 rp = (texture(uNoise, wp.xz * 0.05 + uTime * 0.01).rg - 0.5) * 0.06 * near;
+    vec3 Nw = normalize(vec3(rp.x, 1.0, rp.y)); vec3 R = reflect(-V, Nw);
+    float F = 0.02 + 0.98 * pow(1.0 - max(dot(Nw, V), 0.0), 5.0);
+    F *= smoothstep(0.55, 0.9, ctx.r);   // narrow ditches / drains (3-5 m, peak coverage < 1 in the 4 m map): mostly the dark body, little sky
+    vec3 body = vec3(0.016, 0.022, 0.016) * (uSkyUp + uSunColor * NoL * sh / PI);
+    vec3 wc = body + skyEnv(R, 1.0) * F;
+    col = mix(col, wc, water);
+  }
+  // ---- night [inf]: a faint urban glow outside the aerodrome and an even flood level on the aprons (no fixture positions)
+  if (uNight > 0.001) {
+    float urbanN = ext * (1.0 - aero) * (1.0 - water);
+    col += alb * vec3(1.0, 0.75, 0.5) * urbanN * (0.3 + 0.7 * nzB.g * nzC.b) * 0.10 * uNight;
+    float apronN = paved * smoothstep(0.86, 0.95, apt.g);   // apron = G 255 (js/world/ground.js)
+    col += alb * vec3(1.0, 0.92, 0.8) * apronN * (0.6 + 0.4 * nzB.r) * 0.06 * uNight;
+  }
+  col = applyFog(col, wp);
+  writeOut(col, wp, 1.0);
+}`;
