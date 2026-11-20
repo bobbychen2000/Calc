@@ -379,6 +379,14 @@ Q0 and Q1 block everything else.
   4. **Inferred:** SHA-side timing, stands, taxi paths and runway use, from AIP rules and the published statistics.
 - **OD3 (Q2):** the owner will not register an eAIP account. AIP values come from the unofficial mirror copy, as
   **reference** labelled "AIP (mirror)". Only short cited facts are published (Q2 default); whole lists stay local.
+- **OD4 (2026-11-20):** sha3d is for the owner's **personal use only** and is not meant to be published. The GitHub repo
+  stays public all the same (the owner chose to keep it as it is), so every rule for committed content still holds.
+  - Real flight identities observed elsewhere (OD2 tier 2) **are shown in the app**, labelled "observed elsewhere, SHA
+    time inferred". They are read at run time from the gitignored `refs/cache/observed_elsewhere/` (standalone app with
+    the local relay) or embedded in the private in-Claude snapshot artifact. They are **never committed**. Without
+    them, a checkout of the public repo falls back to airline and type only.
+  - **No history rewrite.** The material redacted in Phase 0 stays in the history of `claude/sha-live-3d`.
+  - The local data in `refs/cache/` lives only in this container. A zip goes to the owner on request.
 
 ### 6b. Working defaults until the owner says otherwise (2026-11-14)
 
@@ -394,7 +402,7 @@ The owner did not answer Q3–Q11. These recommended defaults apply, and each ca
   - `gcj02.py` stays local;
   - no takedown address published until the owner gives one;
   - the local live recorder finishes its run and only aggregates are committed;
-  - per-flight data observed elsewhere (OD2.2) stays local until the owner sees a sample.
+  - per-flight data observed elsewhere (OD2.2) stays local (sample seen; settled by OD4: used locally, never committed).
 - **Q4 (ATC audio):** no audio toggle.
 - **Q5 (models and liveries):**
   - C919 and C909 come in Phase 4, fitted from public non-ACAP dimensions (Wikipedia), marked `inf`;
