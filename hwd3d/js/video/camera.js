@@ -108,7 +108,7 @@ export function planCamera({ trace, shots, site, rwyAxis, fps = 30, aspect = 16 
   for (const S0 of shots) {
     const S = { ...KIND_DEFAULTS[S0.kind], ...S0 }; const R = { kind: S.kind, name: S.name || S.kind, f0: S.f0, f1: S.f1, frames: S.f1 - S.f0,
       camAglMin: Infinity, fixtureMin: Infinity, stepMax: 0, stepMaxAt: null, relStepMax: 0, acClearMin: Infinity, ndcMax: 0, offScreen: 0, occluded: 0, heroInvalid: 0, raised: 0, pushed: 0, fov: [Infinity, -Infinity],
-      heroPxMax: 0, heroPxAt: null, heroAccMax: 0, heroAccAt: null, bgPxMax: 0, bgPxAt: null, bgOver20: 0, lagErrMax: null, lagErrAt: null, carAtVmax: 0, restJitter: 0, restJitterAt: null };
+      heroPxMax: 0, heroPxAt: null, heroAccMax: 0, heroAccAt: null, bgPxMax: 0, bgPxAt: null, bgOver20: 0, lagErrMax: null, lagErrAt: null, carAtVmax: 0, restJitter: 0, restJitterAt: null, camAccMax: 0, camAccAt: null };
     let st = null, scr1 = null, scr2 = null, dir1 = null; lo = S.f0; hi = S.f1;
     for (let f = S.f0; f < S.f1 && f < trace.length; f++) {
       const P0 = trace[f]; const ok = P0 && P0.found !== false && P0.valid && P0.alpha > 0.05;
@@ -198,6 +198,13 @@ export function planCamera({ trace, shots, site, rwyAxis, fps = 30, aspect = 16 
         // relative to the hero (a chase camera moves with it): a jump is a change of the camera-to-hero offset
         if (st.prevHero) { const rs = len(sub(sub(pos, hero), sub(prevCam.slice(0, 3), st.prevHero))); R.relStepMax = Math.max(R.relStepMax, rs); }
       }
+      // (round 5, V3) the camera's own acceleration in DATA time (m/s2; second difference of its positions over the frames' data-time steps,
+      // from the third frame of the shot): a chase camera on a hero whose drawn speed stuttered (7.9 -> 4.6 -> 6.3 kt at 4x) stepped 0.47 ->
+      // 0.27 -> 0.37 -> 0.32 m per frame, and the whole frame juddered while the hero's screen position (heroAcc) stayed put
+      if (st.prevCam2 && prevCam && f >= S.f0 + 2 && okAt(f - 1) && okAt(f - 2) && ok) { const t0 = trace[f - 2].t, t1 = trace[f - 1].t, t2 = P0.t, d0 = (t1 - t0) / 1000, d1 = (t2 - t1) / 1000;
+        if (d0 > 1e-4 && d1 > 1e-4) { let a2 = 0; for (let k = 0; k < 3; k++) { const v0 = (prevCam[k] - st.prevCam2[k]) / d0, v1 = (pos[k] - prevCam[k]) / d1; a2 += ((v1 - v0) / (0.5 * (d0 + d1))) ** 2; }
+          const a = Math.sqrt(a2); if (a > R.camAccMax) { R.camAccMax = a; R.camAccAt = f; } } }
+      st.prevCam2 = prevCam ? prevCam.slice(0, 3) : null;
       st.prevHero = hero;
       for (const o of P.near || []) R.acClearMin = Math.min(R.acClearMin, len(sub(pos, [o[0], o[1], o[2]])) - o[3]);
       R.acClearMin = Math.min(R.acClearMin, len(sub(pos, hero)) - 0.5 * Math.max(P.L || 10, P.span || 12));
@@ -227,7 +234,7 @@ export function planCamera({ trace, shots, site, rwyAxis, fps = 30, aspect = 16 
       }
       cams[f] = cam.map(v => +v.toFixed(4)); prevCam = cams[f];
     }
-    for (const k of ['camAglMin', 'fixtureMin', 'stepMax', 'relStepMax', 'acClearMin', 'ndcMax', 'heroPxMax', 'heroAccMax', 'bgPxMax', 'lagErrMax']) if (Number.isFinite(R[k])) R[k] = +R[k].toFixed(2);
+    for (const k of ['camAglMin', 'fixtureMin', 'stepMax', 'relStepMax', 'acClearMin', 'ndcMax', 'heroPxMax', 'heroAccMax', 'bgPxMax', 'lagErrMax', 'camAccMax']) if (Number.isFinite(R[k])) R[k] = +R[k].toFixed(2);
     R.fov = R.fov.map(v => +(+v).toFixed(1));
     report.push(R);
   }

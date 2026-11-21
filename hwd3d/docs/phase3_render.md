@@ -26,11 +26,11 @@ Models checked:
   ground. They run on SwiftShader at 1920×1080 with MSAA 4 and 4096² shadow cascades. The page is driven by
   `out/phase3_render/shoot.mjs`, a copy of M2's `dev/model_shot.mjs` with two differences: it passes `?metar=`, and it
   records the light sprites. `shoot_flash.mjs` renders at an instant when a strobe or beacon is flashing.
-- **SF50 morning.** An early-November morning; the sky and wind come from a real KHWD METAR of that hour
-  (`00000KT 10SM CLR 10/08 A3013`). The sun is low in the east-southeast, about 10° up. (The exact instant is not
-  given here: it was chosen near a recorded movement, default D1.)
-- **PC-12 midday.** An early-November midday; real KHWD METAR of that hour (`25005KT 10SM CLR 17/11 A3014`). The sun
-  is in the south, about 36° up. Both METARs come from `refs/cache/metar/` (IEM archive).
+- **SF50 morning.** An early-November morning with a calm, clear sky taken from a real KHWD METAR. The sun is low in
+  the east-southeast.
+- **PC-12 midday.** An early-November midday with a light westerly and a clear sky taken from a real KHWD METAR. The
+  sun is in the south. Both METARs come from `refs/cache/metar/` (IEM archive). (The render instants are not given here,
+  default D1.)
 - **Night.** 2026-11-06 03:40Z (19:40 PST, sun elevation −30.2°). The last available METAR, 052054Z, is carried forward
   [inf: no report for that hour is in the cache].
 - **Placement.**

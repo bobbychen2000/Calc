@@ -116,7 +116,7 @@ void main(){
     // at most 1 - the reference viewer's rule; before, the glb's 0.02-0.03 was used as written. (Not the cause of the dotted
     // hatch of review G4: that was the blend order of the glass, see the two-pass draw in DetailedAircraft.items.)
     // OD4 iteration 4 (review G3): the FLIGHT-DECK glazing (mat 27: windshield and crew side windows, js/aircraft/models.js
-    // AC_PART_DECK_GLASS) takes the direct sun in its diffuse return at GLASS_VEIL_SUN_DECK = 0.8 (uVeilSunDeck) [inf:
+    // AC_PART_DECK_GLASS) takes the direct sun in its diffuse return at GLASS_VEIL_SUN_DECK (uVeilSunDeck; 0.8, 0.65 since OD4 iteration 5) [inf:
     // appearance fit]; the cabin windows (24) keep GLASS_VEIL_SUN = 0. The pc12 viewer shades every glb BLEND pane with the
     // full sun in it (three.js: 0.82 coverage of the tint, lit like any surface); without it the flight-deck panes in sun read
     // 15-30 sRGB levels below both reference renders (a near-black visor: hwd_front34 windshield (33, 34, 38) vs dev (57, 65,
@@ -202,7 +202,8 @@ uniform float uCabinAmb; // share of the sky that reaches this group's interior 
 uniform float uCabinSun; // share of the direct sun that reaches them: the glazing transmission tau of the type (closed cabin), 1 = rule off
 uniform float uDeckAmb;  // flight deck (id 26, displays 22; OD4 iteration 4, review G3): share of the sky (DECK_SKY_SHARE closed, 1 = rule off)
 uniform float uDeckSun;  // flight deck: share of the direct sun through the windshield / side windows (DECK_SUN_T closed, 1 = rule off)
-uniform vec4 uDeckPlane; // flight-deck region (OD4 iteration 5, review F4): dot(xyz, world pos) + w > 0 forward of the deck's aft boundary
+uniform vec4 uDeckPlane; // flight-deck region (OD4 iteration 5, review F4): dot(xyz, world pos) + w = metres forward of the deck's aft boundary
+const float DECK_RAMP = 1.0; // metres aft of that boundary over which the cabin-rule surfaces go from the deck's shares to the cabin's [inf]
 // uAlpha: screen-door fade of one item, the obj shader's rule (js/shaders/objects.js, fix round 1): a 4x4 ordered-dither
 // threshold discards a growing share of fragments, so a re-placement fades instead of blinking (render item field 'alpha')
 uniform float uAlpha;
@@ -226,9 +227,14 @@ void main(){
   // surfaces take the deck's shares too - the back faces of the cabin-enclosing parts there are the flight deck's own walls,
   // roof and window frames (PC-12 fus_fwd, glazing_flightdeck), and the SF50's crew seats / cockpit lining are cabin parts
   // (cabin_seats, cabin_lining); with the cabin's shares the walls behind the PC-12 crew seats read near black through the
-  // shaded side window while the seats in front of them were lit
-  bool cabin = mat == 23 || (back && mat == 25), deck = mat == 26 || mat == 22 || (cabin && dot(uDeckPlane.xyz, vWP) + uDeckPlane.w > 0.0);
+  // shaded side window while the seats in front of them were lit (a debug render, out/od4_it5/dbg/ids_port.png, showed those
+  // walls are the forward-cabin skin just aft of the seats)
+  // The PC-12 has no bulkhead behind the crew seats: what is seen behind them through the flight-deck glazing is the forward
+  // cabin, lit by the same glazing - so the deck's shares fade into the cabin's over DECK_RAMP (1 m [inf]) aft of xAft
+  bool cabin = mat == 23 || (back && mat == 25), deck = mat == 26 || mat == 22;
   float sunT = cabin ? clamp(uCabinSun, 0.0, 1.0) : 1.0, ambT = cabin ? clamp(uCabinAmb, 0.0, 1.0) : 1.0;
+  if (cabin) { float fd = smoothstep(-DECK_RAMP, 0.0, dot(uDeckPlane.xyz, vWP) + uDeckPlane.w);
+    sunT = mix(sunT, clamp(uDeckSun, 0.0, 1.0), fd); ambT = mix(ambT, clamp(uDeckAmb, 0.0, 1.0), fd); }
   if (deck) { sunT = clamp(uDeckSun, 0.0, 1.0); ambT = clamp(uDeckAmb, 0.0, 1.0); }
   // ground-contact occlusion of belly / wells / gear near the pavement (item groundRef = ground y; -1e4 = off), a softer
   // version of the obj shader's building rule (0.55 over 4 m): 0.8 over 2 m [inf]
@@ -280,7 +286,11 @@ export const CONTROL_LAG = 7;        // 1/s first-order lag of roll / pitch / ya
 export const CABIN_SKY_SHARE = 0.35; // share of the sky that reaches the closed cabin through its windows (ACOBJ_FS header) [inf]
 export const CABIN_SUN_T = 0.2;      // direct sun into the closed cabin when the model gives no glazing transmission (ACOBJ_FS header)
 export const GLASS_VEIL_SUN = 0.0;   // share of the direct sun in the glazing's diffuse return (GLASS_FS header)
-export const GLASS_VEIL_SUN_DECK = 0.8; // the same for the flight-deck glazing (mat 27; GLASS_FS header, OD4 it. 4, G3) [inf: appearance fit]
+// OD4 iteration 5 (review F4): refitted to 0.65 after the flight-deck region (ACOBJ_FS uDeckPlane) lit the deck's walls with the
+// deck's shares - the mean distance outside the dev-stage range over 26 windshield / side-window boxes at 12 cameras (the 11
+// of iteration 4, the recheck's grazing cameras, the cockpit's cabin windows; out/od4_it5/tools/g4_measure.py), renders at
+// 0.4 and 0.8 interpolated in linear light: 0.4 6.7, 0.5 6.0, 0.6 5.6, 0.7 5.6, 0.8 5.9, 1.0 7.1 sRGB levels
+export const GLASS_VEIL_SUN_DECK = 0.65; // the same for the flight-deck glazing (mat 27; GLASS_FS header, OD4 it. 4, G3) [inf: appearance fit]
 export const DECK_SKY_SHARE = 1.0;   // share of the sky that reaches the closed flight deck (ACOBJ_FS header, OD4 it. 4, G3) [inf]
 export const DECK_SUN_T = 1.0;       // share of the direct sun on the flight deck where the shadow map lets it in (OD4 it. 4, G3) [inf]
 export const cabinSunT = (model) => { const t = model && model.stats && model.stats.glazingT; return t != null && isFinite(t) ? Math.max(0, Math.min(1, t)) : CABIN_SUN_T; };
@@ -414,8 +424,8 @@ export class DetailedAircraft {
     const anyDoorOpen = G.groups.some(g => doorPart(g) && (this.doors[g.key] || 0) > 0.02);
     const tauSun = cabinSunT(m);
     // OD4 iteration 5 (review F4): the flight-deck region as a world plane (ACOBJ_FS uDeckPlane: forward of the model's
-    // deck.xAft, js/aircraft/models.js); (0, 0, 0, -1) = no region
-    let deckPlane = [0, 0, 0, -1];
+    // deck.xAft, js/aircraft/models.js); (0, 0, 0, -1e4) = no region
+    let deckPlane = [0, 0, 0, -1e4];
     if (m.deck && Number.isFinite(m.deck.xAft)) { const f = m4.xdir(this.model, [1, 0, 0]), fl = Math.hypot(f[0], f[1], f[2]) || 1, P0 = m4.xform(this.model, [m.deck.xAft, 0, 0]);
       deckPlane = [f[0] / fl, f[1] / fl, f[2] / fl, -(f[0] * P0[0] + f[1] * P0[1] + f[2] * P0[2]) / fl]; }
     // motion vectors: a group's prevModel is its previous-frame model; a group riding on a fast-spinning propeller / fan

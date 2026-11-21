@@ -621,7 +621,7 @@ with a per-unit altitude bias was drawn rolling over the grass of the approach.
     pass refuses a roll whose steady part lasts more than 3 s: it is replaced by a gentler braking straight into the re-acceleration
     (the braking rate ≥ 0.3 m/s² and the lowest speed solved for the distance and the time, 3 s at the bottom); when none fits, later
     touchdowns and other splits are tried, and only a second pass accepts a plateau (`counters.touchGoVfit`, `touchGoPlateau`). The
-    later touchdowns made some approaches FLOAT (a weekday light twin glided from a low fix to 8 ft within 2 s and floated 10 s at
+    later touchdowns made some approaches FLOAT (a weekday light single - case T2's aircraft; called a light twin here before round 5 - glided from a low fix to 8 ft within 2 s and floated 10 s at
     4-9 ft and 47 kt): an approach that spends more than 6 s below 15 ft is refused (`counters.touchGoFloatRefused`). Weekday 'case T2'
     now brakes 43 → 30 kt, stays 3 s at the bottom and accelerates to its lift-off (was ~20 s at a constant 41.4-41.7 kt). Also fixed:
     the stop-and-go wait was a local `W` that shadowed the reason counter `W()` in `rollFit` - `W('slow75')` threw (temporal dead
@@ -733,7 +733,7 @@ with a per-unit altitude bias was drawn rolling over the grass of the approach.
 - **Drawable.** `GaAircraft` draws with `prog: 'obj'` and `noCull`, because the slab winding was not checked face by
   face. The obj program has no alpha, so a track is drawn while its fade alpha is above 0.5.
 - **Renders looked at** (SwiftShader, 1280×720): `out/traffic/render_types_grid.png` (C172, CH7A, P28A, BE55, PC12,
-  SF50, C56X, R44), `render_lineup_close.png`, and `render_traffic_grid.png` (weekend replay at 33 min).
+  SF50, C56X, R44), `render_lineup_close.png`, and `render_traffic_grid.png` (one instant of the weekend replay; which minute is not given - D1, round 5).
   - The traffic render shows: a C182 at the Hangar C door spot; a C172 taxiing; a BL8 rolling out on 28L; a B06 on the
     FBO ramp; a C172 on downwind; the Green Ramp.
   - The shapes read as their classes: high and low wing, twin nacelles, V-tail with a top-mounted engine, rear-engine

@@ -25,10 +25,11 @@
 //    an aircraft first drawn in the air starts in its rule state (no cycle at its first frame);
 //  - flaps (degrees, the model's own flap settings from its pivot `settings`: PC-12 0 / 15 / 30 / 40, SF50 0 / 15 / 39):
 //    take-off setting (the second) from the hold / run-up / line-up through the roll and the climb-out to 400 ft above the
-//    ground; the same setting on a downwind below 1,500 ft; the approach setting (the second highest) on base and on final
-//    above 500 ft; the landing setting (the highest) on final below 500 ft, kept through the landing roll until the
-//    aircraft taxis (an aircraft first drawn on its landing roll starts with it); up (0) otherwise; js/aircraft/detailed.js
-//    moves them at 11 deg/s;
+//    ground - only BEFORE a departure: after a landing roll (the engine's tr._postLand, until a departure, the air, parking or
+//    5 min at rest) a hold-short gets no take-off flaps (round 5); the same setting on a downwind below 1,500 ft; the approach
+//    setting (the second highest) on base and on final above 500 ft; the landing setting (the highest) on final below 500 ft,
+//    kept through the landing roll and on the runway until the aircraft has left it (the exit / taxi-in, timing inferred; an
+//    aircraft first drawn on its landing roll starts with it); up (0) otherwise; js/aircraft/detailed.js moves them at 11 deg/s;
 //  - propeller / fan: off when parked, in a hangar or silent at rest; else spooling (time constant SPOOL_S) to the idle
 //    speed on the ground below 30 kt and to the run speed on a take-off / landing roll and in the air (PC-12: the pc12
 //    pivot's 1,700 rpm = 178 rad/s run, 110 rad/s idle; SF50 fan 100 / 120 rad/s - both idle values and the SF50 fan speed
@@ -156,31 +157,7 @@ export class AircraftViews {
     if (set) { this.flapSets.set(type, set); return set; }
     return FLAP_FALLBACK[type] || [0, 15, 30];
   }
-  flapRule(set, prev, D, agl, phase, S = null, tr = null) {
-    const n = set.length, to = set[Math.min(1, n - 1)], ap = set[Math.max(1, n - 2)], ld = set[n - 1];
-    // (round 4 iteration 3, F4) the take-off setting, once set at a hold / run-up / line-up, stays set while the aircraft taxis on to
-    // the runway ('taxi' / 'runway_taxi' between the hold and the line-up): the SF50 of video S set them at the hold, retracted them to 0
-    // on the taxi onto 28L and extended them again lined up - both moves filmed. The latch ends at a landing roll, parking, a hangar,
-    // no signal or in the air (the climb-out rule takes over); a planned take-off (the engine target xplan:takeoff:* / plan:takeoff*:*)
-    // also keeps it
-    if (S) { if (D.ground && TO_GROUND.has(phase)) S.toSet = true;
-      else if (!D.ground || phase === 'landing_roll' || OFF_PHASE.has(phase)) S.toSet = false; }
-    if (D.ground) {
-      if (TO_GROUND.has(phase)) return to;
-      // (and the engine's own latch tr._toFl - set at a hold / run-up / line-up, cleared by a landing roll, parking, a hangar, no signal or
-      // the air - for a view created after the hold: a snapshot opened on the taxi onto the runway drew the SF50 with its flaps up)
-      if ((phase === 'taxi' || phase === 'runway_taxi') && ((S && S.toSet && prev != null && prev >= to - 0.01) || (tr && tr._toFl) || /^x?plan:takeoff/.test((tr && tr._tgtMode) || ''))) return to;
-      // kept from the landing (or the take-off setting) until the aircraft taxis; first drawn on a landing roll: landing flaps
-      if (phase === 'landing_roll') return prev != null ? prev : ld;
-      if (phase === 'runway_taxi') return prev != null ? prev : 0;
-      return 0;
-    }
-    if (CLIMB_OUT.has(phase)) return agl < 400 * FT ? to : 0;
-    if (phase === 'downwind') return agl < 1500 * FT ? to : 0;
-    if (phase === 'base') return ap;
-    if (phase === 'final' || (phase === 'arriving' && agl < 1000 * FT)) return agl > 500 * FT ? ap : ld;
-    return 0;
-  }
+  flapRule(set, prev, D, agl, phase, S = null, tr = null) { return flapRuleOf(set, prev, D, agl, phase, S, tr); }
   controls(S, D, T, dt, fresh) {
     const h = D.hdg * D2R;
     if (fresh || !S.last || !(dt > 0)) { S.last = { roll: D.roll || 0, pitch: D.pitch || 0, h }; S.rr = S.pr = S.yr = 0; S.ctl = { roll: 0, pitch: 0, yaw: 0 }; return; }
@@ -205,4 +182,40 @@ export class AircraftViews {
     return dimsNote(T);
   }
   dispose() { for (const v of this.map.values()) { this.scene.remove(v); v.dispose(); } this.map.clear(); this.drv.clear(); }
+}
+
+// The flap rule of the detailed models (degrees) [inf, see the header]; exported pure so tools/traffic/replay_engine.mjs can gate it.
+//  set: the model's flap settings (ascending), prev: the current target (null when first drawn), D: tr.disp, agl (m), phase: tr.phase,
+//  S: the drive state (its take-off latch S.toSet), tr: the track (the engine's own state: tr._toFl, tr._postLand, tr._tgtMode)
+export function flapRuleOf(set, prev, D, agl, phase, S = null, tr = null) {
+  const n = set.length, to = set[Math.min(1, n - 1)], ap = set[Math.max(1, n - 2)], ld = set[n - 1];
+  // (round 5, V1) after a landing roll the aircraft is arriving (the engine's tr._postLand, js/live/traffic.js attitude: set by a landing
+  // roll, cleared in the air, parked / in a hangar, by a departure - lined up, a take-off / touch-and-go roll, a run-up, a take-off plan -
+  // or after 5 min standing): no take-off setting at a hold-short of the taxi-in; the landing setting is kept on the landing roll and on the
+  // runway, the flaps go up once it has left the runway (the after-landing check [inf]) and stay up to parking. The iteration-3 latch set
+  // the take-off setting at every hold-short: video P's PC-12 extended 15 deg at its post-landing hold and taxied in with it
+  const post = !!(tr && tr._postLand) && D.ground;
+  // (round 4 iteration 3, F4) the take-off setting, once set at a hold / run-up / line-up, stays set while the aircraft taxis on to
+  // the runway ('taxi' / 'runway_taxi' between the hold and the line-up): the SF50 of video S set them at the hold, retracted them to 0
+  // on the taxi onto 28L and extended them again lined up - both moves filmed. The latch ends at a landing roll, parking, a hangar,
+  // no signal, an arrival or in the air (the climb-out rule takes over); a planned take-off (the engine target xplan:takeoff:* /
+  // plan:takeoff*:*) also keeps it
+  if (S) { if (D.ground && TO_GROUND.has(phase) && !post) S.toSet = true;
+    else if (!D.ground || post || phase === 'landing_roll' || OFF_PHASE.has(phase)) S.toSet = false; }
+  if (D.ground) {
+    if (post) { if (phase === 'landing_roll' || phase === 'runway_taxi') return prev != null ? prev : ld; return 0; }
+    if (TO_GROUND.has(phase)) return to;
+    // (and the engine's own latch tr._toFl - set at a hold / run-up / line-up, cleared by a landing roll, parking, a hangar, no signal or
+    // the air - for a view created after the hold: a snapshot opened on the taxi onto the runway drew the SF50 with its flaps up)
+    if ((phase === 'taxi' || phase === 'runway_taxi') && ((S && S.toSet && prev != null && prev >= to - 0.01) || (tr && tr._toFl) || /^x?plan:takeoff/.test((tr && tr._tgtMode) || ''))) return to;
+    // kept from the landing (or the take-off setting) until the aircraft taxis; first drawn on a landing roll: landing flaps
+    if (phase === 'landing_roll') return prev != null ? prev : ld;
+    if (phase === 'runway_taxi') return prev != null ? prev : 0;
+    return 0;
+  }
+  if (CLIMB_OUT.has(phase)) return agl < 400 * FT ? to : 0;
+  if (phase === 'downwind') return agl < 1500 * FT ? to : 0;
+  if (phase === 'base') return ap;
+  if (phase === 'final' || (phase === 'arriving' && agl < 1000 * FT)) return agl > 500 * FT ? ap : ld;
+  return 0;
 }

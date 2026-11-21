@@ -106,11 +106,15 @@ Checks
      class in the hour is flagged. Images are not read: every app screenshot (docs/phase2/, or a SOURCES entry naming
      livetest or a replay / snapshot pack) carries a by-eye review note d1_labels ('checked ...' / 'masked ...') - hard; the
      masked ones say so in their caption ('MASKED'). The check alone: --d1-windows (seconds once the counts are cached).
-     D1 event clock times (round 4 iteration 3; d1_event_times): no committed text gives the clock time (hh:mm[:ss]Z / UTC / PST
-     / PDT) of an individual aircraft's event - a time in the same sentence or table row as an event word (taxied, took off,
-     landing roll, touchdown, lift-off, touch-and-go, departed, parked, crossed, first seen, signal ended, ...) - hard; window
-     labels on the hour, either end of a span of >= 5 min and a screenshot's 'scene hh:mm' are not events; planted cases -
-     hard. Also run by --d1-windows.
+     D1 event clock times (round 4 iteration 3, round 5; d1_event_times): no committed text gives the clock time (hh:mm[:ss]Z /
+     UTC / PST / PDT; a bare hh:mm:ss in a table under a clock header) of an individual aircraft's event - a time in the same
+     sentence or table row as an event word (taxied, took off, landing roll, touchdown, lift-off, touch-and-go, departed, parked,
+     crossed, first seen, signal ended, ...) - hard; a screenshot's 'scene hh:mm' in a caption / paragraph that names an event or
+     an aircraft's state, and an offset that pins an instant in a window or run ('the window's first <few> seconds', 'N min into the
+     window', '?at=<min>', a render's '_m<n>_' minute index) next to an event or state, are hits too; window labels on the hour and
+     either end of a span of >= 5 min are not events. Scanned: markdown / JSON / text units, code comments and docstrings, and
+     every string literal of .py / .js / .mjs files. Planted cases with times built at run time from an instant outside every
+     recorded hour - hard. Also run by --d1-windows.
 usage: python3 hwd3d/tools/check_airport.py [--data FILE] [--paint-only] [--d1-windows]
 """
 import json, math, os, re, subprocess, sys
@@ -353,7 +357,7 @@ for _n in ('heli', 'pat', 'night', 'weekday', 'weekend'):
 for _n in D1W_LOCAL:   # also by their anonymous case labels: the docs define od3s / od3p as the windows around OD3 case S / P
     D1W_NAME_RE[_n] = [re.compile(r'(?<![A-Za-z0-9])%s(?![A-Za-z0-9])' % _n, re.I), re.compile(r"\b[Cc]ase %s\b" % _n[-1].upper())]
 # Window references by date: an explicit recording hour or hour range ("Sat 7 Nov 20Z", "7 Nov 2026 20:00Z", "Sun 8 Nov
-# 20:00-21:00Z", "Nov 8 12:00 PST", "2026-11-07T20:12Z", "20261107_20", "Sunday 8 Nov 2026, 12:00-13:00 PST"); a date outside
+# 20:00-21:00Z", "Nov 8 12:00 PST", "2026-11-07T20Z", "20261107_20", "Sunday 8 Nov 2026, 12:00-13:00 PST"); a date outside
 # the recording (4-11 Nov 2026) is no window.
 _MON = r'Nov(?:ember|\.)?'
 _HM = (r'(?P<h>[0-2]?\d)(?::(?P<m>[0-5]\d))?(?::[0-5]\d)?(?:\.\d+)?'
@@ -769,28 +773,60 @@ def d1_dated_windows():
 
 
 # ------------------------------------------------------------------------------------------------ D1: event clock times
-# (round 4 iteration 3, F3) 'no committed time of an individual aircraft's event' (docs/PLAN.md 6a D1 / 6b (d)): a clock time
-# (hh:mm[:ss[.s]]Z / UTC / PST / PDT, optionally ISO-dated) in the same sentence (or table cell) of committed text as an aircraft-event word (taxied,
-# took off, landing roll, touchdown, lift-off, touch-and-go, low pass, departed, arrived, parked, held short, lined up, crossed,
-# first seen / heard, signal ended, vanished, re-appeared, ...) is a hit - hard. Window-scale times are not events: a time on the hour
-# (hh:00Z, hh:00:00Z - a window or hour label), either end of a range of >= 5 min (a run's or window's span, 'T1 -> T2') and a
-# screenshot's 'scene hh:mm' (the instant an image shows, not an event; an image caption must not give the minute of a case the
-# text describes - phase2_run_6, round 4 iteration 3). The
-# units are the D1(d) units (_d1w_units: markdown paragraphs / list items / table cells, code comments, JSON entries). Two
-# committed lines of docs/phase2_run.md (round 1) gave a window-B taxi crossing and a window-A take-off to the second.
+# (round 4 iteration 3, F3; round 5, R1) 'no committed time of an individual aircraft's event' (docs/PLAN.md 6a D1 / 6b (d)):
+# - a clock time (hh:mm[:ss[.s]]Z / UTC / PST / PDT, optionally ISO-dated; in a markdown table also a bare hh:mm:ss in a row of
+#   a table whose header names a clock - 'Scene (Z)', 'UTC', 'clock') in the same sentence (or table row) as an aircraft-event
+#   word (taxied, took off, landing roll, touchdown, lift-off, touch-and-go, low pass, departed, arrived, parked, held short,
+#   lined up, crossed, first seen / heard, signal ended, vanished, re-appeared, ...) is a hit;
+# - a screenshot's scene minute ('scene hh:mm PST') is a hit when its unit (the whole caption / paragraph) also names an event
+#   or the state of an individual aircraft (taxiing, climbing, on final, holding short, in hangar, last signal, ft AGL, ...);
+# - an offset that pins an instant inside a window or run ('the window's first <few> seconds', 'N min into the weekend window',
+#   'a <few> minutes into window B', '<shortly> before the window began', 'replay at N min', 'at minute N', a snapshot's
+#   '?at=<min>', a render's minute index '_m<n>_desktop') is a hit when its unit names an event or an aircraft state - hard.
+# Window-scale times are not events: a time on the hour (hh:00Z - a window or hour label) and either end of a range of >= 5 min
+# (a run's or window's span, 'T1 -> T2'). The units are the D1(d) units (_d1w_units: markdown paragraphs / list items / table
+# rows, code comments and docstrings, one JSON entry's strings) and, in .py / .js / .mjs files, every string literal (adjacent
+# literals joined by whitespace or '+' are one unit). The planted cases use times built at run time from an instant OUTSIDE
+# every recorded hour (_d1t_synthetic), so no planted time is a time of the recording.
 D1T_TIME = re.compile(r'(?<![\d:])(?:(\d{4}-\d\d-\d\d)T)?([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d)(?:\.\d+)?)?(\s?Z|\s(?:UTC|PST|PDT))?(?![A-Za-z0-9:])')
 D1T_EVENT = re.compile(r'\b(taxi(?:ed|ing)|took off|take-?offs?|land(?:ed|s)|landing rolls?|touch(?:ed)?[- ]?downs?|lift(?:ed|s)?[- ]?offs?|'
                        r'touch-and-gos?|stop-and-gos?|low pass(?:es)?|go-arounds?|depart(?:ed|ures?|ing)|arriv(?:al|als|ed|ing)|parked|'
                        r'held short|holding short|lined up|rolled|crossed|first (?:seen|heard)|was (?:seen|heard)|heard again|'
                        r'signal (?:ended|lost|came back)|vanish\w*|re-?appear\w*|teleport\w*|climbing out|on final|hovered|hover-taxi\w*)\b', re.I)
+# the state of an individual aircraft at an instant (scene minutes and offsets only)
+D1T_STATE = re.compile(r'\b(climbing|descending|airborne|overflights?|rolling(?: out)?|roll-?outs?|on (?:the )?(?:runway|final|downwind|base|ground|ramp|taxiway|apron)|'
+                       r'(?:final|downwind|crosswind|base)(?: leg)? \d\d[LR]?|holding|run-?ups?|stopped|in hangar|no signal|last signal|'
+                       r'ft AGL|hangar_in|take-off roll|helicopter on the ground)\b', re.I)
 D1T_RANGE = re.compile(r'\s*(?:→|->|–|—|-|\.\.|to)\s*')
+D1T_SCENE = re.compile(r'\bscene(?: time| minute)?(?: about| at| =|:)?\s*$', re.I)
+D1T_OFFSET = re.compile(
+    r"\b(?:window|run|recording|hour|pack|replay|snapshot)'s\s+(?:very\s+)?(?:first|last|opening|closing)\s+(?:few\s+)?(?:\d+(?:\.\d+)?\s*)?(?:seconds?|minutes?|s|min)\b"
+    r"|\b(?:a\s+few|several|some|\d+(?:\.\d+)?)\s*(?:s|secs?|seconds?|mins?|minutes?)\s+(?:into|after\s+the\s+(?:start|beginning)\s+of|before\s+the\s+end\s+of)"
+    r"\s+(?:the\s+)?(?:[\w-]+\s+)?(?:window|run|recording|hour|pack|replay|snapshot)\b"
+    r"|\b(?:shortly|just|right|seconds|minutes)\s+(?:before|after)\s+the\s+(?:window|run|recording)\s+(?:began|started|ended|start|end)\b"
+    r"|\b(?:window|run|recording|hour|pack|replay|snapshot)\s+(?:at|after)\s+(?:minute\s+)?\d+(?:\.\d+)?\s*(?:s|secs?|seconds?|mins?|minutes?)?\b(?!\s*(?:kt|ft|m\b|%|Hz|fps))"
+    r"|\b(?:at|in)\s+minute\s+\d+|\bminute\s+\d+(?:\.\d+)?\s+(?:of|into)\s+(?:the\s+)?(?:[\w-]+\s+)?(?:window|run|recording|hour|pack|replay)\b"
+    r"|[?&]at=\d+(?:\.\d+)?\b|_m\d+(?:_\d+)?_(?:desktop|phone)\b", re.I)
+D1T_CLOCK_HEAD = re.compile(r'\((?:Z|UTC|PST|PDT)\)|\bscene\b|\bclock\b|\bUTC\b', re.I)
+D1T_CODE_EXT = ('py', 'js', 'mjs')
+
+
 def _d1t_sec(m): return int(m.group(2)) * 3600 + int(m.group(3)) * 60 + int(m.group(4) or 0)
-def _d1t_hits(txt_unit):
-    """-> [(offset, time text, event word)] for one unit's joined text"""
+
+
+def _d1t_hits(txt_unit, bare_ok=False):
+    """-> [(offset, time / offset text, event word)] for one unit's joined text; bare_ok: a bare hh:mm:ss counts as a clock time
+    (a table row under a clock header)"""
     out = []; ms0 = list(D1T_TIME.finditer(txt_unit)); ms = []
-    # a time without 'Z' counts only as the first end of a range whose other end has one ('23:05:16-23:05:22Z')
+    ev_any = None
+    def any_ev():
+        e = D1T_EVENT.search(txt_unit) or D1T_STATE.search(txt_unit)
+        return e.group(0) if e else ''
+    # a time without 'Z' counts only as the first end of a range whose other end has one ('hh:mm:ss-hh:mm:ssZ'), after 'scene',
+    # or (bare_ok) with seconds
     for k, m in enumerate(ms0):
-        if m.group(5) or (k + 1 < len(ms0) and ms0[k + 1].group(5) and D1T_RANGE.fullmatch(txt_unit[m.end():ms0[k + 1].start()] or 'x')): ms.append(m)
+        if (m.group(5) or (bare_ok and m.group(4)) or D1T_SCENE.search(txt_unit[max(0, m.start() - 24):m.start()])
+                or (k + 1 < len(ms0) and ms0[k + 1].group(5) and D1T_RANGE.fullmatch(txt_unit[m.end():ms0[k + 1].start()] or 'x'))): ms.append(m)
     for k, m in enumerate(ms):
         if m.group(3) == '00' and (m.group(4) in (None, '00')): continue          # on the hour: a window / hour label
         span = None
@@ -798,15 +834,149 @@ def _d1t_hits(txt_unit):
             if a is None: continue
             if D1T_RANGE.fullmatch(txt_unit[a.end():b.start()] or 'x'): span = abs(_d1t_sec(b) - _d1t_sec(a)); span = min(span, 86400 - span); break
         if span is not None and span >= 300: continue                               # a run's / window's span
-        if re.search(r'\bscene(?: time)?(?: about| at| =)?\s*$', txt_unit[max(0, m.start() - 24):m.start()]): continue   # a screenshot's scene time
+        if D1T_SCENE.search(txt_unit[max(0, m.start() - 24):m.start()]):            # a screenshot's scene minute: a hit when the
+            if ev_any is None: ev_any = any_ev()                                    # caption / paragraph shows an aircraft's event
+            if ev_any: out.append((m.start(), m.group(0), 'scene minute + ' + ev_any))   # or state
+            continue
         # the sentence (or table cell) around the time
         a0 = max(txt_unit.rfind('. ', 0, m.start()), txt_unit.rfind('; ', 0, m.start()))
         b0 = [q for q in (txt_unit.find('. ', m.end()), txt_unit.find('; ', m.end())) if q >= 0]
         sent = txt_unit[a0 + 1:min(b0) if b0 else len(txt_unit)]
         e = D1T_EVENT.search(sent)
         if e: out.append((m.start(), m.group(0), e.group(0)))
+    for m in D1T_OFFSET.finditer(txt_unit):                                         # an offset inside a window / run
+        if ev_any is None: ev_any = any_ev()
+        if ev_any: out.append((m.start(), m.group(0), 'offset + ' + ev_any))
     return out
+
+
+def _d1t_code_strings(ext, txt):
+    """string literals of a .py / .js / .mjs file as units [[(line, text), ...], ...]; literals joined only by whitespace or '+'
+    (one concatenated string) form one unit; f-string / template-literal expressions are dropped"""
+    units = []
+    if ext == 'py':
+        import io, tokenize
+        FS, FM, FE = (getattr(tokenize, n, -9) for n in ('FSTRING_START', 'FSTRING_MIDDLE', 'FSTRING_END'))
+        cur, depth, joinable = [], 0, False
+        try:
+            for tk in tokenize.generate_tokens(io.StringIO(txt).readline):
+                if depth:
+                    if tk.type == FM: cur += [(tk.start[0] + k, s) for k, s in enumerate(tk.string.split('\n'))]
+                    elif tk.type == FS: depth += 1
+                    elif tk.type == FE: depth -= 1; joinable = depth == 0
+                    continue
+                if tk.type == tokenize.STRING:
+                    m = re.match(r'^[A-Za-z]{0,3}(\'\'\'|"""|\'|")(.*)\1$', tk.string, re.S)
+                    body = m.group(2) if m else tk.string
+                    if not joinable and cur: units.append(cur); cur = []
+                    cur += [(tk.start[0] + k, s) for k, s in enumerate(body.split('\n'))]; joinable = True
+                elif tk.type == FS:
+                    if not joinable and cur: units.append(cur); cur = []
+                    depth = 1
+                elif tk.type in (tokenize.NL, tokenize.NEWLINE, tokenize.COMMENT) or (tk.type == tokenize.OP and tk.string == '+'):
+                    if tk.type == tokenize.NEWLINE: joinable = False
+                else: joinable = False
+        except (tokenize.TokenError, IndentationError, SyntaxError): pass
+        if cur: units.append(cur)
+        return units
+    i, n, ln = 0, len(txt), 1
+    cur, last_close, prev = [], -1, ''   # prev: the last significant character outside literals (regex-literal context)
+    while i < n:
+        ch = txt[i]
+        if ch == '\n': ln += 1; i += 1; continue
+        if ch in ' \t\r': i += 1; continue
+        if txt.startswith('//', i):
+            e = txt.find('\n', i); i = n if e < 0 else e; continue
+        if txt.startswith('/*', i):
+            e = txt.find('*/', i + 2); e = n if e < 0 else e + 2; ln += txt.count('\n', i, e); i = e; continue
+        if ch == '/' and (not prev or prev in '(,=:[!&|?{};+-*%<>~^'):     # a regex literal: skip it (same line)
+            j, cls = i + 1, False
+            while j < n and txt[j] != '\n':
+                c = txt[j]
+                if c == '\\': j += 2; continue
+                if c == '[': cls = True
+                elif c == ']': cls = False
+                elif c == '/' and not cls: break
+                j += 1
+            i = j + 1; prev = 'r'; continue
+        if ch in '\'"`':
+            q, j, buf, pieces = ch, i + 1, [], []
+            while j < n:
+                c = txt[j]
+                if c == '\\':
+                    if j + 1 < n and txt[j + 1] == '\n': pieces.append((ln, ''.join(buf))); buf = []; ln += 1
+                    else: buf.append(txt[j:j + 2])
+                    j += 2; continue
+                if c == q: break
+                if c == '\n':
+                    if q != '`': break                                   # unterminated: stop at the line end
+                    pieces.append((ln, ''.join(buf))); buf = []; ln += 1; j += 1; continue
+                if q == '`' and txt.startswith('${', j):                 # a template expression: dropped (nesting by braces)
+                    d, j = 1, j + 2
+                    while j < n and d:
+                        if txt[j] == '{': d += 1
+                        elif txt[j] == '}': d -= 1
+                        elif txt[j] == '\n': ln += 1
+                        j += 1
+                    buf.append(' '); continue
+                buf.append(c); j += 1
+            pieces.append((ln, ''.join(buf)))
+            if cur and last_close >= 0 and re.fullmatch(r'[\s+]*', txt[last_close:i]): cur += pieces
+            else:
+                if cur: units.append(cur)
+                cur = pieces
+            last_close = j + 1; i = j + 1; prev = 'q'; continue
+        prev = ch; i += 1
+    if cur: units.append(cur)
+    return units
+
+
+def _d1t_scan(rel_, txt):
+    """-> [(file, line, time or offset text, event word)] for one committed text file"""
+    hits = []; nu = 0
+    ext = rel_.rsplit('.', 1)[-1].lower(); L = txt.split('\n'); md = ext == 'md'
+    head = {}   # markdown table line -> its header row (bare clock times under a clock header)
+    if md:
+        h0 = None
+        for i, l in enumerate(L):
+            if l.lstrip().startswith('|'):
+                if h0 is None: h0 = l
+                head[i + 1] = h0
+            else: h0 = None
+    # markdown paragraphs / list items are checked with their parent items (an offset in a parent, the events in a sub-item)
+    units = [(lines, ctx if md else None) for lines, ctx, _ in _d1w_units(rel_, txt, {})]
+    if ext in D1T_CODE_EXT and (D1T_TIME.search(txt) or D1T_OFFSET.search(txt)):   # string literals (only files with a candidate)
+        units += [(u, None) for u in _d1t_code_strings(ext, txt) if any(D1T_TIME.search(s) or D1T_OFFSET.search(s) for _, s in u)]
+    done = set()   # markdown table rows already checked (one unit per cell)
+    for lines, ctx in units:
+        nu += 1
+        if md and len(lines) == 1 and L[lines[0][0] - 1].lstrip().startswith('|'):   # a table cell: checked with its whole row
+            ln = lines[0][0]
+            if ln in done: continue
+            done.add(ln); rows = [(ln, L[ln - 1])]; bare = bool(D1T_CLOCK_HEAD.search(head.get(ln, ''))); ctx = None
+        else: rows = lines; bare = False; ctx = ctx if ctx and ctx.startswith(' '.join(x for _, x in rows)) else None
+        chunks = [rows] if sum(len(x) + 1 for _, x in rows) <= 20000 else [[r] for r in rows]   # a huge unit (data): per string
+        for ch in chunks:
+            for off, tt, ev in _d1t_hits(ctx if ctx and ch is rows else ' '.join(x for _, x in ch), bare):
+                lnh = next((l2 for l2, x in ch if tt in x), ch[0][0]); hits.append((rel_, lnh, tt, ev))
+    return hits, nu
+
+
+def _d1t_synthetic():
+    """an instant (UTC, datetime) inside no recorded hour: the hour before the first hour of the rec_pack recording (or 1 Nov 2026,
+    before the recording, without the local pack), at minute 37 s 41 - the planted cases' times are built from it"""
+    import datetime as _dt
+    pack = os.path.join(os.path.dirname(HWD), 'sfo3d', 'refs', 'cache', 'rec_pack')
+    try: stems = sorted(re.findall(r'_(\d{8}_\d\d)\.jsonl', ' '.join(os.listdir(pack))))
+    except OSError: stems = []
+    t = _dt.datetime(2026, 11, 1, 3) if not stems else _dt.datetime.strptime(stems[0], '%Y%m%d_%H') - _dt.timedelta(hours=1)
+    have = set(stems)
+    while t.strftime('%Y%m%d_%H') in have: t -= _dt.timedelta(hours=1)
+    return t.replace(minute=37, second=41)
+
+
 def d1_event_times():
+    import datetime as _dt
     root = os.path.dirname(HWD)
     allf = sorted(subprocess.run(['git', '-C', root, 'ls-files', '--cached', '--others', '--exclude-standard', '--', 'hwd3d'], capture_output=True, text=True, check=True).stdout.split())
     hits = []; nf = 0; nu = 0
@@ -815,26 +985,40 @@ def d1_event_times():
         if rel_.rsplit('.', 1)[-1].lower() not in D1W_TEXT_EXT or rel_.startswith('out/'): continue
         try: txt = open(os.path.join(HWD, rel_), encoding='utf-8').read()
         except (OSError, UnicodeDecodeError): continue
-        nf += 1
-        L = txt.split('\n')
-        for lines, ctx, _ in _d1w_units(rel_, txt, {}):
-            nu += 1
-            md = rel_.endswith('.md')
-            for ln, t in lines:
-                # (markdown: a paragraph / list item is joined; a table cell is checked with its whole row)
-                u = (L[ln - 1] if L[ln - 1].lstrip().startswith('|') else ' '.join(x for _, x in lines)) if md else t
-                for off, tt, ev in _d1t_hits(u):
-                    lnh = next((l2 for l2, x in lines if tt in x), ln); hits.append((rel_, lnh, tt, ev))
-                if md: break
+        nf += 1; h_, n_ = _d1t_scan(rel_, txt); hits += h_; nu += n_
     hits = sorted(set(hits))
-    # planted cases: an event time must be found; window labels, run spans and build stamps must not
-    plant = [('hit', 'At 23:05:16-23:05:22Z an untyped single taxiing on a route crossed another.'), ('hit', 'first seen by the run at 20:00:01Z just after lift-off'),
-             ('hit', '| case | 19:56Z | taxied to the hold |'), ('clean', 'Window B, Wed 4 Nov 2026 23:00Z, pattern work: 5 touch-and-goes.'),
-             ('clean', 'the run 19:59:08 -> 20:13:13Z (desktop); 3 landings'), ('clean', 'current build 2026-11-13T21:13:45Z, sha256 49242e41'),
-             ('clean', 'dusk still (--t=2026-11-14T01:05:00Z): wing landing-light glare'), ('hit', 'a C172 taxied out at 12:13 PST'),
-             ('clean', 'statistics sheet (scene 12:13 PST): 28L: 1 departure, 4 touch-and-goes')]
-    bad = [i for i, (w, t) in enumerate(plant) if bool(_d1t_hits(t)) != (w == 'hit')]
-    say('   D1 event times: %d committed text files (%d units) scanned; planted cases %d, wrongly classified %d %s; clock times next to an aircraft event: %d - hard' % (nf, nu, len(plant), len(bad), bad, len(hits)))
+    # planted cases, built at run time from an instant outside every recorded hour: event times, scene minutes with an
+    # aircraft's state and pinning offsets must be found (also in .py / .js / .mjs string literals); window labels, run spans,
+    # build stamps and a scene minute without an aircraft must not
+    t = _d1t_synthetic(); p = t - _dt.timedelta(hours=8)
+    iso, d = t.strftime('%Y-%m-%dT%H:%M:%S'), t.strftime('%Y-%m-%d')
+    hms, hm, hm2 = t.strftime('%H:%M:%S'), t.strftime('%H:%M'), (t + _dt.timedelta(seconds=6)).strftime('%H:%M:%S')
+    phm, run1 = p.strftime('%H:%M'), (t + _dt.timedelta(minutes=14)).strftime('%H:%M:%S')
+    plant = [('hit', 'p.md', 'At %s-%sZ an untyped single taxiing on a route crossed another.' % (hms, hm2)),
+             ('hit', 'p.md', 'first seen by the run at %sZ just after lift-off' % hms),
+             ('hit', 'p.md', '| case | %sZ | taxied to the hold |' % hm),
+             ('hit', 'p.md', 'a single taxied out at %s PST' % phm),
+             ('hit', 'p.md', 'statistics sheet (scene %s PST): 28L: 1 departure, 4 touch-and-goes' % phm),
+             ('hit', 'p.json', json.dumps({'x.jpg': {'caption': 'a departing single at 40 ft AGL, 50 kt. Window Q, scene %s PST, phone.' % phm}}, indent=1)),
+             ('hit', 'p.md', "a single first seen by the run in the window's first %s, just after lift-off" % 'seconds'),
+             ('hit', 'p.md', 'a single whose signal ended on the taxiway (snapshot %d min into the window)' % 16),
+             ('hit', 'p.md', 'render (weekend replay at %d min): a single rolling out on 28L, a helicopter on the ramp' % 33),
+             ('hit', 'p.md', '- **Renders**: `grid.png` (one replay at %d min).\n  - It shows: a single taxiing; a twin rolling out on 28L\n' % 33),
+             ('hit', 'p.md', '| Scene (Z) | Phases |\n|---|---|\n| %s | taxi 3 · parked 2 |\n' % hms),
+             ('clean', 'p.md', '| Scene (Z) | Phases |\n|---|---|\n| total | taxi 3 · parked 2 |\n| %s | pattern 1 |\n' % hms),   # rows apart
+             ('hit', 'p.py', "PLANT = ('hit', 'At %sZ a single took off')\n" % hms),
+             ('hit', 'p.js', "const s = 'a single ' +\n  'took off at %sZ';\n" % hms),
+             ('hit', 'p.mjs', "const s = `a single ${x}\n  took off at %sZ`;\nconst r = /'/;\n" % hms),
+             ('clean', 'p.md', 'Window Q, %s %s:00Z, pattern work: 5 touch-and-goes.' % (d, t.strftime('%H'))),
+             ('clean', 'p.md', 'the run %s -> %sZ (desktop); 3 landings' % (hms, run1)),
+             ('clean', 'p.md', 'current build %sZ, sha256 49242e41' % iso),
+             ('clean', 'p.md', 'dusk still (--t=%sZ): wing landing-light glare' % iso),
+             ('clean', 'p.md', 'ATC sheet (scene %s PST): tower open at the scene time, CTAF 120.2' % phm),
+             ('clean', 'p.md', '| Run | Scene span (Z) | Events |\n|---|---|---|\n| a | %s → %s | 3 landings |\n' % (hms, run1)),
+             ('clean', 'p.js', "const BUILD = '%sZ';  // build stamp\n" % iso),
+             ('clean', 'p.py', "STAMP = '%sZ'   # the build\n" % iso)]
+    bad = [i for i, (w, f, x) in enumerate(plant) if bool(_d1t_scan(f, x)[0]) != (w == 'hit')]
+    say('   D1 event times: %d committed text files (%d units, incl. string literals of .py / .js / .mjs) scanned; planted cases %d (times from an instant outside every recorded hour), wrongly classified %d %s; event times, scene minutes or offsets next to an aircraft event: %d - hard' % (nf, nu, len(plant), len(bad), bad, len(hits)))
     for h in hits: say('   D1 event time HIT %s:%d  %s  (%s)' % h)
     return ['%s:%d' % (h[0], h[1]) for h in hits] + (['D1 event-time planted cases: %d wrong' % len(bad)] if bad else [])
 

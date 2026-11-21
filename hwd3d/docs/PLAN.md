@@ -247,6 +247,13 @@ recorded here next to OD1–OD3 but did not come from the owner directly, and **
   (commit b0d55c1) on. The earlier pushed checkpoint bd22c60 still holds a few such readings (raster scales and
   registration numbers, a handful of per-butt-line water lines) in its history; history is not rewritten without the
   owner's explicit permission (no force-push), so that is left to the owner.
+- **(e) Forced take-off plans for aircraft not yet rolling, recorded packs only (2026-11-20).** In replay and snapshot
+  mode (120-s lookahead, decision (c)), a take-off whose aircraft was **not yet rolling** when it fell silent (taxiing or
+  holding) also gets a forced plan - taxi onto the runway, line up, roll, lift off and join the first airborne fix -
+  whenever a plan within the physical limits exists; only when none exists is it hidden with the 1.5-s fade. Live mode
+  keeps M3 (60-s lookahead, hidden until the first airborne fix and shown there at its reported height). Every inferred
+  segment stays marked inferred (`inf`). This settles the question of `docs/phase2_run.md` 12.6 by delegation; the
+  owner may overrule it.
 
 ## 7. Phased task list
 

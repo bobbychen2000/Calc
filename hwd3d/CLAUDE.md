@@ -130,6 +130,14 @@ aircraft), follow / chase / free camera, and About / statistics / ATC bottom she
   - minor: three take-offs hidden although a runway is consistent, which the owner's M3 rule does not allow; snapshot
     mode not frozen; ground bodies pivoting in place.
 
+  Rounds 4 and 5 (`docs/phase2_run.md` section 10 onward) continued the motion engine work. **D1 in committed files** is a
+  hard part of `python3 -I -B tools/check_airport.py` (`--d1-windows` runs it alone in seconds). No type may be named
+  with a dated window when it identifies a flagged aircraft (`docs/PLAN.md` 6b (d)). No committed text may give the time
+  of an individual aircraft's event: clock times, scene minutes in captions, and offsets that pin an instant in a window
+  are all hits, in docs, JSON and code string literals alike. Committed app screenshots have the HUD clock pixelated.
+  Orchestrator decision (e) (`docs/PLAN.md` 6b): recorded packs also give a forced take-off plan to aircraft that were
+  not yet rolling.
+
   Integration notes: `docs/phase2_app.md`.
 - **Phase 3 — aircraft** (`docs/PLAN.md` §7): real GA models (C172, PA-28, SR22, C182, the PC-12 from `pc12/`, a bizjet
   set, three helicopters) with N-number decals, replacing the placeholders. Verify each model's licence.

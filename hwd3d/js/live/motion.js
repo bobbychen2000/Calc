@@ -91,19 +91,29 @@ export function profilePath(R, D, v0, v1, opt) {
     cap[i] = Math.min(opt.cap ? opt.cap(S[i]) : 10, Math.sqrt(opt.lat * r), opt.w * r);
     rr[i] = r;
   }
+  // (round 5, V3) through a corner (local radius < 100 m) the cap is the corner's lowest within +-8 m: the local radius of a filleted polyline
+  // (arc points every <= 10 deg) varies from sample to sample, and the profile ran a speed sawtooth through case P's exit turn (9.4 -> 8.7 ->
+  // 9.2 -> 8.2 -> 10.3 -> 8.5 kt, 1-2.6 m/s2) [inf: 8 m, 100 m]
+  // (only where the path is still drivable in time with it: a tight hole keeps the per-sample caps)
+  const capRaw = cap.slice();
+  { const cw = Math.max(1, Math.round(8 / h)), cm = new Float64Array(n);
+    for (let i = 0; i < n; i++) { let mn = cap[i]; if (rr[i] < 100) for (let j = Math.max(0, i - cw); j <= Math.min(n - 1, i + cw); j++) if (rr[j] < 100) mn = Math.min(mn, cap[j]); cm[i] = mn; }
+    cap.set(cm); }
   // (round 4 iteration 2, F2) a LINE-UP section (a taxi onto the runway for a take-off): from the first turning sample (radius < 60 m)
   // of the last opt.lu.len m of the path to its end - the turn onto the runway and whatever bends follow it. There: gentler corner speeds
   // (lateral opt.lu.lat, turn rate opt.lu.w), at most opt.lu.vmax, and (run below) a speed that never rises again - case S turned 85 deg
   // onto 28L at 10-14 kt with ~2 m/s2 lateral and a speed sawtooth
+  const turnI = [];
+  const luCaps = () => { if (iM >= 0) for (let k = iM; k < n; k++) { const r = rr[k]; cap[k] = Math.min(cap[k], Math.sqrt(opt.lu.lat * r), opt.lu.w * r, opt.lu.vmax); } };
   if (opt.lu) {
     for (let k = 0; k < n; k++) if (S[k] >= L - opt.lu.len && rr[k] < 60) { iM = k; break; }
-    if (iM >= 0) for (let k = iM; k < n; k++) { const r = rr[k]; cap[k] = Math.min(cap[k], Math.sqrt(opt.lu.lat * r), opt.lu.w * r, opt.lu.vmax); }
+    luCaps();
   }
   // turn-arounds (sharp vertices > 150 deg kept by filletPath): stop and pivot there
   for (let k = 1; k < R.pts.length - 1; k++) {
     const A = R.pts[k - 1], B = R.pts[k], C = R.pts[k + 1];
     const th = Math.abs(wrapPi(Math.atan2(C[0] - B[0], -(C[1] - B[1])) - Math.atan2(B[0] - A[0], -(B[1] - A[1]))));
-    if (th > 150 * Math.PI / 180) { const i = clamp(Math.round(R.cum[k] / h), 0, n - 1); cap[i] = 0; dwell[i] += th / opt.pivotW; }
+    if (th > 150 * Math.PI / 180) { const i = clamp(Math.round(R.cum[k] / h), 0, n - 1); cap[i] = 0; dwell[i] += th / opt.pivotW; turnI.push(i); }
   }
   // (round 4 iteration 3, F10) a pivot before the start: the body stands at rest heading away from the path's first direction
   if (opt.dwell0 > 0) dwell[0] += opt.dwell0;
@@ -118,7 +128,8 @@ export function profilePath(R, D, v0, v1, opt) {
     }
     v[0] = Math.min(Math.max(v[0], start), start); v[n - 1] = Math.min(v[n - 1], end);
     for (let i = 1; i < n; i++) v[i] = Math.min(v[i], Math.sqrt(v[i - 1] * v[i - 1] + 2 * opt.acc * h));
-    for (let i = n - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * opt.dec * h));
+    // (round 5, V3: opt.decLo below opt.vLo - a roll-out brakes at its roll-out rate at speed and gently at taxi speed)
+    for (let i = n - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * (opt.decLo != null && v[i + 1] < (opt.vLo ?? 0) ? opt.decLo : opt.dec) * h));
     // (F2) monotonic line-up: from the first turn of the line-up section on, the speed never rises again (only lowers values, so the
     // acceleration / braking limits above still hold)
     if (iM >= 0) for (let i = Math.max(iM, stopAt) + 1; i < n; i++) v[i] = Math.min(v[i], v[i - 1]);
@@ -127,7 +138,8 @@ export function profilePath(R, D, v0, v1, opt) {
     T += dwell[n - 1];
     return { v, tA, T };
   };
-  const base = run(null, -1);
+  let base = run(null, -1);
+  if (base.T > D * 1.15) { const capSm = cap.slice(); cap.set(capRaw); luCaps(); for (const i of turnI) cap[i] = 0; const b2 = run(null, -1); if (b2.T < base.T) base = b2; else cap.set(capSm); }
   const out = { R, D, S, h, n, dwell, startErr: start - base.v[0], tmin: base.T, feasible: base.T <= D * 1.15 };
   let pr = base;
   if (base.T < D) {
@@ -242,6 +254,25 @@ export function dubinsCSC(p0, d0, p1, d1, r) {
   const arc = (c, s, aStart, A) => { const m = Math.max(1, Math.ceil(A / (5 * Math.PI / 180))); for (let k = 0; k <= m; k++) { const a = aStart + s * A * k / m; push(c[0] + s * r * Math.sin(a), c[1] - s * r * Math.cos(a)); } };
   arc(B.c0, B.s0, B.a0, B.A0); arc(B.c1, B.s1, B.al, B.A1);
   return { pts, len: B.tot };
+}
+// (round 5, V2 / V6) a GENTLE join for small heading / offset changes: e m straight on d0 from p0, a natural cubic Hermite (tangent
+// scale = its own chord) to the point fin m before p1, arriving along d1, then fin m straight into p1. Its curvature is continuous inside
+// the Hermite and small where the join turns little - the Dubins path of turnFlight turns at its full bank radius for any change, so a
+// 1-deg / 1-m join after a take-off became two short 25-deg arcs (case S rocked -4.5 -> +5.5 deg at 45-70 ft).
+//   -> { at, len, k, kMax (1/m, the Hermite part), gentle: true } | null (the Hermite would run backward / too short)
+export function straightHermite(p0, d0, s0, p1, d1, s1, D, e, fin = 0, n = 48) {
+  const S = [p0[0] + d0[0] * e, p0[1] + d0[1] * e], F = [p1[0] - d1[0] * fin, p1[1] - d1[1] * fin];
+  const cx = F[0] - S[0], cz = F[1] - S[1], ch = Math.hypot(cx, cz); if (ch < 5 || (cx * d0[0] + cz * d0[1]) / ch < 0.1 || (cx * d1[0] + cz * d1[1]) / ch < 0.1) return null;
+  const pts = e > 0.5 ? [p0] : [];
+  for (let j = 0; j <= n; j++) { const u = j / n, u2 = u * u, u3 = u2 * u, h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
+    pts.push([h00 * S[0] + h10 * ch * d0[0] + h01 * F[0] + h11 * ch * d1[0], h00 * S[1] + h10 * ch * d0[1] + h01 * F[1] + h11 * ch * d1[1]]); }
+  if (fin > 0.5) pts.push(p1);
+  const i0 = e > 0.5 ? 1 : 0; let kMax = 0;
+  for (let j = i0 + 1; j < i0 + n; j++) { const a = pts[j - 1], b = pts[j], c = pts[j + 1], l1 = Math.hypot(b[0] - a[0], b[1] - a[1]), l2 = Math.hypot(c[0] - b[0], c[1] - b[1]);
+    if (l1 > 1e-6 && l2 > 1e-6) kMax = Math.max(kMax, Math.abs(wrapPi(Math.atan2(c[0] - b[0], -(c[1] - b[1])) - Math.atan2(b[0] - a[0], -(b[1] - a[1])))) / (0.5 * (l1 + l2))); }
+  const R = polyOf(pts), k = R.len / (D * Math.max(1e-3, (s0 + s1) / 2));
+  const at = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAt(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
+  return { at, len: R.len, k, kMax, gentle: true };
 }
 export function turnFlight(p0, d0, s0, p1, d1, s1, D, r, opt = {}) {
   // opt.initial: m flown straight on the initial heading first (a climb-out before the first turn)

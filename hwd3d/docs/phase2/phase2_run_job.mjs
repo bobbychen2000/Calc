@@ -1,7 +1,7 @@
 // Independent Phase 2 run of the integrated app (docs/phase2_run.md). QA only: it changes nothing in the app. Run from
 // hwd3d/ under the harness, e.g.
 //   python3 -I tools/qa/phase2_run_ref.py satA 2026-11-07T20:00Z 12 out/phase2/ref_satA.json   # local-only D1 reference
-//   RELAY=spawn REPLAY_FROM=2026-11-07T20:00Z WIN=satA SIM_MIN=12.5 SHOT_AT=6,11 PREFIX=run_satA REF=out/phase2/ref_satA.json \
+//   RELAY=spawn REPLAY_FROM=2026-11-07T20:00Z WIN=satA SIM_MIN=12.5 SHOT_AT=<min>,<min> PREFIX=run_satA REF=out/phase2/ref_satA.json \
 //     node livetest.mjs docs/phase2/phase2_run_job.mjs
 //   (+ MOBILE=1 for 390x844; RELAY_ARGS="--ident type-only" for commit-safe HUD shots; WATCH_TYPE=<ICAO type> WATCH_DIST/PITCH to
 //   shoot a type whose fuselage enters a building footprint)
@@ -15,7 +15,7 @@ import fs from 'node:fs'; import path from 'node:path';
 
 export default async ({ page, base, OUT, DEV, MOBILE, errors, log, relayURL }) => {
   const WIN = process.env.WIN || 'w', SIM_MIN = +(process.env.SIM_MIN || 12);
-  const SHOT_AT = (process.env.SHOT_AT || '6,11').split(',').filter(Boolean).map(Number);
+  const SHOT_AT = (process.env.SHOT_AT || '').split(',').filter(Boolean).map(Number);   // run minutes of the shot sets (no default; D1, round 5: not documented)
   const SCAN_EVERY_S = 30, TL_EVERY_S = 30;
   const REF = process.env.REF ? JSON.parse(fs.readFileSync(process.env.REF, 'utf8')) : null;
   const QS = process.env.QS ?? 'fixedres=1';

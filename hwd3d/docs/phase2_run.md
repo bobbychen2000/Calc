@@ -13,7 +13,7 @@ artefacts with identities (`out/phase2/run_*`, full-ident runs) are gitignored a
 | Window | Recording hour | Local | Rank data (ground / transitions / area) | Offline Phase 1 events in the first 12 min |
 |---|---|---|---|---|
 | **A** | Sat 7 Nov 2026 20:00Z | 12:00 PST | 22 / 19 / 125 (2nd busiest hour) | T&G 5, take-off 3, full-stop 2, low pass 3 |
-| **B** | Wed 4 Nov 2026 23:00Z | 15:00 PST | 15 / 19 / 122 (weekday pattern work) | T&G 5, take-off 2, full-stop 3, lift-off 1, low pass 1 |
+| **B** | Wed 4 Nov 2026 23:00Z | 15:00 PST | 15 / 19 / 122 (weekday pattern work) | T&G 5, take-off 2, full-stop 3, low pass 1 (helicopter events not listed, D1) |
 
 **Runs** (all through `node livetest.mjs <job>` with `RELAY=spawn`, i.e. `hwd_live_server.py --replay rec_pack --from <W>
 --until <W+1h> --loop --no-adsbfi --quiet` on a free port 8760; the page was opened **on the relay's own port**, so static
@@ -25,7 +25,7 @@ files and `/api/*` came from the relay with its gzip — the real deployment pat
 | `wedB_desktop` | B | 1280 × 720 | full | 22:59:16 → 23:13:12Z | 6,196 (10.3 min) |
 | `satA_t_phone` | A | 390 × 844, DPR 1, touch, iPhone UA | `--ident type-only` | 19:59:07 → 20:13:13Z | 8,134 (13.6 min) |
 | `wedB_t_phone` | B | 390 × 844 | type-only | 22:59:07 → 23:12:03Z | 7,477 (12.5 min) |
-| `satA_t2_desktop` | A from 20:09Z | 1280 × 720 | type-only | 20:08:07 → 20:13:46Z | 2,949 (short repro of F3a + commit-safe HUD shots) |
+| `satA_t2_desktop` | A (a ~6-min part) | 1280 × 720 | type-only | not given (D1: it would date the cases it shows) | 2,949 (short type-only repeat for commit-safe HUD shots) |
 | `perf` ×4 | pack (shim) | desktop high / low / dynamic res, phone | — | 30 s each after 20 s warm-up | frame-rate probe only |
 
 The first ~60 s of every relay run show no aircraft: a freshly spawned replay relay has no backlog (P4's issue I2, confirmed).
@@ -106,23 +106,19 @@ The phone (low tier) transfers **2.20 MB** (NAIP 1.71 MB: `naip2024_2m4.jpg` + `
 
 ### 2.3 Traffic counts by phase over time
 
-`HWD.qa.counts().phases` and the runway line, read every 30 s (excerpt; runway lines shortened, zero counts dropped;
-full series in `out/phase2/run_<w>_<dev>.json`):
+`HWD.qa.counts().phases` and the runway line were read every 30 s (full series in the gitignored
+`out/phase2/run_<w>_<dev>.json`). *(Round 5, R1: the table that stood here listed the phase counts, the scope counts and the
+runway line at five scene times per window, about 2 min apart. With those times it placed individual movements within a few
+minutes. It is replaced by window totals - D1, no committed time of an
+individual aircraft's event.)* Ranges over those five readings per window, for the whole run (≈ 13-14 min of scene time):
 
-| Scene (Z) | Drawn | Tracks | Phases | Scope (all tracks) | Runway line |
-|---|---|---|---|---|---|
-| **A** 20:00:16 | 8 | 31 | pattern 4 · parked 5 · arr/dep 2 | pending 12, overflight 12, hwd 7 | No runway movements seen yet |
-| 20:02:13 | 10 | 34 | pattern 2 · taxi 3 · parked 3 · arr/dep 1 · over 2 | overflight 21, hwd 8, pending 5 | 28L ↑0 ↓0 (last 3 min) |
-| 20:04:13 | 10 | 28 | pattern 4 · taxi 2 · parked 3 · arr/dep 1 · over 1 | overflight 16, hwd 9, pending 3 | 28L ↑0 ↓0 · 28R ↑1 ↓0 |
-| 20:08:15 | 9 | 30 | pattern 4 · runway 1 · taxi 3 · parked 2 | overflight 15, hwd 11, pending 4 | 28L T&G 2 · 28R ↑1 ↓1 |
-| 20:10:10 | 9 | 29 | pattern 2 · runway 1 · taxi 5 · parked 2 | overflight 19, hwd 10 | 28L T&G 3 · 28R ↑1 ↓2 |
-| **B** 23:00:17 | 6 | 23 | pattern 1 · taxi 1 · parked 4 · arr/dep 3 | overflight 10, pending 7, hwd 6 | No runway movements seen yet |
-| 23:02:16 | 9 | 24 | pattern 1 · taxi 2 · parked 3 · arr/dep 1 · over 2 | overflight 15, pending 3, hwd 6 | 28L T&G 1 |
-| 23:04:10 | 9 | 24 | pattern 1 · runway 2 · taxi 4 · parked 1 · over 1 | overflight 15, hwd 7, pending 2 | 28L T&G 2 · 28R ↓1 |
-| 23:06:51 | 7 | 23 | pattern 1 · runway 1 · taxi 4 · parked 2 · heli 1 | overflight 13, hwd 9, pending 1 | 28L T&G 3 · 28R ↓1 |
-| 23:10:13 | 10 | 25 | pattern 2 · taxi 2 · parked 4 · heli 1 · arr/dep 1 · over 1 | overflight 15, hwd 10 | 28L T&G 4 · 28R ↓2 · heli 1 |
+| Window (whole run) | Drawn at a time | Tracks held at a time | Scope at a time: overflight / hwd / pending |
+|---|---|---|---|
+| A | 8–10 | 28–34 | 12–21 / 7–11 / 0–12 |
+| B | 6–10 | 23–25 | 10–15 / 6–10 / 0–7 |
 
-**Events vs the Phase 1 offline classifier** (live = whole run, ≈ 13 min; offline = first 12 min of the window):
+**Events vs the Phase 1 offline classifier** (window totals; live = whole run, ≈ 13 min; offline = first 12 min of the
+window; helicopter events are not listed by window, D1):
 
 | Event | A live / offline | B live / offline |
 |---|---|---|
@@ -130,7 +126,6 @@ full series in `out/phase2/run_<w>_<dev>.json`):
 | takeoff | 3 / 3 | 2 / 2 |
 | full_stop_landing | 2 / 2 | 3 / 3 |
 | low_pass_unresolved | 4 / 3 | 1 / 1 |
-| lift_off (helicopter) | 0 / 0 | 1 / 1 |
 | runup · hold_short · park · unpark · hangar_in · hangar_out | 3 · 2 · 6 · 2 · 2 · 0 | 4 · 1 · 6 · 2 · 2 · 1 |
 
 ### 2.4 Speeds, accelerations, turn rates of the drawn bodies (10 Hz)
@@ -205,8 +200,8 @@ lead equals the adaptive delay (up to 65 s).
   points, depending on the heading, which was not logged; Hangar B is drawn 4.5 m tall, height [inf]); its reported GNSS fixes are outside every footprint. It stayed so until its signal
   ended (`hangar_in`, "In hangar · Hangar B"): 66 / 149 samples. It is real behaviour (entering its T-hangar), but no door
   is modelled and no door spot exists there, so the render shows the nose through the wall (image 4). Reproduced in a
-  third, type-only run at the same scene time.
-- **b. Two taxiing aircraft pass through each other (B, both B runs; 'case B1').** A few minutes into window B, for about
+  third, type-only run.
+- **b. Two taxiing aircraft pass through each other (B, both B runs; 'case B1').** In window B, for about
   6 s, an untyped high-wing single taxiing at ~2.3 m/s (4.5 kt) on a taxi route crossed a second high-wing single that was
   in phase "runup" but creeping at 0.7–2 m/s, north-east of the 28R end; centre distance down to 0.4 m; 56 / 60
   overlapping samples (1 pair). *(Round 4 iteration 3, F3: the clock times, the second aircraft's type and the position
@@ -239,12 +234,11 @@ stand-in (airliner shape, 34.3 m span; image 5) instead of its 28.7 m bizjet pla
 Since published packs default to type-only (D1), the artifact will show this. The type is not identity under D1, so
 keeping `_mx.t` / `_mx.d` as `t` / `desc` before masking would fix it (owner/P1 decision).
 
-**F6 — One HWD departure tagged overflight (window edge, P3 classifier; 'case F6a').** In A, a single-engine piston
-that had been taxiing on the field shortly before the window began was first seen by the run in the window's first
-seconds, just after lift-off (h ≈ 0 ft AGL, 83 kt), then 4 km away climbing. *(Round 4 iteration 3, F3: its type, clock
-times, track and position were removed - D1.)* The run never saw its ground part and D6 tagged it
-overflight after 90 s; the "L corridor fix" rule did not fire on that first low fix (cause not verified). The same will
-happen whenever the live relay starts, or coverage begins, during a take-off.
+**F6 — One HWD departure tagged overflight (P3 classifier; 'case F6a').** In A, a single-engine piston was first seen
+by the run just after lift-off (h ≈ 0 ft AGL, 83 kt), then 4 km away climbing. *(Round 4 iteration 3, F3, and round 5, R1:
+its type, its clock times, when in the window it happened, its track and its position were removed - D1.)* The run never
+saw its ground part and D6 tagged it overflight after 90 s; the "L corridor fix" rule did not fire on that first low fix
+(cause not verified). The same can happen to any take-off whose ground part the app has not seen.
 
 **F7 — Start-up transient on the tower suffix (P4, minor).** In one scan (B, 5 s after `ready`) a list row carried
 "tower closed (CTAF)" although the scene tower was open: the first list render uses `ui.towerOpen` computed before the
@@ -266,8 +260,10 @@ with a runway event, deterministic event counts across two runs of the same wind
 
 ## 4. Screenshots
 
-Committed (JPEG, ≤ 285 kB each; captions, sources and licences in `docs/phase2/SOURCES.json`; every HUD shot is from a
-`--ident type-only` relay, the clean shot has no HUD, so none shows a registration or callsign):
+Committed (JPEG, ≤ 307 kB each; captions, sources and licences in `docs/phase2/SOURCES.json`; every HUD shot is from a
+`--ident type-only` relay, the clean shot has no HUD, so none shows a registration or callsign). *Round 5 (R1, D1): the HUD
+clock is pixelated in every shot that shows aircraft, the statistics sheet's event times, latest-events list and in-view line
+are pixelated, and no caption gives the scene minute or the render's minute index.*
 
 | File | What it shows |
 |---|---|
@@ -278,11 +274,11 @@ Committed (JPEG, ≤ 285 kB each; captions, sources and licences in `docs/phase2
 | `docs/phase2/phase2_run_5_type_only_bizjet_standin_desktop.jpg` | F5: parked bizjet as "Aircraft" with the airliner stand-in |
 | `docs/phase2/phase2_run_6_runup_pad_clean_desktop.jpg` | B, three GA placeholders on/beside a paved pad, on pavement and apart (framebuffer, credit line added) |
 | `docs/phase2/phase2_run_7_atc_sheet_phone.jpg` | ATC sheet: tower open at the scene time, LiveATC link, frequencies |
-| `docs/phase2/phase2_run_8_stats_sheet_phone.jpg` | Statistics sheet: phases in view, runway movements, circuit median, latest events by type |
+| `docs/phase2/phase2_run_8_stats_sheet_phone.jpg` | Statistics sheet: runway movements, circuit median (the clock, the in-view line, the per-runway last times and the latest-events list masked, D1) |
 
 All run images (gitignored, 140 PNGs; the full-ident desktop runs show registrations and must not be published):
-`out/phase2/run_{satA,wedB}_<view>_m{6,11}_desktop.png`, `run_{satA_t,wedB_t}_<view>_m{6,11}_phone.png` and
-`run_satA_t2_*_desktop.png`, where `<view>` ∈ overview, tower, green, west, final28l, overview_clean, close_{parked,taxi,
+`out/phase2/run_{satA,wedB}_<view>_m<n>_desktop.png`, `run_{satA_t,wedB_t}_<view>_m<n>_phone.png` and
+`run_satA_t2_*_desktop.png` (`m<n>`: the run minute of the shot set; not given here, D1), where `<view>` ∈ overview, tower, green, west, final28l, overview_clean, close_{parked,taxi,
 air}[_clean], card_masked, follow, plus `about`, `atc`, `stats`, `card_stalepark`, `clip_*`. Per-run data:
 `out/phase2/run_<w>_<dev>.json`; console files `out/phase2/app_console_run_<w>_<dev>.json`.
 
@@ -1774,7 +1770,7 @@ It was interrupted once by the account usage limit (its partial work was checkpo
 re-measured everything below on the final files. Every change and constant is written up in `docs/phase2_traffic.md` §4 ("Fix round 4,
 iteration 3"); the video part in `docs/phase3_video.md` section 15. Cases are named by window, class and an anonymous label, never by
 time (D1): 'case P' / 'case S' (the OD3 heroes), weekend 'case H' (an aerobatic single) and 'case J' (a business jet), weekday 'case A'
-(a single of iteration 2's F8), 'case T2' (a light twin's touch-and-go), weekend 'case W1' (iteration 2's F1 single).
+(a single of iteration 2's F8), 'case T2' (a light single's touch-and-go; round 5, R9: it was called a light twin here before), weekend 'case W1' (iteration 2's F1 single).
 
 ### 12.1 Method
 
@@ -1911,7 +1907,7 @@ weekday 0 (0), `air_substall_samples` heli / pat / weekday 2, weekend 3, od3p 1 
   out over 1.5 s (was 7 → 0 kt within 1 s), hidden ~45 s, re-appears airborne over 28L at ~20 ft and 148 kt (fades in over 0.5 s).
 - **Case A (weekday single, take-off 28R; F6).** Lined up 28R → Take-off roll 28R (27.7 s) → Climbing out 28R (lift-off at 58 kt,
   7.6°) → Climbing out → Crosswind 28R; no 'Low pass', no 'Landing roll'.
-- **Case T2 (weekday light twin, touch-and-go 28L; F7).** 26 s on the ground: 43 → 30.3 kt at ~0.5 m/s², 3 s at 30.3 kt,
+- **Case T2 (weekday light single, touch-and-go 28L; F7).** 26 s on the ground: 43 → 30.3 kt at ~0.5 m/s², 3 s at 30.3 kt,
   accelerates at ~1.4 m/s² to its lift-off. The approach to it (fix-following, before the plan) dives at 1,100-1,300 ft/min with
   -3 to -5° pitch between 93 and 41 ft and then floats ~4 s at 0-5 ft (12.7).
 - **Case W1 (weekend single, take-off 28R; F8).** Run-up pivot to the path heading in the plan's own wait, then taxi (no second
@@ -1927,7 +1923,7 @@ hold, heard again at ~20 ft and 148 kt 885 m away 47 s later). None was rolling 
 silent, and no take-off within the plan limits reaches its next fix in the time left (`plan fail 11`). They fade out over 1.5 s while
 they keep moving and fade in at their first airborne fix. Every aircraft that WAS rolling on a runway is now drawn with the least
 implausible plan instead (forced: 5 take-offs in the five hour windows, `low_bank_forced_frames` 18 / 34 / 16 frames in pat / weekday /
-weekend - e.g. a light twin turning crosswind at 26-29° bank at 190-215 ft, 3-4° over the low-height rule). **Question:** should the
+weekend - e.g. a light single (case T2's aircraft) turning crosswind at 26-29° bank at 190-215 ft, 3-4° over the low-height rule). **Question:** should the
 three non-rolling ones also be drawn with a forced plan (taxi, line-up and roll compressed, climb-out turn without the bank limit), or
 stay hidden under M3? The engine supports both (`planTakeoffForced` is limited to rolling aircraft by `FORCE_V`).
 
@@ -1955,9 +1951,9 @@ stay hidden under M3? The engine supports both (`planTakeoffForced` is limited t
   rule; the weekend climb-outs of section 11.7 are forced plans now, INFO); heli 24 and weekday 13 as in section 11.7; case T2's dive and short float before its touchdown (data-following air hole before the plan).
 - The other gates of section 11.7 (`air_climb_samples`, `air_accel_samples`, `liftoff_plateau_frames`, `roll_start_yaw_frames`,
   `taxi_hole_stop_frames`, `label_overflight_hwd`, `tg_no_contact`, ...) are unchanged or lower and were not worked on.
-- Section 2.3's table (the first run's traffic counts every 2 min in windows A and B) gives the runway-movement counts of the moment
-  ("28R ↑1 ↓0 (last 3 min)"), i.e. how many departures and landings happened in a 3-minute span, without a type; `d1_event_times`
-  does not flag it (no event word next to the time) and it was left as it is - the reviewer may want it coarsened.
+- Section 2.3's table (the first run's traffic counts every 2 min in windows A and B) gave the runway-movement counts of the moment,
+  i.e. how many departures and landings happened in a 3-minute span. *Round 5 (R1): coarsened to window totals; `d1_event_times`
+  now reads bare hh:mm:ss under a clock column header and flags such rows.*
 
 ### 12.8 Other checks, wanted, inferred, not verified
 
@@ -1967,6 +1963,24 @@ stay hidden under M3? The engine supports both (`planTakeoffForced` is limited t
   ...) is a hit; times on the hour, either end of a span of ≥ 5 min and a screenshot's 'scene hh:mm' are not; 9 planted cases
   (`--d1-windows` runs it alone in seconds). The window B caption in `docs/phase2/SOURCES.json` no longer gives the scene minute of
   case B1.
+- **Round 5, D1 fixer (recheck R1 and R9, 2026-11-20).** R1: the planted cases of `d1_event_times` repeated two real event times
+  of windows A and B word for word, and a comment tied them to those windows. Committed text and images also still pinned events:
+  where in their windows cases F6a and B1 happened, section 2.3's per-slot table, the span of the short
+  type-only repeat run, scene minutes and render minute indexes in screenshot captions, a snapshot minute in two captions, a
+  traffic-render minute in `docs/phase2_traffic.md`, unmasked HUD clocks next to cards and lists, and the statistics sheet's
+  latest-events list. All were reworded, coarsened to window totals or masked (sections 1, 2.3, 3 and 4,
+  `docs/phase2/SOURCES.json`, 8 images, the run job's default shot minutes). `d1_event_times` now also reads:
+  - string literals of .py / .js / .mjs files;
+  - a bare hh:mm:ss under a clock column header;
+  - a scene minute in a unit that names an aircraft's event or state;
+  - offsets that pin an instant in a window or run.
+
+  Markdown list items are read with their parent items. Its 23 planted cases use times built at run time from an instant in
+  no recorded hour. Hits of this scanner on the pushed HEAD (7306714) **before**: 30 (`docs/phase2/SOURCES.json` 11,
+  `docs/phase2_run.md` 13, `docs/phase2_traffic.md` 1, `tools/check_airport.py` 5); **after**: 0.
+  `python3 -I -B tools/check_airport.py`: ALL HARD CHECKS PASSED (2 min). R9: case T2's aircraft is a light single, not a twin
+  (12.0, 12.5, 12.6; `docs/phase2_traffic.md` §4). The pushed history (bd6cb30 onward) still holds the old text and images;
+  rewriting it is the owner's decision.
 - `node --check` on every edited JS file: OK. OD3 traces refreshed (`out/od3/trace_case_{S,P}.{json,csv}`, local). App snapshots of the
   SF50 at the hold, on the taxi onto 28L, lined up and climbing (`livetest.mjs` with the reviewer's job, local): flaps 15° at each,
   0 page errors.

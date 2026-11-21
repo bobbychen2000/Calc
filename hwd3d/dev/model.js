@@ -160,7 +160,11 @@ function camera() {
   const eye = k === 1 ? E0 : T0.map((t, i) => t + (E0[i] - t) * k);
   const pos = w(eye), tg = w(T0); const dir = [tg[0] - pos[0], tg[1] - pos[1], tg[2] - pos[2]]; const dl = Math.hypot(...dir); dir.forEach((v, i) => { dir[i] = v / dl; });
   const up = Math.abs(dir[1]) > 0.999 ? [f[0], 0, f[2]] : [0, 1, 0];
-  return { pos, dir, up, fov: cam.fov * D2R, near: Math.max(0.05, Math.min(0.3, dl * 0.01)), split: Math.max(300, dl * 12), far: 40000, shadowSplits: [Math.max(30, dl * 2.2), Math.max(250, dl * 10), 2500] };
+  // near plane: 0.05-0.3 m for the close cameras (as before); beyond 75 m it grows as the app's camera rig sets it
+  // (js/live/controls.js: d x 0.004, at most 5 m) - OD4 iteration 5 (review F3): with 0.3 m at 900-1500 m a float32 depth
+  // step is 0.16-0.45 m, coarser than the airframe that hides a light (the lens test of js/shaders/sprites.js)
+  const near = Math.min(5, Math.max(0.05, Math.min(0.3, dl * 0.01), dl * 0.004));
+  return { pos, dir, up, fov: cam.fov * D2R, near, split: Math.max(300, dl * 12), far: 40000, shadowSplits: [Math.max(30, dl * 2.2), Math.max(250, dl * 10), 2500] };
 }
 // ---------------------------------------------------------------- render
 let scene = null, frames = 0, last = performance.now(), paused = false;
