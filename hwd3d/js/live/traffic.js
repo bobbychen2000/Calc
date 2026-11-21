@@ -199,7 +199,7 @@ const GENTLE_BANK = 12;
 // AGL (ROLL_RATE_LO, rising to ROLL_RATE at 400 ft) [inf]
 const HO_MIN_S = 5, HO_MAX_S = 12, HO_AL_V = 0.6, HO_AL_MAX_S = 90, ROLL_RATE_LO = 4.8, HO_LAT_M = 5, HO_DH = 4, LOWJ_R = 3500, ROLL_LAG_MAX = 8;
 // (round 5, V3) taxi smoothing on observed ground fixes (taxiRunOf): m/s, s, s, s, s [inf]
-const TSM_V = 1.5, TSM_W = 6, TSM_HC = 4, TSM_VH = 2.0, TSM_RAMP = 3.5;
+const TSM_V = 1.5, TSM_W = 6, TSM_HC = 4, TSM_VH = 2.0, TSM_RAMP = 3.5, TSM_HANGAR_M = 15;
 // (round 5, V6) the bank of a FORCED take-off's climb-out: 15 deg below 100 ft, 20 deg at 300 ft, then up to 30 deg; the turn ladder of its
 // join; the speed ratio the forced climb-out may fly over the reported one (FORCE_KMAX); decision (e): recorded packs (display lookahead >=
 // REC_LOOK_S) also force a take-off of an aircraft that was not yet rolling, within FORCE_ACC x the class roll limit [inf]
@@ -1374,7 +1374,10 @@ export class Traffic {
   // 28L, filmed in the line-up chase; the chase camera followed the hitch) [inf: 1.5 m/s, 6 m, 4 s, 2 s, 3.5 s]
   taxiRunOf(tr, F, i) {
     const a = F[i - 1], b = F[i];
-    const ok = (f) => f.ground && !f.stillRun && (f.gsm || 0) >= TSM_V && (f.gsm || 0) <= TAXI_BODY_MAX && Math.hypot(f.px, f.pz) < GROUND_VIEW_M;
+    // (not in front of a hangar door - within TSM_HANGAR_M of a hangar footprint the fixes of an aircraft turning round scatter, and the
+    // smoothed run of an aerobatic single there was driven at its 14-kt reported speeds while the body pivoted: its wings swept the T-hangar
+    // row for 0.6 s longer than on the fix-to-fix path) [inf: 15 m]
+    const ok = (f) => f.ground && !f.stillRun && (f.gsm || 0) >= TSM_V && (f.gsm || 0) <= TAXI_BODY_MAX && Math.hypot(f.px, f.pz) < GROUND_VIEW_M && !(this.parking && this.parking.hangarNear && this.parking.hangarNear(f.px, f.pz, TSM_HANGAR_M));
     const link = (p, q) => q.t - p.t <= HOLE_S * 1000 && q.t > p.t && Math.hypot(q.px - p.px, q.pz - p.pz) <= 1.6 * Math.max(p.gsm, q.gsm) * (q.t - p.t) / 1000 + 4;
     if (!ok(a) || !ok(b) || !link(a, b)) return null;
     let k0 = i - 1, k1 = i;
@@ -1444,10 +1447,10 @@ export class Traffic {
     // (iteration 2: across a recorder hole a ramp - steady rate - ramp profile, not the cubic that peaks at 1.5 x the mean rate)
     if (dt > HOLE_S) { const k = 'vt' + a.t; let P = this._vtc && this._vtc.get(k); if (!P || P.a !== a || P.b !== b) { P = vTrap(a.y, b.y, sa, sb, dt); P.a = a; P.b = b; (this._vtc || (this._vtc = new Map())).set(k, P); if (this._vtc.size > 400) this._vtc.delete(this._vtc.keys().next().value); }
       const V = vTrapAt(P, u * dt); o.y = V.y; o.vy = V.vy; return; }
-    // (round 5) vy is the Hermite's own derivative: it was the linear blend of the end slopes, and where the chord rate differs from them
-    // (an altitude step between two fixes 1.4 s apart) the target moved 100 ft at a 'vy' of 4.9 m/s - the follower, fed that vy, lagged
-    // and then surged at its vertical limit (2.5 m/s2) to 1,870 ft/min
-    o.y = h00 * a.y + h10 * dt * sa + h01 * b.y + h11 * dt * sb; o.vy = ((6 * u2 - 6 * u) * a.y + (3 * u2 - 4 * u + 1) * dt * sa + (6 * u - 6 * u2) * b.y + (3 * u2 - 2 * u) * dt * sb) / dt;
+    // (o.vy stays the linear blend of the end slopes, not the cubic's derivative: between fixes 0.5-1 s apart whose heights step by the
+    // 25-ft altitude quantum the derivative wobbles, and a body fed it climbed 740 -> 515 -> 1,270 ft/min within 4 s after case S's
+    // hand-over (round 5, tried and dropped); the position term of the follower takes the cubic's shape out smoothly)
+    o.y = h00 * a.y + h10 * dt * sa + h01 * b.y + h11 * dt * sb; o.vy = sa + (sb - sa) * u;
   }
   // ---- an unseen touch-and-go (iteration 3 of review round 3, F1 / F4): two AIRBORNE fixes across a hole, both low and lined up
   // with one runway - the first on final (or over the runway), the second climbing out beyond it - whose air curve would have to
