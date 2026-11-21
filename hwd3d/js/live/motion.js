@@ -43,6 +43,20 @@ export function polyAt(R, s) {
   return { x: a[0] + (b[0] - a[0]) * u, z: a[1] + (b[1] - a[1]) * u, ux: (b[0] - a[0]) / l, uz: (b[1] - a[1]) / l };
 }
 
+// (round 5 iteration 2, G3) polyAt with a CONTINUOUS direction: the unit direction is interpolated along each segment between the tangents
+// at its two vertices (the mean of the adjoining segments' directions), so a polyline air path (a Dubins arc drawn in <= 5-deg steps, a
+// sampled Hermite join) turns smoothly instead of stepping at every vertex - the body following it got a turn-rate pulse at each vertex
+// and its bank rocked by 8-10 deg (video S's crosswind turn). The position is polyAt's
+export function polyAtSmooth(R, s) {
+  const c = R.cum, P = R.pts, n = c.length; s = clamp(s, 0, R.len); let lo = 0, hi = n - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (c[m] <= s) lo = m; else hi = m; }
+  const dir = (i) => { const l = c[i + 1] - c[i] || 1e-9; return [(P[i + 1][0] - P[i][0]) / l, (P[i + 1][1] - P[i][1]) / l]; };
+  const a = P[lo], l = c[hi] - c[lo] || 1e-9, u = (s - c[lo]) / l, d = dir(lo);
+  const tan = (i, e) => { if (i < 0 || i > n - 2) return d; const q = dir(i), x = d[0] + q[0], z = d[1] + q[1], m = Math.hypot(x, z); return m > 1e-6 ? [x / m, z / m] : d; };
+  const t0 = tan(lo - 1), t1 = tan(hi), x = t0[0] * (1 - u) + t1[0] * u, z = t0[1] * (1 - u) + t1[1] * u, m = Math.hypot(x, z) || 1e-9;
+  return { x: a[0] + d[0] * (s - c[lo]), z: a[1] + d[1] * (s - c[lo]), ux: x / m, uz: z / m };
+}
+
 // ---------------------------------------------------------------- corners
 export function filletPath(pts, r, ok = null) {
   if (pts.length < 3 || !(r > 0)) return pts.slice();
@@ -271,8 +285,11 @@ export function straightHermite(p0, d0, s0, p1, d1, s1, D, e, fin = 0, n = 48) {
   for (let j = i0 + 1; j < i0 + n; j++) { const a = pts[j - 1], b = pts[j], c = pts[j + 1], l1 = Math.hypot(b[0] - a[0], b[1] - a[1]), l2 = Math.hypot(c[0] - b[0], c[1] - b[1]);
     if (l1 > 1e-6 && l2 > 1e-6) kMax = Math.max(kMax, Math.abs(wrapPi(Math.atan2(c[0] - b[0], -(c[1] - b[1])) - Math.atan2(b[0] - a[0], -(b[1] - a[1])))) / (0.5 * (l1 + l2))); }
   const R = polyOf(pts), k = R.len / (D * Math.max(1e-3, (s0 + s1) / 2));
-  const at = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAt(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
-  return { at, len: R.len, k, kMax, gentle: true };
+  const at = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAtSmooth(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
+  // (round 5 iteration 2: atRaw - the direction of the polyline segment, as before polyAtSmooth; the plan validators' bank checks read it,
+  // so a plan is chosen as it was)
+  const atRaw = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAt(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
+  return { at, atRaw, len: R.len, k, kMax, gentle: true };
 }
 export function turnFlight(p0, d0, s0, p1, d1, s1, D, r, opt = {}) {
   // opt.initial: m flown straight on the initial heading first (a climb-out before the first turn)
@@ -291,6 +308,7 @@ export function turnFlight(p0, d0, s0, p1, d1, s1, D, r, opt = {}) {
   const R = polyOf(pts);
   // speed: linear from s0 to s1, scaled so that the path is flown in D (k > 1: the data say faster than reported)
   const k = R.len / (D * Math.max(1e-3, (s0 + s1) / 2));
-  const at = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAt(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
-  return { at, len: R.len, k, dubins: true };
+  const at = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAtSmooth(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
+  const atRaw = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAt(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
+  return { at, atRaw, len: R.len, k, dubins: true };
 }

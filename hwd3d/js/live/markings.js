@@ -314,6 +314,31 @@ function runwayRects() {
   return RWY_PAIRS.map(([a, b]) => { const A = rwyAxis(a); return { A, hw: RWY_DATA[`${a}/${b}`].widthFt * FT / 2, L: A.length }; });
 }
 function inRunway(R, x, z, m = 0) { for (const r of R) { const px = x - r.A.origin[0], pz = z - r.A.origin[1]; const al = px * r.A.dir[0] + pz * r.A.dir[1], ac = px * r.A.right[0] + pz * r.A.right[1]; if (al >= -m && al <= r.L + m && Math.abs(ac) <= r.hw + m) return true; } return false; }
+function rwyRectDist(R, x, z) { let d = 1e9; for (const r of R) { const px = x - r.A.origin[0], pz = z - r.A.origin[1]; const al = px * r.A.dir[0] + pz * r.A.dir[1], ac = px * r.A.right[0] + pz * r.A.right[1]; d = Math.min(d, Math.hypot(Math.max(0, Math.abs(ac) - r.hw), Math.max(0, -al, al - r.L))); } return d; }
+// (round 5 iteration 3, G6) the unit direction ALONG a hold's way that leads to a runway rectangle: walked from the bar's projection on the
+// way both ways in 1-m steps (<= 250 m); the direction that enters a rectangle first wins, else the one that comes closest -> [x, z] | null
+function holdWayToRunway(H, RR) {
+  const P = H.way.pts; if (!P || P.length < 2) return null;
+  let bi = 1, bt = 0, bd = 1e9;
+  for (let i = 1; i < P.length; i++) { const a = P[i - 1], b = P[i], dx = b[0] - a[0], dz = b[1] - a[1], L2 = dx * dx + dz * dz; if (L2 < 1e-9) continue;
+    const t = Math.max(0, Math.min(1, ((H.x - a[0]) * dx + (H.z - a[1]) * dz) / L2)), d = Math.hypot(H.x - a[0] - dx * t, H.z - a[1] - dz * t); if (d < bd) { bd = d; bi = i; bt = t; } }
+  const res = [];
+  for (const sg of [1, -1]) {
+    let i = bi, t = bt, walked = 0, minD = 1e9, hit = null, dir = null;
+    while (walked < 250) {
+      const a = P[i - 1], b = P[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (L < 1e-6) { i += sg; if (i < 1 || i >= P.length) break; t = sg > 0 ? 0 : 1; continue; }
+      if (!dir) dir = [sg * (b[0] - a[0]) / L, sg * (b[1] - a[1]) / L];
+      t += sg / L; if (t > 1 || t < 0) { i += sg; if (i < 1 || i >= P.length) break; t = sg > 0 ? 0 : 1; continue; }
+      walked += 1; const x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t;
+      if (inRunway(RR, x, z, 0)) { hit = walked; break; } minD = Math.min(minD, rwyRectDist(RR, x, z));
+    }
+    if (dir) res.push({ dir, hit, minD });
+  }
+  if (!res.length) return null;
+  res.sort((p, q) => (p.hit != null ? p.hit : 1e6 + p.minD) - (q.hit != null ? q.hit : 1e6 + q.minD));
+  return res[0].dir;
+}
 // split a polyline into the pieces where `inside` is false (tested every 0.25 m); the pieces keep the original vertices
 // plus the cut points
 function cutWhere(pts, inside) {
@@ -355,7 +380,7 @@ export function buildTaxiPaint(P, airport, site) {
   // runway holding position markings, Pattern A (3.3.4.1): 4 lines x 12 in with 12 in spaces (operating ATCT), two
   // solid on the holding side, two dashed (3 ft dashes / 3 ft spaces, Fig. A-13) toward the runway, a dash centred on
   // the taxiway centreline, across the taxiway width
-  let nH = 0;
+  let nH = 0, nWaySide = 0;
   for (const H of holds) {
     if (!H.dir) continue;
     const u = H.dir; let n = [-u[1], u[0]];
@@ -363,7 +388,13 @@ export function buildTaxiPaint(P, airport, site) {
     const r = RR.find(rr => `${rr.A.end}/${rr.A.opp}` === H.h.runway) || RR[0];
     const px = H.x - r.A.origin[0], pz = H.z - r.A.origin[1]; const ac = px * r.A.right[0] + pz * r.A.right[1];
     const toRw = [-r.A.right[0] * Math.sign(ac), -r.A.right[1] * Math.sign(ac)];
-    if (n[0] * toRw[0] + n[1] * toRw[1] < 0) n = [-n[0], -n[1]];
+    let side = n[0] * toRw[0] + n[1] * toRw[1];
+    // (round 5 iteration 3, G6) a hold on a taxiway that runs PARALLEL to the runway (A1 / Z1 at the 28L end: |n . toRw| 0.02 / 0.00, every
+    // other hold 0.81-1.00) makes the centreline test degenerate - A1 was drawn reversed, an aircraft holding there faced the dashed lines.
+    // There the runway side is the way's direction that leads to the runway rectangle: walked along the way from the bar both ways (1-m
+    // steps, <= 250 m), the direction that enters the rectangle first, or else comes closest to it [inf: 0.3]
+    if (Math.abs(side) < 0.3 && H.way) { const w = holdWayToRunway(H, RR); if (w) { side = n[0] * w[0] + n[1] * w[1]; nWaySide++; } }
+    if (side < 0) n = [-n[0], -n[1]];
     const half = H.width / 2; const LW = 12 * IN;
     for (let k = 0; k < 4; k++) {
       const off = (-1.5 + k) * 2 * LW;     // line centres at -3, -1, +1, +3 x 12 in from the bar centre (toward the runway +)
@@ -377,7 +408,7 @@ export function buildTaxiPaint(P, airport, site) {
     }
     nH++;
   }
-  inv.push({ element: 'runway holding position markings (Pattern A)', count: nH, ac: '3.3.4.1 + Fig. A-13 (4 x 12 in lines, 12 in spaces, 3 ft dashes)', src: `obs position / direction for ${holds.filter(H => H.dirSrc === 'obs').length} (NAIP-measured bars), inf direction for ${holds.filter(H => H.dirSrc !== 'obs').length} (perpendicular to the way at the OSM node)` });
+  inv.push({ element: 'runway holding position markings (Pattern A)', count: nH, ac: '3.3.4.1 + Fig. A-13 (4 x 12 in lines, 12 in spaces, 3 ft dashes)', src: `obs position / direction for ${holds.filter(H => H.dirSrc === 'obs').length} (NAIP-measured bars), inf direction for ${holds.filter(H => H.dirSrc !== 'obs').length} (perpendicular to the way at the OSM node)`, note: `holding side: toward the runway centreline; for ${nWaySide} hold(s) on a taxiway parallel to the runway, toward the way's own approach to the runway rectangle [inf]` });
   // tie-down tees (Green Ramp): cross-bar 6.0 m on the wing line, stem 4.8 m toward the tail (tools/airport/tiedowns.py,
   // read by eye on NAIP 2024, +-0.5 m; AC 150/5300-13B E.2.3.2); line width 0.3 m [inf]; white (NAIP: "painted white T
   // marks", refs/cache/naip/naip_visual_notes.json). Only tees seen on NAIP (src obs) are painted.

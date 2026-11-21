@@ -135,7 +135,9 @@ with a per-unit altitude bias was drawn rolling over the grass of the approach.
     | vertical speed | 12 m/s (GA), 15 m/s (turboprop), 25 m/s (jets) [inf] |
     | heading rate | ≤ min(20°/s, 4.5 m/s² / speed) |
 
-  - Roll is the coordinated bank `atan(v·ω/g)`, capped at ±35°.
+  - Roll is the coordinated bank `atan(v·ω/g)`, capped at ±35°. (Round 5 iteration 2, `docs/phase2_run.md` 14.3 G3: ω is the target's
+    mean turn rate over ±1 s, kept within 8° of the bank of the body's own turn; on reconstructed plans the body's own turn smoothed over
+    0.4 s.)
 - **Fix round 1 (Phase 2 review) - what changed and why.** The review counted 28 / 27 / 6 visible re-placements per hour
   (an aircraft vanishing for ~0.5 s and reappearing 60-1,295 m away), take-offs that braked to a stop on the runway and
   lifted off at 1-30 kt, ghost-parked aircraft at their old spot, straight chords across grass, and fixed-wing aircraft
@@ -954,7 +956,7 @@ OD3 case P (PC-12 landing) (window definitions in `out/od3/windows.json`, gitign
   reports in the heli, weekday and weekend windows, which no gate measured; see "Iteration 2 results"):
   - *grass_route_frames*: wheels of routed bodies over gaps of the NAIP-derived pavement mask - taxiway corners
     without the fillet in the mask (weekend: two business jets at about (108, 223) and (189, 278)), 1-2-m notches at
-    a pavement edge (pat: a C172 standing at about (-212, -290); heli / od3p: a BL8 holding short at about (-32, -190)),
+    a pavement edge (pat: a C172 standing at about (-212, -290); heli: a BL8 holding short at about (-32, -190); od3p: one such notch),
     a turboprop at about (-114, 98), and a moving single routed over a grass corner beside the run-up pad (pat). The site's
     own surface model calls each of these points taxiway / apron; the mask, not the route, is short.
   - *ground_overlap_frames (pat, 6)*: two singles in the 28L run-up area whose *reported* positions are 9 m apart

@@ -253,7 +253,9 @@ recorded here next to OD1–OD3 but did not come from the owner directly, and **
   whenever a plan within the physical limits exists; only when none exists is it hidden with the 1.5-s fade. Live mode
   keeps M3 (60-s lookahead, hidden until the first airborne fix and shown there at its reported height). Every inferred
   segment stays marked inferred (`inf`). This settles the question of `docs/phase2_run.md` 12.6 by delegation; the
-  owner may overrule it.
+  owner may overrule it. *The physical limits (round 5 iteration 2, `docs/phase2_run.md` 14): the roll acceleration is the
+  TYPE's (`traffic.js rollLimOf`: the class limit capped by the FAA ACD MTOW - jets <= 10 t 2.5, <= 20 t 2.1, heavier 1.8 m/s²,
+  never below the type's own table value), not the class's 4.5 m/s²; among plans within the limits the slowest roll is drawn.*
 
 ## 7. Phased task list
 

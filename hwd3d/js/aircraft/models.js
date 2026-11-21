@@ -2,10 +2,11 @@
 // type and shared by every aircraft of that type. Types without a model fall back to the GA placeholder
 // (js/aircraft/placeholder.js). Provenance of every file: js/aircraft/models/SOURCES.json.
 //
-//   MODELS {PC12, SF50}: { url, meta, exclude, note, groundGl, lightAnchors, frame, deck: { xAft, src } (OD4 iteration 5: the
-//        flight-deck region, js/aircraft/detailed.js) }
+//   MODELS {PC12, SF50}: { url, meta, exclude, note, groundGl, lightAnchors, frame, deck: { xAft, ramp, rampNote, veilWs, veilNote, src } (OD4 iteration 5:
+//        the flight-deck region, js/aircraft/detailed.js; iteration 6: its per-type ramp, a windshield veil of its own) }
 //   hasModel(type) -> bool
-//   loadModel(type, { fetchFn, keepCpu }) -> Promise<AircraftModel>   (js/aircraft/glb.js convertGLB; cached per type)
+//   loadModel(type, { fetchFn, keepCpu }) -> Promise<AircraftModel>   (js/aircraft/glb.js convertGLB + lampTables, OD4 iteration 6;
+//        cached per type)
 //   createAircraft(T, opts) -> DetailedAircraft (type has a model) | GaAircraft     T = dims record (T.type = ICAO type)
 //        opts as DetailedAircraft (R, id, colour, lodDist, shadowDist); the detailed drawable shows the placeholder until
 //        its model is ready and keeps it if the load fails
@@ -22,7 +23,7 @@
 //        PAINT_FIT below)
 // Node: loadModel needs a fetchFn (e.g. (u) => fs.readFile(fileURLToPath(u))) - tools/models/test_models.mjs reads the
 // files directly with convertGLB instead.
-import { convertGLB } from './glb.js';
+import { convertGLB, lampTables } from './glb.js';
 import { DetailedAircraft } from './detailed.js';
 import { GaAircraft } from './placeholder.js';
 import { gaDims } from './ga_dims.js';
@@ -35,7 +36,8 @@ const here = (p) => new URL(p, import.meta.url).href;
 // sheet (reflection, the pane's diffuse return at its opacity as three.js shades it - OD4 iteration 2 - and transmission);
 // 'clear' lens covers keep 0 (diffuse translucent plastic). OD4 iteration 4: 25 = a plain / paint material of a part that
 // encloses the cabin (AC_PART_CABIN below; set per part by AC_PART_MAT), 26 = a plain material of the flight deck
-// (AC_PART_DECK below), 27 = the glazing of the flight deck (AC_PART_DECK_GLASS below; 24 stays the cabin windows).
+// (AC_PART_DECK below), 27 = the glazing of the flight deck (AC_PART_DECK_GLASS below; 24 stays the cabin windows); OD4
+// iteration 6: 27 = its windshield, 28 = its crew side windows.
 export const AC_MAT = (info) => /^(paint_|trim_)/.test(info.name) ? 21 : /^screen/.test(info.name) ? 22
   : /^(leather|carpet|lining|wood|panel_black|interior|seat|cabin)/.test(info.name) ? 23 : info.cls === 'glass' ? 24 : 0;
 // OD4: parts whose every plain material is cabin / flight-deck interior (id 23: lit only through the glazing, js/aircraft/
@@ -59,9 +61,13 @@ export const AC_PART_DECK = /^(flight_deck|cockpit_interior)$/;
 // OD4 iteration 4 (review G3): the GLAZING of the flight deck - the windshield and the crew side windows (PC-12 part
 // glazing_flightdeck: glass_windshield + glass; SF50 part windshield: glass_windshield) - takes id 27, the cabin windows keep
 // 24: the flight-deck panes take the direct sun in their diffuse return (js/aircraft/detailed.js GLASS_FS, GLASS_VEIL_SUN_DECK).
+// OD4 iteration 6 (recheck R4): the windshield (material glass_windshield) keeps 27, the crew side windows (the other glass
+// material of the deck part: PC-12 'glass') take 28, so the two get their own veil (GLASS_VEIL_SUN_WS / GLASS_VEIL_SUN_SIDE):
+// one value fitted to both had moved most sunlit windshield boxes away from the references for the side windows' gain.
 export const AC_PART_DECK_GLASS = /^(glazing_flightdeck|windshield)$/;
+export const AC_DECK_WINDSHIELD = /^glass_windshield$/;
 export const AC_PART_MAT = (id, part, mat) => (part && AC_PART_DECK.test(part) && (id === 0 || id === 23) && !(mat && mat.blend) ? 26
-  : id === 24 && part && AC_PART_DECK_GLASS.test(part) ? 27
+  : id === 24 && part && AC_PART_DECK_GLASS.test(part) ? (mat && !AC_DECK_WINDSHIELD.test(mat.name || '') ? 28 : 27)
   : id === 0 && part && AC_PART_INTERIOR.test(part) ? 23
   : (id === 0 || id === 21) && part && AC_PART_CABIN.test(part) && !(mat && mat.blend) ? 25 : id);
 export const MODELS = {
@@ -93,7 +99,13 @@ export const MODELS = {
     // of fus_fwd, the windshield / side-window frames) take the flight deck's shares of sky and sun, as its crew seats and
     // panel (id 26) do. 2.00 = the aft end of the 'flight_deck' part (crew seats, x 2.03-3.17) ahead of 'cabin_interior'
     // (x <= 1.97), measured in this file's frame [inf: boundary]
-    deck: { xAft: 2.00, src: 'aft end of the flight_deck part (crew seat backs) in js/aircraft/models/pc12.glb, measured 2026-11-20 [inf]' },
+    // ramp (OD4 iteration 6, recheck R5): metres aft of xAft over which those shares fade into the cabin's. The PC-12 keeps
+    // iteration 5's 1 m (rampNote): it has no bulkhead behind the crew seats, its first passenger row (front edge x 1.60) sits
+    // in the open forward cabin that the windshield and the crew side windows light, and the door window and the shaded crew
+    // side windows of the reference cameras read closer to both references with it than with a ramp ending before that row
+    // (0.3 m: cockpit door window (20, 28, 36) vs (26, 33, 41) with 1 m; dev (45, 48, 50), stage (57, 62, 65);
+    // docs/phase3_models.md 15.10) [inf]
+    deck: { xAft: 2.00, ramp: 1.00, rampNote: 'no bulkhead behind the crew seats: the first passenger row (front edge x 1.60) is partly deck-lit [inf]; checked against the reference door window / shaded side windows (docs/phase3_models.md 15.10)', src: 'aft end of the flight_deck part (crew seat backs) in js/aircraft/models/pc12.glb, measured 2026-11-20 [inf]' },
     // drawn colour of the navy livery band (OD4 iterations 2-3, review F1 / F2; PAINT_FIT below): linear, fitted so that the band
     // in the HWD world, in sun AND in shade together, looks as in the pc12 viewer [inf: appearance fit]; the glb's own factor is
     // (0.10, 0.17, 0.27)
@@ -109,7 +121,9 @@ export const MODELS = {
     // flight-deck region (OD4 iteration 5, review F4; see PC12): the SF50's crew seats are the front row of 'cabin_seats'
     // (x 1.5-2.33; the second row ends at ~1.0) and its cockpit lining is the forward part of 'cabin_lining' - forward of x
     // 1.40 both take the flight deck's shares, with the back faces of the windshield frame / fuselage there [inf: boundary]
-    deck: { xAft: 1.40, src: 'between the front row (x 1.5-2.33) and the second row (x <= 1.0) of cabin_seats in js/aircraft/models/sf50.glb, measured 2026-11-20 [inf]' },
+    // ramp (OD4 iteration 6, recheck R5): 0.30 m, ending at x 1.10, before the second row (front edge x 1.06); iteration 5's
+    // 1 m gave that front edge ~65 % of the deck's sky and sun shares
+    deck: { xAft: 1.40, ramp: 0.30, veilWs: 0.65, veilNote: 'no SF50 reference boxes: its windshield keeps the common deck value of iteration 5 (detailed.js GLASS_VEIL_SUN_DECK); GLASS_VEIL_SUN_WS was fitted to the PC-12 references only (docs/phase3_models.md 15.10) [inf]', src: 'between the front row (x 1.5-2.33) and the second row (front edge x 1.06) of cabin_seats in js/aircraft/models/sf50.glb, measured 2026-11-20 / 21 [inf]; ramp 0.30 m ends before the second row [inf]' },
     frame: { L: 9.357, span: 11.793, H: 3.325, xMain: 4.453, xNose: 1.148, track: 3.414, wheelbase: 3.305,
       basis: 'measured from js/aircraft/models/sf50.glb by js/aircraft/glb.js; L / span / H / track from FAA ACD + AFM Fig 1-1 (tools/models/sf50/SF50_FACTS.md), wheelbase read off AFM Fig 1-1 [inf]' },
   },
@@ -175,7 +189,12 @@ export function loadModel(type, { fetchFn = defaultFetch, keepCpu = false, palet
     const [buf, meta] = await Promise.all([fetchFn(e.url), fetchFn(e.meta).then(b => JSON.parse(new TextDecoder().decode(b))).catch(() => null)]);
     // keepCpu false (the app): js/aircraft/detailed.js drops the vertex / index arrays once they are on the GPU (~21 MB of
     // JS heap per type); the dev viewer and the tests keep them
-    const m = convertGLB(buf, MODEL_LOAD_OPTS(type, { palette })); m.meta = meta; m.type = type; m.keepCpu = !!keepCpu; m.deck = e.deck || null; return m;
+    const m = convertGLB(buf, MODEL_LOAD_OPTS(type, { palette })); m.meta = meta; m.type = type; m.keepCpu = !!keepCpu; m.deck = e.deck || null;
+    // OD4 iteration 6 (recheck R1 / R2, docs/phase3_models.md 15.10): every lamp's self-visibility table (js/aircraft/glb.js
+    // lampTables: ray casting the CPU geometry, which js/aircraft/detailed.js drops after the GPU upload) before the model is
+    // handed out, so every frame of a still or a video sees the same lens test; time-sliced (the page keeps running)
+    m.lampVis = await lampTables(m, { yieldMs: 25 });
+    return m;
   })());
   const p = CACHE.get(key); p.catch(() => CACHE.delete(key)); return p;
 }

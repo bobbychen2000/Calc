@@ -967,7 +967,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), front 3/4 at a screen-door fade of alpha 0.5; fix round 2: the shadow is dithered by the same alpha; gear 1, flaps 0, rotor stopped, on the ground, fade alpha 0.5; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-20T23:58:26.414Z",
+  "rendered_utc": "2026-11-21T03:23:32.862Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -998,7 +998,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), rear 3/4 on the Green Ramp, flaps fully down (the pivot clamps 40 to the type maximum); gear 1, flaps 40, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-20T23:58:37.612Z",
+  "rendered_utc": "2026-11-21T03:23:57.961Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1059,7 +1059,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), front 3/4 on the Green Ramp (overall shape, livery, glazing, shadow); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-20T23:59:01.150Z",
+  "rendered_utc": "2026-11-21T03:24:40.524Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1121,7 +1121,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), fix round 3 (S1): SF50 gear up, starboard wing root from above; gear 0, flaps 0, rotor stopped, 9 m up; at rwy28L; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-20T23:59:30.053Z",
+  "rendered_utc": "2026-11-21T03:25:12.438Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "1.6,3.2,2.6",
@@ -1182,7 +1182,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), close range: dorsal nacelle from ahead / port (raised D inlet lip, cowl faired into the spine); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-20T23:59:47.593Z",
+  "rendered_utc": "2026-11-21T03:25:27.998Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": "2.6,3.4,-2.4",
@@ -1212,7 +1212,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), rear 3/4 on the Green Ramp (tail, wing tips, nacelle / bullet fairing); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-20T23:59:58.871Z",
+  "rendered_utc": "2026-11-21T03:25:40.291Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,
@@ -1243,7 +1243,7 @@
   "caption": "SF50 in the hwd3d renderer (SwiftShader, 1920x1080, MSAA 4, 4096 shadow cascades), starboard side on the Green Ramp (profile, windows, gear); gear 1, flaps 0, rotor stopped, on the ground; at ramp, heading 135; time 2026-11-13T20:30Z (default, 12:30 PST).",
   "model": "SF50",
   "model_sha256": "49242e4166f7a6a2fe33ce2d5b553bdcb5fd8661a1ae4384cd86f30bd439f697",
-  "rendered_utc": "2026-11-21T00:00:10.890Z",
+  "rendered_utc": "2026-11-21T03:25:51.952Z",
   "made_by": "dev/model_shot.mjs",
   "params": {
    "eye": null,

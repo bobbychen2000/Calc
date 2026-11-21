@@ -134,9 +134,15 @@ aircraft), follow / chase / free camera, and About / statistics / ATC bottom she
   hard part of `python3 -I -B tools/check_airport.py` (`--d1-windows` runs it alone in seconds). No type may be named
   with a dated window when it identifies a flagged aircraft (`docs/PLAN.md` 6b (d)). No committed text may give the time
   of an individual aircraft's event: clock times, scene minutes in captions, and offsets that pin an instant in a window
-  are all hits, in docs, JSON and code string literals alike. Committed app screenshots have the HUD clock pixelated.
+  are all hits, in docs, JSON and code string literals alike. Committed app screenshots that show aircraft have the HUD clock
+  and every HUD element derived from elapsed time (the runway line's '(last N min)', 'watching since', 'last signal N min ago')
+  pixelated; each carries a by-eye `d1_clock` review in its SOURCES entry (hard check). The ATC-sheet screenshot shows its clock
+  (no aircraft in view).
   Orchestrator decision (e) (`docs/PLAN.md` 6b): recorded packs also give a forced take-off plan to aircraft that were
-  not yet rolling.
+  not yet rolling, within the TYPE's roll limit (`rollLimOf`: class limit capped by MTOW). Round 5 iteration 2
+  (`docs/phase2_run.md` 14): the drawn bank follows a smoothed turn rate (`bank_rock_episodes` 0-25 per window, was 23-710),
+  polyline air paths turn smoothly (`motion.js polyAtSmooth`), and a ground body whose moving target falls back to it at a mode
+  hand-over runs on past its trail end instead of stopping dead (G5 is only partly fixed: `ground_decel_frames` still fails, 14.7).
 
   Integration notes: `docs/phase2_app.md`.
 - **Phase 3 — aircraft** (`docs/PLAN.md` §7): real GA models (C172, PA-28, SR22, C182, the PC-12 from `pc12/`, a bizjet

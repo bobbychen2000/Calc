@@ -26,7 +26,10 @@ import { buildSite } from '../../js/world/site.js';
 import { HWD_AIRPORT } from '../../data/hwd_airport.js';
 import { TAXIGRAPH } from '../../data/hwd_taxigraph.js';
 import { parsePayload, normalizeAircraft } from '../../js/live/feed.js';
-import { Traffic, phaseLabel, category } from '../../js/live/traffic.js';
+import * as TRAFFIC from '../../js/live/traffic.js';
+const { Traffic, phaseLabel, category } = TRAFFIC;
+// (round 5 iteration 2: rollLimOf - an engine without it, the 'before' of section 14, is gated on its class limit)
+const rollLimOf = TRAFFIC.rollLimOf || ((T) => ({ single_hw: 2.5, single_lw: 2.5, twin: 3.0, turboprop: 3.5, jet: 4.5 })[T && T.cls] || 2.5);
 import { ParkingModel } from '../../js/live/parking.js';
 import { GroundPhysics, samples, bodyOf, overlaps, pavedWith } from '../../js/live/ground.js';
 import { PHASES } from '../../js/live/classifier.js';
@@ -113,7 +116,9 @@ const PL = { teleports: 0, teleports_hwd: 0, teleports_engine: 0, teleports_sign
   off_pavement_moving_frames: 0, low_bank_landing_frames: 0, r4i3Log: [],
   // round 5 (docs/phase2_run.md section 13): see r5Frame
   postland_toflaps_frames: 0, postland_toflaps_view_frames: 0, low_roll_rate_frames: 0, low_roll_rate_turn_frames: 0, taxi_speed_mismatch_frames: 0, label_lowpass_after_liftoff: 0,
-  forced_low_bank_frames: 0, forced_speed_drop_frames: 0, handover_rate_frames: 0, handover_rate_raw_frames: 0, r5Log: [] };
+  forced_low_bank_frames: 0, forced_speed_drop_frames: 0, handover_rate_frames: 0, handover_rate_raw_frames: 0, r5Log: [],
+  // round 5 iteration 2: see r5i2Frame
+  bank_rock_episodes: 0, forced_roll_acc_frames: 0, ground_decel_frames: 0, ground_decel_plan_frames: 0, r5i2Log: [] };
 // runway rectangle test (site.runways axes; m = extra half-width) - the pavement a take-off / landing roll uses
 const onRwy = (x, z, m = 3) => (site.runways || []).some(r => { const px = x - r.origin[0], pz = z - r.origin[1], al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; return al >= 0 && al <= r.length && Math.abs(ac) <= r.halfWidth + m; });
 const newLog = (...a) => { if (PL.newLog.length < 400) PL.newLog.push(a); };
@@ -319,6 +324,7 @@ function extraFrame(now) {
     if (fw) r4Frame(tr, D, td, t, s1, agl, kt, lab);
     if (fw) r4i3Frame(tr, D, td, t, s1, agl, kt, lab);
     if (fw) r5Frame(tr, D, td, t, s1, agl, kt, lab);
+    if (fw) r5i2Frame(tr, D, td, t, s1, agl, kt, lab);
   }
   for (let i = 0; i < air.length; i++) for (let j = i + 1; j < air.length; j++) {
     const A = air[i].disp, B = air[j].disp, d = Math.hypot(A.x - B.x, A.y - B.y, A.z - B.z); if (d >= 30) continue;
@@ -679,11 +685,62 @@ function r5Frame(tr, D, td, t, s1, agl, kt, lab) {
         // speed faster than the limit is the data, not the hand-over; counted only where the drawn rate exceeds the data's by > 0.3
         // (from the target's POSITIONS, differenced over 0.2 s: the vertical Hermite's vy field is the linear blend of its end slopes, not its
         // derivative - an altitude step in the fixes moved the target 100 ft in 1.4 s at a vy of 4.9 m/s, and the gate blamed the hand-over)
-        const tg = (tq) => traffic.target0(tr, tq, tq <= P.ho ? { peek: true } : { peek: true, noX: true });
+        // (target0: the target without the hand-over blend; an engine without it - the iteration-3 one, measured as the 'before' - has target)
+        const tg = (tq) => (traffic.target0 || traffic.target).call(traffic, tr, tq, tq <= P.ho ? { peek: true } : { peek: true, noX: true });
         const vel = (tq) => { const A1 = tg(tq), A0 = tg(tq - 200), Ax = { x: A1.x, z: A1.z, y: A1.y }; return [Math.hypot(Ax.x - A0.x, Ax.z - A0.z) / 0.2, (Ax.y - A0.y) / 0.2]; };
         const VA = vel(td), VB = vel(td - 1000);
         const rv = Math.abs(VA[0] - VB[0]), rvs = Math.abs(VA[1] - VB[1]);
         if ((dv > 1.2 && dv > rv + 0.3) || (dvs > 1.5 && dvs > rvs + 0.3)) { PL.handover_rate_frames++; if (s1) r5Log('handover_rate', t, lab, +dv.toFixed(2), +rv.toFixed(2), +dvs.toFixed(2), +rvs.toFixed(2), Math.round(agl), mode); } } } }
+}
+// ---- round 5 iteration 2 (docs/phase2_run.md section 14; the recheck's findings G3-G5), fixed-wing, drawn (alpha > 0.99), 10-Hz frames:
+//   bank_rock_episodes      G3: airborne within 4.5 km of the ARP, at any height: the drawn bank swinging >= 4 deg one way and >= 4 deg back,
+//                           each swing within 1.5 s (three consecutive extrema of the bank, 1-deg hysteresis) - wing rock; a roll into or out of
+//                           a turn, however fast, is one swing and is not counted
+//   forced_roll_acc_frames  G4: a FORCED take-off plan (o.forced) on the ground faster than 30 kt, the drawn speed rising faster over 1 s than the
+//                           type's roll limit (traffic.js rollLimOf: the class limit capped by the FAA ACD MTOW) + 0.1 m/s2
+//   ground_decel_frames     G5: on the ground within 4.5 km (both frames), the drawn speed (or the speed of the drawn position along the
+//                           heading, where the shown speed is >= 1 m/s) falling by more than 3.5 m/s2 (+ 0.1) over 0.3 s - a jolt at a mode
+//                           hand-over (plan -> fixes, landing roll -> runway taxi, fix-following -> route) or a dead stop - unless the target
+//                           itself brakes as hard and smoothly (<= 6 m/s2): INFO ground_decel_plan_frames (a planned roll-out's or the data's
+//                           own braking, not a hand-over)
+// The limits are design values [inf].
+const R5I2 = new Map();
+const r5i2Log = (...a) => { if (PL.r5i2Log.length < 900) PL.r5i2Log.push(a); };
+function r5i2Frame(tr, D, td, t, s1, agl, kt, lab) {
+  const P = R5I2.get(tr.key) || { h: [], ext: [], dir: 0, cand: null }; R5I2.set(tr.key, P);
+  const ok = D.alpha > 0.99 && Math.hypot(D.x, D.z) < 4500, rollD = (D.roll || 0) * 180 / Math.PI;
+  const H = P.h; if (H.length && (td - H[H.length - 1][0] > 250 || !ok)) H.length = 0;
+  if (ok) H.push([td, D.gs, D.ground, D.x, D.z, D.hdg, tr._tgtMode || '', !!tr._tgtForced, tr._tgtV || 0]); while (H.length && H[0][0] < td - 1100) H.shift();
+  const at = (sec) => { for (let k = H.length - 1; k >= 0; k--) if (H[k][0] <= td - sec * 1000 + 1) return H[k]; return null; };
+  // G3: bank extrema (reset on the ground / hidden)
+  if (!ok || D.ground) { P.ext = []; P.dir = 0; P.cand = null; }
+  else { const c = P.cand; let conf = false;
+    // (the running extreme in the current direction; a move of >= 1 deg back from it confirms it as an extremum - from the start, the first
+    // move of >= 1 deg sets the direction and confirms the start)
+    if (!c) P.cand = [td, rollD];
+    else if (P.dir === 0) { if (Math.abs(rollD - c[1]) >= 1.0) { P.dir = rollD > c[1] ? 1 : -1; conf = true; } }
+    else if (P.dir > 0) { if (rollD > c[1]) P.cand = [td, rollD]; else if (c[1] - rollD >= 1.0) { P.dir = -1; conf = true; } }
+    else { if (rollD < c[1]) P.cand = [td, rollD]; else if (rollD - c[1] >= 1.0) { P.dir = 1; conf = true; } }
+    if (conf) { P.ext.push(c); P.cand = [td, rollD]; if (P.ext.length > 3) P.ext.shift();
+      const E = P.ext; if (E.length === 3 && Math.abs(E[1][1] - E[0][1]) >= 4 && Math.abs(E[2][1] - E[1][1]) >= 4 && E[1][0] - E[0][0] <= 1500 && E[2][0] - E[1][0] <= 1500) {
+        PL.bank_rock_episodes++; r5i2Log('bank_rock', t, lab, +E[0][1].toFixed(1), +E[1][1].toFixed(1), +E[2][1].toFixed(1), Math.round(agl), tr._tgtMode || ''); P.ext = [E[2]]; } } }
+  if (!ok) return;
+  // G4
+  if (D.ground && tr._tgtForced && kt > 30) { const q = at(1.0); if (q && q[2] && td - q[0] < 1200) { const acc = (D.gs - q[1]) / ((td - q[0]) / 1000), lim = rollLimOf(tr.dims);
+      if (acc > lim + 0.1) { PL.forced_roll_acc_frames++; if (!P.fr || td - P.fr > 1000) { P.fr = td; r5i2Log('forced_roll_acc', t, lab, +acc.toFixed(2), +lim.toFixed(2), +kt.toFixed(0), tr._tgtMode || ''); } } } }
+  // G5
+  const q3 = at(0.3), q6 = at(0.6);
+  if (D.ground && q3 && q3[2] && td - q3[0] < 400) { const dt = (td - q3[0]) / 1000, dv = (q3[1] - D.gs) / dt;
+    // (the position's speed along the heading only while the shown speed is >= 1 m/s in both frames: a wheel pivot at walking speed moves the
+    // reference point and is not a speed)
+    let dp = 0; if (q6 && q6[2] && q3[0] - q6[0] < 400 && q3[0] > q6[0] && q3[1] >= 1 && q6[1] >= 1) { const h = D.hdg * Math.PI / 180, ux = Math.sin(h), uz = -Math.cos(h);
+      const v1 = ((q3[3] - q6[3]) * ux + (q3[4] - q6[4]) * uz) / ((q3[0] - q6[0]) / 1000), v2 = ((D.x - q3[3]) * ux + (D.z - q3[4]) * uz) / dt; if (v1 > 0.5) dp = (v1 - Math.max(0, v2)) / dt; }
+    // (3.5 + 0.1: LIM.rollDec is 3.5 and a body braking at it reads 3.5x over 0.3 s; the target's own braking - a planned roll-out or the
+    // data, <= 6 m/s2 and as hard as the body's - is INFO ground_decel_target_frames; harder than the target, or a target that steps, counts)
+    const bd = Math.max(dv, dp);
+    if (bd > 3.6) { const tdec = (q3[8] - (tr._tgtV || 0)) / dt;
+      if (tdec >= bd - 0.5 && tdec <= 6) PL.ground_decel_plan_frames++;
+      else { PL.ground_decel_frames++; if (!P.gd || td - P.gd > 1000) { P.gd = td; r5i2Log('ground_decel', t, lab, +dv.toFixed(1), +dp.toFixed(1), +tdec.toFixed(1), +(q3[1] / 0.514444).toFixed(1), +kt.toFixed(1), q3[6], tr._tgtMode || '', tr.phase); } } } }
 }
 const R43 = new Map();
 const r43Log = (...a) => { if (PL.r4i3Log.length < 900) PL.r4i3Log.push(a); };
@@ -832,7 +889,9 @@ const CHECKS = { teleports_engine: [PL.teleports_engine, 0], teleports_signal_hw
   label_landing_roll_rotating: [PL.label_landing_roll_rotating, 0], off_pavement_moving_frames: [PL.off_pavement_moving_frames, 0], low_bank_landing_frames: [PL.low_bank_landing_frames, 0],
   // round 5 (r5Frame)
   postland_toflaps_frames: [PL.postland_toflaps_frames, 0], postland_toflaps_view_frames: [PL.postland_toflaps_view_frames, 0], low_roll_rate_frames: [PL.low_roll_rate_frames, 0], taxi_speed_mismatch_frames: [PL.taxi_speed_mismatch_frames, 0],
-  label_lowpass_after_liftoff: [PL.label_lowpass_after_liftoff, 0], forced_low_bank_frames: [PL.forced_low_bank_frames, 0], forced_speed_drop_frames: [PL.forced_speed_drop_frames, 0], handover_rate_frames: [PL.handover_rate_frames, 0] };
+  label_lowpass_after_liftoff: [PL.label_lowpass_after_liftoff, 0], forced_low_bank_frames: [PL.forced_low_bank_frames, 0], forced_speed_drop_frames: [PL.forced_speed_drop_frames, 0], handover_rate_frames: [PL.handover_rate_frames, 0],
+  // round 5 iteration 2 (r5i2Frame)
+  bank_rock_episodes: [PL.bank_rock_episodes, 0], forced_roll_acc_frames: [PL.forced_roll_acc_frames, 0], ground_decel_frames: [PL.ground_decel_frames, 0] };
 // (iteration 2, F4) planted cases: each gate below must FIRE on its planted input and must NOT fire on its planted
 // exception - a gate that cannot fire is dead code (ground_air_reappear read a field that was never stored)
 { const last = { t: 0, x: 0, y: 12, z: 0, gs: 0, ground: true, cls: 'single_hw' }, Dp = { x: -800, y: 45, z: -400, gs: 36, ground: false };
@@ -858,7 +917,7 @@ const CHECKS = { teleports_engine: [PL.teleports_engine, 0], teleports_signal_hw
   const nApp = fixesWith('app'), nOld = fixesWith('tstart'), okB = nApp === 3 && nOld === 1;
   CHECKS.planted_open_burst = [okB ? 0 : 1, 0]; PL.planted_open_burst = [nApp, nOld]; }
 // reported, not gated: transitions without a take-off / landing plan (the straight fallback chord) - review round 2, finding 5
-const INFO = { open: OPEN, lookahead_s: L, label_vertical_info: PL.label_vertical_info, air_float_runway_reported: PL.air_float_runway_reported, air_substall_reported: PL.air_substall_reported, label_taxi_stopped_tracks: PL.label_taxi_stopped_tracks, tg_checked: PL.tg_checked, m3_hidden_takeoffs: PL.m3_hidden_takeoffs, air_pair_close_reported: PL.air_pair_close_reported, transition_linear: traffic.counters.transitionLinear || 0, transition_plans: traffic.counters.transitionPlans || 0, transition_fallback: traffic.counters.transitionFallback || 0, teleports_per_h: +(PL.teleports / hrs).toFixed(1), window_reentries: PL.window_reentries, low_roll_rate_turn_frames: PL.low_roll_rate_turn_frames, handover_rate_raw_frames: PL.handover_rate_raw_frames };
+const INFO = { open: OPEN, lookahead_s: L, label_vertical_info: PL.label_vertical_info, air_float_runway_reported: PL.air_float_runway_reported, air_substall_reported: PL.air_substall_reported, label_taxi_stopped_tracks: PL.label_taxi_stopped_tracks, tg_checked: PL.tg_checked, m3_hidden_takeoffs: PL.m3_hidden_takeoffs, air_pair_close_reported: PL.air_pair_close_reported, transition_linear: traffic.counters.transitionLinear || 0, transition_plans: traffic.counters.transitionPlans || 0, transition_fallback: traffic.counters.transitionFallback || 0, teleports_per_h: +(PL.teleports / hrs).toFixed(1), window_reentries: PL.window_reentries, low_roll_rate_turn_frames: PL.low_roll_rate_turn_frames, handover_rate_raw_frames: PL.handover_rate_raw_frames, ground_decel_plan_frames: PL.ground_decel_plan_frames };
 const FAILED = Object.entries(CHECKS).filter(([k, [v, lim]]) => v > lim).map(([k]) => k);
 // end of the window: decide what is still open (contexts that would time out after it)
 for (const tr of traffic.tracks.values()) for (const e of traffic.classifier.flush(tr, tEnd * 1000 + 3600e3)) traffic.event(e);
@@ -956,7 +1015,7 @@ console.log('pavement', JSON.stringify(out.pavement)); console.log('overlaps', J
 console.log('motion', JSON.stringify(out.motion)); console.log('parking', JSON.stringify(park)); console.log('scope', JSON.stringify(scope)); console.log('d1', JSON.stringify(d1));
 console.log('counters', JSON.stringify(traffic.counters), 'net', JSON.stringify(out.run.net), 'flow', JSON.stringify(out.run.flow));
 console.log('visible phases', JSON.stringify(M.phaseFrames));
-console.log('plausibility', JSON.stringify({ ...PL, r4Log: undefined, r4i3Log: undefined, r5Log: undefined, teleLog: undefined, ghostLog: undefined, liftLog: undefined, hopLog: undefined, alignLog: undefined, newLog: undefined, m3Log: undefined, xLog: undefined }));
+console.log('plausibility', JSON.stringify({ ...PL, r4Log: undefined, r4i3Log: undefined, r5Log: undefined, r5i2Log: undefined, teleLog: undefined, ghostLog: undefined, liftLog: undefined, hopLog: undefined, alignLog: undefined, newLog: undefined, m3Log: undefined, xLog: undefined }));
 if (PL.m3Log.length) console.log('m3 hidden take-offs [t s, type, m from the last drawn ground pose, absent s, ft AGL at the fix, why]', JSON.stringify(PL.m3Log));
 if (PL.teleLog.length) console.log('teleports [t s, type, scope, phase, m, absent s, why, engine|signal, longest fix gap s]', JSON.stringify(PL.teleLog));
 if (PL.alignLog.length) console.log('misaligned [t s, type, kind, deg off the runway]', JSON.stringify(PL.alignLog));
@@ -966,6 +1025,7 @@ if (PL.xLog.length && args.includes('--log')) for (const r of PL.xLog) console.l
 if (PL.r4Log.length && args.includes('--log')) for (const r of PL.r4Log) console.log('r4log', JSON.stringify(r));
 if (PL.r4i3Log.length && args.includes('--log')) for (const r of PL.r4i3Log) console.log('r43log', JSON.stringify(r));
 if (PL.r5Log.length && args.includes('--log')) for (const r of PL.r5Log) console.log('r5log', JSON.stringify(r));
+if (PL.r5i2Log.length && args.includes('--log')) for (const r of PL.r5i2Log) console.log('r5i2log', JSON.stringify(r));
 console.log('INFO', JSON.stringify(INFO));
 console.log('CHECKS', Object.entries(CHECKS).map(([k, [v, lim]]) => `${k} ${v} (<= ${lim}) ${v > lim ? 'FAIL' : 'ok'}`).join(' | '));
 console.log(FAILED.length ? 'RESULT: FAILED ' + FAILED.join(', ') : 'RESULT: ALL PLAUSIBILITY CHECKS PASSED');

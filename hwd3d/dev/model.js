@@ -24,7 +24,8 @@
 //   lseed=<s>                (OD4 it. 2, review F9) the aircraft's light-flash phase seed (DetailedAircraft.seed, random in
 //                            the app); default 0.5: beacon and strobes are between flashes in the final frame of shot()
 //                            (t = 1.033..1.066 s), so a still does not depend on a random flash phase
-import { initGL, Mesh } from '../js/gl.js';
+import { initGL, Mesh, Program, FBO, gl } from '../js/gl.js';
+import { SPRITE_VS } from '../js/shaders/sprites.js';
 import { Renderer } from '../js/renderer.js';
 import { Scene } from '../js/scene.js';
 import { Geo } from '../js/geom.js';
@@ -190,6 +191,35 @@ async function shot({ n = 3, type = 'image/jpeg', jq = 0.9 } = {}) {
   cx.putImageData(id, 0, 0); window.__lastShot = c2; return c2.toDataURL(type, jq);
 }
 const reencode = (jq) => window.__lastShot.toDataURL('image/jpeg', jq);
+// lensProbe() (OD4 iteration 6, docs/phase3_models.md 15.10): after a render, the lens visibility js/shaders/sprites.js
+// lensVisible computes for every sprite of that frame, read back from the GPU (the same shader code, the same depth copy
+// and lamp-table atlas, the same camera). Returns [{ i, v }] in the scene's sprite order (the aircraft's lightSprites first);
+// v = -1 for a sprite that is not tested (no pull flag or no depth copy). Dev / QA only.
+let probe = null;
+function lensProbe() {
+  const C = R.curCam, sc = scene, n = sc.spriteCount; if (!C || !n) return [];
+  if (!probe) {
+    const vs = SPRITE_VS.slice(0, SPRITE_VS.lastIndexOf('void main(){')) + `uniform float uProbeN;
+void main(){
+  float lv = (iData.y > 0.5 && uOcclude > 0.5) ? lensVisible(iM0.xyz) : -1.0;
+  vQ = vec2(lv, iData.y); vCol = vec3(0.0); vI = 0.0; vLens = 0.0;
+  gl_Position = vec4((float(gl_InstanceID) + 0.5 + aPos.x * 0.45) / uProbeN * 2.0 - 1.0, aPos.y, 0.0, 1.0);
+}`;
+    probe = { prog: new Program(vs, 'in vec2 vQ; in vec3 vCol; in float vI; in float vLens; layout(location=0) out vec4 o; void main(){ o = vec4(vQ, 0.0, 1.0); }'), fbo: null, n: 0 };
+  }
+  if (!probe.fbo || probe.n < n) { probe.n = Math.max(256, n); probe.fbo = new FBO(probe.n, 1, [{ internal: gl.RGBA32F, format: gl.RGBA, type: gl.FLOAT }], null); }
+  probe.fbo.bind(); gl.viewport(0, 0, probe.n, 1); gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+  gl.clearColor(-2, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+  const right = [C.dir[1] * C.up[2] - C.dir[2] * C.up[1], C.dir[2] * C.up[0] - C.dir[0] * C.up[2], C.dir[0] * C.up[1] - C.dir[1] * C.up[0]], rl = Math.hypot(...right);
+  const rn = right.map(v => v / rl), up = [rn[1] * C.dir[2] - rn[2] * C.dir[1], rn[2] * C.dir[0] - rn[0] * C.dir[2], rn[0] * C.dir[1] - rn[1] * C.dir[0]];
+  const LV = sc.lampVis || {}, U = { uViewProj: C.vpNear, uCamPos: C.pos, uCamRight: rn, uCamUp: up, uFovScale: 2 * Math.tan(C.fov / 2) / R.H, uViewport: [R.W, R.H],
+    uSceneDepth: R.sceneDepth || R.noDepth, uOcclude: R.sceneDepth ? 1 : 0, uLampVis: LV.tex || sc.noLampVis, uLampVisNE: LV.ne || 1, uProbeN: probe.n };
+  probe.prog.use(); for (const k in U) if (U[k] !== undefined && probe.prog.u[k] !== undefined) probe.prog.set(k, U[k]);   // (a scene without the atlas: an older tree)
+  sc.spriteMesh.draw();
+  const px = new Float32Array(probe.n * 4); gl.readPixels(0, 0, probe.n, 1, gl.RGBA, gl.FLOAT, px);
+  gl.viewport(0, 0, R.W, R.H); gl.clearColor(0, 0, 0, 1);
+  const out = []; for (let i = 0; i < n; i++) out.push({ i, v: px[i * 4], pull: px[i * 4 + 1] }); return out;
+}
 // ---------------------------------------------------------------- controls (drag = orbit about the target, wheel / pinch = zoom)
 function orbit(dYaw, dPitch, k = 1) {
   const e = cam.eye, t = cam.tgt; let v = [e[0] - t[0], e[1] - t[1], e[2] - t[2]]; let d = Math.hypot(...v) * k;
@@ -224,7 +254,7 @@ function buildUI() {
 // ---------------------------------------------------------------- go
 // set({...}): merge parameters (same names as the URL; null deletes) and re-pose; a new `at` / `hdg` re-places the aircraft
 function set(o) { for (const k in o) { if (o[k] == null) delete P[k]; else P[k] = String(o[k]); } if ('at' in o || 'hdg' in o) place = placement(); setCam(); poseAircraft(); if (STUDIO) applyEnv(true); if ('t' in o) console.warn('t is read at load only'); return { gear: ac.gear, flaps: ac.flaps, rotor: ac.rotor }; }
-window.HWDM = { R, cam, PRESETS, P, post, set, render, shot, reencode, pause: (v = true) => { paused = !!v; }, hud: () => hudText(), applyEnv, get ac() { return ac; }, get scene() { return scene; }, get world() { return world; }, worldMode: () => worldMode };
+window.HWDM = { R, cam, PRESETS, P, post, set, render, shot, reencode, lensProbe, pause: (v = true) => { paused = !!v; }, hud: () => hudText(), applyEnv, get ac() { return ac; }, get scene() { return scene; }, get world() { return world; }, worldMode: () => worldMode };
 (async () => {
   try {
     await buildWorld();

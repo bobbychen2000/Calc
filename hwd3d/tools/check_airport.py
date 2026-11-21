@@ -104,8 +104,12 @@ Checks
      window is a hit - hard; hits print file:line, the window and the class only. Planted cases built at run time from the
      counts must classify correctly - hard. A class phrase ('a twin turboprop') counts like a type when every aircraft of that
      class in the hour is flagged. Images are not read: every app screenshot (docs/phase2/, or a SOURCES entry naming
-     livetest or a replay / snapshot pack) carries a by-eye review note d1_labels ('checked ...' / 'masked ...') - hard; the
-     masked ones say so in their caption ('MASKED'). The check alone: --d1-windows (seconds once the counts are cached).
+     livetest or a replay / snapshot pack) carries a by-eye review note d1_labels ('checked ...' / 'masked ...') and a by-eye
+     clock review d1_clock (the HUD clock and every elapsed-time HUD element - the runway line's '(last N min)', 'watching
+     since', 'last signal N min ago' - masked where an aircraft is in view) - hard; the masked ones say so in their caption ('MASKED').
+     A screenshot whose committed job fixes its offset into a dated window (a livetest job that loads a recorded pack and waits a
+     committed default before its shots) is clocked as a whole: its d1_clock says 'job-clocked' and every aircraft state is masked
+     or none is shown - hard (planted entries too). The check alone: --d1-windows (seconds once the counts are cached).
      D1 event clock times (round 4 iteration 3, round 5; d1_event_times): no committed text gives the clock time (hh:mm[:ss]Z /
      UTC / PST / PDT; a bare hh:mm:ss in a table under a clock header) of an individual aircraft's event - a time in the same
      sentence or table row as an event word (taxied, took off, landing roll, touchdown, lift-off, touch-and-go, departed, parked,
@@ -754,8 +758,16 @@ def d1_dated_windows():
     hits = sorted(set(hits))
     # images: pixels are not read here. Every committed app screenshot (docs/phase2/, or an image whose SOURCES entry names
     # livetest or a replay / snapshot pack) carries a by-eye review note 'd1_labels' ('checked ...' or 'masked ...') saying its
-    # type labels were compared with the identifying types of the window it documents - hard.
-    noreview = []; nimg = 0
+    # type labels were compared with the identifying types of the window it documents - hard; and (round 5 iteration 2, G2) a
+    # by-eye clock review 'd1_clock' ('checked ...' or 'masked ...'): the HUD clock and every HUD element derived from elapsed
+    # time (the runway line's '(last N min)' = minutes since the page started watching, 'watching since', 'last signal N min ago'
+    # next to a known instant) count as a clock and are masked wherever the image shows an individual aircraft - hard.
+    # (round 5 iteration 3, G1) A screenshot whose committed job fixes its offset into a dated window is clocked too, even with
+    # the HUD clock masked: _d1_job_clocked() - the entry names a committed livetest job that loads a recorded pack (replay /
+    # snapshot) and waits a committed default before its shots (no shot instant left to an environment variable without a
+    # default). Its d1_clock must say 'job-clocked' and that every aircraft state is masked ('masked') or that none is shown
+    # ('checked ... no aircraft') - hard; planted entries must classify correctly - hard.
+    noreview = []; noclock = []; nimg = 0; jobclk = []; njob = 0
     for rel_ in sorted(t for t in texts if os.path.basename(t) == 'SOURCES.json'):
         try: sj = json.loads(texts[rel_])
         except ValueError: continue
@@ -765,11 +777,49 @@ def d1_dated_windows():
             if not (here.startswith('docs/phase2/') or re.search(r'livetest|replay|snapshot|\bpack\b', json.dumps(v), re.I)): continue
             nimg += 1
             if not str(v.get('d1_labels', '')).startswith(('checked', 'masked')): noreview.append(here)
+            if not str(v.get('d1_clock', '')).startswith(('checked', 'masked')): noclock.append(here)
+            jc = _d1_job_clocked(v)
+            if jc:
+                njob += 1
+                if not _d1_job_review_ok(v): jobclk.append('%s (%s)' % (here, jc))
+    plant_j = [(True, {'source_render': 'x.png (MOBILE=1 livetest jobs/views.mjs)', 'd1_clock': 'masked: HUD clock'}),
+               (False, {'source_render': 'x.png (MOBILE=1 livetest jobs/views.mjs)', 'd1_clock': 'masked: job-clocked, every aircraft state blanked'}),
+               (False, {'source_render': 'x.png (livetest jobs/views.mjs)', 'd1_clock': 'checked: job-clocked, no aircraft in view'}),
+               (False, {'source_render': 'x.png (livetest + docs/phase2/phase2_run_job.mjs)', 'd1_clock': 'masked: HUD clock'}),
+               (False, {'source_render': 'x.png (a scratch QA job)', 'd1_clock': 'checked: no HUD'})]
+    badj = [i for i, (want, v) in enumerate(plant_j) if (bool(_d1_job_clocked(v)) and not _d1_job_review_ok(v)) != want]
+    say('   D1 job-clocked screenshots (a committed job fixes the shot\'s offset into a dated window): %d; without a job-clocked review (d1_clock \'job-clocked\' + every aircraft state masked, or none shown): %d %s; planted entries %d, wrongly classified %d %s - hard'
+        % (njob, len(jobclk), jobclk, len(plant_j), len(badj), badj))
+    if badj: probs.append('D1 job-clocked planted entries: %d of %d wrong' % (len(badj), len(plant_j)))
+    probs += ['D1 job-clocked image without a job-clocked review: %s' % x for x in jobclk]
     say('   D1(d) app screenshots with a SOURCES entry: %d; without a by-eye label review (d1_labels): %d %s - hard' % (nimg, len(noreview), noreview))
+    say('   D1 app screenshots without a by-eye clock review (d1_clock: the HUD clock and every HUD element derived from elapsed time - the runway line\'s \'(last N min)\', \'watching since\', \'last signal N min ago\' - masked where the image shows an aircraft): %d %s - hard' % (len(noclock), noclock))
     probs += ['D1(d) image without a label review: %s' % f for f in noreview]
     say('   D1(d) committed text files scanned: %d (%d units); identifying type named with its dated window: %d - hard' % (len(texts), nunits, len(hits)))
     for h in hits: say('   D1(d) HIT %s:%d:%d  window %s  class %s' % h)
-    return probs + ['%s:%d window %s (%s)' % (h[0], h[1], h[3], h[4]) for h in hits]
+    return probs + ['%s:%d window %s (%s)' % (h[0], h[1], h[3], h[4]) for h in hits] + ['D1 image without a clock review: %s' % x for x in noclock]
+
+
+def _d1_job_clocked(v):
+    """(round 5 iteration 3, G1) The committed job named by a SOURCES entry, when it fixes the shot's offset into a dated window:
+    it loads a recorded pack (mode=replay / mode=snapshot; the default replay pack is a dated window, js/live/entry.js) and waits a
+    committed default after ready before its shots (process.env.WAIT || <ms>, or a literal waitForTimeout), and no shot instant
+    comes from an environment variable without a committed default (e.g. phase2_run_job.mjs SHOT_AT). Returns the job path or ''."""
+    blob = json.dumps(v)
+    for m in re.finditer(r'(?<![\w/])((?:hwd3d/)?(?:jobs|docs/phase2)/[\w.-]+\.mjs)', blob):
+        rel_ = m.group(1)[6:] if m.group(1).startswith('hwd3d/') else m.group(1)
+        try: job = open(os.path.join(HWD, rel_), encoding='utf-8').read()
+        except OSError: continue
+        if not re.search(r'mode=(?:replay|snapshot)', job): continue
+        if not re.search(r'process\.env\.WAIT\s*\|\|\s*\d+|waitForTimeout\(\s*\d+\s*\)', job): continue
+        if re.search(r"process\.env\.\w+\s*\|\|\s*''\)\.split", job): continue   # shot instants from an env list with no default
+        return rel_
+    return ''
+
+
+def _d1_job_review_ok(v):
+    c = str(v.get('d1_clock', ''))
+    return 'job-clocked' in c and (c.startswith('masked') or (c.startswith('checked') and re.search(r'\bno aircraft\b', c) is not None))
 
 
 # ------------------------------------------------------------------------------------------------ D1: event clock times
@@ -994,21 +1044,22 @@ def d1_event_times():
     iso, d = t.strftime('%Y-%m-%dT%H:%M:%S'), t.strftime('%Y-%m-%d')
     hms, hm, hm2 = t.strftime('%H:%M:%S'), t.strftime('%H:%M'), (t + _dt.timedelta(seconds=6)).strftime('%H:%M:%S')
     phm, run1 = p.strftime('%H:%M'), (t + _dt.timedelta(minutes=14)).strftime('%H:%M:%S')
-    plant = [('hit', 'p.md', 'At %s-%sZ an untyped single taxiing on a route crossed another.' % (hms, hm2)),
-             ('hit', 'p.md', 'first seen by the run at %sZ just after lift-off' % hms),
-             ('hit', 'p.md', '| case | %sZ | taxied to the hold |' % hm),
-             ('hit', 'p.md', 'a single taxied out at %s PST' % phm),
-             ('hit', 'p.md', 'statistics sheet (scene %s PST): 28L: 1 departure, 4 touch-and-goes' % phm),
-             ('hit', 'p.json', json.dumps({'x.jpg': {'caption': 'a departing single at 40 ft AGL, 50 kt. Window Q, scene %s PST, phone.' % phm}}, indent=1)),
-             ('hit', 'p.md', "a single first seen by the run in the window's first %s, just after lift-off" % 'seconds'),
-             ('hit', 'p.md', 'a single whose signal ended on the taxiway (snapshot %d min into the window)' % 16),
-             ('hit', 'p.md', 'render (weekend replay at %d min): a single rolling out on 28L, a helicopter on the ramp' % 33),
-             ('hit', 'p.md', '- **Renders**: `grid.png` (one replay at %d min).\n  - It shows: a single taxiing; a twin rolling out on 28L\n' % 33),
+    o1, o2, hist = _d1t_plant_offsets(t)
+    plant = [('hit', 'p.md', 'At %s-%sZ a twin taxiing to 10L crossed a helicopter.' % (hms, hm2)),
+             ('hit', 'p.md', 'first heard at %sZ climbing out of 10R' % hms),
+             ('hit', 'p.md', '| case | %sZ | taxied to the wash rack |' % hm),
+             ('hit', 'p.md', 'a twin taxied to 10L at %s PST' % phm),
+             ('hit', 'p.md', 'statistics sheet (scene %s PST): 10L: 2 departures, 1 go-around' % phm),
+             ('hit', 'p.json', json.dumps({'x.jpg': {'caption': 'a twin on final 10R at 300 ft AGL, 95 kt. Window Q, scene %s PST, phone.' % phm}}, indent=1)),
+             ('hit', 'p.md', "a twin taxied to 10L in the pack's last %s" % 'few minutes'),
+             ('hit', 'p.md', 'a twin held short at the wash rack (snapshot %d min into the window)' % o1),
+             ('hit', 'p.md', 'render (pattern replay at %d min): a twin climbing out of 10R, a gyroplane on the ramp' % o2),
+             ('hit', 'p.md', '- **Renders**: `grid.png` (one replay at %d min).\n  - It shows: a twin holding short of 10L; a single on final 10R\n' % o2),
              ('hit', 'p.md', '| Scene (Z) | Phases |\n|---|---|\n| %s | taxi 3 · parked 2 |\n' % hms),
              ('clean', 'p.md', '| Scene (Z) | Phases |\n|---|---|\n| total | taxi 3 · parked 2 |\n| %s | pattern 1 |\n' % hms),   # rows apart
-             ('hit', 'p.py', "PLANT = ('hit', 'At %sZ a single took off')\n" % hms),
-             ('hit', 'p.js', "const s = 'a single ' +\n  'took off at %sZ';\n" % hms),
-             ('hit', 'p.mjs', "const s = `a single ${x}\n  took off at %sZ`;\nconst r = /'/;\n" % hms),
+             ('hit', 'p.py', "PLANT = ('hit', 'At %sZ a twin took off from 10R')\n" % hms),
+             ('hit', 'p.js', "const s = 'a twin ' +\n  'took off from 10R at %sZ';\n" % hms),
+             ('hit', 'p.mjs', "const s = `a twin ${x}\n  took off from 10R at %sZ`;\nconst r = /'/;\n" % hms),
              ('clean', 'p.md', 'Window Q, %s %s:00Z, pattern work: 5 touch-and-goes.' % (d, t.strftime('%H'))),
              ('clean', 'p.md', 'the run %s -> %sZ (desktop); 3 landings' % (hms, run1)),
              ('clean', 'p.md', 'current build %sZ, sha256 49242e41' % iso),
@@ -1018,9 +1069,30 @@ def d1_event_times():
              ('clean', 'p.js', "const BUILD = '%sZ';  // build stamp\n" % iso),
              ('clean', 'p.py', "STAMP = '%sZ'   # the build\n" % iso)]
     bad = [i for i, (w, f, x) in enumerate(plant) if bool(_d1t_scan(f, x)[0]) != (w == 'hit')]
-    say('   D1 event times: %d committed text files (%d units, incl. string literals of .py / .js / .mjs) scanned; planted cases %d (times from an instant outside every recorded hour), wrongly classified %d %s; event times, scene minutes or offsets next to an aircraft event: %d - hard' % (nf, nu, len(plant), len(bad), bad, len(hits)))
+    say('   D1 event times: %d committed text files (%d units, incl. string literals of .py / .js / .mjs) scanned; planted cases %d (times from an instant outside every recorded hour, offsets %d / %d min, neither among the %s offset numbers of the docs\' history; east-flow runways 10L/R, which no recorded hour used), wrongly classified %d %s; event times, scene minutes or offsets next to an aircraft event: %d - hard' % (nf, nu, len(plant), o1, o2, hist if hist is not None else 'unread (no git history)', len(bad), bad, len(hits)))
     for h in hits: say('   D1 event time HIT %s:%d  %s  (%s)' % h)
     return ['%s:%d' % (h[0], h[1]) for h in hits] + (['D1 event-time planted cases: %d wrong' % len(bad)] if bad else [])
+
+
+def _d1t_plant_offsets(t):
+    """(o1, o2, n): the two planted offsets (minutes) - synthetic, from the synthetic instant t (its second // 10 - 1 and its minute + 10),
+    each stepped on while it equals an offset number that ever appeared in the docs' git history (every + / - line of hwd3d/docs/**
+    and hwd3d/**.md, read with D1T_OFFSET), so no plant repeats a real offset; n = how many distinct offset numbers the history holds
+    (None without git history)"""
+    seen = set(); n = None
+    try:
+        r = subprocess.run(['git', '-C', HWD, 'log', '-p', '--no-color', '--format=format:@@', '--', 'docs', '*.md'], capture_output=True, text=True, timeout=120)
+        if r.returncode == 0:
+            for ln in r.stdout.splitlines():
+                if ln[:1] in '+-' and not ln.startswith(('+++', '---')):
+                    for m in D1T_OFFSET.finditer(ln): seen.update(int(float(x)) for x in re.findall(r'\d+(?:\.\d+)?', m.group(0)))
+            n = len(seen)
+    except (OSError, subprocess.SubprocessError): pass
+    out = []
+    for c in (max(1, t.second // 10 - 1), t.minute + 10):
+        while c in seen or c in out: c = c % 59 + 1
+        out.append(c)
+    return out[0], out[1], n
 
 
 def pave_path(x, z, FE, res=1.0):

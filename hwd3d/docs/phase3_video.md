@@ -1,6 +1,10 @@
 # Phase 3 (OD3) — deterministic video pipeline
 
-**Status 2026-11-20, fix round 4 iteration 3 (section 15):** both snapshots refreshed with the iteration-3 engine; case P's roll-out
+**Status 2026-11-21, fix round 5 (section 16):** both snapshots refreshed with the round-5 engine; video P's PC-12 retracts its
+flaps once off the runway and keeps them up through the hold-short and the taxi-in (was: take-off flaps from the post-landing hold to the
+stop), video S's SF50 no longer rocks its wings at the plan → fix hand-over (<= 1.8°/s, <= 2.4° of bank), its fix-following taxi no
+longer stutters (drawn speed within 0.54 kt of the shown speed), and a new plan gate measures chase-camera judder; all gates pass with no
+override, determinism and spot stills re-checked. **Before that, 2026-11-20, fix round 4 iteration 3 (section 15):** both snapshots refreshed with the iteration-3 engine; case P's roll-out
 stutter and yaw are gone (drawn speed = shown speed within 0.14 kt, 0°/s of yaw on the roll), its `c-roll-dolly` passes the 1.5-px/frame²
 gate with no override (the job's `heroAcc: 3` was removed), the SF50 keeps its take-off flaps from the hold to the climb, and its nose no
 longer dips after the lift-off. **Before that, 2026-11-14, fix round 4 iteration 2 (section 14):** the snapshots now hold the final traffic engine (renderer,
@@ -733,3 +737,115 @@ roll; the E8 freeze test unchanged (no field or card change at the frozen clock)
 
 **Not done here.** No clip was encoded; the full videos are still the orchestrator's (section 11), from a full new snapshot
 (`--refresh`) once OD4's look fixes are to be in them.
+
+## 16. Fix round 5 (recheck findings R2, R6, R7; items V1-V3): the snapshots on the round-5 engine (2026-11-21)
+
+**Findings.** R2: video P's PC-12 set its take-off flaps (15°) at the hold-short after its landing and taxied in with them to the stop
+(frames 2109-3106, filmed in `b-taxi-chase`, `a-ramp-establish` and the end card). R6: video S's SF50 rocked its wings -2.9 → +5.8° in
+1.6 s at 45-70 ft where the take-off plan hands over to fix-following (`d-climb-chase`). R7: the SF50's fix-following taxi in
+`lineup-chase` stuttered (drawn 7.9 → 4.6 → 6.3 → 6.4 → 5.5 → 7.1 kt while 7.8 kt was shown) and the chase camera juddered with it,
+which no plan gate could see; video P's runway exit turn ran at 1.6-1.9 m/s² lateral at 20°/s. The engine causes and changes are in
+`docs/phase2_run.md` section 13.
+
+**What changed in the pipeline.**
+- `js/video/camera.js`: a per-shot **camera judder** measure (`camAccMax` / `camAccAt` in the plan report): the camera's per-frame step
+  (m per video frame) whose change reverses sign on two neighbouring frames - faster / slower / faster - as a fraction of the step. The
+  reviewer's stutter (steps 0.47 → 0.27 → 0.37 → 0.32 m) measures 0.37 on it. The interrupted attempt of this round measured the camera's
+  acceleration in data time instead; that is no measure here (the camera springs run in video time, and every time-lapse speed ramp read
+  as up to 35 m/s²), and one smooth minimum - a hero slowing and rolling on - is a single reversal, not judder.
+- `tools/video/render.mjs`: plan gate `camAcc` <= 0.05 for chase shots (with the other gates; [inf] design limit).
+- The local job of case S (`out/od3/video_S.json`) starts 4 s earlier: on the round-5 engine the SF50 leaves its FBO spot ~4 s earlier
+  in the job window than in the iteration-3 snapshot (the app now agrees with the Node trace of `tools/traffic/od3_trace.mjs`), so the
+  opening shot would have started on a moving aircraft. It again opens on the parked SF50, which moves at frame 103. Every later frame of
+  case S is 120 frames later than in section 15. Nothing else in either job changed; neither job carries a gate override.
+
+**Snapshots now** (`snapshot --refresh=engine`: the engine files of `tools/video/lib.mjs` `ENGINE_FILES` and `js/video/**` from the
+working tree; renderer, shaders, models and data still frozen from Phase 3b, so OD4's look fixes are NOT in them - the orchestrator
+re-snapshots after OD4): S tree **8b46d7086b79**, P tree **91d35e6bf382**, holding `traffic.js` sha256 e200ec261122…, `motion.js`
+c9b302d72d77…, `aircraft.js` 2fbc4c333138… (the final engine of `docs/phase2_run.md` 13.1). Both re-scouted and re-planned.
+
+**Events** (scouts): S parked at frame 0, moves at 103, lined up 1636, roll 1811, lift-off 2482 at 84.9 kt; P touchdown 1187 at 80.8 kt.
+Hero not drawn: 0 frames in both; 0 page errors.
+
+**Plans and gates** (`plan`, both cases): **all gates pass with no override**. Camera judder in the chase shots: S `b-taxi-chase` 0.01,
+`lineup-chase` 0, `d-climb-chase` 0; P `d-final-chase` 0, `b-taxi-chase` 0.02. Other values as in section 15 (S `c-roll-dolly` lag error
+<= 0.62 m, `e-liftoff-edge` <= 0.47 px/frame²; P `c-roll-dolly` <= 0.21 px/frame², lag error <= 1.2 m).
+
+**Checked on the scout traces** (every frame, [obs]; local checker over +-3 frames in data time):
+
+| | Case S | Case P |
+|---|---|---|
+| ground frames 2-30 kt: drawn speed - shown speed | <= 0.54 kt over the whole video (iteration 3: up to 1.75 kt and a 3.99-m/s² hitch in `lineup-chase`) | <= 0.64 kt on the taxi-in, <= 0.11 kt on the roll-out |
+| taxi braking / lateral / yaw | braking <= 1.95 m/s², lateral <= 0.9 m/s² (single frames at route vertices up to 1.57), yaw <= 18.8°/s, from the FBO to the line-up | exit turn and taxi-in: lateral <= 1.22 m/s², yaw <= 12.7°/s, braking <= 2.0 m/s² (iteration 3: 1.6-1.9 m/s² lateral at 20°/s in the exit turn); the planned braking after the last roll fix, 3.5 m/s² for ~3 s, remains |
+| flaps | 0 → 15° at the hold (frame 1079), held through the taxi onto 28L, the roll and the climb to 400 ft (2987), then up | 40° on final and through the roll-out; target 0 from frame 2058 (off the runway): the flaps **retract through the post-landing hold-short** (20.9° at 2109, 5.2° at 2152, ~27 s of data time at 1/6 of the travel per s [inf]) and are up from ~2185 to the stop (iteration 3: 15° from the hold to the end). *Corrected in round 5 iteration 2 (G7): this row said 0° at the hold-short.* |
+| roll below 200 ft | <= 1.8°/s and <= 2.4° of bank through the hand-over (frames 2662-2722, 6-8 s after the lift-off; iteration 3: 15°/s, -2.9 → +5.8°), <= 4.6°/s after it | <= 1.2°/s on final |
+| labels | Parked → Taxiing → Holding short → Taxiing → Lined up 28L → Take-off roll 28L → Climbing out 28L (one runway format from the lift-off through the hand-over; was 'Climbing out' → 'Climbing out 28L') → Crosswind 28L → Departing | Final 28L → Landing roll 28L → Taxiing on the runway 28L → Taxiing → Holding short → Taxiing → Stopped |
+
+Small rest: on P's roll-out, at the plan → observed hand-over (frames 1445-1452), the speed rises 62.54 → 63.26 kt (iteration 3, unchanged).
+
+**Determinism** (`determinism --frames=…`, shutter 0.5, final trees): case S frames 2700-2714 (the hand-over): 15 / 15 PNGs identical between
+two fresh browser runs and 15 / 15 after rendering earlier frames first; hero vs scout 0.00000 m, 0 page errors (5.9-12.5 s per frame at a
+load of ~8).
+
+Case P frames 2050-2064 (the runway exit, flaps retracting): 15 / 15 identical between two fresh runs and 15 / 15 after earlier frames
+first; hero vs scout 0.00000 m, 0 page errors (9.4-17 s per frame at a load of ~12-16, another workflow rendering).
+
+**Spot stills** (`render --pick`, final trees, looked at; local in `out/video/{S,P}/picks_r5/`, not committed: they show the scene clock
+and the METAR day-time group): case S frames 1513 (`lineup-chase`, taxiing toward 28L with the take-off flaps set, the chase camera
+steady behind it), 2452 (rotation, head-on, landing lights on), 2700 (the hand-over: wings level over the extended centreline, gear still
+down); case P frames 1187 (touchdown on the mains, flaps 40°), 1637 (roll-out from the side, on the centreline), 2073 (the exit turn,
+flaps going up), 2336 (taxi-in on the taxiway centreline, flaps up). Nothing wrong was seen; the look of the renderer and models is the
+frozen Phase 3b one (OD4's fixes are not in these snapshots).
+
+**App check** (`livetest.mjs`, the app itself on the working tree, `docs/phase2_app.md` 12): the snapshot cases on case P's taxi-in
+(`P_taxiin`), its hold-short and its stop draw the PC-12 with the flaps up (iteration 3: 15° on the taxi-in); case S keeps 15° from the
+hold to the climb.
+
+**Not done here.** No clip was encoded and no full video rendered (the orchestrator renders them after OD4's look fixes, from a new
+snapshot). The braking after P's last roll fix (3.5 m/s² for ~3 s, planned) and the small speed rise at P's plan → observed hand-over
+remain (above).
+
+## 17. Fix round 5, iteration 2 (recheck findings G3, G5, G7): the snapshots on the iteration-2 engine (2026-11-21)
+
+**Findings.** G3: in fix-following turns the drawn bank of video S's SF50 rocked about ±5° every ~0.7 s of video (33 swings of >= 4° in
+`d-climb-chase`, frames 3242-3601, at 920-1,590 ft); the round-5 roll limit applied only below 200 ft. G5: ground-speed steps and dead stops
+at mode hand-overs in the app (no hero frame of either video was affected: S's taxi stays within 0.54 kt of the shown speed, as in section 16). G7: section
+16 said video P's flaps were 0° at the post-landing hold-short; they were retracting through it (corrected in place). The engine causes and
+changes are in `docs/phase2_run.md` section 14.
+
+**Snapshots now** (`snapshot --refresh=engine`, renderer / shaders / models / data still frozen from Phase 3b, so OD4's look fixes are NOT in
+them - the orchestrator re-snapshots after OD4): S tree **9a5930ad1a5e**, P tree **e814076cd53b**, holding `traffic.js` 9437e3c5a1ea…, `motion.js`
+ba446d169cb7…, `aircraft.js` 2fbc4c333138… (unchanged). Both re-scouted and re-planned; the jobs are unchanged (no gate override). Nothing in
+`js/video/**` or `tools/video/**` changed in this iteration.
+
+**Events** (scouts): as in section 16 - S parked at frame 0, moves at 103, roll 1811 (it rolls onto 28L without stopping: the scout's
+'lineup' event is the roll start), lift-off 2482 at 84.9 kt; P touchdown 1187 at 80.8 kt, stop event 2036. Hero not drawn: 0 frames;
+0 page errors.
+
+**Plans and gates** (`plan`): **all gates pass, no override**. S: every shot's report equals section 16's except `d-climb-chase` (camera
+step <= 4.99 m against 5.02, |ndc| <= 0.22 against 0.21 - the smoother bank moves the chase camera's target a little); P: identical to
+section 16.
+
+**Checked on the scout traces** (every frame, [obs]; local checker):
+
+| | Case S | Case P |
+|---|---|---|
+| wing rock (bank swinging >= 4° one way and back within 1.5 s of data time, above 200 ft) | **0** (round 5: 33 in `d-climb-chase`); the crosswind turn rolls in and out once; roll rate <= 15°/s | 0 |
+| bank below 200 ft | <= 2.3°, <= 2.5°/s | <= 0.3°, <= 0.7°/s |
+| ground: largest deceleration of the shown speed over 0.3 s | 1.96 m/s² (frame 1507, taxi) | 3.5 m/s² (frame 1831: the planned braking after the last roll fix, as in section 16) |
+| flaps | 0 → 15° at the hold (frames 1079-1246), 15° through the taxi onto 28L, the roll and the climb to 400 ft, then up (as in section 16) | 40° on final, the roll-out and the runway taxi (to frame 2057); retracting from the exit: 39.6° → 21.3° taxiing to the hold-short, **20.9° → 5.5° through the post-landing hold-short** (2109-2151), 5.2° → 0 on the taxi-in; 0 at the stop (2851) |
+| labels | Parked → Taxiing → Holding short → Taxiing → **Taxiing on the runway 28L** (1676-1810; section 16: 'Lined up 28L' while rolling at 8 kt) → Take-off roll 28L → Climbing out 28L → Crosswind 28L → Departing | Final 28L → Landing roll 28L → Taxiing on the runway 28L → Taxiing → Holding short → Taxiing → Stopped (unchanged) |
+
+**Determinism** (`determinism --frames=…`, shutter 0.5, final trees): case S frames 3262-3276 (the crosswind turn in `d-climb-chase`): 15 / 15 PNGs identical between two fresh browser
+runs and 15 / 15 after rendering earlier frames first (6 frames of lead); hero vs scout 0.00000 m, 0 page errors (3.1-8.7 s per frame at a
+load of 3.5-10.7). Case P frames 2100-2114 (the post-landing hold-short, flaps retracting): 15 / 15 and 15 / 15; hero vs scout 0.00000 m,
+0 page errors (4.2-6.0 s per frame at a load of ~3).
+
+**Spot stills** (`render --pick`, final trees, looked at; local in `out/video/{S,P}/picks_r5i2/`, not committed: they show the scene clock
+and the METAR day-time group): case S frames 1700 (`c-roll-dolly`: rolling onto 28L with the take-off flaps set, captioned 'Taxiing on the runway 28L'), 3262, 3270
+and 3277 (`d-climb-chase`, the crosswind turn: the same steady left bank in all three - no rock -, the strobes flashing at 3277); case P
+frames 1831 (`c-roll-dolly`, the roll-out on the centreline, flaps down), 2109 (`b-taxi-chase`, the post-landing hold-short: the flaps
+visibly part-way down) and 2152 (taxiing on, flaps nearly up). Nothing wrong was seen; the look of the renderer and models is the frozen
+Phase 3b one (OD4's fixes are not in these snapshots).
+
+**App check** (`livetest.mjs`, the app itself on the working tree): `docs/phase2_app.md` section 13.

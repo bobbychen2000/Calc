@@ -424,3 +424,277 @@ export function lampShape(a, prims, parts, toLocalPt) {
   }
   return { c: a.p.slice(), ax: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], h: [LAMP_VIRTUAL_R, LAMP_VIRTUAL_R, LAMP_VIRTUAL_R], shape: 'ellipsoid', geom: false, face: null, mat: null, n: 0, cover: 0 };
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// OD4 iteration 6 (recheck of iteration 5, findings R1 / R2; docs/phase3_models.md 15.10): per-lamp SELF-VISIBILITY TABLES.
+// Beyond ~60 m a lamp is smaller than a pixel: the scene depth holds one sample per pixel, taken up to half a pixel from the
+// lamp, so the lens test of js/shaders/sprites.js cannot tell a lamp at its own body's silhouette (the PC-12 belly beacon seen
+// from just below the horizon: the belly beside it lies 0.3 m in front of it at a grazing angle) from a lamp just behind an
+// occluder's silhouette (a nav lamp under 5-10 cm of winglet skin) - whichever way it decides, the answer depends on where
+// the lamp falls inside its pixel, and a light on a moving aircraft blinks. The airframe that hides a lamp of a detailed
+// aircraft is the aircraft itself, so for every lamp its visible share is tabulated here once per model, by ray casting
+// the model at rest: T(d) = the share of the lamp's projected area that is seen from direction d (the ground truth of the
+// iteration-5 sweeps: G x G parallel rays over the lamp's footprint; a ray is in the footprint when it meets the lamp's own
+// triangles (its lamp material, + the clear lens cover over it) or, for a lamp with no geometry, its shape; it sees the lamp
+// when the first opaque surface along it lies at or behind the lamp's surface less LAMPVIS.TOL (5 mm: the PC-12 tail lamp
+// is sunk 1-5 mm into the bullet tip and seen from behind). js/shaders/sprites.js looks the table up for a lamp below about
+// two pixels (bilinear; the view direction in the lamp's shape frame), so the answer no longer depends on the pixel grid,
+// and keeps the depth test for the occluders that are not the aircraft (buildings, other aircraft: only depth in front of
+// the aircraft's bounding sphere counts there).
+//   Layout: lat-long in the lamp shape's frame e0 = ax[0], e1 = ax[1], e2 = e0 x e1 (the frame js/shaders/sprites.js builds
+//   from the sprite's iL1 / iL2): d = cos(el) cos(az) e0 + sin(el) e1 + cos(el) sin(az) e2; column ia = az in
+//   [ia, ia + 1) x 2 pi / NA, row je = el in -90 deg + [je, je + 1) x 180 deg / NE (cell centres sampled); two channels:
+//   0 = gear down (the model at rest), 1 = gear up (the same without the gear legs, wheels, braces and gear doors - retracted
+//   into their wells they hide no lamp; the PC-12's tyres protrude ~1 in) [inf: approximation]; values x 255 (Uint8); channel
+//   2 = the distance from the lamp's surface to the farthest of the cell's occluders (over its rays, the first opaque surface
+//   along each hidden ray), in LAMPVIS.TFS = 0.1 m units (capped at 25.5 m): the table is a view from afar, and a camera
+//   nearer than an occluder of its direction (between a wing-tip lamp and the fuselage, 5-20 m away) sees past it - there
+//   js/shaders/sprites.js uses its depth test alone; channel 3 (OD4 iteration 6 round 2, recheck F2) = the aircraft's REACH
+//   in front of the lamp: an upper bound of how far in front of the lamp (along d, from the plane through its centre normal
+//   to d) any surface of the aircraft at rest (gear down, no propeller blades) lies within LAMPVIS.RHO of the line of sight
+//   through the lamp's centre, in LAMPVIS.TFS units (capped at 25.5 m) - js/shaders/sprites.js counts a depth sample of its
+//   external-occluder taps as another object's (an occluder that is not this aircraft) when it lies more than the reach (+ a
+//   margin) in front of the lamp. Iteration 6 counted only depth in front of the aircraft's bounding sphere (11.6 m on the
+//   PC-12), so another aircraft's wing or a hangar wall 1-3 m in front of a lamp was not an occluder of a sub-pixel lamp.
+//   The reach of a direction is the largest along-distance over the surface points inside the cylinder of radius RHO around
+//   it (the first surface a ray inside the cylinder meets coming from the camera is its farthest point in front of the lamp),
+//   computed conservatively by splatting: the opaque surface is sampled at <= LAMPVIS.VS spacing into LAMPVIS.VOX voxels; a
+//   voxel at distance r (centre) bounds its surface points within bV = VOX x sqrt(3) / 2 + VS of its centre, so it lies in
+//   the cylinder only for directions within asin((RHO + bV) / r) of it (90 deg + asin(bV / r) when it is that close), where
+//   no point of it lies more than r cos(b) + bV in front (b: the angle between the direction and the voxel); each cell takes
+//   the largest such value over every voxel whose cap comes within one cell diagonal of the cell centre, at the smallest b
+//   over that support (so the bilinear lookup between four cell centres never falls below the true reach there). Voxels with r + bV <= LAMPVIS.RMIN (the lamp's own housing) are left out: the shader's margin covers
+//   them.
+//   Flaps, control surfaces and doors are at rest in the table [inf]; above two pixels the depth test (which sees them) decides.
+//   lampTables(model, { yieldMs, NA, NE }) -> Promise<{ ms, rays, lamps, bladeTris, voxels }>: sets model.lights[k].occ.vis =
+//   { NA, NE, data } for every light with a lamp shape. yieldMs > 0: gives the event loop a turn every yieldMs of work
+//   (js/aircraft/models.js loadModel: the app stays responsive while a model's tables are computed). NA / NE: the grid (tools;
+//   default LAMPVIS). Needs the CPU geometry (groups), i.e. before js/aircraft/detailed.js drops it after the GPU upload.
+export const LAMPVIS = { NA: 128, NE: 64, G: 4, MINFOOT: 4, TOL: 0.005, TFS: 0.1, RHO: 0.5, VOX: 0.1, VS: 0.05, RMIN: 0.25 };
+const GEAR_KINDS = new Set(['gear', 'gear_door', 'brace']);
+// one turn of the event loop: a MessageChannel message (not a timer: browsers throttle the timers of a page that is not in
+// front to one per second or less, which would stretch a model's tables over minutes)
+const yieldTurn = () => new Promise(r => { if (typeof MessageChannel === 'undefined') { setTimeout(r, 0); return; }
+  const ch = new MessageChannel(); ch.port1.onmessage = () => { ch.port1.close(); r(); }; ch.port2.postMessage(0); });
+export async function lampTables(model, { yieldMs = 0, NA = LAMPVIS.NA, NE = LAMPVIS.NE } = {}) {
+  const t0 = Date.now(); let tl = Date.now(), rays = 0, lamps = 0;
+  const parts = model.parts, mats = model.materials;
+  const gearChain = (pi) => { for (let q = pi; q >= 0; q = parts[q].parent) if (parts[q].pivot && GEAR_KINDS.has(parts[q].pivot.kind)) return true; return false; };
+  // OD4 iteration 6, round 2 (recheck F1): the PROPELLER BLADES are not occluders of the tables. They were tabulated frozen
+  // at rotor angle 0, but a lamp is only on with the engine running (idle ~110 rad/s taxiing, ~178 on the roll), where
+  // js/aircraft/detailed.js draws the translucent disc instead of the blades (above PROP_BLUR[1]): the depth copy holds no
+  // blade and the lamp is seen through the disc - the rest blades hid the PC-12 nose-leg taxi light from ground cameras
+  // ahead (az +-8..21 deg, el -4..+10 deg) and blinked it as a taxiing aircraft turned. A blade = a part whose mover chain
+  // holds a 'pitch' mover below a 'spin' mover (detailed.js resources: prop.blades); the axisymmetric spinner (the 'spin'
+  // mover's own part) stays. A slowly turning prop with drawn blades (below PROP_BLUR[1], an engine start) is still seen by
+  // the depth test of a resolved lamp, and by the external-occluder taps where a blade lies beyond the reach (channel 3) +
+  // the shader's margin; nearer (the PC-12 taxi light from ahead: reach 2.7 m, the blades 2.15 m in front) a sub-pixel lamp
+  // is drawn through them [inf]
+  const bladeChain = (pi) => { let pitch = false; for (let q = pi; q >= 0; q = parts[q].parent) { const k = parts[q].pivot && parts[q].pivot.kind;
+    if (k === 'pitch') pitch = true; else if (k === 'spin') return pitch; } return false; };
+  const A = [], Gr = [];   // opaque triangles: not on the gear / on the gear (9 floats each, local frame at rest)
+  const push = (out, d, i) => { const a = d.idx[i] * 3, b = d.idx[i + 1] * 3, c = d.idx[i + 2] * 3;
+    out.push(d.pos[a], d.pos[a + 1], d.pos[a + 2], d.pos[b], d.pos[b + 1], d.pos[b + 2], d.pos[c], d.pos[c + 1], d.pos[c + 2]); };
+  let bladeTris = 0;
+  for (const g of model.groups) { const d = g.opaque; if (!d || !d.idx) continue; if (g.mover >= 0 && bladeChain(g.mover)) { bladeTris += d.idx.length / 3; continue; }
+    const out = g.mover >= 0 && gearChain(g.mover) ? Gr : A; for (let i = 0; i < d.idx.length; i += 3) push(out, d, i); }
+  if (!A.length) return { ms: 0, rays: 0, lamps: 0, skipped: 'no CPU geometry' };
+  const BA = bvhBuild(new Float32Array(A)), BG = Gr.length ? bvhBuild(new Float32Array(Gr)) : null;
+  const { TOL } = LAMPVIS, RB = 40;
+  const VX = reachVoxels([A, Gr]);   // channel 3: the surface (airframe + gear, no blades) as voxel centres
+  for (const [k, L] of Object.entries(model.lights)) {
+    const S = L && L.occ; if (!S || !KINDS.includes(k)) continue;   // kinds that are drawn (js/aircraft/detailed.js)
+    const onGear = L.part >= 0 && gearChain(L.part);
+    // the lamp's own triangles (its lamp material on its mover, + the clear lens cover over it; centroid inside the shape x 1.05)
+    let LB = null, LV = null;
+    if (S.geom) { const V = [];
+      for (const g of model.groups) { if (g.mover !== L.part) continue;
+        for (const [d, sel] of [[g.opaque, (mi) => mats[mi] && mats[mi].name === S.mat], [g.glass, (mi) => S.cover > 0 && mats[mi] && mats[mi].cls === 'clear']]) { if (!d || !d.idx) continue;
+          for (let i = 0; i < d.idx.length; i += 3) { if (!sel(d.mat[d.idx[i]])) continue; const c = [0, 1, 2].map(q => (d.pos[d.idx[i] * 3 + q] + d.pos[d.idx[i + 1] * 3 + q] + d.pos[d.idx[i + 2] * 3 + q]) / 3);
+            if (inLamp(c, S, 1.05)) push(V, d, i); } } }
+      LB = V.length ? bvhBuild(new Float32Array(V)) : null; LV = V.length ? new Float32Array(V) : null; }
+    const e0 = S.ax[0], e1 = S.ax[1], e2 = [e0[1] * e1[2] - e0[2] * e1[1], e0[2] * e1[0] - e0[0] * e1[2], e0[0] * e1[1] - e0[1] * e1[0]];
+    // one cell of an na x ne grid: GG x GG parallel rays over the lamp's footprint seen from the cell-centre direction ->
+    // [footprint rays, seen with the gear down, seen with the gear up, farthest first occluder of a hidden ray (m)]
+    const cell = (na, ne, je, ia, GG) => {
+      const el = -Math.PI / 2 + (je + 0.5) / ne * Math.PI, az = (ia + 0.5) / na * 2 * Math.PI, ce = Math.cos(el), se = Math.sin(el), ca = Math.cos(az), sa = Math.sin(az);
+      const d = [0, 1, 2].map(q => ce * ca * e0[q] + se * e1[q] + ce * sa * e2[q]);
+      const up0 = Math.abs(d[1]) > 0.99 ? [1, 0, 0] : [0, 1, 0];
+      let R = [d[1] * up0[2] - d[2] * up0[1], d[2] * up0[0] - d[0] * up0[2], d[0] * up0[1] - d[1] * up0[0]]; const rl = Math.hypot(R[0], R[1], R[2]); R = R.map(v => v / rl);
+      const U = [R[1] * d[2] - R[2] * d[1], R[2] * d[0] - R[0] * d[2], R[0] * d[1] - R[1] * d[0]];
+      // the rays cover the bounding rectangle of the lamp's projection (its own vertices +- 1 mm; a lamp with no geometry: its
+      // shape x 1.05, as the ground truth): an unbiased estimate of the seen share of its projected area, with few rays wasted
+      // on a flat lamp patch seen nearly edge-on
+      let r0, r1, u0, u1;
+      if (LV) { r0 = u0 = 1e9; r1 = u1 = -1e9; for (let v = 0; v < LV.length; v += 3) { const x = LV[v] - S.c[0], y = LV[v + 1] - S.c[1], z = LV[v + 2] - S.c[2];
+          const pr = x * R[0] + y * R[1] + z * R[2], pu = x * U[0] + y * U[1] + z * U[2]; if (pr < r0) r0 = pr; if (pr > r1) r1 = pr; if (pu < u0) u0 = pu; if (pu > u1) u1 = pu; }
+        r0 -= 0.001; r1 += 0.001; u0 -= 0.001; u1 += 0.001; }
+      else { const sR = lampSupport(S, R) * 1.05, sU = lampSupport(S, U) * 1.05; r0 = -sR; r1 = sR; u0 = -sU; u1 = sU; }
+      let foot = 0, visD = 0, visU = 0, tf = 0;
+      for (let j = 0; j < GG; j++) for (let i = 0; i < GG; i++) {
+        const u = r0 + (i + 0.5) / GG * (r1 - r0), w = u0 + (j + 0.5) / GG * (u1 - u0);
+        const ox = S.c[0] + R[0] * u + U[0] * w + d[0] * RB, oy = S.c[1] + R[1] * u + U[1] * w + d[1] * RB, oz = S.c[2] + R[2] * u + U[2] * w + d[2] * RB;
+        let t;   // distance from o (outside, toward the viewer) back to the lamp's surface along -d
+        if (LB) { t = bvhFirst(LB, ox, oy, oz, -d[0], -d[1], -d[2], 0, 2 * RB); if (t < 0) continue; }
+        else { const iv = lampRay([ox, oy, oz], [-d[0], -d[1], -d[2]], S); if (!iv) continue; t = iv[0]; }
+        foot++; rays++;
+        const px = ox - d[0] * t, py = oy - d[1] * t, pz = oz - d[2] * t;
+        // an occluder between the lamp's surface (+ TOL) and the viewer: the airframe (A), the gear (G)
+        const tA = bvhFirst(BA, px, py, pz, d[0], d[1], d[2], TOL, RB), occA = tA >= 0;
+        if (occA && !onGear) { if (tA > tf) tf = tA; continue; }
+        const tG = BG ? bvhFirst(BG, px, py, pz, d[0], d[1], d[2], TOL, RB) : -1, occG = tG >= 0;
+        // a lamp with geometry: the ray must also meet an opaque surface at or behind (lamp surface - TOL) - a ray through the
+        // rim of a clear lens cover that meets nothing is not a view of the lamp (the ground truth's rule; a lamp with no lens
+        // cover: the surface found IS an opaque lamp triangle, so the check holds by construction)
+        const back = (B) => !!B && bvhAny(B, px + d[0] * TOL, py + d[1] * TOL, pz + d[2] * TOL, -d[0], -d[1], -d[2], 0, 2 * RB);
+        const bA = LB && S.cover > 0 ? back(BA) : true, bG = !bA ? back(BG) : false;
+        if (!bA && !bG) continue;
+        if (onGear) { if (!occA && !occG) { visD++; visU++; } else tf = Math.max(tf, occA && occG ? Math.min(tA, tG) : occA ? tA : tG); continue; }   // a lamp on a gear leg is off unless the gear is down
+        if (!occG) visD++; else if (tG > tf) tf = tG;
+        if (bA) visU++;
+      }
+      return [foot, visD, visU, tf];
+    };
+    // every cell of the NA x NE grid with G x G rays; a lamp seen nearly edge-on (fewer than MINFOOT rays meet its footprint:
+    // a flat SF50 lamp patch) is cast again with 3G x 3G
+    const data = new Uint8Array(NA * NE * 4), hole = new Uint8Array(NA * NE);
+    for (let je = 0; je < NE; je++) {
+      for (let ia = 0; ia < NA; ia++) {
+        let [foot, visD, visU, tf] = cell(NA, NE, je, ia, LAMPVIS.G);
+        if (foot < LAMPVIS.MINFOOT) [foot, visD, visU, tf] = cell(NA, NE, je, ia, 3 * LAMPVIS.G);
+        const q = je * NA + ia; if (!foot) { hole[q] = 1; continue; }
+        data[q * 4] = Math.round(255 * visD / foot); data[q * 4 + 1] = Math.round(255 * visU / foot); data[q * 4 + 2] = Math.min(255, Math.ceil(tf / LAMPVIS.TFS));
+      }
+      if (yieldMs > 0 && Date.now() - tl > yieldMs) { await yieldTurn(); tl = Date.now(); }
+    }
+    // directions from which the lamp has no projected area at all (a flat patch exactly edge-on): the mean of the cells
+    // around them, so the bilinear lookup next to them is not pulled to 0 (a one-sided lamp seen from behind is hidden by
+    // js/shaders/sprites.js anyway)
+    for (let pass = 0; pass < 4 && hole.some(Boolean); pass++) { const fill = [];
+      for (let q = 0; q < NA * NE; q++) { if (!hole[q]) continue; const je = (q / NA) | 0, ia = q % NA; let n = 0, a0 = 0, a1 = 0, a2 = 0;
+        for (const [dj, di] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) { const j2 = je + dj; if (j2 < 0 || j2 >= NE) continue; const q2 = j2 * NA + (ia + di + NA) % NA; if (hole[q2]) continue; n++; a0 += data[q2 * 4]; a1 += data[q2 * 4 + 1]; a2 = Math.max(a2, data[q2 * 4 + 2]); }
+        if (n) fill.push([q, Math.round(a0 / n), Math.round(a1 / n), a2]); }
+      for (const [q, a0, a1, a2] of fill) { data[q * 4] = a0; data[q * 4 + 1] = a1; data[q * 4 + 2] = a2; hole[q] = 0; } }
+    reachSplat(data, NA, NE, S.c, e0, e1, e2, VX);
+    S.vis = { NA, NE, data }; lamps++;
+    if (yieldMs > 0 && Date.now() - tl > yieldMs) { await yieldTurn(); tl = Date.now(); }
+  }
+  return { ms: Date.now() - t0, rays, lamps, bladeTris, voxels: VX.length / 3 };
+}
+// the opaque surface sampled at <= LAMPVIS.VS into LAMPVIS.VOX voxels -> Float32Array of voxel centres (x, y, z, ...)
+function reachVoxels(sets) {
+  const { VOX, VS } = LAMPVIS, seen = new Set(), out = [];
+  const add = (x, y, z) => { const ix = Math.floor(x / VOX), iy = Math.floor(y / VOX), iz = Math.floor(z / VOX);
+    const key = ((ix + 2048) * 4096 + (iy + 2048)) * 4096 + (iz + 2048); if (seen.has(key)) return; seen.add(key); out.push((ix + 0.5) * VOX, (iy + 0.5) * VOX, (iz + 0.5) * VOX); };
+  for (const T of sets) for (let o = 0; o < T.length; o += 9) {
+    const ax = T[o], ay = T[o + 1], az = T[o + 2], bx = T[o + 3] - ax, by = T[o + 4] - ay, bz = T[o + 5] - az, cx = T[o + 6] - ax, cy = T[o + 7] - ay, cz = T[o + 8] - az;
+    const e = Math.max(Math.hypot(bx, by, bz), Math.hypot(cx, cy, cz), Math.hypot(bx - cx, by - cy, bz - cz));
+    const n = Math.max(1, Math.ceil(e / VS));   // barycentric grid of step e / n <= VS: every point of the triangle is within VS of a sample
+    for (let i = 0; i <= n; i++) for (let j = 0; i + j <= n; j++) { const u = i / n, v = j / n; add(ax + bx * u + cx * v, ay + by * u + cy * v, az + bz * u + cz * v); }
+  }
+  return new Float32Array(out);
+}
+// channel 3 of a table (see LAMPVIS above): the largest along-distance r + bV of every voxel whose cylinder cap reaches each
+// cell (+ one cell diagonal), in TFS units
+function reachSplat(data, NA, NE, c, e0, e1, e2, VX) {
+  const { VOX, VS, RHO, RMIN, TFS } = LAMPVIS, bV = VOX * Math.sqrt(3) / 2 + VS, dAz = 2 * Math.PI / NA, dEl = Math.PI / NE;
+  const rel = new Float64Array(NE), sel = new Float64Array(NE), cel = new Float64Array(NE), del = new Float64Array(NE);
+  const ang = (a1, e1_, a2, e2_) => Math.acos(Math.max(-1, Math.min(1, Math.sin(e1_) * Math.sin(e2_) + Math.cos(e1_) * Math.cos(e2_) * Math.cos(a1 - a2))));
+  for (let j = 0; j < NE; j++) { const el = -Math.PI / 2 + (j + 0.5) * dEl; rel[j] = el; sel[j] = Math.sin(el); cel[j] = Math.cos(el);
+    del[j] = Math.max(ang(0, el, dAz, Math.min(Math.PI / 2, el + dEl)), ang(0, el, dAz, Math.max(-Math.PI / 2, el - dEl))); }
+  const dMax = Math.max(...del);
+  const cdx = new Float64Array(NA * NE), cdy = new Float64Array(NA * NE), cdz = new Float64Array(NA * NE);   // cell-centre directions (lamp frame)
+  for (let j = 0; j < NE; j++) for (let i = 0; i < NA; i++) { const az = (i + 0.5) * dAz, q = j * NA + i; cdx[q] = cel[j] * Math.cos(az); cdy[q] = sel[j]; cdz[q] = cel[j] * Math.sin(az); }
+  for (let k = 0; k < NA * NE; k++) data[k * 4 + 3] = 0;
+  for (let o = 0; o < VX.length; o += 3) {
+    const vx = VX[o] - c[0], vy = VX[o + 1] - c[1], vz = VX[o + 2] - c[2], r = Math.hypot(vx, vy, vz), val = r + bV;
+    if (val <= RMIN) continue;
+    const x = vx * e0[0] + vy * e0[1] + vz * e0[2], y = vx * e1[0] + vy * e1[1] + vz * e1[2], z = vx * e2[0] + vy * e2[1] + vz * e2[2];
+    const ux = x / r, uy = y / r, uz = z / r;
+    const elv = Math.asin(Math.max(-1, Math.min(1, y / r))), azv = Math.atan2(z, x), sv = Math.sin(elv), cv = Math.cos(elv);
+    // a point of the voxel inside the cylinder: the centre's lateral offset r sin(b) <= RHO + bV, its along-distance
+    // r cos(b) > -bV; both hold beyond 90 deg only when r^2 < (RHO + bV)^2 + bV^2
+    const th = r * r < (RHO + bV) * (RHO + bV) + bV * bV ? Math.PI / 2 + Math.asin(Math.min(1, bV / r)) : Math.asin((RHO + bV) / r);
+    const j0 = Math.max(0, Math.floor((elv - th - dMax + Math.PI / 2) / dEl - 0.5)), j1 = Math.min(NE - 1, Math.ceil((elv + th + dMax + Math.PI / 2) / dEl - 0.5));
+    for (let j = j0; j <= j1; j++) {
+      const T = th + del[j]; if (Math.abs(rel[j] - elv) > T) continue;
+      let i0, i1;
+      const den = cel[j] * cv, num = Math.cos(Math.min(Math.PI, T)) - sel[j] * sv;
+      if (T >= Math.PI || den < 1e-9 || num / den <= -1) { i0 = 0; i1 = NA - 1; }
+      else { const cc = num / den; if (cc > 1) continue; const half = Math.acos(cc); i0 = Math.ceil((azv - half) / dAz - 0.5); i1 = Math.floor((azv + half) / dAz - 0.5); if (i1 - i0 >= NA - 1) { i0 = 0; i1 = NA - 1; } }
+      const row = j * NA, cd = Math.cos(del[j]), sd = Math.sin(del[j]);
+      // the voxel's points lie at most r cos(b - dj) + bV in front over the cell's support (directions within dj of its centre)
+      for (let i = i0; i <= i1; i++) { const q = row + ((i % NA) + NA) % NA, cb = cdx[q] * ux + cdy[q] * uy + cdz[q] * uz;
+        const v = (cb >= cd ? r : r * (cb * cd + Math.sqrt(Math.max(0, 1 - cb * cb)) * sd)) + bV; if (v <= RMIN) continue;
+        const code = Math.min(255, Math.ceil(v / TFS)); if (data[q * 4 + 3] < code) data[q * 4 + 3] = code; }
+    }
+  }
+}
+// bilinear lookup of a table (as the GPU's LINEAR filter on the RGBA8 atlas: columns wrap, rows clamp) - for tools and tests:
+// the seen share; lampVisFar: the farthest occluder distance (m) of channel 2; lampVisReach: the aircraft's reach in front of
+// the lamp (m) of channel 3
+export function lampVisLookup(vis, S, dir, gearUp = 0) { const v = lampVisSample(vis, S, dir); return v[0] * (1 - gearUp) + v[1] * gearUp; }
+export function lampVisFar(vis, S, dir) { return lampVisSample(vis, S, dir)[2] * 255 * LAMPVIS.TFS; }
+export function lampVisReach(vis, S, dir) { return lampVisSample(vis, S, dir)[3] * 255 * LAMPVIS.TFS; }
+function lampVisSample(vis, S, dir) {
+  const e0 = S.ax[0], e1 = S.ax[1], e2 = [e0[1] * e1[2] - e0[2] * e1[1], e0[2] * e1[0] - e0[0] * e1[2], e0[0] * e1[1] - e0[1] * e1[0]];
+  const l = Math.hypot(dir[0], dir[1], dir[2]) || 1, x = (dir[0] * e0[0] + dir[1] * e0[1] + dir[2] * e0[2]) / l, y = (dir[0] * e1[0] + dir[1] * e1[1] + dir[2] * e1[2]) / l, z = (dir[0] * e2[0] + dir[1] * e2[1] + dir[2] * e2[2]) / l;
+  const { NA, NE, data } = vis; const el = Math.asin(Math.max(-1, Math.min(1, y))), az = Math.atan2(z, x);
+  const fx = (az / (2 * Math.PI)) * NA - 0.5, fy = Math.min(NE - 0.5, Math.max(0.5, (el / Math.PI + 0.5) * NE)) - 0.5;
+  const x0 = Math.floor(fx), y0 = Math.floor(fy), ax = fx - x0, ay = fy - y0;
+  const g = (ix, iy, ch) => data[((Math.min(NE - 1, Math.max(0, iy)) * NA + (((ix % NA) + NA) % NA)) * 4) + ch] / 255;
+  const v = (ch) => (g(x0, y0, ch) * (1 - ax) + g(x0 + 1, y0, ch) * ax) * (1 - ay) + (g(x0, y0 + 1, ch) * (1 - ax) + g(x0 + 1, y0 + 1, ch) * ax) * ay;
+  return [v(0), v(1), v(2), v(3)];
+}
+function inLamp(p, S, k) { const u = S.ax.map(a => (p[0] - S.c[0]) * a[0] + (p[1] - S.c[1]) * a[1] + (p[2] - S.c[2]) * a[2]);
+  return S.shape === 'box' ? u.every((v, i) => Math.abs(v) <= S.h[i] * k) : Math.hypot(u[0] / S.h[0], u[1] / S.h[1], u[2] / S.h[2]) <= k; }
+function lampSupport(S, v) { const p = S.ax.map((a, k) => S.h[k] * (a[0] * v[0] + a[1] * v[1] + a[2] * v[2])); return S.shape === 'box' ? Math.abs(p[0]) + Math.abs(p[1]) + Math.abs(p[2]) : Math.hypot(p[0], p[1], p[2]); }
+function lampRay(o, d, S) {   // ray o + t d vs the lamp shape -> [t0, t1] | null
+  const oc = [o[0] - S.c[0], o[1] - S.c[1], o[2] - S.c[2]], os = S.ax.map(a => oc[0] * a[0] + oc[1] * a[1] + oc[2] * a[2]), ds = S.ax.map(a => d[0] * a[0] + d[1] * a[1] + d[2] * a[2]);
+  if (S.shape === 'box') { let t0 = -1e30, t1 = 1e30; for (let k = 0; k < 3; k++) { const dk = Math.abs(ds[k]) < 1e-9 ? 1e-9 : ds[k]; let a = (-S.h[k] - os[k]) / dk, b = (S.h[k] - os[k]) / dk; if (a > b) [a, b] = [b, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, b); } return t0 <= t1 ? [t0, t1] : null; }
+  const oo = os.map((v, k) => v / S.h[k]), dd = ds.map((v, k) => v / S.h[k]); const a = dd[0] * dd[0] + dd[1] * dd[1] + dd[2] * dd[2], b = oo[0] * dd[0] + oo[1] * dd[1] + oo[2] * dd[2], c = oo[0] * oo[0] + oo[1] * oo[1] + oo[2] * oo[2] - 1;
+  const D = b * b - a * c; if (D < 0) return null; const s = Math.sqrt(D); return [(-b - s) / a, (-b + s) / a];
+}
+// compact BVH over a triangle soup (9 floats per triangle): midpoint split of the centroid box, flattened typed arrays
+function bvhBuild(T) {
+  const n = T.length / 9, idx = new Uint32Array(n), cen = new Float32Array(n * 3), bb = new Float32Array(n * 6);
+  for (let i = 0; i < n; i++) for (let k = 0; k < 3; k++) { const a = T[i * 9 + k], b = T[i * 9 + 3 + k], c = T[i * 9 + 6 + k]; bb[i * 6 + k] = Math.min(a, b, c); bb[i * 6 + 3 + k] = Math.max(a, b, c); cen[i * 3 + k] = (a + b + c) / 3; idx[i] = i; }
+  const cap = 2 * n + 1, lo = new Float32Array(cap * 3), hi = new Float32Array(cap * 3), left = new Int32Array(cap), start = new Uint32Array(cap), cnt = new Uint32Array(cap), axis = new Uint8Array(cap);
+  let nn = 0;
+  const mk = (s, e) => { const id = nn++; let x0 = 1e30, y0 = 1e30, z0 = 1e30, x1 = -1e30, y1 = -1e30, z1 = -1e30;
+    for (let j = s; j < e; j++) { const i = idx[j] * 6; x0 = Math.min(x0, bb[i]); y0 = Math.min(y0, bb[i + 1]); z0 = Math.min(z0, bb[i + 2]); x1 = Math.max(x1, bb[i + 3]); y1 = Math.max(y1, bb[i + 4]); z1 = Math.max(z1, bb[i + 5]); }
+    lo[id * 3] = x0; lo[id * 3 + 1] = y0; lo[id * 3 + 2] = z0; hi[id * 3] = x1; hi[id * 3 + 1] = y1; hi[id * 3 + 2] = z1; start[id] = s; cnt[id] = e - s; left[id] = -1; return id; };
+  const work = [mk(0, n)];
+  while (work.length) { const id = work.pop(); const s = start[id], e = s + cnt[id]; if (e - s <= 4) continue;
+    const c0 = [1e30, 1e30, 1e30], c1 = [-1e30, -1e30, -1e30]; for (let j = s; j < e; j++) for (let k = 0; k < 3; k++) { const v = cen[idx[j] * 3 + k]; c0[k] = Math.min(c0[k], v); c1[k] = Math.max(c1[k], v); }
+    let ax = 0; if (c1[1] - c0[1] > c1[ax] - c0[ax]) ax = 1; if (c1[2] - c0[2] > c1[ax] - c0[ax]) ax = 2;
+    if (c1[ax] - c0[ax] < 1e-9) continue;
+    const mid = 0.5 * (c0[ax] + c1[ax]); let i0 = s, i1 = e - 1;
+    while (i0 <= i1) { if (cen[idx[i0] * 3 + ax] < mid) i0++; else { const t = idx[i0]; idx[i0] = idx[i1]; idx[i1] = t; i1--; } }
+    if (i0 === s || i0 === e) i0 = (s + e) >> 1;
+    const a = mk(s, i0), b = mk(i0, e); left[id] = a; cnt[id] = 0; start[id] = b; axis[id] = ax; work.push(a, b); }
+  return { T, idx, lo, hi, left, start, cnt, axis };
+}
+const BVH_STACK = new Int32Array(512);
+function bvhWalk(B, ox, oy, oz, dx, dy, dz, tmin, tmax, any) {
+  const ix = 1 / (Math.abs(dx) < 1e-12 ? 1e-12 : dx), iy = 1 / (Math.abs(dy) < 1e-12 ? 1e-12 : dy), iz = 1 / (Math.abs(dz) < 1e-12 ? 1e-12 : dz);
+  const { T, idx, lo, hi, left, start, cnt, axis } = B; const st = BVH_STACK; let sp = 0, best = tmax; st[sp++] = 0;
+  while (sp) { const id = st[--sp], j = id * 3;
+    let a = (lo[j] - ox) * ix, b = (hi[j] - ox) * ix, t0 = Math.min(a, b), t1 = Math.max(a, b);
+    a = (lo[j + 1] - oy) * iy; b = (hi[j + 1] - oy) * iy; t0 = Math.max(t0, Math.min(a, b)); t1 = Math.min(t1, Math.max(a, b));
+    a = (lo[j + 2] - oz) * iz; b = (hi[j + 2] - oz) * iz; t0 = Math.max(t0, Math.min(a, b)); t1 = Math.min(t1, Math.max(a, b));
+    if (t1 < Math.max(t0, tmin) || t0 > best) continue;
+    if (left[id] < 0) { for (let q = start[id], e = start[id] + cnt[id]; q < e; q++) { const o = idx[q] * 9;
+        const ax = T[o], ay = T[o + 1], az = T[o + 2], e1x = T[o + 3] - ax, e1y = T[o + 4] - ay, e1z = T[o + 5] - az, e2x = T[o + 6] - ax, e2y = T[o + 7] - ay, e2z = T[o + 8] - az;
+        const px = dy * e2z - dz * e2y, py = dz * e2x - dx * e2z, pz = dx * e2y - dy * e2x, det = e1x * px + e1y * py + e1z * pz; if (det > -1e-14 && det < 1e-14) continue;
+        const inv = 1 / det, sx = ox - ax, sy = oy - ay, sz = oz - az, u = (sx * px + sy * py + sz * pz) * inv; if (u < 0 || u > 1) continue;
+        const qx = sy * e1z - sz * e1y, qy = sz * e1x - sx * e1z, qz = sx * e1y - sy * e1x, v = (dx * qx + dy * qy + dz * qz) * inv; if (v < 0 || u + v > 1) continue;
+        const t = (e2x * qx + e2y * qy + e2z * qz) * inv; if (t > tmin && t < best) { if (any) return t; best = t; } } }
+    // near child first (popped first): the left child holds the centroids below the split on its axis - a first-hit query
+    // then shrinks `best` early and skips more boxes (OD4 it. 6 round 2: ~same hits, fewer box tests)
+    else { const ax = axis[id], pos = ax === 0 ? dx > 0 : ax === 1 ? dy > 0 : dz > 0;
+      if (pos) { st[sp++] = start[id]; st[sp++] = left[id]; } else { st[sp++] = left[id]; st[sp++] = start[id]; } } }
+  return best < tmax ? best : -1;
+}
+const bvhAny = (B, ox, oy, oz, dx, dy, dz, tmin, tmax) => bvhWalk(B, ox, oy, oz, dx, dy, dz, tmin, tmax, true) >= 0;
+const bvhFirst = (B, ox, oy, oz, dx, dy, dz, tmin, tmax) => bvhWalk(B, ox, oy, oz, dx, dy, dz, tmin, tmax, false);

@@ -389,3 +389,71 @@ The app's own loop is unchanged (`frame(wall)` without options behaves as before
 - Engine-side state the views would use if it existed: the sample provenance (`docs/phase3_video.md` section 8 item 7) and
   a "parked" / "stopped" phase for an aircraft at rest that the classifier still calls "Taxiing" (its engine keeps idling
   in the views until the phase changes).
+
+## 12. Fix round 5 (2026-11-21): the views' flap rule after a landing (finding R2)
+
+**App shell unchanged** (`live.html`, `entry.js`, `app.js`, `ui.js`, `controls.js` and the hooks of section 11 are as before). The
+change is in the views: `js/live/aircraft.js` now exports the detailed models' flap rule as a pure function, `flapRuleOf(set, prev, D,
+agl, phase, S, tr)` (`AircraftViews.flapRule` calls it), so `tools/traffic/replay_engine.mjs` can gate it per track
+(`postland_toflaps_view_frames`, `docs/phase2_run.md` 13.2). The rule reads the engine's new arrival state `tr._postLand` (set by a
+landing roll; cleared in the air, parked or in a hangar, by a departure - lined up, a take-off / touch-and-go / stop-and-go roll, a
+run-up, a take-off plan - or after 5 min at rest): while arriving, a hold-short no longer sets the take-off flaps; the landing setting
+stays on the landing roll and the runway taxi, the flaps go up once the aircraft has left the runway (the after-landing check, [inf])
+and stay up to parking. The take-off latch of round 4 iteration 3 (hold → taxi onto the runway → line-up) is unchanged for departures.
+
+**Checks run** (2026-11-21, this machine, SwiftShader; `livetest.mjs` desktop 1280 x 720, snapshot mode, RELAY=none, on the local
+type-only video packs; a local job, images local only, looked at every image): 14 snapshot instants on the two OD3 heroes, each with the
+driven state, the wheel contacts against `site.groundY` and a 90-frame freeze test (E8); the last column is the same job on the
+iteration-3 tree (local run of round 4 iteration 3):
+
+| case | label (engine) | flaps | iteration 3 |
+|---|---|---|---|
+| S parked | Parked | 0 | 0 |
+| S taxiing to the hold | Taxiing | 0 | 0 |
+| S at the hold | Holding short | 15 | 15 |
+| S taxiing onto the runway | Taxiing | 15 | 15 |
+| S lined up / take-off roll / climbing out (196 ft, gear up) | Lined up / Take-off roll / Climbing out | 15 | 15 |
+| P final / flare / landing roll | Final / Final / Landing roll | 40 | 40 |
+| P at the post-landing hold-short | Holding short | **0** | 15 |
+| P taxiing on from the hold-short | Taxiing | **0** | 15 |
+| P taxi-in (`P_taxiin`, 9.1 kt) | Taxiing | **0** | 15 |
+| P stopped at the end of the taxi-in | Stopped | **0** | 15 |
+
+(A snapshot opened at an instant draws the model at its flap target at once; in continuous play the PC-12's flaps are still retracting
+through the post-landing hold-short - 21° → 5° in video P, up from frame ~2185, `docs/phase3_video.md` 16 as corrected in round 5
+iteration 2, G7.)
+
+The wheels touch the ground within -4.2 / +1.8 cm in every ground case; E8: no pose, label or card change in 90 frames at the frozen
+clock in any case; 0 page errors in the final runs. The first run had one page error (`Unexpected identifier` in
+`js/shaders/sprites.js`, OD4's file, caught mid-edit by OD4's own workflow; it stopped the P hold / taxi-in / stop cases); those three
+were re-run once the file was valid again, with 0 errors. The video pipeline's spot stills of the same movements are in
+`docs/phase3_video.md` section 16.
+
+## 13. Fix round 5, iteration 2 (2026-11-21): bank, labels, hand-overs, the QA contact probe (findings G3, G4, G5, G7, G10)
+
+No app-shell file changed. What the app shows changed with the engine (`docs/phase2_run.md` section 14):
+- **Bank.** The drawn bank of every fixed-wing aircraft is the coordinated bank of a smoothed turn rate (the target's mean turn rate over
+  ±1 s, kept within 8° of the body's own turn; on reconstructed plans the body's own turn smoothed over 0.4 s): no more wing rock in
+  fix-following turns. The detailed models' aileron / control deflections follow the drawn bank rate (`js/live/aircraft.js controls`,
+  unchanged), so they no longer flick with every fix either.
+- **Labels.** 'Lined up' is shown only below 2.5 m/s; a body still moving onto the line-up point reads 'Taxiing' / 'Taxiing on the
+  runway', and a rolling start that never stops (video S's SF50) reads Taxiing → Taxiing on the runway 28L → Take-off roll 28L (the snapshot
+  case at S's line-up instant, 7.3 kt, reads 'Taxiing'; section 12's table said 'Lined up').
+- **Decision (e).** A forced take-off of an aircraft that was not yet rolling is drawn only within its type's roll limit; weekend case J
+  (a large-cabin business jet) is again hidden with the 1.5-s fade (no plan within its limit exists).
+- **Ground hand-overs (G5, partly fixed).** A body whose moving target falls back to it at a mode hand-over runs on past its trail end
+  instead of stopping dead (a landing roll released from its 'behind' hold no longer drops 32.6 -> 6.4 kt in a frame); dead stops in front of
+  a standing target remain (`docs/phase2_run.md` 14.7).
+- **G7.** Section 12's table is a snapshot table: a snapshot opened at an instant draws the model at its flap target at once (note added
+  there); in continuous play the PC-12's flaps retract through the post-landing hold-short.
+
+**G10 - the livetest wheel-contact probe.** The recheck's local job read the wheel contacts 11.4 m below the ground in four of eight ground
+cases on the current tree, while the images showed the wheels on the pavement. Cause: the job read `view.worldPt(contact)` right after the
+model had loaded and the clock was paused - before a drawn frame had updated the view's model matrix. The local
+job (`out/`, not committed; jobs are not changed) now draws two frames at the frozen clock before it reads the contacts. Re-run on the final tree (2026-11-21, this machine, SwiftShader, desktop 1280 x 720, RELAY=none, local type-only video packs; 7 ground
+instants: S at the hold, taxiing on with the take-off flaps, rolling onto 28L; P at the post-landing hold-short, taxiing in, stopped, at the
+exit): the wheel contacts read -2.3 / +2.1 cm both at the first read and after the 90-frame freeze; E8: no pose, label or card change;
+0 page errors; all 21 images looked at (wheels on the pavement; flaps 15° on the SF50, up on the PC-12 - a snapshot draws the flap target
+at once). The recheck's job, run once more for three of the cases: its FIRST case of the session read -1,142 to -1,146 cm, the same case
+after the freeze +0.3 / -0.3 / -1.1 cm, its later cases correctly - the first loaded model's matrix is set by the first drawn frame. A probe
+artefact: the app draws frames continuously, and nothing drawn is affected.

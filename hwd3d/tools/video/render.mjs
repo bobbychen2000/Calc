@@ -205,12 +205,13 @@ async function scout() {
 const FIX_CLEAR = 18;
 // plan gates per shot kind (px per frame / px per frame^2 at 1920 x 1080, m): the hero's screen speed and its change, the
 // background's pan speed from the camera's rotation (captured frames carry motion blur, shutter 0.5: a 40-px/frame pan is
-// a 20-px streak), the dolly's lag error, the hero's rest jitter in a static shot, (round 5, V3) the camera's own acceleration in data
-// time in a chase shot (camAcc, m/s2: a stuttering hero made the whole frame judder); job.gates[kind] and shot.gates override
+// a 20-px streak), the dolly's lag error, the hero's rest jitter in a static shot, (round 5, V3) the camera's judder in a chase shot
+// (camAcc: its per-frame step speeding up / slowing down / speeding up again by more than that fraction of the step - a stuttering hero
+// made the whole frame judder; js/video/camera.js); job.gates[kind] and shot.gates override
 // (with a `why`, printed) [inf: design limits]
 const GATES = {
   establish: { heroPx: 4, heroAcc: 3, pan: 5, restJitter: 0 },
-  chase: { heroPx: 6, heroAcc: 1.5, pan: 40, camAcc: 3 },
+  chase: { heroPx: 6, heroAcc: 1.5, pan: 40, camAcc: 0.05 },
   dolly: { heroPx: 4, heroAcc: 1.5, pan: 5, lagErr: 3 },
   fixed: { heroPx: 32, heroAcc: 3, pan: 50 },
   tower: { heroPx: 20, heroAcc: 3, pan: 30 },
@@ -255,7 +256,7 @@ async function plan() {
   wr('cams.json', { planKey: pk, scoutKey: sk, app: M.tree, frames: cams.length, shots: shots.map(s => ({ kind: s.kind, name: s.name, f0: s.f0, f1: s.f1 })), cuts: shots.map(s => s.f0).filter(f => f > 0),
     report, gates: { ok: !fails.length, fails }, capTab: tab, capIdx, cams });
   for (const r of report) log(`shot ${String(r.name).padEnd(16)} ${String(r.f0).padStart(5)}-${String(r.f1).padStart(5)} (${(r.frames / FPS).toFixed(1).padStart(5)} s)  camAGL>=${r.camAglMin}  step<=${r.stepMax} (rel ${r.relStepMax})  ac>=${r.acClearMin}  fixt>=${r.fixtureMin}  |ndc|<=${r.ndcMax}  off ${r.offScreen} occl ${r.occluded} raised ${r.raised} pushed ${r.pushed}  fov ${r.fov}`
-    + `\n      hero px/f<=${r.heroPxMax}@${r.heroPxAt} px/f2<=${r.heroAccMax}@${r.heroAccAt}  pan px/f<=${r.bgPxMax}@${r.bgPxAt} (>20: ${r.bgOver20})${r.lagErrMax != null ? `  lag err<=${r.lagErrMax} m@${r.lagErrAt} vmax ${r.carAtVmax} f` : ''}  rest jitter ${r.restJitter}${r.restJitterAt != null ? '@' + r.restJitterAt : ''}  cam acc<=${r.camAccMax} m/s2@${r.camAccAt}`);
+    + `\n      hero px/f<=${r.heroPxMax}@${r.heroPxAt} px/f2<=${r.heroAccMax}@${r.heroAccAt}  pan px/f<=${r.bgPxMax}@${r.bgPxAt} (>20: ${r.bgOver20})${r.lagErrMax != null ? `  lag err<=${r.lagErrMax} m@${r.lagErrAt} vmax ${r.carAtVmax} f` : ''}  rest jitter ${r.restJitter}${r.restJitterAt != null ? '@' + r.restJitterAt : ''}  cam judder<=${r.camAccMax}@${r.camAccAt}`);
   log(`plan: ${cams.length} frames, ${(cams.length / FPS).toFixed(1)} s of video; captions: ${tab.length} states, ${held} frames held (< 0.5 s states)`);
   if (fails.length) { log('GATES FAILED (render refuses this plan without --nogate):'); for (const f of fails) log('  ' + f); process.exitCode = 3; }
   else log('gates: all passed');

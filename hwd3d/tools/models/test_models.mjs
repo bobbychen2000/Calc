@@ -32,7 +32,9 @@
 //      aft underside / half-breadth / body-plan sections, dorsal fin, winglet side view, wing front view, absolute heights
 //  11. the drawable (js/aircraft/detailed.js, Node with a stub WebGL context): every item carries the screen-door alpha in
 //      both the loaded and the placeholder path, every field js/live/aircraft.js sets is synced to the placeholder, the
-//      aircraft programs read uAlpha, spinning groups keep the aircraft's motion in their prevModel, CPU arrays released
+//      aircraft programs read uAlpha, spinning groups keep the aircraft's motion in their prevModel, CPU arrays released;
+//      (OD4 iteration 4) the cabin back-face rule only on cabin-enclosing parts (G2), the flight-deck ids / shares / glazing
+//      veil (G3), the two-pass glass (G4), and the lens-occlusion test of aircraft light sprites (G1, runtime)
 //  12. provenance: js/aircraft/models/SOURCES.json hashes = the files on disk (and = the builder's own record); every image
 //      in docs/phase3 has a caption in docs/phase3/SOURCES.json, and every caption that claims to show the current model
 //      names the current file hash (fix round 1: stills and SOURCES of a superseded SF50 build were presented as current);
@@ -45,10 +47,11 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { initGL, Program } from '../../js/gl.js';
-import { convertGLB, parseGLB, KINDS } from '../../js/aircraft/glb.js';
+import { convertGLB, parseGLB, KINDS, lampTables, lampVisLookup, lampVisFar, lampVisReach, LAMPVIS } from '../../js/aircraft/glb.js';
 import { Kinematics, xform, rotAbout } from '../../js/aircraft/kinematics.js';
-import { MODELS, MODEL_LOAD_OPTS, withModelFrame } from '../../js/aircraft/models.js';
-import { DetailedAircraft, SYNC_KEYS, ACOBJ_FS, ACOBJ_SHADOW_FS, GLASS_FS, PROP_BLUR, CABIN_SKY_SHARE, GLASS_VEIL_SUN, cabinSunT } from '../../js/aircraft/detailed.js';
+import { MODELS, MODEL_LOAD_OPTS, withModelFrame, AC_PART_MAT, AC_PART_CABIN, AC_PART_DECK, AC_PART_DECK_GLASS } from '../../js/aircraft/models.js';
+import { DetailedAircraft, SYNC_KEYS, ACOBJ_FS, ACOBJ_SHADOW_FS, GLASS_FS, PROP_BLUR, CABIN_SKY_SHARE, GLASS_VEIL_SUN, GLASS_VEIL_SUN_WS, GLASS_VEIL_SUN_SIDE, DECK_SKY_SHARE, DECK_SUN_T, DECK_RAMP_DEFAULT, LAMPVIS_BS_MARGIN, cabinSunT } from '../../js/aircraft/detailed.js';
+import { Scene } from '../../js/scene.js';
 import { gaDims } from '../../js/aircraft/ga_dims.js';
 
 const HWD = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -694,7 +697,7 @@ for (const [type, e] of Object.entries(MODELS)) {
     // placeholder path (model not resolved yet) and loaded path
     const pending = new DetailedAircraft(T, { model: new Promise(() => {}) }); pending.alpha = 0.3;
     const itP = pending.items([0, 0, 50]);
-    const m2 = convertGLB(models[type].buf, MODEL_LOAD_OPTS(type)); m2.keepCpu = false;
+    const m2 = convertGLB(models[type].buf, MODEL_LOAD_OPTS(type)); m2.keepCpu = false; m2.deck = MODELS[type].deck || null;   // as loadModel (it. 6: the deck ramp / windshield veil per type)
     const ac = new DetailedAircraft(T, { model: m2 }); await ac.ready;
     ac.pos = [0, 0, 0]; ac.fwd = [0, 0, -1]; ac.alpha = 0.3; ac.rotor = 178; ac.step(1 / 30);
     const it1 = ac.items([20, 5, 0]);
@@ -754,6 +757,46 @@ for (const [type, e] of Object.entries(MODELS)) {
     const veilOK = GLASS_VEIL_SUN === 0 && gU.length > 0 && gU.every(u => u.uVeilSun === GLASS_VEIL_SUN && u.uKind === 0)
       && /glz \? uVeilSun : 1\.0/.test(GLASS_FS) && /bool glz = int\(vExt\.z \+ 0\.5\) == 24/.test(GLASS_FS);
     check(type, 'drawable: glazing veil without the direct sun (GLASS_VEIL_SUN 0; lens covers keep it) (review F1)', veilOK, { GLASS_VEIL_SUN, glass_draws: gU.length });
+    // OD4 iteration 4 (reviews G2 / G3): material ids per (part, material) as the loader assigns them (AC_PART_MAT through
+    // convertGLB). 25 (a plain / paint material whose BACK face is the cabin) only on the parts that enclose the cabin - G2:
+    // the cabin rule was applied to EVERY back face (the main-gear wells); 26 on the flight deck's plain / interior materials
+    // (displays keep 22); 27 on the flight-deck glazing (windshield, crew side windows), 24 on the cabin windows
+    const rec = new Map();
+    convertGLB(models[type].buf, { ...MODEL_LOAD_OPTS(type), partMatId: (id, part, mt) => { const r = AC_PART_MAT(id, part, mt); rec.set(`${part}|${mt.name}`, { part, mat: mt.name, blend: !!mt.blend, cls: mt.cls, id: r }); return r; } });
+    const E = [...rec.values()];
+    const bad25 = E.filter(e => e.id === 25 && !AC_PART_CABIN.test(e.part || '')).map(e => `${e.part}|${e.mat}`);
+    const n25 = E.filter(e => e.id === 25).length;
+    const backRule = /bool cabin = mat == 23 \|\| \(back && mat == 25\)/.test(lightPath) && !/mat == 22 \|\| back\b/.test(lightPath);
+    const wells = E.filter(e => /^(gear_bays|nose_bay|wing_[LR]|belly_fairing)$/.test(e.part || '')).map(e => `${e.part}|${e.mat}=${e.id}`);
+    check(type, 'drawable: cabin rule on back faces only of the parts that enclose the cabin (material id 25), not the gear wells / wings (review G2)',
+      backRule && n25 > 0 && bad25.length === 0 && wells.every(w => !/=25$/.test(w)), { id25_entries: n25, outside_cabin_parts: bad25, wells_wings: wells.slice(0, 12), shader_rule: backRule });
+    const deck = E.filter(e => AC_PART_DECK.test(e.part || '')), deckBad = deck.filter(e => !e.blend && !(e.id === 26 || e.id === 22)).map(e => `${e.part}|${e.mat}=${e.id}`);
+    // (OD4 iteration 6, recheck R4: the deck's windshield keeps 27, its crew side windows take 28 - their veils are fitted apart)
+    const g27 = E.filter(e => e.id === 27 || e.id === 28), g27bad = g27.filter(e => !(AC_PART_DECK_GLASS.test(e.part || '') && e.cls === 'glass' && (e.id === 27) === /^glass_windshield$/.test(e.mat))).map(e => `${e.part}|${e.mat}=${e.id}`);
+    const g24 = E.filter(e => e.id === 24 && e.cls === 'glass').map(e => `${e.part}|${e.mat}`);
+    const dk = async (doors) => { const x = new DetailedAircraft(T, { model: m2, R: fakeR }); await x.ready; x.pos = [0, 0, 0]; x.fwd = [0, 0, -1]; x.setControls({ doors }, true); x.step(1 / 30);
+      const it = x.items([20, 5, 0]); const o = it.filter(i => i.prog === 'acobj'), gl = it.filter(i => i.prog === 'acglass' && typeof i.uniforms === 'function').map(i => i.uniforms()).filter(u => u.uKind === 0);
+      return { amb: [...new Set(o.map(i => i.uniforms.uDeckAmb))], sun: [...new Set(o.map(i => i.uniforms.uDeckSun))], veilWs: [...new Set(gl.map(u => u.uVeilSunWs))], veilSide: [...new Set(gl.map(u => u.uVeilSunSide))] }; };
+    const dClosed = await dk({}), dOpen = doorIds.length ? await dk({ [doorIds[0]]: 1 }) : null;
+    const deckOK = deck.some(e => e.id === 26) && deckBad.length === 0 && g27.length > 0 && g27bad.length === 0 && g24.length > 0
+      && dClosed.amb.length === 1 && dClosed.amb[0] === DECK_SKY_SHARE && dClosed.sun.length === 1 && dClosed.sun[0] === DECK_SUN_T
+      && dClosed.veilWs.length === 1 && dClosed.veilWs[0] === (MODELS[type].deck && Number.isFinite(MODELS[type].deck.veilWs) ? MODELS[type].deck.veilWs : GLASS_VEIL_SUN_WS) && dClosed.veilSide.length === 1 && dClosed.veilSide[0] === GLASS_VEIL_SUN_SIDE
+      && (dOpen === null || (dOpen.amb.length === 1 && dOpen.amb[0] === 1 && dOpen.sun.length === 1 && dOpen.sun[0] === 1))
+      && /int gid = int\(vExt\.z \+ 0\.5\); bool wsg = gid == 27, sdg = gid == 28;/.test(GLASS_FS) && /wsg \? uVeilSunWs : sdg \? uVeilSunSide : glz \? uVeilSun : 1\.0/.test(GLASS_FS)
+      && /deck = mat == 26 \|\| mat == 22/.test(lightPath) && /if \(deck\) \{ sunT = clamp\(uDeckSun, 0\.0, 1\.0\); ambT = clamp\(uDeckAmb, 0\.0, 1\.0\); \}/.test(lightPath);
+    check(type, 'drawable: flight deck lit by its own shares (id 26, displays 22; DECK_SKY_SHARE / DECK_SUN_T closed, 1 with a door open), its windshield (id 27) and crew side windows (id 28) take the sun in their veils, cabin windows 24 (review G3, it. 6 R4: the windshield veil is the type\'s deck.veilWs when the registry gives one - the SF50, which has no reference boxes)', deckOK,
+      { deck_entries: deck.map(e => `${e.mat}=${e.id}`), deck_bad: deckBad, deck_glass: g27.map(e => `${e.part}|${e.mat}=${e.id}`), deck_glass_bad: g27bad, cabin_glass: g24, DECK_SKY_SHARE, DECK_SUN_T, GLASS_VEIL_SUN_WS, GLASS_VEIL_SUN_SIDE, closed: dClosed, door_open: dOpen });
+    // OD4 iteration 4 (review G4): the glazing is drawn in two passes, back faces first (cullFront, the farther sort key), then
+    // front faces (back faces culled) - three.js r160's order for a transparent double-sided material; one noCull pass blended
+    // the near and far panes of the wrap-around windshield in index order (a dotted hatch); the propeller disc stays one pass
+    const gItems = gIt.items([20, 5, 0]).filter(i => i.prog === 'acglass');
+    const byMesh = new Map(); for (const i of gItems) { const u = typeof i.uniforms === 'function' ? i.uniforms() : i.uniforms; if (u.uKind !== 0) continue; if (!byMesh.has(i.mesh)) byMesh.set(i.mesh, []); byMesh.get(i.mesh).push(i); }
+    const cp = [20, 5, 0], twoBad = [];
+    for (const [, L] of byMesh) { const b = L.filter(i => i.cullFront), f = L.filter(i => !i.cullFront);
+      if (!(L.length === 2 && b.length === 1 && f.length === 1 && !b[0].noCull && !f[0].noCull && b[0].sortKey(cp) > f[0].sortKey(cp))) twoBad.push(L.map(i => ({ cullFront: !!i.cullFront, noCull: !!i.noCull }))); }
+    const rsrc0 = fs.readFileSync(path.join(HWD, 'js/renderer.js'), 'utf8');
+    const passOK = byMesh.size > 0 && twoBad.length === 0 && /else if \(it\.cullFront\) gl\.cullFace\(gl\.FRONT\)/.test(rsrc0) && /else if \(it\.cullFront\) gl\.cullFace\(gl\.BACK\)/.test(rsrc0);
+    check(type, 'drawable: glazing drawn back faces first, then front faces (two items per glass group; review G4)', passOK, { glass_groups: byMesh.size, bad: twoBad.slice(0, 3) });
     // OD4 iteration 2 (review F1): paintFit materials take the registry's fitted linear colour at load (alpha kept, the glb's
     // factor recorded as baseGlb), every other factor is the glb's; with palette false every factor is the glb's
     const raw = convertGLB(models[type].buf, MODEL_LOAD_OPTS(type, { palette: false })), fit = MODELS[type].paintFit || {};
@@ -781,6 +824,186 @@ for (const [type, e] of Object.entries(MODELS)) {
   const dsrc = fs.readFileSync(path.join(HWD, 'js/aircraft/detailed.js'), 'utf8');
   const pullOK = /B\[o \+ 13\] = s\.pull \? 1 : 0/.test(ssrc) && /iData\.y > 0\.5 \? min\(max\(s, 3\.0\), d \* 0\.5\) : 0\.0/.test(spsrc) && /for \(const sp of S\) sp\.pull = true/.test(dsrc);
   check('runtime', 'sprites: detailed-aircraft lights pulled by 3 m (or their drawn radius), other sprites unchanged (review F7)', pullOK, 'scene.js iData.y, sprites.js pull, detailed.js lightSprites');
+  // OD4 iteration 4 (review G1): the pull let a light show through the airframe (the PC-12 belly beacon on the wing root from
+  // above, the landing lamp through the wing). A flagged sprite is faded by an occlusion test of its lens centre against a
+  // copy of the near pass's opaque depth (renderer copyDepth, made after the opaque near draws and before the blended ones,
+  // only in frames whose items ask for it); unflagged sprites (airfield lights) are not tested and no copy is made for them
+  const fR = { progs: {}, H: 1080, curCam: { dir: [0, 0, -1], up: [0, 1, 0], fov: 0.7 }, sceneDepth: null, noDepth: { tex: 'noDepth' },
+    addProgram(n, vs, fs2, d = {}) { this.progs[n] = { main: new Program(vs, fs2, d) }; } };
+  const sc = new Scene(fR, { items: [] });
+  const spr = (S) => S.items.find(i => i.prog === 'sprite');
+  sc.staticLights.push({ p: [0, 1, 0], s: 0.3, c: [1, 1, 1], i: 1 });
+  const s0 = spr(sc.frame(0, [0, 2, 10]));
+  const acD = { items: () => [], lightSprites: () => [{ p: [1, 1, 0], s: 0.2, c: [1, 0, 0], i: 2, pull: true }] }; sc.add(acD);
+  const s1 = spr(sc.frame(0, [0, 2, 10])); const u1 = s1 && s1.uniforms(); fR.sceneDepth = { tex: 'copy' }; const u2 = s1 && s1.uniforms();
+  const ri = (re) => rsrc.search(re);
+  const iOpaque = ri(/this\.drawItems\(scene\.items, 'main', C\.vpNear, C\.pos, planesNear, it => !it\.blend/), iCopy = ri(/this\.sceneDepth = scene\.items\.some\(it => it\.needsDepth\) \? this\.copyDepth\(\) : null/), iBlend = ri(/this\.drawItems\(blended, 'main', C\.vpNear/);
+  const occOK = !!s0 && s0.needsDepth === false && !!s1 && s1.needsDepth === true && u1.uOcclude === 0 && u1.uSceneDepth === fR.noDepth && u2.uOcclude === 1 && u2.uSceneDepth.tex === 'copy'
+    && iOpaque > 0 && iCopy > iOpaque && iBlend > iCopy && /gl\.blitFramebuffer\(0, 0, this\.W, this\.H, 0, 0, this\.W, this\.H, gl\.DEPTH_BUFFER_BIT, gl\.NEAREST\)/.test(rsrc)
+    && /if \(iData\.y > 0\.5 && uOcclude > 0\.5\) \{ float lv = lensVisible\(p\); I \*= lv; if \(lv <= 0\.0\) s = 0\.0; \}/.test(spsrc)
+    && /const float LENS_TAP = 0\.55, LENS_E0 = 0\.002, LENS_KPX = 0\.5, LENS_ZEPS = 1\.8e-7/.test(spsrc);
+  check('runtime', 'sprites: detailed-aircraft lights faded by a lamp occlusion test against the opaque depth; airfield-only frames make no depth copy (review G1, it. 5 F1)', occOK,
+    { airfield_only_needsDepth: s0 && s0.needsDepth, with_aircraft_needsDepth: s1 && s1.needsDepth, uOcclude_without_copy: u1 && u1.uOcclude, uOcclude_with_copy: u2 && u2.uOcclude, copy_between_opaque_and_blended_near_draws: iOpaque > 0 && iCopy > iOpaque && iBlend > iCopy });
+}
+
+// OD4 iteration 5 (review F1 / F3 / F4): the lamp shapes, the sprite layout, the lens test's tap classes and the flight-deck region
+{
+  const spsrc5 = fs.readFileSync(path.join(HWD, 'js/shaders/sprites.js'), 'utf8'), ssrc5 = fs.readFileSync(path.join(HWD, 'js/scene.js'), 'utf8');
+  const gsrc5 = fs.readFileSync(path.join(HWD, 'js/gl.js'), 'utf8'), dsrc5 = fs.readFileSync(path.join(HWD, 'js/aircraft/detailed.js'), 'utf8');
+  for (const type of ['PC12', 'SF50']) {
+    const m = convertGLB(fs.readFileSync(path.join(HWD, `js/aircraft/models/${type.toLowerCase()}.glb`)), MODEL_LOAD_OPTS(type));
+    const drawn = KINDS.filter(k => m.lights[k]); const bad = [];
+    for (const k of drawn) { const o = m.lights[k].occ;
+      if (!o || !Array.isArray(o.c) || o.h.some(v => !(v > 0 && v < 0.2)) || !/^(ellipsoid|box)$/.test(o.shape) || Math.hypot(...o.c.map((v, i) => v - m.lights[k].p[i])) > 0.06) bad.push(k);
+      const ax = o ? o.ax : null; if (ax && Math.abs(ax[0][0] * ax[1][0] + ax[0][1] * ax[1][1] + ax[0][2] * ax[1][2]) > 1e-6) bad.push(k + ':axes'); }
+    const geomLamps = drawn.filter(k => m.lights[k].occ.geom).length;
+    // PC-12: every lamp but the registry landing lights and the clear nose-strut lens is an opaque body (geom); SF50: the strobes are one-sided patches (face)
+    const typeOK = type === 'PC12' ? ['navL', 'navR', 'tail', 'beaconTop', 'beaconBot', 'strobeL', 'strobeR'].every(k => m.lights[k].occ.geom && m.lights[k].occ.shape === 'ellipsoid') && !m.lights.landL.occ.geom && !m.lights.taxi.occ.geom
+      : ['strobeL', 'strobeR'].every(k => m.lights[k].occ.face && m.lights[k].occ.face.cos > -1);
+    check(type, 'lights: every drawn light has its lamp shape (glb.js lampShape: centre within 6 cm of the anchor, half extents 0-0.2 m, orthonormal axes) (it. 5, F1 / F3)', bad.length === 0 && typeOK,
+      { drawn, bad, geom_lamps: geomLamps, shapes: Object.fromEntries(drawn.map(k => [k, `${m.lights[k].occ.shape}${m.lights[k].occ.geom ? '' : ' virtual'}${m.lights[k].occ.face ? ' one-sided' : ''} h ${m.lights[k].occ.h.map(v => v.toFixed(3)).join('/')}`])) });
+    check(type, 'flight deck: the registry gives the deck region (models.js deck.xAft) [inf]', !!(MODELS[type].deck && Number.isFinite(MODELS[type].deck.xAft)), MODELS[type].deck);
+  }
+  const layoutOK = /const SPRITE_F = 40;/.test(ssrc5) && /setInstances\(B\.subarray\(0, n \* SPRITE_F\), n, SPRITE_F \/ 4\)/.test(ssrc5) && /B\[o \+ 31\] = f \? f\.cos : -2/.test(ssrc5)
+    && /setInstances\(f32, n, nVec4 = 4\)/.test(gsrc5) && /layout\(location=9\) in vec4 iL0; layout\(location=10\) in vec4 iL1; layout\(location=11\) in vec4 iL2; layout\(location=12\) in vec4 iL3;/.test(spsrc5);
+  check('runtime', 'sprites: 40 floats per sprite (10 instance vec4s since it. 6), the lamp shape packed into iData.zw / iL0-iL3 (it. 5, F1)', layoutOK, 'scene.js SPRITE_F, gl.js setInstances nVec4, sprites.js iL0..iL3');
+  const tapOK = /if \(ts < iv\.x - E\) den \+= 1\.0;/.test(spsrc5) && /else if \(ts <= iv\.y \+ E \|\| geom < 0\.5\) \{ num \+= 1\.0; den \+= 1\.0; \}/.test(spsrc5)
+    && /float fp = dc \* uFovScale;/.test(spsrc5) && /float e = LENS_E0 \+ LENS_KPX \* fp;/.test(spsrc5) && /dot\(toC \/ dc, iL3\.xyz\) <= iL3\.w\) return 0\.0;/.test(spsrc5) && !/LENS_PER_M/.test(spsrc5);
+  check('runtime', 'sprites: a tap counts as seen only when the first surface lies in the lamp\'s own volume; occluders count against, background / beside-the-lamp taps not at all; per-pixel tolerance; one-sided lamps hidden from behind (it. 5, F1 / F3)', tapOK, 'sprites.js lensVisible');
+  const deckOK = /uniform vec4 uDeckPlane;/.test(dsrc5) && /uniform float uDeckRamp;/.test(dsrc5) && /float fd = smoothstep\(-max\(uDeckRamp, 1e-3\), 0\.0, dot\(uDeckPlane\.xyz, vWP\) \+ uDeckPlane\.w\);/.test(dsrc5)
+    && /uDeckPlane: deckPlane, uDeckRamp: deckRamp/.test(dsrc5) && DECK_RAMP_DEFAULT === 1.0;
+  check('runtime', 'acobj: cabin-rule surfaces in the flight-deck region take the deck\'s shares, fading into the cabin\'s over the type\'s deck ramp (it. 5 F4, it. 6 R5)', deckOK, 'detailed.js ACOBJ_FS uDeckPlane / uDeckRamp');
+}
+
+// OD4 iteration 6 (recheck of iteration 5, R1 / R2 / R4 / R5; docs/phase3_models.md 15.10): the lamps' self-visibility tables,
+// their agreement with an independent ray cast, the sub-pixel regime of the lens test, the sprite / atlas wiring, the
+// per-type deck ramp. Round 2 (recheck F1 / F2, 15.11): no propeller blades in the tables (the PC-12 taxi light through the
+// disc), the reach channel (an upper bound of the aircraft's own surfaces in front of a lamp) against a ray cast, the
+// external-occluder taps against it
+{
+  const spsrc6 = fs.readFileSync(path.join(HWD, 'js/shaders/sprites.js'), 'utf8'), ssrc6 = fs.readFileSync(path.join(HWD, 'js/scene.js'), 'utf8');
+  const dsrc6 = fs.readFileSync(path.join(HWD, 'js/aircraft/detailed.js'), 'utf8'), msrc6 = fs.readFileSync(path.join(HWD, 'js/aircraft/models.js'), 'utf8');
+  const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const crs = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], nrm3 = (a) => { const l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; };
+  const sup = (S, v) => { const p = S.ax.map((a, k) => S.h[k] * dot3(a, v)); return S.shape === 'box' ? p.reduce((q, x) => q + Math.abs(x), 0) : Math.hypot(...p); };
+  const LC = Object.fromEntries(['LENS_R1', 'LENS_R2', 'LENS_G0', 'LENS_G1', 'LENS_QMIN'].map(k => [k, +((spsrc6.match(new RegExp(k + ' = ([0-9.]+)')) || [])[1])]));
+  for (const type of ['PC12', 'SF50']) {
+    const m = convertGLB(fs.readFileSync(path.join(HWD, `js/aircraft/models/${type.toLowerCase()}.glb`)), MODEL_LOAD_OPTS(type));
+    const t0 = Date.now(); const st = await lampTables(m); const ms = Date.now() - t0;
+    const drawn = KINDS.filter(k => m.lights[k] && m.lights[k].occ);
+    const bad = drawn.filter(k => { const v = m.lights[k].occ.vis; return !v || v.NA !== LAMPVIS.NA || v.NE !== LAMPVIS.NE || !(v.data instanceof Uint8Array) || v.data.length !== v.NA * v.NE * 4; });
+    check(type, 'lens: every drawn light has its self-visibility table (glb.js lampTables, NA x NE x [gear down, gear up, farthest occluder, reach]) (it. 6, R1 / R2; round 2, F2)', bad.length === 0 && st.lamps === drawn.length,
+      { lamps: st.lamps, drawn: drawn.length, bad, NA: LAMPVIS.NA, NE: LAMPVIS.NE, rays: st.rays, voxels: st.voxels, ms });
+    // round 2 (recheck F1): the propeller blades are not occluders of the tables (a lamp is on only with the engine running,
+    // where the blades are replaced by the translucent disc): every triangle of a part below a 'pitch' mover below the 'spin'
+    // mover is left out, and the PC-12's nose-leg taxi light is seen through the disc from ground cameras ahead
+    const P6 = m.parts, bladeMv = (pi) => { let pitch = false; for (let q = pi; q >= 0; q = P6[q].parent) { const kk = P6[q].pivot && P6[q].pivot.kind; if (kk === 'pitch') pitch = true; else if (kk === 'spin') return pitch; } return false; };
+    let nBladeTris = 0; for (const g of m.groups) if (g.opaque && g.opaque.idx && g.mover >= 0 && bladeMv(g.mover)) nBladeTris += g.opaque.idx.length / 3;
+    const hasProp = P6.some(p => p.pivot && p.pivot.kind === 'pitch');
+    const taxiAt = []; if (type === 'PC12' && m.lights.taxi && m.lights.taxi.occ) { const S = m.lights.taxi.occ;
+      for (const [el, az] of [[2, -16], [2, 16], [2, -14], [-2, 18], [-2, -16], [6, 12], [6, -12]]) { const e = el * Math.PI / 180, z = az * Math.PI / 180; taxiAt.push([el, az, +lampVisLookup(S.vis, S, [Math.cos(e) * Math.cos(z), Math.sin(e), Math.cos(e) * Math.sin(z)], 0).toFixed(3)]); } }
+    check(type, 'lens: the propeller blades are not in the tables\' occluders (round 2, F1: lights are on with the engine running, the blades are then the disc); the PC-12 taxi light\'s table is >= 0.9 from ground cameras ahead (el -2..6 deg, az +-12..18 deg; with the rest blades 0.00-0.22)',
+      st.bladeTris === nBladeTris && (hasProp ? nBladeTris > 0 : nBladeTris === 0) && taxiAt.every(r => r[2] >= 0.9),
+      { blade_triangles_left_out: st.bladeTris, blade_triangles_in_model: nBladeTris, taxi_table_el_az_value: taxiAt });
+    // independent ray cast (no BVH: per direction, only the triangles whose projection overlaps the lamp's footprint): the
+    // seen share of the lamp's projected area from 16 directions per light (lampTables' definition: G x G parallel rays over
+    // the footprint, a ray in it when it meets the lamp's own triangles - lamp material + clear cover, or the shape of a lamp
+    // with no geometry -, seen when no opaque surface lies more than TOL in front of the lamp's surface and one lies at or
+    // behind it), against the table's bilinear value
+    const T = [], Tm = [], Tg = [], LTr = new Map();
+    for (const g of m.groups) { for (const [d, isGlass] of [[g.opaque, false], [g.glass, true]]) { if (!d || !d.idx) continue;
+      for (let i = 0; i < d.idx.length; i += 3) { const a = d.idx[i] * 3, b = d.idx[i + 1] * 3, c = d.idx[i + 2] * 3; const mt = m.materials[d.mat[d.idx[i]]];
+        const tri = [d.pos[a], d.pos[a + 1], d.pos[a + 2], d.pos[b], d.pos[b + 1], d.pos[b + 2], d.pos[c], d.pos[c + 1], d.pos[c + 2]];
+        if (isGlass) { if (mt && mt.cls === 'clear') { const key = g.mover; if (!LTr.has(key)) LTr.set(key, []); LTr.get(key).push({ tri, mat: mt.name, cls: mt.cls }); } continue; }
+        if (g.mover >= 0 && bladeMv(g.mover)) continue;   // round 2 (F1): the tables' occluders hold no propeller blade
+        T.push(tri); Tm.push(mt ? mt.name : ''); Tg.push(g.mover); } } }
+    const hit = (tri, o, dv) => { const e1 = sub3(tri.slice(3, 6), tri.slice(0, 3)), e2 = sub3(tri.slice(6, 9), tri.slice(0, 3)), p = crs(dv, e2), det = dot3(e1, p); if (Math.abs(det) < 1e-14) return -1;
+      const sv = sub3(o, tri.slice(0, 3)), u = dot3(sv, p) / det; if (u < 0 || u > 1) return -1; const q = crs(sv, e1), v = dot3(dv, q) / det; if (v < 0 || u + v > 1) return -1; return dot3(e2, q) / det; };
+    const fibD = (N) => Array.from({ length: N }, (_, i) => { const y = 1 - 2 * (i + 0.5) / N, r = Math.sqrt(1 - y * y), ph = i * Math.PI * (3 - Math.sqrt(5)); return [r * Math.cos(ph), y, r * Math.sin(ph)]; });
+    let n = 0, sumErr = 0, maxErr = 0, worst = null; const G = 9, TOL = LAMPVIS.TOL;
+    let nF = 0, okF = 0, worstF = null;   // the farthest-occluder channel (the near-camera guard) against the same ray cast
+    let nR = 0, okR = 0, worstR = null, sumLoose = 0;   // the reach channel (round 2, F2) against the same ray cast
+    for (const k of drawn) { const L = m.lights[k], S = L.occ;
+      const inS = (p) => { const u = S.ax.map(a => dot3(sub3(p, S.c), a)); return S.shape === 'box' ? u.every((v, i) => Math.abs(v) <= S.h[i] * 1.05) : Math.hypot(u[0] / S.h[0], u[1] / S.h[1], u[2] / S.h[2]) <= 1.05; };
+      const own = []; if (S.geom) { T.forEach((tri, i) => { if (Tg[i] === L.part && Tm[i] === S.mat && inS([(tri[0] + tri[3] + tri[6]) / 3, (tri[1] + tri[4] + tri[7]) / 3, (tri[2] + tri[5] + tri[8]) / 3])) own.push(tri); });
+        if (S.cover > 0) for (const t of LTr.get(L.part) || []) if (inS([(t.tri[0] + t.tri[3] + t.tri[6]) / 3, (t.tri[1] + t.tri[4] + t.tri[7]) / 3, (t.tri[2] + t.tri[5] + t.tri[8]) / 3])) own.push(t.tri); }
+      for (const dv of fibD(16)) {
+        if (S.face && dot3(dv, S.face.n) <= S.face.cos) continue;   // one-sided lamp from behind: hidden by the shader's face rule
+        const R = nrm3(crs(dv, Math.abs(dv[1]) > 0.99 ? [1, 0, 0] : [0, 1, 0])), U = crs(R, dv); const sR = sup(S, R) * 1.05, sU = sup(S, U) * 1.05;
+        const pr = (p) => [dot3(sub3(p, S.c), R), dot3(sub3(p, S.c), U)];
+        const near = [], nearR = [], RH = LAMPVIS.RHO; for (let i = 0; i < T.length; i++) { const t = T[i]; const a = pr(t.slice(0, 3)), b = pr(t.slice(3, 6)), c = pr(t.slice(6, 9));
+          if (Math.max(a[0], b[0], c[0]) < -RH || Math.min(a[0], b[0], c[0]) > RH || Math.max(a[1], b[1], c[1]) < -RH || Math.min(a[1], b[1], c[1]) > RH) continue; nearR.push(t);
+          if (Math.max(a[0], b[0], c[0]) < -sR || Math.min(a[0], b[0], c[0]) > sR || Math.max(a[1], b[1], c[1]) < -sU || Math.min(a[1], b[1], c[1]) > sU) continue; near.push(t); }
+        // round 2 (F2): the reach - rays parallel to the direction inside the disc of radius LAMPVIS.RHO around the lamp centre,
+        // coming from the camera side: the largest along-distance of a first hit in front of the lamp's plane
+        { let rTrue = 0; const GR = 9; for (let j = 0; j < GR; j++) for (let i = 0; i < GR; i++) { const u = ((i + 0.5) / GR * 2 - 1) * RH, w = ((j + 0.5) / GR * 2 - 1) * RH; if (u * u + w * w > RH * RH) continue;
+            const o = [0, 1, 2].map(q => S.c[q] + R[q] * u + U[q] * w + dv[q] * 40), md = dv.map(x => -x); let first = Infinity; for (const t of nearR) { const h = hit(t, o, md); if (h > 0 && h < first) first = h; }
+            if (isFinite(first) && 40 - first > rTrue) rTrue = 40 - first; }
+          const rTab = lampVisReach(S.vis, S, dv); nR++; if (rTab >= rTrue - LAMPVIS.RMIN - 1e-6) okR++; else if (!worstR) worstR = `${k} dir ${dv.map(x => x.toFixed(2)).join(',')} table ${rTab.toFixed(2)} m ray cast ${rTrue.toFixed(2)} m`;
+          sumLoose += Math.max(0, rTab - rTrue); }
+        let foot = 0, vis = 0, indTf = 0;
+        for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) { const u = ((i + 0.5) / G * 2 - 1) * sR, w = ((j + 0.5) / G * 2 - 1) * sU;
+          const o = [0, 1, 2].map(q => S.c[q] + R[q] * u + U[q] * w + dv[q] * 40), md = dv.map(x => -x);
+          let tl = Infinity; if (S.geom) { for (const t of own) { const h = hit(t, o, md); if (h > 0 && h < tl) tl = h; } }
+          else { const oc = sub3(o, S.c), os = S.ax.map(a => dot3(oc, a)), ds = S.ax.map(a => dot3(md, a));
+            if (S.shape === 'box') { let a0 = -1e30, a1 = 1e30; for (let q = 0; q < 3; q++) { const dq = Math.abs(ds[q]) < 1e-9 ? 1e-9 : ds[q]; let x = (-S.h[q] - os[q]) / dq, y = (S.h[q] - os[q]) / dq; if (x > y) [x, y] = [y, x]; a0 = Math.max(a0, x); a1 = Math.min(a1, y); } if (a0 <= a1) tl = a0; }
+            else { const oo = os.map((v, q) => v / S.h[q]), dd = ds.map((v, q) => v / S.h[q]); const A = dot3(dd, dd), B = dot3(oo, dd), C = dot3(oo, oo) - 1, D = B * B - A * C; if (D >= 0) tl = (-B - Math.sqrt(D)) / A; } }
+          if (!isFinite(tl)) continue; foot++;
+          let first = Infinity, lastOcc = -Infinity; for (const t of near) { const h = hit(t, o, md); if (h > 0 && h < first) first = h; if (h > 0 && h < tl - TOL && h > lastOcc) lastOcc = h; }
+          if (isFinite(lastOcc)) indTf = Math.max(indTf, tl - lastOcc);
+          if (S.geom ? (first >= tl - TOL && isFinite(first)) : !(first < tl - TOL)) vis++; }
+        if (foot < 4) continue;
+        if (indTf > 0.2) { const tf = lampVisFar(S.vis, S, dv); nF++; if (tf >= 0.5 * Math.min(indTf, 25.5)) okF++; else if (!worstF) worstF = `${k} dir ${dv.map(x => x.toFixed(2)).join(',')} table ${tf.toFixed(1)} m ray cast ${indTf.toFixed(1)} m`; }
+        const truth = vis / foot, tab = lampVisLookup(S.vis, S, dv, 0), e = Math.abs(tab - truth); n++; sumErr += e; if (e > maxErr) { maxErr = e; worst = `${k} dir ${dv.map(x => x.toFixed(2)).join(',')} table ${tab.toFixed(2)} ray cast ${truth.toFixed(2)}`; } } }
+    check(type, 'lens: the self-visibility tables agree with an independent ray cast (16 directions per light; mean |table - ray cast| <= 0.08: the table is bilinear over 2.8 deg cells) (it. 6, R1 / R2)', n > 0 && sumErr / n <= 0.08,
+      { samples: n, mean_abs_err: +(sumErr / n).toFixed(3), max_abs_err: +maxErr.toFixed(3), worst });
+    check(type, 'lens: the tables\' farthest-occluder channel (the near-camera guard: a camera nearer than an occluder of its direction sees past it) holds at least half the ray cast\'s distance in >= 90 % of the directions with an occluder over 0.2 m away (it. 6)', nF > 0 && okF / nF >= 0.9,
+      { directions: nF, ok: okF, worst: worstF });
+    check(type, 'lens: the tables\' reach channel is an upper bound of the aircraft\'s own surfaces in front of each lamp within LAMPVIS.RHO of the line of sight (ray cast, every direction; up to LAMPVIS.RMIN below it, the lamp housing the shader\'s margin covers), so the external-occluder taps never take this aircraft for another object (round 2, F2)',
+      nR > 0 && okR === nR, { directions: nR, ok: okR, worst: worstR, mean_excess_m: nR ? +(sumLoose / nR).toFixed(3) : null, RHO: LAMPVIS.RHO, RMIN: LAMPVIS.RMIN });
+    // the sub-pixel regime: from which distance every light takes a share of its table (w > 0: smaller projected half extent
+    // under LENS_R2 px from every direction), and from which distance it is the table alone (under LENS_R1 px), at the app's /
+    // the videos' sharpest view (fov 30 deg, 1080 lines). Beyond the first, a lamp the table sees is never drawn at 0 whatever
+    // its sub-pixel position (iteration 5 blinked beyond ~60 m); below LENS_R1 px the test is the table alone by construction
+    const fs30 = 2 * Math.tan(15 * Math.PI / 180) / 1080; let dTab = 0, dAny = 0, worstK = null, worstA = null;
+    for (const k of drawn) { const S = m.lights[k].occ; let mx = 0;
+      const eS = (v) => Math.hypot(...S.ax.map((a, q) => S.h[q] * dot3(a, v)));   // the shader's measure: the ellipsoid of half extents h
+      for (const dv of fibD(200)) { const R = nrm3(crs(dv, Math.abs(dv[1]) > 0.99 ? [1, 0, 0] : [0, 1, 0])), U = crs(R, dv); mx = Math.max(mx, Math.min(eS(R), eS(U))); }
+      const d1 = mx / (LC.LENS_R1 * fs30), d2 = mx / (LC.LENS_R2 * fs30); if (d1 > dTab) { dTab = d1; worstK = k; } if (d2 > dAny) { dAny = d2; worstA = k; } }
+    check(type, 'lens: from 80 m (the nearest range where iteration 5 blinked) every light takes a share of its table even at fov 30 deg / 1080 lines, so a lamp the table sees is never drawn at 0; below LENS_R1 px the test is the table alone (it. 6, R1)', dAny <= 80,
+      { every_light_table_share_beyond_m: +dAny.toFixed(1), lamp: worstA, table_alone_beyond_m: +dTab.toFixed(1), largest_lamp: worstK, LENS_R1: LC.LENS_R1, LENS_R2: LC.LENS_R2 });
+    // R5: the deck-light ramp ends before the first seat row aft of the deck boundary
+    const dk = MODELS[type].deck, seatPart = type === 'PC12' ? 'cabin_interior' : 'cabin_seats';
+    const mp = convertGLB(fs.readFileSync(path.join(HWD, `js/aircraft/models/${type.toLowerCase()}.glb`)), { ...MODEL_LOAD_OPTS(type), groupBy: 'part' });
+    const sg = mp.groups.find(g => g.key === seatPart); let front = -1e9;
+    if (sg && sg.opaque) for (let i = 0; i < sg.opaque.pos.length; i += 3) { const x = sg.opaque.pos[i]; if (x < dk.xAft - 0.25 && x > front) front = x; }
+    // (vertices within 0.25 m aft of the boundary are a strip of the crew-seat bulkhead lining, not a seat row: PC-12 4 + 4 vertices at x 1.75 / 1.95)
+    // (a type whose ramp reaches that row says why in deck.rampNote: the PC-12, no bulkhead behind its crew seats)
+    check(type, 'flight deck: the deck-light ramp ends before the first cabin seat row aft of the deck boundary, or the registry says why not (models.js deck.ramp / rampNote; it. 6, R5)',
+      Number.isFinite(dk.ramp) && (dk.xAft - dk.ramp > front || (typeof dk.rampNote === 'string' && dk.rampNote.length > 20)) && (type !== 'SF50' || dk.xAft - dk.ramp > front),
+      { xAft: dk.xAft, ramp: dk.ramp, ramp_ends_at: +(dk.xAft - dk.ramp).toFixed(3), seat_row_front_edge: +front.toFixed(3), part: seatPart, rampNote: dk.rampNote || null });
+  }
+  // shader / scene / drawable / registry wiring of the iteration-6 test
+  const shOK = /const float LENS_R1 = 1\.5, LENS_R2 = 3\.0, LENS_G0 = 0\.04, LENS_G1 = 0\.2, LENS_QMIN = 0\.5;/.test(spsrc6)
+    && /layout\(location=13\) in vec4 iL4; layout\(location=14\) in vec4 iL5;/.test(spsrc6) && /uniform sampler2D uLampVis; uniform float uLampVisNE;/.test(spsrc6)
+    && /qn = tab \? smoothstep\(tt\.y, tt\.y \+ LENS_TF, dc\) : 0\.0;/.test(spsrc6) && /float w = qn \* \(1\.0 - smoothstep\(LENS_R1, LENS_R2, min\(length\(h \* pr\), length\(h \* pu\)\) \/ fp\)\);/.test(spsrc6) && /float g = mix\(1\.0, smoothstep\(LENS_G0, LENS_G1, T\), qn\);/.test(spsrc6)
+    && /v5 = \(den > 0\.0 \? num \/ den : 1\.0\) \* g;/.test(spsrc6) && /return mix\(max\(v5, vt \* vx \* smoothstep\(LENS_N0, LENS_N1, T\) \* qn\), vt \* vx, w\);/.test(spsrc6) && /const float LENS_N0 = 0\.25, LENS_N1 = 0\.5, LENS_TF = 0\.5;/.test(spsrc6) && /if \(!tab\) return v5;/.test(spsrc6)
+    && /float b = dot\(oc, dir\), D = b \* b - cB, tb = D > 0\.0 \? max\(0\.0, -b - sqrt\(D\)\) : dc;/.test(spsrc6) && /if \(!\(ts < tc - LENS_E0 - LENS_ZEPS \/ max\(dzdt, 1e-12\)\)\) num \+= 1\.0;/.test(spsrc6);
+  check('runtime', 'sprites: below LENS_R1..R2 px the lens test is the lamp\'s self-visibility table x the share of taps not hidden by another object; above it the iteration-5 test vetoed by the table, never below the table where the table clearly sees the lamp; nearer than an occluder of its direction, the depth test alone (it. 6, R1 / R2)', shOK, LC);
+  // round 2 (F2): a tap's depth is another object's when it lies more than the aircraft's reach (table channel A) + LENS_XM in
+  // front of the lamp's plane - the bounding sphere only for a tap whose texel lies beyond LENS_RHO (= LAMPVIS.RHO) of the line
+  // of sight; LENS_XM covers the housing left out of the reach (LAMPVIS.RMIN)
+  const LX = Object.fromEntries(['LENS_XM', 'LENS_RHO', 'LENS_TXL'].map(k => [k, +((spsrc6.match(new RegExp(k + ' = ([0-9.]+)')) || [])[1])]));
+  const exOK = LX.LENS_RHO === LAMPVIS.RHO && LX.LENS_XM >= LAMPVIS.RMIN && LX.LENS_TXL >= Math.SQRT1_2
+    && /return vec3\(mix\(t\.r, t\.g, gearUp\), t\.b \* 25\.5, t\.a \* 25\.5\);/.test(spsrc6) && /float rx = tt\.z \+ LENS_XM;/.test(spsrc6)
+    && /float tR = \(dc - rx\) \/ max\(dot\(dir, nc\), 1e-3\), off = length\(vec2\(float\(i\) \* qR, float\(j\) \* qU\)\) \+ LENS_TXL \* fp;/.test(spsrc6)
+    && /float tc = mix\(tb, max\(tb, tR\), 1\.0 - smoothstep\(0\.8 \* LENS_RHO, LENS_RHO, off\)\);/.test(spsrc6) && Math.abs(LAMPVIS.TFS * 255 - 25.5) < 1e-9;
+  check('runtime', 'sprites: the external-occluder taps count depth more than the aircraft\'s reach + LENS_XM in front of the lamp (not only depth in front of its bounding sphere: another aircraft or a wall 1-3 m in front of a lamp hides it); LENS_RHO = LAMPVIS.RHO, LENS_XM >= LAMPVIS.RMIN (round 2, F2)', exOK, { ...LX, RHO: LAMPVIS.RHO, RMIN: LAMPVIS.RMIN });
+  const scOK = /const SPRITE_F = 40;/.test(ssrc6) && /class LampVisAtlas/.test(ssrc6) && /B\[o \+ 36\] = L\.vis \? this\.lampVis\.band\(L\.vis\) : -1; B\[o \+ 37\] = L\.gearUp \|\| 0;/.test(ssrc6)
+    && /uLampVis: LV\.tex \|\| this\.noLampVis, uLampVisNE: LV\.ne \|\| 1/.test(ssrc6) && /internal: gl\.RGBA8, format: gl\.RGBA, repeat: true/.test(ssrc6)
+    && /vis: o\.vis \|\| null, gearUp: o\.vis \? gearSequence\(this\.gear\)\.leg : 0, bs: this\._bs/.test(dsrc6) && LAMPVIS_BS_MARGIN > 0
+    && /m\.lampVis = await lampTables\(m, \{ yieldMs: \d+ \}\);/.test(msrc6);
+  check('runtime', 'sprites: the lamp tables reach the shader (models.js loadModel computes them, detailed.js lampWorld passes table / gear-up share / bounding sphere, scene.js packs 40 floats and keeps the RGBA8 atlas) (it. 6)', scOK, 'models.js loadModel, detailed.js lampWorld, scene.js put / LampVisAtlas');
 }
 
 // ---- 12. provenance: SOURCES.json hashes, docs/phase3 captions
