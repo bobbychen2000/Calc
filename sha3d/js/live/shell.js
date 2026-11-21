@@ -54,10 +54,12 @@ function legendLines(app) {
 
 function setupLegend(app) {
   const ui = app.ui;
-  // what other packages put into the body before us (gates with ?legend=1: "Observed / inferred<br>Stands: ..."), without their header
-  const prev = (ui.el.legend.innerHTML || '').replace(/^\s*<b>Observed \/ inferred<\/b>(<br>)?/, '').trim();
+  // keyed lines other packages added before us (P2f: gates' 'gates' line), kept and placed after the stand-label line;
+  // raw html another package may have put into the body without addLegendLine is kept as one 'packages' line
+  const keep = [...ui.legendLines.entries()];
+  const prev = keep.length ? '' : (ui.el.legend.innerHTML || '').replace(/^\s*<b>Observed \/ inferred<\/b>(<br>)?/, '').trim();
   ui.setLegend('');
-  for (const [k, h] of legendLines(app)) ui.addLegendLine(k, h);
+  for (const [k, h] of legendLines(app)) { ui.addLegendLine(k, h); if (k === 'stands') for (const [k2, h2] of keep) ui.addLegendLine(k2, h2); }
   if (prev) ui.addLegendLine('packages', prev);
   const q = new URLSearchParams(location.search).get('legend');
   ui.openLegend(q === '1' ? true : q === '0' ? false : !!store.get('legend', false));
@@ -99,7 +101,7 @@ function status(app, now) {
     const t = cfg.snapshot ? cfg.snapshot.now : now;
     const sub = localFmt(t, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     if (mi.relayWanted) ui.setStatus({ state: 'err', text: 'Relay offline', sub: 'snapshot ' + sub, title: 'The relay was requested (?relay=1) but did not answer' + (mi.relayError ? ' (' + mi.relayError + ')' : '') + ': showing the recorded snapshot instead.' });
-    else ui.setStatus({ state: 'snap', text: 'Snapshot · ' + localFmt(t, { day: 'numeric', month: 'short' }), sub, title: 'Snapshot: recorded ZSSS weather at ' + (cfg.snapshot ? cfg.snapshot.nowUtc : '') + ' (no network). No traffic: open ADS-B does not cover Hongqiao; simulated traffic comes in Phase 3.' });
+    else ui.setStatus({ state: 'snap', text: 'Snapshot · ' + localFmt(t, { day: 'numeric', month: 'short' }), sub: localFmt(t, { hour: '2-digit', minute: '2-digit' }) + ' CST', title: 'Snapshot: recorded ZSSS weather at ' + (cfg.snapshot ? cfg.snapshot.nowUtc : '') + ' (no network). No traffic: open ADS-B does not cover Hongqiao; simulated traffic comes in Phase 3.' });
   } else {
     ui.setStatus({ state: 'wait', text: 'Static scene', sub: 'no relay', title: 'No relay: no live weather (clear default) and no traffic. Start sha_live_server.py for live ZSSS weather.' });
   }

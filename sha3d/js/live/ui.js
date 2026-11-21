@@ -108,8 +108,16 @@ export class UI {
     e.innerHTML = html; this.legendLines.set(key, html);
   }
   openLegend(on) { const b = this.el.legend; b.hidden = !on || !b.innerHTML; $('#lg-h').setAttribute('aria-expanded', String(!b.hidden)); this.el.legendBox.classList.toggle('open', !b.hidden); }
-  /** One-line note at the top of the list panel (e.g. "No traffic yet"). */
-  setNote(text) { const e = this.el.note; if (e._t === text) return; e._t = text; e.textContent = text || ''; e.hidden = !text; }
+  /** Note at the top of the list panel (e.g. "No traffic yet"; the UI shell's weather and runway lines). */
+  setNote(text) { this._noteMain = text || ''; this._renderNote(); }
+  /** P2f: an extra keyed note line under the main note ('' removes it), e.g. the gates package's DEBUG ?park= line, so
+   *  the shell's once-a-second setNote() no longer overwrites it. */
+  setNoteLine(key, text, opts = {}) { if (!this._noteLines) this._noteLines = new Map(); if (text) this._noteLines.set(key, { text, first: !!opts.first }); else this._noteLines.delete(key); this._renderNote(); }
+  _renderNote() {
+    const L = this._noteLines ? [...this._noteLines.values()] : [];   // {first: true} lines go above the main note (phone peek shows the top lines)
+    const t = [...L.filter(l => l.first).map(l => l.text), this._noteMain, ...L.filter(l => !l.first).map(l => l.text)].filter(Boolean).join('\n');
+    const e = this.el.note; if (e._t === t) return; e._t = t; e.textContent = t; e.hidden = !t;
+  }
 
   // ------------------------------------------------------------ status bar
   setStatus({ state, text, sub, title }) {

@@ -154,7 +154,6 @@ registerExtension({
     const QN = { high: [1800, 1600], medium: [1300, 1100], ultra: [4000, 2500], low: [1000, 700] }[(app.qa.info().quality) || 'high'] || [1800, 1600];
     // ---- debug parking
     const byName = new Map(state.gates.map(g => [g.name, g]));
-    const baseNote = (app.ui.el && app.ui.el.note && app.ui.el.note._t) || ''; // (the core's note, restored when nothing is parked)
     async function park(name, icao = null, animate = false) {
       const g = byName.get(String(name)); if (!g) return { ok: false, why: 'no stand ' + name };
       const ty = (icao || debugType(g)).toUpperCase(); const m = TYPE_MODELS[ty]; const T = m && TYPES[m.t];
@@ -180,9 +179,10 @@ registerExtension({
       sys.setOccupant(P.bridgeGate, null, false, Date.now(), null, null);
       state.parked.delete(String(name)); sys.dirty = true; note(); return true;
     }
+    // P2f: a keyed note line (js/live/ui.js setNoteLine), so the UI shell's weather / runway note does not overwrite it
     function note() {
       const n = state.parked.size;
-      app.ui.setNote(n ? `DEBUG ?park=: ${n} static aircraft (not traffic)` : baseNote);
+      app.ui.setNoteLine('debug-park', n ? `DEBUG ?park=: ${n} static aircraft (not traffic)` : '', { first: true });
     }
     app.qa.park = park; app.qa.unpark = unpark; app.qa.unparkAll = () => { for (const k of [...state.parked.keys()]) unpark(k); return true; };
     app.qa.parked = () => [...state.parked.values()].map(P => ({ stand: P.gate.name, icao: P.icao, type: P.type }));
@@ -203,9 +203,8 @@ registerExtension({
     }
     for (const [n, t] of want) { const r = await park(n, t, false); if (!r.ok) console.warn('[gates] park', n, r.why); }
     if (want.length) console.log('[gates] DEBUG parked', state.parked.size, 'static aircraft');
-    // (appended to whatever the core / other packages put in the legend slot)
-    if (q.get('legend') === '1') { const prev = (app.ui.el && app.ui.el.legend && app.ui.el.legend.innerHTML) || ''; const mine = legendHtml(state.info);
-      app.ui.setLegend(prev ? prev + '<br>' + mine.replace(/^<b>Observed \/ inferred<\/b><br>/, '') : mine); }
+    // legend line (P2f: always, as a keyed line of the UI shell's Observed / Inferred legend; was only with ?legend=1)
+    if (app.ui.addLegendLine) app.ui.addLegendLine('gates', legendHtml(state.info));
   },
   // light sprites: cab floodlights at night (photocell: the scene's night factor; inf), beacons flash while a bridge moves
   lights: (t, app) => {
@@ -248,8 +247,7 @@ function gateDetail(sys, g) {
     bridges: (g.bridges || []).map(b => gateBridge(g, b)), occupant: g.acType || null };
 }
 function legendHtml(I) {
-  const s = I.summary;
-  return '<b>Observed / inferred</b><br>Stands: OpenStreetMap stop nodes (observed); class and stop as nose tip inferred.<br>' +
-    `Jet bridges: ${s.bridgesObs} seen on SAR (observed), ${s.bridgesInf} from OSM gate nodes only (inferred), drawn alike; ` +
-    'bridge model, rest pose, levels, VDGS position and GSE inferred. Stand signs: CAAC MH 5001-2021 8.5.';
+  const s = I.summary; const O = '<span class="srcchip obs">obs</span>', N = '<span class="srcchip inf">inf</span>';
+  return `<b>Jet bridges:</b> ${s.bridgesObs} seen on Umbra SAR ${O}, ${s.bridgesInf} from OSM gate nodes only ${N}, drawn alike; ` +
+    `bridge model, rest pose, levels, VDGS position and ground equipment ${N}. Stand signs: CAAC MH 5001-2021 8.5, placement ${N}.`;
 }

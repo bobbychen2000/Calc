@@ -350,8 +350,68 @@ panel contains each of the 16 required notices; all are present.
 SOFTGL=1 DEVICE='iPhone 15' RELAY=http://127.0.0.1:8792 SCENES=snapshot,offline,live OUT=docs/phase2 PREFIX=ui_phone node livetest.mjs jobs/ui.mjs
 SOFTGL=1 W=1440 H=900       RELAY=http://127.0.0.1:8792 SCENES=snapshot,offline,live OUT=docs/phase2 PREFIX=ui_laptop node livetest.mjs jobs/ui.mjs
 ```
-RENDER_TABLE
+Phone = Playwright's "iPhone 15" descriptor (393 × 659 CSS px, iPhone UA, touch, `isMobile`) at deviceScaleFactor 1, low
+quality tier (the app's mobile default). Laptop = 1440 × 900, high tier. Snapshot scenes use the default page (no `?t=`:
+the snapshot instant, 12:15 CST on 20 Nov); live scenes went through a real `sha_live_server.py` on the current ZSSS
+reports (22:30Z = 06:30-07:00 CST on 21 Nov, dawn); the offline scene blocks the relay API. Render times on this sandbox
+(llvmpipe): about 1.5 min for the phone set, 7-8 min for the laptop set.
+
+| Render (phone / laptop) | What I checked |
+|---|---|
+| `ui_*_snapshot_overview` | Status "Snapshot · 20 Nov", clock 12:15 (CST), two note lines (METAR 0400Z 330° 6 m/s CAVOK Q1027 13/-5 °C, trend NOSIG not applied; runway north flow, arr 36R, dep 36L, tail-wind rule); legend chip; credit line with "About & licences". Phone: bottom sheet peek holds the grab, tabs and both lines (4 rows at 11.5 px); the view bar scrolls sideways; the credit line sits under it. Laptop: side panel shrinks to its content while there is no traffic. |
+| `ui_*_legend` | Legend open: six layer lines with obs / inf chips. Phone: full-width above the sheet; laptop: bottom-left beside / below the panel. Text readable at both sizes. |
+| `ui_*_t2_labels` | T2 view with stand labels: laptop 34 labels (both piers, the west and south-west aprons, remote 212-217 / 410 / 413 dashed), phone 15 (overlaps hidden). Green class letters where Sentinel-2 showed a wide-body (e.g. 250 EL, 256 E, 283 EL), amber elsewhere. Labels sit on the stop nodes at the pier fingers; none floats over grass. |
+| `ui_*_stand_card_label` | A real tap (phone: touchscreen) / click (laptop) on a visible label opened the card (phone 256, laptop 250); the label turns purple (selected). Card rows: OSM node (obs), lead-in heading (obs), class + span limit (chip by `cls_src`), bridges (seen on SAR or OSM-only), push-back (inf), provenance note. |
+| `ui_*_stand_card_fly` | "Fly to stand" frames the stand from ahead-left. Phone: the card shrinks to its title and buttons ("details" re-opens it) so the stand stays visible above it; laptop: the full card stays bottom-right. |
+| `ui_*_search_stands` | Search "25": a "Stands (6)" section (250, 256, 257, 258, 259, 259A) with class, chip and contact / remote; phone sheet opened. |
+| `ui_*_settings` | Lighting, quality, labels, **Runway direction rule** (tail-wind default / into the wind), other traffic. No ATC audio control anywhere. |
+| `ui_*_about`, `ui_*_about_licences`, `ui_*_about_end` | Top: the "simulated and inferred, not observed" statement and the mode line; middle: every licence notice (the job checks 16 required strings, all present); end: terminals' "Buildings and surroundings" section, then Not included / Controls / disclaimer (the shell moved the tail after it). Phone: full-width sheet, sticky close button. |
+| `ui_*_relay_offline` | `?relay=1` with the relay API answering 503: the app falls back to the snapshot (same weather and runway lines) and the pill is red "Relay offline"; the job prints `check: relay requested but absent -> snapshot + Relay offline ok`. |
+| `ui_*_live`, `ui_*_live_about` | `?relay=1` through the real relay: green "Live weather", clock 06:53 / 07:01 CST (dawn light, real time), METAR 2230Z VRB 1 m/s CAVOK Q1028 6/0 °C, runway north flow kept on calm / VRB (reason `keep (calm/VRB/missing)`); the About mode line says "Live through the local relay: ZSSS weather (METAR / TAF) on; observed ADS-B (adsb.lol) off". |
+
+All phone renders: nothing overflows horizontally, the pill text ellipsises before the clock, touch targets (view
+buttons, legend header, card buttons, labels) are at least about 30 px high.
 
 ## 10. Open issues
 
-OPEN_ISSUES
+1. **Laptop width 761-1480 px hides the clock's weather text** (core CSS); the panel's first note line repeats it, so
+   nothing is lost, but the clock alone shows only the time. At 1440 px the status pill's date sub-line is hidden too
+   (core CSS hides `.prov` below 1720 px); the snapshot date is therefore in the pill text ("Snapshot · 20 Nov").
+2. **Phone view bar scrolls sideways**: Settings and About sit off-screen to the right on a 393 px screen (core design).
+   About is also reachable from the status pill and the credit line's "About & licences" link; Settings only by scrolling
+   the bar. A bottom-sheet "more" menu could replace the icons on phones.
+3. **Observed ADS-B is not drawn yet**: in live mode with `--adsb` the shell polls `/api/adsb` and keeps
+   `SHA.observed` (count in the pill), but there is no traffic engine to draw or list aircraft (Phase 3). The relay side is
+   unit-tested against a mock; the browser side was checked against the harness mock (`MOCK_RELAY=1 MOCK_ADSB=1`:
+   `SHA.observed.ac` = the one adsb_icao record, pill tooltip "observed ADS-B on"), never against a real adsb.lol answer,
+   deliberately (no adsb.lol request was made in this package).
+4. **Inferred elements are not yet drawn distinctly in 3-D** (PLAN §4: "drawn distinctly"): the legend, labels, cards and
+   About carry the obs / inf distinction, but bridges, paint, signs and buildings render the same whatever their source.
+   A "provenance tint" overlay (as sfo3d's `?qa=prov`) would be the next step and needs each package's items to carry
+   `src` (gates and markings items already do).
+5. **Snapshot instant is a choice** [inf]: 12:15 CST on the last full local day of the downloaded window (20 Nov 2026,
+   CAVOK, north flow). Re-run `tools/live/build_snapshot.py --fetch [--at ISO]` to refresh it; that makes 3 requests to
+   aviationweather.gov. The source files in `refs/cache/metar/snapshot_20261120/` are redistributable per SOURCES.json but
+   local until the lead adds them with `git add -f`; `data/sha_snapshot.js` alone is enough for the app.
+6. **Runway rule starts at 36** when there is no earlier report (no preferred direction is published); with only 11
+   snapshot reports (5 h) or 12 h from the relay, a light-wind start keeps that default. NOTAM closures (e.g. F4551/26,
+   18L/36R closed 1700-2200 UTC until 29 Nov) are not applied: `assignRunways(dir, t, closed)` is the hook for Phase 3.
+7. **Two decoders**: the renderer's EnvState still uses `js/env/wx/metar.js` (knots internally, trend cut), the UI and
+   the runway rule use `metar_zsss.js` (report units). Both cut the trend; only the latter is verified against the Python
+   reference on the ZSSS archive.
+8. **Relay scope**: no SSE stream, no replay of recordings, no `/api/routeset` (VRS) yet; Phase 3 decides what the
+   simulator needs from the relay. The relay binds to 127.0.0.1 by default; `--host 0.0.0.0` exposes it on the LAN
+   (allow-listed static files and the three APIs only).
+9. **Google Fonts** are still linked by `live.html` (core open issue 9; a phone in mainland China may not reach them); the
+   About credits the fonts "when the browser can load them". Self-hosting the two OFL fonts would remove the dependency.
+10. **Render weight**: the 26 `ui_*.png` files total about 18 MB at deviceScaleFactor 1; the lead may keep a subset.
+11. **Interaction with other packages' QA**: the default page is now in snapshot mode. Their jobs pass
+    `?t=2026-11-14T03:00:00Z`, before the earliest snapshot report, so their scenes keep the clear default sky. Checked
+    with a page load at that time: mode snapshot, `wx.none: true`, no report, no TAF, note "Weather: no report (clear
+    default sky)". Their renders were not re-run here. A job that wants the old wall-clock behaviour without a relay can
+    pass `?mode=live`.
+12. **OD4 (2026-11-20, added to PLAN.md while this package ran):** flights observed elsewhere are to be shown locally,
+    read at run time from the gitignored `refs/cache/observed_elsewhere/`. The relay never serves `refs/` as static files
+    (allow-list); Phase 3 should add an API endpoint such as `/api/observed_elsewhere` to `sha_live_server.py` that reads
+    the local cache and returns only what the app shows, labelled "observed elsewhere, SHA time inferred". The About text
+    already describes that tier.

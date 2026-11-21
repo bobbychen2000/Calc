@@ -132,7 +132,10 @@ registerExtension({
           const T = buildControlTower(t);
           const b = T.geo.bbox; const it = { mesh: new Mesh(T.geo), prog: 'obj', model: m4.translate(t.x, G, t.z), bbox: [b[0] + t.x, b[1] + G, b[2] + t.z, b[3] + t.x, b[4] + G, b[5] + t.z], castShadow: true, uniforms: { uEmissiveBoost: 1 }, src: 'inf', what: 'east control tower' };
           items.push(it);
-          anchors.tower = { pos: [t.x, G, t.z], eyeY: G + T.eye, top: G + T.top, src: 'height AIP (mirror); form inf (photo 02)' };
+          // cabHalf (P2f): the cab's half-width at eye height (glazing leans out from cab_w0 to cab_w1), so the app's Tower view
+          // can stand the eye near the glass instead of at the cab centre (the console band filled ~40 % of the frame)
+          const dm = t.dims || {}; const cabHalf = dm.cab_w0 && dm.cab_w1 && dm.head_y1 && dm.cab_y1 ? 0.5 * (dm.cab_w0 + (dm.cab_w1 - dm.cab_w0) * Math.min(1, 1.6 / (dm.cab_y1 - dm.head_y1))) : null;
+          anchors.tower = { pos: [t.x, G, t.z], eyeY: G + T.eye, top: G + T.top, cabHalf, src: 'height AIP (mirror); form inf (photo 02)' };
         } else buildBlockTower(grp('airport'), t);
       }
       info.hangars = D.hangars.length; info.towers = D.towers.length;

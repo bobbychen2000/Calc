@@ -168,7 +168,12 @@ export async function startApp(cfg) {
     rig.stopFollow(); followMode = null; if (name !== 'tower') rig.leaveTower();
     const V = VIEWS[name];
     if (V) rig.flyTo({ target: V.target.slice(), dist: V.dist, yaw: V.yaw * DEG, pitch: V.pitch * DEG, fov: V.fov * DEG });
-    else if (name === 'tower' && A.tower) rig.setTower([A.tower.pos[0], A.tower.eyeY, A.tower.pos[2]], { yaw: 262 * DEG, pitch: -5 * DEG, fov: 58 * DEG });
+    else if (name === 'tower' && A.tower) {
+      // P2f: with a modelled cab (anchors.tower.cabHalf, terminals package) the eye stands 2 m inside the glass on the
+      // runway side, so the console band below the glass no longer fills the lower ~40 % of the frame; pitch -7 deg
+      const yaw = 262, hv = GEO.hdgVec(yaw), off = A.tower.cabHalf ? Math.max(0, A.tower.cabHalf - 2.0) : 0;
+      rig.setTower([A.tower.pos[0] + hv[0] * off, A.tower.eyeY, A.tower.pos[2] + hv[1] * off], { yaw: yaw * DEG, pitch: (off ? -7 : -5) * DEG, fov: 58 * DEG });
+    }
     ui.root.querySelectorAll('#views [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === name));
   }
   function setting(k, v) {
