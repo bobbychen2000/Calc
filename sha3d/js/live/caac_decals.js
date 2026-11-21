@@ -11,6 +11,7 @@
 import { gl, Mesh, texture } from '../gl.js';
 import { earcut } from './earcut.js';
 import { CAAC, val } from './caac_markings.js';
+import '../shaders/ground.js';   // defines the sha_apron_flood chunk (apron night flood shared with the ground shader)
 
 const T_ = CAAC.taxiway, H_ = CAAC.hold, S_ = CAAC.stand, M_ = CAAC.mandatoryMarking;
 const AL = CAAC.albedo;
@@ -36,8 +37,10 @@ export const DECAL_FS = `
 #include <common>
 #include <shadow>
 #include <fout>
+#include <sha_apron_flood>
 in vec3 vWP; in vec4 vCol; in vec3 vDash; in float vA; in vec2 vUV; in float vPoly;
 uniform sampler2D uChars; uniform float uNight;
+uniform sampler2D uAptMap; uniform vec4 uAptRect;   // the ground's airfield map (apron = G 255), for the night flood
 void main(){
   vec3 wp = vWP; vec3 V = uCamPos - wp; float dist = length(V); V /= dist;
   float a = vCol.a * vA;
@@ -56,6 +59,13 @@ void main(){
   float sh = getShadow(wp, N, dist) * cloudShadow(wp);
   vec3 alb = vCol.rgb * (0.84 + 0.16 * texture(uNoise, wp.xz * 0.23).r);
   vec3 col = shadePBR(alb, N, V, 0.62, 0.0, sh, 1.0, 0.6);
+  if (uNight > 0.001) {   // apron paint is lit by the same flood as the apron (js/shaders/ground.js shaApronFlood) [inf]
+    // fix round 2: sampled in uniform control flow (the rect test multiplies), light map uniforms from the ground (N2)
+    vec2 auv = (wp.xz - uAptRect.xy) / uAptRect.zw;
+    float inA = step(0.0, auv.x) * step(auv.x, 1.0) * step(0.0, auv.y) * step(auv.y, 1.0);
+    vec4 apt = texture(uAptMap, auv);
+    col += alb * shaApronFlood(wp, apt, smoothstep(0.35, 0.65, apt.r), texture(uNoise, wp.xz * (1.0 / 1900.0)).g, texture(uNoise, wp.xz * (1.0 / 150.0)).r) * uNight * inA;
+  }
   col = applyFog(col, wp);
   writeOut(col, wp, a);
 }`;
@@ -274,13 +284,44 @@ export function buildDecals(ctx, plan) {
   // ---------------------------------------------------------------------------------------- taxiway centrelines
   const clHalf = val(T_.clW) / 2, clBorder = val(T_.clBorder);
   const off = val(CAAC.runway.clW) / 2 + val(T_.clRunwayOffset) + clHalf;   // 1.2 m: 0.9 m clear of the runway CL stripe
-  let leadOns = 0, crossings = 0;
+  let leadOns = 0, crossings = 0, leadOnsDropped = 0;
   const centrelines = [];
+  // runway markings win at intersections (6.2.1-2): a taxiway line is interrupted over the designation numerals. Fix round 2
+  // (review N8): it is NOT cut at threshold marking - the stripes, the displaced-threshold bar (6.2.4-4) and the threshold
+  // arrows (table 6.2.4-2) - because 6.2.8-3 makes a taxiway CL continuous where it crosses threshold marking (fig. 6.2.8-2);
+  // fix round 1 kept lines 0.9 m clear of the bar and the arrow heads, which that clause does not allow
+  const RW = CAAC.runway;
+  const rwyMarkWins = (p) => {
+    if (!val(T_.cutAtDesignation)) return false;
+    for (const Pl of plan || []) {
+      const [s, tt] = G.rwyAlongAcross(Pl.R, p[0], p[1]); const ay = Math.abs(tt);
+      if (ay > 6.5 || s < -5 || s > Pl.L + 5) continue;
+      for (let j = 0; j < 2; j++) {
+        const e = Pl.ends[j]; const xs = (j === 0 ? s : Pl.L - s) - e.disp;
+        if (xs > e.lx0 - 1.5 && xs < e.nx0 + val(RW.desigH) + 2) return true;   // designation numerals
+      }
+    }
+    return false;
+  };
+  // in a displaced portion (pavement end -> displaced threshold) a lead-on is kept only if it points in that end's take-off
+  // direction (the portion is usable for take-off from that end and for the opposite end's roll-out; a lead-on towards the
+  // pavement end would only serve a backtrack) [inf]
+  const leadOnAllowed = (R, s, sd) => {
+    const Pl = (plan || []).find(q => q.R === R); if (!Pl) return true;
+    if (s < Pl.ends[0].disp) return sd > 0;
+    if (s > Pl.L - Pl.ends[1].disp) return sd < 0;
+    return true;
+  };
+  // fix round 2 (review M4): the filter also governs the curve itself. A backtrack curve is no longer clamped onto the 0.9 m
+  // lead-on line (where it merged into the take-off lead-on of the next pair out and read as a 60 m parallel towards the
+  // pavement end); it stops T_.backtrackClear clear of that line (|t| < offB is cut within 40 m of its tangent point) [inf]
+  const offB = off + clHalf * 2 + val(T_.backtrackClear);
+  let backtrackStopped = 0;
   for (const t of lines) {
     let pts = t.pts.map(p => p.slice());
     // ends on a runway centreline (OSM taxiways join the runway way): a tangential lead-on / -off is moved 0.9 m clear of
     // the runway CL stripe and continued parallel for 60 m (6.2.8-5); a steep entry or a crossing stops 0.9 m short
-    const extra = [];
+    const extra = []; const backCut = [];
     for (const R of runways) {
       const W = R.width || 45; const st = (p) => G.rwyAlongAcross(R, p[0], p[1]);
       for (const endIdx of [0, pts.length - 1]) {
@@ -289,30 +330,34 @@ export function buildDecals(ctx, plan) {
         const ref = at(pts, c, endIdx === 0 ? Math.min(12, Ltot) : Math.max(0, Ltot - 12)).p;   // 12 m back from the end
         const dir = norm(sub(e, ref)); const along = dot(dir, R.dir); const ang = Math.acos(Math.min(1, Math.abs(along))) * 180 / Math.PI;
         if (ang < 35) {
+          const sgn = Math.sign(st(ref)[1]) || 1; const sd = Math.sign(along) || 1;
+          if (!leadOnAllowed(R, se, sd)) { backCut.push({ R, s: se }); leadOnsDropped++; continue; }
           // clamp |t| to off on the approach side, then continue parallel along the runway for 60 m
-          const sgn = Math.sign(st(ref)[1]) || 1;
           pts = pts.map(p => { const [s, tt] = st(p); if (Math.abs(tt) < off && s > -5 && s < R.len + 5) return G.rwyToWorld(R, s, sgn * off); return p; });
-          const e2 = pts[endIdx]; const [s2] = st(e2); const sd = Math.sign(along) || 1;
+          const e2 = pts[endIdx]; const [s2] = st(e2);
           const s3 = Math.max(0, Math.min(R.len, s2 + sd * val(T_.clRunwayParallel)));
           extra.push([G.rwyToWorld(R, s2, sgn * off), G.rwyToWorld(R, s3, sgn * off)]); leadOns++;
         } else crossings++;
         void inward; void W;
       }
     }
-    // cut: 0.9 m clear of the runway CL stripe (crossings) and of the holding markings
-    // runway designation zones: the runway marking wins (6.2.1-2), the taxiway line is interrupted over the numerals
-    const desig = (p) => { for (const Pl of plan || []) { const [s, tt] = G.rwyAlongAcross(Pl.R, p[0], p[1]); if (Math.abs(tt) > 6.5) continue;
-      for (let j = 0; j < 2; j++) { const e = Pl.ends[j]; const xs = (j === 0 ? s : Pl.L - s) - e.disp; if (xs > e.lx0 - 1.5 && xs < e.nx0 + val(CAAC.runway.desigH) + 2) return true; } } return false; };
-    const near = (p) => { for (const R of runways) { const [s, tt] = G.rwyAlongAcross(R, p[0], p[1]); if (Math.abs(tt) < off - 0.01 && s > -5 && s < R.len + 5) return true; } return desig(p); };
-    for (const q of cutPoly(pts, (p) => near(p) || holdZone(p, val(T_.clClearOfHold)))) centrelines.push({ pts: q, ref: t.ref });
-    for (const q of extra) for (const r of cutPoly(q, (p) => holdZone(p, val(T_.clClearOfHold)) || desig(p))) centrelines.push({ pts: r, ref: t.ref, lead: true });
+    // cut: 0.9 m clear of the runway CL stripe (crossings) and of the holding markings; the designation numerals (rwyMarkWins);
+    // backtrack curves 0.9 m clear of the lead-on line (backCut)
+    const back = (p) => backCut.some(b => { const [s, tt] = G.rwyAlongAcross(b.R, p[0], p[1]); return Math.abs(tt) < offB && Math.abs(s - b.s) < 40; });
+    const near = (p) => { for (const R of runways) { const [s, tt] = G.rwyAlongAcross(R, p[0], p[1]); if (Math.abs(tt) < off - 0.01 && s > -5 && s < R.len + 5) return true; } return rwyMarkWins(p); };
+    const keepPiece = (q, m) => q && q.length >= 2 && cum(q)[q.length - 1] >= m;   // no slivers between two cuts
+    for (const q of cutPoly(pts, (p) => near(p) || holdZone(p, val(T_.clClearOfHold)) || (backCut.length > 0 && back(p)))) if (keepPiece(q, 1.5)) centrelines.push({ pts: q, ref: t.ref });
+    backtrackStopped += backCut.length;
+    for (const q of extra) for (const r of cutPoly(q, (p) => holdZone(p, val(T_.clClearOfHold)) || rwyMarkWins(p), 0.25)) if (keepPiece(r, 3)) centrelines.push({ pts: r, ref: t.ref, lead: true });
   }
   for (const c of centrelines) {
     // black edges on light pavement (concrete aprons / taxiways), interrupted on the runways (6.2.8-2 and fig. 6.2.8-2 note)
     for (const q of cutPoly(c.pts, (p) => !!onRunway(p, 0.5), 1.0)) B.line(q, clHalf + clBorder, BLK, 1);
     P.line(c.pts, clHalf, YEL, 1);
   }
-  info.centrelines = { lines: lines.length, pieces: centrelines.length, runwayLeadOns: leadOns, runwayCrossingsOrSteepEnds: crossings };
+  info.centrelines = { lines: lines.length, pieces: centrelines.length, runwayLeadOns: leadOns, leadOnsDroppedInDisplacedPortion: leadOnsDropped,
+    backtrackCurvesStoppedClear: backtrackStopped, runwayCrossingsOrSteepEnds: crossings,
+    rule: 'continuous over threshold marking (6.2.8-3); cut at the designation numerals (6.2.1-2); backtrack curves in a displaced portion: no parallel, stop 0.9 m clear (inf)' };
 
   // ---------------------------------------------------------------------------------------- enhanced centrelines
   let enh = 0;
@@ -392,9 +437,10 @@ export function buildDecals(ctx, plan) {
   info.stands = SI;
 
   const merged = merge([B, P, T]);
-  const items = [];
+  const items = []; const gu = (ctx.ground && ctx.ground.uniforms) || {};
   if (merged) items.push({ mesh: merged.mesh, prog: 'caacDecal', blend: 'alpha', bothPasses: true, noCull: true, sortKey: () => 1e12, bbox: merged.bbox, castShadow: false, polyOffset: [-2, -6], src: 'inf', layer: 'markings',
-    uniforms: () => ({ uPxScale: 2 * Math.tan((ctx.R.curCam ? ctx.R.curCam.fov : 0.9) / 2) / (ctx.R.H || 720), uChars: chars.tex }) });
+    uniforms: () => ({ uPxScale: 2 * Math.tan((ctx.R.curCam ? ctx.R.curCam.fov : 0.9) / 2) / (ctx.R.H || 720), uChars: chars.tex, uAptMap: gu.uAptMap, uAptRect: gu.uAptRect,
+      uApLight: gu.uApLight || gu.uAptMap, uApLightRect: gu.uApLightRect || [0, 0, 1, 1], uApLightOn: gu.uApLightOn || 0 }) });
   ctx.R.addProgram('caacDecal', DECAL_VS, DECAL_FS);
   info.mesh = merged ? { verts: merged.verts, tris: merged.tris } : null; info.ms = Math.round(performance.now() - t0);
   // holds and named junctions for the signs
@@ -420,7 +466,11 @@ function buildStands(ctx, ST, B, P, T, chars) {
   const lw = val(S_.leadW) / 2, lb = val(S_.leadBorder);
   const W = ST.map(s => {
     const h = G.hdgVec(s.hdg); const rn = rightOf(h); const env = standEnvelope(s, refs);
-    const toW = ([u, v]) => add(s.nose, add(mul(h, u), mul(rn, v)));
+    // the stop node is the nose-wheel stop (MH 5001-2021 6.2.16-7; gates fix round 1, data class_ref.<cls>.nose_gear_m,
+    // obs per reference type): the class planform's nose tip lies nose_gear_m AHEAD of the node, so the envelope, safety
+    // line, hatched overlaps and equipment areas are shifted by it; the stop line, lead-in and alignment stay at s.nose
+    const ng = (refs[s.cls] && refs[s.cls].nose_gear_m) || 0;
+    const toW = ([u, v]) => add(s.nose, add(mul(h, u + ng), mul(rn, v)));
     const poly = env.local.map(toW);
     return { s, h, rn, env, toW, poly, bb: bboxOf(poly) };
   });
@@ -449,7 +499,7 @@ function buildStands(ctx, ST, B, P, T, chars) {
         else if (placed.some(o => len(sub(o.c, cen)) < o.r + r)) info.platesSkippedOverlap = (info.platesSkippedOverlap || 0) + 1;   // overlay / alternative stands
         else { B.poly([pent(bdr)], BLK); P.poly([pent(0)], YEL); textQuads(T, chars, s.name, cen, right, up, chH, BLK); placed.push({ c: cen, r }); info.numberPlates++; }
       }
-      // stop line at the stop node (6.2.16-7) [inf: the OSM stop node taken as the painted stop line]
+      // stop line at the stop node (the OSM stop node = the nose-wheel stop, MH 5001-2021 6.2.16-7; gates fix round 1)
       const sl = val(S_.stopLen) / 2; const a = add(s.nose, mul(w.rn, -sl)), b = add(s.nose, mul(w.rn, sl));
       B.line([a, b], val(S_.stopW) / 2 + lb, BLK, 1); P.line([a, b], val(S_.stopW) / 2, YEL, 1); info.stopLines++;
     }

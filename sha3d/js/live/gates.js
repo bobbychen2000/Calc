@@ -20,7 +20,7 @@ import { Geo } from '../geom.js';
 import { m4, v3 } from '../math.js';
 import { TYPES, ICAO_TYPES } from '../aircraft/types.js';
 import { TYPE_MODELS } from '../aircraft/fit.js';
-import { LiveGateSystem, setGateWorld, footprint, DEPARTURE_LEVELS, PBB } from './gate_system.js';
+import { LiveGateSystem, setGateWorld, footprint, DEPARTURE_LEVELS, PBB, noseGearX, standTip } from './gate_system.js';
 import { GSIGN_VS, GSIGN_FS } from './gate_signs.js';
 import { OBJ_VS, OBJ_FS } from '../shaders/objects.js';
 import { LiveAircraft } from './aircraft.js';
@@ -159,19 +159,21 @@ registerExtension({
       const ty = (icao || debugType(g)).toUpperCase(); const m = TYPE_MODELS[ty]; const T = m && TYPES[m.t];
       if (!T) return { ok: false, why: 'no model for ' + ty };
       unpark(g.name);
-      const f2 = g.dir, f3 = [f2[0], 0, f2[1]], nose3 = [g.nose[0], state.G, g.nose[1]];
-      const ac = new LiveAircraft(m.t, m.m && MODEL_SOURCES[m.m] ? m.m : null, liveryForAirline(null), { id: 'debug-park-' + g.name, lod: 1, lodDist: QN[0], shadowDist: QN[1] });
-      ac.pos = [g.nose[0] - f2[0] * ac.T.xMain, state.G, g.nose[1] - f2[1] * ac.T.xMain]; ac.fwd = f3; ac.gear = 1; ac.dirt = 0.35;
+      // (fix round 1, M5) the nose wheel on the stop node: the nose tip lies the drawn model's nose-gear station ahead of it
+      const mk = m.m && MODEL_SOURCES[m.m] ? m.m : null;
+      const f2 = g.dir, f3 = [f2[0], 0, f2[1]], nose3 = standTip(g, T, mk); nose3[1] = state.G;
+      const ac = new LiveAircraft(m.t, mk, liveryForAirline(null), { id: 'debug-park-' + g.name, lod: 1, lodDist: QN[0], shadowDist: QN[1] });
+      ac.pos = [nose3[0] - f2[0] * ac.T.xMain, state.G, nose3[2] - f2[1] * ac.T.xMain]; ac.fwd = f3; ac.gear = 1; ac.dirt = 0.35;
       Object.assign(ac.lightsOn, aircraftLightStates({ phase: 'parked', ground: true, gs: 0, altAgl: 0, stale: false }));
       ac.debugPark = true; app.scene.add(ac);
       // the bridge stand: the stand itself, or the base stand whose bridge an alternative position shares
       const B = g.sharesBridgesOf ? byName.get(g.sharesBridgesOf) : g;
       state.parked.set(g.name, { ac, gate: g, bridgeGate: B, T, type: m.t, icao: ty, nose3, f3 });
-      sys.setOccupant(B, m.t, !!animate, Date.now(), { nose: g.nose.slice(), dir: g.dir.slice() }, ty);
+      sys.setOccupant(B, m.t, !!animate, Date.now(), { nose: [nose3[0], nose3[2]], dir: g.dir.slice() }, ty);
       sys.dirty = true; note();
       await ac.ready;
       const docked = B.bridge ? sys.bridgesOf(B).map(b => { const P = sys.planFor(B, b); return { gate: b.gate, model: b.modelUsed || null, docks: !!P.ok, why: P.ok ? null : P.why }; }) : [];
-      return { ok: true, stand: g.name, type: m.t, icao: ty, model: m.m || null, L: +ac.T.L.toFixed(2), span: ac.T.wing ? +ac.T.wing.span.toFixed(2) : null, bridges: docked, debug: true };
+      return { ok: true, stand: g.name, type: m.t, icao: ty, model: m.m || null, noseGear: noseGearX(T, mk), L: +ac.T.L.toFixed(2), span: ac.T.wing ? +ac.T.wing.span.toFixed(2) : null, bridges: docked, debug: true };
     }
     function unpark(name) {
       const P = state.parked.get(String(name)); if (!P) return false;
@@ -203,17 +205,45 @@ registerExtension({
     }
     for (const [n, t] of want) { const r = await park(n, t, false); if (!r.ok) console.warn('[gates] park', n, r.why); }
     if (want.length) console.log('[gates] DEBUG parked', state.parked.size, 'static aircraft');
+    // (fix round 1) staged idle airstairs (L4) in the painted equipment areas, apron floodlight masts (M2): both need the
+    // markings package's apron rings (SHA.markings.apron(): equipment areas, stand envelopes), available from its start()
+    const apron = (app.markings && app.markings.apron && app.markings.apron()) || {};
+    try { sys.stageIdleStairs(apron.equipment || []); } catch (e) { console.error('[gates] idle stairs', e); }
+    try { sys.placeMasts({ runways: (app.geo && app.geo.RUNWAYS) || [], envelopes: apron.envelopes || [] }); } catch (e) { console.error('[gates] masts', e); }
+    state.info.masts = sys.mastStats || null; state.info.idleStairs = sys.idleStats || null;
+    app.qa.masts = () => ({ stats: sys.mastStats || null, masts: sys.masts || [], uncovered: sys.mastUncovered || [] });
+    // (fix round 2, N1) the stand camera's subject points as the mast placement used them (shell.js flyToStand side choice)
+    app.qa.camSubject = (n) => { const g = state.gates.find(x => x.name === String(n)); return g ? sys.camSubject(g) : null; };
+    app.qa.idleStairs = () => ({ stats: sys.idleStats || null, spots: sys.idleSpots || [] });
+    ctx_log(app, 'gates masts ' + JSON.stringify(sys.mastStats) + ' idle stairs ' + JSON.stringify(sys.idleStats));
     // legend line (P2f: always, as a keyed line of the UI shell's Observed / Inferred legend; was only with ?legend=1)
     if (app.ui.addLegendLine) app.ui.addLegendLine('gates', legendHtml(state.info));
   },
-  // light sprites: cab floodlights at night (photocell: the scene's night factor; inf), beacons flash while a bridge moves
+  // light sprites: cab floodlights at night (photocell: the scene's night factor; inf), beacons flash while a bridge moves;
+  // (fix round 2, N1) the floodlight-mast lamps capped in projected size and faded near the camera (mastSprite)
   lights: (t, app) => {
     const sys = state.sys; if (!sys || !sys.sprites) return [];
     const night = ((app.R.extraCommon && app.R.extraCommon.uNight) || 0) > 0.5; const S = [];
-    for (const s of sys.sprites) { if (s.night) { if (night) S.push(s); } else if (s.beacon) { if (s.moving) { const k = Math.pow(Math.max(0, Math.sin(t * 6.3)), 6); S.push({ ...s, i: 40 + 400 * k }); } } else S.push(s); }
+    const C = app.R.curCam; const fs = C && C.pos && app.R.H ? 2 * Math.tan(C.fov / 2) / app.R.H : 0;
+    for (const s of sys.sprites) {
+      if (s.night) { if (night) { if (s.mast && fs) { const m = mastSprite(s, C.pos, fs); if (m) S.push(m); } else S.push(s); } }
+      else if (s.beacon) { if (s.moving) { const k = Math.pow(Math.max(0, Math.sin(t * 6.3)), 6); S.push({ ...s, i: 40 + 400 * k }); } } else S.push(s);
+    }
     return S;
   },
 });
+
+// (fix round 2, review N1) floodlight-mast lamp sprites near the camera. A stand camera can pass a 30 m lamp head at
+// 10-20 m, where the head glow (s 1.6 m) drew a ~220 px disk: the projected radius of every mast sprite is capped at
+// MAST_SPRITE_PX (js/shaders/sprites.js draws the quad at 1.6 s, pulled min(2 m, 0.05 d) towards the camera) and the
+// sprite fades out between MAST_FADE_M[1] and MAST_FADE_M[0] m from the camera. A display rule, inf (no airfield value).
+const MAST_SPRITE_PX = 24, MAST_FADE_M = [10, 40];
+function mastSprite(s, cp, fs) {
+  const d = Math.hypot(s.p[0] - cp[0], s.p[1] - cp[1], s.p[2] - cp[2]);
+  const u = Math.min(1, Math.max(0, (d - MAST_FADE_M[0]) / (MAST_FADE_M[1] - MAST_FADE_M[0]))); const k = u * u * (3 - 2 * u); if (k <= 0) return null;
+  const sMax = MAST_SPRITE_PX * Math.max(0.5, d - Math.min(2, 0.05 * d)) * fs / 1.6;
+  return k >= 1 && s.s <= sMax ? s : { ...s, s: Math.min(s.s, sMax), i: s.i * k };
+}
 
 // ---------------------------------------------------------------- statistics / diagnostics (QA, legend, report)
 function gateStats(sys, gates, ms) {
@@ -248,6 +278,11 @@ function gateDetail(sys, g) {
 }
 function legendHtml(I) {
   const s = I.summary; const O = '<span class="srcchip obs">obs</span>', N = '<span class="srcchip inf">inf</span>';
+  const M = I.masts, Q = I.idleStairs;
   return `<b>Jet bridges:</b> ${s.bridgesObs} seen on Umbra SAR ${O}, ${s.bridgesInf} from OSM gate nodes only ${N}, drawn alike; ` +
-    `bridge model, rest pose, levels, VDGS position and ground equipment ${N}. Stand signs: CAAC MH 5001-2021 8.5, placement ${N}.`;
+    `bridge model, rest pose, levels, VDGS position and ground equipment ${N}. Stand signs: CAAC MH 5001-2021 8.5, placement ${N}. ` +
+    `Aircraft park with the nose wheel on the stop line (MH 5001-2021 6.2.16-7). ` +
+    (M ? `Apron floodlight masts: ${M.masts}, about one per two stands; as in photos, but positions and form ${N}. ` : '') +
+    (Q ? `Idle airstairs: ${Q.placed}, at most one per ${Q.perStands} remote stands, staged in the equipment areas: cues ${N}, not seen.` : '');
 }
+function ctx_log(app, msg) { try { console.log('[gates] ' + msg); } catch (e) { } }

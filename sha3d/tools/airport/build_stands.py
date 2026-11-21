@@ -17,9 +17,12 @@ Inputs (all committed; the build runs from a clean checkout):
 The AIP stand table (span limits) and VDGS list are NOT inputs: they are read from refs/cache/aip/derived_aip_zsss/
 (local only) after the build, for agreement COUNTS only (checks_at_build.aip_agreement); no per-stand AIP value is written.
 
-Reference point ("nose"): the OSM ref node = the end of the painted lead-in line as mapped. It is used as the nose tip of
-the class reference aircraft (inf). Check on the Sentinel-2 stack: narrow-body fits put the nose a median 1 m behind it
-(10 m pixels, spread several metres): not applied.
+Reference point ("nose"): the OSM ref node = the end of the painted lead-in line as mapped = the NOSE-WHEEL stop (fix
+round 1, review M5: CAAC MH 5001-2021 6.2.16-7 and the OSM aeroway=parking_position tagging; NOSE_NOTE). The docked cab
+points (bridges[].cab, reach_m) are for the class reference parked with its nose wheel on the node (NOSE_GEAR_M). The
+class geometry and the Phase 1 bridge rules still place the class planform with its nose tip at the node (unchanged:
+re-tuning them is an open item, docs/phase2/gates.md fix round 1). Check on the Sentinel-2 stack: narrow-body fits put
+the nose a median 1 m behind it (10 m pixels, spread several metres): not applied.
 Size class (sfo3d classes B / C / CL / D / E / EL / F, tools/airport/acplan.py): from our own evidence only:
   1. geometry: the largest class whose reference planform, placed on this stand and on each neighbour (the same class:
      symmetric assumption), keeps >= CLEAR m from every neighbour planform and from buildings (alternative positions of
@@ -71,10 +74,30 @@ DOOR2_SEP = 8.0       # m: a door-2 bridge's rotunda is at least this far along 
 PUSH_CAP = 1.5        # x class reference length (QA C1 M5): pushes along the own lead-in longer than this are flagged
 PUSH_CAP_GEOMETRIC = False   # True cuts the push at the cap; measured 2026-11-14: 34 stands then cannot depart under
 CAPPED_DEPARTURE_FAILURES = 34   # the 90 deg turn rule (the aircraft faces the stand at the push end), so it is a flag
-NOSE_NOTE = ('nose = the OSM stop node, used as the nose tip of the class reference aircraft [inf]. At VDGS stands the '
-             'stop position usually refers to the nose wheel or the pilot, a few metres behind the nose tip [inf, from '
-             'memory]; the 10 m Sentinel-2 check (median 1 m) cannot settle it. A per-type nose offset is to be applied '
-             'when the aircraft models are placed (Phase 2 / 4; QA C1 L6).')
+NOSE_NOTE = ('nose = the OSM stop node = the NOSE-WHEEL stop of every type (sha3d fix round 1, review M5). Sources: '
+             'CAAC MH 5001-2021 6.2.16-7 (with manual or equipment guidance the stop line is placed at the nose-wheel '
+             'position of the intended stop point, square to the alignment line; without guidance at the left-seat '
+             'pilot) - every ZSSS stand has guidance (VDGS or marshaller, AIP (mirror) AD 2.20 3.2.2.3) - and the OSM '
+             'tagging of aeroway=parking_position ("Put a node where the nose wheel stops"; the last node of the way '
+             '"where the nose wheel is parked", OSM wiki). The painted stop line stays at the node. A type T parks with '
+             'its nose-gear contact on the node, so its nose tip lies T\'s nose-gear station ahead of it '
+             '(class_ref.<cls>.nose_gear_m for the class reference; the renderer uses each model\'s own nose-gear '
+             'contact). bridges[].cab = door 1 / 2 of the class reference parked so. The 10 m Sentinel-2 check (median '
+             '1 m) cannot separate the conventions [inf].')
+# nose-gear station (m aft of the nose tip) of the docking reference type per class, from the published airport
+# planning documents as transcribed in js/aircraft/types.js SPEC `nose` (forked sfo3d data; the gate engine uses the
+# same values, js/live/gate_system.js REF_TYPE): B = CRJ900 2.24 (ARJ21 / C909 not transcribed: the engine's class-B
+# docking reference, inf), C = A321 5.07, CL = B757-300 5.89, D = B767-300 4.55, E = A330-300 6.67, EL = B777-300ER 5.89,
+# F = B747-8 7.74. Used only for the docked cab points (bridges[].cab, reach_m); the class geometry tests keep their
+# Phase 1 planform placement (see CAB_PLACEMENT below).
+NOSE_GEAR_M = {'B': 2.24, 'C': 5.07, 'CL': 5.89, 'D': 4.55, 'E': 6.67, 'EL': 5.89, 'F': 7.74}
+NOSE_GEAR_SRC = {'B': 'CRJ900 (engine class-B reference; ARJ21 not transcribed) [inf]', 'C': 'A321 [obs: Airbus AC]',
+                 'CL': 'B757-300 [obs: Boeing ACAP]', 'D': 'B767-300 [obs: Boeing ACAP]', 'E': 'A330-300 [obs: Airbus AC]',
+                 'EL': 'B777-300ER [obs: Boeing ACAP]', 'F': 'B747-8 [obs: Boeing ACAP]'}
+# The bridge rules of Phase 1 (which second bridges are kept, SPARE_REACH; the T1 fixed-link length, BRIDGE_REACH) were
+# set and checked (QA C1 M3) against the cab of the earlier tip-at-node convention. Fix round 1 keeps those decisions
+# (bridge set, rotundas, walkways) as they were and moves only the docked cab points: CAB_PLACEMENT = the Phase 1 cab
+# used for the rules; the written cab / reach_m use the nose-wheel convention. Re-tuning the rules is an open item.
 REF_SPAN = {'B': 27.3, 'C': 35.8, 'CL': 41.1, 'D': 47.6, 'E': 60.3, 'EL': 64.8, 'F': 68.4}   # acplan.CLS_REF spans
 WIDE = {'D', 'E', 'EL', 'F'}
 
@@ -429,7 +452,8 @@ def main():
         attach1 = rot1 = None
         for k in (1, 2) if second else (1,):
             du, dv = door_uv(cls[n], k)
-            cab = from_local(du, dv, st['stop'], st['hdg'])
+            cab = from_local(du, dv, st['stop'], st['hdg'])           # CAB_PLACEMENT (Phase 1 rules, see NOSE_GEAR_M)
+            cab_nw = from_local(du + NOSE_GEAR_M[cls[n]], dv, st['stop'], st['hdg'])   # nose wheel on the node (M5)
             if k == 1:
                 base = gpt
                 rot_src = ('OSM aeroway=gate node (taken as the rotunda / end of the fixed link: in the SAR scene the T2 '
@@ -466,7 +490,7 @@ def main():
                 rot_src = ('facade gate node + fixed link of %.1f m along the facade normal, placed so that the reach '
                            'to the docked cab is <= %.0f m [inf]' % (fixed, BRIDGE_REACH)) if g is not None or k == 2 \
                     else rot_src + ' + fixed link of %.1f m along the facade normal [inf]' % fixed
-            reach = math.dist(rot, cab)
+            reach = math.dist(rot, cab_nw)
             attach = fpt if term_u.distance(Point(base)) < 80 else None
             if k == 1:
                 attach1, rot1 = attach, rot
@@ -475,7 +499,8 @@ def main():
                 'attach': [R2(attach[0]), R2(attach[1])] if attach is not None else None,
                 'rotunda': [R2(rot[0]), R2(rot[1])],
                 'rotunda_src': rot_src,
-                'cab': [R2(cab[0]), R2(cab[1])], 'cab_pose': 'docked (inf: door %d of the class reference aircraft)' % k,
+                'cab': [R2(cab_nw[0]), R2(cab_nw[1])],
+                'cab_pose': 'docked (inf: door %d of the class reference aircraft, its nose wheel on the stop node)' % k,
                 'reach_m': R2(reach),
                 **({'reach_flag': 'reach > %g m: longer than a typical apron-drive bridge; the docked cab position or '
                                   'the rotunda (OSM gate node) is uncertain [inf]' % SPARE_REACH}
@@ -502,15 +527,15 @@ def main():
         if n.startswith('1'):
             return 'T1 north face' if n in ('101', '102', '109', '110', '111', '112') else 'T1 west face'
         if n.startswith('2'):
-            return 'T2 aprons Nr. 2'
+            return 'T2 apron 2'
         if n.startswith('3'):
             return 'business apron (north-east)' if int(n[:3]) <= 312 else 'east apron (north of T1)'
         if n.startswith('4'):
-            return 'west remote apron (Apron Nr. 4)'
+            return 'west remote apron (apron 4)'
         if n.startswith('5'):
             return 'east remote apron (along TWY A / L01)'
         if n.startswith('6'):
-            return 'south-west apron (Apron Nr. 6)'
+            return 'south-west apron (apron 6)'
         return 'other'
 
     own = {s_['name']: O.own_leadin(s_['key']) for s_ in stands}
@@ -793,8 +818,8 @@ def main():
         'generator': 'tools/airport/build_stands.py', 'inputs_sha256_16': meta_in,
         'frame': F.FRAME_ID,
         'src_legend': A['src_legend'],
-        'note': ('nose = the OSM stop node (end of the painted lead-in line as mapped), used as the nose tip of the class '
-                 'reference aircraft [inf]; hdg = final lead-in segment (true deg); cls = sfo3d class (B / C / CL / D / E '
+        'note': ('nose = the OSM stop node (end of the painted lead-in line as mapped) = the nose-wheel stop (nose_note); '
+                 'hdg = final lead-in segment (true deg); cls = sfo3d class (B / C / CL / D / E '
                  '/ EL / F, js/live/airport.js CLASS_MAX) from our geometry + Sentinel-2 parked-aircraft evidence (cls_src '
                  "'obs' = a wide-body was fitted on >= 2 Sentinel-2 dates); span_max = the largest span that clears the "
                  'neighbours at their class maxima (every stand); bridges[] from OSM gate nodes + the Umbra SAR scene '
@@ -804,7 +829,8 @@ def main():
                  'are OSM refs (ODbL); no per-stand AIP-derived field.'),
         'nose_note': NOSE_NOTE,
         'class_max': {k: list(v) for k, v in CLASS_MAX.items()},
-        'class_ref': {k: {'type': v[0], 'length_m': v[1], 'span_m': v[2]} for k, v in CLS_REF.items()},
+        'class_ref': {k: {'type': v[0], 'length_m': v[1], 'span_m': v[2], 'nose_gear_m': NOSE_GEAR_M[k],
+                          'nose_gear_src': NOSE_GEAR_SRC[k]} for k, v in CLS_REF.items()},
         'params': {'clear_m': CLEAR, 'building_clear_m': BLD_CLEAR, 'tail_clear_m': TAIL_CLEAR,
                    'wide_spacing_m': WIDE_SPACING, 'bridge_reach_m': BRIDGE_REACH, 'spare_bridge_reach_m': SPARE_REACH,
                    'door2_rotunda_sep_m': DOOR2_SEP, 'push_cap_x_class_length': PUSH_CAP},

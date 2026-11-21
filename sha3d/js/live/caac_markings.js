@@ -79,10 +79,15 @@ export const CAAC = {
     tdzPattern: P('A', 'inf: pattern A or B unknown at ZSSS (6.2.6-3 allows both)'),
     tdzLen: P(22.5, '6.2.6-3 (pattern A >= 22.5 m)'),
     tdzW: P(3, '6.2.6-3 (pattern A >= 3 m)'),
-    // pre-threshold pavement >= 60 m unfit for aircraft: yellow ">" chevrons, line >= 0.9 m, 45 deg, apex towards the
-    // runway, X = W, apexes 30 m apart; the nearest chevron's legs start X/4 before the threshold line (fig. 6.2.25)
+    // pre-threshold pavement >= 60 m unfit for aircraft: yellow ">" chevrons over its full length, line >= 0.9 m, 45 deg,
+    // apex towards the runway, X = W (0 <= W - X <= 15 m), apexes 30 m apart. Fig. 6.2.25 (re-read in fix round 1, review
+    // L10): the last full chevron's apex is X/2 + X/4 before the line where the marking ends, so the nearest chevron is cut
+    // by that line: only its outer legs, X/4 long, are painted, and its apex would lie X/4 inside the runway; the far end
+    // is cut <= 1.5 m from the outer edge of the pavement
     chevronMinLen: P(60, '6.2.25'), chevronW: P(0.9, '6.2.25'), chevronPitch: P(30, 'fig. 6.2.25'),
-    chevronAngle: P(45, 'fig. 6.2.25'), chevronLastLegFromThr: P(1 / 4, 'fig. 6.2.25 (X/4)'),
+    chevronAngle: P(45, 'fig. 6.2.25'), chevronLastLegFromThr: P(1 / 4, 'fig. 6.2.25 (X/4: the cut nearest chevron)'),
+    chevronFullLength: P(true, '6.2.25 (在跑道入口前的全长: over the full length; length = the paved pad surface, fix round 1 L1)'),
+    chevronNotOnTaxiway: P(true, 'inf: no chevrons where taxiway pavement crosses the pad (that pavement is in use; 6.2.25 marks pavement unfit for aircraft)'),
     rubber: P(true, 'inf: tyre rubber deposits around the touchdown zone (rendering)'),
   },
   // runway designation numerals and letters, fig. 6.2.2-2 (dimensions in metres). Polygons were drawn by us from the
@@ -117,6 +122,14 @@ export const CAAC = {
     clClearOfHold: P(0.9, '6.2.8-3 (0.9 m clear of holding / intermediate holding / runway CL markings)'),
     clRunwayOffset: P(0.9, '6.2.8-5 (exit CL parallel to the runway CL, 0.9 m clear)'),
     clRunwayParallel: P(60, '6.2.8-5 (>= 60 m beyond the tangent point, code 3-4)'),
+    // fix round 2 (review N8 / M4): where a taxiway CL crosses threshold marking it is continuous - the threshold stripes,
+    // the displaced-threshold bar (6.2.4-4) and the threshold arrows (table 6.2.4-2 "入口标志箭头") are threshold marking;
+    // only the designation numerals interrupt it (runway markings win, 6.2.1-2)
+    crossThreshold: P('continuous', '6.2.8-3 (滑行道中线标志与跑道入口标志交叉时应连续; fig. 6.2.8-2)'),
+    cutAtDesignation: P(true, '6.2.1-2 (at a runway / taxiway intersection the runway markings are shown; numerals kept whole)'),
+    // in a displaced portion a curve that meets the runway CL heading towards the pavement end serves only a backtrack: no
+    // 60 m parallel, and the curve stops this clear of the runway lead-on line (the 6.2.8-3 clearance, by analogy)
+    backtrackClear: P(0.9, 'inf: 6.2.8-3 clearance applied to the 0.9 m lead-on line; ZSSS paint not observed'),
     edgeLineW: P(0.15, '6.2.14-3'), edgeLineGap: P(0.15, '6.2.14-3'),
     edgeClearOfHold: P(0.9, 'amd. 4, 6.2.14-4'),
     // enhanced centreline: side dashes 0.15 m wide, 3 m long, 1 m gaps, 0.15 m clear of the CL, over 47 m from
@@ -174,6 +187,30 @@ export const CAAC = {
     equipW: P(0.15, 'inf: 6.2.20 (white lines)'), equipText: P('设备区', '6.2.20-1 (white, 黑体)'),
     pushDash: P([1, 1], '6.2.16-9 (white dashed 0.15 m, 1 m / 1 m; only where operations need it: not drawn)'),
     classLetter: P({ B: 'C', C: 'C', CL: 'D', D: 'D', E: 'E', EL: 'E', F: 'F' }, 'inf: sfo3d stand class -> ICAO code letter'),
+  },
+  // ---------------------------------------------------------------------------------------------------- separations (4.9)
+  // object clearances from taxiway / taxilane centrelines by code letter (read off the local copy, fix round 1; used by the
+  // gates package for the apron floodlight masts: 9.2.7 says mast supports keep the table 4.9.5 taxilane distance)
+  separation: {
+    twyCLToObject: P({ A: 15.5, B: 20.0, C: 26.0, D: 37.0, E: 43.5, F: 51.0 }, 'table 4.9.5 col. (11) (taxiway, not stand taxilane, CL to object)'),
+    taxilaneCLToObject: P({ A: 12.0, B: 16.5, C: 22.5, D: 33.5, E: 40.0, F: 47.5 }, 'table 4.9.5 col. (13) (stand taxilane CL to object); 9.2.7 (apron floodlight supports)'),
+  },
+  // ---------------------------------------------------------------------------------------------------- apron floodlighting (9.2)
+  // fix round 2 (review N2 / M1 / N4): the night flood of js/shaders/ground.js shaApronFlood is modulated by a 4 m light map
+  // (js/live/markings.js apronLightMap): lit area = apron (airfield map G 255) + airside pavement added by packages (the
+  // T1 / T2 airside fill), with a soft spill past its edge, times the pools of the gates package's 73 inferred masts
+  // (SHA.qa.masts(): position + facing), normalised to the mean over the stand envelopes. The level (APRON_FLOOD 0.42 x
+  // albedo) and every shape value are rendering choices; only the floor and the two-direction rule are printed.
+  apronFlood: {
+    illuminance: P('stands >= 20 lx horizontal, avg:min <= 4:1; other apron >= 50 % of the stand average, avg:min <= 4:1', '9.2.6'),
+    directions: P('each stand lit from two or more directions', '9.2.2 (pools of neighbouring masts are summed)'),
+    res: P(4, 'inf: light-map texel (m); the flood is smooth, the 1 m apron edge stays from the airfield map'),
+    spill: P(16, 'inf: Gaussian spill length past the lit area (m): 0.2 at 20 m, 0.03 at 30 m (review N4 "20-30 m soft spill")'),
+    poolR: P(60, 'inf: per-mast falloff 1 / (1 + (d / R)^2) (review N4)'),
+    poolReach: P(360, 'inf: falloff truncated (continuously) at this distance (m)'),
+    poolAhead: P(25, 'inf: pool centre this far ahead of the mast along its facing (lamps aimed at the apron)'),
+    floor: P(0.5, '9.2.6-2 (other apron areas >= 50 % of the stand average; also meets avg:min <= 4:1 of 9.2.6-1)'),
+    cap: P(1.8, 'inf: brightest pool relative to the stand mean'),
   },
   // ---------------------------------------------------------------------------------------------------- signs (ch. 8, app. H)
   sign: {

@@ -14,6 +14,9 @@ hangars, the surroundings of the 23.5 km² extent plus a low-detail far ground, 
 live modes, the phone / laptop UI with the Observed / Inferred legend and the About panel. **There is no traffic yet**
 (Phase 3: a schedule-driven simulator, every aircraft labelled inferred - open ADS-B sees nothing at Hongqiao, PLAN §3).
 
+**Phase 2 fix round 1 (2026-11-21)** answered `docs/phase2/review_visual.md` (each package report has a "Fix round 1"
+section; `integration.md` the integration). Conventions that changed are listed under "Conventions" below.
+
 ## Rules (owner decisions and working defaults; non-negotiable unless the owner says otherwise)
 
 - **Do not modify `sfo3d/`, `pc12/` or `hwd3d/`.** Copy what you need into `sha3d/`; every copied file starts with
@@ -80,8 +83,10 @@ threshold), `tower` (orbit), `towercab` (the app's cab view), `stand:<name>[,<IC
 `bridge:<stand>`, `hold:<taxiway ref>`, `look:x,y,z,yaw,pitch,dist[,fov]`, `park:<stand>[:<ICAO>]+...` / `unpark`,
 `ui:legend|card:<stand>|fly:<stand>|nocard|about|close` (with `SHOWUI=1`), `<view>@<name>` (file name). `T=snapshot` keeps the app's
 snapshot instant; otherwise `T` defaults to 2026-11-14T03:00Z (11:00 local, clear default sky).
-Package jobs: `jobs/markings.mjs` (`end: endtop: hold: sign: plate:`), `jobs/gates.mjs`, `jobs/buildings.mjs`
-(photo-match views), `jobs/ui.mjs` (`SCENES=snapshot,offline,live`).
+Package jobs: `jobs/markings.mjs` (`end: endtop: hold: sign: plate: thr:`; `thr:<end>` = the app's threshold view, as
+`views.mjs rwy:<end>`), `jobs/gates.mjs` (`SET='fix1;fix1night'`: stop convention, masts, idle stairs), `jobs/buildings.mjs`
+(photo-match views; `FILLCHECK=1` counts fixed-link points, rotundas and VDGS posts on pavement), `jobs/ui.mjs`
+(`SCENES=snapshot,offline,live`; also checks that the card leaves the credit strip free and the strip's contrast).
 
 Tests (no browser):
 ```bash
@@ -96,7 +101,9 @@ In the page, `window.SHA` = `{R, scene, rig, ui, world, view, applyEnv, qa, env(
 cfg, mode, hooks, quality, runwayMode(), setRunwayRule(), observed, markings}`; readiness `window.__shaReady` /
 `__shaError`; storage prefix `shalive.`. `SHA.qa`: `hideUI, look, view, threshold, stand, tower, placeModel` (QA only),
 `clearModels, info`; gates: `park, unpark, unparkAll, parked, gates, gate, bridgeView`; shell: `selectStand, closeCard,
-openAbout, openSettings, openLegend, sheet, search, standLabels, runway, mode`; `SHA.markings.holds() / signs() / info()`.
+openAbout, openSettings, openLegend, sheet, search, standLabels, runway, mode`; gates (fix round 1): `masts()` (73 inferred
+apron floodlight masts), `idleStairs()` (staged idle stair cues); `SHA.markings.holds() / signs() / info() / apron() / plan()`
+(`apron()`: equipment areas, stand envelopes, bridge areas as world rings, src inf).
 
 ## Architecture
 
@@ -127,6 +134,26 @@ units + runway rule), `js/aircraft/*` + `js/live/models.js` (sfo3d's model pipel
 stub; the traffic engine removes `body.no-traffic`). Relay: `sha_live_server.py` (`/api/ping`, `/api/metar`, `/api/taf`,
 `/api/adsb`, `/api/status`; static allow-list: `sha3d/live.html`, `live.css`, `js/**`, `data/**`, sfo3d models and
 liveries; never `refs/`, `tools/`, `docs/`, `out/`, `jobs/`).
+
+## Conventions (since Phase 2 fix round 1)
+
+- **Stand stop node = nose-wheel stop** (MH 5001-2021 6.2.16-7; OSM `aeroway=parking_position`). A type parks with its
+  nose-gear contact on `stands[].nose` and its nose tip `noseGearX(T)` ahead (`js/live/gate_system.js` `noseGearX(T)`,
+  `standTip(stand, T)`; Phase 3 traffic: `setOccupant(g, key, ..., {nose: standTip(g, T), dir})`). `sha_stands.json`
+  `class_ref.<cls>.nose_gear_m` (+ `nose_gear_src`) per reference type; the bridges' `cab` points are door 1 of the class
+  reference parked that way. The painted envelopes, safety lines, hatching and equipment areas (`caac_decals.js`) are
+  shifted forward by `nose_gear_m`; the stop line, lead-in and alignment line stay at the node.
+- **Ground shader hooks** (`js/shaders/ground.js`): the paint hook is `shaGroundPaint(wp, fw, dxy, apt, paved, rough)`
+  (`dxy` = dFdx / dFdy of `wp.xz`, for directional footprints); chunk `sha_apron_flood` (`shaApronFlood`, level
+  `APRON_FLOOD` 0.42 × albedo, warm, inf) lights the apron and the decals at night. Airfield lighting (runway / taxiway
+  lights, stop bars) is **not modelled** (Phase 5); the legend and About say so.
+- **`aip_facts.blast_pad_m`** = [length, width] of the pad at both ends (AD 2.12), not one value per end.
+- `caac_markings.js` also carries table 4.9.5 (`separation.twyCLToObject` / `taxilaneCLToObject`, used for the masts).
+- Pavement added by packages through the `pavement(api)` hook is in the airfield map: the T1 / T2 **airside fill**
+  (`sha_buildings3d.json` `airside_fill`, src inf: OSM apron gap, paved in S2 / photo 09) draws as asphalt.
+- The UI clock and pill say **UTC+8** (Beijing time), not "CST". The tower view (`app.js`) faces the 18L/36R midpoint
+  (`anchors.tower.cabYaw`). The far haze follows the METAR surface extinction (L = clamp(0.8 / σ, 1.2, 20 km)), and the
+  Sentinel-2 hint is cross-faded into the far ground over the inner 60-480 m of the extent (`terminals.js featherS2`).
 
 ## Data (`data/`, generated - do not hand-edit)
 

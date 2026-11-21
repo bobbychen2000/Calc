@@ -10,7 +10,7 @@
 // Every colour, band height, depth and spacing below is a rendering parameter [inf] read from the open-licence photos
 // (docs/phase1/photos_credits.md: proportions only, nothing textured or traced); heights come from the data (B3 / rules).
 // Object-shader materials (js/shaders/objects.js): 1 glass curtain wall, 2 concrete panels, 3 parking facade, 4 corrugated
-// metal, 5 flat roof, 6 punched windows, 11 parking roof, 12 tower-cab glass, 13 hangar door, 15 apron-level service facade.
+// metal, 5 flat roof, 6 punched windows, 11 parking roof, 12 tower-cab glass, 13 hangar door, 15 apron-level service facade, 17 bank kerb (fades out at distance).
 import { Geo } from '../geom.js';
 import { m4, v3 } from '../math.js';
 import { earcut } from '../live/earcut.js';
@@ -21,8 +21,10 @@ export const M = {
   glass: mat([0.1, 0.1, 0.1], 0.1, 0, 1),
   fascia: mat([0.74, 0.75, 0.76], 0.35, 0.4, 0),
   fasciaDark: mat([0.36, 0.37, 0.39], 0.4, 0.5, 0),
-  roofMetal: mat([0.52, 0.53, 0.54], 0.45, 0.5, 5),
-  roofLight: mat([0.58, 0.58, 0.57], 0.8, 0, 5),
+  // roofs (fix round 1, review L5 "snow city"): terminal / hangar roofs ~0.45 grey metal (was 0.52-0.58, read as white
+  // from above); aerials 21 / 22 / 24 show mid-grey metal roofs [inf]
+  roofMetal: mat([0.44, 0.45, 0.46], 0.45, 0.5, 5),
+  roofLight: mat([0.45, 0.45, 0.44], 0.8, 0, 5),
   roofDark: mat([0.33, 0.33, 0.34], 0.9, 0, 5),
   service: mat([0.52, 0.53, 0.55], 0.75, 0.1, 15),
   ceiling: mat([0.80, 0.80, 0.78], 0.7, 0, 0),
@@ -35,17 +37,18 @@ export const M = {
   recess: mat([0.16, 0.17, 0.18], 0.8, 0.1, 15),
   louvre: mat([0.66, 0.68, 0.70], 0.35, 0.7, 0),
   louvreGap: mat([0.18, 0.19, 0.21], 0.6, 0.3, 0),
-  panelLight: mat([0.78, 0.78, 0.76], 0.85, 0, 2),
-  officeLight: mat([0.74, 0.73, 0.70], 0.85, 0, 6),
+  panelLight: mat([0.66, 0.66, 0.64], 0.85, 0, 2),      // fix 1 (L5): 0.78 -> 0.66, 0.74 -> 0.60 (concrete / tile, not paint white) [inf]
+  officeLight: mat([0.60, 0.59, 0.56], 0.85, 0, 6),
   whiteWin: mat([0.84, 0.85, 0.85], 0.6, 0, 6),
   // tower (photo 02): pale concrete, dark slot, dark windows, tinted cab glass, light roof slab
   concrete: mat([0.72, 0.71, 0.68], 0.85, 0, 2),
   slot: mat([0.05, 0.06, 0.07], 0.1, 0, 0),
   window: mat([0.05, 0.06, 0.07], 0.12, 0, 0),
   cab: mat([0.05, 0.06, 0.07], 0.05, 0, 12),
+  terrace: mat([0.26, 0.26, 0.255], 0.9, 0, 5),          // head-top terrace (roof membrane) [inf]
   console: mat([0.10, 0.095, 0.09], 0.9, 0, 0, 0.3),     // cab floor / consoles: matte charcoal + a faint fill (no AO under the cab roof, so a light floor turns sky-blue in the Tower view) [inf]
   // hangars: light corrugated cladding, door leaves, darker door header
-  clad: mat([0.74, 0.75, 0.76], 0.55, 0.35, 4),
+  clad: mat([0.64, 0.65, 0.66], 0.55, 0.35, 4),          // fix 1 (L5): 0.74 -> 0.64 (weathered light metal cladding) [inf]
   cladDark: mat([0.46, 0.47, 0.49], 0.55, 0.35, 4),
   door: mat([0.62, 0.64, 0.66], 0.5, 0.4, 13),
   // hub / others
@@ -177,6 +180,7 @@ const ROOF = { generic: 'roofLight', t1_annex: 'roofLight', t2_pier: 'roofMetal'
 export function buildPart(g, p) {
   const h = +p.h; seed = 11 + Math.floor(hash01(p.id) * 1e4);
   if (p.style === 'canopy') return buildCanopy(g, p);
+  if (p.roof_form && p.roof_form.kind === 'arch') return buildArchPart(g, p);
   wallPolys(g, p.polys, layersFor(p.style, h));
   const roof = M[ROOF[p.style] || 'roofDark'];
   if (p.roof_polys) {   // roof slab with an overhang beyond the walls (T2 hall, T1 halls, station) [inf]
@@ -189,6 +193,75 @@ export function buildPart(g, p) {
   if (/^t2_pier|t2_concourse/.test(p.style)) { skylights(g, p, top); rooftop(g, p, top, 1600); }
   else if (/t2_hall|t1_hall|t1_louvre|station/.test(p.style)) rooftop(g, p, top, 1100, 8);
   else if (/t1_core|office|hotel|glass_pavilion|generic/.test(p.style) && p.area > 1500) rooftop(g, p, top, 1400);
+}
+// ---- arch roof (fix round 1, review L2: the T1 central hall's raised roof volume, photo 02) ----------------------------
+// data roof_form {kind 'arch', rise, exp, dir}: the crest stays at h + 1.3 (the B3 height + the slab, as the flat roof
+// before), the walls stop at the eaves he = h - rise; above them a 1.3 m roof slab follows y(s) = rise (1 - |s|^exp), s
+// = -1..1 along dir across the roof outline (with its overhang). The faces under the slab ("gables") continue the wall
+// below: fritted glass on the airside (west) face, white elsewhere; the slab edge is white, its top grey metal [inf].
+function clipHalf(ring, f, keepGE) {   // Sutherland-Hodgman: keep f(p) >= 0 (keepGE) or <= 0
+  const out = []; const s = keepGE ? 1 : -1;
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i], b = ring[(i + 1) % ring.length]; const fa = s * f(a), fb = s * f(b);
+    if (fa >= 0) out.push(a);
+    if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); }
+  }
+  return out;
+}
+function sideWall(g, a, b, ya0, yb0, ya1, yb1, mt, outN) {   // one wall quad a-b with sloped bottom / top, facing outN
+  const A0 = [a[0], ya0, a[1]], B0 = [b[0], yb0, b[1]], B1 = [b[0], yb1, b[1]], A1 = [a[0], ya1, a[1]];
+  const n = v3.cross(v3.sub(B0, A0), v3.sub(A1, A0));
+  if (n[0] * outN[0] + n[2] * outN[1] >= 0) g.quad(A0, B0, B1, A1, mt.c, mt.e); else g.quad(B0, A0, A1, B1, mt.c, mt.e);
+}
+function buildArchPart(g, p) {
+  const rf = p.roof_form; const h = +p.h, rise = +rf.rise || 7, ex = +rf.exp || 2, T = 1.3; const he = h - rise;
+  const d = rf.dir || [0, 1]; const tOf = (q) => q[0] * d[0] + q[1] * d[1];
+  const roofP = p.roof_polys || p.polys; const outer = roofP[0][0];
+  let t0 = Infinity, t1 = -Infinity; for (const q of outer) { const t = tOf(q); t0 = Math.min(t0, t); t1 = Math.max(t1, t); }
+  const tc = (t0 + t1) / 2, hw = (t1 - t0) / 2;
+  const yA = (t) => rise * (1 - Math.pow(Math.min(1, Math.abs((t - tc) / hw)), ex));
+  const dyA = (t) => { const s = (t - tc) / hw; return -rise * ex * Math.pow(Math.min(1, Math.abs(s)), ex - 1) * Math.sign(s) / hw; };
+  const NS = 32; const cuts = []; for (let k = 0; k <= NS; k++) cuts.push(t0 + (t1 - t0) * k / NS);
+  // split an edge at the strip cuts (so a curved top is piecewise linear between cut lines)
+  const split = (a, b) => { const ta = tOf(a), tb = tOf(b); const pts = [a]; const ks = cuts.filter(c => (c - ta) * (c - tb) < 0).sort((x, y) => (x - ta) / (tb - ta) - (y - ta) / (tb - ta));
+    for (const c of ks) { const f = (c - ta) / (tb - ta); pts.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]); } pts.push(b); return pts; };
+  // walls to the eaves: the airside (west) face fritted glass from 13 m up to the eaves (it continues in the gable)
+  const land = layersFor('t1_louvre', he), air = [[0, 13.0, M.white], [13.0, he, M.frit]];
+  wallPolys(g, p.polys, (nx) => nx < -0.6 ? air : land);
+  // gables under the arch slab, along the wall outline
+  for (const pl of p.polys) pl.forEach((r, ri) => {
+    const pos = ringArea(r) > 0; const outward = ri === 0;
+    for (let i = 0; i < r.length; i++) {
+      const a = r[i], b = r[(i + 1) % r.length]; const L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L < 0.05) continue;
+      let n = [(b[1] - a[1]) / L, -(b[0] - a[0]) / L]; if (pos !== outward) n = [-n[0], -n[1]];
+      const mt = n[0] < -0.6 ? M.frit : M.white; const pts = split(a, b);
+      for (let k = 0; k + 1 < pts.length; k++) { const u = pts[k], w = pts[k + 1]; sideWall(g, u, w, he, he, he + yA(tOf(u)), he + yA(tOf(w)), mt, n); }
+    }
+  });
+  // the arch slab: strips across dir, each clipped from the roof outline, earcut, vertices lifted to the arch
+  const roofMt = M.roofMetal;
+  for (let k = 0; k < NS; k++) {
+    let ring = clipHalf(outer, (q) => tOf(q) - cuts[k], true); if (ring.length >= 3) ring = clipHalf(ring, (q) => tOf(q) - cuts[k + 1], false);
+    if (ring.length < 3) continue;
+    const flat = []; for (const q of ring) flat.push(q[0], q[1]); const tri = earcut(flat, []);
+    for (const up of [true, false]) {
+      const base = g.nv; const mt = up ? roofMt : M.ceiling;
+      for (const q of ring) { const t = tOf(q), s = dyA(t); const nn = up ? v3.norm([-s * d[0], 1, -s * d[1]]) : [0, -1, 0]; g.vert([q[0], he + yA(t) + (up ? T : 0), q[1]], nn, mt.c, mt.e, q); }
+      for (let i = 0; i < tri.length; i += 3) {
+        const a = tri[i], b = tri[i + 1], c = tri[i + 2];
+        const cr = (flat[b * 2] - flat[a * 2]) * (flat[c * 2 + 1] - flat[a * 2 + 1]) - (flat[b * 2 + 1] - flat[a * 2 + 1]) * (flat[c * 2] - flat[a * 2]);
+        if ((cr > 0) === up) g.idx.push(base + a, base + c, base + b); else g.idx.push(base + a, base + b, base + c);
+      }
+    }
+  }
+  // slab edge (white fascia) along the roof outline
+  const rpos = ringArea(outer) > 0;
+  for (let i = 0; i < outer.length; i++) {
+    const a = outer[i], b = outer[(i + 1) % outer.length]; const L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L < 0.05) continue;
+    let n = [(b[1] - a[1]) / L, -(b[0] - a[0]) / L]; if (!rpos) n = [-n[0], -n[1]];
+    const pts = split(a, b);
+    for (let k = 0; k + 1 < pts.length; k++) { const u = pts[k], w = pts[k + 1], yu = he + yA(tOf(u)), yw = he + yA(tOf(w)); sideWall(g, u, w, yu, yw, yu + T, yw + T, M.white, n); }
+  }
 }
 // platform canopies (Hongqiao station): a roof slab on a 24 m column grid [inf]
 function buildCanopy(g, p) {
@@ -299,8 +372,10 @@ export function buildControlTower(t) {
         g.quad(p(s - 0.5, yr - 0.55, wk0), p(s + 0.5, yr - 0.55, wk0), p(s + 0.5, yr + 0.55, wk2), p(s - 0.5, yr + 0.55, wk2), M.window.c, M.window.e); }
     }
   }
-  // terrace floor at head_y1 (closes the frustum top)
-  g.box([-w1, y1 - 0.4, -w1], [w1, y1, w1], M.concrete.c, M.concrete.e, B);
+  // terrace floor at head_y1 (closes the frustum top): grey roof membrane on top (fix round 1: the pale concrete top glared
+  // white across the lower part of the in-app Tower view) [inf]
+  g.box([-w1, y1 - 0.4, -w1], [w1, y1, w1], M.concrete.c, M.concrete.e, B, ['px', 'nx', 'pz', 'nz', 'ny']);
+  g.box([-w1, y1 - 0.4, -w1], [w1, y1, w1], M.terrace.c, M.terrace.e, B, ['py']);
   // cab: chamfered square (octagon with long / short sides), glazing from head_y1 to cab_y1, leaning outward
   const oct = (w, ch) => [[w, -w + ch], [w, w - ch], [w - ch, w], [-w + ch, w], [-w, w - ch], [-w, -w + ch], [-w + ch, -w], [w - ch, -w]];
   const cb = oct(D.cab_w0 / 2, D.cab_w0 * 0.17), ct = oct(D.cab_w1 / 2, D.cab_w1 * 0.17);
@@ -331,25 +406,49 @@ export function buildBlockTower(g, t) {
 // context buildings of the detailed extent (data/sha_airport.js context.buildings, minus the hub parts drawn above):
 // one low-detail block each - walls to the data height (rule heights, inf), a parapet, a flat roof; facade by kind
 // (punched windows for housing / offices, concrete panels otherwise, glass for tall offices); wall tint per building from
-// a small palette by id hash [all inf].
-const TINTS = [[0.56, 0.54, 0.50], [0.62, 0.60, 0.56], [0.60, 0.52, 0.48], [0.52, 0.54, 0.56], [0.66, 0.64, 0.60], [0.50, 0.48, 0.45]];
+// a palette by id hash, roofs darker than walls [all inf].
+// Fix round 1 (review L5, "snow city"): the old tints (linear 0.50-0.66) and the uniform 0.30-0.38 roofs read as white
+// blocks from above. Walls now come from a Shanghai-like palette (linear luminance ~0.25-0.52: grey concrete, beige / buff
+// tile, brick, warm white tile, blue-grey) with a +-8 % per-building variation from a second hash; roofs are 0.16-0.30
+// grey (asphalt / concrete / gravel) and a share of industrial / commercial roofs are blue or grey steel (aerials 21 / 24:
+// blue steel roofs on factory sheds) [inf: palette and shares read from the open aerials, not measured].
+const WALLS = [
+  [0.40, 0.40, 0.39], [0.46, 0.45, 0.43], [0.34, 0.34, 0.34],   // grey concrete
+  [0.50, 0.44, 0.35], [0.44, 0.39, 0.31],                       // beige / buff tile
+  [0.36, 0.21, 0.15], [0.30, 0.19, 0.14],                       // brick
+  [0.55, 0.53, 0.49],                                           // warm white tile
+  [0.33, 0.36, 0.40],                                           // blue-grey
+];
+const W_SHARE = [0.13, 0.13, 0.10, 0.13, 0.10, 0.08, 0.05, 0.18, 0.10];   // cumulative pick by hash
+function pickWall(k) { let a = 0; for (let i = 0; i < WALLS.length; i++) { a += W_SHARE[i]; if (k < a) return WALLS[i]; } return WALLS[WALLS.length - 1]; }
+export const CONTEXT_PALETTE = { walls: WALLS, shares: W_SHARE, roofGrey: [0.16, 0.30], steelBlue: [0.10, 0.17, 0.27], steelGrey: [0.30, 0.31, 0.33], src: 'inf (aerials 21 / 24, photos 02 / 22)' };
+export function contextColours(id, kind) {
+  const k = hash01(id), k2 = hash01(id + '#v'), k3 = hash01(id + '#r');
+  const v = 0.92 + 0.16 * k2; const w = pickWall(k).map(c => c * v);
+  let roof; const g = 0.16 + 0.14 * k3;
+  if (/industrial|commercial/.test(kind) && k3 > 0.6) roof = k3 > 0.8 ? CONTEXT_PALETTE.steelBlue : CONTEXT_PALETTE.steelGrey;
+  else roof = [g, g * 0.99, g * 0.96];
+  // roofs stay darker than their walls (<= 0.8 x the wall luminance; brick walls are dark)
+  const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; const kr = Math.min(1, 0.8 * lum(w) / lum(roof));
+  return { wall: w, roof: roof.map(c => c * kr) };
+}
 export function buildContextBlocks(g, buildings, skip) {
   let n = 0;
   for (const b of buildings) {
     if (skip.has(b.id)) continue;
-    const h = Math.max(3, +b.height_m || 10); const k = hash01(b.id); const tint = TINTS[Math.floor(k * TINTS.length) % TINTS.length];
-    const kind = b.kind || 'building';
+    const h = Math.max(3, +b.height_m || 10);
+    const kind = b.kind || 'building'; const C = contextColours(b.id, kind); const tint = C.wall;
     let wall;
     if (/apartments|residential|house|hotel/.test(kind)) wall = { c: [...tint, 1], e: [0.9, 0, 6, 0] };
     else if (/office|commercial/.test(kind)) wall = h >= 28 ? { c: [0.1, 0.1, 0.1, 1], e: [0.1, 0, 1, 0] } : { c: [...tint, 1], e: [0.85, 0, 6, 0] };
-    else if (/industrial/.test(kind)) wall = { c: [0.66, 0.67, 0.69, 1], e: [0.6, 0.3, 4, 0] };
+    else if (/industrial/.test(kind)) wall = { c: [0.50, 0.51, 0.53, 1], e: [0.6, 0.3, 4, 0] };
     else wall = { c: [...tint, 1], e: [0.9, 0, 2, 0] };
     const rings = [b.ring, ...((b.more_rings || []).map(r => Array.isArray(r[0][0]) ? r[0] : r))].filter(r => r && r.length >= 3);
     const polys = rings.map(r => [ringArea(r) > 0 ? r : r.slice().reverse()]);
     wallPolys(g, polys, [[-0.5, h, wall]]);
-    const roof = { c: [0.30 + 0.08 * k, 0.30 + 0.07 * k, 0.30 + 0.06 * k, 1], e: [0.9, 0, 5, 0] };
+    const roof = { c: [...C.roof, 1], e: [0.9, 0, 5, 0] };
     capPolys(g, polys, h, roof, true);
-    if (h > 6) parapet(g, polys, h, 0.7, { c: [tint[0] * 0.9, tint[1] * 0.9, tint[2] * 0.9, 1], e: [0.9, 0, 0, 0] });
+    if (h > 6) parapet(g, polys, h, 0.7, { c: [tint[0] * 0.85, tint[1] * 0.85, tint[2] * 0.85, 1], e: [0.9, 0, 0, 0] });
     n++;
   }
   return n;
@@ -360,7 +459,7 @@ export function buildContextBlocks(g, buildings, skip) {
 // not run inside a water area, offset by the core's drawn half-width (js/world/ground.js WATER_W) [inf: form, height,
 // widths]; the water itself stays the ground shader's (core). Ditches and drains get none.
 const BANK_W = { river: 16, canal: 10, stream: 5 };
-const BANK = { c: [0.56, 0.55, 0.52, 1], e: [0.85, 0, 2, 0] };
+const BANK = { c: [0.46, 0.45, 0.42, 1], e: [0.85, 0, 17, 0] };   // mat 17: kerb, fades out beyond ~650-850 m (fix 1, review M6) [inf]
 function kerb(g, a, b, h = 0.5, w = 0.35) {
   const dx = b[0] - a[0], dz = b[1] - a[1]; const L = Math.hypot(dx, dz); if (L < 0.5) return 0;
   g.box([-L / 2, -0.4, -w / 2], [L / 2, h, w / 2], BANK.c, BANK.e, m4.basis([dx / L, 0, dz / L], [0, 1, 0], [(a[0] + b[0]) / 2, 0, (a[1] + b[1]) / 2]), ['px', 'nx', 'py', 'pz', 'nz']);

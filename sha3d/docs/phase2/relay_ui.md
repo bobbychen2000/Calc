@@ -415,3 +415,37 @@ buttons, legend header, card buttons, labels) are at least about 30 px high.
     (allow-list); Phase 3 should add an API endpoint such as `/api/observed_elsewhere` to `sha_live_server.py` that reads
     the local cache and returns only what the app shows, labelled "observed elsewhere, SHA time inferred". The About text
     already describes that tier.
+
+## Fix round 1 (2026-11-21)
+
+UI findings of `docs/phase2/review_visual.md` fixed by the gates package fixer, who owns this report's files in this round
+(the M5 / M2 / L4 / L6 work is in `gates.md`, fix round 1). Files changed: `js/live/ui.js`, `js/live/shell.js`,
+`js/live/about.js`, `live.css`, `jobs/ui.mjs`. The renders were made with `jobs/ui.mjs` (`SCENES=snapshot`) on a laptop
+(1440 × 900) and an iPhone 15 (393 × 659), deviceScaleFactor 1; they are in `out/fix1/gates/ui/` (gitignored). Before =
+the Phase 2 renders `ui_laptop_stand_card_fly.png` / `ui_phone_stand_card_fly.png` in this folder, from the same job and
+the same camera.
+
+| Id | What changed | Evidence | Status |
+|---|---|---|---|
+| L7 | **Credit line on its own dark strip.** `#attrib` gets `rgba(8, 12, 18, 0.82)`, 6 px radius and 2 / 7 px padding, with `#dfe6ee` text and `#f2f5f8` links; the "About & licences" link keeps the accent colour. Before: `--dim` grey with a text shadow over the scene. On the laptop it is limited to `100vw - 300px`, so it never runs under the legend box. `ui.js` measures its height into `--attrib-h` (ResizeObserver), and the laptop card's bottom is `--attrib-h + 17 px`, so an open card never covers it, even when the line wraps. On the phone the strip shrinks to fit at the top right under the view buttons, and the card sits at the bottom. `jobs/ui.mjs` now checks both: it reports overlap and contrast against the worst case (the strip over white, and over black). | Laptop: credit line 872-891 px, card ends at 864 -> **not covered**. Text **9.4:1**; links 10.8:1 (OSM) and 6.7:1 (accent "About & licences"). Phone: strip 86-126 px, card from 469 px -> not covered, same ratios. `fix1_gates_ui_laptop.png`, `fix1_gates_ui_phone.png` | fixed |
+| L8 | **"UTC+8" instead of "CST"** in the clock (`ui.js` `setClock`, tooltip "Beijing time (China Standard Time, UTC+8)") and in the snapshot pill (`shell.js`). The phone used to hide the zone (`#clock .dim { display: none }`); it now shows it at 10 px. About: "Times are Beijing time (UTC+8)." | clock text `12:15 UTC+8` on both (job log `check: ... clock UTC+8 ok`); `fix1_gates_ui_laptop.png` top row, `fix1_gates_ui_phone.png` | fixed |
+| lighting | **Honest night note.** New legend line `lighting`: "Airfield lighting: not modelled yet (Phase 5): no runway or taxiway lights, stop bars or approach lights at night. The apron glow, the floodlight-mast lamps and the lit signs are inf." The same statement is in About ("Not included"). | `jobs/ui.mjs`: `legend has Airfield lighting ok`, `about has Airfield lighting: not modelled yet (Phase 5) ok` (laptop and phone) | fixed |
+| L6 (shown here) | The card title comes from the data area: "T2 APRONS NR. 2" -> "T2 APRON 2" (`build_stands.py`, gates.md F4). The stand card note now reads "aircraft park with the nose wheel on the stop node (CAAC MH 5001-2021 6.2.16-7; OSM tagging)" (gates.md F1). | `fix1_gates_ui_laptop.png`, `fix1_gates_ui_phone.png` | fixed |
+
+The legend's gates line also names the new inferred cues: floodlight masts (73) and staged idle airstairs (26). Every About
+check of the job still passes, now including "UTC+8" and the lighting line. Console: `jobs/integration.mjs` `SCENES=snapshot`
+and `park` are clean (0 errors, 0 warnings, 0 page errors).
+
+## Fix round 2 (2026-11-21)
+
+One finding of `docs/phase2/review_visual_fix1.md` touches this report's files: **N1** (medium), apron floodlight masts in
+the app's own "Fly to stand" camera. The mast placement and the lamp sprites are in `gates.md` (fix round 2). This section
+covers only the UI shell part; the file changed is `js/live/shell.js`.
+
+| Id | What changed | Evidence | Status |
+|---|---|---|---|
+| N1 (UI) | **"Fly to stand" picks a clear side.** The stand camera is now defined once, in `gate_system.js` `STAND_CAM` / `standCamWedge`. The numbers are the same as before (inf): target 18 m behind the stop node, horizontal direction 0.75 × heading + 0.66 × left, 24° down, 90 m or 120 m for E / EL / F, fov 50°. `flyToStand` takes side +1 (the aircraft's left, the bridge side). It switches to side -1 only when a mast stands in side +1 and side -1 is clearer. "A mast stands in it" is `standCamPos`: projected into the camera, the pole passes within 4° of the image of the class reference and the bridge, or crosses the ±8° centre band in front of the target. The mast placement keeps side +1 of every contact stand clear, so side -1 is only taken at remote stands (48 of 106). The camera now uses the stand's exact heading (the card record is rounded to 1°) and the subject points the mast placement used (`SHA.qa.camSubject`). New QA hook `SHA.qa.standCam(name)` returns `{side, clear: [side +1, side -1], subjDeg, centreDeg}`; clear is the clearance in multiples of the margin, and < 1 means a mast in the subject. | `jobs/gates.mjs SET=fix2` checks every stand's camera: on the side taken, 0 of 164 stands have a pole within 5 m of the sight line (before 40) and 0 have one inside the margins. Renders: `fix2_gates_fly_248_274.png`, `fix2_gates_stand_233_115.png` (described in gates.md) | fixed |
+
+Console: `jobs/integration.mjs` `SCENES=snapshot` is clean (0 errors, 0 warnings, 0 page errors, 0 failed requests). The
+`jobs/gates.mjs` `fix2` runs exercise `flyToStand` through `SHA.qa.selectStand(name, true)` (the stand card's "Fly to stand"
+path) and log no error or warning.

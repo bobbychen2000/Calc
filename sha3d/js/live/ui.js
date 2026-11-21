@@ -69,6 +69,8 @@ export class UI {
     $('#lg-h').addEventListener('click', () => this.openLegend(this.el.legend.hidden));
     this.el.slabels.addEventListener('click', e => { const l = e.target.closest('[data-stand]'); if (l && this.onStand) this.onStand(l.dataset.stand, true); });
     this.pops = [this.el.settings, this.el.about];
+    // fix round 1 (review L7): the card's bottom edge stays above the credit line (live.css #card uses --attrib-h)
+    try { const ro = new ResizeObserver(() => { const h = this.el.attrib.getBoundingClientRect().height; document.documentElement.style.setProperty('--attrib-h', Math.ceil(h) + 'px'); }); ro.observe(this.el.attrib); } catch (e) { }
     R.querySelectorAll('#panel .tabs button').forEach(b => b.addEventListener('click', () => { this.tab = b.dataset.tab; this.renderList(true); if (this.sheet === 'peek') this.setSheet('open'); }));
     this.el.search.addEventListener('input', () => { this.q = this.el.search.value.trim().toLowerCase(); if (this.q && this.tab !== 'all') this.tab = 'all'; this.renderList(true); });
     this.el.search.addEventListener('focus', () => { if (this.sheet !== 'open') this.setSheet('open'); });
@@ -127,7 +129,8 @@ export class UI {
   }
   setClock(d, extra) {
     const t = d.toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
-    this.el.clock.innerHTML = `${esc(t)} <span class="dim">CST</span>${extra ? ' <span class="wx">' + esc(extra) + '</span>' : ''}`;
+    // fix round 1 (review L8): Beijing time labelled UTC+8 - 'CST' also reads as US Central time in an English UI
+    this.el.clock.innerHTML = `${esc(t)} <span class="dim" title="Beijing time (China Standard Time, UTC+8)">UTC+8</span>${extra ? ' <span class="wx">' + esc(extra) + '</span>' : ''}`;
   }
 
   // ------------------------------------------------------------ lists (filled by the Phase 3 traffic engine)

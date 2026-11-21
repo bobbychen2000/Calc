@@ -26,8 +26,9 @@ Method:
   2. binned into 50 m world cells over the crop's world bbox -> class fractions per cell;
   3. colour = sum(fraction x class reflectance) -> 8-bit sRGB of 2 x reflectance (the same encoding as data/sha_ground_s2.js:
      decode rho = srgb_to_linear(v / 255) / 2), stored as JPEG (quality 90, deterministic with this Pillow);
-     attributes (PNG): R = water (class 80) fraction, G = built-up (50) fraction, B = distance outside the detailed extent
-     / 6000 m (0 inside; the renderer's haze ramp);
+     attributes (PNG): R = water (class 80) fraction, G = built-up (50) fraction, B = signed distance to the detailed
+     extent's edge, (d + 1000 m) / 7000 m (0 = 1 km or more inside, 1000/7000 at the edge, 1 = 6 km or more outside; the
+     renderer's haze ramp and edge cross-fade; fix round 1: it was the distance outside only, 0 inside);
   4. base64 in a JS wrapper.
 Attribution: (c) ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA
 WorldCover consortium (CC BY 4.0); calibration: Contains modified Copernicus Sentinel data 2026.
@@ -100,11 +101,12 @@ def ll_to_world_grid(lat, lon):
     return bil(GX), bil(GZ), err
 
 
-OUT_RANGE = 6000.0
+OUT_RANGE, IN_RANGE = 6000.0, 1000.0
 
 
 def out_distance(x0, z0, w, h):
-    """per 50 m cell: distance (m) outside the extent polygon of data/sha_airport.json, scaled to 0..255 over OUT_RANGE"""
+    """per 50 m cell: signed distance (m) to the edge of the extent polygon of data/sha_airport.json (negative inside),
+    scaled to 0..255 over -IN_RANGE .. OUT_RANGE (fix round 1: the edge cross-fade starts inside the extent)"""
     from matplotlib.path import Path
     from scipy.ndimage import distance_transform_edt
     with open(os.path.join(ROOT, 'data', 'sha_airport.json'), encoding='utf-8') as fh:
@@ -112,8 +114,8 @@ def out_distance(x0, z0, w, h):
     xs = x0 + (np.arange(w) + 0.5) * RES; zs = z0 + (np.arange(h) + 0.5) * RES
     XX, ZZ = np.meshgrid(xs, zs)
     inside = Path(np.array(ring)).contains_points(np.stack([XX.ravel(), ZZ.ravel()], axis=1)).reshape(h, w)
-    d = distance_transform_edt(~inside) * RES
-    return np.round(255 * np.clip(d / OUT_RANGE, 0, 1)).astype(np.uint8)
+    d = np.where(inside, -distance_transform_edt(inside), distance_transform_edt(~inside)) * RES
+    return np.round(255 * np.clip((d + IN_RANGE) / (IN_RANGE + OUT_RANGE), 0, 1)).astype(np.uint8)
 
 
 def calibrate(wc, wtr):
@@ -178,8 +180,8 @@ def main():
     attr = np.zeros((h, w, 3), np.uint8)
     for ch, f in enumerate((frac[80], frac[50])):
         attr[..., ch] = np.round(255 * np.clip(f, 0, 1)).reshape(h, w).astype(np.uint8)
-    # B = distance outside the detailed extent (0 inside, 255 at >= OUT_RANGE m): the haze ramp starts at the extent edge
-    # (js/live/terminals.js), so the far ground next to the extent is not hazier than the extent itself
+    # B = signed distance to the extent edge (0 at >= IN_RANGE m inside, 255 at >= OUT_RANGE m outside): the haze ramp and
+    # the colour cross-fade (js/live/terminals.js) run over a few hundred metres across the edge
     attr[..., 2] = out_distance(x0, z0, w, h)
     pc, nc = jpg_b64(col); pa, na = png_b64(attr, 'RGB')
     shares = {NAMES[k]: round(float(frac[k][valid].mean()), 4) for k in CLASSES if frac[k][valid].mean() > 0}
@@ -194,7 +196,8 @@ def main():
                        'Contains modified Copernicus Sentinel data 2026',
         'frame': frame.FRAME_ID, 'rect': [float(x0), float(z0), float(x1 - x0), float(z1 - z0)], 'res_m': RES, 'w': w, 'h': h,
         'encoding': 'png_col (JPEG q90) RGB = 255 * srgb(min(1, 2 * reflectance)); png_attr (PNG) R water fraction, G built-up fraction, '
-                    'B = 255 * min(1, distance outside the extent / %d m)' % OUT_RANGE,
+                    'B = 255 * clip((signed distance to the extent edge, negative inside, + %d m) / %d m)' % (IN_RANGE, IN_RANGE + OUT_RANGE),
+        'attr_b_range_m': [-IN_RANGE, OUT_RANGE],
         'classes': {str(k): {'name': NAMES[k], 'reflectance_rgb': refl[k], 'src': 'obs (S2 calibration)' if k in cal else 'inf (fallback)',
                              'pure_px_in_extent': counts.get(k, 0)} for k in CLASSES},
         'shares': shares, 'mean_reflectance_rgb': mean_rgb, 'grid_interp_err_m': round(err, 4),

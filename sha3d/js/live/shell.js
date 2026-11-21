@@ -14,6 +14,7 @@ import { RELAY, fetchTaf, fetchAdsb } from './relay.js';
 import { modeLine } from './about.js';
 import { decode as decodeZsss, runwayMode, windText, RULES } from '../env/wx/metar_zsss.js';
 import { TZ } from '../env/clock.js';
+import { STAND_CAM, standCamWedge, standCamClearance } from './gate_system.js';   // (fix round 2, N1) the stand camera, defined once
 
 const DEG = Math.PI / 180;
 const store = { get(k, d) { try { const v = localStorage.getItem('shalive.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('shalive.' + k, JSON.stringify(v)); } catch (e) { } } };
@@ -35,7 +36,7 @@ function standRecords(data) {
       service: !s.contact && remote.get(String(s.name)) ? remote.get(String(s.name)).service : null,
       push: P ? `${Math.round(P.push_dist_m || 0)} m back along the lead-in line, then onto the apron lane` : null,
       note: `Class ${s.cls_src === 'obs' ? 'from Sentinel-2 parked-aircraft evidence (observed)' : 'by rule from the stand geometry and neighbours (inferred)'}; ` +
-        `the stop node is taken as the nose position (inferred). Bridges: ${br.length ? br.filter(b => b.src === 'obs').length + ' seen on Umbra SAR, ' + br.filter(b => b.src !== 'obs').length + ' from OSM gate nodes only' : 'none (remote stand: bus service inferred)'}.` };
+        `aircraft park with the nose wheel on the stop node (CAAC MH 5001-2021 6.2.16-7; OSM tagging). Bridges: ${br.length ? br.filter(b => b.src === 'obs').length + ' seen on Umbra SAR, ' + br.filter(b => b.src !== 'obs').length + ' from OSM gate nodes only' : 'none (remote stand: bus service inferred)'}.` };
   });
 }
 
@@ -49,6 +50,8 @@ function legendLines(app) {
   else L.push(['buildings', '<b>Buildings:</b> outlines from OpenStreetMap <span class="srcchip obs">obs</span>; heights <span class="srcchip inf">inf</span>.']);
   L.push(['weather', '<b>Weather:</b> the ZSSS METAR <span class="srcchip obs">obs</span> (live via the relay, or recorded in a snapshot); the runway direction in use <span class="srcchip inf">inf</span>.']);
   L.push(['traffic', '<b>Traffic:</b> none yet. Simulated aircraft will be <span class="srcchip inf">inf</span>; ADS-B positions <span class="srcchip obs">obs</span>.']);
+  // (fix round 1) night scenes must not pass for the real airfield: runway / taxiway lights, stop bars and RGLs are Phase 5
+  L.push(['lighting', '<b>Airfield lighting:</b> not modelled yet (Phase 5): no runway or taxiway lights, stop bars or approach lights at night. The apron glow (brighter near the masts; it also lights the aircraft, vehicles and jet bridges on the apron), the floodlight-mast lamps and the lit signs are <span class="srcchip inf">inf</span>.']);
   return L;
 }
 
@@ -101,11 +104,11 @@ function status(app, now) {
     const t = cfg.snapshot ? cfg.snapshot.now : now;
     const sub = localFmt(t, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     if (mi.relayWanted) ui.setStatus({ state: 'err', text: 'Relay offline', sub: 'snapshot ' + sub, title: 'The relay was requested (?relay=1) but did not answer' + (mi.relayError ? ' (' + mi.relayError + ')' : '') + ': showing the recorded snapshot instead.' });
-    else ui.setStatus({ state: 'snap', text: 'Snapshot · ' + localFmt(t, { day: 'numeric', month: 'short' }), sub: localFmt(t, { hour: '2-digit', minute: '2-digit' }) + ' CST', title: 'Snapshot: recorded ZSSS weather at ' + (cfg.snapshot ? cfg.snapshot.nowUtc : '') + ' (no network). No traffic: open ADS-B does not cover Hongqiao; simulated traffic comes in Phase 3.' });
+    else ui.setStatus({ state: 'snap', text: 'Snapshot · ' + localFmt(t, { day: 'numeric', month: 'short' }), sub: localFmt(t, { hour: '2-digit', minute: '2-digit' }) + ' UTC+8', title: 'Snapshot: recorded ZSSS weather at ' + (cfg.snapshot ? cfg.snapshot.nowUtc : '') + ' (no network). No traffic: open ADS-B does not cover Hongqiao; simulated traffic comes in Phase 3.' });
   } else {
     ui.setStatus({ state: 'wait', text: 'Static scene', sub: 'no relay', title: 'No relay: no live weather (clear default) and no traffic. Start sha_live_server.py for live ZSSS weather.' });
   }
-  // clock line: local time (CST) + weather in the report's own units
+  // clock line: Beijing time, labelled UTC+8 (fix round 1, review L8: 'CST' is also US Central time) + weather in the report's own units
   let wx = '';
   if (M && M.raw) {
     const d = decodeZsss(M.raw);
@@ -137,13 +140,32 @@ function standLabels(app) {
   }
   app.ui.updateStandLabels(items, W, H);
 }
+// "Fly to stand": the stand camera (gate_system.js STAND_CAM: ahead-left of the stand, looking back at a point 18 m behind
+// the stop node, 24 deg down, 90 m / 120 m for E / EL / F). (fix round 2, review N1) Side +1 (the aircraft's left, the
+// bridge side) unless an apron floodlight mast stands in it (gate_system.js standCamPos: projected into the camera, its pole
+// passes within STAND_CAM.subjDeg of the image of the class reference parked there and the bridge rotundas / cabs, or
+// crosses the centre band in front of the target) and side -1 is clearer. placeMasts keeps side +1 of every contact stand and at least one side of
+// every remote stand clear, so side -1 is only taken at remote stands. Uses the stand's exact heading (not the rounded card
+// record) and the subject points the mast placement used (SHA.qa.camSubject; without the gates package, the data's).
+function standCam(app, s, side) {
+  const D = app.data && app.data.stands; const r = (D && D.stands || []).find(x => String(x.name) === s.name) || s;
+  const h = app.geo.hdgVec(r.hdg); let subj = app.qa && typeof app.qa.camSubject === 'function' ? app.qa.camSubject(s.name) : null;   // as the masts were placed
+  if (!subj) { const ng = (D && D.class_ref && D.class_ref[r.cls] && D.class_ref[r.cls].nose_gear_m) || 0; const H = STAND_CAM.subjH;   // (no gates package: from the data)
+    subj = [{ p: [r.nose[0] + h[0] * ng, r.nose[1] + h[1] * ng], y: H.tip }];
+    for (const b of (Array.isArray(r.bridges) ? r.bridges : [])) { if (b.rotunda) subj.push({ p: b.rotunda, y: H.rotunda }); if (b.cab) subj.push({ p: b.cab, y: H.cab }); } }
+  return standCamWedge(r.nose, h, r.cls, side, subj);
+}
+function standCamSide(app, s) {
+  const M = (app.qa && typeof app.qa.masts === 'function' && (app.qa.masts() || {}).masts) || []; if (!M.length) return 1;
+  const P = M.map(m => m.p); const c1 = standCamClearance(standCam(app, s, 1), P); if (c1 >= 1) return 1;
+  return standCamClearance(standCam(app, s, -1), P) > c1 ? -1 : 1;
+}
 function flyToStand(app, s) {
-  const h = app.geo.hdgVec(s.hdg); const G = app.geo.GROUND_Y;
-  const tgt = [s.nose[0] - h[0] * 18, G, s.nose[1] - h[1] * 18]; const lf = [h[1], -h[0]];
-  const off = [h[0] * 0.75 + lf[0] * 0.66, h[1] * 0.75 + lf[1] * 0.66];
+  const G = app.geo.GROUND_Y; const W = standCam(app, s, standCamSide(app, s));
   app.rig.stopFollow(); app.rig.leaveTower();
-  app.rig.flyTo({ target: tgt, dist: s.cls === 'E' || s.cls === 'EL' || s.cls === 'F' ? 120 : 90, yaw: Math.atan2(off[0], -off[1]), pitch: 24 * DEG, fov: 50 * DEG });
+  app.rig.flyTo({ target: [W.T[0], G, W.T[1]], dist: W.dist, yaw: Math.atan2(W.o[0], -W.o[1]), pitch: STAND_CAM.pitch * DEG, fov: STAND_CAM.fov * DEG });
   app.ui.root.querySelectorAll('#views [data-view]').forEach(b => b.classList.remove('on'));
+  return W.side;
 }
 function selectStand(app, name, fromLabel = false, fly = false) {
   const s = S.byName.get(String(name)); if (!s) { app.ui.renderStandCard(null); S.sel = null; return false; }
@@ -191,6 +213,8 @@ registerExtension({
     Object.assign(app.qa, {
       selectStand: (n, fly = true) => selectStand(app, n, !fly, fly),
       closeCard: () => { S.sel = null; ui.renderStandCard(null); return true; },
+      standCam: (n) => { const s = S.byName.get(String(n)); if (!s) return null; const P = ((app.qa.masts && app.qa.masts().masts) || []).map(m => m.p);   // (fix round 2, N1) the "Fly to stand" side
+        return { stand: s.name, side: standCamSide(app, s), clear: [1, -1].map(sd => +Math.min(999, standCamClearance(standCam(app, s, sd), P)).toFixed(2)), subjDeg: STAND_CAM.subjDeg, centreDeg: STAND_CAM.centreDeg, src: STAND_CAM.src }; },
       openAbout: (on = true) => { for (const p of ui.pops) p.hidden = true; ui.el.about.hidden = !on; return true; },
       openSettings: (on = true) => { for (const p of ui.pops) p.hidden = true; ui.el.settings.hidden = !on; return true; },
       openLegend: (on = true) => { ui.openLegend(on); return true; },

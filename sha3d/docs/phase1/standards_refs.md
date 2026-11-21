@@ -69,7 +69,7 @@ Colours: runway markings white; taxiway and turn-pad markings yellow; black bord
 | Layout at threshold | stripes from 6 m; 12 m gap; letter 9 m; 6 m gap; number 9 m; 12 m gap; centreline (Fig. 6.2.2-1 b) | stripes from 20 ft (6 m) (2.5) | letter nearer the threshold in both |
 | Threshold stripes | count by width: 18 m 4, 23 m 6, 30 m 8, **45 m 12, 60 m 16**; ≥ 30 m long (preferably 45 m), ~1.8 m wide, ~1.8 m apart, double centre gap; out to ≤ 3 m from the edge or 27 m from the CL (6.2.4) | 12 for 150 ft, 16 for 200 ft; 150 ft long, 5.75 ft wide and apart (2.5) | 45 m stripes; spacing fitted to the 3 m rule: 1.45 m (45 m rwy), 1.575 m (60 m) (inf) |
 | Displaced threshold | transverse bar ≥ 1.8 m; permanent: centreline arrows before it, first arrow 30 m long starting 20 m before the bar (Fig. 6.2.4 b); temporary: row of arrows (3/3/4/5/7 for 18/23/30/45/60 m) | 10 ft bar; arrowheads + arrows [code] | permanent case at all four ends (100 m / 300 m, AIP mirror) |
-| Pre-threshold pavement ≥ 60 m unfit for use | yellow ">" chevrons, line ≥ 0.9 m, 45°, 30 m pitch, apex towards the runway (6.2.25) | yellow, 3 ft, 100 ft pitch [code] | blast pads 60 m (18L/36R) and 120 m (18R/36L) (AIP mirror) |
+| Pre-threshold pavement ≥ 60 m unfit for use | yellow ">" chevrons, line ≥ 0.9 m, 45°, 30 m pitch, apex towards the runway, over the full length of the pre-threshold pavement ("在跑道入口前的全长") (6.2.25). Fig. 6.2.25 (read at 300 dpi, fix round 1): the nearest chevron is cut by the threshold line, so only its legs are painted, X/4 long, and its apex would fall X/4 inside the runway; the far end is ≤ 1.5 m from the outer pavement edge; 0 ≤ W − X ≤ 15 m (preferably X = W) | yellow, 3 ft, 100 ft pitch [code] | blast pads 60 m (18L/36R) and 120 m (18R/36L) long (AIP mirror: 60 × 60 m and 120 × 75 m, length × width, at both ends) |
 | Centreline | stripe + gap 50-75 m, stripe ≥ max(gap, 30 m) (6.2.3); width **≥ 0.9 m CAT II/III, ≥ 0.45 m CAT I**, 0.3 m small | 120 ft / 80 ft; 36 in precision (2.4) | 30/20 m, 0.45 m (ZSSS CAT I, AIP mirror) (inf) |
 | Runway edge | white, ≥ 0.9 m (runway ≥ 30 m), outer edge at the pavement edge (≤ 30 m from CL) (6.2.7) | 3 ft [code] | |
 | Aiming point | start ≥ 150/250/300/**400 m** by LDA (<800/<1200/<2400/≥2400); **with a PAPI it starts at the visual approach slope origin**; length 45-60 m, width 6-10 m, inner gap 18-22.5 m (LDA ≥ 2400) (6.2.5) | 1,020 ft (311 m), 150 ft × 30 ft, gap 72 ft (2.6) | 474 m (18L/36R), 393 m (18R/36L) = AIP PAPI positions (inf: PAPI ≈ origin); 60 × 9 m (inf) |
@@ -102,7 +102,7 @@ Colours: runway markings white; taxiway and turn-pad markings yellow; black bord
 | Aiming point start | 474 m (PAPI, AIP mirror) | 393 m (PAPI, AIP mirror) |
 | TDZ pairs painted | 150, 300, 600, 750, 900 m (450 m omitted) | same |
 | Centreline width (CAT I) | ≥ 0.45 m | ≥ 0.45 m |
-| Blast pad chevrons | 60 m pad | 120 m pad |
+| Blast pad chevrons | 60 m pads (AIP 60 × 60 m = the paved surface) | 120 m pads at both ends (AIP 120 × 75 m = measured on S2 / Umbra); chevrons over the full 120 m (6.2.25) |
 | Holding distance (CAT I, code 4 / F) | ≥ 90 / 100 m | ≥ 90 / 100 m |
 
 All of these are **inf** (standard + AIP facts); no imagery here resolves paint.
@@ -384,3 +384,11 @@ photos in the repo, the 23 reusable files in `refs/cache/photos/commons/` with `
 - The layover factor in the text is now the exact cot 38.08° = 1.2763. The code always used the exact cotangent
   (incidence 38.0798°, K = 1.27627 in `b3_umbra_layover.json`), so no height changes. For example, 42.7 m of layover
   still gives 33.5 m.
+
+## Changes in integration fix round 1 (2026-11-21)
+
+- §1.3, pre-threshold pavement: added the fig. 6.2.25 reading by the markings fixer (nearest chevron cut by the
+  threshold line, legs X/4, far end ≤ 1.5 m from the outer edge, 0 ≤ W − X ≤ 15 m, full length of the pavement).
+- §1.4, blast pad chevrons: the AIP (mirror) pair is **length × width at both ends** ("Blast pad: 120×75m on the both
+  ends" for 18R/36L, "60×60m" for 18L/36R). The Phase 2 renderer read the pair as one length per end, so 36L got 75 m
+  chevrons (review L1). The 120 m in this table was right; there is no AIP-vs-measurement conflict at 36L.

@@ -102,8 +102,8 @@ export function checkFrame(F) {
 // ------------------------------------------------------------------------------------------------ runways (from data)
 // Filled by initGeo(airport). RUNWAYS[i] = { id '18L/36R', ends ['18L', '36R'], hdg (deg, first end's direction),
 //   dir [x, z] (unit, from the first end's runway end towards the second), a / b (physical runway ends = start of the
-//   pavement, [x, z]), len, width, shoulder, blastPad [m, m], segments [[s0, s1, 'CONC'|'ASPH']] (s from a),
-//   profile [[s, y]], centreline, outline, src }.
+//   pavement, [x, z]), len, width, shoulder, blastPad [length, width] (m, the same at both ends: AD 2.12),
+//   segments [[s0, s1, 'CONC'|'ASPH']] (s from a), profile [[s, y]], centreline, outline, src }.
 // RUNWAY_ENDS['18L'] = { id, rw (runway), hdg (landing / take-off direction, deg), end [x, z] (runway end), thr [x, z]
 //   (landing threshold: displaced threshold where there is one), thrS (s of thr from rw.a), dthrM, endOfTora, papi, als,
 //   elev {thr, dthr}, declared, src }.

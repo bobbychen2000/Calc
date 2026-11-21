@@ -1,6 +1,7 @@
 // Markings package renders (CAAC MH 5001-2021 paint and signs). Run through the harness:
 //   SOFTGL=1 OUT=docs/phase2 PREFIX=markings node livetest.mjs jobs/markings.mjs
 // VIEWS (';'-separated; default below):
+//   thr:<id>                                          the app's threshold view (SHA.qa.threshold, = views.mjs rwy:<id>): stripe count check
 //   end:<id>[,<m from the threshold>,<dist>,<pitch>]  close view of a runway end (camera behind, looking along the landing direction)
 //   endtop:<id>[,<m>,<height>]                        near-vertical view of a runway-end section (layout check)
 //   hold:<n>|hold:<taxiway ref>[,<dist>,<pitch>,<side deg>]  runway-holding position (n = index in SHA.markings.holds())
@@ -9,7 +10,8 @@
 //   plate:<stand>[,<dist>,<pitch>]                    the start of a stand's lead-in (stand number plate)
 //   view:<name>                                        the app's named views (overview, runways, t1, t2, top)
 //   look:x,y,z,yaw,pitch,dist[,fov]
-// Other env as jobs/views.mjs (T, QUALITY, WAIT_MS, SHOWUI). Prints the runway marking plan and the decal / sign counts.
+// Other env as jobs/views.mjs (T, QUALITY, WAIT_MS, SHOWUI). Prints the runway marking plan, the decal / sign counts and
+// (fix round 2) the apron light-map statistics (SHA.markings.apronLight(); the mast pools arrive on the first frames).
 const DEFAULT = 'end:18L;end:36R;end:18R;end:36L;endtop:18L,40,260;endtop:18R,40,330;hold:H1;hold:B3;stand:233';
 export default async ({ page, shot, base }) => {
   const t = process.env.T || '2026-11-14T03:00:00Z';
@@ -19,6 +21,8 @@ export default async ({ page, shot, base }) => {
   const err = await page.evaluate(() => window.__shaError || null); if (err) { console.log('APP ERROR', err); throw new Error(err); }
   const info = await page.evaluate(() => ({ world: SHA.qa.info().world.markings, m: SHA.markings ? SHA.markings.info() : null }));
   console.log('markings', JSON.stringify(info.world));
+  // fix round 2: the apron light map (night flood: apron + airside fill + spill, mast pools; js/live/markings.js apronLightMap)
+  console.log('apron light', JSON.stringify(await page.evaluate(() => { const L = SHA.markings.apronLight && SHA.markings.apronLight(); if (!L) return null; const { at, ...st } = L; return st; })));
   if (!process.env.SHOWUI) await page.evaluate(() => SHA.qa.hideUI(true));
   const frames = (n) => page.evaluate((n) => new Promise(r => { let k = 0; const f = () => { if (++k >= n) r(); else requestAnimationFrame(f); }; requestAnimationFrame(f); }), n);
   for (const v of (process.env.VIEWS || DEFAULT).split(';').filter(Boolean)) {
@@ -55,6 +59,7 @@ export default async ({ page, shot, base }) => {
       }
       if (kind === 'standm') { const ok = SHA.qa.stand(a[0], +(a[2] || 70), +(a[3] || 1), +(a[4] || 20)); if (ok && a[5]) SHA.rig.yaw += (+a[5]) * DEG; return ok; }
       if (kind === 'stand') return SHA.qa.stand(a[0], +(a[1] || 70), +(a[2] || 1), +(a[3] || 32));
+      if (kind === 'thr') return SHA.qa.threshold(a[0]);
       if (kind === 'view') return SHA.qa.view(a[0]);   // the app's named views (overview, runways, t1, t2, top)
       if (kind === 'look') { SHA.qa.look([+a[0], +a[1], +a[2]], +a[3], +a[4], +a[5], +(a[6] || 50)); return true; }
       return false;

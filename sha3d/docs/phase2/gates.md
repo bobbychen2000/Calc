@@ -48,7 +48,7 @@ door 1 of the class reference, inf), `reach_m`, `src`. These map to the sfo3d fi
 `cabW`. Walks shorter than 0.5 m become null: the T1 west face, where the rotunda is the facade gate node. The data has no
 `model`, `ext_range`, `stow`, `rotunda_max_r`, `cab_convention` or `type_stops`. Those are inferred (§2.2-2.3) or take the
 donor's defaults: cab sense CW = −1 as sfo3d inferred it, rotunda radius ≤ 2.45 m, and every type stopping with its
-nose tip on the stop point, as in the data's `nose_note`. Alternative positions 238A / 259A (`bridge_status: shared`)
+nose tip on the stop point, as in the data's `nose_note` (superseded: fix round 1 F1, the nose wheel stops on the node). Alternative positions 238A / 259A (`bridge_status: shared`)
 share the bridge of 238 / 259 (`sharesBridgesOf`). The engine docks that bridge to whichever position is occupied.
 
 Class limits come from the data's `class_max` and `span_max` (`maxSpan` = min(class, span_max + 0.1)). The accepted types
@@ -186,7 +186,7 @@ Remote and VIP stands use marshaller guidance (AIP (mirror) AD 2.20 3.2.2.3) and
 - **Sign:** post-mounted (§4).
 - **Empty stand:** an idle self-propelled stair unit (cue; inf). It is parked parallel to the stand axis at the stand
   head, or beside the stop where the head is grass or a lane: many remote rows end at the apron edge. It must be on
-  pavement, off the lanes and outside every neighbour's class-reference planform. **94** placed: every non-business
+  pavement, off the lanes and outside every neighbour's class-reference planform. **94** placed (superseded: fix round 1 F3, 26 staged units): every non-business
   remote stand. Not at the business stands 301-312.
 - **Parked aircraft** (`placeVehicles`, every hull sampled against the aircraft, the other aircraft, the bridges and the
   buildings, as sfo3d):
@@ -205,7 +205,7 @@ Remote and VIP stands use marshaller guidance (AIP (mirror) AD 2.20 3.2.2.3) and
 ## 6. DEBUG features
 
 - `?park=<stand>[:<ICAO>],…` (also `contact`, `remote`, `all`), or `SHA.qa.park(stand, icao, animate)`. This parks a
-  **static** aircraft at the stand (nose tip on the stop point, heading = stand heading). Default types by class: B
+  **static** aircraft at the stand (nose tip on the stop point, heading = stand heading; since fix round 1 F1 the nose-gear contact on the stop point). Default types by class: B
   E190, C A320 / B738 alternating by stand number, CL B752, D B763, E A333, EL B77W, F B748. The aircraft uses sfo3d's
   `.sfom` by URL with a neutral livery. The stand's bridge then docks (instantly, or animated at the sheet's rates with
   `animate`) and the GSE is placed. **Clearly debug:** while anything is parked, the scene note reads
@@ -230,7 +230,7 @@ Remote and VIP stands use marshaller guidance (AIP (mirror) AD 2.20 3.2.2.3) and
 
 | Element | Tag | Where kept |
 |---|---|---|
-| stand position, number, heading | obs (OSM), stop as nose tip inf | `g.src`, `g.posSrc`, data `nose_note` |
+| stand position, number, heading | obs (OSM), stop = nose-wheel stop (MH 5001-2021 6.2.16-7, OSM tagging; fix round 1 F1) | `g.src`, `g.posSrc`, data `nose_note` |
 | bridge exists | obs at 13 (SAR corridor), inf at 43 (OSM gate node) | `b.src`, `g.bridgeStatus`; drawn alike (owner rule: flag, not style) |
 | attach / walkway / rotunda | inf (data); 3 rotundas moved (inf) | `b.rotundaSrc`, `b.rotundaMoved`, `b.rotundaData` |
 | bridge model, rest pose, levels, cab sense | inf | `b.modelUsed` / `modelSrc` / `modelWhy`, `b.autoRest`, `b.HbTag` / `HbSrc` |
@@ -309,7 +309,7 @@ VDGS display mounted low, or a bridge-head display. VDGS mounting at ZSSS stays 
    - stairs and buses appear only with a parked aircraft (the DEBUG option until Phase 3 parks traffic).
 8. **Glazed material at T1** is assumed (T2 from photo 09). The T2 fixed links, which standards_refs.md §2.3 describes
    as two-level, are drawn as one walkway.
-9. **Stop point = nose tip** of every type (data `nose_note`); per-type stop offsets (sfo3d `type_stops`) do not exist
+9. *(Closed by fix round 1 F1: the stop point is the nose-wheel stop.)* **Stop point = nose tip** of every type (data `nose_note`); per-type stop offsets (sfo3d `type_stops`) do not exist
    for ZSSS. A VDGS stop usually refers to the nose wheel or the pilot, so the DEBUG aircraft and the docked bridges may
    sit a few metres off the real pose.
 10. **Start-up:** the 56-bridge preparation takes 0.7-1.0 s here (CPU-bound path planning, measured in software GL).
@@ -320,3 +320,333 @@ VDGS display mounted low, or a bridge-head display. VDGS mounting at ZSSS stays 
     - for 238A / 259A it should call it on the base stand (`g.sharesBridgesOf`);
     - it should set `gateSys.aircraftFootprints`, which the DEBUG park sets now;
     - it can use `extension`, `pushClearEta`, `undockEarly`, `expectArrival` and `makePlan` as in sfo3d.
+
+## Fix round 1 (2026-11-21)
+
+Findings of `docs/phase2/review_visual.md` assigned to the gates package: M5, M2, L4, L6, L7, L8 and the airfield-lighting
+note. The UI items (L7, L8, lighting line) are also listed in `relay_ui.md` (fix round 1), which owns the shell files.
+Files changed: `js/live/gate_system.js`, `js/live/gates.js`, `tools/airport/build_stands.py`, `data/sha_stands.js/.json`
+(regenerated), `js/live/shell.js`, `js/live/ui.js`, `js/live/about.js`, `live.css`, `jobs/gates.mjs`, `jobs/ui.mjs`, this
+report and `relay_ui.md`. `js/live/gate_signs.js` and `js/world/gates.js` are unchanged. Check renders are in
+`out/fix1/gates/` (gitignored): `before/` was rendered with the Phase 2 code before any edit, `after/` and `ui/` with the
+fixed code; the six composites `docs/phase2/fix1_gates_*.png` are made from deviceScaleFactor 1 renders (1280 × 720,
+1440 × 900, iPhone 15 393 × 659). I looked at every render listed below.
+
+### F1 (M5): one stop convention - the stand stop node is the nose-wheel stop
+
+**Decision.** The stand's `nose` (the OSM `aeroway=parking_position` node, where the markings package paints the stop line)
+is the **nose-wheel stop** of every type. Sources:
+- CAAC MH 5001-2021 **6.2.16-7** (read in the local copy, `markings.md` §5): "如果对飞机有人工或设备引导，停止线应设在对正于
+  拟定停止点上的鼻轮位置并与对准线成直角" - with manual or equipment guidance the stop line is set at the **nose-wheel**
+  position of the intended stop point, square to the alignment line (only without guidance at the left-seat pilot). Every
+  ZSSS stand has guidance: VDGS at the contact stands, marshallers at the remote and VIP stands (AIP (mirror) AD 2.20
+  3.2.2.3, `sha_stands.json` `aip_facts.marshaller`).
+- OSM tagging of `aeroway=parking_position` (wiki page, read 2026-11-21): "Put a node where the nose wheel stops"; for the
+  way, "the last node of the way should be where the nose wheel is parked". The 164 ZSSS stop nodes carry only `ref`; they
+  are the last nodes of the lead-in ways (`stand_geom.py`).
+
+**Phase 3 contract (traffic parks the same way).** A type `T` parks with its nose-gear contact on the node and heading
+`hdgVec(hdg)`, so its nose tip lies `noseGearX(T)` metres ahead of the node. `js/live/gate_system.js` exports
+`noseGearX(T, modelKey)` and `standTip(stand, T, modelKey)` (the nose tip `[x, y, z]`); the traffic engine passes
+`{nose: [tip[0], tip[2]], dir}` to `gateSys.setOccupant(...)` and places the model with `ac.pos = tip - dir × T.xMain`, as
+`gates.js park()` does. `noseGearX` is the drawn model's own nose-gear contact where the model stands on its own gear
+(sfo3d model metadata `MODEL_FEATURES[m].contact.nose` through the fitted station map `T.fit.rx`: B738 4.32 m, B77W 6.25 m)
+and otherwise the published station `T.xNose` (`js/aircraft/types.js`, where the procedural gear is drawn: A320 / A321
+5.07, A333 6.67, B763 4.55, B748 7.74, E190 4.13, CRJ900 2.24 m). The painted stop line stays at the node.
+
+**What follows the convention.**
+- Engine (`gate_system.js`): every place that took the node as a nose tip now uses the type's tip - the class reference's
+  door for the auto rest pose, `autoModel`, `standAircraft`, `dockTargets`, `staticPlans`, `upperDockExt`, `makePlan` /
+  `pose` / `dockFrom` without a pose, `parkOcc`, `neighbourPrints`. A new `frontOf(g)` (the farthest-forward nose tip of the
+  stand's accepted types and class reference) is the base of the VDGS spot, the VDGS geometry and the remote stand-number
+  post (8.5.3: ahead of the stop on the centreline). The engine's own per-family `type_stops` hook stays empty.
+- DEBUG park (`gates.js`): the model is placed by its nose-gear contact; the docked bridge cab follows (it docks door 1 of the
+  model as placed). `SHA.qa.park()` returns `noseGear`.
+- Data (`build_stands.py`, re-run): `bridges[].cab` (and `reach_m`, `cab_pose`) are now door 1 of the class reference parked
+  with its nose wheel on the node (`NOSE_GEAR_M`, also written as `class_ref.<cls>.nose_gear_m` / `nose_gear_src`), and
+  `nose_note` / `note` state the convention. The Phase 1 bridge rules (which second bridges are kept, the T1 fixed-link
+  length) still use the Phase 1 cab, so the bridge set, rotundas and walkways do not move: re-tuning them is an open item.
+
+**Data diff** (`out/fix1/gates/stands_diff.txt`, every field of the old and new `sha_stands.json` compared; the build is
+deterministic, a second run gives the same bytes):
+
+| Field | Changed | Note |
+|---|---|---|
+| `stands[].bridges[].cab` | 111 of 112 coordinates | moved 2.2-7.7 m forward along the stand axis (class reference nose-gear station) |
+| `stands[].bridges[].reach_m` | 56 of 56 | median 4.2 m shorter (0.4-5.7 m) |
+| `stands[].bridges[].cab_pose` | 56 | text: "... its nose wheel on the stop node" |
+| `stands[].bridges[].reach_flag` | 1 removed | 266: 48.4 -> 43.9 m, below the 45 m flag; 240 keeps it (52.5 -> 47.7 m) |
+| `stands[].area`, `remote[].area` | 93 + 48 | L6 (below) |
+| `nose_note`, `note` | 1 + 1 | the convention |
+| `class_ref.<cls>.nose_gear_m`, `.nose_gear_src` | 7 + 7 added | new fields |
+| everything else (positions, headings, classes, span limits, excl / alt groups, bridges' attach / rotunda / walk / src / evidence, remote, push, counts, checks) | 0 | unchanged |
+
+**Docking check** (class reference at every bridge stand, `SHA.qa.gates().refDock`): **54 / 56 dock, as before**. The two
+that do not are the same (111: cab turn 119° (was 114°), 235: 99° (was 97°), both > the sheet's 92.5°). The rotunda
+moves of §2.4 shrink: 236 no longer needs one (reach 39.9 m), 266 moves 1.45 m (was 8.65), 240 5.95 m (was 12.35). The
+`autoModel` choice shifts with the shorter reaches (AT3 47/85 3 -> 8, 52/100 11 -> 16, 58/116 16 -> 11, 61/127 6 -> 13,
+65/133 9 -> 3, 68/144 8 -> 1, 72/150 3 -> 4); 2 rest poses are now turned clear (was 0); the VDGS units are 52 posts and
+4 facade units (was 56 posts), because the front moved 2-8 m nearer the facade. All 11 DEBUG-parked bridge stands of the
+check run dock (229, 230, 231, 233, 234, 237, 239, 113, 115, 102, 110).
+
+Evidence: `fix1_gates_stop_233.png` - top view at 233 (B738), before: the stop line under the nose tip; after: the nose tip
+4.3 m ahead of it; and a low view where the nose-gear wheels stand on the yellow stop line. The docked cab and the red
+bridge-area band (drawn by the markings package from the data cab) moved with it. Renders:
+`out/fix1/gates/before/b_nose233_top.png`, `after/g_fix1_nose233_top.png`, `after/n_nw233_q1.png`.
+**Status: fixed.** Open: the painted stand envelopes, safety lines, hatching and equipment areas (markings package) still
+put the class planform's nose at the node; at 233 the red nose-clearance line now crosses the B738's nose (handoff).
+
+### F2 (M2): apron floodlight masts
+
+`LiveGateSystem.placeMasts()` (inf, comments in the code) places **73 masts**, 30 m high, each with a six-lamp head aimed
+25° down towards the apron, a service platform and a concrete base (galvanised grey; make unknown). Photos 02, 09, 14, 16
+and 17 show such masts; photo 09 (T2 north pier) shows them on the apron edge of the service road, about on the rotunda
+line, between stands. Candidates per stand: at a contact stand beside its rotunda along the facade (±8-30 m, on the
+rotunda line or up to 6 m apron-side); at a remote stand ahead of its front or between the noses of neighbouring stands.
+A candidate is accepted (stands in area / number order) when it is clear of:
+- the terminal outlines (4 m) and the runway strips (150 m from a runway centreline);
+- every stand's class-reference planform (nose wheel on the node) grown by the table 4.13.5 clearance, and the painted
+  envelopes of the markings package (+1 m);
+- the swept path of every lead-in (class reference along it, same clearance; for code C equal to MH 5001-2021 table 4.9.5
+  col. (13) within 0.1 m);
+- taxiway / taxilane centrelines by table 4.9.5 col. (11) / (13) for the largest code letter of the stands within 150 m
+  (C 26.0 / 22.5, D 37.0 / 33.5, E 43.5 / 40.0, F 51.0 / 47.5 m);
+- the bridges' fixed walkways and drums (3 m) and every tunnel axis in the rest pose and along every docking path (6 m);
+- the VDGS and stand-sign posts (3 m);
+- the masts already placed: max(80 m, 1.8 × the stand's spacing to its nearest neighbour), so about one per two stands.
+
+A mast must also stand on the apron, or at a remote row on the grass verge within 12 m of it. The service roads themselves
+are not in the data: the rotunda-line rule keeps the masts out of the band between facade and rotundas, where photo 09
+shows the road. Result by area:
+
+| Area | Stands | Masts |
+|---|---|---|
+| T2 apron 2 | 70 | 32 |
+| T1 north / west face | 6 + 7 | 3 + 2 |
+| east apron (north of T1) | 30 | 11 |
+| business apron (north-east) | 12 | 5 |
+| east remote apron | 16 | 9 |
+| west remote apron (apron 4) | 13 | 7 |
+| south-west apron (apron 6) | 10 | 4 |
+
+Five stands have no mast within 120 m: 333-337, whose heads face an apron lane, so every candidate is inside the
+table 4.9.5 distance. The placement takes 0.2-0.4 s at start-up. At night the `lights` hook draws each head's six aimed
+lamp sprites (warm white, directional) and a faint all-round head glow (night factor > 0.5, the same photocell as the
+cab floodlights, inf). QA: `SHA.qa.masts()` gives `{stats, masts [{p, face, h, stand, area, at, src: 'inf'}], uncovered}`.
+The gates legend line names them as inferred.
+
+Evidence: `fix1_gates_masts_day.png` - T2 pier before (no masts) / after, and a zoom of the north pier: poles on the
+rotunda line between the bridges, as in photo 09. `fix1_gates_masts_night.png` - the Phase 2 night render
+(`view_night_t2pier.png`, no masts) next to the same view after the fix (21:30 local): lamp heads glowing along both piers;
+every head is lit from any side. Renders: `before/b_t2pier.png`, `after/a_t2pier.png`, `after/g_fix1_masts_t2_north.png`,
+`after/g_fix1_masts_t1.png`, `after/an2_night_t2pier.png`, `after/g_fix1_night_masts_t2.png`. **Status: fixed** (positions
+inf). The ground's night apron flood (markings package, uniform) could fall off with the distance from these masts
+(handoff).
+
+### F3 (L4): idle airstairs staged, not at every stand head
+
+`stageIdleStairs()` replaces the per-stand idle unit. The 94 non-business remote stands are grouped by area in stand-number
+order, four per group, and each group gets **at most one** unit. It is parked in a painted equipment area of the group
+(MH 5001-2021 6.2.20 设备区, from `SHA.markings.apron().equipment`), along the area's long side; if none fits, at the apron
+edge ahead of the group's stand fronts. Either way it stands on pavement, off the lanes and buildings and outside every
+class-reference planform. **26 placed, all 26 in equipment areas** (was 94, one at every stand head). A unit is not drawn
+while an aircraft is parked at a stand within 60 m: `placeVehicles` then draws the stairs at that aircraft's doors. The
+legend line now says: "Idle airstairs: 26, at most one per 4 remote stands, staged in the equipment areas: cues inf, not
+seen". QA: `SHA.qa.idleStairs()`.
+
+Evidence: `fix1_gates_idle_stairs.png` - west remote apron 401-413 before (a unit at every empty stand head) and after (two
+units in this frame; the masts stand at the apron edge). Renders: `before/b_remote_west.png`, `after/a_remote_west.png`,
+`after/g_fix1_idle_west.png`. **Status: fixed.**
+
+### F4 (L6): area names
+
+`build_stands.py` `area_of`: "T2 aprons Nr. 2" -> **"T2 apron 2"** (93 stands, 48 remote entries); "west remote apron
+(Apron Nr. 4)" -> "west remote apron (apron 4)"; "south-west apron (Apron Nr. 6)" -> "south-west apron (apron 6)". The card
+title now reads "T2 APRON 2" (`fix1_gates_ui_laptop.png`, `fix1_gates_ui_phone.png`). `gates.js` still finds the
+terminal from the "T1" / "T2" prefix. **Status: fixed.**
+
+### F5 (L7, L8, airfield lighting): UI shell
+
+Details in `relay_ui.md` (fix round 1):
+- **L7:** the credit line sits on a dark strip (contrast measured in `jobs/ui.mjs` against the worst case, the strip over
+  white: text 9.4:1, links 10.8:1 / 6.7:1). The laptop card keeps its bottom edge above the strip (`--attrib-h`). Phone
+  and laptop both report "not covered".
+- **L8:** the clock and the snapshot pill say "UTC+8" (Beijing time); About says "Times are Beijing time (UTC+8)".
+- **Lighting:** a legend line "Airfield lighting: not modelled yet (Phase 5): no runway or taxiway lights, stop bars or
+  approach lights at night..." and the same statement in About ("Not included").
+
+**Status: fixed.**
+
+### Checks
+
+- `SOFTGL=1 SCENES=snapshot node livetest.mjs jobs/integration.mjs`: 0 errors, 0 warnings, 0 page errors ("clean"); also
+  `SCENES=park`: clean (run after the code changes; the night sprite tweak was re-checked with the snapshot scene).
+- No-browser tests: `test_geo_js.mjs` all passed, `test_frame.py` OK, `test_buildings3d.mjs` all passed, `test_relay.py`
+  7 OK. `node --check` passes for every changed module.
+- `jobs/gates.mjs` has two new sets, `SET='fix1;fix1night'`: the 233 top and nose-gear views, masts by day and night, and
+  the staged stairs. They are not in the default list. The job also prints the mast and idle-stair statistics.
+- No FAA constant was added. The new clearances are MH 5001-2021 table 4.9.5 and table 4.13.5. Everything else new is
+  labelled `inf`: mast height, head, spacing and placement rules; the idle-stair rule; the lamp colour.
+
+Commands:
+
+```
+SOFTGL=1 OUT=out/fix1/gates/after PREFIX=a VIEWS='park:233+234+404;look:-760.58,2.5,-138.65,77,80,40@nose233_top;t2pier;stand:404,-,75,1,22;look:-880,2.5,-1430,70,22,260,50@remote_west' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/gates/after PREFIX=g SET='fix1;fix1night' PARK='229,230,231:A320,233,234,237,239,113,115,102,110,401,403,404:A321,406' node livetest.mjs jobs/gates.mjs
+SOFTGL=1 OUT=out/fix1/gates/after PREFIX=n VIEWS='park:233;look:-760.58,1.2,-138.65,300,4,20,40@nw233_q1' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/gates/after PREFIX=an2 T=2026-11-20T13:30:00Z VIEWS='park:229+230+231+233+234;t2pier@night_t2pier' node livetest.mjs jobs/views.mjs
+SOFTGL=1 W=1440 H=900 SCENES=snapshot OUT=out/fix1/gates/ui PREFIX=ui_laptop node livetest.mjs jobs/ui.mjs
+SOFTGL=1 DEVICE='iPhone 15' SCENES=snapshot OUT=out/fix1/gates/ui PREFIX=ui_phone node livetest.mjs jobs/ui.mjs
+python3 -I tools/airport/build_stands.py
+```
+
+### Open after this round
+
+1. **Markings follow-up (handoff):** the stand envelopes, safety lines, hatched overlaps and equipment areas still put the
+   class planform's nose at the node. They should move forward by `class_ref.<cls>.nose_gear_m`.
+2. **Phase 1 bridge rules** (SPARE_REACH second-bridge selection, the BRIDGE_REACH T1 fixed-link length) were kept on the
+   Phase 1 cab so that no bridge moved. Re-tuned on the new cab, the T1 fixed links would be ~4-5 m shorter and the 250
+   spare-gate bridge (45.15 m) might qualify.
+3. The table 4.9.5 distances are a local copy in `gate_system.js` with the clause cited. They belong in
+   `js/live/caac_markings.js`, the one parameter table (handoff).
+4. Masts: 333-337 have none (lane distance). Heights, heads and positions are not surveyed. Masts are opaque geometry but
+   cast no light onto aircraft and GSE: the ground flood is the markings package's uniform term.
+
+### Integration notes (fix round 1, 2026-11-21)
+
+- Open items 1 and 3 are done. `caac_decals.js` shifts the painted envelopes, safety lines, hatching and equipment areas
+  forward by `class_ref.<cls>.nose_gear_m`. `caac_markings.js` carries table 4.9.5 (`separation.twyCLToObject` /
+  `taxilaneCLToObject`, read off the local copy: col. (11) C 26.0 / D 37.0 / E 43.5 / F 51.0 m, col. (13) C 22.5 /
+  D 33.5 / E 40.0 / F 47.5 m; 9.2.7 applies them to apron floodlight supports), and `placeMasts` reads them from there
+  (same values, so the masts did not move: still 73, the same rejection counts).
+- **Side effect on the staged idle stairs (L4): 20 of 26 groups now get a unit** (was 26; all 20 in equipment areas).
+  The 6 groups without one are the whole west remote apron (401-413, 4 groups) and T2 apron 2 remote 286-290 (2 groups).
+  At those stands the paved surface ends 0-1.5 m ahead of the stop node (`pavedAt` along the heading), so the shifted
+  equipment areas reach onto the unpaved band and no fallback spot fits. Under the nose-wheel convention the class C
+  noses there also reach ~4-5 m past the pavement edge, and the red envelope fronts and the 设备区 boxes are painted on
+  the band (`view_stand_404.png`). The Sentinel-2 hint reads the band ahead of 403 / 404 / 287 as neutral grey
+  (134-171 in the 8-bit hint, against 170-206 on the apron and ~(93, 98, 89) on the grass further out): probably
+  another OSM apron gap like H2, not grass. Proposed for round 2: extend the H2 airside fill (or an inferred
+  `apron_fill` in `build_airport.py`) over these strips where S2 reads paved.
+
+## Fix round 2 (2026-11-21)
+
+Answers `docs/phase2/review_visual_fix1.md`, finding **N1** (medium, new): the apron floodlight masts of fix round 1 stood
+in the app's own stand cameras. Files changed: `js/live/gate_system.js` (the stand camera, mast placement),
+`js/live/gates.js` (mast lamp sprites, `SHA.qa.camSubject`), `js/live/shell.js` ("Fly to stand", `SHA.qa.standCam`; also in
+`relay_ui.md` fix round 2), `jobs/gates.mjs` (sets `fix2` / `fix2night`, the stand-camera check). Renders are in
+`out/fix1/gates2/` (gitignored), 1280 × 720 at deviceScaleFactor 1, and I looked at all of them. `before/` is the fix-round-1
+code (the reviewer's own `out/review1/` renders where named); `after/` is this round's code, with the buildings and
+markings fixers' concurrent edits in it.
+
+### N1: masts in the stand cameras
+
+**Before** (fix-round-1 code, measured in the page: `out/fix1/gates2/before/b_mastcam.json`): 73 masts. On the "Fly to
+stand" camera (side +1), a pole came within 3 m of the centre sight line (camera to target, 3-D) at 7 of the 56 bridge
+stands (109, 113, 115, 121, 248, 264, 274: the review's six plus 113, where the pole stands just below the camera), and
+within 5 m at 13. Over all 164 stands it was 24 and 40: the review counted only contact stands, but the remote candidates
+"ahead of the stand front, between the stands" lie on the camera's ahead-left line, so 52 of 106 remote stands also had a
+mast inside the review's ±12 m strip. At 233 the mast split the named day, phone and laptop views; at night the head glow
+sprite (s = 1.6 m) drew a ~220 px disk (`view_night_stand_233.png`).
+
+**What changed**
+
+1. **One stand camera** (`gate_system.js` `STAND_CAM`, `standCamWedge`; a UI choice, inf): target 18 m behind the stop
+   node, horizontal direction 0.75 × heading + 0.66 × left × side, 24° down, 90 m (120 m for E / EL / F), fov 50°. These
+   are the numbers `shell.js flyToStand` and `SHA.qa.stand` already used; `flyToStand` now reads them from here.
+2. **An image test, not a ground strip** (`standCamPos`). A mast pole (0-31 m) stands in a stand camera when, projected
+   into that camera and not wholly behind the subject, it passes within **4°** of the subject's image (about 55 px at
+   1280 × 720). It also counts when, standing in front of the target, it crosses the centre band of the frame (**±8°**).
+   The subject is the convex hull of the projected target (3 m), the stop node (1 m) and `camSubject(g)`: the class
+   reference parked with its nose wheel on the node (nose tip 3 m, wing tips 4 m, tail 9 m), every bridge rotunda as
+   placed (5 m) and every docked cab (4 m). All values are inf. I first built the review's ±12 m ground strip about the
+   sight line, then a fan of such strips to the nose tip, node and rotunda. With the strip, the 248 mast moved 14 m off the
+   line, and in that run's render it stood right beside the B77W's nose: the pole passed about 13 px left of the nose tip.
+   A later run overwrote that render; this sentence is the record of what I saw. A tall pole near the camera sweeps
+   across the subject even when its foot is clear on the ground, so the test has to be done in the image. I also tried
+   the VDGS display as a subject point. The result was 61 masts and 20 stands without a mast within 120 m, the whole T2
+   north pier tip among them, so the VDGS is not a subject point; in the renders it stays visible beside the masts.
+3. **Placement** (`placeMasts`). A candidate is rejected ("stand camera") when it stands in side +1 of any contact stand,
+   or when it would leave a remote stand with both sides blocked. With `MAST_CAM_STRICT_REMOTE = true`, side +1 of the
+   remote stands is also kept clear; I tested that: 68 masts, but only 2 left on the business apron, so the default is
+   false. `SHA.qa.masts().stats.cameras` gives the contact stands with side +1 blocked, the remote side +1 / -1 counts
+   and the stands with both sides blocked.
+4. **"Fly to stand"** (`shell.js`). It takes side +1 unless a mast stands in it and side -1 is clearer.
+   `SHA.qa.standCam(name)` returns the side and both clearances. The camera uses the stand's exact heading (the card
+   record is rounded to 1°) and the subject points of the placement (`SHA.qa.camSubject`).
+5. **Lamp sprites** (`gates.js` `mastSprite`, an inf display rule). The projected radius of every mast sprite is capped at
+   **24 px**. The sprite shader draws the quad at 1.6 × s, pulled min(2 m, 0.05 d) towards the camera; the cap uses the
+   same numbers. The sprite also fades out (smoothstep) between 40 m and 10 m from the camera.
+
+**Result** (`jobs/gates.mjs SET=fix2`, `out/fix1/gates2/after/render2.log`):
+- **67 masts** (73 before): T2 apron 2 28 (32), T1 north / west face 2 + 2 (3 + 2), east apron 10 (11), business 5,
+  east remote 9, west remote 7, south-west 4. "stand camera" rejected 379 candidates.
+- **Contact stands with a mast in side +1: none.** No remote stand has both sides blocked; "Fly to stand" takes side -1
+  at 48 remote stands and at 0 contact stands.
+- On the side taken, no stand of the 164 has a pole within 3 m or 5 m of the centre sight line (before: 24 / 40), and
+  none has a mast inside the subject or centre margins.
+- The other stands of the review: 109, 115, 121, 248, 264 and 274 all fly to side +1, with clearances 1.0-14.7 × the
+  margin.
+- **Stands with no mast within 120 m: 8** (5 before). 333-337 as before (their heads face an apron lane), plus 126
+  (T1 west face) and 231 / 232 (T2 north pier tip). Of their own candidates, the stand-camera test rejected 28 (126),
+  40 (231) and 27 (232). The rest failed on buildings, bridge sweeps, posts, envelopes, lanes or spacing
+  (`SHA.qa.masts().uncovered`, printed by the job).
+- The placement takes 0.4-0.5 s (was 0.2-0.3 s).
+- The markings package's apron light pools read the mast list at run time and follow it (n = 67 in the log).
+
+**Renders** (looked at):
+- **248, "Fly to stand" (B77W parked).** Before: the pole stood at the rotunda in mid-frame. After: the nearest mast
+  stands beside the VDGS post, at the edge of the service road, about 70 px left of the nose. The nose, bridge and cab
+  are clear; the VDGS unit is visible just left of the pole (`g_fix2_fly_248.png`).
+- **274.** Before: a mast in front of the 274 rotunda. After: the nearest mast is at the 273 rotunda at the left edge.
+- **115.** The review's mast in front of the stand is gone. The nearest pole stands left of the B738's nose, beside the
+  113 equipment area.
+- **233.** "Fly to stand", the named view `stand:233,-,70,1,24` and the night view of the same camera show no mast at
+  all: B738 docked, bridge, VDGS and sign clear.
+- **The other named stand views** (`jobs/views.mjs` `stand:113,-,75,1,22`, `stand:102,-,110,1,20`, `stand:404,-,75,1,22`,
+  aircraft parked; `out/fix1/gates2/after/v_stand_*.png`). At 113 a mast now stands at the left frame edge (there was
+  none before). At 102 the mast at the 103 rotunda is still at the left, and a second pole enters at the bottom right
+  edge. At 404 a mast stands between the 403 and 404 heads at the left. All of them are clear of the aircraft, bridge and
+  stairs. These cameras differ a little from "Fly to stand" (nearer, flatter), which the placement checks.
+- **Night (21:30 local).** The named night view of 233 shows no mast and no lamp disk now; before, it showed the ~220 px
+  disk. "Fly to stand" 233 at night is clean as well; far masts show as small dots on the horizon. For the cap itself,
+  the job puts a lamp head 22 m in front of the camera (the 236 mast at the T2 pier tip). The six aimed lamps draw as
+  six disks of about 45-50 px, and nothing larger. The job's measurement agrees: the largest uncapped radius would have
+  been 96 px, the drawn one is 24 px (`mast sprites fix2_night_mast_near {"maxRadiusPxUncapped":96.1,
+  "maxRadiusPxDrawn":24}`). At 60 m it is 34 px uncapped and 24 px drawn: a compact six-lamp cluster
+  (`g_fix2_night_mast_near.png`, `g_fix2_night_mast_mid.png`). The aircraft are lit in these renders through the
+  buildings fixer's concurrent N3 change, not through this one.
+
+Evidence: `fix2_gates_fly_248_274.png` (before / after, 248 and 274), `fix2_gates_stand_233_115.png` (the named 233 view
+before / after, "Fly to stand" 233 and 115), `fix2_gates_night_233.png` (the named night view before / after, "Fly to
+stand" 233 at night, and a lamp head 22 m from the camera). The masts do not depend on the parked aircraft (the
+placement uses the class reference planforms), so the before renders without aircraft and the after renders with
+them show the same masts.
+
+| Id | What changed | Evidence | Status |
+|---|---|---|---|
+| N1 | Stand camera defined once (`STAND_CAM`). Masts are rejected by an image-space test (pole vs the hull of the class reference, rotundas and cabs, ±4°; centre band ±8°): side +1 of every contact stand clear, at least one side of every remote stand clear. "Fly to stand" picks the clear side. Mast lamp sprites capped at 24 px projected radius and faded within 40 m of the camera. | `fix2_gates_fly_248_274.png`, `fix2_gates_stand_233_115.png`, `fix2_gates_night_233.png`; `out/fix1/gates2/after/g_fix2_*.png`, `v_stand_113/102/404.png`; job log: 0 stands with a mast within 5 m of the sight line on the side taken (before 40); near lamp head 96 px uncapped -> 24 px drawn | fixed |
+
+### Checks
+
+- `jobs/gates.mjs SET='fix2;fix2night'`: the stand-camera check above. All parked bridges docked (229, 230, 231, 233,
+  234, 113, 115, 121, 248, 274).
+- Console: `SOFTGL=1 SCENES=snapshot node livetest.mjs jobs/integration.mjs` -> "console 7 messages (0 error, 0 warning),
+  page errors 0, HTTP>=400 0, failed requests 0 -> clean" (`out/fix1/gates2/integ_snapshot.log`). The `fix2` / `fix2night` runs
+  (DEBUG park, day and 21:30) logged no error or warning either.
+- No-browser tests: `test_geo_js.mjs` all passed, `test_frame.py` OK, `test_relay.py` 7 OK, `test_metar_zsss_js.mjs`
+  all passed, `test_buildings3d.mjs` all passed. `node --check` passes for the four changed modules / jobs.
+- No FAA constant and no SFO value. Every new value is a UI or display choice and is labelled inf: the stand camera, the
+  margins, the subject heights and the sprite cap / fade.
+
+### Open after this round
+
+1. **Fewer masts.** 6 masts fewer, and 126, 231 and 232 now have no mast within 120 m. Photos show masts on the T2 pier tip. If the owner prefers
+   coverage to clean stand views, `STAND_CAM.subjDeg` / `centreDeg` trade one against the other.
+2. Remote stands fly to their right side (side -1) where a mast stands on the left. Neighbouring remote stands can
+   therefore open from different sides.
+3. N5 (low, not in this round's list): the mast list still depends on the quality tier through the post list. The new
+   camera test adds no tier dependence.
+4. Handoffs: `CLAUDE.md` (lead) still says "`masts()` (73 inferred apron floodlight masts)". It should read 67 and name
+   `SHA.qa.standCam()` / `SHA.qa.camSubject()` and `STAND_CAM` (the stand camera, `gate_system.js`).
+   `app.js SHA.qa.stand` (core) could take its defaults from `STAND_CAM` / `standCamWedge`; it has the same numbers now.

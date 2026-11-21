@@ -116,9 +116,34 @@ import '../aircraft/fit.js'; // fits the imported models to the published dimens
 import { bellowsShape, bellowsGeo } from '../aircraft/dock.js'; // the bellows closure fitted to the drawn fuselage skin
 import { inst, buildVehicleMeshes, beltShape, beltFamily, beltDoor, beltEndY, BELT_RAIL_GAP, cateringFloor, cateringBoxes, stairShape, stairHull, stairDoors, BUS_HULL } from '../world/gates.js';
 import { makeGateAtlas } from './gate_signs.js';
-// sha3d: the SHA stand data has no per-family stop offsets (sfo3d type_stops, keyed by traffic.js familyOf): every type
-// stops with its nose tip at the stand's stop point (data nose_note, inf)
+import { MODEL_DIMS, MODEL_FEATURES } from '../../data/models/manifest.js'; // (sfo3d model metadata: nose-gear contact)
+import { CAAC, val } from './caac_markings.js'; // the ONE CAAC parameter table (table 4.9.5 separations for the masts)
+// ---- stand stop convention (sha3d fix round 1, review M5). The stand's stop point g.nose (data `nose`, the OSM
+// aeroway=parking_position node, where the painted stop line is drawn) is the NOSE-WHEEL stop of every type:
+//  - CAAC MH 5001-2021 6.2.16-7: with manual or equipment guidance the stop line is set at the nose-wheel position of the
+//    intended stop point, square to the alignment line (without guidance: at the left-seat pilot). Every ZSSS stand has
+//    guidance (VDGS or marshaller, AIP (mirror) AD 2.20 3.2.2.3);
+//  - OSM tagging of aeroway=parking_position: "Put a node where the nose wheel stops"; the last node of the way "where
+//    the nose wheel is parked" (OSM wiki).
+// A type T therefore parks with its nose-gear contact on the node and its nose tip noseGearX(T) metres AHEAD of it: the
+// drawn model's own nose-gear contact (sfo3d model metadata MODEL_FEATURES[m].contact, through the fitted station map
+// T.fit.rx) for the models standing on their own gear, else the published nose-gear station T.xNose (js/aircraft/types.js,
+// where the procedural gear is drawn). The engine's "nose" is the nose tip throughout (doors, footprints, clearances);
+// standTip(g, T) converts. Phase 3 traffic parks the same way: setOccupant(g, key, ..., {nose: standTip(g, T), dir}).
+// (sfo3d's per-family type_stops do not exist for ZSSS: familyOf is null, the nose-gear offset replaces them.)
 const familyOf = () => null;
+const _ngx = new Map();
+export function noseGearX(T, modelKey) {
+  if (!T) return 0;
+  const f = T.fit; const ck = (T.key || '') + '|' + (modelKey === undefined ? '*' : modelKey || '-');
+  if (_ngx.has(ck) && _ngx.get(ck).fit === f) return _ngx.get(ck).x;
+  let x = Number.isFinite(T.xNose) ? T.xNose : (T.gear && T.gear.nose ? T.gear.nose.x : 0);
+  const m = f && f.model; const C = m && MODEL_FEATURES[m] && MODEL_FEATURES[m].contact;
+  if (C && C.nose && typeof f.rx === 'function' && MODEL_DIMS[m] && MODEL_DIMS[m].hasGear && (modelKey === undefined || modelKey === m)) x = f.rx(C.nose.st);
+  x = +x.toFixed(3); _ngx.set(ck, { fit: f, x }); return x;
+}
+// the nose tip [x, y, z] of type T parked at stand s (its nose wheel on the stop node, heading s.dir)
+export function standTip(s, T, modelKey) { const f = [s.dir[0], 0, s.dir[1]]; const L = Math.hypot(f[0], f[2]) || 1; const x = noseGearX(T, modelKey); return [s.nose[0] + f[0] / L * x, GROUND_Y, s.nose[1] + f[2] / L * x]; }
 
 // terminal outlines the bridges must stay out of (sha3d: injected by setGateWorld - the OSM T1 / T2 outlines of
 // window.SHA_AIRPORT, the same rings the stand builder took the bridge attach points from; BLD_H = wall top above the
@@ -270,6 +295,78 @@ const EXPECT_MG = 3.0;
 // (sha3d: CAAC MH 5001-2021 4.13.5, table 4.13.5 gives the same minimum clearances by code letter: A / B 3.0, C 4.5,
 // D-F 7.5 m; the code letter is taken from the span as here)
 const icaoClear = (span) => span < 24 ? 3.0 : span < 36 ? 4.5 : 7.5;
+// (sha3d fix round 1) apron floodlight masts (review M2) and idle airstair staging (review L4) - all inferred:
+const MAST_H = 30.0;            // m, mast height to the lamp head (inf: photos 02 / 09 / 14 show 25-35 m masts)
+const MAST_SPACING = 80.0;      // m, at least between masts (inf: about one per two stands at the 38-45 m T2 stand spacing)
+const MAST_BRIDGE_CLEAR = 6.0;  // m, from any jet-bridge tunnel axis (rest pose and every docking path) (inf)
+const MAST_CAM_STRICT_REMOTE = false; // (fix round 2, N1) false: a remote stand keeps one stand-camera side clear, not side +1 (inf)
+// (sha3d fix round 2, review N1) the app's own stand camera, defined once here: js/live/shell.js flyToStand ("Fly to
+// stand") and the named stand views (app.js SHA.qa.stand, side +1) look from ahead-left of the stand (side +1 = the
+// aircraft's left, the bridge side; side -1 = its right) back at a target `back` m behind the stop node, horizontally along
+// fwd * heading + left * side * (heading turned left), pitched `pitch` deg down, `dist` m away (`big` classes farther).
+// A mast pole (0 .. poleH m) "stands in the camera" when, projected into that camera and not wholly behind the subject, it
+// passes within subjDeg of the subject's image: the convex hull of the target, the stop node and (camSubject) the class
+// reference parked there (nose tip, wing tips, tail) and the bridge rotundas and docked cabs, at the heights subjH; or when,
+// in front of the target, it crosses the centre band +-centreDeg of the frame. A test in the image, not on the ground: the
+// review's ground strip (+-12 m about the sight line) let a pole 14 m off the line at 248 stand right beside the nose (a
+// tall pole near the camera sweeps across the subject). subjDeg 4 = about 55 px at 1280 x 720. All values inf (a UI camera
+// choice, not an airfield parameter).
+export const STAND_CAM = { back: 18, fwd: 0.75, left: 0.66, pitch: 24, fov: 50, dist: 90, distBig: 120, big: ['E', 'EL', 'F'],
+  subjDeg: 4, centreDeg: 8, poleH: 31, subjH: { target: 3, node: 1, tip: 3, wing: 4, tail: 9, rotunda: 5, cab: 4 }, src: 'inf' };
+/** the stand camera of a stand (stop node `nose` [x, z], heading vector `h` [x, z], class `cls`) on `side` (+1 / -1).
+ *  `subj`: extra subject points {p: [x, z], y: height above the apron} (LiveGateSystem.camSubject). Returns {T: target
+ *  [x, z], o: horizontal unit direction target -> camera, dist, side, cam (above the apron), F / R / U (camera basis),
+ *  S: the subject points projected [X, Y, depth] (X, Y = tangent of the angle off the view axis), hull, zMax} */
+export function standCamWedge(nose, h, cls, side = 1, subj = []) {
+  const K = STAND_CAM; const hl = Math.hypot(h[0], h[1]) || 1; const f = [h[0] / hl, h[1] / hl], lf = [f[1], -f[0]];
+  const T = [nose[0] - f[0] * K.back, nose[1] - f[1] * K.back];
+  const off = [f[0] * K.fwd + lf[0] * K.left * side, f[1] * K.fwd + lf[1] * K.left * side]; const ol = Math.hypot(off[0], off[1]) || 1; const o = [off[0] / ol, off[1] / ol];
+  const dist = K.big.includes(cls) ? K.distBig : K.dist; const cp = Math.cos(K.pitch * DEG), sp = Math.sin(K.pitch * DEG);
+  const W = { T, o, dist, side, cam: [T[0] + o[0] * dist * cp, dist * sp, T[1] + o[1] * dist * cp], F: [-o[0] * cp, -sp, -o[1] * cp], R: [o[1], 0, -o[0]] };
+  W.U = [W.R[1] * W.F[2] - W.R[2] * W.F[1], W.R[2] * W.F[0] - W.R[0] * W.F[2], W.R[0] * W.F[1] - W.R[1] * W.F[0]];
+  const pts = [{ p: T, y: K.subjH.target }, { p: nose, y: K.subjH.node }].concat(subj.filter(q => q && q.p));
+  W.S = pts.map(q => standCamProject(W, [q.p[0], q.y, q.p[1]])).filter(Boolean);
+  W.hull = hull2(W.S); W.zMax = Math.max(...W.S.map(q => q[2]));
+  return W;
+}
+/** camera-space projection of [x, y above the apron, z]: [X, Y, depth] or null behind the camera */
+export function standCamProject(W, P) {
+  const v = [P[0] - W.cam[0], P[1] - W.cam[1], P[2] - W.cam[2]]; const z = v[0] * W.F[0] + v[1] * W.F[1] + v[2] * W.F[2]; if (z < 0.5) return null;
+  return [(v[0] * W.R[0] + v[1] * W.R[1] + v[2] * W.R[2]) / z, (v[0] * W.U[0] + v[1] * W.U[1] + v[2] * W.U[2]) / z, z];
+}
+const hull2 = (P) => { const p = P.map(q => [q[0], q[1]]).sort((a, b) => a[0] - b[0] || a[1] - b[1]); if (p.length < 3) return p;
+  const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); const lo = [], up = [];
+  for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+  for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+  return lo.slice(0, -1).concat(up.slice(0, -1)); };
+const ptSeg2 = (q, a, b) => { const ex = b[0] - a[0], ey = b[1] - a[1]; const t = clampN(((q[0] - a[0]) * ex + (q[1] - a[1]) * ey) / (ex * ex + ey * ey || 1), 0, 1); return Math.hypot(a[0] + ex * t - q[0], a[1] + ey * t - q[1]); };
+const segX2 = (a, b, c, d) => { const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])); return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0; };
+const inPoly2 = (q, H) => { let c = false; for (let i = 0, j = H.length - 1; i < H.length; j = i++) if (((H[i][1] > q[1]) !== (H[j][1] > q[1])) && (q[0] < (H[j][0] - H[i][0]) * (q[1] - H[i][1]) / (H[j][1] - H[i][1]) + H[i][0])) c = !c; return c; };
+// distance (tangent units) from segment a-b to the convex polygon H (0: they overlap)
+const segPoly2 = (a, b, H) => { if (!H.length) return Infinity; if (H.length === 1) return ptSeg2(H[0], a, b); if (H.length >= 3 && (inPoly2(a, H) || inPoly2(b, H))) return 0;
+  let d = Infinity; for (let i = 0, j = H.length - 1; i < H.length; j = i++) { if (segX2(a, b, H[j], H[i])) return 0; d = Math.min(d, ptSeg2(a, H[j], H[i]), ptSeg2(b, H[j], H[i]), ptSeg2(H[i], a, b)); } return d; };
+/** a mast pole at ground point q [x, z] in the stand camera W: d = its clearance as a fraction of the margins (the angle to
+ *  the subject's image / subjDeg unless the pole is wholly behind the subject; in front of the target also the angle to the
+ *  frame centre / centreDeg); in = d < 1 */
+export function standCamPos(W, q) {
+  const K = STAND_CAM; let A = [q[0], 0, q[1]], B = [q[0], K.poleH, q[1]];
+  const zf = (A[0] - W.cam[0]) * W.F[0] + (A[1] - W.cam[1]) * W.F[1] + (A[2] - W.cam[2]) * W.F[2], zh = (B[0] - W.cam[0]) * W.F[0] + (B[1] - W.cam[1]) * W.F[1] + (B[2] - W.cam[2]) * W.F[2];
+  if (zf < 0.5 && zh < 0.5) return { d: Infinity, in: false };
+  if (zf < 0.5 || zh < 0.5) { const t = (0.5 - zf) / (zh - zf) + 1e-6; const M = [A[0], A[1] + (B[1] - A[1]) * t, A[2]]; if (zf < 0.5) A = M; else B = M; }
+  const a = standCamProject(W, A), b = standCamProject(W, B); if (!a || !b) return { d: Infinity, in: false };
+  let d = Infinity; const ts = Math.tan(K.subjDeg * DEG), tc = Math.tan(K.centreDeg * DEG), ty = Math.tan(K.fov / 2 * DEG);
+  if (Math.min(zf, zh) < W.zMax) d = segPoly2(a, b, W.hull) / ts;
+  const zT = W.S.length ? W.S[0][2] : Infinity;
+  if (Math.min(zf, zh) < zT) { // in front of the target: the part of the pole inside the frame height, its nearest approach to the centre column
+    const y0 = Math.max(-ty, Math.min(a[1], b[1])), y1 = Math.min(ty, Math.max(a[1], b[1]));
+    if (y0 <= y1) { const xAt = (y) => Math.abs(b[1] - a[1]) < 1e-9 ? a[0] : a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]); const x0 = xAt(y0), x1 = xAt(y1);
+      d = Math.min(d, (x0 * x1 <= 0 ? 0 : Math.min(Math.abs(x0), Math.abs(x1))) / tc); } }
+  return { d, in: d < 1 };
+}
+/** the smallest clearance (standCamPos d) of mast poles at the ground points pts [[x, z], ...] (Infinity: none in view) */
+export function standCamClearance(W, pts) { let m = Infinity; for (const p of pts) m = Math.min(m, standCamPos(W, p).d); return m; }
+const IDLE_PER = 4;             // remote stands per staged idle stair unit (inf: review L4 asks for at most one per 3-4)
+const IDLE_BUSY = 60.0;         // m: a staged unit is not drawn while an aircraft is parked at a stand this close (inf)
 // exterior cross-sections (width, height) of tunnel sections A (rotunda) .. C (cab): AC 150/5220-21C §3.5.a(1) minimum
 // interior 50 in corridor / 80 in height; sheet minimum A tunnel interior 1.47 x 2.13 m; exterior inferred
 const SEC_WH = { 2: [[2.55, 2.85], [2.82, 3.12]], 3: [[2.55, 2.85], [2.68, 2.98], [2.82, 3.12]] };
@@ -358,6 +455,7 @@ const C = {
   yellow: [0.9, 0.7, 0.08, 1], yellowE: [0.5, 0, 0, 0], tyre: [0.05, 0.05, 0.05, 1], tyreE: [0.9, 0, 0, 0],
   unit: [0.74, 0.75, 0.76, 1], unitE: [0.5, 0.2, 0, 0], lamp: [1, 0.93, 0.82, 1], lampE: [0.15, 0, 14, 0], amber: [1, 0.55, 0.05, 1], amberE: [0.2, 0, 14, 0],
   walk: [0.84, 0.85, 0.86, 1], neck: [0.78, 0.79, 0.8, 1],
+  mast: [0.62, 0.63, 0.64, 1], concrete: [0.6, 0.59, 0.56, 1], concreteE: [0.9, 0, 0, 0], // (fix round 1: floodlight masts, galvanised grey, inf)
   // (sha3d) glazed tunnel and fixed-link sides: the objects shader's curtain-wall glass (mat 1: 1.8 m mullions). ZSSS
   // photos 09 / 14 / 15 / 16 (docs/phase1/photos_credits.md) show glass-walled bridge tunnels and two-level glazed fixed
   // links at T2 (obs, appearance only); T1 is assumed alike (inf)
@@ -685,7 +783,8 @@ export class LiveGateSystem {
     if (stowW) { b.a0 = yawOf(stowW[0] - rot[0], stowW[1] - rot[2]); b.e0 = clampN(stowL, opR, mechE); }
     // (sha3d: no data rest pose - fully retracted towards the class reference's door; finishPrep turns it clear of the
     // aircraft, the fixed parts and the building where it is not: autoRest)
-    else { const dp = doorOf(nose, f, TYPES[REF_TYPE[g.cls] || 'b38m'], b.door).door; b.a0 = yawOf(dp[0] - rot[0], dp[2] - rot[2]); b.e0 = opR; b.autoRest = true; }
+    else { const RT = TYPES[REF_TYPE[g.cls] || 'b38m']; const dp = doorOf(standTip(g, RT), f, RT, b.door).door; // (M5: nose wheel on the stop node)
+      b.a0 = yawOf(dp[0] - rot[0], dp[2] - rot[2]); b.e0 = opR; b.autoRest = true; }
     b.stairSide = b.stairSide || 1;
     // legacy fields read by tools (jobs/extract2d.mjs, tools/live/invariants.mjs)
     b.attachW = att; b.attachW3 = att; const lu = [rot[0] - walk[Math.max(0, n - 2)][0], 0, rot[2] - walk[Math.max(0, n - 2)][2]]; b.u = Math.hypot(lu[0], lu[2]) > 0.05 ? v3.norm(lu) : dirOf(b.acWalk);
@@ -702,7 +801,7 @@ export class LiveGateSystem {
     const pts = []; const ref = REF_TYPE[g.cls];
     for (const { s } of this.standPoses(g)) for (const A of this.acceptedTypes(s)) {
       if (b.door === 2 && A.T.dockX2 == null) continue;
-      const { door, left } = doorOf(stW(s.nose, G), stD(s.dir), A.T, b.door);
+      const { door, left } = doorOf(standTip(s, A.T), stD(s.dir), A.T, b.door);
       pts.push({ key: A.key, door, left, w: A.key === ref ? 100 : SHA_MAIN.has(A.key) ? 10 : 1 });
     }
     if (!pts.length) return null;
@@ -918,18 +1017,26 @@ export class LiveGateSystem {
       b.stairSide = bad[-1] < bad[1] ? -1 : 1;
     }
   }
+  // (M5) the stand's front: the farthest-forward nose tip of its accepted types and its class reference, each parked with
+  // the nose wheel on the stop node - the VDGS unit, the stand-number post and the idle-equipment rules measure from it
+  frontOf(g) {
+    if (g._front) return g._front;
+    let x = noseGearX(TYPES[REF_TYPE[g.cls]] || TYPES.a320);
+    for (const A of this.acceptedTypes(g)) x = Math.max(x, noseGearX(A.T));
+    g._frontX = +x.toFixed(2); return (g._front = [g.nose[0] + g.dir[0] * x, G, g.nose[1] + g.dir[1] * x]);
+  }
   // every accepted type of the stand (and of the alternative positions sharing its bridges) at its stop: {T, nose, f}
   standAircraft(g) {
     if (g._acs) return g._acs; const out = [];
     for (const { s } of this.standPoses(g)) for (const A of this.acceptedTypes(s)) {
-      const fam = familyOf(A.icao); const st = fam && s.typeStops && s.typeStops[fam]; const along = st && Number.isFinite(st.along) ? Math.min(0, st.along) : 0;
+      const fam = familyOf(A.icao); const st = fam && s.typeStops && s.typeStops[fam]; const along = (st && Number.isFinite(st.along) ? Math.min(0, st.along) : 0) + noseGearX(A.T); // (M5: nose wheel on the stop node)
       const f = stD(s.dir); const n = v3.add(stW(s.nose, G), v3.mul(f, along)); out.push({ T: A.T, key: A.key, nose: [n[0], n[2]], f: [f[0], f[2]] });
     }
     return (g._acs = out);
   }
   // docking extension of an upper-deck bridge to the A380's U1L at the stand
   upperDockExt(g, b, rot) {
-    const T = TYPES.a388; if (!T) return null; const { door, left } = doorOf(stW(g.nose, G), stD(g.dir), T, 3);
+    const T = TYPES.a388; if (!T) return null; const { door, left } = doorOf(standTip(g, T), stD(g.dir), T, 3);
     const p = v3.add(door, v3.mul(left, 2.225)); return Math.hypot(p[0] - rot[0], p[2] - rot[2]);
   }
   // the aircraft this bridge docks at its stand (and the alternative positions sharing its bridges): accepted types
@@ -957,7 +1064,7 @@ export class LiveGateSystem {
     for (const { s } of this.standPoses(g)) for (const A of this.acceptedTypes(s)) {
       if (b.upper && A.key !== 'a388') continue;
       if (!b.upper && b.door === 2 && A.T.dockX2 == null) continue;
-      const fam = familyOf(A.icao); const st = fam && s.typeStops && s.typeStops[fam]; const along = st && Number.isFinite(st.along) ? Math.min(0, st.along) : 0;
+      const fam = familyOf(A.icao); const st = fam && s.typeStops && s.typeStops[fam]; const along = (st && Number.isFinite(st.along) ? Math.min(0, st.along) : 0) + noseGearX(A.T); // (M5: nose wheel on the stop node)
       const f = stD(s.dir); const nose = v3.add(stW(s.nose, G), v3.mul(f, along));
       const q = this.dockPose(b, A.T, nose, f, b.door);
       if (!q || !this.jointOk(b, q, A.icao).ok) continue;
@@ -1006,8 +1113,8 @@ export class LiveGateSystem {
     if (!T) return no('no aircraft');
     if (b.upper) { if (tk !== 'a388') return no('upper deck: A380 only'); }
     else if (b.door === 2 && T.dockX2 == null) return no('no second-bridge door');
-    const dn = g.dock ? g.dock.nose : g.nose, dd = g.dock ? g.dock.dir : g.dir;
-    const f = stD(dd), nose = stW(dn, G);
+    const dd = g.dock ? g.dock.dir : g.dir;
+    const f = stD(dd), nose = g.dock ? stW(g.dock.nose, G) : standTip(g, T); // (M5: without a pose, the nose wheel on the stop node)
     const q1 = this.dockPose(b, T, nose, f, b.door); if (!q1) return no('no door');
     const j = this.jointOk(b, q1, icao); if (!j.ok) return no(j.why);
     const slope = this.slopeOf(b, q1.e, q1.h);
@@ -1109,7 +1216,7 @@ export class LiveGateSystem {
     const q = !P.ok || (k <= 0 && !(a && a.plans)) ? this.restNow(b) : this.qAt(b, P, k); // (a bridge that does not dock: its rest per occupant)
     const T = P.T || TYPES[g.acType] || TYPES[g._lastType] || TYPES[REF_TYPE[g.cls] || 'b38m'];
     let door = P.door;
-    if (!door) { const dn = g.dock ? g.dock.nose : g.nose, dd = g.dock ? g.dock.dir : g.dir; door = doorOf(stW(dn, G), stD(dd), T, b.door).door; }
+    if (!door) { const dd = g.dock ? g.dock.dir : g.dir; door = doorOf(g.dock ? stW(g.dock.nose, G) : standTip(g, T), stD(dd), T, b.door).door; }
     const approach = P.ok && P.dur.length && !P.toRest ? clampN((clampN(k, 0, 1) * P.total - (P.total - P.dur[P.dur.length - 1])) / P.dur[P.dur.length - 1], 0, 1) : 0;
     return this.poseQ(b, q, { T, door, kk: approach, plan: P });
   }
@@ -1419,7 +1526,7 @@ export class LiveGateSystem {
   // or a neighbouring stand reaches in any pose (rest, docking paths, docked for every type it docks) with 0.5 m clearance
   vdgsSpot(g) {
     if (g._vdgs) return g._vdgs;
-    const nose = stW(g.nose, G), f = stD(g.dir);
+    const nose = this.frontOf(g), f = stD(g.dir); // (M5: ahead of the farthest-forward nose tip of the accepted types)
     // the terminal face on the stand centreline: the outline js/live/terminals.js draws (td; none within 60 m - A13, G10,
     // G13: posts only; review 2026-11-04 found their facade units floating 7-11 m up with no wall within 22-30 m) and,
     // where the SFO Museum ring the 3-D building assets are built from lies in front of it (by at most the OSM lean,
@@ -1501,7 +1608,7 @@ export class LiveGateSystem {
   staticPlans(g, b, exact = false) {
     const key = exact ? '_staticX' : '_static'; if (b[key]) return b[key]; const out = [];
     for (const { s } of this.standPoses(g)) for (const A of this.acceptedTypes(s)) {
-      const fam = familyOf(A.icao); const st = fam && s.typeStops && s.typeStops[fam]; const along = st && Number.isFinite(st.along) ? Math.min(0, st.along) : 0;
+      const fam = familyOf(A.icao); const st = fam && s.typeStops && s.typeStops[fam]; const along = (st && Number.isFinite(st.along) ? Math.min(0, st.along) : 0) + noseGearX(A.T); // (M5: nose wheel on the stop node)
       const f = stD(s.dir); const nose = v3.add(stW(s.nose, G), v3.mul(f, along));
       const gp = { ...g, acType: A.key, _lastType: A.key, dockType: A.icao, dock: { nose: worldToST(nose[0], nose[2]), dir: s.dir } };
       const P = this.makePlan(gp, b, exact ? {} : { all: true }); if (P.ok) { if (exact) out.push(P); else for (const path of P.alts) out.push({ ...P, path }); }
@@ -1509,7 +1616,7 @@ export class LiveGateSystem {
     return (b[key] = out);
   }
   standGeo(g, geo, sgn) {
-    const nose = stW(g.nose, G), f = stD(g.dir);
+    const nose = this.frontOf(g), f = stD(g.dir); // (vdgsSpot's t is measured from the same point)
     const V = this.vdgsSpot(g); const post = V.post, t = V.t;
     const c = v3.add(nose, v3.mul(f, t));
     const outW = v3.mul(f, -1); // display faces the arriving aircraft
@@ -1543,7 +1650,7 @@ export class LiveGateSystem {
   // (placeVehicles: stairs + bus at remote stands); empty remote stand: an idle stair unit at the stand head (cue, inf).
   remoteSpot(g) {
     if (g._sign) return g._sign;
-    const nose = stW(g.nose, G), f = stD(g.dir), left = v3.norm(v3.cross([0, 1, 0], f)); // (aircraft's left: up x forward)
+    const nose = this.frontOf(g), f = stD(g.dir), left = v3.norm(v3.cross([0, 1, 0], f)); // (aircraft's left: up x forward)
     const nb = this.neighbourPrints(g);
     const okAt = (p, rad) => !inBuilding(p[0], p[2]) && nearestBuilding(p[0], p[2]).d > rad && laneClear(p[0], p[2]) > rad
       && !nb.some(fp => hitsAircraft(fp, [p[0], p[2]], 6)); // (pavement or grass: a sign post stands on either)
@@ -1558,8 +1665,8 @@ export class LiveGateSystem {
   neighbourPrints(g) {
     if (g._nbp) return g._nbp; const n0 = stW(g.nose, G); const out = [];
     for (const o of this.gates) { if (o === g) continue; const on = stW(o.nose, G); if (Math.hypot(on[0] - n0[0], on[2] - n0[2]) > 120) continue;
-      const T = TYPES[REF_TYPE[o.cls]] || TYPES.a320; if (T) out.push(footprint(on, stD(o.dir), T, o)); }
-    { const T = TYPES[REF_TYPE[g.cls]] || TYPES.a320; if (T) out.push(footprint(n0, stD(g.dir), T, g)); }
+      const T = TYPES[REF_TYPE[o.cls]] || TYPES.a320; if (T) out.push(footprint(standTip(o, T), stD(o.dir), T, o)); }
+    { const T = TYPES[REF_TYPE[g.cls]] || TYPES.a320; if (T) out.push(footprint(standTip(g, T), stD(g.dir), T, g)); }
     return (g._nbp = out);
   }
   remoteGeo(g, geo, sgn) {
@@ -1576,24 +1683,202 @@ export class LiveGateSystem {
       signQuad(sgn, [v3.add(d0, v3.mul(tW, w / 2)), v3.add(d0, v3.mul(tW, -w / 2)), v3.add(v3.add(d0, v3.mul(tW, -w / 2)), [0, Fh, 0]), v3.add(v3.add(d0, v3.mul(tW, w / 2)), [0, Fh, 0])], outW, r, true);
     }
     if (g.acType && g.dock) { this.placeVehicles(g, []); return; }
-    if (!g.remote || g.service === 'business' || !this.vehicleBuckets) return;
-    // idle stair unit at the stand head, parallel to the stand axis (cue that the stand boards by stairs; inf)
-    const nose = stW(g.nose, G), left = v3.norm(v3.cross([0, 1, 0], f)); const nb = this.neighbourPrints(g);
-    const st = Object.keys(this.vehicleBuckets).filter(k => /^stairs\d+$/.test(k)).map(k => [k, +k.slice(6) / 100]).sort((a, b) => Math.abs(a[1] - 3.2) - Math.abs(b[1] - 3.2))[0];
-    if (!st) return; const hull = stairHull(st[1]);
-    const R = rng(hash(g.id + ':idle'));
-    // (the stand head first; where it is grass or a lane - many remote rows end at the apron edge - beside the forward
-    // fuselage's stop position, outside the class reference's planform)
-    for (const a of [6, 9, 3, 12, -3, -6]) for (const l of (R() < 0.5 ? [-10, 10, -14, 14, -18, 18] : [10, -10, 14, -14, 18, -18])) {
-      const p = v3.add(v3.add(nose, v3.mul(f, a)), v3.mul(left, l)); const d = f; const rt = [-d[2], d[0]];
-      const W = (x, z) => [p[0] + d[0] * x + rt[0] * z, p[2] + d[2] * x + rt[1] * z];
-      let good = true;
-      for (const [x0, x1, z0, z1] of hull) { for (const [x, z] of [[x0, z0], [x0, z1], [x1, z0], [x1, z1], [(x0 + x1) / 2, (z0 + z1) / 2]]) { const q = W(x, z);
-        if (inBuilding(q[0], q[1]) || laneClear(q[0], q[1]) < 1.5 || (PAVED && PAVED(q[0], q[1]) < 0.5) || nb.some(fp => hitsAircraft(fp, q, 4))) { good = false; break; } } if (!good) break; }
-      if (good && this._idleBoxes) for (const o of this._idleBoxes) if (Math.hypot(o[0] - p[0], o[1] - p[2]) < 9) { good = false; break; }
-      if (!good) continue;
-      (this._idleBoxes || (this._idleBoxes = [])).push([p[0], p[2]]);
-      this.vehicleBuckets[st[0]].push(inst(m4.basis(d, [0, 1, 0], [p[0], G, p[2]]), [0.9, 0.9, 0.9, 1])); return;
+    // (fix round 1, review L4: the idle stair units are no longer parked at every empty remote stand head; they are staged
+    // once for the whole apron, at most one per IDLE_PER remote stands - stageIdleStairs / idleGeo)
+  }
+  // ------------------------------------------------------------ idle airstairs (sha3d fix round 1, review L4)
+  // A cue that the remote stands board by stairs (inf; not an observation): at most one unit per IDLE_PER remote stands
+  // (non-business remote stands grouped by area in stand-number order), parked in a painted equipment area of the group
+  // (MH 5001-2021 6.2.20 设备区: js/live/caac_decals.js, SHA.markings.apron().equipment) along its long side, else at the
+  // apron edge ahead of the group's stand fronts; always on pavement, off the lanes and the buildings and outside every
+  // class-reference planform (nose wheel on the stop node; 4 m). A unit is not drawn while an aircraft is parked at a stand
+  // within IDLE_BUSY m of it: placeVehicles then draws the stairs at that aircraft's doors.
+  stageIdleStairs(equipment = []) {
+    const S = 3.2, hull = stairHull(S), x0 = Math.min(...hull.map(h => h[0])), len = -x0, wid = 2.2;
+    const remote = this.gates.filter(g => g.remote && g.service !== 'business' && !g.sharesBridgesOf)
+      .sort((a, b) => (a.area || '').localeCompare(b.area || '') || (parseInt(a.name, 10) - parseInt(b.name, 10)) || a.name.localeCompare(b.name));
+    const byArea = new Map(); for (const g of remote) { const k = g.area || ''; if (!byArea.has(k)) byArea.set(k, []); byArea.get(k).push(g); }
+    const eqBy = new Map(); for (const e of equipment || []) { if (!e || !e.ring || e.ring.length < 4) continue; if (!eqBy.has(e.stand)) eqBy.set(e.stand, []); eqBy.get(e.stand).push(e); }
+    const out = [];
+    const fits = (p, d, g) => { const rt = [-d[1], d[0]]; const nb = this.neighbourPrints(g);
+      for (const [hx0, hx1, z0, z1] of hull) for (const [x, z] of [[hx0, z0], [hx0, z1], [hx1, z0], [hx1, z1], [(hx0 + hx1) / 2, (z0 + z1) / 2]]) {
+        const q = [p[0] + d[0] * x + rt[0] * z, p[1] + d[1] * x + rt[1] * z];
+        if (inBuilding(q[0], q[1]) || laneClear(q[0], q[1]) < 1.5 || (PAVED && PAVED(q[0], q[1]) < 0.5) || nb.some(fp => hitsAircraft(fp, q, 4))) return false; }
+      return !out.some(o => Math.hypot(o.p[0] - p[0], o.p[1] - p[1]) < 9); };
+    for (const [area, list] of byArea) for (let i = 0; i < list.length; i += IDLE_PER) {
+      const grp = list.slice(i, i + IDLE_PER); const mid = Math.floor((grp.length - 1) / 2);
+      const order = grp.map((g, k) => [g, Math.abs(k - mid)]).sort((a, b) => a[1] - b[1]).map(x => x[0]);
+      let pick = null;
+      for (const g of order) { if (pick) break; for (const e of eqBy.get(g.name) || []) {
+        const R = e.ring; const ax = [R[1][0] - R[0][0], R[1][1] - R[0][1]], aw = [R[3][0] - R[0][0], R[3][1] - R[0][1]];
+        let La = Math.hypot(ax[0], ax[1]), Lw = Math.hypot(aw[0], aw[1]); let d = [ax[0] / La, ax[1] / La], w = [aw[0] / Lw, aw[1] / Lw];
+        if (Lw > La) { [La, Lw] = [Lw, La]; [d, w] = [w, d]; }
+        if (La < len + 0.8 || Lw < wid + 0.8) continue;
+        const c = [(R[0][0] + R[1][0] + R[2][0] + R[3][0]) / 4, (R[0][1] + R[1][1] + R[2][1] + R[3][1]) / 4];
+        const p = [c[0] + d[0] * len / 2, c[1] + d[1] * len / 2];                // (the unit's front; it reaches len m back)
+        if (fits(p, d, g)) { pick = { p, d, host: g.name, where: 'equipment area (6.2.20)' }; break; } } }
+      for (const g of order) { if (pick) break; const f = g.dir, lf = [f[1], -f[0]]; const F = this.frontOf(g);
+        for (const a of [10, 14, 18, 22]) { if (pick) break; for (const l of [0, 6, -6, 12, -12, 18, -18]) {
+          const p = [F[0] + f[0] * (a + len) + lf[0] * l, F[2] + f[1] * (a + len) + lf[1] * l];
+          if (fits(p, f, g)) { pick = { p, d: f.slice(), host: g.name, where: 'apron edge ahead of the stand' }; break; } } } }
+      if (pick) out.push({ ...pick, p: pick.p.map(v => +v.toFixed(2)), d: pick.d.map(v => +v.toFixed(4)), area, group: grp.map(g => g.name), src: 'inf' });
+    }
+    this.idleSpots = out; this.idleStats = { remoteStands: remote.length, groups: [...byArea.values()].reduce((n, l) => n + Math.ceil(l.length / IDLE_PER), 0), placed: out.length,
+      inEquipmentAreas: out.filter(o => /^equipment/.test(o.where)).length, perStands: IDLE_PER };
+    this.dirty = true; return out;
+  }
+  idleGeo() {
+    if (!this.idleSpots || !this.vehicleBuckets) return;
+    const st = Object.keys(this.vehicleBuckets).filter(k => /^stairs\d+$/.test(k)).map(k => [k, +k.slice(6) / 100]).sort((a, b) => Math.abs(a[1] - 3.2) - Math.abs(b[1] - 3.2))[0]; if (!st) return;
+    const busy = this.gates.filter(o => o.acType).map(o => o.nose);
+    for (const s of this.idleSpots) {
+      if (busy.some(n => Math.hypot(n[0] - s.p[0], n[1] - s.p[1]) < IDLE_BUSY)) continue;
+      (this._idleBoxes || (this._idleBoxes = [])).push(s.p.slice());
+      this.vehicleBuckets[st[0]].push(inst(m4.basis([s.d[0], 0, s.d[1]], [0, 1, 0], [s.p[0], G, s.p[1]]), [0.9, 0.9, 0.9, 1]));
+    }
+  }
+  // ------------------------------------------------------------ apron floodlight masts (sha3d fix round 1, review M2)
+  // Photos 02, 09, 14, 16 and 17 (docs/phase1/photos_credits.md) show 25-35 m high-mast floodlights with a multi-lamp head
+  // at regular spacing along the ZSSS aprons; photo 09 (T2 north pier, 2013) shows them on the apron edge of the service
+  // road, about on the line of the rotundas, between the stands. Positions, height (MAST_H), head (6 lamps) and spacing
+  // are inferred (src inf); the make is unknown. Candidates per stand, in preference order: at a contact stand beside its
+  // rotunda along the facade (+-8 .. 30 m) on the rotunda line or up to 6 m apron-side of it; at a remote stand ahead of
+  // its front (the farthest-forward nose tip), between the stands. A candidate is taken when it is clear of:
+  //  - the terminal outlines (4 m) and the runway strips (150 m from a runway centreline, MH 5001-2021 4.4: strip of a code
+  //    3 / 4 instrument runway);
+  //  - every stand's planform (class reference with its nose wheel on the stop node) grown by the table 4.13.5 clearance
+  //    (3.0 / 4.5 / 7.5 m), and every painted stand envelope when the markings package gives them (+1 m);
+  //  - the swept path of every lead-in (the class reference along it, the same clearance; for code C this equals the
+  //    table 4.9.5 col. (13) taxilane-to-object distance 22.5 m within 0.1 m);
+  //  - apron lanes: taxiway centrelines by table 4.9.5 col. (11), taxilane centrelines by col. (13), for the largest code
+  //    letter among the stands within 150 m (C 26.0 / 22.5, D 37.0 / 33.5, E 43.5 / 40.0, F 51.0 / 47.5 m);
+  //  - the jet bridges: fixed walkways and drums (3 m) and every tunnel axis from the rotunda to the cab in the rest pose and
+  //    along every docking path of the accepted types (MAST_BRIDGE_CLEAR); the VDGS and stand-sign posts (3 m);
+  //  - the masts already placed (stands in area / number order): at least max(MAST_SPACING, 1.8 x the stand's spacing to
+  //    its nearest neighbour), so about one mast per two stands;
+  //  - and it stands on the apron, or at a remote row on the grass verge within 12 m of the apron edge;
+  //  - (fix round 2, review N1) and out of the app's own stand cameras (STAND_CAM / standCamPos: the pole projected into
+  //    each stand's camera, both sides, must clear the subject points and the centre band): a contact stand keeps side +1
+  //    clear (the bridge side: "Fly to stand" and the named stand views), a remote stand keeps at least one side clear
+  //    (flyToStand takes the clear side). MAST_CAM_STRICT_REMOTE = true asks side +1 of the remote stands too.
+  // The service roads are not in the data (no airside road geometry); the rotunda-line rule keeps the masts off the band
+  // between the facade and the rotundas where photo 09 shows the road.
+  placeMasts({ runways = [], envelopes = [] } = {}) {
+    if (!this._fin) this.finishPrep();
+    const t0 = performance.now();
+    const letter = { B: 'C', C: 'C', CL: 'D', D: 'D', E: 'E', EL: 'E', F: 'F' }, ORD = 'CDEF';
+    const TWY_OBJ = val(CAAC.separation.twyCLToObject), TWL_OBJ = val(CAAC.separation.taxilaneCLToObject); // MH 5001-2021 table 4.9.5 col. (11) / (13), 9.2.7 (js/live/caac_markings.js)
+    const refT = (g) => TYPES[REF_TYPE[g.cls]] || TYPES.a320;
+    const prints = this.gates.map(g => { const T = refT(g); return { fp: footprint(standTip(g, T), stD(g.dir), T, g), m: icaoClear(T.wing.span), R: T.L + T.wing.span / 2 + 8 }; });
+    const sweep = [];
+    for (const g of this.gates) { const W = g.leadinW; if (!W || W.length < 2) continue; const T = refT(g); const xg = noseGearX(T); const m = icaoClear(T.wing.span);
+      for (let i = 1; i < W.length; i++) { const A = W[i - 1], B = W[i]; const L = Math.hypot(B[0] - A[0], B[1] - A[1]); if (L < 0.1) continue; const u = [(B[0] - A[0]) / L, (B[1] - A[1]) / L];
+        for (let t = 0; t < L; t += 6) { const p = [A[0] + u[0] * t, A[1] + u[1] * t]; const tip = [p[0] + u[0] * xg, G, p[1] + u[1] * xg]; sweep.push({ fp: footprint(tip, [u[0], 0, u[1]], T, g), m, R: T.L + T.wing.span / 2 + 8 }); } } }
+    const envHit = (P, q) => { const fp = P.fp; const dx = q[0] - fp.nose[0], dz = q[1] - fp.nose[1]; if (dx * dx + dz * dz > P.R * P.R) return false;
+      const x = -(dx * fp.f[0] + dz * fp.f[1]), y = dx * fp.r[0] + dz * fp.r[1], T = fp.T, m = P.m;
+      if (x > -m && x < T.L + m && Math.abs(y) < T.R + m) return true;
+      const w = T.wing; if (w) { const ay = Math.abs(y), yy = Math.min(ay, w.span / 2), le = w.rootLE + yy * Math.tan((w.sweep || 25) * DEG), ch = w.rootC - (w.rootC - w.tipC) * Math.min(1, yy / (w.span / 2));
+        if (ay < w.span / 2 + m && x > le - m && x < le + ch + m) return true; }
+      return !!(T.hstab && x > T.hstab.x - m && x < T.L + m && Math.abs(y) < T.hstab.span / 2 + m); };
+    const segD = (p, A, B) => { const ex = B[0] - A[0], ez = B[1] - A[1]; const t = clampN(((p[0] - A[0]) * ex + (p[1] - A[1]) * ez) / (ex * ex + ez * ez || 1), 0, 1); return Math.hypot(A[0] + ex * t - p[0], A[1] + ez * t - p[1]); };
+    const arms = []; const fixed = [];
+    for (const g of this.gates) for (const b of this.bridgesOf(g)) { if (!b.m) this.prepBridge(g, b); const r = [b.rot[0], b.rot[2]];
+      fixed.push({ c: r, r: (b.rotR || 2.45) + 3 }); for (let i = 1; i < (b.walk || []).length; i++) fixed.push({ A: [b.walk[i - 1][0], b.walk[i - 1][2]], B: [b.walk[i][0], b.walk[i][2]], r: WALK_W / 2 + 3 });
+      const qs = [{ a: b.a0, e: b.e0 }].concat(this.sweepQ(g, b, false)); for (const q of qs) arms.push({ A: r, B: [r[0] + Math.cos(q.a) * (q.e + 2.5), r[1] + Math.sin(q.a) * (q.e + 2.5)] }); }
+    const posts = []; for (const g of this.gates) { const F = this.frontOf(g); if (g.bridge) { const V = this.vdgsSpot(g); posts.push([F[0] + g.dir[0] * V.t, F[2] + g.dir[1] * V.t]); } else { const S = this.remoteSpot(g); posts.push([S.p[0], S.p[2]]); } }
+    const strips = runways.map(rw => ({ A: rw.a, B: rw.b }));
+    const inRing = (R, x, z) => { let c = false; for (let i = 0, j = R.length - 1; i < R.length; j = i++) if (((R[i][1] > z) !== (R[j][1] > z)) && (x < (R[j][0] - R[i][0]) * (z - R[i][1]) / (R[j][1] - R[i][1]) + R[i][0])) c = !c; return c; };
+    const envBB = envelopes.filter(e => e && e.ring && e.ring.length >= 3).map(e => { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const p of e.ring) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); } return { ring: e.ring, bb: [x0 - 1, z0 - 1, x1 + 1, z1 + 1] }; });
+    const nearest = new Map(this.gates.map(g => { let d = 1e9; for (const o of this.gates) if (o !== g && !o.sharesBridgesOf && !g.sharesBridgesOf) d = Math.min(d, Math.hypot(o.nose[0] - g.nose[0], o.nose[1] - g.nose[1])); return [g, d]; }));
+    // (fix round 2, N1) the stand cameras: both sides of every stand, and which sides the masts placed so far block
+    const cams = this.gates.map(g => { const subj = this.camSubject(g);
+      return { g, strict: !!g.contact || MAST_CAM_STRICT_REMOTE, w: [standCamWedge(g.nose, g.dir, g.cls, 1, subj), standCamWedge(g.nose, g.dir, g.cls, -1, subj)], blk: [false, false] }; });
+    const camHits = (q) => { const H = []; for (const c of cams) { if (Math.abs(c.g.nose[0] - q[0]) > 160 || Math.abs(c.g.nose[1] - q[1]) > 160) continue;
+      const a = standCamPos(c.w[0], q).in, b = standCamPos(c.w[1], q).in; if (a || b) H.push([c, a, b]); } return H; };
+    const why = {}; let mine = null; const fail = (k) => { why[k] = (why[k] || 0) + 1; if (mine) mine[k] = (mine[k] || 0) + 1; return false; };
+    const ok = (q, g) => {
+      if (inBuilding(q[0], q[1])) return fail('building'); if (nearestBuilding(q[0], q[1]).d < 4) return fail('building');
+      if (strips.some(s => segD(q, s.A, s.B) < 150)) return fail('runway strip');
+      let code = 0; for (const o of this.gates) if (Math.hypot(o.nose[0] - q[0], o.nose[1] - q[1]) < 150) code = Math.max(code, ORD.indexOf(letter[o.cls] || 'C'));
+      for (const L of LANES) { const lim = L[4] > 10 ? TWY_OBJ[ORD[code]] : TWL_OBJ[ORD[code]]; if (Math.min(L[0], L[2]) > q[0] + lim || Math.max(L[0], L[2]) < q[0] - lim || Math.min(L[1], L[3]) > q[1] + lim || Math.max(L[1], L[3]) < q[1] - lim) continue;
+        if (segD(q, [L[0], L[1]], [L[2], L[3]]) < lim) return fail('lane'); }
+      if (prints.some(P => envHit(P, q))) return fail('stand envelope');
+      if (envBB.some(E => q[0] > E.bb[0] && q[0] < E.bb[2] && q[1] > E.bb[1] && q[1] < E.bb[3] && inRing(E.ring, q[0], q[1]))) return fail('painted envelope');
+      if (sweep.some(P => envHit(P, q))) return fail('lead-in sweep');
+      if (fixed.some(F => F.c ? Math.hypot(F.c[0] - q[0], F.c[1] - q[1]) < F.r : segD(q, F.A, F.B) < F.r)) return fail('bridge fixed part');
+      if (arms.some(A => segD(q, A.A, A.B) < MAST_BRIDGE_CLEAR)) return fail('bridge sweep');
+      if (posts.some(p => Math.hypot(p[0] - q[0], p[1] - q[1]) < 3)) return fail('post');
+      // on the apron, or (remote rows, which often end at the apron edge) on the grass verge within 12 m of it
+      if (PAVED && PAVED(q[0], q[1]) < 0.5 && !(g.remote && [[12, 0], [-12, 0], [0, 12], [0, -12], [8.5, 8.5], [-8.5, 8.5], [8.5, -8.5], [-8.5, -8.5]].some(([a, c]) => PAVED(q[0] + a, q[1] + c) >= 0.5))) return fail('not paved');
+      for (const [c, a, b] of camHits(q)) if (c.strict ? a : (a || c.blk[0]) && (b || c.blk[1])) return fail('stand camera');
+      return true; };
+    const order = this.gates.filter(g => !g.sharesBridgesOf)
+      .sort((a, b) => (a.area || '').localeCompare(b.area || '') || (parseInt(a.name, 10) - parseInt(b.name, 10)) || a.name.localeCompare(b.name));
+    const masts = []; const perStand = new Map();
+    for (const g of order) {
+      mine = {}; perStand.set(g.name, mine);
+      const spacing = Math.max(MAST_SPACING, 1.8 * Math.min(nearest.get(g), 70));
+      const f = g.dir, lf = [f[1], -f[0]]; const cands = [];
+      const b = (g.bridges || [])[0];
+      if (b && b.rot) { // along the facade beside the rotunda: u = out of the building (walkway direction), t = along the facade
+        const r = [b.rot[0], b.rot[2]]; const u = b.u ? [b.u[0], b.u[2]] : [-f[0], -f[1]]; const ul = Math.hypot(u[0], u[1]) || 1; const uo = [u[0] / ul, u[1] / ul], t = [-uo[1], uo[0]];
+        for (const s of [0, 2, 4, 6]) for (const l of [8, -8, 11, -11, 14, -14, 18, -18, 22, -22, 26, -26, 30, -30]) cands.push({ q: [r[0] + t[0] * l + uo[0] * s, r[1] + t[1] * l + uo[1] * s], face: uo, at: 'rotunda line' });
+      } else { // ahead of the stand front, between the stands
+        const F = this.frontOf(g); const half = Math.min(35, nearest.get(g) / 2);
+        // (a = 0 / -3: between the noses of neighbouring stands, ahead of their wings - for the rows whose heads end at the
+        // apron edge or face a lane)
+        for (const a of [8, 12, 6, 3, 16, 0, -3, 20, 26]) for (const l of [half, -half, half * 0.7, -half * 0.7, 0]) cands.push({ q: [F[0] + f[0] * a + lf[0] * l, F[2] + f[1] * a + lf[1] * l], face: [-f[0], -f[1]], at: a > 0 ? 'ahead of the stand front' : 'between the stand noses' });
+      }
+      for (const c of cands) {
+        if (masts.some(M => Math.hypot(M.p[0] - c.q[0], M.p[1] - c.q[1]) < spacing)) { fail('spacing'); continue; }
+        if (!ok(c.q, g)) continue;
+        for (const [cc, a, b] of camHits(c.q)) { if (a) cc.blk[0] = true; if (b) cc.blk[1] = true; }
+        masts.push({ p: c.q.map(v => +v.toFixed(2)), face: c.face.map(v => +v.toFixed(4)), h: MAST_H, stand: g.name, area: g.area, at: c.at, src: 'inf' }); break;
+      }
+    }
+    mine = null; this.masts = masts;
+    const by = {}; for (const M of masts) by[M.area] = (by[M.area] || 0) + 1;
+    // stands with no mast within 120 m of their stop node, and why their own candidates failed (QA / report)
+    const uncovered = order.filter(g => !masts.some(M => Math.hypot(M.p[0] - g.nose[0], M.p[1] - g.nose[1]) < 120)).map(g => { const r = perStand.get(g.name) || {}; delete r.spacing; return { stand: g.name, area: g.area, why: r }; });
+    // (fix round 2, N1) the stand cameras after placement: sides with a mast in the sight wedge (QA; contact side +1 must be 0)
+    const cb = { contactSide1: cams.filter(c => c.g.contact && c.blk[0]).map(c => c.g.name), remoteSide1: cams.filter(c => !c.g.contact && c.blk[0]).length,
+      remoteSide2: cams.filter(c => !c.g.contact && c.blk[1]).length, bothSides: cams.filter(c => c.blk[0] && c.blk[1]).map(c => c.g.name), subjDeg: STAND_CAM.subjDeg, centreDeg: STAND_CAM.centreDeg, strictRemote: MAST_CAM_STRICT_REMOTE, src: 'inf' };
+    this.mastStats = { masts: masts.length, standsConsidered: order.length, byArea: by, rejected: why, uncovered: uncovered.length, cameras: cb, ms: Math.round(performance.now() - t0), h: MAST_H, src: 'inf' };
+    this.mastUncovered = uncovered;
+    this.dirty = true; return masts;
+  }
+  // (fix round 2, N1) the stand camera's subject points besides the target and the stop node (STAND_CAM.subjH heights): the
+  // class reference parked with its nose wheel on the node (nose tip, wing tips, tail), every bridge's rotunda (as placed)
+  // and docked cab (data cab). (The VDGS display was tried as a subject point too: 61 masts, 20 stands without one within
+  // 120 m, the whole T2 north pier tip among them - so it is not one; the VDGS stays visible beside the masts.)
+  camSubject(g) {
+    const RT = TYPES[REF_TYPE[g.cls]] || TYPES.a320; const tip = standTip(g, RT); const H = STAND_CAM.subjH; const r2 = (v) => +v.toFixed(2);
+    const fl = Math.hypot(g.dir[0], g.dir[1]) || 1, f = [g.dir[0] / fl, g.dir[1] / fl], lf = [f[1], -f[0]]; const at = (x, y) => [r2(tip[0] - f[0] * x + lf[0] * y), r2(tip[2] - f[1] * x + lf[1] * y)];
+    const subj = [{ p: at(0, 0), y: H.tip }, { p: at(RT.L, 0), y: H.tail }];
+    const w = RT.wing; if (w) { const yy = w.span / 2, xw = w.rootLE + yy * Math.tan((w.sweep || 25) * DEG) + (w.tipC || 1) / 2; subj.push({ p: at(xw, yy), y: H.wing }, { p: at(xw, -yy), y: H.wing }); }
+    const B = g.sharesBridgesOf ? this.gates.find(o => o.name === g.sharesBridgesOf) || g : g;
+    for (const b of this.bridgesOf(B)) { if (!b.rot && !b.m) this.prepBridge(B, b); if (b.rot) subj.push({ p: [+b.rot[0].toFixed(2), +b.rot[2].toFixed(2)], y: H.rotunda }); if (b.cabW) subj.push({ p: b.cabW.slice(0, 2), y: H.cab }); }
+    return subj;
+  }
+  mastGeo(geo) {
+    for (const M of this.masts || []) {
+      const p = M.p, H = M.h, f3 = [M.face[0], 0, M.face[1]];
+      geo.box([-0.8, 0, -0.8], [0.8, 0.45, 0.8], C.concrete, C.concreteE, m4.basis(f3, [0, 1, 0], [p[0], G, p[1]]));
+      cyl(geo, [p[0], G + 0.45, p[1]], 0.36, 10, C.mast, C.steelE, 12); cyl(geo, [p[0], G + 10.45, p[1]], 0.3, 10, C.mast, C.steelE, 12); cyl(geo, [p[0], G + 20.45, p[1]], 0.24, H - 20.45, C.mast, C.steelE, 10);
+      const Mh = m4.basis(f3, [0, 1, 0], [p[0], G + H, p[1]]);
+      geo.box([-0.15, -0.12, -2.0], [0.15, 0.12, 2.0], C.steel, C.steelE, Mh);                       // head frame (two bars)
+      geo.box([-0.15, -1.32, -2.0], [0.15, -1.08, 2.0], C.steel, C.steelE, Mh);
+      geo.box([-1.1, -2.05, -2.1], [0.7, -1.95, 2.1], C.steel, C.steelE, Mh);                        // service platform
+      // six lamp housings in two rows, aimed 25 deg down towards the apron (inf)
+      const c = Math.cos(25 * DEG), s = Math.sin(25 * DEG); const fd = [f3[0] * c, -s, f3[2] * c], up = [f3[0] * s, c, f3[2] * s];
+      for (const y of [0, -1.2]) for (const z of [-1.3, 0, 1.3]) {
+        const o = m4.xform(Mh, [0.35, y, z]); const L = m4.basis(fd, up, o);
+        geo.box([0, -0.38, -0.5], [0.42, 0.38, 0.5], C.dark, C.darkE, L);
+        geo.box([0.42, -0.32, -0.44], [0.46, 0.32, 0.44], C.lamp, C.lampE, L);
+        this.staticSprites.push({ p: m4.xform(L, [0.75, 0, 0]), c: [1.0, 0.74, 0.45], i: 650, s: 0.5, dir: fd, k: 1.2, night: true, mast: true }); // (warm white, high-pressure-sodium-like; inf)
+      }
+      // a faint all-round glow of the head (seen from behind and the side, where the aimed lamps are not visible)
+      this.staticSprites.push({ p: m4.xform(Mh, [0.4, -0.6, 0]), c: [1.0, 0.74, 0.45], i: 45, s: 1.6, night: true, mast: true });
     }
   }
   // ------------------------------------------------------------ occupancy and animation
@@ -1678,8 +1963,8 @@ export class LiveGateSystem {
   // parameter k0 now). Before (review round 2 v5): the new plan was started at the running animation's k - the cabs
   // jumped by up to 8.3 m (a pose 10 cm off), 2.6 m (the same pose after a normal undock), 9.6 m (after a hurry)
   dockFrom(g, L, now, same) {
-    const T = TYPES[g.acType]; const dn = g.dock ? g.dock.nose : g.nose, dd = g.dock ? g.dock.dir : g.dir;
-    const f = stD(dd), nose = stW(dn, G); const n2 = [nose[0], nose[2]], f2 = [f[0], f[2]];
+    const T = TYPES[g.acType]; const dd = g.dock ? g.dock.dir : g.dir;
+    const f = stD(dd), nose = g.dock ? stW(g.dock.nose, G) : standTip(g, T); const n2 = [nose[0], nose[2]], f2 = [f[0], f[2]];
     const near = (A, B) => Math.abs(wrap(A.a - B.a)) < 1e-4 && Math.abs(A.e - B.e) < 1e-3 && Math.abs(A.t - B.t) < 1e-4 && Math.abs(A.h - B.h) < 1e-3;
     const dedupe = (P) => P.filter((q, i) => i === 0 || !near(q, P[i - 1]));
     const parts = []; let inside = false;
@@ -1757,7 +2042,7 @@ export class LiveGateSystem {
   // parked at the stands around, and - while b is parked - a departing one for its hold (o._parkHold)
   parkOcc(g, b, holds = !!b._parkQ) {
     const out = []; const now = this._now ?? Date.now();
-    const add = (o, tk, pose, mg = 0.5) => { const T = TYPES[tk]; if (!T || !T.wing) return; const f = stD(pose ? pose.dir : o.dir), n = stW(pose ? pose.nose : o.nose, G);
+    const add = (o, tk, pose, mg = 0.5) => { const T = TYPES[tk]; if (!T || !T.wing) return; const f = stD(pose ? pose.dir : o.dir), n = pose ? stW(pose.nose, G) : standTip(o, T);
       out.push({ tk, T, nose: [n[0], n[2]], f: [f[0], f[2]], need: icaoClear(T.wing.span), mg }); };
     for (const o of [g].concat(this.nearStands(g))) {
       if (o.acType) { if (o !== g || !this.docks(g, b)) add(o, o.acType, o.dock); }
@@ -1981,6 +2266,7 @@ export class LiveGateSystem {
         if (!this.anims.has(g.id) && !this.settling(g)) { const Ps = this.bridgesOf(g).map(b => this.bridgeGeo(g, b, g.acType && this.docks(g, b) ? 1 : 0, geo, sgn)); if (g.acType) this.placeVehicles(g, Ps); }
         this.standGeo(g, geo, sgn);
       }
+      this.idleGeo(); this.mastGeo(geo); // (fix round 1: staged idle stairs L4, floodlight masts M2)
       if (this.staticMesh) this.staticMesh.dispose(); if (this.signMesh) this.signMesh.dispose();
       this.staticMesh = meshOf(geo); this.signMesh = meshOfSign(sgn);
       for (const k in this.vehicleBuckets) { const list = this.vehicleBuckets[k]; this.vehicleMeshes[k].setInstances(new Float32Array(list.flat()), list.length); }

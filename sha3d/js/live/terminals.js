@@ -21,17 +21,26 @@ const Q = (typeof location !== 'undefined') ? new URLSearchParams(location.searc
 const ON = Q.get('bld') !== '0', FAR_ON = Q.get('far') !== '0';
 const B3D = () => (typeof window !== 'undefined' && window.SHA_BUILDINGS3D) || null;
 const FAR = () => (typeof window !== 'undefined' && window.SHA_LANDCOVER_FAR) || null;
-// the haze law [inf]: strength, start distance from the camera (m), e-folding distance (m), ramp width outside the
-// detailed extent (m; the far attribute map's B channel holds the distance outside the extent)
+// the haze law [inf]: strength, start distance from the camera (m), e-folding distance (m; used only when the scaling below
+// is off), ramp width outside the detailed extent (m; the far attribute map's B channel holds the signed edge distance)
 const FAR_HAZE = [1.0, 2500, 14000, 4000];
+// fix round 1 (review L9): the e-folding distance follows the environment's surface extinction (uFog.x, from the METAR
+// visibility via js/env/state.js): L = clamp(K / sigma, Lmin, Lmax). K 0.8, Lmin 1.2 km; Lmax 20 km is the Shanghai haze
+// floor (even a dry CAVOK day keeps a residual haze, photos 22 / 23) [inf]. CAVOK / clear air (sigma 3.3e-5 /m) -> 20 km
+// (was a fixed 14 km); 10 km visibility (sigma 3.9e-4) -> 2 km; 5 km -> 1.2 km
+const FAR_HAZE_SIGMA = [0.8, 1200, 20000];
+// fix round 1 (lead: hard ring at the edge of the detailed extent): the haze ramp starts EDGE_HAZE_IN m inside the edge,
+// and the Sentinel-2 hint is cross-faded to the far land-cover colour over the inner EDGE_COL m (see featherS2) [inf]
+const EDGE_HAZE_IN = 300, EDGE_COL = [60, 480];
 
 const FAR_GLSL = `
 // sha_ground_far (js/live/terminals.js, package P2d): ESA WorldCover 2021 class colours beyond the detailed extent, with a
 // procedural roof-tone pattern on built-up cells (no buildings, no roads: PLAN s.6b Q3), sky-reflecting water and a night
 // urban glow; beyond the 20 km land-cover crop, the crop's mean colour; a distance haze toward the horizon sky colour that
-// ramps in over 4 km outside the extent (so the extent edge shows no step; rendering law [inf]).
+// ramps in from 300 m inside the extent edge to 4 km outside it (so the edge shows no step), with an e-folding distance
+// from the environment's surface extinction (fix round 1; rendering law [inf]).
 uniform sampler2D uFarCol; uniform sampler2D uFarAttr; uniform vec4 uFarRect; uniform float uHasFar; uniform vec3 uFarMean;
-uniform vec4 uFarHaze; uniform sampler2D uFarSky; uniform float uHasFarSky;
+uniform vec4 uFarHaze; uniform sampler2D uFarSky; uniform float uHasFarSky; uniform vec2 uFarDist; uniform vec4 uFarHazeSig;
 vec3 shaFarLin(vec3 c){ return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
 vec3 shaGroundFar(vec3 wp, float dist, vec3 neutral, inout float water, inout float glow){
   if (uHasFar < 0.5) return neutral;
@@ -57,14 +66,18 @@ vec3 shaGroundFar(vec3 wp, float dist, vec3 neutral, inout float water, inout fl
 }
 vec3 shaGroundFarHaze(vec3 col, vec3 wp, float dist, vec3 V, float ext, float night){
   if (uFarHaze.x <= 0.0) return col;
-  // ramp with the distance outside the detailed extent (far attribute map B: 0 inside .. 1 at 6 km; 1 beyond the map)
-  vec2 uv = (wp.xz - uFarRect.xy) / uFarRect.zw; float dOut = 6000.0;
-  if (uHasFar > 0.5 && uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) dOut = texture(uFarAttr, uv).b * 6000.0;
-  float a = uFarHaze.x * (1.0 - exp(-max(dist - uFarHaze.y, 0.0) / uFarHaze.z)) * smoothstep(0.0, uFarHaze.w, dOut) * (1.0 - ext);
+  // signed distance to the detailed extent's edge (far attribute map B over uFarDist = (min, max) m; beyond the map: max).
+  // Fix round 1: the ramp starts uFarHazeSig.w m inside the edge (the old data had 0 inside; then uFarDist.x = 0)
+  vec2 uv = (wp.xz - uFarRect.xy) / uFarRect.zw; float dS = uFarDist.y;
+  if (uHasFar > 0.5 && uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) dS = mix(uFarDist.x, uFarDist.y, texture(uFarAttr, uv).b);
+  // e-folding distance from the surface extinction (fix round 1, L9): clamp(K / sigma, Lmin, Lmax); off (K = 0): uFarHaze.z
+  float L = uFarHazeSig.x > 0.0 ? clamp(uFarHazeSig.x / max(uFog.x, 1e-7), uFarHazeSig.y, uFarHazeSig.z) : uFarHaze.z;
+  float a = uFarHaze.x * (1.0 - exp(-max(dist - uFarHaze.y, 0.0) / L)) * smoothstep(-uFarHazeSig.w, uFarHaze.w, dS);
   // haze colour: the sky the sky pass draws (the renderer's sky base, set in start()) at the horizon in the view
   // direction; toward the end of the ground mesh (80 km) the direction tends to the actual (below-horizon) view ray, so
   // the mesh edge meets the sky drawn beyond it without a step. Fallback before start(): the env map.
   float w = smoothstep(25000.0, 75000.0, dist); vec3 rd = -V;
+  a = max(a, smoothstep(45000.0, 78000.0, dist) * step(0.0, dS));   // the 80 km mesh edge always meets the drawn sky (with a long L)
   vec3 hz = uHasFarSky > 0.5 ? textureLod(uFarSky, dirToEquirect(normalize(vec3(rd.x, mix(0.0, rd.y, w), rd.z))), 0.0).rgb
                              : mix(skyEnv(normalize(vec3(rd.x, 0.02, rd.z)), 3.0), skyEnv(rd, 3.0), w);
   return mix(col, hz, clamp(a, 0.0, 0.99));
@@ -83,17 +96,89 @@ async function pngTexture(b64) {
   return { tex: t, w, h };
 }
 
-// one renderer item from a Geo built with y above the ground (drawn at GROUND_Y)
-function item(g, G, extra = {}) {
-  const d = g.data(); if (!d.idx.length) return null; const b = d.bbox;
-  return { mesh: new Mesh(d), prog: 'obj', model: m4.translate(0, G, 0), bbox: [b[0], b[1] + G, b[2], b[3], b[4] + G, b[5]], castShadow: true, uniforms: { uEmissiveBoost: 1 }, src: 'inf', tris: d.idx.length / 3, ...extra };
+async function decodePixels(b64) {   // base64 PNG / JPEG -> {w, h, data (RGBA, sRGB-encoded values as stored)}
+  const bin = atob(b64); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  const bmp = await createImageBitmap(new Blob([u], { type: u[0] === 0xff ? 'image/jpeg' : 'image/png' }), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+  const w = bmp.width, h = bmp.height;
+  const cv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(w, h) : Object.assign(document.createElement('canvas'), { width: w, height: h });
+  const cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(bmp, 0, 0);
+  const data = cx.getImageData(0, 0, w, h).data; if (bmp.close) bmp.close();
+  return { w, h, data };
+}
+// Edge cross-fade (fix round 1, lead finding: a hard ring at the edge of the detailed extent in view_overview). The core
+// mixes the far ground in with a soft extent mask (~+-250 m) but the Sentinel-2 hint (data/sha_ground_s2.js) has a binary
+// alpha at the extent polygon, so its 10 m detail stopped dead at half weight. This builds a replacement for the ground
+// program's uS2 texture: inside the polygon the hint is cross-faded (in linear reflectance) to the far land-cover colour
+// (data/sha_landcover_far.js, the same encoding: 255 srgb(min(1, 2 rho))) over the inner EDGE_COL m; outside the polygon
+// (still inside the hint's rectangle) it carries the far land-cover colour only (alpha 1, fading out over the last 150 m
+// before the rectangle's edge, where the core's procedural ground takes over). No detail is added beyond the
+// extent: outside it the texture holds nothing but the 50 m land-cover colours (PLAN s.6b Q3) [inf: widths].
+async function featherS2(S, F) {
+  const [a, f] = await Promise.all([decodePixels(S.png), decodePixels(F.png_col)]);
+  const W = a.w, H = a.h, res = S.res_m || (S.rect[2] / W);
+  // chamfer (3-4) distance in pixels from each valid pixel to the nearest nodata pixel (outside the image = nodata)
+  const PW = W + 2, PH = H + 2, D = new Float32Array(PW * PH);
+  for (let j = 0; j < PH; j++) for (let i = 0; i < PW; i++) { const ii = i - 1, jj = j - 1; D[j * PW + i] = (ii >= 0 && jj >= 0 && ii < W && jj < H && a.data[(jj * W + ii) * 4 + 3] > 127) ? 1e9 : 0; }
+  for (let j = 1; j < PH - 1; j++) for (let i = 1; i < PW - 1; i++) { const k = j * PW + i; if (!D[k]) continue;
+    D[k] = Math.min(D[k], D[k - 1] + 3, D[k - PW] + 3, D[k - PW - 1] + 4, D[k - PW + 1] + 4); }
+  for (let j = PH - 2; j >= 1; j--) for (let i = PW - 2; i >= 1; i--) { const k = j * PW + i; if (!D[k]) continue;
+    D[k] = Math.min(D[k], D[k + 1] + 3, D[k + PW] + 3, D[k + PW + 1] + 4, D[k + PW - 1] + 4); }
+  const LIN = new Float32Array(256); for (let v = 0; v < 256; v++) { const c = v / 255; LIN[v] = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+  const enc = (l) => { const c = Math.min(1, Math.max(0, l)); return Math.round(255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055)); };
+  const sm = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+  const out = new Uint8Array(W * H * 4); const fr = F.rect, fres = F.res_m || (fr[2] / f.w);
+  let nIn = 0, nFade = 0;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const x = S.rect[0] + (i + 0.5) * res, z = S.rect[1] + (j + 0.5) * res;
+    // far colour, bilinear on the 50 m cells
+    const fx = Math.min(f.w - 1.001, Math.max(0, (x - fr[0]) / fres - 0.5)), fz = Math.min(f.h - 1.001, Math.max(0, (z - fr[1]) / fres - 0.5));
+    const i0 = Math.floor(fx), j0 = Math.floor(fz), tx = fx - i0, tz = fz - j0;
+    const k = (j * W + i) * 4, dIn = D[(j + 1) * PW + i + 1] / 3 * res, wgt = sm(EDGE_COL[0], EDGE_COL[1], dIn);
+    if (dIn > 0) nIn++; if (dIn > 0 && wgt < 1) nFade++;
+    for (let c = 0; c < 3; c++) {
+      const q = (jj, ii) => LIN[f.data[(jj * f.w + ii) * 4 + c]];
+      const lf = (q(j0, i0) * (1 - tx) + q(j0, i0 + 1) * tx) * (1 - tz) + (q(j0 + 1, i0) * (1 - tx) + q(j0 + 1, i0 + 1) * tx) * tz;
+      out[k + c] = wgt >= 1 ? a.data[k + c] : enc(lf + (LIN[a.data[k + c]] - lf) * wgt);
+    }
+    // alpha: 1 inside the polygon; outside it the far colour fades out over the last 150 m before the hint's rectangle
+    // ends (the core draws its procedural ground beyond the rectangle: no seam where the polygon nears the rectangle)
+    out[k + 3] = dIn > 0 ? 255 : Math.round(255 * sm(0, 150, (Math.min(i, j, W - 1 - i, H - 1 - j) + 0.5) * res));
+  }
+  return { tex: texture(W, H, { data: out, mips: true }), stats: { px: [W, H], inside: nIn, crossfaded: nFade, widths_m: EDGE_COL, src: 'inf' } };
 }
 
-let stats = null;
+// one renderer item from a Geo built with y above the ground (drawn at GROUND_Y). noFlood (fix round 2, N3): the buildings
+// opt out of the objects' apron flood (js/shaders/objects.js sha_obj_flood, wired in js/live/app.js): the light map's spill
+// reaches under the piers, so 15 m pier roofs glowed at night (out/fix1/buildings2/n4_night_t2pier.png); facades keep their
+// own night terms [inf]
+function item(g, G, extra = {}) {
+  const d = g.data(); if (!d.idx.length) return null; const b = d.bbox;
+  return { mesh: new Mesh(d), prog: 'obj', model: m4.translate(0, G, 0), bbox: [b[0], b[1] + G, b[2], b[3], b[4] + G, b[5]], castShadow: true, uniforms: { uEmissiveBoost: 1 }, noFlood: true, src: 'inf', tris: d.idx.length / 3, ...extra };
+}
+
+let stats = null, fillInfo = null;
 registerExtension({
   name: 'terminals',
   order: 40,
   shaderChunks: FAR_ON ? { sha_ground_far: FAR_GLSL } : {},
+  // airside fill (fix round 1, review H2): the OSM apron ways stop 15-40 m short of the T1 / T2 airside facades, so grass
+  // showed under every fixed link, rotunda and VDGS post. data airside_fill (tools/buildings/build_buildings3d.py) =
+  // facade-to-apron band inside the aerodrome, minus Sentinel-2 grass pixels, plus fixed-link corridors / rotunda discs;
+  // drawn as asphalt ('paved': photo 09 shows a dark asphalt service road there) [src inf]
+  // stand-head fill (fix round 2, review_visual_fix1.md R1): with the nose-wheel stop convention (MH 5001-2021 6.2.16-7) the
+  // nose, envelope front and equipment areas of the edge stands lay 5-12 m beyond the OSM apron edge, on grass. data
+  // stand_head_fill = the stand head rectangles outside the pavement, inside the aerodrome, minus Sentinel-2 grass pixels;
+  // drawn as apron ('apron': the same concrete and night flood as the apron it continues) [src inf: OSM apron gap]
+  pavement(api) {
+    const D = ON ? B3D() : null; if (!D) return;
+    const F = D.airside_fill, H = D.stand_head_fill;
+    if (F && F.polys) for (const pl of F.polys) api.fill(pl, F.kind || 'paved');
+    // (the core map is additive: 'apron' sets G only, so the ring is drawn as 'paved' (R, pavedAt) + 'apron' (G 255), as the
+    // core draws its OSM aprons; js/world/ground.js paintAirfieldMap)
+    if (H && H.polys) for (const pl of H.polys) { api.fill(pl, 'paved'); if ((H.kind || 'apron') !== 'paved') api.fill(pl, H.kind || 'apron'); }
+    fillInfo = { rings: F && F.polys ? F.polys.length : 0, kind: (F && F.kind) || 'paved', src: (F && F.src) || 'inf',
+      standHead: H && H.polys ? { rings: H.polys.length, stands: (H.stands || []).length, kind: H.kind || 'apron', src: H.src || 'inf' } : null };
+  },
   claimBuildings(airport) {
     if (!ON) return [];
     const D = B3D(); const ids = D ? [...D.claims] : [];
@@ -104,10 +189,12 @@ registerExtension({
     if (!FAR_ON) return {};
     const one = texture(1, 1, { data: new Uint8Array([128, 128, 128, 255]) });
     const F = FAR();
-    return { uFarCol: one, uFarAttr: one, uFarSky: one, uHasFarSky: 0, uFarRect: [0, 0, 1, 1], uHasFar: 0, uFarMean: F ? F.mean_reflectance_rgb.map(v => v * 0.92) : [0.085, 0.082, 0.068], uFarHaze: FAR_HAZE };
+    const dr = F && F.attr_b_range_m ? F.attr_b_range_m : [0, 6000];   // old data: B = distance outside only
+    return { uFarCol: one, uFarAttr: one, uFarSky: one, uHasFarSky: 0, uFarRect: [0, 0, 1, 1], uHasFar: 0, uFarMean: F ? F.mean_reflectance_rgb.map(v => v * 0.92) : [0.085, 0.082, 0.068], uFarHaze: FAR_HAZE,
+      uFarDist: dr, uFarHazeSig: [...FAR_HAZE_SIGMA, dr[0] < 0 ? EDGE_HAZE_IN : 0] };
   },
   async buildWorld(ctx) {
-    const G = ctx.groundY; const items = []; const anchors = {}; const info = { src: 'inf (heights B3 / rules; forms from photos)', parts: 0 };
+    const G = ctx.groundY; const items = []; const anchors = {}; const info = { src: 'inf (heights B3 / rules; forms from photos)', parts: 0, airsideFill: fillInfo };
     const t0 = performance.now();
     // far ground textures
     const F = FAR();
@@ -117,6 +204,12 @@ registerExtension({
         Object.assign(ctx.ground.uniforms, { uFarCol: tc, uFarAttr: ta, uFarRect: F.rect, uHasFar: 1 });
         info.far = { rect: F.rect, res_m: F.res_m, px: [F.w, F.h], licence: F.licence };
       } catch (e) { console.warn('[terminals] far land cover not loaded', e); info.far = 'FAILED'; }
+      // edge cross-fade of the Sentinel-2 hint (replaces the ground program's uS2 texture; ?far=0 keeps the core's)
+      const S = (typeof window !== 'undefined' && window.SHA_GROUND_S2) || null;
+      if (info.far !== 'FAILED' && S && ctx.ground.s2 && ctx.ground.uniforms.uHasS2) {
+        try { const r = await featherS2(S, F); ctx.ground.uniforms.uS2 = r.tex; info.edge = r.stats; }
+        catch (e) { console.warn('[terminals] edge cross-fade not built', e); info.edge = 'FAILED'; }
+      }
     } else info.far = FAR_ON ? 'no data/sha_landcover_far.js' : 'off (?far=0)';
     if (!ON) { info.buildings = 'off (?bld=0)'; return { items, anchors, info }; }
     const D = B3D();
@@ -130,12 +223,12 @@ registerExtension({
       for (const t of D.towers) {
         if (t.form === 'control') {
           const T = buildControlTower(t);
-          const b = T.geo.bbox; const it = { mesh: new Mesh(T.geo), prog: 'obj', model: m4.translate(t.x, G, t.z), bbox: [b[0] + t.x, b[1] + G, b[2] + t.z, b[3] + t.x, b[4] + G, b[5] + t.z], castShadow: true, uniforms: { uEmissiveBoost: 1 }, src: 'inf', what: 'east control tower' };
+          const b = T.geo.bbox; const it = { mesh: new Mesh(T.geo), prog: 'obj', model: m4.translate(t.x, G, t.z), bbox: [b[0] + t.x, b[1] + G, b[2] + t.z, b[3] + t.x, b[4] + G, b[5] + t.z], castShadow: true, uniforms: { uEmissiveBoost: 1 }, noFlood: true, src: 'inf', what: 'east control tower' };
           items.push(it);
           // cabHalf (P2f): the cab's half-width at eye height (glazing leans out from cab_w0 to cab_w1), so the app's Tower view
           // can stand the eye near the glass instead of at the cab centre (the console band filled ~40 % of the frame)
           const dm = t.dims || {}; const cabHalf = dm.cab_w0 && dm.cab_w1 && dm.head_y1 && dm.cab_y1 ? 0.5 * (dm.cab_w0 + (dm.cab_w1 - dm.cab_w0) * Math.min(1, 1.6 / (dm.cab_y1 - dm.head_y1))) : null;
-          anchors.tower = { pos: [t.x, G, t.z], eyeY: G + T.eye, top: G + T.top, cabHalf, src: 'height AIP (mirror); form inf (photo 02)' };
+          anchors.tower = { pos: [t.x, G, t.z], eyeY: G + T.eye, top: G + T.top, cabHalf, cabYaw: t.yaw_deg != null ? +t.yaw_deg : null, src: 'height AIP (mirror); form inf (photo 02)' };
         } else buildBlockTower(grp('airport'), t);
       }
       info.hangars = D.hangars.length; info.towers = D.towers.length;

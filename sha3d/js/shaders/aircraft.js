@@ -1,4 +1,5 @@
 // forked from sfo3d@e3218d6 js/shaders/aircraft.js
+import './objects.js';   // sha3d fix round 2 (review_visual_fix1.md N3): defines the <sha_obj_flood> chunk (apron flood on objects, inf)
 export const AC_VS = `
 #include <common>
 #include <vout>
@@ -17,6 +18,8 @@ export const AC_FS = `
 #include <common>
 #include <shadow>
 #include <fout>
+#include <sha_obj_flood>
+uniform float uGroundY; // nominal ground height (app.js R.extraCommon), for the apron flood fade
 in vec3 vWP; in vec3 vN; in vec4 vCol; in vec4 vExt; in vec3 vLP; in vec2 vUV; in vec3 vLN;
 uniform mat4 uModel;
 uniform vec3 uPaneC[3]; uniform vec3 uPaneN[3]; uniform vec3 uPaneE1[3]; uniform vec3 uPaneE2[3]; uniform vec4 uPaneQ[9];
@@ -182,6 +185,7 @@ void main(){
   // self-occlusion approx: underside darker
   float ao = mix(0.75, 1.0, smoothstep(-0.6, 0.4, N.y));
   vec3 col = shadePBR(albedo, N, V, rough, metal, sh, ao, 1.0);
+  col += shaObjFlood(wp, N, albedo, wp.y - uGroundY) * ao;   // sha3d fix round 2 (N3): the apron night flood on the aircraft [inf]
   // glass layer (cockpit facets use the flat pane normal; cabin windows the local surface normal)
   if (glassW > 0.0) {
     vec3 Ng = normalize(mix(N, glassN, glassFlat)); if (dot(Ng, V) < 0.02) Ng = N;

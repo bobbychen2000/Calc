@@ -1,5 +1,41 @@
 // forked from sfo3d@e3218d6 js/shaders/objects.js
 // Generic object shader (buildings, jet bridges, vehicles, props) with optional instancing
+import { defineChunk } from '../gl.js';
+import * as GROUND_SHADER from './ground.js';   // APRON_FLOOD (level, tint) of the ground's apron night flood (namespace import:
+                                                // the object flood falls back to its own copy if the export changes)
+
+// Object apron flood (fix round 2, review_visual_fix1.md N3) [inf]: at night the ground's apron flood (js/shaders/ground.js
+// shaApronFlood, APRON_FLOOD x albedo) lit the apron and its paint, but aircraft, GSE and bridges standing on it stayed
+// navy-black silhouettes; photo 19 shows lit fuselages and wings. shaObjFlood adds the same warm flood to an object surface
+// that stands over apron (airfield map R paved and G 255, sampled ~4 m in front of the surface, ~4 m mip footprint) below
+// OBJ_FLOOD.h m above the ground (the masts are 30 m: js/live/gate_system.js placeMasts), full on up-facing surfaces and half
+// on vertical / down-facing ones (lamps above, bounce from the lit apron): alb x tint x level x (0.5 + 0.5 max(N.y, 0)).
+// When the markings package's apron light map is bound (uObjLightOn = 1: js/live/markings.js apronLightMap, ground uniforms
+// uApLight / uApLightRect / uApLightOn; R = lit area incl. the airside fill + spill, G = mast pools / gScale) the object
+// flood follows it exactly as the ground does (lit = max(apron, R), level x gScale x G); otherwise the apron test alone.
+// The chunk is self-contained (declares its uniforms, own names); the aircraft programs include it too (aircraft.js, aircraft_real.js):
+//   uAptMap, uAptRect = the ground's airfield map (js/world/ground.js uniforms); uObjLight, uObjLightRect, uObjLightOn = the
+//   light map (or the airfield map with uObjLightOn 0: a sampler is always bound); uObjFlood 1 = on (0 = off, per item);
+//   uFloodNight = the night factor (js/live/app.js R.extraCommon; the bridges' objG program dims uNight, not this).
+const AF = GROUND_SHADER.APRON_FLOOD || { level: 0.42, tint: [1.0, 0.82, 0.6] };
+export const OBJ_FLOOD = { level: AF.level, tint: AF.tint, gScale: AF.gScale || 2.5, h: [14, 24], probe: 4.0, src: 'inf: the ground apron flood (APRON_FLOOD, light map when bound) applied to objects over the lit apron below 14-24 m (masts 30 m); photo 19' };
+export const OBJ_FLOOD_GLSL = `
+uniform sampler2D uAptMap; uniform vec4 uAptRect; uniform float uObjFlood; uniform float uFloodNight;
+uniform sampler2D uObjLight; uniform vec4 uObjLightRect; uniform float uObjLightOn;
+vec3 shaObjFlood(vec3 wp, vec3 N, vec3 alb, float hAbove){
+  if (uObjFlood < 0.5 || uFloodNight < 0.001) return vec3(0.0);
+  float hk = 1.0 - smoothstep(${OBJ_FLOOD.h[0].toFixed(1)}, ${OBJ_FLOOD.h[1].toFixed(1)}, hAbove);
+  if (hk <= 0.0) return vec3(0.0);
+  vec2 p = wp.xz + N.xz * ${OBJ_FLOOD.probe.toFixed(1)};   // the ground in front of the surface
+  vec2 auv = (p - uAptRect.xy) / uAptRect.zw;
+  if (any(lessThan(auv, vec2(0.0))) || any(greaterThan(auv, vec2(1.0)))) return vec3(0.0);
+  vec4 apt = textureLod(uAptMap, auv, 2.0);
+  float apronN = smoothstep(0.35, 0.65, apt.r) * smoothstep(0.86, 0.95, apt.g);   // apron = R paved + G 255 (js/world/ground.js)
+  float k = 1.0;
+  if (uObjLightOn > 0.5) { vec2 L = textureLod(uObjLight, (p - uObjLightRect.xy) / max(uObjLightRect.zw, vec2(1.0)), 1.0).rg; apronN = max(apronN, L.r); k = ${(+OBJ_FLOOD.gScale).toFixed(2)} * L.g; }
+  return alb * vec3(${OBJ_FLOOD.tint.map(v => (+v).toFixed(3)).join(', ')}) * ${(+OBJ_FLOOD.level).toFixed(3)} * apronN * k * hk * (0.5 + 0.5 * max(N.y, 0.0)) * uFloodNight;
+}`;
+defineChunk('sha_obj_flood', OBJ_FLOOD_GLSL);
 export const OBJ_VS = `
 #include <common>
 #include <vout>
@@ -31,10 +67,14 @@ export const OBJ_FS = `
 #include <common>
 #include <shadow>
 #include <fout>
+#include <sha_obj_flood>
 in vec3 vWP; in vec3 vN; in vec4 vCol; in vec4 vExt; in vec3 vLP; in vec3 vLN; in vec2 vUV; in vec4 vData;
 uniform float uEmissiveBoost; uniform float uNight;
 uniform float uGroundY; // sha3d: nominal ground height (frame ground_y_nominal), set by app.js in R.extraCommon (sfo3d had the literal 3.0)
 float gridLine(float x, float period, float w){ float f = abs(fract(x / period + 0.5) - 0.5) * period; float fw = fwidth(x) * 0.8; return 1.0 - smoothstep(w, w + fw, f); }
+// fix 1: grid-line coverage that tends to the mean line coverage (2 w / period) once a pixel spans a period (gridLine alone
+// tends to 1 there, which darkened whole distant facades at night)
+float gridAA(float x, float period, float w){ return mix(gridLine(x, period, w), min(1.0, 2.0 * w / period), smoothstep(0.25 * period, 0.8 * period, fwidth(x))); }
 void main(){
   vec3 wp = vWP; vec3 V = uCamPos - wp; float dist = length(V); V /= dist;
   vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;
@@ -55,7 +95,13 @@ void main(){
     // interior hint
     float room = texture(uNoise, vec2(floor(u / 1.8) * 0.13, floor(v / 3.9) * 0.37)).r;
     albedo += vec3(0.02, 0.018, 0.015) * room * (1.0 - mull) * isWall;
-    extraEmis += vec3(1.0, 0.86, 0.68) * uNight * (0.35 + 0.9 * room) * (1.0 - mull) * (1.0 - spandrel) * isWall * 0.9;
+    // night (fix round 1, review M3: the old 0.9 x (0.35 + 0.9 room) clipped to white; photos 07 / 12 / 13 show warm,
+    // partly transparent glazing with dark frames): about 0.3 of the old level, warm tint, per-bay variation (a quarter of
+    // the bays dim, a few dark), mullions and spandrels stay dark, the mullion darkening does not fade with distance [inf]
+    float bay = hash12(vec2(floor(u / 1.8), floor(v / 3.9)) + vec2(17.0, 3.0));
+    float bayK = bay < 0.06 ? 0.08 : bay < 0.28 ? 0.35 : 1.0;
+    float mullN = max(gridAA(u, 1.8, 0.06), gridAA(v, 3.9, 0.08));
+    extraEmis += vec3(1.0, 0.74, 0.46) * uNight * (0.10 + 0.22 * room) * bayK * (1.0 - mullN) * (1.0 - spandrel) * isWall;
   } else if (mat == 2) { // concrete panels
     float seam = max(gridLine(u, 3.0, 0.02), gridLine(v, 1.5, 0.02));
     albedo *= (0.9 + 0.2 * texture(uNoise, vec2(u, v) * 0.05).b) * (1.0 - 0.25 * seam);
@@ -80,7 +126,7 @@ void main(){
     vec2 rp = wp.xz;
     albedo *= 0.8 + 0.35 * texture(uNoise, rp * 0.01).b;
     float hv = step(0.82, texture(uNoise, floor(rp / 6.0) * 0.173).r);
-    albedo = mix(albedo, vec3(0.62, 0.62, 0.6), hv * 0.6);
+    albedo = mix(albedo, min(albedo * 1.5 + 0.03, vec3(0.6)), hv * 0.6);   // fix 1 (L5): relative patches (a fixed 0.62 read as white spots on the darker roofs)
   } else if (mat == 6) { // punched windows (hotel/office)
     float isWall = 1.0 - abs(LN.y);
     vec2 cell = vec2(fract(u / 3.2), fract(v / 3.5));
@@ -88,7 +134,7 @@ void main(){
     win *= 1.0 - smoothstep(300.0, 1200.0, dist) * 0.6;
     albedo = mix(albedo, vec3(0.06, 0.07, 0.08), win); rough = mix(rough, 0.08, win);
     float lit = step(0.45, texture(uNoise, vec2(floor(u / 3.2) * 0.173, floor(v / 3.5) * 0.311)).g);
-    extraEmis += vec3(1.0, 0.82, 0.6) * uNight * win * lit * 0.9;
+    extraEmis += vec3(1.0, 0.82, 0.6) * uNight * win * lit * 0.4;   // fix 1 (M3): 0.9 -> 0.4 (clipped at the night exposure) [inf]
   } else if (mat == 7) { // foliage
     float n = texture(uNoise, vLP.xz * 0.4 + vLP.y * 0.3 + vData.xy).g;
     albedo *= 0.65 + 0.7 * n; ao = 0.7 + 0.3 * smoothstep(-1.0, 1.0, vLP.y);
@@ -100,7 +146,7 @@ void main(){
     albedo *= 0.93 + 0.07 * rib * isSide;
     float strip = step(0.5, vUV.y) * step(vUV.y, 0.72) * isSide * step(0.25, fract(along / 1.4)) * (1.0 - abs(LN.x));
     albedo = mix(albedo, vec3(0.03, 0.04, 0.05), strip); rough = mix(rough, 0.08, strip);
-    extraEmis += vec3(1.0, 0.88, 0.7) * uNight * strip * 0.7;
+    extraEmis += vec3(1.0, 0.85, 0.65) * uNight * strip * 0.09;   // fix 1 (M3): 0.4 of the new curtain-wall mean glow (gates.md) [inf]
     albedo *= 1.0 - 0.25 * (1.0 - smoothstep(0.0, 0.15, vUV.y)) * isSide;
   } else if (mat == 11) { // parking roof with cars
     vec2 rp = vLP.xz;
@@ -138,6 +184,10 @@ void main(){
     extraEmis += uNight * mix(vec3(0.15, 0.45, 1.0), vec3(0.2, 0.9, 0.9), wave) * (1.4 + 0.8 * wave);
   } else if (mat == 14) { // floodlight / lamp lens: lit at night
     extraEmis += albedo * uNight * 40.0; rough = 0.1;
+  } else if (mat == 17) { // canal / river bank kerb (js/world/buildings3d.js BANK). Fix round 1 (review M6): the 0.35 m kerbs
+    // aliased into dotted beige outlines on the water at distance; dithered fade-out from 650 to 850 m [inf]
+    if (hash12(gl_FragCoord.xy + 0.37) < smoothstep(650.0, 850.0, dist)) discard;
+    albedo *= 0.9 + 0.2 * texture(uNoise, vec2(u, v) * 0.05).b;
   } else if (mat == 13) { // hangar door
     float panel = gridLine(u, 6.0, 0.08); float rib = sin(v * 6.2831 / 0.4);
     albedo *= (0.95 + 0.05 * rib) * (1.0 - 0.3 * panel);
@@ -147,6 +197,7 @@ void main(){
   if (mat != 7) ao *= mix(0.55, 1.0, smoothstep(0.0, 4.0, wp.y - uGroundY));
   vec3 col = shadePBR(albedo, N, V, rough, metal, sh, ao, specOcc);
   col += albedo * emis * uEmissiveBoost + extraEmis;
+  col += shaObjFlood(wp, N, albedo, wp.y - uGroundY) * ao;   // fix round 2 (N3): apron flood on objects over the apron [inf]
   if (mat == 7) col += albedo * uSunColor * 0.08 * max(dot(-V, uSunDir), 0.0) * sh; // translucency
   col = applyFog(col, wp);
   writeOut(col, wp, 1.0);

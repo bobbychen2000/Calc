@@ -32,6 +32,8 @@ export default async ({ page, shot, base, W, H }) => {
     await shot(process.env.PREFIX + '_snapshot_overview');
     await page.evaluate(() => SHA.qa.openLegend(true)); await settle(2);
     await shot(process.env.PREFIX + '_legend');
+    { const lg = await page.evaluate(() => document.querySelector('#legend').innerText);
+      for (const k of ['Airfield lighting', 'not modelled yet', 'floodlight masts', 'Idle airstairs', 'nose wheel']) console.log('legend has', k, lg.includes(k) ? 'ok' : 'MISSING'); }
     await page.evaluate(() => SHA.qa.openLegend(false));
     // T2 with stand labels; tap / click a label -> stand card
     await page.evaluate(() => SHA.qa.view('t2')); await settle(8);
@@ -47,6 +49,22 @@ export default async ({ page, shot, base, W, H }) => {
     await page.evaluate(() => { const b = document.querySelector('#card button[data-act="fly"]'); b && b.click(); });
     await page.waitForTimeout(2200); await settle(6);
     await shot(process.env.PREFIX + '_stand_card_fly');
+    // fix round 1 (review L7 / L8): the credit line is not covered by the open card and reads >= 4.5:1 on its strip even over
+    // white haze (worst case); the clock says UTC+8
+    const at = await page.evaluate(() => {
+      const A = document.querySelector('#attrib'), C = document.querySelector('#card'); const a = A.getBoundingClientRect(), c = C.getBoundingClientRect();
+      const rgb = (s) => (s.match(/[\d.]+/g) || []).map(Number); const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+      const Lum = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+      const bg = rgb(getComputedStyle(A).backgroundColor); const al = bg.length > 3 ? bg[3] : 1;
+      const over = (u) => [0, 1, 2].map(i => bg[i] * al + u * (1 - al));          // the strip over white / black ground
+      const ratio = (fg, b) => { const L1 = Lum(...fg), L2 = Lum(...b); return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05); };
+      const txt = rgb(getComputedStyle(A).color), lk = [...A.querySelectorAll('a')].map(e => rgb(getComputedStyle(e).color));
+      const worst = (fg) => Math.min(ratio(fg, over(255)), ratio(fg, over(0)));
+      return { attrib: [a.x, a.y, a.right, a.bottom].map(Math.round), card: C.hidden ? null : [c.x, c.y, c.right, c.bottom].map(Math.round),
+        overlap: !C.hidden && !(a.right <= c.x || c.right <= a.x || a.bottom <= c.y || c.bottom <= a.y), text: +worst(txt).toFixed(2), links: lk.map(f => +worst(f).toFixed(2)),
+        clock: document.querySelector('#clock').innerText.replace(/\s+/g, ' ') };
+    });
+    console.log('check: credit line vs card', JSON.stringify(at), at.overlap ? 'FAIL (covered)' : 'not covered ok', Math.min(at.text, ...at.links) >= 4.5 ? 'contrast ok' : 'FAIL contrast', /UTC\+8/.test(at.clock) ? 'clock UTC+8 ok' : 'FAIL clock');
     await page.evaluate(() => SHA.qa.closeCard());
     // list search for stands (phone: the sheet opens)
     await page.evaluate(() => SHA.qa.search('25')); if (phone) await page.evaluate(() => SHA.qa.sheet('open')); await settle(3);
@@ -61,7 +79,7 @@ export default async ({ page, shot, base, W, H }) => {
     await page.evaluate(() => { const a = document.querySelector('#about'); a.scrollTop = a.scrollHeight; }); await settle(2);
     await shot(process.env.PREFIX + '_about_end');
     const about = await page.evaluate(() => document.querySelector('#about').innerText);
-    for (const k of ['OpenStreetMap', 'ODbL', 'ADSB.lol', 'Copernicus Sentinel', 'WorldDEM', 'Umbra', 'WorldCover', 'standing data', 'Mictronics', 'NOAA/NWS', 'AIP China', 'MH 5001-2021', 'GPL-2.0', 'trademarks', 'simulated and inferred', 'No ATC audio'])
+    for (const k of ['OpenStreetMap', 'ODbL', 'ADSB.lol', 'Copernicus Sentinel', 'WorldDEM', 'Umbra', 'WorldCover', 'standing data', 'Mictronics', 'NOAA/NWS', 'AIP China', 'MH 5001-2021', 'GPL-2.0', 'trademarks', 'simulated and inferred', 'No ATC audio', 'Airfield lighting: not modelled yet (Phase 5)', 'UTC+8'])
       console.log('about has', k, about.includes(k) ? 'ok' : 'MISSING');
     await page.evaluate(() => SHA.qa.openAbout(false));
   }

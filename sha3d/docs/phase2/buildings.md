@@ -335,3 +335,130 @@ node tools/buildings/test_buildings3d.mjs        # geometry checks (no WebGL): a
   T2 wall heights are in the parts (open issue 11).
 - **QA:** `jobs/buildings.mjs` (named views, photo-match views with a 4:3 viewport), `tools/buildings/
   compare_plates.py`, `tools/buildings/test_buildings3d.mjs`.
+
+## Fix round 1 (2026-11-21)
+
+Findings from `docs/phase2/review_visual.md` (H2, M3, M6 part, L2, L3, L5, L9) and the lead's extent-ring finding.
+Files changed (this package only): `tools/buildings/build_buildings3d.py`, `data/sha_buildings3d.js/.json` (rebuilt),
+`tools/terrain/worldcover_far.py`, `data/sha_landcover_far.js` (rebuilt), `js/live/terminals.js`, `js/world/buildings3d.js`,
+`js/shaders/objects.js`, `js/live/app.js`, `jobs/buildings.mjs`, `tools/buildings/test_buildings3d.mjs`, this report.
+Nothing was committed; `sfo3d/`, `pc12/` and `hwd3d/` were not touched. Every new value below is tagged in the code and
+data: **inf** unless a source is named. Check renders are in `out/fix1/buildings/` (gitignored); the six evidence plates
+are `docs/phase2/fix1_buildings_*.png` (our renders, deviceScaleFactor 1, SOFTGL llvmpipe). I looked at every render.
+
+| Id | Status | What changed | Evidence |
+|---|---|---|---|
+| H2 | **fixed** | New data block `airside_fill` (`build_buildings3d.py` `airside_fill()`, `src: inf`, `kind: paved`), drawn by a new `pavement(api)` hook in `terminals.js` (the core hook, `js/live/ext.js`) as asphalt. Rule: every T1 / T2 / VVIP-annex facade segment (≤ 8 m) whose outward normal meets airside pavement (aprons, taxiway / runway surfaces) within 60 m gets a quad facade → pavement + 3 m, pier-tip corners get a disc; cut to the aerodrome polygon (never landside) and to outside every building; **minus the Sentinel-2 pixels that read as grass** (L < 0.115 and g > 0.02, or g > 0.12, clusters ≥ 3 px; thresholds from the medians of 12,516 apron and 11,589 airside-grass pixels of `data/sha_ground_s2.js`): 2,162 m² of real grass kept at the T1 south end and pier edges. Plus 24 m corridors along every fixed link, 14 m rotunda discs and 10 m contact-stand centreline strips nose → facade (VDGS posts). Total 99,931 m², 2 rings. Evidence string in the data: OSM apron ways stop 15-40 m short of the facades; paved in the S2 hint; dark asphalt service road in photo 09. Checked on S2 plates before rendering (`out/fix1/buildings/fill_t2.png`, `fill_t1.png`, `fill_233.png`). | `fix1_buildings_h2_stand_233.png` (stand 233: links, rotundas, VDGS on asphalt, the bridge hatching now on pavement), `fix1_buildings_h2_stand_102.png` (T1 north face); `out/fix1/buildings/h2a_bridge_230.png`, `h2a_t1_north_face.png`, `h2a_under233.png`. `FILLCHECK=1` (jobs/buildings.mjs, `SHA.world.pavedAt`): fixed-link points 392 / 392, VDGS posts 56 / 56, rotundas 53 / 56 paved; the 3 others (115, 121, 126, T1 west) have no fixed link: the rotunda sits on the facade line, so the 2 m pavedAt sample falls inside the outline; not visible. `test_buildings3d.mjs`: 0 / 539 fixed-link points off pavement |
+| M3 | **fixed** | `objects.js` mat 1 night term: ~0.25 of the old level (mean 0.72 → ~0.17), warm tint (1.0, 0.74, 0.46), per-bay hash (6 % of bays near dark, 22 % at 0.35), mullions and spandrels dark with a distance-stable line coverage (`gridAA`: a plain `gridLine` tends to full coverage once a pixel spans a period and would have blacked out distant facades). Bridge tunnel strip 0.7 → 0.09 (0.4-0.5 of the new mean curtain-wall glow, as `gates.md` intends). Punched windows (mat 6) 0.9 → 0.4. | `fix1_buildings_night_t2pier.png` (T2 north pier at 21:30, before / after: no clipped white bands, warm panes, dark frames); `out/fix1/buildings/r2_night_stand_233.png` (fixed link at 233: warm panes, dark mullions) |
+| M6 (part) | **fixed** (kerbs) | Bank kerbs get their own material (mat 17, `buildings3d.js` `BANK`, albedo 0.46): a dithered fade-out from 650 to 850 m (`objects.js`), so the 67 km of 0.35 m kerb no longer alias into dotted beige outlines from overview distances; still drawn near the camera. The water colour is the markings fixer's. | `fix1_buildings_overview_edge.png`: no dotted outlines along the canals (before: beige dots along every canal) |
+| Extent ring (lead) | **fixed** | Two causes, two fixes. (1) The Sentinel-2 hint's alpha is binary at the extent polygon while the core's extent mask fades over ~±250 m, so 10 m detail stopped dead at half weight. `terminals.js` `featherS2()` builds a replacement for the ground program's `uS2` texture: inside the polygon the hint is cross-faded (linear reflectance) to the far land-cover colour over the inner 60-480 m (chamfer distance to the nodata edge); outside the polygon, within the hint's rectangle, it carries only the 50 m WorldCover colour (fading out over the rectangle's last 150 m, which removed a faint seam in the first try, `out/fix1/buildings/cmp_edge_r1r2.png`). No detail is added beyond the extent. (2) The far attribute map's B channel is now the **signed** distance to the edge (-1 km … +6 km, `worldcover_far.py`, `attr_b_range_m`), and the far haze ramps from 300 m inside the edge to 4 km outside (was: from the edge; `(1 - ext)` factor dropped). `?far=0` keeps the core's texture and ground. Cost: `buildWorld` 296 ms here (was 70-120 ms; the cross-fade loop over 457 × 703 px). | `fix1_buildings_overview_edge.png` (before: hard ring; after: the detail fades into the far ground); crops `out/fix1/buildings/cmp_edge_east.png` |
+| L9 | **fixed** | The far-haze e-folding distance follows the environment's surface extinction: L = clamp(0.8 / σ, 1.2 km, 20 km), σ = `uFog.x` (from the METAR visibility via `js/env/state.js`). 20 km is the Shanghai haze floor [inf]: a dry CAVOK day (the 13/M05 snapshot, σ = 3.3e-5 /m) gets 20 km (was a fixed 14 km); 10 km visibility gets 2 km, 5 km 1.2 km. The 80 km mesh edge is forced to the sky colour (`max(a, smoothstep(45, 78 km))`) so the longer L leaves no step at the horizon. | `out/fix1/buildings/r2_overview_far.png` vs `buildings_overview_far.png` (mid-distance ground clearer, horizon band unchanged); `fix1_buildings_overview_edge.png` |
+| L2 | **fixed** | T1 central hall: data `roof_form {kind 'arch', rise 7, exp 4, dir N-S, src inf}`; `buildings3d.js` `buildArchPart()`: walls to the eaves (h − 7 m), a 1.3 m roof slab following y(s) = 7 (1 − \|s\|⁴) across the 145 m N-S length (flat crest, ends sloping down, as photo 02), gables under it (fritted glass on the airside face, continuing the wall below; white elsewhere), white slab edge, grey metal top. The crest stays at the B3 height + slab (27.3 m, as the flat roof before), because B3's 26.4 m photo ratio was measured to the top of the hall front; `test_buildings3d.mjs` checks crest and eaves. | `fix1_buildings_t1_hall.png` (photo-match camera of photo 02, before / after); `out/fix1/buildings/cmp/buildings_compare_t1.png` (photo 02 above the new render, credit strip; not committed); `out/fix1/buildings/r1_tower.png` |
+| L5 | **fixed** | Context blocks: wall colour from a Shanghai-like palette by id hash (grey concrete, beige / buff tile, brick, warm white tile, blue-grey; luminance 0.18-0.58) with ±8 % per-building variation; roofs 0.16-0.30 grey, always ≤ 0.8 × the wall luminance, with blue / grey steel on a share of industrial / commercial roofs (`contextColours()`, `CONTEXT_PALETTE`, src inf: aerials 21 / 24). Terminal / hangar roofs `roofMetal` / `roofLight` 0.52-0.58 → 0.45 grey; `clad` 0.74 → 0.64, `panelLight` 0.78 → 0.66, `officeLight` 0.74 → 0.60; roof-patch shader term made relative (a fixed 0.62 made white spots on darker roofs). | `fix1_buildings_overview_edge.png`, `out/fix1/buildings/r1_t1.png` vs `view_t1.png` (brick / beige / grey blocks instead of white), `out/fix1/buildings/cmp_t1_hall.png` |
+| L3 | **fixed** | `app.js` Tower view: aims at the RWY 18L/36R midpoint from the runway data (yaw ≈ 285° instead of 262°), eye 0.5 m from the glass of the nearest cab face (`anchors.tower.cabYaw` added by `terminals.js`), pitch −11°; on a portrait screen the vertical field widens to keep ≥ ~40° horizontal (58-72°). The console band is no longer in view. The cab's own head terrace (2.65 m ring at the head top, photo 02 dims) still hides the ground within ~75 m of the tower: it is real geometry, now a grey roof membrane (`M.terrace` 0.26) instead of glaring white concrete; it takes the lower-right ~15 % of the laptop frame. | `fix1_buildings_towercab.png` (laptop before / after, phone after: T1 apron stands, taxiways, runway 18L/36R and its crossings in view; phone 393 × 659 with the UI) |
+
+**Tests and console.** `node tools/buildings/test_buildings3d.mjs`: all checks passed, with new checks for the arch
+(crest 27.30 m, eaves roof 20.30 m), the context palette (0 walls out of range, 0 roofs brighter than their walls) and the
+airside fill (tagged inf / paved; 0 of 539 fixed-link points off pavement). `node tools/common/test_geo_js.mjs`: passed.
+Both generators re-run twice: byte-identical outputs. Console in every check run (snapshot mode overview / T1 / tower /
+cab, night, phone, photo match): 0 errors, 0 warnings, 0 page errors.
+
+```
+SOFTGL=1 OUT=out/fix1/buildings PREFIX=h2a T=snapshot VIEWS='park:229+230+231+233+234+102;stand:233,-,70,1,24;look:-860,2.5,-180,60,22,140@bridge_230;stand:102,-,110,1,20;look:600,2.5,-40,345,22,330@t1_north_face;look:-786,2.5,-118,160,35,70@under233' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/buildings PREFIX=r2 T=snapshot VIEWS='towercab;overview' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/buildings PREFIX=r2 DEVICE='iPhone 15' QUALITY=low SHOWUI=1 T=snapshot VIEWS='towercab@phone_towercab' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/buildings PREFIX=r3 T=2026-11-20T13:30:00Z VIEWS='park:229+230+231+233+234;t2pier@night_t2pier' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/buildings PREFIX=r3 FILLCHECK=1 VIEWS='p02;look:-1195,2.5,-398,100,35,120' node livetest.mjs jobs/buildings.mjs
+```
+
+**Open after this round.**
+1. Roads, rail and canals (OSM, clipped at the extent polygon) still end at the edge, at half weight and fading with the
+   core's extent mask; they are drawn by the core ground shader (handoff below).
+2. The airside asphalt fill gets no night flood: the markings fixer's `shaApronFlood` keys on the apron channel (G = 255)
+   and the fill is plain 'paved' (G = 0, like runway asphalt). Under the piers it lies in the buildings' shadow anyway.
+3. North of the T2 north arm (z < −406) a ~33 m strip between the apron and the aerodrome boundary reads paved in S2 but
+   stays unpaved: it is outside this fill (no terminal facade faces it).
+4. The S2 override of `uS2` is a package-side workaround; a feathered alpha in the hint itself (core / data tool) would
+   make it unnecessary.
+5. The T1 hall's photo-02 offset (open issue 2, ~40 m south) and its white end wedges (the arch gables here are glass on the
+   airside face) remain.
+6. Tower view: the head terrace still covers the near field (~15 % laptop); hiding the head while the eye is in the cab is
+   the alternative the review mentions, not done (it would show ground that the controllers cannot see).
+
+**Handoffs (files this package does not own).**
+- `js/shaders/ground.js` (core): fade OSM context features out before the extent polygon instead of stopping them at half
+  weight: add `float extF = smoothstep(0.55, 0.95, ext);` after `ext` is computed, and use `extF` instead of `ext` in the
+  ditch line (`alb *= 1.0 - 0.3 * … * ext;`), `sharp(ctx.g, 0.0, 1.0) * ext` (road), `sharp(ctx.b, 0.0, 1.0) * ext` (rail)
+  and `float water = sharp(ctx.r, 0.0, 1.0) * ext;`.
+- `js/shaders/ground.js` `shaApronFlood` (markings fixer): the airfield map cannot tell the fill from runway asphalt (both
+  R 255, G 0; G 0.5-0.85 already reads as concrete). If the band should be flood-lit, `terminals.js` can supply a 1 m R8
+  mask of the same rings as a ground uniform (`uAirsideFill`, through `groundUniforms`) and the flood chunk adds
+  `0.6 * level * mask`; say so and the terminals side follows.
+- `tools/terrain/s2_ground_hint.py` / `js/world/ground.js` (core): optionally write the hint's alpha as a 300-500 m
+  feather inside the extent polygon; `terminals.js` `featherS2()` can then be dropped.
+
+## Fix round 2 (2026-11-21)
+
+Findings from `docs/phase2/review_visual_fix1.md`: **R1** (high, regression: edge stands on unpaved ground) and **N3**
+(medium: aircraft and GSE unlit at night; owner "other", the object program is this package's). Files changed (this package
+only): `tools/buildings/build_buildings3d.py`, `data/sha_buildings3d.js/.json` (rebuilt), `js/live/terminals.js`,
+`js/shaders/objects.js`, `js/live/app.js`, `jobs/buildings.mjs`, `tools/buildings/test_buildings3d.mjs`, this report.
+Nothing was committed; `sfo3d/`, `pc12/` and `hwd3d/` were not touched. Check renders: `out/fix1/buildings2/` (gitignored);
+evidence plates `docs/phase2/fix1_buildings_r2_*.png` (our renders, deviceScaleFactor 1, SOFTGL llvmpipe). I looked at every
+render listed below. The markings fixer worked on `js/shaders/ground.js` / `js/live/markings.js` at the same time (apron light
+map); the night renders below include its state at the time.
+
+| Id | Status | What changed | Evidence |
+|---|---|---|---|
+| R1 | **fixed** (pavement under nodes, nose tips, equipment areas, envelopes); masts and remote stand signs: **handoff** (gates) | New data block `stand_head_fill` (`build_buildings3d.py` `stand_head_fill()`, `src: inf`, `kind: apron`, evidence and rule strings in the data), drawn by the `pavement(api)` hook in `terminals.js` as `paved` (R, `pavedAt`) + `apron` (G 255: the same concrete and night flood as the apron it continues; the core map is additive, `apron` alone sets no R). Rule [inf]: per stand, the head rectangle in the decals' stand frame shifted by `class_ref.nose_gear_m` (nose-wheel stop, MH 5001-2021 6.2.16-7): u from −0.5 × length (contact stands; remote stands from the envelope back, −length − 3 m) to the envelope front (`stand.noseE` 3.75 m, table 4.13.5 note a) + 3 m, v = ±(span / 2 + B + 2 m), B = table 4.13.5 by code letter. `clearB`, `noseE` and `classLetter` are **read from `js/live/caac_markings.js`** (the ONE table; not duplicated). The part outside the pavement (aprons, taxiway / runway surfaces and shoulders, the H2 fill) is the stand's need (69 stands ≥ 5 m²); needs joined by a 6 m closing (one band per row, no teeth), cut to the aerodrome, outside buildings and OSM water, minus the Sentinel-2 grass pixels (the H2 test, clusters ≥ 3 px: 0 m² cut, the bands read neutral grey: e.g. 286-290 L 0.14-0.20 up to the aerodrome boundary, 401-413 L 0.13-0.18 in the first 10 m pixel past the apron edge, grass beyond, which the band does not reach), 2 m overlap with the apron, never over taxiway / runway pavement or the H2 asphalt band. Result: 21 rings, 28,181 m² (T2 apron 2 212-219 / 278-290, east apron 318-322 / 338-342, business apron 306 / 313, west remote 401-413, east remote 501-525, apron 6 601-608). Generator check (polygon test, in `checks`): stop nodes off pavement 14 → 0, class nose tips 32 → 0, envelope fronts 49 → 0. Page probe (`jobs/buildings.mjs HEADCHECK=1`, the review's `pavedAt` probe, snapshot, high tier) vs the review's `rv_probe.json`: stop nodes **18 → 0**, class nose tips **32 → 0**, equipment areas > 5 % unpaved **87 → 0** of 261 (≥ 25 %: 65 → 0), envelopes > 5 % **29 → 1** of 164 (101, T1 north face, 7 %: the rear of a contact stand, outside this rule), idle stair groups with a unit 20 → **26 / 26**; mast feet off pavement 33 → 30 of 73 (gates: placement, see handoffs). Checked on S2 plates before rendering (`fix1_buildings_r2_s2_plates.png`). | `fix1_buildings_r2_stand_404.png` (named view `stand:404,-,75,1,22`, before / after: the A320 at 404 and the B738 at 403 now have noses, stairs, buses and both equipment areas on concrete; the stand signs and the mast foot stand just past the band, on grass), `fix1_buildings_r2_edge290.png` (the review's two cameras at 286-290, before / after: equipment boxes and envelope fronts on concrete; masts and signs beyond the band), `fix1_buildings_r2_s2_plates.png`; `out/fix1/buildings2/r1_edge607.png` (apron 6: 607 / 608 and the corner piece south of 608 on concrete), `f2c_headcheck.json` |
+| N3 | **partly**: GSE, jet bridges, stairs and buses lit; aircraft wired but need a two-line shader include (**handoff**); legend line (**handoff**) | `objects.js`: new self-contained chunk `sha_obj_flood` (`shaObjFlood(wp, N, alb, hAbove)`, `OBJ_FLOOD`, src inf): an object surface over the lit apron gets the ground's flood, `alb × APRON_FLOOD.tint × level × lit × k × (0.5 + 0.5 max(N.y, 0)) × uFloodNight`, faded out between 14 and 24 m above the ground (masts 30 m); `lit` = apron in the airfield map (R paved, G 255) sampled 4 m in front of the surface (4 m mip footprint), and — when the markings package's apron light map is in the ground uniforms (`uApLight`, R = lit area incl. the airside fill + spill, G = mast pools) — `lit = max(apron, R)`, `k = gScale × G`, exactly as the ground; else k = 1. Level / tint / gScale come from `ground.js APRON_FLOOD` by namespace import (fallback copy if the export changes). OBJ_FS calls it after the emissive terms. `app.js`: `R.extraCommon.uFloodNight` (= the night factor; the bridges' `objG` program dims `uNight`, not this) and `floodUniforms(fr.items)` after `scene.frame`: every item of the object programs (`obj`, `objI`, `objG`) and of the aircraft programs (`aircraft`, `acr`, inert until their shaders include the chunk) gets `uAptMap / uAptRect / uObjLight / uObjLightRect / uObjLightOn / uObjFlood` per draw (samplers are rebound per draw in `gl.js`; with no light map the airfield map is bound in its place, so no sampler is ever unbound). The wrapper inherits the item's uniforms (`Object.create`: the aircraft items keep prototype-chained per-frame uniforms) and is re-made when an item's uniforms are replaced. Items may opt out (`noFlood: true`): the terminals' building items do (`terminals.js item()` and the tower): with the light map's spill under the piers, the 15 m T2 pier roofs glowed (`out/fix1/buildings2/n4_night_t2pier.png`, rejected). Day renders are byte-identical before / after the wiring (`r1_stand_404` vs `r2_stand_404`: 0 differing pixels). | `fix1_buildings_r2_night_t2pier.png` (named view `t2pier` at 21:30 UTC+8, before / after: belt loaders, tugs, carts, bridge tunnels, cabs and drive units lit like the apron under them; the pier roof stays dark; the aircraft stay navy silhouettes), `fix1_buildings_r2_night_stand_233.png` (before / after: fuel truck, catering, baggage train, belt loader and the 233 / 232 bridges lit; B738 unlit); `out/fix1/buildings2/n5_night_stand_404.png` (remote stand: stairs and buses lit on the lit apron fill) |
+
+**Tests and console.** `node tools/buildings/test_buildings3d.mjs`: all checks passed, with a new check that the stand-head
+fill exists (tagged inf / apron) and that every stop node, class nose tip and envelope front lies on pavement (0 / 0 / 0 of
+164). `node tools/common/test_geo_js.mjs`: passed. The generator run twice: byte-identical outputs (note: `caac_markings.js`
+is now an input, so an edit there changes `inputs_sha256_16`). `jobs/buildings.mjs` now prints a console tally (errors /
+warnings / page errors, driver noise excluded as in `livetest.mjs`): snapshot run with HEADCHECK + FILLCHECK + overview
+0 / 0 / 0; night run (21:30) 0 / 0 / 0; the `jobs/views.mjs` day and night runs above logged no console warnings, errors or
+page errors. FILLCHECK unchanged: fixed-link points 392 / 392, VDGS posts 52 / 52 paved, rotundas 53 / 56 (115, 121, 126:
+rotunda on the facade line, as in round 1).
+
+```
+python3 -I tools/buildings/build_buildings3d.py && node tools/buildings/test_buildings3d.mjs
+SOFTGL=1 OUT=out/fix1/buildings2 PREFIX=f2c HEADCHECK=1 FILLCHECK=1 VIEWS='overview' T=snapshot node livetest.mjs jobs/buildings.mjs
+SOFTGL=1 OUT=out/fix1/buildings2 PREFIX=r1 T=snapshot VIEWS='park:403+404+288+290+607+608;stand:404,-,75,1,22@stand_404;look:-723,2.5,1050,60,30,140@edge290;look:-726,2.5,1050,268,86,140,50@edge290_top;look:-735,2.5,1590,300,40,120@edge607' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/buildings2 PREFIX=n5 T=2026-11-20T13:30:00Z VIEWS='park:229+230+231+233+234+403+404;t2pier@night_t2pier;stand:233,-,70,1,24@night_stand_233;stand:404,-,75,1,22@night_stand_404' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/buildings2 PREFIX=f2n VIEWS='t2_close' T=2026-11-20T13:30:00Z node livetest.mjs jobs/buildings.mjs
+```
+
+**Open after this round.**
+1. Masts (30 of 73 feet off pavement, all 7 west-remote ones) and the remote stand-number signs stand just past the new
+   band: `remoteSpot` puts the post 10 m ahead of `frontOf` (≈ node + 15 m for class C) and the band ends at node +
+   nose_gear_m + 3.75 + 3 m (≈ 11.8 m). Placement is the gates package's (handoff); the band is not widened for them because
+   the S2 hint turns to grass 10-15 m past the apron edge at 401-413.
+2. Envelope of 101 (T1 north face, EL) 7 % unpaved at its rear (contact stands use the front half of the head rectangle).
+3. Aircraft stay unlit at night until the aircraft shaders include `sha_obj_flood` (handoff; `app.js` already passes the
+   uniforms). Vertical faces over the dark asphalt band (N6, plain asphalt albedo) are lit by the light map although the
+   ground there stays darker (albedo, not light).
+4. The stand-head band is plain apron concrete; the photo-09-style service-road lines (N6, low) are not drawn.
+
+**Handoffs (files this package does not own).**
+- **Aircraft programs** (`js/shaders/aircraft_real.js` ACR_FS, `js/shaders/aircraft.js` AC_FS; core / aircraft): add
+  `import './objects.js';` at the top of each module (defines the chunk); in each FS add `#include <sha_obj_flood>` after
+  `#include <fout>` and `uniform float uGroundY;` (already in `R.extraCommon`); after `vec3 col = shadePBR(albedo, N, V,
+  rough, metal, sh, ao, 1.0);` (aircraft_real.js line ~139, aircraft.js line ~184) add
+  `col += shaObjFlood(wp, N, albedo, wp.y - uGroundY) * ao;`. Nothing else: `app.js floodUniforms` already binds the
+  uniforms for `aircraft` / `acr` items. Then the legend clause below can be dropped.
+- **Legend** (`js/live/shell.js`, lighting line, relay_ui): until the aircraft include lands, append "; aircraft are not lit
+  at night yet (vehicles and jet bridges are)".
+- **Gates** (`js/live/gate_system.js`): `placeMasts`: require `pavedAt(x, z) >= 0.5` at the mast foot for remote stands too
+  and drop the 12 m remote tolerance (the stand-head fill now paves the stand heads); `remoteSpot`: add
+  `&& pavedAt(p[0], p[2]) >= 0.5` to `okAt` and try the lateral candidates before `t >= 10` when the centreline candidates
+  are unpaved (the band ends ≈ nose_gear_m + 6.75 m ahead of the node; `lat` 8-10 m at `t` 3-6 is on the band and clear of
+  the class footprint).
+- **Markings** (`js/live/caac_decals.js`, optional safety net): multiply decal alpha by `paved` (the probe now finds 0
+  equipment areas and 1 envelope (101, 7 %) over unpaved ground).
+- **Lead / CLAUDE.md** ("Conventions"): add "the **stand-head fill** (`sha_buildings3d.json` `stand_head_fill`, src inf: OSM
+  apron gap ahead of the edge stands, S2-tested) draws as apron; chunk `sha_obj_flood` (`js/shaders/objects.js`) lights
+  objects over the lit apron at night, `app.js floodUniforms` binds it per draw (`noFlood: true` opts an item out)", and
+  under package jobs "`jobs/buildings.mjs HEADCHECK=1` (the review's pavement probe: stop nodes, nose tips, equipment areas,
+  envelopes, mast feet) and a console tally".

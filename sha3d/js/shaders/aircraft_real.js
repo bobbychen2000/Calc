@@ -11,6 +11,7 @@
 //   on the fuselage sides: uReg = (station s0 from the nose, width, centre height, row height) in model units; row 0 of
 //   uRegTex is the port-side layout, row 1 the starboard one (text reads left to right on both sides). Black texels are
 //   the letters, inked dark or white by the paint under them; coloured texels are the flag.
+import './objects.js';   // sha3d fix round 2 (review_visual_fix1.md N3): defines the <sha_obj_flood> chunk (apron flood on objects, inf)
 export const ACR_VS = `
 #include <common>
 #include <vout>
@@ -46,6 +47,8 @@ export const ACR_FS = `
 #include <common>
 #include <shadow>
 #include <fout>
+#include <sha_obj_flood>
+uniform float uGroundY; // nominal ground height (app.js R.extraCommon), for the apron flood fade
 in vec3 vWP; in vec3 vN; in vec2 vUV; in vec3 vLP; in vec3 vLN; flat in vec4 vMat; flat in vec4 vMat2;
 uniform sampler2D uAlbedo; uniform float uHasTex; uniform vec4 uFusB; // crown, belly, cockpit-glass x threshold, cabin light
 uniform vec3 uLivTop; uniform vec3 uLivBelly; uniform vec3 uLivTail; uniform vec3 uLivTail2; uniform vec3 uLivEngine; uniform vec4 uLivStripe;
@@ -137,6 +140,7 @@ void main(){
   float sh = getShadow(wp, N, dist) * cloudShadow(wp);
   float ao = mix(0.72, 1.0, smoothstep(-0.7, 0.3, N.y));
   vec3 col = shadePBR(albedo, N, V, rough, metal, sh, ao, 1.0);
+  col += shaObjFlood(wp, N, albedo, wp.y - uGroundY) * ao;   // sha3d fix round 2 (N3): the apron night flood on the aircraft [inf]
   if (kind == 1) {
     float Fg; vec3 refl = glassRefl(N, V, sh, 0.06, Fg) * vec3(0.92, 0.95, 0.97);
     col = col * (1.0 - Fg) + refl + emis * (1.0 - Fg);

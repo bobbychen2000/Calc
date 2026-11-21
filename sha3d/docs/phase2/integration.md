@@ -209,3 +209,224 @@ Do **not** commit: `sha3d/out/` (harness output and the relay's `out/relay/.stat
 7. `js/live/gates.js` `WALL_H` still uses the 25 m T2 rule for the VDGS facade test while the modelled T2 walls are 15 /
    21 m (buildings.md open issue 11). No unit is facade-mounted (all stops are 20-40 m from the walls), so nothing
    changes on screen today.
+
+## Fix round 1 (2026-11-21)
+
+Integration of the three package fixers' answers to `review_visual.md` (markings, buildings, gates), plus the
+hand-offs between them. Nothing was committed. `sfo3d/`, `pc12/` and `hwd3d/` are untouched (`git status` is clean
+there). Tags as above: **obs** = observed, **inf** = inferred.
+
+### F1. Review findings: where each one stands
+
+| # | Owner | Status after integration | Seen in |
+|---|---|---|---|
+| H1 threshold paint blurred | markings | **fixed**: directional footprints. The final set shows 6 + 6 = 12 stripes at 18L / 36R and 8 + 8 = 16 at 18R / 36L | `view_rwy_*.png`, `fix1_integration_thresholds.png` |
+| H2 brown strip at the facades | buildings | **fixed** (airside fill, asphalt, src inf). See F4.1 for a similar gap at the edge stands | `view_stand_233`, `view_bridge_230`, `view_stand_102` |
+| M1 night airfield black | markings (a), gates (label) | **partly**: apron flood 0.42 × albedo, warm; legend and About say airfield lighting is not modelled (Phase 5). Aircraft and GSE are not flood-lit (deferred hand-off) | `view_night_*` |
+| M2 no floodlight masts | gates | **fixed**: 73 masts (inf); the clearances now come from table 4.9.5 in the one parameter table | `view_tower`, `view_bridge_230`, `view_stand_102` |
+| M3 night glazing clipped | buildings | **fixed**: warm, per-bay variation, dark mullions | `view_night_t2pier` |
+| M4 lead-ons over DTHR arrows | markings | **fixed**: yellow runs beside the shafts, never through the heads or the bar | `view_rwy_18R`, `view_rwy_36L` |
+| M5 nose tip vs nose wheel | gates + integration | **fixed**: the stop node is the nose-wheel stop for every package. The painted envelopes now follow it (F2.1). Side effect at the edge stands: F4.1 | `view_stand_*`, `fix1_integration_envelope_233.png` |
+| M6 water black, dotted kerbs | markings (water), buildings (kerbs) | **fixed** | `view_overview`, `view_t2` |
+| L1 36L chevrons 75 m | markings + integration | **fixed**: chevrons over the full 120 m pad. The "AIP 75 m conflict" was a misreading of [length, width] (F2.2) | `view_rwy_*` |
+| L2 T1 hall box | buildings | **fixed**: arched roof (inf) | `view_t1`, `view_tower` |
+| L3 tower cab view | buildings | **fixed**: faces the 18L/36R midpoint; no console band | `view_towercab`, `view_phone_towercab` |
+| L4 idle airstairs everywhere | gates | **fixed**: staged in the equipment areas, now **20 of 26** groups (F2.1) | `view_stand_102` (background), `view_stand_404` |
+| L5 snow-white city | buildings | **fixed**: hashed wall palette, grey roofs | `view_overview`, `view_t1`, `view_t2` |
+| L6 "T2 APRONS NR. 2" | gates | **fixed**: "T2 APRON 2" | `view_phone_stand_233`, `view_laptop_live_stand_233` |
+| L7 attribution hidden | gates | **fixed**: dark credit strip; the card stays above it | `view_laptop_live_*`, `view_phone_*` |
+| L8 "CST" | gates | **fixed**: "UTC+8" | all UI views |
+| L9 haze ignores the weather | buildings | **fixed**: L = clamp(0.8 / σ, 1.2, 20 km) | `view_overview` |
+| L10 first pad chevron | markings | **verified** (fig. 6.2.25: the cut legs are right); no chevrons on taxiway pavement | `view_rwy_18L` |
+| Extent ring (lead) | buildings + integration | **fixed**: S2 cross-fade and haze ramp (buildings); context lines fade inside the ramp (F2.3) | `fix1_integration_extent_edge.png` |
+
+### F2. Hand-offs applied
+
+1. **Stand envelopes on the nose-wheel convention** (gates → markings, `js/live/caac_decals.js` `buildStands`). The
+   class planform is shifted forward by `class_ref.<cls>.nose_gear_m`: `toW([u, v]) = nose + h·(u + ng) + rn·v`. The
+   stop line, lead-in and alignment line stay at the node, and the stop-line comment now cites the convention.
+   - Effect: the red nose-clearance line runs ahead of the B738's nose tip at 233. Before, it crossed the fuselage about
+     2.5 m behind the tip (`fix1_integration_envelope_233.png`, the same camera as the gates fixer's
+     `g_fix1_nose233_top`).
+   - Counts from the page: equipment areas 265 → 261, hatched overlaps 91 → 94; masts unchanged (73, identical
+     rejection counts).
+   - **Staged idle stairs 26 → 20 groups** (all 20 in equipment areas). The six groups that lost their unit are the
+     whole west remote apron (401-413) and T2 remote 286-290. See F4.1.
+2. **Table 4.9.5 in the one parameter table** (gates → `js/live/caac_markings.js`). `CAAC.separation.twyCLToObject` =
+   col. (11) {A 15.5, B 20.0, C 26.0, D 37.0, E 43.5, F 51.0} and `taxilaneCLToObject` = col. (13) {A 12.0, B 16.5,
+   C 22.5, D 33.5, E 40.0, F 47.5}. I checked the values against the local MH 5001-2021 copy; 9.2.7 applies col. (13)
+   to apron floodlight supports. `gate_system.js` `placeMasts` imports them and has no local copy now (same values, so
+   no mast moved).
+3. **Context lines fade inside the extent ramp** (buildings → core, `js/shaders/ground.js`):
+   `extF = smoothstep(0.55, 0.95, ext)` for ditches, roads, rail and water. The soft extent mask is 0.5 at the polygon
+   where the OSM context ends, so these lines used to stop at half weight. The change is small at overview range: a mean
+   0.02 grey-level difference, concentrated along the extent outline (`fix1_integration_extent_edge.png`).
+4. **Docs.**
+   - `docs/phase1/standards_refs.md` §1.3: the fig. 6.2.25 reading. §1.4: the blast-pad row, plus a change note.
+   - `docs/phase1/airport.md`: the blast-pad note (F2.2).
+   - `docs/phase1/stands.md`: the reference point is now the nose-wheel stop, with `nose_gear_m` and the moved cab
+     points.
+   - `docs/phase2/markings.md`: §5 stop lines and safety lines; open issue 2 closed; the §3 table row; integration
+     notes.
+   - `docs/phase2/gates.md`: integration notes.
+   - `sha3d/CLAUDE.md`: the `thr:` job view, the gates `SET='fix1;fix1night'` and buildings `FILLCHECK=1` options, the
+     QA hooks `masts()` / `idleStairs()` / `SHA.markings.apron()` / `plan()`, and a new "Conventions" section (stop node
+     = nose-wheel stop, paint hook signature `shaGroundPaint(wp, fw, dxy, apt, paved, rough)`, `sha_apron_flood`,
+     `blast_pad_m` = [length, width], table 4.9.5, airside fill, UTC+8, tower view, haze).
+
+**F2.2 Conflict found and resolved: the 36L "75 m" blast pad.** `aip_facts.blast_pad_m` is the pad's
+**[length, width] at both ends**. The AIP (mirror) AD 2.12 remark reads "Blast pad: 120×75m on the both ends" for
+18R/36L and "60×60m" for 18L/36R, and `build_airport.py` already builds the rings as `bl, bw = blast_pad_m`.
+- `js/live/markings.js` read the pair as one length per end (`[j]`) in Phase 2 and in the L1 fix, which gave 75 m at
+  36L. Review L1 and the markings hand-offs then treated this as an AIP-vs-measurement conflict to record.
+- There is no conflict. The measured 120 m at both 18R and 36L agrees with the AIP.
+- Changed in `markings.js`: it now reads `[0]` at both ends. The chevrons are unchanged (the length is the surface
+  ring, 120 m); `padSrc` for 36L now reads "= AIP (mirror) 120 m". The `geo.js` comment now says `blastPad`
+  [length, width].
+- I did **not** record the requested conflict in `airport.md` or `standards_refs.md`, and I did not change the
+  `build_airport.py` evidence string: its current text is correct, and the requested one ("AIP 75 m") came from the
+  misreading. Both docs now state the length × width reading.
+
+**Not applied (not small, or optional), for round 2:**
+- Aircraft and GSE lit by the apron flood. Every object / model program would need the airfield map texture and
+  `sha_apron_flood`; this is not a one-line change.
+- Per-mast flood pools from `SHA.qa.masts()` instead of the even flood.
+- A `uAirsideFill` mask so the asphalt fill gets the flood.
+- Feathering the S2 hint's alpha in `tools/terrain/s2_ground_hint.py`. This regenerates data; `featherS2` covers it
+  for now.
+- Matching the bank-kerb colour to the new water colour (cosmetic).
+
+### F3. Scenes, tests, frame time
+
+**Scenes**, with a real relay (`sha_live_server.py --port 8792`, METAR / TAF on, ADS-B off):
+`SOFTGL=1 RELAY=http://127.0.0.1:8792 SCENES=snapshot,live,offline,park,standalone node livetest.mjs jobs/integration.mjs`.
+All five are **clean**: 0 errors, 0 warnings, 0 page errors, 0 HTTP ≥ 400, 0 failed requests. The offline scene has
+only its expected 503 line.
+
+| Scene | Pill / note |
+|---|---|
+| snapshot | "Snapshot · 20 Nov · 12:15 UTC+8"; METAR 0400Z CAVOK Q1027 13/-5; north flow, arr 36R, dep 36L |
+| live | "Live weather · METAR 0300Z" (320° 4 m/s CAVOK Q1030 14/-2) |
+| offline | "Relay offline · snapshot 20 Nov, 12:15" |
+| park (`233,230,113,404`) | "DEBUG ?park=: 4 static aircraft (not traffic)" first, then METAR and runway lines |
+| standalone | live, with every file served from the relay's allow-list |
+
+Every scene logs the same world: 164 stands, 56 bridges, 56 VDGS (52 posts, 4 facade), class reference docks 54 / 56,
+73 masts, airside fill 2 rings, 41 building parts. Build times: ground 1.18-1.38 s, runway paint set-up 0.44-0.50 s,
+gates 0.81-0.89 s plus masts 0.17-0.20 s, terminals 0.18-0.23 s.
+
+Upstream during this step (about 41 min of relay uptime): aviationweather.gov 2 METAR and 2 TAF requests (one TAF
+answered 304). adsb.lol: none. OpenSky: never.
+
+**No-browser tests: all pass.**
+- `test_geo_js.mjs`: 1681 grid + 50 data points; data 6.6 mm.
+- `test_relay.py`: 7 / 7.
+- `test_metar_zsss_js.mjs`: 0 decode differences on 69,104 IEM reports.
+- `test_buildings3d.mjs`: arch crest 27.30 / eaves 20.30 m, palette, airside fill, 0 / 539 fixed-link points off
+  pavement.
+- `test_frame.py`: OK.
+- The edited modules pass `node --check`.
+
+**Frame time on llvmpipe** (reference only; `SCENES=perf TIERS=low,high`, 1280 × 720 viewport, fixed resolution, 40
+frames after 10 warm-up), median / p90 ms:
+
+| Tier | Overview | T2 | Stand 233 | Phase 2 (same views) |
+|---|---|---|---|---|
+| low (1024 × 576) | 1150 / 1217 (js 2.8, 201 draws, 738 k tris) | 1017 / 1067 (127, 583 k) | 933 / 967 (108, 677 k) | 1183 / 1050 / 983 |
+| high (1280 × 720) | 1517 / 1617 (js 3.0, 201, 737 k) | 1567 / 1633 (127, 582 k) | 1533 / 1600 (108, 676 k) | 1683 / 1550 / 1567 |
+
+The fixes add no draw calls (the masts are merged) and no measurable frame cost on llvmpipe; the differences are
+within run-to-run noise (±10 %).
+
+### F4. Named views (re-rendered, all 25 looked at)
+
+The commands are the ones in §6 above (the separate `t2pier` re-render is not needed: `@full` includes it). Day views
+are at the snapshot instant; night at 21:30 local; laptop views are live (relay METAR 0330Z, 11:42-11:47 UTC+8).
+- **Parking.** All 8 bridge stands dock (229 A333, 230 B77W, 231 / 233 / 113 / 115 B738, 234 A320, 102 B77W). 403
+  and 404 get stairs and buses. The bridge models picked for some stands changed because the cab points moved (gates
+  M5), e.g. 230 AT3 47/85.
+- **Orientation checks:** T2 west, T1 east, runways N-S (ok).
+- What I saw, per render:
+  - **overview**: varied context blocks, grey roofs, dark green-grey water, no ring at the extent edge, CAVOK haze.
+  - **rwy_18L / 36R**: 12 stripes, pad chevrons (the cut first one), small "L 18" / "R 36" glyphs.
+  - **rwy_18R / 36L**: 16 stripes, five DTHR arrows clear of yellow.
+  - **t1 / t2 / tower**: grey metal roofs, T1 hall arch, masts on the aprons.
+  - **towercab**: across the T1 apron and both runways to T2; head terrace in the lower right.
+  - **stand_233 / bridge_230 / stand_102 / stand_113**: docked aircraft, asphalt under the fixed links and rotundas
+    (no brown strip). In `stand_233` a mast stands in the near foreground and splits the frame.
+  - **stand_404**: see F4.1.
+  - **hold_H1**: unchanged and correct.
+  - **t2pier**: five docked aircraft, asphalt at the pier tip.
+  - **night_t2pier / night_stand_233**: lit apron, warm glazing with dark mullions, glowing mast heads. Aircraft and
+    GSE are dark silhouettes. In `night_stand_233` the near mast's lamp glow is a ~220 px disk.
+  - **night_hold_H1**: black except the signs (no airfield lighting, as labelled).
+  - **phone views**: "UTC+8", credit strip readable, "T2 APRON 2" card, legend lists the masts and "Idle airstairs:
+    20".
+  - **laptop views**: "Live weather · UTC+8", the card clear of the credit strip, DEBUG line first.
+
+Evidence images from this step (deviceScaleFactor 1 renders, composited):
+- `fix1_integration_envelope_233.png`: envelope shift at 233.
+- `fix1_integration_edge_stands_404.png`: Phase 2 / now / top view at the west remote apron.
+- `fix1_integration_extent_edge.png`: the context-line fade at the extent edge.
+- `fix1_integration_thresholds.png`: stripe crops from the final `view_rwy_*`.
+
+Check renders are in `out/fix1/integ/` (gitignored).
+
+**F4.1 New integration finding: an OSM apron gap ahead of the edge stands.** At 286-290 (T2 remote) and 401-413 (west
+remote apron) the paved surface ends 0-1.5 m ahead of the stop node (`pavedAt` along the heading).
+- Under the nose-wheel convention the class C noses there reach about 4-5 m over the unpaved band.
+- The shifted red envelope fronts and the 设备区 boxes are painted on the band (the decal shader has no pavement mask),
+  and the six idle-stair groups there find no spot.
+- The three west-remote masts also stand on it (`pavedAt` 0).
+- The Sentinel-2 hint reads the band as neutral grey: 134-171 in the 8-bit hint, against 170-206 on the apron and
+  about (93, 98, 89) on real grass further out. It is probably paved, a gap in the OSM apron like H2.
+- Phase 2 already showed the boxes and the nose at this edge; the convention moves them about 5 m further
+  (`fix1_integration_edge_stands_404.png`).
+- Proposed for round 2: extend the airside fill (`build_buildings3d.py`) or add an inferred `apron_fill` in
+  `build_airport.py` over the S2-paved strips ahead of these stand heads.
+
+### F5. Files changed in this step and safe to commit
+
+- Code:
+  - `js/live/caac_decals.js`: envelope shift.
+  - `js/live/caac_markings.js`: `separation`.
+  - `js/live/gate_system.js`: imports table 4.9.5.
+  - `js/live/markings.js`: `padAip` [0].
+  - `js/geo.js`: comment only.
+  - `js/shaders/ground.js`: `extF`.
+- Docs: `CLAUDE.md`, `docs/phase1/airport.md`, `docs/phase1/standards_refs.md`, `docs/phase1/stands.md`,
+  `docs/phase2/markings.md`, `docs/phase2/gates.md`, `docs/phase2/integration.md`.
+- Renders: the 25 `docs/phase2/view_*.png` (re-rendered) and the 4 `docs/phase2/fix1_integration_*.png`.
+
+Together with the fixers' files (their reports list them), everything in `git status` under `sha3d/` is safe to
+commit:
+- `js/**`, `data/**`, `jobs/**`, `tools/**`, `live.css`, `docs/**`;
+- the 18 `fix1_markings_*` / `fix1_buildings_*` / `fix1_gates_*` images (13 MB).
+
+None of it holds secrets, per-flight data, AIP lists or third-party imagery. The AIP remark quoted in `airport.md` and
+`markings.md` is one short cited fact, labelled AIP (mirror). Do **not** commit `out/` (it holds the check renders and
+the relay state).
+
+### F6. Open issues after this round
+
+1. **Edge stands 286-290 / 401-413** (F4.1): the OSM apron gap ahead of the stand heads. Noses, envelope fronts,
+   equipment areas and three masts sit on an unpaved band; 6 of 26 idle-stair groups have no unit.
+2. **Aircraft and GSE are not flood-lit** at night, so they show as dark silhouettes on the lit apron (deferred
+   hand-off). Airfield lights (centreline, edge, stop bars, RGL) are Phase 5; `view_night_hold_H1` stays dark, and the
+   legend and About say so.
+3. **Masts close to the camera.**
+   - A mast on the rotunda line stands in the near foreground of the stand-233 cameras (`view_stand_233`, phone,
+     laptop).
+   - At night its lamp sprite draws a ~220 px glow disk (`view_night_stand_233`).
+   - Proposal for the gates package: cap the sprite's screen size or fade the glow within ~40 m of the camera, or move
+     the named camera.
+4. The designation numerals are 3-4 px tall in the threshold views. The ZSSS size is not observed; 6.2.2-4 allows 2×
+   (markings).
+5. Carried from the package reports:
+   - buildings: the T2 north strip, the T1 hall offset against photo 02, the tower terrace covering about 15 % of the
+     cab view, and `featherS2` costing about 150-200 ms of start-up;
+   - gates: the Phase 1 bridge rules still on the old cab, no masts at 333-337, 4 facade VDGS units and 2 turned rest
+     poses not re-reviewed close up;
+   - markings: whether the lead-on parallels beside the DTHR arrows are painted is unobserved; the decal build takes
+     0.58 s;
+   - the open issues of §9 above (model loading under llvmpipe, phone frame time unmeasured).

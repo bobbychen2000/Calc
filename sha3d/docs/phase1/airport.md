@@ -134,6 +134,13 @@ ODbL; the Umbra attribution carries the CC BY 4.0 URL and "modified" (QA L2). 1.
 | PAPI | 18L left / 36R right, 474 m inward of DTHR, 3° | 18R left / 36L right, 393 m inward of DTHR, 3° |
 | Approach lights | PALS CAT I, 900 m (both) | PALS CAT I, 840 m (18R), 900 m (36L) |
 
+`aip_facts.blast_pad_m` is the pad's **[length, width] at both ends** (AIP (mirror) AD 2.12: "Blast pad: 60×60m on
+the both ends" / "120×75m on the both ends"); `runways[].blast_pads` draws one ring per end from it, and the measured
+outer edges of the 18R and 36L pads (S2 / Umbra, table below: 120 m beyond each end) agree with the 120 m length. The Phase 2 markings
+code read the pair as one length per end (36L = 75 m); review L1 and the markings fix round 1 then treated 36L as an
+AIP-vs-measurement conflict. There is none (integration fix round 1, 2026-11-21: `js/live/markings.js` reads [0] at both
+ends; the chevrons cover the full 120 m pad at 18R and 36L, 60 m at 18L and 36R).
+
 No longer in any committed file (fix round 1): strip, RESA, SWY / CWY, grooving, the slope chain, TDZ elevations,
 MEHT, REL taxiways, light remarks, AIP bearings. Never transcribed: PCR values, RVR / wind / ceilometer positions, WDI
 positions (AMDT 12 changes them on 26 Nov 2026), the stand / VDGS / frequency lists.

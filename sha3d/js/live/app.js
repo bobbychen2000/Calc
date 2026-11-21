@@ -126,7 +126,7 @@ export async function startApp(cfg) {
     nightF = sstep(6, -4, elN);
     const dark = sstep(2, -10, elN);
     exposure = (0.45 + 0.25 * (env.cloud[0] > 0.6 ? 1 : 0) * (1 - dark)) * (1 - dark) + 2.4 * dark + sstep(8, 2, elN) * (1 - dark) * 0.25;
-    R.extraCommon = { uNight: nightF, uGroundY: GROUND_Y };
+    R.extraCommon = { uNight: nightF, uGroundY: GROUND_Y, uFloodNight: nightF };   // uFloodNight: the objects' apron flood (fix 2, N3)
     setLightEnv(E, DAY_GAIN / 258);
     setClouds(lowSlab ? { H: env.cloud[1], cov: env.cloud[0] } : null);
     envInfo = { sun: sp, metar: M };
@@ -169,10 +169,20 @@ export async function startApp(cfg) {
     const V = VIEWS[name];
     if (V) rig.flyTo({ target: V.target.slice(), dist: V.dist, yaw: V.yaw * DEG, pitch: V.pitch * DEG, fov: V.fov * DEG });
     else if (name === 'tower' && A.tower) {
-      // P2f: with a modelled cab (anchors.tower.cabHalf, terminals package) the eye stands 2 m inside the glass on the
-      // runway side, so the console band below the glass no longer fills the lower ~40 % of the frame; pitch -7 deg
-      const yaw = 262, hv = GEO.hdgVec(yaw), off = A.tower.cabHalf ? Math.max(0, A.tower.cabHalf - 2.0) : 0;
-      rig.setTower([A.tower.pos[0] + hv[0] * off, A.tower.eyeY, A.tower.pos[2] + hv[1] * off], { yaw: yaw * DEG, pitch: (off ? -7 : -5) * DEG, fov: 58 * DEG });
+      // fix round 1 (review L3): the cab view aims at the RWY 18L/36R midpoint (the T1 apron and the runway intersections,
+      // the controllers' main view) instead of due west; with a modelled cab (anchors.tower.cabHalf, terminals package)
+      // the eye stands 0.5 m inside the glass (the console band is then below / behind the eye; the cab's own terrace,
+      // 2.65 m wide at the head top, still hides the ground within ~75 m of the tower, as in a real cab) and pitches
+      // -11 deg. On a portrait screen the vertical field widens so that the horizontal field stays >= ~40 deg [inf]
+      const R0 = GEO.RUNWAYS.find(r => /18L/.test(r.id)) || GEO.RUNWAYS[0];
+      const mid = R0 ? [(R0.a[0] + R0.b[0]) / 2, (R0.a[1] + R0.b[1]) / 2] : [0, 0];
+      const yaw = (Math.atan2(mid[0] - A.tower.pos[0], -(mid[1] - A.tower.pos[2])) / DEG + 360) % 360;   // hdgVec(h) = [sin h, -cos h]
+      // eye 0.5 m from the glass of the cab face nearest to the view direction (faces every 90 deg from anchors.tower.cabYaw)
+      const fy = A.tower.cabYaw != null ? A.tower.cabYaw : yaw; const dA = ((((yaw - fy) % 90) + 135) % 90) - 45;
+      const hv = GEO.hdgVec(yaw), off = A.tower.cabHalf ? Math.max(0, A.tower.cabHalf - 0.5) / Math.cos(dA * DEG) : 0;
+      const asp = Math.max(0.3, (canvas.clientWidth || 16) / Math.max(1, canvas.clientHeight || 9));
+      const fov = asp >= 1 ? 58 : Math.min(72, Math.max(58, 2 * Math.atan(Math.tan(20 * DEG) / asp) / DEG));
+      rig.setTower([A.tower.pos[0] + hv[0] * off, A.tower.eyeY, A.tower.pos[2] + hv[1] * off], { yaw: yaw * DEG, pitch: (off ? -11 : -5) * DEG, fov: fov * DEG });
     }
     ui.root.querySelectorAll('#views [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === name));
   }
@@ -198,6 +208,29 @@ export async function startApp(cfg) {
   const post = { exposure: 0.45, shutter: 0, bloom: 0.012, vignette: 0.18, grain: 0.0, sat: 1.1 };
   function onResize() { S = size(); if (canvas.width !== S.cw || canvas.height !== S.ch) { canvas.width = S.cw; canvas.height = S.ch; } R.resize(S.rw, S.rh); rig.resize(canvas.clientWidth, canvas.clientHeight); }
   window.addEventListener('resize', onResize); onResize();
+  // Object apron flood (fix round 2, review_visual_fix1.md N3) [inf]: the object programs (js/shaders/objects.js: buildings,
+  // jet bridges, stairs, GSE - 'obj', 'objI', 'objG') get the ground's airfield map with every draw, so sha_obj_flood can light
+  // what stands over the apron at night as the ground flood lights the apron. Samplers are rebound per draw (js/gl.js), so
+  // every item of these programs carries them; an item may opt out with noFlood: true. The aircraft programs ('aircraft',
+  // 'acr') get the same uniforms; their shaders include <sha_obj_flood> (js/shaders/aircraft.js / aircraft_real.js, fix round 2). The wrapper inherits
+  // the item's own uniforms (Object.create: the aircraft items keep prototype-chained, per-frame updated uniforms) and is
+  // re-made whenever an item's uniforms are replaced (e.g. the aircraft body item, every frame).
+  const FLOOD_PROGS = new Set(['obj', 'objI', 'objG', 'aircraft', 'acr']); const gU = world.groundU || {};
+  // (the markings package's apron light map, when its ground uniforms carry one: the same pools and lit area as the ground;
+  // otherwise the airfield map is bound in its place with uObjLightOn 0, so the sampler is never left unbound)
+  const floodOn = gU.uAptMap ? { uAptMap: gU.uAptMap, uAptRect: gU.uAptRect, uObjFlood: 1, uObjLight: gU.uApLight || gU.uAptMap,
+    uObjLightRect: gU.uApLight ? gU.uApLightRect : gU.uAptRect, uObjLightOn: gU.uApLight && gU.uApLightOn ? 1 : 0 } : null;
+  const floodOff = floodOn && { ...floodOn, uObjFlood: 0 };
+  const floodWrapped = new WeakSet();
+  function floodUniforms(items) {
+    if (!floodOn) return;
+    for (const it of items) {
+      if (!FLOOD_PROGS.has(it.prog) || (it.uniforms && floodWrapped.has(it.uniforms))) continue;
+      const add = it.noFlood ? floodOff : floodOn, u = it.uniforms;
+      const w = typeof u === 'function' ? () => Object.assign(Object.create(u() || null), add) : Object.assign(Object.create(u || null), add);
+      floodWrapped.add(w); it.uniforms = w;
+    }
+  }
   let camPos = [0, 100, 0];
   function tick() {
     if (!running) return;
@@ -207,7 +240,7 @@ export async function startApp(cfg) {
       rig.update(dt);
       if ((tEnv += wall) > 30) { tEnv = 0; applyEnv(now, false); }
       const cam = rig.camera(); camPos = cam.pos; setLightViewer(camPos, 2 * Math.tan((cam.fov || 0.8) / 2) / Math.max(1, R.H || canvas.height || 720)); setLightFrame(simT);
-      const fr = scene.frame(simT, cam.pos);
+      const fr = scene.frame(simT, cam.pos); floodUniforms(fr.items);
       post.exposure = exposure;
       R.render(fr, cam, simT, post); scene.commit(); R.present(canvas.width, canvas.height);
       if ((tUi += wall) > 1) { tUi = 0; status(now); }

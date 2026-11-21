@@ -49,6 +49,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import sys
 
 from shapely.geometry import MultiPolygon, Point, Polygon, box
@@ -60,6 +61,8 @@ ROOT = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, 
 AIRPORT = os.path.join(ROOT, 'data/sha_airport.json')
 STANDS = os.path.join(ROOT, 'data/sha_stands.json')
 HEIGHTS = os.path.join(ROOT, 'data/meas/b3_building_heights.json')
+S2HINT = os.path.join(ROOT, 'data/sha_ground_s2.js')
+CAAC_JS = os.path.join(ROOT, 'js/live/caac_markings.js')   # the ONE CAAC parameter table (stand envelope values, read below)
 OUT_JSON = os.path.join(ROOT, 'data/sha_buildings3d.json')
 OUT_JS = os.path.join(ROOT, 'data/sha_buildings3d.js')
 R2 = lambda v: round(float(v), 2)  # noqa: E731
@@ -157,6 +160,249 @@ def b3(H, bid):
     return None
 
 
+# ---------------------------------------------------------------------------------------------- airside fill (fix round 1, H2)
+# The OSM apron ways stop 15-40 m short of the T1 / T2 airside facades, so the ground shader drew grass ("dirt moat") under
+# every fixed link, rotunda and VDGS post. Photo 09 shows a dark asphalt service road there (white edge lines, parking,
+# vehicles); the Sentinel-2 hint (data/sha_ground_s2.js, 10 m) shows the band as paved. The fill below is drawn by
+# js/live/terminals.js through the core pavement hook as 'paved' (asphalt) [inf]:
+#   1. every airside facade segment (<= FILL_SEG m) whose outward normal meets airside pavement (aprons, taxiway / runway
+#      surfaces) within FILL_REACH m gets a quad from the facade to that pavement + FILL_OVERLAP m; convex corners between
+#      two such segments get a disc of the shorter reach (pier tips);
+#   2. cut to the aerodrome polygon (never landside) and to outside the buildings;
+#   3. minus the 10 m Sentinel-2 pixels that read as grass (GRASS_TEST, clusters of >= 3 pixels: isolated dark pixels are
+#      shadows or bridge roofs, not grass) so real grass stays grass;
+#   4. plus a WALK_W m corridor along every fixed link (attach -> rotunda), a ROT_R m disc at every rotunda and a
+#      STAND_CL_W m strip along every contact stand's centreline from the nose to the facade (VDGS posts)
+#      (data/sha_stands.json), never grass under a bridge.
+AIRSIDE_FILL_OF = [T1_ID, T2_ID, 'osm:way/1443258835']   # T1, T2, the VVIP annex at the south end of the T1 concourse
+FILL_REACH, FILL_OVERLAP, FILL_SEG = 60.0, 3.0, 8.0     # m [inf]
+WALK_W, ROT_R = 24.0, 14.0                              # m [inf] (review_visual.md H2)
+STAND_CL_W = 10.0                                       # m [inf] contact-stand centreline strip (VDGS posts)
+# Sentinel-2 grass test on rho (linear reflectance): L = mean(R, G, B), g = (G - (R + B) / 2) / L. Medians on this scene:
+# apron L 0.177, g 0.035 (12,516 px inside the aprons); airside grass L 0.092, g 0.053 (11,589 px) -> grass when
+# L < 0.115 and g > 0.02, or g > 0.12 [inf]
+GRASS_L, GRASS_G, GRASS_G_ANY = 0.115, 0.02, 0.12
+
+
+_S2 = {}
+
+
+def s2_hint():
+    if 'h' in _S2:
+        return _S2['h']
+    import base64
+    import io
+    import numpy as np
+    from PIL import Image
+    s = open(S2HINT, encoding='utf-8').read()
+    meta = json.loads(s[s.index('{'):s.rindex('}') + 1])
+    im = np.asarray(Image.open(io.BytesIO(base64.b64decode(meta['png']))).convert('RGBA'), dtype=float)
+    v = im[..., :3] / 255.0
+    rho = np.where(v <= 0.04045, v / 12.92, ((v + 0.055) / 1.055) ** 2.4) / 2.0   # decode as the file says
+    _S2['h'] = (meta, rho, im[..., 3] > 0)
+    return _S2['h']
+
+
+def s2_grass_geom(bounds):
+    """the 10 m Sentinel-2 pixels inside bounds that read as grass (GRASS_L / GRASS_G / GRASS_G_ANY, clusters of >= 3 px:
+    isolated dark pixels are shadows or bridge roofs), as one geometry buffered by 1 m"""
+    import numpy as np
+    meta, rho, valid = s2_hint()
+    L = rho.mean(axis=2); gidx = (rho[..., 1] - 0.5 * (rho[..., 0] + rho[..., 2])) / np.maximum(L, 1e-3)
+    grass = valid & (((L < GRASS_L) & (gidx > GRASS_G)) | (gidx > GRASS_G_ANY))
+    gp = np.pad(grass, 1); nb = sum(np.roll(np.roll(gp, dy, 0), dx, 1) for dy in (-1, 0, 1) for dx in (-1, 0, 1) if dy or dx)[1:-1, 1:-1]
+    grass &= nb >= 2   # itself + >= 2 neighbours
+    x0, z0 = meta['rect'][0], meta['rect'][1]; res = meta['res_m']
+    bx0, bz0, bx1, bz1 = bounds
+    i0, i1 = max(0, int((bx0 - x0) / res) - 1), min(grass.shape[1], int((bx1 - x0) / res) + 2)
+    j0, j1 = max(0, int((bz0 - z0) / res) - 1), min(grass.shape[0], int((bz1 - z0) / res) + 2)
+    gboxes = [box(x0 + i * res, z0 + j * res, x0 + (i + 1) * res, z0 + (j + 1) * res) for j in range(j0, j1) for i in range(i0, i1) if grass[j, i]]
+    return unary_union(gboxes).buffer(1.0, join_style=2) if gboxes else Polygon()
+
+
+def airside_fill(A, S, terminals):
+    import numpy as np
+    T = unary_union(terminals)
+    allb = unary_union([poly_of(b) for b in A['buildings']])
+    pav = unary_union([Polygon(a['ring'], a.get('holes') or []).buffer(0) for a in A['aprons']] +
+                      [Polygon(p['ring']).buffer(0) for k in ('taxiway', 'runway', 'taxiway_shoulders', 'runway_shoulders_blast_pads')
+                       for p in A['surfaces'].get(k, [])])
+    aer = unary_union([Polygon(r).buffer(0) for r in A['aerodrome']['rings']])
+    quads, discs, nseg, nhit = [], [], 0, 0
+    for g in (list(T.geoms) if hasattr(T, 'geoms') else [T]):
+        ring = list(shapely.geometry.polygon.orient(g, 1.0).exterior.coords)[:-1]
+        reach_at = []   # per original edge: list of (p, q, reach or None)
+        for i in range(len(ring)):
+            a, b = ring[i], ring[(i + 1) % len(ring)]
+            L = math.hypot(b[0] - a[0], b[1] - a[1])
+            if L < 0.5:
+                reach_at.append([]); continue
+            d = ((b[0] - a[0]) / L, (b[1] - a[1]) / L); n = (d[1], -d[0])
+            mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+            if g.contains(Point(mid[0] + n[0] * 0.5, mid[1] + n[1] * 0.5)):
+                n = (-n[0], -n[1])
+            k = max(1, int(math.ceil(L / FILL_SEG))); segs = []
+            for j in range(k):
+                p = (a[0] + d[0] * L * j / k, a[1] + d[1] * L * j / k); q = (a[0] + d[0] * L * (j + 1) / k, a[1] + d[1] * L * (j + 1) / k)
+                m = ((p[0] + q[0]) / 2, (p[1] + q[1]) / 2); ts = np.arange(1.0, FILL_REACH + 0.5, 1.0)
+                hit = shapely.contains_xy(pav, m[0] + n[0] * ts, m[1] + n[1] * ts)
+                bl = shapely.contains_xy(allb, m[0] + n[0] * ts, m[1] + n[1] * ts)   # another building in the way: no fill
+                nseg += 1; r = None
+                if hit.any():
+                    t0 = float(ts[int(np.argmax(hit))])
+                    if not bl[ts < t0].any():
+                        r = t0 + FILL_OVERLAP; nhit += 1
+                        quads.append(Polygon([p, q, (q[0] + n[0] * r, q[1] + n[1] * r), (p[0] + n[0] * r, p[1] + n[1] * r)]))
+                segs.append((p, q, r))
+            reach_at.append(segs)
+        for i in range(len(ring)):   # corners between two filled facade segments (convex corners leave a wedge: pier tips)
+            s0, s1 = reach_at[i - 1], reach_at[i]
+            if s0 and s1 and s0[-1][2] and s1[0][2]:
+                discs.append(Point(ring[i]).buffer(min(s0[-1][2], s1[0][2]), 24))
+    band = unary_union(quads + discs).buffer(1.0, join_style=2).buffer(-1.0, join_style=2)
+    band = band.intersection(aer).difference(allb).difference(pav.buffer(-2.0))
+    # Sentinel-2 grass pixels (clusters of >= 3)
+    grass_geom = s2_grass_geom(band.bounds)
+    before = band.area
+    band = band.difference(grass_geom)
+    grass_cut = before - band.area
+    # fixed links and rotundas (never grass under a bridge); contact stands: the centreline from the nose to the facade
+    # (<= FILL_REACH m, STAND_CL_W wide), where the gates package stands the VDGS post (e.g. 221, beyond the end of the
+    # T2 north arm, where no facade segment faces the apron)
+    br = []
+    for s in S['stands']:
+        for b in s.get('bridges') or []:
+            br.append(shapely.geometry.LineString(b['walk']).buffer(WALK_W / 2, cap_style=2, join_style=2))
+            br.append(Point(*b['rotunda']).buffer(ROT_R, 24))
+        if s.get('bridges'):
+            h = math.radians(s['hdg']); f = (math.sin(h), -math.cos(h)); n0 = s['nose']; ts = np.arange(1.0, FILL_REACH + 0.5, 1.0)
+            inb = shapely.contains_xy(allb, n0[0] + f[0] * ts, n0[1] + f[1] * ts); t1 = float(ts[int(np.argmax(inb))]) if inb.any() else FILL_REACH
+            br.append(shapely.geometry.LineString([n0, (n0[0] + f[0] * t1, n0[1] + f[1] * t1)]).buffer(STAND_CL_W / 2, cap_style=2))
+    brg = unary_union(br).intersection(aer).difference(allb).difference(pav.buffer(-2.0))
+    # close slivers < 6 m between the pieces (e.g. stand 221's centreline strip and the band), stay out of buildings
+    fill = unary_union([band, brg]).buffer(3.0, join_style=2).buffer(-3.0, join_style=2).intersection(aer).difference(allb).simplify(0.4)
+    polys = rings_of(fill, min_area=40.0)
+    stats = {'facade_segments': nseg, 'segments_facing_pavement': nhit, 'area_m2': R2(fill.area), 'grass_cut_m2': R2(grass_cut),
+             'bridge_corridors_m2': R2(brg.area), 'rings': len(polys)}
+    out = {'kind': 'paved', 'src': 'inf', 'polys': polys,
+           'evidence': 'OSM apron ways stop 15-40 m short of the T1 / T2 airside facades (no apron polygon under the fixed links, '
+                       'rotundas and VDGS posts); the band is paved in the Sentinel-2 hint (S2B_51RUQ_20261014, 10 m) and is a dark '
+                       'asphalt service road in photo 09 (Commons, T2)',
+           'rule': 'facade-to-pavement quads (reach <= %g m, + %g m overlap) and pier-tip corner discs, inside the aerodrome, outside '
+                   'buildings, minus Sentinel-2 grass pixels (L < %g and g > %g, or g > %g; clusters >= 3 px); plus %g m fixed-link '
+                   'corridors, %g m rotunda discs and %g m contact-stand centreline strips nose -> facade [inf]' % (FILL_REACH, FILL_OVERLAP, GRASS_L, GRASS_G, GRASS_G_ANY, WALK_W, ROT_R, STAND_CL_W),
+           'drawn_as': "asphalt ('paved' kind of the core pavement hook, js/live/terminals.js)"}
+    return out, stats
+
+
+
+# ---------------------------------------------------------------------------------------------- stand-head fill (fix round 2, R1)
+# Since gates fix round 1 the OSM stop node (aeroway=parking_position) is the NOSE-WHEEL stop (MH 5001-2021 6.2.16-7): the
+# class reference's nose tip lies nose_gear_m ahead of it (data/sha_stands.json class_ref, obs per type), the painted
+# envelope front a further 3.75 m (table 4.13.5 note a, caac_markings.js stand.noseE) and the equipment areas (6.2.20) lie
+# beside the nose up to about that front (js/live/caac_decals.js). At the edge stands the OSM apron polygons end at or just
+# ahead of the stop nodes (T2 apron 2: 212-219, 278-290; east apron: 318-322, 339-342; business apron 306; west remote apron
+# 4: 401-413; apron 6: 601-608; east remote: 501-525), so noses, envelope fronts, equipment areas, stairs and signs stood on
+# grass (docs/phase2/review_visual_fix1.md R1). The Sentinel-2 hint reads neutral grey there, not grass (e.g. 286-290: L
+# 0.14-0.20 from the apron edge to the aerodrome boundary; 401-413: L 0.13-0.18 in the first 10 m pixel beyond the edge,
+# grass beyond it), so the apron is taken to continue [inf: OSM apron gap ahead of the stand heads]. Rule [inf]:
+#   1. per stand, the head rectangle in the decals' stand frame (shifted by nose_gear_m): u from -HEAD_BACK x length (contact
+#      stands; remote stands: from the envelope's back, -length - 3 m, as caac_decals.js) to the envelope front + HEAD_FRONT_PAD, v = +-(span / 2 + B + HEAD_SIDE_PAD) (B = table 4.13.5 by code letter); the part of
+#      it outside the pavement (aprons, taxiway / runway surfaces and shoulders, the H2 facade fill) is the stand's need;
+#      stands needing < HEAD_MIN_M2 are skipped;
+#   2. the needs are joined (HEAD_CLOSE m closing: one band along a row, no teeth), cut to the aerodrome polygon, outside
+#      every building and OSM water area, minus the Sentinel-2 grass pixels (the H2 test above, clusters >= 3 px);
+#   3. drawn as apron concrete (airfield map G 255: same surface and night flood as the apron it continues), overlapping the
+#      apron by APRON_OVERLAP m and never drawn over taxiway / runway pavement or the H2 asphalt band.
+HEAD_BACK, HEAD_FRONT_PAD, HEAD_SIDE_PAD = 0.5, 3.0, 2.0   # [inf] (front pad: pavedAt samples a 2 m grid of a blurred map)
+HEAD_MIN_M2, HEAD_CLOSE, APRON_OVERLAP = 5.0, 6.0, 2.0     # m², m, m [inf]
+
+
+def caac_stand():
+    """clearB (table 4.13.5), noseE and classLetter from js/live/caac_markings.js (the ONE CAAC table; not duplicated here)"""
+    t = open(CAAC_JS, encoding='utf-8').read()
+
+    def obj(key):
+        m = re.search(r'\b' + key + r':\s*P\((\{[^}]*\})', t)
+        if not m:
+            raise SystemExit('caac_markings.js: ' + key + ' not found')
+        return json.loads(re.sub(r'(\w+)\s*:', r'"\1":', m.group(1)).replace("'", '"'))
+    m = re.search(r'\bnoseE:\s*P\(([\d.]+)', t)
+    if not m:
+        raise SystemExit('caac_markings.js: noseE not found')
+    return {'clearB': obj('clearB'), 'classLetter': obj('classLetter'), 'noseE': float(m.group(1))}
+
+
+def stand_frame(s, refs, C):
+    """the decals' stand frame: world(u, v) with u along the heading from the class nose tip, v to the right; + dims"""
+    ref = refs.get(s['cls']) or refs.get('C') or {'length_m': 44.5, 'span_m': 35.8, 'nose_gear_m': 0.0}
+    L = s.get('len_max') or ref['length_m']; Sp = s.get('span_max') or ref['span_m']; ng = ref.get('nose_gear_m') or 0.0
+    B = C['clearB'].get(C['classLetter'].get(s['cls'], 'C'), 4.5)
+    h = math.radians(s['hdg']); f = (math.sin(h), -math.cos(h)); r = (-f[1], f[0]); n = s['nose']
+
+    def W(u, v):
+        return (n[0] + f[0] * (u + ng) + r[0] * v, n[1] + f[1] * (u + ng) + r[1] * v)
+    return W, {'L': L, 'Sp': Sp, 'ng': ng, 'B': B, 'E': C['noseE']}
+
+
+def stand_head_fill(A, S, h2):
+    C = caac_stand(); refs = S.get('class_ref') or {}
+    aprons = unary_union([Polygon(a['ring'], a.get('holes') or []).buffer(0) for a in A['aprons']])
+    other = unary_union([Polygon(p['ring']).buffer(0) for k in ('taxiway', 'runway', 'taxiway_shoulders', 'runway_shoulders_blast_pads')
+                         for p in A['surfaces'].get(k, [])])
+    pav = unary_union([aprons, other, h2])
+    aer = unary_union([Polygon(r).buffer(0) for r in A['aerodrome']['rings']])
+    allb = unary_union([poly_of(b) for b in A['buildings']])
+    water = unary_union([Polygon(w['ring']).buffer(0) for w in (A.get('context') or {}).get('water_areas', []) if len(w['ring']) >= 3])
+    needs, names = [], []
+    for s in S['stands']:
+        W, d = stand_frame(s, refs, C)
+        # contact stands: the front half (the rear meets the terminal and the H2 band); remote stands: the whole envelope length
+        u0 = -HEAD_BACK * d['L'] if s.get('bridges') else -d['L'] - 3.0
+        u1, hw = d['E'] + HEAD_FRONT_PAD, d['Sp'] / 2 + d['B'] + HEAD_SIDE_PAD
+        miss = Polygon([W(u0, -hw), W(u1, -hw), W(u1, hw), W(u0, hw)]).difference(pav)
+        if miss.area >= HEAD_MIN_M2:
+            needs.append(miss); names.append(s['name'])
+    need = unary_union(needs).buffer(HEAD_CLOSE, join_style=2).buffer(-HEAD_CLOSE, join_style=2)
+    need = need.intersection(aer).difference(allb).difference(water)
+    grass = s2_grass_geom(need.bounds)
+    before = need.area
+    need = need.difference(grass)
+    grass_cut = before - need.area
+    fill = need.difference(aprons.buffer(-APRON_OVERLAP, join_style=2)).difference(other).difference(h2).simplify(0.4)
+    polys = rings_of(fill, min_area=20.0)
+    stats = {'stands_needing': len(names), 'area_m2': R2(fill.area), 'grass_cut_m2': R2(max(0.0, grass_cut)), 'rings': len(polys)}
+    out = {'kind': 'apron', 'src': 'inf', 'polys': polys, 'stands': names,
+           'evidence': 'OSM apron polygons end at or just ahead of the stop nodes of the edge stands, while the nose-wheel stop '
+                       'convention (MH 5001-2021 6.2.16-7; class_ref nose_gear_m) puts the nose, the envelope front (table 4.13.5 '
+                       'note a) and the equipment areas (6.2.20) 5-12 m beyond; the Sentinel-2 hint (S2B_51RUQ_20261014, 10 m) '
+                       'reads neutral grey, not grass, there',
+           'rule': 'per stand, the head rectangle (u from -%g x length (remote stands: -length - 3 m) to the envelope front + %g m, v = +-(span / 2 + B + %g m), '
+                   'decals stand frame) outside the pavement and the H2 fill; stands needing >= %g m2; %g m closing; inside the '
+                   'aerodrome, outside buildings and water, minus Sentinel-2 grass pixels (the H2 test); drawn as apron, %g m '
+                   'overlap with the apron, never over taxiway / runway pavement [inf]' % (HEAD_BACK, HEAD_FRONT_PAD, HEAD_SIDE_PAD, HEAD_MIN_M2, HEAD_CLOSE, APRON_OVERLAP),
+           'drawn_as': "apron concrete ('apron' kind of the core pavement hook, js/live/terminals.js)"}
+    return out, stats, fill
+
+
+def stand_head_check(A, S, geoms):
+    """stop nodes and class nose tips (and the envelope front centre) outside the pavement + fills, polygon test"""
+    C = caac_stand(); refs = S.get('class_ref') or {}
+    pav = unary_union([Polygon(a['ring'], a.get('holes') or []).buffer(0) for a in A['aprons']] +
+                      [Polygon(p['ring']).buffer(0) for k in ('taxiway', 'runway', 'taxiway_shoulders', 'runway_shoulders_blast_pads')
+                       for p in A['surfaces'].get(k, [])] + list(geoms))
+    node, tip, front = [], [], []
+    for s in S['stands']:
+        W, d = stand_frame(s, refs, C)
+        if not pav.contains(Point(*s['nose'])):
+            node.append(s['name'])
+        if not pav.contains(Point(*W(0, 0))):
+            tip.append(s['name'])
+        if not pav.contains(Point(*W(d['E'], 0))):
+            front.append(s['name'])
+    return {'stop_nodes_off': node, 'nose_tips_off': tip, 'envelope_fronts_off': front}
+
+
 def main():
     A = load(AIRPORT); S = load(STANDS); H = load(HEIGHTS)
     B = {b['id']: b for b in A['buildings']}
@@ -222,7 +468,13 @@ def main():
     claims.append(T1_HALL_ID)
     parts.append(part('t1_hall', T1_HALL_ID, 'T1 central hall', poly_of(B[T1_HALL_ID]), 26.0, 't1_hall', 'inf',
                       'B3 photo ratio (photo 02): central hall roof 26.4 m (23.0-30.1); identification of this OSM way as the hall: '
-                      'its west face is where B3 placed the hall front (x ~ 560, z ~ 240) [inf]'))
+                      'its west face is where B3 placed the hall front (x ~ 560, z ~ 240) [inf]',
+                      # fix round 1 (review L2): photo 02 shows a raised white roof volume over the hall (it carries the red
+                      # "上海 SHANGHAI" letters): flat crest, ends sloping down to north and south. Drawn as an arch across the
+                      # N-S length (dir = world z): y(s) = rise * (1 - |s|^exp), s = -1..1; the crest stays at the B3 height
+                      # (h + roof slab), the eaves are rise lower [inf: rise, exponent and orientation read from photo 02]
+                      {'roof_form': {'kind': 'arch', 'rise': 7.0, 'exp': 4.0, 'dir': [0.0, 1.0], 'src': 'inf',
+                                     'note': 'photo 02: raised white roof volume, flat crest, sloping N / S ends; crest = B3 height'}}))
     checks['t1_area_split_vs_outline'] = [R2(front.area + rear.area + core.area + land.area + yard.intersection(t1).area), R2(t1.area)]
     checks['t1_tower_in_yard'] = bool(yard.contains(Point(tw['x'], tw['z'])))
 
@@ -312,6 +564,16 @@ def main():
         p['roof_polys'] = rings_of(g.buffer(d, join_style=2, mitre_limit=2.0).simplify(0.2))
         p['roof_overhang_m'] = d
 
+    # ------------------------------------------------------------------------------------------------ airside fill (fix 1, H2)
+    fill, fill_stats = airside_fill(A, S, [poly_of(B[i]) for i in AIRSIDE_FILL_OF if i in B])
+    checks['airside_fill'] = fill_stats
+    # ------------------------------------------------------------------------------------------------ stand-head fill (fix 2, R1)
+    h2 = unary_union([Polygon(pl[0], pl[1:]).buffer(0) for pl in fill['polys']])
+    head, head_stats, head_geom = stand_head_fill(A, S, h2)
+    checks['stand_head_fill'] = head_stats
+    checks['stand_heads_unpaved_before'] = stand_head_check(A, S, [h2])
+    checks['stand_heads_unpaved'] = stand_head_check(A, S, [h2, head_geom])
+
     # ------------------------------------------------------------------------------------------------ checks
     # every bridge attach point (OSM gate node on the facade) must lie on a T1 / T2 part boundary (within 1.5 m)
     tparts = [p for p in parts if p['of'] in (T1_ID, T2_ID)]
@@ -322,7 +584,7 @@ def main():
             dmax = max(dmax, bnd.distance(Point(*br['attach']))); nb += 1
     checks['bridge_attach_on_facade'] = {'n': nb, 'max_dist_m': R2(dmax)}
 
-    src_files = [AIRPORT, STANDS, HEIGHTS, os.path.abspath(__file__)]
+    src_files = [AIRPORT, STANDS, HEIGHTS, S2HINT, CAAC_JS, os.path.abspath(__file__)]
     out = {
         'what': 'Parametric building volumes of SHA Live 3D (terminals T1 / T2 split into piers and halls, control towers, hangars, '
                 'hub, other airport buildings), for js/world/buildings3d.js',
@@ -336,7 +598,9 @@ def main():
         'note': 'all heights inf (B3: measurements or rules); every split zone, depth, roof form and facade style is a modelling '
                 'parameter [inf]; the OSM outline (the airside facade) is not moved',
         'parts': parts, 'towers': towers, 'hangars': hangars, 'claims': claims, 'checks': checks,
-        'counts': {'parts': len(parts), 'towers': len(towers), 'hangars': len(hangars), 'claims': len(claims)},
+        'airside_fill': fill, 'stand_head_fill': head,
+        'counts': {'parts': len(parts), 'towers': len(towers), 'hangars': len(hangars), 'claims': len(claims), 'airside_fill_rings': len(fill['polys']),
+                   'stand_head_fill_rings': len(head['polys'])},
     }
     os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)
     with open(OUT_JSON, 'w', encoding='utf-8') as fh:

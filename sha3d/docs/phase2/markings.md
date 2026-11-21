@@ -70,7 +70,7 @@ chevrons.
 | Width (AIP mirror) | 45 | 45 | 60 | 60 |
 | Displaced threshold (AIP mirror) | 100 m | 100 m | 300 m | 300 m |
 | Arrows / bar | 1 / 1.8 m | 1 / 1.8 m | 5 / 1.8 m | 5 / 1.8 m |
-| Blast pad → chevrons | 60 m, yes | 60 m, yes | 120 m, yes | 75 m, yes |
+| Blast pad → chevrons | 60 m, yes | 60 m, yes | 120 m, yes | 120 m (AIP 120 × 75 m = surface), yes: fix round 1 L1 |
 | Stripes | 12 × 45 m | 12 | 16 × 45 m | 16 |
 | Designation (letter, then number) | L, 18 | R, 36 | R, 18 | L, 36 |
 | Aiming point from the DTHR | 474 m | 474 m | 393 m | 393 m |
@@ -129,16 +129,18 @@ chevrons.
 
 - **Lead-ins:** the 164 OSM lead-in lines (`sha_stands.json` `leadin`) in yellow 0.15 m with a 0.05 m black edge, each
   continued 4 m past the stop node as the alignment line.
-- **Stop lines:** 6 × 0.3 m, square to the alignment line. **Placement is inf:** the stop line is drawn AT the OSM stop
-  node. The stand data (A2) and the gates package treat that node as the nose tip. With visual docking guidance, a stop
-  line marks the nose wheel (6.2.16-7), about 5 m behind the nose. This 5 m question stays open (stands.md nose_note).
+- **Stop lines:** 6 × 0.3 m, square to the alignment line, drawn AT the OSM stop node. Since fix round 1 the node is
+  the **nose-wheel stop** for every package (6.2.16-7: with guidance the stop line marks the nose-wheel position; gates
+  fix round 1 M5): aircraft park with their nose-gear contact on it, and the stand envelopes below are shifted forward by
+  the class reference's `class_ref.<cls>.nose_gear_m` (integration fix round 1). The stop-line position itself stays inf
+  (the OSM node as mapped).
 - **Stand number plates:** yellow pentagon, 5 m body plus a 2 m point, 0.1 m black border, black 4 m numerals
   (fig. 6.2.16-2). Each sits 18 m along the lead-in (or 35 % of a short one), 1 m clear of the line, on the outer side of
   the lead-in's first turn, pointing to the stand. 151 are placed. 13 are skipped: 9 would overlap an overlay /
   alternative stand's plate, and 4 would sit on another lead-in. The gates package draws the stand-number sign boards
   (8.5); these plates are the painted marking (6.2.16).
-- **Stand safety lines:** red 0.1 m (6.2.18). Each is a multi-segment line from the class reference aircraft: nose at the
-  stop node; fuselage + B; wing leading edge; wingtip + B, back to the tail + 3 m. B comes from table 4.13.5 (C 4.5 m,
+- **Stand safety lines:** red 0.1 m (6.2.18). Each is a multi-segment line from the class reference aircraft: nose tip
+  `nose_gear_m` ahead of the stop node (C 5.07 m, E 6.67 m, EL 5.89 m ...: `sha_stands.json` class_ref); fuselage + B; wing leading edge; wingtip + B, back to the tail + 3 m. B comes from table 4.13.5 (C 4.5 m,
   D-F 7.5 m) and the nose clearance is 3.75 m (note a). Where the line runs inside a neighbour's envelope it is dashed
   (1.0 / 0.5 m), and the overlap of the two envelopes is hatched at 45° (0.1 m lines, 2 m clear): 91 overlaps.
 - **Bridge activity areas** (56 contact stands with a bridge): a 9 m band from the rotunda to the docked cab + 2 m, red
@@ -239,8 +241,9 @@ and one loop per ground fragment near a runway, and returns at once elsewhere.
 
 1. **Nothing is observed at ZSSS:** the TDZ pattern (A drawn), numeral size (9 m), stripe length (45 m), enhanced
    centrelines, mandatory markings, sign positions and texts. They stay inf until a photo or an official chart shows them.
-2. **Stop line vs nose (5 m):** the stop line is drawn at the OSM stop node, which the stand data and the gates package
-   use as the nose tip. This needs one decision shared with the gates package.
+2. **Stop line vs nose (5 m): closed in fix round 1.** One convention for all packages: the OSM stop node is the
+   nose-wheel stop (6.2.16-7); the gates package parks by the nose-gear contact and the envelopes, safety lines, hatching
+   and equipment areas here are shifted by `nose_gear_m` (integration fix round 1).
 3. **Runway-end lead-on lines** (36 tangential OSM ends) are extended 60 m at 0.9 m clear of the CL. At the runway ends
    they run alongside the designation area (they are cut over the numerals). Whether ZSSS paints them is unknown.
 4. **Signs:** 85 candidates had no clear spot within 12 m and 65 arms were shorter than 35 m. Exit signs, runway-vacated,
@@ -268,3 +271,92 @@ and one loop per ground fragment near a runway, and returns at once elsewhere.
 - `js/live/caac_markings.js`: the CAAC table and helpers, for the lighting package and a later three.js path. Both
   should take dimensions from here rather than re-type them.
 - World items: decals `prog 'caacDecal'` and signs `prog 'caacSign'`, both `src: 'inf'`.
+
+## Fix round 1 (2026-11-21)
+
+Findings from `review_visual.md` assigned to this package. Files changed: `js/live/markings.js`, `js/live/caac_markings.js`,
+`js/live/caac_decals.js`, `js/shaders/ground.js`, `jobs/markings.mjs`, this report. `js/live/caac_signs.js` is unchanged.
+Check renders are in `out/fix1/markings/` (gitignored; `before/` was rendered with the Phase 2 code before any edit, `after/`
+with the fixed code); six before / after composites are in `docs/phase2/fix1_markings_*.png` (all from deviceScaleFactor 1
+renders, 1280 × 720 or 390 × 844). Snapshot mode console: `SCENES=snapshot jobs/integration.mjs` -> 0 errors, 0 warnings,
+0 page errors. None of the no-browser tests in `CLAUDE.md` touches these files; the four modules pass `node --check`.
+
+| Id | What changed | Evidence | Status |
+|---|---|---|---|
+| H1 | **Directional anti-aliasing footprints.** `js/shaders/ground.js` now takes `dFdx / dFdy(wp.xz)` in `main()` (uniform control flow) and passes them to the paint hook, whose signature is now `shaGroundPaint(wp, fw, dxy, apt, paved, rough)`. In `markings.js` every runway projects them on its axis `d` and normal `n` (`jx`, `jy` = d(s, t) per screen pixel), and every edge is smoothed over 0.6 × the footprint **along its normal**: along-track `fwS` for stripe ends, CL dash ends and their fade, bar, TDZ and aiming-point ends; across-track `fwT` for stripe sides, the stripe fade to mean density (`smoothstep(0.45, 1.1, fwT)`), CL width, edge stripes, TDZ / aiming-point sides, arrow shafts; the leg normal for chevrons and arrow-head legs. The numerals / letters use the footprint along the signed-distance gradient (finite difference over one footprint, `textureLod` at the footprint's minor axis, no implicit derivatives in the branch), and the clamped part of the field (beyond ±0.6 m) gets no coverage, so large footprints no longer paint a grey box. Stripes and CL dashes use centred coordinates (symmetric edge ramps). All values `inf` (rendering choices, not dimensions). | `fix1_markings_stripes.png`: the four `rwy:` views (1280 × 720) now show **6 + 6 = 12** stripes at 18L and 36R and **8 + 8 = 16** at 18R and 36L, counted in the renders (before: two solid blocks each); the letter and number read as separate glyphs (they are only 3-4 px tall at 420 m, so legible only as shapes). `fix1_markings_phone.png`: the same counts at 390 × 844 (`MOBILE=1`), 36L 16 and 18L 12 (before: blocks). `fix1_markings_water_far.png` (lower part): `end:36R,800,3000,4` from 3 km: edge stripes, CL dashes and TDZ now visible where the old paint was a blur; no moiré. Shimmer proxy: two renders 0.7 m apart, runway window mean \|Δ\| 0.13 -> 0.17 grey levels, p95 1 -> 1, while the paint contrast (std) rose 17.8 -> 20.2. | fixed |
+| M4 | **Runway markings win over lead-on lines** (6.2.1-2). `caac_decals.js` `rwyMarkWins(p)` replaces the numeral-only cut: taxiway lines are cut over the designation numerals (as before) and kept 0.9 m clear (the 6.2.8-3 clearance from the runway CL, applied to the CL arrows that stand in for it and to the bar, `inf`) of the displaced-threshold arrow heads and shafts and of the 1.8 m threshold bar; slivers under 1.5 m (3 m for the 60 m parallels) are dropped. **Only lead-ons in a displaced portion's take-off direction** keep their 60 m parallel: 4 of 36 point towards the pavement end (18R/36L, s = 99 and 3191 m, both sides) and are dropped (`info.decals.centrelines.leadOnsDroppedInDisplacedPortion`); their curves remain up to the arrow cut. | `fix1_markings_rwy_36L.png`: before, two yellow lines through the arrow heads; after, the lines stop short of each head and run 0.9 m clear of the shafts; the top view of the 36L displaced portion shows no yellow over arrows or bar. `after/a2_endtop_18R_40_330.png`: 18R bar and arrow clear. | fixed |
+| M6 (shader) | Water body albedo 0.016 / 0.022 / 0.016 -> **0.050 / 0.060 / 0.045** (turbid green-brown), Fresnel with a **0.06 floor** (`mix(0.06, 1, (1 - N·V)^5)`), body weighted by (1 - F). Water with full coverage (wider than ~10 m) gets the full term; narrow drains (peak coverage < 0.9 in the 4 m map) stay body-only as before. `inf` rendering values. The dotted bank-kerb outlines are geometry in `terminals.js` (buildings package). | `fix1_markings_water_far.png`: overview pond (28, 35, 32) -> **(58, 66, 58)** sRGB at midday, close to the far rivers (47, 63, 76) and greener; the canals at grazing angle still pick up the sky, with a smaller jump. | fixed (shader part) |
+| M1 (a) | Apron night flood 0.06 -> **0.42 × albedo**, warm tint (1.0, 0.82, 0.6), varied by ±12 % over ~2 km and ±7 % over ~150 m: `APRON_FLOOD` / chunk `sha_apron_flood` in `js/shaders/ground.js` (`inf`, chosen against photos 12, 13, 19, 20; no fixture positions). The decal shader uses the same chunk (apron map from the ground uniforms), so lead-ins, safety lines and 设备区 boxes are lit like the apron. Runway / taxiway / stop-bar lighting is Phase 5 and not added. | `fix1_markings_night_apron.png` (21:30): apron concrete (22-28 grey) -> **(100-121, 87-106, 68-84)** sRGB, apron paint readable. Parked aircraft and GSE are not lit by the flood (other shaders: handoff). | partly (a done; b, c are Phase 5 / view-set decisions) |
+| L1 | **One source per end:** the chevrons cover the paved pad surface drawn by the ground (`runways[].blast_pads` ring, via `js/geo.js` `blastPads`), with `aip_facts.blast_pad_m` only as a fallback. Reason: 6.2.25 marks the pre-threshold pavement "在跑道入口前的全长" (over its full length), and at 36L the paved surface is measured at 120 m (S2, two scenes, and Umbra agree within 3 m: `data/meas/rwy_ends.json`), whereas the AIP (mirror) gives 75 m (probably the declared blast pad only). 18L, 36R (60 m) and 18R (120 m) agree with the AIP. `SHA.markings.info()` carries `padSrc` per end, and the 36L entry states the conflict. | `fix1_markings_pads.png` top: 36L chevrons now cover the whole 120 m pad (before: the inner 75 m only). | fixed (doc corrections in airport.md / standards_refs.md: handoff) |
+| L10 | **Fig. 6.2.25 re-read** (300 dpi from the local copy): the last full chevron's apex is X/2 + X/4 before the line where the marking ends, so the nearest chevron is cut by that line. Only its outer legs, X/4 long, are painted, and its apex would lie X/4 inside the runway. The far end is cut ≤ 1.5 m from the pavement edge, and 0 ≤ W − X ≤ 15 m. **The Phase 2 offset is right** (`chevronLastLegFromThr` = X/4; the table comment now says why). New: no chevrons where taxiway / apron pavement crosses the pad (airfield map G channel > 0.5; the 18L end taxiway reaches ~4 m onto the pad; 18R and 36L have small overlaps, 36R none). | `fix1_markings_pads.png`: 18L pad, cut legs X/4 next to the pavement end, then full chevrons at 30 m; zoom: before, the legs ran onto the taxiway pavement; after, they stop at its edge. | fixed |
+
+Other effects: the decal build takes about 0.58 s (was 0.44-0.55 s). There are now 416 centreline pieces (was 412) and 32 lead-on
+parallels (36 tangential ends: 4 dropped). `jobs/markings.mjs` has a new `thr:<end>` view (the app's threshold view, same as
+`views.mjs rwy:`) for the stripe count. Commands:
+
+```
+SOFTGL=1 OUT=out/fix1/markings/after PREFIX=a1 T=snapshot VIEWS='rwy:18L;rwy:36R;rwy:18R;rwy:36L' node livetest.mjs jobs/views.mjs
+SOFTGL=1 MOBILE=1 W=390 H=844 OUT=out/fix1/markings/after PREFIX=a2phone T=snapshot VIEWS='rwy:36L;rwy:18L' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/markings/after PREFIX=a2 VIEWS='end:36R,800,3000,4;end:36R,800.7,3000,4;endtop:18L,-90,330;endtop:36L,-360,480;endtop:36L,-150,300;endtop:18R,40,330' node livetest.mjs jobs/markings.mjs
+SOFTGL=1 OUT=out/fix1/markings/after PREFIX=a2n T=2026-11-20T13:30:00Z VIEWS='park:229+230+231+233+234;t2pier@night_t2pier;stand:233,-,70,1,24@night_stand_233' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/markings/after PREFIX=a3 T=snapshot VIEWS='overview;t2' node livetest.mjs jobs/views.mjs
+SOFTGL=1 SCENES=snapshot node livetest.mjs jobs/integration.mjs
+```
+
+Open after this round: the numerals stay small in the threshold view because they are 9 m long and only 3-4 px tall at
+420 m. The ZSSS numeral size is not observed; 6.2.2-4 allows up to 2 ×. The apron flood is uniform until floodlight masts
+exist (M2). Aircraft and GSE are dark against the lit apron at night.
+
+### Integration notes (fix round 1, 2026-11-21)
+
+- **L1 correction.** `aip_facts.blast_pad_m` is [length, width] at both ends (AIP (mirror) AD 2.12: "120×75m on the both
+  ends" for 18R/36L, "60×60m" for 18L/36R), not one length per end. The Phase 2 code (and the L1 fix's `padAip`) read
+  index [1] = 75 m (the pad width) as the 36L length; that was the whole "36L conflict". `runwayPlan` now reads [0] at
+  both ends. Nothing on screen changes (the chevron length is the surface ring, 120 m at 18R and 36L), but `padSrc` for
+  36L now reads "paved pad surface 120 m = AIP (mirror) 120 m". No conflict was recorded in airport.md; it notes the
+  length × width reading instead, and standards_refs.md §1.3 / §1.4 have the fig. 6.2.25 reading.
+- **Stand envelopes on the nose-wheel convention** (gates hand-off): `buildStands` shifts each class planform forward by
+  `class_ref.<cls>.nose_gear_m`, so the red nose-clearance line no longer crosses a parked aircraft's nose. The stop line,
+  lead-in and alignment line stay at the stop node. The gates package's equipment-area idle stairs and the masts (which
+  avoid the painted envelopes) read the shifted rings; see integration.md for the counts.
+
+## Fix round 2 (2026-11-21)
+
+Findings from `review_visual_fix1.md` assigned to this package: N2, M1 (with N4, which M1 points to) and M4 (with N8,
+which M4 points to). Files changed: `js/shaders/ground.js`, `js/live/markings.js`, `js/live/caac_markings.js`,
+`js/live/caac_decals.js`, `jobs/markings.mjs`, this report. `js/live/caac_signs.js` is unchanged. Check renders are in
+`out/fix1/markings2/` (gitignored). `before/` was rendered with the fix round 1 code. For the night "before" state I used the
+reviewer's own renders (`view_night_*.png`, `out/review1/night/`). `after/` was rendered with this round's code; the
+buildings fixer's concurrent edits (fill rings, object flood) are in those renders too. Four composites are
+`docs/phase2/fix2_markings_*.png`, all from 1280 × 720 renders at deviceScaleFactor 1. Console: `SCENES=snapshot,park
+jobs/integration.mjs` -> both scenes clean (0 errors, 0 warnings, 0 page errors, 0 failed requests). The four night and
+five day runs below logged no warning either. None of the no-browser tests in `CLAUDE.md` touches these files; all five
+modules pass `node --check`.
+
+| Id | What changed | Evidence | Status |
+|---|---|---|---|
+| N2 | **The airside fill is lit at night.** A new **apron light map** is built in `markings.js` (`apronLightMap`, `groundUniforms`): RG8, 4 m per texel over the airfield-map rect. **R = lit area**: the aprons, plus any airside pavement that packages add through the `pavement()` hook. That pavement is found as `pavedAt` ≥ 0.5 with no core surface (runway, shoulder, blast pad, taxiway, helipad, apron) within one texel, so it is the T1 / T2 fill today (0.084 km², 5,256 texels) and any fill ring the buildings package adds later. R also carries a Gaussian spill past the area's edge (16 m: 0.2 at 20 m, 0.03 at 30 m, exact EDT). The approach is generic, so it does not depend on how `sha_buildings3d.json` stores the fill. `shaApronFlood` (chunk `sha_apron_flood`, same signature) now uses `lit = max(apron, R)` when `uApLightOn` = 1. Without the map (a program that does not set the uniform), it falls back to the fix round 1 flood. The decal shader uses the same uniforms, so paint on the fill is lit. Its flood sample now runs in uniform control flow (the rect test multiplies). All values are inf (`CAAC.apronFlood`). | `fix2_markings_night_fill.png`. T2 pier fill at 21:30: (32, 28, 21) -> **(73, 64, 51)** sRGB mean, and (39, 34, 28) -> (84, 74, 60) on the north side (`after/a3n_night_t2pier.png`). Under the stand 233 bridge: (0, 0, 1) -> **(59, 51, 42)** (`after/a3n_night_stand_233.png`). The fill reads as lit, darker asphalt beside the concrete. The difference is the albedo (0.085 against 0.30), not the light. | fixed |
+| M1 (with N4) | **The flood is no longer one even sheet with a hard polygon edge.** (1) The R spill gives a ~20-30 m soft edge onto the taxiway and the grass beyond the apron. (2) **G = mast pools.** In the first frame after the gates package has placed its masts (its `start()` runs after ours, so the `frame` hook reads `SHA.qa.masts()` once), `applyMastPools` sums `1 / (1 + (d / 60 m)²)` over the 73 masts. Each pool is centred 25 m ahead of its mast along its facing and truncated continuously at 360 m. The sum is normalised to the mean over the painted stand envelopes (9.2.6: the stand average is the reference), clamped to [**0.5** (9.2.6-2: other apron areas ≥ 50 % of the stand average, which also meets the 4:1 avg:min uniformity of 9.2.6-1), 1.8] and scaled by one gain so that the mean over the lit area stays at the fix round 1 level (the reviewer measured and accepted that level). The page reports gain 1.276, stand mean ×1.28, lit minimum ×0.64, maximum ×2.30. The cost is paid once: the map takes about 120 ms at build, the pools about 95-145 ms in their first frame. The texture is updated in place, so every holder of the reference sees it (the buildings package's object flood reads the same map, `objects.js shaObjFlood`). Sums from neighbouring masts give each stand light from more than one direction, in the spirit of 9.2.2. `SHA.markings.apronLight()` returns the statistics and `at(x, z)` → [lit, factor]. `jobs/markings.mjs` prints them. N3 (unlit aircraft) belongs to other packages; the buildings fixer's object flood is visible on GSE and bridges in the after renders, but the aircraft are still dark. | `fix2_markings_night_pools.png` (east apron from 900 m): before, one flat tone (p5 / p50 / p95 = 81 / 94 / 103 on the open apron). After, pools around the mast rows and a dimmer apron between them (T2 view open apron p50 94 -> 70, pools p95 up to 133-144). Column profile across the lower apron edge: 65 -> 1 within 8 px before, 55 -> 14 -> 2 after. | partly (N2 and N4 parts fixed; aircraft lighting, N3, is outside this package) |
+| M4 | **Inner crossings at 36L / 18R.** A node probe that replicates the lead-on logic against `sha_airport.json` (scratch, not committed) shows that the parallels beside the arrow shafts between s = 3177-3237 (36L) and 65-125 (18R) are **not** the backtrack pair's. They are the 60 m take-off-direction parallels of the **outermost** lead-ons (36L s = 3237 heading north, 18R s = 65 heading south: 6.2.8-5, allowed). The backtrack pair (s = 3191 / 99, heading towards the pavement end; already without a parallel) was clamped onto the same 0.9 m line at its tangent point, so it merged into those parallels and read as a curve continuing towards the pavement end. The reviewer's "outermost crossings s = 99 / 3191" are the second crossings; the outermost are at 65 / 3237. Fix: `leadOnAllowed` is now applied **before** the clamp. A backtrack curve is no longer clamped onto the 0.9 m offset; it is cut where it comes within 0.9 m (`CAAC.taxiway.backtrackClear`, inf, the 6.2.8-3 clearance by analogy) of that line, within 40 m of its tangent point. Counter: `backtrackCurvesStoppedClear` = 4. | `fix2_markings_leadons.png` (80 m top views, `before/b_endtop_36L_-200_80.png` vs `after/a2_endtop_36L_-200_80.png`, and the same for 18R). Before, both backtrack curves ran into the lead-on line. After, they end visibly short of it, and the only parallels are the outer pairs'. The 300 m views requested by the reviewer are `after/a2_endtop_36L_-150_300.png` and `a2_endtop_18R_-150_300.png`. At that scale (3 px per m) the difference is a few pixels; the 80 m pair is the readable evidence. | fixed |
+| N8 (part of M4) | **Continuous across threshold marking (6.2.8-3, fig. 6.2.8-2).** `rwyMarkWins` now cuts only at the designation numerals (6.2.1-2). The threshold bar and the arrow legs / shafts are no longer cut. The take-off parallels therefore cross the arrow-head legs in the displaced portions (as the clause requires), and crossing centrelines run over the 1.8 m bar. Recorded in `caac_markings.js` as `taxiway.crossThreshold` (6.2.8-3), `cutAtDesignation` (6.2.1-2) and `backtrackClear` (inf). Centreline pieces 416 -> 408. | `fix2_markings_thr_bar.png`: 18L before (gap 0.9 m above and below the bar), after (continuous); the "L" cut above the stripes is unchanged. | fixed |
+
+Hand-offs: none required. The light-map uniforms (`uApLight`, `uApLightRect`, `uApLightOn` in `app.world.groundU`) and
+`APRON_FLOOD.gScale` (2.5) are a stable interface. The buildings package already reads them in `objects.js` / `app.js` for
+the object flood, and the aircraft programs can do the same. Keep the texture reference: it is updated in place.
+
+Commands (from `sha3d/`):
+
+```
+SOFTGL=1 OUT=out/fix1/markings2/before PREFIX=b VIEWS='endtop:36L,-150,300;endtop:36L,-120,110;endtop:18R,-120,110' node livetest.mjs jobs/markings.mjs
+SOFTGL=1 OUT=out/fix1/markings2/before PREFIX=b VIEWS='endtop:36L,-200,80;endtop:18R,-200,80;endtop:18R,-150,300' node livetest.mjs jobs/markings.mjs
+SOFTGL=1 OUT=out/fix1/markings2/after PREFIX=a2 VIEWS='endtop:36L,-150,300;endtop:36L,-200,80;endtop:18R,-150,300;endtop:18R,-200,80;endtop:18L,30,160' node livetest.mjs jobs/markings.mjs
+SOFTGL=1 OUT=out/fix1/markings2/after PREFIX=a3n T=2026-11-20T13:30:00Z VIEWS='park:229+230+231+233+234;t2pier@night_t2pier;stand:233,-,70,1,24@night_stand_233;look:600,2.5,-300,250,22,900@night_east_apron;look:-760.58,2.5,-138.65,250,30,260@night_233_far' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix1/markings2/integ SCENES=snapshot,park node livetest.mjs jobs/integration.mjs
+```
+
+Open after this round:
+- The fill is asphalt, and lit asphalt stays darker than lit concrete. Photos 13 / 19 show this band as the brightest part
+  of the apron, which the albedo of the fill (buildings N6) would have to answer. The mast pools are as good as the
+  inferred mast positions (gates N5: they move between quality tiers, and the pools follow them).
+- The light map has 4 m texels. Where the fill meets grass its edge is soft, not the crisp 1 m edge of the apron; the
+  spill hides most of it. Aircraft and bridges cast no shadow in the flood (the masts are not shadow casters).

@@ -29,7 +29,7 @@ export function aboutHtml(info = {}) {
   const { s2 } = info;
   return `
 <h3>About SHA Live 3D</h3>
-<p>A 3-D model of <b>Shanghai Hongqiao International Airport</b> (ZSSS / SHA), built from open data.</p>
+<p>A 3-D model of <b>Shanghai Hongqiao International Airport</b> (ZSSS / SHA), built from open data. Times are Beijing time (UTC+8).</p>
 <p class="note-strong"><b>Hongqiao traffic is simulated and inferred, not observed.</b> Open ADS-B receivers do not cover Hongqiao:
 in three full days of the open adsb.lol archive (8, 10 and 12 November 2026) none of its about 780 daily movements was seen. When traffic is added (Phase 3) every
 aircraft will be generated from published facts and rules and labelled <span class="srcchip inf">inf</span>; real flights seen by
@@ -96,6 +96,9 @@ depiction; no endorsement is implied. Aircraft type names are trademarks of thei
 <ul>
 <li>No ATC audio: no lawful, verified source exists for Hongqiao.</li>
 <li>No airport flight-board data, no Google, Baidu or Amap imagery, no OpenSky data.</li>
+<li><b>Airfield lighting: not modelled yet (Phase 5).</b> Night views show no runway or taxiway lights, stop bars, guard
+lights or approach lights, so they are not a picture of the real airfield at night. The apron glow (also on the aircraft,
+vehicles and jet bridges standing on the apron), the floodlight-mast lamps and the lit signs and windows are inferred.</li>
 </ul>
 
 <h4>Controls</h4>
