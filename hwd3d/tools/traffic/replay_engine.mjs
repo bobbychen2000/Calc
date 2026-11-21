@@ -112,7 +112,7 @@ const PL = { teleports: 0, teleports_hwd: 0, teleports_engine: 0, teleports_sign
   roll_yaw_rate_frames: 0, roll_speed_mismatch_frames: 0, hard_stops_fade: 0, hidden_rolling: 0, liftoff_pitch_dip: 0, label_landing_roll_rotating: 0,
   off_pavement_moving_frames: 0, low_bank_landing_frames: 0, r4i3Log: [],
   // round 5 (docs/phase2_run.md section 13): see r5Frame
-  postland_toflaps_frames: 0, postland_toflaps_view_frames: 0, low_roll_rate_frames: 0, taxi_speed_mismatch_frames: 0, label_lowpass_after_liftoff: 0,
+  postland_toflaps_frames: 0, postland_toflaps_view_frames: 0, low_roll_rate_frames: 0, low_roll_rate_turn_frames: 0, taxi_speed_mismatch_frames: 0, label_lowpass_after_liftoff: 0,
   forced_low_bank_frames: 0, forced_speed_drop_frames: 0, handover_rate_frames: 0, handover_rate_raw_frames: 0, r5Log: [] };
 // runway rectangle test (site.runways axes; m = extra half-width) - the pavement a take-off / landing roll uses
 const onRwy = (x, z, m = 3) => (site.runways || []).some(r => { const px = x - r.origin[0], pz = z - r.origin[1], al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; return al >= 0 && al <= r.length && Math.abs(ac) <= r.halfWidth + m; });
@@ -620,6 +620,9 @@ function r4i2Frame(tr, D, td, t, s1, agl, kt, lab, P, R0, VR, near, rollD) {
 //                                (disp.flapsT) at the take-off setting; postland_toflaps_view_frames: the same for the detailed models' rule
 //                                (js/live/aircraft.js flapRuleOf, run here per track with its drive latch) giving the take-off setting
 //   low_roll_rate_frames         V2: airborne within 3 km of the ARP below 200 ft AGL, the drawn bank changing faster than 5 deg/s over 0.3 s
+//                                (wing rock: an unforced roll). INFO low_roll_rate_turn_frames: the same where the engine's bank was catching
+//                                up with the coordinated bank of the body's own turn (disp.rollCatch: the drawn path turns harder than a
+//                                5-deg/s roll can follow, and the bank may not lag it by more than 8 deg - roll_turn_samples)
 //   taxi_speed_mismatch_frames   V3: on the ground within 3 km, shown speed 2-30 kt in both frames 0.3 s apart, the drawn position's speed
 //                                differing from the mean shown speed by more than 1.5 kt (fix-following taxi stutter)
 //   label_lowpass_after_liftoff  V4: 'Low pass' or 'Final' within 30 s after a drawn lift-off from a roll (>= 0.6 VR) while the body climbs or
@@ -635,7 +638,7 @@ const R5 = new Map(), FLAPSET = { PC12: [0, 15, 30, 40], SF50: [0, 15, 39] };
 const r5Log = (...a) => { if (PL.r5Log.length < 900) PL.r5Log.push(a); };
 function r5Frame(tr, D, td, t, s1, agl, kt, lab) {
   const P = R5.get(tr.key) || { h: [], S: {}, prev: null }; R5.set(tr.key, P);
-  const H = P.h; H.push([td, D.gs, D.ground, D.x, D.z, D.alpha, (D.roll || 0) * 180 / Math.PI, D.vs || 0, tr._tgtMode || '']); while (H.length && H[0][0] < td - 6100) H.shift();
+  const H = P.h; H.push([td, D.gs, D.ground, D.x, D.z, D.alpha, (D.roll || 0) * 180 / Math.PI, D.vs || 0, tr._tgtMode || '', !!D.rollCatch]); while (H.length && H[0][0] < td - 6100) H.shift();
   const at = (s) => { for (let k = H.length - 1; k >= 0; k--) if (H[k][0] <= td - s * 1000 + 1) return H[k]; return null; };
   const near = Math.hypot(D.x, D.z) < 3000, mode = tr._tgtMode || '', ph = tr.phase;
   // V1 (the state of the previous frame: the engine sets its flap target before the frame's label; a landing roll / touch-and-go roll keeps
@@ -652,7 +655,9 @@ function r5Frame(tr, D, td, t, s1, agl, kt, lab) {
   const q3 = at(0.3);
   if (q3 && td - q3[0] < 400 && q3[5] > 0.99 && D.alpha > 0.99) { const dt = (td - q3[0]) / 1000;
     // V2
-    if (!D.ground && !q3[2] && near && agl < 200) { const rr = Math.abs((D.roll || 0) * 180 / Math.PI - q3[6]) / dt; if (rr > 5.05) { PL.low_roll_rate_frames++; if (!P.rr || td - P.rr > 1000) { P.rr = td; r5Log('low_roll_rate', t, lab, +rr.toFixed(1), Math.round(agl), mode); } } }
+    if (!D.ground && !q3[2] && near && agl < 200) { const rr = Math.abs((D.roll || 0) * 180 / Math.PI - q3[6]) / dt; if (rr > 5.05) { const forced = H.some(q => q[0] >= q3[0] && q[9]);
+        if (forced) PL.low_roll_rate_turn_frames++;
+        else { PL.low_roll_rate_frames++; if (!P.rr || td - P.rr > 1000) { P.rr = td; r5Log('low_roll_rate', t, lab, +rr.toFixed(1), Math.round(agl), mode); } } } }
     // V3
     if (D.ground && q3[2] && near && kt > 2 && kt < 30 && q3[1] > 2 * 0.514444 && q3[1] < 30 * 0.514444) { const vp = Math.hypot(D.x - q3[3], D.z - q3[4]) / dt, vs = 0.5 * (D.gs + q3[1]);
       if (Math.abs(vp - vs) > 1.5 * 0.514444) { PL.taxi_speed_mismatch_frames++; if (!P.tm || td - P.tm > 1000) { P.tm = td; r5Log('taxi_speed_mismatch', t, lab, +(vp / 0.514444).toFixed(1), +(vs / 0.514444).toFixed(1), ph, mode); } } } }
@@ -672,8 +677,12 @@ function r5Frame(tr, D, td, t, s1, agl, kt, lab) {
       if (dv > 1.2 || dvs > 1.5) { PL.handover_rate_raw_frames++;
         // the fix-following target's OWN rates over the same second (no plan, no blend): a climb whose reports change speed / vertical
         // speed faster than the limit is the data, not the hand-over; counted only where the drawn rate exceeds the data's by > 0.3
-        const A = traffic.target0(tr, td, { peek: true, noX: true }), B = traffic.target0(tr, td - 1000, td - 1000 <= P.ho ? { peek: true } : { peek: true, noX: true });
-        const rv = Math.abs(Math.hypot(A.vx, A.vz) - Math.hypot(B.vx, B.vz)), rvs = Math.abs((A.vy || 0) - (B.vy || 0));
+        // (from the target's POSITIONS, differenced over 0.2 s: the vertical Hermite's vy field is the linear blend of its end slopes, not its
+        // derivative - an altitude step in the fixes moved the target 100 ft in 1.4 s at a vy of 4.9 m/s, and the gate blamed the hand-over)
+        const tg = (tq) => traffic.target0(tr, tq, tq <= P.ho ? { peek: true } : { peek: true, noX: true });
+        const vel = (tq) => { const A1 = tg(tq), A0 = tg(tq - 200), Ax = { x: A1.x, z: A1.z, y: A1.y }; return [Math.hypot(Ax.x - A0.x, Ax.z - A0.z) / 0.2, (Ax.y - A0.y) / 0.2]; };
+        const VA = vel(td), VB = vel(td - 1000);
+        const rv = Math.abs(VA[0] - VB[0]), rvs = Math.abs(VA[1] - VB[1]);
         if ((dv > 1.2 && dv > rv + 0.3) || (dvs > 1.5 && dvs > rvs + 0.3)) { PL.handover_rate_frames++; if (s1) r5Log('handover_rate', t, lab, +dv.toFixed(2), +rv.toFixed(2), +dvs.toFixed(2), +rvs.toFixed(2), Math.round(agl), mode); } } } }
 }
 const R43 = new Map();
@@ -849,7 +858,7 @@ const CHECKS = { teleports_engine: [PL.teleports_engine, 0], teleports_signal_hw
   const nApp = fixesWith('app'), nOld = fixesWith('tstart'), okB = nApp === 3 && nOld === 1;
   CHECKS.planted_open_burst = [okB ? 0 : 1, 0]; PL.planted_open_burst = [nApp, nOld]; }
 // reported, not gated: transitions without a take-off / landing plan (the straight fallback chord) - review round 2, finding 5
-const INFO = { open: OPEN, lookahead_s: L, label_vertical_info: PL.label_vertical_info, air_float_runway_reported: PL.air_float_runway_reported, air_substall_reported: PL.air_substall_reported, label_taxi_stopped_tracks: PL.label_taxi_stopped_tracks, tg_checked: PL.tg_checked, m3_hidden_takeoffs: PL.m3_hidden_takeoffs, air_pair_close_reported: PL.air_pair_close_reported, transition_linear: traffic.counters.transitionLinear || 0, transition_plans: traffic.counters.transitionPlans || 0, transition_fallback: traffic.counters.transitionFallback || 0, teleports_per_h: +(PL.teleports / hrs).toFixed(1), window_reentries: PL.window_reentries };
+const INFO = { open: OPEN, lookahead_s: L, label_vertical_info: PL.label_vertical_info, air_float_runway_reported: PL.air_float_runway_reported, air_substall_reported: PL.air_substall_reported, label_taxi_stopped_tracks: PL.label_taxi_stopped_tracks, tg_checked: PL.tg_checked, m3_hidden_takeoffs: PL.m3_hidden_takeoffs, air_pair_close_reported: PL.air_pair_close_reported, transition_linear: traffic.counters.transitionLinear || 0, transition_plans: traffic.counters.transitionPlans || 0, transition_fallback: traffic.counters.transitionFallback || 0, teleports_per_h: +(PL.teleports / hrs).toFixed(1), window_reentries: PL.window_reentries, low_roll_rate_turn_frames: PL.low_roll_rate_turn_frames, handover_rate_raw_frames: PL.handover_rate_raw_frames };
 const FAILED = Object.entries(CHECKS).filter(([k, [v, lim]]) => v > lim).map(([k]) => k);
 // end of the window: decide what is still open (contexts that would time out after it)
 for (const tr of traffic.tracks.values()) for (const e of traffic.classifier.flush(tr, tEnd * 1000 + 3600e3)) traffic.event(e);
