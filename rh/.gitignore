@@ -1,0 +1,5 @@
+audio/*.wav
+out/
+__pycache__/
+*.pyc
+data/zeta_data.npz

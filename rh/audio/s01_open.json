@@ -1,0 +1,666 @@
+{
+ "scene": "s01_open",
+ "duration": 36.775,
+ "sr": 24000,
+ "voice": "af_heart",
+ "speed": 1.0,
+ "words": [
+  {
+   "w": "On",
+   "spoken": "On",
+   "start": 0.7,
+   "end": 0.812
+  },
+  {
+   "w": "November",
+   "spoken": "November",
+   "start": 0.812,
+   "end": 1.2
+  },
+  {
+   "w": "twentieth,",
+   "spoken": "twentieth,",
+   "start": 1.2,
+   "end": 1.9
+  },
+  {
+   "w": "2026,",
+   "spoken": "twenty twenty-six,",
+   "start": 1.9,
+   "end": 3.0
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 3.0,
+   "end": 3.1
+  },
+  {
+   "w": "mathematician",
+   "spoken": "mathematician",
+   "start": 3.1,
+   "end": 3.875
+  },
+  {
+   "w": "Levent",
+   "spoken": "Levent",
+   "start": 3.875,
+   "end": 4.2
+  },
+  {
+   "w": "Alpöge",
+   "spoken": "Alpöge",
+   "start": 4.2,
+   "end": 4.65
+  },
+  {
+   "w": "posted",
+   "spoken": "posted",
+   "start": 4.65,
+   "end": 4.987
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 4.987,
+   "end": 5.062
+  },
+  {
+   "w": "four-page",
+   "spoken": "four-page",
+   "start": 5.062,
+   "end": 5.575
+  },
+  {
+   "w": "note.",
+   "spoken": "note.",
+   "start": 5.575,
+   "end": 6.4
+  },
+  {
+   "w": "He",
+   "spoken": "He",
+   "start": 6.4,
+   "end": 6.525
+  },
+  {
+   "w": "wrote",
+   "spoken": "wrote",
+   "start": 6.525,
+   "end": 6.713
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 6.713,
+   "end": 6.825
+  },
+  {
+   "w": "he",
+   "spoken": "he",
+   "start": 6.825,
+   "end": 6.95
+  },
+  {
+   "w": "believes",
+   "spoken": "believes",
+   "start": 6.95,
+   "end": 7.45
+  },
+  {
+   "w": "that,",
+   "spoken": "that,",
+   "start": 7.45,
+   "end": 7.725
+  },
+  {
+   "w": "working",
+   "spoken": "working",
+   "start": 7.725,
+   "end": 8.037
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 8.037,
+   "end": 8.2
+  },
+  {
+   "w": "Claude,",
+   "spoken": "Claude,",
+   "start": 8.2,
+   "end": 8.825
+  },
+  {
+   "w": "he",
+   "spoken": "he",
+   "start": 8.825,
+   "end": 8.912
+  },
+  {
+   "w": "has",
+   "spoken": "has",
+   "start": 8.912,
+   "end": 9.075
+  },
+  {
+   "w": "found",
+   "spoken": "found",
+   "start": 9.075,
+   "end": 9.287
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 9.287,
+   "end": 9.362
+  },
+  {
+   "w": "proof",
+   "spoken": "proof",
+   "start": 9.362,
+   "end": 9.662
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 9.662,
+   "end": 9.737
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 9.737,
+   "end": 9.825
+  },
+  {
+   "w": "Riemann",
+   "spoken": "Riemann",
+   "start": 9.825,
+   "end": 10.125
+  },
+  {
+   "w": "Hypothesis,",
+   "spoken": "Hypothesis,",
+   "start": 10.125,
+   "end": 11.275
+  },
+  {
+   "w": "perhaps",
+   "spoken": "perhaps",
+   "start": 11.275,
+   "end": 11.662
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 11.662,
+   "end": 11.737
+  },
+  {
+   "w": "most",
+   "spoken": "most",
+   "start": 11.737,
+   "end": 12.012
+  },
+  {
+   "w": "famous",
+   "spoken": "famous",
+   "start": 12.012,
+   "end": 12.462
+  },
+  {
+   "w": "open",
+   "spoken": "open",
+   "start": 12.462,
+   "end": 12.775
+  },
+  {
+   "w": "problem",
+   "spoken": "problem",
+   "start": 12.775,
+   "end": 13.188
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 13.188,
+   "end": 13.262
+  },
+  {
+   "w": "mathematics.",
+   "spoken": "mathematics.",
+   "start": 13.262,
+   "end": 14.612
+  },
+  {
+   "w": "Instead",
+   "spoken": "Instead",
+   "start": 14.612,
+   "end": 14.962
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 14.962,
+   "end": 15.037
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 15.037,
+   "end": 15.1
+  },
+  {
+   "w": "written",
+   "spoken": "written",
+   "start": 15.1,
+   "end": 15.35
+  },
+  {
+   "w": "proof,",
+   "spoken": "proof,",
+   "start": 15.35,
+   "end": 15.925
+  },
+  {
+   "w": "he",
+   "spoken": "he",
+   "start": 15.925,
+   "end": 16.05
+  },
+  {
+   "w": "posted",
+   "spoken": "posted",
+   "start": 16.05,
+   "end": 16.462
+  },
+  {
+   "w": "17 million",
+   "spoken": "seventeen million",
+   "start": 16.462,
+   "end": 17.45
+  },
+  {
+   "w": "lines",
+   "spoken": "lines",
+   "start": 17.45,
+   "end": 17.762
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 17.762,
+   "end": 17.85
+  },
+  {
+   "w": "Lean,",
+   "spoken": "Lean,",
+   "start": 17.85,
+   "end": 18.512
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 18.512,
+   "end": 18.625
+  },
+  {
+   "w": "language",
+   "spoken": "language",
+   "start": 18.625,
+   "end": 19.075
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 19.075,
+   "end": 19.162
+  },
+  {
+   "w": "which",
+   "spoken": "which",
+   "start": 19.162,
+   "end": 19.312
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 19.312,
+   "end": 19.375
+  },
+  {
+   "w": "computer",
+   "spoken": "computer",
+   "start": 19.375,
+   "end": 19.787
+  },
+  {
+   "w": "checks",
+   "spoken": "checks",
+   "start": 19.787,
+   "end": 20.125
+  },
+  {
+   "w": "every",
+   "spoken": "every",
+   "start": 20.125,
+   "end": 20.425
+  },
+  {
+   "w": "step.",
+   "spoken": "step.",
+   "start": 20.425,
+   "end": 21.363
+  },
+  {
+   "w": "A",
+   "spoken": "A",
+   "start": 21.363,
+   "end": 21.475
+  },
+  {
+   "w": "day",
+   "spoken": "day",
+   "start": 21.475,
+   "end": 21.675
+  },
+  {
+   "w": "later,",
+   "spoken": "later,",
+   "start": 21.675,
+   "end": 22.325
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 22.325,
+   "end": 22.462
+  },
+  {
+   "w": "Lean",
+   "spoken": "Lean",
+   "start": 22.462,
+   "end": 22.825
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 22.825,
+   "end": 22.95
+  },
+  {
+   "w": "Mathlib",
+   "spoken": "Mathlib",
+   "start": 22.95,
+   "end": 23.4
+  },
+  {
+   "w": "communities",
+   "spoken": "communities",
+   "start": 23.4,
+   "end": 23.95
+  },
+  {
+   "w": "wrote",
+   "spoken": "wrote",
+   "start": 23.95,
+   "end": 24.2
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 24.2,
+   "end": 24.312
+  },
+  {
+   "w": "they",
+   "spoken": "they",
+   "start": 24.312,
+   "end": 24.45
+  },
+  {
+   "w": "have,",
+   "spoken": "have,",
+   "start": 24.45,
+   "end": 25.012
+  },
+  {
+   "w": "quote,",
+   "spoken": "quote,",
+   "start": 25.012,
+   "end": 25.462
+  },
+  {
+   "w": "full",
+   "spoken": "full",
+   "start": 25.462,
+   "end": 25.725
+  },
+  {
+   "w": "confidence",
+   "spoken": "confidence",
+   "start": 25.725,
+   "end": 26.35
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 26.35,
+   "end": 26.462
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 26.462,
+   "end": 26.562
+  },
+  {
+   "w": "proof",
+   "spoken": "proof",
+   "start": 26.562,
+   "end": 26.875
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 26.875,
+   "end": 27.025
+  },
+  {
+   "w": "correct.",
+   "spoken": "correct.",
+   "start": 27.025,
+   "end": 27.925
+  },
+  {
+   "w": "Let's",
+   "spoken": "Let's",
+   "start": 28.85,
+   "end": 29.05
+  },
+  {
+   "w": "see",
+   "spoken": "see",
+   "start": 29.05,
+   "end": 29.212
+  },
+  {
+   "w": "what",
+   "spoken": "what",
+   "start": 29.212,
+   "end": 29.337
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 29.337,
+   "end": 29.425
+  },
+  {
+   "w": "zeta",
+   "spoken": "zeta",
+   "start": 29.425,
+   "end": 29.75
+  },
+  {
+   "w": "function",
+   "spoken": "function",
+   "start": 29.75,
+   "end": 30.162
+  },
+  {
+   "w": "is,",
+   "spoken": "is,",
+   "start": 30.162,
+   "end": 30.75
+  },
+  {
+   "w": "what",
+   "spoken": "what",
+   "start": 30.75,
+   "end": 30.887
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 30.887,
+   "end": 30.975
+  },
+  {
+   "w": "hypothesis",
+   "spoken": "hypothesis",
+   "start": 30.975,
+   "end": 31.65
+  },
+  {
+   "w": "says,",
+   "spoken": "says,",
+   "start": 31.65,
+   "end": 32.2
+  },
+  {
+   "w": "why",
+   "spoken": "why",
+   "start": 32.2,
+   "end": 32.438
+  },
+  {
+   "w": "primes",
+   "spoken": "primes",
+   "start": 32.438,
+   "end": 32.85
+  },
+  {
+   "w": "care,",
+   "spoken": "care,",
+   "start": 32.85,
+   "end": 33.525
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 33.525,
+   "end": 33.638
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 33.638,
+   "end": 33.763
+  },
+  {
+   "w": "idea",
+   "spoken": "idea",
+   "start": 33.763,
+   "end": 34.15
+  },
+  {
+   "w": "behind",
+   "spoken": "behind",
+   "start": 34.15,
+   "end": 34.562
+  },
+  {
+   "w": "this",
+   "spoken": "this",
+   "start": 34.562,
+   "end": 34.737
+  },
+  {
+   "w": "claimed",
+   "spoken": "claimed",
+   "start": 34.737,
+   "end": 35.138
+  },
+  {
+   "w": "proof.",
+   "spoken": "proof.",
+   "start": 35.138,
+   "end": 35.925
+  }
+ ],
+ "chunks": [
+  {
+   "text": "On November twentieth, 2026,",
+   "start": 0.7,
+   "end": 3.0
+  },
+  {
+   "text": "the mathematician Levent Alpöge posted a four-page note.",
+   "start": 3.0,
+   "end": 6.4
+  },
+  {
+   "text": "He wrote that he believes that, working with Claude,",
+   "start": 6.4,
+   "end": 8.825
+  },
+  {
+   "text": "he has found a proof of the Riemann Hypothesis,",
+   "start": 8.825,
+   "end": 11.275
+  },
+  {
+   "text": "perhaps the most famous open problem in mathematics.",
+   "start": 11.275,
+   "end": 14.612
+  },
+  {
+   "text": "Instead of a written proof, he posted 17 million lines of Lean,",
+   "start": 14.612,
+   "end": 18.512
+  },
+  {
+   "text": "a language in which a computer checks every step.",
+   "start": 18.512,
+   "end": 21.363
+  },
+  {
+   "text": "A day later, the Lean and Mathlib communities wrote that they have,",
+   "start": 21.363,
+   "end": 25.012
+  },
+  {
+   "text": "quote, full confidence that the proof is correct.",
+   "start": 25.012,
+   "end": 27.925
+  },
+  {
+   "text": "Let's see what the zeta function is, what the hypothesis says,",
+   "start": 28.85,
+   "end": 32.2
+  },
+  {
+   "text": "why primes care, and the idea behind this claimed proof.",
+   "start": 32.2,
+   "end": 35.925
+  }
+ ],
+ "cues": {
+  "title": 0.7,
+  "lean": 14.612,
+  "joint": 21.363,
+  "plan": 28.85
+ }
+}

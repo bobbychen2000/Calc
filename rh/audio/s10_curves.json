@@ -1,0 +1,709 @@
+{
+ "scene": "s10_curves",
+ "duration": 43.425,
+ "sr": 24000,
+ "voice": "af_heart",
+ "speed": 1.0,
+ "words": [
+  {
+   "w": "In",
+   "spoken": "In",
+   "start": 0.725,
+   "end": 0.812
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 0.812,
+   "end": 0.875
+  },
+  {
+   "w": "parallel",
+   "spoken": "parallel",
+   "start": 0.875,
+   "end": 1.375
+  },
+  {
+   "w": "world,",
+   "spoken": "world,",
+   "start": 1.375,
+   "end": 1.95
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 1.95,
+   "end": 2.1
+  },
+  {
+   "w": "analogous",
+   "spoken": "analogous",
+   "start": 2.1,
+   "end": 2.6
+  },
+  {
+   "w": "hypothesis",
+   "spoken": "hypothesis",
+   "start": 2.6,
+   "end": 3.35
+  },
+  {
+   "w": "has",
+   "spoken": "has",
+   "start": 3.35,
+   "end": 3.5
+  },
+  {
+   "w": "been",
+   "spoken": "been",
+   "start": 3.5,
+   "end": 3.7
+  },
+  {
+   "w": "proved",
+   "spoken": "proved",
+   "start": 3.7,
+   "end": 4.075
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 4.075,
+   "end": 4.2
+  },
+  {
+   "w": "decades.",
+   "spoken": "decades.",
+   "start": 4.2,
+   "end": 5.425
+  },
+  {
+   "w": "Do",
+   "spoken": "Do",
+   "start": 5.425,
+   "end": 5.65
+  },
+  {
+   "w": "arithmetic",
+   "spoken": "arithmetic",
+   "start": 5.65,
+   "end": 6.325
+  },
+  {
+   "w": "on",
+   "spoken": "on",
+   "start": 6.325,
+   "end": 6.463
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 6.463,
+   "end": 6.538
+  },
+  {
+   "w": "clock",
+   "spoken": "clock",
+   "start": 6.538,
+   "end": 6.888
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 6.888,
+   "end": 7.062
+  },
+  {
+   "w": "p",
+   "spoken": "p",
+   "start": 7.062,
+   "end": 7.325
+  },
+  {
+   "w": "hours,",
+   "spoken": "hours,",
+   "start": 7.325,
+   "end": 8.012
+  },
+  {
+   "w": "p",
+   "spoken": "p",
+   "start": 8.012,
+   "end": 8.275
+  },
+  {
+   "w": "prime,",
+   "spoken": "prime,",
+   "start": 8.275,
+   "end": 9.025
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 9.025,
+   "end": 9.162
+  },
+  {
+   "w": "count",
+   "spoken": "count",
+   "start": 9.162,
+   "end": 9.462
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 9.462,
+   "end": 9.55
+  },
+  {
+   "w": "solutions",
+   "spoken": "solutions",
+   "start": 9.55,
+   "end": 10.112
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 10.112,
+   "end": 10.225
+  },
+  {
+   "w": "y² + y = x³ − x.",
+   "spoken": "y squared, plus y, equals x cubed minus x.",
+   "start": 10.225,
+   "end": 13.75
+  },
+  {
+   "w": "For",
+   "spoken": "For",
+   "start": 13.75,
+   "end": 13.938
+  },
+  {
+   "w": "p",
+   "spoken": "p",
+   "start": 13.938,
+   "end": 14.2
+  },
+  {
+   "w": "equal",
+   "spoken": "equal",
+   "start": 14.2,
+   "end": 14.525
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 14.525,
+   "end": 14.65
+  },
+  {
+   "w": "thirteen,",
+   "spoken": "thirteen,",
+   "start": 14.65,
+   "end": 15.575
+  },
+  {
+   "w": "there",
+   "spoken": "there",
+   "start": 15.575,
+   "end": 15.75
+  },
+  {
+   "w": "are",
+   "spoken": "are",
+   "start": 15.75,
+   "end": 15.887
+  },
+  {
+   "w": "fifteen,",
+   "spoken": "fifteen,",
+   "start": 15.887,
+   "end": 16.775
+  },
+  {
+   "w": "plus",
+   "spoken": "plus",
+   "start": 16.775,
+   "end": 17.087
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 17.087,
+   "end": 17.325
+  },
+  {
+   "w": "point",
+   "spoken": "point",
+   "start": 17.325,
+   "end": 17.688
+  },
+  {
+   "w": "at",
+   "spoken": "at",
+   "start": 17.688,
+   "end": 17.787
+  },
+  {
+   "w": "infinity.",
+   "spoken": "infinity.",
+   "start": 17.787,
+   "end": 18.825
+  },
+  {
+   "w": "You'd",
+   "spoken": "You'd",
+   "start": 19.75,
+   "end": 19.863
+  },
+  {
+   "w": "expect",
+   "spoken": "expect",
+   "start": 19.863,
+   "end": 20.238
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 20.238,
+   "end": 20.538
+  },
+  {
+   "w": "p",
+   "spoken": "p",
+   "start": 20.538,
+   "end": 20.8
+  },
+  {
+   "w": "plus",
+   "spoken": "plus",
+   "start": 20.8,
+   "end": 21.075
+  },
+  {
+   "w": "one.",
+   "spoken": "one.",
+   "start": 21.075,
+   "end": 21.775
+  },
+  {
+   "w": "The",
+   "spoken": "The",
+   "start": 21.775,
+   "end": 21.875
+  },
+  {
+   "w": "surprise",
+   "spoken": "surprise",
+   "start": 21.875,
+   "end": 22.475
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 22.475,
+   "end": 22.6
+  },
+  {
+   "w": "how",
+   "spoken": "how",
+   "start": 22.6,
+   "end": 22.775
+  },
+  {
+   "w": "close",
+   "spoken": "close",
+   "start": 22.775,
+   "end": 23.075
+  },
+  {
+   "w": "it",
+   "spoken": "it",
+   "start": 23.075,
+   "end": 23.2
+  },
+  {
+   "w": "stays:",
+   "spoken": "stays:",
+   "start": 23.2,
+   "end": 23.975
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 23.975,
+   "end": 24.138
+  },
+  {
+   "w": "error",
+   "spoken": "error",
+   "start": 24.138,
+   "end": 24.525
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 24.525,
+   "end": 24.688
+  },
+  {
+   "w": "never",
+   "spoken": "never",
+   "start": 24.688,
+   "end": 25.025
+  },
+  {
+   "w": "more",
+   "spoken": "more",
+   "start": 25.025,
+   "end": 25.25
+  },
+  {
+   "w": "than",
+   "spoken": "than",
+   "start": 25.25,
+   "end": 25.45
+  },
+  {
+   "w": "two",
+   "spoken": "two",
+   "start": 25.45,
+   "end": 25.7
+  },
+  {
+   "w": "root",
+   "spoken": "root",
+   "start": 25.7,
+   "end": 25.938
+  },
+  {
+   "w": "p,",
+   "spoken": "p,",
+   "start": 25.938,
+   "end": 26.5
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 26.5,
+   "end": 26.65
+  },
+  {
+   "w": "every",
+   "spoken": "every",
+   "start": 26.65,
+   "end": 26.95
+  },
+  {
+   "w": "prime.",
+   "spoken": "prime.",
+   "start": 26.95,
+   "end": 27.938
+  },
+  {
+   "w": "Hasse",
+   "spoken": "Hasse",
+   "start": 27.938,
+   "end": 28.3
+  },
+  {
+   "w": "proved",
+   "spoken": "proved",
+   "start": 28.3,
+   "end": 28.65
+  },
+  {
+   "w": "this",
+   "spoken": "this",
+   "start": 28.65,
+   "end": 28.85
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 28.85,
+   "end": 29.013
+  },
+  {
+   "w": "curves",
+   "spoken": "curves",
+   "start": 29.013,
+   "end": 29.475
+  },
+  {
+   "w": "like",
+   "spoken": "like",
+   "start": 29.475,
+   "end": 29.675
+  },
+  {
+   "w": "this",
+   "spoken": "this",
+   "start": 29.675,
+   "end": 29.875
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 29.875,
+   "end": 30.1
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 30.1,
+   "end": 30.188
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 30.188,
+   "end": 30.275
+  },
+  {
+   "w": "1930s,",
+   "spoken": "nineteen thirties,",
+   "start": 30.275,
+   "end": 31.613
+  },
+  {
+   "w": "Weil",
+   "spoken": "Weil",
+   "start": 31.613,
+   "end": 31.95
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 31.95,
+   "end": 32.112
+  },
+  {
+   "w": "all",
+   "spoken": "all",
+   "start": 32.112,
+   "end": 32.375
+  },
+  {
+   "w": "curves",
+   "spoken": "curves",
+   "start": 32.375,
+   "end": 32.737
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 32.737,
+   "end": 32.812
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 32.812,
+   "end": 32.9
+  },
+  {
+   "w": "1940s,",
+   "spoken": "forties,",
+   "start": 32.9,
+   "end": 33.675
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 33.675,
+   "end": 33.8
+  },
+  {
+   "w": "Deligne",
+   "spoken": "Deligne",
+   "start": 33.8,
+   "end": 34.225
+  },
+  {
+   "w": "went",
+   "spoken": "went",
+   "start": 34.225,
+   "end": 34.4
+  },
+  {
+   "w": "much",
+   "spoken": "much",
+   "start": 34.4,
+   "end": 34.688
+  },
+  {
+   "w": "further",
+   "spoken": "further",
+   "start": 34.688,
+   "end": 35.05
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 35.05,
+   "end": 35.175
+  },
+  {
+   "w": "1974.",
+   "spoken": "nineteen seventy-four.",
+   "start": 35.175,
+   "end": 36.938
+  },
+  {
+   "w": "Each",
+   "spoken": "Each",
+   "start": 36.938,
+   "end": 37.2
+  },
+  {
+   "w": "such",
+   "spoken": "such",
+   "start": 37.2,
+   "end": 37.425
+  },
+  {
+   "w": "equation",
+   "spoken": "equation",
+   "start": 37.425,
+   "end": 37.95
+  },
+  {
+   "w": "has",
+   "spoken": "has",
+   "start": 37.95,
+   "end": 38.112
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 38.112,
+   "end": 38.2
+  },
+  {
+   "w": "zeta",
+   "spoken": "zeta",
+   "start": 38.2,
+   "end": 38.525
+  },
+  {
+   "w": "function,",
+   "spoken": "function,",
+   "start": 38.525,
+   "end": 39.325
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 39.325,
+   "end": 39.438
+  },
+  {
+   "w": "this",
+   "spoken": "this",
+   "start": 39.438,
+   "end": 39.612
+  },
+  {
+   "w": "bound",
+   "spoken": "bound",
+   "start": 39.612,
+   "end": 40.0
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 40.0,
+   "end": 40.125
+  },
+  {
+   "w": "exactly",
+   "spoken": "exactly",
+   "start": 40.125,
+   "end": 40.75
+  },
+  {
+   "w": "its",
+   "spoken": "its",
+   "start": 40.75,
+   "end": 40.963
+  },
+  {
+   "w": "Riemann",
+   "spoken": "Riemann",
+   "start": 40.963,
+   "end": 41.35
+  },
+  {
+   "w": "Hypothesis.",
+   "spoken": "Hypothesis.",
+   "start": 41.35,
+   "end": 42.575
+  }
+ ],
+ "chunks": [
+  {
+   "text": "In a parallel world, the analogous hypothesis has been proved for decades.",
+   "start": 0.725,
+   "end": 5.425
+  },
+  {
+   "text": "Do arithmetic on a clock with p hours, p prime,",
+   "start": 5.425,
+   "end": 9.025
+  },
+  {
+   "text": "and count the solutions of y² + y = x³ − x.",
+   "start": 9.025,
+   "end": 13.75
+  },
+  {
+   "text": "For p equal to thirteen, there are fifteen, plus one point at infinity.",
+   "start": 13.75,
+   "end": 18.825
+  },
+  {
+   "text": "You'd expect about p plus one.",
+   "start": 19.75,
+   "end": 21.775
+  },
+  {
+   "text": "The surprise is how close it stays: the error is never more than two root p,",
+   "start": 21.775,
+   "end": 26.5
+  },
+  {
+   "text": "for every prime.",
+   "start": 26.5,
+   "end": 27.938
+  },
+  {
+   "text": "Hasse proved this for curves like this one in the 1930s,",
+   "start": 27.938,
+   "end": 31.613
+  },
+  {
+   "text": "Weil for all curves in the 1940s, and Deligne went much further in 1974.",
+   "start": 31.613,
+   "end": 36.938
+  },
+  {
+   "text": "Each such equation has a zeta function,",
+   "start": 36.938,
+   "end": 39.325
+  },
+  {
+   "text": "and this bound is exactly its Riemann Hypothesis.",
+   "start": 39.325,
+   "end": 42.575
+  }
+ ],
+ "cues": {
+  "clock": 5.425,
+  "grid": 13.75,
+  "count": 19.75,
+  "hasse": 21.775,
+  "weil": 27.938
+ }
+}

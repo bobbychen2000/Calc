@@ -1,0 +1,172 @@
+{
+ "files": 175187,
+ "lines": 17374215,
+ "top": {
+  "Statements.lean": [
+   1,
+   16
+  ],
+  "Main.lean": [
+   1,
+   12
+  ],
+  "ReciprocityTheory": [
+   3845,
+   563016
+  ],
+  "Formalism": [
+   18254,
+   3200748
+  ],
+  "Supplements": [
+   3,
+   22
+  ],
+  "Development": [
+   141928,
+   12232663
+  ],
+  "BuildAid": [
+   5,
+   20
+  ],
+  "Lemmata": [
+   167,
+   9232
+  ],
+  "CompanionTheory": [
+   2027,
+   194218
+  ],
+  "GroundTheory": [
+   8507,
+   1119138
+  ],
+  "PositivityTheory": [
+   449,
+   55130
+  ]
+ },
+ "sub": {
+  "Development/AbelianVarietyTheory": [
+   99187,
+   8142960
+  ],
+  "Development/AutomorphicArithmetic": [
+   18431,
+   1776375
+  ],
+  "Development/AutomorphicSpectrum": [
+   15147,
+   1195844
+  ],
+  "Formalism/LocalToGlobal": [
+   5501,
+   955843
+  ],
+  "Development/WeilBound": [
+   7051,
+   848547
+  ],
+  "Formalism/SharpRestriction": [
+   3093,
+   709436
+  ],
+  "GroundTheory/HeightsAndTheta": [
+   6410,
+   641322
+  ],
+  "Formalism/HermitianCurvature": [
+   1922,
+   460802
+  ],
+  "Formalism/PeriodIntegrals": [
+   4350,
+   451856
+  ],
+  "ReciprocityTheory/ReductiveGroups": [
+   2799,
+   409976
+  ],
+  "GroundTheory/AutomorphicForms": [
+   542,
+   150005
+  ],
+  "Development/ResolutionOfSingularities": [
+   499,
+   140709
+  ],
+  "CompanionTheory/SpectralGeometry": [
+   1254,
+   105437
+  ],
+  "Development/EtaleCohomology": [
+   1398,
+   104525
+  ],
+  "GroundTheory/ProfiniteCohomology": [
+   450,
+   84902
+  ],
+  "Formalism/GL3MeanSquares": [
+   440,
+   78320
+  ],
+  "GroundTheory/GlobalFields": [
+   384,
+   72305
+  ],
+  "GroundTheory/PAdicHodge": [
+   226,
+   64317
+  ],
+  "PositivityTheory/AutomorphicForms": [
+   445,
+   54970
+  ],
+  "Formalism/ThetaLogCoordinates": [
+   292,
+   54555
+  ],
+  "CompanionTheory/AutomorphicTheory": [
+   457,
+   47957
+  ],
+  "GroundTheory/ArithmeticGeometry": [
+   218,
+   45046
+  ],
+  "GroundTheory/LocalFields": [
+   159,
+   40767
+  ],
+  "Formalism/WachLatticeTwists": [
+   262,
+   38367
+  ],
+  "ReciprocityTheory/AnalyticForms": [
+   192,
+   36680
+  ],
+  "Formalism/LocalRingCardinality": [
+   173,
+   35348
+  ],
+  "ReciprocityTheory/L2DbarEstimates": [
+   227,
+   33734
+  ],
+  "Formalism/FlagUnipotentLattices": [
+   77,
+   31383
+  ],
+  "Formalism/PieriBlockIdeals": [
+   98,
+   29254
+  ],
+  "Formalism/SizeWindowBrackets": [
+   64,
+   28345
+  ]
+ }
+}

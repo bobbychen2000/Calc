@@ -1,0 +1,607 @@
+{
+ "scene": "s03_euler",
+ "duration": 36.95,
+ "sr": 24000,
+ "voice": "af_heart",
+ "speed": 1.0,
+ "words": [
+  {
+   "w": "Decades",
+   "spoken": "Decades",
+   "start": 0.75,
+   "end": 1.175
+  },
+  {
+   "w": "earlier,",
+   "spoken": "earlier,",
+   "start": 1.175,
+   "end": 1.863
+  },
+  {
+   "w": "Leonhard",
+   "spoken": "Leonhard",
+   "start": 1.863,
+   "end": 2.363
+  },
+  {
+   "w": "Euler",
+   "spoken": "Euler",
+   "start": 2.363,
+   "end": 2.725
+  },
+  {
+   "w": "had",
+   "spoken": "had",
+   "start": 2.725,
+   "end": 2.9
+  },
+  {
+   "w": "studied",
+   "spoken": "studied",
+   "start": 2.9,
+   "end": 3.213
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 3.213,
+   "end": 3.275
+  },
+  {
+   "w": "different",
+   "spoken": "different",
+   "start": 3.275,
+   "end": 3.663
+  },
+  {
+   "w": "sum.",
+   "spoken": "sum.",
+   "start": 3.663,
+   "end": 4.65
+  },
+  {
+   "w": "One,",
+   "spoken": "One,",
+   "start": 4.65,
+   "end": 5.175
+  },
+  {
+   "w": "plus",
+   "spoken": "plus",
+   "start": 5.175,
+   "end": 5.413
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 5.413,
+   "end": 5.475
+  },
+  {
+   "w": "quarter,",
+   "spoken": "quarter,",
+   "start": 5.475,
+   "end": 5.925
+  },
+  {
+   "w": "plus",
+   "spoken": "plus",
+   "start": 5.925,
+   "end": 6.163
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 6.163,
+   "end": 6.225
+  },
+  {
+   "w": "ninth:",
+   "spoken": "ninth:",
+   "start": 6.225,
+   "end": 6.963
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 6.963,
+   "end": 7.225
+  },
+  {
+   "w": "over",
+   "spoken": "over",
+   "start": 7.225,
+   "end": 7.538
+  },
+  {
+   "w": "every",
+   "spoken": "every",
+   "start": 7.538,
+   "end": 7.888
+  },
+  {
+   "w": "square",
+   "spoken": "square",
+   "start": 7.888,
+   "end": 8.25
+  },
+  {
+   "w": "number.",
+   "spoken": "number.",
+   "start": 8.25,
+   "end": 9.075
+  },
+  {
+   "w": "The",
+   "spoken": "The",
+   "start": 9.075,
+   "end": 9.188
+  },
+  {
+   "w": "total",
+   "spoken": "total",
+   "start": 9.188,
+   "end": 9.575
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 9.575,
+   "end": 9.7
+  },
+  {
+   "w": "exactly",
+   "spoken": "exactly",
+   "start": 9.7,
+   "end": 10.312
+  },
+  {
+   "w": "π²/6.",
+   "spoken": "pi squared over six.",
+   "start": 10.312,
+   "end": 12.175
+  },
+  {
+   "w": "With",
+   "spoken": "With",
+   "start": 12.175,
+   "end": 12.375
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 12.375,
+   "end": 12.537
+  },
+  {
+   "w": "over",
+   "spoken": "over",
+   "start": 12.537,
+   "end": 12.775
+  },
+  {
+   "w": "n",
+   "spoken": "n",
+   "start": 12.775,
+   "end": 12.9
+  },
+  {
+   "w": "itself,",
+   "spoken": "itself,",
+   "start": 12.9,
+   "end": 13.575
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 13.575,
+   "end": 13.725
+  },
+  {
+   "w": "sum",
+   "spoken": "sum",
+   "start": 13.725,
+   "end": 14.05
+  },
+  {
+   "w": "grows",
+   "spoken": "grows",
+   "start": 14.05,
+   "end": 14.375
+  },
+  {
+   "w": "forever,",
+   "spoken": "forever,",
+   "start": 14.375,
+   "end": 14.875
+  },
+  {
+   "w": "though",
+   "spoken": "though",
+   "start": 14.875,
+   "end": 15.062
+  },
+  {
+   "w": "slowly.",
+   "spoken": "slowly.",
+   "start": 15.062,
+   "end": 16.025
+  },
+  {
+   "w": "Then",
+   "spoken": "Then",
+   "start": 16.95,
+   "end": 17.188
+  },
+  {
+   "w": "Euler",
+   "spoken": "Euler",
+   "start": 17.188,
+   "end": 17.562
+  },
+  {
+   "w": "found",
+   "spoken": "found",
+   "start": 17.562,
+   "end": 17.863
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 17.863,
+   "end": 17.95
+  },
+  {
+   "w": "bridge",
+   "spoken": "bridge",
+   "start": 17.95,
+   "end": 18.275
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 18.275,
+   "end": 18.363
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 18.363,
+   "end": 18.45
+  },
+  {
+   "w": "primes.",
+   "spoken": "primes.",
+   "start": 18.45,
+   "end": 19.463
+  },
+  {
+   "w": "Since",
+   "spoken": "Since",
+   "start": 19.463,
+   "end": 19.713
+  },
+  {
+   "w": "every",
+   "spoken": "every",
+   "start": 19.713,
+   "end": 20.025
+  },
+  {
+   "w": "whole",
+   "spoken": "whole",
+   "start": 20.025,
+   "end": 20.275
+  },
+  {
+   "w": "number",
+   "spoken": "number",
+   "start": 20.275,
+   "end": 20.637
+  },
+  {
+   "w": "splits",
+   "spoken": "splits",
+   "start": 20.637,
+   "end": 20.988
+  },
+  {
+   "w": "into",
+   "spoken": "into",
+   "start": 20.988,
+   "end": 21.2
+  },
+  {
+   "w": "primes",
+   "spoken": "primes",
+   "start": 21.2,
+   "end": 21.7
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 21.7,
+   "end": 21.8
+  },
+  {
+   "w": "exactly",
+   "spoken": "exactly",
+   "start": 21.8,
+   "end": 22.375
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 22.375,
+   "end": 22.6
+  },
+  {
+   "w": "way,",
+   "spoken": "way,",
+   "start": 22.6,
+   "end": 23.275
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 23.275,
+   "end": 23.413
+  },
+  {
+   "w": "sum",
+   "spoken": "sum",
+   "start": 23.413,
+   "end": 23.675
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 23.675,
+   "end": 23.812
+  },
+  {
+   "w": "1/nˢ",
+   "spoken": "one over n to the s",
+   "start": 23.812,
+   "end": 25.2
+  },
+  {
+   "w": "over",
+   "spoken": "over",
+   "start": 25.2,
+   "end": 25.513
+  },
+  {
+   "w": "all",
+   "spoken": "all",
+   "start": 25.513,
+   "end": 25.775
+  },
+  {
+   "w": "whole",
+   "spoken": "whole",
+   "start": 25.775,
+   "end": 26.025
+  },
+  {
+   "w": "numbers",
+   "spoken": "numbers",
+   "start": 26.025,
+   "end": 26.562
+  },
+  {
+   "w": "equals",
+   "spoken": "equals",
+   "start": 26.562,
+   "end": 26.938
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 26.938,
+   "end": 27.0
+  },
+  {
+   "w": "product",
+   "spoken": "product",
+   "start": 27.0,
+   "end": 27.5
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 27.5,
+   "end": 27.688
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 27.688,
+   "end": 27.925
+  },
+  {
+   "w": "factor",
+   "spoken": "factor",
+   "start": 27.925,
+   "end": 28.35
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 28.35,
+   "end": 28.5
+  },
+  {
+   "w": "each",
+   "spoken": "each",
+   "start": 28.5,
+   "end": 28.725
+  },
+  {
+   "w": "prime.",
+   "spoken": "prime.",
+   "start": 28.725,
+   "end": 29.663
+  },
+  {
+   "w": "That",
+   "spoken": "That",
+   "start": 29.663,
+   "end": 29.938
+  },
+  {
+   "w": "sum",
+   "spoken": "sum",
+   "start": 29.938,
+   "end": 30.363
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 30.363,
+   "end": 30.525
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 30.525,
+   "end": 30.625
+  },
+  {
+   "w": "zeta",
+   "spoken": "zeta",
+   "start": 30.625,
+   "end": 30.95
+  },
+  {
+   "w": "function.",
+   "spoken": "function.",
+   "start": 30.95,
+   "end": 32.0
+  },
+  {
+   "w": "One",
+   "spoken": "One",
+   "start": 32.0,
+   "end": 32.288
+  },
+  {
+   "w": "side",
+   "spoken": "side",
+   "start": 32.288,
+   "end": 32.625
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 32.625,
+   "end": 32.737
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 32.737,
+   "end": 33.062
+  },
+  {
+   "w": "all",
+   "spoken": "all",
+   "start": 33.062,
+   "end": 33.325
+  },
+  {
+   "w": "numbers;",
+   "spoken": "numbers;",
+   "start": 33.325,
+   "end": 34.075
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 34.075,
+   "end": 34.225
+  },
+  {
+   "w": "other",
+   "spoken": "other",
+   "start": 34.225,
+   "end": 34.525
+  },
+  {
+   "w": "only",
+   "spoken": "only",
+   "start": 34.525,
+   "end": 34.825
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 34.825,
+   "end": 35.125
+  },
+  {
+   "w": "primes.",
+   "spoken": "primes.",
+   "start": 35.125,
+   "end": 36.1
+  }
+ ],
+ "chunks": [
+  {
+   "text": "Decades earlier, Leonhard Euler had studied a different sum.",
+   "start": 0.75,
+   "end": 4.65
+  },
+  {
+   "text": "One, plus a quarter, plus a ninth: one over every square number.",
+   "start": 4.65,
+   "end": 9.075
+  },
+  {
+   "text": "The total is exactly π²/6.",
+   "start": 9.075,
+   "end": 12.175
+  },
+  {
+   "text": "With one over n itself, the sum grows forever, though slowly.",
+   "start": 12.175,
+   "end": 16.025
+  },
+  {
+   "text": "Then Euler found the bridge to the primes.",
+   "start": 16.95,
+   "end": 19.463
+  },
+  {
+   "text": "Since every whole number splits into primes in exactly one way,",
+   "start": 19.463,
+   "end": 23.275
+  },
+  {
+   "text": "the sum of 1/nˢ over all whole numbers equals a product with one factor for each",
+   "start": 23.275,
+   "end": 28.725
+  },
+  {
+   "text": "prime.",
+   "start": 28.725,
+   "end": 29.663
+  },
+  {
+   "text": "That sum is the zeta function.",
+   "start": 29.663,
+   "end": 32.0
+  },
+  {
+   "text": "One side is about all numbers; the other only about primes.",
+   "start": 32.0,
+   "end": 36.1
+  }
+ ],
+ "cues": {
+  "basel": 4.65,
+  "harmonic": 12.175,
+  "product": 16.95,
+  "zeta": 29.663
+ }
+}

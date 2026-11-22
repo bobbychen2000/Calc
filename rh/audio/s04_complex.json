@@ -1,0 +1,581 @@
+{
+ "scene": "s04_complex",
+ "duration": 34.975,
+ "sr": 24000,
+ "voice": "af_heart",
+ "speed": 1.0,
+ "words": [
+  {
+   "w": "In",
+   "spoken": "In",
+   "start": 0.725,
+   "end": 0.85
+  },
+  {
+   "w": "1859,",
+   "spoken": "eighteen fifty-nine,",
+   "start": 0.85,
+   "end": 2.138
+  },
+  {
+   "w": "Bernhard",
+   "spoken": "Bernhard",
+   "start": 2.138,
+   "end": 2.625
+  },
+  {
+   "w": "Riemann",
+   "spoken": "Riemann",
+   "start": 2.625,
+   "end": 3.0
+  },
+  {
+   "w": "made",
+   "spoken": "made",
+   "start": 3.0,
+   "end": 3.188
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 3.188,
+   "end": 3.288
+  },
+  {
+   "w": "move",
+   "spoken": "move",
+   "start": 3.288,
+   "end": 3.65
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 3.65,
+   "end": 3.863
+  },
+  {
+   "w": "changed",
+   "spoken": "changed",
+   "start": 3.863,
+   "end": 4.325
+  },
+  {
+   "w": "everything:",
+   "spoken": "everything:",
+   "start": 4.325,
+   "end": 5.338
+  },
+  {
+   "w": "let",
+   "spoken": "let",
+   "start": 5.338,
+   "end": 5.513
+  },
+  {
+   "w": "s",
+   "spoken": "s",
+   "start": 5.513,
+   "end": 5.7
+  },
+  {
+   "w": "be",
+   "spoken": "be",
+   "start": 5.7,
+   "end": 5.85
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 5.85,
+   "end": 5.95
+  },
+  {
+   "w": "complex",
+   "spoken": "complex",
+   "start": 5.95,
+   "end": 6.5
+  },
+  {
+   "w": "number.",
+   "spoken": "number.",
+   "start": 6.5,
+   "end": 7.325
+  },
+  {
+   "w": "If",
+   "spoken": "If",
+   "start": 7.325,
+   "end": 7.5
+  },
+  {
+   "w": "you've",
+   "spoken": "you've",
+   "start": 7.5,
+   "end": 7.675
+  },
+  {
+   "w": "worked",
+   "spoken": "worked",
+   "start": 7.675,
+   "end": 7.913
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 7.913,
+   "end": 8.075
+  },
+  {
+   "w": "phasors,",
+   "spoken": "phasors,",
+   "start": 8.075,
+   "end": 8.825
+  },
+  {
+   "w": "you",
+   "spoken": "you",
+   "start": 8.825,
+   "end": 8.925
+  },
+  {
+   "w": "know",
+   "spoken": "know",
+   "start": 8.925,
+   "end": 9.1
+  },
+  {
+   "w": "what",
+   "spoken": "what",
+   "start": 9.1,
+   "end": 9.25
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 9.25,
+   "end": 9.475
+  },
+  {
+   "w": "does.",
+   "spoken": "does.",
+   "start": 9.475,
+   "end": 10.4
+  },
+  {
+   "w": "Write",
+   "spoken": "Write",
+   "start": 10.4,
+   "end": 10.675
+  },
+  {
+   "w": "s",
+   "spoken": "s",
+   "start": 10.675,
+   "end": 10.95
+  },
+  {
+   "w": "as",
+   "spoken": "as",
+   "start": 10.95,
+   "end": 11.087
+  },
+  {
+   "w": "σ + it.",
+   "spoken": "sigma plus i t.",
+   "start": 11.087,
+   "end": 12.612
+  },
+  {
+   "w": "Then",
+   "spoken": "Then",
+   "start": 12.612,
+   "end": 12.912
+  },
+  {
+   "w": "n⁻ˢ",
+   "spoken": "n to the minus s",
+   "start": 12.912,
+   "end": 13.987
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 13.987,
+   "end": 14.112
+  },
+  {
+   "w": "an",
+   "spoken": "an",
+   "start": 14.112,
+   "end": 14.237
+  },
+  {
+   "w": "arrow",
+   "spoken": "arrow",
+   "start": 14.237,
+   "end": 14.537
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 14.537,
+   "end": 14.65
+  },
+  {
+   "w": "length",
+   "spoken": "length",
+   "start": 14.65,
+   "end": 15.05
+  },
+  {
+   "w": "n^−σ,",
+   "spoken": "n to the minus sigma,",
+   "start": 15.05,
+   "end": 16.688
+  },
+  {
+   "w": "turned",
+   "spoken": "turned",
+   "start": 16.688,
+   "end": 17.025
+  },
+  {
+   "w": "by",
+   "spoken": "by",
+   "start": 17.025,
+   "end": 17.2
+  },
+  {
+   "w": "an",
+   "spoken": "an",
+   "start": 17.2,
+   "end": 17.337
+  },
+  {
+   "w": "angle",
+   "spoken": "angle",
+   "start": 17.337,
+   "end": 17.75
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 17.75,
+   "end": 17.912
+  },
+  {
+   "w": "t·ln n.",
+   "spoken": "t times log n.",
+   "start": 17.912,
+   "end": 19.55
+  },
+  {
+   "w": "So",
+   "spoken": "So",
+   "start": 20.625,
+   "end": 20.812
+  },
+  {
+   "w": "zeta",
+   "spoken": "zeta",
+   "start": 20.812,
+   "end": 21.225
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 21.225,
+   "end": 21.337
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 21.337,
+   "end": 21.425
+  },
+  {
+   "w": "sum",
+   "spoken": "sum",
+   "start": 21.425,
+   "end": 21.613
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 21.613,
+   "end": 21.738
+  },
+  {
+   "w": "spinning,",
+   "spoken": "spinning,",
+   "start": 21.738,
+   "end": 22.363
+  },
+  {
+   "w": "shrinking",
+   "spoken": "shrinking",
+   "start": 22.363,
+   "end": 22.8
+  },
+  {
+   "w": "arrows.",
+   "spoken": "arrows.",
+   "start": 22.8,
+   "end": 23.8
+  },
+  {
+   "w": "Laid",
+   "spoken": "Laid",
+   "start": 23.8,
+   "end": 24.162
+  },
+  {
+   "w": "tip",
+   "spoken": "tip",
+   "start": 24.162,
+   "end": 24.4
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 24.4,
+   "end": 24.538
+  },
+  {
+   "w": "tail,",
+   "spoken": "tail,",
+   "start": 24.538,
+   "end": 25.075
+  },
+  {
+   "w": "they",
+   "spoken": "they",
+   "start": 25.075,
+   "end": 25.237
+  },
+  {
+   "w": "form",
+   "spoken": "form",
+   "start": 25.237,
+   "end": 25.487
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 25.487,
+   "end": 25.562
+  },
+  {
+   "w": "spiral.",
+   "spoken": "spiral.",
+   "start": 25.562,
+   "end": 26.5
+  },
+  {
+   "w": "When",
+   "spoken": "When",
+   "start": 26.5,
+   "end": 26.725
+  },
+  {
+   "w": "sigma",
+   "spoken": "sigma",
+   "start": 26.725,
+   "end": 27.175
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 27.175,
+   "end": 27.337
+  },
+  {
+   "w": "bigger",
+   "spoken": "bigger",
+   "start": 27.337,
+   "end": 27.675
+  },
+  {
+   "w": "than",
+   "spoken": "than",
+   "start": 27.675,
+   "end": 27.825
+  },
+  {
+   "w": "one,",
+   "spoken": "one,",
+   "start": 27.825,
+   "end": 28.425
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 28.425,
+   "end": 28.587
+  },
+  {
+   "w": "arrows",
+   "spoken": "arrows",
+   "start": 28.587,
+   "end": 29.05
+  },
+  {
+   "w": "shrink",
+   "spoken": "shrink",
+   "start": 29.05,
+   "end": 29.413
+  },
+  {
+   "w": "fast",
+   "spoken": "fast",
+   "start": 29.413,
+   "end": 29.762
+  },
+  {
+   "w": "enough",
+   "spoken": "enough",
+   "start": 29.762,
+   "end": 30.075
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 30.075,
+   "end": 30.188
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 30.188,
+   "end": 30.288
+  },
+  {
+   "w": "spiral",
+   "spoken": "spiral",
+   "start": 30.288,
+   "end": 30.7
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 30.7,
+   "end": 30.837
+  },
+  {
+   "w": "wind",
+   "spoken": "wind",
+   "start": 30.837,
+   "end": 31.212
+  },
+  {
+   "w": "into",
+   "spoken": "into",
+   "start": 31.212,
+   "end": 31.45
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 31.45,
+   "end": 31.562
+  },
+  {
+   "w": "single",
+   "spoken": "single",
+   "start": 31.562,
+   "end": 31.9
+  },
+  {
+   "w": "point:",
+   "spoken": "point:",
+   "start": 31.9,
+   "end": 32.675
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 32.675,
+   "end": 32.775
+  },
+  {
+   "w": "value",
+   "spoken": "value",
+   "start": 32.775,
+   "end": 33.175
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 33.175,
+   "end": 33.3
+  },
+  {
+   "w": "zeta.",
+   "spoken": "zeta.",
+   "start": 33.3,
+   "end": 34.125
+  }
+ ],
+ "chunks": [
+  {
+   "text": "In 1859, Bernhard Riemann made the move that changed everything:",
+   "start": 0.725,
+   "end": 5.338
+  },
+  {
+   "text": "let s be a complex number.",
+   "start": 5.338,
+   "end": 7.325
+  },
+  {
+   "text": "If you've worked with phasors, you know what that does.",
+   "start": 7.325,
+   "end": 10.4
+  },
+  {
+   "text": "Write s as σ + it.",
+   "start": 10.4,
+   "end": 12.612
+  },
+  {
+   "text": "Then n⁻ˢ is an arrow of length n^−σ,",
+   "start": 12.612,
+   "end": 16.688
+  },
+  {
+   "text": "turned by an angle of t·ln n.",
+   "start": 16.688,
+   "end": 19.55
+  },
+  {
+   "text": "So zeta is a sum of spinning, shrinking arrows.",
+   "start": 20.625,
+   "end": 23.8
+  },
+  {
+   "text": "Laid tip to tail, they form a spiral.",
+   "start": 23.8,
+   "end": 26.5
+  },
+  {
+   "text": "When sigma is bigger than one,",
+   "start": 26.5,
+   "end": 28.425
+  },
+  {
+   "text": "the arrows shrink fast enough for the spiral to wind into a single point:",
+   "start": 28.425,
+   "end": 32.675
+  },
+  {
+   "text": "the value of zeta.",
+   "start": 32.675,
+   "end": 34.125
+  }
+ ],
+ "cues": {
+  "phasor": 7.325,
+  "spiral": 20.625,
+  "converge": 26.5
+ }
+}

@@ -1,0 +1,696 @@
+{
+ "scene": "s02_primes",
+ "duration": 40.275,
+ "sr": 24000,
+ "voice": "af_heart",
+ "speed": 1.0,
+ "words": [
+  {
+   "w": "Start",
+   "spoken": "Start",
+   "start": 0.725,
+   "end": 0.962
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 0.962,
+   "end": 1.062
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 1.062,
+   "end": 1.15
+  },
+  {
+   "w": "primes:",
+   "spoken": "primes:",
+   "start": 1.15,
+   "end": 1.938
+  },
+  {
+   "w": "two,",
+   "spoken": "two,",
+   "start": 1.938,
+   "end": 2.337
+  },
+  {
+   "w": "three,",
+   "spoken": "three,",
+   "start": 2.337,
+   "end": 2.713
+  },
+  {
+   "w": "five,",
+   "spoken": "five,",
+   "start": 2.713,
+   "end": 3.163
+  },
+  {
+   "w": "seven,",
+   "spoken": "seven,",
+   "start": 3.163,
+   "end": 3.575
+  },
+  {
+   "w": "eleven,",
+   "spoken": "eleven,",
+   "start": 3.575,
+   "end": 4.287
+  },
+  {
+   "w": "numbers",
+   "spoken": "numbers",
+   "start": 4.287,
+   "end": 4.75
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 4.75,
+   "end": 4.938
+  },
+  {
+   "w": "no",
+   "spoken": "no",
+   "start": 4.938,
+   "end": 5.125
+  },
+  {
+   "w": "divisors",
+   "spoken": "divisors",
+   "start": 5.125,
+   "end": 5.725
+  },
+  {
+   "w": "but",
+   "spoken": "but",
+   "start": 5.725,
+   "end": 5.913
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 5.913,
+   "end": 6.2
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 6.2,
+   "end": 6.312
+  },
+  {
+   "w": "themselves.",
+   "spoken": "themselves.",
+   "start": 6.312,
+   "end": 7.513
+  },
+  {
+   "w": "Up",
+   "spoken": "Up",
+   "start": 7.513,
+   "end": 7.725
+  },
+  {
+   "w": "close,",
+   "spoken": "close,",
+   "start": 7.725,
+   "end": 8.25
+  },
+  {
+   "w": "they",
+   "spoken": "they",
+   "start": 8.25,
+   "end": 8.4
+  },
+  {
+   "w": "look",
+   "spoken": "look",
+   "start": 8.4,
+   "end": 8.6
+  },
+  {
+   "w": "random.",
+   "spoken": "random.",
+   "start": 8.6,
+   "end": 9.475
+  },
+  {
+   "w": "But",
+   "spoken": "But",
+   "start": 9.475,
+   "end": 9.625
+  },
+  {
+   "w": "count",
+   "spoken": "count",
+   "start": 9.625,
+   "end": 9.925
+  },
+  {
+   "w": "them.",
+   "spoken": "them.",
+   "start": 9.925,
+   "end": 10.688
+  },
+  {
+   "w": "π(x)",
+   "spoken": "Pi of x",
+   "start": 10.688,
+   "end": 11.3
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 11.3,
+   "end": 11.45
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 11.45,
+   "end": 11.55
+  },
+  {
+   "w": "number",
+   "spoken": "number",
+   "start": 11.55,
+   "end": 11.787
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 11.787,
+   "end": 11.875
+  },
+  {
+   "w": "primes",
+   "spoken": "primes",
+   "start": 11.875,
+   "end": 12.237
+  },
+  {
+   "w": "up",
+   "spoken": "up",
+   "start": 12.237,
+   "end": 12.375
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 12.375,
+   "end": 12.5
+  },
+  {
+   "w": "x.",
+   "spoken": "x.",
+   "start": 12.5,
+   "end": 12.787
+  },
+  {
+   "w": "Its",
+   "spoken": "Its",
+   "start": 12.787,
+   "end": 12.975
+  },
+  {
+   "w": "graph",
+   "spoken": "graph",
+   "start": 12.975,
+   "end": 13.375
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 13.375,
+   "end": 13.487
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 13.487,
+   "end": 13.55
+  },
+  {
+   "w": "staircase,",
+   "spoken": "staircase,",
+   "start": 13.55,
+   "end": 14.55
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 14.55,
+   "end": 14.675
+  },
+  {
+   "w": "from",
+   "spoken": "from",
+   "start": 14.675,
+   "end": 14.887
+  },
+  {
+   "w": "far",
+   "spoken": "far",
+   "start": 14.887,
+   "end": 15.15
+  },
+  {
+   "w": "away",
+   "spoken": "away",
+   "start": 15.15,
+   "end": 15.425
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 15.425,
+   "end": 15.525
+  },
+  {
+   "w": "staircase",
+   "spoken": "staircase",
+   "start": 15.525,
+   "end": 16.1
+  },
+  {
+   "w": "looks",
+   "spoken": "looks",
+   "start": 16.1,
+   "end": 16.35
+  },
+  {
+   "w": "astonishingly",
+   "spoken": "astonishingly",
+   "start": 16.35,
+   "end": 17.162
+  },
+  {
+   "w": "smooth.",
+   "spoken": "smooth.",
+   "start": 17.162,
+   "end": 18.075
+  },
+  {
+   "w": "As",
+   "spoken": "As",
+   "start": 18.975,
+   "end": 19.113
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 19.113,
+   "end": 19.213
+  },
+  {
+   "w": "teenager,",
+   "spoken": "teenager,",
+   "start": 19.213,
+   "end": 19.775
+  },
+  {
+   "w": "Gauss",
+   "spoken": "Gauss",
+   "start": 19.775,
+   "end": 20.125
+  },
+  {
+   "w": "guessed",
+   "spoken": "guessed",
+   "start": 20.125,
+   "end": 20.363
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 20.363,
+   "end": 20.55
+  },
+  {
+   "w": "near",
+   "spoken": "near",
+   "start": 20.55,
+   "end": 20.775
+  },
+  {
+   "w": "x,",
+   "spoken": "x,",
+   "start": 20.775,
+   "end": 21.363
+  },
+  {
+   "w": "roughly",
+   "spoken": "roughly",
+   "start": 21.363,
+   "end": 21.775
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 21.775,
+   "end": 22.0
+  },
+  {
+   "w": "number",
+   "spoken": "number",
+   "start": 22.0,
+   "end": 22.3
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 22.3,
+   "end": 22.45
+  },
+  {
+   "w": "ln x",
+   "spoken": "log x",
+   "start": 22.45,
+   "end": 23.05
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 23.05,
+   "end": 23.2
+  },
+  {
+   "w": "prime.",
+   "spoken": "prime.",
+   "start": 23.2,
+   "end": 24.213
+  },
+  {
+   "w": "Adding",
+   "spoken": "Adding",
+   "start": 24.213,
+   "end": 24.513
+  },
+  {
+   "w": "up",
+   "spoken": "up",
+   "start": 24.513,
+   "end": 24.7
+  },
+  {
+   "w": "those",
+   "spoken": "those",
+   "start": 24.7,
+   "end": 24.938
+  },
+  {
+   "w": "odds",
+   "spoken": "odds",
+   "start": 24.938,
+   "end": 25.325
+  },
+  {
+   "w": "gives",
+   "spoken": "gives",
+   "start": 25.325,
+   "end": 25.575
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 25.575,
+   "end": 25.713
+  },
+  {
+   "w": "logarithmic",
+   "spoken": "logarithmic",
+   "start": 25.713,
+   "end": 26.375
+  },
+  {
+   "w": "integral,",
+   "spoken": "integral,",
+   "start": 26.375,
+   "end": 27.213
+  },
+  {
+   "w": "li(x).",
+   "spoken": "L I of x.",
+   "start": 27.213,
+   "end": 27.975
+  },
+  {
+   "w": "Up",
+   "spoken": "Up",
+   "start": 27.975,
+   "end": 28.15
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 28.15,
+   "end": 28.238
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 28.238,
+   "end": 28.3
+  },
+  {
+   "w": "million",
+   "spoken": "million",
+   "start": 28.3,
+   "end": 28.913
+  },
+  {
+   "w": "there",
+   "spoken": "there",
+   "start": 28.913,
+   "end": 29.1
+  },
+  {
+   "w": "are",
+   "spoken": "are",
+   "start": 29.1,
+   "end": 29.25
+  },
+  {
+   "w": "78,498",
+   "spoken": "seventy-eight thousand, four hundred ninety-eight",
+   "start": 29.25,
+   "end": 31.875
+  },
+  {
+   "w": "primes,",
+   "spoken": "primes,",
+   "start": 31.875,
+   "end": 32.75
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 32.75,
+   "end": 32.913
+  },
+  {
+   "w": "L",
+   "spoken": "L",
+   "start": 32.913,
+   "end": 33.15
+  },
+  {
+   "w": "I",
+   "spoken": "I",
+   "start": 33.15,
+   "end": 33.3
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 33.3,
+   "end": 33.425
+  },
+  {
+   "w": "off",
+   "spoken": "off",
+   "start": 33.425,
+   "end": 33.7
+  },
+  {
+   "w": "by",
+   "spoken": "by",
+   "start": 33.7,
+   "end": 33.913
+  },
+  {
+   "w": "only",
+   "spoken": "only",
+   "start": 33.913,
+   "end": 34.225
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 34.225,
+   "end": 34.438
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 34.438,
+   "end": 34.5
+  },
+  {
+   "w": "hundred",
+   "spoken": "hundred",
+   "start": 34.5,
+   "end": 34.888
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 34.888,
+   "end": 35.0
+  },
+  {
+   "w": "thirty.",
+   "spoken": "thirty.",
+   "start": 35.0,
+   "end": 36.013
+  },
+  {
+   "w": "The",
+   "spoken": "The",
+   "start": 36.013,
+   "end": 36.15
+  },
+  {
+   "w": "real",
+   "spoken": "real",
+   "start": 36.15,
+   "end": 36.425
+  },
+  {
+   "w": "question",
+   "spoken": "question",
+   "start": 36.425,
+   "end": 36.913
+  },
+  {
+   "w": "is:",
+   "spoken": "is:",
+   "start": 36.913,
+   "end": 37.513
+  },
+  {
+   "w": "how",
+   "spoken": "how",
+   "start": 37.513,
+   "end": 37.737
+  },
+  {
+   "w": "big",
+   "spoken": "big",
+   "start": 37.737,
+   "end": 37.975
+  },
+  {
+   "w": "can",
+   "spoken": "can",
+   "start": 37.975,
+   "end": 38.15
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 38.15,
+   "end": 38.375
+  },
+  {
+   "w": "error",
+   "spoken": "error",
+   "start": 38.375,
+   "end": 38.675
+  },
+  {
+   "w": "get?",
+   "spoken": "get?",
+   "start": 38.675,
+   "end": 39.425
+  }
+ ],
+ "chunks": [
+  {
+   "text": "Start with the primes: two, three, five, seven, eleven,",
+   "start": 0.725,
+   "end": 4.287
+  },
+  {
+   "text": "numbers with no divisors but one and themselves.",
+   "start": 4.287,
+   "end": 7.513
+  },
+  {
+   "text": "Up close, they look random.",
+   "start": 7.513,
+   "end": 9.475
+  },
+  {
+   "text": "But count them.",
+   "start": 9.475,
+   "end": 10.688
+  },
+  {
+   "text": "π(x) is the number of primes up to x.",
+   "start": 10.688,
+   "end": 12.787
+  },
+  {
+   "text": "Its graph is a staircase, and from far away the staircase looks astonishingly",
+   "start": 12.787,
+   "end": 17.162
+  },
+  {
+   "text": "smooth.",
+   "start": 17.162,
+   "end": 18.075
+  },
+  {
+   "text": "As a teenager, Gauss guessed that near x, roughly one number in ln x is prime.",
+   "start": 18.975,
+   "end": 24.213
+  },
+  {
+   "text": "Adding up those odds gives the logarithmic integral,",
+   "start": 24.213,
+   "end": 27.213
+  },
+  {
+   "text": "li(x).",
+   "start": 27.213,
+   "end": 27.975
+  },
+  {
+   "text": "Up to a million there are 78,498 primes,",
+   "start": 27.975,
+   "end": 32.75
+  },
+  {
+   "text": "and L I is off by only about a hundred and thirty.",
+   "start": 32.75,
+   "end": 36.013
+  },
+  {
+   "text": "The real question is: how big can that error get?",
+   "start": 36.013,
+   "end": 39.425
+  }
+ ],
+ "cues": {
+  "grid": 7.513,
+  "staircase": 9.475,
+  "zoom": 14.55,
+  "gauss": 18.975,
+  "table": 27.975,
+  "question": 36.013
+ }
+}
