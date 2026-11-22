@@ -1193,5 +1193,7 @@ def s16(fig, ctx, t):
             color=PAL["green"])
         txt(ov, W / 2 + 60, 570, "not yet understood", size=36, a=ae * ramp(t, c_end + 3.0, 0.6), ha="left",
             color=PAL["gold"])
-        txt(ov, W / 2, 205, "Sources: alpo.ge/remark.pdf · leanprover-community.github.io/blog · math.mit.edu/~drew/grh",
+        txt(ov, W / 2, 230, "Sources: alpo.ge/remark.pdf · leanprover-community.github.io/blog · math.mit.edu/~drew/grh",
+            size=20, a=ae * ramp(t, c_end + 5, 0.6), ha="center", color=PAL["faint"])
+        txt(ov, W / 2, 195, "Synthetic narration (Kokoro-82M) · every plot computed from scratch in Python",
             size=20, a=ae * ramp(t, c_end + 5, 0.6), ha="center", color=PAL["faint"])
