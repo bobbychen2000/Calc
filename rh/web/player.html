@@ -1,0 +1,377 @@
+<title>The Riemann Hypothesis</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* Layout: one centred column, the film first, then a gallery of chapter clips, then notes.
+   Single dark look matching the video's palette: navy ground, gold zeros, cyan critical line. */
+:root {
+  --bg: #0d1117;
+  --panel: #151b26;
+  --line: #273041;
+  --fg: #e8e6e3;
+  --muted: #8f98ab;
+  --gold: #f2b134;
+  --cyan: #4cc9f0;
+  --font-body: "Inter", "Noto Sans SC", system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+.wrap {
+  max-width: 1120px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+  display: grid; gap: 28px;
+}
+header { display: flex; gap: 18px; align-items: stretch; }
+.crit { flex: none; width: 18px; }
+.crit svg { display: block; height: 100%; width: 18px; }
+.crit line { stroke: var(--cyan); stroke-opacity: .6; stroke-width: 1.5; }
+.crit circle { fill: var(--gold); }
+.head { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.toprow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.08; margin: 0; font-weight: 700; text-wrap: balance; }
+.sub { margin: 2px 0 0; color: var(--muted); font-size: 17px; max-width: 62ch; }
+.langs { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.langs button {
+  border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600;
+  padding: 6px 12px; cursor: pointer;
+}
+.langs button[aria-pressed="true"] { background: var(--panel); color: var(--gold); }
+.langs button:disabled { opacity: .45; cursor: default; }
+
+.player { display: grid; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #000; }
+.player:fullscreen { border: 0; border-radius: 0; align-content: center; }
+.screen { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: #000; }
+.screen video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: #000; }
+.bigplay {
+  position: absolute; inset: 0; margin: auto; width: 88px; height: 88px; border-radius: 50%;
+  border: 1.5px solid var(--gold); background: rgba(13, 17, 23, .72); color: var(--gold);
+  display: grid; place-items: center; cursor: pointer;
+}
+.bigplay svg { width: 34px; height: 34px; margin-left: 5px; }
+.spinner {
+  position: absolute; inset: 0; margin: auto; width: 44px; height: 44px; border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, .15); border-top-color: var(--gold); animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.bar { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--panel); border-top: 1px solid var(--line); }
+.btn { flex: none; width: 36px; height: 36px; border-radius: 8px; border: 0; background: transparent; color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+.btn:hover { background: #1f2735; }
+.btn svg { width: 20px; height: 20px; }
+.time { font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.time b { color: var(--fg); font-weight: 500; }
+.track { position: relative; flex: 1; min-width: 0; height: 36px; display: flex; align-items: center; }
+.rail { position: absolute; left: 0; right: 0; height: 4px; border-radius: 2px; background: #2b3446; }
+.fill { position: absolute; left: 0; height: 4px; border-radius: 2px; background: var(--gold); width: 0; }
+.tick { position: absolute; width: 2px; height: 10px; background: var(--muted); opacity: .55; transform: translateX(-1px); }
+.track input { position: absolute; inset: 0; width: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.knob { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--gold); transform: translateX(-7px); box-shadow: 0 0 0 4px rgba(242, 177, 52, .18); pointer-events: none; }
+.track:focus-within .knob { box-shadow: 0 0 0 4px rgba(76, 201, 240, .55); }
+.btn:focus-visible, .card:focus-visible, .bigplay:focus-visible, .langs button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.now { padding: 8px 14px 12px; background: var(--panel); color: var(--muted); font-size: 14px; }
+.now b { color: var(--fg); font-weight: 600; }
+
+h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 720px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; } }
+.card {
+  width: 100%; display: grid; gap: 8px; padding: 0 0 10px; text-align: left; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--panel); color: var(--fg); font: inherit; cursor: pointer; overflow: hidden;
+}
+.card:hover { border-color: #3a4560; }
+.card .thumb { position: relative; aspect-ratio: 16 / 9; background: #000; }
+.card img { width: 100%; height: 100%; object-fit: cover; display: block; max-width: 100%; }
+.card .len { position: absolute; right: 6px; bottom: 6px; font-family: var(--font-mono); font-size: 12px; background: rgba(0,0,0,.72); color: #fff; padding: 1px 6px; border-radius: 4px; }
+.card .meta { display: grid; gap: 2px; padding: 0 10px; }
+.card .t { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.card .n { font-size: 15px; font-weight: 500; line-height: 1.3; }
+.card[aria-current="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.card[aria-current="true"] .t { color: var(--gold); }
+.notes { display: grid; gap: 14px; font-size: 15px; color: #cfd2d8; max-width: 70ch; }
+.notes p { margin: 0; }
+.notes a { color: var(--cyan); text-decoration-thickness: 1px; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.status { border-left: 2px solid var(--gold); padding: 2px 0 2px 14px; }
+.small { font-size: 13px; color: var(--muted); }
+@media (max-width: 640px) { .bar { gap: 6px; padding: 8px; } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="crit" aria-hidden="true">
+      <svg viewBox="0 0 18 100" preserveAspectRatio="none">
+        <line x1="9" y1="0" x2="9" y2="100"></line>
+        <!-- the first zeros 14.13, 21.02, 25.01, 30.42, 32.94, 37.59 on a 0-40 scale, bottom = 0 -->
+        <circle cx="9" cy="64.7" r="2.4"></circle><circle cx="9" cy="47.4" r="2.4"></circle>
+        <circle cx="9" cy="37.5" r="2.4"></circle><circle cx="9" cy="23.9" r="2.4"></circle>
+        <circle cx="9" cy="17.7" r="2.4"></circle><circle cx="9" cy="6.0" r="2.4"></circle>
+      </svg>
+    </div>
+    <div class="head">
+      <div class="toprow">
+        <p class="eyebrow"><span data-i18n="eyebrow">Narrated explainer</span> · <span id="dur">12:14</span></p>
+        <div class="langs" role="group" aria-label="Language" id="langs"></div>
+      </div>
+      <h1 data-i18n="title">The Riemann Hypothesis</h1>
+      <p class="sub" data-i18n="sub">The zeta function, why its zeros control the primes, and the idea behind the claimed proof announced on 20 November 2026.</p>
+    </div>
+  </header>
+
+  <section class="player" id="player" aria-label="Video player">
+    <div class="screen">
+      <video id="video" preload="metadata" playsinline></video>
+      <button class="bigplay" id="bigplay" aria-label="Play">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>
+      </button>
+      <div class="spinner" id="spinner" hidden></div>
+    </div>
+    <div class="bar">
+      <button class="btn" id="play" aria-label="Play">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" id="playicon"><path d="M7 4.5v15l13-7.5z"/></svg>
+      </button>
+      <span class="time"><b id="cur">0:00</b> / <span id="tot">12:14</span></span>
+      <div class="track" id="track">
+        <div class="rail"></div>
+        <div class="fill" id="fill"></div>
+        <div class="knob" id="knob" style="left:0"></div>
+        <input id="seek" type="range" min="0" max="734" step="0.1" value="0" aria-label="Seek">
+      </div>
+      <button class="btn" id="mute" aria-label="Mute">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" id="muteicon"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" stroke="none"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+      </button>
+      <button class="btn" id="fs" aria-label="Full screen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+    <div class="now" aria-live="polite"><span data-i18n="chapter">Chapter</span>: <b id="chapname"></b></div>
+  </section>
+
+  <section aria-labelledby="chap-h">
+    <h2 id="chap-h" data-i18n="chapters">Chapters</h2>
+    <ol class="grid" id="chapters"></ol>
+  </section>
+
+  <section class="notes" aria-labelledby="about-h">
+    <h2 id="about-h" data-i18n="about">About this video</h2>
+    <div data-lang="en">
+      <p>An explainer for engineers who are rusty on college math: counting primes, Euler's product, zeta as a sum of
+        spinning arrows, its zeros, the explicit formula that rebuilds the primes from waves, the proved analogue for
+        curves over finite fields, and the idea and construction of the claimed proof.</p>
+      <p class="status"><b>Status as of 22 November 2026.</b> Levent Alpöge, working with Claude, released the proof as a
+        Lean library. The Lean and Mathlib communities' joint statement certifies the classical Riemann Hypothesis;
+        Andrew Sutherland's verification page reports the same library also proves it for every Dirichlet L-function.
+        There is no human-readable proof yet, and the Clay prize requires publication, two years and general acceptance.
+        It is a claimed proof.</p>
+      <p class="small">Synthetic narration (Kokoro-82M). Every plot is computed from scratch in Python; captions are burned in.
+        Keys: space plays or pauses, ← and → skip 5 s, F toggles full screen, M mutes.</p>
+    </div>
+    <div data-lang="zh" hidden>
+      <p>写给大学数学有些生疏的工程师的科普视频：数素数、欧拉乘积、把 ζ 函数看成旋转箭头之和、它的零点、用波重建素数的显式公式、在有限域上的曲线中已被证明的类比，以及这份待确认证明的思路与构造。</p>
+      <p class="status"><b>截至 2026 年 11 月 22 日的状态。</b>Levent Alpöge 与 Claude 合作，以 Lean 代码库的形式发布了证明。Lean 与 Mathlib 社区的联合声明认证了经典黎曼猜想；Andrew Sutherland 的验证页面报告，同一代码库也对所有狄利克雷 L 函数证明了它。目前还没有供人阅读的证明，克雷奖要求先发表、再等两年、并获得普遍认可。这是一份待确认的证明。</p>
+      <p class="small">合成配音。所有图形均用 Python 从头计算；字幕已烧录在画面中。快捷键：空格播放/暂停，← → 跳 5 秒，F 全屏，M 静音。</p>
+    </div>
+    <p data-i18n-html="sources">Primary sources:
+      <a href="https://alpo.ge/remark.pdf" target="_blank" rel="noopener">Alpöge's note</a> ·
+      <a href="https://leanprover-community.github.io/blog/posts/riemann-hypothesis/" target="_blank" rel="noopener">Lean and Mathlib joint statement</a> ·
+      <a href="https://math.mit.edu/~drew/grh/" target="_blank" rel="noopener">Sutherland's verification page</a> ·
+      <a href="https://xenaproject.wordpress.com/2026/11/12/and-the-proof-is-checked-in-lean/" target="_blank" rel="noopener">Buzzard's four questions</a></p>
+  </section>
+</div>
+
+<script>
+(function () {
+  const DATA = /*DATA*/null;
+  const UI = {
+    en: { eyebrow: "Narrated explainer", title: "The Riemann Hypothesis",
+          sub: "The zeta function, why its zeros control the primes, and the idea behind the claimed proof announced on 20 November 2026.",
+          chapter: "Chapter", chapters: "Chapters", about: "About this video", play: "Play", pause: "Pause",
+          sources: 'Primary sources: <a href="https://alpo.ge/remark.pdf" target="_blank" rel="noopener">Alpöge\'s note</a> · <a href="https://leanprover-community.github.io/blog/posts/riemann-hypothesis/" target="_blank" rel="noopener">Lean and Mathlib joint statement</a> · <a href="https://math.mit.edu/~drew/grh/" target="_blank" rel="noopener">Sutherland\'s verification page</a> · <a href="https://xenaproject.wordpress.com/2026/11/12/and-the-proof-is-checked-in-lean/" target="_blank" rel="noopener">Buzzard\'s four questions</a>' },
+    zh: { eyebrow: "配音讲解", title: "黎曼猜想",
+          sub: "ζ 函数、它的零点为何掌控素数，以及 2026 年 11 月 20 日公布的待确认证明背后的思路。",
+          chapter: "章节", chapters: "章节", about: "关于本视频", play: "播放", pause: "暂停",
+          sources: '一手资料：<a href="https://alpo.ge/remark.pdf" target="_blank" rel="noopener">Alpöge 的说明</a> · <a href="https://leanprover-community.github.io/blog/posts/riemann-hypothesis/" target="_blank" rel="noopener">Lean 与 Mathlib 联合声明</a> · <a href="https://math.mit.edu/~drew/grh/" target="_blank" rel="noopener">Sutherland 的验证页面</a> · <a href="https://xenaproject.wordpress.com/2026/11/12/and-the-proof-is-checked-in-lean/" target="_blank" rel="noopener">Buzzard 的四个问题</a>' },
+  };
+  const $ = (id) => document.getElementById(id);
+  const v = $("video"), seek = $("seek"), fill = $("fill"), knob = $("knob");
+  const playBtn = $("play"), big = $("bigplay"), spin = $("spinner"), track = $("track");
+  const PLAY = '<path d="M7 4.5v15l13-7.5z"/>', PAUSE = '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>';
+  const pre = document.createElement("video");
+  pre.muted = true; pre.preload = "none";
+  let lang, L, segs, chapters, TOTAL, cards = [];
+  let cur = 0, wantPlay = false, pendingOffset = null, scrubbing = false;
+
+  const fmt = (t) => { t = Math.max(0, Math.floor(t)); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); };
+  const segAt = (g) => { for (let i = segs.length - 1; i >= 0; i--) if (g >= segs[i].start - 0.01) return i; return 0; };
+  const chapAt = (g) => { let k = 0; for (let i = 0; i < chapters.length; i++) if (g >= chapters[i].t - 0.05) k = i; return k; };
+  const globalTime = () => Math.min(TOTAL, segs[cur].start + (v.currentTime || 0));
+  const ui = (k) => (UI[lang] && UI[lang][k]) || UI.en[k];
+
+  function buildLangButtons() {
+    const box = $("langs");
+    box.innerHTML = "";
+    [["en", "EN"], ["zh", "中文"]].forEach(([code, label]) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = label; b.lang = code;
+      const has = !!DATA.langs[code];
+      b.disabled = !has;
+      if (!has) b.title = code === "zh" ? "中文版即将推出 (coming soon)" : "";
+      b.setAttribute("aria-pressed", code === lang ? "true" : "false");
+      b.addEventListener("click", () => { if (has && code !== lang) switchLang(code); });
+      box.appendChild(b);
+    });
+  }
+
+  function buildChapters() {
+    track.querySelectorAll(".tick").forEach((t) => t.remove());
+    const list = $("chapters");
+    list.innerHTML = "";
+    chapters.forEach((c, i) => {
+      if (i > 0) {
+        const tk = document.createElement("div");
+        tk.className = "tick"; tk.style.left = (100 * c.t / TOTAL) + "%";
+        track.insertBefore(tk, seek);
+      }
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "card";
+      b.innerHTML = '<span class="thumb"><img alt="" loading="lazy"><span class="len"></span></span><span class="meta"><span class="t"></span><span class="n"></span></span>';
+      b.querySelector("img").src = segs[i].thumb;
+      b.querySelector(".len").textContent = fmt(segs[i].dur);
+      b.querySelector(".t").textContent = fmt(c.t);
+      b.querySelector(".n").textContent = c.title;
+      b.addEventListener("click", () => { setSeg(i, 0, true); $("player").scrollIntoView({ behavior: "smooth", block: "start" }); });
+      li.appendChild(b); list.appendChild(li);
+    });
+    cards = Array.from(list.querySelectorAll(".card"));
+  }
+
+  function applyText() {
+    document.documentElement.lang = lang === "zh" ? "zh-Hans" : "en";
+    document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = ui(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-html]").forEach((el) => { el.innerHTML = ui(el.dataset.i18nHtml); });
+    document.querySelectorAll("[data-lang]").forEach((el) => { el.hidden = el.dataset.lang !== lang; });
+    $("tot").textContent = fmt(TOTAL); $("dur").textContent = fmt(TOTAL);
+    seek.max = String(TOTAL);
+  }
+
+  function useLang(code) {
+    lang = code; L = DATA.langs[code];
+    segs = L.segments; chapters = L.chapters; TOTAL = L.total;
+    cur = 0; pendingOffset = null;
+    v.poster = L.poster; v.src = segs[0].src; v.load();
+    pre.removeAttribute("src");
+    applyText(); buildLangButtons(); buildChapters(); render();
+    try { localStorage.setItem("rh-lang", code); } catch (e) {}
+  }
+
+  function switchLang(code) {
+    const k = chapAt(globalTime()), playing = !v.paused;
+    useLang(code);
+    if (k > 0 || playing) setSeg(k, 0, playing);
+  }
+
+  function render() {
+    const g = scrubbing ? Number(seek.value) : globalTime();
+    $("cur").textContent = fmt(g);
+    if (!scrubbing) seek.value = String(g);
+    seek.setAttribute("aria-valuetext", fmt(g) + " / " + fmt(TOTAL));
+    const pct = 100 * g / TOTAL;
+    fill.style.width = pct + "%"; knob.style.left = pct + "%";
+    const playing = !v.paused && !v.ended;
+    $("playicon").innerHTML = playing ? PAUSE : PLAY;
+    playBtn.setAttribute("aria-label", playing ? ui("pause") : ui("play"));
+    big.hidden = playing || wantPlay;
+    const k = chapAt(g);
+    cards.forEach((b, i) => b.setAttribute("aria-current", i === k ? "true" : "false"));
+    $("chapname").textContent = chapters[k].title;
+  }
+
+  function warmNext() {
+    const n = cur + 1;
+    if (n < segs.length && pre.getAttribute("src") !== segs[n].src) { pre.src = segs[n].src; pre.preload = "auto"; pre.load(); }
+  }
+
+  function setSeg(i, offset, play) {
+    wantPlay = play;
+    if (i !== cur || !v.currentSrc) {
+      cur = i; pendingOffset = offset;
+      v.src = segs[i].src; v.load();
+      if (play) v.play().catch(() => {});
+    } else {
+      try { v.currentTime = offset; } catch (e) { pendingOffset = offset; }
+      if (play) v.play().catch(() => {});
+    }
+    render();
+  }
+
+  function seekTo(g, play) {
+    g = Math.max(0, Math.min(TOTAL - 0.05, g));
+    const i = segAt(g);
+    setSeg(i, g - segs[i].start, play === undefined ? (!v.paused || wantPlay) : play);
+  }
+
+  function toggle() {
+    if (v.paused || v.ended) { wantPlay = true; v.play().catch(() => { wantPlay = false; render(); }); }
+    else { wantPlay = false; v.pause(); }
+    render();
+  }
+
+  v.addEventListener("loadedmetadata", () => {
+    if (pendingOffset !== null) { try { v.currentTime = pendingOffset; } catch (e) {} pendingOffset = null; }
+    if (wantPlay && v.paused) v.play().catch(() => {});
+  });
+  v.addEventListener("ended", () => {
+    if (cur < segs.length - 1) setSeg(cur + 1, 0, true);
+    else { wantPlay = false; render(); }
+  });
+  v.addEventListener("playing", () => { spin.hidden = true; warmNext(); render(); });
+  v.addEventListener("waiting", () => { if (wantPlay) spin.hidden = false; });
+  v.addEventListener("canplay", () => { spin.hidden = true; });
+  v.addEventListener("pause", () => { if (!v.ended && v.currentTime < (segs[cur].dur - 0.2)) wantPlay = false; render(); });
+  ["play", "timeupdate", "seeked"].forEach((e) => v.addEventListener(e, render));
+  v.addEventListener("click", toggle);
+  playBtn.addEventListener("click", toggle);
+  big.addEventListener("click", toggle);
+
+  seek.addEventListener("input", () => { scrubbing = true; render(); });
+  seek.addEventListener("change", () => { scrubbing = false; seekTo(Number(seek.value)); });
+
+  $("mute").addEventListener("click", () => {
+    v.muted = !v.muted;
+    $("mute").setAttribute("aria-label", v.muted ? "Unmute" : "Mute");
+    $("muteicon").style.opacity = v.muted ? "0.45" : "1";
+  });
+
+  const player = $("player");
+  function fullscreen() {
+    if (document.fullscreenElement) { document.exitFullscreen().catch(() => {}); return; }
+    if (player.requestFullscreen) player.requestFullscreen().catch(() => { if (v.webkitEnterFullscreen) v.webkitEnterFullscreen(); });
+    else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+  }
+  $("fs").addEventListener("click", fullscreen);
+
+  document.addEventListener("keydown", (e) => {
+    const tag = e.target && e.target.tagName;
+    if (e.target === seek && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+      e.preventDefault(); seekTo(globalTime() + (e.key === "ArrowLeft" ? -5 : 5)); return;
+    }
+    if (tag === "INPUT" || tag === "BUTTON" || tag === "A") return;
+    if (e.key === " " || e.key === "k") { e.preventDefault(); toggle(); }
+    else if (e.key === "ArrowLeft") { seekTo(globalTime() - 5); }
+    else if (e.key === "ArrowRight") { seekTo(globalTime() + 5); }
+    else if (e.key === "f") { fullscreen(); }
+    else if (e.key === "m") { $("mute").click(); }
+  });
+
+  let start = DATA.default;
+  try { const s = localStorage.getItem("rh-lang"); if (s && DATA.langs[s]) start = s; } catch (e) {}
+  useLang(start);
+  (function loop() { if (!v.paused && !scrubbing) render(); requestAnimationFrame(loop); })();
+})();
+</script>

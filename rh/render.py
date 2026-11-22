@@ -27,8 +27,10 @@ import soundfile as sf  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-AUDIO = os.path.join(HERE, "audio")
-OUT = os.path.join(HERE, "out")
+LANG = os.environ.get("RH_LANG", "en")          # "en" or "zh" (Mandarin: script_zh, audio_zh, out_zh)
+AUDIO = os.path.join(HERE, "audio" if LANG == "en" else f"audio_{LANG}")
+OUT = os.path.join(HERE, "out" if LANG == "en" else f"out_{LANG}")
+SCRIPT_MODULE = "script" if LANG == "en" else f"script_{LANG}"
 W, H, FPS, SR = 1920, 1080, 30, 24000
 SPF = SR // FPS  # samples per frame
 
@@ -51,6 +53,72 @@ matplotlib.rcParams.update({
     "savefig.facecolor": PAL["bg"],
 })
 MONO = ["DejaVu Sans Mono", "DejaVu Sans", "STIXGeneral"]
+if LANG == "zh":
+    # Latin text keeps Inter; CJK glyphs fall back per glyph to Noto Sans CJK SC.  Mathtext cannot
+    # fall back, so strings mixing Chinese with $...$ use a "custom" math font set (upright text
+    # in Noto Sans CJK SC, italic letters and symbols in STIX); see _mathify.
+    matplotlib.rcParams["font.family"] = ["Inter", "Noto Sans CJK SC", "DejaVu Sans"]
+    matplotlib.rcParams.update({"mathtext.rm": "Noto Sans CJK SC", "mathtext.it": "STIXGeneral:italic",
+                                "mathtext.bf": "Noto Sans CJK SC:bold", "mathtext.sf": "Noto Sans CJK SC",
+                                "mathtext.fallback": "stix"})
+    MONO = ["DejaVu Sans Mono", "Noto Sans Mono CJK SC", "DejaVu Sans", "STIXGeneral"]
+
+
+def _install_translation(lang):
+    """Every string matplotlib draws passes through Text.set_text: map the English on-screen
+    strings to the language's table (i18n/<lang>.json: exact strings + numeric templates)."""
+    import re
+    import matplotlib.text as mtext
+    with open(os.path.join(HERE, "i18n", f"{lang}.json"), encoding="utf-8") as f:
+        table = json.load(f)
+    exact = table["exact"]
+    templ = []
+    for en, tr in table.get("templates", {}).items():
+        pat = "^" + re.escape(en).replace("\\#", "#").replace("#", r"(\d[\d,]*(?:\.\d+)?)") + "$"
+        templ.append((re.compile(pat, re.S), tr))
+    orig = mtext.Text.set_text
+    cjk = re.compile(r"[\u3000-\u303f\u4e00-\u9fff\uff00-\uffef]")
+
+    def mathify_line(line):
+        """Chinese prose around $...$ -> one math run with the prose in \\mathrm{} (Noto CJK)."""
+        if "$" not in line or not cjk.search(re.sub(r"\$[^$]*\$", "", line)):
+            return line, False
+        out = []
+        for part in re.split(r"(\$[^$]*\$)", line):
+            if not part:
+                continue
+            if part.startswith("$") and part.endswith("$") and len(part) > 1:
+                out.append(part[1:-1])
+            else:
+                esc = re.sub(r"([\\{}_^%#&$])", r"\\\1", part).replace(" ", r"\ ")
+                out.append(r"\mathrm{" + esc + "}")
+        return "$" + "".join(out) + "$", True
+
+    def set_text(self, s):
+        if isinstance(s, str) and s:
+            if s in exact:
+                s = exact[s]
+            else:
+                for rx, tr in templ:
+                    m = rx.match(s)
+                    if m:
+                        s = tr.format(*m.groups())
+                        break
+            lines, mixed = [], False
+            for line in s.split("\n"):
+                l2, mx = mathify_line(line)
+                lines.append(l2)
+                mixed |= mx
+            if mixed:
+                s = "\n".join(lines)
+                self.set_math_fontfamily("custom")
+        return orig(self, s)
+
+    mtext.Text.set_text = set_text
+
+
+if LANG != "en":
+    _install_translation(LANG)
 
 
 # ---------------------------------------------------------------------------------- timing helpers
@@ -103,8 +171,26 @@ def overlay(fig):
     return ax
 
 
+def _is_cjk(text):
+    return any("\u4e00" <= c <= "\u9fff" for c in text)
+
+
 def caption_lines(text, max_chars=46):
-    """Split a caption into at most two balanced lines."""
+    """Split a caption into at most two balanced lines (by characters for CJK text)."""
+    if _is_cjk(text):
+        if len(text) <= 15:
+            return [text]
+        mid = len(text) / 2
+        best, best_cost = None, 1e9
+        for i in range(4, len(text) - 3):
+            if text[i - 1] in "，、；：（(" or text[i] in "）)，、；：。":
+                continue
+            cost = abs(i - mid) - (3 if text[i - 1] in "，。；：、 " else 0)
+            if text[i - 1].isascii() and text[i].isascii() and text[i - 1].isalnum() and text[i].isalnum():
+                cost += 50  # don't split inside a Latin word or number
+            if cost < best_cost:
+                best, best_cost = i, cost
+        return [text[:best].strip(), text[best:].strip()]
     if len(text) <= max_chars:
         return [text]
     words = text.split()
@@ -159,8 +245,9 @@ def padded_audio(sid):
 
 
 def scene_table():
+    import importlib
     import scenes  # noqa: F401  (registers SCENE_FUNCS)
-    import script
+    script = importlib.import_module(SCRIPT_MODULE)
     return [(s["id"], s.get("title", ""), scenes.SCENE_FUNCS[s["id"]]) for s in script.SCENES]
 
 
@@ -239,7 +326,7 @@ def assemble(sids):
     wav = np.concatenate(parts)
     raw = os.path.join(OUT, "narration_raw.wav")
     sf.write(raw, wav, SR, subtype="PCM_16")
-    final = os.path.join(OUT, "rh_explainer.mp4")
+    final = os.path.join(OUT, "rh_explainer.mp4")  # same name per language, in its own out dir
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", video, "-i", raw,
                     "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
                     "-af", "loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000",
@@ -288,7 +375,8 @@ def main():
         for r in pool.imap_unordered(render_scene, jobs):
             pass
     if not a.no_assemble and not a.scenes:
-        import script
+        import importlib
+        script = importlib.import_module(SCRIPT_MODULE)
         assemble([s["id"] for s in script.SCENES])
 
 
