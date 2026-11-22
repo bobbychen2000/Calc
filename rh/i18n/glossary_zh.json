@@ -1,0 +1,1780 @@
+{
+ "about": "English -> Simplified Chinese (mainland, 普通话) glossary for the RH explainer (script.py + i18n/strings_en.json + the Artifact player). Terms checked against zh.wikipedia.org (zh-cn) on 2026-11-22. Fields: category, en, zh, spoken (what the Mandarin voice should say when it differs from zh), note.",
+ "rules": [
+  "Claimed proof: 待确认的证明 (or 声称的证明 when the sentence is about Alpöge's claim); never 已被证明 / 已解决 / 证明了黎曼猜想 in the narrator's own voice. 已被证明 is right only for the curves-over-finite-fields analogue (Hasse, Weil, Deligne).",
+  "The Lean and Mathlib communities' joint statement (联合声明, endorsed / 背书 by the Lean FRO and the Mathlib Initiative) certified (认证) the CLASSICAL RH only; 完全确信 appears only inside their attributed, translated quote.",
+  "Sutherland's MIT page 报告称 the library also proves the on-the-line statement for every Dirichlet L-function = 这一意义上的广义黎曼猜想; other L-functions 未经检查; the note only 预期 ERH 假以时日.",
+  "Clay: 先发表（合格刊物），再过两年，然后获得普遍认可.",
+  "The mechanism (θ 提升链的周期、可除性、X/m + m 的平衡) is attributed to 短文 and AI 辅助撰写的导读 / 研读代码的人, never the narrator's voice.",
+  "The timeline is 'Claude 整理/提供的粗略时间线（据短文）'.",
+  "Quotes keep their attribution; quotes from English sources get （译文） on screen; Riemann's German line: '黎曼，1859（据 D. R. Wilkins 英译）'.",
+  "Disambiguation: 内核 = Lean's kernel, θ 核 = theta kernel; 编译 = compile code, 整理 = compile a timeline; 声明 = public statement, 命题 = a theorem's statement; 对称变换群, not 对称群 (= S_n).",
+  "Typography: full-width Chinese punctuation （），：；“” ……; Latin names, code, file and tool names verbatim; numbers in 万 / 万亿; dates YYYY 年 M 月 D 日.",
+  "Voice: [display|spoken] — captions keep Latin names (Levent Alpöge, Kevin Buzzard, Andrew Sutherland), the voice says the transliteration in 'spoken'; Greek letters are spoken as in the 'spoken' field."
+ ],
+ "glossary": [
+  {
+   "category": "claim-status",
+   "en": "claimed proof",
+   "zh": "待确认的证明",
+   "note": "Default in the narrator's own voice (as web/player.html already writes). Use 声称的证明 only where the sentence is about Alpöge's claim (他声称找到的证明). NEVER in the narrator's voice: 已被证明 / 已证明 / 已解决 / 证明了黎曼猜想 / 被攻克. Caption 'a claimed proof' -> 待确认的证明; 'and a claimed proof in Lean' -> 以及一份用 Lean 写成、待确认的证明; '(= RH, claimed)' -> （= 黎曼猜想，待确认）."
+  },
+  {
+   "category": "claim-status",
+   "en": "he wrote that he believes that ... he has found a proof",
+   "zh": "他写道，他相信自己……找到了一个证明",
+   "note": "Keep both hedges: 他写道 (reported) + 他相信 (his belief). Note: 'I believe I have, working with Claude, discovered a proof of the Riemann Hypothesis.'"
+  },
+  {
+   "category": "claim-status",
+   "en": "working with Claude",
+   "zh": "与 Claude 合作",
+   "note": "Alpöge's own words; keep 'Alpöge, working with Claude'. Not 'Claude 独自证明' nor 'Alpöge 独自'. Caption 'Levent Alpöge, working with Claude: a 4-page note' -> Levent Alpöge 与 Claude 合作：一篇 4 页的短文."
+  },
+  {
+   "category": "claim-status",
+   "en": "joint statement",
+   "zh": "联合声明",
+   "note": "'the Lean and Mathlib communities' joint statement' -> Lean 与 Mathlib 社区的联合声明 (statement BY the communities; the Lean FRO and the Mathlib Initiative only endorse it). Do not confuse with 命题 (a theorem's statement)."
+  },
+  {
+   "category": "claim-status",
+   "en": "endorsed by the Lean FRO and the Mathlib Initiative",
+   "zh": "获 Lean FRO 与 Mathlib Initiative 背书",
+   "note": "Not '由 Lean FRO 发布/认证'. 背书 = endorse; avoid 认可 here (reserved for Clay's 'general acceptance')."
+  },
+  {
+   "category": "claim-status",
+   "en": "certified / certifies",
+   "zh": "认证",
+   "note": "Subject is always the joint statement: Lean 与 Mathlib 的声明所认证的，是经典黎曼猜想. Scope = the classical RH only (Mathlib's RiemannHypothesis). Status-row label 'certified' -> 已认证 (its body line names who certified: Lean + Mathlib, 11 月 21 日)."
+  },
+  {
+   "category": "claim-status",
+   "en": "full confidence",
+   "zh": "完全确信",
+   "note": "Only inside the attributed quotation, never as the narrator's verdict. 'the November twenty-first statement of full confidence' -> 11 月 21 日那份表示“完全确信”的声明 (keep the quotation marks)."
+  },
+  {
+   "category": "claim-status",
+   "en": "We have full confidence that Alpöge's proof of the Riemann Hypothesis is correct",
+   "zh": "我们完全确信，Alpöge 对黎曼猜想的证明是正确的",
+   "note": "A QUOTE (Lean + Mathlib communities, 21 Nov 2026), translated from English: on screen add （译文） to the attribution line; narration introduces it with 原话是 / 引述如下. On-screen 3-line split ('We have full confidence that' / 'Alpöge's proof of the Riemann' / 'Hypothesis is correct') -> 我们完全确信， / Alpöge 对黎曼猜想的 / 证明是正确的。 Short form '“We have full confidence that Alpöge’s proof … is correct”' -> “我们完全确信，Alpöge 的证明……是正确的”（译文）."
+  },
+  {
+   "category": "claim-status",
+   "en": "classical Riemann Hypothesis",
+   "zh": "经典黎曼猜想",
+   "note": "What the joint statement certifies (as opposed to GRH / ERH)."
+  },
+  {
+   "category": "claim-status",
+   "en": "reports (Sutherland's page reports ...)",
+   "zh": "报告称",
+   "note": "Keep the attribution verb: Andrew Sutherland 在 MIT 的验证页面报告称，这个代码库也对每个狄利克雷 L 函数证明了同样的“零点都在线上”的命题. Not stated as the narrator's fact."
+  },
+  {
+   "category": "claim-status",
+   "en": "GRH in that sense / the generalized hypothesis, in that sense",
+   "zh": "这一意义上的广义黎曼猜想",
+   "note": "GRH here = every Dirichlet L-function (Sutherland's scope note). zh.wikipedia 广义黎曼猜想 uses the same split: GRH = Dirichlet L-functions, ERH = Dedekind zeta functions (and notes the broader usage)."
+  },
+  {
+   "category": "claim-status",
+   "en": "other kinds of L-functions haven't been checked",
+   "zh": "其他类型的 L 函数尚未经过检查",
+   "note": "Status label 'not checked' -> 未经检查. Body: 'other L-functions (Dedekind, Hecke, …); the note only \"expects\" ERH' -> 其他 L 函数（戴德金、赫克……）；短文只是“预期”扩展黎曼猜想（ERH）."
+  },
+  {
+   "category": "claim-status",
+   "en": "expects (the Extended RH) with more time",
+   "zh": "预期（假以时日也能得到扩展黎曼猜想）",
+   "note": "Note: 'I expect, with more time, the Extended Riemann Hypothesis too'. Only an expectation: never 已证明 / 声称已证明 ERH. Narration: Alpöge 只是预期，假以时日，也能得到其中之一——扩展黎曼猜想."
+  },
+  {
+   "category": "claim-status",
+   "en": "human-readable proof",
+   "zh": "供人阅读的证明",
+   "note": "As in web/player.html. 'there's no human-readable proof yet' -> 目前还没有供人阅读的证明. Status label 'not yet' -> 尚无."
+  },
+  {
+   "category": "claim-status",
+   "en": "he'll write it properly / \"write it properly\"",
+   "zh": "好好写出来",
+   "note": "Quote from the note (English): on screen 'Alpöge: he will \"write it properly\"' -> Alpöge：他会“好好写出来”（译文）."
+  },
+  {
+   "category": "claim-status",
+   "en": "machine-checked",
+   "zh": "经机器检查",
+   "note": "End-card word; pairs with 尚未解释清楚."
+  },
+  {
+   "category": "claim-status",
+   "en": "not yet explained (in human terms)",
+   "zh": "尚未用人类的语言解释清楚",
+   "note": "End-card short form: 尚未解释清楚. Not 'not yet understood' (fact-check changed that)."
+  },
+  {
+   "category": "claim-status",
+   "en": "checked by machines, not yet explained in human terms",
+   "zh": "经过了机器检查，但还没有用人类的语言解释清楚"
+  },
+  {
+   "category": "claim-status",
+   "en": "If it holds",
+   "zh": "如果它成立",
+   "note": "Keep the conditional in the closing lines."
+  },
+  {
+   "category": "claim-status",
+   "en": "no human has read in full",
+   "zh": "没有人完整读过",
+   "note": "Fact-check wording: not 'no human has read' (没有人读过)."
+  },
+  {
+   "category": "claim-status",
+   "en": "the note (Alpöge's four-page note, remark.pdf)",
+   "zh": "短文",
+   "note": "First mention 一篇四页的短文; later 这篇短文 / 短文中. web/player.html currently says 'Alpöge 的说明' — change to 'Alpöge 的短文' so the page and the video agree."
+  },
+  {
+   "category": "claim-status",
+   "en": "per the note / as the note says",
+   "zh": "据短文所述"
+  },
+  {
+   "category": "claim-status",
+   "en": "as the note and the guides describe it",
+   "zh": "按照短文和导读的描述",
+   "note": "The mechanism (periods of chained θ lifts, divisibility growing along the chain, the X/m + m balance) is ALWAYS attributed to the note and the AI-assisted guides, never stated in the narrator's own voice."
+  },
+  {
+   "category": "claim-status",
+   "en": "guides (Jaswal's and Rubinstein's documents)",
+   "zh": "导读"
+  },
+  {
+   "category": "claim-status",
+   "en": "AI-assisted guides",
+   "zh": "AI 辅助撰写的导读",
+   "note": "'two errors, as the AI-assisted guides read the code:' -> AI 辅助撰写的导读对代码的解读：两项误差："
+  },
+  {
+   "category": "claim-status",
+   "en": "the guides, written from the code with AI help",
+   "zh": "根据代码、借助 AI 写成的导读"
+  },
+  {
+   "category": "claim-status",
+   "en": "readers of the code",
+   "zh": "研读代码的人",
+   "note": "Also 代码研读者. 'Readers of the code describe the claimed proof as ...' -> 研读代码的人把这份待确认的证明描述为…… 'analogy as described in the note and by readers of the code' -> 类比依据短文及代码研读者的描述."
+  },
+  {
+   "category": "claim-status",
+   "en": "caveat from independent readers",
+   "zh": "独立研读者的提醒"
+  },
+  {
+   "category": "claim-status",
+   "en": "rough timeline",
+   "zh": "粗略时间线"
+  },
+  {
+   "category": "claim-status",
+   "en": "which Alpöge says Claude compiled",
+   "zh": "Alpöge 说这是 Claude 整理的",
+   "note": "Compiled a timeline = 整理 (NOT 编译, which is reserved for compiling code). Note: 'a rough timeline Claude provided after a thorough search'."
+  },
+  {
+   "category": "claim-status",
+   "en": "\"Claude provided\", per the note",
+   "zh": "（据短文，由“Claude 提供”）",
+   "note": "On-screen header: 'the note's rough timeline (\"Claude provided\", per the note): 20 items, Oct 6 → Nov 16, 2026' -> 短文中的粗略时间线（据短文，由“Claude 提供”）：共 20 项，2026 年 10 月 6 日 → 11 月 16 日."
+  },
+  {
+   "category": "claim-status",
+   "en": "have no (visible) counterpart in the code",
+   "zh": "在代码中找不到（明显的）对应",
+   "note": "On screen these lines are split ('some of the note's 20 timeline steps,' / 'e.g. the \"Stepanov determinant\", have no' / 'counterpart found in the code (Jaswal, 21 Nov)'); re-split the Chinese sentence: 短文时间线 20 步中的若干步， / 例如“斯捷潘诺夫行列式”， / 在代码中找不到对应（Jaswal，11 月 21 日）."
+  },
+  {
+   "category": "claim-status",
+   "en": "quote: (narration)",
+   "zh": "原话是：",
+   "note": "Captions may show 引述（译文）： while the voice says 引述： ([display|spoken])."
+  },
+  {
+   "category": "claim-status",
+   "en": "(translation marker for quotes whose original is English)",
+   "zh": "（译文）",
+   "note": "Append to the attribution line of every quote card from an English source (joint statement, Alpöge's note, Buzzard, Sutherland). Riemann's line is German: credit '黎曼，1859（据 D. R. Wilkins 英译）'."
+  },
+  {
+   "category": "claim-status",
+   "en": "verbatim",
+   "zh": "原文照录",
+   "note": "'Main.lean, line 4 (verbatim; line wrapped)' -> Main.lean 第 4 行（原文照录；已换行）; 'Mathlib's definition (verbatim; long line wrapped)' -> Mathlib 的定义（原文照录；长行已换行）; 'Formalism/…/SChain.lean, line 57 (verbatim)' -> Formalism/…/SChain.lean 第 57 行（原文照录）."
+  },
+  {
+   "category": "claim-status",
+   "en": "perhaps the most famous open problem in mathematics",
+   "zh": "或许是数学中最著名的未解决问题"
+  },
+  {
+   "category": "claim-status",
+   "en": "a world where it is proved / the analogous hypothesis has been proved",
+   "zh": "一个已被证明的世界 / 类似的猜想已被证明",
+   "note": "The ONLY place 已被证明 is right: the function-field (curves over finite fields) analogue, proved by Hasse, Weil, Deligne."
+  },
+  {
+   "category": "lean-verification",
+   "en": "Lean",
+   "zh": "Lean",
+   "spoken": "Lean",
+   "note": "Keep Latin. Gloss on first use: Lean——一种由计算机检查每一步的语言 (zh.wikipedia: 证明助手和函数式编程语言)."
+  },
+  {
+   "category": "lean-verification",
+   "en": "a language in which a computer checks every step",
+   "zh": "一种由计算机检查每一步推理的语言",
+   "note": "Card: 'checks every step' -> 检查每一步."
+  },
+  {
+   "category": "lean-verification",
+   "en": "proof assistant",
+   "zh": "证明助手",
+   "note": "zh.wikipedia 证明助手 (also 交互式定理证明器)."
+  },
+  {
+   "category": "lean-verification",
+   "en": "Mathlib",
+   "zh": "Mathlib",
+   "spoken": "Mathlib",
+   "note": "Keep Latin; gloss: Lean 的共享数学库."
+  },
+  {
+   "category": "lean-verification",
+   "en": "shared (math) library",
+   "zh": "共享数学库"
+  },
+  {
+   "category": "lean-verification",
+   "en": "Lean and Mathlib communities",
+   "zh": "Lean 与 Mathlib 社区"
+  },
+  {
+   "category": "lean-verification",
+   "en": "Lean FRO",
+   "zh": "Lean FRO",
+   "note": "Keep Latin (Focused Research Organization)."
+  },
+  {
+   "category": "lean-verification",
+   "en": "Mathlib Initiative",
+   "zh": "Mathlib Initiative",
+   "note": "Keep Latin."
+  },
+  {
+   "category": "lean-verification",
+   "en": "kernel (Lean's checking kernel)",
+   "zh": "内核",
+   "note": "Lean 的（检查）内核: 'a small program, the kernel, checks them all' -> 一个小程序——内核——把它们全部检查一遍. Do NOT use 内核 for the theta kernel (θ 核)."
+  },
+  {
+   "category": "lean-verification",
+   "en": "Lean's own kernel: every module replayed",
+   "zh": "Lean 自身的内核：逐个模块重放"
+  },
+  {
+   "category": "lean-verification",
+   "en": "Lean's kernel on the full export: still running",
+   "zh": "Lean 内核检查完整导出文件：仍在运行",
+   "note": "Status fact as of 22 Nov (keep 'still running')."
+  },
+  {
+   "category": "lean-verification",
+   "en": "checker / proof checker",
+   "zh": "检查器 / 证明检查器"
+  },
+  {
+   "category": "lean-verification",
+   "en": "several independent checkers accept(ed) it",
+   "zh": "多个独立检查器接受了它"
+  },
+  {
+   "category": "lean-verification",
+   "en": "checks that accepted it (MIT page, 22 Nov):",
+   "zh": "接受它的检查（MIT 页面，11 月 22 日）："
+  },
+  {
+   "category": "lean-verification",
+   "en": "formal proof, relative to set theory, that they can't accept a false one",
+   "zh": "相对于集合论的形式化证明，证明它们不会接受错误的证明",
+   "note": "con-leche / con-ron; keep 'relative to set theory' (相对于集合论)."
+  },
+  {
+   "category": "lean-verification",
+   "en": "formal soundness proof",
+   "zh": "形式化的可靠性证明",
+   "note": "soundness = 可靠性 (mainland logic usage)."
+  },
+  {
+   "category": "lean-verification",
+   "en": "compile / Does it compile?",
+   "zh": "编译 / 能编译通过吗？",
+   "note": "Code only. 'compiled a timeline' is 整理."
+  },
+  {
+   "category": "lean-verification",
+   "en": "rebuild / dozens of people have rebuilt it",
+   "zh": "重新构建 / 已有数十人重新构建过它"
+  },
+  {
+   "category": "lean-verification",
+   "en": "dozens of rebuilds; one sandboxed, byte-identical",
+   "zh": "数十次重新构建；其中一次在沙箱中，结果逐字节一致"
+  },
+  {
+   "category": "lean-verification",
+   "en": "standard axioms",
+   "zh": "标准公理",
+   "note": "zh.wikipedia Lean: 只依赖 Lean 的三条标准公理."
+  },
+  {
+   "category": "lean-verification",
+   "en": "Exactly that statement, standard axioms only?",
+   "zh": "恰好是这个命题，且只用标准公理？"
+  },
+  {
+   "category": "lean-verification",
+   "en": "statement (of a theorem)",
+   "zh": "命题 / 命题的表述",
+   "note": "Two senses of 'statement': a theorem's statement = 命题（表述）; a public statement = 声明. 'Is the statement right?' -> 命题表述对吗？"
+  },
+  {
+   "category": "lean-verification",
+   "en": "definition (in Mathlib)",
+   "zh": "定义",
+   "note": "'Mathlib's own definition, vetted by experts' -> Mathlib 自己的定义，经专家审核."
+  },
+  {
+   "category": "lean-verification",
+   "en": "vetted by experts",
+   "zh": "经专家审核"
+  },
+  {
+   "category": "lean-verification",
+   "en": "bug (in Lean / Lean's kernel)",
+   "zh": "漏洞",
+   "note": "'Could it exploit a bug in Lean's kernel?' -> 会不会利用了 Lean 内核的漏洞？"
+  },
+  {
+   "category": "lean-verification",
+   "en": "formal proof / formalization / formally verified",
+   "zh": "形式化证明 / 形式化 / 形式化验证"
+  },
+  {
+   "category": "lean-verification",
+   "en": "export (proof export) / full export",
+   "zh": "导出文件 / 完整导出文件"
+  },
+  {
+   "category": "lean-verification",
+   "en": "module / every compiled module",
+   "zh": "模块 / 每个已编译模块"
+  },
+  {
+   "category": "lean-verification",
+   "en": "Lean library",
+   "zh": "Lean 代码库",
+   "note": "As in web/player.html."
+  },
+  {
+   "category": "lean-verification",
+   "en": "files / lines / comments",
+   "zh": "文件 / 行 / 注释",
+   "note": "'175,187 files' -> 175,187 个文件; '17,374,215 lines' -> 17,374,215 行; '0 comments · 0 new axioms' -> 0 条注释 · 0 条新公理."
+  },
+  {
+   "category": "lean-verification",
+   "en": "\"sorry\" (Lean keyword)",
+   "zh": "sorry",
+   "note": "Keep the keyword: '0 unfinished steps (Lean's \"sorry\")' -> 0 个未完成步骤（Lean 的 “sorry”）."
+  },
+  {
+   "category": "lean-verification",
+   "en": "AI-written Lean",
+   "zh": "AI 写的 Lean 代码",
+   "note": "'four questions for AI-written Lean (K. Buzzard, Xena blog, 12 Nov 2026)' -> 检验 AI 写的 Lean 代码的四个问题（K. Buzzard，Xena 博客，2026 年 11 月 12 日）."
+  },
+  {
+   "category": "lean-verification",
+   "en": "four questions",
+   "zh": "四个问题"
+  },
+  {
+   "category": "lean-verification",
+   "en": "verification page",
+   "zh": "验证页面"
+  },
+  {
+   "category": "lean-verification",
+   "en": "proof's skeleton, traced from Main.lean",
+   "zh": "证明的骨架（从 Main.lean 追溯）"
+  },
+  {
+   "category": "lean-verification",
+   "en": "published archive (sha256 9631b4f0…)",
+   "zh": "已发布的压缩包（sha256 9631b4f0…）",
+   "note": "'counted from the published archive' -> 按已发布的压缩包统计."
+  },
+  {
+   "category": "lean-verification",
+   "en": "comparator / con-leche / con-ron / nanoda / lean4lean / leanchecker",
+   "zh": "comparator / con-leche / con-ron / nanoda / lean4lean / leanchecker",
+   "note": "Tool names: keep Latin, never translate. 'nanoda (Rust): the full export' -> nanoda（Rust）：完整导出文件; 'con-ron (its Rust port)' -> con-ron（其 Rust 移植版）; 'comparator, con-leche --compare: yes' -> comparator、con-leche --compare：是."
+  },
+  {
+   "category": "lean-verification",
+   "en": "Main.lean / SChain.lean / Formalism / GroundTheory / Development",
+   "zh": "（保留原文）",
+   "note": "File and directory names of the archive (treemap labels): keep Latin."
+  },
+  {
+   "category": "lean-verification",
+   "en": "Lean code snippets (def RiemannHypothesis : Prop := ..., theorem riemannHypothesis :, x ^ ((1 : ℝ) / 2 - ε) ≤ m ∧, ...)",
+   "zh": "（保留原文）",
+   "note": "Verbatim code: never translate; only the labels around it ('in words: every zero s except −2, −4, −6, …' -> 用文字说：除 −2, −4, −6, … 之外的每个零点 s; '(and s ≠ 1, the pole) has real part ½' -> （且 s ≠ 1，即极点）实部为 ½)."
+  },
+  {
+   "category": "lean-verification",
+   "en": "Xena blog",
+   "zh": "Xena 博客",
+   "note": "Keep 'Xena'."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "theta function θ",
+   "zh": "θ 函数",
+   "spoken": "西塔函数",
+   "note": "zh.wikipedia: Θ函数 / 雅可比Θ函数; lower-case θ on screen."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "hidden mirror symmetry (θ(1/t) = √t θ(t))",
+   "zh": "隐藏的镜像对称"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "automorphic form",
+   "zh": "自守形式",
+   "note": "zh.wikipedia 自守形式. Card label 'form' (the starting form) -> 形式."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "symmetry group",
+   "zh": "对称变换群",
+   "note": "Avoid bare 对称群, which in Chinese means the symmetric group S_n."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "partner group",
+   "zh": "配对的群",
+   "note": "The other member of the (reductive) dual pair; 对偶对中的另一个群 if a gloss is needed."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "theta kernel",
+   "zh": "θ 核",
+   "spoken": "西塔核",
+   "note": "Not 内核 (that is Lean's kernel). 'integrating against a theta kernel' -> 对一个 θ 核作积分."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "a many-variable cousin of theta",
+   "zh": "θ 函数的多变量“近亲”"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "theta lift",
+   "zh": "θ 提升",
+   "spoken": "西塔提升",
+   "note": "Usual term in Chinese papers (θ 提升 / theta 提升; the theory: θ 对应, theta correspondence). zh.wikipedia has no page. Card 'theta lift: F(h)=∫ f(g)Θ(g,h)dg' -> θ 提升：F(h)=∫ f(g)Θ(g,h)dg. Labels 'lift #' / 'lift m' -> 提升 # / 提升 m."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "theta correspondence",
+   "zh": "θ 对应",
+   "spoken": "西塔对应"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "chain of lifts / chain m lifts",
+   "zh": "提升链 / 把 m 次提升串联起来",
+   "note": "'chain of ≈√X theta lifts' -> 约 √X 次 θ 提升组成的链."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "chain length (m)",
+   "zh": "链长（m）",
+   "note": "'m = the number of lift steps;' -> m = 提升的步数；"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "iterated theta lifts, m like √X",
+   "zh": "迭代 θ 提升，m 约为 √X",
+   "note": "Timeline item (paraphrase of the note)."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "period (of an automorphic form)",
+   "zh": "周期",
+   "note": "Automorphic period (an integral of the form), not the period of a periodic function. First use: 读出一个数——所谓的“周期”."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "a period of the last lift is a nonzero algebraic integer",
+   "zh": "最后一次提升的周期是一个非零代数整数",
+   "note": "Keep the attribution prefix: 按短文和导读的描述：……"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "algebraic integer",
+   "zh": "代数整数"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "each lift mimics one more order of multiplicity",
+   "zh": "每一次提升都模仿多一阶的重数",
+   "note": "On screen 'one more order of \"multiplicity\"' -> 多一阶“重数” (keep the quotation marks: it is an analogy)."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "divisible / divisibility",
+   "zh": "能被……整除 / 可除性",
+   "note": "可除性 throughout (整除性 is an equally standard synonym: pick one and keep it). 'its divisibility by certain primes grows with every lift' -> 它被某些素数整除的程度随每次提升而增加."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "divisibility at most size / divisibility ≤ size caps that count",
+   "zh": "可除性不超过大小 / “可除性 ≤ 大小”给这个计数设了上限"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "weighted count of primes",
+   "zh": "素数的加权计数",
+   "note": "'(weighted by log p)' -> （以 log p 加权）."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "weighted prime sums (stay below about root x on long stretches)",
+   "zh": "加权素数和（在很长的区间上都保持在约根号 x 以下）"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "the X/m + m balance (two errors: X/m and m)",
+   "zh": "X/m + m 的平衡（两项误差：X/m 与 m）",
+   "note": "'X/m + m is smallest at m ≈ √X' -> X/m + m 在 m ≈ √X 时最小. Attributed to the guides."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "X = how far the prime sum runs (schematic; X = 2500 here)",
+   "zh": "X = 素数和求到多远（示意；这里 X = 2500）"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "error of order √X: what RH demands",
+   "zh": "√X 量级的误差：正是黎曼猜想所要求的"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "Claude suggested root X",
+   "zh": "Claude 建议取根号 X",
+   "note": "Note: 'Claude's suggested length of chain of theta lifts ... was √X'. Card 'Alpöge, on Claude's suggestion of √X' -> Alpöge 谈 Claude 提出的 √X（译文）."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "And yet, what else could it be?",
+   "zh": "可是，它还能是别的什么呢？",
+   "note": "Quote from the note (English): mark （译文）."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "Chebyshev's idea, run with far better numbers",
+   "zh": "切比雪夫的想法，换上好得多的数来运行"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "unitary group",
+   "zh": "酉群",
+   "note": "zh.wikipedia 酉群 (physics 幺正群). 'unitary groups (the note writes U(X₀) → U(X₁) → … → U(Xₘ))' -> 酉群（短文写作 U(X₀) → U(X₁) → … → U(Xₘ)）."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "Galois representations",
+   "zh": "伽罗瓦表示"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "Siegel–Weil (formula)",
+   "zh": "西格尔–韦伊公式"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "Siegel mass (formula)",
+   "zh": "西格尔质量公式"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "Iwasawa towers",
+   "zh": "岩泽塔",
+   "note": "Iwasawa = 岩泽（健吉）, zh.wikipedia 岩泽理论."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "slope inequalities",
+   "zh": "斜率不等式"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "relative trace formula",
+   "zh": "相对迹公式"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "heavy machinery from across number theory",
+   "zh": "来自数论各领域的重型工具"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "names as in the code; most of the 17 M lines",
+   "zh": "名称取自代码；占 1700 万行中的大部分"
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "just under root x (x^(1/2 − ε))",
+   "zh": "略小于根号 x（x^(1/2−ε)）",
+   "spoken": "x 的二分之一减艾普西隆次方",
+   "note": "'at least x^(1/2−ε): just under √x' -> 至少 x^(1/2−ε)：略小于 √x."
+  },
+  {
+   "category": "theta-mechanism",
+   "en": "skeleton (of the proof)",
+   "zh": "骨架"
+  },
+  {
+   "category": "math",
+   "en": "Riemann Hypothesis (RH)",
+   "zh": "黎曼猜想",
+   "spoken": "黎曼猜想",
+   "note": "Not 黎曼假设. 'the hypothesis' -> 这个猜想. Tight labels may keep 'RH' only if space forces it."
+  },
+  {
+   "category": "math",
+   "en": "Generalized Riemann Hypothesis (GRH)",
+   "zh": "广义黎曼猜想（GRH）",
+   "note": "zh.wikipedia: 描述狄利克雷L函数的黎曼猜想被称为广义黎曼猜想. Timeline item 'GRH' -> 广义黎曼猜想."
+  },
+  {
+   "category": "math",
+   "en": "Extended Riemann Hypothesis (ERH)",
+   "zh": "扩展黎曼猜想（ERH）",
+   "note": "zh.wikipedia: 描述戴德金ζ函数的黎曼猜想被称为扩展黎曼猜想."
+  },
+  {
+   "category": "math",
+   "en": "prime (number)",
+   "zh": "素数",
+   "note": "Not 质数 (keep one term; matches 素数计数函数 / 素数定理)."
+  },
+  {
+   "category": "math",
+   "en": "whole numbers / integers",
+   "zh": "整数 / 正整数",
+   "note": "正整数 where only 1, 2, 3, … are meant (the Euler sum: 'all whole numbers' -> 所有正整数; 'whole numbers above one' -> 大于 1 的整数); 整数 for nonzero integers in the Chebyshev / divisibility scenes ('A nonzero whole number' -> 非零整数)."
+  },
+  {
+   "category": "math",
+   "en": "divisor",
+   "zh": "因数",
+   "note": "'no divisors but one and themselves' -> 除了 1 和自身以外没有别的因数."
+  },
+  {
+   "category": "math",
+   "en": "prime-counting function π(x)",
+   "zh": "素数计数函数 π(x)",
+   "spoken": "派 x",
+   "note": "'number of primes ≤ x' -> 不超过 x 的素数个数."
+  },
+  {
+   "category": "math",
+   "en": "staircase (graph of π(x))",
+   "zh": "阶梯"
+  },
+  {
+   "category": "math",
+   "en": "logarithmic integral li(x)",
+   "zh": "对数积分 li(x)",
+   "spoken": "对数积分 li x",
+   "note": "zh.wikipedia 对数积分."
+  },
+  {
+   "category": "math",
+   "en": "natural log ln x",
+   "zh": "自然对数 ln x",
+   "spoken": "x 的自然对数"
+  },
+  {
+   "category": "math",
+   "en": "prime number theorem",
+   "zh": "素数定理"
+  },
+  {
+   "category": "math",
+   "en": "chance that a number near x is prime ≈ 1/ln x",
+   "zh": "x 附近的数是素数的概率 ≈ 1/ln x"
+  },
+  {
+   "category": "math",
+   "en": "error / error term / error bound",
+   "zh": "误差 / 误差项 / 误差界"
+  },
+  {
+   "category": "math",
+   "en": "sum / series",
+   "zh": "和 / 级数"
+  },
+  {
+   "category": "math",
+   "en": "Basel sum (1 + 1/4 + 1/9 + …)",
+   "zh": "巴塞尔问题",
+   "note": "Euler 1735; zh.wikipedia 巴塞尔问题."
+  },
+  {
+   "category": "math",
+   "en": "harmonic series (1 + 1/2 + 1/3 + …) grows forever",
+   "zh": "调和级数……无限增长（发散）"
+  },
+  {
+   "category": "math",
+   "en": "geometric series (1 + x + x² + …)",
+   "zh": "几何级数",
+   "note": "Also 等比级数. 'only when −1 < x < 1 (shaded)' -> 仅当 −1 < x < 1（阴影部分）; 'but 1/(1−x) itself makes sense' / 'for every x ≠ 1' -> 但 1/(1−x) 本身 / 对每个 x ≠ 1 都有意义."
+  },
+  {
+   "category": "math",
+   "en": "Euler product",
+   "zh": "欧拉乘积",
+   "note": "zh.wikipedia 欧拉乘积. '(for s > 1)' -> （当 s > 1）."
+  },
+  {
+   "category": "math",
+   "en": "prime factor / factor",
+   "zh": "素因子 / 因子"
+  },
+  {
+   "category": "math",
+   "en": "splits into primes in exactly one way (unique factorization)",
+   "zh": "只有一种方式分解成素数之积（唯一分解，算术基本定理）",
+   "note": "'multiply out: 12 = 2 · 2 · 3 gives 4⁻ˢ · 3⁻ˢ = 12⁻ˢ, exactly once (one factorisation per n)' -> 乘开：12 = 2 · 2 · 3 给出 4⁻ˢ · 3⁻ˢ = 12⁻ˢ，恰好一次（每个 n 只有一种分解）."
+  },
+  {
+   "category": "math",
+   "en": "zeta function ζ(s)",
+   "zh": "ζ 函数（黎曼 ζ 函数）",
+   "spoken": "泽塔函数",
+   "note": "zh.wikipedia 黎曼ζ函数 (黎曼泽塔函数)."
+  },
+  {
+   "category": "math",
+   "en": "complex number",
+   "zh": "复数"
+  },
+  {
+   "category": "math",
+   "en": "real part σ / imaginary part t",
+   "zh": "实部 σ / 虚部 t",
+   "spoken": "实部西格玛 / 虚部 t"
+  },
+  {
+   "category": "math",
+   "en": "phasor",
+   "zh": "相量",
+   "note": "The EE term Chinese engineers know (zh.wikipedia 相量)."
+  },
+  {
+   "category": "math",
+   "en": "arrow (of length n^−σ, turned by an angle t·ln n)",
+   "zh": "箭头（长度为 n^−σ，转过角度 t·ln n）",
+   "note": "'length × rotation' -> 长度 × 旋转."
+  },
+  {
+   "category": "math",
+   "en": "spinning, shrinking arrows / tip to tail / spiral",
+   "zh": "旋转并缩短的箭头 / 首尾相接 / 螺旋"
+  },
+  {
+   "category": "math",
+   "en": "converge / diverge (the sum never settles)",
+   "zh": "收敛 / 发散（这个和永远不会稳定下来）"
+  },
+  {
+   "category": "math",
+   "en": "partial sum(s)",
+   "zh": "部分和",
+   "note": "'s=½+10i: the partial sums wander off' -> s=½+10i：部分和四处游走、不收敛; 'number of terms' -> 项数."
+  },
+  {
+   "category": "math",
+   "en": "analytic continuation",
+   "zh": "解析延拓",
+   "note": "zh.wikipedia 解析延拓. '(its analytic continuation; only s = 1 is excluded)' -> （它的解析延拓；只排除 s = 1）."
+  },
+  {
+   "category": "math",
+   "en": "complex-differentiable",
+   "zh": "复可微",
+   "note": "'the one extension that stays complex-differentiable' -> 唯一一个保持复可微的延拓 (fact-check: not 'smooth')."
+  },
+  {
+   "category": "math",
+   "en": "the whole (complex) plane",
+   "zh": "整个复平面",
+   "note": "'ζ(s), extended to the whole plane' -> 延拓到整个复平面的 ζ(s)."
+  },
+  {
+   "category": "math",
+   "en": "direction (angle) of ζ(s) / size",
+   "zh": "辐角 / 模（大小）",
+   "note": "'colour = direction (angle) of ζ(s)' -> 颜色 = ζ(s) 的方向（辐角）; 'rings = size: each ring doubles |ζ(s)|' -> 环 = 大小：每过一圈 |ζ(s)| 翻倍."
+  },
+  {
+   "category": "math",
+   "en": "pole (at s = 1)",
+   "zh": "极点（s = 1 处）",
+   "note": "'the pole at s = 1 is a bright meeting point' -> s = 1 处的极点是一个明亮的交汇点."
+  },
+  {
+   "category": "math",
+   "en": "zero (of ζ) / white circles: zeros (dark meeting points)",
+   "zh": "零点 / 白圈：零点（颜色交汇的暗点）"
+  },
+  {
+   "category": "math",
+   "en": "trivial zeros",
+   "zh": "平凡零点",
+   "note": "'trivial zeros: −2, −4, −6, …' -> 平凡零点：−2, −4, −6, …"
+  },
+  {
+   "category": "math",
+   "en": "nontrivial zero",
+   "zh": "非平凡零点",
+   "note": "'Every nontrivial zero of ζ has real part exactly ½.' -> ζ 的每个非平凡零点的实部都恰好是 ½。"
+  },
+  {
+   "category": "math",
+   "en": "critical strip",
+   "zh": "临界带",
+   "note": "zh.wikipedia 黎曼ζ函数: 临界带 0<Re s<1."
+  },
+  {
+   "category": "math",
+   "en": "critical line (real part one half)",
+   "zh": "临界线（实部为二分之一）",
+   "note": "'critical line: σ = ½' -> 临界线：σ = ½."
+  },
+  {
+   "category": "math",
+   "en": "functional equation",
+   "zh": "函数方程",
+   "note": "zh.wikipedia: 满足函数方程."
+  },
+  {
+   "category": "math",
+   "en": "exact identity",
+   "zh": "精确的恒等式"
+  },
+  {
+   "category": "math",
+   "en": "mirror symmetry (s ↔ 1 − s)",
+   "zh": "镜像对称（s ↔ 1 − s）",
+   "note": "'together: zeros mirror across σ = ½' -> 合起来：零点关于 σ = ½ 左右镜像对称. (Fact-check: s ↦ 1 − s is a point reflection; the left-right mirror also needs the up-down symmetry.)"
+  },
+  {
+   "category": "math",
+   "en": "up-down symmetry (ζ(s̄) = conj ζ(s))",
+   "zh": "上下对称（共轭对称）"
+  },
+  {
+   "category": "math",
+   "en": "the first zero: one half plus 14.1347 i",
+   "zh": "第一个零点：二分之一加 14.1347 i",
+   "spoken": "二分之一加十四点一三四七 i"
+  },
+  {
+   "category": "math",
+   "en": "Hardy's Z function Z(t)",
+   "zh": "哈代 Z 函数 Z(t)",
+   "note": "'Hardy's Z(t): real on the line, |Z(t)| = |ζ(½ + it)|' -> 哈代 Z(t)：在临界线上取实数值，|Z(t)| = |ζ(½ + it)|; 't (height up the critical line, s = ½ + it)' -> t（沿临界线向上的高度，s = ½ + it）."
+  },
+  {
+   "category": "math",
+   "en": "roots are real (Riemann)",
+   "zh": "根都是实的",
+   "note": "'…it is very probable that all roots are real.' -> ……很可能所有的根都是实的。（Riemann's German 'sehr wahrscheinlich'; credit 黎曼，1859（据 D. R. Wilkins 英译））. Gloss line: '(Riemann's roots are values of t, with s = ½ + it: a real t is a zero on the line)' -> （黎曼说的根是 t 的值，s = ½ + it：t 为实数，就是线上的零点）."
+  },
+  {
+   "category": "math",
+   "en": "very probable (Riemann called this very probable)",
+   "zh": "很有可能（黎曼称之为“很有可能”）"
+  },
+  {
+   "category": "math",
+   "en": "checked numerically (> 12 trillion zeros)",
+   "zh": "数值检验（超过 12 万亿个零点）",
+   "note": "'Platt & Trudgian (2021): every zero up to height 3·10¹²' -> Platt & Trudgian（2021）：高度 3·10¹² 以内的所有零点."
+  },
+  {
+   "category": "math",
+   "en": "explicit formula",
+   "zh": "显式公式",
+   "note": "zh.wikipedia: 黎曼显式公式. 'proved in this form by von Mangoldt' -> 以这种形式由冯·曼戈尔特证明."
+  },
+  {
+   "category": "math",
+   "en": "von Mangoldt function Λ / von Mangoldt sum",
+   "zh": "冯·曼戈尔特函数 Λ / 冯·曼戈尔特和",
+   "spoken": "兰姆达",
+   "note": "Timeline item 'switch to Λ (von Mangoldt sum)' -> 改用 Λ（冯·曼戈尔特和）."
+  },
+  {
+   "category": "math",
+   "en": "Chebyshev function ψ(x)",
+   "zh": "切比雪夫函数 ψ(x)",
+   "spoken": "普西 x",
+   "note": "(The second Chebyshev function.) 'ψ(x) = Σ ln p over prime powers pᵏ ≤ x' -> ψ(x) = 对所有素数幂 pᵏ ≤ x 求 ln p 之和."
+  },
+  {
+   "category": "math",
+   "en": "prime power",
+   "zh": "素数幂",
+   "note": "'Count prime powers, each weighted by the log of its prime' -> 数素数幂，每个按其素数的对数加权."
+  },
+  {
+   "category": "math",
+   "en": "wave / frequency / signal",
+   "zh": "波 / 频率 / 信号",
+   "note": "'The zeros are the frequencies; the primes are the signal.' -> 零点是频率，素数是信号。"
+  },
+  {
+   "category": "math",
+   "en": "smooth part",
+   "zh": "光滑部分",
+   "note": "'smooth part minus waves from # zero pairs' -> 光滑部分减去 # 对零点的波; 'smooth part: x − ln 2π − ½ ln(1 − x⁻²)' -> 光滑部分：x − ln 2π − ½ ln(1 − x⁻²)."
+  },
+  {
+   "category": "math",
+   "en": "pair of zeros / zero pair / mirror partner",
+   "zh": "一对零点 / 零点对 / 镜像伙伴",
+   "note": "'each pair ½ ± iγ subtracts' -> 每一对 ½ ± iγ 减去; 'the waves of the first three zero pairs (scaled by 1/√x)' -> 前三对零点的波（按 1/√x 缩放）."
+  },
+  {
+   "category": "math",
+   "en": "tiny correction",
+   "zh": "微小的修正项"
+  },
+  {
+   "category": "math",
+   "en": "root x (√x)",
+   "zh": "根号 x",
+   "spoken": "根号 x",
+   "note": "'two root p' -> 2 倍根号 p; 'x to the three quarters' -> x 的四分之三次方."
+  },
+  {
+   "category": "math",
+   "en": "grows like x to the power of its zero's real part",
+   "zh": "增长速度如同 x 的（其零点实部）次方",
+   "note": "'growth of one wave (∝ x^Re ρ)' -> 单个波的增长（∝ x^Re ρ）; 'x^{1/2}: zero on the line' -> x^{1/2}：零点在线上; 'x^{3/4}: a zero at σ = 3/4 (hypothetical)' -> x^{3/4}：σ = 3/4 处的零点（假想）."
+  },
+  {
+   "category": "math",
+   "en": "up to logarithms (up to logs)",
+   "zh": "至多相差对数因子",
+   "note": "'Riemann Hypothesis ⇔ prime-counting error ≈ √x (up to logs)' -> 黎曼猜想 ⇔ 素数计数误差 ≈ √x（至多相差对数因子）."
+  },
+  {
+   "category": "math",
+   "en": "random walk / coin flips",
+   "zh": "随机游走 / 抛硬币",
+   "note": "'random walk: n fair coin flips' -> 随机游走：抛 n 次均匀硬币; 'the typical drift of a random walk of x coin flips' -> 抛 x 次硬币的随机游走的典型偏离."
+  },
+  {
+   "category": "math",
+   "en": "explicit bound",
+   "zh": "显式界",
+   "note": "'Assuming RH, there's even an explicit bound on the gap between π(x) and li(x), from x = 2657 on' -> 假设黎曼猜想成立，从 x = 2657 起，π(x) 与 li(x) 之差甚至有一个显式界. Card 'RH bound (Schoenfeld 1976)' -> 黎曼猜想下的界（Schoenfeld 1976）."
+  },
+  {
+   "category": "math",
+   "en": "hypothetical / schematic / not to scale",
+   "zh": "假想的 / 示意 / 未按比例"
+  },
+  {
+   "category": "math",
+   "en": "clock with p hours (arithmetic mod p)",
+   "zh": "有 p 个钟点的钟面（模 p 运算）",
+   "note": "zh.wikipedia 模算数 uses the clock picture. 'mod 13' -> 模 13; 'curves over a clock (p)' -> 钟面上的曲线（p）; '(mod p)' -> （模 p）."
+  },
+  {
+   "category": "math",
+   "en": "finite field",
+   "zh": "有限域",
+   "note": "zh.wikipedia 有限域 (整数对 p 取模)."
+  },
+  {
+   "category": "math",
+   "en": "curve (over a finite field)",
+   "zh": "（有限域上的）曲线"
+  },
+  {
+   "category": "math",
+   "en": "elliptic curve",
+   "zh": "椭圆曲线",
+   "note": "The curve y² + y = x³ − x (LMFDB 37.a1); keep the equation."
+  },
+  {
+   "category": "math",
+   "en": "solutions / points / number of points N",
+   "zh": "解 / 点 / 点数 N",
+   "note": "'15 solutions + 1 point at infinity = 16' -> 15 个解 + 1 个无穷远点 = 16; 'expected about p + 1 = 14' -> 预期约 p + 1 = 14 个; '(p + 1) − number of points' -> (p + 1) − 点数; '667 odd primes p < 5000 (p ≠ 37)' -> 5000 以下的 667 个奇素数 p（p ≠ 37）."
+  },
+  {
+   "category": "math",
+   "en": "point at infinity",
+   "zh": "无穷远点",
+   "note": "zh.wikipedia 椭圆曲线: 无穷远点O."
+  },
+  {
+   "category": "math",
+   "en": "on average",
+   "zh": "平均而言"
+  },
+  {
+   "category": "math",
+   "en": "Hasse bound (≤ 2√p)",
+   "zh": "哈塞界（≤ 2√p）",
+   "note": "'≤ 2√p (proved: Hasse)' -> ≤ 2√p（已证明：哈塞）; 'Hasse: elliptic curves' -> 哈塞：椭圆曲线."
+  },
+  {
+   "category": "math",
+   "en": "genus (2g√p)",
+   "zh": "亏格（2g√p）",
+   "note": "'Weil: all curves (2g√p)' -> 韦伊：所有曲线（2g√p）."
+  },
+  {
+   "category": "math",
+   "en": "smooth varieties",
+   "zh": "光滑代数簇",
+   "note": "'Deligne: all smooth varieties' -> 德利涅：所有光滑代数簇."
+  },
+  {
+   "category": "math",
+   "en": "Weil conjectures",
+   "zh": "韦伊猜想",
+   "note": "zh.wikipedia uses 韦伊猜想 (red link)."
+  },
+  {
+   "category": "math",
+   "en": "elementary (method)",
+   "zh": "初等的（方法）"
+  },
+  {
+   "category": "math",
+   "en": "polynomial / degree / root",
+   "zh": "多项式 / 次数 / 根",
+   "note": "'degree 6 → at most 6 roots, counted with multiplicity: 1 + 2 + 3 = 6' -> 6 次 → 计重数至多 6 个根：1 + 2 + 3 = 6."
+  },
+  {
+   "category": "math",
+   "en": "multiplicity",
+   "zh": "重数",
+   "note": "zh.wikipedia page title is 重复度, but 重数 is the textbook term for roots (k 重根, 根的重数). Templates 'multiplicity #' -> 重数 #; 'multiplicity m' -> 重数 m."
+  },
+  {
+   "category": "math",
+   "en": "counted with multiplicity",
+   "zh": "计重数"
+  },
+  {
+   "category": "math",
+   "en": "double root",
+   "zh": "二重根",
+   "note": "'f = 0 and f′ = 0: a double root' -> f = 0 且 f′ = 0：二重根."
+  },
+  {
+   "category": "math",
+   "en": "auxiliary polynomial",
+   "zh": "辅助多项式",
+   "note": "'auxiliary polynomial: vanishes to order m at each of the N solutions' -> 辅助多项式：在 N 个解的每一个处都有 m 重零点."
+  },
+  {
+   "category": "math",
+   "en": "not identically zero (the hard part)",
+   "zh": "不恒为零（这是难点）"
+  },
+  {
+   "category": "math",
+   "en": "vanish (to order m) / order of vanishing",
+   "zh": "为零（m 重零点） / 零点的阶",
+   "note": "'every extra order of vanishing costs extra degree' -> 零点每多一阶，就要多付出一些次数."
+  },
+  {
+   "category": "math",
+   "en": "(solutions) × (multiplicity) ≤ (degree) / roots × multiplicity ≤ degree",
+   "zh": "（解的个数）×（重数）≤（次数） / 根数 × 重数 ≤ 次数"
+  },
+  {
+   "category": "math",
+   "en": "overhead / balance",
+   "zh": "固定开销 / 平衡",
+   "note": "'Raising m spreads a fixed overhead thinner' -> 增大 m 会把固定开销摊薄; '~ p/m + m' -> ~ p/m + m; 'minimised at m ≈ √p,' -> 在 m ≈ √p 处最小， 'leaving an error of order √p' -> 留下 √p 量级的误差; 'best m ≈ √p' -> 最佳 m ≈ √p."
+  },
+  {
+   "category": "math",
+   "en": "Stepanov's constant is larger than Hasse's 2",
+   "zh": "斯捷潘诺夫方法的常数比哈塞的 2 大",
+   "note": "Two-line card: '(Stepanov's constant is larger than Hasse's 2;' / 'Bombieri and W. Schmidt extended it to all curves)' -> （斯捷潘诺夫方法的常数比哈塞的 2 大； / 邦别里和 W. 施密特把它推广到了所有曲线）."
+  },
+  {
+   "category": "math",
+   "en": "derivative / slope / differentiate",
+   "zh": "导数 / 斜率 / 求导",
+   "note": "'a whole number has no variable to vary' -> 整数没有可以变动的变量."
+  },
+  {
+   "category": "math",
+   "en": "determinant / Stepanov determinant",
+   "zh": "行列式 / 斯捷潘诺夫行列式",
+   "note": "Timeline item from the note: in quotes “斯捷潘诺夫行列式”."
+  },
+  {
+   "category": "math",
+   "en": "binomial coefficient / twenty choose ten",
+   "zh": "二项式系数 / C(20,10)",
+   "spoken": "二十取十的组合数",
+   "note": "'every prime between 10 and 20 divides it, so their product is at most its size' -> 10 到 20 之间的每个素数都整除它，所以它们的乘积不超过它本身; '(true for every n: the primes between n and 2n multiply to less than 4ⁿ)' -> （对每个 n 都成立：n 与 2n 之间素数的乘积小于 4ⁿ）."
+  },
+  {
+   "category": "math",
+   "en": "factorial / ratios of factorials",
+   "zh": "阶乘 / 阶乘之比",
+   "note": "'Chebyshev (c. 1850), with ratios of factorials: … for large x' -> 切比雪夫（约 1850 年），用阶乘之比：……（x 充分大时）; 'right size, but far from the √x precision of the Riemann Hypothesis' -> 量级对了，但远达不到黎曼猜想的 √x 精度."
+  },
+  {
+   "category": "math",
+   "en": "size, on a log scale (log |N|)",
+   "zh": "大小（取对数，log |N|）",
+   "note": "Dictionary rows: 'polynomials' ↔ 'whole numbers' -> 多项式 ↔ 整数; 'a root' ↔ 'a prime factor p' -> 一个根 ↔ 一个素因子 p; 'its multiplicity m' ↔ 'its power pᵐ' -> 它的重数 m ↔ 它的幂次 pᵐ; 'degree' ↔ size -> 次数 ↔ 大小."
+  },
+  {
+   "category": "math",
+   "en": "A nonzero whole number divisible by many primes (or their powers) must be large.",
+   "zh": "能被许多素数（或它们的幂）整除的非零整数，必然很大。"
+  },
+  {
+   "category": "math",
+   "en": "integer cousin (of root counting)",
+   "zh": "（数根方法在）整数上的“近亲”"
+  },
+  {
+   "category": "math",
+   "en": "Dirichlet L-function",
+   "zh": "狄利克雷 L 函数",
+   "note": "zh.wikipedia 狄利克雷L函数. 'which sort primes by remainder' -> 它们按余数给素数分类."
+  },
+  {
+   "category": "math",
+   "en": "Dirichlet character",
+   "zh": "狄利克雷特征"
+  },
+  {
+   "category": "math",
+   "en": "L-function",
+   "zh": "L 函数"
+  },
+  {
+   "category": "math",
+   "en": "Dedekind (zeta functions) / Hecke (L-functions)",
+   "zh": "戴德金（ζ 函数） / 赫克（L 函数）"
+  },
+  {
+   "category": "math",
+   "en": "no zeros to the right of one half",
+   "zh": "二分之一右侧没有零点",
+   "note": "'no zeros with Re s > ½, for ζ and every Dirichlet L-function' -> 对 ζ 和每个狄利克雷 L 函数，Re s > ½ 处都没有零点; 'if a zero were off the line,' / 'its mirror image would be a zero too' -> 如果有零点不在线上， / 它的镜像也会是零点."
+  },
+  {
+   "category": "math",
+   "en": "order (of √X) / big O",
+   "zh": "（√X）量级 / 大 O",
+   "note": "'order √X (= RH, claimed)' -> √X 量级（= 黎曼猜想，待确认）."
+  },
+  {
+   "category": "math",
+   "en": "set theory",
+   "zh": "集合论"
+  },
+  {
+   "category": "math",
+   "en": "integral",
+   "zh": "积分",
+   "note": "'li(x) = 1.045… + ∫₂ˣ du/ln u' keep the formula."
+  },
+  {
+   "category": "people",
+   "en": "Bernhard Riemann",
+   "zh": "伯恩哈德·黎曼",
+   "spoken": "黎曼",
+   "note": "zh.wikipedia title 伯恩哈德·黎曼 (some pages: 波恩哈德). Usually just 黎曼."
+  },
+  {
+   "category": "people",
+   "en": "Leonhard Euler",
+   "zh": "莱昂哈德·欧拉",
+   "spoken": "欧拉"
+  },
+  {
+   "category": "people",
+   "en": "Gauss",
+   "zh": "高斯",
+   "note": "'As a teenager, Gauss guessed' -> 高斯少年时猜测."
+  },
+  {
+   "category": "people",
+   "en": "G. H. Hardy",
+   "zh": "哈代",
+   "note": "zh.wikipedia 戈弗雷·哈罗德·哈代."
+  },
+  {
+   "category": "people",
+   "en": "David Hilbert",
+   "zh": "大卫·希尔伯特",
+   "spoken": "希尔伯特"
+  },
+  {
+   "category": "people",
+   "en": "Hans von Mangoldt",
+   "zh": "冯·曼戈尔特",
+   "note": "zh.wikipedia 汉斯·冯·曼戈尔特; 冯·曼戈尔特函数."
+  },
+  {
+   "category": "people",
+   "en": "Helmut Hasse",
+   "zh": "哈塞",
+   "note": "zh.wikipedia spells him 赫尔穆特·哈斯 (哈斯定理, 哈斯-韦伊ζ函数); 哈塞 is the German-name table form and common in number theory (哈塞原理). Both are understood: use 哈塞 everywhere in this video."
+  },
+  {
+   "category": "people",
+   "en": "André Weil",
+   "zh": "安德烈·韦伊",
+   "spoken": "韦伊"
+  },
+  {
+   "category": "people",
+   "en": "Pierre Deligne",
+   "zh": "皮埃尔·德利涅",
+   "spoken": "德利涅"
+  },
+  {
+   "category": "people",
+   "en": "Sergei Stepanov",
+   "zh": "谢尔盖·斯捷潘诺夫",
+   "spoken": "斯捷潘诺夫",
+   "note": "Standard Russian transliteration (Степанов). Captions may also keep 'Stepanov' in the timeline item, but use 斯捷潘诺夫 in prose."
+  },
+  {
+   "category": "people",
+   "en": "Enrico Bombieri",
+   "zh": "恩里科·邦别里",
+   "spoken": "邦别里",
+   "note": "zh.wikipedia 恩里科·邦别里."
+  },
+  {
+   "category": "people",
+   "en": "Wolfgang M. Schmidt",
+   "zh": "W. 施密特",
+   "spoken": "施密特",
+   "note": "'Bombieri and W. Schmidt' -> 邦别里和 W. 施密特."
+  },
+  {
+   "category": "people",
+   "en": "Pafnuty Chebyshev",
+   "zh": "帕夫努季·切比雪夫",
+   "spoken": "切比雪夫",
+   "note": "zh.wikipedia 帕夫努季·切比雪夫; usually 切比雪夫."
+  },
+  {
+   "category": "people",
+   "en": "Carl Jacobi",
+   "zh": "雅可比",
+   "note": "雅可比 θ 函数 (zh.wikipedia 雅可比Θ函数)."
+  },
+  {
+   "category": "people",
+   "en": "Carl Ludwig Siegel",
+   "zh": "西格尔",
+   "note": "Siegel–Weil 西格尔–韦伊; Siegel mass 西格尔质量公式."
+  },
+  {
+   "category": "people",
+   "en": "Levent Alpöge",
+   "zh": "Levent Alpöge",
+   "spoken": "莱文特·阿尔普格",
+   "note": "Captions / on screen keep the Latin name (as web/player.html). The voice should say the zh.wikipedia transliteration 莱文特·阿尔普格 (later 阿尔普格): the zh TTS sends Latin words to an English G2P, which mangles 'Alpöge'. Use [Alpöge|阿尔普格] markup."
+  },
+  {
+   "category": "people",
+   "en": "Kevin Buzzard (K. Buzzard)",
+   "zh": "Kevin Buzzard",
+   "spoken": "凯文·巴扎德",
+   "note": "Latin on screen; zh.wikipedia 凯文·巴扎德 for the voice."
+  },
+  {
+   "category": "people",
+   "en": "Andrew Sutherland (A. Sutherland)",
+   "zh": "Andrew Sutherland",
+   "spoken": "安德鲁·萨瑟兰",
+   "note": "Latin on screen; standard transliteration 萨瑟兰 for the voice. 'Sutherland's verification page at MIT' -> 麻省理工学院 Andrew Sutherland 的验证页面."
+  },
+  {
+   "category": "people",
+   "en": "Platt & Trudgian",
+   "zh": "Platt & Trudgian",
+   "note": "Keep Latin (on screen only)."
+  },
+  {
+   "category": "people",
+   "en": "Schoenfeld (Lowell Schoenfeld)",
+   "zh": "Schoenfeld",
+   "note": "Keep Latin (zh.wikipedia 黎曼猜想 keeps 'Lowell Schoenfeld')."
+  },
+  {
+   "category": "people",
+   "en": "D. R. Wilkins (translator)",
+   "zh": "D. R. Wilkins",
+   "note": "Keep Latin: '黎曼，1859（据 D. R. Wilkins 英译）'."
+  },
+  {
+   "category": "people",
+   "en": "Jaswal (Manvir Jaswal)",
+   "zh": "Jaswal",
+   "note": "Keep Latin: '（Jaswal，11 月 21 日）'."
+  },
+  {
+   "category": "people",
+   "en": "Claude",
+   "zh": "Claude",
+   "spoken": "Claude",
+   "note": "Keep Latin; the English G2P reads it."
+  },
+  {
+   "category": "institutions",
+   "en": "Clay Mathematics Institute / the Clay Institute",
+   "zh": "克雷数学研究所",
+   "note": "zh.wikipedia 克雷数学研究所 (CMI)."
+  },
+  {
+   "category": "institutions",
+   "en": "Clay prize",
+   "zh": "克雷奖"
+  },
+  {
+   "category": "institutions",
+   "en": "Clay Millennium Prize, US$1,000,000",
+   "zh": "克雷千禧年大奖，100 万美元",
+   "note": "zh.wikipedia 千禧年大奖难题."
+  },
+  {
+   "category": "institutions",
+   "en": "publication, then two years, then general acceptance",
+   "zh": "先发表，再过两年，然后获得普遍认可",
+   "note": "CMI rules: published in a qualifying outlet, at least two years, general acceptance by the global mathematics community. 'rules: publication, then 2 years, then general acceptance' -> 规则：先发表，再过 2 年，然后获得普遍认可. Never 'Clay 已认证' / '已获奖' / '计时已开始'."
+  },
+  {
+   "category": "institutions",
+   "en": "Hilbert's 8th problem",
+   "zh": "希尔伯特第八问题",
+   "note": "'1900  Hilbert's 8th problem' -> 1900  希尔伯特第八问题."
+  },
+  {
+   "category": "institutions",
+   "en": "Hilbert's famous list",
+   "zh": "希尔伯特著名的 23 个问题"
+  },
+  {
+   "category": "institutions",
+   "en": "MIT",
+   "zh": "MIT（麻省理工学院）",
+   "spoken": "麻省理工学院",
+   "note": "'A. Sutherland's MIT page' -> A. Sutherland 的 MIT 页面."
+  },
+  {
+   "category": "numbers-dates",
+   "en": "million / 17 million lines / 17.4 million",
+   "zh": "百万 / 1700 万行 / 1740 万",
+   "note": "Mainland counts in 万: 17.4 M lines (AI-written) -> 1740 万行（AI 编写）. Animated template '# M lines' -> '# 百万行' (or reformat the counter in 万)."
+  },
+  {
+   "category": "numbers-dates",
+   "en": "trillion (12 trillion zeros)",
+   "zh": "万亿（12 万亿个零点）",
+   "note": "Not 兆 (ambiguous / Taiwan usage)."
+  },
+  {
+   "category": "numbers-dates",
+   "en": "a million dollars",
+   "zh": "一百万美元"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "November twentieth, 2026",
+   "zh": "2026 年 11 月 20 日",
+   "note": "Templates: 'Nov #' -> '11 月 # 日'; 'Oct #' -> '10 月 # 日'; '# November #' (e.g. 21 November 2026) -> '{year} 年 11 月 {day} 日' (reorder the groups); 'Oct 6 → Nov 16, 2026' -> 2026 年 10 月 6 日 → 11 月 16 日."
+  },
+  {
+   "category": "numbers-dates",
+   "en": "the 1930s / the 1940s",
+   "zh": "20 世纪 30 年代 / 40 年代"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "around 1850 / c. 1850",
+   "zh": "1850 年前后 / 约 1850 年"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "terms shown: # / terms: #",
+   "zh": "显示的项数：# / 项数：#"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "π (pi)",
+   "zh": "π",
+   "spoken": "派",
+   "note": "'π²/6' spoken 派的平方除以六."
+  },
+  {
+   "category": "numbers-dates",
+   "en": "σ (sigma)",
+   "zh": "σ",
+   "spoken": "西格玛"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "ζ (zeta)",
+   "zh": "ζ",
+   "spoken": "泽塔"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "θ (theta) / Θ",
+   "zh": "θ / Θ",
+   "spoken": "西塔"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "ψ (psi)",
+   "zh": "ψ",
+   "spoken": "普西"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "ρ (rho)",
+   "zh": "ρ",
+   "spoken": "柔"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "γ (gamma)",
+   "zh": "γ",
+   "spoken": "伽马"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "ε (epsilon)",
+   "zh": "ε",
+   "spoken": "艾普西隆"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "Λ (capital lambda)",
+   "zh": "Λ",
+   "spoken": "兰姆达"
+  },
+  {
+   "category": "numbers-dates",
+   "en": "n to the minus s / one over n to the s",
+   "zh": "n 的负 s 次方 / n 的 s 次方分之一"
+  },
+  {
+   "category": "titles",
+   "en": "Opening",
+   "zh": "开场",
+   "note": "Chapter title (scene title + Artifact chapter list; 'Opening' as in artifact.py OPENING)."
+  },
+  {
+   "category": "titles",
+   "en": "1 · Counting primes",
+   "zh": "1 · 数素数",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "2 · Euler's bridge",
+   "zh": "2 · 欧拉的桥梁",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "3 · Spinning arrows",
+   "zh": "3 · 旋转的箭头",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "4 · The whole plane",
+   "zh": "4 · 整个复平面",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "5 · The zeros",
+   "zh": "5 · 零点",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "6 · The hypothesis",
+   "zh": "6 · 猜想",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "7 · Primes from waves",
+   "zh": "7 · 由波生成素数",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "8 · Why the line matters",
+   "zh": "8 · 那条线为何重要",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "9 · A world where it's proved",
+   "zh": "9 · 一个已被证明的世界",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "10 · Counting with multiplicity",
+   "zh": "10 · 计重数",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "11 · The integer version",
+   "zh": "11 · 整数版本",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "12 · The new idea",
+   "zh": "12 · 新想法",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "13 · The construction",
+   "zh": "13 · 构造",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "14 · Checking it",
+   "zh": "14 · 检验",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "15 · Where this leaves us",
+   "zh": "15 · 现状",
+   "note": "Chapter title."
+  },
+  {
+   "category": "titles",
+   "en": "The Riemann Hypothesis (title card)",
+   "zh": "黎曼猜想"
+  },
+  {
+   "category": "titles",
+   "en": "zeta, the primes, and a claimed proof",
+   "zh": "ζ 函数、素数，与一份待确认的证明"
+  },
+  {
+   "category": "titles",
+   "en": "agenda: the zeta function / the hypothesis / why primes care / a world where it is proved / the idea of the claimed proof / how it was checked, and what is still open",
+   "zh": "ζ 函数 / 这个猜想 / 素数为何在意零点 / 一个已被证明的世界 / 这份待确认证明的思路 / 它是如何被检验的，以及还有什么悬而未决"
+  },
+  {
+   "category": "titles",
+   "en": "Here's the road from the primes to that claim.",
+   "zh": "下面，我们从素数出发，一步步走到这个主张。",
+   "note": "claim = 主张 (Alpöge's claim), not 声明 (the joint statement)."
+  },
+  {
+   "category": "titles",
+   "en": "Sources:",
+   "zh": "资料来源："
+  },
+  {
+   "category": "titles",
+   "en": "Synthetic narration (Kokoro-82M) · every plot computed from scratch in Python",
+   "zh": "合成配音（Kokoro-82M-v1.1-zh）· 所有图形均用 Python 从头计算",
+   "note": "Name the Mandarin model actually used (voice_zh.py: Kokoro-82M-v1.1-zh)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Narrated explainer",
+   "zh": "配音讲解",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Chapter / Chapters",
+   "zh": "章节",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "About this video",
+   "zh": "关于本视频",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Play / Pause",
+   "zh": "播放 / 暂停",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Mute / Unmute",
+   "zh": "静音 / 取消静音",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Full screen",
+   "zh": "全屏",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Seek",
+   "zh": "进度",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Language",
+   "zh": "语言",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Primary sources",
+   "zh": "一手资料",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Lean and Mathlib joint statement",
+   "zh": "Lean 与 Mathlib 联合声明",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Sutherland's verification page",
+   "zh": "Sutherland 的验证页面",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Buzzard's four questions",
+   "zh": "Buzzard 的四个问题",
+   "note": "As already used in web/player.html (keep consistent)."
+  },
+  {
+   "category": "player-ui",
+   "en": "Alpöge's note",
+   "zh": "Alpöge 的短文",
+   "note": "web/player.html currently has 'Alpöge 的说明': align it with the video's 短文."
+  },
+  {
+   "category": "claim-status",
+   "en": "This argument is a descendant of Stepanov's, but multiplicity is hard to find over the integers, corresponding to something like differentiating whole numbers.",
+   "zh": "这一论证是斯捷潘诺夫论证的后裔，但在整数上很难找到重数，这相当于要对整数求导之类的事情。",
+   "note": "Quote from the note (verbatim English on screen, split over 4 lines): re-split the Chinese at its own clause breaks and credit 'Levent Alpöge，remark.pdf，2026 年 11 月 20 日（译文）'. Narration keeps the attribution: Alpöge 称他的论证是斯捷潘诺夫论证的后裔，但他写道……"
+  },
+  {
+   "category": "claim-status",
+   "en": "Levent Alpöge, remark.pdf, 20 Nov 2026",
+   "zh": "Levent Alpöge，remark.pdf，2026 年 11 月 20 日（译文）"
+  },
+  {
+   "category": "claim-status",
+   "en": "Lean + Mathlib communities, 21 Nov 2026",
+   "zh": "Lean + Mathlib 社区，2026 年 11 月 21 日（译文）"
+  },
+  {
+   "category": "claim-status",
+   "en": "Lean and Mathlib communities, endorsed by the Lean FRO and the Mathlib Initiative:",
+   "zh": "Lean 与 Mathlib 社区（获 Lean FRO 与 Mathlib Initiative 背书）："
+  },
+  {
+   "category": "claim-status",
+   "en": "Riemann, 1859 (tr. D. R. Wilkins)",
+   "zh": "黎曼，1859（据 D. R. Wilkins 英译）"
+  },
+  {
+   "category": "claim-status",
+   "en": "certified: the Riemann Hypothesis (Mathlib's statement): Lean + Mathlib, 21 Nov",
+   "zh": "已认证：黎曼猜想（Mathlib 的表述）：Lean + Mathlib，11 月 21 日"
+  },
+  {
+   "category": "claim-status",
+   "en": "also checked: every Dirichlet L-function (GRH in that sense): A. Sutherland's MIT page",
+   "zh": "另经检查：每个狄利克雷 L 函数（这一意义上的广义黎曼猜想）：A. Sutherland 的 MIT 页面"
+  },
+  {
+   "category": "claim-status",
+   "en": "not yet: a human-readable proof (Alpöge: he will \"write it properly\")",
+   "zh": "尚无：供人阅读的证明（Alpöge：他会“好好写出来”（译文））"
+  },
+  {
+   "category": "claim-status",
+   "en": "the idea of the claimed proof",
+   "zh": "这份待确认证明的思路"
+  },
+  {
+   "category": "math",
+   "en": "computed / the curves coincide (computed) / always inside",
+   "zh": "实际计算 / 两条曲线重合（实际计算） / 始终在界内",
+   "note": "'computed here for 4,000 values of x up to 10⁶: always inside' -> 此处对 10⁶ 以内的 4000 个 x 值做了计算：始终在界内; 'error at 10⁶: 130 (0.17 %)' -> 10⁶ 处的误差：130（0.17%）; 'example: s = 2 + 3i' -> 例：s = 2 + 3i."
+  }
+ ]
+}

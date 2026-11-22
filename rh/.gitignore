@@ -3,3 +3,5 @@ out/
 __pycache__/
 *.pyc
 data/zeta_data.npz
+audio_zh/*.wav
+out_zh/

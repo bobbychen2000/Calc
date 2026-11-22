@@ -10,7 +10,7 @@ import numpy as np
 from matplotlib.colors import hsv_to_rgb
 from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangle
 
-from render import MONO, PAL, H, W, clamp, ease, overlay, ramp, window
+from render import LANG, MONO, PAL, H, W, clamp, ease, overlay, ramp, window
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 D = dict(np.load(os.path.join(HERE, "data", "zeta_data.npz")))  # eager: lazy NpzFile handles break across forked workers
@@ -763,7 +763,7 @@ def s10(fig, ctx, t):
             ai = ramp(t, c_wl + 1.6 * i, 0.5)
             card(ov, 160 + i * 540, 905, 500, 80, a=ai * 0.95)
             txt(ov, 185 + i * 540, 945, yr, size=28, a=ai, color=PAL["gold"], weight="bold")
-            txt(ov, 300 + i * 540, 945, who, size=24, a=ai)
+            txt(ov, (335 if LANG == "zh" else 300) + i * 540, 945, who, size=22 if LANG == "zh" else 24, a=ai)
 
 
 # ==============================================================================

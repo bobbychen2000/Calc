@@ -111,10 +111,21 @@ def _install_translation(lang):
                 mixed |= mx
             if mixed:
                 s = "\n".join(lines)
-                self.set_math_fontfamily("custom")
+                if hasattr(self, "_fontproperties"):
+                    self.set_math_fontfamily("custom")
+                else:  # called from Text.__init__: apply once the font properties exist
+                    self._rh_custom_math = True
         return orig(self, s)
 
+    orig_init = mtext.Text.__init__
+
+    def init(self, *args, **kwargs):
+        orig_init(self, *args, **kwargs)
+        if getattr(self, "_rh_custom_math", False):
+            self.set_math_fontfamily("custom")
+
     mtext.Text.set_text = set_text
+    mtext.Text.__init__ = init
 
 
 if LANG != "en":
@@ -175,19 +186,48 @@ def _is_cjk(text):
     return any("\u4e00" <= c <= "\u9fff" for c in text)
 
 
-def caption_lines(text, max_chars=46):
-    """Split a caption into at most two balanced lines (by characters for CJK text)."""
+def _wide(c):
+    """A full-width character: CJK ideograph or CJK / full-width punctuation."""
+    return "\u4e00" <= c <= "\u9fff" or "\u3000" <= c <= "\u303f" or "\uff00" <= c <= "\uffef" or c in "“”‘’…—·"
+
+
+def _width(s):
+    """Caption width in CJK character units (Latin letters, digits and spaces ~0.55)."""
+    return sum(1.0 if _wide(c) else 0.55 for c in s)
+
+
+def caption_lines(text, max_chars=46, breaks=None):
+    """Split a caption into at most two balanced lines (by characters for CJK text; `breaks` =
+    the word boundaries a segmenter found -- voice_zh.py stores them -- so a word is never split)."""
     if _is_cjk(text):
-        if len(text) <= 15:
+        if _width(text) <= 19:
             return [text]
-        mid = len(text) / 2
+        bset = set(breaks) if breaks is not None else None
+        mid = _width(text) / 2
         best, best_cost = None, 1e9
-        for i in range(4, len(text) - 3):
-            if text[i - 1] in "，、；：（(" or text[i] in "）)，、；：。":
-                continue
-            cost = abs(i - mid) - (3 if text[i - 1] in "，。；：、 " else 0)
-            if text[i - 1].isascii() and text[i].isascii() and text[i - 1].isalnum() and text[i].isalnum():
-                cost += 50  # don't split inside a Latin word or number
+        for i in range(2, len(text) - 1):
+            a, b = text[:i].rstrip(), text[i:].lstrip()
+            if not a or not b or a[-1] in "（(“《·" or b[0] in "）)，、；：。？！”》·…":
+                continue  # no line starts with closing punctuation, none ends on an opening one
+            d = abs(_width(text[:i]) - mid)
+            cost = d + 0.1 * d * d
+            if a[-1] in "，。；：、？！":
+                cost -= 6  # break after a clause
+            if not _wide(a[-1]) and not _wide(b[0]):
+                cost += 40  # inside a Latin word / number / formula, or between two Latin words
+            if a[-1].isdigit() and b[0] in "万亿千百年月日号个次倍位%":
+                cost += 50  # a number and its unit
+            if bset is not None and len(text[:i]) == len(a):
+                if i not in bset:
+                    cost += 30  # inside a Chinese word
+                else:
+                    nxt = min([k for k in bset if k > i] + [len(text)])
+                    if nxt - i == 1 and b[0] in "了的地得着过之吗呢吧啊么里上中下内外":
+                        cost += 12  # a particle / postposition never starts a line
+            elif b[0] in "了的地得着过之吗呢吧啊么":
+                cost += 12
+            if b[0] == "之":
+                cost += 20  # 之一 / 之间 belong to what comes before
             if cost < best_cost:
                 best, best_cost = i, cost
         return [text[:best].strip(), text[best:].strip()]
@@ -207,7 +247,7 @@ def draw_captions(ov, ctx, t):
     for ch in ctx.meta.get("chunks", []):
         t0, t1 = ch["start"] - 0.05, ch["end"] + 0.25
         if t0 <= t <= t1:
-            lines = caption_lines(ch["text"])
+            lines = caption_lines(ch["text"], breaks=set(ch["breaks"]) if "breaks" in ch else None)
             a = clamp((t - t0) / 0.12) * clamp((t1 - t) / 0.12)
             ov.text(W / 2, 52, "\n".join(lines), ha="center", va="bottom", fontsize=33,
                     color=PAL["white"], alpha=a, zorder=60, fontweight="medium", linespacing=1.25,

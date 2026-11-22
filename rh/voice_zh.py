@@ -7,6 +7,7 @@ punctuation and at {cue}s) and the timings come from the chunk durations: every 
 chunk start, every caption is one or two chunks.
 
     /home/user/rhwork/venv-tts/bin/python voice_zh.py [scene_id ...]
+    /home/user/rhwork/venv-tts/bin/python voice_zh.py --breaks   # caption word breaks only
 """
 import json
 import os
@@ -144,9 +145,59 @@ def captions(chs):
     out = []
     for g in caps:
         text = "".join(x["display"] for x in g)
-        text = re.sub(r"[，、；：,;:]$", "", text)  # no dangling clause punctuation on screen
-        out.append({"text": text, "start": g[0]["start"], "end": g[-1]["end_t"]})
+        text = tidy(re.sub(r"[，、；：,;:]$", "", text))  # no dangling clause punctuation on screen
+        out.append({"text": text, "start": g[0]["start"], "end": g[-1]["end_t"], "breaks": word_breaks(text)})
     return out
+
+
+_JIEBA = None
+EXTRA_WORDS = ["钟面", "钟点", "四分之三次方", "黎曼猜想", "临界线", "临界带", "非平凡零点", "解析延拓",
+               "显式公式", "随机游走", "辅助多项式", "待确认的证明", "广义黎曼猜想", "扩展黎曼猜想"]
+
+
+def _jieba():
+    """jieba with the glossary's Chinese terms as words (so 黎曼猜想 is never split)."""
+    global _JIEBA
+    if _JIEBA is None:
+        import jieba
+        jieba.setLogLevel(60)
+        g = json.load(open(os.path.join(HERE, "i18n", "glossary_zh.json")))["glossary"]
+        for term in [t["zh"] for t in g] + EXTRA_WORDS:
+            for w in re.split(r"[\s/（）()，、：；·]+", term):
+                if 2 <= len(w) <= 6 and re.fullmatch(r"[\u4e00-\u9fff]+", w):
+                    jieba.add_word(w, freq=200000)
+        _JIEBA = jieba
+    return _JIEBA
+
+
+CJK_SPACE = re.compile(r"(?<=[\u3000-\u303f\u4e00-\u9fff\uff00-\uffef]) +(?=[\u3000-\u303f\u4e00-\u9fff\uff00-\uffef])")
+
+
+def tidy(text):
+    """No spaces between two Chinese characters on screen (the [display|spoken] markup leaves some)."""
+    return CJK_SPACE.sub("", text)
+
+
+def word_breaks(text):
+    """Character offsets between words (jieba), for the renderer's caption line breaking."""
+    out, pos = [], 0
+    for w in _jieba().cut(text):
+        pos += len(w)
+        out.append(pos)
+    return out[:-1]
+
+
+def add_breaks():
+    """Recompute the caption breaks of the voiced scenes without re-synthesising."""
+    for f in sorted(os.listdir(AUDIO)):
+        if f.endswith(".json"):
+            path = os.path.join(AUDIO, f)
+            meta = json.load(open(path))
+            for ch in meta["chunks"]:
+                ch["text"] = tidy(ch["text"])
+                ch["breaks"] = word_breaks(ch["text"])
+            with open(path, "w") as fh:
+                json.dump(meta, fh, indent=1, ensure_ascii=False)
 
 
 def voice_scene(sc):
@@ -192,6 +243,8 @@ def voice_scene(sc):
 
 
 def main(argv):
+    if argv == ["--breaks"]:
+        return add_breaks()
     want = set(argv)
     total = 0.0
     for sc in SCRIPT.SCENES:

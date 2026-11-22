@@ -14,6 +14,9 @@ Everything is generated from code in this folder:
 | `zeta.py` | the numbers: Euler–Maclaurin ζ, Hardy Z(t), 1,069 zeros to t = 1500 (checked against mpmath and Odlyzko's table), prime sieve to 10⁶, li(x), the explicit formula for ψ(x), point counts of the curve 37.a1 mod p → `data/` |
 | `scenes.py` | one matplotlib renderer per scene, driven by the cue times |
 | `render.py` | frames → ffmpeg (x264 crf 18, yuv420p) per scene, concat with `-c copy`, mux the narration (loudness-normalised AAC) |
+| `script_zh.py`, `i18n/` | the Mandarin version: the narration (same scene ids and cues), the on-screen strings (`i18n/zh.json`, exact strings + digit templates, applied by a `Text.set_text` hook in `render.py`) and the glossary they follow |
+| `voice_zh.py` | Kokoro-82M-v1.1-zh, voice `zf_003` → `audio_zh/<scene>.wav` + `.json` (same schema; synthesised one caption chunk at a time, captions carry jieba word breaks) |
+| `artifact.py`, `web/player.html` | the interactive player (one clip per chapter, English / 中文 toggle) |
 | `research/` | source notes: the note, the Lean/Mathlib statement, Sutherland's verification page, the Lean archive itself, third-party guides, background facts |
 
 ## Run
@@ -33,6 +36,15 @@ python3 render.py --test                          # sample frames per scene -> o
 python3 render.py                                 # all scenes -> out/rh_explainer.mp4
 ```
 
+Mandarin: `RH_LANG=zh` switches `render.py` to `script_zh.py`, `audio_zh/` and `out_zh/` (Noto Sans
+CJK SC; mathtext keeps STIX italics for symbols):
+
+```bash
+~/venv-tts/bin/python voice_zh.py                 # ~6 min; uv pip install "misaki[zh]" jieba
+RH_LANG=zh python3 render.py                      # -> out_zh/rh_explainer.mp4
+python3 artifact.py en && python3 artifact.py zh  # -> out/web/ (index.html + clips per language)
+```
+
 ## Voice
 
 Kokoro-82M (Apache-2.0), voice `af_heart`, speed 1.0, through the PyTorch `KPipeline` (misaki G2P;
@@ -43,8 +55,14 @@ open models that run on a 4-core CPU: automatic MOS (UTMOS22) 4.52–4.54 for `a
 alternative met the switch rule (+0.3 MOS, no worse WER). Names the default G2P gets wrong are fixed
 in `script.LEXICON` (misaki phonemes; Alpöge as Wikipedia's American "AL-poh-gay", unsourced there).
 
+The Mandarin voice is Kokoro-82M-v1.1-zh (Apache-2.0), voice `zf_003`, with the model author's
+length-dependent speed. Its pipeline gives no word timings, so each caption chunk is synthesised on
+its own and the chunk durations drive the captions and cues. Greek letters and symbols are written
+out for the voice (`[ζ|zeta]`), and Alpöge is read as in English.
+
 ## QA
 
 `qa.py` (run in a venv with faster-whisper) transcribes each scene and compares the ASR word times
 with `audio/<scene>.json` (caption / cue sync), the word error rate, and how each proper noun was
-heard. `research/factcheck.md` records the adversarial fact-check of the script and on-screen text.
+heard; `qa_zh.py` does the same for Mandarin (Whisper small, character alignment, CER).
+`research/factcheck.md` records the adversarial fact-check of the script and on-screen text.
