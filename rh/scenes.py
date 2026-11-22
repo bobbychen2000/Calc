@@ -13,7 +13,7 @@ from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, Rectangl
 from render import MONO, PAL, H, W, clamp, ease, overlay, ramp, window
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-D = np.load(os.path.join(HERE, "data", "zeta_data.npz"))
+D = dict(np.load(os.path.join(HERE, "data", "zeta_data.npz")))  # eager: lazy NpzFile handles break across forked workers
 with open(os.path.join(HERE, "data", "numbers.json")) as _f:
     NUM = json.load(_f)
 with open(os.path.join(HERE, "data", "lean_tree.json")) as _f:
@@ -203,12 +203,12 @@ def s01(fig, ctx, t):
     txt(ov, 150, 585, "20 November 2026", size=24, color=PAL["gold"], a=a1, weight="semibold")
     txt(ov, 150, 530, "Levent Alpöge, working with Claude: a 4-page note", size=28, a=a1)
     a2 = ramp(t, c_lean, 0.6) * (1 - ramp(t, c_plan - 0.2, 0.6))
-    txt(ov, 150, 470, "and a proof in the Lean language: 17,374,215 lines, no human-readable text", size=28,
+    txt(ov, 150, 470, "and a claimed proof in Lean: 17,374,215 lines, no comments, no written proof", size=28,
         a=a2, color=PAL["cyan"])
     a3 = ramp(t, c_joint, 0.6) * (1 - ramp(t, c_plan - 0.2, 0.6))
     card(ov, 120, 180, 1300, 210, a=a3)
     txt(ov, 150, 345, "21 November 2026", size=24, color=PAL["gold"], a=a3, weight="semibold")
-    txt(ov, 150, 290, "Lean and Mathlib communities, endorsed by the Lean FRO:", size=28, a=a3)
+    txt(ov, 150, 290, "Lean and Mathlib communities, endorsed by the Lean FRO and the Mathlib Initiative:", size=26, a=a3)
     txt(ov, 150, 230, "\u201cWe have full confidence that Alpöge\u2019s proof \u2026 is correct\u201d", size=28,
         a=a3, color=PAL["muted"])
     # agenda
@@ -273,8 +273,8 @@ def s02(fig, ctx, t):
         xx = np.linspace(2.0, xmax, 800)
         from zeta import li
         ax.plot(xx, li(xx), color=PAL["gold"], lw=3, ls=(0, (6, 4)), alpha=ag, label="li(x)")
-        txt(ov, 190, 860, r"chance that a number near $x$ is prime  ≈  $1/\ln x$", size=30, a=ag)
-        txt(ov, 190, 790, r"$\mathrm{li}(x)=\int_0^{x}\frac{du}{\ln u}$", size=34, a=ag,
+        txt(ov, 240, 860, r"chance that a number near $x$ is prime  ≈  $1/\ln x$", size=30, a=ag)
+        txt(ov, 240, 790, r"$\mathrm{li}(x)=1.045\ldots+\int_2^{x}\frac{du}{\ln u}$", size=34, a=ag,
             color=PAL["gold"])
     ax.ticklabel_format(style="plain", axis="both")
     ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{int(v):,}"))
@@ -308,6 +308,7 @@ def s02(fig, ctx, t):
 def s03(fig, ctx, t):
     ov = overlay(fig)
     c_basel, c_h, c_prod, c_zeta = cue(ctx, "basel"), cue(ctx, "harmonic"), cue(ctx, "product"), cue(ctx, "zeta")
+    c_exp = cue(ctx, "expand")
     a_plot = window(t, c_basel - 0.4, c_prod + 0.2, 0.6)
     if a_plot > 0:
         Nmax = 60
@@ -336,10 +337,11 @@ def s03(fig, ctx, t):
     if a_eq > 0:
         txt(ov, 1000, 700, r"$\sum_{n=1}^{\infty}\ \frac{1}{n^{s}}\ \ =\ \ \prod_{p\ \mathrm{prime}}\ \frac{1}{1-p^{-s}}$",
             size=64, a=a_eq, ha="center")
-        txt(ov, W / 2, 520, r"$\frac{1}{1-2^{-s}}\cdot\frac{1}{1-3^{-s}}\cdot\frac{1}{1-5^{-s}}\cdot\frac{1}{1-7^{-s}}\cdots$",
-            size=40, a=a_eq * ramp(t, c_prod + 1.5, 0.6), ha="center", color=PAL["muted"])
-        txt(ov, W / 2, 400, "every n has one prime factorisation:   12 = 2 · 2 · 3,   45 = 3 · 3 · 5",
-            size=28, a=a_eq * ramp(t, c_prod + 2.5, 0.6), ha="center", color=PAL["muted"])
+        txt(ov, 1560, 700, "(for s > 1)", size=28, a=a_eq, ha="left", color=PAL["muted"])
+        txt(ov, W / 2, 490, r"$\frac{1}{1-2^{-s}} = 1 + 2^{-s} + 4^{-s} + 8^{-s} + \cdots$,     $\frac{1}{1-3^{-s}} = 1 + 3^{-s} + 9^{-s} + \cdots$",
+            size=36, a=a_eq * ramp(t, c_exp, 0.6), ha="center", color=PAL["muted"])
+        txt(ov, W / 2, 395, "multiply out: 12 = 2 · 2 · 3 gives 4⁻ˢ · 3⁻ˢ = 12⁻ˢ, exactly once (one factorisation per n)",
+            size=28, a=a_eq * ramp(t, c_exp + 2.5, 0.6), ha="center", color=PAL["muted"])
     a_z = ramp(t, c_zeta, 0.6)
     if a_z > 0:
         txt(ov, 560, 700, "ζ(s) =", size=56, color=PAL["gold"], a=a_z, ha="right", weight="bold")
@@ -473,11 +475,12 @@ def s05(fig, ctx, t):
         ax.scatter([1], [0], marker="x", s=160, color="white", lw=3, alpha=am)
         ax.text(1.6, 0.6, "pole at s = 1", fontsize=16, color="white", alpha=am)
         txt(ov, 790, 860, "ζ(s), extended to the whole plane", size=36, a=am, weight="semibold")
-        txt(ov, 790, 805, "(one smooth extension; only s = 1 is excluded)", size=26, a=am, color=PAL["muted"])
+        txt(ov, 790, 805, "(its analytic continuation; only s = 1 is excluded)", size=26, a=am, color=PAL["muted"])
         am2 = ramp(t, c_map, 0.6)
         txt(ov, 790, 700, "colour = direction (angle) of ζ(s)", size=30, a=am2)
         txt(ov, 790, 645, "rings = size: each ring doubles |ζ(s)|", size=30, a=am2)
-        txt(ov, 790, 545, "white circles: zeros", size=30, a=ramp(t, c_z, 0.6), color=PAL["white"])
+        txt(ov, 790, 545, "white circles: zeros (dark meeting points)", size=30, a=ramp(t, c_z, 0.6), color=PAL["white"])
+        txt(ov, 790, 495, "(the pole at s = 1 is a bright meeting point)", size=24, a=ramp(t, c_z, 0.6), color=PAL["muted"])
 
 
 # ==============================================================================
@@ -504,7 +507,8 @@ def s06(fig, ctx, t):
         ax.scatter([0.5] * len(gs), gs, s=110, facecolor="none", edgecolor="white", lw=2.5, alpha=a_st)
     a_sy = ramp(t, c_sym, 0.6)
     if a_sy > 0:
-        txt(ov, 790, 680, r"$\zeta(s)\ \leftrightarrow\ \zeta(1-s)$:  a mirror across $\sigma=\frac{1}{2}$", size=32,
+        txt(ov, 790, 690, r"$\zeta(s)\leftrightarrow\zeta(1-s)$  and  $\zeta(\bar{s})=\overline{\zeta(s)}$", size=32, a=a_sy)
+        txt(ov, 790, 640, r"together: zeros mirror across $\sigma=\frac{1}{2}$", size=30,
             a=a_sy)
         # schematic: a hypothetical off-line pair and its mirror (inset)
         x0, y0 = 800, 330
@@ -547,6 +551,8 @@ def s07(fig, ctx, t):
         ar = ramp(t, c_rie, 0.6)
         quote(ov, 460, 500, 1000, "", "Riemann, 1859 (tr. D. R. Wilkins)", a=ar * a_s, size=30,
               lines=["…it is very probable that all roots are real."])
+        txt(ov, W / 2, 295, "(Riemann's roots are values of t, with s = ½ + it: a real t is a zero on the line)", size=24,
+            a=ar * a_s, ha="center", color=PAL["muted"])
     if t < c_z - 0.4:
         return
     a = ramp(t, c_z - 0.4, 0.6)
@@ -564,7 +570,7 @@ def s07(fig, ctx, t):
     a_c = ramp(t, c_cnt, 0.5)
     for i in range(10):
         ai = a_c * ramp(t, c_cnt + 0.9 * min(i, 3) + 0.25 * max(0, i - 3), 0.3)
-        txt(ov, 150 + (i % 5) * 330, 405 - (i // 5) * 50, f"{GAM[i]:.6f}…", size=27, a=ai, color=PAL["gold"],
+        txt(ov, 150 + (i % 5) * 330, 405 - (i // 5) * 50, f"{math.floor(GAM[i] * 1e6) / 1e6:.6f}…", size=27, a=ai, color=PAL["gold"],
             family=MONO)
     a_k = ramp(t, c_chk, 0.6)
     card(ov, 130, 190, 780, 115, a=a_k)
@@ -606,8 +612,10 @@ def s08(fig, ctx, t):
             rho = 0.5 + 1j * g
             wv = -2 * np.real(np.exp(rho * np.log(xe)) / rho)
             ax.plot(xe, 62 + 14 * j + 45 * wv / np.sqrt(xe), color=plt.cm.cool(0.2 + 0.35 * j), lw=2.2, alpha=aw)
-        ax.text(98, 104, "the waves of the first three zeros (scaled by 1/√x)", ha="right", fontsize=22,
+        ax.text(98, 104, "the waves of the first three zero pairs (scaled by 1/√x)", ha="right", fontsize=22,
                 color=PAL["muted"], alpha=aw)
+        txt(ov, 1060, 380, r"each pair $\frac{1}{2}\pm i\gamma$ subtracts", size=26, a=aw, color=PAL["cyan"])
+        txt(ov, 1060, 335, r"$2\sqrt{x}\,\cos(\gamma\ln x-\arg\rho)\,/\,|\rho|$", size=28, a=aw, color=PAL["cyan"])
     # reconstruction: crossfade between successive K
     if t >= adds[0][1] - 0.2:
         cur = 0
@@ -620,8 +628,9 @@ def s08(fig, ctx, t):
         y_old = D[f"recon_{adds[cur - 1][0]}"] if cur > 0 else y_new
         y = (1 - w) * y_old + w * y_new
         ax.plot(xe, y, color=PAL["gold"], lw=2.6, alpha=ramp(t, adds[0][1] - 0.2, 0.5))
-        lbl = "smooth guess: x" if K == 0 else f"x  minus waves from {K:,} zero{'s' if K > 1 else ''}"
-        txt(ov, 200, 760, lbl, size=34, color=PAL["gold"], a=1, weight="semibold")
+        lbl = ("smooth part:  x − ln 2π − ½ ln(1 − x⁻²)" if K == 0 else
+               f"smooth part minus waves from {K:,} zero pair{'s' if K > 1 else ''}")
+        txt(ov, 1060, 280, lbl, size=26, color=PAL["gold"], a=1, weight="semibold")
     if t > c_j:
         aj = ramp(t, c_j, 0.6)
         pk = D["xpsi"][D["xpsi"] <= 100]
@@ -649,7 +658,7 @@ def s09(fig, ctx, t):
         ax.text(9800, 140, r"$x^{1/2}$: zero on the line", ha="right", fontsize=28, color=PAL["cyan"], alpha=a1)
         ax.text(9800, 1020, r"$x^{3/4}$: a zero at $\sigma = 3/4$ (hypothetical)", ha="right", fontsize=28,
                 color=PAL["coral"], alpha=a1 * ramp(t, c_sz + 3, 0.6))
-        label_ax(ax, "x", "size of one wave")
+        label_ax(ax, "x", r"growth of one wave ($\propto x^{\mathrm{Re}\,\rho}$)")
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{int(v):,}"))
     a2 = window(t, c_rh, c_bd, 0.6)
     if a2 > 0 and t > c_rh:
@@ -711,7 +720,7 @@ def s10(fig, ctx, t):
     c_cl, c_gr, c_ct, c_hw, c_wl = (cue(ctx, k) for k in ("clock", "grid", "count", "hasse", "weil"))
     a_cl = window(t, c_cl - 0.2, c_hw, 0.6)
     if a_cl > 0:
-        cx, cy, r = 420, 590, 250
+        cx, cy, r = 420, 650, 240
         ov.add_patch(Circle((cx, cy), r, fc=PAL["panel"], ec=PAL["muted"], lw=3, alpha=a_cl))
         for k in range(13):
             ang = math.pi / 2 - 2 * math.pi * k / 13
@@ -733,8 +742,8 @@ def s10(fig, ctx, t):
         txt(ov, x0 + 6 * s, y0 - 50, "x  →", size=22, a=a_g, color=PAL["muted"], ha="center")
         txt(ov, x0 - 45, y0 + 6 * s, "y", size=22, a=a_g, color=PAL["muted"], ha="center")
         ac = ramp(t, c_ct, 0.6)
-        txt(ov, 120, 230, "15 solutions + 1 point at infinity = 16", size=30, a=a_g * ac, color=PAL["coral"])
-        txt(ov, 120, 180, "expected about p + 1 = 14", size=30, a=a_g * ac, color=PAL["muted"])
+        txt(ov, 120, 280, "15 solutions + 1 point at infinity = 16", size=28, a=a_g * ac, color=PAL["coral"])
+        txt(ov, 120, 235, "expected about p + 1 = 14", size=28, a=a_g * ac, color=PAL["muted"])
     if t > c_hw - 0.3:
         a = ramp(t, c_hw - 0.3, 0.6)
         ax = axes(fig, [0.08, 0.25, 0.84, 0.56], xlim=(0, 5000), ylim=(-150, 150))
@@ -746,11 +755,11 @@ def s10(fig, ctx, t):
         ax.plot(pp, -2 * np.sqrt(pp), color=PAL["gold"], lw=3, alpha=a)
         label_ax(ax, "prime p", "(p + 1) − number of points")
         ax.text(4950, 128, r"$\pm\,2\sqrt{p}$", ha="right", fontsize=28, color=PAL["gold"], alpha=a)
-        ax.text(100, -135, f"{len(p)} primes p < 5000 (p ≠ 37)", fontsize=22, color=PAL["coral"], alpha=a)
+        ax.text(100, -135, f"{len(p)} odd primes p < 5000 (p ≠ 37)", fontsize=22, color=PAL["coral"], alpha=a)
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{int(v):,}"))
     if t > c_wl:
-        for i, (yr, who) in enumerate([("1930s", "Hasse: elliptic curves"), ("1940s", "Weil: all curves"),
-                                        ("1974", "Deligne: Weil conjectures")]):
+        for i, (yr, who) in enumerate([("1930s", "Hasse: elliptic curves"), ("1940s", "Weil: all curves (2g√p)"),
+                                        ("1974", "Deligne: all smooth varieties")]):
             ai = ramp(t, c_wl + 1.6 * i, 0.5)
             card(ov, 160 + i * 540, 905, 500, 80, a=ai * 0.95)
             txt(ov, 185 + i * 540, 945, yr, size=28, a=ai, color=PAL["gold"], weight="bold")
@@ -804,11 +813,13 @@ def s11(fig, ctx, t):
         ax.text(52, 235, r"best $m \approx \sqrt{p}$", fontsize=26, color=PAL["gold"], alpha=a)
         ax.set_yticks([])
         label_ax(ax, "multiplicity m", "error bound")
-        txt(ov, 1240, 760, "schematic: the bound has terms", size=26, a=a, color=PAL["muted"])
-        txt(ov, 1240, 700, r"$\sim\ p/m\ \ +\ \ m$", size=44, a=a, color=PAL["cyan"])
-        txt(ov, 1240, 630, r"minimised at $m \approx \sqrt{p}$,", size=30, a=a)
-        txt(ov, 1240, 580, r"leaving an error $\approx 2\sqrt{p}$", size=30, a=a)
-        txt(ov, 1240, 520, r"(here $p = 2500$, $\sqrt{p} = 50$)", size=24, a=a, color=PAL["muted"])
+        txt(ov, 1240, 800, "schematic: the bound has terms", size=26, a=a, color=PAL["muted"])
+        txt(ov, 1240, 740, r"$\sim\ p/m\ \ +\ \ m$", size=44, a=a, color=PAL["cyan"])
+        txt(ov, 1240, 672, r"minimised at $m \approx \sqrt{p}$,", size=30, a=a)
+        txt(ov, 1240, 625, r"leaving an error of order $\sqrt{p}$", size=30, a=a)
+        txt(ov, 1240, 575, r"(here $p = 2500$, $\sqrt{p} = 50$)", size=24, a=a, color=PAL["muted"])
+        txt(ov, 1240, 530, "(Stepanov's constant is larger than Hasse's 2;", size=20, a=a, color=PAL["faint"])
+        txt(ov, 1240, 503, "Bombieri and W. Schmidt extended it to all curves)", size=20, a=a, color=PAL["faint"])
         am = ramp(t, c_mo, 0.6)
         card(ov, 1200, 300, 620, 150, a=am, ec=PAL["gold"])
         txt(ov, 1510, 400, "multiplicity ≈ √p", size=34, a=am, ha="center", weight="semibold")
@@ -845,13 +856,14 @@ def s12(fig, ctx, t):
     aq = window(t, c_q - 0.2, c_co, 0.5)
     if aq > 0:
         quote(ov, 260, 720, 1400, "", "Levent Alpöge, remark.pdf, 20 Nov 2026", a=aq, size=34,
-              lines=["…multiplicity is hard to find over the integers,",
+              lines=["This argument is a descendant of Stepanov's, but",
+                     "multiplicity is hard to find over the integers,",
                      "corresponding to something like differentiating",
                      "whole numbers."])
     a2 = ramp(t, c_co, 0.6) * (1 - ramp(t, c_di - 0.3, 0.5))
     if a2 > 0:
         card(ov, 160, 790, 1600, 120, a=a2, ec=PAL["gold"])
-        txt(ov, W / 2, 850, "A nonzero whole number divisible by many primes must be large.", size=36, a=a2,
+        txt(ov, W / 2, 850, "A nonzero whole number divisible by many primes (or their powers) must be large.", size=27, a=a2,
             ha="center", weight="semibold")
         ab = ramp(t, c_bi, 0.6)
         txt(ov, W / 2, 680, r"$\binom{20}{10}\ =\ 184{,}756\ =\ 2^2\cdot 11\cdot 13\cdot 17\cdot 19$", size=46, a=a2 * ab,
@@ -865,9 +877,9 @@ def s12(fig, ctx, t):
     a3 = ramp(t, c_di - 0.3, 0.6)
     if a3 > 0:
         rows = [("polynomials", "whole numbers"),
-                ("a root at a", "divisible by a prime p"),
-                ("a root of multiplicity m", "divisible by pᵐ"),
-                ("degree", "size  (log |N|)"),
+                ("a root", "a prime factor p"),
+                ("its multiplicity m", "its power pᵐ"),
+                ("degree", "size, on a log scale  (log |N|)"),
                 ("roots × multiplicity  ≤  degree", "Σ m·log p  ≤  log |N|")]
         card(ov, 230, 330, 1460, 560, a=a3)
         for i, (l, r) in enumerate(rows):
@@ -893,6 +905,7 @@ def s12(fig, ctx, t):
 def s13(fig, ctx, t):
     ov = overlay(fig)
     c_th, c_l, c_ch, c_sq, c_tb = (cue(ctx, k) for k in ("theta", "lift", "chain", "sqrt", "table"))
+    c_wg = cue(ctx, "weigh")
     a1 = window(t, c_th - 0.3, c_l, 0.6)
     if a1 > 0:
         ax = axes(fig, [0.08, 0.26, 0.52, 0.56], xlim=(0, 4), ylim=(0, 4.6))
@@ -918,7 +931,9 @@ def s13(fig, ctx, t):
         n_box = 5
         xs = [180 + i * 330 for i in range(n_box)]
         y = 700
-        labels = [r"$U(X_0)$", r"$U(X_1)$", r"$U(X_2)$", r"$\cdots$", r"$U(X_m)$"]
+        labels = [r"$U_0$", r"$U_1$", r"$U_2$", r"$\cdots$", r"$U_m$"]
+        txt(ov, 180, 595, "unitary groups (the note writes U(X₀) → U(X₁) → … → U(Xₘ))", size=20,
+            a=a2 * ramp(t, c_ch, 0.6) * (1 - ramp(t, c_sq - 0.3, 0.4)), color=PAL["faint"])
         for i in range(n_box):
             ai = a2 * (1.0 if i == 0 else ramp(t, c_ch + 0.7 * (i - 1), 0.4) if i > 1 else ramp(t, c_l + 1.5, 0.5))
             if labels[i] == r"$\cdots$":
@@ -932,10 +947,14 @@ def s13(fig, ctx, t):
                 arrow(ov, (xs[i - 1] + 225, y), (xs[i] - 8, y), color=PAL["gold"], a=ai)
                 txt(ov, (xs[i - 1] + xs[i] + 220) / 2, y + 45, "θ", size=30, a=ai, ha="center", color=PAL["gold"])
         txt(ov, 180, 880, r"theta lift:   $F(h)=\int f(g)\,\Theta(g,h)\,dg$", size=36, a=a2 * ramp(t, c_l + 0.5, 0.5))
-        txt(ov, 180, 530, "a special value of the last lift (a period) is an algebraic number;", size=28,
+        txt(ov, 180, 530, "as the note and the guides describe it: a period of the last lift is a nonzero algebraic integer;", size=26,
             a=a2 * ramp(t, c_ch, 0.6) * (1 - ramp(t, c_sq - 0.3, 0.4)), color=PAL["text"])
-        txt(ov, 180, 480, "its divisibility grows with every lift: one more order of \"multiplicity\" (the note's analogy)",
-            size=28, a=a2 * ramp(t, c_ch + 1.5, 0.6) * (1 - ramp(t, c_sq - 0.3, 0.4)), color=PAL["cyan"])
+        txt(ov, 180, 482, "its divisibility by certain primes grows with every lift: one more order of \"multiplicity\"",
+            size=26, a=a2 * ramp(t, c_ch + 1.5, 0.6) * (1 - ramp(t, c_sq - 0.3, 0.4)), color=PAL["cyan"])
+        awg = ramp(t, c_wg, 0.6) * (1 - ramp(t, c_sq - 0.3, 0.4))
+        txt(ov, 180, 420, "its divisibility (weighted by log p) is itself a weighted count of primes,", size=26,
+            a=a2 * awg, color=PAL["gold"])
+        txt(ov, 180, 375, "so  divisibility ≤ size  caps that count", size=26, a=a2 * awg, color=PAL["gold"])
         aq = ramp(t, c_sq - 0.2, 0.6)
         if aq > 0:
             ax = axes(fig, [0.10, 0.22, 0.38, 0.30], xlim=(0, 100), ylim=(0, 125))
@@ -952,30 +971,31 @@ def s13(fig, ctx, t):
             ax.text(8, 110, r"$X/m$", fontsize=24, color=PAL["violet"], alpha=a2 * aq)
             ax.text(88, 70, r"$m$", fontsize=24, color=PAL["coral"], alpha=a2 * aq)
             ax.text(52, 112, "balance", fontsize=22, color=PAL["gold"], alpha=a2 * aq)
-            txt(ov, 1000, 530, "two competing errors (as readers of the code describe them):", size=24,
+            txt(ov, 1000, 530, "two errors, as the AI-assisted guides read the code:", size=24,
                 a=a2 * aq, color=PAL["muted"])
             txt(ov, 1000, 470, r"$X/m\ +\ m$  is smallest at  $m \approx \sqrt{X}$", size=34, a=a2 * aq,
                 color=PAL["gold"])
-            txt(ov, 1000, 405, r"error $\approx 2\sqrt{X}$: the size RH demands", size=32,
+            txt(ov, 1000, 405, r"error of order $\sqrt{X}$: what RH demands", size=32,
                 a=a2 * ramp(t, c_sq + 3.0, 0.6))
-            txt(ov, 1000, 330, "(schematic; X = 2500 here)", size=20, a=a2 * aq, color=PAL["faint"])
+            txt(ov, 1000, 330, "X = how far the prime sum runs  (schematic; X = 2500 here)", size=20,
+                a=a2 * aq, color=PAL["faint"])
     a3 = ramp(t, c_tb - 0.3, 0.6)
     if a3 > 0:
-        x0, x1, x2 = 220, 820, 1320
+        x0, x1, x2 = 220, 700, 1240
         rows = [("", "curves over a clock (p)", "the whole numbers"),
                 ("count", "points  N", r"prime sum  $\psi(X)$"),
                 ("expected", "p + 1", "X"),
                 ("tool", r"multiplicity  $m\approx\sqrt{p}$", r"chain of  $\approx\sqrt{X}$  theta lifts"),
-                ("error", r"$\leq 2\sqrt{p}$  (proved)", r"$\approx\sqrt{X}$  (= RH, claimed)")]
+                ("error", r"$\leq 2\sqrt{p}$  (proved: Hasse)", r"order $\sqrt{X}$  (= RH, claimed)")]
         card(ov, 180, 420, 1580, 520, a=a3)
         for i, (a, b, c) in enumerate(rows):
             yy = 890 - i * 100
             ai = a3 * ramp(t, c_tb + 0.4 * i, 0.4)
             col = PAL["muted"] if i == 0 else PAL["text"]
             txt(ov, x0, yy, a, size=26, a=ai, color=PAL["muted"])
-            txt(ov, x1, yy, b, size=32 if i else 28, a=ai, color=PAL["cyan"] if i == 0 else col,
+            txt(ov, x1, yy, b, size=29 if i else 28, a=ai, color=PAL["cyan"] if i == 0 else col,
                 weight="semibold" if i == 0 else "normal")
-            txt(ov, x2, yy, c, size=32 if i else 28, a=ai, color=PAL["gold"] if i == 0 else col,
+            txt(ov, x2, yy, c, size=29 if i else 28, a=ai, color=PAL["gold"] if i == 0 else col,
                 weight="semibold" if i == 0 else "normal")
         txt(ov, 1740, 440, "analogy as described in the note and by readers of the code", size=18, a=a3, ha="right",
             color=PAL["faint"])
@@ -1043,7 +1063,7 @@ def s14(fig, ctx, t):
             up = i % 2 == 0
             txt(ov, x, y + (70 if up else -60), d, size=26, a=ai, ha="center", color=PAL["gold"], weight="bold")
             txt(ov, x, y + (120 if up else -110), s, size=24, a=ai, ha="center")
-        txt(ov, 200, 860, "Alpöge's timeline (from the note): 20 items, Oct 6 → Nov 16, 2026", size=30, a=a1)
+        txt(ov, 200, 860, "the note's rough timeline (\"Claude provided\", per the note): 20 items, Oct 6 → Nov 16, 2026", size=28, a=a1)
         txt(ov, 200, 330, "periods · theta lifts · Siegel mass · Iwasawa towers · slope inequalities · relative trace formula …",
             size=24, a=a1 * ramp(t, c_tl + 3, 0.6), color=PAL["muted"])
     a2 = window(t, c_ln - 0.3, c_sk, 0.6)
@@ -1063,15 +1083,16 @@ def s14(fig, ctx, t):
                     color=PAL["text"])
         txt(ov, 1260, 820, f"{TREE['files']:,} files", size=44, a=a2, weight="bold", color=PAL["cyan"])
         txt(ov, 1260, 740, f"{TREE['lines']:,} lines", size=44, a=a2, weight="bold", color=PAL["cyan"])
-        txt(ov, 1260, 660, "0 comments, 0 sorry, 0 new axioms", size=28, a=a2 * ramp(t, c_ln + 2, 0.5))
-        txt(ov, 1260, 600, "depends only on Mathlib", size=28, a=a2 * ramp(t, c_ln + 2.5, 0.5), color=PAL["muted"])
+        txt(ov, 1260, 660, "0 comments · 0 new axioms", size=28, a=a2 * ramp(t, c_ln + 2, 0.5))
+        txt(ov, 1260, 615, "0 unfinished steps (Lean's \"sorry\")", size=26, a=a2 * ramp(t, c_ln + 2, 0.5))
+        txt(ov, 1260, 560, "depends directly only on Mathlib", size=26, a=a2 * ramp(t, c_ln + 2.5, 0.5), color=PAL["muted"])
         txt(ov, 1260, 250, "counted from the published\narchive (sha256 9631b4f0…)", size=20, a=a2,
             color=PAL["faint"], linespacing=1.3)
     a3 = ramp(t, c_sk - 0.3, 0.6)
     if a3 > 0:
         boxes = [
-            ("theta lifts on unitary groups, Galois representations,\nlocal Langlands, Siegel–Weil, …  (most of the 17 M lines)", c3, PAL["violet"]),
-            ("a weighted prime sum stays below  ≈ x$^{1/2}$", c2, PAL["coral"]),
+            ("theta lifts on unitary groups, Galois representations,\nSiegel–Weil, … (names as in the code; most of the 17 M lines)", c3, PAL["violet"]),
+            ("weighted prime sums stay below  ≈ x$^{1/2}$  on long stretches of x", c2, PAL["coral"]),
             ("no zeros with Re s > ½  for ζ and every Dirichlet L-function", c2, PAL["cyan"]),
             ("mirror symmetry  s ↔ 1 − s", c1, PAL["blue"]),
             ("Riemann Hypothesis", c1, PAL["gold"]),
@@ -1093,7 +1114,7 @@ def s14(fig, ctx, t):
         code_panel(ov, 1220, 640, 640, [("x ^ ((1 : ℝ) / 2 - ε) ≤ m ∧", PAL["gold"])], a=ac, size=24,
                    label="Formalism/SizeWindowBrackets/SChain.lean, line 57 (verbatim)")
         txt(ov, 1240, 470, "m = the number of lift steps;", size=24, a=ac, color=PAL["muted"])
-        txt(ov, 1240, 432, "at least x to the ½ − ε", size=24, a=ac, color=PAL["muted"])
+        txt(ov, 1240, 432, "at least x$^{1/2-ε}$: just under √x", size=24, a=ac, color=PAL["muted"])
         code_panel(ov, 1220, 380, 640, [("theorem riemannHypothesis :", PAL["cyan"]),
                                         ("  RiemannHypothesis := rhOfAll", PAL["cyan"])],
                    a=a3 * ramp(t, c1, 0.6) * (1 - ramp(t, c_cv - 0.3, 0.4)), size=22,
@@ -1151,12 +1172,17 @@ def s15(fig, ctx, t):
     a_code = ramp(t, q1, 0.6) * (1 - ramp(t, c_j - 0.3, 0.5))
     code_panel(ov, 1110, 840, 760, [(s, PAL["cyan"]) for s in MATHLIB_RH], a=a_code, size=21, line_h=36,
                label="Mathlib's definition (verbatim; long line wrapped)")
+    txt(ov, 1130, 605, "in words: every zero s except −2, −4, −6, …", size=19,
+        a=a_code * ramp(t, q1 + 2.0, 0.6), color=PAL["muted"])
+    txt(ov, 1130, 578, "(and s ≠ 1, the pole) has real part ½", size=19, a=a_code * ramp(t, q1 + 2.0, 0.6), color=PAL["muted"])
     if t > q4 - 0.2:
         a4 = ramp(t, q4 + 1.0, 0.6) * (1 - ramp(t, c_j - 0.3, 0.5))
-        txt(ov, 1120, 560, "kernels that accepted the export:", size=22, a=a4, color=PAL["muted"])
-        for i, s in enumerate(["Lean's own kernel (per module)", "nanoda (Rust)", "con-leche (formally verified)",
-                               "con-ron (Rust port)", "lean4lean"]):
-            txt(ov, 1140, 520 - i * 34, "• " + s, size=21, a=a4)
+        txt(ov, 1120, 535, "checks that accepted it (MIT page, 22 Nov):", size=22, a=a4, color=PAL["muted"])
+        for i, s in enumerate(["Lean's own kernel: every module replayed", "lean4lean: every compiled module",
+                               "nanoda (Rust): the full export", "con-leche (formal soundness proof): full export",
+                               "con-ron (its Rust port): full export"]):
+            txt(ov, 1140, 497 - i * 34, "• " + s, size=21, a=a4)
+        txt(ov, 1140, 322, "Lean's kernel on the full export: still running", size=19, a=a4, color=PAL["faint"])
     aj = ramp(t, c_j, 0.6)
     if aj > 0:
         quote(ov, 1110, 860, 760, "", "Lean + Mathlib communities, 21 Nov 2026", a=aj, size=28,
@@ -1173,9 +1199,9 @@ def s16(fig, ctx, t):
     a = 1 - ramp(t, c_end - 0.3, 0.6)
     rows = [
         (c_c, "✓", PAL["green"], "certified", "the Riemann Hypothesis (Mathlib's statement): Lean + Mathlib, 21 Nov"),
-        (c_d, "✓", PAL["green"], "also checked", "GRH for Dirichlet L-functions: MIT verification page (A. Sutherland)"),
-        (c_n, "✗", PAL["coral"], "not checked", "the wider GRH the note claims (Dedekind, Hecke, automorphic L-functions)"),
-        (c_n + 2.5, "✗", PAL["coral"], "not yet", "a human-readable proof; experts' understanding of the argument"),
+        (c_d, "✓", PAL["green"], "also checked", "every Dirichlet L-function (GRH in that sense): A. Sutherland's MIT page"),
+        (c_n, "✗", PAL["coral"], "not checked", "other L-functions (Dedekind, Hecke, automorphic); the note only expects ERH"),
+        (c_n + 4.0, "✗", PAL["coral"], "not yet", "a human-readable proof (Alpöge: he will \"write it properly\")"),
         (c_cl, "…", PAL["gold"], "Clay prize", "rules: publication, then 2 years, then general acceptance"),
     ]
     for i, (ci, mark, col, head, body) in enumerate(rows):
@@ -1191,7 +1217,7 @@ def s16(fig, ctx, t):
         txt(ov, W / 2 - 60, 640, "a claimed proof", size=48, a=ae, ha="right", weight="bold")
         txt(ov, W / 2 - 60, 570, "machine-checked", size=36, a=ae * ramp(t, c_end + 1.5, 0.6), ha="right",
             color=PAL["green"])
-        txt(ov, W / 2 + 60, 570, "not yet understood", size=36, a=ae * ramp(t, c_end + 3.0, 0.6), ha="left",
+        txt(ov, W / 2 + 60, 570, "not yet explained", size=36, a=ae * ramp(t, c_end + 3.0, 0.6), ha="left",
             color=PAL["gold"])
         txt(ov, W / 2, 230, "Sources: alpo.ge/remark.pdf · leanprover-community.github.io/blog · math.mit.edu/~drew/grh",
             size=20, a=ae * ramp(t, c_end + 5, 0.6), ha="center", color=PAL["faint"])

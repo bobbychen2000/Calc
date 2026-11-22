@@ -1,1026 +1,1241 @@
 {
  "scene": "s13_theta",
- "duration": 58.525,
+ "duration": 69.525,
  "sr": 24000,
  "voice": "af_heart",
  "speed": 1.0,
  "words": [
   {
-   "w": "The",
-   "spoken": "The",
-   "start": 0.7,
-   "end": 0.812
+   "w": "Readers",
+   "spoken": "Readers",
+   "start": 0.75,
+   "end": 1.163
   },
   {
-   "w": "claimed",
-   "spoken": "claimed",
-   "start": 0.812,
+   "w": "of",
+   "spoken": "of",
+   "start": 1.163,
    "end": 1.238
   },
   {
-   "w": "proof",
-   "spoken": "proof",
+   "w": "the",
+   "spoken": "the",
    "start": 1.238,
-   "end": 1.6
-  },
-  {
-   "w": "manufactures",
-   "spoken": "manufactures",
-   "start": 1.6,
-   "end": 2.425
-  },
-  {
-   "w": "far",
-   "spoken": "far",
-   "start": 2.425,
-   "end": 2.725
-  },
-  {
-   "w": "better",
-   "spoken": "better",
-   "start": 2.725,
-   "end": 3.075
-  },
-  {
-   "w": "numbers,",
-   "spoken": "numbers,",
-   "start": 3.075,
-   "end": 3.8
-  },
-  {
-   "w": "from",
-   "spoken": "from",
-   "start": 3.8,
-   "end": 4.013
-  },
-  {
-   "w": "theta",
-   "spoken": "theta",
-   "start": 4.013,
-   "end": 4.325
-  },
-  {
-   "w": "functions.",
-   "spoken": "functions.",
-   "start": 4.325,
-   "end": 5.55
-  },
-  {
-   "w": "Theta",
-   "spoken": "Theta",
-   "start": 5.55,
-   "end": 5.925
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 5.925,
-   "end": 6.062
-  },
-  {
-   "w": "t",
-   "spoken": "t",
-   "start": 6.062,
-   "end": 6.425
-  },
-  {
-   "w": "adds",
-   "spoken": "adds",
-   "start": 6.425,
-   "end": 6.713
-  },
-  {
-   "w": "up",
-   "spoken": "up",
-   "start": 6.713,
-   "end": 6.913
-  },
-  {
-   "w": "e",
-   "spoken": "e",
-   "start": 6.913,
-   "end": 7.175
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 7.175,
-   "end": 7.263
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 7.263,
-   "end": 7.375
-  },
-  {
-   "w": "minus",
-   "spoken": "minus",
-   "start": 7.375,
-   "end": 7.737
-  },
-  {
-   "w": "pi",
-   "spoken": "pi",
-   "start": 7.737,
-   "end": 8.088
-  },
-  {
-   "w": "n",
-   "spoken": "n",
-   "start": 8.088,
-   "end": 8.312
-  },
-  {
-   "w": "squared",
-   "spoken": "squared",
-   "start": 8.312,
-   "end": 8.712
-  },
-  {
-   "w": "t,",
-   "spoken": "t,",
-   "start": 8.712,
-   "end": 9.475
-  },
-  {
-   "w": "over",
-   "spoken": "over",
-   "start": 9.475,
-   "end": 9.725
-  },
-  {
-   "w": "all",
-   "spoken": "all",
-   "start": 9.725,
-   "end": 9.975
-  },
-  {
-   "w": "integers",
-   "spoken": "integers",
-   "start": 9.975,
-   "end": 10.5
-  },
-  {
-   "w": "n.",
-   "spoken": "n.",
-   "start": 10.5,
-   "end": 10.775
-  },
-  {
-   "w": "It",
-   "spoken": "It",
-   "start": 10.775,
-   "end": 10.9
-  },
-  {
-   "w": "has",
-   "spoken": "has",
-   "start": 10.9,
-   "end": 11.075
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 11.075,
-   "end": 11.188
-  },
-  {
-   "w": "hidden",
-   "spoken": "hidden",
-   "start": 11.188,
-   "end": 11.525
-  },
-  {
-   "w": "mirror",
-   "spoken": "mirror",
-   "start": 11.525,
-   "end": 11.85
-  },
-  {
-   "w": "symmetry,",
-   "spoken": "symmetry,",
-   "start": 11.85,
-   "end": 12.7
-  },
-  {
-   "w": "which",
-   "spoken": "which",
-   "start": 12.7,
-   "end": 12.938
-  },
-  {
-   "w": "Riemann",
-   "spoken": "Riemann",
-   "start": 12.938,
-   "end": 13.35
-  },
-  {
-   "w": "used",
-   "spoken": "used",
-   "start": 13.35,
-   "end": 13.562
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 13.562,
-   "end": 13.65
-  },
-  {
-   "w": "prove",
-   "spoken": "prove",
-   "start": 13.65,
-   "end": 13.975
-  },
-  {
-   "w": "zeta's",
-   "spoken": "zeta's",
-   "start": 13.975,
-   "end": 14.35
-  },
-  {
-   "w": "own.",
-   "spoken": "own.",
-   "start": 14.35,
-   "end": 15.075
-  },
-  {
-   "w": "Functions",
-   "spoken": "Functions",
-   "start": 16.025,
-   "end": 16.55
-  },
-  {
-   "w": "with",
-   "spoken": "with",
-   "start": 16.55,
-   "end": 16.725
-  },
-  {
-   "w": "symmetries",
-   "spoken": "symmetries",
-   "start": 16.725,
-   "end": 17.225
-  },
-  {
-   "w": "like",
-   "spoken": "like",
-   "start": 17.225,
-   "end": 17.45
-  },
-  {
-   "w": "this,",
-   "spoken": "this,",
-   "start": 17.45,
-   "end": 17.9
-  },
-  {
-   "w": "called",
-   "spoken": "called",
-   "start": 17.9,
-   "end": 18.188
-  },
-  {
-   "w": "automorphic",
-   "spoken": "automorphic",
-   "start": 18.188,
-   "end": 18.85
-  },
-  {
-   "w": "forms,",
-   "spoken": "forms,",
-   "start": 18.85,
-   "end": 19.65
-  },
-  {
-   "w": "can",
-   "spoken": "can",
-   "start": 19.65,
-   "end": 19.762
-  },
-  {
-   "w": "be",
-   "spoken": "be",
-   "start": 19.762,
-   "end": 19.887
-  },
-  {
-   "w": "carried",
-   "spoken": "carried",
-   "start": 19.887,
-   "end": 20.275
-  },
-  {
-   "w": "from",
-   "spoken": "from",
-   "start": 20.275,
-   "end": 20.488
-  },
-  {
-   "w": "one",
-   "spoken": "one",
-   "start": 20.488,
-   "end": 20.738
-  },
-  {
-   "w": "symmetry",
-   "spoken": "symmetry",
-   "start": 20.738,
-   "end": 21.175
-  },
-  {
-   "w": "group",
-   "spoken": "group",
-   "start": 21.175,
-   "end": 21.675
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 21.675,
-   "end": 21.85
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 21.85,
-   "end": 21.962
-  },
-  {
-   "w": "larger",
-   "spoken": "larger",
-   "start": 21.962,
-   "end": 22.35
-  },
-  {
-   "w": "one",
-   "spoken": "one",
-   "start": 22.35,
-   "end": 22.575
-  },
-  {
-   "w": "by",
-   "spoken": "by",
-   "start": 22.575,
-   "end": 22.788
-  },
-  {
-   "w": "integrating",
-   "spoken": "integrating",
-   "start": 22.788,
-   "end": 23.4
-  },
-  {
-   "w": "against",
-   "spoken": "against",
-   "start": 23.4,
-   "end": 23.712
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 23.712,
-   "end": 23.812
-  },
-  {
-   "w": "theta",
-   "spoken": "theta",
-   "start": 23.812,
-   "end": 24.15
-  },
-  {
-   "w": "function:",
-   "spoken": "function:",
-   "start": 24.15,
-   "end": 25.112
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 25.112,
-   "end": 25.237
-  },
-  {
-   "w": "theta",
-   "spoken": "theta",
-   "start": 25.237,
-   "end": 25.6
-  },
-  {
-   "w": "lift.",
-   "spoken": "lift.",
-   "start": 25.6,
-   "end": 26.487
-  },
-  {
-   "w": "Chain",
-   "spoken": "Chain",
-   "start": 26.487,
-   "end": 26.85
-  },
-  {
-   "w": "m",
-   "spoken": "m",
-   "start": 26.85,
-   "end": 27.1
-  },
-  {
-   "w": "lifts,",
-   "spoken": "lifts,",
-   "start": 27.1,
-   "end": 27.65
-  },
-  {
-   "w": "take",
-   "spoken": "take",
-   "start": 27.65,
-   "end": 27.837
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 27.837,
-   "end": 27.9
-  },
-  {
-   "w": "special",
-   "spoken": "special",
-   "start": 27.9,
-   "end": 28.3
-  },
-  {
-   "w": "value",
-   "spoken": "value",
-   "start": 28.3,
-   "end": 28.7
-  },
-  {
-   "w": "called",
-   "spoken": "called",
-   "start": 28.7,
-   "end": 28.962
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 28.962,
-   "end": 29.025
-  },
-  {
-   "w": "period,",
-   "spoken": "period,",
-   "start": 29.025,
-   "end": 29.875
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 29.875,
-   "end": 29.987
-  },
-  {
-   "w": "you",
-   "spoken": "you",
-   "start": 29.987,
-   "end": 30.075
-  },
-  {
-   "w": "get",
-   "spoken": "get",
-   "start": 30.075,
-   "end": 30.212
-  },
-  {
-   "w": "an",
-   "spoken": "an",
-   "start": 30.212,
-   "end": 30.337
-  },
-  {
-   "w": "algebraic",
-   "spoken": "algebraic",
-   "start": 30.337,
-   "end": 30.975
-  },
-  {
-   "w": "number",
-   "spoken": "number",
-   "start": 30.975,
-   "end": 31.35
-  },
-  {
-   "w": "whose",
-   "spoken": "whose",
-   "start": 31.35,
-   "end": 31.575
-  },
-  {
-   "w": "divisibility",
-   "spoken": "divisibility",
-   "start": 31.575,
-   "end": 32.263
-  },
-  {
-   "w": "grows",
-   "spoken": "grows",
-   "start": 32.263,
-   "end": 32.675
-  },
-  {
-   "w": "along",
-   "spoken": "along",
-   "start": 32.675,
-   "end": 32.987
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 32.987,
-   "end": 33.087
-  },
-  {
-   "w": "chain.",
-   "spoken": "chain.",
-   "start": 33.087,
-   "end": 34.138
-  },
-  {
-   "w": "In",
-   "spoken": "In",
-   "start": 34.138,
-   "end": 34.263
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 34.263,
-   "end": 34.35
-  },
-  {
-   "w": "note's",
-   "spoken": "note's",
-   "start": 34.35,
-   "end": 34.675
-  },
-  {
-   "w": "analogy,",
-   "spoken": "analogy,",
-   "start": 34.675,
-   "end": 35.513
-  },
-  {
-   "w": "each",
-   "spoken": "each",
-   "start": 35.513,
-   "end": 35.825
-  },
-  {
-   "w": "lift",
-   "spoken": "lift",
-   "start": 35.825,
-   "end": 36.125
-  },
-  {
-   "w": "mimics",
-   "spoken": "mimics",
-   "start": 36.125,
-   "end": 36.487
-  },
-  {
-   "w": "one",
-   "spoken": "one",
-   "start": 36.487,
-   "end": 36.725
-  },
-  {
-   "w": "more",
-   "spoken": "more",
-   "start": 36.725,
-   "end": 36.962
-  },
-  {
-   "w": "order",
-   "spoken": "order",
-   "start": 36.962,
-   "end": 37.325
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 37.325,
-   "end": 37.425
-  },
-  {
-   "w": "multiplicity.",
-   "spoken": "multiplicity.",
-   "start": 37.425,
-   "end": 38.625
-  },
-  {
-   "w": "How",
-   "spoken": "How",
-   "start": 39.55,
-   "end": 39.7
-  },
-  {
-   "w": "long",
-   "spoken": "long",
-   "start": 39.7,
-   "end": 39.887
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 39.887,
-   "end": 39.962
-  },
-  {
-   "w": "chain?",
-   "spoken": "chain?",
-   "start": 39.962,
-   "end": 40.737
-  },
-  {
-   "w": "Readers",
-   "spoken": "Readers",
-   "start": 40.737,
-   "end": 41.137
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 41.137,
-   "end": 41.212
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 41.212,
-   "end": 41.3
+   "end": 1.325
   },
   {
    "w": "code",
    "spoken": "code",
-   "start": 41.3,
-   "end": 41.625
+   "start": 1.325,
+   "end": 1.675
   },
   {
    "w": "describe",
    "spoken": "describe",
-   "start": 41.625,
-   "end": 42.163
-  },
-  {
-   "w": "two",
-   "spoken": "two",
-   "start": 42.163,
-   "end": 42.375
-  },
-  {
-   "w": "competing",
-   "spoken": "competing",
-   "start": 42.375,
-   "end": 42.85
-  },
-  {
-   "w": "errors,",
-   "spoken": "errors,",
-   "start": 42.85,
-   "end": 43.562
-  },
-  {
-   "w": "roughly",
-   "spoken": "roughly",
-   "start": 43.562,
-   "end": 44.012
-  },
-  {
-   "w": "X",
-   "spoken": "X",
-   "start": 44.012,
-   "end": 44.288
-  },
-  {
-   "w": "over",
-   "spoken": "over",
-   "start": 44.288,
-   "end": 44.55
-  },
-  {
-   "w": "m,",
-   "spoken": "m,",
-   "start": 44.55,
-   "end": 45.212
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 45.212,
-   "end": 45.387
-  },
-  {
-   "w": "m.",
-   "spoken": "m.",
-   "start": 45.387,
-   "end": 45.65
-  },
-  {
-   "w": "They",
-   "spoken": "They",
-   "start": 45.65,
-   "end": 45.825
-  },
-  {
-   "w": "balance",
-   "spoken": "balance",
-   "start": 45.825,
-   "end": 46.25
-  },
-  {
-   "w": "at",
-   "spoken": "at",
-   "start": 46.25,
-   "end": 46.35
-  },
-  {
-   "w": "m",
-   "spoken": "m",
-   "start": 46.35,
-   "end": 46.65
-  },
-  {
-   "w": "equals",
-   "spoken": "equals",
-   "start": 46.65,
-   "end": 47.038
-  },
-  {
-   "w": "root",
-   "spoken": "root",
-   "start": 47.038,
-   "end": 47.275
-  },
-  {
-   "w": "X,",
-   "spoken": "X,",
-   "start": 47.275,
-   "end": 47.888
-  },
-  {
-   "w": "leaving",
-   "spoken": "leaving",
-   "start": 47.888,
-   "end": 48.188
-  },
-  {
-   "w": "an",
-   "spoken": "an",
-   "start": 48.188,
-   "end": 48.312
-  },
-  {
-   "w": "error",
-   "spoken": "error",
-   "start": 48.312,
-   "end": 48.7
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 48.7,
-   "end": 48.787
-  },
-  {
-   "w": "about",
-   "spoken": "about",
-   "start": 48.787,
-   "end": 49.112
-  },
-  {
-   "w": "root",
-   "spoken": "root",
-   "start": 49.112,
-   "end": 49.35
-  },
-  {
-   "w": "X,",
-   "spoken": "X,",
-   "start": 49.35,
-   "end": 50.0
+   "start": 1.675,
+   "end": 2.15
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 50.0,
-   "end": 50.138
+   "start": 2.15,
+   "end": 2.263
   },
   {
-   "w": "size",
-   "spoken": "size",
-   "start": 50.138,
-   "end": 50.55
+   "w": "claimed",
+   "spoken": "claimed",
+   "start": 2.263,
+   "end": 2.713
   },
   {
-   "w": "the",
-   "spoken": "the",
-   "start": 50.55,
-   "end": 50.688
+   "w": "proof",
+   "spoken": "proof",
+   "start": 2.713,
+   "end": 3.138
+  },
+  {
+   "w": "as",
+   "spoken": "as",
+   "start": 3.138,
+   "end": 3.338
+  },
+  {
+   "w": "Chebyshev's",
+   "spoken": "Chebyshev's",
+   "start": 3.338,
+   "end": 3.913
+  },
+  {
+   "w": "idea,",
+   "spoken": "idea,",
+   "start": 3.913,
+   "end": 4.763
+  },
+  {
+   "w": "run",
+   "spoken": "run",
+   "start": 4.763,
+   "end": 5.1
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 5.1,
+   "end": 5.288
+  },
+  {
+   "w": "far",
+   "spoken": "far",
+   "start": 5.288,
+   "end": 5.638
+  },
+  {
+   "w": "better",
+   "spoken": "better",
+   "start": 5.638,
+   "end": 5.95
+  },
+  {
+   "w": "numbers,",
+   "spoken": "numbers,",
+   "start": 5.95,
+   "end": 6.7
+  },
+  {
+   "w": "built",
+   "spoken": "built",
+   "start": 6.7,
+   "end": 6.975
+  },
+  {
+   "w": "from",
+   "spoken": "from",
+   "start": 6.975,
+   "end": 7.188
+  },
+  {
+   "w": "theta",
+   "spoken": "theta",
+   "start": 7.188,
+   "end": 7.525
+  },
+  {
+   "w": "functions.",
+   "spoken": "functions.",
+   "start": 7.525,
+   "end": 8.762
+  },
+  {
+   "w": "The",
+   "spoken": "The",
+   "start": 8.762,
+   "end": 8.912
+  },
+  {
+   "w": "theta",
+   "spoken": "theta",
+   "start": 8.912,
+   "end": 9.25
+  },
+  {
+   "w": "function",
+   "spoken": "function",
+   "start": 9.25,
+   "end": 9.75
+  },
+  {
+   "w": "has",
+   "spoken": "has",
+   "start": 9.75,
+   "end": 9.925
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 9.925,
+   "end": 10.037
+  },
+  {
+   "w": "hidden",
+   "spoken": "hidden",
+   "start": 10.037,
+   "end": 10.375
+  },
+  {
+   "w": "mirror",
+   "spoken": "mirror",
+   "start": 10.375,
+   "end": 10.712
+  },
+  {
+   "w": "symmetry,",
+   "spoken": "symmetry,",
+   "start": 10.712,
+   "end": 11.575
+  },
+  {
+   "w": "which",
+   "spoken": "which",
+   "start": 11.575,
+   "end": 11.812
   },
   {
    "w": "Riemann",
    "spoken": "Riemann",
-   "start": 50.688,
-   "end": 51.05
+   "start": 11.812,
+   "end": 12.325
   },
   {
-   "w": "Hypothesis",
-   "spoken": "Hypothesis",
-   "start": 51.05,
-   "end": 51.775
+   "w": "used",
+   "spoken": "used",
+   "start": 12.325,
+   "end": 12.537
   },
   {
-   "w": "demands.",
-   "spoken": "demands.",
-   "start": 51.775,
-   "end": 52.975
+   "w": "to",
+   "spoken": "to",
+   "start": 12.537,
+   "end": 12.625
   },
   {
-   "w": "Claude",
-   "spoken": "Claude",
-   "start": 52.975,
-   "end": 53.35
+   "w": "prove",
+   "spoken": "prove",
+   "start": 12.625,
+   "end": 12.95
   },
   {
-   "w": "suggested",
-   "spoken": "suggested",
-   "start": 53.35,
-   "end": 53.975
+   "w": "zeta's",
+   "spoken": "zeta's",
+   "start": 12.95,
+   "end": 13.3
   },
   {
-   "w": "root",
-   "spoken": "root",
-   "start": 53.975,
-   "end": 54.225
+   "w": "own.",
+   "spoken": "own.",
+   "start": 13.3,
+   "end": 14.025
   },
   {
-   "w": "X.",
-   "spoken": "X.",
-   "start": 54.225,
-   "end": 54.5
+   "w": "Functions",
+   "spoken": "Functions",
+   "start": 14.975,
+   "end": 15.45
   },
   {
-   "w": "Alpöge's",
-   "spoken": "Alpöge's",
-   "start": 54.5,
-   "end": 55.0
+   "w": "with",
+   "spoken": "with",
+   "start": 15.45,
+   "end": 15.625
   },
   {
-   "w": "comment:",
-   "spoken": "comment:",
-   "start": 55.0,
-   "end": 55.888
+   "w": "symmetries",
+   "spoken": "symmetries",
+   "start": 15.625,
+   "end": 16.125
+  },
+  {
+   "w": "like",
+   "spoken": "like",
+   "start": 16.125,
+   "end": 16.35
+  },
+  {
+   "w": "this,",
+   "spoken": "this,",
+   "start": 16.35,
+   "end": 16.788
+  },
+  {
+   "w": "automorphic",
+   "spoken": "automorphic",
+   "start": 16.788,
+   "end": 17.45
+  },
+  {
+   "w": "forms,",
+   "spoken": "forms,",
+   "start": 17.45,
+   "end": 18.25
+  },
+  {
+   "w": "can",
+   "spoken": "can",
+   "start": 18.25,
+   "end": 18.363
+  },
+  {
+   "w": "be",
+   "spoken": "be",
+   "start": 18.363,
+   "end": 18.475
+  },
+  {
+   "w": "carried",
+   "spoken": "carried",
+   "start": 18.475,
+   "end": 18.825
+  },
+  {
+   "w": "from",
+   "spoken": "from",
+   "start": 18.825,
+   "end": 19.038
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 19.038,
+   "end": 19.288
+  },
+  {
+   "w": "symmetry",
+   "spoken": "symmetry",
+   "start": 19.288,
+   "end": 19.725
+  },
+  {
+   "w": "group",
+   "spoken": "group",
+   "start": 19.725,
+   "end": 20.0
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 20.0,
+   "end": 20.087
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 20.087,
+   "end": 20.15
+  },
+  {
+   "w": "partner",
+   "spoken": "partner",
+   "start": 20.15,
+   "end": 20.5
+  },
+  {
+   "w": "group",
+   "spoken": "group",
+   "start": 20.5,
+   "end": 20.775
+  },
+  {
+   "w": "by",
+   "spoken": "by",
+   "start": 20.775,
+   "end": 20.95
+  },
+  {
+   "w": "integrating",
+   "spoken": "integrating",
+   "start": 20.95,
+   "end": 21.525
+  },
+  {
+   "w": "against",
+   "spoken": "against",
+   "start": 21.525,
+   "end": 21.837
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 21.837,
+   "end": 21.938
+  },
+  {
+   "w": "theta",
+   "spoken": "theta",
+   "start": 21.938,
+   "end": 22.275
+  },
+  {
+   "w": "kernel,",
+   "spoken": "kernel,",
+   "start": 22.275,
+   "end": 23.038
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 23.038,
+   "end": 23.163
+  },
+  {
+   "w": "many-variable",
+   "spoken": "many-variable",
+   "start": 23.163,
+   "end": 23.95
+  },
+  {
+   "w": "cousin",
+   "spoken": "cousin",
+   "start": 23.95,
+   "end": 24.263
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 24.263,
+   "end": 24.375
+  },
+  {
+   "w": "theta:",
+   "spoken": "theta:",
+   "start": 24.375,
+   "end": 25.087
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 25.087,
+   "end": 25.212
+  },
+  {
+   "w": "theta",
+   "spoken": "theta",
+   "start": 25.212,
+   "end": 25.575
+  },
+  {
+   "w": "lift.",
+   "spoken": "lift.",
+   "start": 25.575,
+   "end": 26.425
+  },
+  {
+   "w": "Chain",
+   "spoken": "Chain",
+   "start": 26.425,
+   "end": 26.775
+  },
+  {
+   "w": "m",
+   "spoken": "m",
+   "start": 26.775,
+   "end": 27.0
+  },
+  {
+   "w": "lifts",
+   "spoken": "lifts",
+   "start": 27.0,
+   "end": 27.413
   },
   {
    "w": "and",
    "spoken": "and",
-   "start": 55.888,
-   "end": 56.025
+   "start": 27.413,
+   "end": 27.562
   },
   {
-   "w": "yet,",
-   "spoken": "yet,",
-   "start": 56.025,
-   "end": 56.4
+   "w": "read",
+   "spoken": "read",
+   "start": 27.562,
+   "end": 27.8
   },
   {
-   "w": "what",
-   "spoken": "what",
-   "start": 56.4,
-   "end": 56.537
+   "w": "off",
+   "spoken": "off",
+   "start": 27.8,
+   "end": 28.025
   },
   {
-   "w": "else",
-   "spoken": "else",
-   "start": 56.537,
-   "end": 56.775
+   "w": "one",
+   "spoken": "one",
+   "start": 28.025,
+   "end": 28.225
   },
   {
-   "w": "could",
-   "spoken": "could",
-   "start": 56.775,
-   "end": 56.912
+   "w": "number,",
+   "spoken": "number,",
+   "start": 28.225,
+   "end": 28.8
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 28.8,
+   "end": 28.9
+  },
+  {
+   "w": "period.",
+   "spoken": "period.",
+   "start": 28.9,
+   "end": 29.925
+  },
+  {
+   "w": "As",
+   "spoken": "As",
+   "start": 29.925,
+   "end": 30.125
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 30.125,
+   "end": 30.238
+  },
+  {
+   "w": "note",
+   "spoken": "note",
+   "start": 30.238,
+   "end": 30.55
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 30.55,
+   "end": 30.663
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 30.663,
+   "end": 30.75
+  },
+  {
+   "w": "guides",
+   "spoken": "guides",
+   "start": 30.75,
+   "end": 31.125
+  },
+  {
+   "w": "describe",
+   "spoken": "describe",
+   "start": 31.125,
+   "end": 31.6
+  },
+  {
+   "w": "it,",
+   "spoken": "it,",
+   "start": 31.6,
+   "end": 31.9
   },
   {
    "w": "it",
    "spoken": "it",
-   "start": 56.912,
-   "end": 57.0
+   "start": 31.9,
+   "end": 31.988
+  },
+  {
+   "w": "isn't",
+   "spoken": "isn't",
+   "start": 31.988,
+   "end": 32.263
+  },
+  {
+   "w": "zero,",
+   "spoken": "zero,",
+   "start": 32.263,
+   "end": 33.0
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 33.0,
+   "end": 33.112
+  },
+  {
+   "w": "it",
+   "spoken": "it",
+   "start": 33.112,
+   "end": 33.2
+  },
+  {
+   "w": "gets",
+   "spoken": "gets",
+   "start": 33.2,
+   "end": 33.45
+  },
+  {
+   "w": "more",
+   "spoken": "more",
+   "start": 33.45,
+   "end": 33.675
+  },
+  {
+   "w": "divisible",
+   "spoken": "divisible",
+   "start": 33.675,
+   "end": 34.2
+  },
+  {
+   "w": "by",
+   "spoken": "by",
+   "start": 34.2,
+   "end": 34.413
+  },
+  {
+   "w": "certain",
+   "spoken": "certain",
+   "start": 34.413,
+   "end": 34.725
+  },
+  {
+   "w": "primes",
+   "spoken": "primes",
+   "start": 34.725,
+   "end": 35.175
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 35.175,
+   "end": 35.362
+  },
+  {
+   "w": "every",
+   "spoken": "every",
+   "start": 35.362,
+   "end": 35.7
+  },
+  {
+   "w": "lift:",
+   "spoken": "lift:",
+   "start": 35.7,
+   "end": 36.562
+  },
+  {
+   "w": "each",
+   "spoken": "each",
+   "start": 36.562,
+   "end": 36.875
+  },
+  {
+   "w": "lift",
+   "spoken": "lift",
+   "start": 36.875,
+   "end": 37.15
+  },
+  {
+   "w": "mimics",
+   "spoken": "mimics",
+   "start": 37.15,
+   "end": 37.513
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 37.513,
+   "end": 37.775
+  },
+  {
+   "w": "more",
+   "spoken": "more",
+   "start": 37.775,
+   "end": 38.0
+  },
+  {
+   "w": "order",
+   "spoken": "order",
+   "start": 38.0,
+   "end": 38.338
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 38.338,
+   "end": 38.425
+  },
+  {
+   "w": "multiplicity.",
+   "spoken": "multiplicity.",
+   "start": 38.425,
+   "end": 39.638
+  },
+  {
+   "w": "Its",
+   "spoken": "Its",
+   "start": 40.075,
+   "end": 40.25
+  },
+  {
+   "w": "divisibility",
+   "spoken": "divisibility",
+   "start": 40.25,
+   "end": 40.988
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 40.988,
+   "end": 41.15
+  },
+  {
+   "w": "itself",
+   "spoken": "itself",
+   "start": 41.15,
+   "end": 41.625
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 41.625,
+   "end": 41.738
+  },
+  {
+   "w": "weighted",
+   "spoken": "weighted",
+   "start": 41.738,
+   "end": 42.125
+  },
+  {
+   "w": "count",
+   "spoken": "count",
+   "start": 42.125,
+   "end": 42.388
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 42.388,
+   "end": 42.475
+  },
+  {
+   "w": "primes,",
+   "spoken": "primes,",
+   "start": 42.475,
+   "end": 43.35
+  },
+  {
+   "w": "so",
+   "spoken": "so",
+   "start": 43.35,
+   "end": 43.5
+  },
+  {
+   "w": "divisibility",
+   "spoken": "divisibility",
+   "start": 43.5,
+   "end": 44.138
+  },
+  {
+   "w": "at",
+   "spoken": "at",
+   "start": 44.138,
+   "end": 44.225
+  },
+  {
+   "w": "most",
+   "spoken": "most",
+   "start": 44.225,
+   "end": 44.525
+  },
+  {
+   "w": "size",
+   "spoken": "size",
+   "start": 44.525,
+   "end": 45.1
+  },
+  {
+   "w": "caps",
+   "spoken": "caps",
+   "start": 45.1,
+   "end": 45.45
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 45.45,
+   "end": 45.65
+  },
+  {
+   "w": "count.",
+   "spoken": "count.",
+   "start": 45.65,
+   "end": 46.425
+  },
+  {
+   "w": "How",
+   "spoken": "How",
+   "start": 47.375,
+   "end": 47.55
+  },
+  {
+   "w": "long",
+   "spoken": "long",
+   "start": 47.55,
+   "end": 47.763
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 47.763,
+   "end": 47.838
+  },
+  {
+   "w": "chain,",
+   "spoken": "chain,",
+   "start": 47.838,
+   "end": 48.275
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 48.275,
+   "end": 48.4
+  },
+  {
+   "w": "primes",
+   "spoken": "primes",
+   "start": 48.4,
+   "end": 48.738
+  },
+  {
+   "w": "up",
+   "spoken": "up",
+   "start": 48.738,
+   "end": 48.875
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 48.875,
+   "end": 49.025
+  },
+  {
+   "w": "X?",
+   "spoken": "X?",
+   "start": 49.025,
+   "end": 49.875
+  },
+  {
+   "w": "The",
+   "spoken": "The",
+   "start": 49.875,
+   "end": 50.0
+  },
+  {
+   "w": "guides,",
+   "spoken": "guides,",
+   "start": 50.0,
+   "end": 50.588
+  },
+  {
+   "w": "written",
+   "spoken": "written",
+   "start": 50.588,
+   "end": 50.875
+  },
+  {
+   "w": "from",
+   "spoken": "from",
+   "start": 50.875,
+   "end": 51.013
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 51.013,
+   "end": 51.1
+  },
+  {
+   "w": "code",
+   "spoken": "code",
+   "start": 51.1,
+   "end": 51.438
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 51.438,
+   "end": 51.613
+  },
+  {
+   "w": "AI",
+   "spoken": "AI",
+   "start": 51.613,
+   "end": 51.975
+  },
+  {
+   "w": "help,",
+   "spoken": "help,",
+   "start": 51.975,
+   "end": 52.4
+  },
+  {
+   "w": "describe",
+   "spoken": "describe",
+   "start": 52.4,
+   "end": 52.913
+  },
+  {
+   "w": "two",
+   "spoken": "two",
+   "start": 52.913,
+   "end": 53.125
+  },
+  {
+   "w": "errors,",
+   "spoken": "errors,",
+   "start": 53.125,
+   "end": 53.663
+  },
+  {
+   "w": "as",
+   "spoken": "as",
+   "start": 53.663,
+   "end": 53.788
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 53.788,
+   "end": 53.913
+  },
+  {
+   "w": "Stepanov:",
+   "spoken": "Stepanov:",
+   "start": 53.913,
+   "end": 54.938
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 54.938,
+   "end": 55.288
+  },
+  {
+   "w": "X",
+   "spoken": "X",
+   "start": 55.288,
+   "end": 55.55
+  },
+  {
+   "w": "over",
+   "spoken": "over",
+   "start": 55.55,
+   "end": 55.85
+  },
+  {
+   "w": "m,",
+   "spoken": "m,",
+   "start": 55.85,
+   "end": 56.375
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 56.375,
+   "end": 56.488
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 56.488,
+   "end": 56.8
+  },
+  {
+   "w": "m.",
+   "spoken": "m.",
+   "start": 56.8,
+   "end": 57.05
+  },
+  {
+   "w": "They",
+   "spoken": "They",
+   "start": 57.05,
+   "end": 57.225
+  },
+  {
+   "w": "balance",
+   "spoken": "balance",
+   "start": 57.225,
+   "end": 57.65
+  },
+  {
+   "w": "at",
+   "spoken": "at",
+   "start": 57.65,
+   "end": 57.75
+  },
+  {
+   "w": "m",
+   "spoken": "m",
+   "start": 57.75,
+   "end": 58.0
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 58.0,
+   "end": 58.338
+  },
+  {
+   "w": "root",
+   "spoken": "root",
+   "start": 58.338,
+   "end": 58.575
+  },
+  {
+   "w": "X,",
+   "spoken": "X,",
+   "start": 58.575,
+   "end": 59.138
+  },
+  {
+   "w": "leaving",
+   "spoken": "leaving",
+   "start": 59.138,
+   "end": 59.438
+  },
+  {
+   "w": "an",
+   "spoken": "an",
+   "start": 59.438,
+   "end": 59.562
+  },
+  {
+   "w": "error",
+   "spoken": "error",
+   "start": 59.562,
+   "end": 59.95
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 59.95,
+   "end": 60.038
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 60.038,
+   "end": 60.363
+  },
+  {
+   "w": "root",
+   "spoken": "root",
+   "start": 60.363,
+   "end": 60.575
+  },
+  {
+   "w": "X:",
+   "spoken": "X:",
+   "start": 60.575,
+   "end": 61.35
+  },
+  {
+   "w": "what",
+   "spoken": "what",
+   "start": 61.35,
+   "end": 61.488
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 61.488,
+   "end": 61.588
+  },
+  {
+   "w": "Riemann",
+   "spoken": "Riemann",
+   "start": 61.588,
+   "end": 62.025
+  },
+  {
+   "w": "Hypothesis",
+   "spoken": "Hypothesis",
+   "start": 62.025,
+   "end": 62.75
+  },
+  {
+   "w": "demands.",
+   "spoken": "demands.",
+   "start": 62.75,
+   "end": 63.925
+  },
+  {
+   "w": "Claude",
+   "spoken": "Claude",
+   "start": 63.925,
+   "end": 64.275
+  },
+  {
+   "w": "suggested",
+   "spoken": "suggested",
+   "start": 64.275,
+   "end": 64.9
+  },
+  {
+   "w": "root",
+   "spoken": "root",
+   "start": 64.9,
+   "end": 65.162
+  },
+  {
+   "w": "X.",
+   "spoken": "X.",
+   "start": 65.162,
+   "end": 65.425
+  },
+  {
+   "w": "Alpöge's",
+   "spoken": "Alpöge's",
+   "start": 65.425,
+   "end": 66.05
+  },
+  {
+   "w": "comment:",
+   "spoken": "comment:",
+   "start": 66.05,
+   "end": 66.912
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 66.912,
+   "end": 67.05
+  },
+  {
+   "w": "yet,",
+   "spoken": "yet,",
+   "start": 67.05,
+   "end": 67.4
+  },
+  {
+   "w": "what",
+   "spoken": "what",
+   "start": 67.4,
+   "end": 67.537
+  },
+  {
+   "w": "else",
+   "spoken": "else",
+   "start": 67.537,
+   "end": 67.8
+  },
+  {
+   "w": "could",
+   "spoken": "could",
+   "start": 67.8,
+   "end": 67.912
+  },
+  {
+   "w": "it",
+   "spoken": "it",
+   "start": 67.912,
+   "end": 68.0
   },
   {
    "w": "be?",
    "spoken": "be?",
-   "start": 57.0,
-   "end": 57.675
+   "start": 68.0,
+   "end": 68.675
   }
  ],
  "chunks": [
   {
-   "text": "The claimed proof manufactures far better numbers,",
-   "start": 0.7,
-   "end": 3.8
+   "text": "Readers of the code describe the claimed proof as Chebyshev's idea,",
+   "start": 0.75,
+   "end": 4.763
   },
   {
-   "text": "from theta functions.",
-   "start": 3.8,
-   "end": 5.55
+   "text": "run with far better numbers, built from theta functions.",
+   "start": 4.763,
+   "end": 8.762
   },
   {
-   "text": "Theta of t adds up e to the minus pi n squared t,",
-   "start": 5.55,
-   "end": 9.475
+   "text": "The theta function has a hidden mirror symmetry,",
+   "start": 8.762,
+   "end": 11.575
   },
   {
-   "text": "over all integers n.",
-   "start": 9.475,
-   "end": 10.775
+   "text": "which Riemann used to prove zeta's own.",
+   "start": 11.575,
+   "end": 14.025
   },
   {
-   "text": "It has a hidden mirror symmetry, which Riemann used to prove zeta's own.",
-   "start": 10.775,
-   "end": 15.075
+   "text": "Functions with symmetries like this, automorphic forms,",
+   "start": 14.975,
+   "end": 18.25
   },
   {
-   "text": "Functions with symmetries like this, called automorphic forms,",
-   "start": 16.025,
-   "end": 19.65
+   "text": "can be carried from one symmetry group to a partner group by integrating against a",
+   "start": 18.25,
+   "end": 21.938
   },
   {
-   "text": "can be carried from one symmetry group to a larger one by integrating against a",
-   "start": 19.65,
-   "end": 23.812
+   "text": "theta kernel, a many-variable cousin of theta: a theta lift.",
+   "start": 21.938,
+   "end": 26.425
   },
   {
-   "text": "theta function: a theta lift.",
-   "start": 23.812,
-   "end": 26.487
+   "text": "Chain m lifts and read off one number, a period.",
+   "start": 26.425,
+   "end": 29.925
   },
   {
-   "text": "Chain m lifts, take a special value called a period,",
-   "start": 26.487,
-   "end": 29.875
+   "text": "As the note and the guides describe it, it isn't zero,",
+   "start": 29.925,
+   "end": 33.0
   },
   {
-   "text": "and you get an algebraic number whose divisibility grows along the chain.",
-   "start": 29.875,
-   "end": 34.138
+   "text": "and it gets more divisible by certain primes with every lift:",
+   "start": 33.0,
+   "end": 36.562
   },
   {
-   "text": "In the note's analogy, each lift mimics one more order of multiplicity.",
-   "start": 34.138,
-   "end": 38.625
+   "text": "each lift mimics one more order of multiplicity.",
+   "start": 36.562,
+   "end": 39.638
   },
   {
-   "text": "How long a chain?",
-   "start": 39.55,
-   "end": 40.737
+   "text": "Its divisibility is itself a weighted count of primes,",
+   "start": 40.075,
+   "end": 43.35
   },
   {
-   "text": "Readers of the code describe two competing errors,",
-   "start": 40.737,
-   "end": 43.562
+   "text": "so divisibility at most size caps that count.",
+   "start": 43.35,
+   "end": 46.425
   },
   {
-   "text": "roughly X over m, and m.",
-   "start": 43.562,
-   "end": 45.65
+   "text": "How long a chain, for primes up to X?",
+   "start": 47.375,
+   "end": 49.875
   },
   {
-   "text": "They balance at m equals root X, leaving an error of about root X,",
-   "start": 45.65,
-   "end": 50.0
+   "text": "The guides, written from the code with AI help, describe two errors,",
+   "start": 49.875,
+   "end": 53.663
   },
   {
-   "text": "the size the Riemann Hypothesis demands.",
-   "start": 50.0,
-   "end": 52.975
+   "text": "as with Stepanov: about X over m, and about m.",
+   "start": 53.663,
+   "end": 57.05
+  },
+  {
+   "text": "They balance at m about root X, leaving an error of about root X:",
+   "start": 57.05,
+   "end": 61.35
+  },
+  {
+   "text": "what the Riemann Hypothesis demands.",
+   "start": 61.35,
+   "end": 63.925
   },
   {
    "text": "Claude suggested root X.",
-   "start": 52.975,
-   "end": 54.5
+   "start": 63.925,
+   "end": 65.425
   },
   {
    "text": "Alpöge's comment: and yet, what else could it be?",
-   "start": 54.5,
-   "end": 57.675
+   "start": 65.425,
+   "end": 68.675
   }
  ],
  "cues": {
-  "theta": 5.55,
-  "lift": 16.025,
-  "chain": 26.487,
-  "sqrt": 39.55,
-  "table": 52.975
+  "theta": 8.762,
+  "lift": 14.975,
+  "chain": 26.425,
+  "weigh": 40.075,
+  "sqrt": 47.375,
+  "table": 63.925
  }
 }

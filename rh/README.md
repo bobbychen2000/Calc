@@ -1,6 +1,6 @@
 # The Riemann Hypothesis and a claimed proof: a narrated explainer
 
-A ~11-minute 1920×1080 / 30 fps MP4 with burned-in captions: the zeta function, the Riemann
+A ~12½-minute 1920×1080 / 30 fps MP4 with burned-in captions: the zeta function, the Riemann
 Hypothesis, why primes care, the function-field world where it is proved, and the idea and
 construction of the proof that Levent Alpöge announced, working with Claude, on 20 November 2026
 (a claimed proof; see `research/status.md` for exactly what has and has not been checked).
@@ -33,5 +33,18 @@ python3 render.py --test                          # sample frames per scene -> o
 python3 render.py                                 # all scenes -> out/rh_explainer.mp4
 ```
 
-The voice is Kokoro-82M (Apache-2.0), voice `af_heart`, chosen over the earlier formant
-synthesizer; names it mispronounces are fixed in `script.LEXICON` (misaki phonemes).
+## Voice
+
+Kokoro-82M (Apache-2.0), voice `af_heart`, speed 1.0, through the PyTorch `KPipeline` (misaki G2P;
+its duration predictor gives each word's start and end, which drive the captions and cues). It
+replaced the earlier hand-built formant synthesizer. `research/tts_eval.md` compares it with the other
+open models that run on a 4-core CPU: automatic MOS (UTMOS22) 4.52–4.54 for `af_heart` against
+4.43–4.52 for Phonon-31m and 4.32–4.50 for Chatterbox, with the lowest ASR word error rate; neither
+alternative met the switch rule (+0.3 MOS, no worse WER). Names the default G2P gets wrong are fixed
+in `script.LEXICON` (misaki phonemes; Alpöge as Wikipedia's American "AL-poh-gay", unsourced there).
+
+## QA
+
+`qa.py` (run in a venv with faster-whisper) transcribes each scene and compares the ASR word times
+with `audio/<scene>.json` (caption / cue sync), the word error rate, and how each proper noun was
+heard. `research/factcheck.md` records the adversarial fact-check of the script and on-screen text.

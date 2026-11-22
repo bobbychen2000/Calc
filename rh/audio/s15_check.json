@@ -1,6 +1,6 @@
 {
  "scene": "s15_check",
- "duration": 51.475,
+ "duration": 49.9,
  "sr": 24000,
  "voice": "af_heart",
  "speed": 1.0,
@@ -45,842 +45,849 @@
    "w": "lines",
    "spoken": "lines",
    "start": 2.575,
-   "end": 3.0
+   "end": 3.025
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 3.025,
+   "end": 3.238
   },
   {
    "w": "no",
    "spoken": "no",
-   "start": 3.0,
-   "end": 3.213
+   "start": 3.238,
+   "end": 3.488
   },
   {
    "w": "human",
    "spoken": "human",
-   "start": 3.213,
-   "end": 3.55
+   "start": 3.488,
+   "end": 3.875
   },
   {
    "w": "has",
    "spoken": "has",
-   "start": 3.55,
-   "end": 3.725
+   "start": 3.875,
+   "end": 4.05
   },
   {
-   "w": "read?",
-   "spoken": "read?",
-   "start": 3.725,
-   "end": 4.562
-  },
-  {
-   "w": "In",
-   "spoken": "In",
-   "start": 4.562,
-   "end": 4.7
-  },
-  {
-   "w": "Lean,",
-   "spoken": "Lean,",
-   "start": 4.7,
-   "end": 5.312
-  },
-  {
-   "w": "every",
-   "spoken": "every",
-   "start": 5.312,
-   "end": 5.65
-  },
-  {
-   "w": "step",
-   "spoken": "step",
-   "start": 5.65,
-   "end": 5.975
-  },
-  {
-   "w": "must",
-   "spoken": "must",
-   "start": 5.975,
-   "end": 6.25
-  },
-  {
-   "w": "follow",
-   "spoken": "follow",
-   "start": 6.25,
-   "end": 6.575
-  },
-  {
-   "w": "from",
-   "spoken": "from",
-   "start": 6.575,
-   "end": 6.775
-  },
-  {
-   "w": "earlier",
-   "spoken": "earlier",
-   "start": 6.775,
-   "end": 7.225
-  },
-  {
-   "w": "ones",
-   "spoken": "ones",
-   "start": 7.225,
-   "end": 7.55
-  },
-  {
-   "w": "by",
-   "spoken": "by",
-   "start": 7.55,
-   "end": 7.763
-  },
-  {
-   "w": "fixed",
-   "spoken": "fixed",
-   "start": 7.763,
-   "end": 8.1
-  },
-  {
-   "w": "rules,",
-   "spoken": "rules,",
-   "start": 8.1,
-   "end": 8.875
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 8.875,
-   "end": 8.987
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 8.987,
-   "end": 9.062
-  },
-  {
-   "w": "small",
-   "spoken": "small",
-   "start": 9.062,
-   "end": 9.45
-  },
-  {
-   "w": "program,",
-   "spoken": "program,",
-   "start": 9.45,
-   "end": 10.175
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 10.175,
-   "end": 10.275
-  },
-  {
-   "w": "kernel,",
-   "spoken": "kernel,",
-   "start": 10.275,
-   "end": 10.938
-  },
-  {
-   "w": "checks",
-   "spoken": "checks",
-   "start": 10.938,
-   "end": 11.237
-  },
-  {
-   "w": "them",
-   "spoken": "them",
-   "start": 11.237,
-   "end": 11.4
-  },
-  {
-   "w": "all.",
-   "spoken": "all.",
-   "start": 11.4,
-   "end": 12.237
-  },
-  {
-   "w": "Kevin",
-   "spoken": "Kevin",
-   "start": 12.237,
-   "end": 12.6
-  },
-  {
-   "w": "Buzzard",
-   "spoken": "Buzzard",
-   "start": 12.6,
-   "end": 12.975
-  },
-  {
-   "w": "lists",
-   "spoken": "lists",
-   "start": 12.975,
-   "end": 13.287
-  },
-  {
-   "w": "four",
-   "spoken": "four",
-   "start": 13.287,
-   "end": 13.525
-  },
-  {
-   "w": "questions",
-   "spoken": "questions",
-   "start": 13.525,
-   "end": 14.1
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 14.1,
-   "end": 14.237
-  },
-  {
-   "w": "ask",
-   "spoken": "ask",
-   "start": 14.237,
-   "end": 14.537
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 14.537,
-   "end": 14.662
-  },
-  {
-   "w": "AI-written",
-   "spoken": "AI-written",
-   "start": 14.662,
-   "end": 15.2
-  },
-  {
-   "w": "Lean.",
-   "spoken": "Lean.",
-   "start": 15.2,
-   "end": 15.975
-  },
-  {
-   "w": "Is",
-   "spoken": "Is",
-   "start": 16.875,
-   "end": 17.038
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 17.038,
-   "end": 17.125
-  },
-  {
-   "w": "statement",
-   "spoken": "statement",
-   "start": 17.125,
-   "end": 17.575
-  },
-  {
-   "w": "right?",
-   "spoken": "right?",
-   "start": 17.575,
-   "end": 18.212
-  },
-  {
-   "w": "Here",
-   "spoken": "Here",
-   "start": 18.212,
-   "end": 18.413
-  },
-  {
-   "w": "it",
-   "spoken": "it",
-   "start": 18.413,
-   "end": 18.5
-  },
-  {
-   "w": "is",
-   "spoken": "is",
-   "start": 18.5,
-   "end": 18.663
-  },
-  {
-   "w": "Mathlib's",
-   "spoken": "Mathlib's",
-   "start": 18.663,
-   "end": 19.275
-  },
-  {
-   "w": "own",
-   "spoken": "own",
-   "start": 19.275,
-   "end": 19.475
-  },
-  {
-   "w": "definition",
-   "spoken": "definition",
-   "start": 19.475,
-   "end": 20.062
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 20.062,
-   "end": 20.137
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 20.137,
-   "end": 20.225
-  },
-  {
-   "w": "Riemann",
-   "spoken": "Riemann",
-   "start": 20.225,
-   "end": 20.525
-  },
-  {
-   "w": "Hypothesis,",
-   "spoken": "Hypothesis,",
-   "start": 20.525,
-   "end": 21.488
-  },
-  {
-   "w": "vetted",
-   "spoken": "vetted",
-   "start": 21.488,
-   "end": 21.8
-  },
-  {
-   "w": "by",
-   "spoken": "by",
-   "start": 21.8,
-   "end": 22.012
-  },
-  {
-   "w": "experts.",
-   "spoken": "experts.",
-   "start": 22.012,
-   "end": 23.05
-  },
-  {
-   "w": "Does",
-   "spoken": "Does",
-   "start": 23.05,
-   "end": 23.212
-  },
-  {
-   "w": "it",
-   "spoken": "it",
-   "start": 23.212,
-   "end": 23.3
-  },
-  {
-   "w": "compile?",
-   "spoken": "compile?",
-   "start": 23.3,
-   "end": 24.163
-  },
-  {
-   "w": "Dozens",
-   "spoken": "Dozens",
-   "start": 24.163,
-   "end": 24.512
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 24.512,
-   "end": 24.6
-  },
-  {
-   "w": "people",
-   "spoken": "people",
-   "start": 24.6,
-   "end": 24.962
-  },
-  {
-   "w": "have",
-   "spoken": "have",
-   "start": 24.962,
-   "end": 25.1
-  },
-  {
-   "w": "rebuilt",
-   "spoken": "rebuilt",
-   "start": 25.1,
-   "end": 25.55
-  },
-  {
-   "w": "it.",
-   "spoken": "it.",
-   "start": 25.55,
-   "end": 26.05
-  },
-  {
-   "w": "Does",
-   "spoken": "Does",
-   "start": 26.05,
-   "end": 26.212
-  },
-  {
-   "w": "it",
-   "spoken": "it",
-   "start": 26.212,
-   "end": 26.3
-  },
-  {
-   "w": "prove",
-   "spoken": "prove",
-   "start": 26.3,
-   "end": 26.55
-  },
-  {
-   "w": "exactly",
-   "spoken": "exactly",
-   "start": 26.55,
-   "end": 27.125
-  },
-  {
-   "w": "that",
-   "spoken": "that",
-   "start": 27.125,
-   "end": 27.35
-  },
-  {
-   "w": "statement,",
-   "spoken": "statement,",
-   "start": 27.35,
-   "end": 27.975
-  },
-  {
-   "w": "using",
-   "spoken": "using",
-   "start": 27.975,
-   "end": 28.3
-  },
-  {
-   "w": "only",
-   "spoken": "only",
-   "start": 28.3,
-   "end": 28.6
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 28.6,
-   "end": 28.7
-  },
-  {
-   "w": "standard",
-   "spoken": "standard",
-   "start": 28.7,
-   "end": 29.1
-  },
-  {
-   "w": "axioms?",
-   "spoken": "axioms?",
-   "start": 29.1,
-   "end": 30.125
-  },
-  {
-   "w": "Two",
-   "spoken": "Two",
-   "start": 30.125,
-   "end": 30.4
-  },
-  {
-   "w": "independent",
-   "spoken": "independent",
-   "start": 30.4,
-   "end": 31.0
-  },
-  {
-   "w": "tools",
-   "spoken": "tools",
-   "start": 31.0,
-   "end": 31.4
-  },
-  {
-   "w": "say",
-   "spoken": "say",
-   "start": 31.4,
-   "end": 31.6
-  },
-  {
-   "w": "yes.",
-   "spoken": "yes.",
-   "start": 31.6,
-   "end": 32.425
-  },
-  {
-   "w": "Could",
-   "spoken": "Could",
-   "start": 32.425,
-   "end": 32.562
-  },
-  {
-   "w": "it",
-   "spoken": "it",
-   "start": 32.562,
-   "end": 32.638
-  },
-  {
-   "w": "exploit",
-   "spoken": "exploit",
-   "start": 32.638,
-   "end": 33.062
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 33.062,
-   "end": 33.138
-  },
-  {
-   "w": "bug",
-   "spoken": "bug",
-   "start": 33.138,
-   "end": 33.45
+   "w": "read",
+   "spoken": "read",
+   "start": 4.05,
+   "end": 4.263
   },
   {
    "w": "in",
    "spoken": "in",
-   "start": 33.45,
-   "end": 33.575
+   "start": 4.263,
+   "end": 4.412
   },
   {
-   "w": "Lean",
-   "spoken": "Lean",
-   "start": 33.575,
-   "end": 33.775
+   "w": "full?",
+   "spoken": "full?",
+   "start": 4.412,
+   "end": 5.312
   },
   {
-   "w": "itself?",
-   "spoken": "itself?",
-   "start": 33.775,
-   "end": 34.75
+   "w": "In",
+   "spoken": "In",
+   "start": 5.312,
+   "end": 5.45
   },
   {
-   "w": "Several",
-   "spoken": "Several",
-   "start": 34.75,
-   "end": 35.15
+   "w": "Lean,",
+   "spoken": "Lean,",
+   "start": 5.45,
+   "end": 6.112
   },
   {
-   "w": "independent",
-   "spoken": "independent",
-   "start": 35.15,
-   "end": 35.725
+   "w": "every",
+   "spoken": "every",
+   "start": 6.112,
+   "end": 6.425
   },
   {
-   "w": "checkers",
-   "spoken": "checkers",
-   "start": 35.725,
-   "end": 36.15
+   "w": "step",
+   "spoken": "step",
+   "start": 6.425,
+   "end": 6.75
   },
   {
-   "w": "accepted",
-   "spoken": "accepted",
-   "start": 36.15,
-   "end": 36.65
+   "w": "must",
+   "spoken": "must",
+   "start": 6.75,
+   "end": 7.025
   },
   {
-   "w": "it,",
-   "spoken": "it,",
-   "start": 36.65,
-   "end": 37.087
+   "w": "follow",
+   "spoken": "follow",
+   "start": 7.025,
+   "end": 7.35
   },
   {
-   "w": "two",
-   "spoken": "two",
-   "start": 37.087,
-   "end": 37.3
+   "w": "from",
+   "spoken": "from",
+   "start": 7.35,
+   "end": 7.55
   },
   {
-   "w": "of",
-   "spoken": "of",
-   "start": 37.3,
-   "end": 37.388
+   "w": "earlier",
+   "spoken": "earlier",
+   "start": 7.55,
+   "end": 8.0
   },
   {
-   "w": "them",
-   "spoken": "them",
-   "start": 37.388,
-   "end": 37.6
+   "w": "ones",
+   "spoken": "ones",
+   "start": 8.0,
+   "end": 8.3
   },
   {
-   "w": "formally",
-   "spoken": "formally",
-   "start": 37.6,
-   "end": 38.112
+   "w": "by",
+   "spoken": "by",
+   "start": 8.3,
+   "end": 8.512
   },
   {
-   "w": "proved",
-   "spoken": "proved",
-   "start": 38.112,
-   "end": 38.5
+   "w": "fixed",
+   "spoken": "fixed",
+   "start": 8.512,
+   "end": 8.85
   },
   {
-   "w": "unable",
-   "spoken": "unable",
-   "start": 38.5,
-   "end": 39.038
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 39.038,
-   "end": 39.2
-  },
-  {
-   "w": "accept",
-   "spoken": "accept",
-   "start": 39.2,
-   "end": 39.587
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 39.587,
-   "end": 39.65
-  },
-  {
-   "w": "false",
-   "spoken": "false",
-   "start": 39.65,
-   "end": 39.925
-  },
-  {
-   "w": "proof.",
-   "spoken": "proof.",
-   "start": 39.925,
-   "end": 40.7
-  },
-  {
-   "w": "So",
-   "spoken": "So",
-   "start": 41.625,
-   "end": 41.85
-  },
-  {
-   "w": "on",
-   "spoken": "on",
-   "start": 41.85,
-   "end": 42.0
-  },
-  {
-   "w": "November",
-   "spoken": "November",
-   "start": 42.0,
-   "end": 42.45
-  },
-  {
-   "w": "twenty-first,",
-   "spoken": "twenty-first,",
-   "start": 42.45,
-   "end": 43.425
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 43.425,
-   "end": 43.562
-  },
-  {
-   "w": "Lean",
-   "spoken": "Lean",
-   "start": 43.562,
-   "end": 43.95
+   "w": "rules,",
+   "spoken": "rules,",
+   "start": 8.85,
+   "end": 9.625
   },
   {
    "w": "and",
    "spoken": "and",
-   "start": 43.95,
-   "end": 44.075
+   "start": 9.625,
+   "end": 9.737
   },
   {
-   "w": "Mathlib",
-   "spoken": "Mathlib",
-   "start": 44.075,
-   "end": 44.55
+   "w": "a",
+   "spoken": "a",
+   "start": 9.737,
+   "end": 9.812
   },
   {
-   "w": "communities",
-   "spoken": "communities",
-   "start": 44.55,
-   "end": 45.1
+   "w": "small",
+   "spoken": "small",
+   "start": 9.812,
+   "end": 10.2
   },
   {
-   "w": "wrote:",
-   "spoken": "wrote:",
-   "start": 45.1,
-   "end": 45.925
-  },
-  {
-   "w": "we",
-   "spoken": "we",
-   "start": 45.925,
-   "end": 46.05
-  },
-  {
-   "w": "have",
-   "spoken": "have",
-   "start": 46.05,
-   "end": 46.262
-  },
-  {
-   "w": "full",
-   "spoken": "full",
-   "start": 46.262,
-   "end": 46.537
-  },
-  {
-   "w": "confidence",
-   "spoken": "confidence",
-   "start": 46.537,
-   "end": 47.2
-  },
-  {
-   "w": "that",
-   "spoken": "that",
-   "start": 47.2,
-   "end": 47.387
-  },
-  {
-   "w": "Alpöge's",
-   "spoken": "Alpöge's",
-   "start": 47.387,
-   "end": 47.912
-  },
-  {
-   "w": "proof",
-   "spoken": "proof",
-   "start": 47.912,
-   "end": 48.237
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 48.237,
-   "end": 48.312
+   "w": "program,",
+   "spoken": "program,",
+   "start": 10.2,
+   "end": 10.9
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 48.312,
-   "end": 48.4
+   "start": 10.9,
+   "end": 11.0
   },
   {
-   "w": "Riemann",
-   "spoken": "Riemann",
-   "start": 48.4,
-   "end": 48.7
+   "w": "kernel,",
+   "spoken": "kernel,",
+   "start": 11.0,
+   "end": 11.688
   },
   {
-   "w": "Hypothesis",
-   "spoken": "Hypothesis",
-   "start": 48.7,
-   "end": 49.562
+   "w": "checks",
+   "spoken": "checks",
+   "start": 11.688,
+   "end": 11.987
+  },
+  {
+   "w": "them",
+   "spoken": "them",
+   "start": 11.987,
+   "end": 12.15
+  },
+  {
+   "w": "all.",
+   "spoken": "all.",
+   "start": 12.15,
+   "end": 13.012
+  },
+  {
+   "w": "Kevin",
+   "spoken": "Kevin",
+   "start": 13.012,
+   "end": 13.375
+  },
+  {
+   "w": "Buzzard",
+   "spoken": "Buzzard",
+   "start": 13.375,
+   "end": 13.75
+  },
+  {
+   "w": "lists",
+   "spoken": "lists",
+   "start": 13.75,
+   "end": 14.062
+  },
+  {
+   "w": "four",
+   "spoken": "four",
+   "start": 14.062,
+   "end": 14.3
+  },
+  {
+   "w": "questions",
+   "spoken": "questions",
+   "start": 14.3,
+   "end": 14.875
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 14.875,
+   "end": 15.012
+  },
+  {
+   "w": "ask",
+   "spoken": "ask",
+   "start": 15.012,
+   "end": 15.35
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 15.35,
+   "end": 15.487
+  },
+  {
+   "w": "AI-written",
+   "spoken": "AI-written",
+   "start": 15.487,
+   "end": 16.05
+  },
+  {
+   "w": "Lean.",
+   "spoken": "Lean.",
+   "start": 16.05,
+   "end": 16.825
+  },
+  {
+   "w": "Is",
+   "spoken": "Is",
+   "start": 17.725,
+   "end": 17.888
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 17.888,
+   "end": 17.975
+  },
+  {
+   "w": "statement",
+   "spoken": "statement",
+   "start": 17.975,
+   "end": 18.375
+  },
+  {
+   "w": "right?",
+   "spoken": "right?",
+   "start": 18.375,
+   "end": 19.038
+  },
+  {
+   "w": "Here",
+   "spoken": "Here",
+   "start": 19.038,
+   "end": 19.238
+  },
+  {
+   "w": "it's",
+   "spoken": "it's",
+   "start": 19.238,
+   "end": 19.363
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 19.363,
+   "end": 19.45
+  },
+  {
+   "w": "definition",
+   "spoken": "definition",
+   "start": 19.45,
+   "end": 19.938
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 19.938,
+   "end": 20.025
+  },
+  {
+   "w": "Mathlib,",
+   "spoken": "Mathlib,",
+   "start": 20.025,
+   "end": 20.713
+  },
+  {
+   "w": "Lean's",
+   "spoken": "Lean's",
+   "start": 20.713,
+   "end": 21.138
+  },
+  {
+   "w": "shared",
+   "spoken": "shared",
+   "start": 21.138,
+   "end": 21.45
+  },
+  {
+   "w": "library,",
+   "spoken": "library,",
+   "start": 21.45,
+   "end": 22.2
+  },
+  {
+   "w": "written",
+   "spoken": "written",
+   "start": 22.2,
+   "end": 22.45
+  },
+  {
+   "w": "by",
+   "spoken": "by",
+   "start": 22.45,
+   "end": 22.625
+  },
+  {
+   "w": "people",
+   "spoken": "people",
+   "start": 22.625,
+   "end": 23.025
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 23.025,
+   "end": 23.15
+  },
+  {
+   "w": "vetted",
+   "spoken": "vetted",
+   "start": 23.15,
+   "end": 23.45
+  },
+  {
+   "w": "by",
+   "spoken": "by",
+   "start": 23.45,
+   "end": 23.625
+  },
+  {
+   "w": "experts.",
+   "spoken": "experts.",
+   "start": 23.625,
+   "end": 24.725
+  },
+  {
+   "w": "Does",
+   "spoken": "Does",
+   "start": 24.725,
+   "end": 24.888
+  },
+  {
+   "w": "it",
+   "spoken": "it",
+   "start": 24.888,
+   "end": 24.975
+  },
+  {
+   "w": "compile?",
+   "spoken": "compile?",
+   "start": 24.975,
+   "end": 25.812
+  },
+  {
+   "w": "Dozens",
+   "spoken": "Dozens",
+   "start": 25.812,
+   "end": 26.188
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 26.188,
+   "end": 26.275
+  },
+  {
+   "w": "people",
+   "spoken": "people",
+   "start": 26.275,
+   "end": 26.588
+  },
+  {
+   "w": "have",
+   "spoken": "have",
+   "start": 26.588,
+   "end": 26.7
+  },
+  {
+   "w": "rebuilt",
+   "spoken": "rebuilt",
+   "start": 26.7,
+   "end": 27.15
+  },
+  {
+   "w": "it.",
+   "spoken": "it.",
+   "start": 27.15,
+   "end": 27.65
+  },
+  {
+   "w": "Does",
+   "spoken": "Does",
+   "start": 27.65,
+   "end": 27.788
+  },
+  {
+   "w": "it",
+   "spoken": "it",
+   "start": 27.788,
+   "end": 27.875
+  },
+  {
+   "w": "prove",
+   "spoken": "prove",
+   "start": 27.875,
+   "end": 28.125
+  },
+  {
+   "w": "exactly",
+   "spoken": "exactly",
+   "start": 28.125,
+   "end": 28.7
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 28.7,
+   "end": 28.925
+  },
+  {
+   "w": "statement,",
+   "spoken": "statement,",
+   "start": 28.925,
+   "end": 29.475
+  },
+  {
+   "w": "using",
+   "spoken": "using",
+   "start": 29.475,
+   "end": 29.8
+  },
+  {
+   "w": "only",
+   "spoken": "only",
+   "start": 29.8,
+   "end": 30.1
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 30.1,
+   "end": 30.2
+  },
+  {
+   "w": "standard",
+   "spoken": "standard",
+   "start": 30.2,
+   "end": 30.6
+  },
+  {
+   "w": "axioms?",
+   "spoken": "axioms?",
+   "start": 30.6,
+   "end": 31.562
+  },
+  {
+   "w": "Two",
+   "spoken": "Two",
+   "start": 31.562,
+   "end": 31.775
+  },
+  {
+   "w": "independent",
+   "spoken": "independent",
+   "start": 31.775,
+   "end": 32.325
+  },
+  {
+   "w": "tools",
+   "spoken": "tools",
+   "start": 32.325,
+   "end": 32.675
+  },
+  {
+   "w": "say",
+   "spoken": "say",
+   "start": 32.675,
+   "end": 32.875
+  },
+  {
+   "w": "yes.",
+   "spoken": "yes.",
+   "start": 32.875,
+   "end": 33.725
+  },
+  {
+   "w": "Could",
+   "spoken": "Could",
+   "start": 33.725,
+   "end": 33.862
+  },
+  {
+   "w": "it",
+   "spoken": "it",
+   "start": 33.862,
+   "end": 33.938
+  },
+  {
+   "w": "exploit",
+   "spoken": "exploit",
+   "start": 33.938,
+   "end": 34.362
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 34.362,
+   "end": 34.438
+  },
+  {
+   "w": "bug",
+   "spoken": "bug",
+   "start": 34.438,
+   "end": 34.737
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 34.737,
+   "end": 34.85
+  },
+  {
+   "w": "Lean",
+   "spoken": "Lean",
+   "start": 34.85,
+   "end": 35.038
+  },
+  {
+   "w": "itself?",
+   "spoken": "itself?",
+   "start": 35.038,
+   "end": 36.088
+  },
+  {
+   "w": "Several",
+   "spoken": "Several",
+   "start": 36.088,
+   "end": 36.5
+  },
+  {
+   "w": "independent",
+   "spoken": "independent",
+   "start": 36.5,
+   "end": 37.05
+  },
+  {
+   "w": "checkers",
+   "spoken": "checkers",
+   "start": 37.05,
+   "end": 37.475
+  },
+  {
+   "w": "accepted",
+   "spoken": "accepted",
+   "start": 37.475,
+   "end": 37.975
+  },
+  {
+   "w": "it,",
+   "spoken": "it,",
+   "start": 37.975,
+   "end": 38.362
+  },
+  {
+   "w": "two",
+   "spoken": "two",
+   "start": 38.362,
+   "end": 38.575
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 38.575,
+   "end": 38.663
+  },
+  {
+   "w": "them",
+   "spoken": "them",
+   "start": 38.663,
+   "end": 38.875
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 38.875,
+   "end": 39.013
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 39.013,
+   "end": 39.125
+  },
+  {
+   "w": "formal",
+   "spoken": "formal",
+   "start": 39.125,
+   "end": 39.525
+  },
+  {
+   "w": "proof,",
+   "spoken": "proof,",
+   "start": 39.525,
+   "end": 39.987
+  },
+  {
+   "w": "relative",
+   "spoken": "relative",
+   "start": 39.987,
+   "end": 40.425
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 40.425,
+   "end": 40.55
+  },
+  {
+   "w": "set",
+   "spoken": "set",
+   "start": 40.55,
+   "end": 40.8
+  },
+  {
+   "w": "theory,",
+   "spoken": "theory,",
+   "start": 40.8,
+   "end": 41.4
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 41.4,
+   "end": 41.538
+  },
+  {
+   "w": "they",
+   "spoken": "they",
+   "start": 41.538,
+   "end": 41.688
+  },
+  {
+   "w": "can't",
+   "spoken": "can't",
+   "start": 41.688,
+   "end": 41.975
+  },
+  {
+   "w": "accept",
+   "spoken": "accept",
+   "start": 41.975,
+   "end": 42.362
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 42.362,
+   "end": 42.438
+  },
+  {
+   "w": "false",
+   "spoken": "false",
+   "start": 42.438,
+   "end": 42.8
+  },
+  {
+   "w": "one.",
+   "spoken": "one.",
+   "start": 42.8,
+   "end": 43.475
+  },
+  {
+   "w": "That",
+   "spoken": "That",
+   "start": 44.4,
+   "end": 44.6
   },
   {
    "w": "is",
    "spoken": "is",
-   "start": 49.562,
-   "end": 49.725
+   "start": 44.6,
+   "end": 44.737
   },
   {
-   "w": "correct.",
-   "spoken": "correct.",
-   "start": 49.725,
-   "end": 50.625
+   "w": "the",
+   "spoken": "the",
+   "start": 44.737,
+   "end": 44.825
+  },
+  {
+   "w": "basis",
+   "spoken": "basis",
+   "start": 44.825,
+   "end": 45.4
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 45.4,
+   "end": 45.487
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 45.487,
+   "end": 45.575
+  },
+  {
+   "w": "November",
+   "spoken": "November",
+   "start": 45.575,
+   "end": 46.1
+  },
+  {
+   "w": "twenty-first",
+   "spoken": "twenty-first",
+   "start": 46.1,
+   "end": 46.725
+  },
+  {
+   "w": "statement",
+   "spoken": "statement",
+   "start": 46.725,
+   "end": 47.475
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 47.475,
+   "end": 47.675
+  },
+  {
+   "w": "full",
+   "spoken": "full",
+   "start": 47.675,
+   "end": 47.975
+  },
+  {
+   "w": "confidence.",
+   "spoken": "confidence.",
+   "start": 47.975,
+   "end": 49.05
   }
  ],
  "chunks": [
   {
-   "text": "How can anyone trust seventeen million lines no human has read?",
+   "text": "How can anyone trust seventeen million lines that no human has read in full?",
    "start": 0.725,
-   "end": 4.562
+   "end": 5.312
   },
   {
    "text": "In Lean, every step must follow from earlier ones by fixed rules,",
-   "start": 4.562,
-   "end": 8.875
+   "start": 5.312,
+   "end": 9.625
   },
   {
    "text": "and a small program, the kernel, checks them all.",
-   "start": 8.875,
-   "end": 12.237
+   "start": 9.625,
+   "end": 13.012
   },
   {
    "text": "Kevin Buzzard lists four questions to ask of AI-written Lean.",
-   "start": 12.237,
-   "end": 15.975
+   "start": 13.012,
+   "end": 16.825
   },
   {
    "text": "Is the statement right?",
-   "start": 16.875,
-   "end": 18.212
+   "start": 17.725,
+   "end": 19.038
   },
   {
-   "text": "Here it is Mathlib's own definition of the Riemann Hypothesis,",
-   "start": 18.212,
-   "end": 21.488
+   "text": "Here it's the definition in Mathlib, Lean's shared library,",
+   "start": 19.038,
+   "end": 22.2
   },
   {
-   "text": "vetted by experts.",
-   "start": 21.488,
-   "end": 23.05
+   "text": "written by people and vetted by experts.",
+   "start": 22.2,
+   "end": 24.725
   },
   {
    "text": "Does it compile?",
-   "start": 23.05,
-   "end": 24.163
+   "start": 24.725,
+   "end": 25.812
   },
   {
    "text": "Dozens of people have rebuilt it.",
-   "start": 24.163,
-   "end": 26.05
+   "start": 25.812,
+   "end": 27.65
   },
   {
    "text": "Does it prove exactly that statement, using only the standard axioms?",
-   "start": 26.05,
-   "end": 30.125
+   "start": 27.65,
+   "end": 31.562
   },
   {
    "text": "Two independent tools say yes.",
-   "start": 30.125,
-   "end": 32.425
+   "start": 31.562,
+   "end": 33.725
   },
   {
    "text": "Could it exploit a bug in Lean itself?",
-   "start": 32.425,
-   "end": 34.75
+   "start": 33.725,
+   "end": 36.088
   },
   {
-   "text": "Several independent checkers accepted it,",
-   "start": 34.75,
-   "end": 37.087
+   "text": "Several independent checkers accepted it, two of them with a formal proof,",
+   "start": 36.088,
+   "end": 39.987
   },
   {
-   "text": "two of them formally proved unable to accept a false proof.",
-   "start": 37.087,
-   "end": 40.7
+   "text": "relative to set theory, that they can't accept a false one.",
+   "start": 39.987,
+   "end": 43.475
   },
   {
-   "text": "So on November twenty-first, the Lean and Mathlib communities wrote:",
-   "start": 41.625,
-   "end": 45.925
-  },
-  {
-   "text": "we have full confidence that Alpöge's proof of the Riemann Hypothesis is correct.",
-   "start": 45.925,
-   "end": 50.625
+   "text": "That is the basis of the November twenty-first statement of full confidence.",
+   "start": 44.4,
+   "end": 49.05
   }
  ],
  "cues": {
-  "kernel": 4.562,
-  "four": 12.237,
-  "q1": 16.875,
-  "q2": 23.05,
-  "q3": 26.05,
-  "q4": 32.425,
-  "joint": 41.625
+  "kernel": 5.312,
+  "four": 13.012,
+  "q1": 17.725,
+  "q2": 24.725,
+  "q3": 27.65,
+  "q4": 33.725,
+  "joint": 44.4
  }
 }

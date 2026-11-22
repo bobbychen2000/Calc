@@ -1,6 +1,6 @@
 {
  "scene": "s05_continue",
- "duration": 35.6,
+ "duration": 39.975,
  "sr": 24000,
  "voice": "af_heart",
  "speed": 1.0,
@@ -21,60 +21,60 @@
    "w": "is",
    "spoken": "is",
    "start": 1.275,
-   "end": 1.438
+   "end": 1.425
   },
   {
    "w": "one",
    "spoken": "one",
-   "start": 1.438,
-   "end": 1.637
+   "start": 1.425,
+   "end": 1.613
   },
   {
    "w": "or",
    "spoken": "or",
-   "start": 1.637,
-   "end": 1.725
+   "start": 1.613,
+   "end": 1.7
   },
   {
    "w": "less,",
    "spoken": "less,",
-   "start": 1.725,
-   "end": 2.087
+   "start": 1.7,
+   "end": 2.062
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 2.087,
-   "end": 2.238
+   "start": 2.062,
+   "end": 2.212
   },
   {
    "w": "arrows",
    "spoken": "arrows",
-   "start": 2.238,
-   "end": 2.65
+   "start": 2.212,
+   "end": 2.625
   },
   {
    "w": "don't",
    "spoken": "don't",
-   "start": 2.65,
-   "end": 2.938
+   "start": 2.625,
+   "end": 2.913
   },
   {
    "w": "shrink",
    "spoken": "shrink",
-   "start": 2.938,
-   "end": 3.275
+   "start": 2.913,
+   "end": 3.225
   },
   {
    "w": "fast",
    "spoken": "fast",
-   "start": 3.275,
-   "end": 3.588
+   "start": 3.225,
+   "end": 3.538
   },
   {
    "w": "enough,",
    "spoken": "enough,",
-   "start": 3.588,
+   "start": 3.538,
    "end": 4.175
   },
   {
@@ -123,469 +123,529 @@
    "w": "one,",
    "spoken": "one,",
    "start": 6.3,
-   "end": 6.825
+   "end": 6.85
   },
   {
    "w": "plus",
    "spoken": "plus",
-   "start": 6.825,
-   "end": 7.138
+   "start": 6.85,
+   "end": 7.163
   },
   {
    "w": "x,",
    "spoken": "x,",
-   "start": 7.138,
-   "end": 7.55
+   "start": 7.163,
+   "end": 7.625
   },
   {
    "w": "plus",
    "spoken": "plus",
-   "start": 7.55,
-   "end": 7.838
+   "start": 7.625,
+   "end": 7.938
   },
   {
    "w": "x",
    "spoken": "x",
-   "start": 7.838,
-   "end": 8.1
+   "start": 7.938,
+   "end": 8.2
   },
   {
    "w": "squared,",
    "spoken": "squared,",
-   "start": 8.1,
-   "end": 8.6
+   "start": 8.2,
+   "end": 8.7
   },
   {
    "w": "and",
    "spoken": "and",
-   "start": 8.6,
-   "end": 8.737
+   "start": 8.7,
+   "end": 8.837
   },
   {
    "w": "so",
    "spoken": "so",
-   "start": 8.737,
-   "end": 8.975
+   "start": 8.837,
+   "end": 9.075
   },
   {
    "w": "on.",
    "spoken": "on.",
-   "start": 8.975,
-   "end": 9.775
+   "start": 9.075,
+   "end": 9.875
   },
   {
    "w": "It",
    "spoken": "It",
-   "start": 9.775,
-   "end": 9.925
+   "start": 9.875,
+   "end": 10.025
   },
   {
    "w": "only",
    "spoken": "only",
-   "start": 9.925,
-   "end": 10.225
+   "start": 10.025,
+   "end": 10.325
   },
   {
    "w": "works",
    "spoken": "works",
-   "start": 10.225,
-   "end": 10.525
+   "start": 10.325,
+   "end": 10.625
   },
   {
    "w": "between",
    "spoken": "between",
-   "start": 10.525,
-   "end": 10.85
+   "start": 10.625,
+   "end": 10.95
   },
   {
    "w": "minus",
    "spoken": "minus",
-   "start": 10.85,
-   "end": 11.212
+   "start": 10.95,
+   "end": 11.312
   },
   {
    "w": "one",
    "spoken": "one",
-   "start": 11.212,
-   "end": 11.462
+   "start": 11.312,
+   "end": 11.537
   },
   {
    "w": "and",
    "spoken": "and",
-   "start": 11.462,
-   "end": 11.575
+   "start": 11.537,
+   "end": 11.65
   },
   {
    "w": "one,",
    "spoken": "one,",
-   "start": 11.575,
-   "end": 12.25
+   "start": 11.65,
+   "end": 12.325
   },
   {
    "w": "but",
    "spoken": "but",
-   "start": 12.25,
-   "end": 12.387
+   "start": 12.325,
+   "end": 12.462
   },
   {
    "w": "it",
    "spoken": "it",
-   "start": 12.387,
-   "end": 12.487
+   "start": 12.462,
+   "end": 12.562
   },
   {
    "w": "clearly",
    "spoken": "clearly",
-   "start": 12.487,
-   "end": 12.925
+   "start": 12.562,
+   "end": 13.0
   },
   {
    "w": "wants",
    "spoken": "wants",
-   "start": 12.925,
-   "end": 13.225
+   "start": 13.0,
+   "end": 13.3
   },
   {
    "w": "to",
    "spoken": "to",
-   "start": 13.225,
-   "end": 13.312
+   "start": 13.3,
+   "end": 13.387
   },
   {
    "w": "be",
    "spoken": "be",
-   "start": 13.312,
-   "end": 13.487
+   "start": 13.387,
+   "end": 13.562
   },
   {
    "w": "one",
    "spoken": "one",
-   "start": 13.487,
-   "end": 13.825
+   "start": 13.562,
+   "end": 13.9
   },
   {
    "w": "over",
    "spoken": "over",
-   "start": 13.825,
-   "end": 14.137
+   "start": 13.9,
+   "end": 14.212
   },
   {
    "w": "one",
    "spoken": "one",
-   "start": 14.137,
-   "end": 14.375
+   "start": 14.212,
+   "end": 14.45
   },
   {
    "w": "minus",
    "spoken": "minus",
-   "start": 14.375,
-   "end": 14.7
+   "start": 14.45,
+   "end": 14.775
   },
   {
    "w": "x,",
    "spoken": "x,",
-   "start": 14.7,
-   "end": 15.3
+   "start": 14.775,
+   "end": 15.425
   },
   {
    "w": "which",
    "spoken": "which",
-   "start": 15.3,
-   "end": 15.5
+   "start": 15.425,
+   "end": 15.625
   },
   {
    "w": "makes",
    "spoken": "makes",
-   "start": 15.5,
-   "end": 15.75
+   "start": 15.625,
+   "end": 15.875
   },
   {
    "w": "sense",
    "spoken": "sense",
-   "start": 15.75,
-   "end": 16.087
+   "start": 15.875,
+   "end": 16.163
   },
   {
-   "w": "almost",
-   "spoken": "almost",
-   "start": 16.087,
-   "end": 16.55
-  },
-  {
-   "w": "everywhere.",
-   "spoken": "everywhere.",
-   "start": 16.55,
-   "end": 17.55
-  },
-  {
-   "w": "In",
-   "spoken": "In",
-   "start": 18.5,
-   "end": 18.587
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 18.587,
-   "end": 18.688
-  },
-  {
-   "w": "same",
-   "spoken": "same",
-   "start": 18.688,
-   "end": 19.0
-  },
-  {
-   "w": "way,",
-   "spoken": "way,",
-   "start": 19.0,
-   "end": 19.412
-  },
-  {
-   "w": "zeta",
-   "spoken": "zeta",
-   "start": 19.412,
-   "end": 19.75
-  },
-  {
-   "w": "has",
-   "spoken": "has",
-   "start": 19.75,
-   "end": 19.95
-  },
-  {
-   "w": "exactly",
-   "spoken": "exactly",
-   "start": 19.95,
-   "end": 20.587
-  },
-  {
-   "w": "one",
-   "spoken": "one",
-   "start": 20.587,
-   "end": 20.9
-  },
-  {
-   "w": "smooth",
-   "spoken": "smooth",
-   "start": 20.9,
-   "end": 21.325
-  },
-  {
-   "w": "extension",
-   "spoken": "extension",
-   "start": 21.325,
-   "end": 21.925
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 21.925,
-   "end": 22.012
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 22.012,
-   "end": 22.137
-  },
-  {
-   "w": "whole",
-   "spoken": "whole",
-   "start": 22.137,
-   "end": 22.462
-  },
-  {
-   "w": "complex",
-   "spoken": "complex",
-   "start": 22.462,
-   "end": 23.025
-  },
-  {
-   "w": "plane,",
-   "spoken": "plane,",
-   "start": 23.025,
-   "end": 23.712
+   "w": "everywhere",
+   "spoken": "everywhere",
+   "start": 16.163,
+   "end": 16.762
   },
   {
    "w": "except",
    "spoken": "except",
-   "start": 23.712,
-   "end": 24.062
+   "start": 16.762,
+   "end": 17.188
   },
   {
-   "w": "the",
-   "spoken": "the",
-   "start": 24.062,
-   "end": 24.15
-  },
-  {
-   "w": "point",
-   "spoken": "point",
-   "start": 24.15,
-   "end": 24.487
-  },
-  {
-   "w": "s",
-   "spoken": "s",
-   "start": 24.487,
-   "end": 24.775
+   "w": "x",
+   "spoken": "x",
+   "start": 17.188,
+   "end": 17.475
   },
   {
    "w": "equals",
    "spoken": "equals",
-   "start": 24.775,
-   "end": 25.15
+   "start": 17.475,
+   "end": 17.85
   },
   {
    "w": "one.",
    "spoken": "one.",
-   "start": 25.15,
-   "end": 26.038
+   "start": 17.85,
+   "end": 18.6
   },
   {
-   "w": "Here",
-   "spoken": "Here",
-   "start": 26.038,
-   "end": 26.237
-  },
-  {
-   "w": "it",
-   "spoken": "it",
-   "start": 26.237,
-   "end": 26.337
-  },
-  {
-   "w": "is.",
-   "spoken": "is.",
-   "start": 26.337,
-   "end": 27.188
-  },
-  {
-   "w": "Color",
-   "spoken": "Color",
-   "start": 27.188,
-   "end": 27.562
-  },
-  {
-   "w": "shows",
-   "spoken": "shows",
-   "start": 27.562,
-   "end": 27.887
+   "w": "In",
+   "spoken": "In",
+   "start": 19.575,
+   "end": 19.663
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 27.887,
-   "end": 27.975
+   "start": 19.663,
+   "end": 19.762
   },
   {
-   "w": "direction",
-   "spoken": "direction",
-   "start": 27.975,
-   "end": 28.525
+   "w": "same",
+   "spoken": "same",
+   "start": 19.762,
+   "end": 20.075
   },
   {
-   "w": "of",
-   "spoken": "of",
-   "start": 28.525,
-   "end": 28.65
-  },
-  {
-   "w": "zeta's",
-   "spoken": "zeta's",
-   "start": 28.65,
-   "end": 29.05
-  },
-  {
-   "w": "value,",
-   "spoken": "value,",
-   "start": 29.05,
-   "end": 29.7
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 29.7,
-   "end": 29.862
-  },
-  {
-   "w": "each",
-   "spoken": "each",
-   "start": 29.862,
-   "end": 30.188
-  },
-  {
-   "w": "ring",
-   "spoken": "ring",
-   "start": 30.188,
-   "end": 30.538
-  },
-  {
-   "w": "doubles",
-   "spoken": "doubles",
-   "start": 30.538,
-   "end": 30.925
-  },
-  {
-   "w": "its",
-   "spoken": "its",
-   "start": 30.925,
-   "end": 31.1
-  },
-  {
-   "w": "size.",
-   "spoken": "size.",
-   "start": 31.1,
-   "end": 31.95
-  },
-  {
-   "w": "Where",
-   "spoken": "Where",
-   "start": 31.95,
-   "end": 32.15
-  },
-  {
-   "w": "all",
-   "spoken": "all",
-   "start": 32.15,
-   "end": 32.388
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 32.388,
-   "end": 32.475
-  },
-  {
-   "w": "colors",
-   "spoken": "colors",
-   "start": 32.475,
-   "end": 32.875
-  },
-  {
-   "w": "meet,",
-   "spoken": "meet,",
-   "start": 32.875,
-   "end": 33.413
+   "w": "way,",
+   "spoken": "way,",
+   "start": 20.075,
+   "end": 20.488
   },
   {
    "w": "zeta",
    "spoken": "zeta",
-   "start": 33.413,
-   "end": 33.775
+   "start": 20.488,
+   "end": 20.85
+  },
+  {
+   "w": "has",
+   "spoken": "has",
+   "start": 20.85,
+   "end": 21.05
+  },
+  {
+   "w": "exactly",
+   "spoken": "exactly",
+   "start": 21.05,
+   "end": 21.688
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 21.688,
+   "end": 21.9
+  },
+  {
+   "w": "extension",
+   "spoken": "extension",
+   "start": 21.9,
+   "end": 22.5
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 22.5,
+   "end": 22.587
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 22.587,
+   "end": 22.688
+  },
+  {
+   "w": "whole",
+   "spoken": "whole",
+   "start": 22.688,
+   "end": 22.962
+  },
+  {
+   "w": "plane",
+   "spoken": "plane",
+   "start": 22.962,
+   "end": 23.375
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 23.375,
+   "end": 23.575
+  },
+  {
+   "w": "stays",
+   "spoken": "stays",
+   "start": 23.575,
+   "end": 23.988
+  },
+  {
+   "w": "complex-differentiable,",
+   "spoken": "complex-differentiable,",
+   "start": 23.988,
+   "end": 25.512
+  },
+  {
+   "w": "its",
+   "spoken": "its",
+   "start": 25.512,
+   "end": 25.738
+  },
+  {
+   "w": "analytic",
+   "spoken": "analytic",
+   "start": 25.738,
+   "end": 26.325
+  },
+  {
+   "w": "continuation,",
+   "spoken": "continuation,",
+   "start": 26.325,
+   "end": 27.538
+  },
+  {
+   "w": "everywhere",
+   "spoken": "everywhere",
+   "start": 27.538,
+   "end": 28.05
+  },
+  {
+   "w": "but",
+   "spoken": "but",
+   "start": 28.05,
+   "end": 28.2
+  },
+  {
+   "w": "s",
+   "spoken": "s",
+   "start": 28.2,
+   "end": 28.475
+  },
+  {
+   "w": "equals",
+   "spoken": "equals",
+   "start": 28.475,
+   "end": 28.85
+  },
+  {
+   "w": "one.",
+   "spoken": "one.",
+   "start": 28.85,
+   "end": 29.688
+  },
+  {
+   "w": "Here",
+   "spoken": "Here",
+   "start": 29.688,
+   "end": 29.887
+  },
+  {
+   "w": "it",
+   "spoken": "it",
+   "start": 29.887,
+   "end": 29.988
+  },
+  {
+   "w": "is.",
+   "spoken": "is.",
+   "start": 29.988,
+   "end": 30.837
+  },
+  {
+   "w": "Color",
+   "spoken": "Color",
+   "start": 30.837,
+   "end": 31.212
+  },
+  {
+   "w": "shows",
+   "spoken": "shows",
+   "start": 31.212,
+   "end": 31.538
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 31.538,
+   "end": 31.625
+  },
+  {
+   "w": "direction",
+   "spoken": "direction",
+   "start": 31.625,
+   "end": 32.15
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 32.15,
+   "end": 32.275
+  },
+  {
+   "w": "zeta's",
+   "spoken": "zeta's",
+   "start": 32.275,
+   "end": 32.65
+  },
+  {
+   "w": "value,",
+   "spoken": "value,",
+   "start": 32.65,
+   "end": 33.325
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 33.325,
+   "end": 33.487
+  },
+  {
+   "w": "each",
+   "spoken": "each",
+   "start": 33.487,
+   "end": 33.85
+  },
+  {
+   "w": "ring",
+   "spoken": "ring",
+   "start": 33.85,
+   "end": 34.212
+  },
+  {
+   "w": "doubles",
+   "spoken": "doubles",
+   "start": 34.212,
+   "end": 34.575
+  },
+  {
+   "w": "its",
+   "spoken": "its",
+   "start": 34.575,
+   "end": 34.75
+  },
+  {
+   "w": "size.",
+   "spoken": "size.",
+   "start": 34.75,
+   "end": 35.675
+  },
+  {
+   "w": "Where",
+   "spoken": "Where",
+   "start": 35.675,
+   "end": 35.875
+  },
+  {
+   "w": "all",
+   "spoken": "all",
+   "start": 35.875,
+   "end": 36.062
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 36.062,
+   "end": 36.15
+  },
+  {
+   "w": "colors",
+   "spoken": "colors",
+   "start": 36.15,
+   "end": 36.55
+  },
+  {
+   "w": "meet",
+   "spoken": "meet",
+   "start": 36.55,
+   "end": 36.75
+  },
+  {
+   "w": "at",
+   "spoken": "at",
+   "start": 36.75,
+   "end": 36.837
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 36.837,
+   "end": 36.9
+  },
+  {
+   "w": "dark",
+   "spoken": "dark",
+   "start": 36.9,
+   "end": 37.175
+  },
+  {
+   "w": "point,",
+   "spoken": "point,",
+   "start": 37.175,
+   "end": 37.825
+  },
+  {
+   "w": "zeta",
+   "spoken": "zeta",
+   "start": 37.825,
+   "end": 38.2
   },
   {
    "w": "is",
    "spoken": "is",
-   "start": 33.775,
-   "end": 33.9
+   "start": 38.2,
+   "end": 38.325
   },
   {
    "w": "zero.",
    "spoken": "zero.",
-   "start": 33.9,
-   "end": 34.75
+   "start": 38.325,
+   "end": 39.125
   }
  ],
  "chunks": [
@@ -602,54 +662,59 @@
   {
    "text": "Think of one, plus x, plus x squared, and so on.",
    "start": 5.963,
-   "end": 9.775
+   "end": 9.875
   },
   {
    "text": "It only works between minus one and one,",
-   "start": 9.775,
-   "end": 12.25
+   "start": 9.875,
+   "end": 12.325
   },
   {
    "text": "but it clearly wants to be one over one minus x,",
-   "start": 12.25,
-   "end": 15.3
+   "start": 12.325,
+   "end": 15.425
   },
   {
-   "text": "which makes sense almost everywhere.",
-   "start": 15.3,
-   "end": 17.55
+   "text": "which makes sense everywhere except x equals one.",
+   "start": 15.425,
+   "end": 18.6
   },
   {
-   "text": "In the same way, zeta has exactly one smooth extension to the whole complex plane,",
-   "start": 18.5,
-   "end": 23.712
+   "text": "In the same way, zeta has exactly one extension to the whole plane that stays",
+   "start": 19.575,
+   "end": 23.988
   },
   {
-   "text": "except the point s equals one.",
-   "start": 23.712,
-   "end": 26.038
+   "text": "complex-differentiable, its analytic continuation,",
+   "start": 23.988,
+   "end": 27.538
+  },
+  {
+   "text": "everywhere but s equals one.",
+   "start": 27.538,
+   "end": 29.688
   },
   {
    "text": "Here it is.",
-   "start": 26.038,
-   "end": 27.188
+   "start": 29.688,
+   "end": 30.837
   },
   {
    "text": "Color shows the direction of zeta's value, and each ring doubles its size.",
-   "start": 27.188,
-   "end": 31.95
+   "start": 30.837,
+   "end": 35.675
   },
   {
-   "text": "Where all the colors meet, zeta is zero.",
-   "start": 31.95,
-   "end": 34.75
+   "text": "Where all the colors meet at a dark point, zeta is zero.",
+   "start": 35.675,
+   "end": 39.125
   }
  ],
  "cues": {
   "diverge": 0.7,
   "geom": 5.963,
-  "unique": 18.5,
-  "map": 26.038,
-  "zeros": 31.95
+  "unique": 19.575,
+  "map": 29.688,
+  "zeros": 35.675
  }
 }

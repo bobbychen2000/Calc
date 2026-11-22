@@ -26,15 +26,15 @@ Primary documents (local copies kept out of the repo):
 | the statement is Mathlib's, vetted by experts | L: "This statement is part of Mathlib: RiemannHypothesis and has been carefully vetted by experts in Lean and number theory." |
 | dozens of rebuilds | L: "dozens of people have reported correct compilation of the codebase" |
 | two independent tools: exactly that statement, standard axioms | L: "two independent tools (comparator and con-leche –compare)"; S: "propext, Classical.choice, Quot.sound only" |
-| several independent checkers; two formally proved unable to accept a false proof | L: "several proof checkers, including Lean's official kernel, the con-leche and con-ron checkers…"; "con-leche and con-ron come with a formal proof, relative to set theory, that they cannot accept a false proof" |
+| several independent checkers; two with a formal proof, relative to set theory, that they can't accept a false one; Lean's kernel on the full export still running (22 Nov, 04:35 UTC) | L: "several proof checkers, including Lean's official kernel, the con-leche and con-ron checkers…"; "con-leche and con-ron come with a formal proof, relative to set theory, that they cannot accept a false proof" |
 | four questions | X: Q1 statement, Q2 compile, Q3 proves the theorem as stated (comparator), Q4 kernel bugs |
-| GRH for Dirichlet L-functions reported by the MIT page; wider GRH not checked | S: "'GRH' here means Dirichlet L-functions… Dedekind zeta functions, Hecke L-functions and automorphic L-functions in general are not among the statements that were checked." L does not mention GRH. N claims GRH ("resolving the so-called Generalized Riemann Hypothesis"). |
+| GRH for every Dirichlet L-function reported by Sutherland's page; other L-functions not checked; the note only expects the Extended RH | S: "'GRH' here means Dirichlet L-functions… Dedekind zeta functions, Hecke L-functions and automorphic L-functions in general are not among the statements that were checked." L does not mention GRH. N: "resolving the so-called Generalized Riemann Hypothesis, and I expect, with more time, the Extended Riemann Hypothesis too". |
 | no human-readable proof yet; he intends to write it properly | N: "I intend to do my best to understand and impart understanding of this argument … to write it properly." |
 | Clay: publication, two years, general acceptance | C: "(i) … published in a Qualifying Outlet …, (ii) at least two years must have passed since publication, and (iii) … general acceptance in the global mathematics community" |
 | Clay's president: road to real understanding long and difficult | M. Bridson, statement quoted by AP (21 Nov): "the journey from today's announcement to a place of real understanding will be long and difficult" (status.md) |
 | "multiplicity is hard to find over the integers, corresponding to something like differentiating whole numbers" | N, verbatim |
 | chained theta lifts, each mimicking multiplicity; Claude suggested √X; "And yet, what else could it be?" | N: "Claude's suggested length of chain of theta lifts, in view of each mimicking multiplicity, was √X. (And yet, what else could it be?)" |
-| timeline Oct 6 → Nov 16 | N, items 1 (10/6/26) … 20 (11/16/26: GRH) |
+| the note's rough timeline, compiled by Claude, Oct 6 → Nov 16 | N: "So here is a rough timeline Claude provided after a thorough search." Items 1 (10/6/26) … 20 (11/16/26: GRH) |
 | skeleton: prime-sum bound ⇒ no zeros right of ½ (ζ and every Dirichlet L) ⇒ mirror ⇒ RH | A (proof terms traced from Main.lean, lean_archive.md §6); J §1 |
 | chain length at least x^(1/2 − ε) | A: `Formalism/SizeWindowBrackets/SChain.lean` line 57, `x ^ ((1 : ℝ) / 2 - ε) ≤ m ∧` ✔ |
 | two competing errors X/m and m, balanced at √X (readers of the code) | R §I.8: "Two errors x/m and m, balanced at m ≈ √x" (guides.md) |
@@ -56,10 +56,22 @@ Primary documents (local copies kept out of the repo):
 | Hilbert 1900 (8th problem); Clay 2000, $1 M | math_facts.md §3–4 |
 | explicit formula (von Mangoldt 1895) | math_facts.md §6; reconstruction computed with 1,000 zeros |
 | RH ⇔ error ≈ √x up to logs; cannot be smaller | math_facts.md §7; Schmidt: ψ(x) − x ≠ o(√x) (intuition.md §4) |
-| Schoenfeld 1976: |π(x) − li(x)| < √x log x/(8π) for x ≥ 2657 under RH | math_facts.md §7; checked numerically to 10⁶ in `zeta.py` |
+| Schoenfeld 1976: \|π(x) − li(x)\| < √x log x/(8π) for x ≥ 2657 under RH (condition stated aloud) | math_facts.md §7; checked numerically to 10⁶ in `zeta.py` |
 | y² + y = x³ − x mod 13: 15 affine solutions + ∞; |N − (p+1)| ≤ 2√p | computed (brute force), LMFDB 37.a1 a_p checked |
-| Hasse (1930s), Weil (1940s), Deligne (1974) | math_facts.md §11 |
+| Hasse (1930s), Weil (1940s; 2g√q for genus g), Deligne (1974) | math_facts.md §11 |
 | Stepanov 1969; extended by Bombieri and Schmidt; multiplicity ≈ √p | math_facts.md §11 (Bombieri, Bourbaki 430: "a proof in the general case has been also obtained by W. Schmidt"; "m is about q^½"); intuition.md §3 |
 | C(20,10) = 184,756 = 2²·11·13·17·19 < 4¹⁰ | computed |
 | Chebyshev, around 1850: 0.92 x/ln x < π(x) < 1.11 x/ln x for large x | Wikipedia, Pafnuty Chebyshev: "bounded above and below by 0.92129 and 1.10555, for all sufficiently large x"; papers of 1848 and 1850 ✔ |
 | θ(1/t) = √t θ(t); Riemann used it for the functional equation | intuition.md §5; checked numerically in `zeta.py` |
+
+## Added after the fact-check
+
+| claim | source |
+|---|---|
+| readers of the code describe it as Chebyshev's idea with far better numbers | J §1: "This is Chebyshev's argument, with a period in place of a ratio of factorials."; R §1.5: "Chebyshev's argument, run with a far better 'integer'" |
+| the guides are AI-assisted | R's byline: "Claude Fable 5.2, Codex Astra 6.2, and Gemini Carbon at the behest of Michael O. Rubinstein"; Jaswal (Tao-blog comment 699587): "with Claude Fable 5.2 and GPT Astra 6.2" |
+| the period's divisibility is a weighted count of primes | J (Tao-blog comment): divisible to order a/p + a/p³ + …, "much as log n! = Σ_p log p Σ_i ⌊n/p^i⌋" |
+| a theta lift integrates against a theta kernel and lands on the partner group of a dual pair | W. T. Gan, "Automorphic forms and the theta correspondence", arXiv 2303.14918, §3.6 (intuition.md §5) |
+| Stepanov: a nonzero auxiliary polynomial vanishing to order m ~ √p | Bombieri, Sém. Bourbaki 430 (1973): "In the final choice, m is about q^½"; Croot (2007): "vanishes to order M at all the mod p roots … when M ∼ c√p" |
+| Stepanov's constant is worse than Hasse's 2 | Tao, "Algebraic combinatorial geometry", arXiv 1310.6482 §4 (bound ≈ q + 42√q from its Lemma 4.7; intuition.md §3) |
+| the numbers of the explicit-formula waves: 2√x cos(γ ln x − arg ρ)/\|ρ\| per conjugate pair | algebra on x^ρ/ρ + conj, ρ = ½ + iγ |

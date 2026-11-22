@@ -1,6 +1,6 @@
 {
  "scene": "s16_close",
- "duration": 51.85,
+ "duration": 52.8,
  "sr": 24000,
  "voice": "af_heart",
  "speed": 1.0,
@@ -15,841 +15,882 @@
    "w": "where",
    "spoken": "where",
    "start": 0.875,
-   "end": 1.05
+   "end": 1.038
   },
   {
    "w": "are",
    "spoken": "are",
-   "start": 1.05,
-   "end": 1.175
+   "start": 1.038,
+   "end": 1.125
   },
   {
    "w": "we?",
    "spoken": "we?",
-   "start": 1.175,
-   "end": 1.787
+   "start": 1.125,
+   "end": 1.75
   },
   {
-   "w": "What's",
-   "spoken": "What's",
-   "start": 1.787,
-   "end": 2.025
+   "w": "What",
+   "spoken": "What",
+   "start": 1.75,
+   "end": 1.887
   },
   {
-   "w": "been",
-   "spoken": "been",
-   "start": 2.025,
-   "end": 2.238
+   "w": "the",
+   "spoken": "the",
+   "start": 1.887,
+   "end": 2.013
   },
   {
-   "w": "certified",
-   "spoken": "certified",
-   "start": 2.238,
-   "end": 2.825
+   "w": "Lean",
+   "spoken": "Lean",
+   "start": 2.013,
+   "end": 2.35
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 2.35,
+   "end": 2.475
+  },
+  {
+   "w": "Mathlib",
+   "spoken": "Mathlib",
+   "start": 2.475,
+   "end": 2.9
+  },
+  {
+   "w": "statement",
+   "spoken": "statement",
+   "start": 2.9,
+   "end": 3.3
+  },
+  {
+   "w": "certifies",
+   "spoken": "certifies",
+   "start": 3.3,
+   "end": 3.925
   },
   {
    "w": "is",
    "spoken": "is",
-   "start": 2.825,
-   "end": 2.963
+   "start": 3.925,
+   "end": 4.062
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 2.963,
-   "end": 3.05
+   "start": 4.062,
+   "end": 4.15
   },
   {
    "w": "classical",
    "spoken": "classical",
-   "start": 3.05,
-   "end": 3.6
+   "start": 4.15,
+   "end": 4.675
   },
   {
    "w": "Riemann",
    "spoken": "Riemann",
-   "start": 3.6,
-   "end": 3.95
+   "start": 4.675,
+   "end": 5.025
   },
   {
    "w": "Hypothesis.",
    "spoken": "Hypothesis.",
-   "start": 3.95,
-   "end": 5.288
+   "start": 5.025,
+   "end": 6.312
   },
   {
-   "w": "A",
-   "spoken": "A",
-   "start": 5.288,
-   "end": 5.4
+   "w": "Andrew",
+   "spoken": "Andrew",
+   "start": 6.312,
+   "end": 6.688
+  },
+  {
+   "w": "Sutherland's",
+   "spoken": "Sutherland's",
+   "start": 6.688,
+   "end": 7.15
   },
   {
    "w": "verification",
    "spoken": "verification",
-   "start": 5.4,
-   "end": 6.175
+   "start": 7.15,
+   "end": 7.85
   },
   {
    "w": "page",
    "spoken": "page",
-   "start": 6.175,
-   "end": 6.5
+   "start": 7.85,
+   "end": 8.175
   },
   {
    "w": "at",
    "spoken": "at",
-   "start": 6.5,
-   "end": 6.6
+   "start": 8.175,
+   "end": 8.275
   },
   {
    "w": "MIT",
    "spoken": "M I T",
-   "start": 6.6,
-   "end": 7.65
+   "start": 8.275,
+   "end": 8.938
   },
   {
    "w": "reports",
    "spoken": "reports",
-   "start": 7.65,
-   "end": 8.15
+   "start": 8.938,
+   "end": 9.412
   },
   {
    "w": "that",
    "spoken": "that",
-   "start": 8.15,
-   "end": 8.275
+   "start": 9.412,
+   "end": 9.512
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 8.275,
-   "end": 8.4
+   "start": 9.512,
+   "end": 9.6
   },
   {
    "w": "library",
    "spoken": "library",
-   "start": 8.4,
-   "end": 8.962
+   "start": 9.6,
+   "end": 10.1
   },
   {
    "w": "also",
    "spoken": "also",
-   "start": 8.962,
-   "end": 9.362
+   "start": 10.1,
+   "end": 10.45
   },
   {
    "w": "proves",
    "spoken": "proves",
-   "start": 9.362,
-   "end": 9.75
+   "start": 10.45,
+   "end": 10.762
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 9.75,
-   "end": 9.887
+   "start": 10.762,
+   "end": 10.887
   },
   {
-   "w": "generalized",
-   "spoken": "generalized",
-   "start": 9.887,
-   "end": 10.525
+   "w": "same",
+   "spoken": "same",
+   "start": 10.887,
+   "end": 11.237
   },
   {
-   "w": "hypothesis",
-   "spoken": "hypothesis",
-   "start": 10.525,
-   "end": 11.3
+   "w": "on-the-line",
+   "spoken": "on-the-line",
+   "start": 11.237,
+   "end": 11.825
+  },
+  {
+   "w": "statement",
+   "spoken": "statement",
+   "start": 11.825,
+   "end": 12.225
   },
   {
    "w": "for",
    "spoken": "for",
-   "start": 11.3,
-   "end": 11.45
+   "start": 12.225,
+   "end": 12.387
+  },
+  {
+   "w": "every",
+   "spoken": "every",
+   "start": 12.387,
+   "end": 12.7
   },
   {
    "w": "Dirichlet",
    "spoken": "Dirichlet",
-   "start": 11.45,
-   "end": 11.975
+   "start": 12.7,
+   "end": 13.2
   },
   {
-   "w": "L-functions.",
-   "spoken": "L-functions.",
-   "start": 11.975,
-   "end": 13.262
+   "w": "L-function:",
+   "spoken": "L-function:",
+   "start": 13.2,
+   "end": 14.25
   },
   {
-   "w": "The",
-   "spoken": "The",
-   "start": 13.262,
-   "end": 13.412
-  },
-  {
-   "w": "wider",
-   "spoken": "wider",
-   "start": 13.412,
-   "end": 13.812
+   "w": "the",
+   "spoken": "the",
+   "start": 14.25,
+   "end": 14.35
   },
   {
    "w": "generalized",
    "spoken": "generalized",
-   "start": 13.812,
-   "end": 14.475
+   "start": 14.35,
+   "end": 14.912
   },
   {
-   "w": "hypothesis",
-   "spoken": "hypothesis",
-   "start": 14.475,
-   "end": 15.3
+   "w": "hypothesis,",
+   "spoken": "hypothesis,",
+   "start": 14.912,
+   "end": 15.775
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 15.775,
+   "end": 15.9
   },
   {
    "w": "that",
    "spoken": "that",
-   "start": 15.3,
-   "end": 15.45
+   "start": 15.9,
+   "end": 16.15
   },
   {
-   "w": "the",
-   "spoken": "the",
-   "start": 15.45,
-   "end": 15.55
+   "w": "sense.",
+   "spoken": "sense.",
+   "start": 16.15,
+   "end": 17.1
   },
   {
-   "w": "note",
-   "spoken": "note",
-   "start": 15.55,
-   "end": 15.8
+   "w": "Wider",
+   "spoken": "Wider",
+   "start": 17.1,
+   "end": 17.45
   },
   {
-   "w": "claims",
-   "spoken": "claims",
-   "start": 15.8,
-   "end": 16.25
+   "w": "versions,",
+   "spoken": "versions,",
+   "start": 17.45,
+   "end": 18.0
   },
   {
-   "w": "hasn't",
-   "spoken": "hasn't",
-   "start": 16.25,
-   "end": 16.537
+   "w": "for",
+   "spoken": "for",
+   "start": 18.0,
+   "end": 18.125
+  },
+  {
+   "w": "other",
+   "spoken": "other",
+   "start": 18.125,
+   "end": 18.35
+  },
+  {
+   "w": "kinds",
+   "spoken": "kinds",
+   "start": 18.35,
+   "end": 18.637
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 18.637,
+   "end": 18.712
+  },
+  {
+   "w": "L-functions,",
+   "spoken": "L-functions,",
+   "start": 18.712,
+   "end": 19.525
+  },
+  {
+   "w": "haven't",
+   "spoken": "haven't",
+   "start": 19.525,
+   "end": 19.812
   },
   {
    "w": "been",
    "spoken": "been",
-   "start": 16.537,
-   "end": 16.738
+   "start": 19.812,
+   "end": 20.012
   },
   {
-   "w": "checked,",
-   "spoken": "checked,",
-   "start": 16.738,
-   "end": 17.475
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 17.475,
-   "end": 17.587
-  },
-  {
-   "w": "there's",
-   "spoken": "there's",
-   "start": 17.587,
-   "end": 17.775
-  },
-  {
-   "w": "no",
-   "spoken": "no",
-   "start": 17.775,
-   "end": 18.062
-  },
-  {
-   "w": "human-readable",
-   "spoken": "human-readable",
-   "start": 18.062,
-   "end": 18.825
-  },
-  {
-   "w": "proof",
-   "spoken": "proof",
-   "start": 18.825,
-   "end": 19.125
-  },
-  {
-   "w": "yet.",
-   "spoken": "yet.",
-   "start": 19.125,
-   "end": 20.037
+   "w": "checked;",
+   "spoken": "checked;",
+   "start": 20.012,
+   "end": 20.912
   },
   {
    "w": "Alpöge",
    "spoken": "Alpöge",
-   "start": 20.037,
-   "end": 20.525
+   "start": 20.912,
+   "end": 21.5
   },
   {
-   "w": "says",
-   "spoken": "says",
-   "start": 20.525,
-   "end": 20.75
+   "w": "only",
+   "spoken": "only",
+   "start": 21.5,
+   "end": 21.8
   },
   {
-   "w": "he",
-   "spoken": "he",
-   "start": 20.75,
-   "end": 20.9
+   "w": "expects",
+   "spoken": "expects",
+   "start": 21.8,
+   "end": 22.287
   },
   {
-   "w": "intends",
-   "spoken": "intends",
-   "start": 20.9,
-   "end": 21.3
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 21.3,
-   "end": 21.425
-  },
-  {
-   "w": "understand",
-   "spoken": "understand",
-   "start": 21.425,
-   "end": 22.025
-  },
-  {
-   "w": "it,",
-   "spoken": "it,",
-   "start": 22.025,
-   "end": 22.45
-  },
-  {
-   "w": "explain",
-   "spoken": "explain",
-   "start": 22.45,
-   "end": 22.95
-  },
-  {
-   "w": "it,",
-   "spoken": "it,",
-   "start": 22.95,
-   "end": 23.35
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 23.35,
-   "end": 23.475
-  },
-  {
-   "w": "write",
-   "spoken": "write",
-   "start": 23.475,
-   "end": 23.712
-  },
-  {
-   "w": "it",
-   "spoken": "it",
-   "start": 23.712,
-   "end": 23.825
-  },
-  {
-   "w": "properly.",
-   "spoken": "properly.",
-   "start": 23.825,
-   "end": 24.863
-  },
-  {
-   "w": "The",
-   "spoken": "The",
-   "start": 25.3,
-   "end": 25.375
-  },
-  {
-   "w": "Clay",
-   "spoken": "Clay",
-   "start": 25.375,
-   "end": 25.65
-  },
-  {
-   "w": "prize",
-   "spoken": "prize",
-   "start": 25.65,
-   "end": 26.05
-  },
-  {
-   "w": "requires",
-   "spoken": "requires",
-   "start": 26.05,
-   "end": 26.6
-  },
-  {
-   "w": "publication,",
-   "spoken": "publication,",
-   "start": 26.6,
-   "end": 27.738
-  },
-  {
-   "w": "two",
-   "spoken": "two",
-   "start": 27.738,
-   "end": 27.988
-  },
-  {
-   "w": "years,",
-   "spoken": "years,",
-   "start": 27.988,
-   "end": 28.575
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 28.575,
-   "end": 28.713
-  },
-  {
-   "w": "general",
-   "spoken": "general",
-   "start": 28.713,
-   "end": 29.1
-  },
-  {
-   "w": "acceptance,",
-   "spoken": "acceptance,",
-   "start": 29.1,
-   "end": 30.2
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 30.2,
-   "end": 30.325
-  },
-  {
-   "w": "Clay's",
-   "spoken": "Clay's",
-   "start": 30.325,
-   "end": 30.65
-  },
-  {
-   "w": "president",
-   "spoken": "president",
-   "start": 30.65,
-   "end": 31.15
-  },
-  {
-   "w": "called",
-   "spoken": "called",
-   "start": 31.15,
-   "end": 31.363
+   "w": "one,",
+   "spoken": "one,",
+   "start": 22.287,
+   "end": 22.75
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 31.363,
-   "end": 31.45
+   "start": 22.75,
+   "end": 22.9
   },
   {
-   "w": "road",
-   "spoken": "road",
-   "start": 31.45,
-   "end": 31.913
+   "w": "extended",
+   "spoken": "extended",
+   "start": 22.9,
+   "end": 23.4
   },
   {
-   "w": "to",
-   "spoken": "to",
-   "start": 31.913,
-   "end": 32.05
-  },
-  {
-   "w": "real",
-   "spoken": "real",
-   "start": 32.05,
-   "end": 32.325
-  },
-  {
-   "w": "understanding",
-   "spoken": "understanding",
-   "start": 32.325,
-   "end": 33.075
-  },
-  {
-   "w": "long",
-   "spoken": "long",
-   "start": 33.075,
-   "end": 33.613
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 33.613,
-   "end": 33.75
-  },
-  {
-   "w": "difficult.",
-   "spoken": "difficult.",
-   "start": 33.75,
-   "end": 34.65
-  },
-  {
-   "w": "So",
-   "spoken": "So",
-   "start": 35.575,
-   "end": 35.75
-  },
-  {
-   "w": "for",
-   "spoken": "for",
-   "start": 35.75,
-   "end": 35.875
-  },
-  {
-   "w": "now,",
-   "spoken": "now,",
-   "start": 35.875,
-   "end": 36.3
-  },
-  {
-   "w": "it's",
-   "spoken": "it's",
-   "start": 36.3,
-   "end": 36.462
-  },
-  {
-   "w": "a",
-   "spoken": "a",
-   "start": 36.462,
-   "end": 36.562
-  },
-  {
-   "w": "claimed",
-   "spoken": "claimed",
-   "start": 36.562,
-   "end": 37.012
-  },
-  {
-   "w": "proof:",
-   "spoken": "proof:",
-   "start": 37.012,
-   "end": 37.875
-  },
-  {
-   "w": "checked",
-   "spoken": "checked",
-   "start": 37.875,
-   "end": 38.2
-  },
-  {
-   "w": "by",
-   "spoken": "by",
-   "start": 38.2,
-   "end": 38.375
-  },
-  {
-   "w": "machines,",
-   "spoken": "machines,",
-   "start": 38.375,
-   "end": 39.2
-  },
-  {
-   "w": "not",
-   "spoken": "not",
-   "start": 39.2,
-   "end": 39.425
-  },
-  {
-   "w": "yet",
-   "spoken": "yet",
-   "start": 39.425,
-   "end": 39.587
-  },
-  {
-   "w": "understood",
-   "spoken": "understood",
-   "start": 39.587,
-   "end": 40.075
-  },
-  {
-   "w": "by",
-   "spoken": "by",
-   "start": 40.075,
-   "end": 40.25
-  },
-  {
-   "w": "people.",
-   "spoken": "people.",
-   "start": 40.25,
-   "end": 41.2
-  },
-  {
-   "w": "If",
-   "spoken": "If",
-   "start": 41.2,
-   "end": 41.362
-  },
-  {
-   "w": "it",
-   "spoken": "it",
-   "start": 41.362,
-   "end": 41.45
-  },
-  {
-   "w": "holds,",
-   "spoken": "holds,",
-   "start": 41.45,
-   "end": 42.05
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 42.05,
-   "end": 42.188
-  },
-  {
-   "w": "zeros",
-   "spoken": "zeros",
-   "start": 42.188,
-   "end": 42.75
-  },
-  {
-   "w": "really",
-   "spoken": "really",
-   "start": 42.75,
-   "end": 43.112
-  },
-  {
-   "w": "do",
-   "spoken": "do",
-   "start": 43.112,
-   "end": 43.3
-  },
-  {
-   "w": "all",
-   "spoken": "all",
-   "start": 43.3,
-   "end": 43.562
-  },
-  {
-   "w": "sit",
-   "spoken": "sit",
-   "start": 43.562,
-   "end": 43.737
-  },
-  {
-   "w": "on",
-   "spoken": "on",
-   "start": 43.737,
-   "end": 43.925
-  },
-  {
-   "w": "one",
-   "spoken": "one",
-   "start": 43.925,
-   "end": 44.125
-  },
-  {
-   "w": "line,",
-   "spoken": "line,",
-   "start": 44.125,
-   "end": 44.75
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 44.75,
-   "end": 44.862
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 44.862,
-   "end": 44.962
-  },
-  {
-   "w": "reason",
-   "spoken": "reason",
-   "start": 44.962,
-   "end": 45.425
-  },
-  {
-   "w": "may",
-   "spoken": "may",
-   "start": 45.425,
-   "end": 45.625
-  },
-  {
-   "w": "be",
-   "spoken": "be",
-   "start": 45.625,
-   "end": 45.775
-  },
-  {
-   "w": "an",
-   "spoken": "an",
-   "start": 45.775,
-   "end": 45.912
-  },
-  {
-   "w": "old",
-   "spoken": "old",
-   "start": 45.912,
-   "end": 46.188
-  },
-  {
-   "w": "idea,",
-   "spoken": "idea,",
-   "start": 46.188,
-   "end": 46.938
-  },
-  {
-   "w": "counting",
-   "spoken": "counting",
-   "start": 46.938,
-   "end": 47.362
+   "w": "hypothesis,",
+   "spoken": "hypothesis,",
+   "start": 23.4,
+   "end": 24.25
   },
   {
    "w": "with",
    "spoken": "with",
-   "start": 47.362,
-   "end": 47.525
+   "start": 24.25,
+   "end": 24.425
   },
   {
-   "w": "multiplicity,",
-   "spoken": "multiplicity,",
-   "start": 47.525,
-   "end": 48.5
+   "w": "more",
+   "spoken": "more",
+   "start": 24.425,
+   "end": 24.65
   },
   {
-   "w": "finally",
-   "spoken": "finally",
-   "start": 48.5,
-   "end": 48.95
+   "w": "time.",
+   "spoken": "time.",
+   "start": 24.65,
+   "end": 25.45
   },
   {
-   "w": "made",
-   "spoken": "made",
-   "start": 48.95,
-   "end": 49.175
+   "w": "And",
+   "spoken": "And",
+   "start": 25.45,
+   "end": 25.587
   },
   {
-   "w": "to",
-   "spoken": "to",
-   "start": 49.175,
-   "end": 49.3
+   "w": "there's",
+   "spoken": "there's",
+   "start": 25.587,
+   "end": 25.775
   },
   {
-   "w": "work",
-   "spoken": "work",
-   "start": 49.3,
-   "end": 49.575
+   "w": "no",
+   "spoken": "no",
+   "start": 25.775,
+   "end": 26.012
   },
   {
-   "w": "for",
-   "spoken": "for",
-   "start": 49.575,
-   "end": 49.688
+   "w": "human-readable",
+   "spoken": "human-readable",
+   "start": 26.012,
+   "end": 26.775
+  },
+  {
+   "w": "proof",
+   "spoken": "proof",
+   "start": 26.775,
+   "end": 27.1
+  },
+  {
+   "w": "yet;",
+   "spoken": "yet;",
+   "start": 27.1,
+   "end": 27.675
+  },
+  {
+   "w": "he",
+   "spoken": "he",
+   "start": 27.675,
+   "end": 27.825
+  },
+  {
+   "w": "says",
+   "spoken": "says",
+   "start": 27.825,
+   "end": 28.05
+  },
+  {
+   "w": "he'll",
+   "spoken": "he'll",
+   "start": 28.05,
+   "end": 28.225
+  },
+  {
+   "w": "write",
+   "spoken": "write",
+   "start": 28.225,
+   "end": 28.412
+  },
+  {
+   "w": "it",
+   "spoken": "it",
+   "start": 28.412,
+   "end": 28.5
+  },
+  {
+   "w": "properly.",
+   "spoken": "properly.",
+   "start": 28.5,
+   "end": 29.512
+  },
+  {
+   "w": "And",
+   "spoken": "And",
+   "start": 29.975,
+   "end": 30.087
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 49.688,
-   "end": 49.775
+   "start": 30.087,
+   "end": 30.175
+  },
+  {
+   "w": "Clay",
+   "spoken": "Clay",
+   "start": 30.175,
+   "end": 30.425
+  },
+  {
+   "w": "prize",
+   "spoken": "prize",
+   "start": 30.425,
+   "end": 30.8
+  },
+  {
+   "w": "requires",
+   "spoken": "requires",
+   "start": 30.8,
+   "end": 31.325
+  },
+  {
+   "w": "publication,",
+   "spoken": "publication,",
+   "start": 31.325,
+   "end": 32.375
+  },
+  {
+   "w": "then",
+   "spoken": "then",
+   "start": 32.375,
+   "end": 32.588
+  },
+  {
+   "w": "two",
+   "spoken": "two",
+   "start": 32.588,
+   "end": 32.8
+  },
+  {
+   "w": "years,",
+   "spoken": "years,",
+   "start": 32.8,
+   "end": 33.45
+  },
+  {
+   "w": "then",
+   "spoken": "then",
+   "start": 33.45,
+   "end": 33.688
+  },
+  {
+   "w": "general",
+   "spoken": "general",
+   "start": 33.688,
+   "end": 34.125
+  },
+  {
+   "w": "acceptance.",
+   "spoken": "acceptance.",
+   "start": 34.125,
+   "end": 35.2
+  },
+  {
+   "w": "So",
+   "spoken": "So",
+   "start": 36.125,
+   "end": 36.3
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 36.3,
+   "end": 36.425
+  },
+  {
+   "w": "now,",
+   "spoken": "now,",
+   "start": 36.425,
+   "end": 36.85
+  },
+  {
+   "w": "it's",
+   "spoken": "it's",
+   "start": 36.85,
+   "end": 37.013
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 37.013,
+   "end": 37.113
+  },
+  {
+   "w": "claimed",
+   "spoken": "claimed",
+   "start": 37.113,
+   "end": 37.562
+  },
+  {
+   "w": "proof:",
+   "spoken": "proof:",
+   "start": 37.562,
+   "end": 38.425
+  },
+  {
+   "w": "checked",
+   "spoken": "checked",
+   "start": 38.425,
+   "end": 38.75
+  },
+  {
+   "w": "by",
+   "spoken": "by",
+   "start": 38.75,
+   "end": 38.925
+  },
+  {
+   "w": "machines,",
+   "spoken": "machines,",
+   "start": 38.925,
+   "end": 39.775
+  },
+  {
+   "w": "not",
+   "spoken": "not",
+   "start": 39.775,
+   "end": 40.0
+  },
+  {
+   "w": "yet",
+   "spoken": "yet",
+   "start": 40.0,
+   "end": 40.175
+  },
+  {
+   "w": "explained",
+   "spoken": "explained",
+   "start": 40.175,
+   "end": 40.75
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 40.75,
+   "end": 40.875
+  },
+  {
+   "w": "human",
+   "spoken": "human",
+   "start": 40.875,
+   "end": 41.2
+  },
+  {
+   "w": "terms.",
+   "spoken": "terms.",
+   "start": 41.2,
+   "end": 42.225
+  },
+  {
+   "w": "If",
+   "spoken": "If",
+   "start": 42.225,
+   "end": 42.388
+  },
+  {
+   "w": "it",
+   "spoken": "it",
+   "start": 42.388,
+   "end": 42.475
+  },
+  {
+   "w": "holds,",
+   "spoken": "holds,",
+   "start": 42.475,
+   "end": 43.15
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 43.15,
+   "end": 43.288
+  },
+  {
+   "w": "zeros",
+   "spoken": "zeros",
+   "start": 43.288,
+   "end": 43.825
+  },
+  {
+   "w": "really",
+   "spoken": "really",
+   "start": 43.825,
+   "end": 44.15
+  },
+  {
+   "w": "do",
+   "spoken": "do",
+   "start": 44.15,
+   "end": 44.338
+  },
+  {
+   "w": "all",
+   "spoken": "all",
+   "start": 44.338,
+   "end": 44.612
+  },
+  {
+   "w": "sit",
+   "spoken": "sit",
+   "start": 44.612,
+   "end": 44.838
+  },
+  {
+   "w": "on",
+   "spoken": "on",
+   "start": 44.838,
+   "end": 45.025
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 45.025,
+   "end": 45.225
+  },
+  {
+   "w": "line,",
+   "spoken": "line,",
+   "start": 45.225,
+   "end": 45.8
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 45.8,
+   "end": 45.913
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 45.913,
+   "end": 46.013
+  },
+  {
+   "w": "reason",
+   "spoken": "reason",
+   "start": 46.013,
+   "end": 46.45
+  },
+  {
+   "w": "may",
+   "spoken": "may",
+   "start": 46.45,
+   "end": 46.625
+  },
+  {
+   "w": "be",
+   "spoken": "be",
+   "start": 46.625,
+   "end": 46.775
+  },
+  {
+   "w": "an",
+   "spoken": "an",
+   "start": 46.775,
+   "end": 46.9
+  },
+  {
+   "w": "old",
+   "spoken": "old",
+   "start": 46.9,
+   "end": 47.163
+  },
+  {
+   "w": "idea,",
+   "spoken": "idea,",
+   "start": 47.163,
+   "end": 47.913
+  },
+  {
+   "w": "counting",
+   "spoken": "counting",
+   "start": 47.913,
+   "end": 48.338
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 48.338,
+   "end": 48.5
+  },
+  {
+   "w": "multiplicity,",
+   "spoken": "multiplicity,",
+   "start": 48.5,
+   "end": 49.475
+  },
+  {
+   "w": "finally",
+   "spoken": "finally",
+   "start": 49.475,
+   "end": 49.925
+  },
+  {
+   "w": "made",
+   "spoken": "made",
+   "start": 49.925,
+   "end": 50.15
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 50.15,
+   "end": 50.275
+  },
+  {
+   "w": "work",
+   "spoken": "work",
+   "start": 50.275,
+   "end": 50.55
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 50.55,
+   "end": 50.663
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 50.663,
+   "end": 50.75
   },
   {
    "w": "whole",
    "spoken": "whole",
-   "start": 49.775,
-   "end": 50.025
+   "start": 50.75,
+   "end": 51.0
   },
   {
    "w": "numbers.",
    "spoken": "numbers.",
-   "start": 50.025,
-   "end": 51.0
+   "start": 51.0,
+   "end": 51.95
   }
  ],
  "chunks": [
   {
    "text": "So where are we?",
    "start": 0.75,
-   "end": 1.787
+   "end": 1.75
   },
   {
-   "text": "What's been certified is the classical Riemann Hypothesis.",
-   "start": 1.787,
-   "end": 5.288
+   "text": "What the Lean and Mathlib statement certifies is the classical Riemann Hypothesis.",
+   "start": 1.75,
+   "end": 6.312
   },
   {
-   "text": "A verification page at MIT reports that the library also proves the generalized",
-   "start": 5.288,
-   "end": 10.525
+   "text": "Andrew Sutherland's verification page at MIT reports that the library also proves",
+   "start": 6.312,
+   "end": 10.762
   },
   {
-   "text": "hypothesis for Dirichlet L-functions.",
-   "start": 10.525,
-   "end": 13.262
+   "text": "the same on-the-line statement for every Dirichlet L-function:",
+   "start": 10.762,
+   "end": 14.25
   },
   {
-   "text": "The wider generalized hypothesis that the note claims hasn't been checked,",
-   "start": 13.262,
-   "end": 17.475
+   "text": "the generalized hypothesis, in that sense.",
+   "start": 14.25,
+   "end": 17.1
   },
   {
-   "text": "and there's no human-readable proof yet.",
-   "start": 17.475,
-   "end": 20.037
+   "text": "Wider versions, for other kinds of L-functions, haven't been checked;",
+   "start": 17.1,
+   "end": 20.912
   },
   {
-   "text": "Alpöge says he intends to understand it, explain it,",
-   "start": 20.037,
-   "end": 23.35
+   "text": "Alpöge only expects one, the extended hypothesis,",
+   "start": 20.912,
+   "end": 24.25
   },
   {
-   "text": "and write it properly.",
-   "start": 23.35,
-   "end": 24.863
+   "text": "with more time.",
+   "start": 24.25,
+   "end": 25.45
   },
   {
-   "text": "The Clay prize requires publication, two years, and general acceptance,",
-   "start": 25.3,
-   "end": 30.2
+   "text": "And there's no human-readable proof yet; he says he'll write it properly.",
+   "start": 25.45,
+   "end": 29.512
   },
   {
-   "text": "and Clay's president called the road to real understanding long and difficult.",
-   "start": 30.2,
-   "end": 34.65
+   "text": "And the Clay prize requires publication, then two years,",
+   "start": 29.975,
+   "end": 33.45
+  },
+  {
+   "text": "then general acceptance.",
+   "start": 33.45,
+   "end": 35.2
   },
   {
    "text": "So for now, it's a claimed proof: checked by machines,",
-   "start": 35.575,
-   "end": 39.2
+   "start": 36.125,
+   "end": 39.775
   },
   {
-   "text": "not yet understood by people.",
-   "start": 39.2,
-   "end": 41.2
+   "text": "not yet explained in human terms.",
+   "start": 39.775,
+   "end": 42.225
   },
   {
    "text": "If it holds, the zeros really do all sit on one line,",
-   "start": 41.2,
-   "end": 44.75
+   "start": 42.225,
+   "end": 45.8
   },
   {
    "text": "and the reason may be an old idea, counting with multiplicity,",
-   "start": 44.75,
-   "end": 48.5
+   "start": 45.8,
+   "end": 49.475
   },
   {
    "text": "finally made to work for the whole numbers.",
-   "start": 48.5,
-   "end": 51.0
+   "start": 49.475,
+   "end": 51.95
   }
  ],
  "cues": {
-  "certified": 1.787,
-  "dirichlet": 5.288,
-  "notyet": 13.262,
-  "clay": 25.3,
-  "close": 35.575
+  "certified": 1.75,
+  "dirichlet": 6.312,
+  "notyet": 17.1,
+  "clay": 29.975,
+  "close": 36.125
  }
 }

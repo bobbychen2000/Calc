@@ -1,6 +1,6 @@
 {
  "scene": "s10_curves",
- "duration": 43.425,
+ "duration": 48.05,
  "sr": 24000,
  "voice": "af_heart",
  "speed": 1.0,
@@ -8,217 +8,217 @@
   {
    "w": "In",
    "spoken": "In",
-   "start": 0.725,
-   "end": 0.812
+   "start": 0.75,
+   "end": 0.838
   },
   {
    "w": "a",
    "spoken": "a",
-   "start": 0.812,
-   "end": 0.875
+   "start": 0.838,
+   "end": 0.9
   },
   {
    "w": "parallel",
    "spoken": "parallel",
-   "start": 0.875,
-   "end": 1.375
+   "start": 0.9,
+   "end": 1.4
   },
   {
    "w": "world,",
    "spoken": "world,",
-   "start": 1.375,
-   "end": 1.95
+   "start": 1.4,
+   "end": 1.975
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 1.95,
-   "end": 2.1
+   "start": 1.975,
+   "end": 2.125
   },
   {
    "w": "analogous",
    "spoken": "analogous",
-   "start": 2.1,
-   "end": 2.6
+   "start": 2.125,
+   "end": 2.625
   },
   {
    "w": "hypothesis",
    "spoken": "hypothesis",
-   "start": 2.6,
-   "end": 3.35
+   "start": 2.625,
+   "end": 3.375
   },
   {
    "w": "has",
    "spoken": "has",
-   "start": 3.35,
-   "end": 3.5
+   "start": 3.375,
+   "end": 3.525
   },
   {
    "w": "been",
    "spoken": "been",
-   "start": 3.5,
-   "end": 3.7
+   "start": 3.525,
+   "end": 3.725
   },
   {
    "w": "proved",
    "spoken": "proved",
-   "start": 3.7,
-   "end": 4.075
+   "start": 3.725,
+   "end": 4.1
   },
   {
    "w": "for",
    "spoken": "for",
-   "start": 4.075,
-   "end": 4.2
+   "start": 4.1,
+   "end": 4.225
   },
   {
    "w": "decades.",
    "spoken": "decades.",
-   "start": 4.2,
-   "end": 5.425
+   "start": 4.225,
+   "end": 5.45
   },
   {
    "w": "Do",
    "spoken": "Do",
-   "start": 5.425,
-   "end": 5.65
+   "start": 5.45,
+   "end": 5.675
   },
   {
    "w": "arithmetic",
    "spoken": "arithmetic",
-   "start": 5.65,
-   "end": 6.325
+   "start": 5.675,
+   "end": 6.35
   },
   {
    "w": "on",
    "spoken": "on",
-   "start": 6.325,
-   "end": 6.463
+   "start": 6.35,
+   "end": 6.487
   },
   {
    "w": "a",
    "spoken": "a",
-   "start": 6.463,
-   "end": 6.538
+   "start": 6.487,
+   "end": 6.562
   },
   {
    "w": "clock",
    "spoken": "clock",
-   "start": 6.538,
-   "end": 6.888
+   "start": 6.562,
+   "end": 6.913
   },
   {
    "w": "with",
    "spoken": "with",
-   "start": 6.888,
-   "end": 7.062
+   "start": 6.913,
+   "end": 7.088
   },
   {
    "w": "p",
    "spoken": "p",
-   "start": 7.062,
-   "end": 7.325
+   "start": 7.088,
+   "end": 7.35
   },
   {
    "w": "hours,",
    "spoken": "hours,",
-   "start": 7.325,
-   "end": 8.012
+   "start": 7.35,
+   "end": 8.037
   },
   {
    "w": "p",
    "spoken": "p",
-   "start": 8.012,
-   "end": 8.275
+   "start": 8.037,
+   "end": 8.3
   },
   {
    "w": "prime,",
    "spoken": "prime,",
-   "start": 8.275,
-   "end": 9.025
+   "start": 8.3,
+   "end": 9.05
   },
   {
    "w": "and",
    "spoken": "and",
-   "start": 9.025,
-   "end": 9.162
+   "start": 9.05,
+   "end": 9.188
   },
   {
    "w": "count",
    "spoken": "count",
-   "start": 9.162,
-   "end": 9.462
+   "start": 9.188,
+   "end": 9.487
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 9.462,
-   "end": 9.55
+   "start": 9.487,
+   "end": 9.575
   },
   {
    "w": "solutions",
    "spoken": "solutions",
-   "start": 9.55,
-   "end": 10.112
+   "start": 9.575,
+   "end": 10.137
   },
   {
    "w": "of",
    "spoken": "of",
-   "start": 10.112,
-   "end": 10.225
+   "start": 10.137,
+   "end": 10.25
   },
   {
    "w": "y² + y = x³ − x.",
    "spoken": "y squared, plus y, equals x cubed minus x.",
-   "start": 10.225,
-   "end": 13.75
+   "start": 10.25,
+   "end": 13.775
   },
   {
    "w": "For",
    "spoken": "For",
-   "start": 13.75,
-   "end": 13.938
+   "start": 13.775,
+   "end": 13.962
   },
   {
    "w": "p",
    "spoken": "p",
-   "start": 13.938,
-   "end": 14.2
+   "start": 13.962,
+   "end": 14.225
   },
   {
    "w": "equal",
    "spoken": "equal",
-   "start": 14.2,
-   "end": 14.525
+   "start": 14.225,
+   "end": 14.55
   },
   {
    "w": "to",
    "spoken": "to",
-   "start": 14.525,
-   "end": 14.65
+   "start": 14.55,
+   "end": 14.675
   },
   {
    "w": "thirteen,",
    "spoken": "thirteen,",
-   "start": 14.65,
-   "end": 15.575
+   "start": 14.675,
+   "end": 15.6
   },
   {
    "w": "there",
    "spoken": "there",
-   "start": 15.575,
-   "end": 15.75
+   "start": 15.6,
+   "end": 15.775
   },
   {
    "w": "are",
    "spoken": "are",
-   "start": 15.75,
-   "end": 15.887
+   "start": 15.775,
+   "end": 15.912
   },
   {
    "w": "fifteen,",
    "spoken": "fifteen,",
-   "start": 15.887,
+   "start": 15.912,
    "end": 16.775
   },
   {
@@ -234,476 +234,612 @@
    "end": 17.325
   },
   {
+   "w": "extra",
+   "spoken": "extra",
+   "start": 17.325,
+   "end": 17.725
+  },
+  {
    "w": "point",
    "spoken": "point",
-   "start": 17.325,
-   "end": 17.688
+   "start": 17.725,
+   "end": 18.087
   },
   {
    "w": "at",
    "spoken": "at",
-   "start": 17.688,
-   "end": 17.787
+   "start": 18.087,
+   "end": 18.188
   },
   {
    "w": "infinity.",
    "spoken": "infinity.",
-   "start": 17.787,
-   "end": 18.825
-  },
-  {
-   "w": "You'd",
-   "spoken": "You'd",
-   "start": 19.75,
-   "end": 19.863
-  },
-  {
-   "w": "expect",
-   "spoken": "expect",
-   "start": 19.863,
-   "end": 20.238
-  },
-  {
-   "w": "about",
-   "spoken": "about",
-   "start": 20.238,
-   "end": 20.538
-  },
-  {
-   "w": "p",
-   "spoken": "p",
-   "start": 20.538,
-   "end": 20.8
-  },
-  {
-   "w": "plus",
-   "spoken": "plus",
-   "start": 20.8,
-   "end": 21.075
-  },
-  {
-   "w": "one.",
-   "spoken": "one.",
-   "start": 21.075,
-   "end": 21.775
-  },
-  {
-   "w": "The",
-   "spoken": "The",
-   "start": 21.775,
-   "end": 21.875
-  },
-  {
-   "w": "surprise",
-   "spoken": "surprise",
-   "start": 21.875,
-   "end": 22.475
-  },
-  {
-   "w": "is",
-   "spoken": "is",
-   "start": 22.475,
-   "end": 22.6
-  },
-  {
-   "w": "how",
-   "spoken": "how",
-   "start": 22.6,
-   "end": 22.775
-  },
-  {
-   "w": "close",
-   "spoken": "close",
-   "start": 22.775,
-   "end": 23.075
-  },
-  {
-   "w": "it",
-   "spoken": "it",
-   "start": 23.075,
-   "end": 23.2
-  },
-  {
-   "w": "stays:",
-   "spoken": "stays:",
-   "start": 23.2,
-   "end": 23.975
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 23.975,
-   "end": 24.138
-  },
-  {
-   "w": "error",
-   "spoken": "error",
-   "start": 24.138,
-   "end": 24.525
-  },
-  {
-   "w": "is",
-   "spoken": "is",
-   "start": 24.525,
-   "end": 24.688
-  },
-  {
-   "w": "never",
-   "spoken": "never",
-   "start": 24.688,
-   "end": 25.025
-  },
-  {
-   "w": "more",
-   "spoken": "more",
-   "start": 25.025,
-   "end": 25.25
-  },
-  {
-   "w": "than",
-   "spoken": "than",
-   "start": 25.25,
-   "end": 25.45
-  },
-  {
-   "w": "two",
-   "spoken": "two",
-   "start": 25.45,
-   "end": 25.7
-  },
-  {
-   "w": "root",
-   "spoken": "root",
-   "start": 25.7,
-   "end": 25.938
-  },
-  {
-   "w": "p,",
-   "spoken": "p,",
-   "start": 25.938,
-   "end": 26.5
-  },
-  {
-   "w": "for",
-   "spoken": "for",
-   "start": 26.5,
-   "end": 26.65
-  },
-  {
-   "w": "every",
-   "spoken": "every",
-   "start": 26.65,
-   "end": 26.95
-  },
-  {
-   "w": "prime.",
-   "spoken": "prime.",
-   "start": 26.95,
-   "end": 27.938
-  },
-  {
-   "w": "Hasse",
-   "spoken": "Hasse",
-   "start": 27.938,
-   "end": 28.3
-  },
-  {
-   "w": "proved",
-   "spoken": "proved",
-   "start": 28.3,
-   "end": 28.65
-  },
-  {
-   "w": "this",
-   "spoken": "this",
-   "start": 28.65,
-   "end": 28.85
-  },
-  {
-   "w": "for",
-   "spoken": "for",
-   "start": 28.85,
-   "end": 29.013
-  },
-  {
-   "w": "curves",
-   "spoken": "curves",
-   "start": 29.013,
-   "end": 29.475
-  },
-  {
-   "w": "like",
-   "spoken": "like",
-   "start": 29.475,
-   "end": 29.675
-  },
-  {
-   "w": "this",
-   "spoken": "this",
-   "start": 29.675,
-   "end": 29.875
-  },
-  {
-   "w": "one",
-   "spoken": "one",
-   "start": 29.875,
-   "end": 30.1
-  },
-  {
-   "w": "in",
-   "spoken": "in",
-   "start": 30.1,
-   "end": 30.188
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 30.188,
-   "end": 30.275
-  },
-  {
-   "w": "1930s,",
-   "spoken": "nineteen thirties,",
-   "start": 30.275,
-   "end": 31.613
-  },
-  {
-   "w": "Weil",
-   "spoken": "Weil",
-   "start": 31.613,
-   "end": 31.95
-  },
-  {
-   "w": "for",
-   "spoken": "for",
-   "start": 31.95,
-   "end": 32.112
-  },
-  {
-   "w": "all",
-   "spoken": "all",
-   "start": 32.112,
-   "end": 32.375
-  },
-  {
-   "w": "curves",
-   "spoken": "curves",
-   "start": 32.375,
-   "end": 32.737
-  },
-  {
-   "w": "in",
-   "spoken": "in",
-   "start": 32.737,
-   "end": 32.812
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 32.812,
-   "end": 32.9
-  },
-  {
-   "w": "1940s,",
-   "spoken": "forties,",
-   "start": 32.9,
-   "end": 33.675
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 33.675,
-   "end": 33.8
-  },
-  {
-   "w": "Deligne",
-   "spoken": "Deligne",
-   "start": 33.8,
-   "end": 34.225
-  },
-  {
-   "w": "went",
-   "spoken": "went",
-   "start": 34.225,
-   "end": 34.4
-  },
-  {
-   "w": "much",
-   "spoken": "much",
-   "start": 34.4,
-   "end": 34.688
-  },
-  {
-   "w": "further",
-   "spoken": "further",
-   "start": 34.688,
-   "end": 35.05
-  },
-  {
-   "w": "in",
-   "spoken": "in",
-   "start": 35.05,
-   "end": 35.175
-  },
-  {
-   "w": "1974.",
-   "spoken": "nineteen seventy-four.",
-   "start": 35.175,
-   "end": 36.938
+   "start": 18.188,
+   "end": 19.225
   },
   {
    "w": "Each",
    "spoken": "Each",
-   "start": 36.938,
-   "end": 37.2
+   "start": 20.175,
+   "end": 20.375
   },
   {
-   "w": "such",
-   "spoken": "such",
-   "start": 37.2,
-   "end": 37.425
+   "w": "x",
+   "spoken": "x",
+   "start": 20.375,
+   "end": 20.65
   },
   {
-   "w": "equation",
-   "spoken": "equation",
-   "start": 37.425,
-   "end": 37.95
+   "w": "gives",
+   "spoken": "gives",
+   "start": 20.65,
+   "end": 20.938
   },
   {
-   "w": "has",
-   "spoken": "has",
-   "start": 37.95,
-   "end": 38.112
+   "w": "two,",
+   "spoken": "two,",
+   "start": 20.938,
+   "end": 21.438
   },
   {
-   "w": "a",
-   "spoken": "a",
-   "start": 38.112,
-   "end": 38.2
+   "w": "one",
+   "spoken": "one",
+   "start": 21.438,
+   "end": 21.75
   },
   {
-   "w": "zeta",
-   "spoken": "zeta",
-   "start": 38.2,
-   "end": 38.525
+   "w": "or",
+   "spoken": "or",
+   "start": 21.75,
+   "end": 21.875
   },
   {
-   "w": "function,",
-   "spoken": "function,",
-   "start": 38.525,
-   "end": 39.325
+   "w": "no",
+   "spoken": "no",
+   "start": 21.875,
+   "end": 22.05
   },
   {
-   "w": "and",
-   "spoken": "and",
-   "start": 39.325,
-   "end": 39.438
+   "w": "values",
+   "spoken": "values",
+   "start": 22.05,
+   "end": 22.462
   },
   {
-   "w": "this",
-   "spoken": "this",
-   "start": 39.438,
-   "end": 39.612
+   "w": "of",
+   "spoken": "of",
+   "start": 22.462,
+   "end": 22.55
   },
   {
-   "w": "bound",
-   "spoken": "bound",
-   "start": 39.612,
-   "end": 40.0
+   "w": "y,",
+   "spoken": "y,",
+   "start": 22.55,
+   "end": 23.05
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 23.05,
+   "end": 23.212
+  },
+  {
+   "w": "on",
+   "spoken": "on",
+   "start": 23.212,
+   "end": 23.35
+  },
+  {
+   "w": "average,",
+   "spoken": "average,",
+   "start": 23.35,
+   "end": 23.925
+  },
+  {
+   "w": "so",
+   "spoken": "so",
+   "start": 23.925,
+   "end": 24.05
+  },
+  {
+   "w": "you'd",
+   "spoken": "you'd",
+   "start": 24.05,
+   "end": 24.163
+  },
+  {
+   "w": "expect",
+   "spoken": "expect",
+   "start": 24.163,
+   "end": 24.538
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 24.538,
+   "end": 24.775
+  },
+  {
+   "w": "p",
+   "spoken": "p",
+   "start": 24.775,
+   "end": 25.0
+  },
+  {
+   "w": "plus",
+   "spoken": "plus",
+   "start": 25.0,
+   "end": 25.275
+  },
+  {
+   "w": "one.",
+   "spoken": "one.",
+   "start": 25.275,
+   "end": 26.075
+  },
+  {
+   "w": "The",
+   "spoken": "The",
+   "start": 26.075,
+   "end": 26.175
+  },
+  {
+   "w": "surprise",
+   "spoken": "surprise",
+   "start": 26.175,
+   "end": 26.725
   },
   {
    "w": "is",
    "spoken": "is",
-   "start": 40.0,
-   "end": 40.125
+   "start": 26.725,
+   "end": 26.85
+  },
+  {
+   "w": "how",
+   "spoken": "how",
+   "start": 26.85,
+   "end": 27.025
+  },
+  {
+   "w": "close",
+   "spoken": "close",
+   "start": 27.025,
+   "end": 27.312
+  },
+  {
+   "w": "it",
+   "spoken": "it",
+   "start": 27.312,
+   "end": 27.4
+  },
+  {
+   "w": "stays:",
+   "spoken": "stays:",
+   "start": 27.4,
+   "end": 28.2
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 28.2,
+   "end": 28.363
+  },
+  {
+   "w": "error",
+   "spoken": "error",
+   "start": 28.363,
+   "end": 28.675
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 28.675,
+   "end": 28.825
+  },
+  {
+   "w": "never",
+   "spoken": "never",
+   "start": 28.825,
+   "end": 29.125
+  },
+  {
+   "w": "more",
+   "spoken": "more",
+   "start": 29.125,
+   "end": 29.35
+  },
+  {
+   "w": "than",
+   "spoken": "than",
+   "start": 29.35,
+   "end": 29.538
+  },
+  {
+   "w": "two",
+   "spoken": "two",
+   "start": 29.538,
+   "end": 29.775
+  },
+  {
+   "w": "root",
+   "spoken": "root",
+   "start": 29.775,
+   "end": 29.975
+  },
+  {
+   "w": "p,",
+   "spoken": "p,",
+   "start": 29.975,
+   "end": 30.4
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 30.4,
+   "end": 30.55
+  },
+  {
+   "w": "every",
+   "spoken": "every",
+   "start": 30.55,
+   "end": 30.85
+  },
+  {
+   "w": "prime.",
+   "spoken": "prime.",
+   "start": 30.85,
+   "end": 31.788
+  },
+  {
+   "w": "Hasse",
+   "spoken": "Hasse",
+   "start": 31.788,
+   "end": 32.15
+  },
+  {
+   "w": "proved",
+   "spoken": "proved",
+   "start": 32.15,
+   "end": 32.5
+  },
+  {
+   "w": "this",
+   "spoken": "this",
+   "start": 32.5,
+   "end": 32.725
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 32.725,
+   "end": 32.875
+  },
+  {
+   "w": "curves",
+   "spoken": "curves",
+   "start": 32.875,
+   "end": 33.237
+  },
+  {
+   "w": "like",
+   "spoken": "like",
+   "start": 33.237,
+   "end": 33.425
+  },
+  {
+   "w": "this",
+   "spoken": "this",
+   "start": 33.425,
+   "end": 33.625
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 33.625,
+   "end": 33.812
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 33.812,
+   "end": 33.888
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 33.888,
+   "end": 33.962
+  },
+  {
+   "w": "1930s,",
+   "spoken": "nineteen thirties,",
+   "start": 33.962,
+   "end": 35.188
+  },
+  {
+   "w": "Weil",
+   "spoken": "Weil",
+   "start": 35.188,
+   "end": 35.425
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 35.425,
+   "end": 35.538
+  },
+  {
+   "w": "general",
+   "spoken": "general",
+   "start": 35.538,
+   "end": 35.95
+  },
+  {
+   "w": "version",
+   "spoken": "version",
+   "start": 35.95,
+   "end": 36.375
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 36.375,
+   "end": 36.538
+  },
+  {
+   "w": "every",
+   "spoken": "every",
+   "start": 36.538,
+   "end": 36.875
+  },
+  {
+   "w": "curve",
+   "spoken": "curve",
+   "start": 36.875,
+   "end": 37.188
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 37.188,
+   "end": 37.263
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 37.263,
+   "end": 37.35
+  },
+  {
+   "w": "1940s,",
+   "spoken": "forties,",
+   "start": 37.35,
+   "end": 38.025
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 38.025,
+   "end": 38.15
+  },
+  {
+   "w": "Deligne",
+   "spoken": "Deligne",
+   "start": 38.15,
+   "end": 38.55
+  },
+  {
+   "w": "went",
+   "spoken": "went",
+   "start": 38.55,
+   "end": 38.725
+  },
+  {
+   "w": "much",
+   "spoken": "much",
+   "start": 38.725,
+   "end": 39.013
+  },
+  {
+   "w": "further",
+   "spoken": "further",
+   "start": 39.013,
+   "end": 39.375
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 39.375,
+   "end": 39.475
+  },
+  {
+   "w": "1974.",
+   "spoken": "nineteen seventy-four.",
+   "start": 39.475,
+   "end": 41.188
+  },
+  {
+   "w": "Each",
+   "spoken": "Each",
+   "start": 41.188,
+   "end": 41.45
+  },
+  {
+   "w": "such",
+   "spoken": "such",
+   "start": 41.45,
+   "end": 41.7
+  },
+  {
+   "w": "curve",
+   "spoken": "curve",
+   "start": 41.7,
+   "end": 42.05
+  },
+  {
+   "w": "has",
+   "spoken": "has",
+   "start": 42.05,
+   "end": 42.212
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 42.212,
+   "end": 42.275
+  },
+  {
+   "w": "zeta",
+   "spoken": "zeta",
+   "start": 42.275,
+   "end": 42.6
+  },
+  {
+   "w": "function,",
+   "spoken": "function,",
+   "start": 42.6,
+   "end": 43.425
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 43.425,
+   "end": 43.55
+  },
+  {
+   "w": "for",
+   "spoken": "for",
+   "start": 43.55,
+   "end": 43.675
+  },
+  {
+   "w": "this",
+   "spoken": "this",
+   "start": 43.675,
+   "end": 43.9
+  },
+  {
+   "w": "one,",
+   "spoken": "one,",
+   "start": 43.9,
+   "end": 44.225
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 44.225,
+   "end": 44.325
+  },
+  {
+   "w": "bound",
+   "spoken": "bound",
+   "start": 44.325,
+   "end": 44.688
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 44.688,
+   "end": 44.8
   },
   {
    "w": "exactly",
    "spoken": "exactly",
-   "start": 40.125,
-   "end": 40.75
+   "start": 44.8,
+   "end": 45.4
   },
   {
    "w": "its",
    "spoken": "its",
-   "start": 40.75,
-   "end": 40.963
+   "start": 45.4,
+   "end": 45.612
   },
   {
    "w": "Riemann",
    "spoken": "Riemann",
-   "start": 40.963,
-   "end": 41.35
+   "start": 45.612,
+   "end": 46.05
   },
   {
    "w": "Hypothesis.",
    "spoken": "Hypothesis.",
-   "start": 41.35,
-   "end": 42.575
+   "start": 46.05,
+   "end": 47.2
   }
  ],
  "chunks": [
   {
    "text": "In a parallel world, the analogous hypothesis has been proved for decades.",
-   "start": 0.725,
-   "end": 5.425
+   "start": 0.75,
+   "end": 5.45
   },
   {
    "text": "Do arithmetic on a clock with p hours, p prime,",
-   "start": 5.425,
-   "end": 9.025
+   "start": 5.45,
+   "end": 9.05
   },
   {
    "text": "and count the solutions of y² + y = x³ − x.",
-   "start": 9.025,
-   "end": 13.75
+   "start": 9.05,
+   "end": 13.775
   },
   {
-   "text": "For p equal to thirteen, there are fifteen, plus one point at infinity.",
-   "start": 13.75,
-   "end": 18.825
+   "text": "For p equal to thirteen, there are fifteen, plus one extra point at infinity.",
+   "start": 13.775,
+   "end": 19.225
   },
   {
-   "text": "You'd expect about p plus one.",
-   "start": 19.75,
-   "end": 21.775
+   "text": "Each x gives two, one or no values of y, one on average,",
+   "start": 20.175,
+   "end": 23.925
+  },
+  {
+   "text": "so you'd expect about p plus one.",
+   "start": 23.925,
+   "end": 26.075
   },
   {
    "text": "The surprise is how close it stays: the error is never more than two root p,",
-   "start": 21.775,
-   "end": 26.5
+   "start": 26.075,
+   "end": 30.4
   },
   {
    "text": "for every prime.",
-   "start": 26.5,
-   "end": 27.938
+   "start": 30.4,
+   "end": 31.788
   },
   {
    "text": "Hasse proved this for curves like this one in the 1930s,",
-   "start": 27.938,
-   "end": 31.613
+   "start": 31.788,
+   "end": 35.188
   },
   {
-   "text": "Weil for all curves in the 1940s, and Deligne went much further in 1974.",
-   "start": 31.613,
-   "end": 36.938
+   "text": "Weil the general version for every curve in the 1940s,",
+   "start": 35.188,
+   "end": 38.025
   },
   {
-   "text": "Each such equation has a zeta function,",
-   "start": 36.938,
-   "end": 39.325
+   "text": "and Deligne went much further in 1974.",
+   "start": 38.025,
+   "end": 41.188
   },
   {
-   "text": "and this bound is exactly its Riemann Hypothesis.",
-   "start": 39.325,
-   "end": 42.575
+   "text": "Each such curve has a zeta function, and for this one,",
+   "start": 41.188,
+   "end": 44.225
+  },
+  {
+   "text": "the bound is exactly its Riemann Hypothesis.",
+   "start": 44.225,
+   "end": 47.2
   }
  ],
  "cues": {
-  "clock": 5.425,
-  "grid": 13.75,
-  "count": 19.75,
-  "hasse": 21.775,
-  "weil": 27.938
+  "clock": 5.45,
+  "grid": 13.775,
+  "count": 20.175,
+  "hasse": 26.075,
+  "weil": 31.788
  }
 }

@@ -1,773 +1,916 @@
 {
  "scene": "s12_obstacle",
- "duration": 47.4,
+ "duration": 54.2,
  "sr": 24000,
  "voice": "af_heart",
  "speed": 1.0,
  "words": [
   {
-   "w": "Over",
-   "spoken": "Over",
-   "start": 0.725,
-   "end": 0.975
+   "w": "Stepanov",
+   "spoken": "Stepanov",
+   "start": 0.7,
+   "end": 1.3
   },
   {
-   "w": "the",
-   "spoken": "the",
-   "start": 0.975,
-   "end": 1.075
-  },
-  {
-   "w": "whole",
-   "spoken": "whole",
-   "start": 1.075,
-   "end": 1.325
-  },
-  {
-   "w": "numbers,",
-   "spoken": "numbers,",
-   "start": 1.325,
-   "end": 2.05
-  },
-  {
-   "w": "there's",
-   "spoken": "there's",
-   "start": 2.05,
-   "end": 2.312
-  },
-  {
-   "w": "nothing",
-   "spoken": "nothing",
-   "start": 2.312,
-   "end": 2.7
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 2.7,
-   "end": 2.825
-  },
-  {
-   "w": "differentiate.",
-   "spoken": "differentiate.",
-   "start": 2.825,
-   "end": 4.213
-  },
-  {
-   "w": "Alpöge's",
-   "spoken": "Alpöge's",
-   "start": 4.213,
-   "end": 4.862
-  },
-  {
-   "w": "note",
-   "spoken": "note",
-   "start": 4.862,
-   "end": 5.175
-  },
-  {
-   "w": "puts",
-   "spoken": "puts",
-   "start": 5.175,
-   "end": 5.388
-  },
-  {
-   "w": "it",
-   "spoken": "it",
-   "start": 5.388,
-   "end": 5.5
-  },
-  {
-   "w": "this",
-   "spoken": "this",
-   "start": 5.5,
-   "end": 5.7
-  },
-  {
-   "w": "way:",
-   "spoken": "way:",
-   "start": 5.7,
-   "end": 6.413
+   "w": "detects",
+   "spoken": "detects",
+   "start": 1.3,
+   "end": 1.75
   },
   {
    "w": "multiplicity",
    "spoken": "multiplicity",
-   "start": 6.413,
-   "end": 7.263
-  },
-  {
-   "w": "is",
-   "spoken": "is",
-   "start": 7.263,
-   "end": 7.438
-  },
-  {
-   "w": "hard",
-   "spoken": "hard",
-   "start": 7.438,
-   "end": 7.725
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 7.725,
-   "end": 7.85
-  },
-  {
-   "w": "find",
-   "spoken": "find",
-   "start": 7.85,
-   "end": 8.162
-  },
-  {
-   "w": "over",
-   "spoken": "over",
-   "start": 8.162,
-   "end": 8.362
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 8.362,
-   "end": 8.475
-  },
-  {
-   "w": "integers,",
-   "spoken": "integers,",
-   "start": 8.475,
-   "end": 9.362
-  },
-  {
-   "w": "corresponding",
-   "spoken": "corresponding",
-   "start": 9.362,
-   "end": 10.15
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 10.15,
-   "end": 10.275
-  },
-  {
-   "w": "something",
-   "spoken": "something",
-   "start": 10.275,
-   "end": 10.65
-  },
-  {
-   "w": "like",
-   "spoken": "like",
-   "start": 10.65,
-   "end": 10.887
-  },
-  {
-   "w": "differentiating",
-   "spoken": "differentiating",
-   "start": 10.887,
-   "end": 11.712
-  },
-  {
-   "w": "whole",
-   "spoken": "whole",
-   "start": 11.712,
-   "end": 11.975
-  },
-  {
-   "w": "numbers.",
-   "spoken": "numbers.",
-   "start": 11.975,
-   "end": 12.925
-  },
-  {
-   "w": "But",
-   "spoken": "But",
-   "start": 13.825,
-   "end": 13.962
-  },
-  {
-   "w": "root",
-   "spoken": "root",
-   "start": 13.962,
-   "end": 14.237
-  },
-  {
-   "w": "counting",
-   "spoken": "counting",
-   "start": 14.237,
-   "end": 14.775
-  },
-  {
-   "w": "has",
-   "spoken": "has",
-   "start": 14.775,
-   "end": 14.938
-  },
-  {
-   "w": "an",
-   "spoken": "an",
-   "start": 14.938,
-   "end": 15.062
-  },
-  {
-   "w": "old",
-   "spoken": "old",
-   "start": 15.062,
-   "end": 15.4
-  },
-  {
-   "w": "integer",
-   "spoken": "integer",
-   "start": 15.4,
-   "end": 15.8
-  },
-  {
-   "w": "cousin.",
-   "spoken": "cousin.",
-   "start": 15.8,
-   "end": 16.712
-  },
-  {
-   "w": "A",
-   "spoken": "A",
-   "start": 16.712,
-   "end": 16.825
-  },
-  {
-   "w": "whole",
-   "spoken": "whole",
-   "start": 16.825,
-   "end": 17.075
-  },
-  {
-   "w": "number",
-   "spoken": "number",
-   "start": 17.075,
-   "end": 17.425
-  },
-  {
-   "w": "that",
-   "spoken": "that",
-   "start": 17.425,
-   "end": 17.575
-  },
-  {
-   "w": "isn't",
-   "spoken": "isn't",
-   "start": 17.575,
-   "end": 17.862
-  },
-  {
-   "w": "zero,",
-   "spoken": "zero,",
-   "start": 17.862,
-   "end": 18.425
-  },
-  {
-   "w": "but",
-   "spoken": "but",
-   "start": 18.425,
-   "end": 18.575
-  },
-  {
-   "w": "is",
-   "spoken": "is",
-   "start": 18.575,
-   "end": 18.725
-  },
-  {
-   "w": "divisible",
-   "spoken": "divisible",
-   "start": 18.725,
-   "end": 19.225
-  },
-  {
-   "w": "by",
-   "spoken": "by",
-   "start": 19.225,
-   "end": 19.4
-  },
-  {
-   "w": "many",
-   "spoken": "many",
-   "start": 19.4,
-   "end": 19.625
-  },
-  {
-   "w": "primes,",
-   "spoken": "primes,",
-   "start": 19.625,
-   "end": 20.288
-  },
-  {
-   "w": "must",
-   "spoken": "must",
-   "start": 20.288,
-   "end": 20.55
-  },
-  {
-   "w": "be",
-   "spoken": "be",
-   "start": 20.55,
-   "end": 20.7
-  },
-  {
-   "w": "large.",
-   "spoken": "large.",
-   "start": 20.7,
-   "end": 21.712
-  },
-  {
-   "w": "Twenty",
-   "spoken": "Twenty",
-   "start": 21.712,
-   "end": 22.038
-  },
-  {
-   "w": "choose",
-   "spoken": "choose",
-   "start": 22.038,
-   "end": 22.387
-  },
-  {
-   "w": "ten",
-   "spoken": "ten",
-   "start": 22.387,
-   "end": 22.762
-  },
-  {
-   "w": "is",
-   "spoken": "is",
-   "start": 22.762,
-   "end": 22.925
-  },
-  {
-   "w": "divisible",
-   "spoken": "divisible",
-   "start": 22.925,
-   "end": 23.4
-  },
-  {
-   "w": "by",
-   "spoken": "by",
-   "start": 23.4,
-   "end": 23.575
-  },
-  {
-   "w": "eleven,",
-   "spoken": "eleven,",
-   "start": 23.575,
-   "end": 24.288
-  },
-  {
-   "w": "thirteen,",
-   "spoken": "thirteen,",
-   "start": 24.288,
-   "end": 25.137
-  },
-  {
-   "w": "seventeen",
-   "spoken": "seventeen",
-   "start": 25.137,
-   "end": 25.875
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 25.875,
-   "end": 26.0
-  },
-  {
-   "w": "nineteen,",
-   "spoken": "nineteen,",
-   "start": 26.0,
-   "end": 26.95
-  },
-  {
-   "w": "so",
-   "spoken": "so",
-   "start": 26.95,
-   "end": 27.087
-  },
-  {
-   "w": "it's",
-   "spoken": "it's",
-   "start": 27.087,
-   "end": 27.188
-  },
-  {
-   "w": "at",
-   "spoken": "at",
-   "start": 27.188,
-   "end": 27.275
-  },
-  {
-   "w": "least",
-   "spoken": "least",
-   "start": 27.275,
-   "end": 27.512
-  },
-  {
-   "w": "their",
-   "spoken": "their",
-   "start": 27.512,
-   "end": 27.675
-  },
-  {
-   "w": "product,",
-   "spoken": "product,",
-   "start": 27.675,
-   "end": 28.325
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 28.325,
-   "end": 28.438
-  },
-  {
-   "w": "it's",
-   "spoken": "it's",
-   "start": 28.438,
-   "end": 28.612
-  },
-  {
-   "w": "less",
-   "spoken": "less",
-   "start": 28.612,
-   "end": 28.925
-  },
-  {
-   "w": "than",
-   "spoken": "than",
-   "start": 28.925,
-   "end": 29.125
-  },
-  {
-   "w": "four",
-   "spoken": "four",
-   "start": 29.125,
-   "end": 29.4
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 29.4,
-   "end": 29.487
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 29.487,
-   "end": 29.587
-  },
-  {
-   "w": "tenth.",
-   "spoken": "tenth.",
-   "start": 29.587,
-   "end": 30.512
-  },
-  {
-   "w": "Divisibility",
-   "spoken": "Divisibility",
-   "start": 30.512,
-   "end": 31.287
-  },
-  {
-   "w": "plays",
-   "spoken": "plays",
-   "start": 31.287,
-   "end": 31.65
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 31.65,
-   "end": 31.775
-  },
-  {
-   "w": "role",
-   "spoken": "role",
-   "start": 31.775,
-   "end": 32.1
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 32.1,
-   "end": 32.225
-  },
-  {
-   "w": "multiplicity;",
-   "spoken": "multiplicity;",
-   "start": 32.225,
-   "end": 33.35
-  },
-  {
-   "w": "size",
-   "spoken": "size",
-   "start": 33.35,
-   "end": 33.787
-  },
-  {
-   "w": "plays",
-   "spoken": "plays",
-   "start": 33.787,
-   "end": 34.125
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 34.125,
-   "end": 34.263
-  },
-  {
-   "w": "role",
-   "spoken": "role",
-   "start": 34.263,
-   "end": 34.562
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 34.562,
-   "end": 34.65
-  },
-  {
-   "w": "degree.",
-   "spoken": "degree.",
-   "start": 34.65,
-   "end": 35.537
-  },
-  {
-   "w": "In",
-   "spoken": "In",
-   "start": 36.0,
-   "end": 36.088
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 36.088,
-   "end": 36.2
-  },
-  {
-   "w": "1850s,",
-   "spoken": "eighteen fifties,",
-   "start": 36.2,
-   "end": 37.538
-  },
-  {
-   "w": "Chebyshev",
-   "spoken": "Chebyshev",
-   "start": 37.538,
-   "end": 38.075
-  },
-  {
-   "w": "used",
-   "spoken": "used",
-   "start": 38.075,
-   "end": 38.35
-  },
-  {
-   "w": "this",
-   "spoken": "this",
-   "start": 38.35,
-   "end": 38.575
-  },
-  {
-   "w": "idea,",
-   "spoken": "idea,",
-   "start": 38.575,
-   "end": 39.2
+   "start": 1.75,
+   "end": 2.475
   },
   {
    "w": "with",
    "spoken": "with",
-   "start": 39.2,
-   "end": 39.375
+   "start": 2.475,
+   "end": 2.65
   },
   {
-   "w": "ratios",
-   "spoken": "ratios",
-   "start": 39.375,
-   "end": 39.913
+   "w": "derivatives:",
+   "spoken": "derivatives:",
+   "start": 2.65,
+   "end": 3.788
+  },
+  {
+   "w": "at",
+   "spoken": "at",
+   "start": 3.788,
+   "end": 3.888
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 3.888,
+   "end": 3.963
+  },
+  {
+   "w": "double",
+   "spoken": "double",
+   "start": 3.963,
+   "end": 4.3
+  },
+  {
+   "w": "root,",
+   "spoken": "root,",
+   "start": 4.3,
+   "end": 4.888
+  },
+  {
+   "w": "f",
+   "spoken": "f",
+   "start": 4.888,
+   "end": 5.237
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 5.237,
+   "end": 5.362
+  },
+  {
+   "w": "its",
+   "spoken": "its",
+   "start": 5.362,
+   "end": 5.513
+  },
+  {
+   "w": "slope",
+   "spoken": "slope",
+   "start": 5.513,
+   "end": 5.875
+  },
+  {
+   "w": "both",
+   "spoken": "both",
+   "start": 5.875,
+   "end": 6.15
+  },
+  {
+   "w": "vanish.",
+   "spoken": "vanish.",
+   "start": 6.15,
+   "end": 7.263
+  },
+  {
+   "w": "Alpöge",
+   "spoken": "Alpöge",
+   "start": 7.263,
+   "end": 7.888
+  },
+  {
+   "w": "calls",
+   "spoken": "calls",
+   "start": 7.888,
+   "end": 8.162
+  },
+  {
+   "w": "his",
+   "spoken": "his",
+   "start": 8.162,
+   "end": 8.325
+  },
+  {
+   "w": "argument",
+   "spoken": "argument",
+   "start": 8.325,
+   "end": 8.85
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 8.85,
+   "end": 8.925
+  },
+  {
+   "w": "descendant",
+   "spoken": "descendant",
+   "start": 8.925,
+   "end": 9.462
   },
   {
    "w": "of",
    "spoken": "of",
-   "start": 39.913,
-   "end": 40.0
+   "start": 9.462,
+   "end": 9.55
   },
   {
-   "w": "factorials,",
-   "spoken": "factorials,",
-   "start": 40.0,
-   "end": 41.05
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 41.05,
-   "end": 41.175
-  },
-  {
-   "w": "bound",
-   "spoken": "bound",
-   "start": 41.175,
-   "end": 41.562
-  },
-  {
-   "w": "how",
-   "spoken": "how",
-   "start": 41.562,
-   "end": 41.763
-  },
-  {
-   "w": "many",
-   "spoken": "many",
-   "start": 41.763,
-   "end": 41.975
-  },
-  {
-   "w": "primes",
-   "spoken": "primes",
-   "start": 41.975,
-   "end": 42.375
-  },
-  {
-   "w": "there",
-   "spoken": "there",
-   "start": 42.375,
-   "end": 42.588
-  },
-  {
-   "w": "are,",
-   "spoken": "are,",
-   "start": 42.588,
-   "end": 43.0
+   "w": "Stepanov's,",
+   "spoken": "Stepanov's,",
+   "start": 9.55,
+   "end": 10.6
   },
   {
    "w": "but",
    "spoken": "but",
-   "start": 43.0,
-   "end": 43.175
+   "start": 10.6,
+   "end": 10.75
   },
   {
-   "w": "only",
-   "spoken": "only",
-   "start": 43.175,
-   "end": 43.475
+   "w": "writes",
+   "spoken": "writes",
+   "start": 10.75,
+   "end": 11.075
   },
   {
-   "w": "roughly:",
-   "spoken": "roughly:",
-   "start": 43.475,
-   "end": 44.362
+   "w": "that",
+   "spoken": "that",
+   "start": 11.075,
+   "end": 11.312
   },
   {
-   "w": "those",
-   "spoken": "those",
-   "start": 44.362,
-   "end": 44.625
+   "w": "multiplicity",
+   "spoken": "multiplicity",
+   "start": 11.312,
+   "end": 12.112
   },
   {
-   "w": "numbers",
-   "spoken": "numbers",
-   "start": 44.625,
-   "end": 45.075
+   "w": "is",
+   "spoken": "is",
+   "start": 12.112,
+   "end": 12.287
   },
   {
-   "w": "aren't",
-   "spoken": "aren't",
-   "start": 45.075,
-   "end": 45.275
+   "w": "hard",
+   "spoken": "hard",
+   "start": 12.287,
+   "end": 12.55
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 12.55,
+   "end": 12.675
+  },
+  {
+   "w": "find",
+   "spoken": "find",
+   "start": 12.675,
+   "end": 12.962
+  },
+  {
+   "w": "over",
+   "spoken": "over",
+   "start": 12.962,
+   "end": 13.162
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 13.162,
+   "end": 13.275
+  },
+  {
+   "w": "integers,",
+   "spoken": "integers,",
+   "start": 13.275,
+   "end": 14.188
+  },
+  {
+   "w": "corresponding",
+   "spoken": "corresponding",
+   "start": 14.188,
+   "end": 14.975
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 14.975,
+   "end": 15.1
+  },
+  {
+   "w": "something",
+   "spoken": "something",
+   "start": 15.1,
+   "end": 15.475
+  },
+  {
+   "w": "like",
+   "spoken": "like",
+   "start": 15.475,
+   "end": 15.712
+  },
+  {
+   "w": "differentiating",
+   "spoken": "differentiating",
+   "start": 15.712,
+   "end": 16.562
+  },
+  {
+   "w": "whole",
+   "spoken": "whole",
+   "start": 16.562,
+   "end": 16.825
+  },
+  {
+   "w": "numbers.",
+   "spoken": "numbers.",
+   "start": 16.825,
+   "end": 17.8
+  },
+  {
+   "w": "Still,",
+   "spoken": "Still,",
+   "start": 18.75,
+   "end": 19.188
+  },
+  {
+   "w": "root",
+   "spoken": "root",
+   "start": 19.188,
+   "end": 19.425
+  },
+  {
+   "w": "counting",
+   "spoken": "counting",
+   "start": 19.425,
+   "end": 19.925
+  },
+  {
+   "w": "has",
+   "spoken": "has",
+   "start": 19.925,
+   "end": 20.087
+  },
+  {
+   "w": "an",
+   "spoken": "an",
+   "start": 20.087,
+   "end": 20.212
+  },
+  {
+   "w": "old",
+   "spoken": "old",
+   "start": 20.212,
+   "end": 20.525
+  },
+  {
+   "w": "integer",
+   "spoken": "integer",
+   "start": 20.525,
+   "end": 20.875
+  },
+  {
+   "w": "cousin.",
+   "spoken": "cousin.",
+   "start": 20.875,
+   "end": 21.787
+  },
+  {
+   "w": "A",
+   "spoken": "A",
+   "start": 21.787,
+   "end": 21.9
+  },
+  {
+   "w": "whole",
+   "spoken": "whole",
+   "start": 21.9,
+   "end": 22.15
+  },
+  {
+   "w": "number",
+   "spoken": "number",
+   "start": 22.15,
+   "end": 22.5
+  },
+  {
+   "w": "that",
+   "spoken": "that",
+   "start": 22.5,
+   "end": 22.65
+  },
+  {
+   "w": "isn't",
+   "spoken": "isn't",
+   "start": 22.65,
+   "end": 22.925
+  },
+  {
+   "w": "zero,",
+   "spoken": "zero,",
+   "start": 22.925,
+   "end": 23.45
+  },
+  {
+   "w": "but",
+   "spoken": "but",
+   "start": 23.45,
+   "end": 23.6
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 23.6,
+   "end": 23.75
   },
   {
    "w": "divisible",
    "spoken": "divisible",
-   "start": 45.275,
-   "end": 45.725
+   "start": 23.75,
+   "end": 24.225
+  },
+  {
+   "w": "by",
+   "spoken": "by",
+   "start": 24.225,
+   "end": 24.4
+  },
+  {
+   "w": "many",
+   "spoken": "many",
+   "start": 24.4,
+   "end": 24.625
+  },
+  {
+   "w": "primes,",
+   "spoken": "primes,",
+   "start": 24.625,
+   "end": 25.175
+  },
+  {
+   "w": "must",
+   "spoken": "must",
+   "start": 25.175,
+   "end": 25.425
+  },
+  {
+   "w": "be",
+   "spoken": "be",
+   "start": 25.425,
+   "end": 25.575
+  },
+  {
+   "w": "large.",
+   "spoken": "large.",
+   "start": 25.575,
+   "end": 26.562
+  },
+  {
+   "w": "Twenty",
+   "spoken": "Twenty",
+   "start": 26.562,
+   "end": 26.887
+  },
+  {
+   "w": "choose",
+   "spoken": "choose",
+   "start": 26.887,
+   "end": 27.237
+  },
+  {
+   "w": "ten",
+   "spoken": "ten",
+   "start": 27.237,
+   "end": 27.6
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 27.6,
+   "end": 27.75
+  },
+  {
+   "w": "divisible",
+   "spoken": "divisible",
+   "start": 27.75,
+   "end": 28.225
+  },
+  {
+   "w": "by",
+   "spoken": "by",
+   "start": 28.225,
+   "end": 28.438
+  },
+  {
+   "w": "every",
+   "spoken": "every",
+   "start": 28.438,
+   "end": 28.75
+  },
+  {
+   "w": "prime",
+   "spoken": "prime",
+   "start": 28.75,
+   "end": 29.1
+  },
+  {
+   "w": "between",
+   "spoken": "between",
+   "start": 29.1,
+   "end": 29.462
+  },
+  {
+   "w": "ten",
+   "spoken": "ten",
+   "start": 29.462,
+   "end": 29.75
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 29.75,
+   "end": 29.875
+  },
+  {
+   "w": "twenty,",
+   "spoken": "twenty,",
+   "start": 29.875,
+   "end": 30.65
+  },
+  {
+   "w": "yet",
+   "spoken": "yet",
+   "start": 30.65,
+   "end": 30.788
+  },
+  {
+   "w": "it's",
+   "spoken": "it's",
+   "start": 30.788,
+   "end": 30.975
+  },
+  {
+   "w": "less",
+   "spoken": "less",
+   "start": 30.975,
+   "end": 31.275
+  },
+  {
+   "w": "than",
+   "spoken": "than",
+   "start": 31.275,
+   "end": 31.462
+  },
+  {
+   "w": "four",
+   "spoken": "four",
+   "start": 31.462,
+   "end": 31.725
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 31.725,
+   "end": 31.812
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 31.812,
+   "end": 31.913
+  },
+  {
+   "w": "tenth,",
+   "spoken": "tenth,",
+   "start": 31.913,
+   "end": 32.575
+  },
+  {
+   "w": "so",
+   "spoken": "so",
+   "start": 32.575,
+   "end": 32.75
+  },
+  {
+   "w": "those",
+   "spoken": "those",
+   "start": 32.75,
+   "end": 32.975
+  },
+  {
+   "w": "primes",
+   "spoken": "primes",
+   "start": 32.975,
+   "end": 33.438
+  },
+  {
+   "w": "can't",
+   "spoken": "can't",
+   "start": 33.438,
+   "end": 33.725
+  },
+  {
+   "w": "be",
+   "spoken": "be",
+   "start": 33.725,
+   "end": 33.888
+  },
+  {
+   "w": "too",
+   "spoken": "too",
+   "start": 33.888,
+   "end": 34.1
+  },
+  {
+   "w": "many.",
+   "spoken": "many.",
+   "start": 34.1,
+   "end": 35.087
+  },
+  {
+   "w": "Each",
+   "spoken": "Each",
+   "start": 35.087,
+   "end": 35.375
+  },
+  {
+   "w": "prime",
+   "spoken": "prime",
+   "start": 35.375,
+   "end": 35.7
+  },
+  {
+   "w": "factor",
+   "spoken": "factor",
+   "start": 35.7,
+   "end": 36.125
+  },
+  {
+   "w": "plays",
+   "spoken": "plays",
+   "start": 36.125,
+   "end": 36.45
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 36.45,
+   "end": 36.575
+  },
+  {
+   "w": "role",
+   "spoken": "role",
+   "start": 36.575,
+   "end": 36.888
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 36.888,
+   "end": 36.962
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 36.962,
+   "end": 37.062
+  },
+  {
+   "w": "root,",
+   "spoken": "root,",
+   "start": 37.062,
+   "end": 37.688
+  },
+  {
+   "w": "its",
+   "spoken": "its",
+   "start": 37.688,
+   "end": 37.912
+  },
+  {
+   "w": "power",
+   "spoken": "power",
+   "start": 37.912,
+   "end": 38.263
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 38.263,
+   "end": 38.35
+  },
+  {
+   "w": "role",
+   "spoken": "role",
+   "start": 38.35,
+   "end": 38.662
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 38.662,
+   "end": 38.75
+  },
+  {
+   "w": "multiplicity,",
+   "spoken": "multiplicity,",
+   "start": 38.75,
+   "end": 39.812
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 39.812,
+   "end": 40.0
+  },
+  {
+   "w": "size,",
+   "spoken": "size,",
+   "start": 40.0,
+   "end": 40.65
+  },
+  {
+   "w": "on",
+   "spoken": "on",
+   "start": 40.65,
+   "end": 40.787
+  },
+  {
+   "w": "a",
+   "spoken": "a",
+   "start": 40.787,
+   "end": 40.875
+  },
+  {
+   "w": "log",
+   "spoken": "log",
+   "start": 40.875,
+   "end": 41.2
+  },
+  {
+   "w": "scale,",
+   "spoken": "scale,",
+   "start": 41.2,
+   "end": 41.725
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 41.725,
+   "end": 41.85
+  },
+  {
+   "w": "role",
+   "spoken": "role",
+   "start": 41.85,
+   "end": 42.138
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 42.138,
+   "end": 42.225
+  },
+  {
+   "w": "degree.",
+   "spoken": "degree.",
+   "start": 42.225,
+   "end": 43.112
+  },
+  {
+   "w": "Around",
+   "spoken": "Around",
+   "start": 43.575,
+   "end": 43.925
+  },
+  {
+   "w": "1850,",
+   "spoken": "eighteen fifty,",
+   "start": 43.925,
+   "end": 45.138
+  },
+  {
+   "w": "Chebyshev",
+   "spoken": "Chebyshev",
+   "start": 45.138,
+   "end": 45.675
+  },
+  {
+   "w": "used",
+   "spoken": "used",
+   "start": 45.675,
+   "end": 45.95
+  },
+  {
+   "w": "this",
+   "spoken": "this",
+   "start": 45.95,
+   "end": 46.175
+  },
+  {
+   "w": "idea,",
+   "spoken": "idea,",
+   "start": 46.175,
+   "end": 46.8
+  },
+  {
+   "w": "with",
+   "spoken": "with",
+   "start": 46.8,
+   "end": 46.987
+  },
+  {
+   "w": "ratios",
+   "spoken": "ratios",
+   "start": 46.987,
+   "end": 47.538
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 47.538,
+   "end": 47.625
+  },
+  {
+   "w": "factorials,",
+   "spoken": "factorials,",
+   "start": 47.625,
+   "end": 48.475
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 48.475,
+   "end": 48.6
+  },
+  {
+   "w": "bound",
+   "spoken": "bound",
+   "start": 48.6,
+   "end": 48.888
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 48.888,
+   "end": 48.975
+  },
+  {
+   "w": "primes,",
+   "spoken": "primes,",
+   "start": 48.975,
+   "end": 49.775
+  },
+  {
+   "w": "but",
+   "spoken": "but",
+   "start": 49.775,
+   "end": 49.925
+  },
+  {
+   "w": "only",
+   "spoken": "only",
+   "start": 49.925,
+   "end": 50.225
+  },
+  {
+   "w": "roughly:",
+   "spoken": "roughly:",
+   "start": 50.225,
+   "end": 51.162
+  },
+  {
+   "w": "those",
+   "spoken": "those",
+   "start": 51.162,
+   "end": 51.425
+  },
+  {
+   "w": "numbers",
+   "spoken": "numbers",
+   "start": 51.425,
+   "end": 51.875
+  },
+  {
+   "w": "aren't",
+   "spoken": "aren't",
+   "start": 51.875,
+   "end": 52.075
+  },
+  {
+   "w": "divisible",
+   "spoken": "divisible",
+   "start": 52.075,
+   "end": 52.525
   },
   {
    "w": "enough.",
    "spoken": "enough.",
-   "start": 45.725,
-   "end": 46.55
+   "start": 52.525,
+   "end": 53.35
   }
  ],
  "chunks": [
   {
-   "text": "Over the whole numbers, there's nothing to differentiate.",
-   "start": 0.725,
-   "end": 4.213
+   "text": "Stepanov detects multiplicity with derivatives: at a double root,",
+   "start": 0.7,
+   "end": 4.888
   },
   {
-   "text": "Alpöge's note puts it this way: multiplicity is hard to find over the integers,",
-   "start": 4.213,
-   "end": 9.362
+   "text": "f and its slope both vanish.",
+   "start": 4.888,
+   "end": 7.263
+  },
+  {
+   "text": "Alpöge calls his argument a descendant of Stepanov's,",
+   "start": 7.263,
+   "end": 10.6
+  },
+  {
+   "text": "but writes that multiplicity is hard to find over the integers,",
+   "start": 10.6,
+   "end": 14.188
   },
   {
    "text": "corresponding to something like differentiating whole numbers.",
-   "start": 9.362,
-   "end": 12.925
+   "start": 14.188,
+   "end": 17.8
   },
   {
-   "text": "But root counting has an old integer cousin.",
-   "start": 13.825,
-   "end": 16.712
+   "text": "Still, root counting has an old integer cousin.",
+   "start": 18.75,
+   "end": 21.787
   },
   {
    "text": "A whole number that isn't zero, but is divisible by many primes,",
-   "start": 16.712,
-   "end": 20.288
+   "start": 21.787,
+   "end": 25.175
   },
   {
    "text": "must be large.",
-   "start": 20.288,
-   "end": 21.712
+   "start": 25.175,
+   "end": 26.562
   },
   {
-   "text": "Twenty choose ten is divisible by eleven, thirteen,",
-   "start": 21.712,
-   "end": 25.137
+   "text": "Twenty choose ten is divisible by every prime between ten and twenty,",
+   "start": 26.562,
+   "end": 30.65
   },
   {
-   "text": "seventeen and nineteen, so it's at least their product,",
-   "start": 25.137,
-   "end": 28.325
+   "text": "yet it's less than four to the tenth, so those primes can't be too many.",
+   "start": 30.65,
+   "end": 35.087
   },
   {
-   "text": "and it's less than four to the tenth.",
-   "start": 28.325,
-   "end": 30.512
+   "text": "Each prime factor plays the role of a root, its power the role of multiplicity,",
+   "start": 35.087,
+   "end": 39.812
   },
   {
-   "text": "Divisibility plays the role of multiplicity; size plays the role of degree.",
-   "start": 30.512,
-   "end": 35.537
+   "text": "and size, on a log scale, the role of degree.",
+   "start": 39.812,
+   "end": 43.112
   },
   {
-   "text": "In the 1850s, Chebyshev used this idea, with ratios of factorials,",
-   "start": 36.0,
-   "end": 41.05
+   "text": "Around 1850, Chebyshev used this idea, with ratios of factorials,",
+   "start": 43.575,
+   "end": 48.475
   },
   {
-   "text": "to bound how many primes there are, but only roughly:",
-   "start": 41.05,
-   "end": 44.362
-  },
-  {
-   "text": "those numbers aren't divisible enough.",
-   "start": 44.362,
-   "end": 46.55
+   "text": "to bound the primes, but only roughly: those numbers aren't divisible enough.",
+   "start": 48.475,
+   "end": 53.35
   }
  ],
  "cues": {
-  "quote": 4.213,
-  "cousin": 13.825,
-  "binom": 21.712,
-  "dict": 30.512,
-  "cheb": 36.0
+  "quote": 7.263,
+  "cousin": 18.75,
+  "binom": 26.562,
+  "dict": 35.087,
+  "cheb": 43.575
  }
 }

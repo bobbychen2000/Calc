@@ -1,6 +1,6 @@
 {
  "scene": "s11_stepanov",
- "duration": 40.475,
+ "duration": 42.45,
  "sr": 24000,
  "voice": "af_heart",
  "speed": 1.0,
@@ -57,664 +57,699 @@
    "w": "to",
    "spoken": "to",
    "start": 4.5,
-   "end": 4.6
+   "end": 4.625
   },
   {
    "w": "prove",
    "spoken": "prove",
-   "start": 4.6,
-   "end": 4.925
+   "start": 4.625,
+   "end": 4.95
   },
   {
    "w": "such",
    "spoken": "such",
-   "start": 4.925,
-   "end": 5.15
+   "start": 4.95,
+   "end": 5.175
   },
   {
-   "w": "bounds,",
-   "spoken": "bounds,",
-   "start": 5.15,
-   "end": 6.0
-  },
-  {
-   "w": "later",
-   "spoken": "later",
-   "start": 6.0,
-   "end": 6.4
-  },
-  {
-   "w": "extended",
-   "spoken": "extended",
-   "start": 6.4,
-   "end": 6.9
-  },
-  {
-   "w": "to",
-   "spoken": "to",
-   "start": 6.9,
-   "end": 7.038
-  },
-  {
-   "w": "all",
-   "spoken": "all",
-   "start": 7.038,
-   "end": 7.3
-  },
-  {
-   "w": "curves",
-   "spoken": "curves",
-   "start": 7.3,
-   "end": 7.75
-  },
-  {
-   "w": "by",
-   "spoken": "by",
-   "start": 7.75,
-   "end": 7.925
-  },
-  {
-   "w": "Bombieri",
-   "spoken": "Bombieri",
-   "start": 7.925,
-   "end": 8.575
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 8.575,
-   "end": 8.712
-  },
-  {
-   "w": "Schmidt.",
-   "spoken": "Schmidt.",
-   "start": 8.712,
-   "end": 9.65
+   "w": "bounds.",
+   "spoken": "bounds.",
+   "start": 5.175,
+   "end": 6.15
   },
   {
    "w": "Its",
    "spoken": "Its",
-   "start": 9.65,
-   "end": 9.912
+   "start": 6.15,
+   "end": 6.413
   },
   {
    "w": "engine",
    "spoken": "engine",
-   "start": 9.912,
-   "end": 10.387
+   "start": 6.413,
+   "end": 6.888
   },
   {
    "w": "is",
    "spoken": "is",
-   "start": 10.387,
-   "end": 10.537
+   "start": 6.888,
+   "end": 7.038
   },
   {
    "w": "simple.",
    "spoken": "simple.",
-   "start": 10.537,
-   "end": 11.487
+   "start": 7.038,
+   "end": 7.987
   },
   {
    "w": "A",
    "spoken": "A",
-   "start": 11.487,
-   "end": 11.6
+   "start": 7.987,
+   "end": 8.1
   },
   {
    "w": "polynomial",
    "spoken": "polynomial",
-   "start": 11.6,
-   "end": 12.362
+   "start": 8.1,
+   "end": 8.862
   },
   {
    "w": "of",
    "spoken": "of",
-   "start": 12.362,
-   "end": 12.45
+   "start": 8.862,
+   "end": 8.95
   },
   {
    "w": "degree",
    "spoken": "degree",
-   "start": 12.45,
-   "end": 12.775
+   "start": 8.95,
+   "end": 9.275
   },
   {
    "w": "D",
    "spoken": "D",
-   "start": 12.775,
-   "end": 13.0
+   "start": 9.275,
+   "end": 9.5
   },
   {
    "w": "has",
    "spoken": "has",
-   "start": 13.0,
-   "end": 13.275
+   "start": 9.5,
+   "end": 9.75
   },
   {
    "w": "at",
    "spoken": "at",
-   "start": 13.275,
-   "end": 13.4
+   "start": 9.75,
+   "end": 9.875
   },
   {
    "w": "most",
    "spoken": "most",
-   "start": 13.4,
-   "end": 13.688
+   "start": 9.875,
+   "end": 10.175
   },
   {
    "w": "D",
    "spoken": "D",
-   "start": 13.688,
-   "end": 13.938
+   "start": 10.175,
+   "end": 10.4
   },
   {
    "w": "roots,",
    "spoken": "roots,",
-   "start": 13.938,
-   "end": 14.587
+   "start": 10.4,
+   "end": 11.012
   },
   {
    "w": "counted",
    "spoken": "counted",
-   "start": 14.587,
-   "end": 14.987
+   "start": 11.012,
+   "end": 11.412
   },
   {
    "w": "with",
    "spoken": "with",
-   "start": 14.987,
-   "end": 15.15
+   "start": 11.412,
+   "end": 11.575
   },
   {
    "w": "multiplicity:",
    "spoken": "multiplicity:",
-   "start": 15.15,
-   "end": 16.312
+   "start": 11.575,
+   "end": 12.737
   },
   {
    "w": "a",
    "spoken": "a",
-   "start": 16.312,
-   "end": 16.438
+   "start": 12.737,
+   "end": 12.862
   },
   {
    "w": "double",
    "spoken": "double",
-   "start": 16.438,
-   "end": 16.775
+   "start": 12.862,
+   "end": 13.2
   },
   {
    "w": "root",
    "spoken": "root",
-   "start": 16.775,
-   "end": 17.087
+   "start": 13.2,
+   "end": 13.512
   },
   {
    "w": "counts",
    "spoken": "counts",
-   "start": 17.087,
-   "end": 17.475
+   "start": 13.512,
+   "end": 13.9
   },
   {
    "w": "twice.",
    "spoken": "twice.",
-   "start": 17.475,
-   "end": 18.35
+   "start": 13.9,
+   "end": 14.725
   },
   {
    "w": "So",
    "spoken": "So",
-   "start": 19.275,
-   "end": 19.425
+   "start": 15.65,
+   "end": 15.8
   },
   {
    "w": "build",
    "spoken": "build",
-   "start": 19.425,
-   "end": 19.663
+   "start": 15.8,
+   "end": 16.038
   },
   {
    "w": "an",
    "spoken": "an",
-   "start": 19.663,
-   "end": 19.775
+   "start": 16.038,
+   "end": 16.15
   },
   {
    "w": "auxiliary",
    "spoken": "auxiliary",
-   "start": 19.775,
-   "end": 20.45
+   "start": 16.15,
+   "end": 16.825
   },
   {
-   "w": "polynomial",
-   "spoken": "polynomial",
-   "start": 20.45,
-   "end": 21.2
+   "w": "polynomial,",
+   "spoken": "polynomial,",
+   "start": 16.825,
+   "end": 17.9
+  },
+  {
+   "w": "not",
+   "spoken": "not",
+   "start": 17.9,
+   "end": 18.125
+  },
+  {
+   "w": "identically",
+   "spoken": "identically",
+   "start": 18.125,
+   "end": 18.663
+  },
+  {
+   "w": "zero,",
+   "spoken": "zero,",
+   "start": 18.663,
+   "end": 19.375
+  },
+  {
+   "w": "which",
+   "spoken": "which",
+   "start": 19.375,
+   "end": 19.575
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 19.575,
+   "end": 19.688
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 19.688,
+   "end": 19.775
+  },
+  {
+   "w": "hard",
+   "spoken": "hard",
+   "start": 19.775,
+   "end": 20.05
+  },
+  {
+   "w": "part,",
+   "spoken": "part,",
+   "start": 20.05,
+   "end": 20.625
   },
   {
    "w": "that",
    "spoken": "that",
-   "start": 21.2,
-   "end": 21.35
+   "start": 20.625,
+   "end": 20.775
   },
   {
    "w": "vanishes",
    "spoken": "vanishes",
-   "start": 21.35,
-   "end": 21.9
+   "start": 20.775,
+   "end": 21.325
   },
   {
    "w": "at",
    "spoken": "at",
-   "start": 21.9,
-   "end": 22.038
+   "start": 21.325,
+   "end": 21.462
   },
   {
    "w": "every",
    "spoken": "every",
-   "start": 22.038,
-   "end": 22.337
+   "start": 21.462,
+   "end": 21.762
   },
   {
    "w": "one",
    "spoken": "one",
-   "start": 22.337,
-   "end": 22.462
+   "start": 21.762,
+   "end": 21.887
   },
   {
    "w": "of",
    "spoken": "of",
-   "start": 22.462,
-   "end": 22.538
+   "start": 21.887,
+   "end": 21.962
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 22.538,
-   "end": 22.65
+   "start": 21.962,
+   "end": 22.05
   },
   {
    "w": "N",
    "spoken": "N",
-   "start": 22.65,
-   "end": 22.85
+   "start": 22.05,
+   "end": 22.25
   },
   {
    "w": "solutions,",
    "spoken": "solutions,",
-   "start": 22.85,
-   "end": 23.962
+   "start": 22.25,
+   "end": 23.4
   },
   {
    "w": "each",
    "spoken": "each",
-   "start": 23.962,
-   "end": 24.275
+   "start": 23.4,
+   "end": 23.675
   },
   {
    "w": "to",
    "spoken": "to",
-   "start": 24.275,
-   "end": 24.4
+   "start": 23.675,
+   "end": 23.812
   },
   {
    "w": "order",
    "spoken": "order",
-   "start": 24.4,
-   "end": 24.7
+   "start": 23.812,
+   "end": 24.125
   },
   {
    "w": "m.",
    "spoken": "m.",
-   "start": 24.7,
-   "end": 24.925
+   "start": 24.125,
+   "end": 24.325
   },
   {
    "w": "Counting",
    "spoken": "Counting",
-   "start": 24.925,
-   "end": 25.35
+   "start": 24.325,
+   "end": 24.725
   },
   {
    "w": "roots",
    "spoken": "roots",
-   "start": 25.35,
-   "end": 25.625
+   "start": 24.725,
+   "end": 25.0
   },
   {
    "w": "gives",
    "spoken": "gives",
-   "start": 25.625,
-   "end": 25.875
+   "start": 25.0,
+   "end": 25.25
   },
   {
    "w": "N",
    "spoken": "N",
-   "start": 25.875,
-   "end": 26.075
+   "start": 25.25,
+   "end": 25.45
   },
   {
    "w": "times",
    "spoken": "times",
-   "start": 26.075,
-   "end": 26.425
+   "start": 25.45,
+   "end": 25.8
   },
   {
    "w": "m,",
    "spoken": "m,",
-   "start": 26.425,
-   "end": 27.087
+   "start": 25.8,
+   "end": 26.587
   },
   {
    "w": "at",
    "spoken": "at",
-   "start": 27.087,
-   "end": 27.225
+   "start": 26.587,
+   "end": 26.725
   },
   {
    "w": "most",
    "spoken": "most",
-   "start": 27.225,
-   "end": 27.525
+   "start": 26.725,
+   "end": 27.0
   },
   {
    "w": "D.",
    "spoken": "D.",
-   "start": 27.525,
-   "end": 27.738
+   "start": 27.0,
+   "end": 27.175
   },
   {
-   "w": "Push",
-   "spoken": "Push",
-   "start": 27.738,
-   "end": 27.988
-  },
-  {
-   "w": "m",
-   "spoken": "m",
-   "start": 27.988,
-   "end": 28.087
-  },
-  {
-   "w": "up",
-   "spoken": "up",
-   "start": 28.087,
-   "end": 28.262
-  },
-  {
-   "w": "while",
-   "spoken": "while",
-   "start": 28.262,
-   "end": 28.475
-  },
-  {
-   "w": "keeping",
-   "spoken": "keeping",
-   "start": 28.475,
-   "end": 28.825
-  },
-  {
-   "w": "D",
-   "spoken": "D",
-   "start": 28.825,
-   "end": 29.025
-  },
-  {
-   "w": "in",
-   "spoken": "in",
-   "start": 29.025,
-   "end": 29.188
-  },
-  {
-   "w": "check,",
-   "spoken": "check,",
-   "start": 29.188,
-   "end": 29.975
-  },
-  {
-   "w": "and",
-   "spoken": "and",
-   "start": 29.975,
-   "end": 30.087
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 30.087,
-   "end": 30.175
-  },
-  {
-   "w": "competing",
-   "spoken": "competing",
-   "start": 30.175,
-   "end": 30.7
-  },
-  {
-   "w": "error",
-   "spoken": "error",
-   "start": 30.7,
-   "end": 31.0
-  },
-  {
-   "w": "terms",
-   "spoken": "terms",
-   "start": 31.0,
-   "end": 31.3
-  },
-  {
-   "w": "balance",
-   "spoken": "balance",
-   "start": 31.3,
-   "end": 31.8
-  },
-  {
-   "w": "when",
-   "spoken": "when",
-   "start": 31.8,
-   "end": 31.988
+   "w": "Raising",
+   "spoken": "Raising",
+   "start": 27.175,
+   "end": 27.575
   },
   {
    "w": "m",
    "spoken": "m",
-   "start": 31.988,
-   "end": 32.325
+   "start": 27.575,
+   "end": 27.825
   },
   {
-   "w": "is",
-   "spoken": "is",
-   "start": 32.325,
-   "end": 32.438
+   "w": "spreads",
+   "spoken": "spreads",
+   "start": 27.825,
+   "end": 28.163
   },
   {
-   "w": "about",
-   "spoken": "about",
-   "start": 32.438,
-   "end": 32.75
+   "w": "a",
+   "spoken": "a",
+   "start": 28.163,
+   "end": 28.275
   },
   {
-   "w": "root",
-   "spoken": "root",
-   "start": 32.75,
-   "end": 32.975
+   "w": "fixed",
+   "spoken": "fixed",
+   "start": 28.275,
+   "end": 28.625
   },
   {
-   "w": "p.",
-   "spoken": "p.",
-   "start": 32.975,
-   "end": 33.4
+   "w": "overhead",
+   "spoken": "overhead",
+   "start": 28.625,
+   "end": 29.075
   },
   {
-   "w": "That's",
-   "spoken": "That's",
-   "start": 33.4,
-   "end": 33.7
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 33.7,
-   "end": 33.8
-  },
-  {
-   "w": "moral:",
-   "spoken": "moral:",
-   "start": 33.8,
-   "end": 34.812
-  },
-  {
-   "w": "multiplicity",
-   "spoken": "multiplicity",
-   "start": 34.812,
-   "end": 35.55
-  },
-  {
-   "w": "of",
-   "spoken": "of",
-   "start": 35.55,
-   "end": 35.638
+   "w": "thinner,",
+   "spoken": "thinner,",
+   "start": 29.075,
+   "end": 29.7
   },
   {
    "w": "about",
    "spoken": "about",
-   "start": 35.638,
-   "end": 35.95
-  },
-  {
-   "w": "root",
-   "spoken": "root",
-   "start": 35.95,
-   "end": 36.188
+   "start": 29.7,
+   "end": 29.988
   },
   {
    "w": "p",
    "spoken": "p",
-   "start": 36.188,
-   "end": 36.812
+   "start": 29.988,
+   "end": 30.225
   },
   {
-   "w": "is",
-   "spoken": "is",
-   "start": 36.812,
-   "end": 37.0
+   "w": "over",
+   "spoken": "over",
+   "start": 30.225,
+   "end": 30.5
   },
   {
-   "w": "what",
-   "spoken": "what",
-   "start": 37.0,
-   "end": 37.237
+   "w": "m,",
+   "spoken": "m,",
+   "start": 30.5,
+   "end": 31.225
   },
   {
-   "w": "yields",
-   "spoken": "yields",
-   "start": 37.237,
-   "end": 37.562
+   "w": "but",
+   "spoken": "but",
+   "start": 31.225,
+   "end": 31.387
   },
   {
-   "w": "an",
-   "spoken": "an",
-   "start": 37.562,
-   "end": 37.688
+   "w": "every",
+   "spoken": "every",
+   "start": 31.387,
+   "end": 31.738
   },
   {
-   "w": "error",
-   "spoken": "error",
-   "start": 37.688,
-   "end": 38.125
+   "w": "extra",
+   "spoken": "extra",
+   "start": 31.738,
+   "end": 32.15
+  },
+  {
+   "w": "order",
+   "spoken": "order",
+   "start": 32.15,
+   "end": 32.438
   },
   {
    "w": "of",
    "spoken": "of",
-   "start": 38.125,
-   "end": 38.237
+   "start": 32.438,
+   "end": 32.525
+  },
+  {
+   "w": "vanishing",
+   "spoken": "vanishing",
+   "start": 32.525,
+   "end": 33.038
+  },
+  {
+   "w": "costs",
+   "spoken": "costs",
+   "start": 33.038,
+   "end": 33.475
+  },
+  {
+   "w": "extra",
+   "spoken": "extra",
+   "start": 33.475,
+   "end": 33.812
+  },
+  {
+   "w": "degree,",
+   "spoken": "degree,",
+   "start": 33.812,
+   "end": 34.788
   },
   {
    "w": "about",
    "spoken": "about",
-   "start": 38.237,
-   "end": 38.562
+   "start": 34.788,
+   "end": 35.1
+  },
+  {
+   "w": "m.",
+   "spoken": "m.",
+   "start": 35.1,
+   "end": 35.525
+  },
+  {
+   "w": "The",
+   "spoken": "The",
+   "start": 35.525,
+   "end": 35.638
+  },
+  {
+   "w": "two",
+   "spoken": "two",
+   "start": 35.638,
+   "end": 35.85
+  },
+  {
+   "w": "balance",
+   "spoken": "balance",
+   "start": 35.85,
+   "end": 36.263
+  },
+  {
+   "w": "when",
+   "spoken": "when",
+   "start": 36.263,
+   "end": 36.438
+  },
+  {
+   "w": "m",
+   "spoken": "m",
+   "start": 36.438,
+   "end": 36.788
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 36.788,
+   "end": 36.913
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 36.913,
+   "end": 37.237
   },
   {
    "w": "root",
    "spoken": "root",
-   "start": 38.562,
-   "end": 38.8
+   "start": 37.237,
+   "end": 37.513
   },
   {
    "w": "p.",
    "spoken": "p.",
-   "start": 38.8,
-   "end": 39.25
+   "start": 37.513,
+   "end": 37.725
+  },
+  {
+   "w": "Multiplicity",
+   "spoken": "Multiplicity",
+   "start": 37.725,
+   "end": 38.4
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 38.4,
+   "end": 38.487
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 38.487,
+   "end": 38.788
+  },
+  {
+   "w": "root",
+   "spoken": "root",
+   "start": 38.788,
+   "end": 39.038
+  },
+  {
+   "w": "p",
+   "spoken": "p",
+   "start": 39.038,
+   "end": 39.275
+  },
+  {
+   "w": "yields",
+   "spoken": "yields",
+   "start": 39.275,
+   "end": 39.587
+  },
+  {
+   "w": "an",
+   "spoken": "an",
+   "start": 39.587,
+   "end": 39.712
+  },
+  {
+   "w": "error",
+   "spoken": "error",
+   "start": 39.712,
+   "end": 40.163
+  },
+  {
+   "w": "of",
+   "spoken": "of",
+   "start": 40.163,
+   "end": 40.288
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 40.288,
+   "end": 40.6
+  },
+  {
+   "w": "root",
+   "spoken": "root",
+   "start": 40.6,
+   "end": 40.825
+  },
+  {
+   "w": "p.",
+   "spoken": "p.",
+   "start": 40.825,
+   "end": 41.2
   }
  ],
  "chunks": [
   {
-   "text": "In 1969, Sergei Stepanov found an elementary way to prove such bounds,",
+   "text": "In 1969, Sergei Stepanov found an elementary way to prove such bounds.",
    "start": 0.75,
-   "end": 6.0
-  },
-  {
-   "text": "later extended to all curves by Bombieri and Schmidt.",
-   "start": 6.0,
-   "end": 9.65
+   "end": 6.15
   },
   {
    "text": "Its engine is simple.",
-   "start": 9.65,
-   "end": 11.487
+   "start": 6.15,
+   "end": 7.987
   },
   {
    "text": "A polynomial of degree D has at most D roots, counted with multiplicity:",
-   "start": 11.487,
-   "end": 16.312
+   "start": 7.987,
+   "end": 12.737
   },
   {
    "text": "a double root counts twice.",
-   "start": 16.312,
-   "end": 18.35
+   "start": 12.737,
+   "end": 14.725
   },
   {
-   "text": "So build an auxiliary polynomial that vanishes at every one of the N solutions,",
-   "start": 19.275,
-   "end": 23.962
+   "text": "So build an auxiliary polynomial, not identically zero,",
+   "start": 15.65,
+   "end": 19.375
+  },
+  {
+   "text": "which is the hard part, that vanishes at every one of the N solutions,",
+   "start": 19.375,
+   "end": 23.4
   },
   {
    "text": "each to order m.",
-   "start": 23.962,
-   "end": 24.925
+   "start": 23.4,
+   "end": 24.325
   },
   {
    "text": "Counting roots gives N times m, at most D.",
-   "start": 24.925,
-   "end": 27.738
+   "start": 24.325,
+   "end": 27.175
   },
   {
-   "text": "Push m up while keeping D in check,",
-   "start": 27.738,
-   "end": 29.975
+   "text": "Raising m spreads a fixed overhead thinner, about p over m,",
+   "start": 27.175,
+   "end": 31.225
   },
   {
-   "text": "and the competing error terms balance when m is about root p.",
-   "start": 29.975,
-   "end": 33.4
+   "text": "but every extra order of vanishing costs extra degree,",
+   "start": 31.225,
+   "end": 34.788
   },
   {
-   "text": "That's the moral: multiplicity of about root p is what yields an error of about root",
-   "start": 33.4,
-   "end": 38.8
+   "text": "about m.",
+   "start": 34.788,
+   "end": 35.525
   },
   {
-   "text": "p.",
-   "start": 38.8,
-   "end": 39.25
+   "text": "The two balance when m is about root p.",
+   "start": 35.525,
+   "end": 37.725
+  },
+  {
+   "text": "Multiplicity of about root p yields an error of about root p.",
+   "start": 37.725,
+   "end": 41.2
   }
  ],
  "cues": {
-  "poly": 11.487,
-  "aux": 19.275,
-  "count": 24.925,
-  "tune": 27.738,
-  "moral": 33.4
+  "poly": 7.987,
+  "aux": 15.65,
+  "count": 24.325,
+  "tune": 27.175,
+  "moral": 37.725
  }
 }

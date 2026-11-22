@@ -1,6 +1,6 @@
 {
  "scene": "s03_euler",
- "duration": 36.95,
+ "duration": 44.1,
  "sr": 24000,
  "voice": "af_heart",
  "speed": 1.0,
@@ -231,319 +231,481 @@
    "w": "Then",
    "spoken": "Then",
    "start": 16.95,
-   "end": 17.188
+   "end": 17.163
   },
   {
    "w": "Euler",
    "spoken": "Euler",
-   "start": 17.188,
-   "end": 17.562
+   "start": 17.163,
+   "end": 17.538
   },
   {
    "w": "found",
    "spoken": "found",
-   "start": 17.562,
-   "end": 17.863
+   "start": 17.538,
+   "end": 17.812
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 17.863,
-   "end": 17.95
+   "start": 17.812,
+   "end": 17.9
   },
   {
    "w": "bridge",
    "spoken": "bridge",
-   "start": 17.95,
-   "end": 18.275
+   "start": 17.9,
+   "end": 18.2
   },
   {
    "w": "to",
    "spoken": "to",
-   "start": 18.275,
-   "end": 18.363
+   "start": 18.2,
+   "end": 18.288
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 18.363,
-   "end": 18.45
+   "start": 18.288,
+   "end": 18.375
   },
   {
    "w": "primes.",
    "spoken": "primes.",
-   "start": 18.45,
-   "end": 19.463
+   "start": 18.375,
+   "end": 19.325
   },
   {
-   "w": "Since",
-   "spoken": "Since",
-   "start": 19.463,
-   "end": 19.713
+   "w": "For",
+   "spoken": "For",
+   "start": 19.325,
+   "end": 19.475
   },
   {
-   "w": "every",
-   "spoken": "every",
-   "start": 19.713,
-   "end": 20.025
+   "w": "s",
+   "spoken": "s",
+   "start": 19.475,
+   "end": 19.675
   },
   {
-   "w": "whole",
-   "spoken": "whole",
-   "start": 20.025,
-   "end": 20.275
+   "w": "bigger",
+   "spoken": "bigger",
+   "start": 19.675,
+   "end": 19.95
   },
   {
-   "w": "number",
-   "spoken": "number",
-   "start": 20.275,
-   "end": 20.637
+   "w": "than",
+   "spoken": "than",
+   "start": 19.95,
+   "end": 20.1
   },
   {
-   "w": "splits",
-   "spoken": "splits",
-   "start": 20.637,
-   "end": 20.988
-  },
-  {
-   "w": "into",
-   "spoken": "into",
-   "start": 20.988,
-   "end": 21.2
-  },
-  {
-   "w": "primes",
-   "spoken": "primes",
-   "start": 21.2,
-   "end": 21.7
-  },
-  {
-   "w": "in",
-   "spoken": "in",
-   "start": 21.7,
-   "end": 21.8
-  },
-  {
-   "w": "exactly",
-   "spoken": "exactly",
-   "start": 21.8,
-   "end": 22.375
-  },
-  {
-   "w": "one",
-   "spoken": "one",
-   "start": 22.375,
-   "end": 22.6
-  },
-  {
-   "w": "way,",
-   "spoken": "way,",
-   "start": 22.6,
-   "end": 23.275
+   "w": "one,",
+   "spoken": "one,",
+   "start": 20.1,
+   "end": 20.5
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 23.275,
-   "end": 23.413
+   "start": 20.5,
+   "end": 20.625
   },
   {
    "w": "sum",
    "spoken": "sum",
-   "start": 23.413,
-   "end": 23.675
+   "start": 20.625,
+   "end": 20.812
   },
   {
    "w": "of",
    "spoken": "of",
-   "start": 23.675,
-   "end": 23.812
+   "start": 20.812,
+   "end": 20.925
   },
   {
    "w": "1/nˢ",
    "spoken": "one over n to the s",
-   "start": 23.812,
-   "end": 25.2
-  },
-  {
-   "w": "over",
-   "spoken": "over",
-   "start": 25.2,
-   "end": 25.513
-  },
-  {
-   "w": "all",
-   "spoken": "all",
-   "start": 25.513,
-   "end": 25.775
-  },
-  {
-   "w": "whole",
-   "spoken": "whole",
-   "start": 25.775,
-   "end": 26.025
-  },
-  {
-   "w": "numbers",
-   "spoken": "numbers",
-   "start": 26.025,
-   "end": 26.562
+   "start": 20.925,
+   "end": 22.1
   },
   {
    "w": "equals",
    "spoken": "equals",
-   "start": 26.562,
-   "end": 26.938
+   "start": 22.1,
+   "end": 22.438
   },
   {
    "w": "a",
    "spoken": "a",
-   "start": 26.938,
-   "end": 27.0
+   "start": 22.438,
+   "end": 22.5
   },
   {
    "w": "product",
    "spoken": "product",
-   "start": 27.0,
-   "end": 27.5
+   "start": 22.5,
+   "end": 22.962
   },
   {
-   "w": "with",
-   "spoken": "with",
-   "start": 27.5,
-   "end": 27.688
-  },
-  {
-   "w": "one",
-   "spoken": "one",
-   "start": 27.688,
-   "end": 27.925
-  },
-  {
-   "w": "factor",
-   "spoken": "factor",
-   "start": 27.925,
-   "end": 28.35
-  },
-  {
-   "w": "for",
-   "spoken": "for",
-   "start": 28.35,
-   "end": 28.5
-  },
-  {
-   "w": "each",
-   "spoken": "each",
-   "start": 28.5,
-   "end": 28.725
-  },
-  {
-   "w": "prime.",
-   "spoken": "prime.",
-   "start": 28.725,
-   "end": 29.663
-  },
-  {
-   "w": "That",
-   "spoken": "That",
-   "start": 29.663,
-   "end": 29.938
-  },
-  {
-   "w": "sum",
-   "spoken": "sum",
-   "start": 29.938,
-   "end": 30.363
-  },
-  {
-   "w": "is",
-   "spoken": "is",
-   "start": 30.363,
-   "end": 30.525
+   "w": "over",
+   "spoken": "over",
+   "start": 22.962,
+   "end": 23.163
   },
   {
    "w": "the",
    "spoken": "the",
-   "start": 30.525,
-   "end": 30.625
-  },
-  {
-   "w": "zeta",
-   "spoken": "zeta",
-   "start": 30.625,
-   "end": 30.95
-  },
-  {
-   "w": "function.",
-   "spoken": "function.",
-   "start": 30.95,
-   "end": 32.0
-  },
-  {
-   "w": "One",
-   "spoken": "One",
-   "start": 32.0,
-   "end": 32.288
-  },
-  {
-   "w": "side",
-   "spoken": "side",
-   "start": 32.288,
-   "end": 32.625
-  },
-  {
-   "w": "is",
-   "spoken": "is",
-   "start": 32.625,
-   "end": 32.737
-  },
-  {
-   "w": "about",
-   "spoken": "about",
-   "start": 32.737,
-   "end": 33.062
-  },
-  {
-   "w": "all",
-   "spoken": "all",
-   "start": 33.062,
-   "end": 33.325
-  },
-  {
-   "w": "numbers;",
-   "spoken": "numbers;",
-   "start": 33.325,
-   "end": 34.075
-  },
-  {
-   "w": "the",
-   "spoken": "the",
-   "start": 34.075,
-   "end": 34.225
-  },
-  {
-   "w": "other",
-   "spoken": "other",
-   "start": 34.225,
-   "end": 34.525
-  },
-  {
-   "w": "only",
-   "spoken": "only",
-   "start": 34.525,
-   "end": 34.825
-  },
-  {
-   "w": "about",
-   "spoken": "about",
-   "start": 34.825,
-   "end": 35.125
+   "start": 23.163,
+   "end": 23.25
   },
   {
    "w": "primes.",
    "spoken": "primes.",
-   "start": 35.125,
-   "end": 36.1
+   "start": 23.25,
+   "end": 24.288
+  },
+  {
+   "w": "Expand",
+   "spoken": "Expand",
+   "start": 24.288,
+   "end": 24.825
+  },
+  {
+   "w": "each",
+   "spoken": "each",
+   "start": 24.825,
+   "end": 25.05
+  },
+  {
+   "w": "factor",
+   "spoken": "factor",
+   "start": 25.05,
+   "end": 25.45
+  },
+  {
+   "w": "as",
+   "spoken": "as",
+   "start": 25.45,
+   "end": 25.6
+  },
+  {
+   "w": "one,",
+   "spoken": "one,",
+   "start": 25.6,
+   "end": 26.125
+  },
+  {
+   "w": "plus",
+   "spoken": "plus",
+   "start": 26.125,
+   "end": 26.413
+  },
+  {
+   "w": "p",
+   "spoken": "p",
+   "start": 26.413,
+   "end": 26.65
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 26.65,
+   "end": 26.738
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 26.738,
+   "end": 26.825
+  },
+  {
+   "w": "minus",
+   "spoken": "minus",
+   "start": 26.825,
+   "end": 27.15
+  },
+  {
+   "w": "s,",
+   "spoken": "s,",
+   "start": 27.15,
+   "end": 27.575
+  },
+  {
+   "w": "plus",
+   "spoken": "plus",
+   "start": 27.575,
+   "end": 27.863
+  },
+  {
+   "w": "p",
+   "spoken": "p",
+   "start": 27.863,
+   "end": 28.1
+  },
+  {
+   "w": "to",
+   "spoken": "to",
+   "start": 28.1,
+   "end": 28.188
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 28.188,
+   "end": 28.275
+  },
+  {
+   "w": "minus",
+   "spoken": "minus",
+   "start": 28.275,
+   "end": 28.6
+  },
+  {
+   "w": "two",
+   "spoken": "two",
+   "start": 28.6,
+   "end": 28.8
+  },
+  {
+   "w": "s,",
+   "spoken": "s,",
+   "start": 28.8,
+   "end": 29.275
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 29.275,
+   "end": 29.413
+  },
+  {
+   "w": "so",
+   "spoken": "so",
+   "start": 29.413,
+   "end": 29.675
+  },
+  {
+   "w": "on,",
+   "spoken": "on,",
+   "start": 29.675,
+   "end": 30.025
+  },
+  {
+   "w": "and",
+   "spoken": "and",
+   "start": 30.025,
+   "end": 30.15
+  },
+  {
+   "w": "multiply",
+   "spoken": "multiply",
+   "start": 30.15,
+   "end": 30.65
+  },
+  {
+   "w": "out:",
+   "spoken": "out:",
+   "start": 30.65,
+   "end": 31.363
+  },
+  {
+   "w": "since",
+   "spoken": "since",
+   "start": 31.363,
+   "end": 31.6
+  },
+  {
+   "w": "every",
+   "spoken": "every",
+   "start": 31.6,
+   "end": 31.9
+  },
+  {
+   "w": "whole",
+   "spoken": "whole",
+   "start": 31.9,
+   "end": 32.15
+  },
+  {
+   "w": "number",
+   "spoken": "number",
+   "start": 32.15,
+   "end": 32.45
+  },
+  {
+   "w": "splits",
+   "spoken": "splits",
+   "start": 32.45,
+   "end": 32.788
+  },
+  {
+   "w": "into",
+   "spoken": "into",
+   "start": 32.788,
+   "end": 33.0
+  },
+  {
+   "w": "primes",
+   "spoken": "primes",
+   "start": 33.0,
+   "end": 33.5
+  },
+  {
+   "w": "in",
+   "spoken": "in",
+   "start": 33.5,
+   "end": 33.6
+  },
+  {
+   "w": "exactly",
+   "spoken": "exactly",
+   "start": 33.6,
+   "end": 34.15
+  },
+  {
+   "w": "one",
+   "spoken": "one",
+   "start": 34.15,
+   "end": 34.375
+  },
+  {
+   "w": "way,",
+   "spoken": "way,",
+   "start": 34.375,
+   "end": 34.875
+  },
+  {
+   "w": "each",
+   "spoken": "each",
+   "start": 34.875,
+   "end": 35.1
+  },
+  {
+   "w": "term",
+   "spoken": "term",
+   "start": 35.1,
+   "end": 35.375
+  },
+  {
+   "w": "appears",
+   "spoken": "appears",
+   "start": 35.375,
+   "end": 35.8
+  },
+  {
+   "w": "exactly",
+   "spoken": "exactly",
+   "start": 35.8,
+   "end": 36.325
+  },
+  {
+   "w": "once.",
+   "spoken": "once.",
+   "start": 36.325,
+   "end": 37.237
+  },
+  {
+   "w": "That",
+   "spoken": "That",
+   "start": 37.237,
+   "end": 37.513
+  },
+  {
+   "w": "sum",
+   "spoken": "sum",
+   "start": 37.513,
+   "end": 37.85
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 37.85,
+   "end": 38.0
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 38.0,
+   "end": 38.1
+  },
+  {
+   "w": "zeta",
+   "spoken": "zeta",
+   "start": 38.1,
+   "end": 38.425
+  },
+  {
+   "w": "function.",
+   "spoken": "function.",
+   "start": 38.425,
+   "end": 39.425
+  },
+  {
+   "w": "One",
+   "spoken": "One",
+   "start": 39.425,
+   "end": 39.713
+  },
+  {
+   "w": "side",
+   "spoken": "side",
+   "start": 39.713,
+   "end": 40.038
+  },
+  {
+   "w": "is",
+   "spoken": "is",
+   "start": 40.038,
+   "end": 40.138
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 40.138,
+   "end": 40.4
+  },
+  {
+   "w": "all",
+   "spoken": "all",
+   "start": 40.4,
+   "end": 40.625
+  },
+  {
+   "w": "numbers;",
+   "spoken": "numbers;",
+   "start": 40.625,
+   "end": 41.325
+  },
+  {
+   "w": "the",
+   "spoken": "the",
+   "start": 41.325,
+   "end": 41.425
+  },
+  {
+   "w": "other",
+   "spoken": "other",
+   "start": 41.425,
+   "end": 41.725
+  },
+  {
+   "w": "only",
+   "spoken": "only",
+   "start": 41.725,
+   "end": 42.013
+  },
+  {
+   "w": "about",
+   "spoken": "about",
+   "start": 42.013,
+   "end": 42.275
+  },
+  {
+   "w": "primes.",
+   "spoken": "primes.",
+   "start": 42.275,
+   "end": 43.25
   }
  ],
  "chunks": [
@@ -570,38 +732,49 @@
   {
    "text": "Then Euler found the bridge to the primes.",
    "start": 16.95,
-   "end": 19.463
+   "end": 19.325
   },
   {
-   "text": "Since every whole number splits into primes in exactly one way,",
-   "start": 19.463,
-   "end": 23.275
+   "text": "For s bigger than one, the sum of 1/nˢ equals a product over the primes.",
+   "start": 19.325,
+   "end": 24.288
   },
   {
-   "text": "the sum of 1/nˢ over all whole numbers equals a product with one factor for each",
-   "start": 23.275,
-   "end": 28.725
+   "text": "Expand each factor as one, plus p to the minus s,",
+   "start": 24.288,
+   "end": 27.575
   },
   {
-   "text": "prime.",
-   "start": 28.725,
-   "end": 29.663
+   "text": "plus p to the minus two s, and so on, and multiply out:",
+   "start": 27.575,
+   "end": 31.363
+  },
+  {
+   "text": "since every whole number splits into primes in exactly one way,",
+   "start": 31.363,
+   "end": 34.875
+  },
+  {
+   "text": "each term appears exactly once.",
+   "start": 34.875,
+   "end": 37.237
   },
   {
    "text": "That sum is the zeta function.",
-   "start": 29.663,
-   "end": 32.0
+   "start": 37.237,
+   "end": 39.425
   },
   {
    "text": "One side is about all numbers; the other only about primes.",
-   "start": 32.0,
-   "end": 36.1
+   "start": 39.425,
+   "end": 43.25
   }
  ],
  "cues": {
   "basel": 4.65,
   "harmonic": 12.175,
   "product": 16.95,
-  "zeta": 29.663
+  "expand": 24.288,
+  "zeta": 37.237
  }
 }
