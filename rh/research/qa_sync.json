@@ -1,0 +1,369 @@
+{
+ "s01_open": {
+  "words": 99,
+  "asr_words": 97,
+  "matched": 92,
+  "wer": 0.071,
+  "offset_median": 0.0,
+  "abs_offset_p95": 0.165,
+  "abs_offset_max": 0.95,
+  "heard": {
+   "Levent": [
+    "Levent"
+   ],
+   "Alpöge": [
+    "Alpogay",
+    "Alpogay's"
+   ],
+   "Claude": [
+    "Claude,"
+   ],
+   "Riemann": [
+    "Riemann",
+    "Riemann"
+   ],
+   "Lean": [
+    "Lean,",
+    "Lean"
+   ],
+   "Mathlib": [
+    "Mathlib,"
+   ]
+  },
+  "asr_text": "On November 20, 2026, the mathematician Levent Alpogay posted a four -page note. He wrote that he believes that, working with Claude, he has found a proof of the Riemann hypothesis, perhaps the most famous open problem in mathematics. Instead of a written proof, he posted 17 million lines of Lean, a language in which a computer checks every step. A day later, the communities behind Lean and its shared math library, Mathlib, wrote, quote, \"...we have full confidence that Alpogay's proof of the Riemann hypothesis is correct. Here's the road from the primes to that claim.\""
+ },
+ "s02_primes": {
+  "words": 120,
+  "asr_words": 112,
+  "matched": 104,
+  "wer": 0.133,
+  "offset_median": -0.008,
+  "abs_offset_p95": 0.16,
+  "abs_offset_max": 0.725,
+  "heard": {
+   "Gauss": [
+    "Gauss"
+   ]
+  },
+  "asr_text": "Start with the primes, 2, 3, 5, 7, 11, whole numbers above one with no divisors but one and themselves. Up close, they look random. But count them. Pi of x is the number of primes up to x, its graph is a staircase, and from far away the staircase looks astonishingly smooth. As a teenager, Gauss guessed that near x. Roughly one number in the natural log of x is prime. Adding up those odds gives the logarithmic integral, l i of x up to a million, there are 78 ,498 primes, and l i is off by only about 130. The real question is, how big can that error get?"
+ },
+ "s03_euler": {
+  "words": 125,
+  "asr_words": 124,
+  "matched": 116,
+  "wer": 0.072,
+  "offset_median": -0.02,
+  "abs_offset_p95": 0.145,
+  "abs_offset_max": 0.568,
+  "heard": {
+   "Euler": [
+    "Euler",
+    "Euler"
+   ],
+   "zeta": [
+    "zeta"
+   ]
+  },
+  "asr_text": "Decades earlier, Leonhard Euler had studied a different sum. 1 plus a quarter plus a ninth, 1 over every square number. The total is exactly pi squared over 6. With 1 over n itself, the sum grows forever, though slowly. Then Euler found the bridge to the primes. For s bigger than 1, the sum of 1 over n to the s equals a product over the primes. Expand each factor as 1 plus p to the minus s plus p to the minus 2s, and so on, and multiply out. Since every whole number splits into primes in exactly one way, each term appears exactly once. That sum is the zeta function. One side is about all numbers, the other only about primes."
+ },
+ "s04_complex": {
+  "words": 101,
+  "asr_words": 99,
+  "matched": 96,
+  "wer": 0.05,
+  "offset_median": -0.005,
+  "abs_offset_p95": 0.125,
+  "abs_offset_max": 0.725,
+  "heard": {
+   "Riemann": [
+    "Riemann"
+   ],
+   "zeta": [
+    "zeta",
+    "zeta."
+   ]
+  },
+  "asr_text": "In 1859, Bernhard Riemann made the move that changed everything. Let us be a complex number. If you've worked with phasors, you know what that does. Write s as sigma plus i t, then n to the minus s is an arrow of length n to the minus sigma, turned by an angle of t times log n. So zeta is a sum of spinning, shrinking arrows. Laid tip to tail, they form a spiral. When sigma is bigger than 1, the arrows shrink fast enough for the spiral to wind into a single point, the value of zeta."
+ },
+ "s05_continue": {
+  "words": 108,
+  "asr_words": 108,
+  "matched": 101,
+  "wer": 0.065,
+  "offset_median": -0.015,
+  "abs_offset_p95": 0.2,
+  "abs_offset_max": 0.7,
+  "heard": {
+   "zeta": [
+    "zeta",
+    "zeta's",
+    "zeta"
+   ]
+  },
+  "asr_text": "When sigma is one or less, the arrows don't shrink fast enough, and the sum never settles. Think of 1 plus x plus x squared and so on. It only works between minus 1 and 1, but it clearly wants to be 1 over 1 minus x, which makes sense everywhere except x equals 1. In the same way, zeta has exactly one extension to the whole plane that stays complex differentiable, its analytic continuation, everywhere but s equals 1. Here it is. Color shows the direction of zeta's value, and each ring doubles its size. Where all the colors meet at a dark point, zeta is zero."
+ },
+ "s06_zeros": {
+  "words": 92,
+  "asr_words": 85,
+  "matched": 77,
+  "wer": 0.163,
+  "offset_median": -0.015,
+  "abs_offset_p95": 0.192,
+  "abs_offset_max": 0.857,
+  "heard": {
+   "zeta": [
+    "zeta",
+    "zeta",
+    "zeta's"
+   ]
+  },
+  "asr_text": "Some zeros are easy—minus 2, minus 4, minus 6, and so on, the trivial zeros. All the other zeros lie in a narrow band, the critical strip, where sigma is between zero and one. An exact identity, the functional equation, ties zeta at s to zeta at 1 minus s together with zeta's up -down symmetry, that mirrors the zeros across the middle of the strip—the critical line, real part one -half. The first zero above the axis sits at one -half, plus 14 .1347i."
+ },
+ "s07_rh": {
+  "words": 107,
+  "asr_words": 105,
+  "matched": 100,
+  "wer": 0.075,
+  "offset_median": 0.0,
+  "abs_offset_p95": 0.155,
+  "abs_offset_max": 0.7,
+  "heard": {
+   "Riemann": [
+    "Riemann",
+    "Riemann"
+   ],
+   "Hardy": [
+    "Hardy's"
+   ],
+   "zeta": [
+    "zeta"
+   ],
+   "Hilbert": [
+    "Hilbert's"
+   ]
+  },
+  "asr_text": "The Riemann hypothesis, every non -trivial zero lies exactly on that middle line. Not near it. On it. In his ten -page paper, Riemann called this very probable and moved on. On the line, we can watch zeros happen. This is Hardy's Z function, real on the line and zero exactly where zeta is. Fourteen point one three, twenty -one point zero two, twenty -five point zero one. Computers have checked more than twelve trillion zeros in order. Everyone is on the line. It was on Hilbert's famous list in 1900, and since 2000, the Clay Institute has offered a million dollars for a proof."
+ },
+ "s08_music": {
+  "words": 118,
+  "asr_words": 118,
+  "matched": 117,
+  "wer": 0.008,
+  "offset_median": -0.005,
+  "abs_offset_p95": 0.115,
+  "abs_offset_max": 0.75,
+  "heard": {
+   "Riemann": [
+    "Riemann's"
+   ],
+   "Mangoldt": [
+    "Mangeldt."
+   ],
+   "Lean": [
+    "cleaner"
+   ]
+  },
+  "asr_text": "Why would primes care where zeros are? Because of an exact formula, the explicit formula from Riemann's paper proved in this form by von Mangeldt. Count prime powers, each weighted by the log of its prime, that's psi of x, a cleaner staircase. The formula says psi of x is x, minus one wave for each pair of zeros, plus a tiny correction. A zero at one -half plus i gamma, with its mirror partner, adds a wave that oscillates with frequency gamma in log x start with the smooth part. Add the first wave, ten, a hundred, a thousand. The prime staircase comes out of pure waves. The zeros are the frequencies, the primes are the signal."
+ },
+ "s09_sqrt": {
+  "words": 117,
+  "asr_words": 115,
+  "matched": 111,
+  "wer": 0.06,
+  "offset_median": -0.018,
+  "abs_offset_p95": 0.15,
+  "abs_offset_max": 0.725,
+  "heard": {
+   "Riemann": [
+    "Riemann"
+   ]
+  },
+  "asr_text": "Here's the point. Each wave grows like X to the power of its zeros real part. A zero on the line makes a wave that grows like root X. A zero at three -quarters would make one growing like X to the three -quarters far louder. So the Riemann hypothesis says the error in counting prime stays as small as it possibly can, about root X up to logarithms. That's the typical drift of a random walk of X coin flips. Assuming R -H, there's even an explicit bound on the gap between pi of X and L -I of X from X equals 2657 on. Up to a million, the primes stay inside it."
+ },
+ "s10_curves": {
+  "words": 138,
+  "asr_words": 135,
+  "matched": 121,
+  "wer": 0.123,
+  "offset_median": -0.01,
+  "abs_offset_p95": 0.125,
+  "abs_offset_max": 0.75,
+  "heard": {
+   "Hasse": [
+    "Haas approved"
+   ],
+   "Weil": [
+    "1930s, Vey"
+   ],
+   "Deligne": [
+    "Dileen"
+   ],
+   "zeta": [
+    "zeta"
+   ],
+   "Riemann": [
+    "Riemann"
+   ]
+  },
+  "asr_text": "In a parallel world, the analogous hypothesis has been proved for decades. Do arithmetic on a clock with p hours, p prime, and count the solutions of y squared, plus y, equals x cubed minus x for p equal to 13, there are 15, plus one extra point at infinity. Each x gives 2, 1 or no values of y, 1 on average, so you'd expect about p plus 1. The surprise is how close it stays. The error is never more than 2 root p for every prime. Haas approved this for curves like this one in the 1930s, Vey the general version for every curve in the 40s, and Dileen went much further in 1974. Each such curve has a zeta function. And for this one, the bound is exactly its Riemann hypothesis."
+ },
+ "s11_stepanov": {
+  "words": 114,
+  "asr_words": 112,
+  "matched": 111,
+  "wer": 0.026,
+  "offset_median": -0.018,
+  "abs_offset_p95": 0.147,
+  "abs_offset_max": 0.75,
+  "heard": {
+   "Stepanov": [
+    "Stepanov"
+   ]
+  },
+  "asr_text": "In 1969, Sergei Stepanov found an elementary way to prove such bounds. Its engine is simple. A polynomial of degree D has at most D roots, counted with multiplicity. A double root counts twice. So build an auxiliary polynomial, not identically zero, which is the hard part, that vanishes at every one of the n solutions. Each to order m counting roots gives n times m. At most, D raising m spreads a fixed overhead thinner, about p over m, but every extra order of vanishing costs extra degree. About m, the two balance when m is about root p multiplicity of about root p yields an error of about root p."
+ },
+ "s12_obstacle": {
+  "words": 139,
+  "asr_words": 138,
+  "matched": 130,
+  "wer": 0.065,
+  "offset_median": -0.007,
+  "abs_offset_p95": 0.13,
+  "abs_offset_max": 0.532,
+  "heard": {
+   "Stepanov": [
+    "Stepanov",
+    "Stepanov's,"
+   ],
+   "Alpöge": [
+    "Alpogay"
+   ],
+   "Chebyshev": [
+    "Chebyshev"
+   ]
+  },
+  "asr_text": "Stepanov detects multiplicity with derivatives. At a double root, f and its slope both vanish. Alpogay calls his argument a descendant of Stepanov's, but writes that multiplicity is hard to find over the integers, corresponding to something like differentiating whole numbers. Still, root counting has an old integer cousin. A whole number that isn't zero, but is divisible by many primes, must be large. 20 choose 10 is divisible by every prime between 10 and 20, yet it's less than 4 to the 10th, so those primes can't be too many. Each prime factor plays the role of a root, its power the role of multiplicity, and size, on a log scale, the role of degree. Around 1850, Chebyshev used this idea, with ratios of factorials, to bound the primes, but only roughly. Those numbers aren't divisible enough."
+ },
+ "s13_theta": {
+  "words": 188,
+  "asr_words": 188,
+  "matched": 187,
+  "wer": 0.005,
+  "offset_median": -0.01,
+  "abs_offset_p95": 0.138,
+  "abs_offset_max": 0.75,
+  "heard": {
+   "Chebyshev": [
+    "Chebyshev's"
+   ],
+   "theta": [
+    "theta",
+    "theta",
+    "theta",
+    "theta,",
+    "theta"
+   ],
+   "Riemann": [
+    "Riemann",
+    "Riemann"
+   ],
+   "zeta": [
+    "Zeta's"
+   ],
+   "Stepanov": [
+    "Stepanov,"
+   ],
+   "Claude": [
+    "Claude"
+   ],
+   "Alpöge": [
+    "-Alpogay's"
+   ]
+  },
+  "asr_text": "Readers of the code describe the claimed proof as Chebyshev's idea, run with far better numbers built from theta functions. The theta function has a hidden mirror symmetry, which Riemann used to prove Zeta's own. Functions with symmetries like this, automorphic forms, can be carried from one symmetry group to a partner group by integrating against a theta kernel, a many -variable cousin of theta, a theta lift. Chain M lifts and read off one number, a period. As the note and the guides describe it, it isn't zero, and it gets more divisible by certain primes with every lift. Each lift mimics one more order of multiplicity. Its divisibility is itself a weighted count of primes, so divisibility at most size caps that count. How long a chain for primes up to X? The guides, written from the code with AI help, describe two errors, as with Stepanov, about X over M, and about M they balance at M about root X, leaving an error of about root X, what the Riemann hypothesis demands. Claude suggested root X -Alpogay's comment, and yet, what else could it be?"
+ },
+ "s14_build": {
+  "words": 160,
+  "asr_words": 157,
+  "matched": 146,
+  "wer": 0.094,
+  "offset_median": -0.025,
+  "abs_offset_p95": 0.167,
+  "abs_offset_max": 0.725,
+  "heard": {
+   "Alpöge": [
+    "Alpogay"
+   ],
+   "Claude": [
+    "Claude"
+   ],
+   "Lean": [
+    "lean"
+   ],
+   "Riemann": [
+    "Riemann"
+   ],
+   "zeta": [
+    "zeta"
+   ],
+   "Dirichlet": [
+    "Dirichlet"
+   ],
+   "theta": [
+    "theta"
+   ]
+  },
+  "asr_text": "The notes rough timeline, which Alpogay says Claude compiled, runs from October 6 to November 16. The result is a lean library of 175 ,000 files and 17 .4 million lines without a single comment. Read from the top, its skeleton is short. Last step, no zeros to the right of one half plus the mirror symmetry gives the Riemann hypothesis. Before that, if weighted primes some stay below about root x on long stretches, no zero can sit right of one half since its louder wave would break the bound. That covers zeta and its cousins, the Dirichlet L functions, which sort primes by remainder. The enormous middle, theta lifts plus heavy machinery from a cross number theory, proves that bound, with chains at least x to the power one half minus epsilon long. Just under root x readers also report that a few steps in the notes timeline have no visible counterpart in the code."
+ },
+ "s15_check": {
+  "words": 135,
+  "asr_words": 134,
+  "matched": 132,
+  "wer": 0.022,
+  "offset_median": -0.015,
+  "abs_offset_p95": 0.2,
+  "abs_offset_max": 0.725,
+  "heard": {
+   "Lean": [
+    "Lean,",
+    "Lean.",
+    "Lean's",
+    "Lean"
+   ],
+   "Buzzard": [
+    "Buzzard"
+   ],
+   "Mathlib": [
+    "Mathlib,"
+   ]
+  },
+  "asr_text": "How can anyone trust 17 million lines that no human has read in full? In Lean, every step must follow from earlier ones by fixed rules, and a small program, the kernel, checks them all. Kevin Buzzard lists four questions to ask of AI -written Lean. Is the statement right? Here it's the definition in Mathlib, Lean's shared library, written by people and vetted by experts. Does it compile? Dozens of people have rebuilt it. Does it prove exactly that statement using only the standard axioms? Two independent tools say yes. Could it exploit a bug in Lean itself? Several independent checkers accepted it, two of them with a formal proof relative to set theory that they can't accept a false one. That is the basis of the November 21st statement of full confidence."
+ },
+ "s16_close": {
+  "words": 140,
+  "asr_words": 138,
+  "matched": 136,
+  "wer": 0.029,
+  "offset_median": -0.008,
+  "abs_offset_p95": 0.165,
+  "abs_offset_max": 0.75,
+  "heard": {
+   "Lean": [
+    "Lean"
+   ],
+   "Mathlib": [
+    "Mathlib"
+   ],
+   "Riemann": [
+    "Riemann"
+   ],
+   "Dirichlet": [
+    "Dirichlet"
+   ],
+   "Alpöge": [
+    "Alpogay"
+   ]
+  },
+  "asr_text": "So where are we? What the Lean and Mathlib statement certifies is the classical Riemann hypothesis. Andrew Sutherland's verification page at MIT reports that the library also proves the same on -the -line statement for every Dirichlet L -function, the generalized hypothesis, in that sense. Wider versions for other kinds of L -functions haven't been checked. Alpogay only expects one, the extended hypothesis, with more time. And there's no human -readable proof yet. He says he'll write it properly. And the Clay Prize requires publication, then two years, then general acceptance. So for now, it's a claimed proof, checked by machines, not yet explained in human terms. If it holds, the zeros really do all sit on one line, and the reason may be an old idea, counting with multiplicity, finally made to work for the whole numbers."
+ }
+}

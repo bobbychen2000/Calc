@@ -556,7 +556,7 @@ def s07(fig, ctx, t):
     if t < c_z - 0.4:
         return
     a = ramp(t, c_z - 0.4, 0.6)
-    ax = axes(fig, [0.07, 0.50, 0.86, 0.38], xlim=(0, 60), ylim=(-4.2, 4.2))
+    ax = axes(fig, [0.07, 0.54, 0.86, 0.35], xlim=(0, 60), ylim=(-4.2, 4.2))
     tz, zt = D["tz"], D["zt"]
     tc = 1 + clamp((t - c_z) / 6.0) * 59
     m = tz <= tc
@@ -570,17 +570,17 @@ def s07(fig, ctx, t):
     a_c = ramp(t, c_cnt, 0.5)
     for i in range(10):
         ai = a_c * ramp(t, c_cnt + 0.9 * min(i, 3) + 0.25 * max(0, i - 3), 0.3)
-        txt(ov, 150 + (i % 5) * 330, 405 - (i // 5) * 50, f"{math.floor(GAM[i] * 1e6) / 1e6:.6f}…", size=27, a=ai, color=PAL["gold"],
+        txt(ov, 150 + (i % 5) * 330, 428 - (i // 5) * 48, f"{math.floor(GAM[i] * 1e6) / 1e6:.6f}…", size=27, a=ai, color=PAL["gold"],
             family=MONO)
     a_k = ramp(t, c_chk, 0.6)
-    card(ov, 130, 190, 780, 115, a=a_k)
-    txt(ov, 160, 268, "> 12 trillion zeros checked numerically", size=30, a=a_k, weight="semibold")
-    txt(ov, 160, 222, "Platt & Trudgian (2021): every zero up to height 3·10$^{12}$", size=21, a=a_k,
+    card(ov, 130, 212, 780, 112, a=a_k)
+    txt(ov, 160, 288, "> 12 trillion zeros checked numerically", size=30, a=a_k, weight="semibold")
+    txt(ov, 160, 243, "Platt & Trudgian (2021): every zero up to height 3·10$^{12}$", size=21, a=a_k,
         color=PAL["muted"])
     a_p = ramp(t, c_pr, 0.6)
-    card(ov, 960, 190, 830, 115, a=a_p)
-    txt(ov, 990, 268, "1900  Hilbert's 8th problem", size=28, a=a_p)
-    txt(ov, 990, 222, "2000  Clay Millennium Prize, US$1,000,000", size=28, a=a_p * ramp(t, c_pr + 1.5, 0.5))
+    card(ov, 960, 212, 830, 112, a=a_p)
+    txt(ov, 990, 288, "1900  Hilbert's 8th problem", size=28, a=a_p)
+    txt(ov, 990, 243, "2000  Clay Millennium Prize, US$1,000,000", size=28, a=a_p * ramp(t, c_pr + 1.5, 0.5))
 
 
 # ==============================================================================
@@ -838,7 +838,7 @@ assert _comb(20, 10) == 184756 == 4 * 11 * 13 * 17 * 19 and 11 * 13 * 17 * 19 ==
 def s12(fig, ctx, t):
     ov = overlay(fig)
     c_q, c_co, c_bi, c_di, c_ch = (cue(ctx, k) for k in ("quote", "cousin", "binom", "dict", "cheb"))
-    a1 = 1 - ramp(t, c_q - 0.3, 0.5)
+    a1 = 1 - ramp(t, c_q - 0.75, 0.45)
     if a1 > 0:
         ax = axes(fig, [0.07, 0.36, 0.40, 0.48], xlim=(-1.5, 2.5), ylim=(-2.2, 2.6))
         x = np.linspace(-1.5, 2.5, 600)
@@ -853,7 +853,7 @@ def s12(fig, ctx, t):
         ax.text(-1.4, 1.85, "f′(x)", fontsize=24, color=PAL["violet"], alpha=a1)
         txt(ov, 1350, 700, r"$\frac{d}{d\,?}\ 7\ =\ ?$", size=84, a=a1, ha="center", color=PAL["coral"])
         txt(ov, 1350, 470, "a whole number has no variable to vary", size=28, a=a1, ha="center", color=PAL["muted"])
-    aq = window(t, c_q - 0.2, c_co, 0.5)
+    aq = window(t, c_q - 0.1, c_co, 0.5)
     if aq > 0:
         quote(ov, 260, 720, 1400, "", "Levent Alpöge, remark.pdf, 20 Nov 2026", a=aq, size=34,
               lines=["This argument is a descendant of Stepanov's, but",
@@ -957,7 +957,7 @@ def s13(fig, ctx, t):
         txt(ov, 180, 375, "so  divisibility ≤ size  caps that count", size=26, a=a2 * awg, color=PAL["gold"])
         aq = ramp(t, c_sq - 0.2, 0.6)
         if aq > 0:
-            ax = axes(fig, [0.10, 0.22, 0.38, 0.30], xlim=(0, 100), ylim=(0, 125))
+            ax = axes(fig, [0.10, 0.28, 0.38, 0.25], xlim=(0, 100), ylim=(0, 125))
             X = 2500.0
             m = np.linspace(1.5, 100, 400)
             ax.plot(m, X / m, color=PAL["violet"], lw=2.5, ls="--", alpha=a2 * aq)
@@ -1092,8 +1092,8 @@ def s14(fig, ctx, t):
     if a3 > 0:
         boxes = [
             ("theta lifts on unitary groups, Galois representations,\nSiegel–Weil, … (names as in the code; most of the 17 M lines)", c3, PAL["violet"]),
-            ("weighted prime sums stay below  ≈ x$^{1/2}$  on long stretches of x", c2, PAL["coral"]),
-            ("no zeros with Re s > ½  for ζ and every Dirichlet L-function", c2, PAL["cyan"]),
+            ("weighted prime sums stay below ≈ x$^{1/2}$ on long stretches", c2, PAL["coral"]),
+            ("no zeros with Re s > ½, for ζ and every Dirichlet L-function", c2, PAL["cyan"]),
             ("mirror symmetry  s ↔ 1 − s", c1, PAL["blue"]),
             ("Riemann Hypothesis", c1, PAL["gold"]),
         ]
@@ -1104,7 +1104,7 @@ def s14(fig, ctx, t):
             ai = a3 * (0.45 + 0.55 * hi)
             hbox = 100 if i == 0 else 78
             card(ov, x0, ys[i] - hbox / 2, wbox, hbox, a=ai, ec=col, lw=2.5 + 1.5 * hi)
-            txt(ov, x0 + 26, ys[i], s, size=23 if i == 0 else 25, a=ai, weight="semibold" if i == 4 else "normal",
+            txt(ov, x0 + 26, ys[i], s, size=23 if i == 0 else 24, a=ai, weight="semibold" if i == 4 else "normal",
                 linespacing=1.2)
             if i < 4:
                 arrow(ov, (x0 + wbox / 2, ys[i] + (hbox / 2) + 2), (x0 + wbox / 2, ys[i + 1] - 37), color=PAL["muted"],
@@ -1112,7 +1112,7 @@ def s14(fig, ctx, t):
         txt(ov, 160, 905, "the proof's skeleton, traced from Main.lean", size=28, a=a3, color=PAL["muted"])
         ac = ramp(t, c_cd, 0.6)
         code_panel(ov, 1220, 640, 640, [("x ^ ((1 : ℝ) / 2 - ε) ≤ m ∧", PAL["gold"])], a=ac, size=24,
-                   label="Formalism/SizeWindowBrackets/SChain.lean, line 57 (verbatim)")
+                   label="Formalism/…/SChain.lean, line 57 (verbatim)")
         txt(ov, 1240, 470, "m = the number of lift steps;", size=24, a=ac, color=PAL["muted"])
         txt(ov, 1240, 432, "at least x$^{1/2-ε}$: just under √x", size=24, a=ac, color=PAL["muted"])
         code_panel(ov, 1220, 380, 640, [("theorem riemannHypothesis :", PAL["cyan"]),
@@ -1200,7 +1200,7 @@ def s16(fig, ctx, t):
     rows = [
         (c_c, "✓", PAL["green"], "certified", "the Riemann Hypothesis (Mathlib's statement): Lean + Mathlib, 21 Nov"),
         (c_d, "✓", PAL["green"], "also checked", "every Dirichlet L-function (GRH in that sense): A. Sutherland's MIT page"),
-        (c_n, "✗", PAL["coral"], "not checked", "other L-functions (Dedekind, Hecke, automorphic); the note only expects ERH"),
+        (c_n, "✗", PAL["coral"], "not checked", "other L-functions (Dedekind, Hecke, …); the note only \"expects\" ERH"),
         (c_n + 4.0, "✗", PAL["coral"], "not yet", "a human-readable proof (Alpöge: he will \"write it properly\")"),
         (c_cl, "…", PAL["gold"], "Clay prize", "rules: publication, then 2 years, then general acceptance"),
     ]
@@ -1210,16 +1210,16 @@ def s16(fig, ctx, t):
         card(ov, 140, yy - 48, 1640, 96, a=ai * 0.95)
         txt(ov, 195, yy, mark, size=40, a=ai, color=col, ha="center", weight="bold")
         txt(ov, 250, yy, head, size=28, a=ai, color=col, weight="semibold")
-        txt(ov, 520, yy, body, size=26, a=ai)
+        txt(ov, 520, yy, body, size=24, a=ai)
     if t > c_end - 0.3:
         ae = ramp(t, c_end - 0.3, 0.8)
-        zero_column(ov, W / 2, 260, 1000, a=ae, tmax=60)
+        zero_column(ov, W / 2, 340, 1000, a=ae, tmax=60)
         txt(ov, W / 2 - 60, 640, "a claimed proof", size=48, a=ae, ha="right", weight="bold")
         txt(ov, W / 2 - 60, 570, "machine-checked", size=36, a=ae * ramp(t, c_end + 1.5, 0.6), ha="right",
             color=PAL["green"])
         txt(ov, W / 2 + 60, 570, "not yet explained", size=36, a=ae * ramp(t, c_end + 3.0, 0.6), ha="left",
             color=PAL["gold"])
-        txt(ov, W / 2, 230, "Sources: alpo.ge/remark.pdf · leanprover-community.github.io/blog · math.mit.edu/~drew/grh",
+        txt(ov, W / 2, 300, "Sources: alpo.ge/remark.pdf · leanprover-community.github.io/blog · math.mit.edu/~drew/grh",
             size=20, a=ae * ramp(t, c_end + 5, 0.6), ha="center", color=PAL["faint"])
-        txt(ov, W / 2, 195, "Synthetic narration (Kokoro-82M) · every plot computed from scratch in Python",
+        txt(ov, W / 2, 268, "Synthetic narration (Kokoro-82M) · every plot computed from scratch in Python",
             size=20, a=ae * ramp(t, c_end + 5, 0.6), ha="center", color=PAL["faint"])
