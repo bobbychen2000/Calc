@@ -27,7 +27,7 @@ def norm(s):
 def main(argv):
     from faster_whisper import WhisperModel
     model = WhisperModel("small", device="cpu", compute_type="int8", cpu_threads=os.cpu_count() or 4)
-    scenes = sorted(f[:-5] for f in os.listdir(AUDIO) if f.endswith(".json"))
+    scenes = sorted(f[:-5] for f in os.listdir(AUDIO) if f.endswith(".json") and "." not in f[:-5])
     if argv:
         scenes = [s for s in scenes if any(s.startswith(a) for a in argv)]
     report = {}

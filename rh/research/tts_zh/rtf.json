@@ -1,0 +1,277 @@
+{
+ "kokoro_zf003": {
+  "rtf": 0.756,
+  "audio_s": 118.1
+ },
+ "qwen17_serena_bf16": {
+  "T2_series": {
+   "audio_s": 15.92,
+   "synth_s": 64.5,
+   "rtf": 4.05
+  },
+  "T1_open": {
+   "audio_s": 21.28,
+   "synth_s": 80.0,
+   "rtf": 3.76
+  },
+  "T6_close": {
+   "audio_s": 22.08,
+   "synth_s": 84.9,
+   "rtf": 3.84
+  }
+ },
+ "qwen17_serena": {
+  "T2_series": {
+   "audio_s": 15.92,
+   "synth_s": 86.3,
+   "rtf": 5.42
+  }
+ },
+ "qwen06_vivian": {
+  "T6_close": {
+   "audio_s": 23.2,
+   "synth_s": 89.2,
+   "rtf": 3.84
+  },
+  "T1_open": {
+   "audio_s": 25.68,
+   "synth_s": 99.8,
+   "rtf": 3.89
+  }
+ },
+ "qwen06_uncle_fu": {
+  "T6_close": {
+   "audio_s": 24.96,
+   "synth_s": 94.7,
+   "rtf": 3.8
+  },
+  "T1_open": {
+   "audio_s": 27.44,
+   "synth_s": 105.3,
+   "rtf": 3.84
+  }
+ },
+ "qwen06_serena": {
+  "T2_series": {
+   "audio_s": 16.24,
+   "synth_s": 63.5,
+   "rtf": 3.91
+  },
+  "T6_close": {
+   "audio_s": 21.52,
+   "synth_s": 82.1,
+   "rtf": 3.81
+  },
+  "T1_open": {
+   "audio_s": 22.08,
+   "synth_s": 84.6,
+   "rtf": 3.83
+  },
+  "T3_waves": {
+   "audio_s": 19.36,
+   "synth_s": 71.6,
+   "rtf": 3.7
+  },
+  "T4_stepanov": {
+   "audio_s": 17.44,
+   "synth_s": 64.1,
+   "rtf": 3.67
+  },
+  "T5_theta": {
+   "audio_s": 15.76,
+   "synth_s": 58.7,
+   "rtf": 3.72
+  }
+ },
+ "voxcpm2_f": {
+  "T1_open": {
+   "audio_s": 20.64,
+   "synth_s": 82.7,
+   "rtf": 4.01
+  },
+  "T2_series": {
+   "audio_s": 14.08,
+   "synth_s": 52.4,
+   "rtf": 3.72
+  },
+  "T3_waves": {
+   "audio_s": 17.92,
+   "synth_s": 66.0,
+   "rtf": 3.68
+  },
+  "T4_stepanov": {
+   "audio_s": 16.96,
+   "synth_s": 65.4,
+   "rtf": 3.86
+  },
+  "T5_theta": {
+   "audio_s": 14.88,
+   "synth_s": 57.7,
+   "rtf": 3.88
+  },
+  "T6_close": {
+   "audio_s": 19.52,
+   "synth_s": 75.8,
+   "rtf": 3.89
+  }
+ },
+ "ming_灵朵儿": {
+  "T2_series": {
+   "audio_s": 14.0,
+   "synth_s": 50.9,
+   "rtf": 3.64
+  },
+  "T1_open": {
+   "audio_s": 21.6,
+   "synth_s": 85.9,
+   "rtf": 3.98
+  },
+  "T3_waves": {
+   "audio_s": 18.8,
+   "synth_s": 65.9,
+   "rtf": 3.51
+  },
+  "T4_stepanov": {
+   "audio_s": 17.1,
+   "synth_s": 61.7,
+   "rtf": 3.61
+  },
+  "T5_theta": {
+   "audio_s": 15.2,
+   "synth_s": 57.5,
+   "rtf": 3.78
+  },
+  "T6_close": {
+   "audio_s": 20.0,
+   "synth_s": 74.5,
+   "rtf": 3.72
+  }
+ },
+ "qwen06_eric": {
+  "T6_close": {
+   "audio_s": 21.6,
+   "synth_s": 81.3,
+   "rtf": 3.76
+  },
+  "T1_open": {
+   "audio_s": 26.0,
+   "synth_s": 96.7,
+   "rtf": 3.72
+  }
+ },
+ "qwen06_dylan": {
+  "T6_close": {
+   "audio_s": 22.88,
+   "synth_s": 86.5,
+   "rtf": 3.78
+  },
+  "T1_open": {
+   "audio_s": 24.08,
+   "synth_s": 90.4,
+   "rtf": 3.75
+  }
+ },
+ "qwen17_unclefu_calm": {
+  "T1_open": {
+   "audio_s": 26.64,
+   "synth_s": 1293.0,
+   "rtf": 48.54
+  },
+  "T2_series": {
+   "audio_s": 23.2,
+   "synth_s": 627.6,
+   "rtf": 27.05
+  },
+  "T3_waves": {
+   "audio_s": 20.0,
+   "synth_s": 78.1,
+   "rtf": 3.91
+  },
+  "T4_stepanov": {
+   "audio_s": 19.12,
+   "synth_s": 73.9,
+   "rtf": 3.87
+  },
+  "T5_theta": {
+   "audio_s": 18.48,
+   "synth_s": 72.5,
+   "rtf": 3.92
+  },
+  "T6_close": {
+   "audio_s": 27.2,
+   "synth_s": 104.7,
+   "rtf": 3.85
+  }
+ },
+ "ming_灵楷": {
+  "T1_open": {
+   "audio_s": 19.9,
+   "synth_s": 70.5,
+   "rtf": 3.54
+  },
+  "T2_series": {
+   "audio_s": 13.6,
+   "synth_s": 48.5,
+   "rtf": 3.56
+  },
+  "T3_waves": {
+   "audio_s": 17.8,
+   "synth_s": 61.4,
+   "rtf": 3.45
+  },
+  "T4_stepanov": {
+   "audio_s": 17.5,
+   "synth_s": 60.1,
+   "rtf": 3.44
+  },
+  "T5_theta": {
+   "audio_s": 15.0,
+   "synth_s": 52.6,
+   "rtf": 3.51
+  },
+  "T6_close": {
+   "audio_s": 18.8,
+   "synth_s": 65.8,
+   "rtf": 3.5
+  }
+ },
+ "qwen17_serena_calm": {
+  "T1_open": {
+   "audio_s": 22.08,
+   "synth_s": 84.9,
+   "rtf": 3.84
+  },
+  "T6_close": {
+   "audio_s": 22.56,
+   "synth_s": 83.7,
+   "rtf": 3.71
+  },
+  "T2_series": {
+   "audio_s": 15.92,
+   "synth_s": 676.8,
+   "rtf": 42.51
+  },
+  "T3_waves": {
+   "audio_s": 21.2,
+   "synth_s": 99.7,
+   "rtf": 4.7
+  },
+  "T4_stepanov": {
+   "audio_s": 16.64,
+   "synth_s": 64.7,
+   "rtf": 3.89
+  },
+  "T5_theta": {
+   "audio_s": 15.36,
+   "synth_s": 59.6,
+   "rtf": 3.88
+  }
+ },
+ "voxcpm2_design": {
+  "REF": {
+   "audio_s": 5.92,
+   "synth_s": 21.3,
+   "rtf": 3.6
+  }
+ }
+}

@@ -1,9 +1,11 @@
 """Mandarin narration (Simplified Chinese, mainland 普通话): the same 16 scenes, cues and order as
 script.py, translated for meaning (not word order) for an engineer who is rusty on college math.
 
-Voiced by voice_zh.py (Kokoro-82M-v1.1-zh, misaki Chinese G2P + an English G2P for Latin-script
-words), which synthesises one caption chunk at a time: the text is split at Chinese punctuation
-(，。；：、？！) and at {cue}s, and each chunk becomes one caption (<= ~24 characters).
+Voiced by voice_zh2.py (Qwen3-TTS 1.7B CustomVoice, voice Serena), one sentence at a time; caption
+chunks are split at Chinese punctuation (，。；：、？！) and at {cue}s (<= ~24 characters a caption)
+and timed by forced alignment.  The first voice, voice_zh.py (Kokoro-82M-v1.1-zh, misaki G2P),
+synthesised one chunk at a time; the TTS rules below were written for it, and voice_zh2.UNDO turns
+its G2P workarounds (航 for 行, 的 for the complement 得, 向量 for 相量, ...) back into the real words.
 
 Markup inside "text" (as in script.py):
   [display|spoken]   captions show `display`, the voice says `spoken` (never split inside; a chunk

@@ -95,7 +95,7 @@
   "Riemann, 1859 (tr. D. R. Wilkins)": "黎曼，1859（据 D. R. Wilkins 英译）",
   "Sources: alpo.ge/remark.pdf · leanprover-community.github.io/blog · math.mit.edu/~drew/grh": "资料来源：alpo.ge/remark.pdf · leanprover-community.github.io/blog · math.mit.edu/~drew/grh",
   "Stepanov determinant": "斯捷潘诺夫行列式",
-  "Synthetic narration (Kokoro-82M) · every plot computed from scratch in Python": "合成配音（Kokoro-82M-v1.1-zh）· 所有图形均用 Python 从头计算",
+  "Synthetic narration (Kokoro-82M) · every plot computed from scratch in Python": "合成配音（Qwen3-TTS，Serena 音色）· 所有图形均用 Python 从头计算",
   "The Riemann Hypothesis": "黎曼猜想",
   "This argument is a descendant of Stepanov's, but": "这一论证脱胎于斯捷潘诺夫的论证，但",
   "We have full confidence that": "我们完全确信，",

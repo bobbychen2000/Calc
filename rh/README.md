@@ -15,7 +15,8 @@ Everything is generated from code in this folder:
 | `scenes.py` | one matplotlib renderer per scene, driven by the cue times |
 | `render.py` | frames → ffmpeg (x264 crf 18, yuv420p) per scene, concat with `-c copy`, mux the narration (loudness-normalised AAC) |
 | `script_zh.py`, `i18n/` | the Mandarin version: the narration (same scene ids and cues), the on-screen strings (`i18n/zh.json`, exact strings + digit templates, applied by a `Text.set_text` hook in `render.py`) and the glossary they follow |
-| `voice_zh.py` | Kokoro-82M-v1.1-zh, voice `zf_003` → `audio_zh/<scene>.wav` + `.json` (same schema; synthesised one caption chunk at a time, captions carry jieba word breaks) |
+| `voice_zh2.py` | the Mandarin voice: Qwen3-TTS 1.7B CustomVoice, voice Serena → `audio_zh/<scene>.wav` + `.json` (same schema), one sentence at a time with an ASR quality gate and forced-aligned captions / cues; `research/tts_zh/` has the model evaluation |
+| `voice_zh.py` | the first Mandarin voice (Kokoro-82M-v1.1-zh, clause by clause); its parser, caption merging and jieba word breaks are shared with `voice_zh2.py` |
 | `artifact.py`, `web/player.html` | the interactive player (one clip per chapter, English / 中文 toggle) |
 | `research/` | source notes: the note, the Lean/Mathlib statement, Sutherland's verification page, the Lean archive itself, third-party guides, background facts |
 
@@ -40,7 +41,8 @@ Mandarin: `RH_LANG=zh` switches `render.py` to `script_zh.py`, `audio_zh/` and `
 CJK SC; mathtext keeps STIX italics for symbols):
 
 ```bash
-~/venv-tts/bin/python voice_zh.py                 # ~6 min; uv pip install "misaki[zh]" jieba
+# Qwen3-TTS venv: uv pip install torch torchaudio (CPU wheels) qwen-tts funasr cn2an pypinyin jieba jiwer
+~/venv-qwen/bin/python voice_zh2.py               # ~70 min on 4 CPU cores (weights: Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice)
 RH_LANG=zh python3 render.py                      # -> out_zh/rh_explainer.mp4
 python3 artifact.py en && python3 artifact.py zh  # -> out/web/ (index.html + clips per language)
 ```
@@ -55,10 +57,14 @@ open models that run on a 4-core CPU: automatic MOS (UTMOS22) 4.52–4.54 for `a
 alternative met the switch rule (+0.3 MOS, no worse WER). Names the default G2P gets wrong are fixed
 in `script.LEXICON` (misaki phonemes; Alpöge as Wikipedia's American "AL-poh-gay", unsourced there).
 
-The Mandarin voice is Kokoro-82M-v1.1-zh (Apache-2.0), voice `zf_003`, with the model author's
-length-dependent speed. Its pipeline gives no word timings, so each caption chunk is synthesised on
-its own and the chunk durations drive the captions and cues. Greek letters and symbols are written
-out for the voice (`[ζ|zeta]`), and Alpöge is read as in English.
+The Mandarin voice is Qwen3-TTS-12Hz-1.7B-CustomVoice (Qwen, Apache-2.0), preset voice Serena with
+the instruction 用平稳、清晰、温和的科普讲解语气，语速适中，娓娓道来。 (bf16 on CPU, ~4x real time).
+- It replaced Kokoro-82M-v1.1-zh after a trial of seven voices from four open models; the method and
+  scores are in `research/tts_zh/README.md`.
+- Each sentence is synthesised whole. Paraformer-zh transcribes every take back, and a take with a
+  misread syllable (compared in toneless pinyin) or an implausible pace is redone with a new seed.
+- FunASR's fa-zh forced aligner times the caption chunks and cues inside each sentence.
+- Greek letters and symbols are written out for the voice (`[ζ|zeta]`), and Alpöge is read as in English.
 
 ## QA
 
