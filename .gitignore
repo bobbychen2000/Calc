@@ -12,3 +12,9 @@ pc12/dist_artifact/
 # third-party reference material (Pilatus drawings, photos) and data derived from it:
 # fetched by pc12/refs scripts, never committed (public repo)
 pc12/refs/cache/
+# house/: third-party listing photos / video frames and everything derived from their pixels:
+# fetched by house/refs scripts, never committed (public repo)
+house/refs/cache/
+house/out/
+house/web/three_local/
+house/dist/

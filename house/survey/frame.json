@@ -1,0 +1,6 @@
+{
+ "_note": "S (upright, lot-aligned SfM frame, arbitrary units) -> world metres: W = scale * Rz(yaw_deg) * (S - origin_S). PROVISIONAL until the aerial photo is registered.",
+ "scale": 31.0,
+ "yaw_deg": 0.0,
+ "origin_S": [-1.08, 2.20, -1.775]
+}

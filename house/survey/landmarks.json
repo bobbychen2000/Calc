@@ -1,0 +1,206 @@
+{
+ "chimB_rim_SW": {
+  "desc": "front (large, right) chimney: top rim of the black metal shroud, front-left (street side / garage side) corner",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1390.8,
+    2075.8
+   ],
+   "frames/seg002_043.jpg": [
+    2061.0,
+    47.6
+   ],
+   "frames/seg141_039.jpg": [
+    2000.0,
+    433.6
+   ]
+  }
+ },
+ "chimB_rim_NW": {
+  "desc": "front chimney: top rim of the shroud, back-left corner",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1391.2,
+    2025.3
+   ],
+   "frames/seg002_043.jpg": [
+    2004.4,
+    54.4
+   ],
+   "frames/seg141_039.jpg": [
+    1957.0,
+    411.0
+   ]
+  }
+ },
+ "chimB_rim_SE": {
+  "desc": "front chimney: top rim of the shroud, front-right corner",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1454.3,
+    2075.8
+   ],
+   "frames/seg002_043.jpg": [
+    2131.0,
+    51.6
+   ],
+   "frames/seg141_039.jpg": [
+    2065.0,
+    421.0
+   ]
+  }
+ },
+ "chimA_rim_SW": {
+  "desc": "middle (rear) chimney next to the two skylights: top rim of the black shroud, front-left corner",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1254.0,
+    1673.5
+   ],
+   "frames/seg002_043.jpg": [
+    1559.3,
+    136.1
+   ],
+   "frames/seg141_039.jpg": [
+    1571.1,
+    332.9
+   ]
+  }
+ },
+ "chimA_rim_NW": {
+  "desc": "middle chimney: top rim of the shroud, back-left corner",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1253.8,
+    1639.4
+   ],
+   "frames/seg002_043.jpg": [
+    1532.6,
+    136.9
+   ],
+   "frames/seg141_039.jpg": [
+    1551.4,
+    321.7
+   ]
+  }
+ },
+ "chimA_rim_SE": {
+  "desc": "middle chimney: top rim of the shroud, front-right corner",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1288.1,
+    1672.5
+   ],
+   "frames/seg002_043.jpg": [
+    1595.4,
+    136.4
+   ],
+   "frames/seg141_039.jpg": [
+    1604.6,
+    328.2
+   ]
+  }
+ },
+ "sky1_SW": {
+  "desc": "front skylight (west slope of the right front gable roof, beside the valley): top frame outer corner, front-left (low, street side)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1124.2,
+    1881.3
+   ],
+   "frames/seg002_043.jpg": [
+    1611.7,
+    264.2
+   ],
+   "frames/seg141_039.jpg": [
+    1598.3,
+    571.7
+   ]
+  }
+ },
+ "sky1_SE": {
+  "desc": "front skylight: top frame outer corner, front-right (high, street side)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1170.8,
+    1881.7
+   ],
+   "frames/seg002_043.jpg": [
+    1658.3,
+    244.2
+   ],
+   "frames/seg141_039.jpg": [
+    1640.0,
+    547.5
+   ]
+  }
+ },
+ "sky1_NW": {
+  "desc": "front skylight: top frame outer corner, back-left",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1123.5,
+    1837.5
+   ],
+   "frames/seg002_043.jpg": [
+    1575.3,
+    264.2
+   ],
+   "frames/seg141_039.jpg": [
+    1568.3,
+    550.8
+   ]
+  }
+ },
+ "vent1_top": {
+  "desc": "main front roof slope: left one of three mushroom vents, centre of the cap top",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    669.0,
+    1859.0
+   ],
+   "frames/seg002_043.jpg": [
+    936.3,
+    244.3
+   ],
+   "frames/seg141_039.jpg": [
+    1029.0,
+    676.3
+   ]
+  }
+ },
+ "vent2_top": {
+  "desc": "main front roof slope: middle mushroom vent, centre of the cap top",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    760.6,
+    1858.4
+   ],
+   "frames/seg002_043.jpg": [
+    1087.5,
+    245.8
+   ],
+   "frames/seg141_039.jpg": [
+    1152.0,
+    648.8
+   ]
+  }
+ },
+ "vent3_top": {
+  "desc": "main front roof slope: right mushroom vent (right of the hip ridge, with a thin pipe beside it), centre of the cap top",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    851.6,
+    1850.0
+   ],
+   "frames/seg002_043.jpg": [
+    1222.5,
+    272.5
+   ],
+   "frames/seg141_039.jpg": [
+    1263.3,
+    636.3
+   ]
+  }
+ }
+}
