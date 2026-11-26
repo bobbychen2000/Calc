@@ -241,11 +241,11 @@ export function detailTile(ctx, kind) {
       g.lineCap = 'round';
       const N = n * 9;
       for (let i = 0; i < N; i++) {
-        const x = r() * n, y = r() * n, a = (r() - 0.5) * 1.9 + (r() < 0.2 ? Math.PI / 2 : 0), l = n * (0.03 + r() * 0.07);
+        const x = r() * n, y = r() * n, a = (r() - 0.5) * 1.9 + (r() < 0.2 ? Math.PI / 2 : 0), l = n * (0.05 + r() * 0.1);
         const dx = Math.sin(a) * l, dy = -Math.cos(a) * l, bend = (r() - 0.5) * l * 0.6;
         const v = Math.round(60 + (i / N) * 150 + r() * 45);
         g.strokeStyle = `rgb(${v},${v},${v})`;
-        g.lineWidth = n / 512 * (0.9 + r() * 1.3);
+        g.lineWidth = n / 512 * (0.8 + r() * 1.0);
         for (let oy = -n; oy <= n; oy += n) {
           if (y + oy < -l || y + oy > n + l) continue;
           for (let ox = -n; ox <= n; ox += n) {

@@ -57,11 +57,26 @@ viewer.settle = () => new Promise((res) => {
   tick();
 });
 
+// The packaged bundle carries the model as base64 text parts (CFG.b64 = { file: parts }); the dev page loads the GLB.
+async function loadGLB(name) {
+  const loader = new GLTFLoader(), parts = (CFG.b64 || {})[name];
+  if (!parts) return loader.loadAsync(CFG.data + name);
+  const texts = await Promise.all(Array.from({ length: parts }, (_, i) => fetch(`${CFG.data}${name}.b64.${i}.txt`).then((r) => {
+    if (!r.ok) throw new Error(`${name}: part ${i} ${r.status}`);
+    return r.text();
+  })));
+  const bins = texts.map((t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0)));
+  const all = new Uint8Array(bins.reduce((n, b) => n + b.length, 0));
+  let o = 0;
+  for (const b of bins) { all.set(b, o); o += b.length; }
+  return new Promise((res, rej) => loader.parse(all.buffer, '', res, rej));
+}
+
 async function boot() {
   const metaUrl = CFG.data + (Q.get('meta') || 'house_meta.json');
   const meta = state.meta = await (await fetch(metaUrl)).json();
   status('Loading the model…');
-  const gltf = await new GLTFLoader().loadAsync(CFG.data + (Q.get('glb') || meta.glb || 'house.glb'));
+  const gltf = await loadGLB(Q.get('glb') || meta.glb || 'house.glb');
   const root = gltf.scene;
   root.traverse((o) => {
     if (!o.isMesh) return;

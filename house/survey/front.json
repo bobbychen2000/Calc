@@ -632,6 +632,20 @@
       ]
      ],
      "note": "right part of the eave"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       255,
+       923
+      ],
+      [
+       940,
+       825
+      ]
+     ],
+     "note": "gutter line; left end hidden by a tree"
     }
    ],
    "size_est_m": [
@@ -754,31 +768,31 @@
      "image": "frames/seg002_035.jpg",
      "poly": [
       [
-       224,
-       800
+       255,
+       923
       ],
       [
-       395,
-       700
-      ],
-      [
-       780,
-       690
-      ],
-      [
-       780,
-       625
+       940,
+       825
       ],
       [
        1105,
        620
       ],
       [
-       954,
-       760
+       780,
+       625
+      ],
+      [
+       780,
+       690
+      ],
+      [
+       395,
+       700
       ]
      ],
-     "note": "approximate"
+     "note": "eave (255,923)-(940,825); left end hidden by a tree"
     }
    ],
    "size_est_m": [
@@ -861,6 +875,19 @@
       [
        1162,
        913
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       940,
+       825
+      ],
+      [
+       1105,
+       620
       ]
      ]
     }
@@ -970,12 +997,14 @@
     ]
    },
    "also": [],
-   "size_est_m": [
-    null,
-    2.0
-   ],
+   "size_est_m": null,
    "size_basis": "height ~2.0 m",
-   "attrs": {},
+   "attrs": {
+    "size_partial_m": {
+     "width": null,
+     "height": 2.0
+    }
+   },
    "conf": 0.45
   },
   {
@@ -2019,16 +2048,17 @@
      "note": "front planes (dark, in shade)"
     }
    ],
-   "size_est_m": [
-    9.5,
-    null
-   ],
+   "size_est_m": null,
    "size_basis": "plan length of walls A + B",
    "attrs": {
     "material": "dimensional asphalt shingles, charcoal",
     "pitch_est": "5:12",
     "slope_direction": "down toward the street",
-    "type": "hip"
+    "type": "hip",
+    "size_partial_m": {
+     "width": 9.5,
+     "height": null
+    }
    },
    "conf": 0.6
   },
@@ -2611,19 +2641,19 @@
      "image": "photos/p02_1ea535.jpg",
      "poly": [
       [
-       659,
-       179
+       730,
+       155
       ],
       [
-       935,
-       160
+       938,
+       162
       ],
       [
        1104,
        374
       ]
      ],
-     "note": "seen steeply from below"
+     "note": "seen steeply from below: left rake looks almost level"
     }
    ],
    "size_est_m": [
@@ -2724,15 +2754,16 @@
      "note": "right piece, ends at the chimney"
     }
    ],
-   "size_est_m": [
-    5.2,
-    null
-   ],
+   "size_est_m": null,
    "size_basis": "block width from p01 strips 1.2 + 3.2 + 0.95 m; p30 gives ~4.9 m",
    "attrs": {
     "pitch_est": "5:12",
     "ridge": "front-to-back, shared with the bay",
-    "west_eave_x_p30": 1051
+    "west_eave_x_p30": 1051,
+    "size_partial_m": {
+     "width": 5.2,
+     "height": null
+    }
    },
    "conf": 0.6
   },
@@ -3044,7 +3075,19 @@
     "shaft_top_y_p01": 624,
     "shaft_top_above_bay_ridge_m": 0.65,
     "cap_top_above_bay_ridge_m": 1.4,
-    "siding": "white lap, courses not aligned with the adjacent wall"
+    "siding": "white lap, courses not aligned with the adjacent wall",
+    "plan_footprint_p30_at_roof_level": {
+     "x": [
+      1348,
+      1417
+     ],
+     "y": [
+      1974,
+      2043
+     ],
+     "note": "where the shaft leaves the shingle roof; ~69 x 69 px = ~1.2 x 1.2 m; cap top is displaced to x 1374-1454, y 2007-2076 by its height"
+    },
+    "front_face_vs_block_wall": "p30 puts the front face 0-0.3 m in front of the right block front wall and ~0.4 m behind the bay face; p02 shows the main rake board passing in front of it"
    },
    "conf": 0.65
   },
@@ -3332,10 +3375,7 @@
      "note": "eave"
     }
    ],
-   "size_est_m": [
-    2.4,
-    null
-   ],
+   "size_est_m": null,
    "size_basis": "eave 169 px in p01",
    "attrs": {
     "eave_fascia_box_p01": [
@@ -3344,7 +3384,11 @@
      2117,
      851
     ],
-    "material": "charcoal shingles"
+    "material": "charcoal shingles",
+    "size_partial_m": {
+     "width": 2.4,
+     "height": null
+    }
    },
    "conf": 0.55
   },
@@ -4488,8 +4532,8 @@
      "image": "frames/seg002_035.jpg",
      "poly": [
       [
-       954,
-       760
+       940,
+       825
       ],
       [
        1088,
@@ -4503,8 +4547,7 @@
        1105,
        620
       ]
-     ],
-     "note": "approximate"
+     ]
     }
    ],
    "size_est_m": [
@@ -6763,19 +6806,27 @@
      "image": "photos/p30_b7b282.jpg",
      "poly": [
       [
-       1450,
-       2117
+       1452,
+       2110
       ],
       [
-       1493,
-       2007
+       1500,
+       2105
       ],
       [
-       1554,
-       2117
+       1556,
+       2110
+      ],
+      [
+       1556,
+       2010
+      ],
+      [
+       1452,
+       2010
       ]
      ],
-     "note": "ridge at x~1493 running back from the eave zone"
+     "note": "plan outline of the gablet roof (in shadow): ridge along x~1500 from y~2105 back to the two-storey wall at y~2010"
     }
    ],
    "size_est_m": [
@@ -6794,7 +6845,9 @@
     "apex_p01": [
      2197,
      962
-    ]
+    ],
+    "ridge_runs_back_m": 1.9,
+    "ridge_reaches": "the recessed two-storey wall right of the chimney (p30)"
    },
    "conf": 0.7
   },
@@ -6909,16 +6962,17 @@
      ]
     }
    ],
-   "size_est_m": [
-    null,
-    2.0
-   ],
+   "size_est_m": null,
    "size_basis": "apparent",
    "attrs": {
     "lattice_band_y_p01": [
      1197,
      1217
-    ]
+    ],
+    "size_partial_m": {
+     "width": null,
+     "height": 2.0
+    }
    },
    "conf": 0.5
   },
@@ -7056,12 +7110,14 @@
     ]
    },
    "also": [],
-   "size_est_m": [
-    0.25,
-    null
-   ],
+   "size_est_m": null,
    "size_basis": "p30",
-   "attrs": {},
+   "attrs": {
+    "size_partial_m": {
+     "width": 0.25,
+     "height": null
+    }
+   },
    "conf": 0.5
   },
   {
@@ -7137,24 +7193,16 @@
       2560,
       1440
      ]
-    },
-    {
-     "image": "frames/seg141_040.jpg",
-     "bbox": [
-      1840,
-      1250,
-      1980,
-      1440
-     ]
     }
    ],
-   "size_est_m": [
-    3.0,
-    null
-   ],
+   "size_est_m": null,
    "size_basis": "p30",
    "attrs": {
-    "material": "bluestone"
+    "material": "bluestone",
+    "size_partial_m": {
+     "width": 3.0,
+     "height": null
+    }
    },
    "conf": 0.6
   },
@@ -7365,12 +7413,14 @@
      ]
     }
    ],
-   "size_est_m": [
-    null,
-    0.8
-   ],
+   "size_est_m": null,
    "size_basis": "apparent",
-   "attrs": {},
+   "attrs": {
+    "size_partial_m": {
+     "width": null,
+     "height": 0.8
+    }
+   },
    "conf": 0.5
   },
   {
@@ -7478,13 +7528,14 @@
      "note": "line of the strip"
     }
    ],
-   "size_est_m": [
-    null,
-    0.7
-   ],
+   "size_est_m": null,
    "size_basis": "apparent",
    "attrs": {
-    "count_est": 20
+    "count_est": 20,
+    "size_partial_m": {
+     "width": null,
+     "height": 0.7
+    }
    },
    "conf": 0.6
   },
@@ -7503,10 +7554,7 @@
     ]
    },
    "also": [],
-   "size_est_m": [
-    null,
-    0.4
-   ],
+   "size_est_m": null,
    "size_basis": "apparent",
    "attrs": {
     "rose_bush_box_p01": [
@@ -7514,7 +7562,11 @@
      1500,
      2255,
      1575
-    ]
+    ],
+    "size_partial_m": {
+     "width": null,
+     "height": 0.4
+    }
    },
    "conf": 0.5
   },
@@ -7893,7 +7945,7 @@
      2395
     ]
    },
-   "notes": "Light concrete / limestone coping ~80 mm thick."
+   "notes": "Light concrete / limestone coping ~80 mm thick. The sample is in open shade under a blue sky (#7895bc); colour_srgb is the estimated neutral colour (it reads #c9c8c3 at dusk in p01, y 1434-1448)."
   },
   {
    "name": "driveway pavers",

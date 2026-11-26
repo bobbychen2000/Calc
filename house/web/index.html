@@ -30,7 +30,7 @@
   var c = window.HOUSE_CONFIG;
   var m = document.createElement('script');
   m.type = 'importmap';
-  m.textContent = JSON.stringify({ imports: { 'three': c.three + 'build/three.module.js', 'three/addons/': c.three + 'examples/jsm/' } });
+  m.textContent = JSON.stringify({ imports: { 'three': c.three + (c.threeBuild || 'build/three.module.js'), 'three/addons/': c.three + 'examples/jsm/' } });
   document.currentScript.after(m);
 })();
 </script>

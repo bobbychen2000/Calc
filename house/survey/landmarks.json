@@ -521,5 +521,106 @@
     1142.9
    ]
   }
+ },
+ "solar_NW": {
+  "desc": "left solar array (4 panels on the west slope of the main roof): north-west corner of the array (far, low/eave side)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    326.8,
+    1529.2
+   ],
+   "frames/seg141_031.jpg": [
+    432.6,
+    590.4
+   ],
+   "frames/seg141_039.jpg": [
+    457.2,
+    620.3
+   ],
+   "frames/seg141_049.jpg": [
+    491.9,
+    643.0
+   ]
+  }
+ },
+ "solar_SW": {
+  "desc": "left solar array: south-west corner (near, low/eave side)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    326.8,
+    1800.2
+   ],
+   "frames/seg141_031.jpg": [
+    473.0,
+    770.2
+   ],
+   "frames/seg141_039.jpg": [
+    503.0,
+    809.8
+   ],
+   "frames/seg141_049.jpg": [
+    543.4,
+    841.1
+   ]
+  }
+ },
+ "solar_SE": {
+  "desc": "left solar array: south-east corner (near, high/ridge side)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    415.5,
+    1804.6
+   ],
+   "frames/seg141_031.jpg": [
+    618.0,
+    683.0
+   ],
+   "frames/seg141_039.jpg": [
+    641.8,
+    725.8
+   ],
+   "frames/seg141_049.jpg": [
+    672.7,
+    759.8
+   ]
+  }
+ },
+ "garW_roof_NW": {
+  "desc": "one-storey metal roof along the left (west) side of the house / garage: its rear-left (north-west) corner, outer corner of the eave edge band (beside the roof vent pipe, at the lawn)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    247.5,
+    1273.5
+   ],
+   "frames/seg141_031.jpg": [
+    305.7,
+    704.3
+   ],
+   "frames/seg141_039.jpg": [
+    332.3,
+    715.8
+   ],
+   "frames/seg141_049.jpg": [
+    370.0,
+    717.2
+   ]
+  }
+ },
+ "cab_ridge_N": {
+  "desc": "cabana roof: north end of the ridge (where the two rear hips meet the ridge cap)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1564.8,
+    235.1
+   ],
+   "frames/seg141_031.jpg": [
+    1241.0,
+    143.8
+   ],
+   "frames/seg141_049.jpg": [
+    1248.1,
+    89.3
+   ]
+  }
  }
 }

@@ -266,11 +266,12 @@ class _GlassCode:
             sc = 0
         else:
             sc = 1 + int(min(8, max(0, round(float(shade) * h / 0.3))))
+        self.floor = floor
         self.du = 0.25 + 16.0 * (int(seed) % 32 + 32 * wcode)
-        self.dv = 0.25 + floor + 8.0 * (sc + 10 * (int(room) % 4) + 40 * hcode)
+        self.dv = 0.25 + 8.0 * (sc + 10 * (int(room) % 4) + 40 * hcode)
 
     def uv(self, x, z):
-        return (min(max(x, 0.0), 15.5) + self.du, min(max(z, -0.2), 7.2) + self.dv)
+        return (min(max(x, 0.0), 15.5) + self.du, min(max(z + self.floor, 0.0), 7.4) + self.dv)
 
 
 # =====================================================================================================================
@@ -507,12 +508,11 @@ def corner_glazing(geo, corner, dir_a, dir_b, wa, wb, h, na=4, nb=3, lights=2, p
         r = np.cross(UP, o)                                # right as seen from outside
         if r @ d > 0:                                      # the corner is this bank's LEFT end
             window(geo, corner + d * post, r, width - post, h, n=n, sides='r', ext_l=post + reach, **G)
-            F = Frame(corner, r)
-            _B(geo, F).box(frame_mat, 0.0, post, 0.0, h, -setback - post, -setback, 'f')
+            _B(geo, Frame(corner, r)).box(frame_mat, setback, post, 0.0, h, -setback - post, -setback, 'f')
         else:                                              # ... its RIGHT end
             window(geo, corner + d * width, r, width - post, h, n=n, sides='l', ext_r=post + reach, **G)
-            F = Frame(corner + d * post, r)
-            _B(geo, F).box(frame_mat, 0.0, post, 0.0, h, -setback - post, -setback, 'f')
+            _B(geo, Frame(corner + d * post, r)).box(frame_mat, 0.0, post - setback, 0.0, h, -setback - post,
+                                                     -setback, 'f')
     return [(0.0, 0.0, wa, h), (0.0, 0.0, wb, h)]
 
 
