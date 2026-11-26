@@ -46,7 +46,8 @@ def build(zones=None, out='house'):
         print('materials not in model/materials.py:', missing)
     os.makedirs(os.path.join(HERE, 'out'), exist_ok=True)
     n = g.write(os.path.join(HERE, 'out', out + '.glb'))
-    V = np.vstack([m.V for p in parts for m in p.geo.meshes() if p.group == 'house']) if parts else np.zeros((1, 3))
+    vs = [m.V for p in parts for m in p.geo.meshes() if p.group == 'house'] or [m.V for p in parts for m in p.geo.meshes()]
+    V = np.vstack(vs) if vs else np.zeros((1, 3))
     cams = {}
     for k, c in frame.world_cams().items():
         cams[k] = dict(w=c['w'], h=c['h'], f=c['f'], R=np.round(c['R'], 8).tolist(), C=np.round(c['C'], 4).tolist())

@@ -1,0 +1,12 @@
+{
+  "chimB_rim_SW": {"obs": {"frames/seg002_031.jpg": [1460.0, 790.5]}},
+  "chimB_rim_NW": {"obs": {"frames/seg002_031.jpg": [1471.0, 771.5]}},
+  "chimB_rim_SE": {"obs": {"frames/seg002_031.jpg": [1506.5, 801.0]}},
+  "chimA_rim_SW": {"obs": {"frames/seg002_031.jpg": [1449.6, 658.3]}},
+  "chimA_rim_NW": {"obs": {"frames/seg002_031.jpg": [1455.6, 649.0]}},
+  "chimA_rim_SE": {"obs": {"frames/seg002_031.jpg": [1476.2, 662.5]}},
+  "vent1_top": {"obs": {"frames/seg002_031.jpg": [995.0, 716.7]}},
+  "vent2_top": {"obs": {"frames/seg002_031.jpg": [1060.7, 728.3]}},
+  "vent3_top": {"obs": {"frames/seg002_031.jpg": [1127.7, 747.7]}},
+  "gable_gar_apex": {"obs": {"frames/seg002_031.jpg": [817.5, 736.5]}}
+}
