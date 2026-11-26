@@ -1,6 +1,10 @@
 {
- "_note": "S (upright, lot-aligned SfM frame, arbitrary units) -> world metres: W = scale * Rz(yaw_deg) * (S - origin_S). PROVISIONAL until the aerial photo is registered.",
- "scale": 31.0,
+ "_note": "S (upright, lot-aligned SfM frame, arbitrary units) -> world metres: W = scale * Rz(yaw_deg) * (S - origin_S). Scale: the side fences are 100 ft (30.48 m) apart at the ground in the registered aerial photo (0.9673 S units). Origin: the front-left (street / garage side) eave corner of the roof in plan, Z = 0 at the driveway grade by the garage.",
+ "scale": 31.5,
  "yaw_deg": 0.0,
- "origin_S": [-1.08, 2.20, -1.775]
+ "origin_S": [
+  -1.0756,
+  2.2601,
+  -1.772
+ ]
 }

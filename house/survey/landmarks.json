@@ -202,5 +202,324 @@
     636.3
    ]
   }
+ },
+ "lawn_grate": {
+  "desc": "front right lawn: centre of the square drain grate",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1547.0,
+    2198.7
+   ],
+   "frames/seg141_031.jpg": [
+    2497.1,
+    1209.2
+   ],
+   "frames/seg141_049.jpg": [
+    2394.5,
+    1203.3
+   ]
+  }
+ },
+ "pooldeck_NW": {
+  "desc": "pool: west deck paving, north-west outer corner of the block that projects north of the coping (far left corner)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    239.5,
+    189.0
+   ],
+   "frames/seg141_031.jpg": [
+    271.1,
+    403.3
+   ],
+   "frames/seg141_049.jpg": [
+    303.3,
+    360.0
+   ],
+   "frames/seg002_033.jpg": [
+    174.0,
+    531.2
+   ]
+  }
+ },
+ "pooldeck_SW": {
+  "desc": "pool: west deck paving, south-west outer corner (paving / lawn)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    240.4,
+    548.5
+   ],
+   "frames/seg141_031.jpg": [
+    278.2,
+    513.8
+   ],
+   "frames/seg141_049.jpg": [
+    320.7,
+    484.0
+   ]
+  }
+ },
+ "pool_water_SW": {
+  "desc": "pool: south-west inner corner of the coping (water corner, west end, house side)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    286.5,
+    523.6
+   ],
+   "frames/seg141_031.jpg": [
+    325.6,
+    494.4
+   ],
+   "frames/seg141_049.jpg": [
+    364.4,
+    461.1
+   ]
+  }
+ },
+ "pool_SE_inner": {
+  "desc": "pool: south-east inner corner of the coping at the spa (spa tile / coping corner, house side, cabana end)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1169.4,
+    531.0
+   ],
+   "frames/seg141_031.jpg": [
+    1069.1,
+    378.7
+   ],
+   "frames/seg141_049.jpg": [
+    1081.8,
+    337.3
+   ]
+  }
+ },
+ "spa_NE": {
+  "desc": "spa: north-east corner of the dark-blue spa wall top where it meets the east coping",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1169.4,
+    415.0
+   ],
+   "frames/seg141_031.jpg": [
+    1045.5,
+    361.5
+   ],
+   "frames/seg141_049.jpg": [
+    1057.8,
+    312.2
+   ]
+  }
+ },
+ "cab_ridge_S": {
+  "desc": "cabana roof: south end of the ridge (apex of the south hip triangle)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1565.8,
+    333.0
+   ],
+   "frames/seg141_031.jpg": [
+    1268.6,
+    165.7
+   ],
+   "frames/seg141_049.jpg": [
+    1276.3,
+    116.3
+   ]
+  }
+ },
+ "cab_eave_SE": {
+  "desc": "cabana roof: south-east eave corner (right front corner seen from the house)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1690.0,
+    506.3
+   ],
+   "frames/seg141_031.jpg": [
+    1400.9,
+    218.0
+   ],
+   "frames/seg141_049.jpg": [
+    1405.5,
+    169.0
+   ]
+  }
+ },
+ "cab_bay_SW": {
+  "desc": "cabana roof: south-west corner of the eave of the projecting window bay (where the gutter jogs, left of the window)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1466.3,
+    522.5
+   ],
+   "frames/seg141_031.jpg": [
+    1261.4,
+    242.9
+   ],
+   "frames/seg141_049.jpg": [
+    1270.5,
+    203.0
+   ]
+  }
+ },
+ "perg_SW": {
+  "desc": "cabana pergola: south-west outer top corner of the frame (corner post nearest the pool / house)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1226.9,
+    515.6
+   ],
+   "frames/seg141_031.jpg": [
+    1101.4,
+    256.3
+   ],
+   "frames/seg141_049.jpg": [
+    1111.3,
+    216.3
+   ]
+  }
+ },
+ "gen_top_NE": {
+  "desc": "left side yard: big grey equipment cabinet (generator) by the fence, top face north-east corner (far right corner seen from the street)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    178.5,
+    1605.0
+   ],
+   "frames/seg141_039.jpg": [
+    255.3,
+    1108.0
+   ],
+   "frames/seg141_049.jpg": [
+    309.4,
+    1104.3
+   ]
+  }
+ },
+ "gen_top_SE": {
+  "desc": "left side yard: grey equipment cabinet, top face south-east corner (near right corner seen from the street)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    178.5,
+    1690.6
+   ],
+   "frames/seg141_039.jpg": [
+    258.3,
+    1191.3
+   ],
+   "frames/seg141_049.jpg": [
+    315.9,
+    1187.1
+   ]
+  }
+ },
+ "gable_gar_apex": {
+  "desc": "upper-floor front gable over the garage (left gable with the big window): apex of the gable at the front (front end of its ridge, vertex of the rake edges)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    452.7,
+    1961.5
+   ],
+   "frames/seg002_043.jpg": [
+    561.6,
+    260.3
+   ],
+   "frames/seg141_039.jpg": [
+    752.9,
+    846.8
+   ]
+  }
+ },
+ "gable_right_apex": {
+  "desc": "upper-floor right front gable (beside the big chimney): apex of the gable at the front (front end of its ridge, vertex of the rake edges)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1226.0,
+    2101.5
+   ],
+   "frames/seg002_043.jpg": [
+    1953.9,
+    229.4
+   ],
+   "frames/seg141_039.jpg": [
+    1878.2,
+    648.8
+   ]
+  }
+ },
+ "walk_slab_NE": {
+  "desc": "front walkway: the one clearly darker paving slab (4th-5th slab row from the porch steps, right half of the walk): its north-east corner (house side, right)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    899.2,
+    2241.8
+   ],
+   "frames/seg002_053.jpg": [
+    1959.3,
+    1325.7
+   ],
+   "frames/seg002_043.jpg": [
+    1935.0,
+    1413.1
+   ]
+  }
+ },
+ "walk_slab_SW": {
+  "desc": "front walkway: the darker paving slab, south-west corner (street side, left)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    871.3,
+    2271.3
+   ],
+   "frames/seg002_053.jpg": [
+    1960.7,
+    1385.7
+   ]
+  }
+ },
+ "walk_slab_SE": {
+  "desc": "front walkway: the darker paving slab, south-east corner (street side, right)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    899.2,
+    2271.3
+   ],
+   "frames/seg002_053.jpg": [
+    2025.0,
+    1365.0
+   ]
+  }
+ },
+ "porch_roof_SW": {
+  "desc": "front porch roof: front-left corner of the metal roof itself (roof edge at the lower end of the left hip, inside the gutter) - garage side",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    620.5,
+    2181.5
+   ],
+   "frames/seg002_043.jpg": [
+    1086.0,
+    864.6
+   ],
+   "frames/seg141_039.jpg": [
+    1167.0,
+    1386.7
+   ]
+  }
+ },
+ "porch_roof_SE": {
+  "desc": "front porch roof: front-right corner of the metal roof itself (roof edge at the lower end of the right hip, inside the gutter)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1062.0,
+    2192.0
+   ],
+   "frames/seg002_043.jpg": [
+    1997.0,
+    741.4
+   ],
+   "frames/seg141_039.jpg": [
+    1842.1,
+    1142.9
+   ]
+  }
  }
 }

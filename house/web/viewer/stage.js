@@ -2,13 +2,44 @@
 // World (model) axes: x right along the street, y into the lot, z up.  three axes: X = x, Y = z, Z = -y.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { Sky } from 'three/addons/objects/Sky.js';
+import { SkyDome, skyRadiance } from './sky.js';
+import { Picture } from './picture.js';
 
 export const toGL = (p) => new THREE.Vector3(p[0], p[2], -p[1]);
 
+// Tone mapping: the Khronos "PBR Neutral" curve (base colours pass 1:1 up to 0.76, a soft shoulder above), so a
+// material's albedo is what the photo shows under the same light and white walls can sit near 245 without ACES'
+// hue shifts.  three r160 has no built-in for it: it goes in as the custom tone-mapping function.
+THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars_fragment.replace(
+  'vec3 CustomToneMapping( vec3 color ) { return color; }',
+  `vec3 CustomToneMapping( vec3 color ) {
+    const float startCompression = 0.8 - 0.04;
+    const float desaturation = 0.15;
+    color *= toneMappingExposure;
+    float x = min( color.r, min( color.g, color.b ) );
+    float offset = x < 0.08 ? x - 6.25 * x * x : 0.04;
+    color -= offset;
+    float peak = max( color.r, max( color.g, color.b ) );
+    if ( peak < startCompression ) return color;
+    float d = 1.0 - startCompression;
+    float newPeak = 1.0 - d * d / ( peak + d - startCompression );
+    color *= newPeak / peak;
+    float g = 1.0 - 1.0 / ( desaturation * ( peak - newPeak ) + 1.0 );
+    return mix( color, vec3( newPeak ), g );
+  }`);
+
+// picture.js replaces part of the sky's image-based DIFFUSE light by shadowed sky samples while it refines a still:
+// uSkyOff (zero unless a material is hooked and a refinement pass is running) is that part, for a sky-facing surface.
+THREE.ShaderChunk.envmap_physical_pars_fragment = 'uniform vec3 uSkyOff;\n' + THREE.ShaderChunk.envmap_physical_pars_fragment;
+THREE.ShaderChunk.lights_fragment_maps = THREE.ShaderChunk.lights_fragment_maps.replace(
+  'iblIrradiance += getIBLIrradiance( geometryNormal );',
+  'iblIrradiance += max( getIBLIrradiance( geometryNormal ) - uSkyOff * ( 0.5 + 0.5 * inverseTransformDirection( geometryNormal, viewMatrix ).y ), vec3( 0.0 ) );');
+
+// Light balance, calibrated on the listing photos (their real-estate grade lifts the shade): a sunlit white wall
+// renders ~245, the same wall in open shade ~180.
 export const LOOK = {
-  day: { exposure: 0.62, sun: 3.4, sunColor: 0xfff1dc, sky: 1.0, turbidity: 3.2, rayleigh: 1.1, env: 1.0, hemi: 0.0 },
-  dusk: { exposure: 0.85, sun: 0.25, sunColor: 0xffb08a, sky: 1.0, turbidity: 6.0, rayleigh: 2.6, env: 1.0, hemi: 0.0 },
+  day: { exposure: 1.0, sun: 3.0, sunColor: 0xfff3e0, env: 1.3 },
+  dusk: { exposure: 1.0, sun: 0.45, sunColor: 0xffc4a4, env: 1.45 },
   shadow: { size: 4096, half: 34, near: 1, far: 220, bias: -0.00025, normalBias: 0.035, radius: 2.5 },
 };
 
@@ -18,7 +49,7 @@ export class Stage {
     const r = this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
     r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     r.outputColorSpace = THREE.SRGBColorSpace;
-    r.toneMapping = THREE.ACESFilmicToneMapping;
+    r.toneMapping = THREE.CustomToneMapping;
     r.shadowMap.enabled = true;
     r.shadowMap.type = THREE.PCFSoftShadowMap;
     this.scene = new THREE.Scene();
@@ -32,9 +63,8 @@ export class Stage {
     this.controls.maxDistance = 220;
     this.controls.addEventListener('change', () => { this.fixed = null; this.needs = true; });
 
-    this.sky = new Sky();
-    this.sky.scale.setScalar(900);
-    this.scene.add(this.sky);
+    this.sky = new SkyDome();
+    this.scene.add(this.sky.mesh);
     this.sun = new THREE.DirectionalLight(0xffffff, 3);
     const s = LOOK.shadow;
     this.sun.castShadow = true;
@@ -50,6 +80,9 @@ export class Stage {
     this.centre = new THREE.Vector3(0, 0, 0);
     this.needs = true;
     this.fixed = null;                      // a photo-matched camera pins the aspect
+    this.picture = new Picture(this);
+    this.refine = false;                    // progressive refinement of stills (main.js turns it on)
+    this.skyMean = new THREE.Color(0, 0, 0);
     window.addEventListener('resize', () => this.resize());
     this.resize();
   }
@@ -66,32 +99,30 @@ export class Stage {
 
   applyLight() {
     const L = LOOK[this.time];
-    const el = THREE.MathUtils.degToRad(this.time === 'dusk' ? -3.5 : this.sunDir.el);
+    const el = THREE.MathUtils.degToRad(this.time === 'dusk' ? 1.5 : this.sunDir.el);
     const az = THREE.MathUtils.degToRad(this.time === 'dusk' ? this.sunDir.az + 95 : this.sunDir.az);
     // unit vector toward the sun in model axes, then three axes
     const d = toGL([Math.sin(az) * Math.cos(el), Math.cos(az) * Math.cos(el), Math.sin(el)]);
-    const u = this.sky.material.uniforms;
-    u.sunPosition.value.copy(d);
-    u.turbidity.value = L.turbidity;
-    u.rayleigh.value = L.rayleigh;
-    u.mieCoefficient.value = 0.004;
-    u.mieDirectionalG.value = 0.82;
-    const lit = this.time === 'dusk' ? toGL([Math.sin(az) * 0.94, Math.cos(az) * 0.94, 0.34]) : d;
+    this.sky.set(this.time, d);
+    // at dusk the "sun" light is the bright part of the sky, well above the horizon
+    const lit = this.time === 'dusk' ? toGL([Math.sin(az) * 0.94, Math.cos(az) * 0.94, 0.34]).normalize() : d;
     this.sun.position.copy(this.centre).addScaledVector(lit, 120);
     this.sun.target.position.copy(this.centre);
     this.sun.color.set(L.sunColor);
     this.sun.intensity = L.sun;
     this.renderer.toneMappingExposure = L.exposure;
     if (this.envRT) this.envRT.dispose();
-    const env = new THREE.Scene();
-    const sky2 = new Sky();
-    sky2.scale.setScalar(900);
-    sky2.material.uniforms.sunPosition.value.copy(d);
-    for (const k of ['turbidity', 'rayleigh', 'mieCoefficient', 'mieDirectionalG']) sky2.material.uniforms[k].value = u[k].value;
-    env.add(sky2);
-    this.envRT = this.pmrem.fromScene(env, 0.02);
+    this.envRT = this.sky.environment(this.pmrem, this.time, d, L.env);
     this.scene.environment = this.envRT.texture;
-    this.scene.environmentIntensity = L.env;
+    this.skyMean.setRGB(0, 0, 0);          // mean radiance of the lighting sky's upper hemisphere (picture.js)
+    for (let i = 0; i < 64; i++) {
+      const y = (i + 0.5) / 64, a = i * 2.399963, c = Math.sqrt(1 - y * y);
+      this.skyMean.add(skyRadiance(this.time, new THREE.Vector3(c * Math.cos(a), y, c * Math.sin(a)), L.env));
+    }
+    this.skyMean.multiplyScalar(1 / 64);
+    this.picture.reset();
+    this.envGain = L.env;                // the image-based light is this much brighter than the sky looks: mirror-like
+                                         // materials (glass, water) divide their envMapIntensity by it (stage.envGain)
     this.needs = true;
   }
 
@@ -124,12 +155,18 @@ export class Stage {
     this.needs = true;
   }
 
+  skyRadiance(d) { return skyRadiance(this.time, d, LOOK[this.time].env); }
+
+  // one animation frame: a plain render when something changed, else refinement passes until the still converges
   frame() {
     if (!this.fixed) this.controls.update();
     if (this.needs) {
       this.needs = false;
-      this.renderer.render(this.scene, this.camera);
+      this.picture.reset();
+      if (this.refine) { this.picture.pass(); } else { this.renderer.render(this.scene, this.camera); }
       this.frames = (this.frames || 0) + 1;
+    } else if (this.refine && !this.picture.done) {
+      this.picture.pass();
     }
   }
 }

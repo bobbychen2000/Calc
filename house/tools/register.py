@@ -5,10 +5,12 @@ scale and origin until tools/frame.py fixes them).
     python3 -I tools/register.py export     # SfM cameras -> refs/cache/cams_sfm.json (S frame)
     python3 -I tools/register.py solve      # survey/landmarks.json -> refs/cache/cams_S.json + landmarks_S.json + report
     python3 -I tools/register.py check IMG  # residual table for one image
+    python3 -I tools/register.py freeze IMG [IMG ...]   # fix these images' solved cameras for all later solves
     python3 -I tools/register.py where NAME # where a solved landmark should appear in the other registered images
     python3 -I tools/register.py mark IMG OUT.jpg [scale] [x0,y0,x1,y1]   # picks (yellow +) vs solved positions (cyan x)
 
-survey/landmarks.json:  { "name": { "desc": "...", "obs": { "<image rel. to refs/cache>": [u, v], ... } }, ... }
+survey/landmarks.json and survey/landmarks_*.json (merged by landmark name):
+    { "name": { "desc": "...", "obs": { "<image rel. to refs/cache>": [u, v], ... } }, ... }
 Pixel coordinates are in ORIGINAL pixels of each image.  SfM frames (frames/seg002_033..053, seg141_031..049) are
 fixed cameras; every other image gets a camera fitted (focal length free, principal point at the centre).
 A landmark needs >= 2 observations to count; a new image needs >= 6 landmarks whose position is already known.
@@ -47,16 +49,74 @@ def export():
         print('  ', k, CAMS.describe(out[k]))
 
 
+def landmarks():
+    """All landmark files merged: survey/landmarks.json + survey/landmarks_*.json (same name = same point; the
+    observations are united, a later file's pick for the same image wins)."""
+    import glob
+    out = {}
+    for f in [LM] + sorted(glob.glob(os.path.join(HERE, 'survey', 'landmarks_*.json'))):
+        try:
+            d = json.load(open(f))
+        except Exception as e:
+            print('  cannot read', os.path.basename(f), '-', e)
+            continue
+        for k, v in d.items():
+            if k.startswith('_') or not isinstance(v, dict) or 'obs' not in v:
+                continue
+            o = out.setdefault(k, {'desc': v.get('desc', ''), 'obs': {}})
+            o['obs'].update(v['obs'])
+    return out
+
+
+def fixed_cams():
+    """Cameras that are not adjusted: the SfM frames and every image frozen with `freeze`."""
+    fixed = CAMS.load(os.path.join(CACHE, 'cams_sfm.json'))
+    fixed.update(CAMS.load(os.path.join(CACHE, 'cams_fixed.json')))
+    return fixed
+
+
+def _write(obj, path, cams=False):
+    tmp = path + '.tmp%d' % os.getpid()
+    if cams:
+        CAMS.save(obj, tmp)
+    else:
+        json.dump(obj, open(tmp, 'w'), indent=1)
+    os.replace(tmp, path)
+
+
+def freeze(images):
+    """Fix the solved cameras of these images: later solves keep them exactly (and triangulate with them)."""
+    cur = CAMS.load(os.path.join(CACHE, 'cams_S.json'))
+    fz = CAMS.load(os.path.join(CACHE, 'cams_fixed.json'))
+    for i in images:
+        fz[i] = dict(cur[i], fixed=True)
+        print('frozen', i, CAMS.describe(cur[i]))
+    _write(fz, os.path.join(CACHE, 'cams_fixed.json'), cams=True)
+
+
+def guesses():
+    """Rough cameras predicted by the multi-view network (tools/vggt_align.py), converted to the S frame: good to a
+    few degrees / metres - starting points for the fits and for finding a landmark in an unregistered image."""
+    p = os.path.join(CACHE, 'vggt', 'run1_cams.json')
+    if not os.path.exists(p):
+        return {}
+    from model import frame
+    out = {}
+    for k, c in json.load(open(p)).items():
+        out[k] = CAMS.make(c['w'], c['h'], c['f'], np.array(c['R']) @ frame._rz(), frame.to_S(c['C']))
+    return out
+
+
 def _size(img):
     from PIL import Image
     return Image.open(os.path.join(CACHE, img)).size
 
 
 def solve(verbose=True):
-    fixed = CAMS.load(os.path.join(CACHE, 'cams_sfm.json'))
-    lm = json.load(open(LM))
-    lm = {k: v for k, v in lm.items() if not k.startswith('_')}
+    fixed = fixed_cams()
+    lm = landmarks()
     cams = dict(fixed)
+    G = guesses()
     X = {}
     for _ in range(6):                             # alternate: triangulate what can be, then fit new cameras
         for name, d in lm.items():
@@ -69,11 +129,20 @@ def solve(verbose=True):
             pairs = [list(X[n]) + list(d['obs'][img]) for n, d in lm.items() if n in X and img in d['obs']]
             if len(pairs) >= 6:
                 w, h = _size(img)
-                try:
-                    cams[img], rms = CAMS.fit(pairs, w, h)
-                    new += 1
+                cands = []
+                if img in G:                                   # start from the network's guess ...
+                    try:
+                        cands.append(CAMS.refine(G[img], pairs, free=('f',)))
+                    except Exception:
+                        pass
+                try:                                           # ... and from scratch; keep the better fit
+                    cands.append(CAMS.fit(pairs, w, h))
                 except Exception as e:
-                    print('  fit failed for', img, e)
+                    if not cands:
+                        print('  fit failed for', img, e)
+                if cands:
+                    cams[img] = min(cands, key=lambda c: c[1])[0]
+                    new += 1
         if not new:
             break
     free = sorted(set(cams) - set(fixed))
@@ -130,9 +199,8 @@ def solve(verbose=True):
         unreg = sorted({i for d in lm.values() for i in d['obs']} - set(cams2))
         if unreg:
             print('  images not registered (need 6 known landmarks):', unreg)
-    CAMS.save(cams2, os.path.join(CACHE, 'cams_S.json'))
-    json.dump({n: np.round(X2[n], 5).tolist() for n in names}, open(os.path.join(CACHE, 'landmarks_S.json'), 'w'),
-              indent=1)
+    _write(cams2, os.path.join(CACHE, 'cams_S.json'), cams=True)
+    _write({n: np.round(X2[n], 5).tolist() for n in names}, os.path.join(CACHE, 'landmarks_S.json'))
     return cams2, X2, obs, e
 
 
@@ -160,13 +228,18 @@ def where(name):
             if i.startswith('photos/') or i.endswith(('_033.jpg', '_043.jpg', '_053.jpg', '_031.jpg', '_039.jpg',
                                                       '_049.jpg', '_009.jpg', '_025.jpg', '_059.jpg')):
                 print('   %-28s (%.0f, %.0f)' % (i, uv[0, 0], uv[0, 1]))
+    for i, c in sorted(guesses().items()):                     # not registered yet: the network's rough guess
+        if i not in cams2:
+            uv, z = CAMS.project(c, X[name], depth=True)
+            if z[0] > 0 and -200 <= uv[0, 0] < c['w'] + 200 and -200 <= uv[0, 1] < c['h'] + 200:
+                print('   %-28s about (%.0f, %.0f)   [rough guess, can be off by 100-200 px]' % (i, uv[0, 0], uv[0, 1]))
 
 
 def mark(img, out, scale=1.0, box=None):
     """Draw the picks (yellow +, with names) and the solved model positions (cyan x) of all landmarks in an image.
     box = x0,y0,x1,y1 to draw a crop (original pixels)."""
     from PIL import Image, ImageDraw
-    lm = {k: v for k, v in json.load(open(LM)).items() if not k.startswith('_')}
+    lm = landmarks()
     cams2 = CAMS.load(os.path.join(CACHE, 'cams_S.json'))
     X = json.load(open(os.path.join(CACHE, 'landmarks_S.json')))
     im = Image.open(os.path.join(CACHE, img)).convert('RGB')
@@ -200,6 +273,8 @@ if __name__ == '__main__':
         solve()
     elif sys.argv[1] == 'check':
         check(sys.argv[2])
+    elif sys.argv[1] == 'freeze':
+        freeze(sys.argv[2:])
     elif sys.argv[1] == 'where':
         where(sys.argv[2])
     elif sys.argv[1] == 'mark':

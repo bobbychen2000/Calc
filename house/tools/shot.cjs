@@ -1,6 +1,7 @@
 // Headless screenshots of the dev viewer (software GL).  Needs `python3 -m http.server 8777 --directory house`.
 //   node tools/shot.cjs OUT.png "view=cam:frames/seg002_043.jpg&mode=white" [WIDTH] [OUT2.png "query2" ...]
 // The canvas takes the aspect of a photo-matched camera when the view names one; WIDTH (default 1280) sets its width.
+// Add hq=N to the query for a refined still (N passes: soft shadows, sky-light shading, antialiasing; slow in software GL).
 const { chromium } = require('playwright');
 
 (async () => {
@@ -38,7 +39,8 @@ for (const j of jobs) {
     const r = await window.viewer.ready;
     await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
     window.viewer.renderNow();
-    return r;
+    const passes = await window.viewer.settle();
+    return Object.assign({ passes }, r);
   }).catch((e) => ({ error: String(e) }));
   await page.screenshot({ path: j.out });
   console.log(j.out, JSON.stringify(info));

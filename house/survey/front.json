@@ -1,0 +1,7974 @@
+{
+ "zone": "front",
+ "overview": "Two-storey white modern-farmhouse front, about 25 m wide wall-to-wall, facing the street across a raised front yard. GROUND FLOOR, left to right: (1) the garage block - a plain lap-sided wall 6.5 m wide with two white 8 ft carriage-style doors, a black slatted steel canopy on four tie rods above them, a lantern each side, and a stained wood side gate at the far left; it is the most recessed ground-floor wall. (2) A deep covered porch on a ledgestone-clad base, 4 risers above the yard, with a bluestone floor, square white 0.3 m columns and a white box beam. Its left bay stands in front of the office (two-panel glazed door), whose wall is ~1.2 m forward of the garage; the middle is a recessed entry alcove (navy 9 ft Dutch-style door with two sidelights) under a slightly projecting pyramid-hipped roof, reached by a 2.6 m wide flight of 4 bluestone steps between stone piers; the right bay fronts the living room (four-part French door unit) and is ~1 m shallower. A second small flight of steps leaves the porch's west end to the driveway. (3) A one-storey wing at the right end which steps forward of the living-room wall: its west side wall (single glass door onto the porch) closes the porch, and its front has a board-and-batten box bay with a wide triple window, a second black canopy, two lanterns and a small decorative gable sitting on the roof above. ROOFS AT FIRST-FLOOR LEVEL: one continuous black standing-seam skirt with a single eave height wraps the garage, porch, entry, right bay, wing and both side walls; the sloping planes are only ~2 m deep and hide a flat membrane roof behind them. UPPER FLOOR (narrower than the ground floor, set well back on the left and middle): on the left a board-and-batten gable bay with a twin window rises out of the garage roof; then two recessed lap-sided walls (wall A with a short wide window and a tall narrow one, wall B 0.65 m further back with a tall twin unit) under the eave of the main shingled hip roof; on the right a gabled block comes forward ~2.7 m, with its own projecting board-and-batten gable bay and twin window, a small window on its west side wall, and a tall white lap-sided chimney with a black metal bonnet cap at its front-right corner; right of the chimney a short recessed wall with a small square window ends the upper storey. Upper roofs are charcoal dimensional shingles; gutters and downspouts are black. GROUNDS: paver driveway on the left rising ~1 m from the street to the garage; curved bluestone walk from the entry steps to the driveway; lawn panels; a ~1.1 m ledgestone retaining wall with a light cap along the street (street skewed ~7 deg to the house), a row of globe shrubs on top and three young standard trees in the strip at its foot.",
+ "elements": [
+  {
+   "id": "front.wall_garage",
+   "type": "wall",
+   "on": "front wall of the garage block, storey 1 (left end of the house)",
+   "desc": "Flat white horizontal lap-siding wall (about 5 in / 127 mm exposure, 11.75 px per course in p01) holding the two garage doors. Left corner has a white corner board; a strip of grey concrete foundation shows under the siding at the bottom-left. Right end meets the short west wall of the office block (hidden behind the porch downspout / column 1 in p01). Top of wall is the flat soffit of the standing-seam roof eave.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      152,
+      1058
+     ],
+     [
+      787,
+      1069
+     ],
+     [
+      787,
+      1403
+     ],
+     [
+      152,
+      1401
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      300,
+      838,
+      979,
+      1370
+     ],
+     "note": "right corner x=979 (top y 838, bottom y 1196); left part hidden by a tree and title overlay"
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       275,
+       2000
+      ],
+      [
+       633,
+       2000
+      ]
+     ],
+     "note": "wall line lies ~0.5 m (27 px) inside this eave line; wall itself not visible from above"
+    }
+   ],
+   "size_est_m": [
+    6.5,
+    3.66
+   ],
+   "size_basis": "p01 local scale from lap-siding courses (5 in exposure assumed, which makes the garage doors 8 ft high): garage wall 93.5 px/m vertical; horizontal scale = vertical x ~1.04 at the far left falling to ~0.92 at the far right (facade is yawed ~10 deg to the image plane, right end farther); 635 px wide, 343 px slab-to-soffit",
+   "attrs": {
+    "siding": "horizontal lap, ~5 in exposure",
+    "depth_ref": "this wall plane is the depth datum (0 m) used in relations",
+    "height_slab_to_soffit_m": 3.66,
+    "height_slab_to_fascia_bottom_m": 3.76,
+    "height_slab_to_eave_top_m": 4.02,
+    "left_corner_x_p01": 152,
+    "right_end_x_p01": 787
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.garage_door_1",
+   "type": "garage_door",
+   "on": "front wall of the garage, storey 1 (left door)",
+   "desc": "White carriage-house style overhead garage door made to look like a pair of side-hinged leaves: a vertical centre stile splits it into two halves; each half has a row of 3 square-ish glass lites at the top (each ~0.30 m wide x 0.46 m high, thin white muntins) and below it one tall recessed panel filled with 3 vertical V-groove boards, framed by flat stiles/rails. No visible hardware. Lit from inside in p01.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     246,
+     1175,
+     483,
+     1403
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      324,
+      1054,
+      600,
+      1354
+     ],
+     "note": "approximate: partly behind a tree and the title overlay"
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      255,
+      990,
+      560,
+      1260
+     ],
+     "note": "approximate, under title overlay"
+    }
+   ],
+   "size_est_m": [
+    2.44,
+    2.44
+   ],
+   "size_basis": "8 ft x 8 ft assumed; 237 x 228 px at 93.5 px/m (x1.04 horizontally) gives 2.44 x 2.44 m. A 9 ft width cannot be excluded.",
+   "attrs": {
+    "halves": 2,
+    "lites_per_half": 3,
+    "lite_boxes_p01": [
+     [
+      261,
+      1186,
+      289,
+      1229
+     ],
+     [
+      293,
+      1186,
+      321,
+      1229
+     ],
+     [
+      325,
+      1186,
+      354,
+      1229
+     ],
+     [
+      383,
+      1186,
+      411,
+      1229
+     ],
+     [
+      415,
+      1186,
+      443,
+      1229
+     ],
+     [
+      446,
+      1186,
+      474,
+      1229
+     ]
+    ],
+    "lower_panel": "3 vertical V-groove boards per half",
+    "colour": "white",
+    "lite_row_y_p01": [
+     1186,
+     1229
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.garage_door_2",
+   "type": "garage_door",
+   "on": "front wall of the garage, storey 1 (right door)",
+   "desc": "White carriage-house style overhead garage door made to look like a pair of side-hinged leaves: a vertical centre stile splits it into two halves; each half has a row of 3 square-ish glass lites at the top (each ~0.30 m wide x 0.46 m high, thin white muntins) and below it one tall recessed panel filled with 3 vertical V-groove boards, framed by flat stiles/rails. No visible hardware. Lit from inside in p01.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     506,
+     1178,
+     738,
+     1404
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      608,
+      1001,
+      897,
+      1285
+     ],
+     "note": "top-left to bottom-right extent; lites at x 621-733 and 771-879, y ~1010-1075"
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      570,
+      930,
+      890,
+      1190
+     ],
+     "note": "approximate, under title overlay"
+    }
+   ],
+   "size_est_m": [
+    2.44,
+    2.44
+   ],
+   "size_basis": "same as door 1 (232 px wide, slightly farther from the camera)",
+   "attrs": {
+    "halves": 2,
+    "lites_per_half": 3,
+    "lite_boxes_p01": [
+     [
+      520,
+      1190,
+      548,
+      1232
+     ],
+     [
+      551,
+      1190,
+      579,
+      1232
+     ],
+     [
+      582,
+      1190,
+      609,
+      1232
+     ],
+     [
+      639,
+      1190,
+      667,
+      1232
+     ],
+     [
+      670,
+      1190,
+      697,
+      1232
+     ],
+     [
+      700,
+      1190,
+      728,
+      1232
+     ]
+    ],
+    "colour": "white"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.garage_door_surround",
+   "type": "other",
+   "on": "front wall of the garage, storey 1",
+   "desc": "Flat white casing (~70-100 mm) around the pair of garage doors with a white post ~0.24 m wide between the two doors. Head casing at y~1169-1176 in p01.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     238,
+     1169,
+     743,
+     1404
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    5.2,
+    2.5
+   ],
+   "size_basis": "505 px across both doors and the post",
+   "attrs": {
+    "centre_post_x_p01": [
+     483,
+     506
+    ],
+    "centre_post_width_m": 0.24
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.garage_awning",
+   "type": "awning",
+   "on": "front wall of the garage, storey 1, above both doors",
+   "desc": "Black steel flat canopy hung from the wall by 4 tie rods. Seen from above (drone) it is NOT a solid sheet: a rectangular channel frame holding about 5 long flat slats (louvres) running the full length, with cross members at the rod positions. From the street it reads as a thin dark horizontal band ~0.2 m deep. It starts ~0.5 m right of the garage left corner and ends ~0.3 m short of the garage right end.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     199,
+     1113,
+     756,
+     1142
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      203,
+      919,
+      942,
+      1027
+     ],
+     "note": "left end hidden by tree; right end at (942, 950)"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      878,
+      1180,
+      1070,
+      1300
+     ],
+     "note": "right half, seen from above: slats visible"
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      185,
+      860,
+      950,
+      990
+     ],
+     "note": "approximate"
+    }
+   ],
+   "size_est_m": [
+    5.7,
+    0.2
+   ],
+   "size_basis": "557 px long at 93.5x1.04 px/m; band 20-28 px thick; projection from the wall estimated ~0.9 m from the drone frames (not measured)",
+   "attrs": {
+    "projection_m_est": 0.9,
+    "slats": 5,
+    "colour": "black",
+    "underside_height_above_slab_m": 2.85,
+    "top_height_above_slab_m": 3.07,
+    "gap_above_door_head_m": 0.4
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.garage_awning_rods",
+   "type": "other",
+   "on": "front wall of the garage, storey 1",
+   "desc": "4 thin black tie rods carrying the garage canopy. Each runs from a small square black wall plate (~0.13 m) under the eave down and outward to the front edge of the canopy.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     205,
+     1066,
+     760,
+     1126
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      440,
+      850,
+      930,
+      1010
+     ],
+     "note": "rods 2-4: plates at (455,934), (693,897), (908,862); canopy ends at (466,1006), (703,964), (921,925)"
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "plates are ~0.43 m above the canopy top",
+   "attrs": {
+    "plate_centres_p01": [
+     [
+      229,
+      1074
+     ],
+     [
+      407,
+      1078
+     ],
+     [
+      582,
+      1081
+     ],
+     [
+      751,
+      1084
+     ]
+    ],
+    "rod_lower_ends_p01": [
+     [
+      215,
+      1114
+     ],
+     [
+      398,
+      1116
+     ],
+     [
+      577,
+      1120
+     ],
+     [
+      749,
+      1123
+     ]
+    ],
+    "count": 4,
+    "spacing_m": 1.8
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.garage_sconce_left",
+   "type": "light",
+   "on": "front wall of the garage, storey 1, left of door 1",
+   "desc": "Tall rectangular wall lantern: black metal frame box with clear glass and a vertical warm filament tube. Same fixture as all other front sconces (~0.2 m wide x ~0.66 m tall, ~0.12 m deep).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     185,
+     1174,
+     205,
+     1236
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.2,
+    0.66
+   ],
+   "size_basis": "20 x 62 px at 93.5 px/m",
+   "attrs": {
+    "centre_height_above_slab_m": 2.12
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.garage_sconce_right",
+   "type": "light",
+   "on": "front wall of the garage, storey 1, right of door 2 (wall strip next to the office corner)",
+   "desc": "Same tall black box lantern as the others.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     772,
+     1184,
+     785,
+     1240
+    ],
+    "note": "right edge clipped by the porch downspout"
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      937,
+      975,
+      958,
+      1043
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      925,
+      880,
+      950,
+      950
+     ],
+     "note": "approximate"
+    }
+   ],
+   "size_est_m": [
+    0.2,
+    0.66
+   ],
+   "size_basis": "same fixture",
+   "attrs": {},
+   "conf": 0.8
+  },
+  {
+   "id": "front.garage_floodlight",
+   "type": "light",
+   "on": "front wall of the garage, storey 1, above the centre post under the canopy",
+   "desc": "Small twin-head security floodlight, lit in p01 (two bright spots).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     480,
+     1148,
+     503,
+     1164
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.25,
+    0.15
+   ],
+   "size_basis": "apparent size only",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "front.garage_camera",
+   "type": "equipment",
+   "on": "front wall of the garage, storey 1, right end under the canopy",
+   "desc": "Small dark dome security camera.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     771,
+     1149,
+     779,
+     1158
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      940,
+      941,
+      949,
+      950
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.08,
+    0.08
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "front.garage_utility_box",
+   "type": "equipment",
+   "on": "front wall of the garage, storey 1, low on the strip between door 2 and the office corner",
+   "desc": "Grey rectangular box (keypad / EV or utility box) about 0.35 m square, ~0.6 m above the slab. Only seen in the drone frames (hidden by shrubs in p01).",
+   "ref": {
+    "image": "frames/seg002_035.jpg",
+    "bbox": [
+     950,
+     1148,
+     971,
+     1169
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.3,
+    0.3
+   ],
+   "size_basis": "apparent in drone frame",
+   "attrs": {},
+   "conf": 0.4
+  },
+  {
+   "id": "front.garage_foundation",
+   "type": "other",
+   "on": "base of the garage front wall at its left corner",
+   "desc": "Exposed grey concrete foundation stem under the siding, ~0.28 m high, visible between the left corner and door 1 (with a small step in it).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     157,
+     1377,
+     237,
+     1403
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.85,
+    0.28
+   ],
+   "size_basis": "80 x 26 px at 93.5 px/m",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "front.eave_garage",
+   "type": "gutter",
+   "on": "front eave of the garage roof, top of storey 1",
+   "desc": "Eave of the standing-seam roof over the garage: black gutter/drip-edge band (~0.12 m) over a white fascia board (~0.14 m), flat white soffit ~0.5 m deep behind it. Line slopes down to the right in p01 by perspective only (it is level). The same eave continues round the left end as the west side eave.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      97,
+      1016
+     ],
+     [
+      768,
+      1036
+     ],
+     [
+      770,
+      1060
+     ],
+     [
+      105,
+      1047
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       248,
+       1998
+      ],
+      [
+       611,
+       1998
+      ]
+     ],
+     "note": "eave line in plan"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       884,
+       1225
+      ],
+      [
+       1053,
+       1173
+      ]
+     ],
+     "note": "right part of the eave"
+    }
+   ],
+   "size_est_m": [
+    6.9,
+    0.26
+   ],
+   "size_basis": "eave left corner x=97..105, wall corner x=152 -> ~0.5 m side overhang",
+   "attrs": {
+    "overhang_m": 0.5,
+    "gutter": "black K-style",
+    "fascia": "white",
+    "eave_top_above_slab_m": 4.02
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.roof_garage",
+   "type": "roof_plane",
+   "on": "low roof over the garage, between the garage eave and the upper-floor walls",
+   "desc": "Black standing-seam metal roof plane sloping down toward the street, seams ~0.45 m apart running up-slope. It rises from the garage eave to the base of the upper-left gable bay and (behind the bay) to the base of upper wall A. Left end is a hip that turns the corner into a long standing-seam skirt roof along the west side of the house. Right end meets the west-facing plane of the porch-left roof in a valley.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      97,
+      1021
+     ],
+     [
+      400,
+      980
+     ],
+     [
+      431,
+      978
+     ],
+     [
+      709,
+      981
+     ],
+     [
+      752,
+      978
+     ],
+     [
+      770,
+      990
+     ],
+     [
+      768,
+      1038
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       248,
+       1998
+      ],
+      [
+       611,
+       1998
+      ],
+      [
+       685,
+       1926
+      ],
+      [
+       570,
+       1946
+      ],
+      [
+       452,
+       1960
+      ],
+      [
+       348,
+       1947
+      ],
+      [
+       313,
+       1924
+      ]
+     ],
+     "note": "upper edge hidden under upper-roof overhangs"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       635,
+       1085
+      ],
+      [
+       920,
+       1067
+      ],
+      [
+       920,
+       964
+      ],
+      [
+       1162,
+       913
+      ],
+      [
+       1056,
+       1164
+      ],
+      [
+       884,
+       1225
+      ]
+     ],
+     "note": "right 2/3 of the plane (left part out of the crop area)"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       224,
+       800
+      ],
+      [
+       395,
+       700
+      ],
+      [
+       780,
+       690
+      ],
+      [
+       780,
+       625
+      ],
+      [
+       1105,
+       620
+      ],
+      [
+       954,
+       760
+      ]
+     ],
+     "note": "approximate"
+    }
+   ],
+   "size_est_m": [
+    6.9,
+    2.1
+   ],
+   "size_basis": "plan depth eave-to-upper-wall-A ~2.1 m from p30 (corrected for height); ~1.6 m of it is in front of the gable bay",
+   "attrs": {
+    "material": "standing seam metal, matte black",
+    "pitch_est": "~3.5:12 (15-18 deg), low confidence",
+    "seam_spacing_m": 0.45,
+    "slope_direction": "down toward the street"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.ridge_garage_hip_left",
+   "type": "ridge",
+   "on": "left end of the garage roof",
+   "desc": "Hip rib where the garage front roof plane turns into the west side skirt roof; runs from the front-left eave corner up to the left corner of the upper storey.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      97,
+      1021
+     ],
+     [
+      400,
+      980
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       248,
+       1998
+      ],
+      [
+       313,
+       1924
+      ]
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "front.valley_garage_porch",
+   "type": "ridge",
+   "on": "junction of the garage roof and the porch-left roof",
+   "desc": "Valley between the garage front roof plane and the west-facing plane of the porch-left hipped roof; in plan it runs at 45 deg from the inside eave corner back to upper wall A. Not visible in p01.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      611,
+      1998
+     ],
+     [
+      685,
+      1926
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1056,
+       1164
+      ],
+      [
+       1162,
+       913
+      ]
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {
+    "kind": "valley"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.downspout_porch_left",
+   "type": "downspout",
+   "on": "west face of porch column 1 / right end of the garage wall",
+   "desc": "Black rectangular downspout from the left end of the porch-left gutter: short diagonal leader under the eave, straight down the west face of column 1, then a jog left along the top of the stone base and down to grade.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      757,
+      1014
+     ],
+     [
+      786,
+      1020
+     ],
+     [
+      786,
+      1336
+     ],
+     [
+      753,
+      1338
+     ],
+     [
+      753,
+      1370
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1076,
+      986,
+      1118,
+      1420
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.08,
+    3.6
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "front.side_gate_left",
+   "type": "gate",
+   "on": "between the garage left corner and the left fence, set back about level with the garage front",
+   "desc": "Stained wood (redwood/cedar, warm reddish brown) side-yard gate ~0.75 m wide and ~2.0 m tall: solid vertical boards with a square-lattice band (~0.3 m) across the top, between a 0.2 m square post with a flat cap and the garage wall.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     82,
+     1206,
+     151,
+     1400
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.75,
+    2.05
+   ],
+   "size_basis": "69 px wide, 194 px tall at ~93 px/m",
+   "attrs": {
+    "post_box_p01": [
+     62,
+     1192,
+     83,
+     1400
+    ],
+    "lattice_band_y_p01": [
+     1206,
+     1236
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.fence_left",
+   "type": "fence",
+   "on": "left property line beside the driveway",
+   "desc": "Same stained wood fence with lattice top, running from the gate post toward the street along the left edge of the driveway (seen foreshortened at the far left of p01). A white box (sensor/keypad) is mounted on the gate post and a white post with a red base stands in front of it.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     0,
+     1198,
+     62,
+     1400
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    null,
+    2.0
+   ],
+   "size_basis": "height ~2.0 m",
+   "attrs": {},
+   "conf": 0.45
+  },
+  {
+   "id": "front.gas_meter",
+   "type": "equipment",
+   "on": "left end of the garage front wall, in front of the side gate",
+   "desc": "Utility cluster: grey gas meter with white-painted pipes and a white bollard post, ~1 m tall.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     117,
+     1304,
+     151,
+     1399
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.4,
+    1.0
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "front.wall_upper_left_stub",
+   "type": "wall",
+   "on": "upper floor front wall left of the gable bay, storey 2",
+   "desc": "Narrow strip (~0.6 m) of the main upper-floor front wall showing to the left of the projecting gable bay; white lap siding; hip-roof eave above it. Its left edge is the upper storey's left (west) corner.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      382,
+      806
+     ],
+     [
+      431,
+      806
+     ],
+     [
+      431,
+      978
+     ],
+     [
+      400,
+      980
+     ],
+     [
+      382,
+      970
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      335,
+      462,
+      378,
+      700
+     ],
+     "note": "in shade, partly behind tree"
+    }
+   ],
+   "size_est_m": [
+    0.6,
+    2.1
+   ],
+   "size_basis": "49 px at ~82 px/m",
+   "attrs": {
+    "same_plane_as": "front.wall_upper_A"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.wall_upper_left_bay",
+   "type": "wall",
+   "on": "front face of the upper-left projecting gable bay, storey 2 (above the garage)",
+   "desc": "White board-and-batten gable-end wall of a shallow bay that projects ~0.5 m in front of the main upper wall. Flat boards with ~50 mm battens at ~0.41 m (16 in) centres, running unbroken up into the gable peak. Its base sits on the standing-seam garage roof (white flashing/base trim). One twin window centred in it.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      431,
+      793
+     ],
+     [
+      567,
+      739
+     ],
+     [
+      709,
+      801
+     ],
+     [
+      709,
+      981
+     ],
+     [
+      431,
+      978
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       378,
+       456
+      ],
+      [
+       571,
+       371
+      ],
+      [
+       762,
+       439
+      ],
+      [
+       762,
+       680
+      ],
+      [
+       378,
+       698
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       617,
+       958
+      ],
+      [
+       738,
+       867
+      ],
+      [
+       908,
+       880
+      ],
+      [
+       908,
+       1025
+      ],
+      [
+       617,
+       1085
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "poly": [
+      [
+       385,
+       409
+      ],
+      [
+       562,
+       300
+      ],
+      [
+       765,
+       385
+      ],
+      [
+       768,
+       620
+      ],
+      [
+       385,
+       641
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.3,
+    3.0
+   ],
+   "size_basis": "278 px wide at ~81x1.03 px/m; 242 px base-to-peak (under the rake)",
+   "attrs": {
+    "batten_x_p01": [
+     459,
+     496,
+     533,
+     571,
+     608,
+     646,
+     684
+    ],
+    "batten_spacing_m": 0.41,
+    "eave_height_above_base_m": 2.25,
+    "projection_from_upper_wall_A_m": 0.5,
+    "depth_rel_garage_wall_m": -1.6,
+    "side_return": "short side walls, same white siding"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.window_upper_left_bay",
+   "type": "window",
+   "on": "front face of the upper-left gable bay, storey 2",
+   "desc": "Twin black-framed window (two equal sashes mulled with a ~0.12 m post). Each sash: two small square lites side by side across the top over one large pane (Craftsman pattern). White flat casing with a small projecting head cap; white sill resting almost on the garage roof flashing.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     491,
+     837,
+     651,
+     980
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      465,
+      491,
+      701,
+      691
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      455,
+      428,
+      692,
+      624
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      682,
+      916,
+      859,
+      1062
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.9,
+    1.77
+   ],
+   "size_basis": "160 x 143 px at ~81 px/m (x1.03 horizontally)",
+   "attrs": {
+    "sashes": 2,
+    "grid_per_sash": "2 small lites over 1 pane",
+    "glass_left_x_p01": [
+     502,
+     567
+    ],
+    "glass_right_x_p01": [
+     579,
+     643
+    ],
+    "top_lites_y_p01": [
+     849,
+     874
+    ],
+    "main_pane_y_p01": [
+     877,
+     972
+    ],
+    "frame_colour": "black",
+    "operable": "probably casements"
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.gable_upper_left",
+   "type": "gable",
+   "on": "roof of the upper-left gable bay",
+   "desc": "Front-facing gable over the bay: wide white bargeboard (~0.3 m deep) with a dark roof edge on top, rake overhang ~0.3 m, small flat soffit returns at both eave ends. Covered in the same charcoal shingles as the main roof; its ridge runs straight back into the front plane of the main hip roof.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      402,
+      795
+     ],
+     [
+      402,
+      776
+     ],
+     [
+      565,
+      711
+     ],
+     [
+      731,
+      790
+     ],
+     [
+      731,
+      809
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       348,
+       1947
+      ],
+      [
+       452,
+       1960
+      ],
+      [
+       570,
+       1946
+      ],
+      [
+       570,
+       1924
+      ],
+      [
+       452,
+       1830
+      ],
+      [
+       348,
+       1924
+      ]
+     ],
+     "note": "whole gable roof in plan; ridge x=452"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       330,
+       470
+      ],
+      [
+       330,
+       440
+      ],
+      [
+       568,
+       339
+      ],
+      [
+       800,
+       425
+      ],
+      [
+       800,
+       452
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       578,
+       940
+      ],
+      [
+       735,
+       852
+      ],
+      [
+       938,
+       860
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.9,
+    1.0
+   ],
+   "size_basis": "apex is 65-79 px above the eave ends over a half-span of ~165 px -> slope 0.40-0.48",
+   "attrs": {
+    "pitch_est": "5:12 (22-25 deg)",
+    "apex_p01": [
+     565,
+     711
+    ],
+    "apex_under_rake_p01": [
+     567,
+     739
+    ],
+    "eave_ends_p01": [
+     [
+      402,
+      792
+     ],
+     [
+      731,
+      806
+     ]
+    ],
+    "overhang_m": 0.3
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.eave_upper_left",
+   "type": "gutter",
+   "on": "upper-floor eave to the left of the gable bay",
+   "desc": "Short piece of the main hip roof eave (black gutter over white fascia/soffit) left of the gable; its left end is the front-left corner of the upper roof.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     341,
+     779,
+     402,
+     806
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       313,
+       1924
+      ],
+      [
+       348,
+       1924
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.7,
+    0.3
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "front.downspout_upper_left",
+   "type": "downspout",
+   "on": "inside corner between the gable bay right side and upper wall A, storey 2",
+   "desc": "Black downspout from the upper gutter, discharging onto the garage roof.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     708,
+     822,
+     714,
+     976
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.08,
+    1.9
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "front.wall_upper_A",
+   "type": "wall",
+   "on": "recessed upper-floor front wall, middle-left (right of the left gable bay), storey 2",
+   "desc": "White lap-siding wall of the upper floor, set back ~2 m behind the garage front wall. Only its upper ~2 m shows from the street: the lower part is hidden by the garage roof and the porch roof in front. Its base meets the garage roof (left part) and the flat membrane roof (right part). Two windows. Right end is a small step back to wall B.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      711,
+      826
+     ],
+     [
+      1145,
+      840
+     ],
+     [
+      1145,
+      936
+     ],
+     [
+      1020,
+      931
+     ],
+     [
+      790,
+      968
+     ],
+     [
+      752,
+      978
+     ],
+     [
+      711,
+      981
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       779,
+       427
+      ],
+      [
+       1268,
+       404
+      ],
+      [
+       1268,
+       586
+      ],
+      [
+       779,
+       627
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       908,
+       879
+      ],
+      [
+       1302,
+       749
+      ],
+      [
+       1302,
+       831
+      ],
+      [
+       908,
+       976
+      ]
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       570,
+       1924
+      ],
+      [
+       873,
+       1924
+      ]
+     ],
+     "note": "eave line; wall ~0.45 m inside"
+    }
+   ],
+   "size_est_m": [
+    5.3,
+    2.75
+   ],
+   "size_basis": "434 px at ~79.5x1.02 px/m; p30 eave length 303 px at ~58.6 px/m; full height to the roof junction estimated",
+   "attrs": {
+    "depth_rel_garage_wall_m": -2.1,
+    "top_is": "soffit of the main hip roof eave",
+    "visible_height_m": 1.9
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.window_upper_A_short",
+   "type": "window",
+   "on": "upper wall A, storey 2 (left window)",
+   "desc": "Short wide single-pane window (bathroom-type), black frame, white casing with head cap and sill.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     858,
+     862,
+     944,
+     907
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      940,
+      464,
+      1042,
+      527
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      937,
+      415,
+      1039,
+      475
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1036,
+      819,
+      1117,
+      872
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.06,
+    0.57
+   ],
+   "size_basis": "86 x 45 px at ~79.5 px/m",
+   "attrs": {
+    "lites": 1,
+    "head_y_p01": 862
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.window_upper_A_tall",
+   "type": "window",
+   "on": "upper wall A, storey 2 (right window)",
+   "desc": "Tall narrow window: two small lites across the top over one tall pane, black frame, white casing. In p01 its lower part is hidden behind the porch roof (visible down to y~933).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1017,
+     867,
+     1088,
+     933
+    ],
+    "note": "visible part only; bottom estimated at y~985-990"
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1128,
+      455,
+      1206,
+      586
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      1126,
+      411,
+      1206,
+      543
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1185,
+      785,
+      1246,
+      875
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.88,
+    1.5
+   ],
+   "size_basis": "71 px wide at ~79.5 px/m; height from the drone aspect ratio (78 x 131 px)",
+   "attrs": {
+    "grid": "2 small lites over 1 pane",
+    "top_lites_y_p01": [
+     878,
+     902
+    ],
+    "bottom_hidden_in_p01": true
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.wall_upper_B",
+   "type": "wall",
+   "on": "recessed upper-floor front wall, middle-right (between wall A and the right gable block), storey 2",
+   "desc": "White lap-siding wall set ~0.65 m further back than wall A. Holds one tall twin window/door unit. Right end is the inside corner with the west side wall of the right gable block. Base sits on the flat membrane roof (hidden from the street by the porch and entry roofs).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1150,
+      852
+     ],
+     [
+      1432,
+      862
+     ],
+     [
+      1432,
+      963
+     ],
+     [
+      1353,
+      949
+     ],
+     [
+      1329,
+      943
+     ],
+     [
+      1150,
+      937
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1300,
+       395
+      ],
+      [
+       1535,
+       376
+      ],
+      [
+       1535,
+       570
+      ],
+      [
+       1300,
+       573
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1302,
+       749
+      ],
+      [
+       1526,
+       664
+      ],
+      [
+       1526,
+       782
+      ],
+      [
+       1302,
+       825
+      ]
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       873,
+       1887
+      ],
+      [
+       1051,
+       1887
+      ]
+     ],
+     "note": "eave line"
+    }
+   ],
+   "size_est_m": [
+    3.6,
+    2.75
+   ],
+   "size_basis": "282 px at ~77.5 px/m; p30 gives ~3.5 m",
+   "attrs": {
+    "depth_rel_garage_wall_m": -2.75,
+    "step_back_from_wall_A_m": 0.65
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.window_upper_B_twin",
+   "type": "window",
+   "on": "upper wall B, storey 2",
+   "desc": "Twin black-framed glazed unit, each half with two small lites over one tall pane. It is clearly taller than the other upper windows (about door height, sill close to the flat roof) - probably the stair-landing glazing; could be a pair of doors to the flat roof. In p01 everything below y~942 is hidden by the porch roof.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1229,
+     871,
+     1365,
+     942
+    ],
+    "note": "visible part only; bottom estimated at y~1015-1025"
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1337,
+      410,
+      1473,
+      563
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      1338,
+      378,
+      1472,
+      525
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1356,
+      690,
+      1466,
+      802
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.78,
+    1.95
+   ],
+   "size_basis": "136 px wide at ~77.5 px/m; height from drone frames (1.2x the tall window on wall A)",
+   "attrs": {
+    "halves": 2,
+    "grid_per_half": "2 small lites over 1 pane",
+    "glass_x_p01": [
+     [
+      1235,
+      1291
+     ],
+     [
+      1301,
+      1357
+     ]
+    ],
+    "top_lites_y_p01": [
+     881,
+     904
+    ],
+    "bottom_hidden_in_p01": true
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.eave_upper_A",
+   "type": "gutter",
+   "on": "eave of the main hip roof over upper wall A",
+   "desc": "Black gutter and white fascia/soffit of the upper main roof above wall A; the eave ends in an outside corner (x~1178 in p01) where the roof steps back to wall B.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      736,
+      797
+     ],
+     [
+      1178,
+      818
+     ],
+     [
+      1178,
+      838
+     ],
+     [
+      736,
+      824
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       570,
+       1924
+      ],
+      [
+       873,
+       1924
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.9,
+    0.3
+   ],
+   "size_basis": "apparent",
+   "attrs": {
+    "overhang_m": 0.45
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.eave_upper_B",
+   "type": "gutter",
+   "on": "eave of the main hip roof over upper wall B",
+   "desc": "Black gutter and white fascia/soffit above wall B, ~0.65 m further back; runs into the inside corner with the right block's west eave.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1173,
+      830
+     ],
+     [
+      1415,
+      845
+     ],
+     [
+      1415,
+      860
+     ],
+     [
+      1173,
+      850
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       873,
+       1887
+      ],
+      [
+       1051,
+       1887
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.9,
+    0.3
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "front.roof_upper_main",
+   "type": "roof_plane",
+   "on": "upper main roof over the left and middle of the house (front-facing plane)",
+   "desc": "Front plane of the main upper hip roof: charcoal/dark-grey heavy dimensional asphalt shingles (staggered \"shake-look\" pattern) with matching hip/ridge caps. From the street only a shallow sliver shows above the eaves; the silhouette is level at the left (ridge) and then falls gently to the right. The left gable bay roof dies into it.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      669,
+      755
+     ],
+     [
+      840,
+      757
+     ],
+     [
+      1015,
+      787
+     ],
+     [
+      1265,
+      801
+     ],
+     [
+      1428,
+      810
+     ],
+     [
+      1411,
+      845
+     ],
+     [
+      1177,
+      830
+     ],
+     [
+      1178,
+      818
+     ],
+     [
+      736,
+      797
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      224,
+      203,
+      1560,
+      420
+     ],
+     "note": "whole front plane with 3 vents"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      640,
+      540,
+      1530,
+      850
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      330,
+      1790,
+      1050,
+      1924
+     ],
+     "note": "front planes (dark, in shade)"
+    }
+   ],
+   "size_est_m": [
+    9.5,
+    null
+   ],
+   "size_basis": "plan length of walls A + B",
+   "attrs": {
+    "material": "dimensional asphalt shingles, charcoal",
+    "pitch_est": "5:12",
+    "slope_direction": "down toward the street",
+    "type": "hip"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.vent_pipes_upper",
+   "type": "vent",
+   "on": "front plane of the upper main roof",
+   "desc": "Three dark-painted round vent pipes with caps standing ~0.4-0.5 m above the shingles, spaced along the front plane above wall A.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     880,
+     752,
+     1143,
+     810
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      925,
+      285,
+      1240,
+      360
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1015,
+      630,
+      1275,
+      700
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {
+    "boxes_p01": [
+     [
+      882,
+      754,
+      899,
+      791
+     ],
+     [
+      1005,
+      758,
+      1023,
+      798
+     ],
+     [
+      1128,
+      787,
+      1142,
+      808
+     ]
+    ],
+    "count": 3
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.wall_rblock_west",
+   "type": "wall",
+   "on": "west-facing side wall of the right upper block, storey 2 (seen obliquely from the street)",
+   "desc": "Side wall of the right gable block where it steps forward of wall B: white lap siding, one small window, eave with gutter above running front-to-back. In p01 it is seen at a glancing angle between x 1434 and 1480.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1434,
+      858
+     ],
+     [
+      1480,
+      812
+     ],
+     [
+      1480,
+      975
+     ],
+     [
+      1434,
+      964
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1535,
+       376
+      ],
+      [
+       1674,
+       397
+      ],
+      [
+       1674,
+       621
+      ],
+      [
+       1535,
+       570
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1526,
+       664
+      ],
+      [
+       1629,
+       752
+      ],
+      [
+       1623,
+       888
+      ],
+      [
+       1526,
+       782
+      ]
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1051,
+       1887
+      ],
+      [
+       1051,
+       2037
+      ]
+     ],
+     "note": "west eave line"
+    }
+   ],
+   "size_est_m": [
+    2.4,
+    2.75
+   ],
+   "size_basis": "p30 eave length 150 px at ~58.6 px/m less overhang",
+   "attrs": {
+    "faces": "west (toward the garage side)"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.window_rblock_west",
+   "type": "window",
+   "on": "west side wall of the right upper block, storey 2",
+   "desc": "Small single-pane black-framed window with white casing.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1452,
+     866,
+     1467,
+     912
+    ],
+    "note": "strongly foreshortened"
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1595,
+      430,
+      1636,
+      486
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      1597,
+      394,
+      1639,
+      447
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1573,
+      716,
+      1605,
+      767
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.6,
+    0.75
+   ],
+   "size_basis": "drone frames, compared with the gable window",
+   "attrs": {
+    "lites": 1
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "front.wall_rblock_front_left",
+   "type": "wall",
+   "on": "front wall of the right upper block, left of its gable bay, storey 2",
+   "desc": "Narrow white lap-siding strip of the block's front (gable-end) wall, between the block's front-left corner and the projecting board-and-batten bay. Its top follows the sloping main rake.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1482,
+      814
+     ],
+     [
+      1495,
+      796
+     ],
+     [
+      1552,
+      772
+     ],
+     [
+      1578,
+      766
+     ],
+     [
+      1578,
+      994
+     ],
+     [
+      1482,
+      975
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1681,
+      400,
+      1781,
+      610
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      548,
+      247,
+      677,
+      416
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1629,
+      760,
+      1713,
+      900
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.2,
+    2.6
+   ],
+   "size_basis": "96 px at ~78.7x0.96 px/m; p30 suggests ~0.9 m",
+   "attrs": {
+    "depth_rel_garage_wall_m": 0.0
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.wall_rblock_bay",
+   "type": "wall",
+   "on": "front face of the right upper gable bay, storey 2",
+   "desc": "White board-and-batten gable-end bay, twin of the upper-left one: projects ~0.7 m in front of the right block's front wall, battens at ~0.41 m centres up into the peak, one twin window centred. Its base sits on the porch/flat roof zone (white base trim), so it visually rises out of the standing-seam roof.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1579,
+      757
+     ],
+     [
+      1710,
+      702
+     ],
+     [
+      1823,
+      763
+     ],
+     [
+      1823,
+      985
+     ],
+     [
+      1579,
+      985
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1800,
+       370
+      ],
+      [
+       1948,
+       283
+      ],
+      [
+       2013,
+       357
+      ],
+      [
+       2010,
+       608
+      ],
+      [
+       1784,
+       628
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1736,
+       724
+      ],
+      [
+       1877,
+       660
+      ],
+      [
+       1913,
+       663
+      ],
+      [
+       1900,
+       858
+      ],
+      [
+       1713,
+       902
+      ]
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "poly": [
+      [
+       733,
+       226
+      ],
+      [
+       925,
+       213
+      ],
+      [
+       1040,
+       374
+      ],
+      [
+       1040,
+       574
+      ],
+      [
+       733,
+       445
+      ]
+     ],
+     "note": "seen steeply from below; base hidden by the entry roof"
+    }
+   ],
+   "size_est_m": [
+    3.2,
+    3.5
+   ],
+   "size_basis": "244 px at ~80x0.955 px/m; 283 px base-to-peak",
+   "attrs": {
+    "batten_x_p01": [
+     1597,
+     1632,
+     1666,
+     1701,
+     1735,
+     1770,
+     1805
+    ],
+    "projection_from_block_wall_m": 0.7,
+    "depth_rel_garage_wall_m": 0.7,
+    "eave_height_above_base_m": 2.75
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.window_rblock_bay",
+   "type": "window",
+   "on": "front face of the right upper gable bay, storey 2",
+   "desc": "Twin black-framed window like the upper-left one: two sashes, each two small lites over one large pane; white casing with head cap and sill; short batten stubs below the sill down to the roof flashing.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1628,
+     837,
+     1771,
+     964
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1835,
+      439,
+      1966,
+      586
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      1843,
+      400,
+      1972,
+      547
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1763,
+      744,
+      1884,
+      861
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      810,
+      389,
+      980,
+      542
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.87,
+    1.59
+   ],
+   "size_basis": "143 x 127 px at ~80 px/m (x0.955 horizontally)",
+   "attrs": {
+    "sashes": 2,
+    "grid_per_sash": "2 small lites over 1 pane",
+    "glass_x_p01": [
+     [
+      1632,
+      1692
+     ],
+     [
+      1703,
+      1761
+     ]
+    ],
+    "top_lites_y_p01": [
+     847,
+     872
+    ],
+    "main_pane_y_p01": [
+     875,
+     957
+    ]
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.gable_rblock_bay",
+   "type": "gable",
+   "on": "roof of the right upper gable bay",
+   "desc": "Front-facing gable over the bay with wide white bargeboards and ~0.3 m overhang, short gutters on both side eaves of the bay. Shares its ridge line with the larger gable of the block behind it.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1558,
+      766
+     ],
+     [
+      1558,
+      739
+     ],
+     [
+      1713,
+      677
+     ],
+     [
+      1855,
+      754
+     ],
+     [
+      1855,
+      772
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1111,
+       2083
+      ],
+      [
+       1226,
+       2100
+      ],
+      [
+       1324,
+       2083
+      ]
+     ],
+     "note": "front rake edge; ridge at x=1226 runs back to y~1885"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1790,
+       360
+      ],
+      [
+       1948,
+       273
+      ],
+      [
+       2084,
+       376
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1713,
+       715
+      ],
+      [
+       1877,
+       652
+      ],
+      [
+       1990,
+       660
+      ]
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "poly": [
+      [
+       659,
+       179
+      ],
+      [
+       935,
+       160
+      ],
+      [
+       1104,
+       374
+      ]
+     ],
+     "note": "seen steeply from below"
+    }
+   ],
+   "size_est_m": [
+    3.8,
+    1.0
+   ],
+   "size_basis": "rake slopes 0.40 (left) and 0.54 (right) in p01",
+   "attrs": {
+    "pitch_est": "5:12 (possibly 6:12)",
+    "apex_p01": [
+     1713,
+     677
+    ],
+    "apex_under_rake_p01": [
+     1710,
+     702
+    ],
+    "overhang_m": 0.3
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.gable_rblock_main",
+   "type": "gable",
+   "on": "main front-facing gable of the right upper block (behind and around the bay)",
+   "desc": "The right block itself has a front-facing gable roof (ridge front-to-back) slightly wider than the bay; its white rake boards show as short sloping pieces left and right of the bay, about 0.7 m behind the bay's rakes. The left rake starts at the end of the west eave gutter; the right rake runs down across the front of the chimney and ends at x~1916 in p01.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1467,
+      782
+     ],
+     [
+      1552,
+      755
+     ],
+     [
+      1552,
+      772
+     ],
+     [
+      1467,
+      800
+     ]
+    ],
+    "note": "left rake piece"
+   },
+   "also": [
+    {
+     "image": "photos/p01_57ca6a.jpg",
+     "poly": [
+      [
+       1846,
+       775
+      ],
+      [
+       1916,
+       806
+      ],
+      [
+       1905,
+       824
+      ],
+      [
+       1825,
+       790
+      ]
+     ],
+     "note": "right rake piece"
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1051,
+       2037
+      ],
+      [
+       1111,
+       2046
+      ]
+     ],
+     "note": "left piece of the front rake edge"
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1324,
+       2046
+      ],
+      [
+       1348,
+       2040
+      ]
+     ],
+     "note": "right piece, ends at the chimney"
+    }
+   ],
+   "size_est_m": [
+    5.2,
+    null
+   ],
+   "size_basis": "block width from p01 strips 1.2 + 3.2 + 0.95 m; p30 gives ~4.9 m",
+   "attrs": {
+    "pitch_est": "5:12",
+    "ridge": "front-to-back, shared with the bay",
+    "west_eave_x_p30": 1051
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.wall_rblock_front_right",
+   "type": "wall",
+   "on": "front wall of the right upper block, right of its gable bay, storey 2",
+   "desc": "White lap-siding strip between the bay and the block's front-right corner (downspout at the corner); the lower chimney chase continues the surface to the right of the downspout. Top follows the right main rake.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1825,
+      792
+     ],
+     [
+      1898,
+      824
+     ],
+     [
+      1898,
+      992
+     ],
+     [
+      1825,
+      985
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2013,
+      400,
+      2046,
+      600
+     ],
+     "note": "approximate"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1900,
+      665,
+      1945,
+      815
+     ],
+     "note": "approximate"
+    }
+   ],
+   "size_est_m": [
+    0.95,
+    2.3
+   ],
+   "size_basis": "73 px at ~78.7x0.945 px/m",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "front.eave_rblock_west",
+   "type": "gutter",
+   "on": "west eave of the right upper block",
+   "desc": "Horizontal eave with black gutter running front-to-back along the block's west wall (appears as a rising diagonal in p01). The gutter stops at the front-left corner where the gable rake begins; a leader drops to the corner downspout.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1414,
+      844
+     ],
+     [
+      1460,
+      786
+     ],
+     [
+      1467,
+      799
+     ],
+     [
+      1420,
+      856
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1051,
+       1887
+      ],
+      [
+       1051,
+       2037
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1535,
+       370
+      ],
+      [
+       1680,
+       395
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    2.6,
+    0.25
+   ],
+   "size_basis": "p30",
+   "attrs": {},
+   "conf": 0.65
+  },
+  {
+   "id": "front.downspouts_rblock",
+   "type": "downspout",
+   "on": "front corners of the right upper block, storey 2",
+   "desc": "Three black rectangular downspouts on the right block: (a) at the block's front-left corner, fed by a leader from the west gutter end; (b) in the corner between the bay's left side and the front wall, fed by the bay's short side gutter; (c) at the block's front-right corner beside the chimney. All discharge onto the roofs below.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1478,
+     812,
+     1484,
+     976
+    ],
+    "note": "downspout (a)"
+   },
+   "also": [
+    {
+     "image": "photos/p01_57ca6a.jpg",
+     "bbox": [
+      1573,
+      770,
+      1579,
+      985
+     ],
+     "note": "downspout (b)"
+    },
+    {
+     "image": "photos/p01_57ca6a.jpg",
+     "bbox": [
+      1897,
+      825,
+      1903,
+      992
+     ],
+     "note": "downspout (c)"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1660,
+      395,
+      1680,
+      620
+     ],
+     "note": "(a)"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1774,
+      365,
+      1800,
+      628
+     ],
+     "note": "(b)"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2035,
+      395,
+      2058,
+      602
+     ],
+     "note": "(c)"
+    }
+   ],
+   "size_est_m": [
+    0.08,
+    2.0
+   ],
+   "size_basis": "apparent",
+   "attrs": {
+    "count": 3
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.chimney",
+   "type": "chimney",
+   "on": "front-right corner of the right upper block, rising from the roofs to well above the ridge",
+   "desc": "Tall white lap-sided chimney chase, rectangular (~1.2 m wide across the front, ~1.1 m deep), with a white corner board on its right edge. It stands at the front-right corner of the right upper block, straddling that corner: about half its width is inside the block's width and half projects to the right of the block's east wall. Its front face is approximately flush with the block's front (gable-end) wall - the main gable's right rake board passes in front of its left part. Below the upper roof the chase continues down as a narrow white strip (visible right of the corner downspout) to the standing-seam roof of the porch/wing. To its right, the recessed upper wall and its roof butt against it. Serves the living-room fireplace on the room's east wall.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1826,
+      628
+     ],
+     [
+      1857,
+      624
+     ],
+     [
+      1946,
+      624
+     ],
+     [
+      1946,
+      1005
+     ],
+     [
+      1904,
+      1005
+     ],
+     [
+      1904,
+      824
+     ],
+     [
+      1857,
+      790
+     ],
+     [
+      1857,
+      752
+     ],
+     [
+      1826,
+      740
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1971,
+      157,
+      2129,
+      596
+     ],
+     "note": "shaft and lower chase"
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      1978,
+      117,
+      2131,
+      560
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1908,
+      480,
+      2055,
+      813
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      980,
+      242,
+      1127,
+      700
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1348,
+      1972,
+      1454,
+      2076
+     ],
+     "note": "leaning image of the shaft; base rear-left corner ~ (1348,1974), rear-right ~ (1417,1972)"
+    }
+   ],
+   "size_est_m": [
+    1.2,
+    5.6
+   ],
+   "size_basis": "front face 89 px at ~78.7x0.94 px/m; height from the lower roof (y 1005) to the cap top (y 565) = 440 px",
+   "attrs": {
+    "depth_m_est": 1.1,
+    "left_face_x_p01": [
+     1826,
+     1857
+    ],
+    "front_face_x_p01": [
+     1857,
+     1946
+    ],
+    "shaft_top_y_p01": 624,
+    "shaft_top_above_bay_ridge_m": 0.65,
+    "cap_top_above_bay_ridge_m": 1.4,
+    "siding": "white lap, courses not aligned with the adjacent wall"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.chimney_cap",
+   "type": "chimney",
+   "on": "top of the chimney",
+   "desc": "Black standing-seam metal shroud: a hollow truncated-pyramid \"bonnet\" with vertical seams, wider at the bottom (~1.35 m) than at the top (~1.05 m), ~0.6 m tall, standing on a low black base frame with an open slot (~70 mm) between the frame and the hood all round; open at the top (flue termination inside).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1823,
+     565,
+     1949,
+     624
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1984,
+      85,
+      2132,
+      157
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      1989,
+      47,
+      2133,
+      117
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1935,
+      405,
+      2066,
+      497
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      962,
+      122,
+      1130,
+      242
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1374,
+      2007,
+      1454,
+      2076
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.35,
+    0.72
+   ],
+   "size_basis": "126 px wide, 59 px tall at ~80 px/m",
+   "attrs": {
+    "material": "black metal, vertical standing seams",
+    "hood_y_p01": [
+     565,
+     612
+    ],
+    "slot_y_p01": [
+     612,
+     618
+    ],
+    "base_frame_y_p01": [
+     618,
+     624
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.wall_upper_right_recessed",
+   "type": "wall",
+   "on": "upper-floor front wall right of the chimney, storey 2 (set back)",
+   "desc": "Short white lap-siding wall to the right of the chimney, set back ~0.8 m behind the right block's front wall, with one small square window. It is the right-hand end of the upper storey; the one-storey wing roof is in front of and below it.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1948,
+      852
+     ],
+     [
+      2088,
+      852
+     ],
+     [
+      2088,
+      994
+     ],
+     [
+      1948,
+      1003
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2100,
+      370,
+      2181,
+      512
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2005,
+      619,
+      2097,
+      713
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1130,
+      605,
+      1214,
+      720
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      2097,
+      345,
+      2175,
+      555
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.9,
+    2.75
+   ],
+   "size_basis": "140 px at ~81x0.93 px/m; visible height 1.8 m",
+   "attrs": {
+    "depth_rel_garage_wall_m": -0.75,
+    "right_end_is": "east end of the upper storey"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.window_upper_right_recessed",
+   "type": "window",
+   "on": "recessed upper wall right of the chimney, storey 2",
+   "desc": "Small square single-pane window, black frame, white casing with head cap and sill.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1966,
+     890,
+     2025,
+     948
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2088,
+      421,
+      2125,
+      479
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      2097,
+      396,
+      2133,
+      453
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2007,
+      641,
+      2041,
+      685
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1130,
+      647,
+      1154,
+      710
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.78,
+    0.72
+   ],
+   "size_basis": "59 x 58 px at ~81 px/m (x0.93 horizontally)",
+   "attrs": {
+    "lites": 1
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.roof_upper_right_recessed",
+   "type": "roof_plane",
+   "on": "upper roof right of the chimney",
+   "desc": "Front-facing shingle roof plane over the recessed right wall (part of a hip roof that the right gable intersects); eave with black gutter and white fascia runs from the chimney to the east end of the upper storey, where the roof hips round the corner.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1948,
+      808
+     ],
+     [
+      2075,
+      820
+     ],
+     [
+      2131,
+      833
+     ],
+     [
+      2117,
+      846
+     ],
+     [
+      1948,
+      832
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1446,
+       2003
+      ],
+      [
+       1563,
+       2003
+      ],
+      [
+       1563,
+       1900
+      ],
+      [
+       1400,
+       1900
+      ]
+     ],
+     "note": "approximate plane; eave y=2003"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2005,
+      580,
+      2145,
+      625
+     ],
+     "note": "eave"
+    }
+   ],
+   "size_est_m": [
+    2.4,
+    null
+   ],
+   "size_basis": "eave 169 px in p01",
+   "attrs": {
+    "eave_fascia_box_p01": [
+     1948,
+     831,
+     2117,
+     851
+    ],
+    "material": "charcoal shingles"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.skylight_rblock",
+   "type": "skylight",
+   "on": "west slope of the right upper block roof",
+   "desc": "Curb-mounted skylight on the west-facing slope of the right gable roof, plus a few dark vent pipes near it. Only visible from the drone frames, not from the street.",
+   "ref": {
+    "image": "frames/seg002_035.jpg",
+    "bbox": [
+     1574,
+     273,
+     1658,
+     318
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1569,
+      533,
+      1638,
+      580
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.0,
+    0.7
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "front.porch_floor",
+   "type": "paving",
+   "on": "covered front porch, storey 1 floor level",
+   "desc": "Raised porch deck paved in blue-grey bluestone (large rectangular pavers ~0.6 x 0.9 m, tight joints) with a ~50 mm bluestone coping overhanging the stone base. It runs the full width of the porch from the office west corner to the wing, in three depths: ~2.2 m deep in front of the office (left bay), ~4 m at the recessed entry, ~2.9 m in front of the living room (right bay). Floor is level with the interior floor, 4 risers (~0.66 m) above the front walk.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      756,
+      1340
+     ],
+     [
+      1252,
+      1344
+     ],
+     [
+      1252,
+      1348
+     ],
+     [
+      756,
+      1347
+     ]
+    ],
+    "note": "front edge of the left part; the floor surface is seen edge-on"
+   },
+   "also": [
+    {
+     "image": "photos/p01_57ca6a.jpg",
+     "poly": [
+      [
+       1506,
+       1344
+      ],
+      [
+       2000,
+       1347
+      ],
+      [
+       2000,
+       1351
+      ],
+      [
+       1506,
+       1349
+      ]
+     ],
+     "note": "front edge of the right part"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1111,
+       1341
+      ],
+      [
+       1611,
+       1233
+      ],
+      [
+       1611,
+       1165
+      ],
+      [
+       1830,
+       1100
+      ],
+      [
+       2140,
+       1000
+      ],
+      [
+       2140,
+       930
+      ],
+      [
+       1778,
+       969
+      ],
+      [
+       1539,
+       1020
+      ],
+      [
+       1483,
+       1105
+      ],
+      [
+       1161,
+       1136
+      ]
+     ],
+     "note": "floor surface seen from above"
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      0,
+      1250,
+      1380,
+      1400
+     ],
+     "note": "floor seen along the porch"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1680,
+      1060,
+      2020,
+      1170
+     ],
+     "note": "right bay floor"
+    }
+   ],
+   "size_est_m": [
+    12.5,
+    0.66
+   ],
+   "size_basis": "length column 1 to end column; height from 4 risers of ~0.165 m (17 px each at ~100 px/m)",
+   "attrs": {
+    "material": "bluestone",
+    "height_above_walk_m": 0.66,
+    "depth_left_bay_m": 2.25,
+    "depth_entry_m": 4.0,
+    "depth_right_bay_m": 2.9
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.porch_base_left",
+   "type": "wall_low",
+   "on": "front face of the porch base, left of the entry steps",
+   "desc": "Stacked ledgestone veneer (thin horizontal strips of grey / cream / tan quartzite, dry-stack look) cladding the porch base from the porch-left west end to the left side of the entry steps, ~0.6 m high, capped by the bluestone porch edge. The same stone wraps the cheek pier under column 2.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     755,
+     1347,
+     1252,
+     1412
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1086,
+      1233,
+      1611,
+      1419
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      0,
+      1414,
+      305,
+      1608
+     ],
+     "note": "cheek pier under column 2"
+    }
+   ],
+   "size_est_m": [
+    5.0,
+    0.6
+   ],
+   "size_basis": "497 px at ~99 px/m",
+   "attrs": {
+    "material": "ledgestone veneer"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.porch_base_right",
+   "type": "wall_low",
+   "on": "front face of the porch base, right of the entry steps",
+   "desc": "Same ledgestone-clad base from the right cheek pier (under the entry's front-right column) along the right porch bay to the wing. The pier under the column projects ~1.1 m forward of the right-bay base (the entry projects).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1506,
+     1347,
+     2000,
+     1410
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      961,
+      1264,
+      1377,
+      1350
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      821,
+      1325,
+      1050,
+      1456
+     ],
+     "note": "pier at the right side of the steps"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1847,
+      1136,
+      2150,
+      1215
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1752,
+      1150,
+      2015,
+      1250
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.0,
+    0.6
+   ],
+   "size_basis": "494 px",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "front.entry_steps",
+   "type": "steps",
+   "on": "front of the entry bay, between the two stone cheek piers",
+   "desc": "Flight of 4 risers (3 bluestone treads plus the porch edge) ~2.6 m wide leading from the curved front walk up to the porch, between stone-clad cheek piers that carry column 2 and the front-right entry column. Treads are single long bluestone slabs ~0.38 m deep with square nosings; risers bluestone-faced. Small recessed bronze louvred step lights are set in risers 2 and 4 (counting down from the porch), two per riser.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1252,
+     1345,
+     1506,
+     1413
+    ],
+    "note": "lower risers hidden by shrubs"
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      250,
+      1325,
+      1005,
+      1647
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1611,
+      1163,
+      1883,
+      1313
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1518,
+      1300,
+      1740,
+      1440
+     ],
+     "note": "approximate; bottom cut by the frame edge"
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      821,
+      2196,
+      983,
+      2212
+     ],
+     "note": "only the outer edge shows beyond the entry eave"
+    }
+   ],
+   "size_est_m": [
+    2.6,
+    0.66
+   ],
+   "size_basis": "254 px wide at ~99x0.975 px/m; riser pitch 17 px",
+   "attrs": {
+    "risers": 4,
+    "riser_m": 0.165,
+    "tread_m": 0.38,
+    "riser_lines_y_p01": [
+     1345,
+     1363,
+     1380,
+     1397
+    ],
+    "step_light_boxes_p02": [
+     [
+      431,
+      1445,
+      465,
+      1470
+     ],
+     [
+      742,
+      1401,
+      767,
+      1424
+     ],
+     [
+      535,
+      1579,
+      570,
+      1605
+     ],
+     [
+      845,
+      1512,
+      870,
+      1535
+     ]
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.side_steps_left",
+   "type": "steps",
+   "on": "west end of the porch-left bay, down to the driveway",
+   "desc": "Second, smaller flight of bluestone steps at the left (west) end of the porch, descending westward onto the driveway in front of the wall strip between garage door 2 and the office corner. About 3 treads / ~4 risers, as wide as the porch is deep (~2 m). Only seen in the drone frames; hidden by shrubs in p01.",
+   "ref": {
+    "image": "frames/seg002_035.jpg",
+    "bbox": [
+     964,
+     1163,
+     1111,
+     1408
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      960,
+      1070,
+      1100,
+      1300
+     ],
+     "note": "approximate, under title overlay"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1050,
+      1340,
+      1175,
+      1440
+     ],
+     "note": "approximate"
+    }
+   ],
+   "size_est_m": [
+    2.0,
+    0.7
+   ],
+   "size_basis": "drone frames only; riser count uncertain",
+   "attrs": {
+    "risers_est": 4,
+    "direction": "descends toward the west (driveway)"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "front.column_1",
+   "type": "column",
+   "on": "porch, front-left corner (left end of the porch-left bay)",
+   "desc": "Square white painted box column ~0.30 m x 0.30 m, plain shaft, no capital, tiny plinth; carries the white porch beam. Floor to beam soffit ~3.06 m. Downspout on its west face, sconce on its front face.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     789,
+     1038,
+     821,
+     1341
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1111,
+      980,
+      1161,
+      1341
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1175,
+      1387,
+      1212,
+      1440
+     ],
+     "note": "top part only"
+    }
+   ],
+   "size_est_m": [
+    0.3,
+    3.06
+   ],
+   "size_basis": "32 px wide, 303 px tall at ~99 px/m",
+   "attrs": {
+    "depth_rel_garage_wall_m": 3.45
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.column_2",
+   "type": "column",
+   "on": "porch, left front corner of the entry bay (on the left stone cheek pier)",
+   "desc": "Square white painted box column ~0.30 m x 0.30 m, plain shaft, no capital, tiny plinth; carries the white porch beam. Floor to beam soffit ~3.06 m. Sconce on its front face.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1198,
+     1045,
+     1228,
+     1341
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1529,
+      885,
+      1592,
+      1224
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      56,
+      435,
+      197,
+      1404
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1478,
+      1277,
+      1523,
+      1427
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.3,
+    3.06
+   ],
+   "size_basis": "30 px wide",
+   "attrs": {
+    "west_face_visible_x_p01": [
+     1190,
+     1198
+    ],
+    "depth_rel_garage_wall_m": 3.68
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.column_3_front",
+   "type": "column",
+   "on": "porch, right front corner of the entry bay (on the right stone cheek pier)",
+   "desc": "Square white painted box column ~0.30 m x 0.30 m, plain shaft, no capital, tiny plinth; carries the white porch beam. Floor to beam soffit ~3.06 m. Sconce on its front face, downspout on its east face.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1534,
+     1052,
+     1563,
+     1343
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1833,
+      852,
+      1900,
+      1141
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      870,
+      688,
+      959,
+      1325
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1713,
+      1202,
+      1769,
+      1300
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.3,
+    3.06
+   ],
+   "size_basis": "29 px wide",
+   "attrs": {
+    "depth_rel_garage_wall_m": 3.68
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.column_3_rear",
+   "type": "column",
+   "on": "porch, ~1.1 m directly behind column_3_front, where the right-bay beam starts",
+   "desc": "Square white painted box column ~0.30 m x 0.30 m, plain shaft, no capital, tiny plinth; carries the white porch beam. Floor to beam soffit ~3.06 m. Stands on the porch floor behind the front-right entry column; the entry's side beam spans the two and the right bay's front beam starts here. In p01 it shows as a slightly darker column just left of the front one.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1503,
+     1080,
+     1531,
+     1343
+    ],
+    "note": "right ~4 px hidden behind the front column"
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1775,
+      863,
+      1825,
+      1102
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      745,
+      721,
+      831,
+      1309
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.3,
+    3.06
+   ],
+   "size_basis": "same section as the others",
+   "attrs": {
+    "behind_front_column_m": 1.1,
+    "depth_rel_garage_wall_m": 2.57
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.column_4_end",
+   "type": "column",
+   "on": "porch, right end of the right bay, in front of the wing's front-left corner",
+   "desc": "Square white painted box column ~0.30 m x 0.30 m, plain shaft, no capital, tiny plinth; carries the white porch beam. Floor to beam soffit ~3.06 m. Sconce on its front face.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1956,
+     1080,
+     1994,
+     1348
+    ],
+    "note": "west face x 1956-1968, front face x 1968-1994"
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2138,
+      755,
+      2182,
+      998
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1298,
+      866,
+      1355,
+      1259
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1974,
+      997,
+      2013,
+      1152
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.3,
+    3.06
+   ],
+   "size_basis": "26 px front face (farther from the camera)",
+   "attrs": {
+    "depth_rel_garage_wall_m": 2.57,
+    "stands_in_front_of_wing_main_wall_m": 0.9
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.beam_porch_left",
+   "type": "beam",
+   "on": "porch-left bay, column 1 to column 2",
+   "desc": "White box beam (~0.3 m square, flush with the outer column faces) under the eave soffit; only its lower ~0.15 m shows below the fascia from the street. Returns along the west end of the porch to the office wall.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     789,
+     1022,
+     1198,
+     1046
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    4.1,
+    0.3
+   ],
+   "size_basis": "column centres 408 px apart at ~99 px/m",
+   "attrs": {
+    "soffit_height_above_floor_m": 3.06
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.beam_entry",
+   "type": "beam",
+   "on": "entry bay, column 2 to column 3 (front) and back along both sides",
+   "desc": "White box beam of the slightly projecting entry bay; side beams run back to the house wall (the right one over column_3_rear).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1198,
+     1035,
+     1563,
+     1056
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      0,
+      380,
+      950,
+      720
+     ],
+     "note": "approximate; seen from below, running to column_3_front"
+    }
+   ],
+   "size_est_m": [
+    3.5,
+    0.3
+   ],
+   "size_basis": "column centres 335 px",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "front.beam_porch_right",
+   "type": "beam",
+   "on": "right bay, column_3_rear to column_4_end",
+   "desc": "White box beam of the right porch bay, ~1.1 m behind the entry beam line.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1563,
+     1058,
+     1994,
+     1078
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      960,
+      560,
+      1380,
+      880
+     ],
+     "note": "approximate"
+    }
+   ],
+   "size_est_m": [
+    4.8,
+    0.3
+   ],
+   "size_basis": "405 px clear at ~95x0.95 px/m",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "front.eave_porch_left",
+   "type": "gutter",
+   "on": "front eave of the porch-left roof",
+   "desc": "Black K-style gutter over white fascia, white board soffit ~0.4 m deep. Left end x=752 in p01 (0.38 m beyond column 1), right end meets the entry eave with a ~0.2 m forward step at x=1165.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      752,
+      980
+     ],
+     [
+      1165,
+      988
+     ],
+     [
+      1165,
+      1017
+     ],
+     [
+      752,
+      1007
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       611,
+       2183
+      ],
+      [
+       820,
+       2183
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1088,
+       960
+      ],
+      [
+       1555,
+       883
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1165,
+       1388
+      ],
+      [
+       1497,
+       1272
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.8,
+    0.27
+   ],
+   "size_basis": "p30 209 px at ~55 px/m",
+   "attrs": {
+    "gutter_top_above_porch_floor_m": 3.63,
+    "fascia_bottom_above_porch_floor_m": 3.36,
+    "overhang_m": 0.4
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.eave_entry",
+   "type": "gutter",
+   "on": "front eave of the entry hip roof",
+   "desc": "Same black gutter / white fascia; the entry eave stands ~0.24 m forward of the porch-left eave and ~1.1 m forward of the right-bay eave, and overhangs columns 2 and 3 by ~0.35 m on each side.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1165,
+      993
+     ],
+     [
+      1621,
+      1001
+     ],
+     [
+      1621,
+      1024
+     ],
+     [
+      1165,
+      1019
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       820,
+       2195
+      ],
+      [
+       1064,
+       2196
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1555,
+       883
+      ],
+      [
+       1978,
+       806
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1497,
+       1272
+      ],
+      [
+       1841,
+       1152
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    4.4,
+    0.27
+   ],
+   "size_basis": "p30 244 px at ~55 px/m",
+   "attrs": {},
+   "conf": 0.8
+  },
+  {
+   "id": "front.eave_porch_right",
+   "type": "gutter",
+   "on": "front eave of the right porch bay roof",
+   "desc": "Same eave detail, set back; runs from behind the entry roof's right corner to the wing, where it meets the wing eave (which is ~0.3 m further back).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1600,
+      1021
+     ],
+     [
+      2026,
+      1033
+     ],
+     [
+      2026,
+      1055
+     ],
+     [
+      1600,
+      1046
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1064,
+       2134
+      ],
+      [
+       1341,
+       2134
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1780,
+       1088
+      ],
+      [
+       2055,
+       977
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.0,
+    0.27
+   ],
+   "size_basis": "p30 277 px at ~55 px/m",
+   "attrs": {},
+   "conf": 0.75
+  },
+  {
+   "id": "front.roof_porch_left",
+   "type": "roof_plane",
+   "on": "porch-left roof, front plane",
+   "desc": "Black standing-seam plane sloping to the street over the left porch bay; trapezoid between the left hip rib, the porch eave, the entry roof's left rib and a level top edge where it stops against the hidden flat roof.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      752,
+      975
+     ],
+     [
+      1020,
+      930
+     ],
+     [
+      1329,
+      942
+     ],
+     [
+      1165,
+      986
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       611,
+       2183
+      ],
+      [
+       820,
+       2183
+      ],
+      [
+       896,
+       2072
+      ],
+      [
+       739,
+       2070
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1088,
+       960
+      ],
+      [
+       1555,
+       883
+      ],
+      [
+       1619,
+       672
+      ],
+      [
+       1235,
+       698
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1165,
+       1388
+      ],
+      [
+       1497,
+       1272
+      ],
+      [
+       1490,
+       1016
+      ],
+      [
+       1278,
+       1082
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.8,
+    2.0
+   ],
+   "size_basis": "plan depth 110 px at ~55 px/m",
+   "attrs": {
+    "pitch_est": "~3.5:12",
+    "seam_spacing_m": 0.45,
+    "top_edge": "meets flat roof ~2 m behind the eave"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.roof_porch_left_west",
+   "type": "roof_plane",
+   "on": "porch-left roof, west-facing plane",
+   "desc": "West-facing standing-seam plane of the porch-left hip (seams run east-west), over the porch's west end and the office west wall; bounded by the valley to the garage roof, the west eave, the hip rib and the flat roof. Not visible in p01.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      611,
+      1998
+     ],
+     [
+      611,
+      2183
+     ],
+     [
+      739,
+      2070
+     ],
+     [
+      741,
+      1930
+     ],
+     [
+      685,
+      1926
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1056,
+       1164
+      ],
+      [
+       1165,
+       1388
+      ],
+      [
+       1278,
+       1082
+      ],
+      [
+       1162,
+       913
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       954,
+       760
+      ],
+      [
+       1088,
+       960
+      ],
+      [
+       1235,
+       698
+      ],
+      [
+       1105,
+       620
+      ]
+     ],
+     "note": "approximate"
+    }
+   ],
+   "size_est_m": [
+    2.3,
+    3.4
+   ],
+   "size_basis": "p30",
+   "attrs": {
+    "slope_direction": "down toward the west (driveway)"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.ridge_porch_left_hip",
+   "type": "ridge",
+   "on": "porch-left roof",
+   "desc": "Hip rib (wide flat metal cap) from the porch's front-left eave corner up to the corner of the flat roof.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      752,
+      975
+     ],
+     [
+      1020,
+      930
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       611,
+       2183
+      ],
+      [
+       739,
+       2070
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1165,
+       1388
+      ],
+      [
+       1278,
+       1082
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1088,
+       960
+      ],
+      [
+       1235,
+       698
+      ]
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.8
+  },
+  {
+   "id": "front.roof_entry_hip",
+   "type": "roof_plane",
+   "on": "entry roof (projecting hipped part of the porch roof)",
+   "desc": "Low pyramid-like hip roof over the entry bay in black standing seam, slightly forward of the rest of the porch roof. Front face is a triangle with its apex centred on the bay and ~2.2 m behind the eave; wide flat hip caps on both ribs; a short ridge/cricket runs back from the apex to the flat roof. Its east-facing side plane meets the right-bay roof in a valley; on the west it merges almost flush with the porch-left front plane.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1165,
+      986
+     ],
+     [
+      1353,
+      949
+     ],
+     [
+      1621,
+      1003
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       820,
+       2195
+      ],
+      [
+       1064,
+       2196
+      ],
+      [
+       943,
+       2096
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1555,
+       883
+      ],
+      [
+       1978,
+       806
+      ],
+      [
+       1619,
+       672
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1497,
+       1272
+      ],
+      [
+       1841,
+       1152
+      ],
+      [
+       1577,
+       1025
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "poly": [
+      [
+       1555,
+       820
+      ],
+      [
+       1990,
+       755
+      ],
+      [
+       1620,
+       620
+      ]
+     ],
+     "note": "approximate"
+    }
+   ],
+   "size_est_m": [
+    4.4,
+    2.2
+   ],
+   "size_basis": "p30 244 px wide; apex 99 px behind the eave (+ perspective)",
+   "attrs": {
+    "apex_p01": [
+     1353,
+     949
+    ],
+    "pitch_est": "~3.5:12",
+    "hips_in_plan": "45 deg"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.roof_porch_right",
+   "type": "roof_plane",
+   "on": "right porch bay roof, front plane",
+   "desc": "Black standing-seam plane sloping to the street over the right porch bay, from the valley beside the entry roof to the wing roof; its top edge runs along the base of the right upper bay / flat roof.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1585,
+      985
+     ],
+     [
+      1940,
+      992
+     ],
+     [
+      2025,
+      1032
+     ],
+     [
+      1622,
+      1022
+     ],
+     [
+      1621,
+      1004
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1064,
+       2134
+      ],
+      [
+       1341,
+       2134
+      ],
+      [
+       1341,
+       2085
+      ],
+      [
+       1064,
+       2085
+      ]
+     ],
+     "note": "upper edge hidden under the upper gable overhang"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       1780,
+       1088
+      ],
+      [
+       1597,
+       991
+      ],
+      [
+       1908,
+       899
+      ],
+      [
+       2047,
+       930
+      ],
+      [
+       2055,
+       977
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.0,
+    1.6
+   ],
+   "size_basis": "p30",
+   "attrs": {
+    "pitch_est": "~3.5:12"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.valley_entry_right",
+   "type": "ridge",
+   "on": "between the entry roof and the right-bay roof",
+   "desc": "Valley where the entry roof's east-facing plane meets the right-bay front plane; runs at 45 deg in plan from the inside eave corner back toward the entry apex.",
+   "ref": {
+    "image": "frames/seg141_040.jpg",
+    "poly": [
+     [
+      1780,
+      1088
+     ],
+     [
+      1597,
+      991
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1064,
+       2134
+      ],
+      [
+       990,
+       2060
+      ]
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {
+    "kind": "valley"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.roof_flat",
+   "type": "roof_plane",
+   "on": "hidden low-slope roof behind the porch roofs, in front of upper walls A and B",
+   "desc": "Dark grey membrane low-slope (\"flat\") roof that the standing-seam skirts hide from the street: it fills the area between upper wall A / wall B / the right block's west wall at the back and the top edges of the porch-left, entry and right-bay standing-seam planes at the front. Roughly 1 m above the porch eaves. A row of small dark pads/blocks runs front-to-back across it. Only visible from the drone.",
+   "ref": {
+    "image": "frames/seg141_040.jpg",
+    "poly": [
+     [
+      1165,
+      911
+     ],
+     [
+      1302,
+      831
+     ],
+     [
+      1356,
+      813
+     ],
+     [
+      1526,
+      782
+     ],
+     [
+      1623,
+      888
+     ],
+     [
+      1713,
+      902
+     ],
+     [
+      1897,
+      858
+     ],
+     [
+      1908,
+      899
+     ],
+     [
+      1597,
+      991
+     ],
+     [
+      1490,
+      1016
+     ],
+     [
+      1278,
+      1082
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       741,
+       1930
+      ],
+      [
+       873,
+       1924
+      ],
+      [
+       873,
+       1887
+      ],
+      [
+       1051,
+       1887
+      ],
+      [
+       1051,
+       2037
+      ],
+      [
+       1111,
+       2046
+      ],
+      [
+       1111,
+       2085
+      ],
+      [
+       1064,
+       2085
+      ],
+      [
+       990,
+       2060
+      ],
+      [
+       896,
+       2072
+      ],
+      [
+       739,
+       2070
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1105,
+      560,
+      2000,
+      700
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.7,
+    2.7
+   ],
+   "size_basis": "p30: x 741-1051 and y 1924-2070 at ~55 px/m (main rectangle)",
+   "attrs": {
+    "material": "dark grey roofing membrane",
+    "level": "~1 m above porch eaves (estimate)"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.porch_ceiling",
+   "type": "other",
+   "on": "underside of the porch roof",
+   "desc": "Flat white tongue-and-groove (V-joint) board ceiling running the whole porch, with small recessed round downlights; lit warm in p01. Soffits of the eaves are the same white boards.",
+   "ref": {
+    "image": "photos/p02_1ea535.jpg",
+    "bbox": [
+     200,
+     420,
+     1180,
+     800
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p01_57ca6a.jpg",
+     "bbox": [
+      821,
+      1038,
+      1198,
+      1054
+     ],
+     "note": "thin visible strip in the left bay"
+    },
+    {
+     "image": "photos/p01_57ca6a.jpg",
+     "bbox": [
+      1240,
+      1052,
+      1500,
+      1078
+     ],
+     "note": "entry"
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {
+    "height_above_floor_m": 3.3,
+    "downlights": "recessed, about one per 1.5 m"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.wall_office_front",
+   "type": "wall",
+   "on": "house wall behind the porch-left bay (office), storey 1",
+   "desc": "White lap-siding wall (same 5 in exposure) at the back of the left porch bay, ~1.2 m forward of the garage front wall. Holds the two-panel office door, centred. It ends on the right at x~1238 in p01, where the wall steps back ~1.5 m to the entry wall (entry alcove).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      821,
+      1052
+     ],
+     [
+      1198,
+      1058
+     ],
+     [
+      1238,
+      1060
+     ],
+     [
+      1238,
+      1341
+     ],
+     [
+      821,
+      1340
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1017,
+       860
+      ],
+      [
+       1483,
+       913
+      ],
+      [
+       1483,
+       1105
+      ],
+      [
+       1161,
+       1136
+      ],
+      [
+       1017,
+       1195
+      ]
+     ],
+     "note": "includes the part left of column 1"
+    }
+   ],
+   "size_est_m": [
+    4.9,
+    3.3
+   ],
+   "size_basis": "from the office west corner (x~790, hidden) to x 1238 at 91.7 px/m; drone frame gives 5.0 m",
+   "attrs": {
+    "depth_rel_garage_wall_m": 1.2,
+    "p01_course_px": 11.65
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.door_office",
+   "type": "door",
+   "on": "office front wall under the porch-left bay, storey 1",
+   "desc": "Two-panel glazed patio door (sliding or French), black outside (dark red-brown stained wood inside, see p04). Each panel: a transom-like row of 3 small square lites above one full-height pane. Flat white casing.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     922,
+     1108,
+     1123,
+     1339
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1161,
+      947,
+      1364,
+      1136
+     ]
+    },
+    {
+     "image": "photos/p04_3e3898.jpg",
+     "bbox": [
+      120,
+      135,
+      935,
+      1525
+     ],
+     "note": "same door from inside the office"
+    }
+   ],
+   "size_est_m": [
+    2.19,
+    2.52
+   ],
+   "size_basis": "201 x 231 px at 91.7 px/m",
+   "attrs": {
+    "panels": 2,
+    "grid_per_panel": "3 small lites over 1 pane",
+    "glass_x_p01": [
+     [
+      932,
+      1016
+     ],
+     [
+      1028,
+      1111
+     ]
+    ],
+    "top_lites_y_p01": [
+     1121,
+     1149
+    ],
+    "lower_pane_y_p01": [
+     1151,
+     1328
+    ],
+    "sill": "at porch floor"
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.outlet_office_wall",
+   "type": "equipment",
+   "on": "office front wall, low, left of the door",
+   "desc": "Grey weatherproof outlet cover.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     896,
+     1297,
+     904,
+     1309
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1387,
+      1073,
+      1398,
+      1090
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.09,
+    0.13
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "front.camera_porch_left",
+   "type": "equipment",
+   "on": "office front wall, top-left under the porch ceiling",
+   "desc": "Small dome security camera.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     849,
+     1054,
+     856,
+     1061
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.08,
+    0.08
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "front.wall_office_west",
+   "type": "wall",
+   "on": "west-facing wall of the office block, between the garage front wall and the porch (faces the driveway), storey 1",
+   "desc": "Short white lap-siding return wall (~1.2 m long) where the office block steps forward of the garage; has one tall narrow window near its front corner and a dark stone/concrete base with pipes at grade. In front of it the porch floor ends and the side steps go down to the driveway. Not visible in p01 (edge-on behind the downspout).",
+   "ref": {
+    "image": "frames/seg002_035.jpg",
+    "bbox": [
+     979,
+     838,
+     1018,
+     1200
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      965,
+      760,
+      1005,
+      1090
+     ],
+     "note": "approximate"
+    }
+   ],
+   "size_est_m": [
+    1.2,
+    3.7
+   ],
+   "size_basis": "equals the forward offset of the office wall; drone frame foreshortening consistent",
+   "attrs": {
+    "faces": "west"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.window_office_west",
+   "type": "window",
+   "on": "west wall of the office block, storey 1",
+   "desc": "Tall narrow black-framed window (one small top lite over a tall pane), head level with the office door head; seen from inside in p04.",
+   "ref": {
+    "image": "frames/seg002_035.jpg",
+    "bbox": [
+     1000,
+     914,
+     1013,
+     1106
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p04_3e3898.jpg",
+     "bbox": [
+      1148,
+      500,
+      1315,
+      1055
+     ],
+     "note": "from inside"
+    }
+   ],
+   "size_est_m": [
+    0.45,
+    1.8
+   ],
+   "size_basis": "p04 proportions; drone frame height 192 px",
+   "attrs": {
+    "grid": "1 small lite over 1 pane (2 over 1 possible)"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.wall_entry_living",
+   "type": "wall",
+   "on": "recessed house wall behind the entry and the right porch bay (entry hall + living room), storey 1",
+   "desc": "Long white lap-siding wall ~1.5 m behind the office wall plane (about level with, or slightly behind, the garage front wall). Left to right: entry door with sidelights (tight against the alcove corner), a wall panel with a sconce and a hose bib, the living-room French door unit, a short wall panel with a camera, then the inside corner with the wing's west wall. The left ~0.15 m (alcove return side) is hidden in p01.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1238,
+      1076
+     ],
+     [
+      1503,
+      1078
+     ],
+     [
+      1563,
+      1090
+     ],
+     [
+      1865,
+      1092
+     ],
+     [
+      1865,
+      1347
+     ],
+     [
+      1238,
+      1343
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "poly": [
+      [
+       197,
+       760
+      ],
+      [
+       1065,
+       880
+      ],
+      [
+       1065,
+       1250
+      ],
+      [
+       197,
+       1290
+      ]
+     ],
+     "note": "seen along the porch"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "poly": [
+      [
+       1483,
+       913
+      ],
+      [
+       2105,
+       800
+      ],
+      [
+       2105,
+       930
+      ],
+      [
+       1483,
+       1020
+      ]
+     ],
+     "note": "approximate, mostly behind columns"
+    }
+   ],
+   "size_est_m": [
+    8.0,
+    3.3
+   ],
+   "size_basis": "627 px at ~83x0.96 px/m",
+   "attrs": {
+    "depth_rel_garage_wall_m": -0.3,
+    "recess_behind_office_wall_m": 1.5,
+    "p01_course_px": 10.6
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.door_entry",
+   "type": "door",
+   "on": "entry wall, storey 1 (front door)",
+   "desc": "Dark navy-blue painted wood entry door, about 9 ft tall, Dutch-door look: glazed upper part with a row of 3 small lites over one large pane, a horizontal mid rail with a small shelf moulding at ~1.05 m, and a solid lower part with two tall recessed panels. Black lever handle on the right stile. Flanked by full-height navy sidelights. (Reads black in the dusk photo.)",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1268,
+     1110,
+     1362,
+     1343
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      197,
+      774,
+      305,
+      1276
+     ],
+     "note": "left edge behind column 2"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1483,
+      913,
+      1539,
+      1019
+     ],
+     "note": "door + sidelights deep in the alcove, in shadow"
+    }
+   ],
+   "size_est_m": [
+    1.1,
+    2.75
+   ],
+   "size_basis": "94 x 233 px at ~83 px/m",
+   "attrs": {
+    "colour": "navy blue",
+    "glass_x_p01": [
+     1283,
+     1349
+    ],
+    "top_lites_y_p01": [
+     1126,
+     1151
+    ],
+    "main_pane_y_p01": [
+     1154,
+     1248
+    ],
+    "lower_panels": 2,
+    "lower_panel_y_p01": [
+     1262,
+     1325
+    ],
+    "top_lites": 3
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.sidelight_entry_left",
+   "type": "window",
+   "on": "entry wall, left of the front door",
+   "desc": "Full-height navy-framed sidelight: 2 small lites over one tall pane, solid bottom rail. Its left part is hidden behind the alcove corner / column 2 in p01 (true left edge ~x 1225).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1238,
+     1110,
+     1268,
+     1343
+    ],
+    "note": "visible part"
+   },
+   "also": [],
+   "size_est_m": [
+    0.5,
+    2.75
+   ],
+   "size_basis": "by symmetry with the right sidelight",
+   "attrs": {
+    "grid": "2 small lites over 1 pane"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.sidelight_entry_right",
+   "type": "window",
+   "on": "entry wall, right of the front door",
+   "desc": "Full-height navy-framed sidelight: 2 small lites over one tall pane, solid bottom rail.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1362,
+     1110,
+     1405,
+     1343
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      314,
+      780,
+      402,
+      1276
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.5,
+    2.75
+   ],
+   "size_basis": "43 px at ~83 px/m",
+   "attrs": {
+    "grid": "2 small lites over 1 pane",
+    "glass_x_p01": [
+     1367,
+     1397
+    ],
+    "top_lites_y_p01": [
+     1118,
+     1153
+    ],
+    "glass_bottom_y_p01": 1327
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.sconce_entry_wall",
+   "type": "light",
+   "on": "entry/living wall, between the front door and the French doors",
+   "desc": "Same tall black box lantern, wall mounted.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1457,
+     1140,
+     1473,
+     1195
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      509,
+      879,
+      540,
+      984
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.2,
+    0.66
+   ],
+   "size_basis": "same fixture",
+   "attrs": {},
+   "conf": 0.85
+  },
+  {
+   "id": "front.hose_bib",
+   "type": "equipment",
+   "on": "entry/living wall, low, right of the wall sconce",
+   "desc": "Brass hose bib.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1490,
+     1298,
+     1496,
+     1304
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      563,
+      1182,
+      584,
+      1197
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1660,
+      940,
+      1674,
+      954
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.07,
+    0.07
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "front.doors_living_french",
+   "type": "door",
+   "on": "entry/living wall under the right porch bay, storey 1 (living room)",
+   "desc": "Four-part black-framed glazed unit ~11 ft wide and 8 ft high: a narrow fixed sidelite at each end (2 small top lites over a tall pane) and two wide door panels in the middle (3 small top lites over a full pane each). Stained wood inside (p03). In p01 the left sidelite is hidden behind the two right-hand entry columns; the visible part starts at x 1563.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1563,
+     1137,
+     1786,
+     1347
+    ],
+    "note": "visible part; full unit about x 1515-1786"
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      616,
+      882,
+      968,
+      1256
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1692,
+      883,
+      1778,
+      969
+     ],
+     "note": "left part"
+    },
+    {
+     "image": "photos/p03_568161.jpg",
+     "bbox": [
+      1840,
+      395,
+      2500,
+      1210
+     ],
+     "note": "from inside the living room"
+    }
+   ],
+   "size_est_m": [
+    3.4,
+    2.53
+   ],
+   "size_basis": "271 px (incl. hidden sidelite) at ~83x0.957 px/m; 210 px high",
+   "attrs": {
+    "panels": 4,
+    "glass_x_p01": [
+     [
+      1574,
+      1645
+     ],
+     [
+      1659,
+      1728
+     ],
+     [
+      1746,
+      1779
+     ]
+    ],
+    "top_lites_y_p01": [
+     1146,
+     1172
+    ],
+    "lower_pane_y_p01": [
+     1175,
+     1341
+    ],
+    "head_is_lower_than_entry_door_by_m": 0.34
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.camera_porch_right",
+   "type": "equipment",
+   "on": "entry/living wall, top right under the porch ceiling",
+   "desc": "Small white dome/bullet security camera.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1850,
+     1107,
+     1857,
+     1115
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1050,
+      893,
+      1064,
+      907
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.08,
+    0.08
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "front.outlet_porch_right",
+   "type": "equipment",
+   "on": "entry/living wall, low, right of the French doors",
+   "desc": "White weatherproof outlet cover.",
+   "ref": {
+    "image": "photos/p02_1ea535.jpg",
+    "bbox": [
+     1004,
+     1186,
+     1014,
+     1205
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.09,
+    0.13
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "front.sconce_column_1",
+   "type": "light",
+   "on": "front face of porch column 1",
+   "desc": "Tall black box lantern (clear glass, vertical filament tube) mounted on the front face of the column.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     796,
+     1081,
+     814,
+     1148
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1128,
+      1047,
+      1153,
+      1131
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.68
+   ],
+   "size_basis": "18 x 67 px at ~99 px/m",
+   "attrs": {
+    "centre_height_above_porch_floor_m": 2.29
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.sconce_column_2",
+   "type": "light",
+   "on": "front face of porch column 2",
+   "desc": "Tall black box lantern (clear glass, vertical filament tube) mounted on the front face of the column.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1206,
+     1092,
+     1222,
+     1156
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1564,
+      958,
+      1589,
+      1033
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      118,
+      596,
+      185,
+      813
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.66
+   ],
+   "size_basis": "same fixture",
+   "attrs": {},
+   "conf": 0.85
+  },
+  {
+   "id": "front.sconce_column_3",
+   "type": "light",
+   "on": "front face of the entry front-right column",
+   "desc": "Tall black box lantern (clear glass, vertical filament tube) mounted on the front face of the column.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1541,
+     1100,
+     1558,
+     1163
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1875,
+      894,
+      1897,
+      960
+     ]
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      924,
+      792,
+      964,
+      930
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.66
+   ],
+   "size_basis": "same fixture",
+   "attrs": {},
+   "conf": 0.85
+  },
+  {
+   "id": "front.sconce_column_4",
+   "type": "light",
+   "on": "front face of the right end column",
+   "desc": "Tall black box lantern (clear glass, vertical filament tube) mounted on the front face of the column.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1974,
+     1120,
+     1993,
+     1178
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1339,
+      929,
+      1361,
+      1014
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2022,
+      1019,
+      2044,
+      1055
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.66
+   ],
+   "size_basis": "same fixture",
+   "attrs": {},
+   "conf": 0.85
+  },
+  {
+   "id": "front.downspout_entry_right",
+   "type": "downspout",
+   "on": "east face of the entry front-right column",
+   "desc": "Black downspout from the right end of the entry gutter, straight down the east face of the column to an elbow at the porch floor.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1562,
+     1040,
+     1567,
+     1343
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      958,
+      690,
+      968,
+      1330
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.08,
+    3.1
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "front.wall_wing_west",
+   "type": "wall",
+   "on": "west-facing wall of the one-storey right wing, facing onto the right porch bay, storey 1",
+   "desc": "White lap-siding side wall of the wing where the wing steps forward of the living-room wall; ~1.95 m long, holds a single glazed door onto the porch. Seen obliquely in p01.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1865,
+      1092
+     ],
+     [
+      1927,
+      1085
+     ],
+     [
+      1927,
+      1348
+     ],
+     [
+      1865,
+      1347
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "poly": [
+      [
+       1068,
+       878
+      ],
+      [
+       1218,
+       878
+      ],
+      [
+       1218,
+       1245
+      ],
+      [
+       1068,
+       1245
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1869,
+      990,
+      1960,
+      1100
+     ],
+     "note": "under the porch roof, mostly hidden"
+    }
+   ],
+   "size_est_m": [
+    1.95,
+    3.3
+   ],
+   "size_basis": "difference of the estimated plane depths (wing main wall +1.65 m, entry wall -0.3 m)",
+   "attrs": {
+    "faces": "west"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.door_wing_side",
+   "type": "door",
+   "on": "west wall of the right wing, opening onto the right porch bay",
+   "desc": "Single full-glass door, black frame: 2 small lites across the top over one tall pane, taller bottom rail; white casing; doormat in front.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1882,
+     1133,
+     1915,
+     1349
+    ],
+    "note": "strongly foreshortened"
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1085,
+      935,
+      1181,
+      1240
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2005,
+      765,
+      2075,
+      950
+     ],
+     "note": "approximate"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1869,
+      1052,
+      1936,
+      1097
+     ],
+     "note": "threshold and mat only"
+    }
+   ],
+   "size_est_m": [
+    0.9,
+    2.55
+   ],
+   "size_basis": "p02 proportions; 216 px high at ~83 px/m",
+   "attrs": {
+    "grid": "2 small lites over 1 pane",
+    "glass_y_p01": [
+     1148,
+     1326
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.wall_wing_main_left",
+   "type": "wall",
+   "on": "front wall of the right wing, left of the bay (behind the end column), storey 1",
+   "desc": "White lap-siding strip of the wing's main front wall between its front-left corner and the projecting bay; partly hidden by porch column 4 which stands ~0.9 m in front of it.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      1927,
+      1085
+     ],
+     [
+      1956,
+      1085
+     ],
+     [
+      1956,
+      1348
+     ],
+     [
+      1927,
+      1348
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p01_57ca6a.jpg",
+     "poly": [
+      [
+       1994,
+       1076
+      ],
+      [
+       2034,
+       1072
+      ],
+      [
+       2034,
+       1348
+      ],
+      [
+       1994,
+       1348
+      ]
+     ],
+     "note": "part right of the column"
+    },
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "poly": [
+      [
+       1219,
+       880
+      ],
+      [
+       1291,
+       866
+      ],
+      [
+       1291,
+       1248
+      ],
+      [
+       1219,
+       1248
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.3,
+    3.3
+   ],
+   "size_basis": "107 px at ~84x0.93 px/m",
+   "attrs": {
+    "depth_rel_garage_wall_m": 1.65
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.wall_wing_bay",
+   "type": "wall",
+   "on": "front face of the box bay of the right wing, storey 1",
+   "desc": "Rectangular box bay (bump-out) ~4.6 m wide projecting ~0.6 m from the wing's main front wall, clad in white board-and-batten (battens ~0.41 m centres) from the eave soffit down to a low base band. Holds the triple window with the metal awning over it and a sconce each side. The wing roof eave continues over it and a small decorative gable sits on the roof above.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      2034,
+      1070
+     ],
+     [
+      2394,
+      1071
+     ],
+     [
+      2394,
+      1344
+     ],
+     [
+      2034,
+      1344
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1355,
+      857,
+      1582,
+      1245
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2189,
+      717,
+      2458,
+      947
+     ],
+     "note": "approximate"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2024,
+      935,
+      2274,
+      1102
+     ]
+    }
+   ],
+   "size_est_m": [
+    4.6,
+    3.2
+   ],
+   "size_basis": "360 px at ~85x0.92 px/m (p30: 251 px at 55 px/m = 4.6 m); 274 px soffit to bottom of siding",
+   "attrs": {
+    "projection_m": 0.6,
+    "depth_rel_garage_wall_m": 2.25,
+    "siding": "board and batten",
+    "corner_boards": true
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.wing_base",
+   "type": "wall_low",
+   "on": "base of the wing bay wall",
+   "desc": "Low base band under the board-and-batten (~0.38 m high): grey stone-veneer / concrete foundation with a black rectangular foundation vent near the middle; mostly hidden by planting.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     2034,
+     1344,
+     2394,
+     1377
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2060,
+      1075,
+      2250,
+      1100
+     ]
+    }
+   ],
+   "size_est_m": [
+    4.6,
+    0.38
+   ],
+   "size_basis": "32 px at ~85 px/m",
+   "attrs": {
+    "vent_box_p01": [
+     2174,
+     1353,
+     2201,
+     1368
+    ],
+    "material": "ledgestone veneer likely (dim in p01)"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "front.window_wing_triple",
+   "type": "window",
+   "on": "front face of the wing box bay, storey 1",
+   "desc": "Wide triple window: three equal black-framed units mulled with ~0.25 m posts, each with 2 small lites across the top over one large pane. White flat casing boxed slightly proud of the battens, white sill with apron.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     2085,
+     1122,
+     2337,
+     1298
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1395,
+      948,
+      1543,
+      1177
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2240,
+      755,
+      2419,
+      896
+     ],
+     "note": "approximate"
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2072,
+      958,
+      2236,
+      1055
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.2,
+    2.07
+   ],
+   "size_basis": "252 x 176 px at ~85 px/m (x0.92 horizontally)",
+   "attrs": {
+    "units": 3,
+    "grid_per_unit": "2 small lites over 1 pane",
+    "glass_x_p01": [
+     [
+      2087,
+      2151
+     ],
+     [
+      2173,
+      2240
+     ],
+     [
+      2262,
+      2325
+     ]
+    ],
+    "top_lites_y_p01": [
+     1131,
+     1160
+    ],
+    "lower_pane_y_p01": [
+     1162,
+     1288
+    ],
+    "sill_height_above_floor_m": 0.58
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.awning_wing",
+   "type": "awning",
+   "on": "front face of the wing box bay, above the triple window",
+   "desc": "Black steel flat canopy like the garage one (slatted/louvred top in a channel frame), ~4.0 m long, hung by 3 tie rods from plates just under the eave soffit; projects ~0.8 m; its underside is ~0.15 m above the window head.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     2073,
+     1088,
+     2392,
+     1110
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1386,
+      900,
+      1623,
+      961
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2252,
+      695,
+      2506,
+      744
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      2269,
+      664,
+      2506,
+      717
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2097,
+      888,
+      2313,
+      977
+     ]
+    }
+   ],
+   "size_est_m": [
+    4.05,
+    0.2
+   ],
+   "size_basis": "319 px at ~85x0.92 px/m",
+   "attrs": {
+    "projection_m_est": 0.8,
+    "rod_plate_centres_p01": [
+     [
+      2080,
+      1064
+     ],
+     [
+      2222,
+      1067
+     ],
+     [
+      2354,
+      1070
+     ]
+    ],
+    "rod_lower_ends_p01": [
+     [
+      2095,
+      1090
+     ],
+     [
+      2237,
+      1091
+     ],
+     [
+      2376,
+      1095
+     ]
+    ],
+    "rods": 3,
+    "colour": "black"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.sconce_wing_left",
+   "type": "light",
+   "on": "wing bay wall, left of the triple window",
+   "desc": "Same tall black box lantern.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     2053,
+     1126,
+     2071,
+     1182
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1371,
+      949,
+      1392,
+      1026
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2066,
+      983,
+      2086,
+      1014
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.2,
+    0.66
+   ],
+   "size_basis": "same fixture",
+   "attrs": {},
+   "conf": 0.85
+  },
+  {
+   "id": "front.sconce_wing_right",
+   "type": "light",
+   "on": "wing bay wall, right of the triple window",
+   "desc": "Same tall black box lantern; a small security camera sits just above it.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     2361,
+     1132,
+     2380,
+     1188
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1566,
+      987,
+      1582,
+      1050
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.2,
+    0.66
+   ],
+   "size_basis": "same fixture",
+   "attrs": {
+    "camera_box_p01": [
+     2367,
+     1121,
+     2375,
+     1129
+    ]
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.wall_wing_main_right",
+   "type": "wall",
+   "on": "front wall of the right wing, right of the bay, storey 1",
+   "desc": "Narrow white lap-siding strip of the wing's main front wall to the right of the box bay (set back ~0.6 m), ending at the house's east (right) corner at x~2431 in p01. A pipe/conduit runs up it near the base.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      2395,
+      1072
+     ],
+     [
+      2431,
+      1072
+     ],
+     [
+      2431,
+      1348
+     ],
+     [
+      2395,
+      1344
+     ]
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.55,
+    3.3
+   ],
+   "size_basis": "36 px visible at ~83x0.92 px/m plus the part hidden behind the bay corner",
+   "attrs": {
+    "east_corner_x_p01": 2431
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.eave_wing",
+   "type": "gutter",
+   "on": "front eave of the right wing roof",
+   "desc": "Black gutter over white fascia across the wing bay; at the right it steps back ~0.6 m to the main east-side eave which continues to x~2478 (house east eave).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      2026,
+      1040
+     ],
+     [
+      2432,
+      1040
+     ],
+     [
+      2432,
+      1068
+     ],
+     [
+      2026,
+      1063
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p01_57ca6a.jpg",
+     "poly": [
+      [
+       2432,
+       1056
+      ],
+      [
+       2478,
+       1056
+      ],
+      [
+       2478,
+       1070
+      ],
+      [
+       2432,
+       1070
+      ]
+     ],
+     "note": "set-back east part"
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1341,
+       2117
+      ],
+      [
+       1622,
+       2117
+      ],
+      [
+       1622,
+       2085
+      ],
+      [
+       1672,
+       2085
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       2055,
+       977
+      ],
+      [
+       2360,
+       852
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.1,
+    0.27
+   ],
+   "size_basis": "p30 281 px at ~55 px/m",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "front.roof_wing",
+   "type": "roof_plane",
+   "on": "roof of the one-storey right wing",
+   "desc": "Black standing-seam hip roof over the wing: a front plane sloping to the street (with the small decorative gable on it), a west plane rising against the chimney / two-storey wall, and an east plane that continues as the long east-side skirt roof. Hip ribs with flat metal caps.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      2030,
+      1041
+     ],
+     [
+      2432,
+      1042
+     ],
+     [
+      2478,
+      1057
+     ],
+     [
+      2334,
+      1031
+     ],
+     [
+      2321,
+      1031
+     ],
+     [
+      2197,
+      962
+     ],
+     [
+      2072,
+      1025
+     ],
+     [
+      1992,
+      1013
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1341,
+       2117
+      ],
+      [
+       1622,
+       2117
+      ],
+      [
+       1622,
+       2085
+      ],
+      [
+       1672,
+       2085
+      ],
+      [
+       1567,
+       1985
+      ],
+      [
+       1420,
+       1985
+      ],
+      [
+       1341,
+       2085
+      ]
+     ],
+     "note": "front plane approx."
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       2055,
+       977
+      ],
+      [
+       2360,
+       852
+      ],
+      [
+       2063,
+       720
+      ],
+      [
+       2047,
+       930
+      ]
+     ],
+     "note": "front plane"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2150,
+      520,
+      2530,
+      700
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.1,
+    2.0
+   ],
+   "size_basis": "p30",
+   "attrs": {
+    "pitch_est": "~3.5:12",
+    "type": "hip"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.gable_wing_accent",
+   "type": "gable",
+   "on": "on the front roof plane of the right wing, centred over the box bay",
+   "desc": "Small decorative gable (false dormer): white rake boards ~0.2 m deep forming a low triangle ~3.2 m wide and ~0.8 m high, white vertical-board infill in the tympanum, its own little black standing-seam roof whose ridge runs back into the wing roof. It sits on the roof a short strip (~0.5 m) back from the eave, not on the wall.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      2072,
+      1025
+     ],
+     [
+      2197,
+      962
+     ],
+     [
+      2321,
+      1031
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1332,
+      757,
+      1523,
+      859
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      2248,
+      576,
+      2435,
+      647
+     ]
+    },
+    {
+     "image": "frames/seg002_043.jpg",
+     "bbox": [
+      2261,
+      533,
+      2444,
+      617
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2102,
+      819,
+      2319,
+      883
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1450,
+       2117
+      ],
+      [
+       1493,
+       2007
+      ],
+      [
+       1554,
+       2117
+      ]
+     ],
+     "note": "ridge at x~1493 running back from the eave zone"
+    }
+   ],
+   "size_est_m": [
+    3.2,
+    0.8
+   ],
+   "size_basis": "249 px wide, 66 px high at ~83 px/m (x0.92 horizontally)",
+   "attrs": {
+    "pitch_est": "6:12",
+    "tympanum_box_p01": [
+     2134,
+     991,
+     2262,
+     1018
+    ],
+    "apex_p01": [
+     2197,
+     962
+    ]
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.ridge_wing_hips",
+   "type": "ridge",
+   "on": "wing roof",
+   "desc": "Hip ribs of the wing roof: one from the front-left eave corner up toward the chimney base, one from the set-back front-right corner up to the peak behind the decorative gable.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      2032,
+      1041
+     ],
+     [
+      1992,
+      1013
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p01_57ca6a.jpg",
+     "poly": [
+      [
+       2478,
+       1057
+      ],
+      [
+       2334,
+       1031
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       2047,
+       930
+      ],
+      [
+       2063,
+       720
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "poly": [
+      [
+       2360,
+       852
+      ],
+      [
+       2063,
+       720
+      ]
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       1672,
+       2083
+      ],
+      [
+       1567,
+       1985
+      ]
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.55
+  },
+  {
+   "id": "front.side_gate_right",
+   "type": "gate",
+   "on": "right (east) side yard, beside the wing, set back from the bay face",
+   "desc": "Stained wood fence/gate with square-lattice top band, same as on the left side, closing the east side yard; ~2 m tall.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     2432,
+     1194,
+     2500,
+     1350
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1583,
+      1050,
+      1623,
+      1236
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2291,
+      824,
+      2374,
+      941
+     ]
+    }
+   ],
+   "size_est_m": [
+    null,
+    2.0
+   ],
+   "size_basis": "apparent",
+   "attrs": {
+    "lattice_band_y_p01": [
+     1197,
+     1217
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "front.driveway",
+   "type": "paving",
+   "on": "front-left of the lot, from the street to the garage doors",
+   "desc": "Driveway of tumbled concrete pavers in a random multi-size rectangular pattern, mixed warm grey / taupe tones. It is the full width of the garage plus the side-yard strip (~8.5 m), runs ~9 m from the garage to the street and rises about 1 m toward the garage. Right edge: the porch-left end with its side steps, then a white concrete curb along the small lawn panel, the walk steps, and the left end of the street planter wall.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      0,
+      1403
+     ],
+     [
+      755,
+      1405
+     ],
+     [
+      640,
+      1440
+     ],
+     [
+      536,
+      1445
+     ],
+     [
+      536,
+      1640
+     ],
+     [
+      530,
+      1672
+     ],
+     [
+      0,
+      1672
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       182,
+       2000
+      ],
+      [
+       609,
+       2000
+      ],
+      [
+       612,
+       2185
+      ],
+      [
+       592,
+       2329
+      ],
+      [
+       587,
+       2400
+      ],
+      [
+       600,
+       2475
+      ],
+      [
+       330,
+       2500
+      ],
+      [
+       182,
+       2500
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      150,
+      1180,
+      1100,
+      1440
+     ]
+    },
+    {
+     "image": "photos/p04_3e3898.jpg",
+     "bbox": [
+      210,
+      870,
+      870,
+      1120
+     ],
+     "note": "seen from the office"
+    }
+   ],
+   "size_est_m": [
+    8.5,
+    9.0
+   ],
+   "size_basis": "p30: x 182-609 at ~51.5 px/m, y 2000-2475",
+   "attrs": {
+    "material": "tumbled concrete pavers",
+    "rise_to_garage_m_est": 1.0
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.driveway_curb",
+   "type": "wall_low",
+   "on": "right edge of the driveway, beside the left lawn panel",
+   "desc": "White concrete curb / low retaining edge (~0.25 m wide) running from the porch-left front corner toward the street, separating the driveway from the small lawn left of the entry walk.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      604,
+      2185
+     ],
+     [
+      618,
+      2185
+     ],
+     [
+      598,
+      2330
+     ],
+     [
+      584,
+      2330
+     ]
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.25,
+    null
+   ],
+   "size_basis": "p30",
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "front.walk_entry",
+   "type": "paving",
+   "on": "front yard, from the entry steps curving left to the driveway",
+   "desc": "Bluestone-paved entry walk (same large rectangular bluestone as the porch): starts the full width of the entry steps, sweeps in a broad quarter-circle to the left (west) and ends at a short flight of steps down to the driveway near the street. Lawn on both sides.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      821,
+      2196
+     ],
+     [
+      983,
+      2196
+     ],
+     [
+      975,
+      2230
+     ],
+     [
+      925,
+      2300
+     ],
+     [
+      860,
+      2345
+     ],
+     [
+      790,
+      2370
+     ],
+     [
+      690,
+      2385
+     ],
+     [
+      687,
+      2310
+     ],
+     [
+      760,
+      2290
+     ],
+     [
+      800,
+      2250
+     ],
+     [
+      815,
+      2215
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      250,
+      1560,
+      2010,
+      1667
+     ],
+     "note": "near end at the foot of the steps"
+    },
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1640,
+      1130,
+      2560,
+      1440
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1840,
+      1250,
+      1980,
+      1440
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.0,
+    null
+   ],
+   "size_basis": "p30",
+   "attrs": {
+    "material": "bluestone"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.walk_steps_to_driveway",
+   "type": "steps",
+   "on": "left end of the entry walk, near the street",
+   "desc": "Short flight of ~3-4 bluestone steps descending westward from the walk to a driveway-level landing, flanked by low white concrete walls.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "bbox": [
+     584,
+     2312,
+     690,
+     2400
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    1.6,
+    0.5
+   ],
+   "size_basis": "p30 only",
+   "attrs": {
+    "risers_est": 3
+   },
+   "conf": 0.4
+  },
+  {
+   "id": "front.lawn_right",
+   "type": "lawn",
+   "on": "front yard right of the entry walk",
+   "desc": "Level lawn panel in front of the right porch bay and the wing, extending to the planting strip behind the street wall; a rectangular drain/valve grate is set in it near the wing.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      983,
+      2196
+     ],
+     [
+      1064,
+      2196
+     ],
+     [
+      1064,
+      2140
+     ],
+     [
+      1340,
+      2140
+     ],
+     [
+      1340,
+      2125
+     ],
+     [
+      1650,
+      2125
+     ],
+     [
+      1650,
+      2330
+     ],
+     [
+      1450,
+      2350
+     ],
+     [
+      930,
+      2380
+     ],
+     [
+      925,
+      2300
+     ],
+     [
+      975,
+      2230
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p02_1ea535.jpg",
+     "bbox": [
+      1070,
+      1375,
+      2500,
+      1667
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      2010,
+      1150,
+      2560,
+      1440
+     ]
+    }
+   ],
+   "size_est_m": [
+    13.0,
+    4.5
+   ],
+   "size_basis": "p30 at ~51.5 px/m",
+   "attrs": {
+    "drain_grate_p30": [
+     1536,
+     2190,
+     1556,
+     2206
+    ],
+    "drain_grate_s141": [
+     2424,
+     1197,
+     2458,
+     1227
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.lawn_left",
+   "type": "lawn",
+   "on": "front yard between the driveway curb and the entry walk",
+   "desc": "Small quarter-circle lawn panel in front of the porch-left bay.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      612,
+      2188
+     ],
+     [
+      820,
+      2190
+     ],
+     [
+      800,
+      2250
+     ],
+     [
+      760,
+      2290
+     ],
+     [
+      690,
+      2310
+     ],
+     [
+      595,
+      2312
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1350,
+      1330,
+      1640,
+      1440
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.8,
+    2.3
+   ],
+   "size_basis": "p30",
+   "attrs": {},
+   "conf": 0.55
+  },
+  {
+   "id": "front.foundation_planting",
+   "type": "shrub",
+   "on": "planting bed along the foot of the porch base and the wing",
+   "desc": "Mulched bed ~1 m deep with white shrub roses, salvias and small evergreen shrubs along the porch base (both sides of the steps) and under the wing window.",
+   "ref": {
+    "image": "photos/p02_1ea535.jpg",
+    "bbox": [
+     1000,
+     1250,
+     2000,
+     1500
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg002_035.jpg",
+     "bbox": [
+      1100,
+      1300,
+      1620,
+      1440
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1900,
+      1130,
+      2260,
+      1330
+     ]
+    }
+   ],
+   "size_est_m": [
+    null,
+    0.8
+   ],
+   "size_basis": "apparent",
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "front.planter_wall",
+   "type": "wall_low",
+   "on": "along the street edge of the lot, from the driveway to the right lot corner",
+   "desc": "Street-side retaining wall ~1.1 m high faced in stacked ledgestone (grey / cream / tan quartzite strips), with a light concrete or limestone cap ~0.08 m thick x ~0.3 m wide that overhangs slightly. It holds the front yard about 1 m above the street. Behind the cap is a ~0.8 m planting strip with a row of clipped globe shrubs, then the lawn. The wall follows the street, which is skewed ~7 deg to the house (left end ~9 m from the garage, right end ~4.6 m from the wing). Its left end returns toward the walk steps.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "poly": [
+     [
+      536,
+      1439
+     ],
+     [
+      2500,
+      1430
+     ],
+     [
+      2500,
+      1608
+     ],
+     [
+      536,
+      1640
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       600,
+       2471
+      ],
+      [
+       1500,
+       2358
+      ]
+     ],
+     "note": "outer face; continues to the right under a tree canopy"
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       585,
+       2400
+      ],
+      [
+       600,
+       2471
+      ]
+     ],
+     "note": "left end return"
+    }
+   ],
+   "size_est_m": [
+    21.0,
+    1.1
+   ],
+   "size_basis": "p30: 900+ px visible at ~51.5 px/m, extrapolated to the right lot corner; height from 196 px vs camera-height ratio (wall = 0.71 x camera height above street)",
+   "attrs": {
+    "cap_y_p01": [
+     1434,
+     1448
+    ],
+    "face_y_p01_at_x1020": [
+     1448,
+     1630
+    ],
+    "material": "ledgestone veneer + light cap",
+    "left_end_x_p01": 536
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.planter_hedge",
+   "type": "shrub",
+   "on": "planting strip on top of the street wall",
+   "desc": "Row of about 20 clipped globe shrubs (boxwood-like, ~0.6-0.7 m) along the top of the street wall, with low white-flowering groundcover between them.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     585,
+     1361,
+     2500,
+     1440
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "poly": [
+      [
+       600,
+       2440
+      ],
+      [
+       1500,
+       2330
+      ]
+     ],
+     "note": "line of the strip"
+    }
+   ],
+   "size_est_m": [
+    null,
+    0.7
+   ],
+   "size_basis": "apparent",
+   "attrs": {
+    "count_est": 20
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.parkway_strip",
+   "type": "shrub",
+   "on": "foot of the street wall, between wall and asphalt",
+   "desc": "Narrow mulched planting strip at the base of the wall with low ferns / groundcover and a white rose bush (p01 x 2185-2255); the three young street trees stand in it.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     536,
+     1560,
+     2500,
+     1640
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    null,
+    0.4
+   ],
+   "size_basis": "apparent",
+   "attrs": {
+    "rose_bush_box_p01": [
+     2185,
+     1500,
+     2255,
+     1575
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "front.tree_street_1",
+   "type": "tree",
+   "on": "parkway strip in front of the street wall (left tree, in line with porch column 2)",
+   "desc": "Young staked standard tree ~3.3 m tall with a slim trunk and a small dense crown of glossy elliptical evergreen leaves (laurel / magnolia type).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1090,
+     1165,
+     1245,
+     1578
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      930,
+      2440,
+      975,
+      2480
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.2,
+    3.3
+   ],
+   "size_basis": "crown 155 px wide at ~130 px/m; trunk base y~1575",
+   "attrs": {
+    "trunk_x_p01": 1164,
+    "trunk_base_p01": [
+     1164,
+     1575
+    ],
+    "crown_box_p01": [
+     1090,
+     1165,
+     1245,
+     1345
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.tree_street_2",
+   "type": "tree",
+   "on": "parkway strip in front of the street wall (middle tree)",
+   "desc": "Same young standard tree.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     1600,
+     1160,
+     1745,
+     1570
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1170,
+      2425,
+      1215,
+      2465
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.1,
+    3.3
+   ],
+   "size_basis": "same",
+   "attrs": {
+    "trunk_x_p01": 1678,
+    "trunk_base_p01": [
+     1678,
+     1568
+    ],
+    "crown_box_p01": [
+     1600,
+     1160,
+     1745,
+     1335
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.tree_street_3",
+   "type": "tree",
+   "on": "parkway strip in front of the street wall (right tree, in front of the wing)",
+   "desc": "Same young standard tree.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     2200,
+     1190,
+     2360,
+     1560
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1400,
+      2385,
+      1445,
+      2425
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.2,
+    3.0
+   ],
+   "size_basis": "same",
+   "attrs": {
+    "trunk_x_p01": 2273,
+    "trunk_base_p01": [
+     2273,
+     1557
+    ],
+    "crown_box_p01": [
+     2200,
+     1190,
+     2360,
+     1400
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.wall_end_light",
+   "type": "light",
+   "on": "left end of the street wall, facing the driveway",
+   "desc": "Low-level light on or near the left end of the street wall casting a warm pool on the driveway pavers (fixture itself not resolved).",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     430,
+     1515,
+     536,
+     1555
+    ],
+    "note": "light pool on the pavers"
+   },
+   "also": [],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.3
+  },
+  {
+   "id": "front.street_edge",
+   "type": "paving",
+   "on": "street in front of the lot",
+   "desc": "Asphalt street directly below the wall strip (no sidewalk on this side along the left 3/4); a concrete curb with a curb ramp and yellow tactile pad begins toward the right. Context only.",
+   "ref": {
+    "image": "photos/p01_57ca6a.jpg",
+    "bbox": [
+     0,
+     1640,
+     2500,
+     1709
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p01_57ca6a.jpg",
+     "bbox": [
+      1906,
+      1617,
+      2500,
+      1700
+     ],
+     "note": "concrete curb and ramp"
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.5
+  }
+ ],
+ "relations": [
+  "Left to right at ground level (street view): side gate | garage block with 2 doors | (office block steps forward ~1.2 m) porch-left bay with the office door | recessed entry alcove with the front door | right porch bay with the living-room French doors | one-storey wing with a box bay and triple window | east side gate.",
+  "Depth datum = garage front wall plane (0 m, + toward the street). Estimated plane depths (+-0.5 m; from top-down p30 eave positions corrected for roof height, cross-checked with p01 lap-siding course sizes and drone frames): office front wall +1.2; entry/living wall -0.3; porch-left column line (outer face) +3.45; entry column line +3.7; right-bay column line +2.6; wing main front wall +1.65; wing box-bay face +2.25; upper wall A -2.1; upper wall B -2.75; upper-left gable bay face -1.6; right upper block front wall ~0.0; right upper gable bay face +0.7; recessed upper-right wall -0.75.",
+  "The garage front wall is therefore the most recessed ground-floor wall on the left; the porch roof projects ~3.3 m beyond the garage eave (p30: garage eave y=1998, porch-left eave y=2183, entry eave y=2195, right-bay eave y=2134, wing bay eave y=2117, wing main / east eave corner y=2085).",
+  "The entry roof eave is only ~0.24 m in front of the porch-left eave but ~1.1 m in front of the right-bay eave; column_3_rear stands ~1.1 m directly behind column_3_front on the right-bay beam line.",
+  "The entry door wall is recessed ~1.5 m behind the office front wall (p01 course size 10.6 px vs 11.65 px on adjacent walls); the living-room French doors are in the same plane as the entry door (continuous wall in p02).",
+  "Porch clear depths wall-to-column-outer-face: ~2.25 m in front of the office, ~4.0 m at the entry, ~2.9 m in front of the living room.",
+  "All low roofs (garage, porch, entry, right bay, wing and the west/east side skirts) are one continuous black standing-seam system with the eave at one height: gutter top ~4.0 m above the garage slab = ~3.6 m above the porch floor. The garage slab is therefore ~0.4 m below the porch/main floor.",
+  "The porch floor is 4 risers (~0.66 m) above the front walk and lawn; porch columns are ~3.06 m from floor to beam soffit.",
+  "Behind the standing-seam skirts there is a flat membrane roof between the porch roofs and upper walls A / B; the standing-seam planes are only ~2 m deep in plan and stop at that flat roof.",
+  "The upper storey is narrower than the ground floor: in p01 it spans x 382 (left corner) to x 2088 (right corner) while the ground floor spans x 152 to x 2431. On the left the garage extends ~2.5 m beyond the upper storey; on the right the one-storey wing extends ~3.7 m beyond it.",
+  "Upper-left gable bay is centred over the garage width only roughly: bay x 431-709 vs garage wall x 152-787 in p01 (bay centre ~100 px right of the garage centre); its window sill sits right on the garage roof flashing.",
+  "Right upper gable bay (x 1579-1823 in p01) stands above the junction of the entry and the right porch bay; its centre is ~70 px right of the entry roof's right corner region and its base sits on the flat roof / top of the right-bay roof.",
+  "Upper wall B is ~0.65 m behind upper wall A (p30 eave step 37 px); the right upper block's front wall is ~2.7 m in front of wall B (its west side wall is ~2.4 m long).",
+  "The chimney is at the front-right corner of the right upper block: front face about flush with that block's front wall (within ~0.2 m), right edge ~0.5 m beyond the block's east wall, shaft top ~0.65 m and cap top ~1.4 m above the right gable ridge.",
+  "The recessed upper-right wall (with the small square window) is ~0.8 m behind the right block's front wall and butts against the right side of the chimney; the wing roof ridge/hip rises to just below its window.",
+  "The wing box bay projects ~0.6 m from the wing main wall; porch column 4 stands ~0.9 m in front of the wing main wall, roughly in line with (0.3 m ahead of) the bay face. The wing's west wall with the single door is ~1.95 m long.",
+  "Window head heights: upper-left bay window and right bay window heads are at the same image height (y 837 in p01); the entry door head is ~0.34 m higher than the French-door and office-door heads (9 ft vs 8 ft).",
+  "Garage canopy top is ~0.4 m above the garage door head and ~0.6 m below the soffit; the wing canopy underside is ~0.15 m above the triple-window head.",
+  "All eleven visible front sconces are the same fixture: left and right of the garage doors, on porch columns 1, 2, 3(front) and 4, on the wall right of the entry door, and either side of the wing window.",
+  "Street wall is not parallel to the house: in p30 its outer face runs from (600,2471) to (1500,2358), i.e. the street is rotated ~7 deg; front yard depth from the entry eave to the wall is ~4.7 m at the entry and ~4.4 m at the wing; the garage door is ~9 m from the street edge.",
+  "p01 is not exactly square-on: the facade recedes to the right (eave lines converge to the right, horizontal scale falls from ~1.04x to ~0.92x of the vertical scale left to right); the camera is roughly opposite the garage/office junction, ~25-30 m away, low (about 0.4 m above the garage slab level)."
+ ],
+ "materials": [
+  {
+   "name": "white lap siding",
+   "where": "all wall planes except the three board-and-batten faces; chimney chase",
+   "colour_srgb": "#f1f1ed",
+   "sample": {
+    "image": "photos/p02_1ea535.jpg",
+    "rect": [
+     430,
+     1120,
+     580,
+     1180
+    ]
+   },
+   "notes": "Smooth painted horizontal lap (fibre-cement look), ~5 in (127 mm) exposure (11.75 px/course on the garage wall in p01). Sample is in open shade (#b7b8b8); in sun it reads near pure white. White corner boards ~0.1 m."
+  },
+  {
+   "name": "white board-and-batten",
+   "where": "upper-left gable bay face, right upper gable bay face, wing box bay, wing gablet tympanum",
+   "colour_srgb": "#f1f1ed",
+   "sample": {
+    "image": "photos/p02_1ea535.jpg",
+    "rect": [
+     760,
+     260,
+     800,
+     460
+    ]
+   },
+   "notes": "Flat panels with ~50 mm battens at ~0.41 m (16 in) centres, vertical, same white paint. Sample in shade #c1cbd2."
+  },
+  {
+   "name": "white trim",
+   "where": "fascias, bargeboards, soffits, casings, columns, beams, porch ceiling boards, garage doors",
+   "colour_srgb": "#f4f4f1",
+   "sample": {
+    "image": "photos/p02_1ea535.jpg",
+    "rect": [
+     60,
+     800,
+     100,
+     1300
+    ]
+   },
+   "notes": "Same white as the siding, smooth. Sample is column 2 in shade (#8d9297)."
+  },
+  {
+   "name": "black window / door frames",
+   "where": "all windows, office door, French doors, wing side door, sconces, gutters, downspouts, awnings",
+   "colour_srgb": "#1e1e20",
+   "sample": {
+    "image": "photos/p02_1ea535.jpg",
+    "rect": [
+     1530,
+     1010,
+     1560,
+     1180
+    ]
+   },
+   "notes": "Satin black (aluminium-clad). Muntins ~25 mm. Sample rect is on the wing window frame (mixed with reflections)."
+  },
+  {
+   "name": "navy entry door",
+   "where": "front door and its two sidelights",
+   "colour_srgb": "#1d2437",
+   "sample": {
+    "image": "photos/p02_1ea535.jpg",
+    "rect": [
+     215,
+     1160,
+     280,
+     1260
+    ]
+   },
+   "notes": "Dark navy blue satin paint; looks black at dusk."
+  },
+  {
+   "name": "standing-seam metal roof",
+   "where": "garage roof, porch roofs, entry hip, wing roof, side skirts, wing gablet, chimney cap",
+   "colour_srgb": "#2b2d31",
+   "sample": {
+    "image": "frames/seg002_035.jpg",
+    "rect": [
+     830,
+     680,
+     890,
+     750
+    ]
+   },
+   "notes": "Matte black / very dark charcoal, vertical seams ~0.45 m apart, flat hip caps, low pitch (~3.5:12). Drone sample #373d51 (sky-tinted)."
+  },
+  {
+   "name": "asphalt shingles",
+   "where": "all upper-storey roofs",
+   "colour_srgb": "#56565c",
+   "sample": {
+    "image": "frames/seg002_035.jpg",
+    "rect": [
+     780,
+     240,
+     900,
+     340
+    ]
+   },
+   "notes": "Heavy dimensional \"shake-look\" shingles in a charcoal/grey blend, staggered tabs, matching ridge caps. Sunlit drone sample #7c7c90."
+  },
+  {
+   "name": "flat roof membrane",
+   "where": "hidden flat roof behind the porch roofs",
+   "colour_srgb": "#3a3c40",
+   "sample": {
+    "image": "frames/seg141_040.jpg",
+    "rect": [
+     1500,
+     900,
+     1700,
+     1000
+    ]
+   },
+   "notes": "Dark grey membrane; sample is in shade (#172746)."
+  },
+  {
+   "name": "bluestone",
+   "where": "porch floor, entry steps, side steps, entry walk",
+   "colour_srgb": "#7a848b",
+   "sample": {
+    "image": "photos/p02_1ea535.jpg",
+    "rect": [
+     400,
+     1365,
+     740,
+     1398
+    ]
+   },
+   "notes": "Blue-grey bluestone, thermal finish, large rectangular pieces (~0.6 x 0.9 m) with tight joints; treads are single slabs."
+  },
+  {
+   "name": "ledgestone veneer",
+   "where": "porch base and cheek piers, street retaining wall, probably the wing base",
+   "colour_srgb": "#8a8a86",
+   "sample": {
+    "image": "photos/p02_1ea535.jpg",
+    "rect": [
+     20,
+     1430,
+     250,
+     1560
+    ]
+   },
+   "notes": "Dry-stacked thin strips 20-80 mm high x 150-450 mm long, mixed light grey / cream / tan / rusty quartzite; no visible mortar. Dusk sample on the street wall in p01: #605c52."
+  },
+  {
+   "name": "wall cap",
+   "where": "top of the street retaining wall; curb by the driveway",
+   "colour_srgb": "#d9d7d0",
+   "sample": {
+    "image": "photos/p30_b7b282.jpg",
+    "rect": [
+     1200,
+     2389,
+     1230,
+     2395
+    ]
+   },
+   "notes": "Light concrete / limestone coping ~80 mm thick."
+  },
+  {
+   "name": "driveway pavers",
+   "where": "driveway",
+   "colour_srgb": "#9a948a",
+   "sample": {
+    "image": "photos/p01_57ca6a.jpg",
+    "rect": [
+     100,
+     1450,
+     480,
+     1640
+    ]
+   },
+   "notes": "Tumbled concrete pavers, random rectangular sizes (about 0.15-0.45 m), warm grey / taupe mix. p01 dusk sample #605a54; sunlit in p30 #dbd4c4 (overexposed)."
+  },
+  {
+   "name": "stained wood fence",
+   "where": "side gates and fences left and right",
+   "colour_srgb": "#7a4526",
+   "sample": {
+    "image": "photos/p02_1ea535.jpg",
+    "rect": [
+     1590,
+     1080,
+     1615,
+     1220
+    ]
+   },
+   "notes": "Redwood/cedar with warm red-brown stain, vertical boards, square lattice top band, posts with flat caps."
+  },
+  {
+   "name": "lawn",
+   "where": "front yard",
+   "colour_srgb": "#3f6a2c",
+   "sample": {
+    "image": "photos/p02_1ea535.jpg",
+    "rect": [
+     1300,
+     1380,
+     2100,
+     1560
+    ]
+   },
+   "notes": "Fresh sod; sample in evening shade #324c26."
+  },
+  {
+   "name": "glass",
+   "where": "all glazing",
+   "colour_srgb": "#3a4148",
+   "sample": {
+    "image": "frames/seg002_035.jpg",
+    "rect": [
+     1170,
+     960,
+     1350,
+     1120
+    ]
+   },
+   "notes": "Clear glass; dark and reflective by day, warm yellow (#f5d27a) when lit from inside at dusk as in p01."
+  }
+ ],
+ "open_questions": [
+  "Absolute depths of the wall planes (office wall vs garage wall, entry recess, upper walls A/B, right upper block) are estimates good to about +-0.5 m; the SfM / camera solve or a side view of the left end of the porch would fix them.",
+  "Garage doors assumed 8 ft x 8 ft (which also fixes the 5 in siding exposure and all p01 scales). If they are 9 ft wide the horizontal scale model changes by ~10 %. A square-on close view of the garage would settle it.",
+  "Lower parts of two upper windows are hidden by the porch roof in p01: the tall window on wall A and the twin unit on wall B. The twin unit looks door-height in the drone frames - unknown whether it is a window or doors onto the flat roof (interior p16 of the landing may show).",
+  "Chimney plan depth (~1.1 m assumed) and whether its front face is exactly flush with, or slightly behind, the right block's front wall; a view from the right (east) side would settle it. Its lower part between the upper roof and the wing roof is only partly seen.",
+  "Whether the wing bay base is stone veneer or plain concrete, and the exact projection of the wing box bay (0.6 m from the p30 eave jog; only >=0.35 m can be confirmed from p01/p02).",
+  "Number of risers of the side steps at the west end of the porch (3-4) and of the walk steps down to the driveway near the street (3-4): only seen small / under the title overlay in the drone frames.",
+  "Exact projection and slat count of the two metal canopies (garage ~0.9 m, wing ~0.8 m assumed).",
+  "Roof pitches are estimates: standing seam ~3.5:12, shingle gables ~5:12, wing gablet ~6:12. Height of the main upper ridge is not measurable from the street view.",
+  "Level and exact outline of the flat membrane roof (taken as ~1 m above the porch eaves) and what the row of small pads on it is.",
+  "The left sidelite of the living-room French unit and the left edge of the entry sidelight are hidden behind columns in p01 (positions inferred from symmetry and p02).",
+  "The area at the foot of the office west wall (dark base, pipes) and the small utility box on the garage wall are only seen in drone frames.",
+  "Whether there are three or four young trees in the street strip (p01 shows three; p30 shows a fourth small canopy further left near the wall end, possibly on the street side).",
+  "What exactly the left-end fence does in front of the side gate (it appears to run toward the street along the driveway) - the far-left edge of p01 only."
+ ]
+}

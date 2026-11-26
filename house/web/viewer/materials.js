@@ -3,7 +3,12 @@
 // table below is the fallback for names no look module has claimed yet.  An entry is either a spec
 //   { color, roughness, metalness, emissive, emissiveDay, emissiveDusk, glass, water }
 // or a factory  (ctx) => THREE.Material  for textured / shader materials, where
-//   ctx = { THREE, renderer, anisotropy, quality: 'high' | 'low', time: 'day' | 'dusk' }.
+//   ctx = { THREE, renderer, anisotropy, quality: 'high' | 'low', time: 'day' | 'dusk', envGain }.
+// LIGHT (stage.js LOOK, sky.js; calibrated on the photos, do not re-tune materials against anything else): a neutral
+// tone curve (display = scene colour up to ~0.76, soft shoulder above), a sunlit white wall (albedo 0.87) renders
+// ~245, in open shade ~180.  The image-based light is ctx.envGain times brighter than the sky looks (the lifted
+// shade of the photos): mirror-like materials (glass, water, polished metal) should set
+// envMapIntensity = 1 / ctx.envGain (and again in lib.onTime) so their reflections match the visible sky.
 // lib.onTime(fn) registers a callback fn(time) for day / dusk changes; lib.onTick(fn) a per-frame callback
 // fn(seconds) for animated materials (the stage then renders continuously).
 import * as THREE from 'three';
@@ -61,9 +66,9 @@ export const FALLBACK = {
   interior_glow: { color: 0xffe2b0, roughness: 1.0, emissive: 0xffc98a, emissiveDay: 0.0, emissiveDusk: 2.2 },
 };
 
-const CLAY = new THREE.MeshStandardMaterial({ color: 0xe9e7e2, roughness: 0.92, metalness: 0 });
-const CLAY_GLASS = new THREE.MeshStandardMaterial({ color: 0x8fa3b3, roughness: 0.35, metalness: 0 });
-const CLAY_WATER = new THREE.MeshStandardMaterial({ color: 0xb7d3df, roughness: 0.3, metalness: 0 });
+export const CLAY = new THREE.MeshStandardMaterial({ color: 0xe9e7e2, roughness: 0.92, metalness: 0 });
+export const CLAY_GLASS = new THREE.MeshStandardMaterial({ color: 0x8fa3b3, roughness: 0.35, metalness: 0 });
+export const CLAY_WATER = new THREE.MeshStandardMaterial({ color: 0xb7d3df, roughness: 0.3, metalness: 0 });
 
 export class Materials {
   constructor(renderer, quality = 'high') {
@@ -73,7 +78,7 @@ export class Materials {
     this.timeFns = [];
     this.tickFns = [];
     this.time = 'day';
-    this.ctx = { THREE, renderer, quality, time: 'day', anisotropy: renderer ? renderer.capabilities.getMaxAnisotropy() : 1 };
+    this.ctx = { THREE, renderer, quality, time: 'day', envGain: 1, anisotropy: renderer ? renderer.capabilities.getMaxAnisotropy() : 1 };
     const lib = {
       add: (name, entry, kind) => { this.entries.set(name, entry); if (kind) this.kinds.set(name, kind); },
       onTime: (fn) => this.timeFns.push(fn),
@@ -98,11 +103,12 @@ export class Materials {
     } else {
       m = new THREE.MeshStandardMaterial({ color: e.color, roughness: e.roughness ?? 0.8, metalness: e.metalness ?? 0 });
       if (e.emissive !== undefined) { m.emissive = new THREE.Color(e.emissive); m.emissiveIntensity = e.emissiveDay ?? 0; }
-      if (e.glass) m.envMapIntensity = 1.6;
-      if (e.water) { m.transparent = true; m.opacity = 0.86; m.envMapIntensity = 1.4; }
+      if (e.glass) m.envMapIntensity = 1.0 / this.ctx.envGain;
+      if (e.water) { m.transparent = true; m.opacity = 0.86; m.envMapIntensity = 1.0 / this.ctx.envGain; }
       m.userData.spec = e;
     }
     m.name = name;
+    if (this.hook) this.hook(m);
     this.cache.set(name, m);
     return m;
   }
