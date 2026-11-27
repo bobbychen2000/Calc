@@ -18,11 +18,27 @@
 //   rapid links before the F4301 first exits are excluded (review L1);
 // - the F4552 closure variant (closedLinks) and the F4551 crossing restriction (18L/36R only at H4 / H7);
 // - route assembly: integer pieces from js/sim/path.js, blocks (>= 60 m per link, junction boxes, runway strips,
-//   one-at-a-time lanes, the 18R/36L end boxes), holds, crossings, the line-up point and the push (incl. option A).
+//   one-at-a-time lanes, the 18R/36L end boxes), holds, crossings, the line-up point and the push (incl. option A);
+// - fix round 1: the path-level turn rule (a driven arc or a 40 m stretch turning > 100 deg is re-searched with its
+//   transitions banned, ROUTER.pathTurn), lane blocks from the pieces, the swing branch's blocks on the taxi route and in
+//   push.resources, the push end on a 33 m straight (both gears aligned), 20 km per off-H2 / H6 crossing for spans >= 36 m.
 // Commit path: integers and + - * / sqrt only (path.js header); the precomputed table data/sha_routes.js (built by
 // tools/sim/build_routes.mjs with this same module) replaces the searches.
 
-import { buildPath, PATH, atanDet, RAD2DEG } from './path.js';
+// - fix round 2 (docs/phase3/movement.md "Verification fixes, round 2"): the push continues on the graph beyond the swing
+//   link (the straight-ahead chain, real link ids), push.resources and the departure's start blocks come from the links
+//   geometrically under the aircraft (nose gear path + the start-up fuselage, ROUTER.foot), one-at-a-time lanes by geometry,
+//   junction boxes also for nodes beside the path that are not route vertices (geoBoxes), behind blocks held to the end of
+//   the taxi's near stretch, every metre of every route inside some block (gap fill), the push path's own turn rule (re-search), arrivals that
+//   re-cross the runway they landed on keep it occupied until the far side (no hold on the strip), wide-bodies full length.
+import { buildPath, PATH, atanDet, RAD2DEG, turnProfile, projectOnPieces, arcPointDet } from './path.js';
+import { TYPES } from '../aircraft/types.js';
+
+// the largest nose-gear -> tail distance of each span class (n < 36 m, w 36-65 m, x >= 65 m) over js/aircraft/types.js SPEC:
+// the start-up fuselage footprint behind the push end (fix round 2, H1) [inf: geometry of the type table]
+// the largest wheelbase of each span class: the push path is (nearly) straight for this far past the push end (fix round 2)
+const WB_CM = (() => { const o = { n: 0, w: 0, x: 0 }; for (const t of Object.values(TYPES)) { const sp = t.wing.span * 100; const c = sp < 3600 ? 'n' : sp < 6500 ? 'w' : 'x'; o[c] = Math.max(o[c], Math.ceil(t.xMain - t.xNose) * 100); } return o; })();
+const TAIL_CM = (() => { const o = { n: 0, w: 0, x: 0 }; for (const t of Object.values(TYPES)) { const sp = t.wing.span * 100; const c = sp < 3600 ? 'n' : sp < 6500 ? 'w' : 'x'; o[c] = Math.max(o[c], Math.ceil((t.L - t.xNose) * 100 / 100) * 100); } return o; })();
 
 export const ROUTER = {
   fullLengthCm: 12000,        // a take-off entry within 120 m of the runway end counts as full length (H1, H7, T6, the end connectors) [inf]
@@ -32,6 +48,8 @@ export const ROUTER = {
     longRunCm: 15000, longRunLinks: 4 },                                       // retry for an end the short runs cannot reach (inf)
   geoTurnCos: -0.17364817766693033,                    // cos 100 deg
   xPenCm: 500000,             // 5 km per 18R/36L crossing (design §4.1, inf)
+  xPenWideCm: 2000000,        // span >= 36 m: 20 km per 18R/36L crossing other than H2 (landing 18L) / H6 (landing 36R), more than any
+                              // detour along B (fix round 1, V10: 5 km let the far exits B6 / B1 / end connectors cross at H6 / H7 / H2) [inf]
   eaLimitedPenCm: 1000000,    // 10 km for an end-around at 36-65 m span ("limited") [inf]
   wideCrossFree: { '18L': 'H2', '36R': 'H6' },         // span >= 36 m: cross 18R/36L via H2 (south flow) / H6 (north flow)
   spanNarrowCm: 3600, spanEaMaxCm: 6500,
@@ -51,8 +69,37 @@ export const ROUTER = {
   pushEndPastArcCm: 200,      // the push ends >= 2 m past the push-turn arc (both gears aligned on the lane)
   fwdTurnRCm: 2000,           // ... and far enough into the branch for a 20 m fillet of the forward turn at K (>= 1.6 R_min of every type) [inf]
   pushTailRoomCm: 4000,       // the push path keeps >= 40 m beyond the push end (main gear on the path) [inf]
+  // the push path is straight past the push end for the class's largest wheelbase (fix round 1, V2: 33 m for every class;
+  // fix round 2: n 19 / w 33 / x 32 m from js/aircraft/types.js), both gears aligned on it; bends of less than pushAlignTh
+  // (10 deg: OSM digitising curvature, gentle lane bends) do not count, and a push end inside such a gentle arc stays where
+  // it is (round 1 moved it past every 0.2 deg kink and to the end of any arc: pushes up to 98 m past K on the real chain) [inf]
+  pushAlignTh: 0.17453292519943295, pushAlignExtraCm: 2000,   // ... and the alignment moves the push end at most 20 m (a curving lane: the push ends on the curve)
+  pushAlignCm: WB_CM,
   caps: { taxiway: 1200, taxiwayWide: 1000, taxilane: 700, leadin: 300, rapid: 2500, lineup: 500, push: 120, stopZoneCm: 1500, stopCms: 100 },   // rapid: the 25 m/s turn-off speed, no acceleration on the exit (design §4.4: entry <= 25 m/s, decelerating)
   leadinStopMs: 5000,         // arrivals stop 5 s before turning onto the lead-in (AIP (mirror) AD 2.20 3.2.2.2; aip_facts.stop_before_leadin; 5 s inf)
+  // path-level turn rule (fix round 1, V3; AIP (mirror) AD 2.20 2.3.1 "turns of more than 90 deg forbidden", + 10 deg of
+  // digitising tolerance as the turns table): a route whose DRIVEN path has an arc of more than maxDeg or a heading change
+  // of more than maxDeg within windowCm is re-searched with the transitions in that stretch banned (up to maxIter times);
+  // if no such route exists the shortest one is kept and route.turn says so [inf]
+  pathTurn: { maxDeg: 100, windowCm: 4000, maxIter: 8, padCm: 1000 },
+  pushResCm: 9000,            // push.resources: the swing branch's blocks within 90 m of K (push end + main gear + tail) [inf]
+  // fix round 2 (H1): the push continues on the graph past the swing link X: at each far node the straight-ahead link
+  // (deflection <= 45 deg, a two-way or one-way apron lane / taxiway, not a lead-in or runway) up to swingExtCm from K;
+  // the links under the aircraft are found geometrically: every open non-runway link centreline within tolCm (4 m + 0.5 m
+  // for the chord sampling of arcs) of the nose-gear path, the push path to the tail and the straight start-up fuselage
+  // (nose gear -> tail, tailCm by span class), every junction node within boxCm (the 15 m junction box pad + 0.5 m) [inf]
+  chainCos: 0.7071067811865476,
+  foot: { tolCm: 450, laneTolCm: 650, boxCm: 1550, stepCm: 100, cellCm: 1000, tailCm: TAIL_CM },   // lanes: 6 m + 0.5 m (nose, main gear or tail near a lane)
+  // one-at-a-time lanes by geometry (H1): a path sample is on lane <ref> when an exclusive lane centreline lies within
+  // laneTolCm of the nose gear (3 m + 0.5 m chord tolerance) and runs within 37 deg of the path direction (|cos| >= 0.8),
+  // or when the piece's own link carries the ref; runs closer than laneGapCm are joined [inf]
+  // a near-run (samples within laneTolCm in any direction) is a lane block when it contains a parallel sample, so the entry
+  // and exit stretches (merging onto / leaving the lane at an angle) are in it and a bare crossing of a lane mouth is not;
+  // a lane the push held (push.resources) continues from s = 0 when the taxi reaches it within laneHoldCm [inf]
+  laneTolCm: 350, laneCos: 0.8, laneGapCm: 300, laneHoldCm: 6000,
+  pushTurn: { maxDeg: 100, windowCm: 4000 },
+  pushMergeMaxCos: -0.17364817766693033,   // push paths merge two corners only into one of < 100 deg (M2; taxi paths: 150 deg) [inf]   // the driven push path (stand -> push end) keeps the path-level turn rule (M2) [inf]
+  wideFullLength: true,       // span >= 36 m (code D-F) always lines up at full length (design §4.2: code C may use H2 / H6) [inf]
   src: 'inf',
   basis: 'design.md §4.1-4.5; AIP (mirror) AD 2.20 2.1.4.2, 2.1.7, 2.2.5, 2.3.1-2.3.3, 3.1.5, 3.2.2.2 via sha_taxigraph rules.facts',
 };
@@ -144,6 +191,136 @@ export function makeRouter(G, o = {}) {
   }
   const laneOK = (l) => l.status === 'open' && (l.kind === 'taxilane' || l.kind === 'taxiway') && l.use !== 'runway' && l.use !== 'stand' && !(closed && closed.has(l.id));
 
+  // ------------------------------------------------------------------------------------------- footprints (fix round 2, H1)
+  // Spatial index of the open non-runway link centrelines (integer cm, ROUTER.foot.cellCm cells) and of the junction nodes;
+  // deterministic sampling of a path's pieces (lines linear, arcs by chord bisection: + - * / sqrt only), so the links under
+  // an aircraft are found by geometry, not from the route's tags. Commit path: no trigonometry.
+  const FO = ROUTER.foot, FG = FO.cellCm;
+  const cumCm = L.map((l) => { const p = ptsCm[l.id]; const c = [0]; for (let i = 1; i < p.length; i++) { const dx = p[i][0] - p[i - 1][0], dz = p[i][1] - p[i - 1][1]; c.push(c[i - 1] + Math.sqrt(dx * dx + dz * dz)); } return c; });
+  const nBlocks = (lid) => Math.max(1, Math.floor(lenCm[lid] / ROUTER.blockMinCm));
+  const gKey = (cx, cz) => (cx + 4096) * 8192 + (cz + 4096);
+  const segGrid = new Map(), nodeGrid = new Map(), laneGrid = new Map();   // laneGrid: the one-at-a-time lanes only
+  const gAdd = (G2, k, v) => { let a = G2.get(k); if (!a) G2.set(k, a = []); a.push(v); };
+  for (const l of L) {
+    if (l.status !== 'open' || l.use === 'runway') continue; const p = ptsCm[l.id];
+    for (let i = 1; i < p.length; i++) {
+      const x0 = Math.floor(Math.min(p[i - 1][0], p[i][0]) / FG), x1 = Math.floor(Math.max(p[i - 1][0], p[i][0]) / FG);
+      const z0 = Math.floor(Math.min(p[i - 1][1], p[i][1]) / FG), z1 = Math.floor(Math.max(p[i - 1][1], p[i][1]) / FG);
+      for (let cx = x0; cx <= x1; cx++) for (let cz = z0; cz <= z1; cz++) { gAdd(segGrid, gKey(cx, cz), l.id * 65536 + i); if (l.ref && EXCL.has(l.ref)) gAdd(laneGrid, gKey(cx, cz), l.id * 65536 + i); }
+    }
+  }
+  const isJunction = (v) => { const n = nodeOf[v]; return !!n && n.kind === 'junction' && (degree.get(v) || 0) >= 3; };
+  for (const n of N) if (isJunction(n.id)) gAdd(nodeGrid, gKey(Math.floor(n.x * 100 / FG), Math.floor(n.z * 100 / FG)), n.id);
+  const twyNode = (v) => (adj.get(v) || []).some(id => L[id].kind === 'taxiway');
+  let maxNode = 0; for (const n of N) if (n.id > maxNode) maxNode = n.id;
+  const skipS = new Float64Array(maxNode + 1), skipG = new Int32Array(maxNode + 1); let skipGen = 0;   // geoBoxes scratch
+  /** calls fn(lid, i, u, d2) for every indexed segment within tol (cm) of (x, z); a segment may be reported more than once */
+  function nearSegs(x, z, tol, fn, grid = segGrid) {
+    const cx = Math.floor(x / FG), cz = Math.floor(z / FG), t2 = tol * tol, rr = Math.ceil(tol / FG);
+    for (let a = -rr; a <= rr; a++) for (let b = -rr; b <= rr; b++) {
+      const arr = grid.get(gKey(cx + a, cz + b)); if (!arr) continue;
+      for (const code of arr) {
+        const lid = Math.floor(code / 65536), i = code - lid * 65536; const p = ptsCm[lid];
+        const ax = p[i - 1][0], az = p[i - 1][1], ex = p[i][0] - ax, ez = p[i][1] - az, l2 = ex * ex + ez * ez;
+        let u = l2 > 0 ? ((x - ax) * ex + (z - az) * ez) / l2 : 0; if (u < 0) u = 0; else if (u > 1) u = 1;
+        const dx = ax + ex * u - x, dz = az + ez * u - z, d2 = dx * dx + dz * dz;
+        if (d2 <= t2) fn(lid, i, u, d2);
+      }
+    }
+  }
+  /** the block index (from the link's a end) of the point at fraction u of segment i of link lid */
+  const blockAt = (lid, i, u) => { const c = cumCm[lid]; const tot = c[c.length - 1]; const nb = nBlocks(lid); if (!(tot > 0)) return 0; const f = (c[i - 1] + (c[i] - c[i - 1]) * u) / tot; return Math.min(nb - 1, Math.max(0, Math.floor(f * nb))); };
+  /**
+   * Sample points [x, z, s] every <= stepCm along pieces over stations [sA, sB]; beyond the last piece the path continues
+   * straight along its end tangent. Arcs (also those cut by trimPath) are evaluated on their full circle by bisection.
+   */
+  function samplePieces(pieces, sA, sB, stepCm = FO.stepCm) {
+    const out = []; let endX = null, endZ = null, endHx = 0, endHz = 0, endS = 0;
+    for (const p of pieces) {
+      const e = p.s0Cm + p.lenCm; const g = p.g;
+      if (p.kind === 'line') { endX = g.x0 + g.hx * p.lenCm; endZ = g.z0 + g.hz * p.lenCm; endHx = g.hx; endHz = g.hz; }
+      else { const bx = g.x0 + g.hx * g.T + g.ox * g.T, bz = g.z0 + g.hz * g.T + g.oz * g.T; endHx = g.ox; endHz = g.oz;
+        // a cut arc ends earlier: its end point is found below by bisection; the tangent is only used for the straight extension
+        endX = bx; endZ = bz; }
+      endS = e;
+      if (e < sA || p.s0Cm > sB || p.lenCm <= 0) continue;
+      if (p.kind === 'line') {
+        const n = Math.max(1, Math.ceil(p.lenCm / stepCm));
+        for (let j = 0; j <= n; j++) { const d = p.lenCm * j / n, s = p.s0Cm + d; if (s < sA || s > sB) continue; out.push([g.x0 + g.hx * d, g.z0 + g.hz * d, s]); }
+      } else {
+        const thF = 2 * atanDet(g.T / g.R), lenF = g.R * thF;       // the full arc (a cut arc keeps its T)
+        let n = 1; while (lenF / n > stepCm) n *= 2;
+        const P = new Array(n + 1); P[0] = [g.x0, g.z0]; P[n] = [g.x0 + g.hx * g.T + g.ox * g.T, g.z0 + g.hz * g.T + g.oz * g.T];
+        for (let h = n; h > 1; h >>= 1) for (let j = 0; j < n; j += h) {   // midpoints on the circle: C + R (P + Q - 2C) / |P + Q - 2C|
+          const a = P[j], b = P[j + h]; const mx = a[0] + b[0] - 2 * g.cx, mz = a[1] + b[1] - 2 * g.cz, m = Math.sqrt(mx * mx + mz * mz) || 1;
+          P[j + h / 2] = [g.cx + mx * g.R / m, g.cz + mz * g.R / m];
+        }
+        for (let j = 0; j <= n; j++) { const d = lenF * j / n; if (d > p.lenCm + 1) break; const s = p.s0Cm + d; if (s < sA || s > sB) continue; out.push([P[j][0], P[j][1], s]); }
+        if (p.lenCm + 1 < lenF) { const last = out.length ? out[out.length - 1] : null; if (last) { endX = last[0]; endZ = last[1]; } }   // cut arc: approx end
+      }
+    }
+    if (endX != null && sB > endS) for (let d = stepCm; endS + d <= sB + stepCm - 1; d += stepCm) { const dd = Math.min(d, sB - endS); out.push([endX + endHx * dd, endZ + endHz * dd, endS + dd]); if (dd < d) break; }
+    return out;
+  }
+  /** links, blocks, junction boxes and one-at-a-time lanes under a set of points (tol: centreline distance) */
+  // pts: [x, z, s, inStart]: one pass fills the footprint of all points and of the points flagged inStart
+  function footOf(pts, tol = FO.tolCm, boxTol = FO.boxCm, laneTol = FO.laneTolCm) {
+    const mk = () => ({ blocks: new Set(), links: new Set(), lanes: new Set(), boxes: new Set() }); const A = mk(), B = mk();
+    const b2 = boxTol * boxTol, t2 = tol * tol, l2 = laneTol * laneTol, rr = Math.ceil(boxTol / FG);
+    for (const [x, z, , inS] of pts) {
+      nearSegs(x, z, Math.max(tol, laneTol), (lid, i, u, d2) => { const r = L[lid].ref; const ln = r && EXCL.has(r) && d2 <= l2; const bk = d2 <= t2 ? 'b:' + lid + ':' + blockAt(lid, i, u) : null;
+        for (const F of inS ? [A, B] : [A]) { if (ln) F.lanes.add(r); if (bk) { F.links.add(lid); F.blocks.add(bk); } } });
+      const cx = Math.floor(x / FG), cz = Math.floor(z / FG);
+      for (let a = -rr; a <= rr; a++) for (let b = -rr; b <= rr; b++) { const arr = nodeGrid.get(gKey(cx + a, cz + b)); if (!arr) continue; for (const v of arr) { const n = nodeOf[v]; const dx = n.x * 100 - x, dz = n.z * 100 - z; if (dx * dx + dz * dz <= b2) { A.boxes.add('j:' + v); if (inS) B.boxes.add('j:' + v); } } }
+    }
+    const out = (F) => ({ blocks: [...F.blocks].sort(), links: [...F.links].sort((a, b) => a - b), lanes: [...F.lanes].sort(), boxes: [...F.boxes].sort() });
+    return { all: out(A), start: out(B) };
+  }
+  /** one-at-a-time lane runs by geometry along pieces [0, sB]: [{ref, s0, s1}] (nose gear within laneTolCm, parallel) */
+  // (only the pieces whose bounding box, grown by laneTolCm, touches a lane cell are sampled)
+  const pieceNearLane = (p) => {
+    const g = p.g; let x0, x1, z0, z1;
+    if (p.kind === 'line') { x0 = Math.min(g.x0, g.x0 + g.hx * p.lenCm); x1 = Math.max(g.x0, g.x0 + g.hx * p.lenCm); z0 = Math.min(g.z0, g.z0 + g.hz * p.lenCm); z1 = Math.max(g.z0, g.z0 + g.hz * p.lenCm); }
+    else { const ex = g.x0 + g.hx * g.T + g.ox * g.T, ez = g.z0 + g.hz * g.T + g.oz * g.T; x0 = Math.min(g.x0, ex, g.cx - g.R); x1 = Math.max(g.x0, ex, g.cx + g.R); z0 = Math.min(g.z0, ez, g.cz - g.R); z1 = Math.max(g.z0, ez, g.cz + g.R);
+      x0 = Math.max(x0, Math.min(g.x0, ex) - p.lenCm); x1 = Math.min(x1, Math.max(g.x0, ex) + p.lenCm); z0 = Math.max(z0, Math.min(g.z0, ez) - p.lenCm); z1 = Math.min(z1, Math.max(g.z0, ez) + p.lenCm); }
+    const pad = ROUTER.laneTolCm; const c0 = Math.floor((x0 - pad) / FG), c1 = Math.floor((x1 + pad) / FG), r0 = Math.floor((z0 - pad) / FG), r1 = Math.floor((z1 + pad) / FG);
+    for (let cx = c0; cx <= c1; cx++) for (let cz = r0; cz <= r1; cz++) if (laneGrid.has(gKey(cx, cz))) return true;
+    return false;
+  };
+  function laneRunsGeo(pieces, sB) {
+    const pts = []; for (const p of pieces) { if (p.s0Cm > sB || p.lenCm <= 0 || !pieceNearLane(p)) continue; for (const q of samplePieces([p], p.s0Cm, Math.min(sB, p.s0Cm + p.lenCm))) pts.push(q); }
+    const runs = new Map(); const t2 = ROUTER.laneTolCm;
+    const rl = Math.ceil(t2 / FG); let lastC = null, lastV = false;
+    const nearLane = (x, z) => { const cx = Math.floor(x / FG), cz = Math.floor(z / FG); const ck = gKey(cx, cz); if (ck === lastC) return lastV; lastC = ck; lastV = false;
+      for (let a = -rl; a <= rl && !lastV; a++) for (let b = -rl; b <= rl; b++) if (laneGrid.has(gKey(cx + a, cz + b))) { lastV = true; break; } return lastV; };
+    for (let k = 0; k < pts.length; k++) {
+      const [x, z, s] = pts[k]; if (!nearLane(x, z)) continue;
+      const nx = pts[k + 1] && pts[k + 1][2] - s <= 2 * FO.stepCm && pts[k + 1][2] > s ? pts[k + 1] : null, pv = pts[k - 1] && s - pts[k - 1][2] <= 2 * FO.stepCm && s > pts[k - 1][2] ? pts[k - 1] : null;
+      const q = nx || pv; if (!q) continue;
+      let hx = (q[0] - x) * (nx ? 1 : -1), hz = (q[1] - z) * (nx ? 1 : -1); const hm = Math.sqrt(hx * hx + hz * hz); if (!(hm > 0)) continue; hx /= hm; hz /= hm;
+      const refs = new Map();   // ref -> parallel?
+      nearSegs(x, z, t2, (lid, i) => { const r = L[lid].ref; if (refs.get(r)) return; const p = ptsCm[lid]; const ex = p[i][0] - p[i - 1][0], ez = p[i][1] - p[i - 1][1], el = Math.sqrt(ex * ex + ez * ez); refs.set(r, el > 0 && Math.abs((ex * hx + ez * hz) / el) >= ROUTER.laneCos); }, laneGrid);
+      for (const [r, par] of refs) { const a = runs.get(r); if (!a) runs.set(r, [[s, s, par]]); else { const last = a[a.length - 1]; if (s - last[1] <= ROUTER.laneGapCm) { last[1] = s; last[2] = last[2] || par; } else a.push([s, s, par]); } }
+    }
+    const out = []; for (const [ref, a] of runs) for (const [s0, s1, par] of a) if (par) out.push({ ref, s0: Math.round(s0), s1: Math.round(s1) });
+    return out;
+  }
+  /** the straight-ahead chain beyond the swing link X (fix round 2, H1): [[lid, fromNode], ...], X first */
+  function swingChain(x, K) {
+    const ch = [[x, K]]; let cur = x, v = other(L[x], K), acc = lenCm[x]; const seen = new Set([x]);
+    while (acc < ROUTER.swingExtCm) {
+      const d0 = dirOut(cur, v); const din = [-d0[0], -d0[1]]; let best = null, bc = -2;
+      for (const y of adj.get(v) || []) {
+        if (seen.has(y)) continue; const Y = L[y]; if (!laneOK(Y) || Y.use === 'arrival') continue;   // a departure's push stays off the arrival-only lanes
+        const d = dirOut(y, v); const c = din[0] * d[0] + din[1] * d[1];
+        if (c >= ROUTER.chainCos && (c > bc || (c === bc && y < best))) { bc = c; best = y; }
+      }
+      if (best == null) break;
+      ch.push([best, v]); seen.add(best); acc += lenCm[best]; cur = best; v = other(L[best], v);
+    }
+    return ch;
+  }
+
   // ------------------------------------------------------------------------------------------- search
   function okLink(l, ctx) {
     if (l.status !== 'open') return false;
@@ -157,6 +334,7 @@ export function makeRouter(G, o = {}) {
   }
   function transCost(lin, v, lout, ctx) {   // extra cost of the transition, or -1 if not allowed
     const n = nodeOf[v]; let c = 0;
+    if (ctx.ban && ctx.ban.has(lin + ':' + v + ':' + lout.id)) return -1;   // path-level turn rule (V3)
     if (n && n.kind === 'rwy' && L[lin].use !== 'runway' && lout.use !== 'runway') {
       const rw = n.runway;
       if (crossOnly && crossOnly[rw] && !crossOnly[rw].includes(lout.ref)) return -1;
@@ -321,7 +499,7 @@ export function makeRouter(G, o = {}) {
     const ctx = { role: 'arr', spanCm: clsSpan[cls] };
     if (RWY_OF[end] === '18L/36R') {
       if (cls === 'n') ctx.xPen = { rwy: '18R/36L', cm: ROUTER.xPenCm, free: null };
-      else { ctx.xPen = { rwy: '18R/36L', cm: ROUTER.xPenCm, free: ROUTER.wideCrossFree[end] }; if (cls === 'w') ctx.eaPenCm = ROUTER.eaLimitedPenCm; }
+      else { ctx.xPen = { rwy: '18R/36L', cm: ROUTER.xPenWideCm, free: ROUTER.wideCrossFree[end] }; if (cls === 'w') ctx.eaPenCm = ROUTER.eaLimitedPenCm; }
     }
     return ctx;
   }
@@ -346,30 +524,76 @@ export function makeRouter(G, o = {}) {
     if (tableVariant !== 'base') { const r = tryG(gk + '|' + tableVariant); if (r !== undefined) return r; }
     return tryG(gk + '|base');
   }
+  // live departure search over every push candidate of the stand (short runs, then long); ban = {trans: Set('lin:v:lout'),
+  // start: Set('swing:y')} from the path-level turn rule (V3). Returns Map key -> {seq, nPush, swing, turnDeg[, fallback]}
+  function liveDep(stand, keys, ban) {
+    const P = pushOf.get(stand); const out = new Map(); if (!P) return out;
+    const ctx = { role: 'dep', spanCm: 0, ban: ban ? ban.trans : null };
+    const run = (cands) => { const owner = new Map(), starts = [];
+      for (const c of cands) for (const [y, w, c0] of c.starts) { if (ban && ban.start.has(c.swing + ':' + y)) continue; if (ban && ban.push && ban.push.has(candKey(c.run, c.swing))) continue; const k = y * 2 + (L[y].b === w ? 1 : 0); const o = owner.get(k); if (!o || c0 < o.c0) owner.set(k, { c0, c }); }
+      for (const [k, o] of [...owner.entries()].sort((a, b) => a[0] - b[0])) starts.push([k >> 1, (k & 1) ? L[k >> 1].b : L[k >> 1].a, o.c0]);
+      return { owner, res: search(starts, depGoalFn(END_IDS), ctx, keys) }; };
+    const A1 = run(pushCands(stand)); let A2 = null, fb = null;
+    for (const k of keys) {
+      let A = A1, r = A1.res.get(k), rec = null;
+      if (!r) { if (!A2) A2 = run(pushCands(stand, { long: true })); A = A2; r = A2.res.get(k); }
+      if (r) {
+        const [y, K] = r.seq[0]; const c = A.owner.get(y * 2 + (L[y].b === other(L[y], K) ? 1 : 0)).c;
+        const seq = [[P.id, standNode.get(stand)]]; c.run.forEach((id, i) => seq.push([id, c.runFrom[i]])); seq.push(...r.seq);
+        rec = { seq, nPush: 1 + c.run.length, swing: c.swing, turnDeg: c.turnDeg };
+      } else {   // no geometric push: the graph's own push-end transition, flagged (never seen on the committed graph)
+        if (!fb) fb = search(normalStarts(stand), depGoalFn(END_IDS), ctx, keys);
+        const q = fb.get(k); if (q) rec = { seq: q.seq, nPush: 1, swing: null, turnDeg: null, fallback: true };
+      }
+      out.set(k, rec);
+    }
+    return out;
+  }
+  const candKey = (run, swing) => run.join(',') + '>' + swing;   // a push candidate (tail-first run + swing link)
+  // the path-level turn check (V3) of an assembled route: null, or the bans for the stretch that turns too much
+  function turnBans(route, nTaxi0) {
+    const PT = ROUTER.pathTurn; const tp = turnProfile(route.path, PT.windowCm);
+    if (tp.maxArcDeg <= PT.maxDeg && tp.maxWinDeg <= PT.maxDeg) return null;
+    const wins = []; if (tp.maxArcDeg > PT.maxDeg) wins.push([tp.arcS0Cm, tp.arcS1Cm]); if (tp.maxWinDeg > PT.maxDeg) wins.push([tp.winS0Cm, tp.winS1Cm]);
+    const V = route.verts, vS = route.vS; const bans = [];
+    for (let k = 1; k < V.length - 1; k++) {
+      const nd = V[k].node; if (nd == null || (V[k].li != null && V[k].li < nTaxi0)) continue;
+      if (!wins.some(([a, b]) => vS[k] >= a - PT.padCm && vS[k] <= b + PT.padCm)) continue;
+      const lin = V[k - 1].tag && V[k - 1].tag.link, lout = V[k].tag && V[k].tag.link; if (lin == null || lout == null || lin === lout) continue;
+      if (route.push && route.push.swing === lin && route.push.node === nd) bans.push('s:' + lin + ':' + lout);
+      else bans.push('t:' + lin + ':' + nd + ':' + lout);
+    }
+    return { tp, bans };
+  }
+  const turnStats = { checked: 0, rerouted: 0, kept: 0, pushBanned: 0, pushKept: 0 };
+  // live departures: the path-level turn rule on the taxi path (V3) and, since fix round 2, on the driven push path (M2) and
+  // the push end on a real link (H1): a failing push candidate (run + swing) is banned and the search repeated; if nothing
+  // passes, the first route is kept and route.turn / route.push.turn / route.push.onGraph say so
+  function depTurnFix(stand, key, rec0) {
+    if (!rec0 || rec0.fallback || rec0.swing == null) return rec0;
+    const [end, entry] = key.split('|'); const ban = { trans: new Set(), start: new Set(), push: new Set() };
+    let rec = rec0; turnStats.checked++; let pushBans = 0;
+    for (let it = 0; it <= ROUTER.pathTurn.maxIter; it++) {
+      let added = 0, bad = false;
+      for (const wg of [false, true]) {
+        const rt = assembleDep(stand, end, entry, rec, wg ? ROUTER.spanNarrowCm : 0, wg, true);
+        if (!wg && (!rt.push.turn.ok || !rt.push.onGraph)) { const kk = candKey(rt.push.run.run, rt.push.swing); bad = true; if (!ban.push.has(kk)) { ban.push.add(kk); added++; pushBans++; } }
+        const v = turnBans(rt, rec.nPush); if (!v) continue; bad = true;
+        for (const b of v.bans) { const set = b[0] === 's' ? ban.start : ban.trans; const kk = b.slice(2); if (!set.has(kk)) { set.add(kk); added++; } }
+      }
+      if (!bad) { if (it) turnStats.rerouted++; if (pushBans) turnStats.pushBanned++; return it ? { ...rec, turnRerouted: it } : rec; }
+      if (!added || it === ROUTER.pathTurn.maxIter) break;
+      const r = liveDep(stand, [key], ban).get(key); if (!r || r.fallback) break; rec = r;
+    }
+    turnStats.kept++; if (pushBans) turnStats.pushKept++; return rec0;
+  }
   function depSeq(stand, end, entry) {
     const ck = 'd|' + stand + '|' + end + '|' + entry; if (seqCache.has(ck)) return seqCache.get(ck);
     const P = pushOf.get(stand); if (!P) return null;
     let rec = tableSeq('dep', 'dep|' + end + '|' + entry, stand, standNode.get(stand));
-    if (rec === undefined) {   // live: one multi-source search over every push candidate of the stand (short runs, then long)
-      const run = (cands) => { const owner = new Map(), starts = [];
-        for (const c of cands) for (const [y, w, c0] of c.starts) { const k = y * 2 + (L[y].b === w ? 1 : 0); const o = owner.get(k); if (!o || c0 < o.c0) owner.set(k, { c0, c }); }
-        for (const [k, o] of [...owner.entries()].sort((a, b) => a[0] - b[0])) starts.push([k >> 1, (k & 1) ? L[k >> 1].b : L[k >> 1].a, o.c0]);
-        return { owner, res: search(starts, depGoalFn(END_IDS), { role: 'dep', spanCm: 0 }, depKeys(END_IDS)) }; };
-      const A1 = run(pushCands(stand)); let A2 = null;
-      let fb = null;
-      for (const k of depKeys(END_IDS)) {
-        let A = A1, r = A1.res.get(k), out = null;
-        if (!r) { if (!A2) A2 = run(pushCands(stand, { long: true })); A = A2; r = A2.res.get(k); }
-        if (r) {
-          const [y, K] = r.seq[0]; const c = A.owner.get(y * 2 + (L[y].b === other(L[y], K) ? 1 : 0)).c;
-          const seq = [[P.id, standNode.get(stand)]]; c.run.forEach((id, i) => seq.push([id, c.runFrom[i]])); seq.push(...r.seq);
-          out = { seq, nPush: 1 + c.run.length, swing: c.swing, turnDeg: c.turnDeg };
-        } else {   // no geometric push: the graph's own push-end transition, flagged (never seen on the committed graph)
-          if (!fb) fb = search(normalStarts(stand), depGoalFn(END_IDS), { role: 'dep', spanCm: 0 }, depKeys(END_IDS));
-          const q = fb.get(k); if (q) out = { seq: q.seq, nPush: 1, swing: null, turnDeg: null, fallback: true };
-        }
-        seqCache.set('d|' + stand + '|' + k, out);
-      }
+    if (rec === undefined) {   // live: one multi-source search for every end, then the path-level turn check per key
+      const base = liveDep(stand, depKeys(END_IDS), null);
+      for (const k of depKeys(END_IDS)) seqCache.set('d|' + stand + '|' + k, depTurnFix(stand, k, base.get(k) || null));
       return seqCache.get(ck) ?? null;
     }
     seqCache.set(ck, rec); return rec;
@@ -391,8 +615,24 @@ export function makeRouter(G, o = {}) {
     let seq;
     if (cls !== 'n') { seq = tableSeq('arr', 'arr|' + exitId + '|' + cls, stand, ex.node); if (seq === undefined && tableVariant) seq = tableSeq('arr', 'arr|' + exitId + '|n', stand, ex.node); }
     else seq = tableSeq('arr', 'arr|' + exitId + '|n', stand, ex.node);
-    if (seq === undefined) seq = arrSeqs(exitId, cls).get(stand) || null;
+    if (seq === undefined) seq = arrTurnFix(exitId, stand, cls, arrSeqs(exitId, cls).get(stand) || null);
     seqCache.set(ck, seq); return seq;
+  }
+  // the path-level turn rule (V3) for a live arrival: re-search to this stand with the offending transitions banned
+  function arrTurnFix(exitId, stand, cls, seq0) {
+    if (!seq0) return seq0;
+    const ex = exitById.get(exitId); const wg = cls !== 'n'; const sp = clsSpan[cls];
+    const ban = new Set(); let seq = seq0; turnStats.checked++;
+    const goal = (lid, v) => { const l = L[lid]; return l.use === 'stand' && l.stand === stand && standNode.get(stand) === v ? stand : null; };
+    for (let it = 0; it <= ROUTER.pathTurn.maxIter; it++) {
+      const v = turnBans(assembleArr(exitId, stand, seq, sp, wg, true), 0);
+      if (!v) { if (it) turnStats.rerouted++; return seq; }
+      let added = 0; for (const b of v.bans) { const kk = b.slice(2); if (!ban.has(kk)) { ban.add(kk); added++; } }
+      if (!added || it === ROUTER.pathTurn.maxIter) break;
+      const res = search([[ex.link, other(L[ex.link], ex.node), lenCm[ex.link]]], goal, { ...arrCtx(ex.end, cls), ban }, [stand]);
+      const r = res.get(stand); if (!r) break; seq = r.seq;
+    }
+    turnStats.kept++; return seq0;
   }
 
   // ------------------------------------------------------------------------------------------- route assembly
@@ -451,11 +691,15 @@ export function makeRouter(G, o = {}) {
       if (lastIdx != null && k >= lastIdx) continue;
       const rw = n.runway, s = vS[k];
       const hb = holdsNear(V, vS, rw, s - ROUTER.holdSearchCm, s - 1), ha = holdsNear(V, vS, rw, s + 1, s + ROUTER.holdSearchCm);
-      const sIn = hb.length ? hb[hb.length - 1].s : lateralCrossS(V, vS, rw, k, -1, ROUTER.holdLatCm) ?? Math.max(0, s - ROUTER.holdLatCm);
-      const sOut = ha.length ? ha[0].s : lateralCrossS(V, vS, rw, k, 1, ROUTER.holdLatCm) ?? s + ROUTER.holdLatCm;
+      const latIn = hb.length ? null : lateralCrossS(V, vS, rw, k, -1, ROUTER.holdLatCm), latOut = ha.length ? null : lateralCrossS(V, vS, rw, k, 1, ROUTER.holdLatCm);
+      const sIn = hb.length ? hb[hb.length - 1].s : latIn ?? Math.max(0, s - ROUTER.holdLatCm);
+      const sOut = ha.length ? ha[0].s : latOut ?? s + ROUTER.holdLatCm;
+      // how the holds were found (fix round 2, L1): an OSM / inferred holding position, the 90 m line on the route, or the
+      // bare fallback s -+ 90 m (the route never reaches the 90 m line on that side: e.g. a re-crossing of the runway just landed on)
+      const inHow = hb.length ? 'hold' : latIn != null ? 'lat90' : 'fallback', outHow = ha.length ? 'hold' : latOut != null ? 'lat90' : 'fallback';
       const along = {}; for (const e of END_IDS) if (RWY_OF[e] === rw) along[e] = Math.round(alongEnd(e, n.x * 100, n.z * 100));
       let nearEnd = null; for (const e of Object.keys(along)) if (along[e] >= 0 && along[e] <= 50000) nearEnd = e;
-      out.push({ runway: rw, node: nd, sCm: s, ref: lout.ref || lin.ref || null, nearEnd, alongCm: along, sInCm: sIn, sOutCm: sOut, holdSrc: hb.length ? hb[hb.length - 1].src : 'inf-90m' });
+      out.push({ runway: rw, node: nd, sCm: s, ref: lout.ref || lin.ref || null, nearEnd, alongCm: along, sInCm: sIn, sOutCm: sOut, holdSrc: hb.length ? hb[hb.length - 1].src : 'inf-90m', inHow, outHow });
     }
     return out;
   }
@@ -493,17 +737,28 @@ export function makeRouter(G, o = {}) {
       const twy = (adj.get(nd) || []).some(id => L[id].kind === 'taxiway');
       B.push({ id: 'j:' + nd, kind: 'box', node: nd, s0Cm: s0, s1Cm: s1, noStop: twy, start: s0 === 0 && opts.startBox ? true : undefined });
     }
-    // one-aircraft-at-a-time lanes (AD 2.20 3.1.5)
-    let run = null;
-    for (let k = 0; k < V.length - 1; k++) {
-      const ref = L[V[k].tag.link] && L[V[k].tag.link].ref;
-      if (V[k].li >= seqIdx0 && ref && EXCL.has(ref)) { if (run && run.ref === ref) run.s1 = vS[k + 1]; else { if (run) B.push(laneBlk(run)); run = { ref, s0: vS[k], s1: vS[k + 1] }; } }
-      else if (run) { B.push(laneBlk(run)); run = null; }
+    // one-aircraft-at-a-time lanes (AD 2.20 3.1.5), from the PIECES (fix round 1, V4): a piece is on a lane when its
+    // in-link or (arcs) its out-link carries the lane's ref, so the entry and exit fillets and a departure's swing
+    // remainder (from the push end back to K) are inside the lane block
+    const open = new Map(); const runs = [];   // ref -> [s0, s1] of the run being built
+    for (const p of path.pieces) {
+      const refs = new Set(); for (const id of [p.linkId, p.kind === 'arc' && p.tagOut ? p.tagOut.link : null]) { const l = id != null ? L[id] : null; if (l && l.ref && EXCL.has(l.ref)) refs.add(l.ref); }
+      for (const [ref, r] of [...open]) if (!refs.has(ref)) { runs.push({ ref, s0: r[0], s1: r[1] }); open.delete(ref); }
+      for (const ref of [...refs].sort()) { const r = open.get(ref); if (r) r[1] = p.s0Cm + p.lenCm; else open.set(ref, [p.s0Cm, p.s0Cm + p.lenCm]); }
     }
-    if (run) B.push(laneBlk(run));
+    for (const [ref, r] of open) runs.push({ ref, s0: r[0], s1: r[1] });
+    // fix round 2 (H1): plus the stretches where the nose gear runs ALONG a lane geometrically (another link's tag, e.g. a
+    // parallel or overlapping centreline, or the swing chain); runs of one ref closer than laneGapCm are one block
+    for (const r of laneRunsGeo(path.pieces, path.lenCm)) runs.push({ ...r, geo: true });
+    const byRef = new Map(); for (const r of runs) { if (!byRef.has(r.ref)) byRef.set(r.ref, []); byRef.get(r.ref).push(r); }
+    for (const ref of [...byRef.keys()].sort()) {
+      const a = byRef.get(ref).sort((p, q) => p.s0 - q.s0 || p.s1 - q.s1); let cur = null;
+      for (const r of a) { if (cur && r.s0 <= cur.s1 + ROUTER.laneGapCm) { cur.s1 = Math.max(cur.s1, r.s1); cur.geo = cur.geo && r.geo; } else { if (cur) B.push(laneBlk(cur)); cur = { ref, s0: r.s0, s1: r.s1, geo: !!r.geo }; } }
+      if (cur) B.push(laneBlk(cur));
+    }
     return B;
   }
-  const laneBlk = (r) => ({ id: 'lane:' + r.ref, kind: 'lane', s0Cm: r.s0, s1Cm: r.s1, noStop: false });
+  const laneBlk = (r) => ({ id: 'lane:' + r.ref, kind: 'lane', s0Cm: r.s0, s1Cm: r.s1, noStop: false, geoOnly: r.geo ? true : undefined });
   function endBoxes(V, vS) {   // 18R/36L end boxes on end-around links
     const out = []; const E = ROUTER.endBox;
     for (const end of ['18R', '36L']) {
@@ -532,7 +787,7 @@ export function makeRouter(G, o = {}) {
     return { ...path, pieces: P, lenCm: sEnd };
   }
 
-  function assembleDep(stand, end, entry, prec, spanCm, wideGeom) {
+  function assembleDep(stand, end, entry, prec, spanCm, wideGeom, lite = false) {   // lite: path, turn and push checks only (depTurnFix)
     const seq = prec.seq; const rec = optionA(stand); const optA = rec && rec.run ? rec : null;
     const nPush = prec.nPush;
     const J = other(L[seq[nPush - 1][0]], seq[nPush - 1][1]);
@@ -549,23 +804,33 @@ export function makeRouter(G, o = {}) {
       }
       if (best < ROUTER.swingCos) { swing = null; swingVirtual = true; }
     }
-    // push path: push link + run (tail first) + into the swing branch
+    // push path: push link + run (tail first) + into the swing branch X and on along the straight-ahead chain beyond X's far
+    // node (fix round 2, H1: real links with their ids; a virtual straight only where the graph ends within swingExtCm)
+    const chain = swing != null ? swingChain(swing, J) : [];
     const PV = [];
     for (let i = 0; i < nPush; i++) { const [lid, from] = seq[i]; const p = simpFrom(lid, from); for (let k = PV.length ? 1 : 0; k < p.length; k++) PV.push({ x: p[k][0], z: p[k][1], tag: { link: lid, cap: ROUTER.caps.push }, node: k === p.length - 1 ? other(L[lid], from) : null }); }
     const iJ = PV.length - 1;
-    let ext = 0;
-    if (swing != null) { const p = simpFrom(swing, J); for (let k = 1; k < p.length && ext < ROUTER.swingExtCm; k++) { const q = PV[PV.length - 1]; ext += Math.sqrt((p[k][0] - q.x) ** 2 + (p[k][1] - q.z) ** 2); PV.push({ x: p[k][0], z: p[k][1], tag: { link: swing, cap: ROUTER.caps.push }, node: null }); } }
-    if (ext < ROUTER.swingExtCm) {   // straight on (virtual swing: opposite the first taxi link)
+    let ext = 0; const chainUsed = [];   // {lid, from, to, iFrom, iTo (PV index of the far node, or null when cut at swingExtCm)}
+    for (const [cid, cfrom] of chain) {
+      if (ext >= ROUTER.swingExtCm) break;
+      const p = simpFrom(cid, cfrom); const rec2 = { lid: cid, from: cfrom, to: other(L[cid], cfrom), iFrom: PV.length - 1, iTo: null };
+      for (let k = 1; k < p.length && ext < ROUTER.swingExtCm; k++) { const q = PV[PV.length - 1]; const ex = p[k][0] - q.x, ez = p[k][1] - q.z; ext += Math.sqrt(ex * ex + ez * ez); PV.push({ x: p[k][0], z: p[k][1], tag: { link: cid, cap: ROUTER.caps.push }, node: k === p.length - 1 ? rec2.to : null }); if (k === p.length - 1) rec2.iTo = PV.length - 1; }
+      chainUsed.push(rec2);
+    }
+    const iReal = PV.length - 1;   // the last push-path vertex on a real link
+    if (ext < ROUTER.swingExtCm) {   // straight on (virtual: the graph ends; or the graph fallback opposite the first taxi link)
       let d;
-      if (swing != null) { const a = PV[PV.length - 2], b = PV[PV.length - 1]; const m = Math.sqrt((b.x - a.x) ** 2 + (b.z - a.z) ** 2) || 1; d = [(b.x - a.x) / m, (b.z - a.z) / m]; }
+      if (swing != null) { const a = PV[PV.length - 2], b = PV[PV.length - 1]; const ex = b.x - a.x, ez = b.z - a.z; const m = Math.sqrt(ex * ex + ez * ez) || 1; d = [ex / m, ez / m]; }
       else if (xOut != null) { const dX = dirOut(xOut, J); d = [-dX[0], -dX[1]]; }
-      else { const a = PV[PV.length - 2], b = PV[PV.length - 1]; const m = Math.sqrt((b.x - a.x) ** 2 + (b.z - a.z) ** 2) || 1; d = [(b.x - a.x) / m, (b.z - a.z) / m]; }
+      else { const a = PV[PV.length - 2], b = PV[PV.length - 1]; const ex = b.x - a.x, ez = b.z - a.z; const m = Math.sqrt(ex * ex + ez * ez) || 1; d = [ex / m, ez / m]; }
       const q = PV[PV.length - 1], r = ROUTER.swingExtCm - ext;
-      PV.push({ x: Math.round(q.x + d[0] * r), z: Math.round(q.z + d[1] * r), tag: { link: swing, cap: ROUTER.caps.push }, node: null });
+      PV.push({ x: Math.round(q.x + d[0] * r), z: Math.round(q.z + d[1] * r), tag: { link: null, cap: ROUTER.caps.push, virtual: true }, node: null });
     }
     for (let k = 0; k < PV.length - 1; k++) PV[k].tag = PV[k + 1].tag;
-    const pushPath = buildPath(PV, { rNomCm: PATH.rPushCm, capOf });
-    const sJ = pushPath.vS[iJ];
+    // fix round 2 (M2): push paths merge two corners only into one of < 100 deg (pushMergeMaxCos; a merged corner over a
+    // short run lane had turned up to 131 deg in one arc); otherwise the corners keep their own deflection and the room's radius
+    const pushPath = buildPath(PV, { rNomCm: PATH.rPushCm, capOf, mergeMaxCos: ROUTER.pushMergeMaxCos });
+    const sJ = pushPath.vS[iJ], sReal = pushPath.vS[iReal];
     const arcJ = arcRangeAt(pushPath, sJ);
     // the push ends far enough into the swing branch that (1) the push-turn arc is complete + 2 m and (2) the forward turn at
     // K out of the branch into the first taxi link has room for a fwdTurnRCm fillet: d >= R tan(theta / 2) + 2 m [inf]
@@ -577,19 +842,40 @@ export function makeRouter(G, o = {}) {
     }
     const pushMax = pushPath.lenCm - ROUTER.pushTailRoomCm;   // leave the main gear + tail on the push path
     let pushEnd = Math.min(sJ + dNeed, Math.max(sJ, pushMax)), pushEndPt;
-    { // a point on a line piece (deterministic, no trigonometry); inside an arc: the arc's end
-      let i = pushPath.pieces.findIndex(p => p.s0Cm <= pushEnd && pushEnd < p.s0Cm + p.lenCm); if (i < 0) i = pushPath.pieces.length - 1;
-      const p = pushPath.pieces[i];
-      if (p.kind === 'line') { const u = Math.min(1, (pushEnd - p.s0Cm) / p.lenCm) * p.g.len; pushEndPt = [p.g.x0 + p.g.hx * u, p.g.z0 + p.g.hz * u]; }
-      else { pushEnd = p.s0Cm + p.lenCm; const g = p.g; pushEndPt = [g.x0 + g.hx * g.T + g.ox * g.T, g.z0 + g.hz * g.T + g.oz * g.T]; }
+    const alignCm = typeof ROUTER.pushAlignCm === 'number' ? ROUTER.pushAlignCm : ROUTER.pushAlignCm[clsOf(spanCm)], alignTh = ROUTER.pushAlignTh;
+    // V2: no arc of the push path may start within pushAlignCm past the push end (both gears aligned on a straight)
+    const alignMax = pushEnd + ROUTER.pushAlignExtraCm;   // fix round 2: on a curving lane the push stops within 20 m of the turn need
+    for (let guard = 0; guard < 8; guard++) {
+      const arc = pushPath.pieces.find(p => p.kind === 'arc' && p.g.th > alignTh && p.s0Cm + p.lenCm > pushEnd && p.s0Cm < pushEnd + alignCm);
+      if (!arc || arc.s0Cm + arc.lenCm > pushMax || arc.s0Cm + arc.lenCm > alignMax) break;
+      pushEnd = arc.s0Cm + arc.lenCm;
     }
-    // the swing remainder: from the push end back to K along the branch's own vertices
-    const TV = [{ x: pushEndPt[0], z: pushEndPt[1], tag: { link: swing ?? seq[nPush - 1][0], cap: ROUTER.caps.taxilane }, node: null, li: nPush - 1 }];
+    { // a point on a line piece (deterministic, no trigonometry); inside a gentle arc (< pushAlignTh): on the arc (bisection,
+      // path.js arcPointDet); inside a sharper arc: the arc's end
+      let i = pushPath.pieces.findIndex(p => p.s0Cm <= pushEnd && pushEnd < p.s0Cm + p.lenCm); if (i < 0) i = pushPath.pieces.length - 1;
+      const p = pushPath.pieces[i]; const g = p.g;
+      if (p.kind === 'line') { const u = Math.min(1, (pushEnd - p.s0Cm) / p.lenCm) * p.g.len; pushEndPt = [p.g.x0 + p.g.hx * u, p.g.z0 + p.g.hz * u]; }
+      else if (g.th <= alignTh) pushEndPt = arcPointDet(g, Math.min(1, (pushEnd - p.s0Cm) / p.lenCm));
+      else { pushEnd = p.s0Cm + p.lenCm; pushEndPt = [g.x0 + g.hx * g.T + g.ox * g.T, g.z0 + g.hz * g.T + g.oz * g.T]; }
+    }
+    const onGraph = pushEnd <= sReal + 100;   // H1: the push ends on a real link (not on the virtual straight)
+    const pushDir = (() => {   // the push path's tangent at the push end (inside a gentle arc: perpendicular to the radius there)
+      let i = pushPath.pieces.findIndex(p => p.s0Cm <= pushEnd && pushEnd < p.s0Cm + p.lenCm); if (i < 0) i = pushPath.pieces.length - 1; const p = pushPath.pieces[i], g = p.g;
+      if (p.kind === 'line') return [g.hx, g.hz];
+      if (pushEnd >= p.s0Cm + p.lenCm) return [g.ox, g.oz];
+      const rx = (pushEndPt[0] - g.cx) / g.R, rz = (pushEndPt[1] - g.cz) / g.R; const t = [-rz, rx]; return t[0] * (g.hx + g.ox) + t[1] * (g.hz + g.oz) >= 0 ? t : [rz, -rx]; })();
+    // the swing remainder: from the push end back to K along the push path's piece starts; each segment carries the link
+    // of the push-path piece it runs on (fix round 2, H1: the chain's real link ids; an arc: its far-side link)
+    const pieceLink = (k) => { const p = pushPath.pieces[k]; return p.kind === 'arc' && p.tagOut && p.tagOut.link != null ? p.tagOut.link : p.linkId; };
+    const kEnd = (() => { let i = pushPath.pieces.findIndex(p => p.s0Cm < pushEnd && pushEnd <= p.s0Cm + p.lenCm); return i < 0 ? pushPath.pieces.length - 1 : i; })();
+    const TV = [{ x: pushEndPt[0], z: pushEndPt[1], tag: { link: pieceLink(kEnd) ?? swing ?? seq[nPush - 1][0], cap: ROUTER.caps.taxilane }, node: null, li: nPush - 1 }];
     for (let k = pushPath.pieces.length - 1; k >= 0; k--) {   // the push path's piece starts between K and the push end, backwards
       const p = pushPath.pieces[k]; if (p.s0Cm >= pushEnd - 1 || p.s0Cm <= sJ) continue;
-      TV.push({ x: p.g.x0, z: p.g.z0, tag: { link: swing ?? seq[nPush - 1][0], cap: ROUTER.caps.taxilane }, node: null, li: nPush - 1 });
+      const lk = k > 0 ? pieceLink(k - 1) : null;
+      TV.push({ x: p.g.x0, z: p.g.z0, tag: { link: lk ?? swing ?? seq[nPush - 1][0], cap: ROUTER.caps.taxilane }, node: null, li: nPush - 1 });
     }
-    const rest = vertsOf(seq, nPush);
+    if (TV.length > 1) TV[TV.length - 1].tag = { link: swing ?? seq[nPush - 1][0], cap: ROUTER.caps.taxilane };   // the last stretch to K is on X
+    const rest = vertsOf(seq, nPush); const kK = TV.length;
     for (const q of rest) TV.push(q);   // rest[0] is K (the swing remainder above runs from the push end back to K)
     const vRw = TV[TV.length - 1]; const E = ENDS[end];
     TV[TV.length - 1].tag = { link: null, cap: ROUTER.caps.lineup, runway: E.rw };
@@ -601,6 +887,11 @@ export function makeRouter(G, o = {}) {
     const rwyS = Math.round(alongEnd(end, vRw.x, vRw.z) + (arcR ? arcR.g.T : 0) + (lineupS - sArcEnd));
     const path = trimPath(full, lineupS);
     const vS = full.vS;
+    if (lite) {
+      const pT0 = turnProfile(trimPath(pushPath, pushEnd), ROUTER.pushTurn.windowCm);
+      return { path, verts: TV, vS, push: { swing, node: J, onGraph, run: { run: seq.slice(1, nPush).map(([id]) => id) },
+        turn: { ok: pT0.maxArcDeg <= ROUTER.pushTurn.maxDeg && pT0.maxWinDeg <= ROUTER.pushTurn.maxDeg } } };
+    }
     const crossings = crossingsOf(TV, vS, kRw);
     const hb = holdsNear(TV, vS, E.rw, sRw - ROUTER.holdSearchCm, sRw - 1);
     const luHold = hb.length ? hb[hb.length - 1] : { s: lateralCrossS(TV, vS, E.rw, kRw, -1, ROUTER.holdLatCm) ?? Math.max(0, sRw - ROUTER.holdLatCm), node: null, src: 'inf-90m' };
@@ -609,13 +900,67 @@ export function makeRouter(G, o = {}) {
     holds.push({ sCm: luHold.s, node: luHold.node, kind: 'lineup', runway: E.rw, src: luHold.src });
     holds.sort((a, b) => a.sCm - b.sCm);
     const blocks = blocksOf(TV, vS, path, nPush, seq, { startBox: true });
+    // the swing chain from the push end back to K (fix round 1, V4; fix round 2, H1: every chain link, real ids): push-path
+    // stations sp in [sJ, pushEnd] map linearly onto the taxi stations [s(K), 0]; parts beyond the push end are "behind"
+    const sK = vS[kK]; const tx = (sp) => (pushEnd - sJ > 0 ? Math.round(sK * (pushEnd - sp) / (pushEnd - sJ)) : 0);
+    const chainBlk = [];   // [{id, sp0, sp1, lid, from}] in push-path stations
+    for (const c of chainUsed) {
+      const spA = pushPath.vS[c.iFrom], spB = c.iTo != null ? pushPath.vS[c.iTo] : spA + lenCm[c.lid]; const nb = nBlocks(c.lid); const fwd = L[c.lid].a === c.from;
+      for (let b = 0; b < nb; b++) {
+        const sp0 = Math.round(spA + (spB - spA) * b / nb), sp1 = Math.round(spA + (spB - spA) * (b + 1) / nb); const kA = fwd ? b : nb - 1 - b;
+        chainBlk.push({ id: 'b:' + c.lid + ':' + kA, sp0, sp1, lid: c.lid, from: c.from });
+        const hi = tx(sp0), lo = tx(sp1);
+        if (hi > 0) blocks.push({ id: 'b:' + c.lid + ':' + kA, kind: 'link', link: c.lid, dir: fwd ? -1 : 1, s0Cm: Math.max(0, lo), s1Cm: Math.min(path.lenCm, hi), noStop: false, twoWay: L[c.lid].dir === 'both', swing: true });
+      }
+    }
+    for (let i = 1; i < chainUsed.length; i++) {   // junction boxes at the chain's own nodes (X's far node, ...)
+      const v = chainUsed[i].from; if (!isJunction(v)) continue; const sp = pushPath.vS[chainUsed[i].iFrom]; const arc = arcRangeAt(pushPath, sp);
+      const lo = tx(arc ? arc.s0Cm + arc.lenCm : sp) - ROUTER.boxPadCm, hi = tx(arc ? arc.s0Cm : sp) + ROUTER.boxPadCm;
+      if (hi > 0) blocks.push({ id: 'j:' + v, kind: 'box', node: v, s0Cm: Math.max(0, lo), s1Cm: Math.min(path.lenCm, hi), noStop: (adj.get(v) || []).some(id => L[id].kind === 'taxiway'), start: lo <= 0 ? true : undefined, swing: true });
+    }
     for (const c of crossings) blocks.push({ id: 'rwy:' + c.runway, kind: 'rwy', s0Cm: c.sInCm, s1Cm: c.sOutCm, noStop: true, crossing: true });
     blocks.push({ id: 'rwy:' + E.rw, kind: 'rwy', s0Cm: luHold.s, s1Cm: path.lenCm, noStop: false, lineup: true });
-    blocks.sort((a, b) => a.s0Cm - b.s0Cm || (a.id < b.id ? -1 : 1));
+    // footprints (fix round 2, H1): the push sweeps the push path from the stand to the push end with the fuselage behind the
+    // nose gear (the push path up to push end + tail, tail by span class) and holds the straight start-up pose (nose gear ->
+    // tail along the push direction) for the 90 s start-up; every link (block), junction box and one-at-a-time lane within
+    // ROUTER.foot of those points is the push's; those under the start-up pose are also the taxi's at s = 0 ("behind")
+    const tailCm = FO.tailCm[clsOf(spanCm)];
+    const fpts = samplePieces(pushPath.pieces, 0, pushEnd + tailCm); for (const q of fpts) q.push(q[2] >= pushEnd);
+    for (let d = 0; d <= tailCm; d += FO.stepCm) fpts.push([pushEndPt[0] + pushDir[0] * d, pushEndPt[1] + pushDir[1] * d, pushEnd + d, true]);
+    const FF = footOf(fpts); const FP = FF.all, FS = FF.start;
+    const twyAt = (v) => (adj.get(v) || []).some(id => L[id].kind === 'taxiway');
+    const startHas = (id) => blocks.some(b => b.id === id && b.s0Cm === 0);
+    // a behind entry is held from s = 0 to the end of the taxi's first stretch whose nose gear is still within the footprint
+    // tolerance of it (0 when the taxi moves straight away from it; verification round 3 of B's fixes, behind-box windows)
+    const tx0 = samplePieces(path.pieces, 0, Math.min(path.lenCm, tailCm + FO.boxCm));
+    const runEnd = (near) => { let s1 = 0; for (const [x, z, s] of tx0) { if (!near(x, z)) break; s1 = s; } return Math.round(s1); };
+    const nearBlk = (id) => { const [, ls, ks] = id.split(':'); const lid = +ls, k = +ks; return (x, z) => { let hit = false; nearSegs(x, z, FO.tolCm, (l2, i, u) => { if (!hit && l2 === lid && blockAt(l2, i, u) === k) hit = true; }); return hit; }; };
+    const nearBox = (v) => { const n = nodeOf[v]; const b2 = FO.boxCm * FO.boxCm; return (x, z) => { const dx = n.x * 100 - x, dz = n.z * 100 - z; return dx * dx + dz * dz <= b2; }; };
+    for (const id of FS.blocks) if (!startHas(id)) { const lid = +id.split(':')[1]; blocks.push({ id, kind: 'link', link: lid, dir: 0, s0Cm: 0, s1Cm: runEnd(nearBlk(id)), noStop: false, twoWay: L[lid].dir === 'both', behind: true }); }
+    for (const id of FS.boxes) if (!startHas(id)) { const v = +id.slice(2); blocks.push({ id, kind: 'box', node: v, s0Cm: 0, s1Cm: runEnd(nearBox(v)), noStop: twyAt(v), start: true, behind: true }); }
+    for (const ref of FS.lanes) { const lb = blocks.find(b => b.kind === 'lane' && b.id === 'lane:' + ref && b.s0Cm <= tailCm); if (lb) lb.s0Cm = 0; else blocks.push({ id: 'lane:' + ref, kind: 'lane', s0Cm: 0, s1Cm: 0, noStop: false, behind: true }); }
+    // a lane the push sweep held continues into the taxi when the taxi reaches it within laneHoldCm (no release in between)
+    for (const ref of FP.lanes) { const lb = blocks.find(b => b.kind === 'lane' && b.id === 'lane:' + ref && b.s0Cm > 0 && b.s0Cm <= ROUTER.laneHoldCm); if (lb) { lb.s0Cm = 0; lb.held = true; } }
+    const nGeoBox = geoBoxes(blocks, path.pieces, path.lenCm);
+    const gaps = fillGaps(blocks, path.pieces, path.lenCm);
+    blocks.sort((a, b) => a.s0Cm - b.s0Cm || a.s1Cm - b.s1Cm || (a.id < b.id ? -1 : 1));
     const tailVec = (() => { const a = PV[iJ], b = PV[Math.min(PV.length - 1, iJ + 1)]; const dx = b.x - a.x, dz = b.z - a.z; return [dx, dz]; })();
+    // push + start-up resources (fix round 1, V4; fix round 2, H1): the push link and the run's blocks, the junction boxes
+    // along the run and at K, the swing chain's blocks up to the push end + tail, and every block, junction box and
+    // one-at-a-time lane geometrically under the push sweep and the start-up pose (FP)
     const pushBlocks = [];
-    for (let i = 0; i < nPush; i++) { const lid = seq[i][0]; const nb = Math.max(1, Math.floor(lenCm[lid] / ROUTER.blockMinCm)); for (let b = 0; b < nb; b++) pushBlocks.push('b:' + lid + ':' + b); }
-    pushBlocks.push('j:' + J); if (swing != null) pushBlocks.push('b:' + swing + ':' + (L[swing].a === J ? 0 : Math.max(1, Math.floor(lenCm[swing] / ROUTER.blockMinCm)) - 1));
+    for (let i = 0; i < nPush; i++) { const lid = seq[i][0]; const nb = nBlocks(lid); for (let b = 0; b < nb; b++) pushBlocks.push('b:' + lid + ':' + b); }
+    for (let i = 1; i < nPush; i++) { const v = seq[i][1]; if (isJunction(v)) pushBlocks.push('j:' + v); }
+    pushBlocks.push('j:' + J);
+    for (const c of chainBlk) if (c.sp0 < pushEnd + tailCm) pushBlocks.push(c.id);
+    for (const id of FP.blocks) pushBlocks.push(id);
+    for (const id of FP.boxes) pushBlocks.push(id);
+    const laneRefs = new Set(FP.lanes); for (const id of seq.slice(1, nPush).map(([x]) => x).concat(chainUsed.map(c => c.lid))) if (L[id].ref && EXCL.has(L[id].ref)) laneRefs.add(L[id].ref);
+    for (const ref of laneRefs) pushBlocks.push('lane:' + ref);
+    const resources = [...new Set(pushBlocks)].sort();
+    // the driven push path (stand -> push end) keeps the path-level turn rule (fix round 2, M2)
+    const pT = turnProfile(trimPath(pushPath, pushEnd), ROUTER.pushTurn.windowCm);
+    const pushTurn = { maxArcDeg: Math.round(pT.maxArcDeg * 10) / 10, maxWinDeg: Math.round(pT.maxWinDeg * 10) / 10, ok: pT.maxArcDeg <= ROUTER.pushTurn.maxDeg && pT.maxWinDeg <= ROUTER.pushTurn.maxDeg };
     const toraCm = toraOf(end, entry);
     return {
       kind: 'dep', stand, end, entry, exitId: null, cls: clsOf(spanCm), geom: wideGeom ? 'wide' : 'narrow',
@@ -623,18 +968,76 @@ export function makeRouter(G, o = {}) {
       blocks, holds, crossings, lineup: { node: vRw.node, sCm: lineupS, rwySCm: rwyS, entrySCm: Math.round(alongEnd(end, vRw.x, vRw.z)), holdSCm: luHold.s, toraCm,
         // declared TORA: from the runway end (full length) or from the intersection (AIP (mirror) AD 2.13 'intersection')
         toraLeftCm: toraCm == null ? null : entry === 'full' ? toraCm - rwyS : toraCm - (rwyS - Math.round(alongEnd(end, vRw.x, vRw.z))) },
+      turn: turnSummary(path), gapFill: gaps, geoBoxes: nGeoBox,
       push: { lenCm: pushEnd, pieces: pushPath.pieces, path: pushPath, verts: PV, nLinks: nPush, node: J, swing, swingVirtual, tailHdg: hdgOfVec(tailVec),
+        chain: chainUsed.map(c => [c.lid, c.from]), onGraph, turn: pushTurn, startFoot: { blocks: FS.blocks, boxes: FS.boxes, lanes: FS.lanes, tailCm },
         run: { run: seq.slice(1, nPush).map(([id]) => id), node: J, swing, turnDeg: prec.turnDeg }, fallback: !!prec.fallback,
-        optionA: optA ? { run: seq.slice(1, nPush).map(([id]) => id), node: J, swing, turnDeg: prec.turnDeg, record: { run: optA.run, node: optA.node, swing: optA.swing, turnDeg: optA.turnDeg } } : null, resources: pushBlocks },
+        optionA: optA ? { run: seq.slice(1, nPush).map(([id]) => id), node: J, swing, turnDeg: prec.turnDeg, record: { run: optA.run, node: optA.node, swing: optA.swing, turnDeg: optA.turnDeg } } : null, resources },
       zones: [], src: 'inf', variant: tableVariant || 'live',
     };
   }
+  /**
+   * Junction boxes by geometry (fix round 2, H1, after the verifier re-run): a junction node within ROUTER.foot.boxCm of the
+   * path that is not one of the route's own vertices (a node of an adjacent or crossing link, or an OSM junction the route's
+   * link passes without sharing it) gets a box over each pass within boxCm (`geo: true`), unless a box of that node already
+   * covers the pass's nearest station or the pass lies inside a runway block. Returns the number of boxes added.
+   */
+  function geoBoxes(blocks, pieces, lenCm) {
+    const b2 = FO.boxCm * FO.boxCm, rr = Math.ceil(FO.boxCm / FG), reach = FO.boxCm + FG; const runs = new Map(); const gen = ++skipGen; let ck = null, cand = null;
+    const st = 2 * FO.stepCm;   // 2 m samples: a node within boxCm - 0.5 m is always seen; the windows are padded by one step
+    for (const [x, z, s] of samplePieces(pieces, 0, lenCm, st)) {
+      const cx = Math.floor(x / FG), cz = Math.floor(z / FG), k = gKey(cx, cz);
+      if (k !== ck) {   // candidates of this cell: junction nodes within boxCm + one cell of the cell centre
+        ck = k; cand = []; const mx = (cx + 0.5) * FG, mz = (cz + 0.5) * FG;
+        for (let a = -rr; a <= rr; a++) for (let b = -rr; b <= rr; b++) { const arr = nodeGrid.get(gKey(cx + a, cz + b)); if (!arr) continue;
+          for (const v of arr) { const n = nodeOf[v]; const dx = n.x * 100 - mx, dz = n.z * 100 - mz; if (dx * dx + dz * dz <= reach * reach) cand.push(v); } }
+      }
+      for (const v of cand) {
+        if (skipG[v] === gen && s < skipS[v]) continue;   // the nose moves at most ds per ds of station: no need to look again before
+        const n = nodeOf[v]; const dx = n.x * 100 - x, dz = n.z * 100 - z, d2 = dx * dx + dz * dz;
+        if (d2 > b2) { skipG[v] = gen; skipS[v] = s + Math.sqrt(d2) - FO.boxCm; continue; }
+        let R = runs.get(v); if (!R) runs.set(v, R = []); const r = R[R.length - 1];
+        if (r && s - r.s1 <= ROUTER.laneGapCm + st) { r.s1 = s; if (d2 < r.d2) { r.d2 = d2; r.sm = s; } } else R.push({ s0: s, s1: s, d2, sm: s }); }
+    }
+    const rw = blocks.filter(b => b.kind === 'rwy'); const add = [];
+    for (const v of [...runs.keys()].sort((a, b) => a - b)) for (const r of runs.get(v)) {
+      if (blocks.some(b => b.kind === 'box' && b.node === v && b.s0Cm - 100 <= r.sm - st / 2 && r.sm + st / 2 <= b.s1Cm + 100)) continue;   // (the true nearest is within st / 2 of r.sm)
+      if (rw.some(b => b.s0Cm <= r.sm && r.sm <= b.s1Cm)) continue;
+      add.push({ id: 'j:' + v, kind: 'box', node: v, s0Cm: Math.max(0, Math.round(r.s0 - st)), s1Cm: Math.min(lenCm, Math.round(r.s1 + st)), noStop: twyNode(v), geo: true });
+    }
+    for (const b of add) blocks.push(b);
+    return add.length;
+  }
+  /**
+   * Every metre of a route inside some block (fix round 2, H1): the uncovered stretches get the block of the link nearest
+   * the path there (geometric, `geo: true`). Returns the number of stretches filled.
+   */
+  function fillGaps(blocks, pieces, lenCm) {
+    const iv = blocks.filter(b => b.s1Cm > b.s0Cm).map(b => [b.s0Cm, b.s1Cm]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const gaps = []; let cur = 0;
+    for (const [a, b] of iv) { if (a > cur + 1) gaps.push([cur, a]); if (b > cur) cur = b; }
+    if (lenCm > cur + 1) gaps.push([cur, lenCm]);
+    let n = 0;
+    for (const [a, b] of gaps) {
+      const runs = [];
+      for (const [x, z, s] of samplePieces(pieces, a, b)) {
+        let best = null, bd = Infinity;
+        nearSegs(x, z, 4000, (lid, i, u, d2) => { if (d2 < bd || (d2 === bd && lid < best.lid)) { bd = d2; best = { lid, k: blockAt(lid, i, u) }; } });
+        if (!best) continue; const id = 'b:' + best.lid + ':' + best.k; const r = runs[runs.length - 1];
+        if (r && r.id === id) r.s1 = s; else runs.push({ id, lid: best.lid, s0: s, s1: s });
+      }
+      for (let j = 0; j < runs.length; j++) { const r = runs[j]; const s0 = j === 0 ? a : Math.round(r.s0), s1 = j === runs.length - 1 ? b : Math.round(runs[j + 1].s0);
+        blocks.push({ id: r.id, kind: 'link', link: r.lid, dir: 0, s0Cm: s0, s1Cm: s1, noStop: false, twoWay: L[r.lid].dir === 'both', geo: true }); n++; }
+    }
+    return n;
+  }
   function toraOf(end, entry) {
     // declared distances come from the airport data (aip_facts); the router knows them only through the table (baked)
-    const r = T && T.runwayEnds && T.runwayEnds[end]; if (!r) return null;
+    // fix round 2 (C2): also in live mode, from the table passed in or opts.runwayEnds (traj.js runwayGeom(airport))
+    const RE = (o.table && o.table.runwayEnds) || o.runwayEnds || null; const r = RE && RE[end]; if (!r) return null;
     if (entry === 'full') return r.toraCm; const it = r.intersections && r.intersections[entry]; return it ? it.toraCm : null;
   }
-  function assembleArr(exitId, stand, seq, spanCm, wideGeom) {
+  function assembleArr(exitId, stand, seq, spanCm, wideGeom, lite = false) {
     const ex = exitById.get(exitId); const E = ENDS[ex.end];
     const v = nodeOf[ex.node]; const vx = Math.round(v.x * 100), vz = Math.round(v.z * 100);
     const V = [{ x: Math.round(vx - E.h[0] * ROUTER.rollLeadCm), z: Math.round(vz - E.h[1] * ROUTER.rollLeadCm), tag: { link: null, cap: ROUTER.caps.rapid, runway: E.rw }, node: null, li: -1 }];
@@ -643,10 +1046,21 @@ export function makeRouter(G, o = {}) {
     const rapidTag = (t) => !!t && (t.runway || (t.link != null && L[t.link] && L[t.link].for_landing));
     const path = buildPath(V, { rNomCm: wideGeom ? PATH.rNomCm.wide : PATH.rNomCm.narrow, capOf: capFor(wideGeom), aLatOf: (a, b) => (rapidTag(a) || rapidTag(b) ? PATH.aLatRapidCms2 : PATH.aLatCms2) });
     const vS = path.vS; const sExit = vS[1];
+    if (lite) return { path, verts: V, vS, push: null };
     // vacate point: the first runway-holding position of the landing runway after the exit node
     const ha = holdsNear(V, vS, E.rw, sExit + 1, sExit + ROUTER.holdSearchCm * 2);
     const vac = ha.length ? ha[0] : { s: lateralCrossS(V, vS, E.rw, 1, 1, ROUTER.holdLatCm) ?? sExit + ROUTER.holdLatCm, node: null, src: 'inf-90m' };
-    const crossings = crossingsOf(V, vS, null);
+    let crossings = crossingsOf(V, vS, null);
+    // fix round 2 (L1): a route that re-crosses the runway it landed on (an exit on the side opposite the stand: only the
+    // exit model's last resort, e.g. 18R/36L with F4552) and does not reach a holding position of that runway in between
+    // never leaves its strip: the landing occupancy runs to the far side of the re-crossing, no hold on the strip
+    let reCross = null;
+    for (const c of crossings) {
+      if (c.runway !== E.rw) continue;
+      if (c.inHow !== 'fallback' && c.sInCm >= vac.s) continue;   // vacated, held at a holding position, then crosses: a normal crossing
+      reCross = { node: c.node, ref: c.ref, sCm: c.sCm, vacateFrom: vac.s }; vac.s = Math.max(vac.s, c.sOutCm); vac.node = null; vac.src = c.outHow === 'hold' ? c.holdSrc : 'inf-90m-recross';
+    }
+    if (reCross) crossings = crossings.filter(c => !(c.runway === E.rw && c.sOutCm <= vac.s));
     // the lead-in: its first vertex (the junction)
     let kLead = V.length - 1; for (let k = V.length - 2; k >= 0; k--) { const l = L[V[k].tag.link]; if (l && l.use === 'stand') kLead = k; else break; }
     const arcL = arcRangeAt(path, vS[kLead]);
@@ -658,7 +1072,9 @@ export function makeRouter(G, o = {}) {
     for (const b of eb) blocks.push(b);
     for (const c of crossings) blocks.push({ id: 'rwy:' + c.runway, kind: 'rwy', s0Cm: c.sInCm, s1Cm: c.sOutCm, noStop: true, crossing: true });
     blocks.push({ id: 'rwy:' + E.rw, kind: 'rwy', s0Cm: 0, s1Cm: vac.s, noStop: true, landing: true });
-    blocks.sort((a, b) => a.s0Cm - b.s0Cm || (a.id < b.id ? -1 : 1));
+    const nGeoBox = geoBoxes(blocks, path.pieces, path.lenCm);
+    const gaps = fillGaps(blocks, path.pieces, path.lenCm);
+    blocks.sort((a, b) => a.s0Cm - b.s0Cm || a.s1Cm - b.s1Cm || (a.id < b.id ? -1 : 1));
     const holds = [];
     for (const c of crossings) holds.push({ sCm: c.sInCm, node: c.node, kind: 'rwyhold', runway: c.runway, ref: c.ref });
     for (const b of eb) holds.push({ sCm: Math.max(0, b.s0Cm - ROUTER.endBox.holdBeforeCm), node: null, kind: 'endbox', end: b.end });
@@ -670,24 +1086,42 @@ export function makeRouter(G, o = {}) {
       kind: 'arr', stand, end: ex.end, entry: null, exitId, cls: clsOf(spanCm), geom: wideGeom ? 'wide' : 'narrow',
       links: seq.map(([a, b]) => [a, b]), lenCm: path.lenCm, pieces: path.pieces, path, vS, verts: V,
       blocks, holds, crossings, lineup: null, push: null, zones,
-      exit: { id: exitId, ref: ex.ref, node: ex.node, side: ex.side, sCm: sExit, rwySCm: ex.sCm, startRwySCm: ex.sCm - ROUTER.rollLeadCm },
-      vacate: { sCm: vac.s, node: vac.node, src: vac.src }, endAround: ea, src: 'inf', variant: tableVariant || 'live',
+      exit: { id: exitId, ref: ex.ref, node: ex.node, side: ex.side, sCm: sExit, rwySCm: ex.sCm, startRwySCm: ex.sCm - ROUTER.rollLeadCm,
+        oppositeSide: ex.side !== standSide(stand, E.rw), reCross },
+      vacate: { sCm: vac.s, node: vac.node, src: vac.src }, endAround: ea, turn: turnSummary(path), gapFill: gaps, geoBoxes: nGeoBox, src: 'inf', variant: tableVariant || 'live',
     };
   }
   const hdgOfVec = (d) => { const a = Math.round(hdgVecDet(d[0], d[1]) * 10) / 10; return a; };
+  // route.turn: the driven path's largest arc and 40 m heading change (deg, 0.1), and whether they meet the rule (V3)
+  const turnSummary = (path) => { const t = turnProfile(path, ROUTER.pathTurn.windowCm); const PT = ROUTER.pathTurn;
+    return { maxArcDeg: Math.round(t.maxArcDeg * 10) / 10, maxWinDeg: Math.round(t.maxWinDeg * 10) / 10, ok: t.maxArcDeg <= PT.maxDeg && t.maxWinDeg <= PT.maxDeg, winS0Cm: t.maxWinDeg > PT.maxDeg ? t.winS0Cm : null }; };
 
   // ------------------------------------------------------------------------------------------- public API
   const routeCache = new Map();
+  // o.slim (C1, fix round 1 V17): drop the assembly inputs (vertex chains and their stations) from served routes;
+  // route.lineup gets a non-enumerable back-reference for takeoffTraj's display (no JSON cycle)
+  function finish(r) {
+    if (r.lineup) Object.defineProperty(r.lineup, 'route', { value: r, enumerable: false, configurable: true });
+    if (o.slim) {   // the path objects are shared copies made by trimPath / buildPath: drop their vertex stations too
+      delete r.verts; delete r.vS; r.path = { lenCm: r.path.lenCm, pieces: r.path.pieces };
+      if (r.push) { delete r.push.verts; r.push.path = { lenCm: r.push.path.lenCm, pieces: r.push.path.pieces }; }
+      for (const p of r.pieces) { p.tag = null; if (p.tagOut) p.tagOut = { link: p.tagOut.link }; }
+    }
+    return r;
+  }
   function departure(stand, end, opts = {}) {
-    const entry = opts.entry || 'full'; const span = opts.spanCm ?? 0; const wg = opts.geom ? opts.geom === 'wide' : span >= ROUTER.spanNarrowCm;
-    const ck = 'D|' + stand + '|' + end + '|' + entry + '|' + clsOf(span) + '|' + wg; if (routeCache.has(ck)) return routeCache.get(ck);
-    const prec = depSeq(stand, end, entry); const r = prec ? assembleDep(stand, end, entry, prec, span, wg) : null;
+    const asked = opts.entry || 'full'; const span = opts.spanCm ?? 0; const wg = opts.geom ? opts.geom === 'wide' : span >= ROUTER.spanNarrowCm;
+    // fix round 2 (C4): span >= 36 m (code D-F) lines up at full length; an intersection request is served as full length
+    const entry = asked !== 'full' && ROUTER.wideFullLength && span >= ROUTER.spanNarrowCm ? 'full' : asked;
+    const ck = 'D|' + stand + '|' + end + '|' + entry + '|' + clsOf(span) + '|' + wg + '|' + asked; if (routeCache.has(ck)) return routeCache.get(ck);
+    const prec = depSeq(stand, end, entry); let r = prec ? finish(assembleDep(stand, end, entry, prec, span, wg)) : null;
+    if (r && entry !== asked) { r.entryAsked = asked; r.entryNote = 'span >= 36 m: full-length line-up (design §4.2; AIP (mirror) AD 2.20 2.1.7 intersection entry for code C) [inf]'; }
     routeCache.set(ck, r); return r;
   }
   function arrival(exitId, stand, opts = {}) {
     const span = opts.spanCm ?? 0; const cls = clsOf(span); const wg = opts.geom ? opts.geom === 'wide' : span >= ROUTER.spanNarrowCm;
     const ck = 'R|' + exitId + '|' + stand + '|' + cls + '|' + wg; if (routeCache.has(ck)) return routeCache.get(ck);
-    const seq = arrSeq(exitId, stand, cls); const r = seq ? assembleArr(exitId, stand, seq, span, wg) : null;
+    const seq = arrSeq(exitId, stand, cls); const r = seq ? finish(assembleArr(exitId, stand, seq, span, wg)) : null;
     routeCache.set(ck, r); return r;
   }
   return {
@@ -695,7 +1129,7 @@ export function makeRouter(G, o = {}) {
     // for tools/sim/build_routes.mjs and the tests
     _search: { depSeq, arrSeq, arrSeqs, findOptionA, search, depKeys, depGoalFn, exitById, exitList },
     graph: { L, N, nodeOf, adj, turns, lenCm, ptsCm, degree, RW, ENDS, alongEnd, latEast, standNode, pushOf, ownLeadin, standNames, other, canGo, dirOut, holdInf },
-    info: () => ({ fingerprint: fp, table: tableNote, variant: tableVariant || 'live', closed: closed ? closed.size : 0, cached: routeCache.size }),
+    info: () => ({ fingerprint: fp, table: tableNote, variant: tableVariant || 'live', closed: closed ? closed.size : 0, cached: routeCache.size, turnRule: { ...turnStats } }),
     clearCache: () => { routeCache.clear(); seqCache.clear(); },
   };
 }
@@ -744,7 +1178,7 @@ export function closedLinksFor(G, targets) {
     if (!res.length) {   // X does not meet the chain (e.g. B ends just short of H1 / H7): the chain node nearest to X, within 150 m
       const xs = /\//.test(X) ? G.nodes.filter(n => (n.kind === 'rwy' || n.kind === 'rwy_end') && n.runway === X).map(n => [n.x, n.z]) : (byRef.get(X) || []).flatMap(l => l.pts);
       let best = null, bd = 150 * 150;
-      for (const v of [...nodes].sort((a, b) => a - b)) { const n = nodeOf.get(v); for (const q of xs) { const d = (n.x - q[0]) ** 2 + (n.z - q[1]) ** 2; if (d < bd) { bd = d; best = v; } } }
+      for (const v of [...nodes].sort((a, b) => a - b)) { const n = nodeOf.get(v); for (const q of xs) { const ex = n.x - q[0], ez = n.z - q[1]; const d = ex * ex + ez * ez; if (d < bd) { bd = d; best = v; } } }
       if (best != null) res.push(best);
     }
     return res.sort((a, b) => a - b);

@@ -165,7 +165,7 @@ function main() {
     stands, exits: exitsOut, optionA, runwayEnds,
     variants: { F4552: { id: F4552.id, window: F4552.window, closedLinks: closed.ids, crossOnly: F4552.crossOnly, ends: ['18R', '36L'], note: 'routes of the 18R / 36L ends that use a closed link; 18L/36R is closed by F4551 in the same window', targets: F4552.targets, src: F4552.src, notice: F4552.notice } },
     groups,
-    counts: { ...counts, groups: Object.keys(groups).length, trieNodes: nNodes },
+    counts: { ...counts, groups: Object.keys(groups).length, trieNodes: nNodes, turnRule: { base: R.info().turnRule, F4552: RV.info().turnRule } },
     format: 'groups[key = dep|<end>|<entry>|<variant> or arr|<end>:<exit>|<n|w|x>|<variant>] = {rev, t: [linkId, parent, ...], leaf: [per stand: trie node | -1 not stored (use base / class n) | -2 no route], lenN / lenW: route length cm (narrow / wide geometry) | -1; dep only: pn = pushed links (push link + tail-first run), sw = swing link, td = push-turn deg}; a route = the links from leaf to root (reversed when !rev); fromNode of the first link = the stand node (dep) or the exit node (arr)',
   };
   const json = JSON.stringify(table);
@@ -182,12 +182,12 @@ function main() {
       airport: { file: 'data/sha_airport.json', sha256_16: sha16(rawA), licence: 'ODbL 1.0 + AIP (mirror) short facts', used: 'runway ends, displaced thresholds, PAPI distances, declared distances, runway profile, extent ring (runwayEnds)' },
       notam: { record: F4552.id + ' (+ F4551/26 crossing restriction)', what: 'derived effect record: taxiway targets and window only, no NOTAM text', source: 'CAAC eAIP NOTAM Summary, in force 2026-11-02 07:06Z (docs/phase1/sources_sim.md §4.2)', licence: 'no terms published; short facts (owner decision OD3)', local_check: localCheck },
     },
-    output: { file: 'data/sha_routes.json', sha256_16: sha16(Buffer.from(json)), bytes: json.length, licence: 'ODbL 1.0 (derivative database of OSM through the taxi graph); runwayEnds / variants.F4552: short cited facts, not covered by ODbL' },
+    output: { file: 'data/sha_routes.json', sha256_16: sha16(Buffer.from(json)), bytes: Buffer.byteLength(json), licence: 'ODbL 1.0 (derivative database of OSM through the taxi graph); runwayEnds / variants.F4552: short cited facts, not covered by ODbL' },
     rules: 'AIP (mirror) AD 2.20 2.1.4.2, 2.1.7, 2.2.5, 2.3.1, 2.3.2, 2.3.3, 3.1.5, 3.2.2.2 through sha_taxigraph.json rules.facts / routing.turns; design.md §4.1-4.2',
     parameters: 'js/sim/router.js ROUTER, js/sim/path.js PATH, js/sim/perf.js PERF: every value src inf with its basis in the module (docs/phase3/movement.md §3)',
     deterministic: 'no clock or randomness; two runs give the same bytes (tools/sim/test_router.mjs)',
   };
   fs.writeFileSync(path.join(OUT, 'SOURCES_routes.json'), JSON.stringify(sources, null, 1) + '\n');
-  log('wrote', path.join(OUT, 'sha_routes.json'), (json.length / 1024).toFixed(1), 'kB in', ((Date.now() - t0) / 1000).toFixed(1), 's');
+  log('wrote', path.join(OUT, 'sha_routes.json'), (Buffer.byteLength(json) / 1024).toFixed(1), 'kB in', ((Date.now() - t0) / 1000).toFixed(1), 's', '; path-level turn rule', JSON.stringify(table.counts.turnRule));
 }
 main();

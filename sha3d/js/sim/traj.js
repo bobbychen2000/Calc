@@ -14,7 +14,7 @@
 // filleted centreline). Air and runway trajectories use the runway axis: s = distance from the physical runway end of
 // that landing / take-off direction (negative on the approach).
 
-import { pointAt } from './path.js';
+import { pointAt, pieceAt } from './path.js';
 import { PERF } from './perf.js';
 import { hdgVec, vecHdg, groundY } from '../geo.js';
 
@@ -72,10 +72,90 @@ const rwyOf = (end, opts) => { const R = (opts && opts.rwy) || RWY; if (!R || !R
 
 // ------------------------------------------------------------------------------------------ integer kinematics
 export function isqrt(n) { if (!(n > 0)) return 0; let r = Math.floor(Math.sqrt(n)); while (r * r > n) r--; while ((r + 1) * (r + 1) <= n) r++; return r; }
-const durMs = (d, v0, v1) => (d <= 0 ? 0 : Math.round(2000 * d / (v0 + v1)));
-function seg(t0, s0, s1, v0, v1, kind) {
-  const T = durMs(s1 - s0, v0, v1);
-  return { t0, t1: t0 + T, s0Cm: s0, s1Cm: s1, v0Cms: v0, v1Cms: v1, aCms2: T > 0 ? Math.round((v1 - v0) * 1000 / T) : 0, kind };
+/**
+ * One constant-acceleration segment from the ACTUAL start speed v0 toward the target end speed v1t over [s0, s1] (fix round
+ * 1, V7). T = ceil(2 d / (v0 + v1t)) ms, so the quadratic through (t0, s0) and (t1, s1) with start speed v0 ends at
+ * vEnd <= v1t; v1Cms = floor(vEnd) (>= 0), so |vEnd - v1Cms| < 1 cm/s and the next segment starts at v1Cms (speed
+ * continuous to 1 cm/s); aCms2 is that quadratic's acceleration, rounded. An accelerating target is lowered so that
+ * the leg never exceeds aCapCms2 from the actual v0. Integers in, integers out; + - * / sqrt only.
+ */
+function legSeg(t0, s0, s1, v0, v1t, kind, aCapCms2 = 0, dCapCms2 = 0) {
+  const d = s1 - s0; if (d <= 0) return null;
+  if (aCapCms2 > 0 && v1t > v0) v1t = Math.min(v1t, isqrt(v0 * v0 + 2 * aCapCms2 * d));
+  const sum = v0 + v1t > 0 ? v0 + v1t : 1; const Tx = 2000 * d / sum;
+  // T: the whole ms within 3 of the exact duration whose quadratic ends at the target, within the caps + 2 % + 1 cm/s^2
+  // (the 1 ms quantization of short legs: one ms moves the end speed by (v0 + v1) / T); else ceil
+  let best = null; const aLim = aCapCms2 ? aCapCms2 * 1.02 + 1 : 0, dLim = dCapCms2 ? dCapCms2 * 1.02 + 1 : 0;
+  // ranking: exactly the target; else the highest end speed <= the target; else at most 2 cm/s above it (within the
+  // speed tolerance of the caps), the lowest first
+  const rank = (c) => (!c.ok ? 0 : c.v1 === v1t ? 4e9 : c.v1 < v1t ? 2e9 + c.v1 : 1e9 - c.v1);
+  const T0 = Math.max(1, Math.ceil(Tx));
+  for (const T of [T0, T0 - 1, T0 + 1, T0 - 2, T0 + 2, T0 - 3, T0 + 3]) {
+    if (T < 1) continue;
+    const vEnd = 2000 * d / T - v0; if (vEnd < -0.5) continue; const v1 = Math.max(0, Math.floor(vEnd + 1e-9)); const a = (v1 * v1 - v0 * v0) / (2 * d);
+    const c = { T, vEnd, v1, ok: v1 <= v1t + 2 && (!aLim || a <= aLim) && (!dLim || -a <= dLim) };
+    if (!best || rank(c) > rank(best)) best = c;
+  }
+  const { T, vEnd, v1 } = best;
+  return { t0, t1: t0 + T, s0Cm: s0, s1Cm: s1, v0Cms: v0, v1Cms: v1, aCms2: Math.round((vEnd - v0) * 1000 / T), kind };
+}
+const SEG_MAX_MS = 4000, CRUISE_MAX_MS = 10000;   // accelerating / braking legs are cut into <= 4 s segments, cruise legs into
+                          // <= 10 s: integrating the frozen integer fields (t0, s0Cm, v0Cms, aCms2) then ends within ~10 cm of s1Cm (V7) [inf]
+/** chain planned legs [{s0, s1, v1}] into segments from start speed v; returns {segs, t, v} */
+function chainLegs(legs, t, v, kind, aCapCms2, out = [], dCapCms2 = 0) {
+  for (const q of legs) {
+    const d = q.s1 - q.s0; if (d <= 0) continue;
+    const tgt = q.v1 > 0 && v > 0 && Math.abs(q.v1 - v) <= Math.max(2, Math.floor(v / 500)) ? v : q.v1;   // a rounding residue (<= 0.2 %): keep the speed (an exact cruise)
+    const sum = v + tgt; const n = sum > 0 ? Math.ceil(2000 * d / sum / (tgt !== v ? SEG_MAX_MS : CRUISE_MAX_MS)) : 1;
+    let s0 = q.s0; const aLeg = (tgt * tgt - v * v) / (2 * d);   // the leg's constant acceleration (cm/s^2, signed)
+    for (let k = 1; k <= n; k++) {   // equal-speed-step cuts; each cut distance rounded UP so no cut exceeds aLeg
+      const vNow = out.length && k > 1 ? out[out.length - 1].v1Cms : v;
+      let s1 = q.s1, vk = tgt;
+      if (k < n) { if (tgt === v) s1 = q.s0 + Math.round(d * k / n); else { vk = Math.round(v + (tgt - v) * k / n); s1 = s0 + Math.ceil((vk * vk - vNow * vNow) / (2 * aLeg)); } if (s1 <= s0 || s1 >= q.s1) continue; }
+      const g = legSeg(t, s0, s1, vNow, vk, kind, aCapCms2, dCapCms2); if (!g) continue; out.push(g); t = g.t1; s0 = s1;
+    }
+    v = out.length ? out[out.length - 1].v1Cms : v;
+  }
+  return { segs: out, t, v };
+}
+const LEG_MIN_MS = 500;   // planned legs shorter than this are merged into a neighbour (V7) [inf]
+/**
+ * Merge short legs (their duration would be rounded to whole ms) so that no speed rises above the plan and no leg's
+ * acceleration exceeds its neighbours': an accelerating leg joins the next one, a decelerating leg the previous one, a
+ * cruise leg the neighbour that turns down from it; a cruise leg in a speed valley (decelerate, cruise, accelerate) is
+ * cut at x = d aAcc / (aAcc + aDec) and its two parts join the neighbours with the valley speed lowered to
+ * sqrt(v^2 - 2 aDec x) (both parts then stay within the caps). Integers, + - * / and isqrt.
+ */
+function mergeShortLegs(legs, aAcc, aDec) {
+  const L = legs.map(q => ({ ...q }));
+  const short = (q) => { const sum = q.v0 + q.v1; return q.s1 > q.s0 && (sum <= 0 || 2000 * (q.s1 - q.s0) / sum < LEG_MIN_MS); };
+  for (let guard = 0; guard < 4 * legs.length + 4 && L.length > 1; guard++) {
+    let k = -1; for (let i = 0; i < L.length; i++) if (short(L[i]) && !L[i].keep) { k = i; break; }
+    if (k < 0) break;
+    const q = L[k], pv = L[k - 1], nx = L[k + 1];
+    const withNext = () => { L.splice(k, 2, { s0: q.s0, s1: nx.s1, v0: q.v0, v1: nx.v1 }); };
+    const withPrev = () => { L.splice(k - 1, 2, { s0: pv.s0, s1: q.s1, v0: pv.v0, v1: q.v1 }); };
+    // fix round 2: two legs A, B merge into one constant-acceleration leg without exceeding the plan at their joint only when
+    // B accelerates no harder than A (v^2 concave): a short braking leg after a harder one stays apart (it had lifted 6.76 m/s
+    // over a 6.54 m/s turn cap)
+    const acc = (x) => (x.v1 * x.v1 - x.v0 * x.v0) / (2 * (x.s1 - x.s0));
+    const okNext = nx && acc(nx) <= acc(q), okPrev = pv && acc(q) <= acc(pv);
+    // neither is safe: the previous leg's own acceleration is carried over the short leg (every speed at or below the plan;
+    // the next leg then starts lower, and chainLegs keeps its acceleration within the cap)
+    const withPrevLow = () => { const v2 = pv.v0 * pv.v0 + (pv.v1 * pv.v1 - pv.v0 * pv.v0) * (q.s1 - pv.s0) / (pv.s1 - pv.s0); const v1 = Math.min(q.v1, isqrt(Math.floor(v2)));
+      L.splice(k - 1, 2, { s0: pv.s0, s1: q.s1, v0: pv.v0, v1 }); if (L[k]) L[k] = { ...L[k], v0: v1 }; };
+    if (q.v1 > q.v0) { if (okNext) withNext(); else if (okPrev) withPrev(); else if (pv) withPrevLow(); else q.keep = true; continue; }
+    if (q.v1 < q.v0) { if (okPrev) withPrev(); else if (okNext) withNext(); else if (pv) withPrevLow(); else q.keep = true; continue; }
+    if (nx && nx.v1 <= q.v1) { withNext(); continue; }      // cruise, then down (or level)
+    if (pv && pv.v0 <= q.v0) { withPrev(); continue; }      // up (or level), then cruise
+    if (pv && nx) {                                         // a valley: decelerate, short cruise, accelerate
+      const d = q.s1 - q.s0, x = Math.floor(d * aAcc / (aAcc + aDec)), vv = isqrt(q.v0 * q.v0 - 2 * aDec * x);
+      L.splice(k - 1, 3, { s0: pv.s0, s1: q.s0 + x, v0: pv.v0, v1: vv }, { s0: q.s0 + x, s1: nx.s1, v0: vv, v1: nx.v1 });
+      continue;
+    }
+    q.keep = true;
+  }
+  return L;
 }
 /**
  * Speed profile over [s0, s1] with piecewise caps; forward-backward pass in v^2 (integers), then constant-acceleration
@@ -114,7 +194,7 @@ function speedProfile(s0, s1, v0, v1, caps, aAcc, aDec) {
     if (d2 > 0) { out.push({ s0: s, s1: s + d2, v0: d1 > 0 ? vm : va, v1: vm }); s += d2; }
     if (d3 > 0) { out.push({ s0: s, s1: s + d3, v0: d1 > 0 || d2 > 0 ? vm : va, v1: vb }); s += d3; }
   }
-  return { segs: out, warn };
+  return { segs: mergeShortLegs(out, aAcc, aDec), warn };
 }
 function capsOf(route, path, zones, sMin, sMax) {
   const caps = path.pieces.map(p => ({ a: p.s0Cm, b: p.s0Cm + p.lenCm, c: p.vmaxCms }));
@@ -133,9 +213,19 @@ function capsOf(route, path, zones, sMin, sMax) {
   return out;
 }
 
+/**
+ * Turn zones (fix round 2, M1): the speed cap of every arc held until the main gear has left it, [s0, s0 + len + wheelbase]
+ * (the body yaws while the main gear is on the arc; with the oversteered display the main gear follows the arc itself).
+ * Integers; route.zones (stand stop) appended.
+ */
+export function turnZones(route, perf) {
+  const wb = perf.wheelbaseCm || 0; const z = (route.zones || []).slice(); if (!wb) return z;
+  for (const p of route.path.pieces) if (p.kind === 'arc' && p.vmaxCms < 1e6) z.push({ s0Cm: p.s0Cm, s1Cm: p.s0Cm + p.lenCm + wb, vmaxCms: p.vmaxCms, why: 'turn (main gear)' });
+  return z;
+}
 /** highest speed (cm/s) at s = 0 of an arrival route from which the caps ahead can be met with taxi braking (backward pass) */
 export function arrivalEntryCms(route, perf, vMax = PERF.vExitCms) {
-  const aDec = perf.taxiDecCms2 ?? PERF.taxiDecCms2; const caps = capsOf(route, route.path, route.zones, 0, route.lenCm);
+  const aDec = perf.taxiDecCms2 ?? PERF.taxiDecCms2; const caps = capsOf(route, route.path, turnZones(route, perf), 0, route.lenCm);
   let v = 0;   // the stop at the stand
   for (let i = caps.length - 1; i >= 0; i--) { const c = caps[i]; v = Math.min(c.c, isqrt(v * v + 2 * aDec * (c.b - c.a))); if (i > 0) v = Math.min(v, caps[i - 1].c); }
   return Math.min(vMax, v);
@@ -153,15 +243,15 @@ export function groundTraj(route, perf, t0, opts = {}) {
   if (opts.leadinStop !== false) for (const h of route.holds || []) if (h.kind === 'leadin' && h.dwellMs) stops.push({ sCm: h.sCm, dwellMs: h.dwellMs, why: 'leadin' });
   for (const s of opts.stops || []) stops.push(s);
   const st = stops.filter(s => s.sCm > sStart && s.sCm < sEnd).sort((a, b) => a.sCm - b.sCm);
-  const caps = capsOf(route, path, route.zones, sStart, sEnd);
+  const caps = capsOf(route, path, turnZones(route, perf), sStart, sEnd);
   const segs = []; const warn = []; let t = t0, s = sStart, v = vStart;
   const legs = st.map(x => ({ ...x })).concat([{ sCm: sEnd, end: true }]);
   for (const lg of legs) {
     const vTo = lg.end ? vEnd : 0;
     if (lg.sCm > s) {
       const P = speedProfile(s, lg.sCm, v, vTo, caps, aAcc, aDec); warn.push(...P.warn);
-      for (const q of P.segs) { const g = seg(t, q.s0, q.s1, q.v0, q.v1, 'taxi'); segs.push(g); t = g.t1; }
-      s = lg.sCm; v = vTo;
+      const c = chainLegs(P.segs, t, v, 'taxi', aAcc, segs, aDec); t = c.t; v = c.v;
+      s = lg.sCm; if (!lg.end) v = 0;
     }
     if (!lg.end) {
       const dw = lg.untilMs != null ? Math.max(0, lg.untilMs - t) : (lg.dwellMs || 0);
@@ -195,7 +285,7 @@ export function pushTraj(route, perf, t0, opts = {}) {
   const P = route.push; const v = opts.pushCms ?? PERF.pushCms, a = opts.pushAccCms2 ?? PERF.pushAccCms2;
   const prof = speedProfile(0, P.lenCm, 0, 0, [{ a: 0, b: P.lenCm, c: v }], a, a);
   const segs = []; let t = t0;
-  for (const q of prof.segs) { const g = seg(t, q.s0, q.s1, q.v0, q.v1, 'push'); segs.push(g); t = g.t1; }
+  t = chainLegs(prof.segs, t, 0, 'push', a, segs, a).t;
   const tPushEnd = t;
   const su = opts.startupMs ?? PERF.startupMs;
   if (su > 0) { segs.push({ t0: t, t1: t + su, s0Cm: P.lenCm, s1Cm: P.lenCm, v0Cms: 0, v1Cms: 0, aCms2: 0, kind: 'hold', why: 'start-up' }); t += su; }
@@ -216,27 +306,31 @@ export function wheelAimSCm(end, perf, opts = {}) { const R = rwyOf(end, opts); 
 export function touchdownSCm(end, perf, opts = {}) { return wheelAimSCm(end, perf, opts) + flareOverrunCm(perf.vappCms) + (opts.tdOffsetCm || 0); }
 /**
  * Straight-in approach on the 3 deg glide path from 12 km before the threshold to touchdown at tTd (ms).
- * opts: {tdOffsetCm (seeded +-60 m by the caller), rwy}
+ * opts: {tdOffsetCm (seeded +-60 m by the caller), rwy, route (the arrival route, carried as Traj.route)}
+ * Stations (fix round 1, V9): the glide path, the flare and touchdown are defined for the MAIN GEAR (the wheels touch
+ * down at marks.tdSCm); the segments carry the NOSE-GEAR station (main + wheelbase), like every other trajectory, so that
+ * the landing roll and the arrival route continue without a jump. Threshold / extent marks: main gear over that point.
  */
 export function approachTraj(end, perf, tTd, opts = {}) {
-  const R = rwyOf(end, opts); const v = perf.vappCms;
+  const R = rwyOf(end, opts); const v = perf.vappCms; const wb = perf.wheelbaseCm || 0;
   const sTd = touchdownSCm(end, perf, opts), sA = R.thrSCm - (opts.approachCm ?? TRAJ.approachCm);
   const sWi = wheelAimSCm(end, perf, opts); const sFl = sWi - Math.round(TRAJ.flareFromCm / TRAJ.tanGlide);
   const tA = tTd - Math.round(1000 * (sTd - sA) / v), tFl = tTd - Math.round(1000 * (sTd - sFl) / v);
-  const segs = [{ t0: tA, t1: tFl, s0Cm: sA, s1Cm: sFl, v0Cms: v, v1Cms: v, aCms2: 0, kind: 'air' }, { t0: tFl, t1: tTd, s0Cm: sFl, s1Cm: sTd, v0Cms: v, v1Cms: v, aCms2: 0, kind: 'flare' }];
+  const segs = [{ t0: tA, t1: tFl, s0Cm: sA + wb, s1Cm: sFl + wb, v0Cms: v, v1Cms: v, aCms2: 0, kind: 'air' }, { t0: tFl, t1: tTd, s0Cm: sFl + wb, s1Cm: sTd + wb, v0Cms: v, v1Cms: v, aCms2: 0, kind: 'flare' }];
   const tFinal = tTd - Math.round(1000 * (sTd - (R.thrSCm - 800000)) / v);
   const tThr = tTd - Math.round(1000 * (sTd - R.thrSCm) / v);
-  const marks = { thresholdMs: tThr, touchdownMs: tTd, tdSCm: sTd, flareMs: tFl };
+  const marks = { thresholdMs: tThr, touchdownMs: tTd, tdSCm: sTd, tdNoseSCm: sTd + wb, flareMs: tFl };
   if (R.extentBeforeThrCm != null) marks.extentMs = tTd - Math.round(1000 * (sTd - (R.thrSCm - R.extentBeforeThrCm)) / v);
   marks.wheelTchCm = Math.round((sWi - R.thrSCm) * TRAJ.tanGlide);
-  return { kind: 'approach', role: 'arr', end, t0: tA, t1: tTd, segs, rwy: R, perf: slimPerf(perf), dir: 1, phases: [[tA, 'approach'], [tFinal, 'final']], marks, flare: { sFl, sTd, sWi } };
+  return { kind: 'approach', role: 'arr', end, t0: tA, t1: tTd, segs, route: opts.route ?? null, rwy: R, perf: slimPerf(perf), dir: 1, phases: [[tA, 'approach'], [tFinal, 'final']], marks, flare: { sFl, sTd, sWi, wb } };
 }
 /**
  * Landing roll from touchdown to the arrival route's start (route.exit.startRwySCm): brake at aDec to vExit, then roll at
  * vExit. Returns null when the exit is too close for the type (the exit model never picks such an exit).
  */
 export function landingTraj(end, perf, tTd, opts = {}) {
-  const R = rwyOf(end, opts); const sTd = opts.tdSCm ?? touchdownSCm(end, perf, opts);
+  // opts.tdSCm: the MAIN-GEAR touchdown station (approachTraj marks.tdSCm); the roll's s is the nose-gear station (V9)
+  const R = rwyOf(end, opts); const sTd = (opts.tdSCm ?? touchdownSCm(end, perf, opts)) + (perf.wheelbaseCm || 0);
   const sTo = opts.toSCm ?? (opts.route ? opts.route.exit.startRwySCm : null); if (sTo == null) throw new Error('landingTraj: toSCm or route');
   const v0 = opts.vTdCms ?? perf.vappCms, a2 = perf.aDecCms2, a1 = opts.rolloutDecCms2 ?? TRAJ.rolloutDecCms2;
   const v1 = opts.vExitCms ?? (opts.route ? arrivalEntryCms(opts.route, perf) : PERF.vExitCms);   // the turn-off speed the exit allows
@@ -245,33 +339,35 @@ export function landingTraj(end, perf, tTd, opts = {}) {
   // two phases [inf]: roll-out at a1 (idle reverse + drag) down to vb, then braking at the type's a_dec to vExit exactly at
   // the exit; an exit beyond the a1-only stopping point: a1 to vExit, then roll at vExit
   let vb2 = Math.floor((a2 * v0 * v0 - a1 * v1 * v1 - 2 * a1 * a2 * d) / (a2 - a1));
-  const segs = []; let t = tTd, s = sTd;
+  const segs = []; const s = sTd; const legs = [];
   if (vb2 > v0 * v0) vb2 = v0 * v0;
   if (vb2 >= v1 * v1) {
     const vb = isqrt(vb2); const d1 = Math.round((v0 * v0 - vb2) / (2 * a1));
-    if (d1 > 0) { const g = seg(t, s, s + d1, v0, vb, 'roll'); segs.push(g); t = g.t1; s += d1; }
-    const g2 = seg(t, s, sTo, d1 > 0 ? vb : v0, v1, 'roll'); segs.push(g2);
+    if (d1 > 0) legs.push({ s0: s, s1: s + d1, v0, v1: vb });
+    legs.push({ s0: s + Math.max(0, d1), s1: sTo, v0: d1 > 0 ? vb : v0, v1 });
   } else {
-    const d1 = Math.round((v0 * v0 - v1 * v1) / (2 * a1)); const g = seg(t, s, s + d1, v0, v1, 'roll'); segs.push(g);
-    if (sTo > s + d1) segs.push(seg(g.t1, s + d1, sTo, v1, v1, 'roll'));
+    const d1 = Math.round((v0 * v0 - v1 * v1) / (2 * a1)); legs.push({ s0: s, s1: s + d1, v0, v1 });
+    if (sTo > s + d1) legs.push({ s0: s + d1, s1: sTo, v0: v1, v1 });
   }
-  const t1 = segs[segs.length - 1].t1;
-  return { kind: 'landing', role: 'arr', end, t0: tTd, t1, segs, rwy: R, perf: slimPerf(perf), dir: 1, phases: [[tTd, 'landing']], marks: { touchdownMs: tTd, exitStartMs: t1, vExitCms: v1 } };
+  const c = chainLegs(mergeShortLegs(legs, a2, a2), tTd, v0, 'roll', 0, segs, a2);
+  const t1 = c.t;
+  return { kind: 'landing', role: 'arr', end, t0: tTd, t1, segs, route: opts.route ?? null, rwy: R, perf: slimPerf(perf), dir: 1, phases: [[tTd, 'landing']], marks: { touchdownMs: tTd, exitStartMs: t1, vExitCms: c.v, tdSCm: sTd - (perf.wheelbaseCm || 0) } };
 }
 /** Take-off from the line-up point (entry = route.lineup or {rwySCm}) at tRoll: roll at aTo to Vlof, then climb to the fade. */
 export function takeoffTraj(end, entry, perf, tRoll, opts = {}) {
   const R = rwyOf(end, opts); const s0 = entry.rwySCm ?? entry.sCm ?? 0; const a = perf.aToCms2, vl = perf.vlofCms;
   const dRoll = Math.round(vl * vl / (2 * a));
-  const g1 = seg(tRoll, s0, s0 + dRoll, 0, vl, 'roll');
-  const va = PERF.vClimbCms, ac = PERF.climbAccCms2;
-  const dAcc = Math.round((va * va - vl * vl) / (2 * ac));
+  const segs = []; const g1 = legSeg(tRoll, s0, s0 + dRoll, 0, vl, 'roll'); segs.push(g1);
+  const va = PERF.vClimbCms, ac = PERF.climbAccCms2; const vlA = g1.v1Cms;
+  const dAcc = Math.round((va * va - vlA * vlA) / (2 * ac));
   const sFade = R.lenCm + (opts.fadeBeyondEndCm ?? TRAJ.fadeBeyondEndCm);
-  const sLof = s0 + dRoll; const segs = [g1];
-  if (sLof + dAcc < sFade) { const g2 = seg(g1.t1, sLof, sLof + dAcc, vl, va, 'climb'); segs.push(g2); segs.push(seg(g2.t1, sLof + dAcc, sFade, va, va, 'climb')); }
-  else segs.push(seg(g1.t1, sLof, sFade, vl, isqrt(vl * vl + 2 * ac * (sFade - sLof)), 'climb'));
+  const sLof = s0 + dRoll;
+  if (sLof + dAcc < sFade) chainLegs([{ s0: sLof, s1: sLof + dAcc, v1: va }, { s0: sLof + dAcc, s1: sFade, v1: va }], g1.t1, vlA, 'climb', 0, segs);
+  else chainLegs([{ s0: sLof, s1: sFade, v1: isqrt(vlA * vlA + 2 * ac * (sFade - sLof)) }], g1.t1, vlA, 'climb', 0, segs);
   const tLof = g1.t1;
   const marks = { rollMs: tRoll, liftoffMs: tLof, liftoffSCm: sLof, rollCm: dRoll, fadeMs: segs[segs.length - 1].t1 };
-  const tr = { kind: 'takeoff', role: 'dep', end, t0: tRoll, t1: segs[segs.length - 1].t1, segs, rwy: R, perf: slimPerf(perf), dir: 1, phases: [[tRoll, 'takeoff'], [tLof, 'departure']], marks };
+  const route = opts.route ?? entry.route ?? null;   // the departure route (router.js gives route.lineup a non-enumerable back-reference)
+  const tr = { kind: 'takeoff', role: 'dep', end, t0: tRoll, t1: segs[segs.length - 1].t1, segs, route, rwy: R, perf: slimPerf(perf), dir: 1, phases: [[tRoll, 'takeoff'], [tLof, 'departure']], marks };
   marks.farEndMs = timeAtS(tr, R.lenCm);
   if (R.extentBeyondEndCm != null) marks.extentMs = timeAtS(tr, R.lenCm + R.extentBeyondEndCm);
   const toraLeft = (entry.toraLeftCm != null) ? entry.toraLeftCm : (R.toraCm != null ? R.toraCm - s0 : null);
@@ -313,13 +409,14 @@ export const phaseAt = (tr, t) => { let p = tr.phases.length ? tr.phases[0][1] :
  */
 export function chooseExit(router, end, stand, perf, u, opts = {}) {
   const R = rwyOf(end, opts); const rw = R.runway; const side = router.standSide(stand, rw);
-  const sTd = opts.tdSCm ?? touchdownSCm(end, perf, opts);
-  const need = sTd + Math.round((perf.vappCms * perf.vappCms - PERF.vExitCms * PERF.vExitCms) / (2 * perf.aDecCms2));
+  const sTd = opts.tdSCm ?? touchdownSCm(end, perf, opts);   // main-gear touchdown station
+  const sTdN = sTd + (perf.wheelbaseCm || 0);                  // the nose-gear station at touchdown (route starts are nose stations, V9)
+  const need = sTdN + Math.round((perf.vappCms * perf.vappCms - PERF.vExitCms * PERF.vExitCms) / (2 * perf.aDecCms2));
   const all = router.exits(end, true); const same = all.filter(e => e.side === side);
   const rotMax = opts.rotMaxMs ?? TRAJ.rotMaxMs;
   const span = opts.spanCm ?? perf.spanCm;
   // reachable: braking at a_dec from touchdown reaches the turn-off speed this exit's path allows before the route start
-  const reach = (e) => { if (e.startCm < need) return false; const rt = router.arrival(e.id, stand, { spanCm: span }); if (!rt) return false; const v = arrivalEntryCms(rt, perf); return e.startCm >= sTd + (perf.vappCms * perf.vappCms - v * v) / (2 * perf.aDecCms2); };
+  const reach = (e) => { if (e.startCm < need) return false; const rt = router.arrival(e.id, stand, { spanCm: span }); if (!rt) return false; const v = arrivalEntryCms(rt, perf); return e.startCm >= sTdN + (perf.vappCms * perf.vappCms - v * v) / (2 * perf.aDecCms2); };
   const rot = (e) => { const rt = router.arrival(e.id, stand, { spanCm: span }); if (!rt) return { ms: null, rt: null }; const ld = landingTraj(end, perf, 0, { tdSCm: sTd, route: rt, rwy: opts.rwy }); if (!ld) return { ms: null, rt }; const g = groundTraj(rt, perf, ld.t1, { vStart: ld.marks.vExitCms, leadinStop: false }); return { ms: rotMs(ld, g), rt }; };
   const r1 = same.find(e => e.rank === 1), r2 = same.find(e => e.rank === 2);
   let pick = null, why = '', q = null;
@@ -337,38 +434,216 @@ export function rotMs(landing, ground) { return ground && ground.marks && ground
 
 // ------------------------------------------------------------------------------------------ DISPLAY evaluation
 const D2R = Math.PI / 180, KT = 0.514444;
-const _a = {}, _b = {};
+const _a = {}, _b = {}, _c = {}, _e = {}, _f = {}, _g = {};
 function profY(R, s) { const P = R.profile; if (!P || !P.length) return groundY(0, 0); if (s <= P[0][0]) return P[0][1]; for (let i = 1; i < P.length; i++) if (s <= P[i][0]) { const k = (s - P[i - 1][0]) / (P[i][0] - P[i - 1][0]); return P[i - 1][1] + k * (P[i][1] - P[i - 1][1]); } return P[P.length - 1][1]; }
-/** height (m) above the runway of an air / runway trajectory at station s (cm) */
+/** height (m) above the runway of an air / runway trajectory at NOSE-GEAR station s (cm); the approach's glide path,
+ *  flare and touchdown are main-gear stations (V9), so the approach is evaluated at s - wheelbase */
 function heightAt(tr, s) {
   if (tr.kind === 'approach') {
-    const { sFl, sTd } = tr.flare;
-    if (s <= sFl) return (tr.flare.sWi - s) * TRAJ.tanGlide / 100;
-    const uF = sTd - sFl; const u = sTd - s; if (u <= 0) return 0;
+    const { sFl, sTd } = tr.flare; const sm = s - (tr.flare.wb || 0);
+    if (sm <= sFl) return (tr.flare.sWi - sm) * TRAJ.tanGlide / 100;
+    const uF = sTd - sFl; const u = sTd - sm; if (u <= 0) return 0;
     const b = 2 * TRAJ.flareFromCm / uF - TRAJ.tanGlide, a = (TRAJ.tanGlide - b) / (2 * uF);   // h = a u^2 + b u, h(uF) = 12 m, h'(uF) = tan 3
     return (a * u * u + b * u) / 100;
   }
   if (tr.kind === 'takeoff') { const sl = tr.marks.liftoffSCm; if (s <= sl) return 0; return Math.min(TRAJ.climbToCm, (s - sl) * TRAJ.tanClimb) / 100; }
   return 0;
 }
+
+// ---- main-gear model (display only; fix round 1, V5 / V2)
+// The main gear cannot slip sideways: it always moves along the aircraft's axis. Forward taxi: the nose gear follows the
+// path (s) and the main-gear centre is its TRACTRIX (pursuit curve at the wheelbase), integrated once per route and
+// wheelbase from the route start and shared by every trajectory on that route; it starts where the push left it (a
+// departure) or on the runway centreline (an arrival). Push-back: the same constraint holds in reverse, so the push is
+// the time reverse of a forward taxi: the nose gear (the tug) follows the push path and the main gear is the tractrix of
+// that path traversed BACKWARDS from the push end, where both gears are aligned on a straight (router pushAlignCm), so
+// the first taxi pose equals the last push pose. Take-off roll: the tractrix continues from the line-up pose until it
+// is on the centreline. Floats and trigonometry (display).
+// pose.main is this model; pose.mainChord is the round-0 chord model (both gears on the path), kept for comparison (C2).
+// At the stand (the end of an arrival, the start of a push) the main gear is blended over alignCm onto the chord position
+// (both gears on the lead-in): the stand's parked pose (gate engine) has the stand heading, and the OSM lead-ins are often
+// too short for the tractrix to align (up to 14 deg off); the blend is the pilot's / tug's alignment (small slip, low speed).
+// Fix round 2 (M1): forward taxi uses JUDGEMENTAL OVERSTEERING. With the nose gear on the centreline the no-slip main gear
+// cuts every corner by up to R - sqrt(R^2 - wb^2) (9.7 m for a B77W on a 55 m fillet), onto the shoulders. The displayed nose
+// gear is therefore steered outward: O(s) = P(s - wb) + wb t(s - wb) puts the main gear exactly on the centreline (P = the
+// route path, t its tangent; the tractrix of O is P(s - wb)); the displayed nose is N(s) = P(s) + w(s) (O(s) - P(s)) with
+// w = 1 unless that moves the nose more than oversteer.maxOffCm from P (then w = maxOff / max |O - P| over the arc's
+// influence [arc start, arc end + wb], ramped), so the nose gear stays within 10 m of the centreline [inf]: inside the 23 m
+// main taxiway (AIP (mirror) AD 2.8, taxigraph halfWidth 11.5 m) and, at a junction, over its outer corner; measured over all
+// routes (tools/sim/test_router.mjs M1) the oversteered nose is off the load-bearing pavement LESS often than a nose on the
+// centreline (a 6 m cap left the wide-bodies' main gear 3.5 x as often off it as 10 m; 15 m put 4 x more noses off). The main gear is the tractrix of
+// the DISPLAYED nose (no slip anywhere). Pushes keep the tug-steered nose on the push path (w = 0). At the stand (the last
+// 2.5 wheelbases + 10 m of an arrival) w fades to 0 and the main gear is blended onto the lead-in as before (D11). Tight
+// fillets (R <= r0Cm 10 m; partly up to r1Cm 20 m) and a departure's first wheelbase (the main gear is where the push left it,
+// not on the path's backward extension) keep the nose on the path. The speed cap of a turn holds until the main gear has
+// left it (groundTraj turn zones), so the main gear's yaw rate stays within sqrt(a_lat / R).
+// s keeps its meaning on the commit path: the station along the centreline (= the nose gear on straights); in corners the
+// displayed nose gear is up to maxOff outside it and moves at v / cos(steering angle).
+export const FOLLOW = { stepCm: 10, sampleCm: 100, alignWb: 2.5, alignAddCm: 1000, oversteer: { maxOffCm: 1000, rampCm: 1000, rampK: 5, r0Cm: 1000, r1Cm: 2000 }, src: 'inf',
+  basis: 'non-holonomic main gear (no lateral slip): tractrix of the displayed nose-gear path (forward taxi: oversteered, main gear on the centreline; push: the tug on the push path, backwards from the push end); aligned onto the lead-in over 2.5 wheelbases + 10 m at the stand' };
+/** oversteer weights per sampleCm of nose station (forward routes), with the arrival's stand fade */
+function oversteerW(route, wbCm, n, alignL) {
+  const W = new Float32Array(n).fill(1); const path = route.path; const OS = FOLLOW.oversteer, sc = FOLLOW.sampleCm; const a = {}, b = {};
+  const dev = (s) => { pointAt(path, s, a); pointAt(path, s - wbCm, b); const ox = b.x + b.hx * wbCm - a.x, oz = b.z + b.hz * wbCm - a.z; return Math.sqrt(ox * ox + oz * oz); };
+  for (const p of path.pieces) {
+    if (p.kind !== 'arc') continue; const s0 = p.s0Cm, s1 = p.s0Cm + p.lenCm + wbCm; let D = 0;
+    for (let s = s0; s <= s1; s += sc) D = Math.max(D, dev(s));
+    const wR = p.rCm <= OS.r0Cm ? 0 : p.rCm >= OS.r1Cm ? 1 : (p.rCm - OS.r0Cm) / (OS.r1Cm - OS.r0Cm);
+    const w = Math.min(wR, D > OS.maxOffCm ? OS.maxOffCm / D : 1); if (w >= 1) continue;
+    // the ramp is long enough that the nose's sideways shift (1 - w) D changes by at most 1 / rampK per metre of travel
+    const ramp = Math.max(OS.rampCm, OS.rampK * (1 - w) * D);
+    const i0 = Math.max(0, Math.floor((s0 - ramp) / sc)), i1 = Math.min(n - 1, Math.ceil((s1 + ramp) / sc));
+    for (let i = i0; i <= i1; i++) { const s = i * sc; const d = s < s0 ? s0 - s : s > s1 ? s - s1 : 0; const v = d >= ramp ? 1 : w + (1 - w) * d / ramp; if (v < W[i]) W[i] = v; }
+  }
+  if (alignL > 0) { const sA = route.lenCm - alignL; for (let i = 0; i < n; i++) { const s = i * sc; if (s <= sA) continue; const u = Math.min(1, (s - sA) / alignL); W[i] *= 1 - u * u * (3 - 2 * u); } }
+  if (route.kind === 'dep') { const r = OS.rampK * OS.maxOffCm; for (let i = 0; i < n; i++) { const s = i * sc; if (s >= wbCm + r) break; W[i] *= s <= wbCm ? 0 : (s - wbCm) / r; } }
+  return W;
+}
+/** DISPLAY: the nose gear [x, z] (cm, out.x / out.z) of a forward-taxi follower at station s (cm): oversteer, see FOLLOW */
+export function noseAt(f, path, s, out = {}) {
+  pointAt(path, s, out); if (!f || !f.W) return out;
+  const u = s / FOLLOW.sampleCm; let i = Math.floor(u); let w;
+  if (i < 0) w = f.W[0]; else if (i >= f.n - 1) w = f.W[f.n - 1]; else w = f.W[i] + (f.W[i + 1] - f.W[i]) * (u - i);
+  if (!(w > 0)) return out;
+  const b = pointAt(path, s - f.wbCm, _d); const ox = b.x + b.hx * f.wbCm, oz = b.z + b.hz * f.wbCm;
+  out.x += w * (ox - out.x); out.z += w * (oz - out.z); return out;
+}
+const _d = {};
+function blendChord(X, Z, sOf, path, wbCm, sA, sB, toChordAtB, dirSign, noseFn = null) {   // blend samples with s in [sA, sB] towards the chord position
+  const q = {}, nq = {};
+  for (let i = 0; i < X.length; i++) {
+    const s = sOf(i); if (s < sA || (s > sB && !toChordAtB)) continue;   // (beyond the route end: fully on the chord)
+    let u = Math.min(1, (s - sA) / Math.max(1, sB - sA)); if (!toChordAtB) u = 1 - u; const w = u * u * (3 - 2 * u);
+    pointAt(path, s - dirSign * wbCm, q); if (noseFn) noseFn(s, nq); else pointAt(path, s, nq);
+    let mx = (1 - w) * X[i] * 100 + w * q.x, mz = (1 - w) * Z[i] * 100 + w * q.z;
+    const dx = nq.x - mx, dz = nq.z - mz, d = Math.sqrt(dx * dx + dz * dz) || 1; mx = nq.x - dx * wbCm / d; mz = nq.z - dz * wbCm / d;
+    X[i] = mx / 100; Z[i] = mz / 100;
+  }
+}
+/** largest main-gear slip (deg) between consecutive samples: motion direction vs the body axis */
+function maxSlip(X, Z, sOf, path, i0, i1, noseFn = null) {
+  const nq = {}; let mx = 0;
+  for (let i = Math.max(1, i0); i <= Math.min(X.length - 1, i1); i++) {
+    const ex = X[i] - X[i - 1], ez = Z[i] - Z[i - 1], el = Math.sqrt(ex * ex + ez * ez); if (el < 1e-3) continue;
+    if (noseFn) noseFn(sOf(i), nq); else pointAt(path, sOf(i), nq); const hx = nq.x / 100 - X[i], hz = nq.z / 100 - Z[i], hl = Math.sqrt(hx * hx + hz * hz) || 1;
+    const c = Math.abs((ex * hx + ez * hz) / (el * hl)); const a = Math.acos(Math.min(1, c)) / D2R; if (a > mx) mx = a;
+  }
+  return mx;
+}
+/** blend onto the chord over 2.5 wheelbases + 10 m at the stand; returns {L, sl: the largest slip in the blend (deg)} */
+function alignBlend(X, Z, sOf, path, wbCm, atEnd, lenCm, dirSign, noseFn = null) {
+  const L = Math.min(lenCm, Math.round(FOLLOW.alignWb * wbCm + FOLLOW.alignAddCm));
+  const sA = atEnd ? lenCm - L : 0, sB = atEnd ? lenCm : L;
+  blendChord(X, Z, sOf, path, wbCm, sA, sB, atEnd, dirSign, noseFn);
+  return { L, sl: maxSlip(X, Z, sOf, path, Math.floor(sA / FOLLOW.sampleCm), Math.ceil(sB / FOLLOW.sampleCm) + 1, noseFn) };
+}
+const followCache = new WeakMap();
 /**
- * DISPLAY: pose at time t (floats, metres, degrees true). x, z: the nose-gear point; main: [x, z] main-gear centre;
- * tip: [x, z] nose tip; y: gear-contact height (world y); gs, vs: m/s; pitch, roll: degrees.
+ * The main-gear follower of a route for a wheelbase: Float32 x / z (m) every sampleCm of station; opts.model 'over'
+ * (default, the displayed model: oversteered nose, FOLLOW) or 'tractrix' (round 1: nose gear on the path, for comparison).
+ * f.W holds the oversteer weights (noseAt).
+ */
+export function gearFollower(route, wbCm, opts = {}) {
+  const model = opts.model || 'over';
+  const path = route.path; let m = followCache.get(path); if (!m) { m = new Map(); followCache.set(path, m); }
+  const key = wbCm + '|' + route.kind + '|' + model; let f = m.get(key); if (f) return f;
+  const n = Math.floor(route.lenCm / FOLLOW.sampleCm) + 2; const X = new Float32Array(n), Z = new Float32Array(n);
+  const alignL = route.kind === 'arr' ? Math.min(route.lenCm, Math.round(FOLLOW.alignWb * wbCm + FOLLOW.alignAddCm)) : 0;
+  const W = model === 'over' ? oversteerW(route, wbCm, n, alignL) : null;
+  const fw = { W, n, wbCm }; const nose = (s, out) => (W ? noseAt(fw, path, s, out) : pointAt(path, s, out));
+  let mx, mz;
+  if (route.kind === 'dep' && route.push && route.push.path) { const g = pushFollowAt(pushFollower(route, wbCm), route.push.lenCm); mx = g[0] * 100; mz = g[1] * 100; }
+  else { const q = pointAt(path, -wbCm, _c); mx = q.x; mz = q.z; }
+  const pull = (s) => { const q = nose(s, _c); const dx = q.x - mx, dz = q.z - mz, d = Math.sqrt(dx * dx + dz * dz) || 1; mx = q.x - dx * wbCm / d; mz = q.z - dz * wbCm / d; };
+  pull(0); X[0] = mx / 100; Z[0] = mz / 100;
+  for (let i = 1; i < n; i++) { const s1 = i * FOLLOW.sampleCm; for (let s = s1 - FOLLOW.sampleCm + FOLLOW.stepCm; s <= s1; s += FOLLOW.stepCm) pull(s); X[i] = mx / 100; Z[i] = mz / 100; }
+  let align = null; if (route.kind === 'arr') align = alignBlend(X, Z, (i) => i * FOLLOW.sampleCm, path, wbCm, true, route.lenCm, 1, nose);
+  f = { X, Z, n, wbCm, W, model, alignCm: align ? align.L : 0, alignSlipDeg: align ? align.sl : 0 }; m.set(key, f); return f;
+}
+/** main-gear centre [x, z] (m) of a follower at nose-gear station s (cm), linear between samples */
+export function followAt(f, s, out = [0, 0]) {
+  const u = s / FOLLOW.sampleCm; let i = Math.floor(u);
+  if (i < 0) { out[0] = f.X[0]; out[1] = f.Z[0]; return out; }
+  if (i >= f.n - 1) { out[0] = f.X[f.n - 1]; out[1] = f.Z[f.n - 1]; return out; }
+  const k = u - i; out[0] = f.X[i] + (f.X[i + 1] - f.X[i]) * k; out[1] = f.Z[i] + (f.Z[i + 1] - f.Z[i]) * k; return out;
+}
+/** the push's main-gear follower: tractrix of the push path from the push end back to the stand (samples by nose station) */
+export function pushFollower(route, wbCm) {
+  const P = route.push; const path = P.path; let m = followCache.get(path); if (!m) { m = new Map(); followCache.set(path, m); }
+  const key = wbCm + '|push|' + P.lenCm; let f = m.get(key); if (f) return f;
+  const n = Math.floor(P.lenCm / FOLLOW.sampleCm) + 2; const X = new Float32Array(n), Z = new Float32Array(n);
+  const q0 = pointAt(path, P.lenCm + wbCm, _c); let mx = q0.x, mz = q0.z;
+  const pull = (s) => { const q = pointAt(path, s, _c); const dx = q.x - mx, dz = q.z - mz, d = Math.sqrt(dx * dx + dz * dz) || 1; mx = q.x - dx * wbCm / d; mz = q.z - dz * wbCm / d; };
+  // from the push end (s = lenCm) down to 0; sample i holds s = i * sampleCm (the last sample: the push end itself)
+  pull(P.lenCm); const last = n - 1; X[last] = mx / 100; Z[last] = mz / 100;   // index n - 1 stands for s = lenCm
+  let sPrev = P.lenCm;
+  for (let i = n - 2; i >= 0; i--) { const s1 = i * FOLLOW.sampleCm; for (let s = sPrev - FOLLOW.stepCm; s > s1; s -= FOLLOW.stepCm) pull(s); pull(s1); X[i] = mx / 100; Z[i] = mz / 100; sPrev = s1; }
+  const align = alignBlend(X, Z, (i) => (i === n - 1 ? P.lenCm : i * FOLLOW.sampleCm), path, wbCm, false, P.lenCm, -1);
+  f = { X, Z, n, wbCm, lenCm: P.lenCm, alignCm: align.L, alignSlipDeg: align.sl }; m.set(key, f); return f;
+}
+function pushFollowAt(f, s, out = [0, 0]) {   // samples at i * sampleCm for i < n - 1 and the push end at n - 1
+  const iLast = f.n - 1, sLast = (iLast - 1) * FOLLOW.sampleCm;
+  if (s >= f.lenCm) { out[0] = f.X[iLast]; out[1] = f.Z[iLast]; return out; }
+  if (s <= 0) { out[0] = f.X[0]; out[1] = f.Z[0]; return out; }
+  let i = Math.floor(s / FOLLOW.sampleCm), j = i + 1, s0 = i * FOLLOW.sampleCm, s1 = j * FOLLOW.sampleCm;
+  if (i >= iLast - 1) { i = iLast - 1; j = iLast; s0 = sLast; s1 = f.lenCm; }
+  const k = s1 > s0 ? (s - s0) / (s1 - s0) : 0; out[0] = f.X[i] + (f.X[j] - f.X[i]) * k; out[1] = f.Z[i] + (f.Z[j] - f.Z[i]) * k; return out;
+}
+const toCache = new WeakMap();
+/** take-off roll follower: from the line-up pose (the route's follower at its end) along the runway axis until aligned */
+function takeoffFollower(tr) {
+  let f = toCache.get(tr); if (f !== undefined) return f;
+  f = null; const rt = tr.route; const wb = tr.perf.wheelbaseCm;
+  if (rt && rt.path && wb > 0) {
+    const g = followAt(gearFollower(rt, wb), rt.lenCm); let mx = g[0] * 100, mz = g[1] * 100;
+    const R = tr.rwy, h = R.h, s0 = tr.segs[0].s0Cm; const X = [], Z = [];
+    for (let k = 0; k < 4000; k++) {   // samples every sampleCm, up to 4 km
+      const s1 = s0 + k * FOLLOW.sampleCm;
+      for (let s = (k ? s1 - FOLLOW.sampleCm + FOLLOW.stepCm : s1); s <= s1; s += FOLLOW.stepCm) { const nx = R.pCm[0] + h[0] * s, nz = R.pCm[1] + h[1] * s; const dx = nx - mx, dz = nz - mz, d = Math.sqrt(dx * dx + dz * dz) || 1; mx = nx - dx * wb / d; mz = nz - dz * wb / d; }
+      X.push(mx / 100); Z.push(mz / 100);
+      const nx = R.pCm[0] + h[0] * s1, nz = R.pCm[1] + h[1] * s1; const lat = Math.abs((mx - nx) * h[1] - (mz - nz) * h[0]);
+      if (lat < 0.1 && k > 0) break;   // within 1 mm of the centreline
+    }
+    f = { s0, X: Float32Array.from(X), Z: Float32Array.from(Z), n: X.length };
+  }
+  toCache.set(tr, f); return f;
+}
+const angDiff = (a, b) => { let d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+/**
+ * DISPLAY: pose at time t (floats, metres, degrees true). x, z: the nose-gear contact; main: [x, z] main-gear centre
+ * (no-slip model above); mainChord: [x, z] the chord model's main gear (on the path, wheelbase behind); tip: [x, z] nose
+ * tip; steerDeg: nose-wheel angle; y: gear-contact height (world y); gs, vs: m/s; pitch, roll: degrees.
  */
 export function evalTraj(tr, t, out = {}) {
   const tt = Math.max(tr.t0, Math.min(tr.t1, t));
   const s = sAtFloat(tr, tt), v = vAt(tr, tt) / 100;
   const P = tr.perf; const wb = P.wheelbaseCm, ng = P.noseGearCm;
   out.phase = phaseAt(tr, tt); out.t = tt;
-  if (tr.kind === 'ground' || tr.kind === 'push') {
-    const n = pointAt(tr.path, s, _a); const m = pointAt(tr.path, s - tr.dir * wb, _b);
-    const dx = n.x - m.x, dz = n.z - m.z;
+  if (tr.kind === 'push') {   // nose gear (tug) on the push path; main gear: the backward tractrix from the push end
+    const n = pointAt(tr.path, s, _a); out.x = n.x / 100; out.z = n.z / 100; out.y = groundY(out.x, out.z);
+    const mc = pointAt(tr.path, s + wb, _b); out.mainChord = [mc.x / 100, mc.z / 100];
+    const M = tr.route && tr.route.push && tr.route.push.path === tr.path ? pushFollowAt(pushFollower(tr.route, wb), s) : out.mainChord;
+    out.main = [M[0], M[1]]; out.hdg = vecHdg(out.x - M[0], out.z - M[1]);
+    out.steerDeg = angDiff(out.hdg, vecHdg(-n.hx, -n.hz));
+    const f = hdgVec(out.hdg); out.tip = [out.x + f[0] * ng / 100, out.z + f[1] * ng / 100];
+    out.gs = Math.abs(v); out.vs = 0; out.ground = true; out.gear = 1; out.pitch = 0; out.roll = 0; out.flaps = 0; out.spoilers = 0;
+    return out;
+  }
+  if (tr.kind === 'ground') {
+    const route = tr.route; const F = route && route.path === tr.path ? gearFollower(route, wb) : null;
+    const n = F ? noseAt(F, tr.path, s, _a) : pointAt(tr.path, s, _a);   // the displayed (oversteered) nose gear, FOLLOW
     out.x = n.x / 100; out.z = n.z / 100; out.y = groundY(out.x, out.z);
-    out.hdg = vecHdg(dx, dz);
-    const f = hdgVec(out.hdg);
-    out.main = [m.x / 100, m.z / 100]; out.tip = [out.x + f[0] * ng / 100, out.z + f[1] * ng / 100];
+    const pc = pointAt(tr.path, s, _e); out.nosePath = [pc.x / 100, pc.z / 100];
+    const mc = pointAt(tr.path, s - wb, _b); out.mainChord = [mc.x / 100, mc.z / 100];
+    const M = F ? followAt(F, s) : out.mainChord;
+    out.main = [M[0], M[1]];
+    out.hdg = vecHdg(out.x - M[0], out.z - M[1]);
+    // nose-wheel angle: the displayed nose gear's direction of motion vs the body axis
+    let hx = pc.hx, hz = pc.hz; if (F && F.W) { const a = noseAt(F, tr.path, s + 25, _f), b = noseAt(F, tr.path, s - 25, _g); hx = a.x - b.x; hz = a.z - b.z; }
+    out.steerDeg = angDiff(out.hdg, vecHdg(hx, hz));
+    const f = hdgVec(out.hdg); out.tip = [out.x + f[0] * ng / 100, out.z + f[1] * ng / 100];
     out.gs = Math.abs(v); out.vs = 0; out.ground = true; out.gear = 1; out.pitch = 0; out.roll = 0;
-    out.flaps = tr.role === 'dep' && tr.kind === 'ground' ? 0.35 : out.phase === 'landing' ? 1 : 0;
+    out.flaps = tr.role === 'dep' ? 0.35 : out.phase === 'landing' ? 1 : 0;
     out.spoilers = out.phase === 'landing' && out.gs > 40 * KT ? 1 : 0;
     return out;
   }
@@ -376,8 +651,13 @@ export function evalTraj(tr, t, out = {}) {
   const R = tr.rwy; const h = R.h;
   const x = (R.pCm[0] + h[0] * s) / 100, z = (R.pCm[1] + h[1] * s) / 100;
   const agl = heightAt(tr, s);
-  out.x = x; out.z = z; out.y = profY(R, Math.max(0, Math.min(R.lenCm, s))) + agl; out.hdg = R.hdg;
-  out.main = [x - h[0] * wb / 100, z - h[1] * wb / 100]; out.tip = [x + h[0] * ng / 100, z + h[1] * ng / 100];
+  out.x = x; out.z = z; out.y = profY(R, Math.max(0, Math.min(R.lenCm, s - wb))) + agl; out.hdg = R.hdg;
+  out.main = [x - h[0] * wb / 100, z - h[1] * wb / 100]; out.mainChord = out.main; out.steerDeg = 0;
+  if (tr.kind === 'takeoff') {   // the roll continues the taxi's main-gear follower until it is on the centreline
+    const tf = takeoffFollower(tr); const k = tf ? (s - tf.s0) / FOLLOW.sampleCm : 0;
+    if (tf && k >= 0 && k < tf.n - 1) { const i = Math.floor(k), u = k - i; const mx = tf.X[i] + (tf.X[i + 1] - tf.X[i]) * u, mz = tf.Z[i] + (tf.Z[i + 1] - tf.Z[i]) * u; out.main = [mx, mz]; out.hdg = vecHdg(x - mx, z - mz); out.steerDeg = angDiff(out.hdg, R.hdg); }
+  }
+  const f = hdgVec(out.hdg); out.tip = [x + f[0] * ng / 100, z + f[1] * ng / 100];
   out.gs = v; out.ground = agl <= 0.001; out.roll = 0; out.spoilers = 0;
   const ds = 50; const vs = (heightAt(tr, s + ds) - heightAt(tr, s)) / (ds / 100) * v; out.vs = vs;
   const gam = Math.atan2(vs, Math.max(v, 40)) / D2R;
@@ -395,3 +675,5 @@ export function evalTraj(tr, t, out = {}) {
   return out;
 }
 function sAtFloat(tr, t) { const g = tr.segs[segIdxT(tr, t)]; if (t <= g.t0) return g.s0Cm; if (t >= g.t1) return g.s1Cm; const T = g.t1 - g.t0, tau = t - g.t0, b = g.v0Cms / 1000, A = (g.s1Cm - g.s0Cm - b * T) / (T * T); return g.s0Cm + b * tau + A * tau * tau; }
+/** internals for tools/sim tests (not an interface) */
+export const _internal = { speedProfile, mergeShortLegs, legSeg, chainLegs };

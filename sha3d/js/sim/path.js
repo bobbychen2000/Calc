@@ -19,7 +19,12 @@
 //   the rest goes to the end that needs more), and a fillet's two tangent lengths are equal;
 // - when the room leaves a corner with a radius below rFloorCm (a corner digitised as two vertices a few metres
 //   apart: OSM splits links at every shared node), the two vertices are MERGED into one at the intersection of the outer
-//   segments (same turn direction, combined deflection < 150 deg), which restores the full radius;
+//   segments (same turn direction, combined deflection < 150 deg), which restores the full radius - but only while every
+//   input vertex the merged corner absorbs stays within mergeDevCm (8 m) of its two legs (fix round 1: cascaded merges had
+//   moved corners 60-140 m off the links); the router's path-level turn rule (router.js ROUTER.pathTurn) re-routes a route
+//   whose merged corner turns more than 100 deg;
+// - every input vertex gets the station of its own place on the path (vS: arc midpoint, or its projection onto the
+//   pieces when it was merged; fix round 1, V1);
 // - deflections below 1e-9 (tan of the half angle) are straight.
 // All values [inf]; see docs/phase3/movement.md §3.
 
@@ -30,6 +35,7 @@ export const PATH = {
   cutTolCm: 100,                           // a small deflection may take a radius up to the one cutting 1 m off the vertex (inf)
   mergeMaxCos: -0.8660254037844386,        // never merge into a corner of >= 150 deg (cos 150 deg)
   mergeKinkTan: 0.2679491924311227,        // a neighbour deflecting < 30 deg (tan of the half angle < tan 15 deg) may be absorbed whatever its sign
+  mergeDevCm: 800,                         // fix round 1 (V1 / V3): a merge is kept only if every input vertex it absorbs stays within 8 m of the merged corner's two legs (cascaded merges had moved corners 60-140 m off the links; 4 m left 169 arcs < 15 m, 8 m 39, unbounded 258 route nodes > 20 m off the path) (inf)
   aLatCms2: 100,                           // lateral acceleration in turns, v <= sqrt(a_lat R): 1.0 m/s^2 (design §4.4, inf)
   aLatRapidCms2: 125,                      // on rapid exits and the runway lead: 1.25 m/s^2 (ICAO RET design 93 km/h on 550 m = 1.2 m/s^2, from memory) [inf]
   src: 'inf',
@@ -110,12 +116,14 @@ function allocate(P, G, D) {
   }
   return T;
 }
+/** squared distance from (x, z) to the segment (ax, az)-(bx, bz) (+ - * / only) */
+function segD2(ax, az, bx, bz, x, z) { const ex = bx - ax, ez = bz - az, l2 = ex * ex + ez * ez; let t = l2 > 0 ? ((x - ax) * ex + (z - az) * ez) / l2 : 0; if (t < 0) t = 0; else if (t > 1) t = 1; const dx = ax + ex * t - x, dz = az + ez * t - z; return dx * dx + dz * dz; }
 const segLen = (P, j) => { const dx = P[j + 1].x - P[j].x, dz = P[j + 1].z - P[j].z; return Math.sqrt(dx * dx + dz * dz); };
 
 /**
  * Build the pieces of a path.
  * @param {Array<{x:number,z:number,tag:any}>} verts  polyline vertices in integer cm; tag = the segment from this vertex to the next
- * @param {object} opt  {rNomCm, rFloorCm, cutTolCm, capOf(tag) -> cm/s, aLatCms2, merge: true}
+ * @param {object} opt  {rNomCm, rFloorCm, cutTolCm, capOf(tag) -> cm/s, aLatCms2, merge: true, mergeMaxCos (default PATH.mergeMaxCos)}
  * @returns Path {lenCm, pieces: [{kind, s0Cm, lenCm, rCm, turn, vmaxCms, linkId, tag, tagOut, g}], vS: [sCm of each input vertex], warn}
  */
 export function buildPath(verts, opt = {}) {
@@ -149,7 +157,7 @@ export function buildPath(verts, opt = {}) {
           const p0 = P[a - 1], pa = P[a], pb = P[b], p3 = P[b + 1];
           const ux = pa.x - p0.x, uz = pa.z - p0.z, wx = p3.x - pb.x, wz = p3.z - pb.z;
           const lu = Math.sqrt(ux * ux + uz * uz), lw = Math.sqrt(wx * wx + wz * wz);
-          if ((ux * wx + uz * wz) / (lu * lw) <= PATH.mergeMaxCos) continue;   // would be >= 150 deg
+          if ((ux * wx + uz * wz) / (lu * lw) <= (opt.mergeMaxCos ?? PATH.mergeMaxCos)) continue;   // would be >= 150 deg (push paths: 100 deg, fix round 2)
           const den = ux * wz - uz * wx; if (Math.abs(den) < 1e-9 * lu * lw) continue;
           const lam = ((pb.x - p0.x) * wz - (pb.z - p0.z) * wx) / den;        // p0 + lam u = intersection
           if (!(lam > 0.5)) continue;
@@ -158,7 +166,10 @@ export function buildPath(verts, opt = {}) {
           if (mu > 0.3) continue;                                               // the merged corner may lie a little past pb, never near p3
           const dpa = Math.sqrt((nx - pa.x) * (nx - pa.x) + (nz - pa.z) * (nz - pa.z));
           if (dpa > 3 * segLen(P, a) + 3000) continue;                         // far outside: not a corner pair
-          const nv = { x: nx, z: nz, tag: pb.tag, orig: pa.orig.concat(pb.orig), merged: true };
+          const orig = pa.orig.concat(pb.orig);
+          const dev2 = PATH.mergeDevCm * PATH.mergeDevCm;
+          if (orig.some(k => Math.min(segD2(p0.x, p0.z, nx, nz, verts[k].x, verts[k].z), segD2(nx, nz, p3.x, p3.z, verts[k].x, verts[k].z)) > dev2)) continue;   // the corner would leave the links
+          const nv = { x: nx, z: nz, tag: pb.tag, orig, merged: true };
           P.splice(a, 2, nv); merged = true; break;
         }
       }
@@ -197,17 +208,106 @@ export function buildPath(verts, opt = {}) {
     cx = bx; cz = bz; vMid[i] = [s0, s];
   }
   vMid[0] = [0, 0];
-  // 4. s of every input vertex: the arc midpoint for a filleted vertex; merged input vertices spread over their arc
+  // 4. s of every input vertex (fix round 1, V1). A vertex that kept its own corner gets its arc midpoint (the vertex lies
+  //    on the bisector, so that IS its projection onto the arc) or, without a fillet, its own station. Input vertices that
+  //    were merged into another corner (or deduplicated) get the station of their projection onto the final pieces: the
+  //    nearest point of the pieces between the neighbouring corners' arcs, monotone along the route. (Round 0 spread them
+  //    over the merged arc, which put e.g. 27 nodes of 1.1 km of taxiway C inside 70 m.) + - * / sqrt and atanDet only.
   const vS = new Array(verts.length).fill(0);
+  let prevS = 0;
   for (let i = 0; i < P.length; i++) {
     const [a, b] = vMid[i] || [s, s]; const o = P[i].orig;
-    if (o.length === 1) { vS[o[0]] = Math.round((a + b) / 2); continue; }
-    // input vertices merged into this one (or deduplicated): proportional to their input polyline distance
-    let tot = 0; const cum = [0];
-    for (let k = 1; k < o.length; k++) { const p = verts[o[k - 1]], q = verts[o[k]]; tot += Math.sqrt((q.x - p.x) * (q.x - p.x) + (q.z - p.z) * (q.z - p.z)); cum.push(tot); }
-    for (let k = 0; k < o.length; k++) vS[o[k]] = tot > 0 ? Math.round(a + (b - a) * cum[k] / tot) : Math.round((a + b) / 2);
+    if (o.length === 1 && !P[i].merged) { const si = Math.max(prevS, Math.round((a + b) / 2)); vS[o[0]] = si; prevS = si; continue; }
+    const w0 = i > 0 && vMid[i - 1] ? vMid[i - 1][0] : 0, w1 = i < P.length - 1 && vMid[i + 1] ? vMid[i + 1][1] : s;
+    for (let k = 0; k < o.length; k++) {
+      const q = verts[o[k]]; const pr = projectOnPieces(pieces, q.x, q.z, Math.max(w0, prevS), w1);
+      const si = Math.max(prevS, pr == null ? Math.round((a + b) / 2) : pr.s); vS[o[k]] = si; prevS = si;
+    }
   }
   return { lenCm: s, pieces, vS, warn, nMerged: verts.length - P.length };
+}
+
+/** deterministic atan2 (rad) from atanDet: + - * / only */
+export function atan2Det(y, x) {
+  if (x > 0) return atanDet(y / x);
+  if (x < 0) return y >= 0 ? atanDet(y / x) + PI : atanDet(y / x) - PI;
+  return y > 0 ? PI_2 : y < 0 ? -PI_2 : 0;
+}
+/**
+ * Point at fraction u (0..1 of the UNCUT arc) of an arc piece's geometry, deterministic (+ - * / sqrt): bisection of the
+ * arc by chord midpoints projected onto the circle (fix round 2: the push end inside a gentle arc); |error| < 1e-4 cm.
+ */
+export function arcPointDet(g, u) {
+  let a = [g.x0, g.z0], b = arcEnd(g), ua = 0, ub = 1;
+  for (let it = 0; it < 30 && ub - ua > 1e-9; it++) {
+    const mx = a[0] + b[0] - 2 * g.cx, mz = a[1] + b[1] - 2 * g.cz, m = Math.sqrt(mx * mx + mz * mz) || 1;
+    const c = [g.cx + mx * g.R / m, g.cz + mz * g.R / m], uc = (ua + ub) / 2;
+    if (u <= uc) { b = c; ub = uc; } else { a = c; ua = uc; }
+  }
+  const k = ub > ua ? (u - ua) / (ub - ua) : 0; return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+}
+/** end point of an arc piece (deterministic: tangent point + T along the outgoing direction) */
+function arcEnd(g) { const vx = g.x0 + g.hx * g.T, vz = g.z0 + g.hz * g.T; return [vx + g.ox * g.T, vz + g.oz * g.T]; }
+/**
+ * Station (integer cm) and squared distance of the nearest point of the pieces to (x, z), over the pieces overlapping
+ * [sLo, sHi] and with s >= sLo (commit path: + - * / sqrt, atanDet). Returns {s, d2} or null.
+ */
+export function projectOnPieces(pieces, x, z, sLo = 0, sHi = Infinity) {
+  let best = null;
+  for (const p of pieces) {
+    const e = p.s0Cm + p.lenCm; if (e < sLo || p.s0Cm > sHi || p.lenCm <= 0) continue;
+    const g = p.g; let u, px, pz;   // u in [0, 1] along the piece
+    if (p.kind === 'line') {
+      const t = (x - g.x0) * g.hx + (z - g.z0) * g.hz; u = g.len > 0 ? t / g.len : 0;
+    } else {
+      const ax = g.x0 - g.cx, az = g.z0 - g.cz, bx = x - g.cx, bz = z - g.cz;
+      const phi = p.turn * atan2Det(ax * bz - az * bx, ax * bx + az * bz);   // angle travelled from the arc start
+      u = g.th > 0 ? phi / g.th : 0;
+      if (phi < g.th / 2 - PI) u = 1;                     // on the far side of the circle: nearer the arc end than its start
+    }
+    const uMin = p.s0Cm >= sLo ? 0 : (sLo - p.s0Cm) / p.lenCm;
+    if (!(u >= uMin)) u = uMin; if (u > 1) u = 1;
+    if (p.kind === 'line') { px = g.x0 + g.hx * u * g.len; pz = g.z0 + g.hz * u * g.len; }
+    else if (u <= 0) { px = g.x0; pz = g.z0; }
+    else if (u >= 1) { const q = arcEnd(g); px = q[0]; pz = q[1]; }
+    else {   // the point at angle u th on the circle: centre + R (b / |b|) (the nearest circle point to (x, z))
+      const bx = x - g.cx, bz = z - g.cz, lb = Math.sqrt(bx * bx + bz * bz);
+      if (lb > 0) { px = g.cx + bx * g.R / lb; pz = g.cz + bz * g.R / lb; } else { px = g.x0; pz = g.z0; }
+    }
+    const d2 = (x - px) * (x - px) + (z - pz) * (z - pz); const sp = Math.round(p.s0Cm + u * p.lenCm);
+    if (!best || d2 < best.d2) best = { s: sp, d2 };
+  }
+  return best;
+}
+
+/**
+ * Path-level turn measures (fix round 1, V3): the largest single-arc deflection and the largest heading change within any
+ * window of windowCm along the path (degrees), with where they are. The heading is piecewise linear in s (lines 0, arcs
+ * turn x th / len), so the window maximum is attained with a window end on a piece boundary: every boundary is tried as
+ * the window start and as the window end. Deterministic (+ - * / only, th from atanDet).
+ * @returns {{maxArcDeg, arcS0Cm, arcS1Cm, maxWinDeg, winS0Cm, winS1Cm}}
+ */
+export function turnProfile(path, windowCm = 4000) {
+  const P = path.pieces; const n = P.length; const H = new Array(n + 1); H[0] = 0;
+  let maxArc = 0, aS0 = 0, aS1 = 0;
+  for (let i = 0; i < n; i++) {
+    const p = P[i]; const d = p.kind === 'arc' ? p.turn * p.g.th : 0;   // (a cut arc carries its shortened th)
+    H[i + 1] = H[i] + d;
+    if (p.kind === 'arc' && Math.abs(d) > maxArc) { maxArc = Math.abs(d); aS0 = p.s0Cm; aS1 = p.s0Cm + p.lenCm; }
+  }
+  const total = n ? P[n - 1].s0Cm + P[n - 1].lenCm : 0;
+  const hAt = (s) => {   // cumulative heading change (rad) at s
+    if (s <= 0 || !n) return 0; if (s >= total) return H[n];
+    let lo = 0, hi = n - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (P[m].s0Cm <= s) lo = m; else hi = m - 1; }
+    const p = P[lo]; return H[lo] + (H[lo + 1] - H[lo]) * (s - p.s0Cm) / p.lenCm;
+  };
+  let maxWin = 0, w0 = 0;
+  for (let i = 0; i <= n; i++) {
+    const b = i < n ? P[i].s0Cm : total;
+    for (const a of [b, b - windowCm]) { if (a < 0 || a + windowCm > total + windowCm) continue; const f = Math.abs(hAt(Math.min(total, a + windowCm)) - hAt(a)); if (f > maxWin) { maxWin = f; w0 = a; } }
+  }
+  const R2D = 180 / PI;
+  return { maxArcDeg: maxArc * R2D, arcS0Cm: aS0, arcS1Cm: aS1, maxWinDeg: maxWin * R2D, winS0Cm: w0, winS1Cm: Math.min(total, w0 + windowCm) };
 }
 
 /** index of the piece containing s (binary search on s0Cm) */
