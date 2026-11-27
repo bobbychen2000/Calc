@@ -217,6 +217,21 @@ const GATES = {
   tower: { heroPx: 20, heroAcc: 3, pan: 30 },
   hold: {},
 };
+// (round 6, H3) the hero's bank reversals in a scout trace (frames { t data ms, roll deg, ground, found }): within 4 s of data time the bank
+// goes from >= 3 deg one way to >= 3 deg the other, >= 15 deg apart -> [{ f, from, to, dt }] (one per episode; the window restarts)
+function bankReversals(trace) {
+  const out = []; let W = [];
+  for (const q of trace) {
+    if (!q || !q.found || q.ground || q.roll == null || q.t == null) { W = []; continue; }
+    if (W.length && (q.t < W[W.length - 1].t || q.t - W[W.length - 1].t > 1000)) W = [];
+    if (W.length && q.t === W[W.length - 1].t) continue;
+    W.push(q); while (W.length && W[0].t < q.t - 4000) W.shift();
+    if (Math.abs(q.roll) < 3) continue;
+    const p = W.find(r => r.roll * q.roll < 0 && Math.abs(r.roll) >= 3 && Math.abs(r.roll - q.roll) >= 15);
+    if (p) { out.push({ f: q.f, from: +p.roll.toFixed(1), to: +q.roll.toFixed(1), dt: +((q.t - p.t) / 1000).toFixed(1) }); W = [q]; }
+  }
+  return out;
+}
 async function plan() {
   const { M, m } = await snap(); const TL = timeline(m.buildTimeline);
   const raw = fs.readFileSync(P('trace.json')); const { trace, events, scoutKey: sk } = JSON.parse(raw);
@@ -249,6 +264,12 @@ async function plan() {
     if (r.offScreen) fails.push(`${r.name}: hero off-screen in ${r.offScreen} frames`);
     if (r.occluded) fails.push(`${r.name}: line of sight through a building in ${r.occluded} frames`);
   }
+  // (round 6, H3) bank reversal over the whole timeline, in data time: the hero's drawn bank changing sign by >= 15 deg in total within 4 s,
+  // from >= 3 deg one way to >= 3 deg the other (the strict harness's bank_reversal_episodes; video S's climbing turn ended -22 -> +21 -> 0 deg
+  // in 4 s, which the per-shot gates did not see); limit 0, job.gates.bankRev = { max, why } overrides
+  { const rev = bankReversals(trace), revLim = (job.gates && job.gates.bankRev && job.gates.bankRev.max) ?? 0;
+    log(`bank reversals (>= 15 deg through level within 4 s of data time): ${rev.length}${rev.length ? ' - ' + rev.map(r => `frame ${r.f}: ${r.from} -> ${r.to} deg in ${r.dt} s`).join('; ') : ''}`);
+    if (rev.length > revLim) fails.push(`hero bank reversal x${rev.length} (first at frame ${rev[0].f}: ${rev[0].from} -> ${rev[0].to} deg in ${rev[0].dt} s)`); }
   // the caption of every frame (pill + phase line, held >= 0.5 s of video), deduplicated
   const cap = m.captionTrack(trace, { fps: FPS, ...(job.caption || {}), cuts: shots.map(s => s.f0).filter(f => f > 0) }); const tab = [], ix = new Map(), capIdx = cap.map(c => { const k = JSON.stringify([c.phase, c.cls, c.text, c.sub]); if (!ix.has(k)) { ix.set(k, tab.length); tab.push({ phase: c.phase, cls: c.cls, text: c.text, sub: c.sub }); } return ix.get(k); });
   const held = cap.filter(c => c.held).length;

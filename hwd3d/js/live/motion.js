@@ -261,13 +261,16 @@ export function hermiteMaxCurv(G, D, n = 48) {
   for (let j = 0; j <= n; j++) { const q = G.at(D * j / n); if (pp && prev) { const a1 = Math.atan2(prev[0] - pp[0], prev[1] - pp[1]), a2 = Math.atan2(q.x - prev[0], q.z - prev[1]), ds = Math.hypot(q.x - prev[0], q.z - prev[1]); if (ds > 0.5) kMax = Math.max(kMax, Math.abs(wrapPi(a2 - a1)) / ds); } pp = prev; prev = [q.x, q.z]; }
   return kMax;
 }
-export function dubinsCSC(p0, d0, p1, d1, r) {
+// (round 6, H3) only = +1 / -1: a turn-straight-turn path whose two turns are both left (CCW) / both right and together turn by no more than
+// the heading change itself (no loop) - null when there is none
+export function dubinsCSC(p0, d0, p1, d1, r, only = 0) {
   // standard frame: X = x, Y = -z (north up, CCW positive)
   const P0 = [p0[0], -p0[1]], P1 = [p1[0], -p1[1]], a0 = Math.atan2(-d0[1], d0[0]), a1 = Math.atan2(-d1[1], d1[0]);
   const ctr = (P, a, s) => [P[0] - s * r * Math.sin(a), P[1] + s * r * Math.cos(a)];   // s = +1 left (CCW), -1 right
   const mod2 = (x) => { x %= 2 * Math.PI; return x < 0 ? x + 2 * Math.PI : x; };
   let best = null;
   for (const s0 of [1, -1]) for (const s1 of [1, -1]) {
+    if (only && (s0 !== only || s1 !== only)) continue;
     const c0 = ctr(P0, a0, s0), c1 = ctr(P1, a1, s1), vx = c1[0] - c0[0], vy = c1[1] - c0[1], Dd = Math.hypot(vx, vy), phi = Math.atan2(vy, vx);
     let al, L;
     if (s0 === s1) { al = phi; L = Dd; }
@@ -275,13 +278,14 @@ export function dubinsCSC(p0, d0, p1, d1, r) {
     const t0 = [c0[0] + s0 * r * Math.sin(al), c0[1] - s0 * r * Math.cos(al)], t1 = [c1[0] + s1 * r * Math.sin(al), c1[1] - s1 * r * Math.cos(al)];
     const A0 = s0 > 0 ? mod2(al - a0) : mod2(a0 - al), A1 = s1 > 0 ? mod2(a1 - al) : mod2(al - a1);
     const tot = r * A0 + Math.max(0, L) + r * A1;
+    if (only && A0 + A1 > Math.abs(wrapPi(a1 - a0)) + 0.02) continue;
     if (!best || tot < best.tot) best = { tot, s0, s1, c0, c1, t0, t1, A0, A1, a0, al };
   }
   if (!best) return null;
   const pts = [], B = best, push = (X, Y) => pts.push([X, -Y]);
   const arc = (c, s, aStart, A) => { const m = Math.max(1, Math.ceil(A / (5 * Math.PI / 180))); for (let k = 0; k <= m; k++) { const a = aStart + s * A * k / m; push(c[0] + s * r * Math.sin(a), c[1] - s * r * Math.cos(a)); } };
   arc(B.c0, B.s0, B.a0, B.A0); arc(B.c1, B.s1, B.al, B.A1);
-  return { pts, len: B.tot };
+  return { pts, len: B.tot, s0: B.s0, s1: B.s1, A0: B.A0, A1: B.A1 };
 }
 // (round 5, V2 / V6) a GENTLE join for small heading / offset changes: e m straight on d0 from p0, a natural cubic Hermite (tangent
 // scale = its own chord) to the point fin m before p1, arriving along d1, then fin m straight into p1. Its curvature is continuous inside
@@ -310,22 +314,34 @@ export function straightHermite(p0, d0, s0, p1, d1, s1, D, e, fin = 0, n = 48) {
 export function turnFlight(p0, d0, s0, p1, d1, s1, D, r, opt = {}) {
   // opt.initial: m flown straight on the initial heading first (a climb-out before the first turn)
   const fin = opt.final || 0, P1f = fin > 0 ? [p1[0] - d1[0] * fin, p1[1] - d1[1] * fin] : p1, e0 = opt.initial || 0;
-  const build = (e) => { const S = [p0[0] + d0[0] * (e + e0), p0[1] + d0[1] * (e + e0)]; const C = dubinsCSC(S, d0, P1f, d1, r); if (!C) return null;
-    const pts = (e + e0 > 0.5 ? [p0] : []).concat(C.pts); if (fin > 0) pts.push(p1); return pts; };
+  // (round 6, H3) opt.noRev (a hole between two observed fixes): where the heading changes one way by more than 3 deg, the two turns go
+  // that way too (LSL / RSR without a loop) whenever such a path fits the time the reported speeds fly; the shortest path otherwise. The
+  // shortest (LSR) turned case S's climbing turn 10 deg past the first observed fix's track and back the other way into it: the wings rolled
+  // -22 -> +21 -> 0 deg within 4 s at the end of the turn
+  // (only where the shortest path itself turns back by more than 3 deg at either end - every other path stays as it was: applied to every path,
+  // the one-way variant changed which climb-out a forced touch-and-go took, weekday window)
+  const dA = wrapPi(Math.atan2(-d1[1], d1[0]) - Math.atan2(-d0[1], d0[0])), only = opt.noRev && Math.abs(dA) > 3 * Math.PI / 180 ? Math.sign(dA) : 0;
+  let one = 0, lastC = null;
+  const build = (e) => { const S = [p0[0] + d0[0] * (e + e0), p0[1] + d0[1] * (e + e0)]; const C = dubinsCSC(S, d0, P1f, d1, r, one); if (!C) return null;
+    lastC = C; const pts = (e + e0 > 0.5 ? [p0] : []).concat(C.pts); if (fin > 0) pts.push(p1); pts.C = C; return pts; };
   const lenOf = (pts) => { let L = 0; for (let k = 1; k < pts.length; k++) L += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]); return L; };
   const Lreq = D * Math.max(1e-3, (s0 + s1) / 2);
-  let pts = build(0); if (!pts) return null;
-  let L = lenOf(pts);
-  if (L < 0.97 * Lreq) {           // time to spare: fly on along the initial heading first (bisection on the extension)
-    let lo = 0, hi = Lreq, bestP = pts, bestE = Math.abs(L - Lreq);
-    for (let it = 0; it < 30; it++) { const m = (lo + hi) / 2, P = build(m); if (!P) { hi = m; continue; } const Lm = lenOf(P); if (Math.abs(Lm - Lreq) < bestE) { bestE = Math.abs(Lm - Lreq); bestP = P; } if (Lm < Lreq) lo = m; else hi = m; }
-    pts = bestP; L = lenOf(pts);
-  }
+  const fit = () => { let pts = build(0); if (!pts) return null; let L = lenOf(pts);
+    if (L < 0.97 * Lreq) {           // time to spare: fly on along the initial heading first (bisection on the extension)
+      let lo = 0, hi = Lreq, bestP = pts, bestE = Math.abs(L - Lreq);
+      for (let it = 0; it < 30; it++) { const m = (lo + hi) / 2, P = build(m); if (!P) { hi = m; continue; } const Lm = lenOf(P); if (Math.abs(Lm - Lreq) < bestE) { bestE = Math.abs(Lm - Lreq); bestP = P; } if (Lm < Lreq) lo = m; else hi = m; }
+      pts = bestP; }
+    return pts; };
+  let pts = fit(); if (!pts) return null;
+  // the arc turned AGAINST the heading change (a C of the other sign), deg
+  const backDeg = (C) => !C || !only ? 0 : ((C.s0 !== only ? C.A0 : 0) + (C.s1 !== only ? C.A1 : 0)) * 180 / Math.PI;
+  if (only && backDeg(pts.C) > 3) { one = only; const P2 = build(0); if (P2 && lenOf(P2) <= 1.03 * Lreq) { const P3 = fit(); if (P3) pts = P3; else one = 0; } else one = 0; }
+  let L = lenOf(pts); void L; void lastC;
   const R = polyOf(pts);
   // speed: linear from s0 to s1, scaled so that the path is flown in D (k > 1: the data say faster than reported)
   const k = R.len / (D * Math.max(1e-3, (s0 + s1) / 2));
   const at = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAtSmooth(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
   const atRaw = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAt(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
   const atS = (s) => polyAtSmooth(R, s);
-  return { at, atRaw, atS, len: R.len, k, dubins: true };
+  return { at, atRaw, atS, len: R.len, k, dubins: true, noRev: !!one };
 }

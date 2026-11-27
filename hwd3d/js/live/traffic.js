@@ -173,6 +173,10 @@ const bankLimAt = (hFt) => LOW_BANK_DEG + (BANK_HI_DEG - LOW_BANK_DEG) * clamp((
 const PIVOT_V = 0.5, PO_FADE_M = 6;
 const STOP_LABEL_S = 3;        // (round 4, E7) s still before 'Taxiing' reads 'Stopped' / 'Parked' (was 10 s) [inf]
 const ROT_S = 2.5;            // s: the take-off rotation ends at the lift-off [inf: ~3 deg/s pitch rate]
+const CLIMB_LEVEL_FT = 50;   // (round 6, H5) ft: a reconstructed climb-out flies wings level at least this high above its lift-off [inf]
+const TAN_JUMP_DEG = 6;   // (round 6, H2) deg: a fix whose two Hermite intervals' tangents disagree by more takes one shared tangent [inf]
+const A_ROLL0 = 0.5;   // (round 6, H4) m/s2: the least deceleration of a landing roll-out from its touchdown (idle, drag + rolling resistance) [inf]
+const MERGE_LD = 2.5, MERGE_S = 15, MERGE_LAT = 1.5;   // (round 6, H1) s: the merge's pursuit point ahead on the target's line (x the speed, >= 8 m); its longest duration [inf]
 const BEHIND_S = 20;           // (round 4) s: the longest a body that touched down ahead of its target rolls on along its own line [inf]
 const LINEUP_M = 12;          // (round 4) the nose of a body lining up blends onto the runway heading over its last 12 m [inf]
 const PITCH_RATE = 4, ROLL_RATE = 15, PITCH_DN = 5;   // deg/s: the drawn pitch / bank rates; deg: the most nose-down pitch drawn below 1,500 ft [inf]
@@ -1204,12 +1208,25 @@ export class Traffic {
       // at that speed) [inf: 0.6 m/s, 90 s]
       const pAl = d.x * ux + d.z * uz; d.x -= pAl * ux; d.z -= pAl * uz; H.dAl = pAl; H.TbA = Math.max(HO_MIN_S, Math.min(HO_AL_MAX_S, 1.875 * Math.abs(pAl) / HO_AL_V));
       H.Tb = clamp(Math.max(HO_MIN_S, 3.94 * Math.abs(dAl) / 0.6, 3.94 * Math.abs(d.vy) / 1.0, 3.94 * Math.abs(dLat) / 0.5, Math.sqrt(5.8 * Math.hypot(d.x, d.z) / 0.2), Math.sqrt(5.8 * Math.abs(d.y) / 0.5)), HO_MIN_S, HO_MAX_S);
+      // (round 6, H2 / H5) and the ACCELERATION difference (the plan's turn and climb-rate change at its end against the fix-following
+      // target's), blended out over Tb as well, so the target's turn rate and vertical acceleration are continuous at the hand-over: matching
+      // only position and velocity, the target's turn rate stepped from the plan's to the fixes' at the join - a forced climb-out banked at
+      // +19 deg rolled to -14 and back to +5 deg within ~5 s, and a forced single's climb surged 472 -> 1,318 ft/min and then sank
+      { const X0 = {}, X1 = {}; this.samplePlan(X, X.t1 - 200, X0); this.samplePlan(X, X.t1, X1); const Q1 = this.target0(tr, X.t1 + 200, { peek: true, noX: true });
+        if (!X0.ground && !X1.ground && !Q1.ground) { const ex = (X1.vx - X0.vx) / 0.2, ez = (X1.vz - X0.vz) / 0.2, ey = ((X1.vy || 0) - (X0.vy || 0)) / 0.2, qx = (Q1.vx - Q.vx) / 0.2, qz = (Q1.vz - Q.vz) / 0.2, qy = ((Q1.vy || 0) - (Q.vy || 0)) / 0.2;
+          // (the LATERAL part only - across the fix target's track: the turn rate; the along-track and vertical acceleration differences were
+          // carried into the blend too in a first version and pushed the speed / climb rate past both - handover_rate_frames pat 15 -> 56)
+          const sQ = Math.max(1, Math.hypot(Q.vx, Q.vz)), nx = -Q.vz / sQ, nz = Q.vx / sQ, aL = clamp((ex - qx) * nx + (ez - qz) * nz, -6, 6);
+          d.ax = aL * nx; d.az = aL * nz; void ey; void qy; } }
       H.d = d; this.counters.handoverBlend = (this.counters.handoverBlend || 0) + 1; if (this.debugHo) this.debugHo.push({ type: tr.info.icao, t1: H.t1, d, dAl, dLat, Tb: H.Tb, E: [E.x, E.z, E.vx, E.vz, E.vy], Q: [Q.x, Q.z, Q.vx, Q.vz, Q.vy, Q.mode] }); }
     if (tau >= Math.max(H.Tb, H.TbA || 0)) { if (!o.peek) tr._ho = null; return r; }
     if (r.ground || !/^(aa|extrap)/.test(r.mode || '')) return r;
     const u = Math.min(1, tau / H.Tb), u2 = u * u, u3 = u2 * u, u4 = u3 * u, u5 = u4 * u, Tb = H.Tb, d = H.d;
     const f = 1 - 10 * u3 + 15 * u4 - 6 * u5, f1 = (-30 * u2 + 60 * u3 - 30 * u4) / Tb, g = Tb * (u - 6 * u3 + 8 * u4 - 3 * u5), g1 = 1 - 18 * u2 + 32 * u3 - 15 * u4;
     r.x += d.x * f + d.vx * g; r.z += d.z * f + d.vz * g; r.vx += d.x * f1 + d.vx * g1; r.vz += d.z * f1 + d.vz * g1;
+    // (round 6) the acceleration term: h(0) = h'(0) = 0, h''(0) = 1, and h, h', h'' all 0 at u = 1
+    const hA = Tb * Tb * (0.5 * u2 - 1.5 * u3 + 1.5 * u4 - 0.5 * u5), hA1 = Tb * (u - 4.5 * u2 + 6 * u3 - 2.5 * u4);
+    if (d.ax != null) { r.x += d.ax * hA; r.z += d.az * hA; r.vx += d.ax * hA1; r.vz += d.az * hA1; }
     if (H.dAl && tau < H.TbA) { const w = tau / H.TbA, w2 = w * w, w3 = w2 * w, fa = 1 - 10 * w3 + 15 * w2 * w2 - 6 * w3 * w2, fa1 = (-30 * w2 + 60 * w3 - 30 * w2 * w2) / H.TbA, sp = Math.hypot(r.vx, r.vz);
       if (sp > 1) { const ux = r.vx / sp, uz = r.vz / sp; r.x += ux * H.dAl * fa; r.z += uz * H.dAl * fa; r.vx += ux * H.dAl * fa1; r.vz += uz * H.dAl * fa1; } }
     r.y = Math.max(r.y + d.y * f + d.vy * g, this.groundY(r.x, r.z) + 0.3); r.vy = (r.vy || 0) + d.y * f1 + d.vy * g1;
@@ -1290,7 +1307,8 @@ export class Traffic {
         // (round 4, E1) no touch-and-go fits (a roll that slow and short cannot take the time): a LOW PASS on the same path, re-timed to
         // one steady speed with gentle ramps from / to the reported speeds (the Hermite speed profile dipped below the stall speed in
         // the middle of the hole: 43 kt for a 51-kt stall)
-        const G2 = this.lowPassCurve(tr, G, a, b, dt);
+        // (round 6: on the shortest hole path, as before - the one-way path, longer, put a low pass at the stall speed)
+        const G2 = this.lowPassCurve(tr, G.noRev ? (this.airCurveFor(tr, a, b, dt, true) || G) : G, a, b, dt);
         if (G2) { const q = G2.at((t - a.t) / 1000); Object.assign(o, { x: q.x, z: q.z, vx: q.vx, vz: q.vz, gs: q.v, ground: false, ex: 0, mode: 'aa:low' }); this.vertHermite(o, a, b, dt, u, G.lowA); o.y = Math.max(o.y, this.groundY(o.x, o.z) + 0.3); o.hd = null; o.recon = true; o.planPh = 'low_pass'; return o; } }
       if (G) { const q = G.at((t - a.t) / 1000); Object.assign(o, { x: q.x, z: q.z, vx: q.vx, vz: q.vz, gs: q.v, ground: false, ex: 0, mode: 'aa:geo' + (G.lowA ? ':pass' : '') }); this.vertHermite(o, a, b, dt, u, G.lowA); o.y = Math.max(o.y, this.groundY(o.x, o.z) + 0.3); o.hd = null; if (G.lowA || b.lowPass) o.recon = true; return o; }
     }
@@ -1306,6 +1324,25 @@ export class Traffic {
     const farX = a.ground !== b.ground && !heli && Math.hypot((a.ground ? a : b).px, (a.ground ? a : b).pz) > GROUND_VIEW_M;
     const jump = !lin && a.ground && b.ground && cs * dt > 1.6 * Math.max(a.gsm || 0, b.gsm || 0, 0.8) * dt + 3;
     if (lin || (!ok(va) && !jump)) va = [cx, cz]; if (lin || (!ok(vb) && !jump)) vb = [cx, cz];
+    // (round 6, H2) a SHARED TANGENT at a fix whose two intervals' tangents disagree by more than TAN_JUMP_DEG: a fix whose reported velocity
+    // agrees with one chord and not the other got the report on one side and the chord on the other, so the target's direction jumped at the
+    // fix (25 deg in one frame, pat window) and swung back inside the next interval - an S the wings rocked through. There both intervals take
+    // the same tangent: the report itself where it is within 45 deg of both chords, else the mean direction of the two old tangents at their
+    // mean speed. Fixes whose tangents already agree (both sides on the report) and every other interval keep their curves exactly; the
+    // round-5 shared tangent (at every fix, the mean of the chords) moved every fix-following path and was dropped [inf: TAN_JUMP_DEG, 45 deg]
+    if (!a.ground && !b.ground && !lin && !heli && a === F[i - 1] && !this.noTanShare) {
+      const tanOf = (p, q) => { if (!p || !q || p.ground || q.ground) return null; const d = (q.t - p.t) / 1000; if (!(d > 0) || d > HOLE_S || d > 60) return null;
+        const kx = (q.px - p.px) / d, kz = (q.pz - p.pz) / d, ks = Math.hypot(kx, kz), okk = (v) => Math.hypot(v[0] - kx, v[1] - kz) < Math.max(3, 0.35 * ks);
+        return { ch: [kx, kz], va: okk([p.vx, p.vz]) ? [p.vx, p.vz] : [kx, kz], vb: okk([q.vx, q.vz]) ? [q.vx, q.vz] : [kx, kz] }; };
+      const share = (f, vL, vR, chL, chR) => { const sL = Math.hypot(vL[0], vL[1]), sR = Math.hypot(vR[0], vR[1]); if (!(sL > 1) || !(sR > 1)) return null;
+        if (Math.abs(wrapPi(bearR(vR[0], vR[1]) - bearR(vL[0], vL[1]))) <= TAN_JUMP_DEG * D2R) return null;
+        const rv = [f.vx || 0, f.vz || 0], rs = Math.hypot(rv[0], rv[1]), dev = (ch) => Math.abs(wrapPi(bearR(rv[0], rv[1]) - bearR(ch[0], ch[1])));
+        if (rs > 5 && dev(chL) < 45 * D2R && dev(chR) < 45 * D2R) return rv;
+        const m = [vL[0] / sL + vR[0] / sR, vL[1] / sL + vR[1] / sR], ms = Math.hypot(m[0], m[1]); if (!(ms > 0.2)) return null; const sp = 0.5 * (sL + sR);
+        return [m[0] / ms * sp, m[1] / ms * sp]; };
+      const Lf = i >= 2 ? tanOf(F[i - 2], a) : null; if (Lf) { const s2 = share(a, Lf.vb, va, Lf.ch, [cx, cz]); if (s2) { va = s2; this.counters.tanShare = (this.counters.tanShare || 0) + 1; } }
+      const Rf = i + 1 < n ? tanOf(b, F[i + 1]) : null; if (Rf) { const s2 = share(b, vb, Rf.va, [cx, cz], Rf.ch); if (s2) vb = s2; }
+    }
     const u2 = u * u, u3 = u2 * u;
     const h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
     o.x = h00 * apx + h10 * dt * va[0] + h01 * bpx + h11 * dt * vb[0];
@@ -1413,8 +1450,11 @@ export class Traffic {
     const link = (p, q) => q.t - p.t <= HOLE_S * 1000 && q.t > p.t && Math.hypot(q.px - p.px, q.pz - p.pz) <= 1.6 * Math.max(p.gsm, q.gsm) * (q.t - p.t) / 1000 + 4;
     if (!ok(a) || !ok(b) || !link(a, b)) return null;
     let k0 = i - 1, k1 = i;
-    while (k0 > 0 && i - 1 - k0 < 120 && ok(F[k0 - 1]) && link(F[k0 - 1], F[k0])) k0--;
-    while (k1 < F.length - 1 && k1 - i < 120 && ok(F[k1 + 1]) && link(F[k1], F[k1 + 1])) k1++;
+    // (round 6, H1) nor across an interval the smoothed runway roll takes (rollRunOf: a fix at 10-12.9 m/s on the runway qualifies for both): the
+    // taxi run ends at the fix where the roll run starts (and starts where one ends), so both pass exactly through that fix - the taxi run ran on
+    // past it, its smoothed point there lay 0.9 m behind the roll run's, and the target stepped back at the hand-over
+    while (k0 > 0 && i - 1 - k0 < 120 && ok(F[k0 - 1]) && link(F[k0 - 1], F[k0]) && !this.rollRunOf(tr, F, k0)) k0--;
+    while (k1 < F.length - 1 && k1 - i < 120 && ok(F[k1 + 1]) && link(F[k1], F[k1 + 1]) && !this.rollRunOf(tr, F, k1 + 1)) k1++;
     const key = F[k0].t + ':' + F[k1].t + ':' + (k1 - k0);
     const Cc = tr._tsC || (tr._tsC = new Map()); if (Cc.has(key)) return Cc.get(key);
     const n = k1 - k0 + 1, T = [], X = [], Z = [], V0 = [];
@@ -1644,10 +1684,11 @@ export class Traffic {
     this.counters.touchGoNone = (this.counters.touchGoNone || 0) + 1; if (this.debugPlan) console.log('planTouchGo none', JSON.stringify({ dt, ch: Math.round(ch), va: +(va / KT).toFixed(0), vb: +(vb / KT).toFixed(0), hA: Math.round(hA / FT), hB: Math.round(hB / FT), why: WH }));
     return null;
   }
-  airCurveFor(tr, a, b, dt) {
-    const k = 'h' + a.t; if (tr.routeCache.has(k)) return tr.routeCache.get(k);
+  // (round 6: plain - the shortest path, without the one-way rule of turnFlight (opt.noRev); a low pass re-timed on the hole's path keeps it)
+  airCurveFor(tr, a, b, dt, plain = false) {
+    const k = 'h' + a.t + (plain ? 'p' : ''); if (tr.routeCache.has(k)) return tr.routeCache.get(k);
     const sa = Math.hypot(a.vx, a.vz), sb = Math.hypot(b.vx, b.vz);
-    let dA = sa > 1 ? [a.vx / sa, a.vz / sa] : null, dB = sb > 1 ? [b.vx / sb, b.vz / sb] : null; const opt = {};
+    let dA = sa > 1 ? [a.vx / sa, a.vz / sa] : null, dB = sb > 1 ? [b.vx / sb, b.vz / sb] : null; const opt = plain ? { noRev: false } : {};
     // (iteration 2 of review round 3, F2) a runway pass inside the hole - a low pass, touch-and-go or go-around: the part below
     // ~100 ft stays a straight on the runway centreline (f.lowPass, report()) and the lateral join to the other fix is flown
     // above it (it was a Hermite S-curve over the infield grass at 0-50 ft, drifting toward the parallel runway). From a low fix
@@ -1667,6 +1708,12 @@ export class Traffic {
   // flown speed - then a Dubins turn-straight-turn path at a 25-deg-bank radius, lengthened on the initial heading to the
   // length the reported speeds fly (motion.js turnFlight). opt.final: m of straight final into p1 (landings) [inf]
   flightCurve(tr, p0, d0, s0, p1, d1, s1, D, opt = {}) {
+    // (round 6, H3: every fixed-wing air path - a hole between fixes, a planned climb-out's join to its first airborne fix - turns
+    // only the way its heading changes when that fits its time: turnFlight opt.noRev; the forced climb-out of a light single turned right to
+    // its join heading + 6 deg and back left into it, +19 -> -14 deg of bank within 4 s at ~500 ft)
+    // (not an approach into a touchdown - opt.final: its time split and touchdown point are chosen against the path's length, and the longer
+    // one-way path moved touchdowns and the take-offs that follow them, weekday window)
+    if (opt.noRev == null && !opt.final) opt = { ...opt, noRev: true };
     const G = geoHermite(p0, d0, s0, p1, d1, s1, D);
     if (tr.dims && tr.dims.cls === 'heli') return G;
     // (round 5, V2 / V6) a climb-out whose join to the first airborne fix turns little is flown as the longest straight on the runway
@@ -1698,6 +1745,13 @@ export class Traffic {
       if (ki >= 100 || kf >= 100) return this.flightCurve(tr, p0, d0, s0, p1, d1, s1, D, { ...opt, initial: Math.min(opt.initial || 0, Math.max(ki, opt.initial ? 0 : 0)), final: Math.min(opt.final || 0, Math.max(kf, 0)), keepInitial: ki >= 100 ? ki : 0, keepFinal: kf >= 100 ? kf : 0 });
       return this.flightCurve(tr, p0, d0, s0, p1, d1, s1, D, { ...opt, keepInitial: 0, keepFinal: 0 });
     }
+    // (round 6, H5) a climb-out keeps at least opt.minInitial of its straight (the wings level to ~50 ft after the lift-off) before the straight is
+    // dropped altogether: with none, a forced touch-and-go climb-out turned at once and banked 12-15 deg at 1-5 ft over the runway
+    // (only where that path is flown at <= 1.15 x the reported speeds - the air_overspeed limit; else no straight, as before)
+    if (best && best.k > 1.35 && opt.minInitial > 1 && (opt.initial || 0) > opt.minInitial + 1) {
+      const M = this.flightCurve(tr, p0, d0, s0, p1, d1, s1, D, { ...opt, initial: opt.minInitial, keepInitial: Math.min(opt.keepInitial || 0, opt.minInitial), minInitial: 0, noFallback: true });
+      if (M && M.k != null && M.k <= 1.15) { this.counters.climbMinInitial = (this.counters.climbMinInitial || 0) + 1; return M; } }
+    if (opt.noFallback && (!best || best.k > 1.35)) return null;
     if (best && best.k > 1.35 && (opt.final || opt.initial)) return this.flightCurve(tr, p0, d0, s0, p1, d1, s1, D, { ...opt, final: 0, initial: 0 });   // no room for a final / straight climb-out
     if (!best || best.k > 1.35) return G;
     this.counters.turnFlight = (this.counters.turnFlight || 0) + 1;
@@ -2073,10 +2127,14 @@ export class Traffic {
     // (the profile accelerates at 0.8 x the body's limit, so a body that fell behind can catch up on the way)
     // (round 5 iteration 3, G7) spare time: the cruise down to TAXI_SLOW before a stop (motion.js profilePath), and a stop never on a runway
     // or between a runway and its holding position (+ half the aircraft's length)
+    // (round 6, H4) a ROLL-OUT (a landing's ground part from the touchdown: 'rollout', 'exit') never holds its touchdown speed on the runway head:
+    // at idle the aircraft decelerates from the touchdown on (drag and rolling resistance, A_ROLL0), so the head's cap falls along that curve
+    // and the profile's own braking takes over where it must; the shortest profile used to roll on at the touchdown speed for ~5 s and brake late
+    const rollOut = (kind === 'rollout' || kind === 'exit') && v0 > TAXI_V;
     const Lh = tr.dims ? 0.5 * tr.dims.L : 5, stopOk = (s) => { const p = polyAt(R, clamp(s, 0, R.len)); return !this.rwyZone(p.x, p.z, Lh); };
     const opt = { acc: 0.8 * (v1 > TAXI_V ? (LIM.rollAcc[cls] || 2.5) : LIM.taxiAcc), dec: o2.dec ?? (v0 > TAXI_V ? (cls === 'jet' || cls === 'turboprop' ? 3.0 : 2.5) : LIM.taxiDec), lat: LIM.latGround, w: LIM.wGround * D2R, pivotW: LIM.wPivot * D2R, vTyp: TAXI_TYP, vSlow: TAXI_SLOW, stopOk,
       lu: o2.lineup ? (() => { const g = LU_RUNGS[this._luRung || 0]; return g ? { len: LU_LEN, lat: g.lat, w: g.w * D2R, vmax: g.v } : null; })() : null,
-      cap: (s) => (s <= sR0 ? capYaw(s, Math.max(TV, v0)) : s >= sR1 ? capYaw(s, Math.max(TV, v1)) : rwyS && rwyS[Math.min(rwyS.length - 1, Math.round(s / 4))] && rwyS[Math.min(rwyS.length - 1, Math.round((s + 8) / 4))] ? Math.max(TV, vRw) : TV) };
+      cap: (s) => (s <= sR0 ? capYaw(s, Math.max(TV, rollOut ? Math.min(v0, Math.sqrt(Math.max(0, v0 * v0 - 2 * A_ROLL0 * s))) : v0)) : s >= sR1 ? capYaw(s, Math.max(TV, v1)) : rwyS && rwyS[Math.min(rwyS.length - 1, Math.round(s / 4))] && rwyS[Math.min(rwyS.length - 1, Math.round((s + 8) / 4))] ? Math.max(TV, vRw) : TV) };
     // (round 4 iteration 3, F10) a start from rest with the nose more than 30 deg off the path's first direction pivots first (about
     // the inner wheel, PIVOT_V) - in the profile as a dwell at the start, during which the target is a planned wait with the path's
     // heading (sampleGround): case S's body pivoted 65 deg off its FBO spot while its target had already left, then caught up at
@@ -2105,7 +2163,10 @@ export class Traffic {
     const P = profilePath(R, D, v0, v1, opt);
     if (!gentleOk && v0 > TAXI_V && !(v1 > TAXI_V) && tr.dims) { const thr = 0.9 * this.spd(tr).vr, f0 = fastProfS(P, thr);
       for (const decLo of [Math.min(opt.dec, 2.0), opt.dec]) { const Pr = profilePath(R, D, v0, v1, { ...opt, decLo, vLo: TAXI_V, lat: Math.min(opt.lat, TAXI_LAT_G), w: Math.min(opt.w, TAXI_W_G * D2R) });
-        if (Pr.feasible && fastProfS(Pr, thr) <= f0 + 0.5) { this.counters.rollOutGentle = (this.counters.rollOutGentle || 0) + 1; return { kind, R, P: Pr, t0: a ? a.t : 0, v0, v1, gentle: true }; } }
+        // (round 6, H4: only within its time, never time-compressed - a profile that needs up to 1.15 x its time is played up to 15 % fast,
+        // and the roll-out of a reconstructed landing ran from its 60.5-kt touchdown up to 66.5 kt, held there ~4 s above lift-off speed and was
+        // labelled a take-off roll; the plain roll-out profile, which brakes from the touchdown, is used instead)
+        if (Pr.feasible && Pr.T <= D + 1e-6 && fastProfS(Pr, thr) <= f0 + 0.5) { this.counters.rollOutGentle = (this.counters.rollOutGentle || 0) + 1; return { kind, R, P: Pr, t0: a ? a.t : 0, v0, v1, gentle: true }; } }
       this.counters.rollOutGentleNo = (this.counters.rollOutGentleNo || 0) + 1; }
     if (!P.feasible && !force) return null;
     return { kind, R, P, t0: a ? a.t : 0, v0, v1 };
@@ -2348,7 +2409,18 @@ export class Traffic {
     for (const tol of [0, BANK_TOL]) { if (P) break; this._bankTol = tol;
       for (const gentle of [true, false]) for (let g = 0; g < LU_RUNGS.length && !P; g++) { this._luRung = g; P = this.planTakeoff1(tr, a0, b, dt, t0, gentle); if (!P && g === 0 && !gentle && !tol) why0 = this._why; if (P) P.lineup = LU_RUNGS[g]; }
       if (P && tol) this.counters.climbOutBankTol = (this.counters.climbOutBankTol || 0) + 1; }
-    this._bankTol = 0; this._luRung = 0; if (!P) this._why = why0; else if (P.lineup !== LU_RUNGS[0]) this.counters.lineupFaster = (this.counters.lineupFaster || 0) + 1;
+    this._bankTol = 0; this._luRung = 0;
+    // (round 6, H3 / H7) no option whose climb-out joins its first airborne fix one way only (flightCurve noRev: the longer one-way join is
+    // flown faster or turns tighter): the ladder once more with the shortest join, as before round 6 - a touch-and-go single whose one-way
+    // join failed every option was drawn with the forced plan instead (a 10-s later lift-off, banked right off the runway and at 35 deg at
+    // the join) where the shortest join rolled +11 -> -13 deg at its end (counters.takeoffShortestJoin)
+    if (!P) { this._noRevOff = true;
+      try { for (const tol of [0, BANK_TOL]) { if (P) break; this._bankTol = tol;
+        for (const gentle of [true, false]) for (let g = 0; g < LU_RUNGS.length && !P; g++) { this._luRung = g; P = this.planTakeoff1(tr, a0, b, dt, t0, gentle); if (P) P.lineup = LU_RUNGS[g]; }
+        if (P && tol) this.counters.climbOutBankTol = (this.counters.climbOutBankTol || 0) + 1; } }
+      finally { this._noRevOff = false; this._bankTol = 0; this._luRung = 0; }
+      if (P) this.counters.takeoffShortestJoin = (this.counters.takeoffShortestJoin || 0) + 1; }
+    if (!P) this._why = why0; else if (P.lineup !== LU_RUNGS[0]) this.counters.lineupFaster = (this.counters.lineupFaster || 0) + 1;
     return P;
   }
   planTakeoff1(tr, a0, b, dt, t0 = a0.t, gentle = false) {
@@ -2554,8 +2626,11 @@ export class Traffic {
     // sized for a linear VR -> vc profile it came out short and was flown below the minimum flying speed)
     // (round 5, V6: a forced climb-out joins with the gentlest bank of FORCE_BANKS that flies the path at <= 1.3 x the reported speed)
     if (force && !air._rung) return this.takeoffAirForced(tr, air, c, kMax, ini, keep, dist, vc, dC, D);
-    const C0 = air._rung ? this.flightCurve(tr, air.LO, air.dirR, vc, [c.px, c.pz], dC, vc, D, { initial: Math.max(ini, air._rung.e), keepInitial: air._rung.e, banks: [[air._rung.bank, 1]], kOk: 9 })
-      : this.flightCurve(tr, air.LO, air.dirR, vc, [c.px, c.pz], dC, vc, D, { initial: Math.max(ini, Math.min(keep, 0.7 * dist)), keepInitial: Math.min(keep, 0.7 * dist), ...(force ? { banks: FORCE_BANKS, kOk: 1.3 } : {}) });
+    // (round 6, H5) the straight the climb-out keeps at least: to ~CLIMB_LEVEL_FT above the lift-off at the climb the plan flies there (the
+    // type's climb, or the forced plan's mean climb to the fix), never more than 0.5 x the distance to the fix
+    const vsLO = Math.max(1, Math.min((this.spd(tr).climb || 3), Math.max(0.5, (c.y - (air.y ?? air.gyLO)) / D))), minIni = Math.min(0.5 * dist, Math.max(0, air.vLO * (CLIMB_LEVEL_FT * FT / vsLO + 1) - (air.flown || 0)));
+    const C0 = air._rung ? this.flightCurve(tr, air.LO, air.dirR, vc, [c.px, c.pz], dC, vc, D, { initial: Math.max(ini, air._rung.e), keepInitial: air._rung.e, banks: [[air._rung.bank, 1]], kOk: 9, minInitial: minIni, ...(air._noRev === false || this._noRevOff ? { noRev: false } : {}) })
+      : this.flightCurve(tr, air.LO, air.dirR, vc, [c.px, c.pz], dC, vc, D, { initial: Math.max(ini, Math.min(keep, 0.7 * dist)), keepInitial: Math.min(keep, 0.7 * dist), minInitial: minIni, ...(force ? { banks: FORCE_BANKS, kOk: 1.3 } : {}), ...(air._noRev === false || this._noRevOff ? { noRev: false } : {}) });
     if (!C0) return null;
     // (re-timed: after lift-off the aircraft accelerates at <= 1.2 m/s2 from its lift-off speed and then flies the path at one
     // speed vc'; k = vc' / the reported speed at c - the linear VR -> vc profile of the curve made a late, slow start look like a
@@ -2599,16 +2674,27 @@ export class Traffic {
   takeoffAirForced(tr, air, c, kMax, ini, keep, dist, vc, dC, D) {
     const y0 = air.y ?? air.gyLO, vsm = Math.max(0.5, (c.y - y0) / D), vAvg = 0.5 * (air.vLO + vc), base = Math.min(keep, 0.7 * dist);
     const hMin = (b) => (b <= 15 ? 0 : b <= 20 ? 100 + (b - 15) * 40 : 300) * FT;
-    let best = null, bestC = Infinity;
-    for (const bank of [15, 18, 20, 25, 30]) {
-      // (and at least FORCE_STRAIGHT_S of straight climb after the lift-off: a 15-deg rung turned off the runway heading 25 deg within 12 s)
-      const e = Math.min(0.9 * dist, Math.max(base, vAvg * (hMin(bank) / vsm + 3), vAvg * FORCE_STRAIGHT_S));
-      const S0 = this.takeoffAir(tr, { ...air, _rung: { e, bank } }, c, true, kMax); if (!S0) continue;
-      // (a climb front-loaded to turn higher - the fix's vertical speed eased to 1/2 or 0 at the join - was tried and dropped: the level-off
-      // before the join and the hand-over back to the fixes' climb drew a light single climbing at 1,080 ft/min on its crosswind leg)
-      const cost = this.forceCost(tr, S0, air, c, kMax); if (cost < bestC - 1e-6) { best = S0; bestC = cost; }
-      if (bestC <= 1e-6) break;
-    }
+    const rungs = (noRev) => { let best = null, bestC = Infinity;
+      for (const bank of [15, 18, 20, 25, 30]) {
+        // (and at least FORCE_STRAIGHT_S of straight climb after the lift-off: a 15-deg rung turned off the runway heading 25 deg within 12 s)
+        const e = Math.min(0.9 * dist, Math.max(base, vAvg * (hMin(bank) / vsm + 3), vAvg * FORCE_STRAIGHT_S));
+        const S0 = this.takeoffAir(tr, { ...air, _rung: { e, bank }, _noRev: noRev }, c, true, kMax); if (!S0) continue;
+        // (a climb front-loaded to turn higher - the fix's vertical speed eased to 1/2 or 0 at the join - was tried and dropped: the level-off
+        // before the join and the hand-over back to the fixes' climb drew a light single climbing at 1,080 ft/min on its crosswind leg)
+        const cost = this.forceCost(tr, S0, air, c, kMax); if (cost < bestC - 1e-6) { best = S0; bestC = cost; }
+        if (bestC <= 1e-6) break;
+      }
+      return { best, bestC }; };
+    let { best, bestC } = rungs(undefined);
+    // (round 6, H3 / H7) the one-way join (flightCurve noRev) can turn tighter low down than the shortest join: the forced climb-out of a
+    // light single turned at 21-23 deg of DRAWN bank at 196-300 ft (the forced rule: 15 -> 20 deg below 300 ft) where the shortest join
+    // turned at <= 19 deg there and reversed at ~500 ft. When the one-way join's drawn bank (the 2-s windowed turn rate, as turnRateS
+    // draws it) breaks the low-height rule and the shortest join's breaks it by >= 1 deg less, at no more cost (+0.5), the shortest join
+    // is drawn (the low-height bank before the reversal higher up) [inf: 1 deg, 0.5]
+    const low = best ? this.segLowBankDrawn(best, air.gyLO, forcedBankLim) : 0;
+    if (best && low > 0.5) {
+      const R = rungs(false);
+      if (R.best && this.segLowBankDrawn(R.best, air.gyLO, forcedBankLim) <= low - 1 && R.bestC <= bestC + 0.5) { best = R.best; bestC = R.bestC; this.counters.forcedRevKeep = (this.counters.forcedRevKeep || 0) + 1; } }
     if (best) this.counters.forcedRung = (this.counters.forcedRung || 0) + 1;
     return best;
   }
@@ -2619,6 +2705,18 @@ export class Traffic {
   // (round 4 iteration 2, F1) the largest excess of the drawn coordinated bank over the low-height limit (max(CLIMB_BANK_MIN, bankLimAt)) along
   // an air segment, 0.5-s samples: <= 0 = within it
   // (round 4 iteration 3, F9) lim(h ft) -> deg: the landing approach's own limit (LAND_BANK_DEG below LAND_BANK_FT; above it the climb-out rule)
+  // (round 6, H7) the largest excess of the DRAWN bank below 300 ft over lim(h ft): the coordinated bank of the mean turn rate over
+  // +-BANK_H s (as turnRateS draws it) along the re-timed path S.C.at, 0.25-s samples; <= 0 = within it
+  segLowBankDrawn(S, gy, lim) {
+    const D = (S.t1 - S.t0) / 1000, n = Math.max(8, Math.ceil(D / 0.25)), hd = [], vv = [], hh = [];
+    const yAt = (tau) => S.vglide ? glideY(S, tau, D).y : D > HOLE_S ? vTrapAt(S._vt || (S._vt = vTrap(S.y0, S.y1, S.vy0, S.vy1, D)), tau).y
+      : (() => { const u = tau / D, u2 = u * u, u3 = u2 * u; return (2 * u3 - 3 * u2 + 1) * S.y0 + (u3 - 2 * u2 + u) * D * S.vy0 + (-2 * u3 + 3 * u2) * S.y1 + (u3 - u2) * D * S.vy1; })();
+    for (let j = 0; j <= n; j++) { const tau = D * j / n, q = S.C.at(tau); hd.push(Math.atan2(q.vx, -q.vz)); vv.push(Math.hypot(q.vx, q.vz)); hh.push((yAt(tau) - gy) / FT); }
+    const w = Math.max(1, Math.round(BANK_H / (D / n))); let worst = -1e9;
+    for (let j = 0; j <= n; j++) { if (hh[j] >= 300) continue; const a = Math.max(0, j - w), b = Math.min(n, j + w); if (b <= a) continue;
+      const rate = wrapPi(hd[b] - hd[a]) / ((b - a) * D / n), bank = Math.atan(Math.abs(vv[j] * rate) / GRAV) / D2R; worst = Math.max(worst, bank - lim(hh[j])); }
+    return worst;
+  }
   segBankExcess(S, gy, lim = null) {
     const D = (S.t1 - S.t0) / 1000, n = Math.max(4, Math.ceil(D / 0.5)); let prev = null, worst = -1e9;
     const yAt = (tau) => S.vglide ? glideY(S, tau, D).y : D > HOLE_S ? vTrapAt(S._vt || (S._vt = vTrap(S.y0, S.y1, S.vy0, S.vy1, D)), tau).y
@@ -3148,12 +3246,15 @@ export class Traffic {
     // ran past its trail end at a corner)
     const fo = tr.physOff || [0, 0];
     let px = o.x, pz = o.z, L = Math.max(0, gap), vMin = Infinity, i = n - 1, tPrev = 0, ux = Math.sin(c.psi), uz = -Math.cos(c.psi), air = false;
+    const heliG = !!(tr.dims && tr.dims.cls === 'heli');
     try {
       for (const tau of GA_TAUS) {
         if (tau > H) break;
         const tq = t0 + tau * 1000; if (tq >= tLast) break;
         const X = tr.xplan, inX = X && tq >= X.t0 && tq <= X.t1;
-        if (!inX) { i = n - 1; while (i > 0 && F[i - 1].t > tq) i--; if (i < 1) break; if (!F[i - 1].ground || !F[i].ground) { air = true; break; } }
+        // (round 6, H1: a helicopter's interval into or out of the air is sampled too - no plan is ever built for one - and its target's own
+        // ground flag decides below: a hover-taxi at 18 kt into a fix at 5 kt 64 deg off its line is braked for)
+        if (!inX) { i = n - 1; while (i > 0 && F[i - 1].t > tq) i--; if (i < 1) break; if (!heliG && (!F[i - 1].ground || !F[i].ground)) { air = true; break; } }
         q.peek = true; const r = this.target0(tr, tq, q);
         if (r.before) break; if (!r.ground) { air = true; break; }
         const rx = r.x + fo[0], rz = r.z + fo[1], dx = rx - px, dz = rz - pz, dL = Math.hypot(dx, dz);
@@ -3178,7 +3279,7 @@ export class Traffic {
   }
   ctlGround(tr, T, c, o, dt) {
     // (the 'behind' mode is for a TOUCHDOWN - a body that comes from the air; a body created on the ground follows its trail at once)
-    if (!c.ground || !c.trail) { c.behind = !c.ground || !!c.td; c.behindT = null; c.td = false; c.ground = true; c.vy = 0; c.trail = { x: [c.x], z: [c.z], s: [0] }; c.s = 0; c.lock = null; c.hw = 0; c.po = [0, 0]; }
+    if (!c.ground || !c.trail) { c.behind = !c.ground || !!c.td; c.behindT = null; c.mergeT = null; c.td = false; c.ground = true; c.vy = 0; c.trail = { x: [c.x], z: [c.z], s: [0] }; c.s = 0; c.lock = null; c.hw = 0; c.po = [0, 0]; }
     // (round 4, E6) REST LOCK: a body standing still whose target rests (a rest pose, a planned wait, a stop) within REST_LOCK_M - the
     // position error of a GA ADS-B fix - keeps its pose exactly: no trail is laid from the target's centimetre jitter, no pivot
     // toward a new rest heading, no physics re-placement (GroundPhysics places a locked body where it is drawn). It moves again only
@@ -3223,7 +3324,22 @@ export class Traffic {
       // (round 4 iteration 3, F1: released only once the target leads by more than the follower's own lead - 1.5 frames of travel, >= 1 m:
       // released at 1 m with 3.5 m of travel per frame, the new trail held the body to 1 m - one frame at 20 kt in case P's landing roll)
       const leadR = Math.max(1, 1.5 * c.v * dt);
-      if (c.v > 1 && tAl && ((ahead < -1 && lat < Math.max(3, -0.3 * ahead)) || (ahead < leadR && lat < 3 && (ahead < 0.3 || this._stepT - c.behindT < BEHIND_S * 1000)))) {
+      const hold = c.v > 1 && tAl && ((ahead < -1 && lat < Math.max(3, -0.3 * ahead)) || (ahead < leadR && lat < 3 && (ahead < 0.3 || this._stepT - c.behindT < BEHIND_S * 1000)));
+      // (round 6, H1) MERGE: a body still moving (> 1 m/s) whose moving target (> 0.5 m/s, within 90 deg of its nose, < 15 m away) is not yet
+      // ahead of it by the follower's own lead but has left the body's line (> 3 m beside it, or turned
+      // > 30 deg away: a planned landing roll swinging toward the runway edge for its back-taxi turn, a hover-taxi turning into its next fix)
+      // stays in this mode and STEERS onto the target's line (a pursuit point MERGE_LD s ahead on it), its speed rate-limited from its own as
+      // above and held down while its nose is turning; once the target leads it is released onto its trail. Released at once, its new
+      // trail ran from the body to a target level with it and beside it: no direction, and the clamp to the trail end stopped it dead
+      // (14.3 -> 0 kt in one frame, then a 14-deg pivot in place) [inf: 15 m, 90 deg, MERGE_LD, MERGE_S]
+      const tCos = (o.gs || 0) > 0.5 ? ((o.vx || 0) * f[0] + (o.vz || 0) * f[1]) / o.gs : 1, dTo = Math.hypot(o.x - c.x, o.z - c.z);
+      if (!hold && c.mergeT == null) c.mergeT = this._stepT;
+      // (only while the target is not yet ahead by the follower's lead and is >= MERGE_LAT beside the body's line: a target that turns off while
+      // level with the body - a planned exit - is followed on its trail, as before; merging toward it slowed a business jet to 1 kt in its exit
+      // turn, weekend window)
+      const merge = !hold && c.v > 1 && (o.gs || 0) > 0.5 && !o.stop && tCos > 0 && dTo < 15 && ahead < leadR && lat >= MERGE_LAT && this._stepT - c.mergeT < MERGE_S * 1000 && T && !tr.vehicle;
+      if (hold) c.mergeT = null;
+      if (hold || merge) {
         const aDec = Math.max(o.gs, c.v) > 15 ? LIM.rollDec : LIM.taxiDec, aAcc = Math.max(o.gs, c.v) > 15 ? (LIM.rollAcc[T ? T.cls : 'unknown'] || 2.5) : LIM.taxiAcc;
         // (round 4: a target behind lets the body slow gently - 0.3 m/s per m, >= 0.9 x its speed - not to 0.8 x: case P lost 8 kt in 2 s
         // after the touchdown and then sped up again to rejoin)
@@ -3235,10 +3351,15 @@ export class Traffic {
         // more than 0.5 m/s (a fix-to-fix Hermite whose field reads the reported 31 kt at its first fix while its positions cover 40-45 kt:
         // the body braked to the field), and the body anticipates its target's abrupt slow-downs as a trail-following body does (groundAhead): a
         // planned landing roll handing over to the fixes braked the body at 5 m/s2 (36 -> 18 kt in 0.3 s before)
-        const fwB = T && T.cls !== 'heli' && !tr.vehicle, vA = fwB ? this.groundAhead(tr, c, o, Math.max(0, ahead), G_DEC) : Infinity;
+        // (round 6, H1: helicopters too - a hover-taxi held at 18 kt behind its touchdown stopped dead where its target turned into a 5-kt fix)
+        // (round 6, H1: planned at the braking the body will have once released - G_DEC on a roll, LIM.taxiDec below 15 m/s - and braked to it at up to
+        // 1.5 x that, as a trail-following body is: planned at G_DEC while held at the 2-m/s2 hold braking, a hover-taxi fell behind its own
+        // anticipation and reached its slowed target at 10 kt above its speed)
+        const rB = Math.max(o.gs || 0, c.v) > 15, aPB = rB ? G_DEC : LIM.taxiDec;
+        const fwB = T && !tr.vehicle, vA = fwB ? this.groundAhead(tr, c, o, Math.max(0, ahead), aPB) : Infinity;
         const og = fwB && this._gaV0 != null && Math.abs(this._gaV0 - (o.gs || 0)) > 0.5 ? this._gaV0 : (o.gs || 0);
         let vT = ahead < -1 ? Math.max(og - 0.3 * xs - 0.3, og * 0.8, 0) : Math.max(og - 0.5, og * 0.97, 0);
-        if (vA < vT) { vT = vA; this.counters.groundAnticip = (this.counters.groundAnticip || 0) + 1; }
+        const antB = vA < vT; if (antB) { vT = vA; this.counters.groundAnticip = (this.counters.groundAnticip || 0) + 1; }
         // (braking toward it at <= 2 m/s2 while the lead is the follower's own - the 3.5-m/s2 roll limit was a jolt right after
         // case P's touchdown; a body really ahead brakes at the roll limit: a body 20 m ahead of a target braking at 3 m/s2
         // overran it by 55 m, turned round and was cut)
@@ -3249,12 +3370,24 @@ export class Traffic {
         // + 0.2 - up to 5 m/s2. Capped at LIM.rollDec in an intermediate tree of this iteration, a large business jet rolled 17 m ahead of its
         // planned landing roll braking at 3.7 m/s2, into the plan's back-taxi turn, stopped there and pivoted while its target ran on, and was
         // cut 155 m away: the case this rule was made for in round 4. The anticipation above starts the braking earlier)
-        const aB = xs > 0 || c.v > o.gs + 1 ? Math.max(aDec, Math.min(aT + 0.1, 5)) : Math.min(aDec, Math.max(2.0, aT + 0.5));
-        c.v = clamp(vT, c.v - aB * dt, ahead < -1 ? c.v : c.v + aAcc * dt); const ox = c.x, oz = c.z; c.x += f[0] * c.v * dt; c.z += f[1] * c.v * dt;
-        c.vx = (c.x - ox) / dt; c.vz = (c.z - oz) / dt; c.y = this.groundY(c.x, c.z); c.w = 0; c.trail = { x: [c.x], z: [c.z], s: [0] }; c.s = 0; c.hw = 0; c.po = [0, 0];
+        let aB = xs > 0 || c.v > o.gs + 1 ? Math.max(aDec, Math.min(aT + 0.1, 5)) : Math.min(aDec, Math.max(2.0, aT + 0.5));
+        if (antB) aB = Math.max(aB, rB ? LIM.rollDec : 1.5 * LIM.taxiDec);
+        let fM = f, wM = 0;
+        if (merge) { const ux = o.vx / o.gs, uz = o.vz / o.gs, eR = (c.x - o.x) * (-uz) + (c.z - o.z) * ux, Ld = Math.max(8, MERGE_LD * Math.max(c.v, o.gs));
+          const want = wrapPi(bearR(ux, uz) - Math.atan2(eR, Ld)), err = wrapPi(want - c.psi), roll = Math.max(o.gs, c.v) > 15;
+          const wMx = Math.min(LIM.wGround * D2R, Math.max(LIM.latGround / Math.max(c.v, 0.3), roll ? 5 * D2R : 0));
+          wM = clamp(err, -wMx * dt, wMx * dt); c.psi = wrapPi(c.psi + wM); fM = hvR(c.psi);
+          // (the nose more than 20 deg off where it must go: slower, as a trail-following body is - it never slides)
+          const mis = Math.abs(err) / D2R; if (mis > 20) vT = Math.min(vT, Math.max(1, c.v * clamp((60 - mis) / 40, 0, 1)));
+          this.counters.groundMerge = (this.counters.groundMerge || 0) + 1; }
+        // (round 6, H4: and never faster on a planned LANDING roll - the body touched down at 59.5 kt behind a roll-out planned from 61.3 kt,
+        // sped up 0.4 m/s within the first second with its nose still up, and read 'Take-off roll' for 2.5 s of a full-stop landing)
+        const noUp = ahead < -1 || o.planPh === 'landing_roll';
+        c.v = clamp(vT, c.v - aB * dt, noUp ? c.v : c.v + aAcc * dt); const ox = c.x, oz = c.z; c.x += fM[0] * c.v * dt; c.z += fM[1] * c.v * dt;
+        c.vx = (c.x - ox) / dt; c.vz = (c.z - oz) / dt; c.y = this.groundY(c.x, c.z); c.w = wM / dt; c.trail = { x: [c.x], z: [c.z], s: [0] }; c.s = 0; c.hw = 0; c.po = [0, 0];
         c.pv = 0; this.counters.groundAhead = (this.counters.groundAhead || 0) + 1; return;
       }
-      c.behind = false; c.behindT = null; tr._ogsB = null;
+      c.behind = false; c.behindT = null; c.mergeT = null; tr._ogsB = null;
       // (round 4 iteration 3, F1) released on a roll, the body's offset BESIDE the target's line (a touchdown 0.5-1 m beside the centreline)
       // is not driven out at once: the new trail starts on the target's line and the offset fades over max(30 m, 1.5 s) of the roll -
       // released with the trail starting at the body, its first metre pointed 15-30 deg at the centreline and the body yawed 4 deg in
@@ -3262,6 +3395,17 @@ export class Traffic {
       if (c.v > 5 && (o.gs || 0) > 1) { const ux = (o.vx || 0) / o.gs, uz = (o.vz || 0) / o.gs, lat = -(c.x - o.x) * uz + (c.z - o.z) * ux;
         if (Math.abs(lat) > 0.05 && Math.abs(lat) < 5) { const ox = -uz * lat, oz = ux * lat; c.trail = { x: [c.x - ox], z: [c.z - oz], s: [0] }; c.s = 0; c.hw = 0;
           c.po = [ox, oz]; c.poFade = Math.max(30, 1.5 * c.v); this.counters.behindLatFade = (this.counters.behindLatFade || 0) + 1; } }
+      // (round 6, H1) released while still moving with a one-point trail - the target level with or beside the body (a planned landing roll
+      // swinging toward the runway edge for its back-taxi turn 3 m beside the body, 14 deg off its nose; a hover-taxi turning 64 deg into its next
+      // fix): the trail gets a point 1 m behind its start along the body's nose, so it has a direction. The body runs on from its OWN speed
+      // (rate-limited at the follower's limits, past the trail end where needed) and turns onto the target's path as the target's points are laid
+      // ahead of it. With no direction the clamp to the one-point trail stopped it dead: 14.3 -> 0 kt in one frame, then a 14-deg pivot in place
+      // (not for a body at walking speed, nor when the target moves more than 90 deg away from the nose - a back-taxi that loops round on the
+      // runway: there the old clamp's stop from < 1.2 m/s is the gentler way, the seeded body ran on 3 m past a target turning back, was
+      // restarted behind it and fell 51 m behind - an engine cut)
+      const tCosR = (o.gs || 0) > 0.5 ? ((o.vx || 0) * Math.sin(c.psi) - (o.vz || 0) * Math.cos(c.psi)) / o.gs : -1;
+      if (Math.abs(c.v) > 1.2 && tCosR > 0 && c.trail.x.length === 1) { const f0 = hvR(c.psi), x0 = c.trail.x[0], z0 = c.trail.z[0];
+        c.trail = { x: [x0 - f0[0], x0], z: [z0 - f0[1], z0], s: [0, 1] }; c.s = 1; c.hw = 0; this.counters.releaseSeed = (this.counters.releaseSeed || 0) + 1; }
     }
     // (round 4 iteration 3, F9) a body at rest whose target starts to move from just behind or beside it, along its nose (a route that
     // begins at the fix 1-3 m behind the parked pose), waits where it is - nose held, no trail laid - until the target is ahead of it:
@@ -3287,6 +3431,13 @@ export class Traffic {
       if (pastEnd && tAhead < 0.3 && (c.s - Tq.s[n - 1] > Math.max(3, 0.6 * Math.abs(c.v)) + 1 || Math.hypot(o.x - c.x, o.z - c.z) > Math.max(10, 3 * Math.abs(c.v)))) {
         c.trail = { x: [c.x], z: [c.z], s: [0] }; c.s = 0; c.hw = 0; c.po = [0, 0]; this.counters.groundOverrunReset = (this.counters.groundOverrunReset || 0) + 1;
         this.trailPush(c, o.x, o.z); }
+      // (round 6, H1) a moving target that steps BACK along the trail by a little (< 3 m behind the trail end along its last direction, the
+      // target itself moving forward along it) is not laid as a spur: a fix-following taxi handing over to the smoothed runway roll stepped
+      // 0.9 m back, the trail ran end -> back -> forward again and the box-filtered body crawled 0.2 / 0.03 m per frame while it showed 18 kt; the
+      // target crosses the old end again a few frames later and is laid from there
+      else if (n >= 2 && (o.gs || 0) > 0.5 && !o.stop && (() => { let k = n - 2; while (k > 0 && Tq.s[n - 1] - Tq.s[k] < 0.5) k--; const L = Tq.s[n - 1] - Tq.s[k]; if (L < 0.2) return false;
+        const ux = (Tq.x[n - 1] - Tq.x[k]) / L, uz = (Tq.z[n - 1] - Tq.z[k]) / L, al = (o.x - Tq.x[n - 1]) * ux + (o.z - Tq.z[n - 1]) * uz;
+        return al < -0.05 && dEnd < 3 && ((o.vx || 0) * ux + (o.vz || 0) * uz) / o.gs > 0.5; })()) { this.counters.trailBackStep = (this.counters.trailBackStep || 0) + 1; }
       else if (!(o.stop && dEnd < 0.3) && !(pastEnd && tAhead < 0.3)) {
         // (round 5 iteration 3, G2) a body that has run past the trail end - along the last segment's direction - is anchored where it is
         // before the target is laid: the trail used to bend from its OLD end to the target, and the body's place on it jumped sideways by
@@ -3305,7 +3456,8 @@ export class Traffic {
     const gapN = Math.max(0, gap - (o.gs || 0) * dt);
     // (round 5 iteration 3, G2) a moving body samples its target ahead (groundAhead: the anticipation limit vA below) and takes the target's PATH
     // speed over the next 0.3 s where its speed field disagrees with its motion by more than 0.5 m/s
-    const fwG = T && T.cls !== 'heli' && !tr.vehicle, aP = roll ? G_DEC : LIM.taxiDec, vA = fwG && c.v > 0.5 ? this.groundAhead(tr, c, o, gap, aP) : Infinity;
+    // (round 6, H1: and so does a helicopter on the ground - the rate limit of its hover-to-ground transition)
+    const fwG = T && !tr.vehicle, aP = roll ? G_DEC : LIM.taxiDec, vA = fwG && c.v > 0.5 ? this.groundAhead(tr, c, o, gap, aP) : Infinity;
     const og = fwG && c.v > 0.5 && this._gaV0 != null && !o.stop && Math.abs(this._gaV0 - (o.gs || 0)) > 0.5 ? this._gaV0 : (o.gs || 0);
     let vDes = o.stop ? (gap < 0.05 ? 0 : Math.min(2.5, Math.sqrt(2 * 0.6 * gap))) : Math.max(0, og + Math.min(0.5 * gapN, CATCH_MS) - Math.min(0.2, 0.15 * og));   // (the lag bias fades below 1.3 m/s: a body arrived 0.5 m short and crept on)
     // (round 5 iteration 3, G2) a body still moving faster than the creep when its target stops brakes along its own braking curve to the stop
@@ -3367,6 +3519,13 @@ export class Traffic {
     // <= sqrt(2 x PIV_ACC x the angle left) - the pivot about the inner wheel started at its full rate and the reference point jumped
     // 0 -> 0.5 m/s in one frame (5.1 m/s2 at case S's hold, 3.6 m/s2 at case P's) [inf: 40 deg/s2]
     if (Math.abs(c.v) < 0.5) { const aP = PIV_ACC * D2R, wl = Math.min(Math.abs(c.w || 0) + aP * dt, Math.max(Math.sqrt(2 * aP * Math.abs(wrapPi(want - c.psi))), 0.5 * aP * dt)); w = clamp(w, -wl * dt, wl * dt); }
+    // (round 6, H7) a turn at walking speed or at rest (a pivot - an observed true heading at a hold, a planned pivot) that would swing a main
+    // wheel off the pavement where it is now on it waits instead: a business jet holding short pivoted 108 deg and back at the hold with one
+    // main wheel over the taxiway edge for ~3 s (off_pavement_moving) [counters.pivotEdgeHold]
+    // (only a pivot toward a resting target's heading - c.pivotObs or a stop: a slow turn along a route still turns)
+    if ((c.pivotObs || o.stop) && Math.abs(c.v) < 0.5 && Math.abs(w) > 1e-4 && T && T.track && T.cls !== 'heli' && !tr.vehicle) {
+      const offAt = (psi) => samples(T, c.x, c.z, toDeg(psi)).gear.some(g => !this.paved(g[0], g[1]));
+      if (offAt(c.psi + w) && !offAt(c.psi)) { w = 0; this.counters.pivotEdgeHold = (this.counters.pivotEdgeHold || 0) + 1; } }
     c.psi = wrapPi(c.psi + w); c.w = w / dt;
     // a GA aircraft moves along its nose: the speed is held down while the nose and the path disagree (15-60 deg ramp), so
     // a path that turns sharply or doubles back makes it stop and pivot instead of sliding sideways or backwards [inf]
@@ -3400,7 +3559,8 @@ export class Traffic {
     { const vCl = Math.max(0, (sEnd - c.s) / dt), stopT = o.stop || (o.gs || 0) < 0.5;
       // (round 5 iteration 3, G2: from 0.3 m/s while the target moves (> 0.5 m/s) - a body 0.1 m ahead of a fix-following target at 2 kt stopped
       // dead from 2.1 kt and started again; a target that stands keeps the 1-m/s threshold)
-      if (c.v - vCl > G_DEC * dt + 1e-3 && c.v > ((o.gs || 0) > 0.5 && !o.stop ? 0.3 : 1) && T && T.cls !== 'heli' && !tr.vehicle) {
+      // (round 6, H1: helicopters too)
+      if (c.v - vCl > G_DEC * dt + 1e-3 && c.v > ((o.gs || 0) > 0.5 && !o.stop ? 0.3 : 1) && T && !tr.vehicle) {
         // (only where the body can brake to the target's speed within max(3 m, 0.6 s of travel) past the trail end; a larger mismatch is in the
         // data or the plan - a landing roll reported at 36 kt whose next fixes cover ~11 kt, a route that starts by turning round - and, like a
         // standing target, still stops the body there: residual, counted as groundJoltKept)
@@ -3561,7 +3721,10 @@ export class Traffic {
     // (not inside a reconstructed plan: its turns were designed against the low-height bank rule at their own points - rolling in BANK_H s
     // early put a planned climb-out's 28-deg crosswind bank at 203 ft; there the window ends now, BANK_H s behind)
     const X = tr.xplan, inX = false;
-    if (n > 1 && tq < F[n - 1].t && (inX || !(X && tq >= X.t0 - 2000 && tq <= X.t1 + 2000)) && !tr._ho) {
+    // (round 6, H2: and through a plan -> fix hand-over too, once it is under way - the blended target, '+ho', is sampled ahead as well: the
+    // window ending at 'now' through the whole blend lagged the hand-over's turn and the bank reversed there)
+    const hoNew = tr._ho && !(tr._ho.d && tDisp > tr._ho.t1 + 500);
+    if (n > 1 && tq < F[n - 1].t && (inX || !(X && tq >= X.t0 - 2000 && tq <= X.t1 + 2000)) && !hoNew) {
       let i = n - 1; while (i > 0 && F[i - 1].t > tq) i--;
       let j = n - 1; while (j > 0 && F[j - 1].t > tDisp) j--;
       let air = i > 0 || inX; if (!inX) for (let k = Math.max(0, j - 1); k <= i && air; k++) if (F[k].ground) air = false;

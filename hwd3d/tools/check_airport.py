@@ -786,7 +786,11 @@ def d1_dated_windows():
                (False, {'source_render': 'x.png (MOBILE=1 livetest jobs/views.mjs)', 'd1_clock': 'masked: job-clocked, every aircraft state blanked'}),
                (False, {'source_render': 'x.png (livetest jobs/views.mjs)', 'd1_clock': 'checked: job-clocked, no aircraft in view'}),
                (False, {'source_render': 'x.png (livetest + docs/phase2/phase2_run_job.mjs)', 'd1_clock': 'masked: HUD clock'}),
-               (False, {'source_render': 'x.png (a scratch QA job)', 'd1_clock': 'checked: no HUD'})]
+               (False, {'source_render': 'x.png (a scratch QA job)', 'd1_clock': 'checked: no HUD'}),
+               # (round 6, H6) a sheet shot after phase2_run_job.mjs' committed run length (SIM_MIN) is job-clocked; its other shots (SHOT_AT) are not
+               (True, {'source_render': 'out/phase2/run_w_stats_phone.png', 'made': 'livetest.mjs + docs/phase2/phase2_run_job.mjs', 'd1_clock': 'masked: HUD clock'}),
+               (False, {'source_render': 'out/phase2/run_w_atc_phone.png', 'made': 'livetest.mjs + docs/phase2/phase2_run_job.mjs', 'd1_clock': 'checked: job-clocked, no aircraft in view'}),
+               (False, {'source_render': 'out/phase2/run_w_overview_m0_desktop.png', 'made': 'livetest.mjs + docs/phase2/phase2_run_job.mjs', 'd1_clock': 'masked: HUD clock'})]
     badj = [i for i, (want, v) in enumerate(plant_j) if (bool(_d1_job_clocked(v)) and not _d1_job_review_ok(v)) != want]
     say('   D1 job-clocked screenshots (a committed job fixes the shot\'s offset into a dated window): %d; without a job-clocked review (d1_clock \'job-clocked\' + every aircraft state masked, or none shown): %d %s; planted entries %d, wrongly classified %d %s - hard'
         % (njob, len(jobclk), jobclk, len(plant_j), len(badj), badj))
@@ -810,11 +814,41 @@ def _d1_job_clocked(v):
         rel_ = m.group(1)[6:] if m.group(1).startswith('hwd3d/') else m.group(1)
         try: job = open(os.path.join(HWD, rel_), encoding='utf-8').read()
         except OSError: continue
+        # (round 6, H6) a job that runs a recorded window for a COMMITTED length (a run-length default such as SIM_MIN = +(process.env.SIM_MIN
+        # || 12), or a value in its usage line) and takes literal-named shots after that run loop (docs/phase2/phase2_run_job.mjs: the About,
+        # ATC and statistics sheets after SIM_MIN of window A, REPLAY_FROM in the usage line) clocks those shots: an entry whose render is one of
+        # them is job-clocked - whatever its other shots' instants (SHOT_AT, no default) do
+        if re.search(r'mode=(?:replay|snapshot)|REPLAY_FROM=|--replay\b', job):
+            names = _d1_job_after_run_shots(job)
+            src = str(v.get('source_render', '')) + ' ' + str(v.get('made', ''))
+            if names and any(re.search(r'_%s_(?:desktop|phone)\.(?:png|jpe?g)' % re.escape(nm), src) for nm in names): return rel_
         if not re.search(r'mode=(?:replay|snapshot)', job): continue
         if not re.search(r'process\.env\.WAIT\s*\|\|\s*\d+|waitForTimeout\(\s*\d+\s*\)', job): continue
         if re.search(r"process\.env\.\w+\s*\|\|\s*''\)\.split", job): continue   # shot instants from an env list with no default
         return rel_
     return ''
+
+
+def _d1_job_after_run_shots(job):
+    """(round 6, H6) The literal shot names a job takes after a run loop of committed length: the loop is a while (...) whose condition reads
+    a variable derived from a run-length setting with a committed default (process.env.X || <number>) or a usage-line value (X=<number> in a
+    comment); the shots are domShot / fbShot / shot calls with a string-literal name after that loop's closing brace. -> set of names"""
+    lens = set(m.group(1) for m in re.finditer(r'\b(\w+)\s*=\s*\+?\(?\s*process\.env\.\w+\s*\|\|\s*\d+(?:\.\d+)?', job))
+    lens |= set(m.group(1) for m in re.finditer(r'//.*?\b([A-Z][A-Z_]*MIN|[A-Z][A-Z_]*SEC|[A-Z][A-Z_]*_S)=\d+(?:\.\d+)?', job))
+    if not lens: return set()
+    derived = set(lens)
+    for m in re.finditer(r'\b(\w+)\s*=\s*([^;,\n]+)', job):
+        if any(re.search(r'\b%s\b' % re.escape(x), m.group(2)) for x in derived): derived.add(m.group(1))
+    names = set()
+    for m in re.finditer(r'\bwhile\s*\(', job):
+        depth, k = 1, m.end()
+        while k < len(job) and depth: depth += {'(': 1, ')': -1}.get(job[k], 0); k += 1
+        cond = job[m.end():k - 1]; mb = re.match(r'\s*\{', job[k:])
+        if not mb or not any(re.search(r'\b%s\b' % re.escape(x), cond) for x in derived): continue
+        depth, k = 1, k + mb.end()
+        while k < len(job) and depth: depth += {'{': 1, '}': -1}.get(job[k], 0); k += 1
+        names |= set(re.findall(r"\b(?:domShot|fbShot|shot)\(\s*'([\w-]+)'", job[k:]))
+    return names
 
 
 def _d1_job_review_ok(v):

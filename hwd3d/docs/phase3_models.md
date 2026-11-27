@@ -1876,7 +1876,7 @@ count at that tap.
 every value (max |GPU − CPU| 0.000). The four documented worst F3 directions (`jobs_f3_PC12.json`, unchanged by this round's
 tables) read strobeL 0.993–0.994, beaconBot 0.872–0.875, landL 0.956, taxi 0.797 against a truth of 0 - the documented 0.99 / 0.88 / 0.95 / 0.80, unchanged: the PC-12's flaps-0 / gear-down tables are round 2's. The temporal sequences are above (F1, F2).
 
-**Tests**: `node tools/models/test_models.mjs` → **123 PASS, 13 KNOWN, 0 FAIL**, 4 INFO (`out/od4_it6r3/test_models_run3.txt`;
+**Tests**: `node tools/models/test_models.mjs` → **123 PASS, 13 KNOWN, 0 FAIL**, 4 INFO (`out/od4_it6r3/test_models_final.txt`;
 round 2: 112 PASS). The recheck's suggestion is in: the independent ray cast of the table check is of the **drawn** default pose
 (`Kinematics.pose({gear: 1})`, mean |table − ray cast| PC-12 0.022, SF50 0.058) - it would have caught both this round's F1 and
 round 2's F1. New: the gear-up tables against a ray cast of `pose({gear: 0})` where the gear changes the table by more than 0.3
