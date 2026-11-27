@@ -1756,7 +1756,8 @@ export class LiveGateSystem {
   //    along every docking path of the accepted types (MAST_BRIDGE_CLEAR); the VDGS and stand-sign posts (3 m);
   //  - the masts already placed (stands in area / number order): at least max(MAST_SPACING, 1.8 x the stand's spacing to
   //    its nearest neighbour), so about one mast per two stands;
-  //  - and it stands on the apron, or at a remote row on the grass verge within 12 m of the apron edge;
+  //  - and it stands on pavement (fix round 2 integration: the 12 m grass-verge tolerance of the remote rows is dropped now
+  //    that the stand-head fill paves the remote stand heads, review_visual_fix1.md R1 (3));
   //  - (fix round 2, review N1) and out of the app's own stand cameras (STAND_CAM / standCamPos: the pole projected into
   //    each stand's camera, both sides, must clear the subject points and the centre band): a contact stand keeps side +1
   //    clear (the bridge side: "Fly to stand" and the named stand views), a remote stand keeps at least one side clear
@@ -1808,8 +1809,9 @@ export class LiveGateSystem {
       if (fixed.some(F => F.c ? Math.hypot(F.c[0] - q[0], F.c[1] - q[1]) < F.r : segD(q, F.A, F.B) < F.r)) return fail('bridge fixed part');
       if (arms.some(A => segD(q, A.A, A.B) < MAST_BRIDGE_CLEAR)) return fail('bridge sweep');
       if (posts.some(p => Math.hypot(p[0] - q[0], p[1] - q[1]) < 3)) return fail('post');
-      // on the apron, or (remote rows, which often end at the apron edge) on the grass verge within 12 m of it
-      if (PAVED && PAVED(q[0], q[1]) < 0.5 && !(g.remote && [[12, 0], [-12, 0], [0, 12], [0, -12], [8.5, 8.5], [-8.5, 8.5], [8.5, -8.5], [-8.5, -8.5]].some(([a, c]) => PAVED(q[0] + a, q[1] + c) >= 0.5))) return fail('not paved');
+      // on pavement (fix round 2 integration, review_visual_fix1.md R1 (3), buildings hand-off: the stand-head fill now paves
+      // the remote stand heads, so the 12 m grass-verge tolerance of the remote rows is dropped)
+      if (PAVED && PAVED(q[0], q[1]) < 0.5) return fail('not paved');
       for (const [c, a, b] of camHits(q)) if (c.strict ? a : (a || c.blk[0]) && (b || c.blk[1])) return fail('stand camera');
       return true; };
     const order = this.gates.filter(g => !g.sharesBridgesOf)

@@ -430,3 +430,248 @@ the relay state).
    - markings: whether the lead-on parallels beside the DTHR arrows are painted is unobserved; the decal build takes
      0.58 s;
    - the open issues of §9 above (model loading under llvmpipe, phone frame time unmeasured).
+
+## Fix round 2 (2026-11-21)
+
+Integration of the three package fixers' answers to `review_visual_fix1.md` (markings: N2, M1 / N4, M4 / N8; buildings:
+R1, N3; gates: N1), plus the hand-offs between them. An earlier attempt at this step was stopped on 2026-11-21 (weekly
+usage limit) after it had applied the aircraft-flood include and the legend / About wording. That state was committed
+as 3da6912 by the lead. This run (2026-11-27) kept that work, checked it, and did everything else. Nothing was committed.
+`sfo3d/`, `pc12/` and `hwd3d/` are untouched. Tags as above: **obs** = observed, **inf** = inferred.
+
+### G1. Review findings: where each one stands
+
+| # | Owner | Status after integration | Seen in |
+|---|---|---|---|
+| R1 edge stands on unpaved ground (high) | buildings (fill), integration (masts) | **fixed** for what the review measured: stop nodes 18 → 0, class nose tips 32 → 0, equipment areas > 5 % unpaved 87 → 0 of 261, envelopes 29 → 1 of 164 (101, 7 % at its rear), idle-stair groups 26 / 26 (buildings `stand_head_fill`, inf). **Mast feet 29 → 1 of 67** off pavement after the integrator applied the gates hand-off (G2.3; the one left, at 525, stands on the 1 m pavement edge). The **remote stand-number posts stay on the grass verge** 3-4 m past the paved head (69 of 108; G2.6 explains why) | `view_stand_404`, `fix2_integration_masts_paved.png`, buildings `fix1_buildings_r2_*` |
+| N1 masts in the stand cameras | gates | **fixed**: 67 masts; side +1 of every contact stand clear; "Fly to stand" picks the clear side (side -1 at 45 remote stands after G2.3, 48 before); 0 stands with a mast inside the subject or centre margins. New, smaller residual: G6 item 2 (238A) | `view_stand_233`, `view_night_stand_233`, `view_phone_stand_233`, `view_laptop_live_stand_233` |
+| N2 asphalt fill a black moat at night | markings | **partly**: the apron light map lights the fill everywhere a mast pool reaches. At the **T2 north pier tip** the fill is dark again in the final set, because gates N1 removed the tip masts and the pools follow the masts: under the 233 bridge (32, 27, 22) sRGB, the round-1 "moat" level (32, 28, 21). The markings fixer measured (59, 51, 42) with the 73 pre-N1 masts. Conflict between two fixes, G2 and G6 item 1 | `fix2_integration_pier_tip_night.png`, `view_night_stand_233`, `view_night_t2pier` |
+| M1 / N4 even flood, hard edge | markings | **fixed** as far as the shape goes (pools from the masts, 20-30 m spill). The pools follow the 67 masts in their post-G2.3 positions: gain 1.259, stand mean × 1.28, minimum × 0.63. **23 stand nodes sit at the 0.5 floor** (T2 pier tip 231-234; T1 110-112, 121, 126; 333-335 among them), half the stand mean, although 9.2.6 holds stands to the stand level (G6 item 1) | `view_night_*`, `view_laptop_live_*` (live, after dark) |
+| N3 aircraft and GSE unlit | buildings + integration | **fixed**: GSE, bridges, stairs and buses (buildings `sha_obj_flood`); **aircraft** since the integrator added the include to both aircraft programs (G2.1) | `fix2_integration_night_aircraft.png`, `view_night_t2pier`, `view_night_stand_233` |
+| M4 backtrack parallels / N8 cut at the bar | markings | **fixed**: backtrack curves stop 0.9 m clear (4 curves); centrelines continuous over threshold marking (6.2.8-3), cut only at the numerals (6.2.1-2) | `view_rwy_18R`, `view_rwy_36L`, markings `fix2_markings_*` |
+| N5 masts depend on the quality tier, N6 pier-tip discs / asphalt albedo, N7 canals read as roads, L2 T1 hall profile, L3 cab terrace, L9 overview haze | gates / buildings / markings | **not in this round** (open, G6) | - |
+
+### G2. Hand-offs
+
+**Applied**
+1. **Aircraft programs include `sha_obj_flood`** (buildings → `js/shaders/aircraft.js` AC_FS, `js/shaders/aircraft_real.js`
+   ACR_FS). This was applied by the stopped attempt and kept here: `import './objects.js'`, `#include <sha_obj_flood>`,
+   `uniform float uGroundY`, and `col += shaObjFlood(wp, N, albedo, wp.y - uGroundY) * ao` after `shadePBR`. `app.js
+   floodUniforms` already bound the uniforms for `aircraft` / `acr` items. Checked: all scenes compile and are clean (G3).
+   At night the parked aircraft are lit by the apron flood like the GSE under them (`fix2_integration_night_aircraft.png`:
+   the stopped attempt's before / after pair at the T2 pier, plus the final named night views).
+2. **Legend and About** (relay_ui hand-off). The buildings fixer asked for an interim clause "aircraft are not lit at
+   night yet". The include (1) landed, so the stopped attempt wrote the final wording instead, kept here: legend
+   "the apron glow (brighter near the masts; it also lights the aircraft, vehicles and jet bridges on the apron) ...
+   inf"; About "The apron glow (also on the aircraft, vehicles and jet bridges standing on the apron) ... inferred".
+3. **Mast feet on pavement** (buildings → gates, review R1 (3); `js/live/gate_system.js` `placeMasts`, one condition).
+   The 12 m grass-verge tolerance of the remote rows is dropped, because the stand-head fill now paves the remote stand
+   heads. Measured with a read-only page probe (`out/fix1/integ2/probe.mjs`, snapshot, high tier):
+
+   | | before (fixers' state) | after |
+   |---|---|---|
+   | masts | 67 | 67 (36 unchanged, 31 moved: most 2-5 m onto the paved edge; T2 apron 2 28 → 29, west remote 7 → 6) |
+   | stands without a mast within 120 m | 8 (333-337, 126, 231, 232) | the same 8 |
+   | mast feet off pavement | 29 | **1** (525: 0.0 at the foot, 0.61 two metres east, the 1 m map edge) |
+   | contact stands with side +1 blocked / stands inside a camera margin | 0 / 0 | 0 / 0 |
+   | "Fly to stand" side -1 | 48 remote stands | 45 remote stands |
+   | masts inside a painted envelope | 0 | 0 |
+   | idle-stair groups with a unit | 26 / 26 | 26 / 26 |
+   | console | clean | clean |
+
+   Renders: `fix2_integration_masts_paved.png` (407 and 288-290; before, the base plate on the grass edge; after, on the
+   concrete). The markings light pools read the new positions at run time ("apron light pools n 67").
+4. **Docs**: `sha3d/CLAUDE.md` (markings, buildings and gates hand-offs; see G5); the mast count 67 here (gates hand-off).
+
+**Not applied (with the reason)**
+5. **`caac_decals.js`: decal alpha × paved** (buildings, optional safety net). The page probe finds no equipment area and
+   one envelope rear (101, 7 %) over unpaved ground. A mask would also cut paint along the soft 1 m edge of the airfield
+   map. Deferred to the markings package.
+6. **`remoteSpot`: the sign post on pavement** (buildings → gates). I tried two variants and measured both:
+   - pavement first, with the Phase 2 candidate order: 7 posts land inside their own stand's painted envelope (289, 320,
+     321, 401, 402, 409, 410, at 3 m ahead and 4 m left of the front);
+   - the hand-off's lateral 8-10 m at 3-6 m: 5 posts land inside their own equipment area (289, 321, 402, 408, 410).
+
+   `remoteSpot` runs at build time, before the markings rings exist, so it cannot test against them. The Phase 2 rule
+   (centreline 10 m ahead of the front, "pavement or grass", MH 5001-2021 8.5.3) is kept. With the fill, those posts now
+   stand 3-4 m past the paved head on what Sentinel-2 reads as grass, which a post may do. A proper fix needs the
+   envelope and equipment rings at sign placement (gates, a later round).
+7. **`app.js SHA.qa.stand` defaults from `STAND_CAM`** (gates, optional). The core would import a package module for
+   numbers that are identical today. Not applied.
+8. **The comment "73 inferred masts" in `js/live/caac_markings.js`** (l. 201). That file is an input of
+   `build_buildings3d.py` (`inputs_sha256_16`), so even a comment edit would leave the data's provenance hash stale or
+   force a rebuild. Left for the markings package's next value change.
+
+**Conflicts and corrections found**
+- **The mast pools vs the stand-camera masts** (markings M1 × gates N1; not code, an effect). Both fixers worked in
+  parallel. The markings fixer's night renders still had the 73 pre-N1 masts. In the integrated state the T2 north pier
+  tip has no mast within 120 m (231 / 232 uncovered), so `applyMastPools` floors the tip at 0.5 of the stand mean.
+  Measured in the final set, against the markings fixer's own renders of the same cameras
+  (`out/fix1/markings2/after/a3n_*`):
+  - `view_night_t2pier`: apron at the tip 122 → 80 and fill 62 → 31 (grey level); the open apron elsewhere unchanged
+    (90 → 87, 75 → 74);
+  - `view_night_stand_233`: fill (63, 55, 46) → (32, 27, 22); apron (151, 135, 110) → (90, 79, 61).
+
+  This is exactly where photos 13 / 19 show the brightest light. I did not change either fix (G6 item 1 has the two
+  options). `fix2_integration_pier_tip_night.png`.
+- `gates.md` (fix round 2, Renders, Night) says "the aircraft are lit in these renders through the buildings fixer's
+  concurrent N3 change". They are not: `out/fix1/gates2/after/g_fix2_night_stand_233.png` (06:19) shows the B738 and its
+  neighbours as navy silhouettes, while the GSE and bridges are lit. The aircraft are lit only since the include
+  (G2.1, about 06:30), as the buildings report says. No code conflict between the packages: the object flood reads the
+  markings light-map uniforms by their published names, and the masts feed the pools at run time.
+
+### G3. Scenes, tests, frame time
+
+**Scenes**, with a real relay (`sha_live_server.py --port 8792`, METAR / TAF on, ADS-B off), on the final code:
+`SOFTGL=1 RELAY=http://127.0.0.1:8792 SCENES=snapshot,live,offline,park,standalone node livetest.mjs jobs/integration.mjs`
+-> "INTEGRATION: all scenes clean" (310.8 s). Every scene has 0 errors, 0 warnings, 0 page errors, 0 HTTP ≥ 400 and 0
+failed requests. The offline scene has only its expected 503 line.
+
+| Scene | Pill / note |
+|---|---|
+| snapshot | "Snapshot · 20 Nov · 12:15 UTC+8"; METAR 0400Z 330° 6 m/s CAVOK Q1027 13/-5; north flow, arr 36R, dep 36L |
+| live | "Live weather · METAR 1100Z" (290° 4 m/s CAVOK Q1020 16/7; 27 Nov 19:00 UTC+8) |
+| offline | "Relay offline · snapshot 20 Nov, 12:15" |
+| park (`233,230,113,404`) | "DEBUG ?park=: 4 static aircraft (not traffic)" first, then the METAR and runway lines; 4 parked (B738, B77W, B738, A320) |
+| standalone | live, every file from the relay's allow-list |
+
+Every scene logs the same world: 164 stands, 56 bridges, 56 VDGS (52 posts, 4 facade), class reference docks 54 / 56, 67
+masts (`not paved` 174 candidates rejected, `stand camera` 375), stand-head fill 21 rings for 69 stands, airside fill
+2 rings, 41 building parts. The apron light map has 5,256 fill texels (0.084 km²) and 67 mast pools. Build times:
+ground 1.04-1.28 s, runway paint set-up 0.35-0.37 s, gates 0.66 s, terminals about 0.2 s. Start-up (`__shaReady`)
+7.8-9.1 s, and 70 s with four parked models (llvmpipe).
+
+Upstream during this step (32 min of relay uptime, scenes and the laptop views): aviationweather.gov 2 METAR and 2 TAF
+requests (one TAF answered 304). adsb.lol: none (`requests_24h` 0). OpenSky: never.
+
+**No-browser tests: all pass.**
+- `test_geo_js.mjs`: 1681 grid + 50 data points; data 6.6 mm.
+- `test_relay.py`: 7 / 7.
+- `test_metar_zsss_js.mjs`: 0 decode differences on 69,104 IEM reports.
+- `test_buildings3d.mjs`: stand-head fill 21 rings for 69 stands; nodes, nose tips and envelope fronts on pavement 164 / 164;
+  fixed-link points off pavement 0 / 539.
+- `test_frame.py`: OK.
+- `node --check js/live/gate_system.js`.
+
+**Frame time on llvmpipe** (reference only): `SOFTGL=1 SCENES=perf TIERS=low,high node livetest.mjs
+jobs/integration.mjs`, 1280 × 720 viewport, fixed resolution, 40 frames after 10 warm-up frames, median / p90 ms:
+
+| Tier | Overview | T2 | Stand 233 | Round 1 (same views) |
+|---|---|---|---|---|
+| low (1024 × 576) | 883 / 950 (js 2.8, 201 draws, 738 k tris) | 767 / 850 (js 2.3, 127, 583 k) | 700 / 817 (js 1.9, 108, 678 k) | 1150 / 1017 / 933 |
+| high (1280 × 720) | 1217 / 1333 (js 3.0, 201, 739 k) | 1200 / 1550 (js 2.2, 127, 583 k) | 1167 / 1333 (js 2.3, 108, 678 k) | 1517 / 1567 / 1533 |
+
+Draw calls and triangles are the same as in round 1. The light map, the object flood and the aircraft include add no
+draw call; one texture fetch per fragment is not measurable here. The lower times this run are the machine (no other
+render job ran during the perf scene), not the code.
+
+### G4. Named views (the full set re-rendered, all 25 looked at)
+
+The commands are the five in §6; the `t2pier` re-render is part of `@full` (script `out/fix1/integ2/r2/views.sh`). Every
+`view_*.png` is from 2026-11-27 11:31-11:49 UTC; before this run all 25 dated from fix round 1. Day views are at the
+snapshot instant; night at 21:30 local. The laptop views are live (relay METAR 1130Z) and the wall clock was 19:46-19:49
+UTC+8, so **this time the two laptop views show the scene after dark**; in round 1 they were day views. All 10 parked
+aircraft were placed and all 8 bridge stands docked (229 A333, 230 B77W, 231 / 233 / 113 / 115 B738, 234 A320, 102
+B77W); 403 / 404 got stairs and buses. The orientation checks were ok (T2 west, T1 east, runways N-S). The view runs
+logged no console error, warning or page error.
+
+What I saw, per render:
+- **overview, t1, t2, tower**: as in round 1. Masts on the aprons; the T1 hall arch; heavy CAVOK haze (L9, open).
+- **rwy_18L / 36R**: 6 + 6 stripes, pad chevrons (first one cut, fig. 6.2.25), red mandatory markings at the holds.
+- **rwy_18R / 36L**: 8 + 8 stripes and the DTHR arrows. The yellow take-off parallels of the outermost lead-ons run
+  beside the arrow shafts and now cross the arrow-head legs (6.2.8-3, markings N8). No backtrack curve reaches them.
+- **towercab**: across the T1 apron and both runways to T2. The head terrace still fills the lower right corner (L3,
+  open). One mast at the right.
+- **stand_233**: B738 docked at 233, GSE, VDGS posts, "232" / "233" signs. **No mast in the frame** (N1; in round 1 a mast
+  split this view).
+- **bridge_230**: B77W at 230 and A333 at 229 docked through their long fixed links; B738 at 231; asphalt under the links.
+- **stand_113**: B738 docked from the facade rotunda; a mast at the left frame edge, clear of the aircraft and bridge.
+- **stand_102**: B77W docked through the fixed link; a mast at the 103 rotunda (left) and one at the bottom right edge.
+- **stand_404**: **R1 visible**. Before, a brown unpaved band ran under the noses. Now concrete runs under both noses, the
+  envelope fronts and the equipment boxes (stand-head fill). The mast foot stands on the paved edge (G2.3). The two
+  stand-number posts stand on the grass verge past the band (G2.6).
+- **hold_H1**: unchanged and correct.
+- **t2pier**: five docked aircraft. The asphalt at the tip is the dark round disc (N6, open). No mast at the tip.
+- **night_t2pier**: warm pools around the mast rows and a soft edge onto the taxiways. All five aircraft, the GSE and
+  the bridges are lit; the glazing is warm. The pier tip and its fill are visibly darker than in the markings fixer's
+  render (G2, conflict).
+- **night_stand_233**: no mast and no lamp disk (N1). The docked B738 is lit (N3, the aircraft include). The fill under
+  the bridges is dark, (32, 27, 22).
+- **night_hold_H1**: black except the internally lit signs (airfield lighting is Phase 5, as the legend and About say).
+- **phone_overview / t2_legend / stand_233 / towercab**: "UTC+8", readable credit strip, legend with the jet-bridge
+  line. The phone legend says "**Apron floodlight masts: 66**" because the phone runs the low tier; the laptop (high) says
+  67 (N5, open). Card "T2 APRON 2 / Stand 233" with the docked B738 and no mast in view. The DEBUG line comes first in
+  the tower view's sheet.
+- **laptop_live_t2** (after dark): lit aprons with the stand labels, "Live weather · 19:46 UTC+8", METAR 1130Z. The
+  legend is open and lists 67 masts and 26 idle airstairs.
+- **laptop_live_stand_233** (after dark): the DEBUG line first, the card ("aircraft park with the nose wheel on the stop
+  node, MH 5001-2021 6.2.16-7") clear of the credit strip, the B738 lit by the flood.
+
+Extra check renders in `out/fix1/integ2/` (gitignored): `ev/before|after/*_mast407|290.png` (G2.3),
+`ev/chk_238A.png`, `chk_238.png`, `chk_263.png`, `chk_287.png` (the "Fly to stand" cameras nearest a mast, G6 item 2),
+and the probe outputs `probe/*.json`.
+
+Evidence images (deviceScaleFactor 1 renders, composited by `out/fix1/integ2/compose.py`):
+- `fix2_integration_masts_paved.png`: G2.3, mast feet at 407 and 288-290, before / after.
+- `fix2_integration_night_aircraft.png`: G2.1, the B738 at 233 before / after the aircraft include, plus the final
+  night views.
+- `fix2_integration_pier_tip_night.png`: the pool / mast conflict at the T2 north pier tip (the markings fixer's
+  73-mast renders vs the final set).
+- `fix2_integration_238A_mast.png`: G6 item 2.
+
+### G5. Files changed in this step, and safe to commit
+
+- `js/live/gate_system.js`: `placeMasts` requires a paved mast foot (G2.3). There are 3 changed lines plus the rule
+  comment.
+- `js/shaders/aircraft.js`, `js/shaders/aircraft_real.js`, `js/live/shell.js` (legend), `js/live/about.js`: from the
+  stopped attempt, already in 3da6912 and kept unchanged.
+- `sha3d/CLAUDE.md`:
+  - the status paragraph (fix round 2);
+  - package jobs: markings light-map statistics, gates `SET='fix2;fix2night'` and view kinds, buildings `HEADCHECK=1`;
+  - the `SHA.qa` list: 67 masts, `standCam`, `camSubject`, `SHA.markings.apronLight()`;
+  - the data row for `sha_buildings3d` (`stand_head_fill`, `caac_markings.js` as an input);
+  - Conventions: stand-head fill, apron light map, object / aircraft flood, taxiway centrelines over threshold marking,
+    the stand camera, masts on pavement. No new URL option came with round 2.
+- `docs/phase2/integration.md`: this section.
+- Renders: the 25 `docs/phase2/view_*.png` (re-rendered) and the 4 `docs/phase2/fix2_integration_*.png`.
+
+With the fixers' files (their reports list them), everything in `git status` under `sha3d/` is safe to commit. None of
+it holds secrets, per-flight data, AIP lists or third-party imagery. Do **not** commit `out/` (check renders, probes,
+relay state).
+
+### G6. Open issues after this round
+
+1. **Pier-tip flood vs the stand-camera masts** (markings × gates; new, from the integration).
+   - Effect: 23 stand nodes are at the 0.5 floor of the pool map, among them the whole T2 north pier tip (231-234).
+     The named night views at 233 show the fill as dark as in round 1.
+   - Option A (markings): apply the 9.2.6-2 floor of 0.5 only to "other apron" texels, and floor the stand envelopes
+     and the airside fill along the terminal faces at the stand level (≥ 1.0 of the stand mean before the gain).
+     9.2.6 requires the stand level on stands.
+   - Option B (gates): re-admit a pier-tip mast by relaxing `STAND_CAM.subjDeg` / `centreDeg` there. The gates
+     report names that trade-off.
+   - A is the smaller change and matches the clause better.
+2. **A mast head beside one stand camera** (gates; new). "Fly to stand" at **238A** (the alternative position on 238's
+   bridge) passes 9.5 m from the mast at (-957.2, -61.5), whose six-lamp head fills the lower right quarter of the frame
+   (`fix2_integration_238A_mast.png`). The image test passes, because it only guards the subject and the centre band
+   (clearance 2.87 × the margin). This was already so in the gates fixer's state (same mast). Over all stands, on the
+   side taken, 3 cameras have a mast within 15 m (238A 10.2 m, 263 11.3 m, 287 12.4 m) and 5 within 20 m. Only 238A
+   shows the head in frame (263 and 287 rendered and looked at). Proposal: reject candidates within about 20 m (3-D) of
+   a stand camera position, or let flyToStand take side -1 when the near-camera test fails.
+3. **Remote stand-number posts on the grass verge** (gates): 69 of 108, 3-4 m past the paved head (G2.6). This is
+   allowed (8.5.3), but the review asked for pavement. It needs the painted rings at sign placement.
+4. **Mast-list tier dependence (N5)**: the phone (low) shows 66 masts, the laptop (high) 67.
+5. Not in this round:
+   - N6 (pier-tip fill discs, plain dark asphalt albedo; the lit fill stays darker than lit concrete);
+   - N7 (canals read as roads from above);
+   - L2 (T1 hall profile);
+   - L3 (cab terrace about 21 % of the frame);
+   - L9 (overview haze);
+   - 101's envelope rear 7 % unpaved;
+   - the "73 masts" comment in `caac_markings.js` (G2.8);
+   - the 1 mast foot on the pavement edge at 525.
+6. Carried from earlier rounds:
+   - airfield lighting is Phase 5;
+   - model loading under llvmpipe takes 22-60 s per type;
+   - the phone frame time is unmeasured;
+   - bridges 111 / 235 cannot dock with the class reference;
+   - 333-337, 126, 231 and 232 have no mast within 120 m (gates).
