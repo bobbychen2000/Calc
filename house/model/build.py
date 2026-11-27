@@ -21,8 +21,10 @@ ZONES = ['site', 'house']
 VIEWS = {
     'front': dict(label='Front', pos=(4.0, -26.0, 5.5), target=(13.0, 6.0, 3.5), fov=42),
     'aerial': dict(label='Aerial', pos=(-14.0, -24.0, 26.0), target=(13.0, 14.0, 2.0), fov=42),
-    'rear': dict(label='Rear', pos=(-2.0, 42.0, 4.0), target=(14.0, 16.0, 3.0), fov=45),
-    'pool': dict(label='Pool', pos=(3.0, 44.0, 2.2), target=(22.0, 38.0, 1.5), fov=50),
+    'rear': dict(label='Rear', pos=(1.5, 33.3, 3.3), target=(13.0, 19.0, 2.7), fov=62),
+    'patio': dict(label='Patio', pos=(24.5, 23.5, 2.5), target=(17.0, 13.5, 2.4), fov=58),
+    'pool': dict(label='Pool', pos=(0.2, 29.7, 3.0), target=(20.0, 30.6, 2.3), fov=52),
+    'entry': dict(label='Entry', pos=(9.0, -13.5, 2.3), target=(13.2, 0.0, 2.7), fov=50),
 }
 # The sun as in the daylight photographs: on the REAR side of the lot (the aerial's shadows fall toward the street, a
 # 3 m pergola throws 5 m), so the street front stands in open shade.  az from +Y toward +X.
