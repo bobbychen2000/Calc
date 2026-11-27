@@ -17,9 +17,13 @@ into committed files (the folder is called house2 for that reason).
   play area, garden; the rest are interiors.
 - Listing facts: house 4,800 sq ft on two levels + 789 sq ft attached 3-car garage, lot 1.03 acres (44,866 sq ft),
   50-panel solar system, built 2008.
-- The property video (Vimeo) could not be fetched from this server: Vimeo answers every request from it with a
-  Cloudflare human-verification page (the first house's video downloaded before that started). The owner may supply a
-  screen recording; its drone frames would then go through `tools/sfm.py` as in `house/`.
+- The property video (Vimeo, 183 s, 4K source) cannot be fetched from this server: Vimeo answers every request from
+  it with a Cloudflare human-verification page (the first house's video downloaded before that started). The owner
+  supplied its frames every 100 ms instead (a screen recording of the player, 1362 x 766):
+  `refs/cache/frames_all/frames/frame_<ms>ms.jpg` + `frame_timing.csv`. Shots used for SfM (`tools/sfm.py SHOTS`,
+  ranges clear of the cross-dissolves; masks over the player's bar, icons, the watermark and the title):
+  approach 14-16 s, pool top-down 21.5-22.8, front 24-26, front roof 26.5-28.3, play area + pool 123.5-126.5,
+  rear 130-138.5 (three moves), top-down 139-141.5, lawn 142-146, rear 153.5-156.5, high orbit 157.5-160.5.
 
 ## Commands (run from `house2/`)
 As in `house/CLAUDE.md`, with `house2` paths: `python3 -I model/build.py`, `node tools/shot.cjs ...` (dev server:

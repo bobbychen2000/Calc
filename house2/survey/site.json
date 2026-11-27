@@ -1,0 +1,6573 @@
+{
+ "zone": "site",
+ "images": [
+  "photos/p29_ddf5dc.jpg",
+  "photos/p28_7ae0dd.jpg",
+  "photos/hero_721b4a.jpg",
+  "photos/p01_768294.jpg",
+  "photos/p18_150f57.jpg",
+  "photos/p19_1e145e.jpg",
+  "photos/p20_f249da.jpg",
+  "photos/p21_160d78.jpg",
+  "photos/p22_50e8b3.jpg",
+  "photos/p23_e4717a.jpg",
+  "photos/p24_5e2477.jpg",
+  "photos/p26_cacb52.jpg",
+  "photos/p27_8c90d5.jpg"
+ ],
+ "elements": [
+  {
+   "id": "site.driveway",
+   "type": "driveway",
+   "desc": "Driveway + motor court in tumbled concrete / stone PAVERS (grey-beige, small rectangular units, running bond). Runs up the lot's LEFT edge from the gated street entrance (bottom-left, under the street-side trees) and widens into a motor court in front of the garage wing (garage doors face it, along the eave x~286) and the left (west) face of the angled front wing (eave x~527). ~190 px wide at the entrance end, ~420 px across at the court.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     60,
+     350
+    ],
+    [
+     225,
+     350
+    ],
+    [
+     255,
+     368
+    ],
+    [
+     286,
+     376
+    ],
+    [
+     288,
+     600
+    ],
+    [
+     290,
+     697
+    ],
+    [
+     292,
+     715
+    ],
+    [
+     305,
+     740
+    ],
+    [
+     325,
+     757
+    ],
+    [
+     527,
+     762
+    ],
+    [
+     527,
+     967
+    ],
+    [
+     477,
+     967
+    ],
+    [
+     300,
+     968
+    ],
+    [
+     275,
+     975
+    ],
+    [
+     250,
+     990
+    ],
+    [
+     232,
+     1015
+    ],
+    [
+     225,
+     1055
+    ],
+    [
+     225,
+     1200
+    ],
+    [
+     228,
+     1260
+    ],
+    [
+     232,
+     1272
+    ],
+    [
+     235,
+     1330
+    ],
+    [
+     255,
+     1362
+    ],
+    [
+     278,
+     1398
+    ],
+    [
+     288,
+     1400
+    ],
+    [
+     288,
+     1612
+    ],
+    [
+     290,
+     1720
+    ],
+    [
+     105,
+     1720
+    ],
+    [
+     100,
+     1610
+    ],
+    [
+     100,
+     1442
+    ],
+    [
+     90,
+     1440
+    ],
+    [
+     86,
+     1250
+    ],
+    [
+     78,
+     950
+    ],
+    [
+     74,
+     760
+    ],
+    [
+     65,
+     600
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1250,
+      1000,
+      1700,
+      1100
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "pavers (tumbled, light grey-beige, ~15x22 cm units)",
+    "width_entry_px": 190,
+    "note": "top edge y~350 under the big bare tree is uncertain (branches); the part y>1700 is hidden by the street tree screen; motor-court right edge = roof eaves (walls ~0.3-0.6 m inside)"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "site.entrance_gate",
+   "type": "gate",
+   "desc": "Gated driveway entrance to the street: HIDDEN under the street-side tree canopy at the bottom-left; the paver drive is last seen at y~1700-1720 between x~100 and ~290. Gate type / position not visible in any photo.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    90,
+    1690,
+    300,
+    1800
+   ],
+   "attrs": {
+    "hidden": true,
+    "adjacent": "site.driveway"
+   },
+   "conf": 0.25
+  },
+  {
+   "id": "site.walk_front",
+   "type": "walk",
+   "desc": "Front FLAGSTONE walk (irregular-rectangular bluestone / Pennsylvania flagstone in grey-blue to buff, wide joints): a straight leg from the motor court (x 477-530) down to a broad landing in front of the angled front wing, a connector curving along the bottom of the upper front lawn to the driveway (x~225), then the curved walk past the front porch (porch eave (687,1195)-(792,1292); the entry steps face down-left onto it), under the birches and along the lower (family-room) wing to the side yard.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     477,
+     1050
+    ],
+    [
+     445,
+     1150
+    ],
+    [
+     420,
+     1200
+    ],
+    [
+     414,
+     1210
+    ],
+    [
+     392,
+     1223
+    ],
+    [
+     347,
+     1240
+    ],
+    [
+     284,
+     1236
+    ],
+    [
+     234,
+     1216
+    ],
+    [
+     222,
+     1248
+    ],
+    [
+     274,
+     1269
+    ],
+    [
+     353,
+     1274
+    ],
+    [
+     406,
+     1254
+    ],
+    [
+     416,
+     1248
+    ],
+    [
+     455,
+     1238
+    ],
+    [
+     546,
+     1256
+    ],
+    [
+     583,
+     1284
+    ],
+    [
+     608,
+     1313
+    ],
+    [
+     615,
+     1333
+    ],
+    [
+     603,
+     1334
+    ],
+    [
+     609,
+     1387
+    ],
+    [
+     614,
+     1399
+    ],
+    [
+     664,
+     1454
+    ],
+    [
+     729,
+     1496
+    ],
+    [
+     740,
+     1499
+    ],
+    [
+     799,
+     1499
+    ],
+    [
+     800,
+     1505
+    ],
+    [
+     880,
+     1485
+    ],
+    [
+     930,
+     1467
+    ],
+    [
+     980,
+     1462
+    ],
+    [
+     1262,
+     1462
+    ],
+    [
+     1262,
+     1425
+    ],
+    [
+     1180,
+     1427
+    ],
+    [
+     1180,
+     1445
+    ],
+    [
+     790,
+     1450
+    ],
+    [
+     791,
+     1457
+    ],
+    [
+     746,
+     1457
+    ],
+    [
+     694,
+     1424
+    ],
+    [
+     650,
+     1376
+    ],
+    [
+     645,
+     1330
+    ],
+    [
+     634,
+     1331
+    ],
+    [
+     640,
+     1322
+    ],
+    [
+     700,
+     1318
+    ],
+    [
+     808,
+     1318
+    ],
+    [
+     808,
+     1298
+    ],
+    [
+     717,
+     1252
+    ],
+    [
+     683,
+     1264
+    ],
+    [
+     646,
+     1266
+    ],
+    [
+     604,
+     1256
+    ],
+    [
+     565,
+     1235
+    ],
+    [
+     540,
+     1210
+    ],
+    [
+     515,
+     1160
+    ],
+    [
+     510,
+     1095
+    ],
+    [
+     530,
+     1037
+    ],
+    [
+     530,
+     967
+    ],
+    [
+     477,
+     967
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/hero_721b4a.jpg",
+     "bbox": [
+      0,
+      1580,
+      2500,
+      1780
+     ]
+    },
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      0,
+      1230,
+      2500,
+      1400
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "flagstone (bluestone, mixed grey-blue / buff)",
+    "width_px": "34-55",
+    "parts_centerline": {
+     "connector": [
+      [
+       228,
+       1232
+      ],
+      [
+       280,
+       1253
+      ],
+      [
+       350,
+       1257
+      ],
+      [
+       400,
+       1238
+      ],
+      [
+       432,
+       1218
+      ]
+     ],
+     "under_birch": [
+      [
+       624,
+       1332
+      ],
+      [
+       630,
+       1385
+      ],
+      [
+       680,
+       1440
+      ],
+      [
+       740,
+       1478
+      ],
+      [
+       805,
+       1478
+      ]
+     ]
+    },
+    "note": "in the house shadow from x 545 to 1180; upper edge along the lower wing (y~1435) hidden by the eave; under the birch canopy (x 640-800) the outline is inferred"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.stepping_stones_side",
+   "type": "stepping_stones",
+   "desc": "Eight rectangular flagstone stepping stones (~0.5 x 0.7 m) set in mulch, from the south walk (1190,1392) up-right toward a grey slab / bench against the SE wing (side yard under the eave, in shadow).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     1190,
+     1392
+    ],
+    [
+     1215,
+     1370
+    ],
+    [
+     1232,
+     1360
+    ],
+    [
+     1248,
+     1353
+    ],
+    [
+     1262,
+     1345
+    ],
+    [
+     1273,
+     1340
+    ],
+    [
+     1285,
+     1337
+    ],
+    [
+     1298,
+     1328
+    ]
+   ],
+   "attrs": {
+    "count": 8,
+    "stone_px": [
+     15,
+     20
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.side_slab",
+   "type": "slab",
+   "desc": "Long low grey slab / bench (or a platform: possibly the outdoor shower's floor?) against the shaded east side of the lower wing, where the stepping stones end. A small white box at (1220,1275) and a downspout with a blue object at (1368,1288) next to it.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    1223,
+    1300,
+    1323,
+    1317
+   ],
+   "attrs": {
+    "role_unknown": true
+   },
+   "conf": 0.35
+  },
+  {
+   "id": "site.walk_rear_curved",
+   "type": "walk",
+   "desc": "Curved FLAGSTONE walk (same bluestone) from the side yard (stepping stones) north-east through the planting beds to the pool patio beside the outdoor-kitchen arbor, with a short branch east to the synthetic lawn's top-left corner. Roses / small shrubs either side (likely the rose walk of p27).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1536,
+     1237
+    ],
+    [
+     1534,
+     1191
+    ],
+    [
+     1477,
+     1192
+    ],
+    [
+     1476,
+     1090
+    ],
+    [
+     1438,
+     1090
+    ],
+    [
+     1437,
+     1131
+    ],
+    [
+     1441,
+     1242
+    ],
+    [
+     1427,
+     1283
+    ],
+    [
+     1380,
+     1373
+    ],
+    [
+     1337,
+     1407
+    ],
+    [
+     1260,
+     1424
+    ],
+    [
+     1171,
+     1427
+    ],
+    [
+     1173,
+     1465
+    ],
+    [
+     1263,
+     1462
+    ],
+    [
+     1353,
+     1442
+    ],
+    [
+     1412,
+     1394
+    ],
+    [
+     1462,
+     1298
+    ],
+    [
+     1478,
+     1251
+    ],
+    [
+     1478,
+     1238
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p27_8c90d5.jpg",
+     "bbox": [
+      700,
+      1200,
+      1550,
+      1667
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "flagstone",
+    "width_px": 38,
+    "centerline": [
+     [
+      1172,
+      1446
+     ],
+     [
+      1262,
+      1443
+     ],
+     [
+      1345,
+      1425
+     ],
+     [
+      1395,
+      1385
+     ],
+     [
+      1425,
+      1330
+     ],
+     [
+      1445,
+      1290
+     ],
+     [
+      1460,
+      1245
+     ],
+     [
+      1458,
+      1190
+     ],
+     [
+      1456,
+      1130
+     ],
+     [
+      1457,
+      1090
+     ]
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.patio_pool",
+   "type": "patio",
+   "desc": "Main rear PATIO / pool deck in large irregular-rectangular FLAGSTONE (bluestone, grey-blue with buff / rust stones, laid on the diagonal of the pool), wrapping the pool and spa; includes a diagonal walk along the side lawn to the north corner of the house, the fireplace lounge area (NE of the pool, shaded by trees), and runs under the outdoor-kitchen arbor and down the east side of the SE wing. Pool, spa and coping lie inside this outline. The house's covered rear patios (under the roof, rear zone) continue the same stone.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1010,
+     317
+    ],
+    [
+     1115,
+     405
+    ],
+    [
+     1175,
+     342
+    ],
+    [
+     1360,
+     342
+    ],
+    [
+     1395,
+     388
+    ],
+    [
+     1475,
+     388
+    ],
+    [
+     1505,
+     342
+    ],
+    [
+     1556,
+     362
+    ],
+    [
+     1617,
+     425
+    ],
+    [
+     1675,
+     445
+    ],
+    [
+     1660,
+     470
+    ],
+    [
+     1660,
+     720
+    ],
+    [
+     1620,
+     795
+    ],
+    [
+     1615,
+     830
+    ],
+    [
+     1670,
+     898
+    ],
+    [
+     1730,
+     968
+    ],
+    [
+     1617,
+     1100
+    ],
+    [
+     1560,
+     1075
+    ],
+    [
+     1476,
+     1078
+    ],
+    [
+     1440,
+     1095
+    ],
+    [
+     1442,
+     1065
+    ],
+    [
+     1395,
+     1065
+    ],
+    [
+     1393,
+     965
+    ],
+    [
+     1300,
+     965
+    ],
+    [
+     1300,
+     886
+    ],
+    [
+     1225,
+     812
+    ],
+    [
+     1105,
+     935
+    ],
+    [
+     1045,
+     878
+    ],
+    [
+     1080,
+     868
+    ],
+    [
+     1172,
+     757
+    ],
+    [
+     1090,
+     757
+    ],
+    [
+     1088,
+     485
+    ],
+    [
+     1088,
+     427
+    ],
+    [
+     1007,
+     355
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      160,
+      1080,
+      2500,
+      1667
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      0,
+      1150,
+      2500,
+      1667
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      0,
+      950,
+      2500,
+      1475
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "flagstone (bluestone, mixed grey-blue / buff / rust), ~0.6-0.9 m stones",
+    "holes": [
+     "site.pool_water",
+     "site.spa",
+     "site.pool_coping"
+    ],
+    "note": "north-east part (lounge) is in tree shade and reads darker; boundary under the arbor and beside the fireplace partly inferred"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.pool_water",
+   "type": "pool",
+   "desc": "Rectangular swimming pool, long axis NW-SE (diagonal in the aerial), dark-blue / turquoise plaster, waterline tile band. Water outline incl. the spa corner (the spa sits inside the pool's EAST corner). ~420 x 202 px (~15 x 7.2 m at ~28 px/m).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1158,
+     538
+    ],
+    [
+     1298,
+     392
+    ],
+    [
+     1597,
+     687
+    ],
+    [
+     1457,
+     833
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "poly": [
+      [
+       1000,
+       985
+      ],
+      [
+       1530,
+       978
+      ],
+      [
+       2005,
+       1258
+      ],
+      [
+       530,
+       1265
+      ]
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      0,
+      1170,
+      2500,
+      1370
+     ]
+    },
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      790,
+      1120,
+      2080,
+      1667
+     ]
+    }
+   ],
+   "attrs": {
+    "corners": {
+     "W": [
+      1158,
+      538
+     ],
+     "N": [
+      1298,
+      392
+     ],
+     "E": [
+      1597,
+      687
+     ],
+     "S": [
+      1457,
+      833
+     ]
+    },
+    "size_px": [
+     420,
+     202
+    ],
+    "size_m_est": [
+     15.0,
+     7.2
+    ],
+    "long_axis_dir_img": [
+     0.712,
+     0.702
+    ]
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "site.pool_coping",
+   "type": "coping",
+   "desc": "Pool coping: a ~13 px (~0.45 m) band of lighter, square-cut bluestone round the water (outer outline here; the water outline is site.pool_water).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1140,
+     538
+    ],
+    [
+     1298,
+     374
+    ],
+    [
+     1615,
+     687
+    ],
+    [
+     1457,
+     851
+    ]
+   ],
+   "attrs": {
+    "width_px": 13
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "site.pool_autocover",
+   "type": "pool_cover_box",
+   "desc": "Automatic pool cover: recessed housing with a metal lid / track strip along the pool's NW short end (the bright double strip in the aerial; the cover rolls out SE along the pool).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1157,
+     535
+    ],
+    [
+     1297,
+     389
+    ],
+    [
+     1303,
+     396
+    ],
+    [
+     1165,
+     541
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      520,
+      1250,
+      2020,
+      1280
+     ]
+    }
+   ],
+   "attrs": {
+    "on": "NW end of site.pool_water",
+    "length_px": 202
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "site.pool_steps_corner",
+   "type": "pool_steps",
+   "desc": "Small corner entry steps in the pool's WEST corner (lighter turquoise treads along the SW wall).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1160,
+     540
+    ],
+    [
+     1172,
+     528
+    ],
+    [
+     1215,
+     575
+    ],
+    [
+     1205,
+     592
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.45
+  },
+  {
+   "id": "site.pool_steps_se",
+   "type": "pool_steps",
+   "desc": "Wide entry steps / sun ledge across the SE end between the SW wall and the spa (3 treads in p21), lighter turquoise.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1457,
+     832
+    ],
+    [
+     1540,
+     745
+    ],
+    [
+     1512,
+     717
+    ],
+    [
+     1427,
+     804
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      820,
+      1300,
+      1190,
+      1460
+     ]
+    }
+   ],
+   "attrs": {},
+   "conf": 0.55
+  },
+  {
+   "id": "site.pool_lights",
+   "type": "light",
+   "desc": "Two underwater pool lights (bright dots) on the NE long wall near the NW end.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1286,
+    537
+   ],
+   "attrs": {
+    "points": [
+     [
+      1297,
+      526
+     ],
+     [
+      1273,
+      548
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.spa",
+   "type": "spa",
+   "desc": "Spa (hot tub) in the pool's EAST corner: square, raised tile-topped wall (iridescent mosaic tile top, grey-blue) between spa and pool, flush with the pool coping on its two outer sides; inner seats / bench step, 3 jets / lights visible. Outer wall ~79 px (~2.8 m) square.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1540,
+     634
+    ],
+    [
+     1597,
+     687
+    ],
+    [
+     1540,
+     745
+    ],
+    [
+     1484,
+     689
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      1120,
+      1400,
+      1700,
+      1667
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1780,
+      1170,
+      2320,
+      1260
+     ]
+    }
+   ],
+   "attrs": {
+    "water_poly": [
+     [
+      1541,
+      662
+     ],
+     [
+      1575,
+      691
+     ],
+     [
+      1540,
+      723
+     ],
+     [
+      1500,
+      689
+     ]
+    ],
+    "size_px": 79,
+    "material": "raised wall with glass-mosaic tile top"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "site.fireplace",
+   "type": "outdoor_fireplace",
+   "desc": "Outdoor FIREPLACE: tall stone chimney (stacked fieldstone, tan / grey / rust) with a flat stone cap, arched firebox facing SW toward the lounge, mantel shelf, raised hearth / seat-wall extension to its right (SE). Base footprint (the chimney leans up-right in the aerial: its cap is at (1589-1657, 314-380)).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1556,
+     362
+    ],
+    [
+     1600,
+     318
+    ],
+    [
+     1655,
+     372
+    ],
+    [
+     1617,
+     425
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p24_5e2477.jpg",
+     "bbox": [
+      590,
+      0,
+      1090,
+      1460
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1130,
+      720,
+      1380,
+      1060
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1790,
+      530,
+      2060,
+      850
+     ]
+    }
+   ],
+   "attrs": {
+    "faces": "SW (toward the lounge and pool)",
+    "cap_poly": [
+     [
+      1616,
+      314
+     ],
+     [
+      1657,
+      354
+     ],
+     [
+      1625,
+      380
+     ],
+     [
+      1589,
+      346
+     ]
+    ],
+    "height_m_est": 4.5
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.lounge_furniture",
+   "type": "furniture",
+   "desc": "Fireplace lounge set on the flagstone in front of the fireplace: 2 three-seat sofas, 3 lounge armchairs, a square wood coffee table, a small side table; grey cushions on grey teak frames.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    1440,
+    400,
+    1600,
+    570
+   ],
+   "also": [
+    {
+     "image": "photos/p24_5e2477.jpg",
+     "bbox": [
+      0,
+      1050,
+      1150,
+      1650
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1900,
+      820,
+      2420,
+      950
+     ]
+    }
+   ],
+   "attrs": {
+    "items_px": {
+     "sofa_w": [
+      1440,
+      420,
+      1480,
+      485
+     ],
+     "sofa_s": [
+      1500,
+      480,
+      1555,
+      525
+     ],
+     "chair_n": [
+      1510,
+      395,
+      1545,
+      425
+     ],
+     "chair_e": [
+      1555,
+      440,
+      1592,
+      475
+     ],
+     "coffee_table": [
+      1478,
+      460,
+      1522,
+      500
+     ]
+    }
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.umbrella_lounge",
+   "type": "umbrella",
+   "desc": "Closed grey market umbrella on a square base beside the lounge (east side).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1557,
+    540
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1490,
+      750,
+      1600,
+      1140
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      2420,
+      600,
+      2490,
+      920
+     ]
+    }
+   ],
+   "attrs": {},
+   "conf": 0.4
+  },
+  {
+   "id": "site.arbor",
+   "type": "arbor",
+   "desc": "Outdoor-kitchen ARBOR / pavilion: dark-stained timber pergola (beams + close rafters, rafter tails visible on the NW side) on 4+ square WHITE columns with stone bases, covered by climbing roses (pink) / vines. Outline = rafter ends (roof level, leaning slightly right in the aerial). Shelters the BBQ kitchen and the bar counter.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1455,
+     985
+    ],
+    [
+     1600,
+     843
+    ],
+    [
+     1730,
+     968
+    ],
+    [
+     1617,
+     1100
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      1290,
+      720,
+      1730,
+      960
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      260,
+      580,
+      1960,
+      1420
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      955,
+      1350,
+      1125,
+      1470
+     ]
+    }
+   ],
+   "attrs": {
+    "height_m_est": 3.0,
+    "size_px": [
+     203,
+     180
+    ],
+    "columns": "white square, ~4 (2 seen facing the pool)"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.bar_counter",
+   "type": "counter",
+   "desc": "Bar counter with 6 stools on the pool-facing (NW) side of the arbor: stone-faced base, light stone top (HIDDEN under the vines in the aerial: position from p26 / p20).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1490,
+     985
+    ],
+    [
+     1600,
+     878
+    ],
+    [
+     1615,
+     893
+    ],
+    [
+     1505,
+     1000
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      1330,
+      860,
+      1610,
+      950
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1040,
+      1150,
+      1500,
+      1400
+     ]
+    }
+   ],
+   "attrs": {
+    "hidden": true,
+    "stools": 6
+   },
+   "conf": 0.3
+  },
+  {
+   "id": "site.bbq_kitchen",
+   "type": "outdoor_kitchen",
+   "desc": "BBQ kitchen: built-in stainless grill in a stone-faced counter with a light stone top, on the arbor's SE (back) side, lanterns on the columns (HIDDEN under the vines in the aerial: position from p20 / p21).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1610,
+     1075
+    ],
+    [
+     1700,
+     975
+    ],
+    [
+     1712,
+     988
+    ],
+    [
+     1622,
+     1088
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      800,
+      1290,
+      1500,
+      1500
+     ]
+    },
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      0,
+      1320,
+      340,
+      1667
+     ]
+    }
+   ],
+   "attrs": {
+    "hidden": true
+   },
+   "conf": 0.25
+  },
+  {
+   "id": "site.outdoor_shower",
+   "type": "outdoor_shower",
+   "desc": "Outdoor shower (listing feature): NOT identified in any exterior photo. Best guess: the shaded side yard against the SE wing where the stepping stones end (site.side_slab).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1273,
+    1308
+   ],
+   "attrs": {
+    "hidden": true,
+    "candidate": "site.side_slab"
+   },
+   "conf": 0.15
+  },
+  {
+   "id": "site.lawn_front_upper",
+   "type": "lawn",
+   "desc": "Upper front LAWN (natural grass, green, D-shaped with rounded left corners) between the driveway, the motor court and the front walk; one small bare tree in it.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     300,
+     968
+    ],
+    [
+     420,
+     967
+    ],
+    [
+     420,
+     1027
+    ],
+    [
+     477,
+     1027
+    ],
+    [
+     477,
+     1050
+    ],
+    [
+     462,
+     1100
+    ],
+    [
+     445,
+     1150
+    ],
+    [
+     420,
+     1200
+    ],
+    [
+     400,
+     1215
+    ],
+    [
+     350,
+     1240
+    ],
+    [
+     280,
+     1235
+    ],
+    [
+     245,
+     1218
+    ],
+    [
+     228,
+     1200
+    ],
+    [
+     225,
+     1055
+    ],
+    [
+     232,
+     1015
+    ],
+    [
+     250,
+     990
+    ],
+    [
+     275,
+     975
+    ]
+   ],
+   "attrs": {
+    "material": "natural turf"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "site.lawn_front_lower",
+   "type": "lawn",
+   "desc": "Lower front LAWN (natural grass) south of the walk: the large lawn the front porch faces (the hero / p01 camera stands on it); bounded by the driveway (left), the curved walk (top), the birch bed (right) and a mulch strip + the street-side tree screen (bottom).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     300,
+     1272
+    ],
+    [
+     350,
+     1272
+    ],
+    [
+     400,
+     1253
+    ],
+    [
+     455,
+     1238
+    ],
+    [
+     520,
+     1250
+    ],
+    [
+     546,
+     1256
+    ],
+    [
+     583,
+     1284
+    ],
+    [
+     608,
+     1313
+    ],
+    [
+     612,
+     1350
+    ],
+    [
+     612,
+     1392
+    ],
+    [
+     640,
+     1430
+    ],
+    [
+     668,
+     1459
+    ],
+    [
+     700,
+     1485
+    ],
+    [
+     735,
+     1500
+    ],
+    [
+     790,
+     1502
+    ],
+    [
+     795,
+     1616
+    ],
+    [
+     720,
+     1618
+    ],
+    [
+     290,
+     1614
+    ],
+    [
+     288,
+     1400
+    ],
+    [
+     278,
+     1397
+    ],
+    [
+     258,
+     1365
+    ],
+    [
+     248,
+     1336
+    ],
+    [
+     275,
+     1325
+    ],
+    [
+     292,
+     1300
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      0,
+      1330,
+      2500,
+      1667
+     ]
+    },
+    {
+     "image": "photos/hero_721b4a.jpg",
+     "bbox": [
+      0,
+      1650,
+      2500,
+      1875
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "natural turf"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "site.lawn_side_north",
+   "type": "lawn",
+   "desc": "Side LAWN (natural grass, in shade) north of the pool deck, between the house's NE corner and the terraced planting; its bottom edge is a V against the flagstone. A square metal grate in it (site.grate_lawn).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1012,
+     177
+    ],
+    [
+     1230,
+     175
+    ],
+    [
+     1365,
+     312
+    ],
+    [
+     1365,
+     342
+    ],
+    [
+     1175,
+     342
+    ],
+    [
+     1115,
+     405
+    ],
+    [
+     1010,
+     317
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      0,
+      940,
+      1520,
+      1180
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "natural turf"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "site.lawn_synthetic",
+   "type": "synthetic_lawn",
+   "desc": "SYNTHETIC LAWN (artificial turf, uniform bright green, mowing-stripe free): large rectangle SE of the house, below the orchard terrace (retaining wall along its north edge), a clipped-shrub hedge along its west edge, a stone wall / curb along its east edge, a mulch strip + tree screen to the south. BR corner hidden by trees.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1566,
+     1230
+    ],
+    [
+     2326,
+     1222
+    ],
+    [
+     2326,
+     1612
+    ],
+    [
+     1560,
+     1607
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      0,
+      960,
+      2500,
+      1667
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      380,
+      1330,
+      800,
+      1600
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "artificial turf",
+    "size_px": [
+     763,
+     385
+    ],
+    "size_m_est": [
+     27,
+     13.7
+    ]
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "site.play_area",
+   "type": "play_area",
+   "desc": "PLAY AREA: rectangle of WOOD CHIPS (engineered wood fibre, light tan) with a timber edge, on the upper terrace east of the gravel path; the play structure stands in its west half.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1822,
+     462
+    ],
+    [
+     2323,
+     455
+    ],
+    [
+     2323,
+     895
+    ],
+    [
+     1822,
+     897
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p19_1e145e.jpg",
+     "bbox": [
+      0,
+      1150,
+      2200,
+      1667
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      580,
+      1540,
+      1260,
+      1875
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "wood chips",
+    "size_px": [
+     501,
+     438
+    ],
+    "size_m_est": [
+     18,
+     15.6
+    ]
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "site.play_structure",
+   "type": "play_structure",
+   "desc": "Wooden PLAY STRUCTURE (weathered cedar): two towers with gabled shingle-wood roofs joined by a bridge, a 3-swing beam along the bridge, a tire swing and monkey-bar / swing beam running west to an A-frame, a short green wavy slide off the north tower (east) and a long green tube-less slide off the south tower (south-west). Footprint incl. beams and slides (tops lean up-right in the aerial).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1848,
+     540
+    ],
+    [
+     2000,
+     505
+    ],
+    [
+     2092,
+     505
+    ],
+    [
+     2092,
+     595
+    ],
+    [
+     2080,
+     700
+    ],
+    [
+     2100,
+     725
+    ],
+    [
+     2095,
+     762
+    ],
+    [
+     2022,
+     770
+    ],
+    [
+     1912,
+     848
+    ],
+    [
+     1902,
+     830
+    ],
+    [
+     2005,
+     748
+    ],
+    [
+     2010,
+     700
+    ],
+    [
+     2000,
+     610
+    ],
+    [
+     1873,
+     615
+    ],
+    [
+     1848,
+     615
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p19_1e145e.jpg",
+     "bbox": [
+      140,
+      140,
+      2020,
+      1600
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      2080,
+      580,
+      2500,
+      900
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      880,
+      1620,
+      1150,
+      1875
+     ]
+    }
+   ],
+   "attrs": {
+    "towers_bbox": [
+     [
+      2000,
+      505,
+      2090,
+      595
+     ],
+     [
+      2015,
+      700,
+      2095,
+      760
+     ]
+    ],
+    "bridge_bbox": [
+     2030,
+     590,
+     2075,
+     705
+    ],
+    "swing_beam_bbox": [
+     1848,
+     545,
+     2003,
+     615
+    ],
+    "tire_swing": [
+     1917,
+     577
+    ],
+    "swings": [
+     [
+      2007,
+      630
+     ],
+     [
+      2012,
+      657
+     ],
+     [
+      2012,
+      687
+     ]
+    ],
+    "height_m_est": 4.0
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.slide_north",
+   "type": "slide",
+   "desc": "Green plastic wavy slide off the north tower, running east.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     2087,
+     537
+    ],
+    [
+     2115,
+     532
+    ],
+    [
+     2140,
+     545
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "site.slide_south",
+   "type": "slide",
+   "desc": "Long green plastic slide off the south tower, running south-west into the chips.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     2022,
+     745
+    ],
+    [
+     1965,
+     790
+    ],
+    [
+     1912,
+     838
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p19_1e145e.jpg",
+     "bbox": [
+      40,
+      820,
+      340,
+      1200
+     ]
+    }
+   ],
+   "attrs": {},
+   "conf": 0.65
+  },
+  {
+   "id": "site.garden_enclosure",
+   "type": "fenced_garden",
+   "desc": "Fenced VEGETABLE GARDEN: square enclosure with a low wood picket / lattice fence (~1 m), crushed-stone / gravel floor (blue-grey), 4 raised timber beds in a 2 x 2 grid, a green garden hose. Outline = fence base (the fence top leans up-right).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1975,
+     148
+    ],
+    [
+     2257,
+     148
+    ],
+    [
+     2257,
+     422
+    ],
+    [
+     1975,
+     422
+    ]
+   ],
+   "attrs": {
+    "floor": "crushed stone / gravel",
+    "fence": "wood pickets / lattice ~1 m",
+    "gate_side": "west",
+    "fence_polyline": [
+     [
+      1975,
+      300
+     ],
+     [
+      1975,
+      148
+     ],
+     [
+      2257,
+      148
+     ],
+     [
+      2257,
+      422
+     ],
+     [
+      1975,
+      422
+     ],
+     [
+      1975,
+      330
+     ]
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "site.raised_bed_1",
+   "type": "raised_bed",
+   "desc": "Raised vegetable bed (NW of four): square timber box, dark soil, ~68 px (~2.4 m) side.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    2012,
+    195,
+    2080,
+    262
+   ],
+   "attrs": {
+    "on": "site.garden_enclosure",
+    "material": "timber boards",
+    "size_px": 68
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "site.raised_bed_2",
+   "type": "raised_bed",
+   "desc": "Raised vegetable bed (NE of four): square timber box, dark soil, ~68 px (~2.4 m) side.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    2137,
+    189,
+    2205,
+    260
+   ],
+   "attrs": {
+    "on": "site.garden_enclosure",
+    "material": "timber boards",
+    "size_px": 68
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "site.raised_bed_3",
+   "type": "raised_bed",
+   "desc": "Raised vegetable bed (SW of four): square timber box, dark soil, ~68 px (~2.4 m) side.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    2010,
+    320,
+    2077,
+    388
+   ],
+   "attrs": {
+    "on": "site.garden_enclosure",
+    "material": "timber boards",
+    "size_px": 68
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "site.raised_bed_4",
+   "type": "raised_bed",
+   "desc": "Raised vegetable bed (SE of four): square timber box, dark soil, ~68 px (~2.4 m) side.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    2137,
+    315,
+    2202,
+    385
+   ],
+   "attrs": {
+    "on": "site.garden_enclosure",
+    "material": "timber boards",
+    "size_px": 68
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "site.garden_gate",
+   "type": "gate",
+   "desc": "Garden gate in the west fence of the vegetable garden, where the gravel path arrives.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    1965,
+    295,
+    1990,
+    330
+   ],
+   "attrs": {
+    "on": "site.garden_enclosure west fence"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "site.path_gravel",
+   "type": "path",
+   "desc": "Garden PATH of fine blue-grey crushed stone / decomposed granite with a timber / steel edge, ~42 px (~1.5 m) wide: from the top of the patio stairs north along the play area to the vegetable-garden gate, and south in an S-curve between the hedge and the orchard down to the stone steps onto the synthetic lawn.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1941,
+     293
+    ],
+    [
+     1879,
+     297
+    ],
+    [
+     1828,
+     316
+    ],
+    [
+     1793,
+     355
+    ],
+    [
+     1779,
+     409
+    ],
+    [
+     1776,
+     500
+    ],
+    [
+     1775,
+     880
+    ],
+    [
+     1779,
+     922
+    ],
+    [
+     1803,
+     977
+    ],
+    [
+     1823,
+     1012
+    ],
+    [
+     1829,
+     1047
+    ],
+    [
+     1829,
+     1088
+    ],
+    [
+     1820,
+     1147
+    ],
+    [
+     1862,
+     1153
+    ],
+    [
+     1871,
+     1093
+    ],
+    [
+     1871,
+     1041
+    ],
+    [
+     1861,
+     995
+    ],
+    [
+     1841,
+     958
+    ],
+    [
+     1821,
+     914
+    ],
+    [
+     1817,
+     879
+    ],
+    [
+     1818,
+     500
+    ],
+    [
+     1821,
+     413
+    ],
+    [
+     1831,
+     375
+    ],
+    [
+     1852,
+     351
+    ],
+    [
+     1884,
+     339
+    ],
+    [
+     1940,
+     335
+    ],
+    [
+     1974,
+     336
+    ],
+    [
+     1976,
+     294
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p19_1e145e.jpg",
+     "bbox": [
+      1950,
+      1000,
+      2500,
+      1667
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      740,
+      1490,
+      1380,
+      1760
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "crushed stone / DG (blue-grey)",
+    "width_px": 42,
+    "centerline": [
+     [
+      1975,
+      315
+     ],
+     [
+      1880,
+      318
+     ],
+     [
+      1812,
+      365
+     ],
+     [
+      1797,
+      500
+     ],
+     [
+      1796,
+      880
+     ],
+     [
+      1822,
+      968
+     ],
+     [
+      1850,
+      1045
+     ],
+     [
+      1841,
+      1150
+     ]
+    ]
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "site.orchard",
+   "type": "orchard",
+   "desc": "ORCHARD terrace: bare soil with patchy grass / moss and fallen leaves, 5 small pruned fruit trees (bare in the aerial) and 2 round shrubs; above the synthetic lawn's retaining wall, south of the play area.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1870,
+     900
+    ],
+    [
+     2325,
+     897
+    ],
+    [
+     2330,
+     1205
+    ],
+    [
+     1875,
+     1210
+    ],
+    [
+     1872,
+     1105
+    ],
+    [
+     1872,
+     1000
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      1500,
+      800,
+      2500,
+      1000
+     ]
+    }
+   ],
+   "attrs": {
+    "surface": "soil / sparse grass"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "site.strip_garden_play",
+   "type": "ground",
+   "desc": "Strip of bare dark soil / leaf litter between the vegetable garden and the play-area fence (shaded).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1822,
+     350
+    ],
+    [
+     1975,
+     340
+    ],
+    [
+     1975,
+     422
+    ],
+    [
+     2257,
+     422
+    ],
+    [
+     2330,
+     430
+    ],
+    [
+     2330,
+     452
+    ],
+    [
+     1822,
+     462
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "site.stairs_patio_path",
+   "type": "steps",
+   "desc": "Stone STEPS (about 9 broad treads, bluestone, black metal handrail on the north side) from the pool deck up east to the gravel path / play-area level; stone cheek walls both sides.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1655,
+     665
+    ],
+    [
+     1785,
+     662
+    ],
+    [
+     1785,
+     720
+    ],
+    [
+     1655,
+     720
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      2120,
+      870,
+      2400,
+      1160
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      870,
+      820,
+      1010,
+      960
+     ]
+    }
+   ],
+   "attrs": {
+    "rises_toward": "+x (east)",
+    "treads": 9,
+    "handrail": "north side, polyline (1665,662)-(1785,660)"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "site.stairs_path_lawn",
+   "type": "steps",
+   "desc": "Stone STEPS (4-5 treads) at the south end of the gravel path down to the synthetic lawn, between the raised planter (west) and a stone cheek wall (east).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1800,
+     1150
+    ],
+    [
+     1872,
+     1150
+    ],
+    [
+     1875,
+     1207
+    ],
+    [
+     1800,
+     1207
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      1300,
+      870,
+      1500,
+      1000
+     ]
+    }
+   ],
+   "attrs": {
+    "descends_toward": "+y (south)"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "site.wall_north",
+   "type": "retaining_wall",
+   "desc": "Long stone RETAINING / garden wall (dry-stacked fieldstone, light cap ~0.7 m) along the north side of the house beds and the side lawn; planting and the boundary trees above / behind it.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     347,
+     145
+    ],
+    [
+     950,
+     142
+    ],
+    [
+     1180,
+     136
+    ],
+    [
+     1370,
+     136
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      0,
+      820,
+      460,
+      1000
+     ]
+    }
+   ],
+   "attrs": {
+    "width_px": 20,
+    "gap": "x 950-1030 hidden by a shrub"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.wall_terrace_lower",
+   "type": "retaining_wall",
+   "desc": "Low stone retaining wall (fieldstone, ~0.4 m stone cap) holding the raised planting bed NE of the side lawn: diagonal along the lawn, a short straight run, then diagonally behind the lounge to the fireplace.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     1250,
+     150
+    ],
+    [
+     1400,
+     292
+    ],
+    [
+     1490,
+     292
+    ],
+    [
+     1556,
+     348
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      0,
+      1040,
+      1140,
+      1110
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      800,
+      850,
+      1800,
+      930
+     ]
+    }
+   ],
+   "attrs": {
+    "cap_width_px": 12
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "site.wall_terrace_upper",
+   "type": "retaining_wall",
+   "desc": "Higher stone retaining wall (~1 m, dry-stacked fieldstone) behind the raised bed / lounge, parallel to the lower wall; continues behind the fireplace (hidden by trees).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     1446,
+     206
+    ],
+    [
+     1546,
+     300
+    ],
+    [
+     1600,
+     318
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      0,
+      950,
+      2120,
+      1010
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      640,
+      760,
+      1800,
+      880
+     ]
+    }
+   ],
+   "attrs": {},
+   "conf": 0.35
+  },
+  {
+   "id": "site.wall_fireplace_east",
+   "type": "retaining_wall",
+   "desc": "Stone wall from the fireplace's east side along the lounge to the top of the patio stairs (raised hearth / seat wall, then the stair's north cheek wall).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     1630,
+     395
+    ],
+    [
+     1700,
+     448
+    ],
+    [
+     1668,
+     470
+    ],
+    [
+     1665,
+     665
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.4
+  },
+  {
+   "id": "site.wall_planter_chevron",
+   "type": "retaining_wall",
+   "desc": "Stone wall of the raised planter between the stairs and the arbor (a \"<\"-shaped front toward the pool deck).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     1667,
+     720
+    ],
+    [
+     1620,
+     795
+    ],
+    [
+     1615,
+     830
+    ],
+    [
+     1670,
+     898
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.55
+  },
+  {
+   "id": "site.wall_planter_mid",
+   "type": "retaining_wall",
+   "desc": "Stone wall (light cap) dividing the lower planter (west) from the higher hedge strip beside the gravel path.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     1712,
+     722
+    ],
+    [
+     1715,
+     1072
+    ]
+   ],
+   "attrs": {
+    "cap_width_px": 12
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "site.wall_lawn_north",
+   "type": "retaining_wall",
+   "desc": "Stone RETAINING WALL (~0.8-1 m, dry-stacked fieldstone, light cap) along the synthetic lawn's north edge, holding the orchard terrace; it casts a dark shadow band on the turf.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     1870,
+     1213
+    ],
+    [
+     2355,
+     1207
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      1390,
+      900,
+      2500,
+      1130
+     ]
+    }
+   ],
+   "attrs": {
+    "cap_width_px": 13
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "site.wall_lawn_east",
+   "type": "wall",
+   "desc": "Stone wall / wide curb along the synthetic lawn's east edge (light top ~29 px ~1 m wide), into the trees.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     2340,
+     1207
+    ],
+    [
+     2340,
+     1620
+    ]
+   ],
+   "attrs": {
+    "width_px": 29
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "site.planter_lawn",
+   "type": "raised_planter",
+   "desc": "Raised stone PLANTER at the synthetic lawn's NW top edge, west of the path steps, with a bare deciduous tree and low shrubs.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1652,
+     1125
+    ],
+    [
+     1800,
+     1125
+    ],
+    [
+     1800,
+     1215
+    ],
+    [
+     1652,
+     1215
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      1130,
+      880,
+      1330,
+      960
+     ]
+    }
+   ],
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "site.planter_terrace",
+   "type": "raised_planter",
+   "desc": "Raised planting bed (lower terrace) between the patio stairs, the arbor and the path hedge: shrubs, a red-twigged Japanese maple, behind the chevron stone wall.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1667,
+     720
+    ],
+    [
+     1707,
+     722
+    ],
+    [
+     1712,
+     1072
+    ],
+    [
+     1690,
+     1078
+    ],
+    [
+     1670,
+     898
+    ],
+    [
+     1615,
+     830
+    ],
+    [
+     1620,
+     795
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "site.fence_upper_terrace",
+   "type": "fence",
+   "desc": "Horizontal-board wood fence on the upper terrace behind the fireplace (seen in p23); HIDDEN under the trees in the aerial, line guessed parallel to the lounge wall.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     1600,
+     225
+    ],
+    [
+     1765,
+     365
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1720,
+      600,
+      2200,
+      680
+     ]
+    }
+   ],
+   "attrs": {
+    "hidden": true
+   },
+   "conf": 0.2
+  },
+  {
+   "id": "site.fence_play_north",
+   "type": "fence",
+   "desc": "Wood picket / lattice fence (~1 m) along the north edge of the play area (picket shadows fall on the chips).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     1822,
+     458
+    ],
+    [
+     2330,
+     452
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "site.fence_play_east",
+   "type": "fence",
+   "desc": "East edge of the play area / orchard: thin dark line (timber edge or a low fence), trees beyond.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     2325,
+     452
+    ],
+    [
+     2325,
+     895
+    ],
+    [
+     2330,
+     1205
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.35
+  },
+  {
+   "id": "site.edging_lawn_south",
+   "type": "edging",
+   "desc": "White board / header along part of the synthetic lawn's south edge (bench or edging).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     2000,
+     1615
+    ],
+    [
+     2180,
+     1615
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.4
+  },
+  {
+   "id": "site.power_lines",
+   "type": "utility",
+   "desc": "Overhead power / telephone lines along the north (top) boundary; the pole is out of frame (a wooden utility pole with a transformer shows beyond the fireplace in p22 / p26).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "polyline": [
+    [
+     0,
+     37
+    ],
+    [
+     640,
+     32
+    ],
+    [
+     1260,
+     22
+    ],
+    [
+     1900,
+     8
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      310,
+      290,
+      380,
+      600
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1700,
+      390,
+      1780,
+      470
+     ]
+    }
+   ],
+   "attrs": {},
+   "conf": 0.45
+  },
+  {
+   "id": "site.bed_nw_tree",
+   "type": "planting_bed",
+   "desc": "Mulch bed under the big bare tree, NW corner of the motor court (rounded edge to the pavers). Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     40,
+     150
+    ],
+    [
+     286,
+     150
+    ],
+    [
+     286,
+     376
+    ],
+    [
+     255,
+     368
+    ],
+    [
+     225,
+     350
+    ],
+    [
+     60,
+     350
+    ],
+    [
+     40,
+     330
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.4
+  },
+  {
+   "id": "site.bed_west",
+   "type": "planting_bed",
+   "desc": "Narrow mulch strip along the driveway's west edge, under the boundary hedge. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     25,
+     350
+    ],
+    [
+     60,
+     350
+    ],
+    [
+     65,
+     600
+    ],
+    [
+     74,
+     760
+    ],
+    [
+     78,
+     950
+    ],
+    [
+     86,
+     1250
+    ],
+    [
+     90,
+     1440
+    ],
+    [
+     100,
+     1442
+    ],
+    [
+     100,
+     1700
+    ],
+    [
+     40,
+     1700
+    ],
+    [
+     25,
+     1300
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "site.bed_garage",
+   "type": "planting_bed",
+   "desc": "Planting bed along the garage wing's south eave, rounded at the motor court. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     290,
+     700
+    ],
+    [
+     527,
+     727
+    ],
+    [
+     527,
+     762
+    ],
+    [
+     325,
+     757
+    ],
+    [
+     305,
+     740
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "site.bed_court_recess",
+   "type": "planting_bed",
+   "desc": "Shaded bed in the recess between the garage wing and the angled front wing, with a small bare tree. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     527,
+     727
+    ],
+    [
+     634,
+     727
+    ],
+    [
+     634,
+     800
+    ],
+    [
+     527,
+     800
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "site.bed_lawn1_corner",
+   "type": "planting_bed",
+   "desc": "Small mulch bed with 4 round shrubs at the upper lawn's top-right corner. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     420,
+     967
+    ],
+    [
+     477,
+     967
+    ],
+    [
+     477,
+     1027
+    ],
+    [
+     420,
+     1027
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "site.bed_drive_corner",
+   "type": "planting_bed",
+   "desc": "Small curved mulch bed with ~5 shrubs where the front walk meets the driveway. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     232,
+     1270
+    ],
+    [
+     300,
+     1270
+    ],
+    [
+     292,
+     1300
+    ],
+    [
+     275,
+     1325
+    ],
+    [
+     248,
+     1336
+    ],
+    [
+     235,
+     1330
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "site.bed_landing",
+   "type": "planting_bed",
+   "desc": "Thin curved planting strip between the front walk landing and the angled front wing. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     530,
+     1037
+    ],
+    [
+     532,
+     1175
+    ],
+    [
+     558,
+     1175
+    ],
+    [
+     562,
+     1226
+    ],
+    [
+     540,
+     1210
+    ],
+    [
+     515,
+     1160
+    ],
+    [
+     510,
+     1095
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.bed_porch",
+   "type": "planting_bed",
+   "desc": "Planting bed in front of the front porch (in the house shadow): perennials, lavender, a small white-flowering tree (magnolia / dogwood) left of the entry steps. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     558,
+     1175
+    ],
+    [
+     687,
+     1175
+    ],
+    [
+     717,
+     1250
+    ],
+    [
+     683,
+     1263
+    ],
+    [
+     646,
+     1265
+    ],
+    [
+     604,
+     1255
+    ],
+    [
+     562,
+     1226
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "site.bed_birch",
+   "type": "planting_bed",
+   "desc": "Bed under the birch clump at the porch's right end (south corner of the angled wing). Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     640,
+     1322
+    ],
+    [
+     700,
+     1318
+    ],
+    [
+     808,
+     1318
+    ],
+    [
+     811,
+     1447
+    ],
+    [
+     790,
+     1450
+    ],
+    [
+     745,
+     1458
+    ],
+    [
+     690,
+     1420
+    ],
+    [
+     650,
+     1375
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "site.bed_front_south",
+   "type": "planting_bed",
+   "desc": "Large mulch bed south of the lower wing and around the curved walk: scattered small shrubs / roses / grasses, a round green utility lid, a few young staked plants; runs into the street-side tree screen. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     800,
+     1505
+    ],
+    [
+     880,
+     1487
+    ],
+    [
+     930,
+     1469
+    ],
+    [
+     980,
+     1464
+    ],
+    [
+     1170,
+     1464
+    ],
+    [
+     1262,
+     1462
+    ],
+    [
+     1345,
+     1445
+    ],
+    [
+     1380,
+     1430
+    ],
+    [
+     1415,
+     1392
+    ],
+    [
+     1437,
+     1350
+    ],
+    [
+     1448,
+     1315
+    ],
+    [
+     1462,
+     1275
+    ],
+    [
+     1482,
+     1238
+    ],
+    [
+     1505,
+     1236
+    ],
+    [
+     1502,
+     1612
+    ],
+    [
+     1500,
+     1640
+    ],
+    [
+     1250,
+     1655
+    ],
+    [
+     1000,
+     1645
+    ],
+    [
+     800,
+     1650
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.bed_south_strip",
+   "type": "planting_bed",
+   "desc": "Mulch strip along the bottom of the lower front lawn, in front of the street-side screen. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     290,
+     1616
+    ],
+    [
+     720,
+     1618
+    ],
+    [
+     720,
+     1665
+    ],
+    [
+     290,
+     1668
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.bed_se_wing",
+   "type": "planting_bed",
+   "desc": "Shaded side-yard bed along the SE wing (under / beside the eave) with the stepping stones and shrubs; plus the narrow strip of round shrubs along the wing's east wall. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1182,
+     1300
+    ],
+    [
+     1340,
+     1300
+    ],
+    [
+     1394,
+     1258
+    ],
+    [
+     1395,
+     1065
+    ],
+    [
+     1442,
+     1065
+    ],
+    [
+     1440,
+     1095
+    ],
+    [
+     1437,
+     1180
+    ],
+    [
+     1450,
+     1205
+    ],
+    [
+     1440,
+     1245
+    ],
+    [
+     1430,
+     1270
+    ],
+    [
+     1415,
+     1295
+    ],
+    [
+     1400,
+     1335
+    ],
+    [
+     1380,
+     1380
+    ],
+    [
+     1345,
+     1425
+    ],
+    [
+     1182,
+     1438
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.bed_maple_round",
+   "type": "planting_bed",
+   "desc": "Round mulch bed between the rear walk and the arbor with a Japanese maple and a shrub. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1476,
+     1080
+    ],
+    [
+     1560,
+     1075
+    ],
+    [
+     1617,
+     1100
+    ],
+    [
+     1600,
+     1180
+    ],
+    [
+     1540,
+     1205
+    ],
+    [
+     1480,
+     1200
+    ],
+    [
+     1470,
+     1140
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.4
+  },
+  {
+   "id": "site.bed_north_side",
+   "type": "planting_bed",
+   "desc": "Long mulch bed between the house's north wall and the north stone wall: large rounded shrubs, a yellow-green tree, low shrubs. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     290,
+     152
+    ],
+    [
+     1010,
+     152
+    ],
+    [
+     1012,
+     177
+    ],
+    [
+     1010,
+     317
+    ],
+    [
+     1006,
+     316
+    ],
+    [
+     584,
+     316
+    ],
+    [
+     584,
+     300
+    ],
+    [
+     286,
+     300
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.bed_upper_terrace",
+   "type": "planting_bed",
+   "desc": "Raised planting bed above the lower terrace wall (NE of the side lawn): shrubs, perennials and a Japanese maple (orange-red foliage in p22). Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1262,
+     150
+    ],
+    [
+     1370,
+     140
+    ],
+    [
+     1446,
+     206
+    ],
+    [
+     1546,
+     300
+    ],
+    [
+     1556,
+     348
+    ],
+    [
+     1490,
+     292
+    ],
+    [
+     1400,
+     292
+    ],
+    [
+     1250,
+     150
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "site.bed_lounge",
+   "type": "planting_bed",
+   "desc": "Patio-level planting bed below the lower terrace wall, NW of the lounge (lavender, salvias). Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1362,
+     310
+    ],
+    [
+     1398,
+     293
+    ],
+    [
+     1480,
+     293
+    ],
+    [
+     1512,
+     315
+    ],
+    [
+     1475,
+     388
+    ],
+    [
+     1395,
+     388
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.bed_patio_nw",
+   "type": "planting_bed",
+   "desc": "Patio bed at the house's NE corner (west of the pool) with a bare small tree, a green box lid at (1080,445). Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1007,
+     355
+    ],
+    [
+     1088,
+     427
+    ],
+    [
+     1088,
+     485
+    ],
+    [
+     1007,
+     485
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.bed_rear_courtyard",
+   "type": "planting_bed",
+   "desc": "Shaded courtyard bed in the house's rear recess plus the diagonal bed with tree A. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1015,
+     757
+    ],
+    [
+     1172,
+     757
+    ],
+    [
+     1080,
+     868
+    ],
+    [
+     1045,
+     878
+    ],
+    [
+     1015,
+     860
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.bed_patio_tree",
+   "type": "planting_bed",
+   "desc": "Diamond-ended patio bed against the SE wing's north eave with tree B and small shrubs. Brown bark mulch.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1225,
+     812
+    ],
+    [
+     1300,
+     886
+    ],
+    [
+     1300,
+     965
+    ],
+    [
+     1125,
+     965
+    ],
+    [
+     1105,
+     935
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "site.hedge_lawn_west",
+   "type": "hedge",
+   "desc": "Row of ~6 clipped round shrubs (boxwood / pittosporum, dark green) along the synthetic lawn's west edge.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1502,
+     1238
+    ],
+    [
+     1567,
+     1232
+    ],
+    [
+     1568,
+     1600
+    ],
+    [
+     1540,
+     1618
+    ],
+    [
+     1500,
+     1612
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      100,
+      870,
+      1000,
+      1000
+     ]
+    }
+   ],
+   "attrs": {
+    "count": 6,
+    "height_m_est": 1.3
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "site.hedge_path",
+   "type": "hedge",
+   "desc": "Large clipped hedge mass (dark green) between the planter wall and the gravel path, swelling west of the path's S-curve.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1722,
+     725
+    ],
+    [
+     1775,
+     722
+    ],
+    [
+     1782,
+     940
+    ],
+    [
+     1825,
+     1010
+    ],
+    [
+     1830,
+     1060
+    ],
+    [
+     1812,
+     1110
+    ],
+    [
+     1760,
+     1120
+    ],
+    [
+     1722,
+     1075
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "site.hedge_west_boundary",
+   "type": "hedge",
+   "desc": "Boundary screen of tall shrubs / small trees along the lot's west edge, beside the driveway.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     0,
+     330
+    ],
+    [
+     35,
+     330
+    ],
+    [
+     30,
+     1700
+    ],
+    [
+     0,
+     1700
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "site.shrub_north_a",
+   "type": "shrub",
+   "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    395,
+    195
+   ],
+   "attrs": {
+    "radius_px": 33,
+    "crown_poly": [
+     [
+      428,
+      195
+     ],
+     [
+      422,
+      214
+     ],
+     [
+      405,
+      226
+     ],
+     [
+      385,
+      226
+     ],
+     [
+      368,
+      214
+     ],
+     [
+      362,
+      195
+     ],
+     [
+      368,
+      176
+     ],
+     [
+      385,
+      164
+     ],
+     [
+      405,
+      164
+     ],
+     [
+      422,
+      176
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.shrub_north_b",
+   "type": "shrub",
+   "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    453,
+    242
+   ],
+   "attrs": {
+    "radius_px": 40,
+    "crown_poly": [
+     [
+      493,
+      242
+     ],
+     [
+      485,
+      266
+     ],
+     [
+      465,
+      280
+     ],
+     [
+      441,
+      280
+     ],
+     [
+      421,
+      266
+     ],
+     [
+      413,
+      242
+     ],
+     [
+      421,
+      218
+     ],
+     [
+      441,
+      204
+     ],
+     [
+      465,
+      204
+     ],
+     [
+      485,
+      218
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.shrub_north_c",
+   "type": "shrub",
+   "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    546,
+    253
+   ],
+   "attrs": {
+    "radius_px": 55,
+    "crown_poly": [
+     [
+      601,
+      253
+     ],
+     [
+      590,
+      285
+     ],
+     [
+      563,
+      305
+     ],
+     [
+      529,
+      305
+     ],
+     [
+      502,
+      285
+     ],
+     [
+      491,
+      253
+     ],
+     [
+      502,
+      221
+     ],
+     [
+      529,
+      201
+     ],
+     [
+      563,
+      201
+     ],
+     [
+      590,
+      221
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.shrub_north_big",
+   "type": "shrub",
+   "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    930,
+    220
+   ],
+   "attrs": {
+    "radius_px": 55,
+    "crown_poly": [
+     [
+      985,
+      220
+     ],
+     [
+      974,
+      252
+     ],
+     [
+      947,
+      272
+     ],
+     [
+      913,
+      272
+     ],
+     [
+      886,
+      252
+     ],
+     [
+      875,
+      220
+     ],
+     [
+      886,
+      188
+     ],
+     [
+      913,
+      168
+     ],
+     [
+      947,
+      168
+     ],
+     [
+      974,
+      188
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.shrub_orchard_w",
+   "type": "shrub",
+   "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1910,
+    945
+   ],
+   "attrs": {
+    "radius_px": 36,
+    "crown_poly": [
+     [
+      1946,
+      945
+     ],
+     [
+      1939,
+      966
+     ],
+     [
+      1921,
+      979
+     ],
+     [
+      1899,
+      979
+     ],
+     [
+      1881,
+      966
+     ],
+     [
+      1874,
+      945
+     ],
+     [
+      1881,
+      924
+     ],
+     [
+      1899,
+      911
+     ],
+     [
+      1921,
+      911
+     ],
+     [
+      1939,
+      924
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.shrub_orchard_e",
+   "type": "shrub",
+   "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    2045,
+    945
+   ],
+   "attrs": {
+    "radius_px": 48,
+    "crown_poly": [
+     [
+      2093,
+      945
+     ],
+     [
+      2084,
+      973
+     ],
+     [
+      2060,
+      991
+     ],
+     [
+      2030,
+      991
+     ],
+     [
+      2006,
+      973
+     ],
+     [
+      1997,
+      945
+     ],
+     [
+      2006,
+      917
+     ],
+     [
+      2030,
+      899
+     ],
+     [
+      2060,
+      899
+     ],
+     [
+      2084,
+      917
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.shrub_play_east",
+   "type": "shrub",
+   "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    2360,
+    763
+   ],
+   "attrs": {
+    "radius_px": 37,
+    "crown_poly": [
+     [
+      2397,
+      763
+     ],
+     [
+      2390,
+      785
+     ],
+     [
+      2371,
+      798
+     ],
+     [
+      2349,
+      798
+     ],
+     [
+      2330,
+      785
+     ],
+     [
+      2323,
+      763
+     ],
+     [
+      2330,
+      741
+     ],
+     [
+      2349,
+      728
+     ],
+     [
+      2371,
+      728
+     ],
+     [
+      2390,
+      741
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.shrub_walk_1",
+   "type": "shrub",
+   "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1490,
+    1160
+   ],
+   "attrs": {
+    "radius_px": 22,
+    "crown_poly": [
+     [
+      1512,
+      1160
+     ],
+     [
+      1508,
+      1173
+     ],
+     [
+      1497,
+      1181
+     ],
+     [
+      1483,
+      1181
+     ],
+     [
+      1472,
+      1173
+     ],
+     [
+      1468,
+      1160
+     ],
+     [
+      1472,
+      1147
+     ],
+     [
+      1483,
+      1139
+     ],
+     [
+      1497,
+      1139
+     ],
+     [
+      1508,
+      1147
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.shrub_walk_2",
+   "type": "shrub",
+   "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1475,
+    1290
+   ],
+   "attrs": {
+    "radius_px": 22,
+    "crown_poly": [
+     [
+      1497,
+      1290
+     ],
+     [
+      1493,
+      1303
+     ],
+     [
+      1482,
+      1311
+     ],
+     [
+      1468,
+      1311
+     ],
+     [
+      1457,
+      1303
+     ],
+     [
+      1453,
+      1290
+     ],
+     [
+      1457,
+      1277
+     ],
+     [
+      1468,
+      1269
+     ],
+     [
+      1482,
+      1269
+     ],
+     [
+      1493,
+      1277
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.shrub_front_south",
+   "type": "shrub",
+   "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1150,
+    1580
+   ],
+   "attrs": {
+    "radius_px": 30,
+    "crown_poly": [
+     [
+      1180,
+      1580
+     ],
+     [
+      1174,
+      1598
+     ],
+     [
+      1159,
+      1609
+     ],
+     [
+      1141,
+      1609
+     ],
+     [
+      1126,
+      1598
+     ],
+     [
+      1120,
+      1580
+     ],
+     [
+      1126,
+      1562
+     ],
+     [
+      1141,
+      1551
+     ],
+     [
+      1159,
+      1551
+     ],
+     [
+      1174,
+      1562
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.tree_big_nw",
+   "type": "tree",
+   "desc": "Very large DECIDUOUS tree (bare, wide spreading crown in the aerial) at the motor court's NW corner; trunk ~0.5 m seen as a dark disc where the limbs converge.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    242,
+    315
+   ],
+   "attrs": {
+    "species_guess": "large deciduous (valley oak / sycamore?)",
+    "trunk_visible": true,
+    "crown_center": [
+     170,
+     190
+    ],
+    "crown_radius_px": 175,
+    "crown_poly": [
+     [
+      345,
+      190
+     ],
+     [
+      322,
+      278
+     ],
+     [
+      258,
+      342
+     ],
+     [
+      170,
+      365
+     ],
+     [
+      83,
+      342
+     ],
+     [
+      18,
+      278
+     ],
+     [
+      -5,
+      190
+     ],
+     [
+      18,
+      103
+     ],
+     [
+      82,
+      38
+     ],
+     [
+      170,
+      15
+     ],
+     [
+      258,
+      38
+     ],
+     [
+      322,
+      102
+     ]
+    ]
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "site.tree_lawn1",
+   "type": "tree",
+   "desc": "Small young deciduous tree (bare) in the upper front lawn.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    348,
+    1098
+   ],
+   "attrs": {
+    "species_guess": "young deciduous (ornamental)",
+    "trunk_visible": true,
+    "crown_center": [
+     345,
+     1095
+    ],
+    "crown_radius_px": 62,
+    "crown_poly": [
+     [
+      407,
+      1095
+     ],
+     [
+      399,
+      1126
+     ],
+     [
+      376,
+      1149
+     ],
+     [
+      345,
+      1157
+     ],
+     [
+      314,
+      1149
+     ],
+     [
+      291,
+      1126
+     ],
+     [
+      283,
+      1095
+     ],
+     [
+      291,
+      1064
+     ],
+     [
+      314,
+      1041
+     ],
+     [
+      345,
+      1033
+     ],
+     [
+      376,
+      1041
+     ],
+     [
+      399,
+      1064
+     ]
+    ]
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "site.tree_court_recess",
+   "type": "tree",
+   "desc": "Small bare deciduous tree in the shaded recess bed by the motor court.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    583,
+    765
+   ],
+   "attrs": {
+    "species_guess": "small deciduous",
+    "trunk_visible": false,
+    "crown_center": [
+     575,
+     760
+    ],
+    "crown_radius_px": 45,
+    "crown_poly": [
+     [
+      620,
+      760
+     ],
+     [
+      614,
+      782
+     ],
+     [
+      598,
+      799
+     ],
+     [
+      575,
+      805
+     ],
+     [
+      552,
+      799
+     ],
+     [
+      536,
+      782
+     ],
+     [
+      530,
+      760
+     ],
+     [
+      536,
+      738
+     ],
+     [
+      552,
+      721
+     ],
+     [
+      575,
+      715
+     ],
+     [
+      598,
+      721
+     ],
+     [
+      614,
+      738
+     ]
+    ]
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "site.tree_porch",
+   "type": "tree",
+   "desc": "Small white-flowering tree in the porch bed, left of the entry steps.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    630,
+    1215
+   ],
+   "also": [
+    {
+     "image": "photos/hero_721b4a.jpg",
+     "bbox": [
+      330,
+      850,
+      800,
+      1380
+     ]
+    }
+   ],
+   "attrs": {
+    "species_guess": "magnolia / dogwood",
+    "trunk_visible": false,
+    "crown_center": [
+     632,
+     1218
+    ],
+    "crown_radius_px": 35,
+    "crown_poly": [
+     [
+      667,
+      1218
+     ],
+     [
+      662,
+      1236
+     ],
+     [
+      650,
+      1248
+     ],
+     [
+      632,
+      1253
+     ],
+     [
+      614,
+      1248
+     ],
+     [
+      602,
+      1236
+     ],
+     [
+      597,
+      1218
+     ],
+     [
+      602,
+      1200
+     ],
+     [
+      614,
+      1188
+     ],
+     [
+      632,
+      1183
+     ],
+     [
+      650,
+      1188
+     ],
+     [
+      662,
+      1200
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.birch_a",
+   "type": "tree",
+   "desc": "Multi-stem white-barked BIRCH clump (bare, white limbs) at the porch's right end; crown over the lawn and walk.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    688,
+    1392
+   ],
+   "also": [
+    {
+     "image": "photos/hero_721b4a.jpg",
+     "bbox": [
+      1850,
+      0,
+      2500,
+      1680
+     ]
+    },
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1400,
+      0,
+      2500,
+      1300
+     ]
+    }
+   ],
+   "attrs": {
+    "species_guess": "birch (Betula, multi-stem)",
+    "trunk_visible": false,
+    "crown_center": [
+     640,
+     1450
+    ],
+    "crown_radius_px": 140,
+    "crown_poly": [
+     [
+      780,
+      1450
+     ],
+     [
+      761,
+      1520
+     ],
+     [
+      710,
+      1571
+     ],
+     [
+      640,
+      1590
+     ],
+     [
+      570,
+      1571
+     ],
+     [
+      519,
+      1520
+     ],
+     [
+      500,
+      1450
+     ],
+     [
+      519,
+      1380
+     ],
+     [
+      570,
+      1329
+     ],
+     [
+      640,
+      1310
+     ],
+     [
+      710,
+      1329
+     ],
+     [
+      761,
+      1380
+     ]
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.birch_b",
+   "type": "tree",
+   "desc": "Second multi-stem BIRCH clump right against the lower wing's SW corner; limbs lean south.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    788,
+    1458
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1400,
+      0,
+      2500,
+      1300
+     ]
+    }
+   ],
+   "attrs": {
+    "species_guess": "birch (Betula, multi-stem)",
+    "trunk_visible": false,
+    "crown_center": [
+     750,
+     1570
+    ],
+    "crown_radius_px": 110,
+    "crown_poly": [
+     [
+      860,
+      1570
+     ],
+     [
+      845,
+      1625
+     ],
+     [
+      805,
+      1665
+     ],
+     [
+      750,
+      1680
+     ],
+     [
+      695,
+      1665
+     ],
+     [
+      655,
+      1625
+     ],
+     [
+      640,
+      1570
+     ],
+     [
+      655,
+      1515
+     ],
+     [
+      695,
+      1475
+     ],
+     [
+      750,
+      1460
+     ],
+     [
+      805,
+      1475
+     ],
+     [
+      845,
+      1515
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.tree_patio_nw",
+   "type": "tree",
+   "desc": "Small bare tree in the patio bed at the house's NE corner.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1050,
+    430
+   ],
+   "attrs": {
+    "species_guess": "small deciduous",
+    "trunk_visible": false,
+    "crown_center": [
+     1045,
+     425
+    ],
+    "crown_radius_px": 45,
+    "crown_poly": [
+     [
+      1090,
+      425
+     ],
+     [
+      1084,
+      448
+     ],
+     [
+      1068,
+      464
+     ],
+     [
+      1045,
+      470
+     ],
+     [
+      1022,
+      464
+     ],
+     [
+      1006,
+      448
+     ],
+     [
+      1000,
+      425
+     ],
+     [
+      1006,
+      402
+     ],
+     [
+      1022,
+      386
+     ],
+     [
+      1045,
+      380
+     ],
+     [
+      1068,
+      386
+     ],
+     [
+      1084,
+      402
+     ]
+    ]
+   },
+   "conf": 0.4
+  },
+  {
+   "id": "site.tree_patio_a",
+   "type": "tree",
+   "desc": "Patio tree A (bare, upright multi-stem, smooth pale bark) in the courtyard bed.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1130,
+    790
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      640,
+      560,
+      1140,
+      1140
+     ]
+    }
+   ],
+   "attrs": {
+    "species_guess": "crape myrtle (smooth tan multi-stem bark, p21 / p23)",
+    "trunk_visible": true,
+    "crown_center": [
+     1110,
+     790
+    ],
+    "crown_radius_px": 95,
+    "crown_poly": [
+     [
+      1205,
+      790
+     ],
+     [
+      1192,
+      838
+     ],
+     [
+      1158,
+      872
+     ],
+     [
+      1110,
+      885
+     ],
+     [
+      1062,
+      872
+     ],
+     [
+      1028,
+      838
+     ],
+     [
+      1015,
+      790
+     ],
+     [
+      1028,
+      742
+     ],
+     [
+      1062,
+      708
+     ],
+     [
+      1110,
+      695
+     ],
+     [
+      1158,
+      708
+     ],
+     [
+      1192,
+      742
+     ]
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.tree_patio_b",
+   "type": "tree",
+   "desc": "Patio tree B (bare, multi-stem) in the diamond bed against the SE wing.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1227,
+    875
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      1040,
+      560,
+      1340,
+      1120
+     ]
+    }
+   ],
+   "attrs": {
+    "species_guess": "crape myrtle (smooth tan multi-stem bark, p21 / p23)",
+    "trunk_visible": true,
+    "crown_center": [
+     1230,
+     870
+    ],
+    "crown_radius_px": 105,
+    "crown_poly": [
+     [
+      1335,
+      870
+     ],
+     [
+      1321,
+      922
+     ],
+     [
+      1282,
+      961
+     ],
+     [
+      1230,
+      975
+     ],
+     [
+      1178,
+      961
+     ],
+     [
+      1139,
+      922
+     ],
+     [
+      1125,
+      870
+     ],
+     [
+      1139,
+      818
+     ],
+     [
+      1178,
+      779
+     ],
+     [
+      1230,
+      765
+     ],
+     [
+      1282,
+      779
+     ],
+     [
+      1321,
+      818
+     ]
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "site.jmaple_upper",
+   "type": "tree",
+   "desc": "Japanese maple (bare red-pink twigs; orange foliage in p22) in the raised bed NE of the side lawn.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1420,
+    200
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      440,
+      500,
+      800,
+      1020
+     ]
+    }
+   ],
+   "attrs": {
+    "species_guess": "Japanese maple",
+    "trunk_visible": false,
+    "crown_center": [
+     1420,
+     198
+    ],
+    "crown_radius_px": 45,
+    "crown_poly": [
+     [
+      1465,
+      198
+     ],
+     [
+      1459,
+      220
+     ],
+     [
+      1442,
+      237
+     ],
+     [
+      1420,
+      243
+     ],
+     [
+      1398,
+      237
+     ],
+     [
+      1381,
+      220
+     ],
+     [
+      1375,
+      198
+     ],
+     [
+      1381,
+      176
+     ],
+     [
+      1398,
+      159
+     ],
+     [
+      1420,
+      153
+     ],
+     [
+      1442,
+      159
+     ],
+     [
+      1459,
+      175
+     ]
+    ]
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "site.jmaple_stairs",
+   "type": "tree",
+   "desc": "Japanese maple (layered crown, green in p22) on the planter left of the patio stairs.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1680,
+    560
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1530,
+      520,
+      2080,
+      1040
+     ]
+    }
+   ],
+   "attrs": {
+    "species_guess": "Japanese maple",
+    "trunk_visible": false,
+    "crown_center": [
+     1680,
+     545
+    ],
+    "crown_radius_px": 85,
+    "crown_poly": [
+     [
+      1765,
+      545
+     ],
+     [
+      1754,
+      588
+     ],
+     [
+      1722,
+      619
+     ],
+     [
+      1680,
+      630
+     ],
+     [
+      1638,
+      619
+     ],
+     [
+      1606,
+      588
+     ],
+     [
+      1595,
+      545
+     ],
+     [
+      1606,
+      502
+     ],
+     [
+      1638,
+      471
+     ],
+     [
+      1680,
+      460
+     ],
+     [
+      1722,
+      471
+     ],
+     [
+      1754,
+      502
+     ]
+    ]
+   },
+   "conf": 0.4
+  },
+  {
+   "id": "site.jmaple_planter",
+   "type": "tree",
+   "desc": "Small red-twigged Japanese maple in the raised planter beside the arbor.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1660,
+    850
+   ],
+   "attrs": {
+    "species_guess": "Japanese maple",
+    "trunk_visible": false,
+    "crown_center": [
+     1660,
+     850
+    ],
+    "crown_radius_px": 40,
+    "crown_poly": [
+     [
+      1700,
+      850
+     ],
+     [
+      1695,
+      870
+     ],
+     [
+      1680,
+      885
+     ],
+     [
+      1660,
+      890
+     ],
+     [
+      1640,
+      885
+     ],
+     [
+      1625,
+      870
+     ],
+     [
+      1620,
+      850
+     ],
+     [
+      1625,
+      830
+     ],
+     [
+      1640,
+      815
+     ],
+     [
+      1660,
+      810
+     ],
+     [
+      1680,
+      815
+     ],
+     [
+      1695,
+      830
+     ]
+    ]
+   },
+   "conf": 0.4
+  },
+  {
+   "id": "site.jmaple_arbor_se",
+   "type": "tree",
+   "desc": "Japanese maple (pinkish bare twigs) in the round bed SE of the arbor, beside the rear walk.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1540,
+    1150
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1830,
+      160,
+      2500,
+      1200
+     ]
+    }
+   ],
+   "attrs": {
+    "species_guess": "Japanese maple",
+    "trunk_visible": false,
+    "crown_center": [
+     1540,
+     1160
+    ],
+    "crown_radius_px": 75,
+    "crown_poly": [
+     [
+      1615,
+      1160
+     ],
+     [
+      1605,
+      1198
+     ],
+     [
+      1578,
+      1225
+     ],
+     [
+      1540,
+      1235
+     ],
+     [
+      1502,
+      1225
+     ],
+     [
+      1475,
+      1198
+     ],
+     [
+      1465,
+      1160
+     ],
+     [
+      1475,
+      1122
+     ],
+     [
+      1502,
+      1095
+     ],
+     [
+      1540,
+      1085
+     ],
+     [
+      1578,
+      1095
+     ],
+     [
+      1605,
+      1122
+     ]
+    ]
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "site.tree_planter_lawn",
+   "type": "tree",
+   "desc": "Bare deciduous tree in the raised planter above the synthetic lawn; its trunk shadow falls south across the turf.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1722,
+    1178
+   ],
+   "attrs": {
+    "species_guess": "deciduous (fruit / ornamental)",
+    "trunk_visible": false,
+    "crown_center": [
+     1700,
+     1180
+    ],
+    "crown_radius_px": 95,
+    "crown_poly": [
+     [
+      1795,
+      1180
+     ],
+     [
+      1782,
+      1228
+     ],
+     [
+      1748,
+      1262
+     ],
+     [
+      1700,
+      1275
+     ],
+     [
+      1652,
+      1262
+     ],
+     [
+      1618,
+      1228
+     ],
+     [
+      1605,
+      1180
+     ],
+     [
+      1618,
+      1132
+     ],
+     [
+      1652,
+      1098
+     ],
+     [
+      1700,
+      1085
+     ],
+     [
+      1748,
+      1098
+     ],
+     [
+      1782,
+      1132
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.tree_play_ne",
+   "type": "tree",
+   "desc": "Small tree with light yellow-green new leaves on the play area's east edge.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    2295,
+    615
+   ],
+   "attrs": {
+    "species_guess": "small deciduous",
+    "trunk_visible": false,
+    "crown_center": [
+     2295,
+     610
+    ],
+    "crown_radius_px": 65,
+    "crown_poly": [
+     [
+      2360,
+      610
+     ],
+     [
+      2351,
+      642
+     ],
+     [
+      2328,
+      666
+     ],
+     [
+      2295,
+      675
+     ],
+     [
+      2262,
+      666
+     ],
+     [
+      2239,
+      642
+     ],
+     [
+      2230,
+      610
+     ],
+     [
+      2239,
+      578
+     ],
+     [
+      2262,
+      554
+     ],
+     [
+      2295,
+      545
+     ],
+     [
+      2328,
+      554
+     ],
+     [
+      2351,
+      578
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.fruit_1",
+   "type": "tree",
+   "desc": "Small pruned FRUIT tree (bare, open vase) on the orchard terrace; long thin trunk shadow.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1960,
+    1105
+   ],
+   "also": [
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      1580,
+      540,
+      2280,
+      880
+     ]
+    }
+   ],
+   "attrs": {
+    "species_guess": "fruit tree (apple / pear / plum / persimmon)",
+    "trunk_visible": true,
+    "crown_center": [
+     1975,
+     1105
+    ],
+    "crown_radius_px": 70,
+    "crown_poly": [
+     [
+      2045,
+      1105
+     ],
+     [
+      2036,
+      1140
+     ],
+     [
+      2010,
+      1166
+     ],
+     [
+      1975,
+      1175
+     ],
+     [
+      1940,
+      1166
+     ],
+     [
+      1914,
+      1140
+     ],
+     [
+      1905,
+      1105
+     ],
+     [
+      1914,
+      1070
+     ],
+     [
+      1940,
+      1044
+     ],
+     [
+      1975,
+      1035
+     ],
+     [
+      2010,
+      1044
+     ],
+     [
+      2036,
+      1070
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.fruit_2",
+   "type": "tree",
+   "desc": "Small pruned FRUIT tree (bare, open vase) on the orchard terrace; long thin trunk shadow.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    2105,
+    1107
+   ],
+   "also": [
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      1580,
+      540,
+      2280,
+      880
+     ]
+    }
+   ],
+   "attrs": {
+    "species_guess": "fruit tree (apple / pear / plum / persimmon)",
+    "trunk_visible": true,
+    "crown_center": [
+     2120,
+     1125
+    ],
+    "crown_radius_px": 50,
+    "crown_poly": [
+     [
+      2170,
+      1125
+     ],
+     [
+      2163,
+      1150
+     ],
+     [
+      2145,
+      1168
+     ],
+     [
+      2120,
+      1175
+     ],
+     [
+      2095,
+      1168
+     ],
+     [
+      2077,
+      1150
+     ],
+     [
+      2070,
+      1125
+     ],
+     [
+      2077,
+      1100
+     ],
+     [
+      2095,
+      1082
+     ],
+     [
+      2120,
+      1075
+     ],
+     [
+      2145,
+      1082
+     ],
+     [
+      2163,
+      1100
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.fruit_3",
+   "type": "tree",
+   "desc": "Small pruned FRUIT tree (bare, open vase) on the orchard terrace; long thin trunk shadow.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    2250,
+    1107
+   ],
+   "attrs": {
+    "species_guess": "fruit tree (apple / pear / plum / persimmon)",
+    "trunk_visible": true,
+    "crown_center": [
+     2300,
+     1140
+    ],
+    "crown_radius_px": 65,
+    "crown_poly": [
+     [
+      2365,
+      1140
+     ],
+     [
+      2356,
+      1172
+     ],
+     [
+      2332,
+      1196
+     ],
+     [
+      2300,
+      1205
+     ],
+     [
+      2268,
+      1196
+     ],
+     [
+      2244,
+      1172
+     ],
+     [
+      2235,
+      1140
+     ],
+     [
+      2244,
+      1108
+     ],
+     [
+      2268,
+      1084
+     ],
+     [
+      2300,
+      1075
+     ],
+     [
+      2332,
+      1084
+     ],
+     [
+      2356,
+      1108
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.fruit_4",
+   "type": "tree",
+   "desc": "Small pruned FRUIT tree (bare, open vase) on the orchard terrace; long thin trunk shadow.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    2158,
+    960
+   ],
+   "attrs": {
+    "species_guess": "fruit tree (apple / pear / plum / persimmon)",
+    "trunk_visible": true,
+    "crown_center": [
+     2175,
+     945
+    ],
+    "crown_radius_px": 55,
+    "crown_poly": [
+     [
+      2230,
+      945
+     ],
+     [
+      2223,
+      972
+     ],
+     [
+      2202,
+      993
+     ],
+     [
+      2175,
+      1000
+     ],
+     [
+      2148,
+      993
+     ],
+     [
+      2127,
+      972
+     ],
+     [
+      2120,
+      945
+     ],
+     [
+      2127,
+      918
+     ],
+     [
+      2148,
+      897
+     ],
+     [
+      2175,
+      890
+     ],
+     [
+      2202,
+      897
+     ],
+     [
+      2223,
+      918
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.fruit_5",
+   "type": "tree",
+   "desc": "Small pruned FRUIT tree (bare, open vase) on the orchard terrace; long thin trunk shadow.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    2290,
+    945
+   ],
+   "attrs": {
+    "species_guess": "fruit tree (apple / pear / plum / persimmon)",
+    "trunk_visible": true,
+    "crown_center": [
+     2320,
+     950
+    ],
+    "crown_radius_px": 55,
+    "crown_poly": [
+     [
+      2375,
+      950
+     ],
+     [
+      2368,
+      978
+     ],
+     [
+      2348,
+      998
+     ],
+     [
+      2320,
+      1005
+     ],
+     [
+      2292,
+      998
+     ],
+     [
+      2272,
+      978
+     ],
+     [
+      2265,
+      950
+     ],
+     [
+      2272,
+      922
+     ],
+     [
+      2292,
+      902
+     ],
+     [
+      2320,
+      895
+     ],
+     [
+      2348,
+      902
+     ],
+     [
+      2368,
+      922
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "site.tree_north_yg",
+   "type": "tree",
+   "desc": "Tree with a round yellow-green crown straddling the north wall, above the north bed.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    530,
+    175
+   ],
+   "attrs": {
+    "species_guess": "evergreen / deciduous (unknown)",
+    "trunk_visible": false,
+    "crown_center": [
+     530,
+     173
+    ],
+    "crown_radius_px": 62,
+    "crown_poly": [
+     [
+      592,
+      173
+     ],
+     [
+      584,
+      204
+     ],
+     [
+      561,
+      227
+     ],
+     [
+      530,
+      235
+     ],
+     [
+      499,
+      227
+     ],
+     [
+      476,
+      204
+     ],
+     [
+      468,
+      173
+     ],
+     [
+      476,
+      142
+     ],
+     [
+      499,
+      119
+     ],
+     [
+      530,
+      111
+     ],
+     [
+      561,
+      119
+     ],
+     [
+      584,
+      142
+     ]
+    ]
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "site.trees_north",
+   "type": "tree_belt",
+   "desc": "Boundary tree belt along the north (top) edge: mixed evergreen oaks (dark green) and deciduous trees, a broad dark live-oak-like canopy NE of the pool / fireplace (x 1500-1980) and big bare deciduous trees NE of the garden. Ground under it: mulch / leaf litter.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     286,
+     0
+    ],
+    [
+     2500,
+     0
+    ],
+    [
+     2500,
+     460
+    ],
+    [
+     2330,
+     450
+    ],
+    [
+     2257,
+     148
+    ],
+    [
+     1975,
+     148
+    ],
+    [
+     1975,
+     295
+    ],
+    [
+     1880,
+     300
+    ],
+    [
+     1815,
+     340
+    ],
+    [
+     1785,
+     420
+    ],
+    [
+     1720,
+     420
+    ],
+    [
+     1620,
+     290
+    ],
+    [
+     1480,
+     160
+    ],
+    [
+     1370,
+     136
+    ],
+    [
+     286,
+     145
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      380,
+      290,
+      1920,
+      760
+     ]
+    }
+   ],
+   "attrs": {
+    "species_mix": "coast live oak?, redwood / conifers beyond (p26), deciduous"
+   },
+   "conf": 0.4
+  },
+  {
+   "id": "site.trees_east",
+   "type": "tree_belt",
+   "desc": "Tree belt along the east edge beyond the play area / orchard / synthetic lawn (large leafy deciduous and evergreen trees).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     2330,
+     450
+    ],
+    [
+     2500,
+     460
+    ],
+    [
+     2500,
+     1875
+    ],
+    [
+     2200,
+     1875
+    ],
+    [
+     2340,
+     1620
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.4
+  },
+  {
+   "id": "site.trees_south",
+   "type": "tree_belt",
+   "desc": "Street-side screen of large shrubs and trees along the south (bottom) edge: yellow-green flowering shrubs / acacia-like trees, evergreens and a few bare deciduous trees (white-barked limbs at x~1100 and 1300); hides the street and the gated entrance.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     105,
+     1720
+    ],
+    [
+     290,
+     1720
+    ],
+    [
+     300,
+     1668
+    ],
+    [
+     720,
+     1665
+    ],
+    [
+     800,
+     1650
+    ],
+    [
+     1000,
+     1645
+    ],
+    [
+     1250,
+     1655
+    ],
+    [
+     1500,
+     1640
+    ],
+    [
+     1560,
+     1640
+    ],
+    [
+     2000,
+     1630
+    ],
+    [
+     2340,
+     1620
+    ],
+    [
+     2200,
+     1875
+    ],
+    [
+     0,
+     1875
+    ],
+    [
+     0,
+     1700
+    ]
+   ],
+   "attrs": {},
+   "conf": 0.45
+  },
+  {
+   "id": "site.structure_south",
+   "type": "context_building",
+   "desc": "Wood-shake roof (hip, weathered cedar shakes) beyond the street-side screen at the bottom edge, plus a dark flat surface east of it: a neighbouring building across the street, or an entry structure. Unclear.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    264,
+    1808,
+    552,
+    1875
+   ],
+   "attrs": {
+    "beyond_lot": "probably"
+   },
+   "conf": 0.3
+  },
+  {
+   "id": "site.lid_green",
+   "type": "utility_lid",
+   "desc": "Round green plastic utility / septic / irrigation-vault lid in the front bed.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1237,
+    1547
+   ],
+   "attrs": {
+    "radius_px": 15
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "site.grate_lawn",
+   "type": "grate",
+   "desc": "Square metal grate (drain / vent, ~1 m) in the side lawn.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    1110,
+    257,
+    1137,
+    283
+   ],
+   "attrs": {},
+   "conf": 0.75
+  },
+  {
+   "id": "site.light_lawn",
+   "type": "light",
+   "desc": "Small garden light (round white globe on a stake) at the synthetic lawn's top-left corner, by the walk.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1625,
+    1197
+   ],
+   "attrs": {},
+   "conf": 0.45
+  },
+  {
+   "id": "site.box_patio_bed",
+   "type": "utility_box",
+   "desc": "Small green box / lid in the NE-corner patio bed (irrigation valve box?).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1080,
+    445
+   ],
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "site.lid_patio",
+   "type": "utility_lid",
+   "desc": "Small round cover and a dark square grate on the flagstone near the house's NE corner.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1067,
+    490
+   ],
+   "attrs": {
+    "grate_bbox": [
+     1060,
+     500,
+     1075,
+     510
+    ]
+   },
+   "conf": 0.4
+  },
+  {
+   "id": "site.downspout_blue",
+   "type": "utility",
+   "desc": "Downspout from the SE wing's gutter ending at a small blue object (bucket / rain barrel?) in the shaded side bed.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1368,
+    1288
+   ],
+   "attrs": {},
+   "conf": 0.35
+  },
+  {
+   "id": "site.house_eave_outline",
+   "type": "house_footprint",
+   "desc": "House + attached 3-car garage as seen from above: ROOF EAVE outline (dark grey asphalt-shingle roofs). The ground footprint (walls) is HIDDEN under the eaves everywhere (overhang ~0.3-0.6 m); covered porch / patios are inside this outline. Garage wing = the NW block (x 286-584), garage doors on its west face to the driveway; front porch under the angled SW wing facing the lower front lawn; rear covered patios and the upstairs balcony face the pool (NE); recesses at (1015-1090, 757-860) and (527-634, 727-800) are open beds.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     286,
+     300
+    ],
+    [
+     584,
+     300
+    ],
+    [
+     584,
+     316
+    ],
+    [
+     1006,
+     316
+    ],
+    [
+     1006,
+     525
+    ],
+    [
+     1086,
+     525
+    ],
+    [
+     1090,
+     757
+    ],
+    [
+     1015,
+     757
+    ],
+    [
+     1015,
+     860
+    ],
+    [
+     1125,
+     965
+    ],
+    [
+     1393,
+     965
+    ],
+    [
+     1394,
+     1256
+    ],
+    [
+     1180,
+     1258
+    ],
+    [
+     1180,
+     1447
+    ],
+    [
+     811,
+     1447
+    ],
+    [
+     811,
+     1275
+    ],
+    [
+     792,
+     1292
+    ],
+    [
+     687,
+     1195
+    ],
+    [
+     687,
+     1175
+    ],
+    [
+     535,
+     1175
+    ],
+    [
+     527,
+     800
+    ],
+    [
+     634,
+     800
+    ],
+    [
+     634,
+     727
+    ],
+    [
+     590,
+     725
+    ],
+    [
+     361,
+     725
+    ],
+    [
+     361,
+     707
+    ],
+    [
+     286,
+     707
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      990,
+      1050,
+      1990,
+      1450
+     ]
+    }
+   ],
+   "attrs": {
+    "walls_hidden": true,
+    "chimneys_px": [
+     [
+      730,
+      308
+     ],
+     [
+      1050,
+      1283
+     ]
+    ],
+    "note": "traced at ~5 px; the roof zone has the exact eaves"
+   },
+   "conf": 0.5
+  }
+ ],
+ "notes": [
+  "All coordinates are ORIGINAL pixels of photos/p29_ddf5dc.jpg (2500 x 1875, near-nadir drone, winter: most deciduous trees bare) unless an element names another image; \"also\" boxes in the ground photos are coarse (identification only).",
+  "Orientation in p29 (not compass): street + gated entrance bottom-left; driveway up the left edge; front porch faces down-left onto the lower front lawn; pool deck NE of the house; terraces rising east: patio -> stairs -> gravel path / play area / garden; synthetic lawn bottom-right below the orchard terrace.",
+  "Scale: ~28-30 px/m on the ground (solar modules on the roof ~30 px per 1.0 m short side; pool 420 x 202 px reads ~15 x 7 m at 28 px/m; the lot (1.03 acre) fits x 0-2340, y 130-1670 at ~29.5 px/m). Use the registered camera for metres.",
+  "Perspective: tall things lean AWAY from the image centre (~1250, 937): chimney caps, the arbor roof, the play structure, fence tops and tree crowns are displaced outward from their bases; trunk points are at the base where the trunk shadow starts, crowns where the foliage is.",
+  "Sun: shadows fall toward +y (down the image); the walls running along x cast dark bands south of them, the house shades its front (south) side, so the front beds / porch are in shadow.",
+  "Materials: driveway = tumbled pavers; every walk / patio = bluestone flagstone (irregular rectangles, grey-blue with buff and rust stones); coping = lighter square-cut stone; garden path + garden floor = blue-grey crushed stone / DG; walls = dry-stacked fieldstone with light caps; beds = brown bark mulch; play area = tan wood chips; synthetic lawn = artificial turf; front + side lawns = natural grass.",
+  "Walk and path outlines were generated as constant-width bands around hand-read centre lines (centre lines kept in attrs) and unioned with hand-traced landings; their edges are good to ~5 px."
+ ],
+ "open_questions": [
+  "Street and gated entrance are hidden by the bottom-left tree screen: gate position / type and where the street runs (along the bottom? the wood-shake roof at (264-552, 1808+) may be across it).",
+  "Outdoor shower not seen anywhere; candidate = the grey slab against the SE wing where the stepping stones end (site.side_slab).",
+  "BBQ kitchen and bar counter lie under the vine-covered arbor: their exact footprint (only p20 / p21 / p26 show them obliquely).",
+  "Big bare tree at the motor-court NW corner: species (valley oak?) and whether the round dark disc at (242,315) is its trunk.",
+  "Terraced walls NE of the side lawn / behind the lounge and the fireplace: two parallel walls are visible only as caps; heights and the run behind the fireplace are guesses.",
+  "Lot boundary lines: no fence is visible in the aerial except the garden / play-area fences; the west hedge, north stone wall and the tree belts are taken as the edges.",
+  "Utility pole carrying the north overhead lines is out of frame (seen in p22 / p26 beyond the fireplace)."
+ ]
+}

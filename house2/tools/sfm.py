@@ -1,10 +1,10 @@
 """Classical structure-from-motion over the exterior video frames + listing photos (COLMAP, CPU).
 
-    python3 -I house/tools/sfm.py prepare        # copy / mask the chosen images into refs/cache/sfm/images
-    python3 -I house/tools/sfm.py features       # SIFT (affine shape + domain-size pooling)
-    python3 -I house/tools/sfm.py match          # exhaustive matching + geometric verification
-    python3 -I house/tools/sfm.py map            # incremental mapping -> refs/cache/sfm/sparse/<k>
-    python3 -I house/tools/sfm.py report         # registered images, focal lengths, point counts, pair matches
+    python3 -I tools/sfm.py prepare        # copy / mask the chosen images into refs/cache/sfm/images
+    python3 -I tools/sfm.py features       # SIFT (affine shape + domain-size pooling)
+    python3 -I tools/sfm.py match          # exhaustive matching + geometric verification
+    python3 -I tools/sfm.py map            # incremental mapping -> refs/cache/sfm/sparse/<k>
+    python3 -I tools/sfm.py report         # registered images, focal lengths, point counts, pair matches
 
 Every video shot is one folder = one camera (same lens through the shot); every photo is its own camera.
 The burnt-in titles / watermark of the video are masked out of the feature extraction.
@@ -23,22 +23,42 @@ IMG = os.path.join(SFM, 'images')
 MASK = os.path.join(SFM, 'masks')
 DB = os.path.join(SFM, 'database.db')
 
-# shot -> (frame prefix, first, last, step, [mask rectangles as fractions x0, y0, x1, y1])
-WATERMARK = (0.0, 0.84, 0.17, 1.0)
+# The video arrives as frames every 100 ms (refs/cache/frames_all/frames/frame_<ms>ms.jpg, 1362 x 766, a screen
+# recording of the player): shot -> (first ms, last ms, step ms, [mask rectangles as fractions x0, y0, x1, y1]).
+# Ranges stop short of the cross-dissolves between shots.  Every frame masks the player's bar along the bottom edge,
+# its icons at the top right and the watermark at the bottom right; the title shot masks its lettering.
+FRAMES = os.path.join(CACHE, 'frames_all', 'frames')
+PLAYER = [(0.0, 0.915, 1.0, 1.0), (0.95, 0.0, 1.0, 0.22), (0.80, 0.86, 1.0, 1.0)]
+TITLE = [(0.0, 0.60, 0.62, 0.92)]
 SHOTS = {
-    'v1_drone_front_high': ('seg002', 15, 31, 2, [(0.18, 0.42, 0.68, 0.64)]),
-    'v2_drone_front_low': ('seg002', 33, 53, 2, [(0.0, 0.62, 0.52, 1.0)]),
-    'v3_pergola': ('seg022', 7, 23, 4, [WATERMARK]),
-    'v4_pool_cabana': ('seg123', 21, 35, 2, [WATERMARK]),
-    'v5_cabana_house': ('seg123', 37, 61, 3, [WATERMARK]),
-    'v6_pool_house': ('seg141', 7, 25, 2, [WATERMARK]),
-    'v7_drone_front_right': ('seg141', 31, 49, 2, [WATERMARK]),
-    'v8_drone_far': ('seg141', 57, 77, 5, [WATERMARK]),
+    'va_approach': (14000, 16000, 400, PLAYER + TITLE),
+    'vb_pool_top': (21500, 22800, 300, PLAYER),
+    'vc_front': (24000, 26000, 400, PLAYER),
+    'vd_front_roof': (26500, 28300, 300, PLAYER),
+    'vg_play_pool': (123500, 126500, 300, PLAYER),
+    'vi_rear_a': (130000, 132000, 300, PLAYER),
+    'vj_rear_b': (132500, 135500, 300, PLAYER),
+    'vk_rear_c': (136000, 138500, 300, PLAYER),
+    'vl_top_play': (139000, 141500, 300, PLAYER),
+    'vm_lawn': (142000, 146000, 400, PLAYER),
+    'vp_rear_d': (153500, 156500, 300, PLAYER),
+    'vq_orbit': (157500, 160500, 200, PLAYER),
 }
 PHOTOS = {
-    'p30_top': 'p30_b7b282.jpg', 'p01_front_dusk': 'p01_57ca6a.jpg', 'p02_porch': 'p02_1ea535.jpg',
-    'p25_pergola': 'p25_0c0464.jpg', 'p26_rear': 'p26_08c1ce.jpg', 'p27_cabana': 'p27_a7bd4e.jpg',
+    'p29_top': 'p29_ddf5dc.jpg', 'p28_rear_high': 'p28_7ae0dd.jpg', 'p01_front': 'p01_768294.jpg',
+    'hero_porch': 'hero_721b4a.jpg', 'p20_arbor': 'p20_f249da.jpg', 'p21_pool_high': 'p21_160d78.jpg',
+    'p22_pool_end': 'p22_50e8b3.jpg', 'p26_pool_house': 'p26_cacb52.jpg', 'p24_fireplace': 'p24_5e2477.jpg',
 }
+
+
+def frame_name(ms):
+    return 'frame_%06dms.jpg' % ms
+
+
+def cache_name(sfm_name):
+    """COLMAP image name (folder/file) -> the image's path relative to refs/cache (the key the other tools use)."""
+    folder, f = sfm_name.split('/')
+    return 'photos/' + f if folder in PHOTOS else 'frames_all/frames/' + f
 
 
 def prepare():
@@ -46,12 +66,12 @@ def prepare():
         shutil.rmtree(d, ignore_errors=True)
         os.makedirs(d)
     n = 0
-    for shot, (pref, a, b, step, rects) in SHOTS.items():
+    for shot, (a, b, step, rects) in SHOTS.items():
         os.makedirs(os.path.join(IMG, shot))
         os.makedirs(os.path.join(MASK, shot))
-        for k in range(a, b + 1, step):
-            name = '%s_%03d.jpg' % (pref, k)
-            src = os.path.join(CACHE, 'frames', name)
+        for ms in range(a, b + 1, step):
+            name = frame_name(ms)
+            src = os.path.join(FRAMES, name)
             shutil.copy(src, os.path.join(IMG, shot, name))
             w, h = Image.open(src).size
             m = np.full((h, w), 255, np.uint8)
