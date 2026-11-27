@@ -1,0 +1,141 @@
+{
+ "what": "Sources of data/sha_sim_inputs.js / .json (Phase 3 day plan inputs, package P3-A)",
+ "generator": "tools/sim/build_sim_inputs.py",
+ "built": "2026-11-27",
+ "sections": {
+  "profile, totals, weights, typeMix, turnaround, intl, checks": "aggregates of the observed-elsewhere data (ODbL 1.0) and published facts; every count cell < 3 merged; no identity, no per-flight time",
+  "published": "published schedule facts, not observed-elsewhere data (HKG: DATA.GOV.HK terms; TSA: OGDL v1.0); the only section where flight numbers occur; allow-listed by tools/sim/audit_identity.py only for flight numbers that occur in refs/cache/schedules_open/",
+  "notams": "NOTAM effect records (ids, windows, targets) from the CAAC eAIP NOTAM Summary (OD3 short facts)",
+  "params": "design parameters [inf], each with its basis"
+ },
+ "attribution": [
+  "Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL",
+  "Flight information: Airport Authority Hong Kong, via DATA.GOV.HK",
+  "Flight information: Taipei Songshan Airport, CAA Taiwan, OGDL v1.0",
+  "NOTAM effects: CAAC eAIP NOTAM Summary, in force 2026-11-02T07:06Z; later NOTAMs not known"
+ ],
+ "files": [
+  {
+   "path": "refs/cache/observed_elsewhere/sha_observed_2026-11-10.json",
+   "local_only": true,
+   "sha256": "local, hash withheld (OD4: no fingerprint of an observed-elsewhere table in a committable file)",
+   "url": "https://github.com/adsblol/globe_history_2026/releases",
+   "retrieved": "2026-11-14",
+   "licence": "ODbL 1.0",
+   "licence_quote": "license: ODbL 1.0 , use it freely, just keep it open. (https://www.adsb.lol/docs/open-data/historical/)",
+   "used_for": "aggregates only: type mix, intl counts, turnaround quantiles, continuation counts"
+  },
+  {
+   "path": "refs/cache/observed_elsewhere/sha_observed_2026-11-12.json",
+   "local_only": true,
+   "sha256": "local, hash withheld (OD4: no fingerprint of an observed-elsewhere table in a committable file)",
+   "url": "https://github.com/adsblol/globe_history_2026/releases",
+   "retrieved": "2026-11-14",
+   "licence": "ODbL 1.0",
+   "licence_quote": "license: ODbL 1.0 , use it freely, just keep it open. (https://www.adsb.lol/docs/open-data/historical/)",
+   "used_for": "aggregates only: type mix, intl counts, turnaround quantiles, continuation counts"
+  },
+  {
+   "path": "refs/cache/schedules_open/hkia/hkia_2026-11-13_arrival-false.json",
+   "local_only": false,
+   "sha256": "c4b6ecef8604bcdc6583920e4731c7c56446e461faeea32ec8c950c59ac15c6f",
+   "url": "https://www.hongkongairport.com/flightinfo-rest/rest/flights/past?date=2026-11-13&lang=en&cargo=false&arrival=false",
+   "retrieved": "2026-11-14T05:42Z",
+   "licence": "DATA.GOV.HK Terms and Conditions of Use",
+   "licence_url": "https://data.gov.hk/en/terms-and-conditions",
+   "licence_quote": "You are allowed to browse, download, distribute, reproduce, hyperlink to, and print the Data for both commercial and non-commercial purposes on a free-of-charge basis on condition that: you shall comply with the Terms of Use; you shall identify clearly the source of the Data and acknowledge the Government and the Relevant Organisations’ ownership of the intellectual property rights in the Data ...; you shall indemnify the Government and the Relevant Organisations ...; you shall also give proper attribution to the Government, the Relevant Organisations and DATA.GOV.HK.",
+   "attribution": "Flight information: Airport Authority Hong Kong, via DATA.GOV.HK",
+   "redistributable": true,
+   "used_for": "section published (tier 3 rows of their own date)"
+  },
+  {
+   "path": "refs/cache/schedules_open/hkia/hkia_2026-11-13_arrival-true.json",
+   "local_only": false,
+   "sha256": "28c50d50cb1b3e227a78f68764ae316c3299320de95203e8f07e5839344c69ca",
+   "url": "https://www.hongkongairport.com/flightinfo-rest/rest/flights/past?date=2026-11-13&lang=en&cargo=false&arrival=true",
+   "retrieved": "2026-11-14T05:42Z",
+   "licence": "DATA.GOV.HK Terms and Conditions of Use",
+   "licence_url": "https://data.gov.hk/en/terms-and-conditions",
+   "licence_quote": "You are allowed to browse, download, distribute, reproduce, hyperlink to, and print the Data for both commercial and non-commercial purposes on a free-of-charge basis on condition that: you shall comply with the Terms of Use; you shall identify clearly the source of the Data and acknowledge the Government and the Relevant Organisations’ ownership of the intellectual property rights in the Data ...; you shall indemnify the Government and the Relevant Organisations ...; you shall also give proper attribution to the Government, the Relevant Organisations and DATA.GOV.HK.",
+   "attribution": "Flight information: Airport Authority Hong Kong, via DATA.GOV.HK",
+   "redistributable": true,
+   "used_for": "section published (tier 3 rows of their own date)"
+  },
+  {
+   "path": "refs/cache/schedules_open/tsa/tsa_intl_arr_2026-11-14.json",
+   "local_only": false,
+   "sha256": "7ecc8df74f143979e9e34039fd4fe282a6c6577eb925811cd5131f79d87700ea",
+   "url": "https://www.tsa.gov.tw/api/publicDataArea/GetFormaterData?id=7dc1379a-9485-4491-866d-fc4f9590ffcf",
+   "retrieved": "2026-11-14T05:43Z (arrivals: first attempt reset by the network, second succeeded)",
+   "licence": "Open Government Data License, version 1.0 (政府資料開放授權條款-第1版)",
+   "licence_url": "https://data.gov.tw/license",
+   "licence_quote": "各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸 ... 本條款與「創用CC授權 姓名標示 4.0 國際版本」相容",
+   "attribution": "Flight information: Taipei Songshan Airport, Civil Aeronautics Administration (Taiwan), Open Government Data License v1.0",
+   "redistributable": true,
+   "used_for": "section published (tier 3 rows of their own date)"
+  },
+  {
+   "path": "refs/cache/schedules_open/tsa/tsa_intl_dep_2026-11-14.json",
+   "local_only": false,
+   "sha256": "d7fbec53bafd1687e2fc7427b483320312663b8dead4f1b2b3b1d699b84d3e8c",
+   "url": "https://www.tsa.gov.tw/api/publicDataArea/GetFormaterData?id=42879f51-f47f-4d26-8b2b-5535c652cbde",
+   "retrieved": "2026-11-14T05:43Z (arrivals: first attempt reset by the network, second succeeded)",
+   "licence": "Open Government Data License, version 1.0 (政府資料開放授權條款-第1版)",
+   "licence_url": "https://data.gov.tw/license",
+   "licence_quote": "各機關所提供之開放資料，授權使用者不限目的、時間及地域、非專屬、不可撤回、免授權金進行利用，利用之方式包括重製、散布、公開傳輸 ... 本條款與「創用CC授權 姓名標示 4.0 國際版本」相容",
+   "attribution": "Flight information: Taipei Songshan Airport, Civil Aeronautics Administration (Taiwan), Open Government Data License v1.0",
+   "redistributable": true,
+   "used_for": "section published (tier 3 rows of their own date)"
+  },
+  {
+   "path": "refs/cache/notam/zsss_notams_2026-11.json",
+   "local_only": true,
+   "sha256": "8b36e589221f72ee266f993c674b009f26ef5c7400dc6e2c6f1dc959462cd734",
+   "url": "eAIP NOTAM Summary (CAAC)",
+   "retrieved": "2026-11-14 (POST https://www.eaipchina.cn/eaip/homeFile/listPublish: the Nov 2026 summary is still the newest; next expected early Dec 2026)",
+   "licence": "none published (treated as all rights reserved; OD3 short facts only)",
+   "licence_quote": "none published",
+   "used_for": "notams: ids, windows, targets"
+  },
+  {
+   "path": "docs/phase1/observed_elsewhere_stats.json",
+   "local_only": false,
+   "sha256": "4766111d0e3159d87d69ad2c3e40e9a7c48c2bddc002b16e33a1cf386a3d72df",
+   "url": "https://github.com/adsblol/globe_history_2026/releases",
+   "licence": "ODbL 1.0 (adsb.lol derived), CC0 (VRS), ODC-By (Mictronics)",
+   "used_for": "committed aggregates: route-DB and identified callsigns per airline, air-time calibration"
+  },
+  {
+   "path": "docs/phase1/sources_sim_hourly.json",
+   "local_only": false,
+   "sha256": "89d9bc27d329927f3866010b4919d939390ad4614bdb99a8a0c27d581351b9f1",
+   "url": "https://github.com/adsblol/globe_history_2026/releases",
+   "licence": "ODbL 1.0 (adsb.lol derived aggregates)",
+   "used_for": "hourly profile shape (aggregates)"
+  },
+  {
+   "path": "data/lookup.js",
+   "local_only": false,
+   "sha256": "91b6d65831376ef792b93f63d6f1a62875f075eb46a7b234baca3dfc6a3b298e",
+   "url": "https://github.com/vradarserver/standing-data",
+   "licence": "CC0 1.0 (Virtual Radar Server standing data, forked from sfo3d)",
+   "used_for": "airline names and IATA designators"
+  },
+  {
+   "path": "data/sha_routes.json",
+   "local_only": false,
+   "sha256": "90bcbf08a72dd8991fb5ef169b022fe686b2880110af513274365b9d089676a6",
+   "url": null,
+   "licence": "ODbL 1.0 (derived from OpenStreetMap)",
+   "used_for": "taxi length medians per side (P3-B route table)"
+  },
+  {
+   "path": "data/sha_stands.json",
+   "local_only": false,
+   "sha256": "4e202d17b31febce179bcda04ce14ac9ef59cb132a5aca7b1529b2d5c8dcc436",
+   "url": null,
+   "licence": "ODbL 1.0 (derived from OpenStreetMap)",
+   "used_for": "stand sides (taxi estimates)"
+  }
+ ]
+}

@@ -103,11 +103,1411 @@
   }
  ],
  "traffic": {
-  "kind": "empty",
+  "kind": "sim",
+  "day": "2026-11-20",
+  "planVersion": 1,
   "ac": [],
-  "src": null,
-  "note": "No recorded traffic: open ADS-B does not cover Hongqiao (docs/PLAN.md s.3). Phase 3 adds a replay set of simulated traffic, every aircraft labelled inferred."
+  "src": "inf",
+  "note": "No recorded traffic: open ADS-B does not cover Hongqiao (docs/PLAN.md s.3). The traffic is simulated from the day plan of this operating day (js/sim/plan.js, Phase 3), every aircraft labelled inferred."
  },
+ "days": [
+  {
+   "day": "2026-11-10",
+   "t0": 1794254400000,
+   "t1": 1794340800000,
+   "from": 1794247200000,
+   "src": "awc",
+   "complete": true,
+   "metars": [
+    {
+     "obsTime": 1794247200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 091800Z 33005MPS CAVOK 08/00 Q1033 NOSIG"
+    },
+    {
+     "obsTime": 1794249000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 091830Z 33006MPS CAVOK 08/00 Q1033 NOSIG"
+    },
+    {
+     "obsTime": 1794250800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 091900Z 33006MPS 300V360 CAVOK 08/00 Q1032 NOSIG"
+    },
+    {
+     "obsTime": 1794252600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 091930Z 33006MPS CAVOK 08/00 Q1032 NOSIG"
+    },
+    {
+     "obsTime": 1794254400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 092000Z 33006MPS CAVOK 08/00 Q1032 NOSIG"
+    },
+    {
+     "obsTime": 1794256200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 092030Z 34006MPS CAVOK 08/00 Q1032 NOSIG"
+    },
+    {
+     "obsTime": 1794258000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 092100Z 33005MPS CAVOK 08/01 Q1032 NOSIG"
+    },
+    {
+     "obsTime": 1794259800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 092130Z 32005MPS CAVOK 08/00 Q1032 NOSIG"
+    },
+    {
+     "obsTime": 1794261600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 092200Z 33005MPS CAVOK 08/00 Q1032 NOSIG"
+    },
+    {
+     "obsTime": 1794263400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 092230Z 33004MPS 300V360 CAVOK 07/00 Q1032 NOSIG"
+    },
+    {
+     "obsTime": 1794265200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 092300Z 33005MPS 300V360 CAVOK 08/00 Q1033 NOSIG"
+    },
+    {
+     "obsTime": 1794267000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 092330Z 32004MPS 290V350 CAVOK 08/00 Q1033 NOSIG"
+    },
+    {
+     "obsTime": 1794268800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100000Z 33005MPS CAVOK 09/00 Q1033 NOSIG"
+    },
+    {
+     "obsTime": 1794270600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100030Z 33005MPS 300V360 CAVOK 09/01 Q1034 NOSIG"
+    },
+    {
+     "obsTime": 1794272400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100100Z 34005MPS 310V010 CAVOK 10/01 Q1033 NOSIG"
+    },
+    {
+     "obsTime": 1794274200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100130Z 35005MPS CAVOK 10/01 Q1033 NOSIG"
+    },
+    {
+     "obsTime": 1794276000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100200Z 34005MPS CAVOK 12/02 Q1033 NOSIG"
+    },
+    {
+     "obsTime": 1794277800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100230Z 34004MPS 300V010 CAVOK 14/02 Q1033 NOSIG"
+    },
+    {
+     "obsTime": 1794279600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100300Z 32005MPS CAVOK 14/02 Q1032 NOSIG"
+    },
+    {
+     "obsTime": 1794281400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100330Z 32005MPS 270V020 CAVOK 14/02 Q1032 NOSIG"
+    },
+    {
+     "obsTime": 1794283200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100400Z 33005MPS 290V360 CAVOK 15/03 Q1031 NOSIG"
+    },
+    {
+     "obsTime": 1794285000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100430Z 33004MPS 290V360 CAVOK 15/03 Q1031 NOSIG"
+    },
+    {
+     "obsTime": 1794286800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100500Z 32004MPS 290V350 CAVOK 15/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794288600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100530Z 33005MPS CAVOK 16/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794290400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100600Z 31005MPS CAVOK 16/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794292200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100630Z 32004MPS 270V010 CAVOK 16/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794294000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100700Z 36004MPS 330V030 CAVOK 15/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794295800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100730Z 35004MPS 320V030 CAVOK 15/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794297600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100800Z 36004MPS CAVOK 14/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794299400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100830Z 33004MPS CAVOK 14/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794301200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100900Z 36004MPS CAVOK 13/03 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1794303000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 100930Z 35003MPS 310V010 CAVOK 12/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794304800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101000Z 35003MPS CAVOK 12/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794306600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101030Z 35003MPS CAVOK 12/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794308400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101100Z 35003MPS CAVOK 12/02 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794310200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101130Z 35003MPS CAVOK 12/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794312000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101200Z 35003MPS CAVOK 11/02 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794313800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101230Z 01002MPS CAVOK 11/02 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794315600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101300Z 35002MPS 280V020 CAVOK 11/03 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794317400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101330Z 32002MPS 290V360 CAVOK 11/02 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794319200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101400Z 25002MPS 230V300 CAVOK 11/04 Q1030 NOSIG"
+    },
+    {
+     "obsTime": 1794321000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101430Z 00000MPS CAVOK 11/04 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1794322800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101500Z VRB01MPS CAVOK 10/05 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1794324600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101530Z 19001MPS CAVOK 10/05 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1794326400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101600Z VRB01MPS CAVOK 09/05 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1794328200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101630Z VRB01MPS CAVOK 09/06 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1794330000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101700Z VRB01MPS CAVOK 08/05 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1794331800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101730Z 09001MPS CAVOK 09/05 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1794333600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101800Z 00000MPS CAVOK 08/05 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1794335400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101830Z 00000MPS CAVOK 08/05 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1794337200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101900Z 00000MPS CAVOK 08/06 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1794339000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 101930Z VRB01MPS CAVOK 08/06 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1794340800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 102000Z 02002MPS CAVOK 08/06 Q1028 NOSIG"
+    }
+   ],
+   "notes": "operating day 04:00-04:00 UTC+8 plus 2 h look-back; 53 reports (53 routine, 0 SPECI), 0 with an AWC receipt time (the others become available at obsTime + 20 min, design s.1.4); largest gap between routine reports 30 min; sources: awc"
+  },
+  {
+   "day": "2026-11-12",
+   "t0": 1794427200000,
+   "t1": 1794513600000,
+   "from": 1794420000000,
+   "src": "awc",
+   "complete": true,
+   "metars": [
+    {
+     "obsTime": 1794420000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 111800Z VRB01MPS CAVOK 15/11 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794421800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 111830Z 18002MPS CAVOK 14/11 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794423600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 111900Z 16002MPS CAVOK 14/12 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794425400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 111930Z 17002MPS CAVOK 15/12 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794427200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 112000Z 16002MPS CAVOK 15/12 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794429000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 112030Z 15002MPS CAVOK 15/12 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794430800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 112100Z VRB01MPS CAVOK 15/13 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794432600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 112130Z 16001MPS CAVOK 15/13 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794434400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 112200Z 17002MPS CAVOK 15/13 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794436200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 112230Z VRB01MPS CAVOK 15/13 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794438000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 112300Z 17002MPS CAVOK 15/13 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794439800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 112330Z 16002MPS CAVOK 16/14 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794441600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120000Z 19002MPS CAVOK 16/14 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1794443400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120030Z 17002MPS CAVOK 17/14 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1794445200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120100Z 19002MPS CAVOK 18/14 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1794447000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120130Z 19003MPS CAVOK 18/14 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1794448800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120200Z 20003MPS CAVOK 18/14 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1794450600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120230Z 21003MPS 180V260 CAVOK 18/14 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1794452400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120300Z 22002MPS 180V300 CAVOK 19/14 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794454200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120330Z 23002MPS 180V310 CAVOK 19/14 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794456000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120400Z 23003MPS 130V270 CAVOK 20/14 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794457800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120430Z 24002MPS 180V300 CAVOK 20/13 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794459600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120500Z 24002MPS 210V270 CAVOK 20/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794461400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120530Z 23002MPS 130V280 CAVOK 20/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794463200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120600Z VRB02MPS CAVOK 20/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794465000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120630Z VRB01MPS CAVOK 20/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794466800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120700Z VRB01MPS CAVOK 20/14 Q1023 BECMG TL0830 33005MPS"
+    },
+    {
+     "obsTime": 1794468600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120730Z 31003MPS 240V360 CAVOK 20/14 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794470400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120800Z 30003MPS 270V360 CAVOK 20/12 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794472200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120830Z 28002MPS 260V330 CAVOK 19/11 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794474000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120900Z 30002MPS 270V350 CAVOK 19/12 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794475800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 120930Z 34003MPS 300V010 9999 FEW030 19/12 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794477600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121000Z 01002MPS CAVOK 18/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794479400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121030Z VRB01MPS CAVOK 18/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794481200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121100Z 35003MPS CAVOK 18/13 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794483000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121130Z 30003MPS 280V340 9999 -RA NSC 18/14 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794484800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121200Z 31003MPS 280V350 9999 -RA NSC 17/13 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794486600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121230Z 31002MPS 280V350 9999 -RA NSC 17/13 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794488400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121300Z 01003MPS 9999 -RA NSC 16/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794490200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121330Z 02004MPS 9999 -RA NSC 16/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794492000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121400Z 01004MPS CAVOK 16/13 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794493800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121430Z 01003MPS CAVOK 16/12 Q1024 NOSIG"
+    },
+    {
+     "obsTime": 1794495600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121500Z 01004MPS 9999 -RA NSC 15/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794497400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121530Z 02003MPS CAVOK 15/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794499200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121600Z 04002MPS CAVOK 15/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794501000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121630Z 01002MPS 9999 -RA NSC 15/13 Q1023 NOSIG"
+    },
+    {
+     "obsTime": 1794502800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121700Z 02002MPS 9999 -RA NSC 15/14 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794504600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121730Z 05002MPS 010V080 9999 -RA NSC 15/14 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794506400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121800Z VRB01MPS 7000 -RA SCT008 15/14 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794508200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121830Z 02002MPS 6000 -RA SCT007 15/14 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794510000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121900Z 03003MPS 6000 -RA SCT008 15/14 Q1022 BECMG TL1930 BKN008"
+    },
+    {
+     "obsTime": 1794511800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121930Z 04002MPS 6000 BKN008 15/14 Q1022 BECMG TL2100 BKN011"
+    },
+    {
+     "obsTime": 1794513600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 122000Z 05002MPS 6000 BKN008 15/14 Q1021 BECMG TL2030 BKN015"
+    }
+   ],
+   "notes": "operating day 04:00-04:00 UTC+8 plus 2 h look-back; 53 reports (53 routine, 0 SPECI), 0 with an AWC receipt time (the others become available at obsTime + 20 min, design s.1.4); largest gap between routine reports 30 min; sources: awc"
+  },
+  {
+   "day": "2026-11-13",
+   "t0": 1794513600000,
+   "t1": 1794600000000,
+   "from": 1794506400000,
+   "src": "awc",
+   "complete": true,
+   "metars": [
+    {
+     "obsTime": 1794506400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121800Z VRB01MPS 7000 -RA SCT008 15/14 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794508200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121830Z 02002MPS 6000 -RA SCT007 15/14 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794510000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121900Z 03003MPS 6000 -RA SCT008 15/14 Q1022 BECMG TL1930 BKN008"
+    },
+    {
+     "obsTime": 1794511800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 121930Z 04002MPS 6000 BKN008 15/14 Q1022 BECMG TL2100 BKN011"
+    },
+    {
+     "obsTime": 1794513600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 122000Z 05002MPS 6000 BKN008 15/14 Q1021 BECMG TL2030 BKN015"
+    },
+    {
+     "obsTime": 1794515400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 122030Z 04002MPS 6000 SCT008 15/14 Q1021 NOSIG"
+    },
+    {
+     "obsTime": 1794517200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 122100Z 06001MPS 6000 NSC 15/14 Q1021 NOSIG"
+    },
+    {
+     "obsTime": 1794519000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 122130Z 04002MPS 6000 NSC 15/14 Q1021 NOSIG"
+    },
+    {
+     "obsTime": 1794520800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 122200Z 09002MPS 6000 -RA FEW008 15/14 Q1021 NOSIG"
+    },
+    {
+     "obsTime": 1794522600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 122230Z VRB01MPS 5000 BR NSC 15/14 Q1021 NOSIG"
+    },
+    {
+     "obsTime": 1794524400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 122300Z 11003MPS 5000 BR NSC 16/14 Q1021 NOSIG"
+    },
+    {
+     "obsTime": 1794526200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 122330Z 11002MPS 7000 SCT013 16/14 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794528000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130000Z 11002MPS 090V150 7000 BKN013 16/15 Q1022 BECMG TL0130 BKN015"
+    },
+    {
+     "obsTime": 1794529800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130030Z VRB01MPS 7000 BKN013 17/15 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794531600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130100Z 06002MPS 010V110 9999 BKN011 17/15 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794533400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130130Z 09002MPS 9999 BKN011 17/15 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794535200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130200Z VRB01MPS 9999 BKN010 17/15 Q1022 BECMG TL0250 BKN009"
+    },
+    {
+     "obsTime": 1794537000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130230Z 12002MPS 090V160 9999 BKN009 18/16 Q1022 NOSIG"
+    },
+    {
+     "obsTime": 1794538800,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130300Z 10002MPS 070V170 9999 BKN009 18/16 Q1021 BECMG TL0350 BKN011"
+    },
+    {
+     "obsTime": 1794540600,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130330Z 11002MPS 080V170 9999 BKN010 19/16 Q1021 NOSIG"
+    },
+    {
+     "obsTime": 1794542400,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130400Z 12002MPS 070V150 9999 BKN010 19/16 Q1020 NOSIG"
+    },
+    {
+     "obsTime": 1794544200,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130430Z 12003MPS 090V160 9999 BKN010 20/16 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794546000,
+     "receiptTime": null,
+     "rawOb": "METAR ZSSS 130500Z 10003MPS 060V160 9999 BKN011 20/17 Q1019 BECMG TL0640 BKN015"
+    },
+    {
+     "obsTime": 1794547800,
+     "receiptTime": "2026-11-13T05:35:14.361Z",
+     "rawOb": "METAR ZSSS 130530Z 14003MPS 090V180 9999 BKN013 21/17 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794549600,
+     "receiptTime": "2026-11-13T06:05:17.297Z",
+     "rawOb": "METAR ZSSS 130600Z 15002MPS 100V210 9999 BKN015 21/17 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794551400,
+     "receiptTime": "2026-11-13T06:36:29.925Z",
+     "rawOb": "METAR ZSSS 130630Z 21002MPS 160V280 9999 BKN015 21/17 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794553200,
+     "receiptTime": "2026-11-13T07:05:17.577Z",
+     "rawOb": "METAR ZSSS 130700Z 17002MPS 080V220 9999 BKN015 21/17 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794555000,
+     "receiptTime": "2026-11-13T07:36:20.810Z",
+     "rawOb": "METAR ZSSS 130730Z VRB02MPS CAVOK 21/17 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794556800,
+     "receiptTime": "2026-11-13T08:20:27.203Z",
+     "rawOb": "METAR ZSSS 130800Z 26002MPS 210V300 CAVOK 21/17 Q1019 BECMG TL0910 BKN013"
+    },
+    {
+     "obsTime": 1794558600,
+     "receiptTime": "2026-11-13T08:35:12.922Z",
+     "rawOb": "METAR ZSSS 130830Z VRB01MPS CAVOK 21/17 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794560400,
+     "receiptTime": "2026-11-13T09:05:37.104Z",
+     "rawOb": "METAR ZSSS 130900Z 22002MPS 150V280 9999 FEW016 20/17 Q1020 NOSIG"
+    },
+    {
+     "obsTime": 1794562200,
+     "receiptTime": "2026-11-13T09:35:27.859Z",
+     "rawOb": "METAR ZSSS 130930Z VRB02MPS 9999 SCT016 20/17 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794564000,
+     "receiptTime": "2026-11-13T10:05:24.295Z",
+     "rawOb": "METAR ZSSS 131000Z 05002MPS 9999 SCT016 20/18 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794565800,
+     "receiptTime": "2026-11-13T10:35:28.794Z",
+     "rawOb": "METAR ZSSS 131030Z 34003MPS 310V020 9999 -RA SCT016 20/17 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794567600,
+     "receiptTime": "2026-11-13T11:06:35.949Z",
+     "rawOb": "METAR ZSSS 131100Z 35004MPS 9999 -RA SCT016 19/18 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794569400,
+     "receiptTime": "2026-11-13T11:35:10.559Z",
+     "rawOb": "METAR ZSSS 131130Z 03004MPS 9999 -RA SCT016 19/18 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794571200,
+     "receiptTime": "2026-11-13T12:05:26.838Z",
+     "rawOb": "METAR ZSSS 131200Z 10003MPS 070V150 9999 -RA FEW016 19/18 Q1018 NOSIG"
+    },
+    {
+     "obsTime": 1794573000,
+     "receiptTime": "2026-11-13T12:40:52.605Z",
+     "rawOb": "METAR ZSSS 131230Z 22003MPS 170V270 9999 -RA FEW016 19/18 Q1020 NOSIG"
+    },
+    {
+     "obsTime": 1794574800,
+     "receiptTime": "2026-11-13T13:21:04.959Z",
+     "rawOb": "METAR ZSSS 131300Z 24003MPS 190V260 9999 -RA SCT011 19/18 Q1020 BECMG TL1350 BKN009"
+    },
+    {
+     "obsTime": 1794576600,
+     "receiptTime": "2026-11-13T13:35:32.175Z",
+     "rawOb": "METAR ZSSS 131330Z VRB01MPS 9999 -RA BKN011 19/18 Q1020 NOSIG"
+    },
+    {
+     "obsTime": 1794578400,
+     "receiptTime": "2026-11-13T14:06:16.626Z",
+     "rawOb": "METAR ZSSS 131400Z 33003MPS 280V060 8000 -RA BKN008 19/18 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794580200,
+     "receiptTime": "2026-11-13T14:35:21.506Z",
+     "rawOb": "METAR ZSSS 131430Z 36003MPS 330V030 7000 -RA BKN008 18/17 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794582000,
+     "receiptTime": "2026-11-13T15:05:09.002Z",
+     "rawOb": "METAR ZSSS 131500Z VRB01MPS 7000 -RA BKN008 18/18 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794583800,
+     "receiptTime": "2026-11-13T15:36:14.578Z",
+     "rawOb": "METAR ZSSS 131530Z 01002MPS 7000 BKN008 18/17 Q1019 NOSIG"
+    },
+    {
+     "obsTime": 1794585600,
+     "receiptTime": "2026-11-13T16:21:04.350Z",
+     "rawOb": "METAR ZSSS 131600Z VRB01MPS 7000 BKN008 18/17 Q1018 BECMG TL1650 SCT008 BKN030"
+    },
+    {
+     "obsTime": 1794587400,
+     "receiptTime": "2026-11-13T16:35:19.981Z",
+     "rawOb": "METAR ZSSS 131630Z VRB01MPS 7000 FEW008 18/17 Q1018 NOSIG"
+    },
+    {
+     "obsTime": 1794589200,
+     "receiptTime": "2026-11-13T17:05:30.764Z",
+     "rawOb": "METAR ZSSS 131700Z VRB01MPS 6000 NSC 18/17 Q1018 NOSIG"
+    },
+    {
+     "obsTime": 1794591000,
+     "receiptTime": "2026-11-13T17:35:19.080Z",
+     "rawOb": "METAR ZSSS 131730Z 23001MPS 6000 NSC 18/18 Q1018 NOSIG"
+    },
+    {
+     "obsTime": 1794592800,
+     "receiptTime": "2026-11-13T18:06:18.789Z",
+     "rawOb": "METAR ZSSS 131800Z 19001MPS 5000 -RA BR NSC 18/17 Q1018 NOSIG"
+    },
+    {
+     "obsTime": 1794594600,
+     "receiptTime": "2026-11-13T18:35:24.407Z",
+     "rawOb": "METAR ZSSS 131830Z 06001MPS 5000 -RA BR NSC 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794596400,
+     "receiptTime": "2026-11-13T19:05:16.226Z",
+     "rawOb": "METAR ZSSS 131900Z VRB01MPS 5000 BR NSC 18/17 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794598200,
+     "receiptTime": "2026-11-13T19:36:45.866Z",
+     "rawOb": "METAR ZSSS 131930Z 22001MPS 5000 -RA BR NSC 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794600000,
+     "receiptTime": "2026-11-13T20:05:18.659Z",
+     "rawOb": "METAR ZSSS 132000Z VRB01MPS 5000 -RA BR NSC 18/17 Q1017 NOSIG"
+    }
+   ],
+   "notes": "operating day 04:00-04:00 UTC+8 plus 2 h look-back; 53 reports (53 routine, 0 SPECI), 30 with an AWC receipt time (the others become available at obsTime + 20 min, design s.1.4); largest gap between routine reports 30 min; sources: awc"
+  },
+  {
+   "day": "2026-11-14",
+   "t0": 1794600000000,
+   "t1": 1794686400000,
+   "from": 1794592800000,
+   "src": "awc",
+   "complete": true,
+   "metars": [
+    {
+     "obsTime": 1794592800,
+     "receiptTime": "2026-11-13T18:06:18.789Z",
+     "rawOb": "METAR ZSSS 131800Z 19001MPS 5000 -RA BR NSC 18/17 Q1018 NOSIG"
+    },
+    {
+     "obsTime": 1794594600,
+     "receiptTime": "2026-11-13T18:35:24.407Z",
+     "rawOb": "METAR ZSSS 131830Z 06001MPS 5000 -RA BR NSC 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794596400,
+     "receiptTime": "2026-11-13T19:05:16.226Z",
+     "rawOb": "METAR ZSSS 131900Z VRB01MPS 5000 BR NSC 18/17 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794598200,
+     "receiptTime": "2026-11-13T19:36:45.866Z",
+     "rawOb": "METAR ZSSS 131930Z 22001MPS 5000 -RA BR NSC 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794600000,
+     "receiptTime": "2026-11-13T20:05:18.659Z",
+     "rawOb": "METAR ZSSS 132000Z VRB01MPS 5000 -RA BR NSC 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794601800,
+     "receiptTime": "2026-11-13T20:35:12.415Z",
+     "rawOb": "METAR ZSSS 132030Z 00000MPS 4000 -RA BR NSC 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794603600,
+     "receiptTime": "2026-11-13T21:05:25.958Z",
+     "rawOb": "METAR ZSSS 132100Z VRB01MPS 3500 -RA BR FEW016 18/17 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794605400,
+     "receiptTime": "2026-11-13T21:36:12.788Z",
+     "rawOb": "METAR ZSSS 132130Z 02001MPS 3500 -RA BR BKN009 18/17 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794607200,
+     "receiptTime": "2026-11-13T22:20:57.794Z",
+     "rawOb": "METAR ZSSS 132200Z 00000MPS 4000 -RA BR BKN008 18/17 Q1017 BECMG TL2330 BKN010"
+    },
+    {
+     "obsTime": 1794609000,
+     "receiptTime": "2026-11-13T22:36:29.376Z",
+     "rawOb": "METAR ZSSS 132230Z 32001MPS 3000 -RA BR BKN006 18/18 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794610800,
+     "receiptTime": "2026-11-13T23:21:05.502Z",
+     "rawOb": "METAR ZSSS 132300Z 34003MPS 2500 -RA BR BKN004 18/17 Q1017 BECMG TL0010 3000 BKN005"
+    },
+    {
+     "obsTime": 1794612600,
+     "receiptTime": "2026-11-13T23:36:06.860Z",
+     "rawOb": "METAR ZSSS 132330Z 36004MPS 4000 -RA BR BKN011 18/17 Q1017 BECMG TL0020 BKN015"
+    },
+    {
+     "obsTime": 1794613800,
+     "receiptTime": "2026-11-13T23:52:19.766Z",
+     "rawOb": "SPECI ZSSS 132350Z 36003MPS 4000 -RA BR BKN004 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794614400,
+     "receiptTime": "2026-11-14T00:20:59.156Z",
+     "rawOb": "METAR ZSSS 140000Z 35003MPS 4000 -RA BR BKN004 18/17 Q1017 BECMG TL0050 BKN005"
+    },
+    {
+     "obsTime": 1794616200,
+     "receiptTime": "2026-11-14T00:35:22.176Z",
+     "rawOb": "METAR ZSSS 140030Z 05002MPS 020V090 4000 -RA BR NSC 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794618000,
+     "receiptTime": "2026-11-14T01:20:24.681Z",
+     "rawOb": "METAR ZSSS 140100Z 08002MPS 3500 -RA BR FEW004 18/17 Q1017 BECMG TL0200 2500"
+    },
+    {
+     "obsTime": 1794618420,
+     "receiptTime": "2026-11-14T01:10:20.287Z",
+     "rawOb": "SPECI ZSSS 140107Z VRB01MPS 4500 -RA BR BKN005 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794619800,
+     "receiptTime": "2026-11-14T01:35:36.753Z",
+     "rawOb": "METAR ZSSS 140130Z 04002MPS 350V090 5000 -RA BR BKN006 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794621600,
+     "receiptTime": "2026-11-14T02:21:03.373Z",
+     "rawOb": "METAR ZSSS 140200Z 01002MPS 340V040 4500 -RA BR BKN006 18/17 Q1017 BECMG TL0340 BKN011"
+    },
+    {
+     "obsTime": 1794623400,
+     "receiptTime": "2026-11-14T02:35:28.088Z",
+     "rawOb": "METAR ZSSS 140230Z VRB01MPS 5000 -RA BR FEW007 BKN015 18/17 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794625200,
+     "receiptTime": "2026-11-14T03:06:06.012Z",
+     "rawOb": "METAR ZSSS 140300Z 04002MPS 010V080 4500 -RA BR FEW007 BKN015 18/17 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794627000,
+     "receiptTime": "2026-11-14T03:35:09.236Z",
+     "rawOb": "METAR ZSSS 140330Z VRB01MPS 6000 -RA SCT007 BKN016 18/17 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794628800,
+     "receiptTime": "2026-11-14T04:05:20.505Z",
+     "rawOb": "METAR ZSSS 140400Z 06002MPS 040V140 9999 SCT008 BKN016 18/17 Q1015 NOSIG"
+    },
+    {
+     "obsTime": 1794630600,
+     "receiptTime": "2026-11-14T04:35:16.514Z",
+     "rawOb": "METAR ZSSS 140430Z VRB01MPS 9999 FEW008 BKN016 18/17 Q1015 NOSIG"
+    },
+    {
+     "obsTime": 1794632400,
+     "receiptTime": "2026-11-14T05:05:15.930Z",
+     "rawOb": "METAR ZSSS 140500Z 05002MPS 010V080 8000 -RA BKN020 19/17 Q1015 NOSIG"
+    },
+    {
+     "obsTime": 1794633900,
+     "receiptTime": "2026-11-14T05:28:01.799Z",
+     "rawOb": "SPECI ZSSS 140525Z VRB01MPS 7000 -RA BKN009 19/17 Q1014 BECMG TL0650 BKN011"
+    },
+    {
+     "obsTime": 1794634200,
+     "receiptTime": "2026-11-14T05:36:04.579Z",
+     "rawOb": "METAR ZSSS 140530Z 04002MPS 010V150 7000 BKN009 19/17 Q1014 BECMG TL0640 BKN011"
+    },
+    {
+     "obsTime": 1794636000,
+     "receiptTime": "2026-11-14T06:20:51.444Z",
+     "rawOb": "METAR ZSSS 140600Z 02002MPS 6000 BKN008 19/18 Q1014 BECMG TL0720 BKN011"
+    },
+    {
+     "obsTime": 1794637800,
+     "receiptTime": "2026-11-14T06:35:28.472Z",
+     "rawOb": "METAR ZSSS 140630Z 06003MPS 020V170 5000 BR BKN008 19/17 Q1013 NOSIG"
+    },
+    {
+     "obsTime": 1794639600,
+     "receiptTime": "2026-11-14T07:06:15.010Z",
+     "rawOb": "METAR ZSSS 140700Z 01003MPS 5000 BR BKN009 19/17 Q1014 NOSIG"
+    },
+    {
+     "obsTime": 1794641400,
+     "receiptTime": "2026-11-14T07:35:22.859Z",
+     "rawOb": "METAR ZSSS 140730Z 02003MPS 350V060 4500 BR BKN009 18/17 Q1014 NOSIG"
+    },
+    {
+     "obsTime": 1794643200,
+     "receiptTime": "2026-11-14T08:20:35.801Z",
+     "rawOb": "METAR ZSSS 140800Z 01003MPS 360V060 3000 BR BKN006 18/17 Q1014 BECMG TL0830 2800"
+    },
+    {
+     "obsTime": 1794645000,
+     "receiptTime": "2026-11-14T08:36:20.388Z",
+     "rawOb": "METAR ZSSS 140830Z 03003MPS 2500 BR BKN006 18/17 Q1014 NOSIG"
+    },
+    {
+     "obsTime": 1794646800,
+     "receiptTime": "2026-11-14T09:20:56.323Z",
+     "rawOb": "METAR ZSSS 140900Z 05003MPS 010V100 2800 BR BKN005 18/17 Q1014 BECMG TL1030 3000"
+    },
+    {
+     "obsTime": 1794648600,
+     "receiptTime": "2026-11-14T09:35:26.478Z",
+     "rawOb": "METAR ZSSS 140930Z 02003MPS 3000 BR BKN005 18/17 Q1015 NOSIG"
+    },
+    {
+     "obsTime": 1794650400,
+     "receiptTime": "2026-11-14T10:20:47.772Z",
+     "rawOb": "METAR ZSSS 141000Z 02002MPS 360V070 5000 -DZ BR BKN005 OVC012 18/17 Q1015 BECMG TL1130 BKN010"
+    },
+    {
+     "obsTime": 1794652200,
+     "receiptTime": "2026-11-14T10:36:17.290Z",
+     "rawOb": "METAR ZSSS 141030Z 04003MPS 010V090 6000 BKN006 OVC040 18/17 Q1015 NOSIG"
+    },
+    {
+     "obsTime": 1794654000,
+     "receiptTime": "2026-11-14T11:05:15.830Z",
+     "rawOb": "METAR ZSSS 141100Z 01002MPS 340V050 6000 -RA BKN007 18/17 Q1015 NOSIG"
+    },
+    {
+     "obsTime": 1794655800,
+     "receiptTime": "2026-11-14T11:36:17.631Z",
+     "rawOb": "METAR ZSSS 141130Z 02002MPS 5000 -RA BR BKN007 18/17 Q1015 NOSIG"
+    },
+    {
+     "obsTime": 1794657600,
+     "receiptTime": "2026-11-14T12:05:13.486Z",
+     "rawOb": "METAR ZSSS 141200Z 36003MPS 5000 -RA BR BKN006 18/17 Q1015 NOSIG"
+    },
+    {
+     "obsTime": 1794659400,
+     "receiptTime": "2026-11-14T12:35:19.760Z",
+     "rawOb": "METAR ZSSS 141230Z 01004MPS 4000 -DZ BR BKN005 18/17 Q1015 NOSIG"
+    },
+    {
+     "obsTime": 1794661200,
+     "receiptTime": "2026-11-14T13:06:24.863Z",
+     "rawOb": "METAR ZSSS 141300Z 01004MPS 4000 -DZ BR BKN006 17/17 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794663000,
+     "receiptTime": "2026-11-14T13:35:14.065Z",
+     "rawOb": "METAR ZSSS 141330Z 01006MPS 4500 -DZ BR BKN005 17/16 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794664800,
+     "receiptTime": "2026-11-14T14:06:45.166Z",
+     "rawOb": "METAR ZSSS 141400Z 01005MPS 4500 -DZ BR BKN005 16/16 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794666600,
+     "receiptTime": "2026-11-14T14:35:39.932Z",
+     "rawOb": "METAR ZSSS 141430Z 01006MPS 7000 -DZ BKN006 16/15 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794668400,
+     "receiptTime": "2026-11-14T15:06:46.503Z",
+     "rawOb": "METAR ZSSS 141500Z 01005MPS 7000 -DZ BKN007 16/15 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794670200,
+     "receiptTime": "2026-11-14T15:35:20.911Z",
+     "rawOb": "METAR ZSSS 141530Z 01005MPS 8000 BKN009 16/15 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794672000,
+     "receiptTime": "2026-11-14T16:20:58.154Z",
+     "rawOb": "METAR ZSSS 141600Z 01003MPS 9999 BKN008 16/15 Q1016 BECMG TL1740 BKN010"
+    },
+    {
+     "obsTime": 1794673800,
+     "receiptTime": "2026-11-14T16:35:48.304Z",
+     "rawOb": "METAR ZSSS 141630Z 01004MPS 9999 BKN008 16/15 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794675600,
+     "receiptTime": "2026-11-14T17:05:29.602Z",
+     "rawOb": "METAR ZSSS 141700Z 35004MPS 9999 SCT007 OVC016 16/14 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794677400,
+     "receiptTime": "2026-11-14T17:35:16.590Z",
+     "rawOb": "METAR ZSSS 141730Z 34005MPS 9999 FEW013 OVC020 15/13 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794679200,
+     "receiptTime": "2026-11-14T18:06:18.422Z",
+     "rawOb": "METAR ZSSS 141800Z 35005MPS 9999 FEW015 OVC026 15/13 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794681000,
+     "receiptTime": "2026-11-14T18:35:13.531Z",
+     "rawOb": "METAR ZSSS 141830Z 35005MPS 8000 OVC030 15/13 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794682800,
+     "receiptTime": "2026-11-14T19:05:47.420Z",
+     "rawOb": "METAR ZSSS 141900Z 34004MPS 8000 OVC033 15/13 Q1016 NOSIG"
+    },
+    {
+     "obsTime": 1794684600,
+     "receiptTime": "2026-11-14T19:35:10.058Z",
+     "rawOb": "METAR ZSSS 141930Z 33003MPS 8000 BKN023 OVC033 15/13 Q1017 NOSIG"
+    },
+    {
+     "obsTime": 1794686400,
+     "receiptTime": "2026-11-14T20:06:35.338Z",
+     "rawOb": "METAR ZSSS 142000Z 31003MPS 7000 SCT011 OVC030 15/13 Q1017 NOSIG"
+    }
+   ],
+   "notes": "operating day 04:00-04:00 UTC+8 plus 2 h look-back; 56 reports (53 routine, 3 SPECI), 56 with an AWC receipt time (the others become available at obsTime + 20 min, design s.1.4); largest gap between routine reports 30 min; sources: awc"
+  },
+  {
+   "day": "2026-11-20",
+   "t0": 1795118400000,
+   "t1": 1795204800000,
+   "from": 1795111200000,
+   "src": "awc",
+   "complete": true,
+   "metars": [
+    {
+     "obsTime": 1795111200,
+     "receiptTime": "2026-11-19T18:06:26.619Z",
+     "rawOb": "METAR ZSSS 191800Z 32005MPS CAVOK 08/M03 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795113000,
+     "receiptTime": "2026-11-19T18:35:21.569Z",
+     "rawOb": "METAR ZSSS 191830Z 33005MPS CAVOK 08/M03 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795114800,
+     "receiptTime": "2026-11-19T19:06:23.884Z",
+     "rawOb": "METAR ZSSS 191900Z 33005MPS CAVOK 08/M03 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795116600,
+     "receiptTime": "2026-11-19T19:36:26.865Z",
+     "rawOb": "METAR ZSSS 191930Z 32004MPS 290V350 CAVOK 07/M03 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795118400,
+     "receiptTime": "2026-11-19T20:05:25.128Z",
+     "rawOb": "METAR ZSSS 192000Z 32004MPS CAVOK 07/M03 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795120200,
+     "receiptTime": "2026-11-19T20:35:15.659Z",
+     "rawOb": "METAR ZSSS 192030Z 32004MPS 290V350 CAVOK 07/M03 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795122000,
+     "receiptTime": "2026-11-19T21:05:18.557Z",
+     "rawOb": "METAR ZSSS 192100Z 32004MPS CAVOK 07/M03 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795123800,
+     "receiptTime": "2026-11-19T21:35:59.882Z",
+     "rawOb": "METAR ZSSS 192130Z 31003MPS CAVOK 06/M02 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795125600,
+     "receiptTime": "2026-11-19T22:05:14.372Z",
+     "rawOb": "METAR ZSSS 192200Z 29003MPS CAVOK 06/M02 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795127400,
+     "receiptTime": "2026-11-19T22:35:11.172Z",
+     "rawOb": "METAR ZSSS 192230Z 28003MPS CAVOK 06/M01 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795129200,
+     "receiptTime": "2026-11-19T23:06:16.530Z",
+     "rawOb": "METAR ZSSS 192300Z 29003MPS CAVOK 07/M01 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1795131000,
+     "receiptTime": "2026-11-19T23:35:16.073Z",
+     "rawOb": "METAR ZSSS 192330Z 29004MPS 260V330 CAVOK 08/M02 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1795132800,
+     "receiptTime": "2026-11-20T00:05:56.250Z",
+     "rawOb": "METAR ZSSS 200000Z 30004MPS CAVOK 09/M02 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1795134600,
+     "receiptTime": "2026-11-20T00:35:21.157Z",
+     "rawOb": "METAR ZSSS 200030Z 32004MPS 290V360 CAVOK 10/M02 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1795136400,
+     "receiptTime": "2026-11-20T01:05:52.927Z",
+     "rawOb": "METAR ZSSS 200100Z 33005MPS 290V010 CAVOK 11/M03 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1795138200,
+     "receiptTime": "2026-11-20T01:35:53.415Z",
+     "rawOb": "METAR ZSSS 200130Z 34005G10MPS CAVOK 11/M04 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1795140000,
+     "receiptTime": "2026-11-20T02:06:12.409Z",
+     "rawOb": "METAR ZSSS 200200Z 31005MPS CAVOK 12/M05 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1795141800,
+     "receiptTime": "2026-11-20T02:35:32.257Z",
+     "rawOb": "METAR ZSSS 200230Z 30005MPS 270V330 CAVOK 12/M06 Q1029 NOSIG"
+    },
+    {
+     "obsTime": 1795143600,
+     "receiptTime": "2026-11-20T03:05:30.417Z",
+     "rawOb": "METAR ZSSS 200300Z 34006MPS 290V360 CAVOK 13/M05 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795145400,
+     "receiptTime": "2026-11-20T03:36:14.985Z",
+     "rawOb": "METAR ZSSS 200330Z 32005MPS 280V350 CAVOK 13/M06 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795147200,
+     "receiptTime": "2026-11-20T04:05:20.590Z",
+     "rawOb": "METAR ZSSS 200400Z 33006MPS 300V360 CAVOK 13/M05 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795149000,
+     "receiptTime": "2026-11-20T04:36:19.102Z",
+     "rawOb": "METAR ZSSS 200430Z 32006MPS 270V360 CAVOK 13/M05 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795150800,
+     "receiptTime": "2026-11-20T05:06:19.527Z",
+     "rawOb": "METAR ZSSS 200500Z 30006MPS 270V330 CAVOK 13/M05 Q1026 NOSIG"
+    },
+    {
+     "obsTime": 1795152600,
+     "receiptTime": "2026-11-20T05:35:47.615Z",
+     "rawOb": "METAR ZSSS 200530Z 30006G11MPS 270V350 CAVOK 14/M04 Q1026 NOSIG"
+    },
+    {
+     "obsTime": 1795154400,
+     "receiptTime": "2026-11-20T06:06:47.587Z",
+     "rawOb": "METAR ZSSS 200600Z 31005MPS 270V350 CAVOK 13/M05 Q1026 NOSIG"
+    },
+    {
+     "obsTime": 1795156200,
+     "receiptTime": "2026-11-20T06:35:18.646Z",
+     "rawOb": "METAR ZSSS 200630Z 29004MPS 260V360 CAVOK 13/M05 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1795158000,
+     "receiptTime": "2026-11-20T07:06:30.471Z",
+     "rawOb": "METAR ZSSS 200700Z 29004MPS 230V340 CAVOK 13/M04 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1795159800,
+     "receiptTime": "2026-11-20T07:36:32.935Z",
+     "rawOb": "METAR ZSSS 200730Z 29007MPS 250V320 CAVOK 13/M06 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1795161600,
+     "receiptTime": "2026-11-20T08:06:22.176Z",
+     "rawOb": "METAR ZSSS 200800Z 29006MPS 270V330 CAVOK 13/M05 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1795163400,
+     "receiptTime": "2026-11-20T08:35:14.487Z",
+     "rawOb": "METAR ZSSS 200830Z 30005MPS 260V340 CAVOK 12/M04 Q1025 NOSIG"
+    },
+    {
+     "obsTime": 1795165200,
+     "receiptTime": "2026-11-20T09:06:58.923Z",
+     "rawOb": "METAR ZSSS 200900Z 29003MPS 260V340 CAVOK 12/M04 Q1026 NOSIG"
+    },
+    {
+     "obsTime": 1795167000,
+     "receiptTime": "2026-11-20T09:35:11.158Z",
+     "rawOb": "METAR ZSSS 200930Z 27002MPS 220V330 CAVOK 11/M03 Q1026 NOSIG"
+    },
+    {
+     "obsTime": 1795168800,
+     "receiptTime": "2026-11-20T10:05:31.131Z",
+     "rawOb": "METAR ZSSS 201000Z 25002MPS 200V320 CAVOK 11/M02 Q1026 NOSIG"
+    },
+    {
+     "obsTime": 1795170600,
+     "receiptTime": "2026-11-20T10:35:32.783Z",
+     "rawOb": "METAR ZSSS 201030Z 25002MPS 220V310 CAVOK 10/M02 Q1026 NOSIG"
+    },
+    {
+     "obsTime": 1795172400,
+     "receiptTime": "2026-11-20T11:05:18.335Z",
+     "rawOb": "METAR ZSSS 201100Z 25002MPS 220V310 CAVOK 11/M02 Q1026 NOSIG"
+    },
+    {
+     "obsTime": 1795174200,
+     "receiptTime": "2026-11-20T11:36:28.531Z",
+     "rawOb": "METAR ZSSS 201130Z 25002MPS 220V280 CAVOK 10/M02 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795176000,
+     "receiptTime": "2026-11-20T12:05:44.557Z",
+     "rawOb": "METAR ZSSS 201200Z 24002MPS CAVOK 10/M01 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795177800,
+     "receiptTime": "2026-11-20T12:36:31.524Z",
+     "rawOb": "METAR ZSSS 201230Z 26002MPS 240V310 CAVOK 10/M02 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795179600,
+     "receiptTime": "2026-11-20T13:06:36.873Z",
+     "rawOb": "METAR ZSSS 201300Z 25002MPS 220V300 CAVOK 09/M01 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795181400,
+     "receiptTime": "2026-11-20T13:36:26.619Z",
+     "rawOb": "METAR ZSSS 201330Z 25003MPS 230V320 CAVOK 10/M01 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795183200,
+     "receiptTime": "2026-11-20T14:05:52.619Z",
+     "rawOb": "METAR ZSSS 201400Z 24002MPS 230V290 CAVOK 09/M01 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795185000,
+     "receiptTime": "2026-11-20T14:36:15.672Z",
+     "rawOb": "METAR ZSSS 201430Z 24002MPS 210V300 CAVOK 08/M00 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795186800,
+     "receiptTime": "2026-11-20T15:06:02.668Z",
+     "rawOb": "METAR ZSSS 201500Z 24002MPS 220V300 CAVOK 08/00 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795188600,
+     "receiptTime": "2026-11-20T15:35:16.927Z",
+     "rawOb": "METAR ZSSS 201530Z 25002MPS CAVOK 08/M00 Q1028 NOSIG"
+    },
+    {
+     "obsTime": 1795190400,
+     "receiptTime": "2026-11-20T16:05:32.934Z",
+     "rawOb": "METAR ZSSS 201600Z 25002MPS 230V300 CAVOK 07/00 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795192200,
+     "receiptTime": "2026-11-20T16:35:10.959Z",
+     "rawOb": "METAR ZSSS 201630Z 26002MPS 230V290 CAVOK 08/01 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795194000,
+     "receiptTime": "2026-11-20T17:05:58.904Z",
+     "rawOb": "METAR ZSSS 201700Z 27002MPS CAVOK 08/01 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795195800,
+     "receiptTime": "2026-11-20T17:35:21.825Z",
+     "rawOb": "METAR ZSSS 201730Z 29002MPS CAVOK 08/01 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795197600,
+     "receiptTime": "2026-11-20T18:05:17.674Z",
+     "rawOb": "METAR ZSSS 201800Z 30003MPS CAVOK 08/00 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795199400,
+     "receiptTime": "2026-11-20T18:35:14.380Z",
+     "rawOb": "METAR ZSSS 201830Z 30003MPS CAVOK 08/M00 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795201200,
+     "receiptTime": "2026-11-20T19:05:21.638Z",
+     "rawOb": "METAR ZSSS 201900Z 30003MPS CAVOK 08/M00 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795203000,
+     "receiptTime": "2026-11-20T19:35:17.033Z",
+     "rawOb": "METAR ZSSS 201930Z 29002MPS CAVOK 08/M01 Q1027 NOSIG"
+    },
+    {
+     "obsTime": 1795204800,
+     "receiptTime": "2026-11-20T20:05:13.977Z",
+     "rawOb": "METAR ZSSS 202000Z 29002MPS CAVOK 08/M01 Q1027 NOSIG"
+    }
+   ],
+   "notes": "operating day 04:00-04:00 UTC+8 plus 2 h look-back; 53 reports (53 routine, 0 SPECI), 53 with an AWC receipt time (the others become available at obsTime + 20 min, design s.1.4); largest gap between routine reports 30 min; sources: awc"
+  }
+ ],
+ "days_note": "Phase 3 replay days (design s.7.1): METAR / SPECI of each operating day 04:00-04:00 UTC+8 plus a 2 h look-back; receiptTime from the AWC JSON where cached, else null (IEM archive, AWC raw text)",
  "attribution": [
   "Weather: NOAA/NWS Aviation Weather Center (aviationweather.gov) data; the ZSSS reports are issued by the CAAC aviation meteorological service. Not official NOAA material."
  ],

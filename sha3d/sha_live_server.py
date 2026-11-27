@@ -14,11 +14,13 @@ Serves the app and relays the few live data SHA can use, so the browser never ta
   python3 sha_live_server.py [--port 8000] [--host 127.0.0.1]     then open http://localhost:8000/
   python3 sha_live_server.py --adsb                                 also relay adsb.lol (OFF by default, see below)
   python3 sha_live_server.py --no-metar                             never contact aviationweather.gov (offline)
+  python3 sha_live_server.py --no-identity                          never serve the local identity overlay
+  python3 sha_live_server.py --host 0.0.0.0 --identity-lan          also serve it to the LAN (personal use only, OD4)
 
 Endpoints (also under /sha3d/api/..., where the page's relative 'api/...' URLs land; js/live/relay.js)
   /, /sha3d/          302 -> /sha3d/live.html?relay=1 (the plain WebGL2 page, working default Q7), query string kept
   /api/ping           {"shalive": 1, "v", "mode": "live", "dataNow", "features", "providers", "attribution", "ua"}
-  /api/metar?ids=ZSSS[&format=json]   ZSSS METAR/SPECI of the last 12 h, newest first. JSON keeps only the identity and
+  /api/metar?ids=ZSSS[&format=json]   ZSSS METAR/SPECI of the last 26 h, newest first. JSON keeps only the identity and
                       time fields and the RAW TEXT {icaoId, metarType, obsTime, reportTime, receiptTime, rawOb}: the AWC
                       JSON weather fields are lossy for ZSSS (wspd = knots rounded from MPS, visib "6+" for 9999, wdir
                       "VRB"; docs/phase1/sources_sim.md s.3.3), so clients decode rawOb (js/env/wx/metar_zsss.js).
@@ -34,6 +36,15 @@ Endpoints (also under /sha3d/api/..., where the page's relative 'api/...' URLs l
                       (mlat, tisb_*, adsr_*, mode_s, other, ...) is dropped and only counted in "excluded" (PLAN s.4:
                       never count 'other' as observed; the task keeps adsb_icao only).
   /api/status         upstream health, cache ages, quota use
+  /api/observed_elsewhere?day=YYYY-MM-DD   LOCAL identity overlay (OD4; Phase 3 design s.3): the allow-listed fields of
+                      refs/cache/observed_elsewhere/sha_observed_<day>.json through tools/sim/observed_overlay.py, never a
+                      static path (refs/ stays unservable). {"available": false} when the day has no local file, with
+                      --no-identity, or when the relay listens beyond loopback (--host) or the client is not on loopback,
+                      unless --identity-lan is given; a malformed day is rejected (400). /api/ping lists the days in
+                      features.identity. Nothing is cached on disk. DNS-rebinding guard (P3-A fix round 1, F4): without
+                      --identity-lan the request's Host header must name localhost / 127.x / [::1] (with --identity-lan:
+                      an IP literal, localhost or this machine's own host name), and a browser request marked
+                      Sec-Fetch-Site: cross-site is refused; otherwise {"available": false} and features.identity [].
 
 Static files: an allow-list (sha3d/live.html, live.css, js/**, data/**, and sfo3d's aircraft models and livery textures,
 which the app loads by URL from ../sfo3d/data/), never refs/ (third-party caches), tools/, docs/, out/, jobs/ or dot
@@ -41,7 +52,7 @@ files. The relay serves the repository root so that ../sfo3d/data/models/ resolv
 
 Attribution strings for each provider: ATTRIBUTION below (also in /api/ping and the About panel, js/live/about.js).
 """
-import argparse, datetime as dt, gzip, json, os, re, sys, threading, time, urllib.error, urllib.parse, urllib.request
+import argparse, datetime as dt, gzip, ipaddress, json, os, re, socket, sys, threading, time, urllib.error, urllib.parse, urllib.request
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 
 VERSION = '0.1'
@@ -55,7 +66,8 @@ UA = f'sha-live-3d-relay/{VERSION} (personal non-commercial visualisation; pytho
 AWC_BASE = 'https://aviationweather.gov/api/data/'          # NOAA/NWS Aviation Weather Center Data API
 ADSBLOL_BASE = 'https://api.adsb.lol'                       # adsb.lol API (ODbL 1.0)
 WX_MIN_INTERVAL = 600.0          # s: at most one upstream METAR request and one TAF request per 10 min (task P2e)
-WX_HOURS = 12                    # METAR look-back requested (ZSSS reports every 30 min: ~24 reports, ~11 kB)
+WX_HOURS = 26                    # METAR look-back requested, one upstream call (ZSSS every 30 min: ~53 reports, ~24 kB); 26 h =
+                                 # the operating day + the 2 h runway-timeline anchor (Phase 3 design s.1.4, package P3-A)
 ADSB_MIN_INTERVAL = 180.0        # s: adsb.lol never more often than this (PLAN s.6b Q10; keyless 500 / day)
 ADSB_BACKOFF_MAX = 3600.0        # s: after HTTP 429 / errors the interval doubles up to this
 ADSB_KEEP = ('hex', 'type', 'flight', 'r', 't', 'desc', 'lat', 'lon', 'alt_baro', 'alt_geom', 'gs', 'track', 'true_heading',
@@ -346,6 +358,128 @@ class Adsb:
         return p
 
 
+# ------------------------------------------------------------------------------------------------ identity overlay (local)
+OBS_DIR = os.path.join(HERE, 'refs', 'cache', 'observed_elsewhere')      # gitignored; never served as a static path
+OVERLAY_TOOL = os.path.join(HERE, 'tools', 'sim', 'observed_overlay.py')
+DAY_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+LOOPBACK = ('127.0.0.1', '::1', 'localhost')
+
+
+def is_loopback(h):
+    h = (h or '').strip('[]')
+    return h in LOOPBACK or h.startswith('127.') or h == '::ffff:127.0.0.1'
+
+
+def host_name(h):
+    """the name part of a Host header ('[::1]:8000' -> '::1', 'localhost:8000' -> 'localhost'), lower case"""
+    h = (h or '').strip().lower()
+    if h.startswith('['):
+        return h[1:h.index(']')] if ']' in h else h[1:]
+    if h.count(':') == 1:
+        h = h.split(':', 1)[0]
+    return h.rstrip('.')
+
+
+def is_ip(h):
+    try:
+        ipaddress.ip_address(h)
+        return True
+    except ValueError:
+        return False
+
+
+def is_loopback_name(name):
+    """a Host header name that can only mean this machine: 'localhost' or a loopback IP literal (never '127.0.0.1.x.example')"""
+    if name == 'localhost':
+        return True
+    try:
+        a = ipaddress.ip_address(name)
+    except ValueError:
+        return False
+    return a.is_loopback or (getattr(a, 'ipv4_mapped', None) is not None and a.ipv4_mapped.is_loopback)
+
+
+def own_names():
+    n = set()
+    try:
+        for x in (socket.gethostname(), socket.getfqdn()):
+            if x:
+                n |= {x.lower(), x.lower() + '.local'}
+    except OSError:
+        pass
+    return n
+
+
+class Identity:
+    """The observed-elsewhere identity overlay (OD4: shown only locally, never committed). Served only on loopback unless
+    --identity-lan; off with --no-identity. The overlay is built in memory by tools/sim/observed_overlay.py (imported by
+    path) and cached per file mtime."""
+
+    def __init__(self, enabled=True, lan=False, host='127.0.0.1', obs_dir=OBS_DIR):
+        self.enabled, self.lan, self.host, self.obs_dir = bool(enabled), bool(lan), host, obs_dir
+        self.lock = threading.Lock()
+        self.cache = {}
+        self.mod = None
+
+    def _tool(self):
+        if self.mod is None:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location('sha_observed_overlay', OVERLAY_TOOL)
+            m = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(m)
+            self.mod = m
+        return self.mod
+
+    def allowed(self, client, host_header=None, fetch_site=None):
+        """(ok, reason). host_header / fetch_site: the request's Host and Sec-Fetch-Site headers (DNS-rebinding guard, P3-A
+        fix round 1, F4): a page served from another name that resolves to 127.0.0.1 reaches the relay as a loopback client
+        but with its own name in Host; a browser marks a cross-site request with Sec-Fetch-Site: cross-site."""
+        if not self.enabled:
+            return False, 'identity overlay off (--no-identity)'
+        if not self.lan and (not is_loopback(self.host) or not is_loopback(client)):
+            return False, 'identity overlay is served on loopback only (add --identity-lan to serve it to the LAN)'
+        if host_header is not None:
+            name = host_name(host_header)
+            ok = is_loopback_name(name) if not self.lan else (is_loopback_name(name) or is_ip(name) or name in own_names())
+            if not ok:
+                return False, ('identity overlay is served only to requests addressed to localhost / 127.0.0.1 / [::1] '
+                               '(Host header; DNS-rebinding guard)' if not self.lan else
+                               'identity overlay (LAN) is served only to requests addressed to an IP address or this host\'s name')
+        if (fetch_site or '').strip().lower() == 'cross-site':
+            return False, 'identity overlay is not served to cross-site browser requests (Sec-Fetch-Site)'
+        return True, None
+
+    def days(self):
+        try:
+            return self._tool().days(self.obs_dir) if self.enabled else []
+        except Exception:
+            return []
+
+    def get(self, day):
+        if not DAY_RE.match(day or '') or day not in self.days():
+            return None
+        f = os.path.join(self.obs_dir, f'sha_observed_{day}.json')
+        try:
+            k = os.stat(f).st_mtime_ns
+        except OSError:
+            return None
+        with self.lock:
+            c = self.cache.get(day)
+            if c and c[0] == k:
+                return c[1]
+        ov = self._tool().overlay(day, self.obs_dir)
+        with self.lock:
+            self.cache[day] = (k, ov)
+        return ov
+
+    def banner(self):
+        if not self.enabled:
+            return 'off (--no-identity)'
+        d = self.days()
+        where = 'LAN (--identity-lan)' if self.lan else ('loopback only' if is_loopback(self.host) else 'not served (--host beyond loopback without --identity-lan)')
+        return f'{where}, local days {d if d else "none"}'
+
+
 # ------------------------------------------------------------------------------------------------ static files
 GZIP_TYPES = ('.js', '.mjs', '.css', '.html', '.json', '.svg', '.txt')
 ALLOW = (                                       # (prefix, is_dir) relative to the repository root
@@ -383,6 +517,7 @@ class StaticGzip:
 # ------------------------------------------------------------------------------------------------ HTTP server
 def make_handler(app):
     wx, adsb = app['wx'], app['adsb']
+    ident = app.get('identity') or Identity(enabled=False)
     sgz = StaticGzip()
 
     class H(SimpleHTTPRequestHandler):
@@ -443,7 +578,8 @@ def make_handler(app):
                 api = self._api(u)
                 if api == '/api/ping':
                     return self._json({'shalive': 1, 'v': VERSION, 'mode': 'live', 'dataNow': int(time.time() * 1000),
-                                       'features': {'metar': wx.enabled, 'taf': wx.enabled, 'adsb': adsb.enabled, 'replay': None},
+                                       'features': {'metar': wx.enabled, 'taf': wx.enabled, 'adsb': adsb.enabled, 'replay': None,
+                                                    'identity': ident.days() if ident.allowed(self.client_address[0], self.headers.get('Host'), self.headers.get('Sec-Fetch-Site'))[0] else []},
                                        'adsb_min_interval_s': adsb.interval, 'wx_min_interval_s': wx.min_interval,
                                        'providers': [v['name'] for k, v in PROVIDERS.items() if (k != 'adsblol' or adsb.enabled) and (k != 'awc' or wx.enabled)],
                                        'attribution': ATTRIBUTION, 'ua': UA})
@@ -459,6 +595,17 @@ def make_handler(app):
                     return self._send(body, ctype, extra=extra)
                 if api == '/api/adsb':
                     return self._json(adsb.get())
+                if api == '/api/observed_elsewhere':
+                    day = (q.get('day') or [''])[0]
+                    if not DAY_RE.match(day):
+                        return self._json({'available': False, 'error': 'day must be YYYY-MM-DD'}, 400)
+                    ok, why = ident.allowed(self.client_address[0], self.headers.get('Host'), self.headers.get('Sec-Fetch-Site'))
+                    if not ok:
+                        return self._json({'available': False, 'reason': why})
+                    ov = ident.get(day)
+                    if ov is None:
+                        return self._json({'available': False, 'reason': 'no local observed-elsewhere file for this day'})
+                    return self._json({**ov, 'available': True})
                 if api == '/api/status':
                     return self._json({'relay': {'v': VERSION, 'uptime_s': round(time.time() - app['t_start']), 'ua': UA,
                                                  'origin': {'lat': ZSSS[0], 'lon': ZSSS[1]}},
@@ -509,6 +656,9 @@ def main(argv=None):
     ap.add_argument('--adsb-interval', type=float, default=ADSB_MIN_INTERVAL, help='s between adsb.lol requests (>= 180; lower values are raised to 180)')
     ap.add_argument('--adsb-radius-nm', type=int, default=60, help='point-query radius around ZSSS (NM, 1-250; default 60)')
     ap.add_argument('--adsb-daily-max', type=int, default=200, help='adsb.lol requests in any 24 h (default 200 of the 500 keyless quota)')
+    ap.add_argument('--no-identity', action='store_true', help='never serve the local observed-elsewhere identity overlay')
+    ap.add_argument('--identity-lan', action='store_true', help='serve the identity overlay beyond loopback (with --host; personal use only, OD4)')
+    ap.add_argument('--identity-dir', default=OBS_DIR, help=argparse.SUPPRESS)       # tests: a temporary directory
     ap.add_argument('--state-dir', default=STATE_DIR, help=argparse.SUPPRESS)
     ap.add_argument('--awc-base', default=AWC_BASE, help=argparse.SUPPRESS)          # tests: a local mock
     ap.add_argument('--adsb-base', default=ADSBLOL_BASE, help=argparse.SUPPRESS)     # tests: a local mock
@@ -519,6 +669,7 @@ def main(argv=None):
     app = {'wx': Wx(base=a.awc_base, enabled=not a.no_metar, min_interval=wx_iv),
            'adsb': Adsb(enabled=a.adsb, base=a.adsb_base, radius_nm=a.adsb_radius_nm, interval=a.adsb_interval,
                         daily_max=a.adsb_daily_max, state_dir=a.state_dir),
+           'identity': Identity(enabled=not a.no_identity, lan=a.identity_lan, host=a.host, obs_dir=a.identity_dir),
            't_start': time.time(), 'quiet': a.quiet}
     srv = ThreadingHTTPServer((a.host, a.port), make_handler(app))
     srv.daemon_threads = True
@@ -528,6 +679,7 @@ def main(argv=None):
     print(f'weather: {"aviationweather.gov ZSSS, <= 1 request / 10 min" if not a.no_metar else "off"} · '
           f'adsb.lol: {"on, >= %d s between requests, <= %d / 24 h, %d NM" % (app["adsb"].interval, app["adsb"].daily_max, app["adsb"].radius_nm) if a.adsb else "off"} · '
           f'UA: {UA}', flush=True)
+    print(f'identity overlay (observed elsewhere, OD4): {app["identity"].banner()}', flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

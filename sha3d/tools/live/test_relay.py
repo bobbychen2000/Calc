@@ -10,11 +10,15 @@ aviationweather.gov Data API and of the adsb.lol point API (nothing leaves this 
   - with --adsb: only adsb_icao records are relayed and each is labelled src 'obs', other types are only counted; a
     second call inside 180 s does not contact the provider; the 180 s floor cannot be lowered;
   - every upstream request carries the generic User-Agent (no names, no e-mail, no repository URL);
-  - static allow-list: the app is served, refs/ tools/ docs/ and the relay source are not; / redirects to live.html?relay=1.
+  - static allow-list: the app is served, refs/ tools/ docs/ and the relay source are not; / redirects to live.html?relay=1;
+  - /api/observed_elsewhere (Phase 3, OD4; a SYNTHETIC identity directory, placeholder airline XXX / ZZ-SIM*): {available:
+    false} without files, a malformed day is rejected (400), a day without a file is not available, the overlay keeps only
+    the allow-listed fields (no 6-hex address, type format), --no-identity and a non-loopback --host without --identity-lan
+    answer {available: false}.
 
 Run:  python3 -I sha3d/tools/live/test_relay.py      (about 3 s)
 """
-import json, os, re, socket, subprocess, sys, tempfile, threading, time, unittest, urllib.error, urllib.request
+import json, os, re, shutil, socket, subprocess, sys, tempfile, threading, time, unittest, urllib.error, urllib.request
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -34,10 +38,10 @@ METARS = [  # AWC JSON shape (fields as served 2026-11-14), deliberately OLDEST 
 TAF = [{'icaoId': 'ZSSS', 'issueTime': '2026-11-14T03:06:00.000Z', 'validTimeFrom': 1794636000, 'validTimeTo': 1794744000,
         'rawTAF': 'TAF ZSSS 140306Z 1406/1512 35004MPS 6000 BKN015 TX20/1406Z TX20/1506Z TN16/1421Z', 'fcsts': [{'wspd': 8}]}]
 ADSB = {'now': 1794632400000, 'msg': 'No error', 'total': 4, 'ac': [
-    {'hex': 'ABC123', 'type': 'adsb_icao', 'flight': 'TEST1   ', 'lat': 31.6, 'lon': 121.9, 'alt_baro': 36000, 'gs': 450.1, 'track': 90.0, 'seen_pos': 0.4, 'dst': 30.1, 'rssi': -20},
-    {'hex': '780aaa', 'type': 'mlat', 'lat': 31.7, 'lon': 121.0, 'alt_baro': 30000, 'seen_pos': 1.0},
+    {'hex': 'FFF0A1', 'type': 'adsb_icao', 'flight': 'TEST1   ', 'lat': 31.6, 'lon': 121.9, 'alt_baro': 36000, 'gs': 450.1, 'track': 90.0, 'seen_pos': 0.4, 'dst': 30.1, 'rssi': -20},
+    {'hex': 'fff0b1', 'type': 'mlat', 'lat': 31.7, 'lon': 121.0, 'alt_baro': 30000, 'seen_pos': 1.0},
     {'hex': '~0001', 'type': 'other', 'lat': 31.2, 'lon': 121.3, 'alt_baro': 'ground', 'seen_pos': 1.0},
-    {'hex': '780bbb', 'type': 'tisb_icao', 'lat': 31.1, 'lon': 121.4, 'alt_baro': 2000, 'seen_pos': 2.0},
+    {'hex': 'fff0b2', 'type': 'tisb_icao', 'lat': 31.1, 'lon': 121.4, 'alt_baro': 2000, 'seen_pos': 2.0},
 ]}
 UA_RE = re.compile(r'^sha-live-3d-relay/\d+\.\d+ \(personal non-commercial visualisation; python-stdlib\)$')
 
@@ -86,20 +90,24 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def get(port, path, redirect=True):
-    """-> (status, headers, body); no proxy for 127.0.0.1."""
+def get(port, path, redirect=True, host='127.0.0.1', headers=None):
+    """-> (status, headers, body); no proxy for 127.0.0.1. `headers` may set Host (sent as given) or Sec-Fetch-Site."""
     handlers = [urllib.request.ProxyHandler({})] + ([] if redirect else [NoRedirect()])
     op = urllib.request.build_opener(*handlers)
     try:
-        with op.open(f'http://127.0.0.1:{port}{path}', timeout=20) as r:
+        with op.open(urllib.request.Request(f'http://{host}:{port}{path}', headers=headers or {}), timeout=20) as r:
             return r.status, dict(r.headers), r.read()
     except urllib.error.HTTPError as e:
         return e.code, dict(e.headers or {}), e.read() or b''
 
 
 class Relay:
-    def __init__(self, mock, *extra):
+    def __init__(self, mock, *extra, ident_dir=None):
         self.port = free_port()
+        self.own_ident = None
+        if ident_dir is None:                      # never the real refs/cache in tests: an empty temporary directory
+            ident_dir = self.own_ident = tempfile.mkdtemp(prefix='sha_ident_empty_')
+        extra = (*extra, '--identity-dir', ident_dir)
         self.state = tempfile.mkdtemp(prefix='sha_relay_state_')
         env = dict(os.environ, NO_PROXY='127.0.0.1,localhost', no_proxy='127.0.0.1,localhost')
         self.p = subprocess.Popen([sys.executable, '-I', RELAY, '--port', str(self.port), '--quiet', '--state-dir', self.state,
@@ -115,12 +123,18 @@ class Relay:
         self.stop()
         raise RuntimeError('relay did not start')
 
-    def stop(self):
-        self.p.terminate()
-        try:
-            self.p.wait(5)
-        except subprocess.TimeoutExpired:
-            self.p.kill()
+    def stop(self, keep_state=False):
+        """stop the relay and remove the temporary directories it created (never anything else in /tmp)"""
+        if self.p.poll() is None:
+            self.p.terminate()
+            try:
+                self.p.wait(5)
+            except subprocess.TimeoutExpired:
+                self.p.kill()
+        if self.own_ident:
+            shutil.rmtree(self.own_ident, ignore_errors=True)
+        if not keep_state:
+            shutil.rmtree(self.state, ignore_errors=True)
 
 
 class TestRelay(unittest.TestCase):
@@ -220,7 +234,7 @@ class TestRelayAdsb(unittest.TestCase):
             j = json.loads(get(relay.port, '/api/adsb')[2])
             self.assertTrue(j['enabled'])
             self.assertEqual(len(mock.hits('/v2/point/31.1978/121.3363/60')), 1)
-            self.assertEqual([a['hex'] for a in j['ac']], ['abc123'])
+            self.assertEqual([a['hex'] for a in j['ac']], ['fff0a1'])
             a = j['ac'][0]
             self.assertEqual((a['src'], a['_src'], a['type']), ('obs', 'adsb.lol', 'adsb_icao'))
             self.assertNotIn('dst', a); self.assertNotIn('rssi', a)
@@ -236,7 +250,7 @@ class TestRelayAdsb(unittest.TestCase):
             for r in mock.log:
                 self.assertRegex(r['ua'] or '', UA_RE)
             # the quota log survives a restart: a new relay on the same state dir does not ask again within 180 s
-            relay.stop()
+            relay.stop(keep_state=True)
             relay2 = Relay(mock, '--adsb', '--state-dir', relay.state)
             try:
                 j3 = json.loads(get(relay2.port, '/api/adsb')[2])
@@ -247,6 +261,121 @@ class TestRelayAdsb(unittest.TestCase):
         finally:
             relay.stop()
             mock.srv.shutdown()
+
+
+# ------------------------------------------------------------------------------------------------ identity overlay (OD4)
+SYN_DAY = '2026-11-12'
+SYN = {'day': SYN_DAY, 'window_utc': ['2026-11-11T20:00:00Z', '2026-11-12T20:00:00Z'], 'n': 4, 'licence': 'synthetic test data',
+       'movements': [   # placeholders only (airline XXX, ZZ-SIM*): outside every real format
+           {'role': 'arr', 'airline': 'XXX', 'cs': 'XXXSIM1', 'r': 'ZZ-SIM1', 't': 'A320', 'icao': 'fff0a1', 'operator': 'Sim Air',
+            'far': 'ZBAA', 't_sha': 1794460000, 'sigma_s': 300, 'consistency': 'track_consistent', 'evidence': {'x': 1}, 'segs': [1]},
+           {'role': 'dep', 'airline': 'XXX', 'cs': 'XXXSIM2', 'r': 'ZZ-SIM2', 't': 'B738', 'icao': 'fff0a2', 'operator': 'Sim Air',
+            'far': 'ZGSZ', 't_sha': 1794470000.4, 'sigma_s': 420.6, 'consistency': 'far_end_match'},
+           {'role': 'dep', 'airline': 'XXX', 'cs': 'XXXSIM3', 'r': 'ZZ-SIM3', 't': 'B738', 'icao': 'fff0a3', 'operator': 'Sim Air',
+            'far': 'ZGSZ', 't_sha': 1794470000, 'sigma_s': 400, 'consistency': 'track_inconsistent'},
+           {'role': 'arr', 'airline': 'XXX', 'cs': 'XXXSIM4', 'r': 'ZZ-SIM4', 't': 'A21N', 'icao': 'fff0a4', 'operator': 'Sim Air',
+            'far': 'ZUUU', 't_sha': None, 'sigma_s': 400, 'consistency': 'track_consistent'}]}
+ALLOWED = {'uid', 'role', 'airline', 'cs', 'flight', 'reg', 'type', 'operator', 'far', 't_sha', 'sigma_s'}
+
+
+def syn_dir():
+    d = tempfile.mkdtemp(prefix='sha_ident_syn_')
+    with open(os.path.join(d, f'sha_observed_{SYN_DAY}.json'), 'w') as f:
+        json.dump(SYN, f)
+    return d
+
+
+class TestIdentity(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.mock = Mock()
+        cls.dir = syn_dir()
+        cls.relay = Relay(cls.mock, ident_dir=cls.dir)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.relay.stop()
+        cls.mock.srv.shutdown()
+        shutil.rmtree(cls.dir, ignore_errors=True)
+
+    def test_identity_unavailable_without_files(self):
+        relay = Relay(self.mock)                 # empty identity directory
+        try:
+            code, hd, body = get(relay.port, f'/api/observed_elsewhere?day={SYN_DAY}')
+            self.assertEqual(code, 200)
+            self.assertEqual(json.loads(body)['available'], False)
+            self.assertEqual(json.loads(get(relay.port, '/api/ping')[2])['features']['identity'], [])
+        finally:
+            relay.stop()
+
+    def test_identity_bad_day(self):
+        p = self.relay.port
+        for bad in ('', '2026-1-12', '2026-11-12x', '../../etc', '2026-11-12%2F..', '20261112'):
+            code, hd, body = get(p, '/api/observed_elsewhere?day=' + bad)
+            self.assertEqual(code, 400, bad)
+            self.assertEqual(json.loads(body)['available'], False)
+        code, hd, body = get(p, '/api/observed_elsewhere?day=2026-11-11')      # well-formed, no file
+        self.assertEqual((code, json.loads(body)['available']), (200, False))
+        self.assertEqual(get(p, '/sha3d/refs/cache/observed_elsewhere/sha_observed_2026-11-12.json')[0], 404)
+
+    def test_identity_allow_list(self):
+        code, hd, body = get(self.relay.port, f'/sha3d/api/observed_elsewhere?day={SYN_DAY}')
+        self.assertEqual(code, 200)
+        self.assertEqual(hd.get('Cache-Control'), 'no-store')
+        j = json.loads(body)
+        self.assertTrue(j['available'])
+        self.assertEqual((j['v'], j['day'], j['tier']), (1, SYN_DAY, 'oe'))
+        self.assertEqual(len(j['records']), 2)           # inconsistent and t_sha-less records dropped
+        for r in j['records']:
+            self.assertEqual(set(r), ALLOWED)
+            self.assertRegex(r['type'], r'^[A-Z][A-Z0-9]{1,3}$')
+            for v in r.values():
+                if isinstance(v, str):
+                    self.assertNotRegex(v, r'^[0-9a-f]{6}$')
+            self.assertIsInstance(r['t_sha'], int)
+            self.assertIsInstance(r['sigma_s'], int)
+        self.assertNotIn('fff0a1', body.decode())
+        self.assertNotIn('evidence', body.decode())
+        self.assertEqual(json.loads(get(self.relay.port, '/api/ping')[2])['features']['identity'], [SYN_DAY])
+
+    def test_identity_off_and_lan(self):
+        for extra in (('--no-identity',), ('--host', '0.0.0.0')):
+            relay = Relay(self.mock, *extra, ident_dir=self.dir)
+            try:
+                j = json.loads(get(relay.port, f'/api/observed_elsewhere?day={SYN_DAY}')[2])
+                self.assertEqual(j['available'], False, extra)
+                self.assertEqual(json.loads(get(relay.port, '/api/ping')[2])['features']['identity'], [], extra)
+            finally:
+                relay.stop()
+        relay = Relay(self.mock, '--host', '0.0.0.0', '--identity-lan', ident_dir=self.dir)
+        try:
+            j = json.loads(get(relay.port, f'/api/observed_elsewhere?day={SYN_DAY}')[2])
+            self.assertTrue(j['available'])
+            # LAN mode: an IP literal or localhost in Host is served, a foreign name (DNS rebinding) is not
+            for h, want in ((f'127.0.0.1:{relay.port}', True), (f'192.168.1.20:{relay.port}', True), (f'localhost:{relay.port}', True),
+                            (f'attacker.example:{relay.port}', False)):
+                j = json.loads(get(relay.port, f'/api/observed_elsewhere?day={SYN_DAY}', headers={'Host': h})[2])
+                self.assertEqual(j['available'], want, h)
+        finally:
+            relay.stop()
+
+    def test_identity_host_header(self):
+        """DNS-rebinding guard (P3-A fix round 1, F4): a loopback client whose Host header names another host, or a
+        browser request marked cross-site, gets {available: false} and an empty features.identity"""
+        p = self.relay.port
+        path = f'/api/observed_elsewhere?day={SYN_DAY}'
+        for hd in ({'Host': f'attacker.example:{p}'}, {'Host': 'attacker.example'}, {'Host': f'127.0.0.1.nip.example:{p}'},
+                   {'Host': f'localhost:{p}', 'Sec-Fetch-Site': 'cross-site'}):
+            code, h, body = get(p, path, headers=hd)
+            j = json.loads(body)
+            self.assertEqual((code, j['available']), (200, False), hd)
+            self.assertNotIn('records', j)
+            self.assertEqual(json.loads(get(p, '/api/ping', headers=hd)[2])['features']['identity'], [], hd)
+        for hd in ({'Host': f'localhost:{p}'}, {'Host': f'127.0.0.1:{p}'}, {'Host': f'[::1]:{p}'}, {'Host': 'localhost'},
+                   {'Host': f'127.0.0.1:{p}', 'Sec-Fetch-Site': 'same-origin'}, {'Host': f'127.0.0.1:{p}', 'Sec-Fetch-Site': 'none'}):
+            j = json.loads(get(p, path, headers=hd)[2])
+            self.assertTrue(j['available'], hd)
+            self.assertEqual(json.loads(get(p, '/api/ping', headers=hd)[2])['features']['identity'], [SYN_DAY], hd)
 
 
 if __name__ == '__main__':
