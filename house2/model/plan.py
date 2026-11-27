@@ -47,20 +47,32 @@ EAVE_1, EAVE_2 = 3.40, 6.40
 # area levels: site element id -> level (m).  SfM medians / low percentiles inside each polygon (n points), the front
 # from the photos.  Sloping areas: SLOPES (id -> ((pixel, z), (pixel, z), ...)) fit a plane through the given points.
 REGIONS = {
+    # tree belts first (the areas below override them where they overlap): the ground under the boundary trees
+    'site.trees_north': 1.0,            # rises behind the north wall toward the garden corner (SLOPES)
+    'site.trees_east': 1.0,             # falls from the play area to the lawn's east curb (SLOPES)
+    'site.trees_south': -0.6,           # street-side screen (SLOPES)
     'site.patio_pool': 0.0,             # n 7132
-    'site.lawn_side_north': -0.15,      # n 1170
+    'site.lawn_side_north': -0.20,      # n 1170 (points -0.1 .. -0.4)
     'site.bed_lounge': 0.0,
     'site.bed_lawn_terrace': -0.05,
     'site.bed_patio_tree': 0.0,
+    'site.bed_patio_nw': 0.0,
     'site.bed_rear_courtyard': 0.05,
-    'site.bed_upper_terrace': 0.75,     # above the lower terrace wall
-    'site.lawn_synthetic': -1.80,       # n 1191
-    'site.bed_lawn_south': -1.75,
-    'site.play_area': 2.10,             # n 6097
-    'site.strip_garden_play': 2.25,
+    'site.bed_upper_terrace': 0.50,     # between the low stone wall and the grey block wall (points 0.5-0.8 incl. plants)
+    # synthetic lawn: the SfM points of the lawn shot tilt from -2.2 (west) to -0.5 (east) over 20 m; p18 shows a level
+    # lawn ~1.2 m (7 risers) under the wall top, level with the mulch toward the house -> flat, the east value
+    'site.lawn_synthetic': -0.70,
+    'site.bed_lawn_south': -0.65,
+    'site.hedge_lawn_west': -0.55,
+    'site.bed_maple_round': -0.35,
+    'site.planter_lawn': 0.45,          # raised planter west of the lawn steps, wall top level with the lawn wall
+    'site.hedge_path': 1.65,            # hedge strip between the planter wall and the gravel path (points 1.6-1.8)
+    'site.play_area': 2.00,             # n 6097: 1.8 (west) .. 2.2 (east) (SLOPES)
+    'site.strip_garden_play': 2.35,
     'site.garden_enclosure': 2.55,      # n 608
-    'site.path_gravel': 1.90,           # n 1159
-    'site.orchard': 1.60,               # n 5321 (trees above)
+    # site.path_gravel is NOT an area: it follows the membrane between the play area, the hedge strip, the orchard
+    # and the lawn steps (1.7 at the patio stairs, ~2.2 at the garden gate, falling to the lawn steps at the south end)
+    'site.orchard': 1.20,               # 1.9-2.0 along the play area, a bank down to the lawn wall (SLOPES)
     'site.driveway': -0.40,             # n 90, p30 -0.26; falls toward the street (SLOPES)
     'site.walk_front': FRONT_WALK,
     'site.lawn_front_upper': -0.35,
@@ -79,6 +91,11 @@ REGIONS = {
 SLOPES = {
     # the driveway falls from the motor court (garage) toward the gate at the image bottom-left
     'site.driveway': (((300, 760), -0.30), ((150, 1100), -0.40), ((120, 1800), -1.10)),
+    'site.play_area': (((1830, 500), 1.85), ((1830, 880), 1.85), ((2320, 690), 2.20)),
+    'site.orchard': (((1900, 905), 1.90), ((2300, 905), 2.00), ((1950, 1200), 0.55), ((2300, 1200), 0.60)),
+    'site.trees_north': (((400, 60), 0.80), ((1300, 60), 1.20), ((2100, 60), 2.40), ((1300, 140), 1.20)),
+    'site.trees_east': (((2420, 500), 2.20), ((2420, 1100), 1.00), ((2420, 1500), -0.20), ((2480, 1100), 1.00)),
+    'site.trees_south': (((300, 1750), -1.00), ((1200, 1720), -0.60), ((2300, 1700), -0.55), ((1200, 1850), -0.70)),
 }
 GRID = 0.25
 EXTENT = (-46.0, -42.0, 36.0, 22.0)   # x0, y0, x1, y1: the aerial's ground footprint
