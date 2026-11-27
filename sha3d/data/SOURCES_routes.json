@@ -1,0 +1,40 @@
+{
+ "what": "sources of data/sha_routes.json / .js (P3-B routing and kinematics)",
+ "generator": "tools/sim/build_routes.mjs",
+ "inputs": {
+  "taxigraph": {
+   "file": "data/sha_taxigraph.json",
+   "sha256_16": "c92ddba6c36d940c",
+   "licence": "ODbL 1.0 (OSM derivative; AIP (mirror) rules block not covered)",
+   "made_by": "tools/airport/build_taxigraph.py"
+  },
+  "stands": {
+   "file": "data/sha_stands.json",
+   "sha256_16": "4e202d17b31febce",
+   "licence": "ODbL 1.0 (OSM derivative)",
+   "used": "stand names, span_max (which span classes a stand needs)"
+  },
+  "airport": {
+   "file": "data/sha_airport.json",
+   "sha256_16": "e6fda38ef50d0327",
+   "licence": "ODbL 1.0 + AIP (mirror) short facts",
+   "used": "runway ends, displaced thresholds, PAPI distances, declared distances, runway profile, extent ring (runwayEnds)"
+  },
+  "notam": {
+   "record": "F4552/26 (+ F4551/26 crossing restriction)",
+   "what": "derived effect record: taxiway targets and window only, no NOTAM text",
+   "source": "CAAC eAIP NOTAM Summary, in force 2026-11-02 07:06Z (docs/phase1/sources_sim.md §4.2)",
+   "licence": "no terms published; short facts (owner decision OD3)",
+   "local_check": "record agrees with the local extraction (taxiway names)"
+  }
+ },
+ "output": {
+  "file": "data/sha_routes.json",
+  "sha256_16": "afcfa6185595032e",
+  "bytes": 334360,
+  "licence": "ODbL 1.0 (derivative database of OSM through the taxi graph); runwayEnds / variants.F4552: short cited facts, not covered by ODbL"
+ },
+ "rules": "AIP (mirror) AD 2.20 2.1.4.2, 2.1.7, 2.2.5, 2.3.1, 2.3.2, 2.3.3, 3.1.5, 3.2.2.2 through sha_taxigraph.json rules.facts / routing.turns; design.md §4.1-4.2",
+ "parameters": "js/sim/router.js ROUTER, js/sim/path.js PATH, js/sim/perf.js PERF: every value src inf with its basis in the module (docs/phase3/movement.md §3)",
+ "deterministic": "no clock or randomness; two runs give the same bytes (tools/sim/test_router.mjs)"
+}
