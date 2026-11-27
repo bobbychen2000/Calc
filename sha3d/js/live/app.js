@@ -181,8 +181,19 @@ export async function startApp(cfg) {
       const fy = A.tower.cabYaw != null ? A.tower.cabYaw : yaw; const dA = ((((yaw - fy) % 90) + 135) % 90) - 45;
       const hv = GEO.hdgVec(yaw), off = A.tower.cabHalf ? Math.max(0, A.tower.cabHalf - 0.5) / Math.cos(dA * DEG) : 0;
       const asp = Math.max(0.3, (canvas.clientWidth || 16) / Math.max(1, canvas.clientHeight || 9));
-      const fov = asp >= 1 ? 58 : Math.min(72, Math.max(58, 2 * Math.atan(Math.tan(20 * DEG) / asp) / DEG));
-      rig.setTower([A.tower.pos[0] + hv[0] * off, A.tower.eyeY, A.tower.pos[2] + hv[1] * off], { yaw: yaw * DEG, pitch: (off ? -11 : -5) * DEG, fov: fov * DEG });
+      // fix round 3 (review_visual_fix2.md L3: the head terrace still filled ~20 % of the laptop frame): the frame's lower edge
+      // sits 1 deg below the terrace edge (anchors.tower.terraceHalf / terraceY, the depression of the edge seen from the eye),
+      // so the terrace is a thin band and the T1 apron and the runway intersections fill the frame. Landscape: vertical field
+      // 46 deg (horizontal ~74 deg on 16:9; was 58 / 88), pitch clamped to -11 .. -4 deg. Portrait: unchanged (>= ~40 deg
+      // horizontal, 58-72 deg vertical, pitch -11 deg): on a phone the bottom sheet covers the terrace band, and a higher pitch
+      // put the horizon mid-screen with the apron under the sheet (out/fix3/buildings/cmp_l3_phone.png) [inf]
+      const fov = asp >= 1 ? 46 : Math.min(72, Math.max(58, 2 * Math.atan(Math.tan(20 * DEG) / asp) / DEG));
+      let pitch = off ? -11 : -5;
+      if (off && asp >= 1 && A.tower.terraceHalf && A.tower.terraceY != null) {
+        const run = A.tower.terraceHalf / Math.cos(dA * DEG) - off, edge = Math.atan2(A.tower.eyeY - A.tower.terraceY, Math.max(0.5, run)) / DEG;
+        pitch = Math.min(-4, Math.max(-11, -(edge + 1 - fov / 2)));
+      }
+      rig.setTower([A.tower.pos[0] + hv[0] * off, A.tower.eyeY, A.tower.pos[2] + hv[1] * off], { yaw: yaw * DEG, pitch: pitch * DEG, fov: fov * DEG });
     }
     ui.root.querySelectorAll('#views [data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === name));
   }
@@ -218,15 +229,18 @@ export async function startApp(cfg) {
   const FLOOD_PROGS = new Set(['obj', 'objI', 'objG', 'aircraft', 'acr']); const gU = world.groundU || {};
   // (the markings package's apron light map, when its ground uniforms carry one: the same pools and lit area as the ground;
   // otherwise the airfield map is bound in its place with uObjLightOn 0, so the sampler is never left unbound)
+  // Fix round 3 (review_visual_fix2.md V3 / V5): a noFlood item may carry nightAmb = [up, vert] (js/shaders/objects.js OBJ_NIGHT,
+  // set by js/live/terminals.js): a dim warm night ambient instead of the flood (uObjNightAmb; every other item gets [0, 0], so
+  // the program's uniform never keeps a previous item's value) [inf]
   const floodOn = gU.uAptMap ? { uAptMap: gU.uAptMap, uAptRect: gU.uAptRect, uObjFlood: 1, uObjLight: gU.uApLight || gU.uAptMap,
-    uObjLightRect: gU.uApLight ? gU.uApLightRect : gU.uAptRect, uObjLightOn: gU.uApLight && gU.uApLightOn ? 1 : 0 } : null;
+    uObjLightRect: gU.uApLight ? gU.uApLightRect : gU.uAptRect, uObjLightOn: gU.uApLight && gU.uApLightOn ? 1 : 0, uObjNightAmb: [0, 0] } : null;
   const floodOff = floodOn && { ...floodOn, uObjFlood: 0 };
   const floodWrapped = new WeakSet();
   function floodUniforms(items) {
     if (!floodOn) return;
     for (const it of items) {
       if (!FLOOD_PROGS.has(it.prog) || (it.uniforms && floodWrapped.has(it.uniforms))) continue;
-      const add = it.noFlood ? floodOff : floodOn, u = it.uniforms;
+      const add = it.noFlood ? (it.nightAmb ? { ...floodOff, uObjNightAmb: it.nightAmb } : floodOff) : floodOn, u = it.uniforms;
       const w = typeof u === 'function' ? () => Object.assign(Object.create(u() || null), add) : Object.assign(Object.create(u || null), add);
       floodWrapped.add(w); it.uniforms = w;
     }

@@ -178,6 +178,11 @@ AIRSIDE_FILL_OF = [T1_ID, T2_ID, 'osm:way/1443258835']   # T1, T2, the VVIP anne
 FILL_REACH, FILL_OVERLAP, FILL_SEG = 60.0, 3.0, 8.0     # m [inf]
 WALK_W, ROT_R = 24.0, 14.0                              # m [inf] (review_visual.md H2)
 STAND_CL_W = 10.0                                       # m [inf] contact-stand centreline strip (VDGS posts)
+# fix round 3 (review N6: the pier-tip fill read as a round dark disc, the OSM apron's rounded inner ring around the pier tip,
+# 30-40 m deep, all asphalt): only a FILL_SERVICE_W m band along the facades (square corners: the terminal outline buffered
+# with mitre joins) is the dark asphalt service road of photo 09; the rest of the fill continues the apron concrete
+# ('apron_polys', drawn as apron: concrete and the apron night flood) [inf]
+FILL_SERVICE_W = 12.0                                   # m [inf] airside service road along the facade (photo 09)
 # Sentinel-2 grass test on rho (linear reflectance): L = mean(R, G, B), g = (G - (R + B) / 2) / L. Medians on this scene:
 # apron L 0.177, g 0.035 (12,516 px inside the aprons); airside grass L 0.092, g 0.053 (11,589 px) -> grass when
 # L < 0.115 and g > 0.02, or g > 0.12 [inf]
@@ -231,12 +236,12 @@ def airside_fill(A, S, terminals):
     quads, discs, nseg, nhit = [], [], 0, 0
     for g in (list(T.geoms) if hasattr(T, 'geoms') else [T]):
         ring = list(shapely.geometry.polygon.orient(g, 1.0).exterior.coords)[:-1]
-        reach_at = []   # per original edge: list of (p, q, reach or None)
+        reach_at, norm_at = [], []   # per original edge: list of (p, q, reach or None); outward unit normal
         for i in range(len(ring)):
             a, b = ring[i], ring[(i + 1) % len(ring)]
             L = math.hypot(b[0] - a[0], b[1] - a[1])
             if L < 0.5:
-                reach_at.append([]); continue
+                reach_at.append([]); norm_at.append(None); continue
             d = ((b[0] - a[0]) / L, (b[1] - a[1]) / L); n = (d[1], -d[0])
             mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
             if g.contains(Point(mid[0] + n[0] * 0.5, mid[1] + n[1] * 0.5)):
@@ -254,11 +259,17 @@ def airside_fill(A, S, terminals):
                         r = t0 + FILL_OVERLAP; nhit += 1
                         quads.append(Polygon([p, q, (q[0] + n[0] * r, q[1] + n[1] * r), (p[0] + n[0] * r, p[1] + n[1] * r)]))
                 segs.append((p, q, r))
-            reach_at.append(segs)
-        for i in range(len(ring)):   # corners between two filled facade segments (convex corners leave a wedge: pier tips)
+            reach_at.append(segs); norm_at.append(n)
+        # corners between two filled facade segments (convex corners leave a wedge: pier tips). Fix round 3 (review N6: the
+        # pier-tip fill read as a round dark disc): the wedge is closed by the mitre parallelogram of the two edges' normals
+        # (corner, + n0 r, + (n0 + n1) r, + n1 r), so the band keeps square corners along the pier outline (photo 09: straight
+        # service-road edges) instead of a disc of radius r [inf]
+        for i in range(len(ring)):
             s0, s1 = reach_at[i - 1], reach_at[i]
-            if s0 and s1 and s0[-1][2] and s1[0][2]:
-                discs.append(Point(ring[i]).buffer(min(s0[-1][2], s1[0][2]), 24))
+            if s0 and s1 and s0[-1][2] and s1[0][2] and norm_at[i - 1] and norm_at[i]:
+                r = min(s0[-1][2], s1[0][2]); c = ring[i]; n0, n1 = norm_at[i - 1], norm_at[i]
+                w = Polygon([c, (c[0] + n0[0] * r, c[1] + n0[1] * r), (c[0] + (n0[0] + n1[0]) * r, c[1] + (n0[1] + n1[1]) * r), (c[0] + n1[0] * r, c[1] + n1[1] * r)]).buffer(0)
+                discs.append(w if not w.is_empty else Point(c).buffer(r, 24))
     band = unary_union(quads + discs).buffer(1.0, join_style=2).buffer(-1.0, join_style=2)
     band = band.intersection(aer).difference(allb).difference(pav.buffer(-2.0))
     # Sentinel-2 grass pixels (clusters of >= 3)
@@ -281,17 +292,23 @@ def airside_fill(A, S, terminals):
     brg = unary_union(br).intersection(aer).difference(allb).difference(pav.buffer(-2.0))
     # close slivers < 6 m between the pieces (e.g. stand 221's centreline strip and the band), stay out of buildings
     fill = unary_union([band, brg]).buffer(3.0, join_style=2).buffer(-3.0, join_style=2).intersection(aer).difference(allb).simplify(0.4)
-    polys = rings_of(fill, min_area=40.0)
+    # fix round 3 (N6): asphalt service band along the facades, apron concrete beyond it
+    svc = T.buffer(FILL_SERVICE_W, join_style=2)
+    road, rest = fill.intersection(svc), fill.difference(svc)
+    polys, apron_polys = rings_of(road, min_area=40.0), rings_of(rest, min_area=40.0)
     stats = {'facade_segments': nseg, 'segments_facing_pavement': nhit, 'area_m2': R2(fill.area), 'grass_cut_m2': R2(grass_cut),
-             'bridge_corridors_m2': R2(brg.area), 'rings': len(polys)}
-    out = {'kind': 'paved', 'src': 'inf', 'polys': polys,
+             'bridge_corridors_m2': R2(brg.area), 'rings': len(polys), 'service_band_m2': R2(road.area), 'apron_part_m2': R2(rest.area),
+             'apron_rings': len(apron_polys)}
+    out = {'kind': 'paved', 'src': 'inf', 'polys': polys, 'apron_kind': 'apron', 'apron_polys': apron_polys,
+           'service_w_m': FILL_SERVICE_W,
            'evidence': 'OSM apron ways stop 15-40 m short of the T1 / T2 airside facades (no apron polygon under the fixed links, '
                        'rotundas and VDGS posts); the band is paved in the Sentinel-2 hint (S2B_51RUQ_20261014, 10 m) and is a dark '
                        'asphalt service road in photo 09 (Commons, T2)',
-           'rule': 'facade-to-pavement quads (reach <= %g m, + %g m overlap) and pier-tip corner discs, inside the aerodrome, outside '
+           'rule': 'facade-to-pavement quads (reach <= %g m, + %g m overlap) and pier-tip corner mitres (square corners, fix round 3 N6), inside the aerodrome, outside '
                    'buildings, minus Sentinel-2 grass pixels (L < %g and g > %g, or g > %g; clusters >= 3 px); plus %g m fixed-link '
                    'corridors, %g m rotunda discs and %g m contact-stand centreline strips nose -> facade [inf]' % (FILL_REACH, FILL_OVERLAP, GRASS_L, GRASS_G, GRASS_G_ANY, WALK_W, ROT_R, STAND_CL_W),
-           'drawn_as': "asphalt ('paved' kind of the core pavement hook, js/live/terminals.js)"}
+           'drawn_as': "polys: asphalt ('paved' kind of the core pavement hook, js/live/terminals.js), the service road within "
+                       "service_w_m of the facades; apron_polys (fix round 3, N6): apron concrete ('paved' + 'apron'), the rest of the gap"}
     return out, stats
 
 

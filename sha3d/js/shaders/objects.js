@@ -17,13 +17,26 @@ import * as GROUND_SHADER from './ground.js';   // APRON_FLOOD (level, tint) of 
 //   uAptMap, uAptRect = the ground's airfield map (js/world/ground.js uniforms); uObjLight, uObjLightRect, uObjLightOn = the
 //   light map (or the airfield map with uObjLightOn 0: a sampler is always bound); uObjFlood 1 = on (0 = off, per item);
 //   uFloodNight = the night factor (js/live/app.js R.extraCommon; the bridges' objG program dims uNight, not this).
+//   uObjNightAmb = (up, vert) night ambient of a noFlood item (fix round 3, OBJ_NIGHT below; [0, 0] = none).
 const AF = GROUND_SHADER.APRON_FLOOD || { level: 0.42, tint: [1.0, 0.82, 0.6] };
 export const OBJ_FLOOD = { level: AF.level, tint: AF.tint, gScale: AF.gScale || 2.5, h: [14, 24], probe: 4.0, src: 'inf: the ground apron flood (APRON_FLOOD, light map when bound) applied to objects over the lit apron below 14-24 m (masts 30 m); photo 19' };
+// Night ambient of the items that opt out of the flood (fix round 3, review_visual_fix2.md V3 / V5) [inf]: the terminal and pier
+// roofs (noFlood: the light map's spill under the piers made them glow) and every other building of js/live/terminals.js were
+// lit by nothing at night: roofs (1, 2, 4) sRGB next to an apron of ~(90, 78, 61) read as holes, and the context blocks of the
+// extent were black. A noFlood item now gets alb x tint x level x mix(vert, up, max(N.y, 0)) x uFloodNight, with (up, vert) =
+// uObjNightAmb per item (item.nightAmb, js/live/app.js floodUniforms; [0, 0] for every other item): the glow of the lit city and
+// of the apron spill on the roof membranes and walls, a fraction of the apron flood level (OBJ_NIGHT, set by js/live/terminals.js:
+// terminal / pier / hangar / hub roofs 0.12 up and 0.04 on walls, context blocks a dim warm emissive). Below the facade glow
+// (curtain wall ~0.10-0.32 x uNight, mat 1) and well below the apron flood; no FAA / CAAC value (lighting levels are rendering
+// parameters, inf).
+export const OBJ_NIGHT = { building: [0.12, 0.04], context: [0.20, 0.14], src: 'inf: fraction of the apron flood level (OBJ_FLOOD.level x tint x albedo) on up-facing / vertical faces of noFlood items at night; review_visual_fix2.md V3 / V5' };
 export const OBJ_FLOOD_GLSL = `
 uniform sampler2D uAptMap; uniform vec4 uAptRect; uniform float uObjFlood; uniform float uFloodNight;
 uniform sampler2D uObjLight; uniform vec4 uObjLightRect; uniform float uObjLightOn;
+uniform vec2 uObjNightAmb;   // fix round 3 (V3 / V5): noFlood items' night ambient (up-facing, vertical) x level x tint x albedo
 vec3 shaObjFlood(vec3 wp, vec3 N, vec3 alb, float hAbove){
-  if (uObjFlood < 0.5 || uFloodNight < 0.001) return vec3(0.0);
+  if (uFloodNight < 0.001) return vec3(0.0);
+  if (uObjFlood < 0.5) return alb * vec3(${OBJ_FLOOD.tint.map(v => (+v).toFixed(3)).join(', ')}) * ${(+OBJ_FLOOD.level).toFixed(3)} * mix(uObjNightAmb.y, uObjNightAmb.x, max(N.y, 0.0)) * uFloodNight;
   float hk = 1.0 - smoothstep(${OBJ_FLOOD.h[0].toFixed(1)}, ${OBJ_FLOOD.h[1].toFixed(1)}, hAbove);
   if (hk <= 0.0) return vec3(0.0);
   vec2 p = wp.xz + N.xz * ${OBJ_FLOOD.probe.toFixed(1)};   // the ground in front of the surface

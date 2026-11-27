@@ -675,3 +675,236 @@ relay state).
    - the phone frame time is unmeasured;
    - bridges 111 / 235 cannot dock with the class reference;
    - 333-337, 126, 231 and 232 have no mast within 120 m (gates).
+
+## Fix round 3 (2026-11-27)
+
+Integration of the three package fixers' answers to `review_visual_fix2.md` (markings: V1, V6, the stale "73 masts" comment;
+gates: V2, V4, N5; buildings: V3, V5, L9, N6, L3), their hand-offs, and V7 (the named laptop views, this package). The
+markings and gates work was committed by the lead as 462452d (WIP); the buildings work and everything below are in the
+working tree. Nothing was committed here; `sfo3d/`, `pc12/` and `hwd3d/` are untouched. Tags: **obs** = observed,
+**inf** = inferred. Check renders and logs are in `out/fix3/integ/` (gitignored); the round-2 named views used as "before"
+are the committed ones (`git show HEAD:sha3d/docs/phase2/view_*.png`, copied to `out/fix3/integ/before/`).
+
+### I1. Review findings: where each one stands
+
+| # | Owner | Status after integration | Measured / seen in (integrated state) |
+|---|---|---|---|
+| V1 stands at half the stand level, pier-tip moat (medium) | markings | **fixed** | Probe `out/fix3/integ/probe.mjs` (`SHA.markings.apronLight().at` at every stop node, final masts), high and low tier: 58 masts (hash `edc568b`), standLevel 1.108, stand mean 1.271, other-apron floor 0.636; **0 of 164 nodes below the stand level** (30 exactly at it, min / median / max 1.000 / 1.203 / 1.726 × the level), 0 stop nodes off a stand texel, and none of the test points 6 m ahead / behind / left / right of each node that fall on a painted-stand texel is more than 0.01 below it; `check926` other-apron min / stand mean 0.500. `jobs/markings.mjs LIGHTTABLE=1` agrees. `view_night_stand_233`: fill under the 233 bridge (31, 27, 22) → **(153, 138, 113)** sRGB; apron right (86, 75, 58) → (106, 92, 72); apron beyond the taxilane (87, 75, 58) → (89, 77, 60). `view_night_t2pier`: tip fill (51, 43, 30) → (144, 127, 102), open apron (79, 69, 53) → (80, 69, 54). The fill is now the brightest ground (photos 13 / 19), and brighter than the markings fixer measured, because N6 turned most of it into concrete: see I2, conflict 1 |
+| V2 masts in the near field of "Fly to stand" (medium) | gates | **fixed** | `jobs/gates.mjs SET='fix3;fix3low' CHECK_ONLY=1` on the integrated code: near-field masts on the side taken 0 contact / 0 remote by the sampled test, the app's `standCamNear` and the review probe's 60 px test; the four named stand views clear; "fix3 requirements: met" on both tiers. `SET='fix2;fix2night'` renders (`out/fix3/integ/gates/`): "Fly to stand" 248, 274, 115, 233 and the named 233 view by day and at 21:30 show masts only in the middle distance (274: a pole 9° left of the rotunda, head small at the top; 115: a pole right of the B738's wing tip); lamp sprite 96 px uncapped → 24 px drawn |
+| V3 terminal roofs black at night (low) | buildings | **fixed** | `view_night_t2pier` pier roof median (7, 6, 7) → **(44, 39, 32)**; the curtain walls stay brighter; the roofs read as dark grey shapes, not holes |
+| V4 masts in equipment areas, plates over the edge (low) | gates | **fixed** | fix3 checks: feet within 2 m of an equipment area 0 (nearest 3.16 m, mast 321 / area 322); base plate + 1 m off pavement 0 (raster `pavedAt` and vector); `jobs/buildings.mjs HEADCHECK=1`: mast feet off pavement 0 / 58 |
+| V5 surroundings black at night (low) | buildings + core hand-off (applied here) | **fixed** | With the core `URBAN_NIGHT` hand-off (I2.2) the landside inside the extent is lit as well as the far ground: night overview at 21:30 (`out/fix3/integ/v5/i3_night_overview.png`), landside patches (1, 1, 0)-(2, 1, 1) → (17, 14, 6)-(34, 26, 14), far-ground row y 300 (7, 5, 2) → (24, 17, 9) (the far ground's 2 km edge ramp dropped automatically), row y 60 unchanged (29, 22, 14); no ring at the extent edge; the aerodrome itself stays dark between the aprons (airfield lighting is Phase 5). `fix3_integration_v5_night.png` |
+| V6 backtrack curves read as flowing into the parallels (low) | markings | **fixed** | Named views `view_rwy_36L` / `view_rwy_18R`: yellow pixels on the runway surface below the inner crossing, between the edge lines, with the parallels' columns (x 612-668) masked: **137 → 0** and **169 → 0** (my own mask; the fixer's job counted 307 → 0 / 288 → 0 with its mask). In the crops the inner crossing's curves stop at the runway edge; the outer pairs' take-off parallels beside the arrow shafts are unchanged |
+| V7 laptop views on the wall clock (low) | integration | **fixed** | `view_laptop_live_t2` and `view_laptop_live_stand_233` now run live through the harness's mock relay with the snapshot's METAR / TAF, `?t=2026-11-20T04:15:00Z` and the page clock pinned to the same instant (`CLOCK=`, I2.6): pill "Live weather", clock "12:15 UTC+8", "METAR 0400Z (observed): 330° 6 m/s · CAVOK · Q1027", runway line "north flow · arr 36R · dep 36L · tail-wind rule". The instant is the snapshot instant 2026-11-20 04:15Z (12:15 UTC+8), recorded here and in `sha3d/CLAUDE.md`. `fix3_integration_v7_laptop.png` |
+| N5 masts depend on the tier (low) | gates | **fixed** | high 58 = low 58, hash `edc568b`, "tiers ... SAME"; `view_phone_t2_legend` (low tier) and `view_laptop_live_t2` (high) both read "Apron floodlight masts: 58" |
+| N6 pier-tip disc (low) | buildings | **fixed** | `view_t2pier`: the dark round cap at the tip is gone; a narrow dark service band follows the pier. Data: see I2.1 |
+| L3 cab terrace (low) | buildings | **fixed** (laptop) | `band_contrast.py --terrace` on `view_towercab`: 20.5 % → **5.5 %** of the frame. New side effect: the framing now shows a mast in the lower middle (I6 item 2) |
+| L9 overview haze (low) | buildings | **fixed** | `band_contrast.py` on `view_overview` (round 2 → round 3), y 60 / 120 / 180 / 240 / 300: review std 3.8 / 5.6 / 12.7 / 17.5 / 22.6 → 3.4 / 6.9 / 9.1 / 17.3 / 22.7; detail contrast 0.008 / 0.025 / 0.048 / 0.135 / 0.132 → 0.018 / 0.047 / 0.063 / 0.146 / 0.137 (the buildings fixer's numbers, reproduced in the named view) |
+| N7 canals, L2 T1 hall, M1 (b, c) airfield lighting | buildings / Phase 5 | not in this round | unchanged |
+
+### I2. Hand-offs
+
+**Applied**
+1. **Data provenance** (markings → lead). `js/live/caac_markings.js` changed in 462452d. (a) Running the generator as
+   committed in HEAD (`tools/buildings/build_buildings3d.py` at HEAD, the HEAD inputs and the markings fixer's
+   `caac_markings.js`, in a scratch tree) against the HEAD data: the only difference in `sha_buildings3d.json` and `.js` is
+   `inputs_sha256_16["js/live/caac_markings.js"]` (cad848ab3049a350 → 0ebaeb6a48fadc88). So the markings change alters only
+   the provenance hash. (b) Re-running the current generator (with the buildings fixer's N6 change) in the working tree
+   reproduces the working-tree data byte for byte (`.json` md5 e17fa564…, `.js` 6e59eca9…). The data diff against HEAD
+   is therefore the N6 change plus the two hashes (`caac_markings.js`, the generator). One side effect of N6 found here:
+   "Conflicts and side effects found", item 2.
+2. **Core ground night glow** (buildings → core, `js/shaders/ground.js`): `export const URBAN_NIGHT = {k: 0.8, road: 0.3,
+   tint, src: 'inf: ...V5'}`; the urban glow factor 0.10 → `URBAN_NIGHT.k`, plus landside street lighting
+   `alb × warm × road × ext × (1 − aero) × URBAN_NIGHT.road × uNight`. Applied with the fixer's script
+   (`out/fix3/buildings/handoff_ground.py`, exactly these two edits). `terminals.js` reads the export and drops the far
+   ground's 2 km edge ramp. Checked in the night overview (V5 above), the named night views (`view_night_t2pier` shows the
+   landside beyond T2 in a dim warm glow; `view_night_hold_H1` is byte-identical to round 2, since the aerodrome mask
+   excludes it), all scenes clean.
+3. **Legend and About** (buildings → shell / about). Legend, buildings line: "... the tower form [inf]. At night, the dim
+   glow on the roofs, the city blocks and the built-up land beyond the detailed area is [inf]." About, "Not included":
+   "... the floodlight-mast lamps, the lit signs and windows, and the dim night glow of the roofs, the city blocks and the
+   built-up land around the airport are inferred."
+4. **`sha3d/CLAUDE.md`** (all three fixers): status paragraph (fix round 3); harness (`CLOCK=`, the pinned laptop command,
+   markings `LIGHTTABLE=1` / `park:`, gates `SET='fix3;fix3night;fix3low'` / `CHECK_ONLY=1`, buildings `FIX3=off`,
+   `band_contrast.py`); `SHA.qa` list (58 masts, `stats.hash`, `pavedVec`, `standCam` near-field lists,
+   `apronLight().at` → `[lit, factor = G × gScale, stand flag]`); conventions (stand floors 9.2.6-1 / -2 independent of the
+   masts, `URBAN_NIGHT` / `uFarNight`, `noFlood` night ambient, backtrack curves to the runway edge, the stand-camera near
+   field / gap fill / vector pavement, the airside fill as service band + apron concrete, the tower view framing, the
+   boundary-layer far haze, the runway-line recompute); the data row of `sha_buildings3d`.
+5. **Reviewer's probe** (markings): `out/review2/rv.mjs` reads `L.at()[1]`, which is now the shader's factor (G × 2.5;
+   1.25 × the old reading). Compare it with `apronLight().masts.standLevel`, or use `jobs/markings.mjs LIGHTTABLE=1`.
+
+**Integration changes (this package)**
+6. **`jobs/views.mjs` `CLOCK=<ISO>`** (V7): `page.clock.setFixedTime` before the page loads; `Date.now` / `new Date`
+   return that instant, timers and frames run as usual. Used with `MOCK_RELAY=1` (the harness's mock relay; `METAR=` /
+   `TAF=` set to the snapshot's 0400Z METAR and 0301Z TAF) and `T=` (the `?t=` environment time). The mock gives the METAR
+   `obsTime` = T − 10 min (04:05Z; the report text says 0400Z).
+7. **`js/live/shell.js`: the runway line is also recomputed when a new METAR list arrives** (integration bug, found in the
+   first V7 render). The shell recomputed it only when the environment time changed or 30 s of wall clock had passed. In
+   live mode with `?t=` the environment time is fixed, so the line read "no METAR: default direction" for up to 30 s after
+   the relay's METAR had arrived (with a pinned clock: for ever). `status()` now also compares the identity of
+   `envCore.reports` (`setReports` replaces the array). Checked: `out/fix3/integ/v7/v7_live_t2.png` (before: "no METAR:
+   default direction") vs `v7b_live_t2.png` (after: "tail-wind rule"); the five scenes, `fix3` checks and all view runs are
+   clean.
+
+**Not applied (with the reason)**
+- **`CAAC.apronFlood.standFillLevel` 1.25 → ~1.0 for apron-kind texels** (buildings → markings, optional): a lighting
+  choice between two fixes (conflict 1 below); left to the markings package / owner with the measurements.
+- **An urban night floor in `applyFog`'s in-scatter** (buildings, optional core, `js/shaders/common.js`): not small, and
+  the night overview reads correctly without it (V5). Open.
+- **`terminals.js`** (gates): no change needed; its `pavement(api)` hook has no call-count side effects.
+
+**Conflicts and side effects found**
+1. **`standFillLevel` (markings V1) × the apron-concrete fill (buildings N6).** The markings fixer chose 1.25 × the stand
+   mean for the fill under contact-stand bridges while that band was asphalt (albedo 0.085): (69, 60, 50) under 233. The
+   buildings fixer, in parallel, made the band beyond 12 m from the facade apron concrete (albedo ~0.30). Together, in the
+   named view: (153, 138, 113) under 233 against (106, 92, 72) on the apron to the right and (89, 77, 60) beyond the
+   taxilane (luminance 1.5 × and 1.8 ×). In `view_night_stand_233` and `view_night_t2pier` that band is a bright halo
+   around the pier-tip stands: what photos 13 / 19 show (the band brightest), perhaps stronger. No code conflict. Options:
+   keep it, or `standFillLevel` ~1.0 for apron-kind texels and 1.25 only on the asphalt service band
+   (`airside_fill.polys`). `fix3_integration_pier_tip_night.png`.
+2. **`build_buildings3d.py` (N6): the stand-head fill is now computed against the asphalt band only** (found here, buildings
+   file, not changed). `main()` builds `h2` (the airside fill that `stand_head_fill` subtracts) from `fill['polys']`, which
+   is now only the 12 m service band; the apron part (`apron_polys`) is no longer subtracted. Effect: `stand_head_fill`
+   grew from 21 rings for 69 stands (28,181 m²) to 37 rings for 98 stands (35,099 m²); the extra 6,918 m² lie exactly on the
+   airside fill's apron part (shapely: overlap 6,918 m², with the service band 0, outside both 28,181 m² = the round-2
+   area). Both draw as apron, so nothing changes on screen, but the data and its stats overstate the stand-head fill.
+   Hand-off (buildings): `h2 = unary_union([... for pl in fill['polys'] + fill['apron_polys']])` at line 588. The buildings
+   report's "`stand_head_fill` came out identical" is true for the `caac_markings.js` change only.
+3. **The Tower view frames a mast after L3** (buildings L3 × gates placement; I6 item 2).
+
+### I3. Named views (the full set re-rendered, all 25 looked at)
+
+```
+SOFTGL=1 OUT=docs/phase2 PREFIX=view T=snapshot VIEWS=@full node livetest.mjs jobs/views.mjs                       # 16 views
+SOFTGL=1 OUT=docs/phase2 PREFIX=view T=2026-11-20T13:30:00Z VIEWS='park:229+230+231+233+234;t2pier@night_t2pier;stand:233,-,70,1,24@night_stand_233;hold:H1@night_hold_H1' node livetest.mjs jobs/views.mjs
+SOFTGL=1 DEVICE='iPhone 15' SHOWUI=1 QUALITY=low OUT=docs/phase2 PREFIX=view_phone T=snapshot VIEWS='overview;ui:legend;t2@t2_legend;ui:close;park:233+234+230;ui:fly:233;stand:233,-,95,1,28@stand_233;ui:nocard;towercab' node livetest.mjs jobs/views.mjs
+SOFTGL=1 W=1440 H=900 SHOWUI=1 MOCK_RELAY=1 CLOCK=2026-11-20T04:15:00Z T=2026-11-20T04:15:00Z \
+  METAR='METAR ZSSS 200400Z 33006MPS 300V360 CAVOK 13/M05 Q1027 NOSIG' \
+  TAF='TAF ZSSS 200301Z 2006/2112 31004MPS 8000 SCT030 TX12/2006Z TX14/2106Z TN04/2022Z' OUT=docs/phase2 PREFIX=view_laptop \
+  VIEWS='ui:legend;t2@live_t2;ui:close;park:233+234+230+229;ui:fly:233;stand:233,-,90,1,26@live_stand_233' node livetest.mjs jobs/views.mjs
+```
+(`out/fix3/integ/views/views.sh`; 471 + 248 + 71 + 197 s.) Day views: the snapshot instant 2026-11-20 04:15Z (12:15
+UTC+8, recorded CAVOK). Night: 2026-11-20 13:30Z (21:30 UTC+8). Laptop: the snapshot instant, pinned (V7). All 10 parked
+aircraft were placed and all 8 bridge stands docked (229 A333, 230 B77W, 231 / 233 / 113 / 115 B738, 234 A320, 102 B77W);
+403 / 404 got stairs and buses. Orientation checks ok. No console error, warning or page error in any of the four runs.
+23 files changed; `view_hold_H1` and `view_night_hold_H1` came out byte-identical to round 2.
+
+What I saw, per render (against the round-2 set):
+- **overview**: the far ground has visibly more detail (L9 numbers above); the top of the frame (ground beyond the 20 km
+  land-cover crop) still reads as haze. Canals read as dark lines (N7).
+- **rwy_18L / 36R**: unchanged (6 + 6 stripes, pad chevrons, red mandatory markings). **rwy_18R / 36L**: the inner
+  crossing's curves end at the runway edge; the yellow take-off parallels beside the arrow shafts remain (V6).
+- **t1, t2, tower**: unchanged apart from the mast positions (fewer masts on the T2 apron, 22 vs 29).
+- **towercab**: terrace a sliver at the lower right (L3). New: the "115" rotunda-line mast (T1 west face) stands in the
+  lower middle, 56 m from the eye, head ~65 px (I6 item 2).
+- **stand_233**: B738 docked, no mast. **bridge_230**: B77W and A333 docked through the long fixed links, B738 at 231; two
+  masts in the background. **stand_113**: B738 docked; the mast moved from the left edge to the right of the wing tip
+  (middle distance, head at the top). **stand_102**: B77W docked; a mast by the nose in the middle distance; the ground
+  under the bridge by the rotunda is now concrete (N6). **stand_404**: as round 2 (A320 / B738 with stairs, buses; the
+  remote posts on the verge). **hold_H1**: identical.
+- **t2pier**: the round dark cap at the tip is gone (N6).
+- **night_t2pier**: the pier-tip stands sit in a bright halo; roofs dark grey (V3); the landside beyond T2 dimly lit (V5);
+  open apron unchanged. **night_stand_233**: no dark moat; the band under the bridges is the brightest ground (V1, conflict
+  1); the B738 lit; no mast. **night_hold_H1**: identical (black, lit signs; Phase 5).
+- **phone_overview / t2_legend / stand_233 / towercab**: "Snapshot · 20 Nov", "12:15 UTC+8"; legend "Apron floodlight
+  masts: 58" (N5); card "T2 APRON 2 / Stand 233" with the docked B738; the tower view shows the same "115" mast (41 px)
+  at the left, and the DEBUG line first in the sheet.
+- **laptop_live_t2 / laptop_live_stand_233**: day, "Live weather · 12:15 UTC+8", METAR 0400Z, runway line, legend with 58
+  masts and the new buildings night sentence; the stand card clear of the credit strip (V7).
+
+Evidence images (deviceScaleFactor 1 renders, scaled; `out/fix3/integ/compose.py`):
+- `fix3_integration_v7_laptop.png`: the two laptop views, round 2 (live, after dark) vs round 3 (pinned).
+- `fix3_integration_v5_night.png`: night overview, review 2 / buildings round 3 before the core hand-off / integrated,
+  and the T2 apron with its landside at 21:30.
+- `fix3_integration_pier_tip_night.png`: `view_night_stand_233` and `view_night_t2pier`, round 2 vs round 3, with the
+  measured values (V1, V3, N6, conflict 1).
+- `fix3_integration_towercab_mast.png`: `view_towercab` and `view_phone_towercab`, round 2 vs round 3 (L3 and the mast).
+
+### I4. Scenes, tests, frame time
+
+**Scenes**, real relay (`sha_live_server.py --port 8792`, METAR / TAF on, ADS-B off), final code:
+`SOFTGL=1 RELAY=http://127.0.0.1:8792 SCENES=snapshot,live,offline,park,standalone node livetest.mjs jobs/integration.mjs`
+→ "INTEGRATION: all scenes clean" (322 s). Every scene: 0 errors, 0 warnings, 0 page errors, 0 HTTP ≥ 400, 0 failed
+requests; the offline scene has only its expected 503 line.
+
+| Scene | Pill / note |
+|---|---|
+| snapshot | "Snapshot · 20 Nov · 12:15 UTC+8"; METAR 0400Z 330° 6 m/s CAVOK Q1027 13/-5; north flow, arr 36R, dep 36L, tail-wind rule |
+| live | "Live weather · METAR 1330Z" (330° 5 m/s CAVOK Q1021 15/5; 27 Nov 21:30 UTC+8); north flow |
+| offline | "Relay offline · snapshot 20 Nov, 12:15" |
+| park (`233,230,113,404`) | "DEBUG ?park=: 4 static aircraft (not traffic)" first; B738, B77W, B738, A320 parked |
+| standalone | live, every file from the relay's allow-list |
+
+Every scene builds the same world: 164 stands, 56 bridges, 56 VDGS, class reference docks 54 / 56, **58 masts**, airside
+fill 3 rings + 2 apron rings, stand-head fill 37 rings, 41 building parts, apron light pools n 58. Start-up (`__shaReady`)
+8.6-10.5 s, 74.5 s with four parked models. Mast placement 1.16 s (high) / 1.17 s (low) (gates check log). Upstream
+during this step (about 6 min of relay uptime): aviationweather.gov 1 METAR + 1 TAF request; adsb.lol none; OpenSky never.
+
+**Package checks** (integrated code):
+- `jobs/gates.mjs SET='fix3;fix3low' CHECK_ONLY=1`: "fix3 requirements: met" (high and low), tiers SAME, console clean.
+- `jobs/gates.mjs SET='fix2;fix2night'` (renders, 19 DEBUG aircraft): side -1 at 42 remote stands, 0 contact; no mast
+  within 3 / 5 m of a sight line; no mast inside a subject / centre margin; lamp sprite cap 24 px; uncovered 310, 121,
+  126; console clean (704 s).
+- `jobs/buildings.mjs HEADCHECK=1 FILLCHECK=1` (snapshot): stop nodes 0, nose tips 0, equipment areas > 5 % 0 / 261,
+  envelopes 1 / 164 (101, as before), mast feet 0 / 58, idle stairs 26 / 26; fixed-link points 392 / 392, rotundas 53 / 56,
+  VDGS posts 52 / 52; console 0 / 0 / 0.
+- `jobs/markings.mjs LIGHTTABLE=1` (21:30): 58 masts, 164 nodes, below the stand level none.
+- The V1 probe above (both tiers): console 0 / 0 / 0.
+
+**No-browser tests: all pass.** `test_geo_js.mjs` (1681 grid + 50 data points, data 6.6 mm); `test_relay.py` 7 / 7;
+`test_metar_zsss_js.mjs` (0 decode differences on 69,104 IEM reports); `test_buildings3d.mjs` (airside fill 3 rings +
+2 apron rings, fixed-link points off pavement 0 / 539; stand-head fill 37 rings for 98 stands, nodes / nose tips /
+envelope fronts off pavement 0); `test_frame.py` OK. `node --check` on every changed module and job.
+
+**Frame time on llvmpipe** (reference only; `SOFTGL=1 SCENES=perf TIERS=low,high`, 1280 × 720 viewport, fixed resolution,
+40 frames after 10 warm-up, median / p90 ms):
+
+| Tier | Overview | T2 | Stand 233 | Round 2 (same views) |
+|---|---|---|---|---|
+| low (1024 × 576), run 1 | 1150 / 1283 (js 2.4, 201 draws, 726 k tris) | 1117 / 1333 (js 3.1, 127, 573 k) | 850 / 917 (js 2.1, 108, 666 k) | 883 / 767 / 700 |
+| low, run 2 | 900 / 1117 (js 2.6) | 767 / 817 (js 1.8) | 717 / 767 (js 2.1) | |
+| high (1280 × 720), run 1 | 1217 / 1417 (js 2.8, 201, 725 k) | 1167 / 1250 (js 2.0, 127, 573 k) | 1117 / 1167 (js 1.9, 108, 665 k) | 1217 / 1200 / 1167 |
+| high, run 2 | 1183 / 1217 (js 2.6) | 1500 / 1667 (js 2.4) | 1150 / 1250 (js 2.0) | |
+
+Draw calls unchanged; ~10 k fewer triangles (58 masts instead of 67). Run 1 started while the machine was still loaded
+(load average 4.4 after the gates render job); run 2 started idle (0.2), but the load rose to 4.7 during it (another
+agent's job), which is likely the T2 high outlier. Taken together the numbers are within run-to-run noise of round 2
+(low run 2 matches round 2 within 5 %); the JS time per frame (1.8-3.1 ms) and the geometry did not grow.
+
+### I5. Files changed in this step, and safe to commit
+
+- `js/shaders/ground.js`: `URBAN_NIGHT` and the two night lines (buildings hand-off, I2.2).
+- `js/live/shell.js`: legend buildings sentence (I2.3); runway line recomputed on a new METAR list (I2.7).
+- `js/live/about.js`: the night-glow clause (I2.3).
+- `jobs/views.mjs`: `CLOCK=` (I2.6).
+- `sha3d/CLAUDE.md` (I2.4), `docs/phase2/integration.md` (this section).
+- Renders: 23 re-rendered `docs/phase2/view_*.png` (2 identical) and the 4 `docs/phase2/fix3_integration_*.png`.
+
+With the fixers' files (their reports list them; the buildings fixer's are uncommitted: `js/shaders/objects.js`,
+`js/live/app.js`, `js/live/terminals.js`, `tools/buildings/build_buildings3d.py`, `tools/buildings/test_buildings3d.mjs`,
+`tools/buildings/band_contrast.py`, `data/sha_buildings3d.js/.json`, `jobs/buildings.mjs`, `docs/phase2/buildings.md`, the 4
+`fix3_buildings_*.png`), everything fix-round-3 in `git status` under `sha3d/` is safe to commit: no secrets, per-flight data,
+AIP lists or third-party imagery. **Not part of fix round 3**: the Phase 3 movement package's untracked files that
+appeared while I worked (`data/sha_routes.js/.json`, `data/SOURCES_routes.json`, `js/sim/`, `docs/phase3/movement_*.png`);
+the lead should commit them with that package. Do **not** commit `out/`.
+
+### I6. Open issues after this round
+
+1. **`standFillLevel` × N6** (markings / owner): the band under the contact bridges is 1.5-1.8 × the apron around it at
+   night (conflict 1). Keep (photos 13 / 19) or ~1.0 on apron-kind texels.
+2. **The app's Tower view frames a mast** (gates × buildings L3; new). After L3 (46° field, pitch −8.2°) the "115"
+   rotunda-line mast (T1 west face) stands in the lower middle of `view_towercab`, 56 m from the eye, head ~65 px; on the
+   phone (`view_phone_towercab`) 41 px at the left (`out/fix3/integ/towerprobe.mjs`). In round 2 no mast was there on the
+   phone and one smaller mast at the right on the laptop. The near-field rule would not catch it (depth 56 m > 45 m; the
+   tower view is not a stand camera). Options (gates): test the tower view camera (`app.js` tower eye / yaw, both
+   orientations) in `placeMasts` with a larger depth, or accept it (towers do look over masts).
+3. **`stand_head_fill` overlap** (buildings; I2, side effect 2): `h2` should include `apron_polys`; no visual change.
+4. **Coverage** (gates): 310, 121, 126 without a mast within 120 m; T2 apron 22 masts (29). `MAST_CAM_CONTACT = 'either'`
+   is an owner choice (61 masts, 1 uncovered in the gates fixer's test).
+5. **Start-up cost**: mast placement 1.2 s (was 0.4-0.5 s) and the pool pass 215-240 ms once (markings); together
+   ~1 s more start-up on this sandbox.
+6. Carried: N7 (canals), L2 (T1 hall), the remote stand-number posts on the grass verge, 101's envelope rear 7 %
+   unpaved, the top of the CAVOK overview beyond the 20 km land-cover crop, the optional `applyFog` urban night floor, the
+   optional emissive lamp face; airfield lighting (Phase 5); model loading under llvmpipe 22-60 s per type; the phone frame
+   time unmeasured; bridges 111 / 235 cannot dock with the class reference.

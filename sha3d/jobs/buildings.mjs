@@ -8,6 +8,12 @@
 // HEADCHECK=1 (fix round 2, review_visual_fix1.md R1): the review's pavement probe (SHA.world.pavedAt < 0.5 = unpaved): stop
 //   nodes, class nose tips (class_ref nose_gear_m ahead), painted equipment areas and envelopes (SHA.markings.apron(), share of
 //   1 m samples unpaved), mast feet and idle stairs (SHA.qa.masts() / idleStairs()); writes <OUT>/<PREFIX>_headcheck.json.
+// FIX3=off (fix round 3, review_visual_fix2.md V3 / V5 / L9): switches the round-3 terms off in the page for before / after
+//   renders: the noFlood night ambient (js/shaders/objects.js OBJ_NIGHT -> 0), the far-ground night level / ramp / airlight
+//   (uFarNight -> the old level 4, uFarNightAir -> 0) and the boundary-layer weighting of the far haze (uFarHazeH.y = 0 -> the
+//   old 3-D distance law). Data (the N6 service band) and app.js (the L3 cab framing) are not switched. Band contrast of a
+//   render: python3 -I tools/buildings/band_contrast.py <png> ...
+// Night views (fix round 3): t2pier_night (the T2 north pier tip, as jobs/views.mjs t2pier) and hub (landside); use T=<night>.
 const NAMED = {
   // T1 from the airside (west), the RWY 18L/36R side, as photo 02 (MNXANL 2023): tower behind the concourse, hall right
   t1: [[520, 2.5, 175], 270, 4, 620, 40],
@@ -27,6 +33,8 @@ const NAMED = {
   // oblique overview from the south-east (the core view) and a far one showing the surroundings and the haze
   overview: [[-300, 2.5, 150], 158, 33, 5600, 50],
   overview_far: [[-300, 2.5, 150], 150, 18, 11000, 55],
+  // fix round 3: the T2 north pier tip from the north-east (centre of stands 229-234, as jobs/views.mjs t2pier)
+  t2pier: [[-820.83, 7.5, -158.69], 45, 24, 250, 50],
   // photo match, photo 02 (MNXANL 2023, 1920 x 1440, iPhone 1x lens: hfov 69.4 deg -> vfov 55.0 deg at 4:3): camera on the
   // RWY 18L/36R centreline abeam the tower (x -6, z 130, eye 4 m above the ground), optical axis 7.8 deg right of the tower
   // (tower at image x 770 of 1920) -> bearing 97.8 deg; rendered at 4:3. p02_tower: same camera, zoomed on the tower.
@@ -89,6 +97,11 @@ export default async ({ page, shot, base, W, H, OUT }) => {
     console.log('HEADCHECK unpaved: stop nodes', r.stopNodesOff.length, r.stopNodesOff.join(' '), '· nose tips', r.noseTipsOff.length, r.noseTipsOff.join(' '),
       '· equipment areas > 5 %', r.equipment.over5pct, '/', r.equipment.total, '(>= 25 %:', r.equipment.over25pct + ')', '· envelopes > 5 %', r.envelopes.over5pct, '/', r.envelopes.total,
       '· mast feet', r.masts ? r.masts.footOff.length + ' / ' + r.masts.total : '-', '· idle stairs', JSON.stringify(r.idleStairs || null));
+  }
+  if (process.env.FIX3 === 'off') {
+    const r = await page.evaluate(async () => { const O = (await import('./js/shaders/objects.js')).OBJ_NIGHT, g = SHA.world.groundU;
+      O.building.splice(0, 2, 0, 0); O.context.splice(0, 2, 0, 0); g.uFarNight = [4, 0, 1, 1]; g.uFarNightAir = [0, 0, 0]; g.uFarHazeH = [300, 0]; return true; });
+    console.log('FIX3=off: round-3 night ambient, far night glow / airlight and boundary-layer haze switched off', r);
   }
   if (!process.env.SHOWUI) await page.evaluate(() => SHA.qa.hideUI(true));
   const frames = (n) => page.evaluate((n) => new Promise(r => { let k = 0; const f = () => { if (++k >= n) r(); else requestAnimationFrame(f); }; requestAnimationFrame(f); }), n);

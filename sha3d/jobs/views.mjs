@@ -17,7 +17,9 @@
 //   <view>@<name>                          render <view> under the file name <PREFIX>_<name>.png
 // Other env: T (ISO time for the sun, default 2026-11-14T03:00:00Z = 11:00 local; T=snapshot = no ?t=, i.e. the app's
 // default snapshot instant and its recorded weather), QUERY (extra URL query), WAIT_MS, SHOWUI=1 (keep the HUD),
-// QUALITY (default high; MOBILE / DEVICE runs usually pass low).
+// QUALITY (default high; MOBILE / DEVICE runs usually pass low), CLOCK=<ISO> (integration fix round 3, review V7: the page's
+// wall clock is pinned with Playwright page.clock.setFixedTime - Date.now / new Date return that instant, timers and frames
+// run normally - so live-mode UI views (pill, clock) are the same in every round; use it with MOCK_RELAY=1 and T=<ISO>).
 // Writes <OUT>/<PREFIX>_<view>.png and prints the scene info (orientation checks: T2 west, T1 east, runways N-S) and, for
 // park, which bridges docked.
 const DEFAULT = 'overview;top;runways;rwy:18L;rwy:36R;rwy:18R;rwy:36L;t1;t2;tower;towercab;stand:233,A320';
@@ -29,6 +31,7 @@ const FULL = 'overview;rwy:18L;rwy:36R;rwy:18R;rwy:36L;t1;t2;tower;towercab;' +
 export default async ({ page, shot, base }) => {
   const t = process.env.T || '2026-11-14T03:00:00Z';
   const q = `?fixedres=1&quality=${process.env.QUALITY || 'high'}${t === 'snapshot' ? '' : '&t=' + encodeURIComponent(t)}${process.env.MOCK_RELAY || process.env.RELAY ? '&relay=1' : ''}${process.env.QUERY ? '&' + process.env.QUERY : ''}`;
+  if (process.env.CLOCK) { await page.clock.setFixedTime(new Date(process.env.CLOCK)); console.log('clock pinned', new Date(process.env.CLOCK).toISOString()); }
   await page.goto(base + 'live.html' + q);
   await page.waitForFunction(() => window.__shaReady || window.__shaError, null, { timeout: 0 });
   const err = await page.evaluate(() => window.__shaError || null); if (err) { console.log('APP ERROR', err); throw new Error(err); }

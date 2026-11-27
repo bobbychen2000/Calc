@@ -47,6 +47,11 @@ vec3 shaGroundFarHaze(vec3 col, vec3 wp, float dist, vec3 V, float ext, float ni
 // Without the map (uApLightOn = 0, the GLSL default for a program that does not set it) the function is the fix round 1
 // flood. Programs that include this chunk: set uApLight / uApLightRect / uApLightOn from the ground uniforms
 // (app.world.groundU) to get the same light; the texture object is updated in place when the masts arrive.
+// Landside night glow (buildings fix round 3, review_visual_fix2.md V5) [inf]: the landside inside the extent (roads, car
+// parks, the blocks' ground) at the level of the far ground beyond it (js/live/terminals.js FAR_NIGHT, which drops its edge
+// ramp when this export exists): k replaces the old 0.10 factor of the urban glow, road = street lighting on landside roads
+// (x albedo, warm).
+export const URBAN_NIGHT = { k: 0.8, road: 0.3, tint: [1.0, 0.75, 0.5], src: 'inf: rendering levels (lit city at night), review_visual_fix2.md V5' };
 export const APRON_FLOOD = { level: 0.42, tint: [1.0, 0.82, 0.6], gScale: 2.5, src: 'inf: level and tint chosen against photos 12/13/19/20 (= the mean over the lit area); shape: light map (CAAC.apronFlood: 9.2.6-1 stand floor, 9.2.6-2 other-apron floor)' };
 export const APRON_FLOOD_GLSL = `
 uniform sampler2D uApLight; uniform vec4 uApLightRect; uniform float uApLightOn;   // light map: R lit area + spill, G pool factor / gScale
@@ -167,7 +172,8 @@ void main(){
   //      mast pools when the light map is bound, fix round 2)
   if (uNight > 0.001) {
     float urbanN = ext * (1.0 - aero) * (1.0 - water);
-    col += alb * vec3(1.0, 0.75, 0.5) * urbanN * (0.3 + 0.7 * nzB.g * nzC.b) * 0.10 * uNight;
+    col += alb * vec3(1.0, 0.75, 0.5) * urbanN * (0.3 + 0.7 * nzB.g * nzC.b) * ${URBAN_NIGHT.k.toFixed(3)} * uNight;   // V5: was 0.10
+    col += alb * vec3(1.0, 0.75, 0.5) * road * ext * (1.0 - aero) * ${URBAN_NIGHT.road.toFixed(3)} * uNight;   // V5: landside street lighting
     col += alb * shaApronFlood(wp, apt, paved, nzA.g, nzB.r) * uNight;
     col += alb * vec3(1.0, 0.75, 0.5) * farGlow * (1.0 - ext) * (1.0 - water) * 0.10 * uNight;   // far-ground hook glow (default 0)
   }

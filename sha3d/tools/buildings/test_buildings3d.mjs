@@ -76,9 +76,11 @@ for (const p of D.parts.filter(p => p.roof_form && p.roof_form.kind === 'arch'))
     for (let k = 0; k <= 10; k++) { const x = a[0] + (r[0] - a[0]) * k / 10, z = a[1] + (r[1] - a[1]) * k / 10; pts++;
       // points on the facade line (k = 0) may fall just inside the building: test 1 m out along the link
       const L = Math.hypot(r[0] - a[0], r[1] - a[1]) || 1, xx = k ? x : x + (r[0] - a[0]) / L, zz = k ? z : z + (r[1] - a[1]) / L;
-      if (!insidePolys(F.polys, xx, zz) && !insidePolys(aprons, xx, zz)) off++; } }
+      if (!insidePolys(F.polys, xx, zz) && !insidePolys(F.apron_polys || [], xx, zz) && !insidePolys(aprons, xx, zz)) off++; } }
   if (off) bad(`airside fill: ${off} of ${pts} fixed-link points over neither the fill nor an apron`);
-  console.log(`airside fill: ${F ? F.polys.length : 0} rings, ${F && F.polys.reduce((s, p) => s + p.length - 1, 0)} holes; fixed-link points off pavement ${off} / ${pts}`); }
+  // fix round 3 (N6): the part beyond the service band is tagged apron
+  if (F && F.apron_polys && (F.apron_kind !== 'apron' || !F.apron_polys.length)) bad('airside_fill apron part missing or not tagged apron');
+  console.log(`airside fill: ${F ? F.polys.length : 0} rings, ${F && F.polys.reduce((s, p) => s + p.length - 1, 0)} holes (service band ${F && F.service_w_m} m) + ${F && F.apron_polys ? F.apron_polys.length : 0} apron rings; fixed-link points off pavement ${off} / ${pts}`); }
 // fix round 2 (review_visual_fix1.md R1): stand-head fill exists (tagged inf / apron), and every stop node (= nose-wheel stop,
 // MH 5001-2021 6.2.16-7), class nose tip (class_ref nose_gear_m ahead) and envelope front (+ stand.noseE, table 4.13.5 note a)
 // lies on pavement (OSM aprons / surfaces, the airside fill or the stand-head fill)
@@ -86,7 +88,7 @@ for (const p of D.parts.filter(p => p.roof_form && p.roof_form.kind === 'arch'))
   if (!H || !H.polys.length || H.src !== 'inf' || H.kind !== 'apron') bad('stand_head_fill missing or not tagged inf / apron');
   const SU = A.surfaces || {}; const pav = [...A.aprons.map(a => [a.ring, ...(a.holes || [])]),
     ...['runway', 'taxiway', 'taxiway_shoulders', 'runway_shoulders_blast_pads'].flatMap(k => (SU[k] || []).map(p => [p.ring, ...(p.holes || [])]))];
-  const on = (x, z) => insidePolys(pav, x, z) || insidePolys(D.airside_fill.polys, x, z) || (H && insidePolys(H.polys, x, z));
+  const on = (x, z) => insidePolys(pav, x, z) || insidePolys(D.airside_fill.polys, x, z) || insidePolys(D.airside_fill.apron_polys || [], x, z) || (H && insidePolys(H.polys, x, z));
   const refs = S.class_ref || {}; const E = val(CAAC.stand.noseE); const off = { node: [], tip: [], front: [] };
   for (const s of S.stands) { const h = s.hdg * Math.PI / 180, f = [Math.sin(h), -Math.cos(h)]; const ng = (refs[s.cls] || refs.C || {}).nose_gear_m || 0;
     const at = (t) => [s.nose[0] + f[0] * t, s.nose[1] + f[1] * t];

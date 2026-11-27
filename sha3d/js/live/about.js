@@ -98,7 +98,8 @@ depiction; no endorsement is implied. Aircraft type names are trademarks of thei
 <li>No airport flight-board data, no Google, Baidu or Amap imagery, no OpenSky data.</li>
 <li><b>Airfield lighting: not modelled yet (Phase 5).</b> Night views show no runway or taxiway lights, stop bars, guard
 lights or approach lights, so they are not a picture of the real airfield at night. The apron glow (also on the aircraft,
-vehicles and jet bridges standing on the apron), the floodlight-mast lamps and the lit signs and windows are inferred.</li>
+vehicles and jet bridges standing on the apron), the floodlight-mast lamps, the lit signs and windows, and the dim night
+glow of the roofs, the city blocks and the built-up land around the airport are inferred.</li>
 </ul>
 
 <h4>Controls</h4>

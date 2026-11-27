@@ -462,3 +462,91 @@ SOFTGL=1 OUT=out/fix1/buildings2 PREFIX=f2n VIEWS='t2_close' T=2026-11-20T13:30:
   objects over the lit apron at night, `app.js floodUniforms` binds it per draw (`noFlood: true` opts an item out)", and
   under package jobs "`jobs/buildings.mjs HEADCHECK=1` (the review's pavement probe: stop nodes, nose tips, equipment areas,
   envelopes, mast feet) and a console tally".
+
+## Fix round 3 (2026-11-27)
+
+Findings from `docs/phase2/review_visual_fix2.md`: **V3** (low: terminal / pier roofs pure black at night), **V5** (low: the
+surroundings black at night), **L9** (low, open since round 1: the CAVOK overview reads as 5-6 km visibility), and the optional
+**N6** (the pier-tip fill reads as a round dark disc) and **L3** (the cab terrace covers ~20 % of the laptop tower view). Files
+changed (this package only): `js/shaders/objects.js`, `js/live/app.js`, `js/live/terminals.js`,
+`tools/buildings/build_buildings3d.py`, `data/sha_buildings3d.js/.json` (rebuilt), `tools/buildings/test_buildings3d.mjs`,
+`jobs/buildings.mjs`, new `tools/buildings/band_contrast.py`, this report. Nothing was committed; `sfo3d/`, `pc12/` and `hwd3d/`
+were not touched. Check renders: `out/fix3/buildings/` (gitignored; SOFTGL llvmpipe, 1280 × 720, deviceScaleFactor 1, high
+tier). Evidence plates (our renders, labelled with the measured values): `fix3_buildings_v3_night_t2pier.png`,
+`fix3_buildings_v5_night_overview.png`, `fix3_buildings_l9_overview.png`, `fix3_buildings_n6_l3_day.png`. Before / after pairs
+were rendered **in one page** (`out/fix3/buildings/fix3.mjs`, the same switch as `jobs/buildings.mjs FIX3=off`): "before"
+switches this round's shader terms off through the page, so the other packages' concurrent changes (masts, light map) are the
+same in both images. I looked at every render named below. Night instant: 2026-11-20T13:30Z (21:30 UTC+8, the named night
+views; that instant's weather has 8 km visibility, sigma 5.1e-4 /m). Day: `T=snapshot` (CAVOK, sigma 3.3e-5 /m).
+
+| Id | Status | What changed | Evidence |
+|---|---|---|---|
+| V3 | **fixed** | `objects.js` `sha_obj_flood`: an item that opts out of the flood (`noFlood`) gets a night ambient instead, `alb × APRON_FLOOD.tint × APRON_FLOOD.level × mix(vert, up, max(N.y, 0)) × uFloodNight`, with `(up, vert)` = `uObjNightAmb` per item (`OBJ_NIGHT`, src inf): terminal / pier / hangar / hub / tower items `[0.12, 0.04]` (0.12 of the apron flood level × albedo on roofs, 0.04 on walls). `app.js floodUniforms` passes `item.nightAmb` (every other item gets `[0, 0]`, so the program uniform never carries over); `terminals.js` sets it on its items (bank kerbs: none). Below the facade glow (curtain wall 0.10-0.32 × uNight) and the apron flood. | `fix3_buildings_v3_night_t2pier.png` (view `t2pier`, 21:30, same page): T2 north pier roof median **(4, 4, 5) → (37, 32, 27)** sRGB next to an apron of (104, 91, 71); the main-hall and concourse roofs read as dark grey shapes, the curtain walls stay the brightest building surfaces. `out/fix3/buildings/n1_night_t2pier_b/_a.png` (V3 alone, before N6). |
+| V5 | **fixed** (far ground, context blocks, terminal / hub roofs); **handoff** for the landside ground and roads inside the extent (core `ground.js`) and the legend wording (`shell.js`) | Far ground (`terminals.js` `sha_ground_far`): the built-up glow level is a uniform, `uFarNight` = (16, ramp 0-2000 m, edge 0.12) (was a fixed 4: radiance ~0.005, black from the overview). It ramps from 0.12 × level at the extent edge to full 2 km outside it, so the landside inside the extent (core ground, ~0.1 × albedo urban glow) does not end in a ring; the ramp is dropped automatically when the core exports `URBAN_NIGHT` (handoff below). Night airlight `uFarNightAir` (0.020, 0.015, 0.010): the far haze colour at night is at least this warm radiance (city light scattered by the haze), faded out towards the 80 km mesh edge; without it the haze (and the core fog: 8 km visibility at the night instant) took the lit plain to black within a few km. Context LOD blocks: `nightAmb` `OBJ_NIGHT.context` [0.20, 0.14] (dim warm emissive on roofs and walls, on top of their lit windows). All src inf. | `fix3_buildings_v5_night_overview.png`: night overview, far ground median by row **0-4 → 7-29** sRGB (y 60: 29, y 300: 22, y 600: 13), apron p90 (75, 65, 49) unchanged, landside inside the extent (1, 1, 0) (core); with the core hand-off applied in a scratch copy (`hoff3`): landside median (27, 21, 11), roads p90 ~47, no ring at the extent edge; hub view (T2 landside): roofs and blocks read, the ground is the core's. Clear-night check (CAVOK sigma forced in the page, airlight 0.010 at the time, `hzn2_clear1`): far city 19-42 sRGB median by row, so it stays below the apron without the haze too. |
+| L9 | **fixed** (the far haze was the dominant term; now a boundary-layer haze); ground-level haze unchanged | **Diagnosis** (overview camera 3,052 m above the ground; page probe `out/fix3/buildings/haze_probe.mjs`, each term switched off through the uniforms): at the review's bands y = 60 / 120 / 180 / 240 / 300 (slant 15.0 / 11.2 / 9.0 / 7.5 / 6.4 km) the far-ground haze (`shaGroundFarHaze`) was a = 0.46 / 0.35 / 0.28 / 0.22 / 0.18, the core aerial perspective (`applyFog`, sigma 3.3e-5 with its 914 m scale height) only 1 − T = 0.13 / 0.10 / 0.08 / 0.07 / 0.06. Renders: switching the far haze off lowers the y = 120 band mean from 120 to 86 and lifts its detail contrast from 0.025 to 0.076; switching the core fog off changes little (120 → 116, 0.025 → 0.030); both off: 76, 0.105. The far haze's law used the 3-D camera distance as if the whole slant path from 3 km ran through ground-level air (ground-level e-folding 20 km, the Shanghai haze floor; with the core's clear-air sigma that is ~47 km visibility at the ground, computed). **Change** (`terminals.js`): the hazed part of the path (beyond 2.5 km) is weighted by exp(−h / H) along the ray: factor H / h1 × (1 − exp(−h1 / H)), h1 = the ray's height where the hazed part starts, H = the core's surface-slab depth (`1 / uFog.y`: 914 m on this CAVOK day, the cloud base under a low deck) clamped to 0.3-2 km (`FAR_HAZE_H`, inf). New a = 0.19 / 0.14 / 0.12 / 0.10 / 0.08. A camera near the ground keeps the old law (factor > 0.95 below ~90 m): `towercab` before / after **0 pixels** differ by more than 2 levels. The mesh-edge sky ramp now starts at 25 km (was 45 km): with the weaker haze a 45 km start left a 6 px step at the horizon of `overview_far` (`d1_overview_far_a.png`, rows 174-186: 152 → 142 → 134); now a soft 20 px haze-layer top (`d2_overview_far_a.png`). | `fix3_buildings_l9_overview.png`; `python3 -I tools/buildings/band_contrast.py` on `d1_overview_b.png` / `d2_overview_a.png` (same page): **review std** y 60-300: 3.8 / 5.6 / 12.7 / 17.5 / 22.6 → 3.4 / 6.9 / 9.1 / 17.3 / 22.7; **detail contrast** (high-pass std / mean, see below): 0.008 / 0.025 / 0.048 / 0.135 / 0.132 → **0.018 / 0.047 / 0.063 / 0.146 / 0.137**; band mean 129 / 120 / 105 → 107 / 102 / 95. The review's std at y = 180 *drops* although the ground there is clearer: that band crosses the extent edge, where the old haze ramp (with the distance outside the extent) made a bright-dark-bright profile; with no haze at all the band's std is 10.5, lower than the hazed 12.7 (`hz0_none.png`). The ceiling with the far haze off is 0.032 / 0.076 / 0.080 (`hz0_nofar.png`). What still reads as haze at the top of the frame: the remaining boundary-layer haze (a 0.14-0.19), the core fog (0.10-0.13) and, above y ≈ 64, ground beyond the 20 km land-cover crop (one mean colour, no detail). |
+| N6 | **fixed** (optional) | The "disc" is the OSM apron's rounded inner ring around the pier tip (obs), 30-40 m deep, filled by the airside fill as asphalt. `build_buildings3d.py airside_fill()`: only a `FILL_SERVICE_W` 12 m band along the facades (the terminal outline buffered with mitre joins: square corners) stays asphalt (`polys`, kind paved: the service road of photo 09); the rest of the gap is `apron_polys` (`apron_kind` apron), drawn by `terminals.js` as paved + apron (the apron concrete and its night flood). Corner wedges of the fill are now mitre parallelograms instead of discs. All inf; evidence / rule strings in the data updated. 36,215 m² service band + 63,638 m² apron part (was 99,931 m² asphalt). | `fix3_buildings_n6_l3_day.png` (day `t2pier`, the old data in a scratch copy vs the new, same code): the round dark cap at the tip is gone, a narrow dark band follows the pier. Night: pier-tip median (70, 60, 49) → (151, 135, 109) (`fix3_buildings_v3_night_t2pier.png`); under the 233 bridges (32, 28, 22) in the review's named view, (70, 61, 51) with this round's light map still on asphalt (`n1_night_stand_233_a.png`), (157, 141, 116) on concrete (`f3n_night_stand_233_a.png`, apron there (89, 77, 60)): the markings light map holds the fill under contact bridges at `standFillLevel` 1.25 × the stand mean, set against asphalt; on concrete that band is now the brightest ground, as photos 13 / 19 show, but ~1.7 × the apron (see handoffs). FILLCHECK unchanged: fixed-link points 392 / 392, VDGS posts 52 / 52, rotundas 53 / 56 (115, 121, 126, as before). |
+| L3 | **fixed** on the laptop (optional); phone unchanged by design | `terminals.js` adds `anchors.tower.terraceHalf / terraceY` (head_w / 2, head_y1). `app.js` Tower view, landscape: vertical field 46° (was 58°; horizontal ~74° on 16:9, was 88°) and the pitch that puts the frame's lower edge 1° below the terrace edge seen from the eye (clamped −11° … −4°; here −8.2°). Portrait keeps −11° and 58-72°: tried first, the higher pitch put the horizon mid-screen and the apron under the bottom sheet, which already hides the terrace (`out/fix3/buildings/cmp_l3_phone.png`); the final phone render differs from the round-2 named view in 3 % of pixels (masts / labels). | `fix3_buildings_n6_l3_day.png`; `band_contrast.py --terrace`: terrace share of the laptop frame **20.5 % → 5.5 %** (column median 20.6 % → 3.3 %; the right-hand columns, where the cab face comes closer, 14 % at p90). |
+
+**Tests and console.** `node tools/buildings/test_buildings3d.mjs`: all checks passed (the fixed-link and stand-head checks now
+also accept the fill's apron part; a new check that the apron part is tagged apron). `node tools/common/test_geo_js.mjs`: passed.
+The generator re-run twice: byte-identical (`sha_buildings3d.json` md5 e17fa564…, `.js` 6e59eca9…). Note: the generator reads
+`js/live/caac_markings.js`, which the markings fixer changed this round (`inputs_sha256_16` changed; `stand_head_fill` came out
+identical); the integrator re-runs the build after all fixers. `jobs/buildings.mjs` snapshot run with `HEADCHECK=1 FILLCHECK=1`
+(views overview, t2pier): stop nodes 0, nose tips 0, equipment areas > 5 % 0 / 261, envelopes 1 / 164 (101, as before), mast feet
+0 / 58, idle stairs 26 / 26; console **0 errors · 0 warnings · 0 page errors**. Every other run of this round (day and night, the
+phone tower view, the `FIX3=off` run, the scratch-copy hand-off runs) logged 0 / 0 / 0. `FIX3=off` reproduces the "before"
+overview (0.08 % of pixels differ by more than 2 levels, the masts placed by the concurrently changing gates package).
+
+```
+python3 -I tools/buildings/build_buildings3d.py && node tools/buildings/test_buildings3d.mjs && node tools/common/test_geo_js.mjs
+SOFTGL=1 OUT=out/fix3/buildings PREFIX=f3c HEADCHECK=1 FILLCHECK=1 T=snapshot VIEWS='overview;t2pier' node livetest.mjs jobs/buildings.mjs
+SOFTGL=1 OUT=out/fix3/buildings PREFIX=f3off FIX3=off T=snapshot VIEWS='overview' node livetest.mjs jobs/buildings.mjs   # "before" (shader terms)
+SOFTGL=1 OUT=out/fix3/buildings PREFIX=f3n T=2026-11-20T13:30:00Z VIEWS='park:229+230+231+233+234;t2pier@night_t2pier;stand:233,-,70,1,24@night_stand_233;overview@night_overview' node livetest.mjs out/fix3/buildings/fix3.mjs
+SOFTGL=1 OUT=out/fix3/buildings PREFIX=d1 T=snapshot VIEWS='overview;look:-300,2.5,150,150,18,11000,55@overview_far;towercab' node livetest.mjs out/fix3/buildings/fix3.mjs
+SOFTGL=1 OUT=out/fix3/buildings PREFIX=l3b DEVICE='iPhone 15' QUALITY=low SHOWUI=1 T=snapshot VIEWS='towercab@phone_towercab' node livetest.mjs jobs/views.mjs
+python3 -I tools/buildings/band_contrast.py out/fix3/buildings/d1_overview_b.png out/fix3/buildings/d2_overview_a.png
+python3 -I tools/buildings/band_contrast.py --terrace docs/phase2/view_towercab.png out/fix3/buildings/l3_towercab_a.png
+```
+
+**Open after this round.**
+1. Inside the extent the landside ground and roads stay black at night until the core hand-off below lands (the far ground's
+   2 km ramp keeps the edge from reading as a ring meanwhile; the airport then sits in a dark disc ~2 km wide in the night
+   overview).
+2. At the named night instant (8 km visibility) the core fog's in-scatter is the night sky (no city light), so the far ground
+   within ~2.5 km of the camera, where this package's airlight does not act, is darkened by the core fog (T 0.48 at 5 km).
+   Optional core change: an urban night floor in `applyFog`'s in-scatter (`js/shaders/common.js`).
+3. The top of the CAVOK overview (above y ≈ 64) is ground beyond the 20 km WorldCover crop: one mean colour, so it still reads
+   as haze; a larger crop needs a new download (refs/cache) and the owner's extent decision (§8).
+4. The light map's `standFillLevel` (markings) was tuned for an asphalt band under the bridges; with N6 most of that band is
+   concrete and ~1.7 × the surrounding apron at night (handoff 3).
+5. L2 (T1 hall profile) and N7 (canal tone) are not in this round.
+
+**Handoffs (files this package does not own).**
+1. **Legend** (`js/live/shell.js` `legendLines`, relay_ui), the `buildings` line when the terminals extension is present, append:
+   `' At night, the dim glow on the roofs, the city blocks and the built-up land beyond the detailed area is <span class="srcchip inf">inf</span>.'`
+   so the line reads: "**Buildings:** outlines from OpenStreetMap [obs]; heights, forms, facades, the tower form [inf]. At night,
+   the dim glow on the roofs, the city blocks and the built-up land beyond the detailed area is [inf]."
+2. **Core ground** (`js/shaders/ground.js`, core / integration), the landside of the extent at the far ground's level (tested in
+   a scratch copy, `out/fix3/buildings/hoff3_night_overview_a.png` / `hoff3_night_hub_a.png`: landside median (27, 21, 11),
+   roads p90 ~47 against an apron p90 of 77, no ring at the extent edge, console 0 / 0 / 0). (a) Above `export const APRON_FLOOD`
+   add
+   `export const URBAN_NIGHT = { k: 0.8, road: 0.3, tint: [1.0, 0.75, 0.5], src: 'inf: rendering levels (lit city at night), review_visual_fix2.md V5' };`
+   (b) in `GROUND_FS`, replace
+   `col += alb * vec3(1.0, 0.75, 0.5) * urbanN * (0.3 + 0.7 * nzB.g * nzC.b) * 0.10 * uNight;` with
+   `col += alb * vec3(1.0, 0.75, 0.5) * urbanN * (0.3 + 0.7 * nzB.g * nzC.b) * ${URBAN_NIGHT.k.toFixed(3)} * uNight;   // V5: was 0.10`
+   `col += alb * vec3(1.0, 0.75, 0.5) * road * ext * (1.0 - aero) * ${URBAN_NIGHT.road.toFixed(3)} * uNight;   // V5: landside street lighting`
+   No change is needed here afterwards: `terminals.js` reads `URBAN_NIGHT` by namespace import and then drops the far ground's
+   edge ramp (`uFarNight.w` = 1). `python3 -I out/fix3/buildings/handoff_ground.py js/shaders/ground.js` (local, gitignored)
+   applies exactly these two edits and nothing else.
+3. **Markings** (`js/live/caac_markings.js` `CAAC.apronFlood.standFillLevel`, optional): since N6 the fill under the contact
+   bridges beyond 12 m from the facade is apron concrete (albedo ~0.30, was asphalt ~0.085). At 1.25 × the stand mean it renders
+   (151-157, 135-141, 109-116) sRGB at the T2 north pier tip against (89, 77, 60) / (104, 91, 71) on the apron beside it: the
+   brightest ground, as photos 13 / 19 show, but by ~1.7 ×. If that is too strong, ~1.0 for apron-kind texels (or 1.25 only for
+   the asphalt service band, `SHA_BUILDINGS3D.airside_fill.polys`) keeps the band at the stand level.
+4. **Lead / CLAUDE.md** ("Conventions"): "the far haze is a boundary-layer haze (`terminals.js` `FAR_HAZE_H`: the hazed path is
+   weighted by exp(−h / H), H = the core's surface-slab depth, 0.3-2 km; ground-level views unchanged); `noFlood` items get a night
+   ambient (`objects.js` `OBJ_NIGHT`, `item.nightAmb`); the far ground's night glow / airlight are `uFarNight` / `uFarNightAir`;
+   the airside fill is a 12 m asphalt service band (`airside_fill.polys`) plus apron concrete (`apron_polys`); the laptop Tower
+   view frames to 1° below the cab terrace (`anchors.tower.terraceHalf / terraceY`, vertical field 46°)"; under package jobs:
+   "`jobs/buildings.mjs FIX3=off` (round-3 shader terms off) and `tools/buildings/band_contrast.py` (band / detail contrast,
+   `--terrace`)".

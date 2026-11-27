@@ -16,6 +16,8 @@ import { gl, Mesh, texture } from '../gl.js';
 import { m4 } from '../math.js';
 import { Geo } from '../geom.js';
 import { buildPart, buildHangar, buildControlTower, buildBlockTower, buildContextBlocks, buildWaterEdges } from '../world/buildings3d.js';
+import { OBJ_NIGHT } from '../shaders/objects.js';
+import * as GROUND_SHADER from '../shaders/ground.js';   // URBAN_NIGHT (core, when the fix round 3 hand-off lands: see FAR_NIGHT)
 
 const Q = (typeof location !== 'undefined') ? new URLSearchParams(location.search) : new URLSearchParams('');
 const ON = Q.get('bld') !== '0', FAR_ON = Q.get('far') !== '0';
@@ -32,6 +34,26 @@ const FAR_HAZE_SIGMA = [0.8, 1200, 20000];
 // fix round 1 (lead: hard ring at the edge of the detailed extent): the haze ramp starts EDGE_HAZE_IN m inside the edge,
 // and the Sentinel-2 hint is cross-faded to the far land-cover colour over the inner EDGE_COL m (see featherS2) [inf]
 const EDGE_HAZE_IN = 300, EDGE_COL = [60, 480];
+// fix round 3 (review_visual_fix2.md L9): the far haze is a boundary-layer haze. The law above treated the whole slant path of
+// the 3 km-high overview camera as ground-level air, so the CAVOK overview read as 5-6 km visibility although the ground-level
+// e-folding distance is the 20 km haze floor (with the core's clear-air sigma, ~47 km visibility). The hazed part of the path
+// (beyond FAR_HAZE[1]) is now weighted by exp(-h / H) along the ray, h = height above the ground: the factor
+// H / h1 x (1 - exp(-h1 / H)) for a ray from height h1 (at the start of the hazed part) down to the ground. H = the depth of the
+// core's surface slab (uFog.y = 1 / fogTop: 914 m on a CAVOK day, the cloud base under a low deck), clamped to FAR_HAZE_H m [inf].
+// A camera near the ground (towers, stands, runway views) keeps the old law (factor > 0.95 below ~90 m).
+const FAR_HAZE_H = [300, 2000];
+// fix round 3 (review_visual_fix2.md V5): night glow of the built-up far ground [inf]. The core adds alb x warm x glow x 0.10 x
+// uNight beyond the extent; glow = level x built-up fraction x a street / block pattern (the old level was 4: radiance ~0.005, a
+// black plain from the overview). The level ramps up from edge x level at the extent edge to full over ramp m outside it, so the
+// landside inside the extent (core ground: ~0.1 x alb urban glow, see the buildings.md fix round 3 handoff) does not end in a
+// ring; the airport's own grounds stay dark. Well below the apron flood: in the night overview (21:30, 8 km METAR visibility)
+// the far ground reads 7-29 sRGB (median by row) against an apron p90 of (75, 65, 49) (out/fix3/buildings/f3n_*) [inf].
+// When the core ground shader lights the landside inside the extent at the same level (js/shaders/ground.js URBAN_NIGHT, the
+// buildings.md fix round 3 hand-off), the ramp is dropped (edge 1).
+// air: the haze's night airlight (linear radiance, warm): city light scattered by the haze. Without it the far haze (and the
+// core fog) faded the lit plain to the black night horizon within a few km on a hazy night (8 km at the named night instant);
+// it fades out towards the 80 km mesh edge, which meets the drawn night sky [inf]
+const FAR_NIGHT = { level: 16, ramp: [0, 2000], edge: 0.12, air: [0.020, 0.015, 0.010], src: 'inf: rendering levels (lit city seen from the overview), review_visual_fix2.md V5' };
 
 const FAR_GLSL = `
 // sha_ground_far (js/live/terminals.js, package P2d): ESA WorldCover 2021 class colours beyond the detailed extent, with a
@@ -41,6 +63,7 @@ const FAR_GLSL = `
 // from the environment's surface extinction (fix round 1; rendering law [inf]).
 uniform sampler2D uFarCol; uniform sampler2D uFarAttr; uniform vec4 uFarRect; uniform float uHasFar; uniform vec3 uFarMean;
 uniform vec4 uFarHaze; uniform sampler2D uFarSky; uniform float uHasFarSky; uniform vec2 uFarDist; uniform vec4 uFarHazeSig;
+uniform vec2 uFarHazeH; uniform vec4 uFarNight; uniform vec3 uFarNightAir;   // fix round 3: haze-layer depth clamp (m); night glow (level, ramp0, ramp1, edge); night airlight
 vec3 shaFarLin(vec3 c){ return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
 vec3 shaGroundFar(vec3 wp, float dist, vec3 neutral, inout float water, inout float glow){
   if (uHasFar < 0.5) return neutral;
@@ -60,8 +83,10 @@ vec3 shaGroundFar(vec3 wp, float dist, vec3 neutral, inout float water, inout fl
   tone *= 0.95 + 0.1 * mix(0.5, nC.r, fade);
   vec3 col = mix(uFarMean * (0.96 + 0.08 * nA.b), tone, inMap);
   water = smoothstep(0.35, 0.8, at.r) * inMap;
-  // night: the core adds alb x warm x glow x 0.10 x uNight; x 4 here so the built-up plain reads as a lit city [inf]
-  glow = 4.0 * (built * inMap + 0.5 * (1.0 - inMap)) * (0.4 + 0.6 * nB.b) * (0.5 + 0.8 * step(0.6, nC.g));
+  // night: the core adds alb x warm x glow x 0.10 x uNight; level uFarNight.x (fix round 3, V5: was 4) so the built-up plain
+  // reads as a lit city, ramped in from the extent edge (signed distance dS, attribute B) [inf]
+  float dS = mix(uFarDist.x, uFarDist.y, at.b);
+  glow = uFarNight.x * mix(uFarNight.w, 1.0, smoothstep(uFarNight.y, uFarNight.z, dS)) * (built * inMap + 0.5 * (1.0 - inMap)) * (0.4 + 0.6 * nB.b) * (0.5 + 0.8 * step(0.6, nC.g));
   return col;
 }
 vec3 shaGroundFarHaze(vec3 col, vec3 wp, float dist, vec3 V, float ext, float night){
@@ -72,14 +97,23 @@ vec3 shaGroundFarHaze(vec3 col, vec3 wp, float dist, vec3 V, float ext, float ni
   if (uHasFar > 0.5 && uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) dS = mix(uFarDist.x, uFarDist.y, texture(uFarAttr, uv).b);
   // e-folding distance from the surface extinction (fix round 1, L9): clamp(K / sigma, Lmin, Lmax); off (K = 0): uFarHaze.z
   float L = uFarHazeSig.x > 0.0 ? clamp(uFarHazeSig.x / max(uFog.x, 1e-7), uFarHazeSig.y, uFarHazeSig.z) : uFarHaze.z;
-  float a = uFarHaze.x * (1.0 - exp(-max(dist - uFarHaze.y, 0.0) / L)) * smoothstep(-uFarHazeSig.w, uFarHaze.w, dS);
+  // boundary-layer weighting of the hazed part of the path (fix round 3, L9): the ray descends from h1 (its height where the
+  // hazed part starts, FAR_HAZE[1] m from the camera) to the ground; integral of exp(-h / H) = H / h1 (1 - exp(-h1 / H)) per metre
+  float hH = clamp(1.0 / max(uFog.y, 1e-6), uFarHazeH.x, uFarHazeH.y);
+  float h1 = max(uCamPos.y - wp.y, 0.0) * (1.0 - min(uFarHaze.y, dist) / max(dist, 1.0));
+  float fH = uFarHazeH.y > 0.0 && h1 > 1.0 ? hH / h1 * (1.0 - exp(-h1 / hH)) : 1.0;
+  float a = uFarHaze.x * (1.0 - exp(-max(dist - uFarHaze.y, 0.0) * fH / L)) * smoothstep(-uFarHazeSig.w, uFarHaze.w, dS);
   // haze colour: the sky the sky pass draws (the renderer's sky base, set in start()) at the horizon in the view
   // direction; toward the end of the ground mesh (80 km) the direction tends to the actual (below-horizon) view ray, so
   // the mesh edge meets the sky drawn beyond it without a step. Fallback before start(): the env map.
   float w = smoothstep(25000.0, 75000.0, dist); vec3 rd = -V;
-  a = max(a, smoothstep(45000.0, 78000.0, dist) * step(0.0, dS));   // the 80 km mesh edge always meets the drawn sky (with a long L)
+  // the 80 km mesh edge always meets the drawn sky (with a long L). Fix round 3: the ramp starts at 25 km (was 45 km): with the
+  // boundary-layer weighting a high camera sees a < 0.6 at 45-78 km, and the 45 km ramp then left a step 6 px tall at the
+  // mesh edge in the overview_far view (out/fix3/buildings/d1_overview_far_a.png) [inf]
+  a = max(a, smoothstep(25000.0, 78000.0, dist) * step(0.0, dS));
   vec3 hz = uHasFarSky > 0.5 ? textureLod(uFarSky, dirToEquirect(normalize(vec3(rd.x, mix(0.0, rd.y, w), rd.z))), 0.0).rgb
                              : mix(skyEnv(normalize(vec3(rd.x, 0.02, rd.z)), 3.0), skyEnv(rd, 3.0), w);
+  hz = max(hz, uFarNightAir * night * (1.0 - w));   // fix round 3 (V5): the haze lit by the city at night [inf]
   return mix(col, hz, clamp(a, 0.0, 0.99));
 }
 `;
@@ -150,10 +184,11 @@ async function featherS2(S, F) {
 // one renderer item from a Geo built with y above the ground (drawn at GROUND_Y). noFlood (fix round 2, N3): the buildings
 // opt out of the objects' apron flood (js/shaders/objects.js sha_obj_flood, wired in js/live/app.js): the light map's spill
 // reaches under the piers, so 15 m pier roofs glowed at night (out/fix1/buildings2/n4_night_t2pier.png); facades keep their
-// own night terms [inf]
+// own night terms [inf]. nightAmb (fix round 3, review_visual_fix2.md V3 / V5): their night ambient instead (js/shaders/objects.js
+// OBJ_NIGHT: buildings 0.12 of the apron flood level x albedo on roofs, 0.04 on walls; the context blocks a dim warm emissive)
 function item(g, G, extra = {}) {
   const d = g.data(); if (!d.idx.length) return null; const b = d.bbox;
-  return { mesh: new Mesh(d), prog: 'obj', model: m4.translate(0, G, 0), bbox: [b[0], b[1] + G, b[2], b[3], b[4] + G, b[5]], castShadow: true, uniforms: { uEmissiveBoost: 1 }, noFlood: true, src: 'inf', tris: d.idx.length / 3, ...extra };
+  return { mesh: new Mesh(d), prog: 'obj', model: m4.translate(0, G, 0), bbox: [b[0], b[1] + G, b[2], b[3], b[4] + G, b[5]], castShadow: true, uniforms: { uEmissiveBoost: 1 }, noFlood: true, nightAmb: OBJ_NIGHT.building, src: 'inf', tris: d.idx.length / 3, ...extra };
 }
 
 let stats = null, fillInfo = null;
@@ -173,10 +208,13 @@ registerExtension({
     const D = ON ? B3D() : null; if (!D) return;
     const F = D.airside_fill, H = D.stand_head_fill;
     if (F && F.polys) for (const pl of F.polys) api.fill(pl, F.kind || 'paved');
+    // fix round 3 (review N6): beyond the FILL_SERVICE_W m asphalt service band along the facades the fill continues the apron
+    // concrete (data airside_fill.apron_polys; the OSM apron's rounded inner ring at the pier tips read as a dark disc) [inf]
+    if (F && F.apron_polys) for (const pl of F.apron_polys) { api.fill(pl, 'paved'); api.fill(pl, F.apron_kind || 'apron'); }
     // (the core map is additive: 'apron' sets G only, so the ring is drawn as 'paved' (R, pavedAt) + 'apron' (G 255), as the
     // core draws its OSM aprons; js/world/ground.js paintAirfieldMap)
     if (H && H.polys) for (const pl of H.polys) { api.fill(pl, 'paved'); if ((H.kind || 'apron') !== 'paved') api.fill(pl, H.kind || 'apron'); }
-    fillInfo = { rings: F && F.polys ? F.polys.length : 0, kind: (F && F.kind) || 'paved', src: (F && F.src) || 'inf',
+    fillInfo = { rings: F && F.polys ? F.polys.length : 0, kind: (F && F.kind) || 'paved', src: (F && F.src) || 'inf', apronRings: F && F.apron_polys ? F.apron_polys.length : 0,
       standHead: H && H.polys ? { rings: H.polys.length, stands: (H.stands || []).length, kind: H.kind || 'apron', src: H.src || 'inf' } : null };
   },
   claimBuildings(airport) {
@@ -191,7 +229,8 @@ registerExtension({
     const F = FAR();
     const dr = F && F.attr_b_range_m ? F.attr_b_range_m : [0, 6000];   // old data: B = distance outside only
     return { uFarCol: one, uFarAttr: one, uFarSky: one, uHasFarSky: 0, uFarRect: [0, 0, 1, 1], uHasFar: 0, uFarMean: F ? F.mean_reflectance_rgb.map(v => v * 0.92) : [0.085, 0.082, 0.068], uFarHaze: FAR_HAZE,
-      uFarDist: dr, uFarHazeSig: [...FAR_HAZE_SIGMA, dr[0] < 0 ? EDGE_HAZE_IN : 0] };
+      uFarDist: dr, uFarHazeSig: [...FAR_HAZE_SIGMA, dr[0] < 0 ? EDGE_HAZE_IN : 0], uFarHazeH: FAR_HAZE_H,
+      uFarNight: [FAR_NIGHT.level, ...FAR_NIGHT.ramp, GROUND_SHADER.URBAN_NIGHT ? 1 : FAR_NIGHT.edge], uFarNightAir: FAR_NIGHT.air };
   },
   async buildWorld(ctx) {
     const G = ctx.groundY; const items = []; const anchors = {}; const info = { src: 'inf (heights B3 / rules; forms from photos)', parts: 0, airsideFill: fillInfo };
@@ -223,12 +262,15 @@ registerExtension({
       for (const t of D.towers) {
         if (t.form === 'control') {
           const T = buildControlTower(t);
-          const b = T.geo.bbox; const it = { mesh: new Mesh(T.geo), prog: 'obj', model: m4.translate(t.x, G, t.z), bbox: [b[0] + t.x, b[1] + G, b[2] + t.z, b[3] + t.x, b[4] + G, b[5] + t.z], castShadow: true, uniforms: { uEmissiveBoost: 1 }, noFlood: true, src: 'inf', what: 'east control tower' };
+          const b = T.geo.bbox; const it = { mesh: new Mesh(T.geo), prog: 'obj', model: m4.translate(t.x, G, t.z), bbox: [b[0] + t.x, b[1] + G, b[2] + t.z, b[3] + t.x, b[4] + G, b[5] + t.z], castShadow: true, uniforms: { uEmissiveBoost: 1 }, noFlood: true, nightAmb: OBJ_NIGHT.building, src: 'inf', what: 'east control tower' };
           items.push(it);
           // cabHalf (P2f): the cab's half-width at eye height (glazing leans out from cab_w0 to cab_w1), so the app's Tower view
           // can stand the eye near the glass instead of at the cab centre (the console band filled ~40 % of the frame)
           const dm = t.dims || {}; const cabHalf = dm.cab_w0 && dm.cab_w1 && dm.head_y1 && dm.cab_y1 ? 0.5 * (dm.cab_w0 + (dm.cab_w1 - dm.cab_w0) * Math.min(1, 1.6 / (dm.cab_y1 - dm.head_y1))) : null;
-          anchors.tower = { pos: [t.x, G, t.z], eyeY: G + T.eye, top: G + T.top, cabHalf, cabYaw: t.yaw_deg != null ? +t.yaw_deg : null, src: 'height AIP (mirror); form inf (photo 02)' };
+          // terraceHalf / terraceY (fix round 3, review L3): the head-top terrace around the cab (half-width head_w / 2 at head_y1),
+          // so the app's Tower view can frame the view to just below the terrace edge instead of filling ~20 % with it
+          anchors.tower = { pos: [t.x, G, t.z], eyeY: G + T.eye, top: G + T.top, cabHalf, cabYaw: t.yaw_deg != null ? +t.yaw_deg : null,
+            terraceHalf: dm.head_w ? dm.head_w / 2 : null, terraceY: dm.head_y1 != null ? G + dm.head_y1 : null, src: 'height AIP (mirror); form inf (photo 02)' };
         } else buildBlockTower(grp('airport'), t);
       }
       info.hangars = D.hangars.length; info.towers = D.towers.length;
@@ -239,8 +281,8 @@ registerExtension({
     const byQ = new Map(); for (const b of ctxB) { const k = quad(b); if (!byQ.has(k)) byQ.set(k, []); byQ.get(k).push(b); }
     info.context = 0; for (const [k, list] of byQ) info.context += buildContextBlocks(grp(k), list, skip);
     // canal / river bank kerbs (the water surface itself is the core ground shader's)
-    if (ctx.airport.context) { const gw = new Geo(); info.bankKerbM = buildWaterEdges(gw, ctx.airport.context); const it = item(gw, G, { what: 'banks', castShadow: false }); if (it) items.push(it); }
-    for (const [k, g] of groups) { const it = item(g, G, { what: k, placeholder: null }); if (it) items.push(it); }
+    if (ctx.airport.context) { const gw = new Geo(); info.bankKerbM = buildWaterEdges(gw, ctx.airport.context); const it = item(gw, G, { what: 'banks', castShadow: false, nightAmb: null }); if (it) items.push(it); }
+    for (const [k, g] of groups) { const it = item(g, G, { what: k, placeholder: null, nightAmb: /^ctx/.test(k) ? OBJ_NIGHT.context : OBJ_NIGHT.building }); if (it) items.push(it); }
     info.items = items.length; info.tris = items.reduce((s, it) => s + (it.tris || it.mesh.count / 3 || 0), 0);
     info.ms = Math.round(performance.now() - t0);
     stats = info;

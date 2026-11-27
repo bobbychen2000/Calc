@@ -46,7 +46,7 @@ function legendLines(app) {
   L.push(['airfield', '<b>Airfield:</b> outlines from OpenStreetMap <span class="srcchip obs">obs</span>; widths, shoulders, which surfaces are concrete, slab joints <span class="srcchip inf">inf</span> (unless the AIP (mirror) gives them).']);
   L.push(['stands', '<b>Stand labels:</b> number and stop from OpenStreetMap <span class="srcchip obs">obs</span>; the class letter is green when Sentinel-2 showed a wide-body there <span class="srcchip obs">obs</span>, amber when set by rule <span class="srcchip inf">inf</span>. Dashed: remote stand.']);
   if (names.has('markings')) L.push(['markings', '<b>Markings and signs:</b> CAAC MH 5001-2021 dimensions; presence and placement inferred from the map <span class="srcchip inf">inf</span> (ZSSS paint not surveyed).']);
-  if (names.has('terminals')) L.push(['buildings', '<b>Buildings:</b> outlines from OpenStreetMap <span class="srcchip obs">obs</span>; heights, forms, facades, the tower form <span class="srcchip inf">inf</span>.']);
+  if (names.has('terminals')) L.push(['buildings', '<b>Buildings:</b> outlines from OpenStreetMap <span class="srcchip obs">obs</span>; heights, forms, facades, the tower form <span class="srcchip inf">inf</span>. At night, the dim glow on the roofs, the city blocks and the built-up land beyond the detailed area is <span class="srcchip inf">inf</span>.']);
   else L.push(['buildings', '<b>Buildings:</b> outlines from OpenStreetMap <span class="srcchip obs">obs</span>; heights <span class="srcchip inf">inf</span>.']);
   L.push(['weather', '<b>Weather:</b> the ZSSS METAR <span class="srcchip obs">obs</span> (live via the relay, or recorded in a snapshot); the runway direction in use <span class="srcchip inf">inf</span>.']);
   L.push(['traffic', '<b>Traffic:</b> none yet. Simulated aircraft will be <span class="srcchip inf">inf</span>; ADS-B positions <span class="srcchip obs">obs</span>.']);
@@ -121,7 +121,10 @@ function status(app, now) {
   } else S.wxLine = st && st.wx && st.wx.forecast ? 'Weather: TAF forecast (no current METAR)' : 'Weather: no report (clear default sky)';
   noteUpdate(app);
   ui.setClock(new Date(tShown), wx + app.envCore.clockNote());
-  if (st && (!S.tRwy || now - S.tRwy > 30000 || S.rwyEnvT !== st.tEnv)) { S.tRwy = now; S.rwyEnvT = st.tEnv; computeRunway(app, false); }
+  // integration fix round 3: also when a new METAR list arrives (live mode with ?t= keeps tEnv fixed, so the runway line
+  // stayed at "no METAR: default direction" until 30 s of wall clock had passed)
+  const rep = app.envCore.reports;
+  if (st && (!S.tRwy || now - S.tRwy > 30000 || S.rwyEnvT !== st.tEnv || S.rwyRep !== rep)) { S.tRwy = now; S.rwyEnvT = st.tEnv; S.rwyRep = rep; computeRunway(app, false); }
 }
 
 // ------------------------------------------------------------------------------------------------ stand labels
