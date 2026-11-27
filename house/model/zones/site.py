@@ -26,7 +26,12 @@ TERR = dict(x0=17.75, x1=27.6, y0=24.8, y1=35.9)                    # cabana ter
 
 
 def flat(g, mat, ring, z, holes=()):
+    """Ground polygon facing up, whatever the ring's winding; z a height or a function of (x, y)."""
     zf = z if callable(z) else (lambda x, y: z)
+    ring = list(ring)
+    area = sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(ring, ring[1:] + ring[:1]))
+    if area < 0:
+        ring = ring[::-1]
     g.poly(mat, [(x, y, zf(x, y)) for x, y in ring], holes=[[(x, y, zf(x, y)) for x, y in h] for h in holes])
 
 
@@ -43,42 +48,56 @@ def rear_lawn_z(x, y=0.0):
     return float(np.interp(x, [0.5, 14.3], [Z_LAWN_W, Z_LAWN_E]))
 
 
+def wall_y(x):
+    """The street wall's outer face: the street runs ~6 deg off the house's front."""
+    return -10.1 + (x - 6.1) * 0.1005
+
+
+def stone_wall(g, a, b, top, base=-0.55, t=0.4):
+    a, b = np.array(a, float), np.array(b, float)
+    L = float(np.linalg.norm(b - a))
+    ex = np.array([(b - a)[0] / L, (b - a)[1] / L, 0.0])
+    ey = np.array([-ex[1], ex[0], 0.0])
+    o = np.array([a[0], a[1], 0.0])
+    g.obox('stone_veneer', o, ex, ey, np.array([0, 0, 1.0]), (0, -t / 2, base), (L, t / 2, top), faces='xXyY')
+    g.obox('coping', o, ex, ey, np.array([0, 0, 1.0]), (-0.04, -t / 2 - 0.04, top), (L + 0.04, t / 2 + 0.04, top + 0.06))
+
+
+WALK = [(9.9, -4.6), (15.0, -4.6), (15.0, -5.0), (14.6, -6.3), (13.4, -7.5), (12.2, -8.2), (11.0, -8.6), (9.0, -8.95),
+        (7.8, -8.9), (7.8, -7.4), (8.6, -6.8), (9.3, -6.0), (9.9, -5.0)]
+
+
 def ground(g):
-    # street and what lies beyond the fences
-    flat(g, 'asphalt', rect(-150, -17.5, 180, -9.6), Z_ST)
-    flat(g, 'ground_far', rect(-260, -260, 290, 300), -0.56)
-    flat(g, 'soil', rect(-6, -9.6, 31, 40), -0.05)
-    # driveway (pavers), in strips along its fall
-    ys = [-9.6, -9.2, -7.4, -5.5, -2.5, 0.55]
+    # the street (parallel to the wall) and what lies beyond the fences
+    g.poly('asphalt', [(-150, -40, Z_ST), (180, -40, Z_ST), (180, wall_y(180) - 1.1, Z_ST), (-150, wall_y(-150) - 1.1, Z_ST)])
+    g.poly('concrete', [(-150, wall_y(-150) - 1.1, Z_ST), (180, wall_y(180) - 1.1, Z_ST), (180, wall_y(180) - 0.2, Z_ST + 0.1),
+                        (-150, wall_y(-150) - 0.2, Z_ST + 0.1)])
+    flat(g, 'ground_far', rect(-260, -260, 290, 300), -0.6)
+    flat(g, 'soil', rect(-6, -11.5, 31, 40), -0.05)
+    # driveway (pavers), in strips along its fall; the bay in front of the right-hand door
+    ys = [-11.4, -9.2, -7.4, -5.5, -2.5, 0.55]
     for a, b in zip(ys[:-1], ys[1:]):
-        g.poly('paver_drive', [(-1.9, a, drive_z(a)), (7.0, a, drive_z(a)), (7.0, b, drive_z(b)), (-1.9, b, drive_z(b))])
-    g.poly('concrete', [(-1.9, -10.2, Z_ST), (7.0, -10.2, Z_ST), (7.0, -9.6, drive_z(-9.6)), (-1.9, -9.6, drive_z(-9.6))])
-    flat(g, 'mulch', rect(FENCE_W, -9.6, -1.9, 0.8), lambda x, y: drive_z(y) + 0.04)        # bed along the left fence
-    # front lawn behind the planter wall; the bed along the street in front of it
-    flat(g, 'lawn', [(7.1, -8.35), (27.6, -8.35), (27.6, -1.3), (24.5, -1.3), (24.5, -1.85), (20.1, -1.85), (20.1, -2.45),
-                     (14.6, -2.45), (14.6, -3.52), (11.15, -3.52), (11.15, -3.28), (7.6, -3.28), (7.6, 0.5), (7.1, 0.5)],
+        g.poly('paver_drive', [(-1.9, a, drive_z(a)), (6.05, a, drive_z(a)), (6.05, b, drive_z(b)), (-1.9, b, drive_z(b))])
+    for a, b in ((-4.2, -2.5), (-2.5, 0.55)):
+        g.poly('paver_drive', [(6.05, a, drive_z(a)), (7.6, a, drive_z(a)), (7.6, b, drive_z(b)), (6.05, b, drive_z(b))])
+    g.poly('paver_drive', [(6.05, -8.85, -0.15), (7.1, -8.85, -0.15), (7.1, -7.45, -0.15), (6.05, -7.45, -0.15)])   # landing
+    for k in range(3):                                 # steps from the walk down to the driveway
+        g.box('bluestone', (7.1 + 0.235 * k, -8.85, -0.3), (7.1 + 0.235 * (k + 1), -7.45, 0.44 - 0.148 * (3 - k)), faces='xyYZ')
+    flat(g, 'mulch', rect(FENCE_W, -11.4, -1.9, 0.8), lambda x, y: drive_z(y) + 0.04)        # bed along the left fence
+    # the front walk, the lawn patch left of it, the main lawn down to the street wall, the planter by the landing
+    flat(g, 'bluestone', WALK, 0.44)
+    flat(g, 'lawn', [(6.2, -7.25), (7.8, -7.3), (8.6, -6.8), (9.3, -6.0), (9.9, -5.0), (9.9, -4.6), (11.7, -4.6), (11.7, -3.52),
+                     (11.15, -3.52), (11.15, -3.28), (7.6, -3.28), (7.6, -4.2), (6.2, -4.2)], Z_LAWN_F)
+    flat(g, 'lawn', [(15.0, -5.0), (15.0, -4.6), (13.95, -4.6), (13.95, -3.52), (14.6, -3.52), (14.6, -2.45), (20.1, -2.45),
+                     (20.1, -1.85), (24.5, -1.85), (24.5, -1.3), (27.5, -1.3), (27.5, wall_y(27.5) + 0.2),
+                     (7.8, wall_y(7.8) + 0.2), (7.8, -8.9), (9.0, -8.95), (11.0, -8.6), (12.2, -8.2), (13.4, -7.5), (14.6, -6.3)],
          Z_LAWN_F)
-    flat(g, 'mulch', rect(7.0, -9.6, 27.8, -8.8), -0.36)
-    wall = [(7.1, -5.6), (7.1, -8.6), (27.6, -8.6)]
-    for a, b in zip(wall[:-1], wall[1:]):
-        x0, x1 = sorted((a[0], b[0]))
-        y0, y1 = sorted((a[1], b[1]))
-        g.box('stone_veneer', (x0 - 0.2, y0 - 0.2, -0.5), (x1 + 0.2, y1 + 0.2, 0.55), faces='xXyY')
-        g.box('coping', (x0 - 0.24, y0 - 0.24, 0.55), (x1 + 0.24, y1 + 0.24, 0.61), faces='xXyYZz')
-    g.box('concrete', (6.98, -5.6, 0.0), (7.1, 0.5, Z_LAWN_F), faces='xXyYZ')                # lawn edge at the driveway
-    # the front walk: from the entry steps round to the driveway
-    p0, p1, p2 = np.array([12.82, -4.78]), np.array([12.7, -6.9]), np.array([7.0, -6.7])
-    n = 14
-    pts = [(1 - t) ** 2 * p0 + 2 * (1 - t) * t * p1 + t ** 2 * p2 for t in np.linspace(0, 1, n)]
-    for i in range(n - 1):
-        a, b = pts[i], pts[i + 1]
-        d = (b - a) / np.linalg.norm(b - a)
-        da = d if i == 0 else (pts[i + 1] - pts[i - 1]) / np.linalg.norm(pts[i + 1] - pts[i - 1])
-        db = d if i == n - 2 else (pts[i + 2] - pts[i]) / np.linalg.norm(pts[i + 2] - pts[i])
-        na, nb = np.array([-da[1], da[0]]) * 0.85, np.array([-db[1], db[0]]) * 0.85
-        za = float(np.interp(i / (n - 1), [0, 0.8, 1], [0.46, 0.44, 0.30]))
-        zb = float(np.interp((i + 1) / (n - 1), [0, 0.8, 1], [0.46, 0.44, 0.30]))
-        g.poly('bluestone', [tuple(a - na) + (za,), tuple(b - nb) + (zb,), tuple(b + nb) + (zb,), tuple(a + na) + (za,)])
+    flat(g, 'mulch', [(6.3, wall_y(6.3) + 0.2), (7.8, wall_y(7.8) + 0.2), (7.8, -9.05), (6.3, -9.05)], Z_LAWN_F - 0.05)
+    stone_wall(g, (6.1, wall_y(6.1)), (27.5, wall_y(27.5)), 0.58)
+    stone_wall(g, (6.1, wall_y(6.1)), (6.1, -8.95), 0.58)
+    stone_wall(g, (6.1, -8.95), (7.8, -8.95), 0.58, base=-0.3)
+    stone_wall(g, (6.1, -7.35), (7.8, -7.35), 0.58, base=-0.3)
+    stone_wall(g, (6.1, -7.35), (6.1, -4.5), 0.52, base=-0.3)
     # side yards
     flat(g, 'concrete', rect(FENCE_W, 0.8, 0.5, 12.8), lambda x, y: 0.40 + 0.012 * (y - 0.8))
     flat(g, 'mulch', rect(25.55, -1.26, FENCE_E, 12.66), 0.92)
@@ -190,22 +209,22 @@ def planting(g, trees):
         PL.rose_bush(g, (x if x < 18.8 or x > 20.4 else 20.8, 24.45, Z_LAWN_E), h=0.9, r=0.45, seed=50 + i)
     # front: clipped shrubs along the porch and the wing, the row behind the planter wall, the bed at the street
     i = 0
-    for x in list(np.arange(7.9, 11.0, 0.95)) + list(np.arange(14.9, 19.6, 0.95)):
+    for x in list(np.arange(7.9, 11.0, 0.95)) + list(np.arange(15.2, 19.6, 0.95)):
         y = -3.75 if x < 11.2 else -2.9
         PL.boxwood(g, (x, y, Z_LAWN_F), r=0.42, h=0.72, seed=60 + i)
         i += 1
     for x in np.arange(20.4, 24.6, 0.95):
         PL.boxwood(g, (x, -2.3, Z_LAWN_F), r=0.42, h=0.75, seed=60 + i)
         i += 1
-    for x in np.arange(7.9, 27.3, 1.25):
-        PL.boxwood(g, (x, -7.85, Z_LAWN_F), r=0.46, h=0.8, seed=60 + i, loose=0.45)
+    for x in np.arange(8.6, 27.2, 1.2):
+        PL.boxwood(g, (x, wall_y(x) + 0.85, Z_LAWN_F), r=0.46, h=0.8, seed=60 + i, loose=0.45)
         i += 1
-    for x in np.arange(8.2, 27.5, 2.3):
-        PL.shrub(g, (x, -9.2, -0.36), r=0.5, h=0.7, kind='green', loose=0.7, seed=60 + i)
+    for x in np.arange(8.5, 27.5, 2.6):
+        PL.shrub(g, (x, wall_y(x) - 0.55, Z_ST + 0.08), r=0.42, h=0.6, kind='green', loose=0.7, seed=60 + i)
         i += 1
-    for k, (x, y) in enumerate(((11.0, -4.7), (14.9, -4.6), (22.3, -4.4))):
+    for k, (x, y) in enumerate(((9.2, -4.9), (15.9, -4.9), (22.3, -4.6))):
         PL.sapling(trees, (x, y, Z_LAWN_F), h=4.0, seed=70 + k)
-    for k, y in enumerate((-8.0, -4.5, -1.2)):
+    for k, y in enumerate((-9.5, -5.0, -1.2)):
         PL.shrub(g, (-2.35, y, drive_z(y) + 0.04), r=0.5, h=1.1, kind='laurel', loose=0.6, seed=80 + k)
 
 

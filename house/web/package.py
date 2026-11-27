@@ -10,7 +10,8 @@ DIR/three/            the three.js r160 modules the viewer imports (from web/thr
 DIR/data/             house_meta.json (reference-photo cameras removed) and the model as base64 text parts
                       house.glb.b64.N.txt (the Artifact host serves no binary type but images, media and fonts)
 DIR/ARTIFACT.json     publish manifest: page, files {published path: {from, contentType}}, sizes
-Nothing cut from the listing photos goes into the bundle: the model's textures are procedural.
+The model's own textures are procedural.  The photo layer (meta 'projectors': the reference photographs the viewer
+casts onto the model) is copied into data/ for PRIVATE bundles; --no-photos leaves it out.
 """
 from __future__ import annotations
 
@@ -26,7 +27,8 @@ HOUSE = WEB.parent
 TITLE = 'Farmhouse Exterior Model'
 DESCRIPTION = 'A navigable 3-D reconstruction of a house exterior and its grounds, rebuilt from listing photos and video.'
 B64_PART = 9_000_000          # characters per base64 text part (text files are limited to 16 MB)
-TYPES = {'.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.txt': 'text/plain', '.html': 'text/html'}
+TYPES = {'.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.txt': 'text/plain', '.html': 'text/html',
+         '.jpg': 'image/jpeg'}
 
 
 def follow_imports(entry: Path, three_src: Path, seen: dict):
@@ -64,6 +66,10 @@ def main():
     # data: meta without the reference-photo cameras, model as base64 text parts
     meta = json.load(open(HOUSE / 'out' / 'house_meta.json'))
     meta.pop('cameras', None)
+    if '--no-photos' in a:
+        meta['projectors'] = []
+    for p in meta.get('projectors', []):          # the photographs the viewer casts onto the model (private bundles only)
+        shutil.copy(HOUSE / 'out' / p['image'], out / 'data' / p['image'])
     json.dump(meta, open(out / 'data' / 'house_meta.json', 'w'), separators=(',', ':'))
     raw = (HOUSE / 'out' / meta.get('glb', 'house.glb')).read_bytes()
     text = base64.b64encode(raw).decode()

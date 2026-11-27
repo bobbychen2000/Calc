@@ -1,11 +1,12 @@
 // Boot: load the model + meta, wire the controls, expose a small API for tests and screenshots (window.viewer).
 // URL parameters (dev / screenshots): ?view=NAME (a named view or a photo-matched camera of the meta file),
 // ?cam=x,y,z&tgt=x,y,z&fov=DEG (a free camera in world metres), ?mode=white, ?time=dusk, ?glb=FILE&meta=FILE,
-// ?ui=0 (hide the controls), ?still=1 (no animation: one deterministic frame), ?hq=N (refine the still over N passes).
+// ?hide=part,part (leave parts out: faster test renders), ?photo=0 (no photo layer), ?ui=0 (hide the controls), ?still=1 (no animation: one deterministic frame), ?hq=N (refine the still over N passes).
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Stage, toGL } from './stage.js';
 import { Materials, CLAY, CLAY_GLASS, CLAY_WATER } from './materials.js';
+import { PhotoLayer } from './photo.js';
 
 const CFG = window.HOUSE_CONFIG || { data: '../out/' };
 const Q = new URLSearchParams(location.search);
@@ -14,12 +15,14 @@ const status = (t) => { $('status').textContent = t; };
 
 const stage = new Stage($('view'));
 const mats = new Materials(stage.renderer, Q.get('quality') === 'low' ? 'low' : 'high');
-mats.hook = (m) => stage.picture.hook(m);
+const photo = new PhotoLayer(stage.renderer);
+mats.hook = (m) => { photo.hook(m); stage.picture.hook(m); };
 for (const m of [CLAY, CLAY_GLASS, CLAY_WATER]) stage.picture.hook(m);
 // ?hq=N refines stills over N passes (soft shadows, sky-light shading, antialiasing); hq=0 turns it off
 if (Q.has('hq')) { stage.refine = +Q.get('hq') > 0; stage.picture.passes = Math.max(1, +Q.get('hq')); }
-const state = { mode: Q.get('mode') === 'white' ? 'white' : 'full', time: Q.get('time') === 'dusk' ? 'dusk' : 'day', view: null, meta: null };
-const viewer = window.viewer = { stage, mats, state, ready: null, errors: [] };
+const state = { mode: Q.get('mode') === 'white' ? 'white' : 'full', time: Q.get('time') === 'dusk' ? 'dusk' : 'day', view: null, meta: null,
+  photo: Q.get('photo') !== '0' };
+const viewer = window.viewer = { stage, mats, state, photo, ready: null, errors: [] };
 window.addEventListener('error', (e) => viewer.errors.push(String(e.message)));
 
 function applyMode() {
@@ -28,6 +31,14 @@ function applyMode() {
     o.material = state.mode === 'white' ? mats.clay(o.userData.matName) : mats.get(o.userData.matName);
   });
   $('b-mode').setAttribute('aria-pressed', state.mode === 'white');
+  applyPhoto();
+}
+
+// the photo layer shows in daylight only (the photographs are daylight ones)
+function applyPhoto() {
+  photo.mix.value = state.photo && state.time === 'day' && photo.n ? 1 : 0;
+  const b = $('b-photo');
+  if (b) { b.hidden = !photo.n; b.setAttribute('aria-pressed', state.photo); b.disabled = state.time !== 'day' || state.mode === 'white'; }
   stage.needs = true;
 }
 
@@ -36,6 +47,7 @@ function applyTime() {
   mats.ctx.envGain = stage.envGain;
   mats.setTime(state.time);
   $('b-time').setAttribute('aria-pressed', state.time === 'dusk');
+  applyPhoto();
 }
 
 function setView(name) {
@@ -50,6 +62,7 @@ function setView(name) {
 viewer.setView = setView;
 viewer.setMode = (m) => { state.mode = m; applyMode(); };
 viewer.setTime = (t) => { state.time = t; applyTime(); };
+viewer.setPhoto = (on) => { state.photo = !!on; applyPhoto(); };
 viewer.renderNow = () => { stage.needs = true; stage.frame(); };
 // resolves when the still has converged (immediately when refinement is off)
 viewer.settle = () => new Promise((res) => {
@@ -76,6 +89,7 @@ async function boot() {
   const metaUrl = CFG.data + (Q.get('meta') || 'house_meta.json');
   const meta = state.meta = await (await fetch(metaUrl)).json();
   status('Loading the model…');
+  if (Q.get('photo') !== '0') await photo.load(meta, CFG.data);
   const gltf = await loadGLB(Q.get('glb') || meta.glb || 'house.glb');
   const root = gltf.scene;
   root.traverse((o) => {
@@ -85,7 +99,10 @@ async function boot() {
     o.castShadow = !(k.glass || k.water || k.noShadow);
     o.receiveShadow = true;
   });
+  for (const n of (Q.get('hide') || '').split(',')) { const o = root.getObjectByName(n); if (o) o.visible = false; }
   stage.scene.add(root);
+  root.updateMatrixWorld(true);
+  photo.bake(stage.scene, root);
   const box = new THREE.Box3().setFromObject(root);
   const c = meta.centre ? toGL(meta.centre) : box.getCenter(new THREE.Vector3());
   stage.setCentre(c);
@@ -108,6 +125,7 @@ async function boot() {
   if (Q.get('ui') === '0') { $('bar').hidden = true; $('status').hidden = true; }
   $('b-mode').addEventListener('click', () => viewer.setMode(state.mode === 'white' ? 'full' : 'white'));
   $('b-time').addEventListener('click', () => viewer.setTime(state.time === 'dusk' ? 'day' : 'dusk'));
+  $('b-photo').addEventListener('click', () => viewer.setPhoto(!state.photo));
   status('');
   const still = Q.get('still') === '1';
   const t0 = performance.now();
