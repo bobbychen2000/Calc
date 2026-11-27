@@ -13,8 +13,8 @@
   <div id="bar" role="toolbar" aria-label="View controls">
     <div class="group" id="g-views"></div>
     <div class="group">
-      <button id="b-mode" type="button" title="Switch between the finished look and the plain white model">White model</button>
-      <button id="b-time" type="button" title="Switch between daylight and dusk">Dusk</button>
+      <button id="b-mode" type="button" disabled title="Switch between the finished look and the plain white model">White model</button>
+      <button id="b-time" type="button" disabled title="Switch between daylight and dusk">Dusk</button>
       <button id="b-photo" type="button" hidden title="Cast the real photographs onto the model (daylight only)">Photo texture</button>
       <button id="b-walk" type="button" hidden title="Walk around at eye level (W A S D, drag to look)">Walk</button>
     </div>
@@ -35,6 +35,31 @@
   document.currentScript.after(m);
 })();
 </script>
-<script type="module" src="viewer/main.js"></script>
+<script>
+// if the viewer's code does not start (a file that did not load, a browser without import maps), say so instead of
+// leaving "Loading…" on screen for ever
+(function () {
+  function fail(msg) {
+    var el = document.getElementById('status');
+    if (!el || window.viewer || el.textContent.indexOf('Loading') !== 0) return;
+    el.textContent = msg + ' ';
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = 'Reload';
+    b.onclick = function () { location.reload(); };
+    el.appendChild(b);
+  }
+  if (!(window.HTMLScriptElement && HTMLScriptElement.supports && HTMLScriptElement.supports('importmap'))) {
+    fail('This browser is too old for the viewer (it needs import maps: Safari 16.4 or later).');
+    return;
+  }
+  var s = document.createElement('script');
+  s.type = 'module';
+  s.src = 'viewer/main.js';
+  s.onerror = function () { fail('The viewer files did not load.'); };
+  document.currentScript.after(s);
+  setTimeout(function () { fail('The viewer did not start.'); }, 30000);
+})();
+</script>
 </body>
 </html>

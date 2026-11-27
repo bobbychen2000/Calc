@@ -62,7 +62,8 @@ export class Picture {
     this.skyLight.shadow.bias = s.bias;
     this.skyLight.shadow.normalBias = s.normalBias * 1.5;
     this.skyLight.shadow.radius = 3;
-    stage.scene.add(this.skyLight, this.skyLight.target);
+    // the sky light joins the scene on the first refinement pass only: until then it would cost a shadow map and a
+    // shadow lookup per fragment for nothing (one recompile of the programs then, in the ?hq= mode only)
     this.skyOff = { value: new THREE.Color(0, 0, 0) };   // shared uniform: sky irradiance taken out of the image-based diffuse light in a pass
     this.sunHome = new THREE.Vector3();
   }
@@ -97,6 +98,8 @@ export class Picture {
   // one refinement pass; returns true while more are wanted
   pass() {
     const st = this.stage, r = st.renderer, cam = st.camera, i = this.n;
+    if (!this.skyLight.parent) st.scene.add(this.skyLight, this.skyLight.target);
+    r.shadowMap.needsUpdate = true;                   // the sun and the sky light move from pass to pass
     const pr = r.getPixelRatio(), W = Math.round(st.canvas.clientWidth * pr), H = Math.round(st.canvas.clientHeight * pr);
     if (!this.frame || this.w !== W || this.h !== H) this.size(W, H);
     // (1) sub-pixel jitter

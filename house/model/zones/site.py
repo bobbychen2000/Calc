@@ -73,13 +73,14 @@ WALK = [(9.9, -4.6), (15.0, -4.6), (15.0, -5.0), (14.6, -6.3), (13.4, -7.5), (12
         (7.8, -8.9), (7.8, -7.4), (8.6, -6.8), (9.3, -6.0), (9.9, -5.0)]
 
 
-def ground(g):
+def ground(g, cut=()):
+    """cut: plan outlines kept out of the two base planes (the pool: its deep end reaches 0.8 m below them)."""
     # the street (parallel to the wall) and what lies beyond the fences
     g.poly('asphalt', [(-150, -40, Z_ST), (180, -40, Z_ST), (180, wall_y(180) - 1.1, Z_ST), (-150, wall_y(-150) - 1.1, Z_ST)])
     g.poly('concrete', [(-150, wall_y(-150) - 1.1, Z_ST), (180, wall_y(180) - 1.1, Z_ST), (180, wall_y(180) - 0.2, Z_ST + 0.1),
                         (-150, wall_y(-150) - 0.2, Z_ST + 0.1)])
-    flat(g, 'ground_far', rect(-260, -260, 290, 300), -0.62)
-    flat(g, 'soil', [(FENCE_W, 0.8), (FENCE_E, -1.3), (FENCE_E, FENCE_N), (FENCE_W, FENCE_N)], -0.05)
+    flat(g, 'ground_far', rect(-260, -260, 290, 300), -0.62, holes=cut)
+    flat(g, 'soil', [(FENCE_W, 0.8), (FENCE_E, -1.3), (FENCE_E, FENCE_N), (FENCE_W, FENCE_N)], -0.05, holes=cut)
     # driveway (pavers), in strips along its fall; the bay in front of the right-hand door
     ys = [-11.4, -9.2, -7.4, -5.5, -2.5, 0.55]
     for a, b in zip(ys[:-1], ys[1:]):
@@ -253,8 +254,8 @@ def backdrop(g, trees):
 def build():
     LAWNS.clear()
     gnd, site, cab, plants, trees, back = Geo(), Geo(), Geo(), Geo(), Geo(), Geo()
-    ground(gnd)
-    pool_terrace(gnd)
+    info = pool_terrace(gnd)
+    ground(gnd, cut=[[tuple(p[:2]) for p in info['footprint']]])
     cabana(cab)
     rear_patio(site)
     fences(site)

@@ -2,7 +2,8 @@
 
 World (x right along the street, y into the lot, z up) -> glTF (X = x, Y = z, Z = -y): a proper rotation, so
 triangle winding is kept.  One glTF mesh per Part, one primitive per material; float32 positions / UVs,
-normals as normalised int16 (KHR_mesh_quantization), uint32 indices.  Materials carry their name and plain
+normals as normalised int16 (KHR_mesh_quantization) padded to 8-byte rows (the extension requires every vertex
+attribute row to be a multiple of 4 bytes: a byteStride of 8 on the normals' view), uint32 indices.  Materials carry their name and plain
 PBR factors; the viewer replaces them by name with its own material library.
 """
 from __future__ import annotations
@@ -27,18 +28,20 @@ class GLB:
         self.views, self.accessors, self.meshes, self.materials, self.nodes = [], [], [], [], []
         self.mat_index = {}
 
-    def _view(self, data, target=None):
+    def _view(self, data, target=None, stride=None):
         while len(self.bin) % 4:
             self.bin.append(0)
         v = {'buffer': 0, 'byteOffset': len(self.bin), 'byteLength': len(data)}
         if target:
             v['target'] = target
+        if stride:
+            v['byteStride'] = stride
         self.bin += data
         self.views.append(v)
         return len(self.views) - 1
 
-    def _acc(self, arr, ctype, typ, target, normalized=False, minmax=False):
-        a = {'bufferView': self._view(arr.tobytes(), target), 'componentType': ctype, 'count': int(len(arr)),
+    def _acc(self, arr, ctype, typ, target, normalized=False, minmax=False, stride=None):
+        a = {'bufferView': self._view(arr.tobytes(), target, stride), 'componentType': ctype, 'count': int(len(arr)),
              'type': typ}
         if normalized:
             a['normalized'] = True
@@ -72,12 +75,12 @@ class GLB:
             N = to_gl(m.N)
             N = np.clip(np.round(N / np.maximum(np.linalg.norm(N, axis=1, keepdims=True), 1e-9) * 32767), -32767,
                         32767).astype(np.int16)
-            N = np.concatenate([N, np.zeros((len(N), 1), np.int16)], 1)[:, :3].copy()
+            N = np.ascontiguousarray(np.concatenate([N, np.zeros((len(N), 1), np.int16)], 1))     # rows of 4 x int16
             UV = m.UV.astype(np.float32)
             UV = np.stack([UV[:, 0], -UV[:, 1]], -1).astype(np.float32)      # glTF v runs down
             prims.append({
                 'attributes': {'POSITION': self._acc(V, FLOAT, 'VEC3', ARRAY_BUFFER, minmax=True),
-                               'NORMAL': self._acc(_pad4(N), SHORT, 'VEC3', ARRAY_BUFFER, normalized=True),
+                               'NORMAL': self._acc(N, SHORT, 'VEC3', ARRAY_BUFFER, normalized=True, stride=8),
                                'TEXCOORD_0': self._acc(UV, FLOAT, 'VEC2', ARRAY_BUFFER)},
                 'indices': self._acc(m.F.astype(np.uint32).reshape(-1), UINT, 'SCALAR', ELEMENT_ARRAY_BUFFER),
                 'material': self.material(m.mat, materials.get(m.mat, {})), 'mode': 4})
@@ -112,8 +115,3 @@ class GLB:
             f.write(struct.pack('<I4s', len(bn), b'BIN\0'))
             f.write(bn)
         return 12 + 8 + len(js) + 8 + len(bn)
-
-
-def _pad4(n):
-    """int16 VEC3 rows are 6 bytes: accessors must be aligned to the component size, which they are (2)."""
-    return n

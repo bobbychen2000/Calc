@@ -41,17 +41,27 @@ export const LOOK = {
   day: { exposure: 1.0, sun: 3.0, sunColor: 0xfff3e0, env: 1.3 },
   dusk: { exposure: 1.0, sun: 0.45, sunColor: 0xffc4a4, env: 1.45 },
   shadow: { size: 4096, half: 34, near: 1, far: 220, bias: -0.00025, normalBias: 0.035, radius: 2.5 },
+  // phones: a quarter of the shadow map's memory (34 MB instead of 134); texels 3.3 cm instead of 1.7, so twice the bias
+  shadowPhone: { size: 2048, normalBias: 0.07 },
 };
 
 export class Stage {
-  constructor(canvas) {
+  // opts.phone: the lighter tier for phones (shadow map size)
+  constructor(canvas, opts = {}) {
     this.canvas = canvas;
-    const r = this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+    // no stencil and no preserved drawing buffer: nothing uses them, and on a phone they cost memory and bandwidth
+    const r = this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, stencil: false, preserveDrawingBuffer: false,
+      powerPreference: 'high-performance' });
+    if (!r.getContext()) throw new Error('WebGL is not available');
     r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.toneMapping = THREE.CustomToneMapping;
     r.shadowMap.enabled = true;
     r.shadowMap.type = THREE.PCFSoftShadowMap;
+    // the shadows only change when the light, the casters or the materials change (applyLight, main.js applyMode,
+    // picture passes, a context restore): they are not redrawn on every frame
+    r.shadowMap.autoUpdate = false;
+    r.shadowMap.needsUpdate = true;
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(40, 1, 0.1, 2000);
     this.camera.position.set(-18, 9, 26);
@@ -67,7 +77,7 @@ export class Stage {
     this.sky = new SkyDome();
     this.scene.add(this.sky.mesh);
     this.sun = new THREE.DirectionalLight(0xffffff, 3);
-    const s = LOOK.shadow;
+    const s = opts.phone ? { ...LOOK.shadow, ...LOOK.shadowPhone } : LOOK.shadow;
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(s.size, s.size);
     Object.assign(this.sun.shadow.camera, { left: -s.half, right: s.half, top: s.half, bottom: -s.half, near: s.near, far: s.far });
@@ -85,8 +95,26 @@ export class Stage {
     this.refine = false;                    // progressive refinement of stills (main.js turns it on)
     this.skyMean = new THREE.Color(0, 0, 0);
     window.addEventListener('resize', () => this.resize());
+    // iOS may take the GPU back (memory pressure, the app in the background): three re-creates its own resources on
+    // restore (its listeners were added first), the image-based light is a render target and is baked again here
+    this.lost = false;
+    canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      this.lost = true;
+      if (this.onLost) this.onLost();
+    });
+    canvas.addEventListener('webglcontextrestored', () => {
+      this.lost = false;
+      this.pmrem = new THREE.PMREMGenerator(this.renderer);
+      this.envRT = null;
+      this.applyLight();
+      if (this.onRestored) this.onRestored();
+    });
     this.resize();
   }
+
+  // the shadow maps are drawn again on the next frame
+  shadowsChanged() { this.renderer.shadowMap.needsUpdate = true; this.needs = true; }
 
   setCentre(p) {
     this.centre.copy(p);
@@ -122,6 +150,7 @@ export class Stage {
     }
     this.skyMean.multiplyScalar(1 / 64);
     this.picture.reset();
+    this.shadowsChanged();
     this.envGain = L.env;                // the image-based light is this much brighter than the sky looks: mirror-like
                                          // materials (glass, water) divide their envMapIntensity by it (stage.envGain)
     this.needs = true;
@@ -197,6 +226,7 @@ export class Stage {
   }
 
   frame() {
+    if (this.lost) return;
     if (!this.fixed) this.controls.update();
     if (this.needs) {
       this.needs = false;
