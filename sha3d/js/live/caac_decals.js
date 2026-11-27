@@ -314,8 +314,13 @@ export function buildDecals(ctx, plan) {
   };
   // fix round 2 (review M4): the filter also governs the curve itself. A backtrack curve is no longer clamped onto the 0.9 m
   // lead-on line (where it merged into the take-off lead-on of the next pair out and read as a 60 m parallel towards the
-  // pavement end); it stops T_.backtrackClear clear of that line (|t| < offB is cut within 40 m of its tangent point) [inf]
+  // pavement end); it stopped T_.backtrackClear clear of that line [inf].
+  // Fix round 3 (review V6): 0.9 m is 1-2 px in the threshold views, so the curve still read as running on into the outer
+  // pair's take-off parallel. It now stops at the runway edge (T_.backtrackStop): no yellow of a backtrack curve on the
+  // runway in a displaced portion; |t| < max(runway half width, offB) is cut within backReach of its tangent point [inf]
   const offB = off + clHalf * 2 + val(T_.backtrackClear);
+  const backStopT = (R) => Math.max(offB, val(T_.backtrackStop) === 'runway edge' ? (R.width || 45) / 2 : offB);
+  const backReach = val(T_.backtrackReach);
   let backtrackStopped = 0;
   for (const t of lines) {
     let pts = t.pts.map(p => p.slice());
@@ -342,8 +347,8 @@ export function buildDecals(ctx, plan) {
       }
     }
     // cut: 0.9 m clear of the runway CL stripe (crossings) and of the holding markings; the designation numerals (rwyMarkWins);
-    // backtrack curves 0.9 m clear of the lead-on line (backCut)
-    const back = (p) => backCut.some(b => { const [s, tt] = G.rwyAlongAcross(b.R, p[0], p[1]); return Math.abs(tt) < offB && Math.abs(s - b.s) < 40; });
+    // backtrack curves stop at the runway edge (backCut; fix round 3, V6)
+    const back = (p) => backCut.some(b => { const [s, tt] = G.rwyAlongAcross(b.R, p[0], p[1]); return Math.abs(tt) < backStopT(b.R) && Math.abs(s - b.s) < backReach; });
     const near = (p) => { for (const R of runways) { const [s, tt] = G.rwyAlongAcross(R, p[0], p[1]); if (Math.abs(tt) < off - 0.01 && s > -5 && s < R.len + 5) return true; } return rwyMarkWins(p); };
     const keepPiece = (q, m) => q && q.length >= 2 && cum(q)[q.length - 1] >= m;   // no slivers between two cuts
     for (const q of cutPoly(pts, (p) => near(p) || holdZone(p, val(T_.clClearOfHold)) || (backCut.length > 0 && back(p)))) if (keepPiece(q, 1.5)) centrelines.push({ pts: q, ref: t.ref });
@@ -357,7 +362,8 @@ export function buildDecals(ctx, plan) {
   }
   info.centrelines = { lines: lines.length, pieces: centrelines.length, runwayLeadOns: leadOns, leadOnsDroppedInDisplacedPortion: leadOnsDropped,
     backtrackCurvesStoppedClear: backtrackStopped, runwayCrossingsOrSteepEnds: crossings,
-    rule: 'continuous over threshold marking (6.2.8-3); cut at the designation numerals (6.2.1-2); backtrack curves in a displaced portion: no parallel, stop 0.9 m clear (inf)' };
+    backtrackStop: val(T_.backtrackStop),
+    rule: 'continuous over threshold marking (6.2.8-3); cut at the designation numerals (6.2.1-2); backtrack curves in a displaced portion: no parallel, stop at the runway edge (inf, fix round 3)' };
 
   // ---------------------------------------------------------------------------------------- enhanced centrelines
   let enh = 0;

@@ -360,3 +360,73 @@ Open after this round:
   inferred mast positions (gates N5: they move between quality tiers, and the pools follow them).
 - The light map has 4 m texels. Where the fill meets grass its edge is soft, not the crisp 1 m edge of the apron; the
   spill hides most of it. Aircraft and bridges cast no shadow in the flood (the masts are not shadow casters).
+
+## Fix round 3 (2026-11-27)
+
+Findings from `review_visual_fix2.md` assigned to this package: **V1** (medium), **V6** (low) and the stale "73 masts"
+comment. Files changed: `js/live/markings.js`, `js/live/caac_markings.js`, `js/live/caac_decals.js`, `js/shaders/ground.js`
+(comments and the flood `src` string only; the GLSL is unchanged), `jobs/markings.mjs`, this report. `js/live/caac_signs.js`
+is unchanged. Check renders are in `out/fix3/markings/` (gitignored), all SOFTGL, 1280 × 720, deviceScaleFactor 1. The
+"before" state is the review's: the committed `view_night_stand_233.png`, `view_night_t2pier.png`, `view_rwy_36L.png`,
+`view_rwy_18R.png` and the reviewer's `out/review2/night/rvn_night_east_apron.png` and probe (`out/review2/day/rv_probe.json`).
+The gates fixer moved masts while I worked (67 masts at my first after-runs, 59 at the final ones); the final renders and
+tables below are with 59. Four composites: `docs/phase2/fix3_markings_night_233.png`, `fix3_markings_night_t2pier.png`,
+`fix3_markings_lightmap.png`, `fix3_markings_backtrack.png`. Console: `SCENES=snapshot,park jobs/integration.mjs` -> both
+scenes clean (0 errors, 0 warnings, 0 page errors, 0 failed requests); every render run below logged no warning or error.
+All six owned modules pass `node --check`; `node tools/buildings/test_buildings3d.mjs` (it reads `caac_markings.js`) passes.
+
+| Id | What changed | Evidence | Status |
+|---|---|---|---|
+| V1 | **Stands are held to the stand level; the 0.5 floor is only for the rest of the apron** (MH 5001-2021 9.2.6-1 / -2, read again in the local copy: 9.2.6-1 "机位上" horizontal ≥ 20 lx, avg:min ≤ 4:1; 9.2.6-2 other apron ≥ 50 % of the stand average). `applyMastPools` (`markings.js`) now builds a **stand mask**: the painted envelopes, bridge areas and equipment areas (`SHA.markings.apron()`), plus the package-added airside pavement (T1 / T2 airside fill, stand-head fill; `apronLightMap` now keeps it as `addedPav`, including the one-texel rim next to the apron) within `standFillR` 60 m of a contact-stand node (58 stands with `contact` or bridges): the ground under the bridges. Floors: painted stand texels ≥ `standFloor` 1.0 × the reference (the mean of the mast pools over the envelopes, as before); the fill under the bridges ≥ `standFillLevel` 1.25 × the stand mean S; every other texel ≥ `floor` 0.5 × S, where S is the envelope mean **after** the stand floor (so 9.2.6-2 is met against the stands as lit). The floor field is max-dilated and box-blurred by `standEdge` 12 m (the raised level falls off over ~24 m past an outline instead of stepping at the painted line; never lowered inside it). The gain is recomputed so that the mean over the lit area stays at the fix round 1 level. The stored G is rounded **up** so the floors hold in the 8-bit map. Nothing here depends on where the masts are: with no mast near a stand it sits at exactly the stand level. New table entries (`CAAC.apronFlood`): `standFloor` (1.0, inf: 9.2.6-1, the clause prints 20 lx and 4:1, no floor relative to the pools), `standFillLevel` (1.25, inf: ≥ 1.0 by 9.2.6-1, the extra 0.25 chosen against photos 13 / 19, obs: the band under the bridges is the brightest part of the apron at night), `standFillR` (60, inf), `standEdge` (12, inf); `floor` keeps 9.2.6-2 and now says where it applies. Also fixed: `SHA.markings.apronLight().at(x, z)` returned G × 2, i.e. 0.8 × the shader's factor (gScale is 2.5); it now returns `[lit, factor = G × gScale, stand flag (1 painted stand, 2 fill under bridges, 0 other)]`. The reviewer's probe values ("0.50" at the floor nodes) were in the old scale: those nodes were at 0.63 = 0.5 × the gain 1.259. New stats in `apronLight().masts`: `standLevel`, `standMeanFactor`, `standFillFloorFactor`, `otherFloorFactor`, `otherMeanFactor`, `check926`. `jobs/markings.mjs` waits for the pools and prints the stand-floor summary, and with `LIGHTTABLE=1` the per-stand table from `apronLight().at(stop node)`; it also takes `park:` views. | **Per-stand table** (`LIGHTTABLE=1`, 59 masts): standLevel 1.118, stand mean 1.273, other-apron floor 0.636, gain 1.114; **0 of 164 stand nodes below the stand level** (30 exactly at it, min 1.118, median 1.343, max 1.882), every node on a stand texel. The 18 the review listed (14 at the old floor, 4 within 0.05): 110 1.44, 111 1.17, 112 1.39, 121 1.24, 126 1.18, 231 1.00, 232 1.19, 233 1.27, 234 1.30, 250 1.36, 262 1.29, 263 1.36, 333 1.36, 334 1.14, 335 1.09, 336 1.54, 337 1.20, 413 1.00 (× the stand level). Same result with the 67-mast placement earlier in the round (standLevel 1.098, 0 below), so the floor does not follow the masts. `check926`: stands avg:min 1.14, other apron avg:min 1.38, other min / stand mean 0.500. **Named night views** (21:30, `park:229+230+231+233+234`): `view_night_stand_233` framing (`a5n_night_stand_233.png`), fill under the 233 bridge (31, 27, 22) -> **(69, 60, 50)** sRGB (patch x 100-200, y 480-530; (32, 28, 22) -> (70, 61, 51) at x 270-320, y 470-520), above the (59, 51, 42) target; the 233 envelope (92, 80, 63) -> (139, 124, 99), now the brightest ground in the frame (taxilane far side (85, 73, 57), apron right (110, 96, 76)). `view_night_t2pier` framing (`a4n_night_t2pier.png`): pier-tip fill, median of the 17,092 px that were the dark band, (30, 25, 20) -> **(62, 54, 44)**. In light-map terms the viewed stands are no longer the darkest: the fill under the bridges is at 1.58 and the envelopes ≥ 1.12, against 0.64 on the open apron. Pixel-wise the asphalt band (albedo ~0.085, photo 09 shows asphalt there) still reads darker than lit concrete (0.30). East apron from 900 m (`a4n_night_east_apron.png` vs the reviewer's render): luminance p5 / p50 / p95 54 / 66 / 122 -> 55 / 84 / 106; the pools are flatter because more of the apron is stand, and the edges are still soft. Cost: the pool pass is 215-240 ms once, on the first frame after the masts (was 68-145 ms). | fixed |
+| V6 | **Backtrack curves stop at the runway edge** (`CAAC.taxiway.backtrackStop` = 'runway edge', inf, recorded next to `backtrackClear`; option 2 of the review's three, with 6.2.1-2 "runway markings win on the runway" by analogy; ZSSS paint not observed). In a displaced portion, a lead-on curve that meets the runway CL heading towards the pavement end (4 at 18R/36L, `leadOnsDroppedInDisplacedPortion`) is now cut where \|t\| < the runway half width (30 m at 18R/36L), within `backtrackReach` 150 m (inf) of its tangent point, instead of 0.9 m short of the lead-on line. Its taxiway part up to the edge stays; the outer pairs' take-off parallels (6.2.8-5) are unchanged. `backtrackClear` (0.9 m) remains only as the lower bound. `info().decals.centrelines.backtrackStop` reports it. | `fix3_markings_backtrack.png`, app threshold views `jobs/markings.mjs thr:36L` / `thr:18R` (`a3_thr_36L.png`, `a3_thr_18R.png`, T=snapshot) against `view_rwy_36L` / `view_rwy_18R`. Yellow-pixel count on the runway below the inner crossing line (columns of the take-off parallels masked): 36L 307 -> **0**, 18R 288 -> **0**. The curve ends now lie ~100 px left and right of the parallels (28.8 m from the lead-on line on the ground), where they met them before with a 1-2 px gap. Top views `a3_endtop_36L_-150_300.png` / `a3_endtop_18R_-150_300.png`: the downward curves of the inner crossing end at the runway edge, the upward (take-off) curves and the outer parallels are as before. | fixed |
+| "73 masts" | `caac_markings.js` `apronFlood` comment no longer gives a mast count ("their number and places are the gates package's, read at run time"). | `grep 73 js/live/caac_markings.js` -> nothing. `caac_markings.js` feeds the provenance hash of `data/sha_buildings3d.json`: see hand-offs. | fixed (hand-off for the data hash) |
+
+Hand-offs (files I do not own):
+- **Data provenance hash** (lead / buildings): re-run `python3 -I tools/buildings/build_buildings3d.py` and check that only
+  the provenance hash (`inputs_sha256_16`) of `data/sha_buildings3d.json` / `.js` changed. `caac_markings.js` changed in this
+  round (comment, `apronFlood.standFloor / standFillLevel / standFillR / standEdge`, `taxiway.backtrackStop / backtrackReach`),
+  but not the values the tool parses (`stand.clearB`, `noseE`, `classLetter`).
+- **`sha3d/CLAUDE.md`** (lead), Conventions: the ground-shader bullet should say the light map holds the stands at the stand
+  level (`CAAC.apronFlood.standFloor` 1.0 × the reference, 9.2.6-1; fill under contact-stand bridges `standFillLevel` 1.25 ×
+  the stand mean; other apron 0.5 × the stand mean, 9.2.6-2; soft edge `standEdge` 12 m), independent of the mast places;
+  `apronLight().at(x, z)` -> `[lit, factor (G × gScale), stand flag]` (it was G × 2). The taxiway bullet should say that
+  backtrack curves in a displaced portion stop at the runway edge (`CAAC.taxiway.backtrackStop`, inf), not 0.9 m short.
+- **Reviewer's probe** (`out/review2/rv.mjs`): `L.at()[1]` is now the shader factor (× 1.25 against the old reading). Compare
+  against `apronLight().masts.standLevel`, or use `jobs/markings.mjs` with `LIGHTTABLE=1`.
+- Optional (buildings, N6): the airside fill under the bridges is asphalt (photo 09 agrees), so it stays darker than lit
+  concrete at night. If the owner wants the photo 13 / 19 look (that band the brightest), the remaining lever is lighting
+  from fittings the model does not draw (terminal face, bridge floods), not albedo.
+
+Commands (from `sha3d/`):
+
+```
+SOFTGL=1 OUT=out/fix3/markings/after PREFIX=t T=2026-11-20T13:30:00Z LIGHTTABLE=1 VIEWS=';' node livetest.mjs jobs/markings.mjs   # per-stand table, ~15 s
+SOFTGL=1 OUT=out/fix3/markings/after PREFIX=a4n T=2026-11-20T13:30:00Z VIEWS='park:229+230+231+233+234;t2pier@night_t2pier;stand:233,-,70,1,24@night_stand_233;look:600,2.5,-300,250,22,900@night_east_apron' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix3/markings/after PREFIX=a5n T=2026-11-20T13:30:00Z VIEWS='park:229+230+231+233+234;stand:233,-,70,1,24@night_stand_233' node livetest.mjs jobs/views.mjs
+SOFTGL=1 OUT=out/fix3/markings/after PREFIX=a3 T=snapshot VIEWS='thr:36L;thr:18R;endtop:36L,-150,300;endtop:18R,-150,300' node livetest.mjs jobs/markings.mjs
+SOFTGL=1 OUT=out/fix3/markings/integ SCENES=snapshot,park node livetest.mjs jobs/integration.mjs
+python3 -I out/fix3/markings/compose.py                                   # the fix3_markings_*.png composites
+```
+
+Per-stand light at the stop node, × the stand level (59 masts; `c` = contact stand), from `out/fix3/markings/after/log_table_final.txt`:
+
+```
+101 1.097c · 102 1.263c · 109 1.053c · 110 1.439c · 111 1.167c · 112 1.386c · 113 1.114c · 114 1.175c · 115 1.175c · 120 1.237c · 121 1.237c · 126 1.175c
+127 1.237c · 212 1.000 · 213 1.026 · 214 1.184 · 215 1.430 · 216 1.412 · 217 1.219 · 218 1.000 · 219 1.000 · 220 1.088 · 221 1.237c · 222 1.246c
+223 1.237c · 224 1.412c · 225 1.509c · 226 1.368c · 227 1.325c · 228 1.281c · 229 1.175c · 230 1.272c · 231 1.000c · 232 1.193c · 233 1.272c · 234 1.298c
+235 1.202c · 236 1.044c · 237 1.211c · 238 1.237c · 238A 1.000c · 239 1.026c · 240 1.000c · 240A 1.360 · 246 1.316c · 248 1.237c · 250 1.360c · 256 1.132c
+257 1.237c · 258 1.061c · 259 1.000c · 259A 1.167c · 260 1.175c · 261 1.044c · 262 1.290c · 263 1.360c · 264 1.360c · 265 1.290c · 266 1.097c · 267 1.237c
+268 1.272c · 269 1.368c · 270 1.175c · 271 1.254c · 272 1.333c · 273 1.175c · 274 1.509c · 275 1.561c · 276 1.623 · 277 1.570 · 278 1.456 · 279 1.430
+280 1.483 · 281 1.676 · 282 1.588 · 283 1.061 · 284 1.097 · 285 1.026 · 286 1.000 · 287 1.000 · 288 1.000 · 289 1.097 · 290 1.105 · 301 1.377
+302 1.439 · 303 1.281 · 304 1.246 · 305 1.368 · 306 1.307 · 307 1.193 · 308 1.000 · 309 1.000 · 310 1.000 · 311 1.000 · 312 1.000 · 313 1.070
+314 1.053 · 315 1.202 · 316 1.061 · 317 1.211 · 318 1.184 · 319 1.404 · 320 1.447 · 321 1.404 · 322 1.167 · 323 1.316 · 324 1.254 · 325 1.211
+326 1.553 · 327 1.219 · 328 1.140 · 329 1.167 · 330 1.175 · 331 1.430 · 332 1.167 · 333 1.360 · 334 1.140 · 335 1.088 · 336 1.544 · 337 1.202
+338 1.570 · 339 1.667 · 340 1.684 · 341 1.561 · 342 1.246 · 401 1.000 · 402 1.184 · 403 1.325 · 404 1.465 · 405 1.465 · 406 1.202 · 407 1.175
+408 1.193 · 409 1.202 · 410 1.061 · 411 1.000 · 412 1.000 · 413 1.000 · 501 1.000 · 502 1.000 · 504 1.000 · 506 1.000 · 508 1.000 · 510 1.000
+511 1.000 · 517 1.167 · 518 1.307 · 519 1.474 · 520 1.570 · 521 1.561 · 522 1.491 · 523 1.333 · 524 1.053 · 525 1.000 · 601 1.114 · 602 1.149
+603 1.149 · 604 1.000 · 604A 1.097 · 604B 1.000 · 605 1.140 · 606 1.061 · 607 1.105 · 608 1.000
+```
+
+Open after this round: the table is from the gates package's 59-mast placement as it stood during this round. The floors
+do not depend on it, but the values above the floor do. The stored G is rounded up (ceil) since the last code change; the
+67-mast table and the `a4n_*` renders predate that (at most 1 LSB, 0.01 in factor), the table above and `a5n_night_stand_233` do not. Aircraft and bridges still cast no shadow in the flood.

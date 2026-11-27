@@ -14,7 +14,7 @@ import { RELAY, fetchTaf, fetchAdsb } from './relay.js';
 import { modeLine } from './about.js';
 import { decode as decodeZsss, runwayMode, windText, RULES } from '../env/wx/metar_zsss.js';
 import { TZ } from '../env/clock.js';
-import { STAND_CAM, standCamWedge, standCamClearance } from './gate_system.js';   // (fix round 2, N1) the stand camera, defined once
+import { STAND_CAM, standCamWedge, standCamClearance, standCamNearList } from './gate_system.js';   // (fix round 2, N1) the stand camera, defined once
 
 const DEG = Math.PI / 180;
 const store = { get(k, d) { try { const v = localStorage.getItem('shalive.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('shalive.' + k, JSON.stringify(v)); } catch (e) { } } };
@@ -147,6 +147,10 @@ function standLabels(app) {
 // crosses the centre band in front of the target) and side -1 is clearer. placeMasts keeps side +1 of every contact stand and at least one side of
 // every remote stand clear, so side -1 is only taken at remote stands. Uses the stand's exact heading (not the rounded card
 // record) and the subject points the mast placement used (SHA.qa.camSubject; without the gates package, the data's).
+// (fix round 3, review_visual_fix2.md V2) A side is clear only when no mast is in its near field either (gate_system.js
+// standCamNear: the head or the pole above 10 m in the frame at a depth under 45 m, or the pole within 25 m of the
+// camera). Order: side +1 if clear; side -1 if clear; else side +1 if its subject is clear; else the side with the larger
+// subject clearance.
 function standCam(app, s, side) {
   const D = app.data && app.data.stands; const r = (D && D.stands || []).find(x => String(x.name) === s.name) || s;
   const h = app.geo.hdgVec(r.hdg); let subj = app.qa && typeof app.qa.camSubject === 'function' ? app.qa.camSubject(s.name) : null;   // as the masts were placed
@@ -155,10 +159,14 @@ function standCam(app, s, side) {
     for (const b of (Array.isArray(r.bridges) ? r.bridges : [])) { if (b.rotunda) subj.push({ p: b.rotunda, y: H.rotunda }); if (b.cab) subj.push({ p: b.cab, y: H.cab }); } }
   return standCamWedge(r.nose, h, r.cls, side, subj);
 }
-function standCamSide(app, s) {
-  const M = (app.qa && typeof app.qa.masts === 'function' && (app.qa.masts() || {}).masts) || []; if (!M.length) return 1;
-  const P = M.map(m => m.p); const c1 = standCamClearance(standCam(app, s, 1), P); if (c1 >= 1) return 1;
-  return standCamClearance(standCam(app, s, -1), P) > c1 ? -1 : 1;
+function standCamSides(app, s) {   // per side (+1, -1): {clear: subject clearance (multiples of the margin), near: masts in the near field}
+  const M = (app.qa && typeof app.qa.masts === 'function' && (app.qa.masts() || {}).masts) || []; const P = M.map(m => m.p);
+  return [1, -1].map(sd => { const W = standCam(app, s, sd); return { side: sd, clear: M.length ? standCamClearance(W, P) : Infinity, near: M.length ? standCamNearList(W, M) : [] }; });
+}
+function standCamSide(app, s, K = standCamSides(app, s)) {
+  const ok = (k) => k.clear >= 1 && !k.near.length;
+  if (ok(K[0])) return 1; if (ok(K[1])) return -1; if (K[0].clear >= 1) return 1;
+  return K[1].clear > K[0].clear ? -1 : 1;
 }
 function flyToStand(app, s) {
   const G = app.geo.GROUND_Y; const W = standCam(app, s, standCamSide(app, s));
@@ -213,8 +221,9 @@ registerExtension({
     Object.assign(app.qa, {
       selectStand: (n, fly = true) => selectStand(app, n, !fly, fly),
       closeCard: () => { S.sel = null; ui.renderStandCard(null); return true; },
-      standCam: (n) => { const s = S.byName.get(String(n)); if (!s) return null; const P = ((app.qa.masts && app.qa.masts().masts) || []).map(m => m.p);   // (fix round 2, N1) the "Fly to stand" side
-        return { stand: s.name, side: standCamSide(app, s), clear: [1, -1].map(sd => +Math.min(999, standCamClearance(standCam(app, s, sd), P)).toFixed(2)), subjDeg: STAND_CAM.subjDeg, centreDeg: STAND_CAM.centreDeg, src: STAND_CAM.src }; },
+      standCam: (n) => { const s = S.byName.get(String(n)); if (!s) return null; const K = standCamSides(app, s);   // (fix round 2, N1) the "Fly to stand" side; (fix round 3, V2) near: masts in the near field per side
+        return { stand: s.name, side: standCamSide(app, s, K), clear: K.map(k => +Math.min(999, k.clear).toFixed(2)), near: K.map(k => k.near), subjDeg: STAND_CAM.subjDeg, centreDeg: STAND_CAM.centreDeg,
+          nearDepth: STAND_CAM.nearDepth, nearDist: STAND_CAM.nearDist, src: STAND_CAM.src }; },
       openAbout: (on = true) => { for (const p of ui.pops) p.hidden = true; ui.el.about.hidden = !on; return true; },
       openSettings: (on = true) => { for (const p of ui.pops) p.hidden = true; ui.el.settings.hidden = !on; return true; },
       openLegend: (on = true) => { ui.openLegend(on); return true; },

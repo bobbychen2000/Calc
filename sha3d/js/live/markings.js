@@ -345,7 +345,13 @@ function runwayUniforms(plan, glyphTex, edgeTex) {
 //   G = pool factor / APRON_FLOOD.gScale: sum over the gates package's masts (SHA.qa.masts(), position + facing) of 1 / (1 + (d / poolR)^2)
 //       around a point poolAhead m ahead of the mast, normalised to the mean over the painted stand envelopes (9.2.6: the
 //       stand average is the reference), clamped to [floor, cap], times one gain that keeps the mean over the lit area at the
-//       fix round 1 level (so stands sit at ~1.3 x, lanes far from masts at 0.5 x the stand mean); x 1 until the masts exist.
+//       fix round 1 level; x 1 until the masts exist.
+// Fix round 3 (review V1): the stands are held to the stand level, the 0.5 floor is only for the rest of the apron
+// (9.2.6-1 / -2). Stand texels = the painted envelopes, bridge areas and equipment areas, plus the package-added airside
+// pavement (T1 / T2 airside fill, stand-head fill) within CAAC.apronFlood.standFillR of a contact-stand node (the ground
+// under the bridges): their factor is >= standFloor x the reference (the pools' mean over the envelopes), whatever the
+// masts do; every other texel is >= floor x the resulting stand mean. So a stand is lit even where the gates package has no
+// mast near it (the gates package moves masts out of the stand cameras); the masts shape the light above that level.
 const AF = CAAC.apronFlood;
 function apronLightMap(ctx) {
   const M = ctx.ground && ctx.ground.maps && ctx.ground.maps.apt, pavedAt = ctx.ground && ctx.ground.pavedAt; if (!M || !pavedAt) return null;
@@ -358,13 +364,18 @@ function apronLightMap(ctx) {
   for (const a of A.aprons || []) fill([a.ring, ...(a.holes || [])], '#f00');   // red: apron
   for (const p of [...(S.runway || []), ...(S.runway_shoulders_blast_pads || []), ...(S.taxiway || []), ...(S.taxiway_shoulders || []), ...(A.helipads || [])]) fill([p.ring, ...(p.holes || [])], '#0f0');   // green: other core surfaces
   const px = cx.getImageData(0, 0, W, H).data; if (cv.width) { cv.width = cv.height = 1; }
-  const n = W * H; const core = new Uint8Array(n), area = new Uint8Array(n); let nApron = 0, nFill = 0;
+  const n = W * H; const core = new Uint8Array(n), area = new Uint8Array(n), addedPav = new Uint8Array(n); let nApron = 0, nFill = 0;
   for (let k = 0; k < n; k++) core[k] = px[k * 4] > 0 || px[k * 4 + 1] > 0 ? 1 : 0;
+  // area: 1 = apron, 2 = package-added airside pavement (fill); addedPav: paved, centre on no core surface (the fill incl. its
+  // one-texel rim next to the apron / taxiways, which `area` leaves to the spill) - used for the stand floor (fix round 3)
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
     const k = j * W + i;
     if (px[k * 4] > 127) { area[k] = 1; nApron++; continue; }
+    if (core[k]) continue;
+    if (pavedAt(rect[0] + (i + 0.5) * res, rect[1] + (j + 0.5) * res) < 0.5) continue;
+    addedPav[k] = 1;
     let nearCore = false; for (let dj = -1; dj <= 1 && !nearCore; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < W && jj < H && core[jj * W + ii]) { nearCore = true; break; } }
-    if (!nearCore && pavedAt(rect[0] + (i + 0.5) * res, rect[1] + (j + 0.5) * res) >= 0.5) { area[k] = 1; nFill++; }
+    if (!nearCore) { area[k] = 2; nFill++; }
   }
   // spill: squared distance (texels) to the lit area, exact EDT (edt2d above)
   const d2 = new Float64Array(n); for (let k = 0; k < n; k++) d2[k] = area[k] ? 0 : 1e20;
@@ -374,10 +385,11 @@ function apronLightMap(ctx) {
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   const tex = texture(W, H, { data, internal: gl.RG8, format: gl.RG, mips: true });
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
-  return { tex, W, H, res, rect, data, area, stats: { texels: [W, H], res_m: res, apronTexels: nApron, fillTexels: nFill, fillKm2: +(nFill * res * res / 1e6).toFixed(3), spill_m: sp, masts: null, ms: Math.round(performance.now() - t0), src: src(AF.res) } };
+  return { tex, W, H, res, rect, data, area, addedPav, stats: { texels: [W, H], res_m: res, apronTexels: nApron, fillTexels: nFill, fillKm2: +(nFill * res * res / 1e6).toFixed(3), spill_m: sp, masts: null, ms: Math.round(performance.now() - t0), src: src(AF.res) } };
 }
-/** mast pools into G (once the gates package has placed its masts); the texture is updated in place */
-function applyMastPools(L, masts, envelopes) {
+/** mast pools into G (once the gates package has placed its masts); the texture is updated in place.
+ *  apron = SHA.markings.apron() rings (envelopes, bridge, equipment); stands = data stands (contact-stand nodes) */
+function applyMastPools(L, masts, apron, stands) {
   const t0 = performance.now(); const { W, H, res, rect, data } = L; const n = W * H;
   const R = val(AF.poolR), reach = val(AF.poolReach), ahead = val(AF.poolAhead), w0 = 1 / (1 + (reach / R) * (reach / R));
   const sum = new Float32Array(n); const rT = Math.ceil(reach / res);
@@ -389,33 +401,91 @@ function applyMastPools(L, masts, envelopes) {
       sum[j * W + i] += (1 / (1 + (d / R) * (d / R)) - w0) / (1 - w0);
     }
   }
-  // reference: the mean over the painted stand envelopes (rasterised at the map resolution); else over the apron texels
-  let s = 0, c = 0; const env = new Uint8Array(n);
-  if (envelopes && envelopes.length) {
+  // rings rasterised at the map resolution (texel centres)
+  const raster = (lists) => {
+    const m = new Uint8Array(n); if (!lists.some(l => l && l.length)) return m;
     const cv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(W, H) : Object.assign(document.createElement('canvas'), { width: W, height: H });
     const cx = cv.getContext('2d', { willReadFrequently: true }); cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H); cx.fillStyle = '#fff';
-    for (const e of envelopes) { const r = e.ring || []; if (r.length < 3) continue; cx.beginPath(); r.forEach((p, i) => { const x = (p[0] - rect[0]) / res, y = (p[1] - rect[1]) / res; i ? cx.lineTo(x, y) : cx.moveTo(x, y); }); cx.closePath(); cx.fill(); }
-    const px = cx.getImageData(0, 0, W, H).data; for (let k = 0; k < n; k++) if (px[k * 4] > 127) { env[k] = 1; s += sum[k]; c++; }
+    for (const l of lists) for (const e of l || []) { const r = e.ring || []; if (r.length < 3) continue; cx.beginPath(); r.forEach((p, i) => { const x = (p[0] - rect[0]) / res, y = (p[1] - rect[1]) / res; i ? cx.lineTo(x, y) : cx.moveTo(x, y); }); cx.closePath(); cx.fill(); }
+    const px = cx.getImageData(0, 0, W, H).data; for (let k = 0; k < n; k++) if (px[k * 4] > 127) m[k] = 1;
     if (cv.width) { cv.width = cv.height = 1; }
-  }
+    return m;
+  };
+  const A = apron || {};
+  // reference: the mean of the pools over the painted stand envelopes (9.2.6: the stand average); else over the lit area
+  const env = raster([A.envelopes]); let s = 0, c = 0;
+  for (let k = 0; k < n; k++) if (env[k]) { s += sum[k]; c++; }
   if (!c) for (let k = 0; k < n; k++) if (L.area[k]) { s += sum[k]; c++; }
-  const norm = c && s > 0 ? s / c : 1; const lo = val(AF.floor), hi = val(AF.cap);
-  // factor relative to the stand mean, clamped to [floor, cap] (9.2.6-2 floor); then one gain so that the mean over the lit
-  // area (apron + fill) stays at the fix round 1 level (the reviewer's measured, accepted mean) [inf]
-  const fac = (k) => Math.min(hi, Math.max(lo, sum[k] / norm));
+  const norm = c && s > 0 ? s / c : 1;
+  // fix round 3 (review V1): stand texels = envelopes + bridge areas + equipment areas (the painted stand) + the package-added
+  // airside pavement (fill, stand-head fill) within standFillR of a contact-stand node (the ground under the bridges)
+  const stand = raster([A.envelopes, A.bridge, A.equipment]); let nFillStand = 0, nContact = 0;
+  const fr = val(AF.standFillR), rS = Math.ceil(fr / res);
+  for (const st of stands || []) {
+    if (!(st.contact || (st.bridges && st.bridges.length)) || !st.nose) continue; nContact++;
+    const ci = (st.nose[0] - rect[0]) / res - 0.5, cj = (st.nose[1] - rect[1]) / res - 0.5;
+    for (let j = Math.max(0, Math.floor(cj - rS)); j <= Math.min(H - 1, Math.ceil(cj + rS)); j++) for (let i = Math.max(0, Math.floor(ci - rS)); i <= Math.min(W - 1, Math.ceil(ci + rS)); i++) {
+      const k = j * W + i; if (!L.addedPav[k] || stand[k] === 2) continue;
+      if (Math.hypot(i - ci, j - cj) * res <= fr) { if (!stand[k]) nFillStand++; stand[k] = 2; }
+    }
+  }
+  const lo = val(AF.floor), hi = val(AF.cap), sf = val(AF.standFloor), sb = val(AF.standFillLevel);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  // the stand mean S (x the reference): the mean over the envelopes with the stand floor applied
+  let sS = 0, sN = 0; for (let k = 0; k < n; k++) if (env[k]) { sS += clamp(sum[k] / norm, sf, hi); sN++; }
+  const S = sN ? sS / sN : 1, loO = lo * S;
+  // floor field: painted stand areas standFloor x the reference, the fill under the bridges standFillLevel x S, every other
+  // texel floor x S (9.2.6-2: >= 50 % of the stand average); then max-dilated and box-blurred by standEdge, so the raised
+  // level falls off over ~2 x standEdge past a stand's outline instead of stepping at the painted line (light, not paint)
+  // and is never lowered inside it (dilation radius = blur radius) [inf]
+  let T = new Float32Array(n); for (let k = 0; k < n; k++) T[k] = stand[k] === 2 ? Math.max(sf, sb * S) : stand[k] ? sf : loO;
+  const re = Math.max(0, Math.round(val(AF.standEdge) / res));
+  if (re > 0) {
+    const pass = (src, dst, op, horiz) => {   // separable max / box filter over (2 re + 1) texels
+      for (let o = 0; o < (horiz ? H : W); o++) for (let p2 = 0; p2 < (horiz ? W : H); p2++) {
+        let acc = op === 'max' ? -1 : 0, cnt = 0;
+        for (let d = -re; d <= re; d++) { const q2 = p2 + d; if (q2 < 0 || q2 >= (horiz ? W : H)) continue; const v = src[horiz ? o * W + q2 : q2 * W + o]; if (op === 'max') acc = Math.max(acc, v); else acc += v; cnt++; }
+        dst[horiz ? o * W + p2 : p2 * W + o] = op === 'max' ? acc : acc / cnt;
+      }
+    };
+    const tmp = new Float32Array(n), D = new Float32Array(n);
+    pass(T, tmp, 'max', true); pass(tmp, D, 'max', false); pass(D, tmp, 'box', true); pass(tmp, D, 'box', false);
+    for (let k = 0; k < n; k++) D[k] = Math.max(D[k], T[k]);   // edge texels (truncated box) never drop below their own floor
+    T = D;
+  }
+  // 9.2.6-2 against the stand mean as finally lit (the soft edge can raise envelope texels next to the fill a little):
+  // non-stand texels >= floor x that mean (envelope texels are >= standFloor > floor x mean, so the mean does not move)
+  let fS = 0, fN = 0; for (let k = 0; k < n; k++) if (env[k]) { fS += clamp(sum[k] / norm, T[k], hi); fN++; }
+  const Sf = fN ? fS / fN : S, loF = lo * Sf;
+  const fac = (k) => clamp(sum[k] / norm, stand[k] ? T[k] : Math.max(T[k], loF), hi);
+  // one gain so that the mean over the lit area (apron + fill) stays at the fix round 1 level (the reviewer's accepted mean) [inf]
   let litN = 0, litS = 0; for (let k = 0; k < n; k++) if (L.area[k]) { litN++; litS += fac(k); }
-  const gain = litN && litS > 0 ? litN / litS : 1; const gs = APRON_FLOOD.gScale; let litMin = 9, standS = 0, standN = 0;
-  for (let k = 0; k < n; k++) { const f = fac(k) * gain; data[k * 2 + 1] = Math.round(Math.min(1, f / gs) * 255); if (L.area[k]) litMin = Math.min(litMin, f); if (env[k]) { standS += f; standN++; } }
+  const gain = litN && litS > 0 ? litN / litS : 1; const gs = APRON_FLOOD.gScale; let litMin = 9, otherMin = 9, standMin = 9, fillMin = 9, standS = 0, standN = 0, nStand = 0, otherS = 0, otherN = 0;
+  const q = (f) => Math.ceil(Math.min(1, f / gs) * 255 - 1e-6);   // 8-bit G, rounded up so the floors hold in the stored map
+  for (let k = 0; k < n; k++) {
+    const f = fac(k) * gain; data[k * 2 + 1] = q(f);
+    if (stand[k]) { nStand++; standMin = Math.min(standMin, f); if (stand[k] === 2) fillMin = Math.min(fillMin, f); } else if (L.area[k]) { otherMin = Math.min(otherMin, f); otherS += f; otherN++; }
+    if (L.area[k]) litMin = Math.min(litMin, f); if (env[k]) { standS += f; standN++; }
+  }
   gl.activeTexture(gl.TEXTURE15);   // a per-draw unit (gl.js rebinds those with every draw), never a per-frame one
   gl.bindTexture(gl.TEXTURE_2D, L.tex.tex); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, W, H, gl.RG, gl.UNSIGNED_BYTE, data);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4); gl.generateMipmap(gl.TEXTURE_2D); gl.bindTexture(gl.TEXTURE_2D, null);
-  L.stats.masts = { n: masts.length, standTexels: c, norm: +norm.toFixed(3), gain: +gain.toFixed(3), standMeanFactor: +(standN ? standS / standN : gain).toFixed(3), litMeanFactor: 1, litMinFactor: +litMin.toFixed(3),
-    litMaxFactor: +(hi * gain).toFixed(3), floor: lo, cap: hi, poolR_m: R, reach_m: reach, ahead_m: ahead, ms: Math.round(performance.now() - t0), src: src(AF.floor) };
+  L.stand = stand;
+  // factors are the shader's multiplier of the APRON_FLOOD level (map G x gScale); standLevel = standFloor x reference x gain,
+  // as stored (8 bit): every stand texel, every stand node included, reads >= it through apronLight().at
+  L.stats.masts = { n: masts.length, standTexels: c, norm: +norm.toFixed(3), gain: +gain.toFixed(3),
+    standLevel: +(q(sf * gain) / 255 * gs).toFixed(4), standMeanFactor: +(standN ? standS / standN : gain).toFixed(3), standMinFactor: +standMin.toFixed(3),
+    otherMeanFactor: +(otherN ? otherS / otherN : 0).toFixed(3),
+    check926: { standAvgOverMin: +((standN ? standS / standN : 1) / standMin).toFixed(2), otherAvgOverMin: +((otherN ? otherS / otherN : 1) / otherMin).toFixed(2), otherMinOverStandMean: +(otherMin / (standN ? standS / standN : 1)).toFixed(3), rule: '9.2.6-1 stands avg:min <= 4; 9.2.6-2 other >= 0.5 x stand avg, avg:min <= 4' },
+    standFillLevel: sb, standFillFloorFactor: +(Math.max(sf, sb * S) * gain).toFixed(3), standFillMinFactor: +fillMin.toFixed(3), standEdge_m: re * res,
+    otherFloorFactor: +(loF * gain).toFixed(3), otherMinFactor: +otherMin.toFixed(3), litMeanFactor: 1, litMinFactor: +litMin.toFixed(3), litMaxFactor: +(hi * gain).toFixed(3),
+    standFloor: sf, floor: lo, cap: hi, standAreaTexels: nStand, standFillTexels: nFillStand, contactStands: nContact, standFillR_m: fr,
+    poolR_m: R, reach_m: reach, ahead_m: ahead, ms: Math.round(performance.now() - t0), src: src(AF.standFloor) + ' | ' + src(AF.floor) };
 }
 
 // ------------------------------------------------------------------------------------------------ extension
-let state = { plan: null, edgeStats: null, decals: null, signs: null, holds: null, light: null, lightDone: false };
+let state = { plan: null, edgeStats: null, decals: null, signs: null, holds: null, light: null, lightDone: false, stands: null };
 registerExtension({
   name: 'markings', order: 20,
   shaderChunks: { sha_ground_paint: GLSL },
@@ -437,6 +507,7 @@ registerExtension({
     const t0 = performance.now(); const items = [];
     const D = buildDecals(ctx, state.plan); items.push(...D.items); state.decals = D.info;
     state.apron = (D.info.stands && D.info.stands.apron) || null;
+    state.stands = (ctx.stands && ctx.stands.stands) || [];   // contact-stand nodes for the light map's stand floor (fix round 3)
     state.holds = D.holds.map(h => ({ id: h.id, p: h.p, u: h.u, kind: h.kind, exitOnly: h.exitOnly, rwy: h.R.id, ref: h.twyRef, text: h.mandText || null, src: h.src, eL: h.eL, eR: h.eR }));
     const t1 = performance.now();
     const S = buildSigns(ctx, D.holds, D.junctions); items.push(...S.items); state.signs = S.info;
@@ -447,7 +518,9 @@ registerExtension({
   },
   start(app) {
     app.markings = { plan: () => state.plan, holds: () => state.holds || [], signs: () => state.signList || [], apron: () => state.apron, info: () => ({ edge: state.edgeStats, decals: state.decals, signs: state.signs, apronLight: state.light ? state.light.stats : null }), params: paramList, CAAC,
-      apronLight: () => (state.light ? { ...state.light.stats, rect: state.light.rect, at: (x, z) => { const L = state.light; const i = Math.floor((x - L.rect[0]) / L.res), j = Math.floor((z - L.rect[1]) / L.res); if (i < 0 || j < 0 || i >= L.W || j >= L.H) return [0, 0]; const k = j * L.W + i; return [L.data[k * 2] / 255, L.data[k * 2 + 1] / 255 * 2]; } } : null),
+      // at(x, z) -> [lit (map R), factor (the shader's multiplier: map G x gScale; fix round 3: was G x 2, i.e. 0.8 x the
+      // factor), stand (1 painted stand area, 2 fill under the bridges of a contact stand, 0 other)] of the texel holding (x, z)
+      apronLight: () => (state.light ? { ...state.light.stats, rect: state.light.rect, at: (x, z) => { const L = state.light; const i = Math.floor((x - L.rect[0]) / L.res), j = Math.floor((z - L.rect[1]) / L.res); if (i < 0 || j < 0 || i >= L.W || j >= L.H) return [0, 0, 0]; const k = j * L.W + i; return [L.data[k * 2] / 255, L.data[k * 2 + 1] / 255 * APRON_FLOOD.gScale, L.stand ? L.stand[k] : 0]; } } : null),
       setRunwayPaint: (on) => { app.world.groundU.uMkOn = on ? 1 : 0; } };
   },
   // the masts are placed by the gates package in its start() (after this one): add their pools to the light map on the first
@@ -456,7 +529,7 @@ registerExtension({
     if (state.lightDone || !state.light) return [];
     const M = app.qa && app.qa.masts ? app.qa.masts() : null; if (!M) return [];
     state.lightDone = true;
-    try { applyMastPools(state.light, M.masts || [], (state.apron && state.apron.envelopes) || []); console.log('[markings] apron light pools ' + JSON.stringify(state.light.stats.masts)); }
+    try { applyMastPools(state.light, M.masts || [], state.apron || {}, state.stands || []); console.log('[markings] apron light pools ' + JSON.stringify(state.light.stats.masts)); }
     catch (err) { console.warn('[markings] apron light pools', err); }
     return [];
   },

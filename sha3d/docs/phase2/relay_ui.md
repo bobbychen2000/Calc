@@ -449,3 +449,19 @@ covers only the UI shell part; the file changed is `js/live/shell.js`.
 Console: `jobs/integration.mjs` `SCENES=snapshot` is clean (0 errors, 0 warnings, 0 page errors, 0 failed requests). The
 `jobs/gates.mjs` `fix2` runs exercise `flyToStand` through `SHA.qa.selectStand(name, true)` (the stand card's "Fly to stand"
 path) and log no error or warning.
+
+## Fix round 3 (2026-11-27)
+
+One finding of `docs/phase2/review_visual_fix2.md` touches this report's files: **V2** (medium), apron floodlight masts in
+the near field of the "Fly to stand" cameras (238A, 264, 270, 228, 259 and 16 more). The near-field test, the mast
+placement and the checks are in `gates.md` (fix round 3); this section covers the UI shell part. File changed:
+`js/live/shell.js`. (N5, the phone and laptop legends showing 66 and 67 masts, is fixed in the gates package: the legend
+line is the gates package's and now reads the same 58 on every tier, measured in `jobs/gates.mjs SET=fix3low`.)
+
+| Id | What changed | Evidence | Status |
+|---|---|---|---|
+| V2 (UI) | **"Fly to stand" prefers a side with no near-field mast.** `standCamSides` computes per side the subject clearance (`standCamClearance`, fix round 2) and the masts in the near field (`gate_system.js standCamNearList`: the head or the pole above 10 m in the 16:9 frame at a depth under 45 m, or the pole within 25 m of the camera; inf). `standCamSide` takes side +1 if it is clear on both counts, else side -1 if clear, else side +1 if its subject is clear, else the side with the larger subject clearance. The placement keeps side +1 of every contact stand and one side of every remote stand clear on both counts, so contact stands still fly from the bridge side; 42 remote stands fly from side -1 (45 before). The camera of an alternative position (238A, 259A) is its own (its node and exact heading, the base stand's bridges as subject), as before. `SHA.qa.standCam(name)` now also returns `near` (the near-field masts of side +1 and side -1) and `nearDepth` / `nearDist`. | `jobs/gates.mjs SET='fix3;fix3low' CHECK_ONLY=1`: on the side taken, 0 contact and 0 remote stands with a near-field mast (before 25 / 9; the review probe's test 21 -> 0); renders `fix3_gates_fly_day.png`, `fix3_gates_night_238A.png` (described in gates.md) | fixed |
+
+Console: `jobs/integration.mjs` `SCENES=snapshot` is clean (0 errors, 0 warnings, 0 page errors, 0 failed requests). The
+`jobs/gates.mjs` `fix3` / `fix3night` runs exercise `flyToStand` through `SHA.qa.selectStand(name, true)` (the stand card's
+"Fly to stand" path) and log no error, warning or page error.

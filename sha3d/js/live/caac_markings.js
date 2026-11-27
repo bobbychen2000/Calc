@@ -128,8 +128,14 @@ export const CAAC = {
     crossThreshold: P('continuous', '6.2.8-3 (滑行道中线标志与跑道入口标志交叉时应连续; fig. 6.2.8-2)'),
     cutAtDesignation: P(true, '6.2.1-2 (at a runway / taxiway intersection the runway markings are shown; numerals kept whole)'),
     // in a displaced portion a curve that meets the runway CL heading towards the pavement end serves only a backtrack: no
-    // 60 m parallel, and the curve stops this clear of the runway lead-on line (the 6.2.8-3 clearance, by analogy)
-    backtrackClear: P(0.9, 'inf: 6.2.8-3 clearance applied to the 0.9 m lead-on line; ZSSS paint not observed'),
+    // 60 m parallel, and the curve stops this clear of the runway lead-on line (the 6.2.8-3 clearance, by analogy; fix round 2)
+    backtrackClear: P(0.9, 'inf: 6.2.8-3 clearance applied to the 0.9 m lead-on line; ZSSS paint not observed; since fix round 3 only the lower bound of backtrackStop'),
+    // fix round 3 (review V6): 0.9 m was 1-2 px in the threshold views and the backtrack curve still read as one line with the
+    // outer pair's take-off parallel. Of the review's three options (>= 5 m short of the lead-on line / at the runway edge /
+    // not in displaced portions) the curve now stops at the runway edge: none of it is painted on the runway in a displaced
+    // portion, and the taxiway part up to the edge stays. ZSSS paint is not observed, the clauses do not cover the case
+    backtrackStop: P('runway edge', 'inf: review V6 option 2; 6.2.1-2 (runway markings win on the runway) by analogy; ZSSS paint not observed'),
+    backtrackReach: P(150, 'inf: along-runway window from the curve\'s tangent point within which the backtrack cut applies (m; a 60 m wide runway and ~60-100 m curve radii put the edge crossing 60-80 m from it)'),
     edgeLineW: P(0.15, '6.2.14-3'), edgeLineGap: P(0.15, '6.2.14-3'),
     edgeClearOfHold: P(0.9, 'amd. 4, 6.2.14-4'),
     // enhanced centreline: side dashes 0.15 m wide, 3 m long, 1 m gaps, 0.15 m clear of the CL, over 47 m from
@@ -198,9 +204,11 @@ export const CAAC = {
   // ---------------------------------------------------------------------------------------------------- apron floodlighting (9.2)
   // fix round 2 (review N2 / M1 / N4): the night flood of js/shaders/ground.js shaApronFlood is modulated by a 4 m light map
   // (js/live/markings.js apronLightMap): lit area = apron (airfield map G 255) + airside pavement added by packages (the
-  // T1 / T2 airside fill), with a soft spill past its edge, times the pools of the gates package's 73 inferred masts
-  // (SHA.qa.masts(): position + facing), normalised to the mean over the stand envelopes. The level (APRON_FLOOD 0.42 x
-  // albedo) and every shape value are rendering choices; only the floor and the two-direction rule are printed.
+  // T1 / T2 airside fill), with a soft spill past its edge, times the pools of the gates package's inferred masts
+  // (SHA.qa.masts(): position + facing; their number and places are the gates package's, read at run time), normalised to
+  // the mean over the stand envelopes. The level (APRON_FLOOD 0.42 x albedo) and every shape value are rendering choices;
+  // only the floor and the two-direction rule are printed. Fix round 3 (review V1): the stands themselves are held to the
+  // stand level (standFloor, standFillR), so a stand is lit whether or not a mast stands near it.
   apronFlood: {
     illuminance: P('stands >= 20 lx horizontal, avg:min <= 4:1; other apron >= 50 % of the stand average, avg:min <= 4:1', '9.2.6'),
     directions: P('each stand lit from two or more directions', '9.2.2 (pools of neighbouring masts are summed)'),
@@ -209,7 +217,21 @@ export const CAAC = {
     poolR: P(60, 'inf: per-mast falloff 1 / (1 + (d / R)^2) (review N4)'),
     poolReach: P(360, 'inf: falloff truncated (continuously) at this distance (m)'),
     poolAhead: P(25, 'inf: pool centre this far ahead of the mast along its facing (lamps aimed at the apron)'),
-    floor: P(0.5, '9.2.6-2 (other apron areas >= 50 % of the stand average; also meets avg:min <= 4:1 of 9.2.6-1)'),
+    floor: P(0.5, '9.2.6-2 (other apron areas >= 50 % of the stand average; also meets avg:min <= 4:1 of 9.2.6-1); fix round 3: applied to the apron outside the stands only, as 0.5 x the stand mean after standFloor'),
+    // fix round 3 (review V1): 9.2.6-1 sets the horizontal illuminance ON STANDS (>= 20 lx average, avg:min <= 4:1); the
+    // 50 % of 9.2.6-2 is for the other apron areas. The clause gives no per-point floor in model units, so the floor is
+    // inferred: every stand texel (painted envelope, bridge area, equipment area) >= 1.0 x the reference stand level (the
+    // mean of the mast pools over the envelopes), which keeps every stand's average at or above the reference
+    standFloor: P(1.0, 'inf: 9.2.6-1 (stands held to the stand level; the clause prints 20 lx and 4:1, no floor relative to the pools)'),
+    // the package-added airside pavement next to a contact stand (the T1 / T2 airside fill and the stand-head fill under the
+    // bridges) is part of the stand's service area: within this distance of a contact-stand node it takes standFloor too
+    // ... and is lit at this multiple of the stand mean (>= 1.0: it is stand; above it: photos 13 and 19, obs, show the band
+    // under the bridges along the T2 face as the brightest part of the apron at night - from fittings the model does not
+    // draw (terminal face, bridges); the asphalt there (albedo ~0.085 against 0.30 for concrete) still reads darker)
+    standFillLevel: P(1.25, 'inf: 9.2.6-1 (>= the stand average); 1.25 chosen against photos 13 / 19 (obs: the band under the bridges brightest at night)'),
+    // the raised floor (stand areas, fill) falls off over ~2 x this distance past the outline (dilate + box blur), like light
+    standEdge: P(12, 'inf: soft edge of the stand floor (m); the review asked for light pools, not polygon edges (N4)'),
+    standFillR: P(60, 'inf: 9.2.6-1 / 9.2.2 (the ground under the bridges is a stand work area; radius chosen to reach the pier-tip fill, review V1 "~60 m")'),
     cap: P(1.8, 'inf: brightest pool relative to the stand mean'),
   },
   // ---------------------------------------------------------------------------------------------------- signs (ch. 8, app. H)

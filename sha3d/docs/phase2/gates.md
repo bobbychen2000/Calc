@@ -650,3 +650,191 @@ them show the same masts.
 4. Handoffs: `CLAUDE.md` (lead) still says "`masts()` (73 inferred apron floodlight masts)". It should read 67 and name
    `SHA.qa.standCam()` / `SHA.qa.camSubject()` and `STAND_CAM` (the stand camera, `gate_system.js`).
    `app.js SHA.qa.stand` (core) could take its defaults from `STAND_CAM` / `standCamWedge`; it has the same numbers now.
+
+## Fix round 3 (2026-11-27)
+
+Answers `docs/phase2/review_visual_fix2.md` findings **V2** (medium, the residual of N1: masts in the near field of the
+"Fly to stand" cameras), **V4** (low: masts in painted equipment areas, base plates over the pavement edge) and **N5** (low:
+the mast list depends on the quality tier). Files changed: `js/live/gate_system.js` (the near-field test, the placement
+rules, the gap fill, the statistics), `js/live/gates.js` (a tier-independent pavement test, the equipment areas passed to
+the placement, the legend line, `SHA.qa.pavedVec`), `js/live/shell.js` ("Fly to stand" side choice and `SHA.qa.standCam`;
+also in `relay_ui.md` fix round 3), `jobs/gates.mjs` (sets `fix3` / `fix3night` / `fix3low`, `CHECK_ONLY=1`, the checks).
+Renders are in `out/fix3/gates/` (gitignored): `before/` is the fix-round-2 code, `final/` this round's code; `a1`-`a3` and
+`after/` are intermediate runs. 1280 × 720, deviceScaleFactor 1, SOFTGL, high tier unless noted; I looked at all of them.
+The renders park DEBUG aircraft (`?park=`) at 228, 238A, 259, 264 and 270 (the review's renders had none there).
+
+### Before (the fix-round-2 code; `out/fix3/gates/before/check.log`, the same job)
+
+- **67 masts** at the high tier, **66** at the low tier; **8 stands** with no mast within 120 m (333-337, 126, 231, 232).
+- **Near field**, every stand on the side "Fly to stand" takes: 25 contact and 9 remote stands had a mast head (a corner of
+  the 4.2 × 2.7 m head box) or its pole above 10 m in the 16:9 frame at a depth under 45 m, or a pole within 25 m of the
+  camera (my sampled test). The review probe's own test (head / mid / foot sample in the frame, a 3 m head >= 60 px):
+  14 contact + 7 remote = the review's 21 stands. Nearest head corner: 238A 8.0 m (the review: head centre 10.3 m),
+  264 12.7 m, 270 12.6 m, 228 18.2 m, 259 20.9 m.
+- **Equipment areas**: the feet of the 323 and 325 masts inside an equipment ring (328's and 325's); the 228 mast 1.44 m
+  from 229's.
+- **Base plates**: at 29 masts (high) / 30 (low) a plate corner + 1 m read `pavedAt` < 0.5; 525's centre read 0.
+- **Tiers**: 13 mast positions differ between high and low (306, 312, 525, 218-225, 275, 284, 403, 407, 412). The cause is
+  not the post list (fix round 2 guessed that) but `pavedAt`: the ground's CPU copy samples the airfield map at the tier's
+  resolution (1.0 m high, 1.6 m low, 0.75 m ultra; 2 m cells read from their first pixel), so candidates near a pavement
+  edge flipped; the rejection counts that differ (post, spacing) follow from the different masts placed before them.
+
+### What changed
+
+1. **Near field of a stand camera** (`gate_system.js` `standCamNear(W, q, h)`, `standCamNearList(W, masts)`; new
+   `STAND_CAM` values, all inf, a UI camera choice). A mast is in the near field of camera W when its head (a sphere of
+   `headR` 2.2 m about `MAST_H` - 0.8 m: the six-lamp head and platform) or its pole above `nearPoleMin` 10 m projects into
+   the frame (vertical fov 50°, width `aspect` 16 / 9: the laptop frame; a portrait phone sees a narrower part of it) at a
+   depth under `nearDepth` 45 m (the review's figure: a 3 m head stays under about 50 px), or when the pole comes within
+   `nearDist` 25 m of the camera (3-D). The pole is clipped to the depth range and tested against the frame rectangle
+   (Liang-Barsky), so a pole crossing the frame with both ends outside counts.
+2. **Placement** (`placeMasts`). A stand-camera side is clear only when no mast is in its subject / centre margins (fix
+   round 2) **and** none is in its near field. A contact stand keeps side +1 (the bridge side) clear (`MAST_CAM_CONTACT`
+   'side1'; 'either' would let it fly from its right side and gave 61 masts / 1 uncovered in a test run with a 1 m plate
+   margin); a remote stand
+   keeps at least one side clear. Cameras whose stop node is within 200 m of the candidate are tested (was 160 m: the near
+   field reaches about 45 m past a camera that hovers up to 130 m from its node). The alternative positions on a base
+   stand's bridge (238A, 259A) have their own camera: their node and heading, the base stand's bridges as subject - the
+   camera `shell.js` builds (`SHA.qa.camSubject`).
+3. **Gap fill** (coverage). The near-field rule empties the rotunda line in front of most contact-stand cameras (they hover
+   over the facade 45-55 m to the left of the stand, so their near field covers the rotunda line towards the left
+   neighbour). A stand still without a mast within `MAST_GAP_R` 120 m after the pass gets one more try on a polar grid
+   about its stop node (radii 24-108 m by 12 m, every 15°, nearest first) under every rule, the head facing the node
+   (`at: 'gap fill'`; inf). 8 masts are placed so (for 309, 333, 336, 112, 228, 250, 265, 289).
+4. **Equipment areas** (V4). `gates.js` passes `SHA.markings.apron().equipment` (MH 5001-2021 6.2.20 设备区, the markings
+   package's rings) to `placeMasts`; a candidate is rejected when its base plate is within `MAST_EQUIP_CLEAR` 2 m of a
+   ring, i.e. its foot within 2 m + the plate's half diagonal (3.13 m). The review asked 2 m from the foot; from the plate
+   reads better in the top views (the 323 render with 2 m from the foot still showed a plate at a box corner).
+5. **Pavement** (V4 / N5). The candidate's base plate is tested, not only its centre: the centre and the four corners of
+   the 1.6 m plate grown by `MAST_PAVE_MARGIN` 2 m (the review's 1 m plus 1 m for the 2 m cells of the ground map's CPU
+   copy, so that the review's own `pavedAt` probe at the corners + 1 m passes as well). The test is the new
+   **tier-independent** `vectorPavement` (`gates.js`): the polygons the airfield map's pavement channel is painted from
+   (`paintAirfieldMap`: runway, shoulders / blast pads, taxiway, taxiway shoulders, aprons, helipads) and the 'paved' fills
+   the packages add through their `pavement(api)` hook (terminals.js: airside fill, stand-head fill), tested exactly
+   (even-odd per fill call as the canvas fills them, edges bucketed in 25 m rows). The staged idle stairs use it too.
+   `SHA.qa.pavedVec(x, z)` exposes it.
+6. **"Fly to stand"** (`shell.js`): side +1 if it is clear (subject and near field); else side -1 if clear; else side +1
+   if its subject is clear; else the side with the larger subject clearance. `SHA.qa.standCam(name)` also returns `near`:
+   the masts in the near field of each side (`relay_ui.md`).
+7. **Statistics** (`SHA.qa.masts().stats`): `hash` (FNV-1a of the positions to 0.01 m; equal on every tier), `paved`
+   ('vector (tier-independent)'), `equipmentAreas` (261), `rules`, and `cameras` = `{contactSide1, contactNear1}` (contact
+   stands with side +1 blocked / blocked by the near field: both must be empty), `contactClear` / `contact` (58 / 58),
+   `remoteSide1`, `remoteSide2`, `remoteNear` [side +1, side -1] (remote sides with a near-field mast; the side "Fly to
+   stand" takes is always clear), `bothSides` (empty), `near` {depth, dist, poleMin}, `contactRule`. `uncovered` lists the
+   stands without a mast within 120 m and why their own candidates failed. Rejection reasons now include 'stand camera
+   near field' and 'equipment area'.
+8. **Legend** (`gates.js`): "Apron floodlight masts: 58, about one per 3 stands, kept out of the "Fly to stand" views; as in
+   photos, but positions and form inf." The phone (low) and laptop (high) legends read the same count.
+9. **Job** (`jobs/gates.mjs`): `SET='fix3;fix3night;fix3low'`, `CHECK_ONLY=1` for the checks without renders. For every
+   stand it rebuilds the camera the app flies to (the side `SHA.qa.standCam` picks, `standCamWedge` with the stand's own node
+   and exact heading and `SHA.qa.camSubject`) and lists the near-field masts three ways: an independent sampled test (the
+   pole every 0.5 m from 10 m to the head, the eight head-box corners, the 3-D distance), the app's `standCamNear`, and the
+   review probe's test. It also checks the four named stand views of `jobs/views.mjs` (233, 113, 102, 404), the equipment
+   areas (foot within 2 m, and the nearest foot), the base plates + 1 m (raster `pavedAt` at this tier and the vector test),
+   the coverage and the hash; `fix3low` reloads at quality=low and compares the list. It prints "fix3 requirements: met" or
+   FAILED (and exits 1) when a contact-stand camera has a near-field mast, a foot is within 2 m of an equipment area, a plate
+   is off pavement, or the tiers differ; it also counts console errors / warnings / page errors.
+
+### Result (`out/fix3/gates/final/check.log`, `check2.log`, `check3.log`; `jobs/gates.mjs SET='fix3;fix3low' CHECK_ONLY=1`)
+
+| | before | after |
+|---|---|---|
+| masts (high / low tier) | 67 / 66 | **58 / 58**, hash `edc568b` on both, identical lists |
+| stands with no mast within 120 m | 8 (333-337, 126, 231, 232) | **3** (310, 121, 126) |
+| "Fly to stand" cameras with a near-field mast (sampled test), contact / remote | 25 / 9 | **0 / 0** |
+| same, the app's `standCamNear` (all stands); the review probe's test (3 m head >= 60 px), contact + remote | 32; 14 + 7 | **0; 0 + 0** |
+| named stand views 233, 113, 102, 404 with a near-field mast | - | **0** |
+| subject clearance < 1 on the side taken | 0 | 0 |
+| mast feet in or within 2 m of an equipment area | 3 (323, 325 inside; 228 at 1.44 m) | **0** (nearest 3.16 m, 321) |
+| base plates + 1 m with a corner off pavement (`pavedAt` high / low) | 29 / 30 | **0 / 0** (vector test: 0) |
+| "Fly to stand" side -1 (contact stands) | 45 (0) | 42 (0) |
+| placement time | 0.4-0.5 s | 1.1-1.3 s |
+
+By area (before -> after): T2 apron 2 29 -> 22, T1 north face 2 -> 3, T1 west face 2 -> 1, east apron 10 -> 11, business
+apron 5 -> 3, east remote 9 -> 8, west remote 6 -> 6, south-west 4 -> 4. By placement: 13 on the rotunda line, 27 ahead
+of a stand front, 10 between stand noses, 8 gap fill. Rejected candidates: 'stand camera near field' 464, 'stand camera'
+552, 'equipment area' 409, 'not paved' 930 (plate + 2 m), spacing 3352. The three stands still without a mast: 310
+(business apron: every candidate's plate + 2 m off the pavement or in a lane clearance), 121 and 126 (T1 west face: 'stand
+camera' and 'building'). The five stands of the review now fly to side +1 with subject clearances 7.3 (238A), 9.3 (264),
+4.1 (270), 9.1 (228) and 24.9 (259) × the margin and no near-field mast.
+
+**Coverage trade.** 9 masts fewer than fix round 2, but 5 fewer uncovered stands. Test runs with the rules overridden
+(`placeMasts({rules})`, plate margin 1 m, equipment clearance 2 m from the foot, no gap fill): 52 masts / 18 uncovered with
+the near-field rule, 61 / 10 without it; the gap fill then brought 52 / 18 to 59 / 4. The light map
+of the markings package reads the mast list at run time, so its pools follow the 58 masts; the stand floor it adds this
+round makes stand lighting independent of them.
+
+### Renders (looked at)
+
+- **"Fly to stand" 238A, 264, 270, 228, 259 by day** (`fix3_gates_fly_day.png`; `out/fix3/gates/before/b_fix3_fly_*.png`,
+  `final/a_fix3_fly_*.png`). Before: at 238A the 238 mast head fills the lower right quarter, seen from just above; at 264
+  the 265 mast's pole and head stand in the lower left over the pier; at 270 the 270 mast head is right of centre, about
+  250 px wide; at 228 and 259 a 30 m pole stands right of the aircraft's right wing tip with the head at the top. After: no
+  mast in any of the five frames' foreground. At 270 one pole stands by the 269 rotunda at the left and one far out on the
+  apron, both in the middle distance (heads about 20-30 px); at 228 two far poles stand at the upper left by the pier.
+  The A320 / B738, the docked bridge, the VDGS and the stand sign are unobstructed in all five.
+- **238A at 21:30** (`fix3_gates_night_238A.png`). Before: the black six-lamp head in the lower right. After: no mast; the
+  aircraft and bridge are lit, the far masts show as small lamp points on the horizon.
+- **Equipment areas and plates** (`fix3_gates_v4_equipment_plates.png`; the review's own cameras, before = its renders
+  `out/review2/day/rv2_mast323_top.png`, `rv2_mast325_top.png`, `rv2_nose608_top.png`). 323: the mast foot is no longer
+  inside the box; the nearest mast (328's) stands between the noses of 323 and 328, 6-7 m from the four boxes around it.
+  325: no mast within 54 m (the next one is at the left edge). 608: the mast at the lower left (607's) now has its plate about two
+  plate widths inside the stand-head concrete instead of on its edge.
+- **Gap-fill masts** (`fix3_gates_gapfill.png`, top views at 84°): at 112 (T1 north face) the mast stands at the stand
+  head beside the lead-in, 6 m from the equipment box; at 333-337, whose heads face an apron lane, two masts stand between
+  the stands. In these near-top views the head is drawn displaced from the foot by the perspective, and the long thin
+  line is the pole's shadow.
+- **The named view `t2pier`** (`out/fix3/gates/after/v_t2pier.png`, an intermediate run with 59 masts) still shows masts
+  along the T2 north pier, fewer than in `view_t2pier.png`.
+
+Evidence: `fix3_gates_fly_day.png`, `fix3_gates_night_238A.png`, `fix3_gates_v4_equipment_plates.png`,
+`fix3_gates_gapfill.png` (composites of 1280 × 720 renders at deviceScaleFactor 1, scaled 0.5).
+
+| Id | What changed | Evidence | Status |
+|---|---|---|---|
+| V2 | Near-field term `standCamNear` (head or pole above 10 m in the 16:9 frame at a depth under 45 m, or the pole within 25 m; inf) in the placement: a camera side is clear only with no near-field mast; contact side +1 clear, remote one side; 238A / 259A with their own camera. "Fly to stand" prefers the side with no near-field mast. Gap fill for stands left without a mast. `jobs/gates.mjs fix3` reports every stand camera with a near-field mast (three tests) and requires 0 for contact stands. | `fix3_gates_fly_day.png`, `fix3_gates_night_238A.png`; `out/fix3/gates/final/check.log`: contact 0 / remote 0 (before 25 / 9; review probe 21 -> 0), named stand views clear; 58 masts, 3 uncovered (before 67, 8) | fixed |
+| V4 | Equipment areas passed to `placeMasts`: the base plate 2 m clear of every ring (foot >= 3.13 m). Base plate + 2 m on pavement at its centre and four corners, by the tier-independent vector test. | `fix3_gates_v4_equipment_plates.png`; feet within 2 m of a ring 3 -> 0 (nearest 3.16 m); plates + 1 m off `pavedAt` 29 / 30 -> 0 / 0 | fixed |
+| N5 | Placement reads a vector pavement test built from the polygons the airfield map is painted from (+ the packages' pavement fills) instead of the tier-resolution `pavedAt`; idle stairs too. `stats.hash`; `fix3low` compares the tiers. | `check.log` / `check2.log`: high and low 58 masts, hash `edc568b`, identical lists, legend "58" on both | fixed |
+
+### Checks
+
+- `jobs/gates.mjs SET='fix3;fix3low' CHECK_ONLY=1` (high and low): requirements met on both tiers, tiers SAME, console 0
+  errors / 0 warnings / 0 page errors. `SET='fix3;fix3night'` (renders, DEBUG park, day and 21:30): console clean; every
+  parked bridge docked (228, 238A on 238's bridge, 259, 264, 270).
+- `SOFTGL=1 SCENES=snapshot node livetest.mjs jobs/integration.mjs`: "console 7 messages (0 error, 0 warning), page
+  errors 0, HTTP>=400 0, failed requests 0 -> clean" (`out/fix3/gates/integ.log`).
+- No-browser tests: `test_geo_js.mjs` all passed, `test_buildings3d.mjs` all checks passed, `test_metar_zsss_js.mjs` all
+  passed, `test_frame.py` OK, `test_relay.py` 7 OK. `node --check` passes for `gates.js`, `gate_system.js`, `shell.js`,
+  `jobs/gates.mjs`.
+- No FAA constant and no SFO value. The new values (near field, plate margin, equipment clearance, gap-fill grid,
+  `MAST_GAP_R`) are UI or placement choices, all labelled inf; the equipment areas are the markings package's MH 5001-2021
+  6.2.20 rings; the lane / envelope clearances (table 4.9.5, 4.13.5) are unchanged.
+
+### For CLAUDE.md (the integrator)
+
+- `SHA.qa`, gates: `masts()` (**58** inferred apron floodlight masts, the same list on every quality tier (`stats.hash`),
+  base plate + 2 m on pavement, clear of the stand cameras incl. their near field and of the equipment areas;
+  `stats.cameras`, `uncovered`), `pavedVec(x, z)` (the placement's tier-independent pavement test); shell: `standCam(name)`
+  (the "Fly to stand" side, both clearances and the near-field masts per side).
+- Harness: `jobs/gates.mjs` `SET='fix3;fix3night;fix3low'` (`CHECK_ONLY=1`: checks only): every stand's "Fly to stand"
+  camera and the named stand views against the near field (contact stands must be 0), equipment areas, base plates,
+  coverage and the tier hash; "fix3 requirements: met" or FAILED (exit 1).
+- Conventions, "Stand camera": also a near field (`STAND_CAM.nearDepth` 45 m, `nearDist` 25 m, `nearPoleMin` 10 m,
+  `standCamNear`; inf): a side is clear only when no mast is in its subject / centre margins or its near field; contact
+  stands keep side +1 clear, remote stands one side; "Fly to stand" takes side +1 if clear, else a clear side -1. Masts:
+  stands still without one within 120 m get a gap-fill try; placement is tier-independent (`gates.js vectorPavement`: the
+  polygons the airfield map is painted from plus the packages' `pavement(api)` fills - a package that adds pavement through
+  that hook counts automatically, and its hook is now called a second time, with `api.rect` null and `api.res` 1).
+
+### Open after this round
+
+1. Coverage: 310, 121 and 126 have no mast within 120 m; the T2 apron has 22 masts (29). `MAST_CAM_CONTACT = 'either'`
+   (contact stands may fly from their right side) would give 61 masts and 1 uncovered stand; it is a UI choice for the
+   owner.
+2. The review's optional emissive lamp face (a near head not a black block at night) is not done: no mast is in a
+   "Fly to stand" near field any more. A user who orbits from there can still bring a head close; the lamp sprite cap and
+   near fade of fix round 2 still apply.
+3. Placement takes 1.1-1.3 s on this sandbox (0.4-0.5 s before), once at start-up: the near-field test and the gap fill.
+4. Handoff (buildings, `js/live/terminals.js`): its `pavement(api)` hook is now also called by `gates.js vectorPavement`
+   (a recording api: `fill` / `line`, `rect` null, `res` 1). It only reads the data and sets `fillInfo` to the same values,
+   so nothing needs to change; keep it free of call-count side effects.

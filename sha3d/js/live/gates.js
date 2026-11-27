@@ -14,7 +14,7 @@
 // Provenance is kept on the gate objects for the planned Observed / Inferred legend: g.src / g.posSrc (stand), each
 // bridge's src ('obs' = SAR corridor seen, 'inf' = OSM gate node / facade only) and bridgeStatus, b.modelSrc 'inf'
 // (autoModel), g.vdgsSrc 'inf'. Inferred bridges are drawn exactly like observed ones (owner rule: flag, not style).
-import { registerExtension } from './ext.js';
+import { registerExtension, extensions } from './ext.js';
 import { Mesh } from '../gl.js';
 import { Geo } from '../geom.js';
 import { m4, v3 } from '../math.js';
@@ -100,6 +100,37 @@ function gateWorld(airport, taxigraph, pavedAt) {
   return { outlines, lanes, pavedAt };
 }
 
+// ---------------------------------------------------------------- a pavement test that does not depend on the quality tier
+// (fix round 3, review_visual_fix1.md / review_visual_fix2.md N5) The mast and idle-stair placement tested the ground's
+// pavedAt, which samples the airfield map at the tier's resolution (1.0 m high, 1.6 m low, 0.75 m ultra; js/world/ground.js):
+// candidates on a pavement edge flipped between tiers, so the phone (low) showed 66 masts and the laptop (high) 67, 13 of
+// them elsewhere. This test reads the polygons the map is painted from - the core's airside pavement (runway, shoulders /
+// blast pads, taxiway, taxiway shoulders, aprons, helipads: paintAirfieldMap's R channel) and the pavement the packages
+// add through their pavement(api) hook (terminals.js: airside fill, stand-head fill; kinds that paint R) - exactly
+// (even-odd per fill call, as the canvas fills them; lines by their half width). Drawing detail may still vary by tier;
+// what is placed does not.
+function vectorPavement(airport, exts) {
+  const EZ = 25; const fills = [], lines = [];
+  const add = (rings) => { const R = (rings || []).filter(r => r && r.length >= 3); if (!R.length) return; const F = { bb: [1e9, 1e9, -1e9, -1e9], rows: new Map() };
+    for (const r of R) for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[j], b = r[i];
+      F.bb[0] = Math.min(F.bb[0], b[0]); F.bb[1] = Math.min(F.bb[1], b[1]); F.bb[2] = Math.max(F.bb[2], b[0]); F.bb[3] = Math.max(F.bb[3], b[1]);
+      if (a[1] === b[1]) continue; const e = [a[0], a[1], b[0], b[1]]; for (let k = Math.floor(Math.min(a[1], b[1]) / EZ); k <= Math.floor(Math.max(a[1], b[1]) / EZ); k++) { if (!F.rows.has(k)) F.rows.set(k, []); F.rows.get(k).push(e); } }
+    fills.push(F); };
+  const S = airport.surfaces || {}; const pr = (p) => [p.ring, ...((p.holes) || [])];
+  for (const k of ['runway', 'runway_shoulders_blast_pads', 'taxiway', 'taxiway_shoulders']) for (const p of S[k] || []) add(pr(p));
+  for (const a of airport.aprons || []) add(pr(a)); for (const h of airport.helipads || []) add(pr(h));
+  const R_KIND = (k) => !['concrete', 'apron', 'shoulder'].includes(k);   // the kinds that paint the R (pavement) channel
+  const api = { fill: (rs, kind = 'paved') => { if (R_KIND(kind)) add(rs); }, line: (pts, w, kind = 'paved') => { if (R_KIND(kind) && pts && pts.length > 1) lines.push({ pts, hw: w / 2 }); }, rect: null, res: 1 };
+  for (const e of exts || []) if (e.pavement) { try { e.pavement(api, airport); } catch (err) { console.warn('[gates] vector pavement ' + e.name, err); } }
+  const inF = (F, x, z) => { if (x < F.bb[0] || x > F.bb[2] || z < F.bb[1] || z > F.bb[3]) return false; const L = F.rows.get(Math.floor(z / EZ)); if (!L) return false; let c = false;
+    for (const e of L) if (((e[1] > z) !== (e[3] > z)) && (x < (e[2] - e[0]) * (z - e[1]) / (e[3] - e[1]) + e[0])) c = !c; return c; };
+  const nearL = (Ln, x, z) => { for (let i = 1; i < Ln.pts.length; i++) { const a = Ln.pts[i - 1], b = Ln.pts[i]; const ex = b[0] - a[0], ez = b[1] - a[1]; const t = Math.max(0, Math.min(1, ((x - a[0]) * ex + (z - a[1]) * ez) / (ex * ex + ez * ez || 1)));
+    if (Math.hypot(a[0] + ex * t - x, a[1] + ez * t - z) < Ln.hw) return true; } return false; };
+  const fn = (x, z) => fills.some(F => inF(F, x, z)) || lines.some(Ln => nearL(Ln, x, z));
+  fn.info = { fills: fills.length, lines: lines.length, src: 'the polygons of the airfield map (OSM obs + package fills inf)' };
+  return fn;
+}
+
 // ---------------------------------------------------------------- debug overlay: lead-ins, push-back paths, bridge points
 function pushOverlay(gates, G) {
   const geo = new Geo();
@@ -121,12 +152,12 @@ function pushOverlay(gates, G) {
 }
 
 // ---------------------------------------------------------------- the extension
-const state = { sys: null, gates: [], parked: new Map(), overlay: null, info: null, G: 0 };
+const state = { sys: null, gates: [], parked: new Map(), overlay: null, info: null, G: 0, airport: null };
 
 registerExtension({
   name: 'gates', order: 30,
   buildWorld: async (ctx) => {
-    const { R, airport, stands, taxigraph, geo, groundY } = ctx; state.G = groundY;
+    const { R, airport, stands, taxigraph, geo, groundY } = ctx; state.G = groundY; state.airport = airport;
     if (!stands || !stands.stands) { ctx.log('gates: no stand data (window.SHA_STANDS)'); return { info: 'no stand data' }; }
     R.addProgram('gsign', GSIGN_VS, GSIGN_FS);
     // the bridges' own object program: the glazed tunnels' night glow (the curtain-wall material's interior light) at 0.4
@@ -207,9 +238,13 @@ registerExtension({
     if (want.length) console.log('[gates] DEBUG parked', state.parked.size, 'static aircraft');
     // (fix round 1) staged idle airstairs (L4) in the painted equipment areas, apron floodlight masts (M2): both need the
     // markings package's apron rings (SHA.markings.apron(): equipment areas, stand envelopes), available from its start()
+    // (fix round 3) both placements test pavement with the tier-independent vector test (review N5), the masts also keep out
+    // of the painted equipment areas (review V4) and out of the stand cameras' near field (review V2, gate_system.js)
     const apron = (app.markings && app.markings.apron && app.markings.apron()) || {};
-    try { sys.stageIdleStairs(apron.equipment || []); } catch (e) { console.error('[gates] idle stairs', e); }
-    try { sys.placeMasts({ runways: (app.geo && app.geo.RUNWAYS) || [], envelopes: apron.envelopes || [] }); } catch (e) { console.error('[gates] masts', e); }
+    let paved = null; try { paved = state.airport ? vectorPavement(state.airport, extensions()) : null; } catch (e) { console.error('[gates] vector pavement', e); }
+    try { sys.stageIdleStairs(apron.equipment || [], paved); } catch (e) { console.error('[gates] idle stairs', e); }
+    try { sys.placeMasts({ runways: (app.geo && app.geo.RUNWAYS) || [], envelopes: apron.envelopes || [], equipment: apron.equipment || [], paved }); } catch (e) { console.error('[gates] masts', e); }
+    app.qa.pavedVec = (x, z) => paved ? paved(x, z) : null;   // QA: the placement's pavement test (true / false)
     state.info.masts = sys.mastStats || null; state.info.idleStairs = sys.idleStats || null;
     app.qa.masts = () => ({ stats: sys.mastStats || null, masts: sys.masts || [], uncovered: sys.mastUncovered || [] });
     // (fix round 2, N1) the stand camera's subject points as the mast placement used them (shell.js flyToStand side choice)
@@ -282,7 +317,8 @@ function legendHtml(I) {
   return `<b>Jet bridges:</b> ${s.bridgesObs} seen on Umbra SAR ${O}, ${s.bridgesInf} from OSM gate nodes only ${N}, drawn alike; ` +
     `bridge model, rest pose, levels, VDGS position and ground equipment ${N}. Stand signs: CAAC MH 5001-2021 8.5, placement ${N}. ` +
     `Aircraft park with the nose wheel on the stop line (MH 5001-2021 6.2.16-7). ` +
-    (M ? `Apron floodlight masts: ${M.masts}, about one per two stands; as in photos, but positions and form ${N}. ` : '') +
+    // (fix round 3, review N5) the same count on every quality tier; V2: none in the "Fly to stand" views
+    (M ? `Apron floodlight masts: ${M.masts}, about one per ${Math.max(2, Math.round((M.standsConsidered || 162) / Math.max(1, M.masts)))} stands, kept out of the "Fly to stand" views; as in photos, but positions and form ${N}. ` : '') +
     (Q ? `Idle airstairs: ${Q.placed}, at most one per ${Q.perStands} remote stands, staged in the equipment areas: cues ${N}, not seen.` : '');
 }
 function ctx_log(app, msg) { try { console.log('[gates] ' + msg); } catch (e) { } }

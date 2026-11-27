@@ -300,6 +300,15 @@ const MAST_H = 30.0;            // m, mast height to the lamp head (inf: photos 
 const MAST_SPACING = 80.0;      // m, at least between masts (inf: about one per two stands at the 38-45 m T2 stand spacing)
 const MAST_BRIDGE_CLEAR = 6.0;  // m, from any jet-bridge tunnel axis (rest pose and every docking path) (inf)
 const MAST_CAM_STRICT_REMOTE = false; // (fix round 2, N1) false: a remote stand keeps one stand-camera side clear, not side +1 (inf)
+// (fix round 3, review_visual_fix2.md V2 / V4) a side of a stand camera is clear when no mast is in its subject / centre
+// margins (standCamPos) AND none is in its near field (standCamNear). MAST_CAM_CONTACT 'side1': a contact stand keeps
+// side +1 (the bridge side) clear; 'either': one side, as a remote stand (inf)
+const MAST_CAM_CONTACT = 'side1';
+const MAST_EQUIP_CLEAR = 2.0;   // m, the base plate clear of every painted equipment area (6.2.20 设备区) by at least this (inf)
+// m, the base plate (1.6 m square) and the pavement margin around it: the review's 1 m (V4) plus 1 m for the ground map's
+// CPU copy (pavedAt reads 2 m cells, so a corner 1-2 m inside the drawn edge can read < 0.5 there) (inf)
+const MAST_PLATE_HALF = 0.8, MAST_PAVE_MARGIN = 2.0;
+const MAST_GAP_R = 120;         // m, a stand "has a mast nearby" within this of its stop node (coverage, gap fill) (inf)
 // (sha3d fix round 2, review N1) the app's own stand camera, defined once here: js/live/shell.js flyToStand ("Fly to
 // stand") and the named stand views (app.js SHA.qa.stand, side +1) look from ahead-left of the stand (side +1 = the
 // aircraft's left, the bridge side; side -1 = its right) back at a target `back` m behind the stop node, horizontally along
@@ -312,7 +321,8 @@ const MAST_CAM_STRICT_REMOTE = false; // (fix round 2, N1) false: a remote stand
 // tall pole near the camera sweeps across the subject). subjDeg 4 = about 55 px at 1280 x 720. All values inf (a UI camera
 // choice, not an airfield parameter).
 export const STAND_CAM = { back: 18, fwd: 0.75, left: 0.66, pitch: 24, fov: 50, dist: 90, distBig: 120, big: ['E', 'EL', 'F'],
-  subjDeg: 4, centreDeg: 8, poleH: 31, subjH: { target: 3, node: 1, tip: 3, wing: 4, tail: 9, rotunda: 5, cab: 4 }, src: 'inf' };
+  subjDeg: 4, centreDeg: 8, poleH: 31, subjH: { target: 3, node: 1, tip: 3, wing: 4, tail: 9, rotunda: 5, cab: 4 },
+  nearDepth: 45, nearDist: 25, nearPoleMin: 10, headR: 2.2, headDy: -0.8, aspect: 16 / 9, src: 'inf' };   // (near*: fix round 3, V2; standCamNear)
 /** the stand camera of a stand (stop node `nose` [x, z], heading vector `h` [x, z], class `cls`) on `side` (+1 / -1).
  *  `subj`: extra subject points {p: [x, z], y: height above the apron} (LiveGateSystem.camSubject). Returns {T: target
  *  [x, z], o: horizontal unit direction target -> camera, dist, side, cam (above the apron), F / R / U (camera basis),
@@ -365,6 +375,42 @@ export function standCamPos(W, q) {
 }
 /** the smallest clearance (standCamPos d) of mast poles at the ground points pts [[x, z], ...] (Infinity: none in view) */
 export function standCamClearance(W, pts) { let m = Infinity; for (const p of pts) m = Math.min(m, standCamPos(W, p).d); return m; }
+// (sha3d fix round 3, review_visual_fix2.md V2) the near field of a stand camera. The subject / centre test above lets a
+// 30 m mast stand 10-39 m from the camera anywhere else in the frame, where its head is the largest object in the picture
+// (238A: 10 m, 226 px; 264: 14 m; 270: 15 m). A mast is in the near field of camera W when
+//  - its head (a sphere of STAND_CAM.headR about MAST_H - 0.8 m: the six-lamp head with its platform, 4.2 x 2.7 m) or
+//    its pole above nearPoleMin m projects into the frame (vertical fov, width aspect x the height: the 16:9 laptop frame;
+//    a portrait phone sees a narrower part of the same frame) at a depth under nearDepth m, or
+//  - the pole (0 .. poleH m) comes within nearDist m (3-D) of the camera position (flying in, orbiting a little).
+// All values inf (a UI camera choice); nearDepth 45 m is the review's figure (a 3 m head about 50 px, the 4.2 m wide head
+// about 70 px at 1280 x 720).
+/** a mast at ground point q [x, z] (height h to the lamp head) in the near field of stand camera W: {near, why, depth, dist} */
+export function standCamNear(W, q, h = 30) {
+  const K = STAND_CAM; const c = W.cam; const ty = Math.tan(K.fov / 2 * DEG), tx = ty * K.aspect;
+  // 3-D distance camera -> pole segment
+  const dy = c[1] > K.poleH ? c[1] - K.poleH : c[1] < 0 ? -c[1] : 0; const dist = Math.hypot(q[0] - c[0], dy, q[1] - c[2]);
+  if (dist < K.nearDist) return { near: true, why: 'pole within ' + K.nearDist + ' m', depth: null, dist: +dist.toFixed(1) };
+  // (a point in the frame at depth z is at most z * hypot(1, tx, ty) from the camera: farther poles cannot be in the near field)
+  if (dist > Math.hypot(1, tx, ty) * (K.nearDepth + K.headR) + 1) return { near: false, why: null, depth: null, dist: +dist.toFixed(1) };
+  const depthOf = (y) => (q[0] - c[0]) * W.F[0] + (y - c[1]) * W.F[1] + (q[1] - c[2]) * W.F[2];
+  // the head
+  const yh = h + K.headDy, zh = depthOf(yh);
+  if (zh > 0.5 && zh - K.headR < K.nearDepth) { const P = standCamProject(W, [q[0], yh, q[1]]); const r = K.headR / zh;
+    if (P && Math.abs(P[0]) < tx + r && Math.abs(P[1]) < ty + r) return { near: true, why: 'head in frame', depth: +zh.toFixed(1), dist: +dist.toFixed(1) }; }
+  // the pole above nearPoleMin, clipped to depths 0.5 .. nearDepth, against the frame rectangle (Liang-Barsky)
+  const y0 = K.nearPoleMin, y1 = h; const z0 = depthOf(y0), z1 = depthOf(y1); let t0 = 0, t1 = 1;
+  const clip = (za, zb, lim, lower) => { // keep the part with z >= lim (lower) or z <= lim
+    if (Math.abs(zb - za) < 1e-9) return lower ? za >= lim : za <= lim; const t = (lim - za) / (zb - za);
+    if (lower) { if (zb > za) t0 = Math.max(t0, t); else t1 = Math.min(t1, t); } else { if (zb > za) t1 = Math.min(t1, t); else t0 = Math.max(t0, t); } return t0 <= t1; };
+  if (clip(z0, z1, 0.6, true) && clip(z0, z1, K.nearDepth, false)) {
+    const A = standCamProject(W, [q[0], y0 + (y1 - y0) * t0, q[1]]), B = standCamProject(W, [q[0], y0 + (y1 - y0) * t1, q[1]]);
+    if (A && B) { let u0 = 0, u1 = 1; const dx = B[0] - A[0], dyy = B[1] - A[1]; let ok = true;
+      for (const [p, qq] of [[-dx, A[0] + tx], [dx, tx - A[0]], [-dyy, A[1] + ty], [dyy, ty - A[1]]]) { if (Math.abs(p) < 1e-12) { if (qq < 0) { ok = false; break; } continue; } const r = qq / p; if (p < 0) u0 = Math.max(u0, r); else u1 = Math.min(u1, r); if (u0 > u1) { ok = false; break; } }
+      if (ok) return { near: true, why: 'pole above ' + y0 + ' m in frame', depth: +Math.min(z0 + (z1 - z0) * t0, z0 + (z1 - z0) * t1).toFixed(1), dist: +dist.toFixed(1) }; } }
+  return { near: false, why: null, depth: null, dist: +dist.toFixed(1) };
+}
+/** the masts M [{p: [x, z], h, stand}, ...] in the near field of stand camera W (list of {stand, why, depth, dist}) */
+export function standCamNearList(W, M) { const out = []; for (const m of M || []) { const p = m.p || m; const r = standCamNear(W, p, m.h || 30); if (r.near) out.push({ mast: m.stand || null, why: r.why, depth: r.depth, dist: r.dist }); } return out; }
 const IDLE_PER = 4;             // remote stands per staged idle stair unit (inf: review L4 asks for at most one per 3-4)
 const IDLE_BUSY = 60.0;         // m: a staged unit is not drawn while an aircraft is parked at a stand this close (inf)
 // exterior cross-sections (width, height) of tunnel sections A (rotunda) .. C (cab): AC 150/5220-21C §3.5.a(1) minimum
@@ -1693,7 +1739,7 @@ export class LiveGateSystem {
   // apron edge ahead of the group's stand fronts; always on pavement, off the lanes and the buildings and outside every
   // class-reference planform (nose wheel on the stop node; 4 m). A unit is not drawn while an aircraft is parked at a stand
   // within IDLE_BUSY m of it: placeVehicles then draws the stairs at that aircraft's doors.
-  stageIdleStairs(equipment = []) {
+  stageIdleStairs(equipment = [], paved = null) {   // (paved: fix round 3, review N5 - the tier-independent pavement test)
     const S = 3.2, hull = stairHull(S), x0 = Math.min(...hull.map(h => h[0])), len = -x0, wid = 2.2;
     const remote = this.gates.filter(g => g.remote && g.service !== 'business' && !g.sharesBridgesOf)
       .sort((a, b) => (a.area || '').localeCompare(b.area || '') || (parseInt(a.name, 10) - parseInt(b.name, 10)) || a.name.localeCompare(b.name));
@@ -1703,7 +1749,7 @@ export class LiveGateSystem {
     const fits = (p, d, g) => { const rt = [-d[1], d[0]]; const nb = this.neighbourPrints(g);
       for (const [hx0, hx1, z0, z1] of hull) for (const [x, z] of [[hx0, z0], [hx0, z1], [hx1, z0], [hx1, z1], [(hx0 + hx1) / 2, (z0 + z1) / 2]]) {
         const q = [p[0] + d[0] * x + rt[0] * z, p[1] + d[1] * x + rt[1] * z];
-        if (inBuilding(q[0], q[1]) || laneClear(q[0], q[1]) < 1.5 || (PAVED && PAVED(q[0], q[1]) < 0.5) || nb.some(fp => hitsAircraft(fp, q, 4))) return false; }
+        if (inBuilding(q[0], q[1]) || laneClear(q[0], q[1]) < 1.5 || (paved ? !paved(q[0], q[1]) : PAVED && PAVED(q[0], q[1]) < 0.5) || nb.some(fp => hitsAircraft(fp, q, 4))) return false; }
       return !out.some(o => Math.hypot(o.p[0] - p[0], o.p[1] - p[1]) < 9); };
     for (const [area, list] of byArea) for (let i = 0; i < list.length; i += IDLE_PER) {
       const grp = list.slice(i, i + IDLE_PER); const mid = Math.floor((grp.length - 1) / 2);
@@ -1757,15 +1803,29 @@ export class LiveGateSystem {
   //  - the masts already placed (stands in area / number order): at least max(MAST_SPACING, 1.8 x the stand's spacing to
   //    its nearest neighbour), so about one mast per two stands;
   //  - and it stands on pavement (fix round 2 integration: the 12 m grass-verge tolerance of the remote rows is dropped now
-  //    that the stand-head fill paves the remote stand heads, review_visual_fix1.md R1 (3));
+  //    that the stand-head fill paves the remote stand heads, review_visual_fix1.md R1 (3)); (fix round 3, review V4) the
+  //    whole base plate with a MAST_PAVE_MARGIN margin (its centre and the four corners of the plate grown by 2 m: the
+  //    review's 1 m plus 1 m for the 2 m cells of the ground map's CPU copy), by the tier-independent
+  //    pavement test `paved` (js/live/gates.js vectorPavement: the polygons the ground map is painted from; review N5:
+  //    the ground map's pavedAt is sampled at the tier's resolution, and edge candidates flipped between tiers);
+  //  - (fix round 3, review V4) the painted equipment areas (6.2.20 设备区, SHA.markings.apron().equipment): the base plate
+  //    at least MAST_EQUIP_CLEAR clear of them;
   //  - (fix round 2, review N1) and out of the app's own stand cameras (STAND_CAM / standCamPos: the pole projected into
   //    each stand's camera, both sides, must clear the subject points and the centre band): a contact stand keeps side +1
   //    clear (the bridge side: "Fly to stand" and the named stand views), a remote stand keeps at least one side clear
   //    (flyToStand takes the clear side). MAST_CAM_STRICT_REMOTE = true asks side +1 of the remote stands too.
+  //    (fix round 3, review V2) a side is clear only when no mast is in its near field either (standCamNear: the head or the
+  //    pole above 10 m in the frame at a depth under 45 m, or the pole within 25 m of the camera), so that "Fly to stand"
+  //    never has a mast head in the foreground. The alternative positions on a base stand's bridge (238A, 259A) have their
+  //    own camera (their node and heading, the base stand's bridges as subject), as the app builds it (shell.js standCam).
   // The service roads are not in the data (no airside road geometry); the rotunda-line rule keeps the masts off the band
   // between the facade and the rotundas where photo 09 shows the road.
-  placeMasts({ runways = [], envelopes = [] } = {}) {
+  // rules: QA overrides of the module rules (experiments; the app passes none): {contact, equipClear, paveMargin, near,
+  // spacing, strictRemote, gapFill}. A stand still without a mast within MAST_GAP_R after the pass gets a gap-fill try
+  // (below). stats.hash = FNV-1a of the positions (equal on every quality tier, review N5).
+  placeMasts({ runways = [], envelopes = [], equipment = [], paved = null, rules = {} } = {}) {
     if (!this._fin) this.finishPrep();
+    const RU = { contact: MAST_CAM_CONTACT, equipClear: MAST_EQUIP_CLEAR, paveMargin: MAST_PAVE_MARGIN, near: true, spacing: MAST_SPACING, strictRemote: MAST_CAM_STRICT_REMOTE, gapFill: true, ...rules };
     const t0 = performance.now();
     const letter = { B: 'C', C: 'C', CL: 'D', D: 'D', E: 'E', EL: 'E', F: 'F' }, ORD = 'CDEF';
     const TWY_OBJ = val(CAAC.separation.twyCLToObject), TWL_OBJ = val(CAAC.separation.taxilaneCLToObject); // MH 5001-2021 table 4.9.5 col. (11) / (13), 9.2.7 (js/live/caac_markings.js)
@@ -1791,13 +1851,25 @@ export class LiveGateSystem {
     const inRing = (R, x, z) => { let c = false; for (let i = 0, j = R.length - 1; i < R.length; j = i++) if (((R[i][1] > z) !== (R[j][1] > z)) && (x < (R[j][0] - R[i][0]) * (z - R[i][1]) / (R[j][1] - R[i][1]) + R[i][0])) c = !c; return c; };
     const envBB = envelopes.filter(e => e && e.ring && e.ring.length >= 3).map(e => { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const p of e.ring) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); } return { ring: e.ring, bb: [x0 - 1, z0 - 1, x1 + 1, z1 + 1] }; });
     const nearest = new Map(this.gates.map(g => { let d = 1e9; for (const o of this.gates) if (o !== g && !o.sharesBridgesOf && !g.sharesBridgesOf) d = Math.min(d, Math.hypot(o.nose[0] - g.nose[0], o.nose[1] - g.nose[1])); return [g, d]; }));
-    // (fix round 2, N1) the stand cameras: both sides of every stand, and which sides the masts placed so far block
+    // (fix round 3, V4) the painted equipment areas, grown by MAST_EQUIP_CLEAR from the base plate (the foot centre at least
+    // MAST_EQUIP_CLEAR + the plate's half diagonal, 3.13 m, from the ring: the review asked 2 m from the foot)
+    const EC = RU.equipClear + MAST_PLATE_HALF * Math.SQRT2; const eqBB = (equipment || []).filter(e => e && e.ring && e.ring.length >= 3).map(e => { let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; for (const p of e.ring) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); } return { ring: e.ring, bb: [x0 - EC, z0 - EC, x1 + EC, z1 + EC] }; });
+    const inEquip = (q) => eqBB.some(E => { if (q[0] < E.bb[0] || q[0] > E.bb[2] || q[1] < E.bb[1] || q[1] > E.bb[3]) return false; if (inRing(E.ring, q[0], q[1])) return true;
+      for (let i = 0, j = E.ring.length - 1; i < E.ring.length; j = i++) if (segD(q, E.ring[j], E.ring[i]) < EC) return true; return false; });
+    // (fix round 3, V4 / N5) the base plate and a margin on pavement: tier-independent `paved` (else the ground map >= 0.5)
+    const onPave = paved || ((x, z) => !PAVED || PAVED(x, z) >= 0.5); const PC = MAST_PLATE_HALF + RU.paveMargin;
+    const plateOnPave = (q, fc) => { if (!onPave(q[0], q[1])) return false; const l = [-fc[1], fc[0]];
+      for (const a of [-PC, PC]) for (const b of [-PC, PC]) if (!onPave(q[0] + fc[0] * a + l[0] * b, q[1] + fc[1] * a + l[1] * b)) return false; return true; };
+    // (fix round 2, N1) the stand cameras: both sides of every stand, and which sides the masts placed so far block -
+    // (fix round 3, V2) by the subject / centre margins (blkS) or by the near field (blkN); blk = either
     const cams = this.gates.map(g => { const subj = this.camSubject(g);
-      return { g, strict: !!g.contact || MAST_CAM_STRICT_REMOTE, w: [standCamWedge(g.nose, g.dir, g.cls, 1, subj), standCamWedge(g.nose, g.dir, g.cls, -1, subj)], blk: [false, false] }; });
-    const camHits = (q) => { const H = []; for (const c of cams) { if (Math.abs(c.g.nose[0] - q[0]) > 160 || Math.abs(c.g.nose[1] - q[1]) > 160) continue;
-      const a = standCamPos(c.w[0], q).in, b = standCamPos(c.w[1], q).in; if (a || b) H.push([c, a, b]); } return H; };
+      return { g, strict: g.contact ? RU.contact !== 'either' : RU.strictRemote, w: [standCamWedge(g.nose, g.dir, g.cls, 1, subj), standCamWedge(g.nose, g.dir, g.cls, -1, subj)], blk: [false, false], blkS: [false, false], blkN: [false, false] }; });
+    // (the near field reaches ~45 m past a camera up to ~130 m from its stop node: cameras within 200 m are tested)
+    const camHits = (q) => { const H = []; for (const c of cams) { if (Math.abs(c.g.nose[0] - q[0]) > 200 || Math.abs(c.g.nose[1] - q[1]) > 200) continue;
+      const sa = standCamPos(c.w[0], q).in, sb = standCamPos(c.w[1], q).in, na = RU.near && standCamNear(c.w[0], q, MAST_H).near, nb = RU.near && standCamNear(c.w[1], q, MAST_H).near;
+      if (sa || sb || na || nb) H.push([c, sa || na, sb || nb, [sa, sb], [na, nb]]); } return H; };
     const why = {}; let mine = null; const fail = (k) => { why[k] = (why[k] || 0) + 1; if (mine) mine[k] = (mine[k] || 0) + 1; return false; };
-    const ok = (q, g) => {
+    const ok = (q, g, fc) => {
       if (inBuilding(q[0], q[1])) return fail('building'); if (nearestBuilding(q[0], q[1]).d < 4) return fail('building');
       if (strips.some(s => segD(q, s.A, s.B) < 150)) return fail('runway strip');
       let code = 0; for (const o of this.gates) if (Math.hypot(o.nose[0] - q[0], o.nose[1] - q[1]) < 150) code = Math.max(code, ORD.indexOf(letter[o.cls] || 'C'));
@@ -1811,15 +1883,21 @@ export class LiveGateSystem {
       if (posts.some(p => Math.hypot(p[0] - q[0], p[1] - q[1]) < 3)) return fail('post');
       // on pavement (fix round 2 integration, review_visual_fix1.md R1 (3), buildings hand-off: the stand-head fill now paves
       // the remote stand heads, so the 12 m grass-verge tolerance of the remote rows is dropped)
-      if (PAVED && PAVED(q[0], q[1]) < 0.5) return fail('not paved');
-      for (const [c, a, b] of camHits(q)) if (c.strict ? a : (a || c.blk[0]) && (b || c.blk[1])) return fail('stand camera');
+      if (!plateOnPave(q, fc)) return fail('not paved');
+      if (inEquip(q)) return fail('equipment area');
+      for (const [c, a, b, S] of camHits(q)) if (c.strict ? a : (a || c.blk[0]) && (b || c.blk[1])) return fail((c.strict ? S[0] : (S[0] || c.blkS[0]) && (S[1] || c.blkS[1])) ? 'stand camera' : 'stand camera near field');
       return true; };
     const order = this.gates.filter(g => !g.sharesBridgesOf)
       .sort((a, b) => (a.area || '').localeCompare(b.area || '') || (parseInt(a.name, 10) - parseInt(b.name, 10)) || a.name.localeCompare(b.name));
     const masts = []; const perStand = new Map();
+    const take = (g, cands, spacing) => { for (const c of cands) {
+      if (masts.some(M => Math.hypot(M.p[0] - c.q[0], M.p[1] - c.q[1]) < spacing)) { fail('spacing'); continue; }
+      if (!ok(c.q, g, c.face)) continue;
+      for (const [cc, a, b, S, N] of camHits(c.q)) { for (const k of [0, 1]) { if (S[k]) cc.blkS[k] = true; if (N[k]) cc.blkN[k] = true; } if (a) cc.blk[0] = true; if (b) cc.blk[1] = true; }
+      masts.push({ p: c.q.map(v => +v.toFixed(2)), face: c.face.map(v => +v.toFixed(4)), h: MAST_H, stand: g.name, area: g.area, at: c.at, src: 'inf' }); return true; } return false; };
     for (const g of order) {
       mine = {}; perStand.set(g.name, mine);
-      const spacing = Math.max(MAST_SPACING, 1.8 * Math.min(nearest.get(g), 70));
+      const spacing = Math.max(RU.spacing, 1.8 * Math.min(nearest.get(g), 70));
       const f = g.dir, lf = [f[1], -f[0]]; const cands = [];
       const b = (g.bridges || [])[0];
       if (b && b.rot) { // along the facade beside the rotunda: u = out of the building (walkway direction), t = along the facade
@@ -1831,21 +1909,36 @@ export class LiveGateSystem {
         // apron edge or face a lane)
         for (const a of [8, 12, 6, 3, 16, 0, -3, 20, 26]) for (const l of [half, -half, half * 0.7, -half * 0.7, 0]) cands.push({ q: [F[0] + f[0] * a + lf[0] * l, F[2] + f[1] * a + lf[1] * l], face: [-f[0], -f[1]], at: a > 0 ? 'ahead of the stand front' : 'between the stand noses' });
       }
-      for (const c of cands) {
-        if (masts.some(M => Math.hypot(M.p[0] - c.q[0], M.p[1] - c.q[1]) < spacing)) { fail('spacing'); continue; }
-        if (!ok(c.q, g)) continue;
-        for (const [cc, a, b] of camHits(c.q)) { if (a) cc.blk[0] = true; if (b) cc.blk[1] = true; }
-        masts.push({ p: c.q.map(v => +v.toFixed(2)), face: c.face.map(v => +v.toFixed(4)), h: MAST_H, stand: g.name, area: g.area, at: c.at, src: 'inf' }); break;
-      }
+      take(g, cands, spacing);
+    }
+    // (fix round 3, review V2) gap fill. The near-field rule clears the rotunda line in front of most contact-stand cameras
+    // (their cameras hover over the facade 45-55 m to the left of the stand). A stand left with no mast within MAST_GAP_R
+    // gets one more try on a polar grid about its stop node (radii 24-108 m by 12 m, every 15 deg, nearest first) under every
+    // rule above, the head facing the stop node: masts stay visible along the rows without entering a stand camera.
+    if (RU.gapFill) for (const g of order) {
+      if (masts.some(M => Math.hypot(M.p[0] - g.nose[0], M.p[1] - g.nose[1]) < MAST_GAP_R)) continue;
+      mine = perStand.get(g.name); const spacing = Math.max(RU.spacing, 1.8 * Math.min(nearest.get(g), 70)); const cands = [];
+      for (let r = 24; r <= 108; r += 12) for (let k = 0; k < 24; k++) { const a = k * 15 * DEG; const d = [Math.sin(a), -Math.cos(a)]; cands.push({ q: [g.nose[0] + d[0] * r, g.nose[1] + d[1] * r], face: [-d[0], -d[1]], at: 'gap fill' }); }
+      take(g, cands, spacing);
     }
     mine = null; this.masts = masts;
     const by = {}; for (const M of masts) by[M.area] = (by[M.area] || 0) + 1;
     // stands with no mast within 120 m of their stop node, and why their own candidates failed (QA / report)
-    const uncovered = order.filter(g => !masts.some(M => Math.hypot(M.p[0] - g.nose[0], M.p[1] - g.nose[1]) < 120)).map(g => { const r = perStand.get(g.name) || {}; delete r.spacing; return { stand: g.name, area: g.area, why: r }; });
+    const uncovered = order.filter(g => !masts.some(M => Math.hypot(M.p[0] - g.nose[0], M.p[1] - g.nose[1]) < MAST_GAP_R)).map(g => { const r = perStand.get(g.name) || {}; delete r.spacing; return { stand: g.name, area: g.area, why: r }; });
     // (fix round 2, N1) the stand cameras after placement: sides with a mast in the sight wedge (QA; contact side +1 must be 0)
-    const cb = { contactSide1: cams.filter(c => c.g.contact && c.blk[0]).map(c => c.g.name), remoteSide1: cams.filter(c => !c.g.contact && c.blk[0]).length,
-      remoteSide2: cams.filter(c => !c.g.contact && c.blk[1]).length, bothSides: cams.filter(c => c.blk[0] && c.blk[1]).map(c => c.g.name), subjDeg: STAND_CAM.subjDeg, centreDeg: STAND_CAM.centreDeg, strictRemote: MAST_CAM_STRICT_REMOTE, src: 'inf' };
-    this.mastStats = { masts: masts.length, standsConsidered: order.length, byArea: by, rejected: why, uncovered: uncovered.length, cameras: cb, ms: Math.round(performance.now() - t0), h: MAST_H, src: 'inf' };
+    // (fix round 3, V2) contactSide1 = contact stands with side +1 blocked (subject or near field); contactNear1 = by the near
+    // field; contactClear = contact stands with a clear side; remoteNoClear = remote stands with neither side clear (all
+    // must be empty / complete with the default rules)
+    const cb = { contactSide1: cams.filter(c => c.g.contact && c.blk[0]).map(c => c.g.name), contactNear1: cams.filter(c => c.g.contact && c.blkN[0]).map(c => c.g.name),
+      contactClear: cams.filter(c => c.g.contact && !(c.blk[0] && c.blk[1])).length, contact: cams.filter(c => c.g.contact).length,
+      remoteSide1: cams.filter(c => !c.g.contact && c.blk[0]).length, remoteSide2: cams.filter(c => !c.g.contact && c.blk[1]).length,
+      remoteNear: [cams.filter(c => !c.g.contact && c.blkN[0]).length, cams.filter(c => !c.g.contact && c.blkN[1]).length],
+      bothSides: cams.filter(c => c.blk[0] && c.blk[1]).map(c => c.g.name), subjDeg: STAND_CAM.subjDeg, centreDeg: STAND_CAM.centreDeg,
+      near: { depth: STAND_CAM.nearDepth, dist: STAND_CAM.nearDist, poleMin: STAND_CAM.nearPoleMin }, strictRemote: RU.strictRemote, contactRule: RU.contact, src: 'inf' };
+    // a hash of the mast list (FNV-1a over the positions to 0.01 m): equal on every quality tier (review N5)
+    let hh = 2166136261; for (const M of masts) for (const v of M.p) { const t = v.toFixed(2); for (let i = 0; i < t.length; i++) { hh ^= t.charCodeAt(i); hh = Math.imul(hh, 16777619) >>> 0; } }
+    this.mastStats = { masts: masts.length, standsConsidered: order.length, byArea: by, rejected: why, uncovered: uncovered.length, cameras: cb, hash: hh.toString(16),
+      paved: paved ? 'vector (tier-independent)' : 'ground map (tier resolution)', equipmentAreas: eqBB.length, rules: RU, ms: Math.round(performance.now() - t0), h: MAST_H, src: 'inf' };
     this.mastUncovered = uncovered;
     this.dirty = true; return masts;
   }

@@ -40,14 +40,16 @@ vec3 shaGroundFarHaze(vec3 col, vec3 wp, float dist, vec3 V, float ext, float ni
 //   max(apron, map R) - R = apron + the airside pavement packages add to the airfield map (the T1 / T2 airside fill, which is
 //   runway-class asphalt in the map and was a black moat at night) + a soft ~20-30 m spill past that area's edge -
 // and the level is x (gScale x map G) - G x gScale = the summed pools of the inferred apron masts (gates package): relative
-//   to the stand mean, floor 0.5 (9.2.6-2: other apron >= 50 % of the stand average), cap 1.8, then scaled so that the mean
-//   over the lit area is 1 (the fix round 1 level) [inf]; G = 1 / gScale (x 1) until the masts are known.
+//   to the stand mean, cap 1.8; floor 1.0 on the stands (fix round 3, review V1: painted envelopes, bridge and equipment
+//   areas, and the airside fill under the bridges of contact stands; 9.2.6-1, CAAC.apronFlood.standFloor) and 0.5 x the
+//   stand mean elsewhere (9.2.6-2); then scaled so that the mean over the lit area is 1 (the fix round 1 level) [inf];
+//   G = 1 / gScale (x 1) until the masts are known.
 // Without the map (uApLightOn = 0, the GLSL default for a program that does not set it) the function is the fix round 1
 // flood. Programs that include this chunk: set uApLight / uApLightRect / uApLightOn from the ground uniforms
 // (app.world.groundU) to get the same light; the texture object is updated in place when the masts arrive.
-export const APRON_FLOOD = { level: 0.42, tint: [1.0, 0.82, 0.6], gScale: 2.5, src: 'inf: level and tint chosen against photos 12/13/19/20 (= the mean over the lit area); shape: light map (CAAC.apronFlood, 9.2.6 floor)' };
+export const APRON_FLOOD = { level: 0.42, tint: [1.0, 0.82, 0.6], gScale: 2.5, src: 'inf: level and tint chosen against photos 12/13/19/20 (= the mean over the lit area); shape: light map (CAAC.apronFlood: 9.2.6-1 stand floor, 9.2.6-2 other-apron floor)' };
 export const APRON_FLOOD_GLSL = `
-uniform sampler2D uApLight; uniform vec4 uApLightRect; uniform float uApLightOn;   // light map: R lit area + spill, G pools / 2
+uniform sampler2D uApLight; uniform vec4 uApLightRect; uniform float uApLightOn;   // light map: R lit area + spill, G pool factor / gScale
 vec3 shaApronFlood(vec3 wp, vec4 apt, float paved, float nLarge, float nMid){
   float apronN = paved * smoothstep(0.86, 0.95, apt.g);   // apron = G 255 (js/world/ground.js)
   vec2 L = texture(uApLight, (wp.xz - uApLightRect.xy) / max(uApLightRect.zw, vec2(1.0))).rg;   // clamp to edge: 0 outside
