@@ -89,14 +89,26 @@
        322
       ],
       [
-       2010,
-       160
+       1150,
+       257
+      ],
+      [
+       1450,
+       217
+      ],
+      [
+       1750,
+       168
+      ],
+      [
+       2050,
+       123
       ]
      ]
     }
    ],
    "attrs": {
-    "p23": "underside lines of the two deep ceiling beams meeting over the corner column (L in plan)"
+    "p23": "underside lines of the two deep ceiling beams meeting over the corner column (L in plan); the east one bowed by the lens, read at x 1150 / 1450 / 1750 / 2050"
    },
    "conf": 0.75
   },
@@ -233,15 +245,26 @@
   {
    "id": "rear.ncp_pot",
    "type": "planter",
-   "desc": "Grey planter pot with a shrub beside the porch corner column.",
+   "desc": "Square grey planter with a small standard tree, beside (south of) the porch's NE corner column.",
    "image": "photos/p21_160d78.jpg",
    "bbox": [
-    1760,
+    1750,
     993,
     1783,
-    1023
+    1025
    ],
-   "conf": 0.5
+   "conf": 0.5,
+   "also": [
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      637,
+      1018,
+      845,
+      1150
+     ]
+    }
+   ]
   },
   {
    "id": "rear.nc_upper_wall_e",
@@ -339,12 +362,12 @@
      "image": "photos/p20_f249da.jpg",
      "polyline": [
       [
-       1490,
-       548
+       1495,
+       568
       ],
       [
        1710,
-       572
+       580
       ]
      ]
     }
@@ -487,12 +510,12 @@
   {
    "id": "rear.utility_meters",
    "type": "utility",
-   "desc": "Electric panel and gas meter on the north wing wall.",
+   "desc": "Electric panel (white box, upper right), meters / gas meter and pipes on the north wing wall.",
    "image": "photos/p28_7ae0dd.jpg",
    "bbox": [
-    1915,
-    1250,
-    1950,
+    1913,
+    1225,
+    1957,
     1285
    ],
    "conf": 0.5
@@ -542,12 +565,12 @@
        1217
       ],
       [
-       1490,
-       1205
+       1491,
+       1206
       ],
       [
-       1565,
-       1250
+       1562,
+       1257
       ]
      ]
     }
@@ -566,7 +589,7 @@
    "image": "photos/p21_160d78.jpg",
    "bbox": [
     1252,
-    594,
+    580,
     1431,
     643
    ],
@@ -574,10 +597,10 @@
     {
      "image": "photos/p20_f249da.jpg",
      "bbox": [
-      1310,
-      450,
-      1410,
-      510
+      1238,
+      448,
+      1418,
+      512
      ]
     }
    ],
@@ -589,10 +612,10 @@
    "desc": "White knee-brace brackets under the gable eave ends (north one visible; south one behind the tree).",
    "image": "photos/p21_160d78.jpg",
    "bbox": [
-    1487,
+    1483,
     653,
-    1517,
-    707
+    1522,
+    710
    ],
    "also": [
     {
@@ -675,26 +698,32 @@
      "image": "photos/p28_7ae0dd.jpg",
      "bbox": [
       1447,
-      1255,
+      1237,
       1592,
-      1307
+      1310
      ]
     }
    ],
-   "conf": 0.8
+   "conf": 0.8,
+   "attrs": {
+    "p28_note": "front run + both side returns (south return y 1237-1261)"
+   }
   },
   {
    "id": "rear.bg_balcony_doors",
    "type": "glass_doors",
-   "desc": "Balcony sliding / French glass doors (3 panels, dark frames, white curtains inside), white trim.",
+   "desc": "Balcony glass doors in a white casing, dark frames: three glazed panels with white curtains inside (x 1288-1428) and a dark south part (x 1232-1285, behind the tree: a fourth panel or a fixed light); bottom behind the railing, on the balcony floor.",
    "image": "photos/p21_160d78.jpg",
    "bbox": [
-    1252,
-    700,
-    1434,
-    782
+    1224,
+    691,
+    1443,
+    838
    ],
-   "conf": 0.75
+   "conf": 0.75,
+   "attrs": {
+    "note": "bbox = casing; y 782-838 seen only between the balusters"
+   }
   },
   {
    "id": "rear.bg_post_upper_n",
@@ -707,7 +736,18 @@
     1503,
     841
    ],
-   "conf": 0.75
+   "conf": 0.75,
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1548,
+      1262,
+      1565,
+      1305
+     ]
+    }
+   ]
   },
   {
    "id": "rear.bg_post_upper_s",
@@ -720,7 +760,18 @@
     1209,
     841
    ],
-   "conf": 0.6
+   "conf": 0.6,
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1437,
+      1224,
+      1452,
+      1300
+     ]
+    }
+   ]
   },
   {
    "id": "rear.bg_floor_fascia",
@@ -769,7 +820,7 @@
    "image": "photos/p21_160d78.jpg",
    "bbox": [
     1474,
-    853,
+    887,
     1503,
     1063
    ],
@@ -777,16 +828,13 @@
     {
      "image": "photos/p28_7ae0dd.jpg",
      "bbox": [
-      1547,
-      1260,
-      1565,
-      1400
+      1546,
+      1322,
+      1563,
+      1398
      ]
     }
    ],
-   "attrs": {
-    "p28_note": "p28 box covers the full two-storey post line"
-   },
    "conf": 0.75
   },
   {
@@ -795,9 +843,9 @@
    "desc": "Ground-floor post at the BG south corner (white square, base block).",
    "image": "photos/p21_160d78.jpg",
    "bbox": [
-    1180,
-    870,
-    1213,
+    1183,
+    887,
+    1211,
     1063
    ],
    "also": [
@@ -805,9 +853,9 @@
      "image": "photos/p28_7ae0dd.jpg",
      "bbox": [
       1437,
-      1225,
-      1452,
-      1360
+      1301,
+      1451,
+      1362
      ]
     }
    ],
@@ -1137,11 +1185,19 @@
      "polyline": [
       [
        1826,
-       673
+       690
       ],
       [
-       2447,
-       688
+       2075,
+       671
+      ],
+      [
+       2300,
+       656
+      ],
+      [
+       2450,
+       648
       ]
      ]
     },
@@ -1159,7 +1215,10 @@
      ]
     }
    ],
-   "conf": 0.7
+   "conf": 0.7,
+   "attrs": {
+    "p26_note": "gutter bottom; it RISES to the right in p26 (the eave runs toward the camera)"
+   }
   },
   {
    "id": "rear.pb_eave_e",
@@ -1169,11 +1228,11 @@
    "polyline": [
     [
      990,
-     1268
+     1275
     ],
     [
-     1157,
-     1327
+     1160,
+     1329
     ]
    ],
    "conf": 0.7
@@ -1373,9 +1432,9 @@
     {
      "image": "photos/p18_150f57.jpg",
      "bbox": [
-      1035,
-      787,
-      1060,
+      1033,
+      785,
+      1093,
       890
      ]
     }
@@ -1802,24 +1861,24 @@
   {
    "id": "rear.pool",
    "type": "pool",
-   "desc": "Rectangular pool (long axis NW-SE), dark-blue-green plaster reading turquoise in sun, dark waterline tile; ~15 x 7 m. Automatic cover at the NW end, spa in the E corner, wide entry steps across the SE end. Poly = water edge (inside the coping) in p26, looking SE down its length.",
+   "desc": "Rectangular pool (long axis NW-SE), dark-blue-green plaster reading turquoise in sun, dark waterline tile; ~15 x 7 m. Automatic cover at the NW end, spa in the E corner, wide entry steps across the SE end. Poly = coping inner edge in p26, looking SE down its length (near NW edge hidden under the autocover roller: its ends at the corners).",
    "image": "photos/p26_cacb52.jpg",
    "poly": [
     [
-     1023,
-     983
-    ],
-    [
-     1523,
+     1022,
      980
     ],
     [
-     2063,
-     1260
+     1522,
+     977
     ],
     [
-     530,
-     1262
+     2068,
+     1263
+    ],
+    [
+     488,
+     1275
     ]
    ],
    "also": [
@@ -1827,20 +1886,36 @@
      "image": "photos/p21_160d78.jpg",
      "polyline": [
       [
-       794,
-       1344
+       795,
+       1342
       ],
       [
-       1670,
-       1120
+       1000,
+       1289
       ],
       [
-       2087,
-       1178
+       1200,
+       1231
       ],
       [
-       1700,
-       1517
+       1500,
+       1152
+      ],
+      [
+       1635,
+       1110
+      ],
+      [
+       2125,
+       1184
+      ],
+      [
+       1960,
+       1315
+      ],
+      [
+       1706,
+       1524
       ]
      ]
     },
@@ -1864,11 +1939,23 @@
     },
     {
      "image": "photos/p28_7ae0dd.jpg",
-     "bbox": [
-      1205,
-      1448,
-      1600,
-      1620
+     "polyline": [
+      [
+       1222,
+       1570
+      ],
+      [
+       1207,
+       1472
+      ],
+      [
+       1560,
+       1451
+      ],
+      [
+       1596,
+       1506
+      ]
      ]
     },
     {
@@ -1887,7 +1974,7 @@
      15,
      7
     ],
-    "p21_polyline": "SW long side -> far NW end (autocover) -> NE long side down to the spa",
+    "p21_polyline": "SW long side (coping inner edge, slightly bowed by the lens) -> W corner (1635,1110) -> far NW end (autocover) -> N corner (2125,1184: hidden behind the umbrella pole, extrapolated from both edges) -> NE long side down to the spa",
     "p22_far_edge": [
      [
       430,
@@ -1897,7 +1984,8 @@
       2121,
       1178
      ]
-    ]
+    ],
+    "p28_polyline": "visible edges: SE end -> far (SW) side -> NW end with the autocover; the near (NE) side under the trees ~y 1565-1572"
    },
    "conf": 0.8
   },
@@ -1940,16 +2028,16 @@
   {
    "id": "rear.pool_autocover",
    "type": "pool_cover",
-   "desc": "Automatic pool cover track / lid: white-grey metal strip along the NW end coping (the cover rolls from under it).",
+   "desc": "Automatic pool cover housing: a white-grey roller / lid (~0.15 m round) lying along the NW end on the coping (the cover rolls out from it).",
    "image": "photos/p26_cacb52.jpg",
    "polyline": [
     [
-     530,
-     1263
+     527,
+     1265
     ],
     [
-     2063,
-     1263
+     2068,
+     1264
     ]
    ],
    "also": [
@@ -1957,12 +2045,12 @@
      "image": "photos/p21_160d78.jpg",
      "polyline": [
       [
-       1700,
-       1127
+       1640,
+       1112
       ],
       [
        2087,
-       1177
+       1178
       ]
      ]
     },
@@ -1997,11 +2085,11 @@
      "polyline": [
       [
        1561,
-       1448
+       1450
       ],
       [
-       1598,
-       1488
+       1597,
+       1505
       ]
      ]
     }
@@ -2093,22 +2181,11 @@
   {
    "id": "rear.pool_fittings",
    "type": "pool_fitting",
-   "desc": "Underwater light / return fitting on the SW wall near the steps.",
+   "desc": "Underwater light / return fitting on the SW wall, mid-length (p21).",
    "image": "photos/p21_160d78.jpg",
    "point": [
     1232,
     1253
-   ],
-   "also": [
-    {
-     "image": "photos/p26_cacb52.jpg",
-     "bbox": [
-      690,
-      1164,
-      717,
-      1177
-     ]
-    }
    ],
    "conf": 0.5
   },
@@ -2517,7 +2594,21 @@
     1725,
     1258
    ],
-   "conf": 0.5
+   "conf": 0.5,
+   "attrs": {
+    "left_p24": [
+     1232,
+     1056,
+     1279,
+     1124
+    ],
+    "right_p24": [
+     1661,
+     1163,
+     1725,
+     1256
+    ]
+   }
   },
   {
    "id": "rear.lounge_set",
@@ -2739,19 +2830,19 @@
     {
      "image": "photos/p23_e4717a.jpg",
      "bbox": [
-      1594,
-      900,
+      1590,
+      906,
       1611,
-      922
+      940
      ]
     },
     {
      "image": "photos/p23_e4717a.jpg",
      "bbox": [
-      1794,
-      900,
-      1806,
-      917
+      1790,
+      897,
+      1810,
+      928
      ]
     },
     {
@@ -2761,6 +2852,15 @@
       1133,
       467,
       1158
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      615,
+      1090,
+      635,
+      1130
      ]
     }
    ],
@@ -2781,10 +2881,10 @@
     {
      "image": "photos/p23_e4717a.jpg",
      "bbox": [
-      1150,
-      856,
-      1917,
-      906
+      1330,
+      855,
+      1950,
+      925
      ]
     },
     {
@@ -2822,8 +2922,12 @@
       1050
      ],
      [
+      1600,
+      1054
+     ],
+     [
       2142,
-      1060
+      1080
      ]
     ]
    },
@@ -2887,13 +2991,13 @@
   {
    "id": "rear.wall_lawn_planter",
    "type": "retaining_wall",
-   "desc": "Low tan fieldstone planter wall with bluestone cap along the side lawn (left of the fireplace in p23).",
+   "desc": "Low tan fieldstone planter wall with bluestone cap along the side lawn (left of the fireplace in p23); it jogs behind the crape-myrtle trunk (x 1335-1440) and continues as rear.wall_lower_planter.",
    "image": "photos/p23_e4717a.jpg",
    "bbox": [
-    800,
+    787,
     878,
-    1300,
-    939
+    1335,
+    940
    ],
    "attrs": {
     "site_id": "site.wall_terrace_lower"
@@ -2971,12 +3075,20 @@
    "image": "photos/p22_50e8b3.jpg",
    "polyline": [
     [
-     2146,
-     1119
+     2148,
+     1120
     ],
     [
-     2250,
-     823
+     2146,
+     1012
+    ],
+    [
+     2252,
+     822
+    ],
+    [
+     2263,
+     828
     ]
    ],
    "also": [
@@ -2984,12 +3096,16 @@
      "image": "photos/p26_cacb52.jpg",
      "polyline": [
       [
-       921,
-       956
+       846,
+       801
       ],
       [
-       846,
-       800
+       915,
+       881
+      ],
+      [
+       917,
+       962
       ]
      ]
     },
@@ -3003,7 +3119,16 @@
      ]
     }
    ],
-   "conf": 0.7
+   "conf": 0.7,
+   "attrs": {
+    "mid_post_p22": [
+     2209,
+     895,
+     2215,
+     1000
+    ],
+    "note": "vertical bottom post, then the sloped rail up to the top return"
+   }
   },
   {
    "id": "rear.stairs_cheek_wall",
@@ -3166,19 +3291,19 @@
     {
      "image": "photos/p20_f249da.jpg",
      "bbox": [
-      1725,
-      1119,
-      1756,
-      1262
+      1727,
+      1113,
+      1762,
+      1232
      ]
     },
     {
      "image": "photos/p28_7ae0dd.jpg",
      "bbox": [
-      965,
-      1460,
-      992,
-      1495
+      970,
+      1450,
+      1118,
+      1498
      ]
     },
     {
@@ -3218,7 +3343,21 @@
       950
      ]
     },
-    "count_seen": "4 in p26, 4 in p20 (likely 6 in all)"
+    "count_seen": "4 in p26, 4 in p20 (likely 6 in all)",
+    "p28_each": [
+     [
+      973,
+      1463,
+      990,
+      1497
+     ],
+     [
+      1100,
+      1453,
+      1116,
+      1487
+     ]
+    ]
    },
    "conf": 0.65
   },
@@ -3282,7 +3421,7 @@
   {
    "id": "rear.arbor_vine_trunk",
    "type": "vine",
-   "desc": "Old twisted vine trunk wrapped round the arbor's NE column (pool side).",
+   "desc": "Two old twisted vine (rose) trunks rising beside the arbor's NE / pool-side column, their lower parts in metal sleeves (left trunk x 1531-1615, right x 1610-1750 in p20).",
    "image": "photos/p20_f249da.jpg",
    "bbox": [
     1531,
@@ -3419,7 +3558,7 @@
      "bbox": [
       0,
       1317,
-      350,
+      325,
       1667
      ]
     }
@@ -3484,7 +3623,7 @@
       0,
       1117,
       550,
-      1183
+      1150
      ]
     },
     {
@@ -3752,7 +3891,7 @@
   {
    "id": "rear.wall_lawn_north",
    "type": "retaining_wall",
-   "desc": "Retaining wall (~0.9-1.0 m) of dark grey segmental block with a cap course along the synthetic lawn's north edge, holding the orchard terrace (bare soil, fruit trees); it continues past the steps.",
+   "desc": "Retaining wall (~0.9-1.0 m) of dark grey segmental block with a cap course along the synthetic lawn's north edge, holding the orchard terrace (bare soil, fruit trees); it continues west of the steps (two tiers, under the arbor / pool terrace).",
    "image": "photos/p18_150f57.jpg",
    "poly": [
     [
@@ -3797,7 +3936,13 @@
     }
    ],
    "attrs": {
-    "site_id": "site.wall_lawn_north"
+    "site_id": "site.wall_lawn_north",
+    "west_of_steps_p18": [
+     1130,
+     885,
+     1400,
+     990
+    ]
    },
    "conf": 0.7
   },
@@ -3895,7 +4040,7 @@
    "bbox": [
     50,
     300,
-    1700,
+    1790,
     1460
    ],
    "also": [
@@ -4094,8 +4239,8 @@
    "bbox": [
     871,
     743,
-    1700,
-    1336
+    1790,
+    1450
    ],
    "also": [
     {
@@ -4112,14 +4257,14 @@
     "beam_p19": [
      871,
      743,
-     1700,
-     793
+     1667,
+     800
     ],
     "aframe_p19": [
      1521,
      743,
-     1700,
-     1336
+     1790,
+     1450
     ]
    },
    "conf": 0.7
@@ -4127,15 +4272,36 @@
   {
    "id": "rear.play_swings",
    "type": "swing",
-   "desc": "Two green bucket / belt swings on chains under the beam.",
+   "desc": "Swings under the beam: a green belt swing on white ropes and a green toddler bucket swing on yellow-coated chains; a third dark-green bucket swing hangs further back under the fort.",
    "image": "photos/p19_1e145e.jpg",
    "bbox": [
-    1029,
-    971,
-    1143,
-    1021
+    1030,
+    965,
+    1145,
+    1024
    ],
-   "conf": 0.6
+   "conf": 0.6,
+   "attrs": {
+    "count": 3,
+    "belt_p19": [
+     1032,
+     978,
+     1077,
+     1022
+    ],
+    "bucket_p19": [
+     1092,
+     967,
+     1143,
+     1013
+    ],
+    "bucket_back_p19": [
+     955,
+     995,
+     993,
+     1047
+    ]
+   }
   },
   {
    "id": "rear.play_tire_swing",
@@ -4228,11 +4394,11 @@
      "polyline": [
       [
        214,
-       1479
+       1482
       ],
       [
-       800,
-       1664
+       870,
+       1662
       ]
      ]
     }
@@ -4375,27 +4541,46 @@
   {
    "id": "rear.outdoor_shower",
    "type": "outdoor_shower",
-   "desc": "Outdoor shower (listing feature): not identified. Candidate: the PB wing's east end (fieldstone wall section + charcoal door facing the side garden with the stepping stones, a a small black bowl on a pedestal -- birdbath / fire bowl -- in front of it in p28).",
-   "image": "photos/p28_7ae0dd.jpg",
+   "desc": "Probable OUTDOOR SHOWER: a metal riser with a fitting and a round valve handle mounted on the fieldstone wall section at the PB wing's east end (p18; the riser's top is under the tree leaves), facing the shaded side garden / stepping stones. In p28 the same stone section with a small black bowl on a pedestal (birdbath?) in front of it.",
+   "image": "photos/p18_150f57.jpg",
    "bbox": [
-    1072,
-    1297,
-    1140,
-    1370
+    1054,
+    818,
+    1078,
+    876
    ],
    "also": [
     {
-     "image": "photos/p18_150f57.jpg",
+     "image": "photos/p28_7ae0dd.jpg",
      "bbox": [
-      900,
-      785,
-      1060,
-      890
+      1072,
+      1297,
+      1140,
+      1370
      ]
     }
    ],
    "attrs": {
     "site_id": "site.outdoor_shower",
+    "on": "rear.pb_stone_wall",
+    "stone_section_p18": [
+     1033,
+     785,
+     1093,
+     890
+    ],
+    "riser_p18": [
+     1066,
+     822,
+     1074,
+     870
+    ],
+    "valve_handle_p18": [
+     1061,
+     864,
+     1071,
+     873
+    ],
     "basin_p28": [
      1112,
      1355,
@@ -4403,7 +4588,117 @@
      1367
     ]
    },
-   "conf": 0.2
+   "conf": 0.45
+  },
+  {
+   "id": "rear.north_wing_service_door",
+   "type": "door",
+   "desc": "Dark grey (louvred?) door / gate in the north wing's recessed north wall beside the chimney, behind the stepladder; a white post at its right.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1881,
+    1253,
+    1899,
+    1305
+   ],
+   "attrs": {
+    "on": "rear.north_wing_wall_n",
+    "post_p28": [
+     1899,
+     1250,
+     1909,
+     1303
+    ]
+   },
+   "conf": 0.35
+  },
+  {
+   "id": "rear.pool_skimmer",
+   "type": "pool_fitting",
+   "desc": "Skimmer mouth: dark rectangular opening in the NE wall just under the coping, near the NW (autocover) end.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    690,
+    1164,
+    717,
+    1177
+   ],
+   "conf": 0.5
+  },
+  {
+   "id": "rear.pool_ledge_nw",
+   "type": "pool_ledge",
+   "desc": "Submerged light-plaster ledge / bench at the NW end along the NE wall, just inside the autocover roller.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    645,
+    1237,
+    775,
+    1257
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      478,
+      1195,
+      595,
+      1208
+     ]
+    }
+   ],
+   "conf": 0.45
+  },
+  {
+   "id": "rear.bg_lantern_upper",
+   "type": "light",
+   "desc": "Black box lantern on the balcony's south post (wall side), under the header beam.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1189,
+    692,
+    1200,
+    709
+   ],
+   "attrs": {
+    "on": "rear.bg_post_upper_s"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.tree_ncp",
+   "type": "tree",
+   "desc": "Multi-stem crape myrtle (smooth tan-grey bark) in the bed in front of the north porch, between its steps and the NE corner column; trunk base.",
+   "image": "photos/p21_160d78.jpg",
+   "point": [
+    1744,
+    1073
+   ],
+   "also": [
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1367,
+      860,
+      1427,
+      1180
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1620,
+      1290,
+      1700,
+      1430
+     ]
+    }
+   ],
+   "attrs": {
+    "p23_note": "trunk only; its base hidden by the dining chairs",
+    "p28_note": "bare in winter, base by identification"
+   },
+   "conf": 0.55
   }
  ],
  "notes": [
@@ -4413,10 +4708,11 @@
   "Materials: walls grey cedar shingles with white trim / corner boards / columns / beams; roofs charcoal asphalt shingles with white gutters and exposed white rafter tails; windows black sashes in white casings; chimneys, fireplace, hearth / planter walls and the counters tan-rust-grey fieldstone ashlar with bluestone caps; deck / porches / walks bluestone flagstone; terrace retaining walls grey segmental concrete block; arbor dark-stained timber on white columns.",
   "Rough metric scale on the rear facade in p21 (BG, from the 0.9 x 2.4 m patio door): ~60 px/m at the BG face; BG ~5.4 m wide, balcony floor ~3.4 m above the patio, railing ~1 m, gable rise ~1.6 m. All est_* attrs are such estimates, not measurements.",
   "The ground-floor porches / patios (NCP, BG patio, PB patio) are one continuous raised bluestone floor 2 risers above the pool deck (steps along their whole fronts); the court between BG and PB is open above the white beam.",
-  "site.json (p29) already has the plan outlines of the pool, spa, fireplace, arbor, lounge, lawns, walls, stairs, play area and garden; attrs.site_id links each element here to it.  roof_id links to roof.json."
+  "site.json (p29) already has the plan outlines of the pool, spa, fireplace, arbor, lounge, lawns, walls, stairs, play area and garden; attrs.site_id links each element here to it.  roof_id links to roof.json.",
+  "Checker pass (second agent): every element drawn over its photo(s) and read at 1.5-7x. Corrected: the pool outline in p21 (W corner was 35 px off; N corner hidden behind the umbrella, extrapolated) and p26 (near corners at the coping, roller = autocover), p28 pool / autocover, the gutter lines pb_eave_n (p26: it rises to the right), pb_eave_e (p28), nc_eave_e (p20), the north porch beam's lens-bowed underside in p23, both terrace-stair handrails (a vertical bottom post, then the sloped rail), the gable vent (p21 top, p20 left half), balcony doors (full casing), BG posts split upper / lower in p28, swing-beam A-frame feet, swings (3), the lawn / planter walls in p23. Added: outdoor-shower riser on the PB stone wall (p18), pool skimmer, NW submerged ledge, crape myrtle at the north porch, north-wing service door, balcony lantern."
  ],
  "open_questions": [
-  "Outdoor shower (listing): not identified in any photo. Best candidate: the PB wing's east end facing the shaded side garden (stone wall section + charcoal door, small dark basin at its foot in p28; site.side_slab / site.outdoor_shower nearby).",
+  "Outdoor shower: a riser with a round valve handle on the PB east-end stone wall section in p18 (rear.outdoor_shower, conf 0.45) -- its head is hidden by leaves, so it could also be a hose bib / spigot; no other candidate seen.",
   "p21 / p20 identification of the PB NE corner column relies on order (left of the window pair, by the tall planter); p26 shows a stone wall section and a glass door between that column and the window pair which p21 cannot see (behind the maple).",
   "Court windows (rear.court_windows): which window in p21 is the p28 triple window (NE-facing 45-degree wall) and which the CC east window is not resolved through the tree branches.",
   "North porch roof form: pitched low hip in p28 but the p21 camera sees no roof above its beam -- the pitch / eave height should be fitted with the cameras.",
