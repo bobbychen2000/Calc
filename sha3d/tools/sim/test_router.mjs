@@ -281,7 +281,7 @@ check('every departure has a geometric push (tail-first run + swing), no graph f
   for (const [R, r, vr] of allRoutes) {
     H.routes++;
     // (H1 a) every metre of the route inside some block (blocks of zero length, "behind", do not count)
-    let unc = 0; const iv = r.blocks.filter(b => b.s1Cm > b.s0Cm); for (let sc = 0; sc <= r.lenCm; sc += 100) if (!iv.some(b => b.s0Cm <= sc && sc <= b.s1Cm)) unc++;
+    let unc = 0; const iv = r.blocks.filter(b => b.s1Cm > b.s0Cm && b.res !== false); for (let sc = 0; sc <= r.lenCm; sc += 100) if (!iv.some(b => b.s0Cm <= sc && sc <= b.s1Cm)) unc++;   // (fix round 3: the tail-clear markers reserve nothing and do not count)
     if (unc) { H.uncovRoutes++; H.uncovM += unc; if (H.ex.length < 4) H.ex.push('uncovered ' + r.kind + ' ' + r.stand + ' ' + unc + ' m'); }
     H.gapFills += r.gapFill || 0; H.behind += r.blocks.filter(b => b.behind).length;
     // (H1 d) one-at-a-time lanes by geometry on the route path: stretches with the nose gear within 3 m of a lane centreline;
@@ -353,6 +353,46 @@ check('every departure has a geometric push (tail-first run + swing), no graph f
   check('C4: span >= 36 m lines up at full length (an intersection request is served as full length, flagged); code C keeps the intersection', wf.entry === 'full' && wf.entryAsked === 'H2' && nf.entry === 'H2', 'B77W asked H2 -> ' + wf.entry + ' (' + (wf.entryNote || '') + '); A320 asked H2 -> ' + nf.entry);
   check('C2: lineup.toraCm / toraLeftCm also in live mode (runwayEnds from traj.js runwayGeom)', lr.lineup.toraCm === T.runwayEnds['36L'].toraCm && lr.lineup.toraLeftCm != null && lh.lineup.toraCm === T.runwayEnds['36L'].intersections.H6.toraCm, 'live 36L full ' + lr.lineup.toraCm + ' / left ' + lr.lineup.toraLeftCm + ', H6 ' + lh.lineup.toraCm);
   info('fix round 2 geometry checks', H.routes + ' routes, ' + H.pushes + ' pushes in ' + ((performance.now() - t0) / 1000).toFixed(0) + ' s');
+}
+
+// ------------------------------------------------------------------------------------------- 5d. fix round 3 (V3-1): tail clear
+// After every runway no-stop block (a crossing's strip, the landing roll to the vacate point) and every end box, the first
+// station where the scheduler may plan a stop - a block boundary that is not strictly inside any no-stop block (no chaining:
+// the strictest reading) - must leave the whole aircraft behind the far end: stop - tail >= far end, tail = the largest
+// nose-gear -> tail distance of any perf.js type of the route's span class. Holds never inside a no-stop block. Queue room
+// behind the holds that follow a tail-clear stretch (INFO, with and without the tail clear).
+{
+  const T3 = { n: 0, bad: 0, byKind: {}, ex: [], holdIn: 0, holdBox: 0, holdBoxK: {}, holds: 0, room: [], room0: [], roomShort: 0, roomShort0: 0, markers: 0, tailMiss: 0 };
+  const tailRef = { n: 0, w: 0, x: 0 }, lenRef = { n: 0, w: 0, x: 0 };
+  for (const id of [...Object.keys(ICAO_TYPES), 'C919', 'AJ27', 'GLF6']) { const p = perfOf(id); const c = p.spanCm < 3600 ? 'n' : p.spanCm < 6500 ? 'w' : 'x'; tailRef[c] = Math.max(tailRef[c], p.lenCm - p.noseGearCm); lenRef[c] = Math.max(lenRef[c], p.lenCm); }
+  for (const c of ['n', 'w', 'x']) if (ROUTER.foot.tailCm[c] < tailRef[c]) T3.tailMiss++;
+  // plus the departures of the wide span classes (allRoutes holds the departures of class n)
+  const routes3 = allRoutes.slice();
+  for (const [R, vr] of [[RT, 'base'], [RVT, 'F4552']]) for (const st of stands) for (const e of END_IDS) { if (vr === 'F4552' && !(e === '18R' || e === '36L')) continue;
+    for (const sp of [3600, 6500]) { if (span.get(st) < sp) continue; const r = R.departure(st, e, { spanCm: sp }); if (r) routes3.push([R, r, vr]); } }
+  for (const [R, r, vr] of routes3) {
+    const ns = r.blocks.filter(b => b.noStop && b.s1Cm > b.s0Cm); const inNS = (x) => ns.some(b => b.s0Cm < x && x < b.s1Cm);
+    const bounds = [...new Set(r.blocks.flatMap(b => [b.s0Cm, b.s1Cm]))].sort((a, b) => a - b);
+    const tail = tailRef[r.cls]; T3.markers += r.blocks.filter(b => b.kind === 'clear').length;
+    for (const b of r.blocks) {
+      const k = b.kind === 'endbox' ? 'endbox' : b.kind === 'rwy' && b.noStop ? (b.landing ? 'landing' : 'crossing') : null; if (!k) continue;
+      const stop = bounds.find(x => x > b.s1Cm && !inNS(x)); if (stop == null || stop >= r.lenCm) continue;   // the route ends inside the sequence (the stand / line-up)
+      T3.n++; const K = T3.byKind[k] || (T3.byKind[k] = { n: 0, bad: 0 }); K.n++;
+      if (stop - tail < b.s1Cm) { T3.bad++; K.bad++; if (T3.ex.length < 6) T3.ex.push((r.kind === 'dep' ? r.stand + '>' + r.end : r.exitId + '>' + r.stand) + '/' + r.cls + ' ' + k + ' far end ' + (b.s1Cm / 100).toFixed(1) + ' first stop ' + (stop / 100).toFixed(1)); }
+    }
+    for (const h of r.holds) { T3.holds++; const inside = ns.filter(b => b.s0Cm < h.sCm && h.sCm < b.s1Cm);
+      if (inside.some(b => b.kind !== 'box')) { T3.holdIn++; if (T3.ex.length < 10) T3.ex.push('hold ' + h.kind + ' inside ' + inside.map(b => b.id).join('+') + ' ' + r.kind + ' ' + r.stand + ' s ' + h.sCm); }
+      else if (inside.length) { T3.holdBox++; T3.holdBoxK[h.kind] = (T3.holdBoxK[h.kind] || 0) + 1; }
+      if (h.kind !== 'rwyhold' && h.kind !== 'lineup' && h.kind !== 'endbox') continue;
+      // the queue room behind the hold: back to the end of the previous no-stop sequence that holds a tail-clear marker
+      const prev = r.blocks.filter(b => b.kind === 'clear' && b.s1Cm <= h.sCm).sort((a, b) => b.s1Cm - a.s1Cm)[0]; if (!prev) continue;
+      const room = (h.sCm - prev.s1Cm) / 100, room0 = room + prev.tailCm / 100; T3.room.push(room); T3.room0.push(room0);
+      if (room * 100 < lenRef[r.cls]) T3.roomShort++; if (room0 * 100 < lenRef[r.cls]) T3.roomShort0++; }
+  }
+  check('V3-1: after every runway no-stop block (crossing, landing) and end box, the first plannable stop (a block boundary outside every no-stop block) leaves the whole aircraft behind the far end (largest nose-gear -> tail of the class: n ' + (tailRef.n / 100).toFixed(1) + ' / w ' + (tailRef.w / 100).toFixed(1) + ' / x ' + (tailRef.x / 100).toFixed(1) + ' m)', T3.bad === 0 && T3.tailMiss === 0, T3.bad + ' of ' + T3.n + ' events short (' + Object.entries(T3.byKind).map(([k, v]) => k + ' ' + v.bad + ' / ' + v.n).join(', ') + '); ' + T3.markers + ' tail-clear markers on ' + routes3.length + ' routes (all variants and span classes, departures of every class); ROUTER.foot.tailCm below a type of its class: ' + T3.tailMiss + (T3.ex.length ? '; ' + T3.ex.slice(0, 4).join('; ') : ''));
+  check('V3-1: no hold strictly inside a runway no-stop block or a tail-clear marker', T3.holdIn === 0, T3.holdIn + ' of ' + T3.holds + ' holds');
+  info('V3-1: holds inside a no-stop junction box (round 0 on; a hold is a mandatory stop and overrides the box\'s no-stop flag, movement.md §8)', T3.holdBox + ' of ' + T3.holds + ' holds (' + JSON.stringify(T3.holdBoxK) + ')');
+  info('V3-1: queue room behind a runway / line-up / end-box hold that follows a tail-clear stretch (hold back to the end of the no-stop sequence)', T3.room.length + ' holds: min ' + mn(T3.room).toFixed(0) + ' m, p10 ' + q(T3.room, 0.1).toFixed(0) + ', p50 ' + q(T3.room, 0.5).toFixed(0) + ' m (without the tail clear: min ' + mn(T3.room0).toFixed(0) + ', p50 ' + q(T3.room0, 0.5).toFixed(0) + ' m); shorter than the longest type of the class: ' + T3.roomShort + ' (without: ' + T3.roomShort0 + ')');
 }
 
 // ------------------------------------------------------------------------------------------- 6. end-arounds and wide crossings

@@ -27,7 +27,8 @@ export class Scene {
     const R = this.R;
     const items = this.world.items.slice();
     for (const ac of this.aircraft) { const it = ac.items(camPos); for (let i = 0; i < it.length; i++) items.push(it[i]); }
-    if (this.gateSys && this.gateSys.items) items.push(...this.gateSys.items(Date.now()));
+    // (Phase 3 P3-E: the gate engine's own clock - sim time while traffic runs, Date.now() otherwise: gate_system.js now())
+    if (this.gateSys && this.gateSys.items) items.push(...this.gateSys.items(this.gateSys.now ? this.gateSys.now() : Date.now()));
     // draw order for early-z: occluders first, expensive ground last
     const pri = { acr: 0, aircraft: 0, obj: 1, objI: 1, decal: 2, water: 3, ground: 4 };
     items.sort((a, b) => (pri[a.prog] ?? 5) - (pri[b.prog] ?? 5));

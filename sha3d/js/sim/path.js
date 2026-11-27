@@ -183,7 +183,7 @@ export function buildPath(verts, opt = {}) {
   const vMid = new Array(P.length).fill(null);   // [s0, s1] of the arc at vertex i (or [s, s])
   const addLine = (x1, z1, tag) => {
     const dx = x1 - cx, dz = z1 - cz, L = Math.sqrt(dx * dx + dz * dz); const lc = Math.round(L);
-    if (lc > 0) { pieces.push({ kind: 'line', s0Cm: s, lenCm: lc, rCm: 0, turn: 0, vmaxCms: capOf(tag), linkId: tag ? tag.link : null, tag, g: { x0: cx, z0: cz, x1, z1, hx: dx / L, hz: dz / L, len: L } }); s += lc; }
+    if (lc > 0) { pieces.push({ kind: 'line', s0Cm: s, lenCm: lc, rCm: 0, turn: 0, vmaxCms: capOf(tag), linkId: tag ? tag.link : null, tag, aLatCms2: opt.aLatOf ? opt.aLatOf(tag, tag) : aLat, g: { x0: cx, z0: cz, x1, z1, hx: dx / L, hz: dz / L, len: L } }); s += lc; }
     cx = x1; cz = z1;
   };
   for (let i = 1; i < P.length; i++) {
@@ -204,7 +204,7 @@ export function buildPath(verts, opt = {}) {
     const al = opt.aLatOf ? opt.aLatOf(tagIn, tagOut) : aLat;
     const vmax = Math.min(capOf(tagIn), capOf(tagOut), Math.floor(Math.sqrt(al * R)));
     const s0 = s;
-    if (lc > 0) { pieces.push({ kind: 'arc', s0Cm: s, lenCm: lc, rCm: rc, turn: g.turn, vmaxCms: vmax, linkId: tagIn ? tagIn.link : null, tag: tagIn, tagOut, g: { x0: ax, z0: az, hx: g.ux, hz: g.uz, ox: g.vx, oz: g.vz, T: Ti, cx: ccx, cz: ccz, R, th, len: L } }); s += lc; }
+    if (lc > 0) { pieces.push({ kind: 'arc', s0Cm: s, lenCm: lc, rCm: rc, turn: g.turn, vmaxCms: vmax, linkId: tagIn ? tagIn.link : null, tag: tagIn, tagOut, aLatCms2: al, g: { x0: ax, z0: az, hx: g.ux, hz: g.uz, ox: g.vx, oz: g.vz, T: Ti, cx: ccx, cz: ccz, R, th, len: L } }); s += lc; }
     cx = bx; cz = bz; vMid[i] = [s0, s];
   }
   vMid[0] = [0, 0];
@@ -339,6 +339,43 @@ function endOf(p, out) {
   const g = p.g;
   if (p.kind === 'line') { out.x = g.x0 + g.hx * g.len; out.z = g.z0 + g.hz * g.len; out.hx = g.hx; out.hz = g.hz; return out; }
   const ph = p.turn * g.th, c = Math.cos(ph), sn = Math.sin(ph), rx = g.x0 - g.cx, rz = g.z0 - g.cz;
+  out.x = g.cx + rx * c - rz * sn; out.z = g.cz + rx * sn + rz * c; out.hx = g.hx * c - g.hz * sn; out.hz = g.hx * sn + g.hz * c; return out;
+}
+// ------------------------------------------------------------------------------------------ deterministic sine / cosine
+// (fix round 3, V3-2: the display gear follower became an input of the commit path's main-gear speed caps, traj.js)
+// + - * / and Math.round only: x = q pi/2 + r, |r| <= pi/4, Horner-form Taylor polynomials to r^27 (|error| < 1e-16)
+const SC_N = 13;
+/** [sin x, cos x] for any finite x (into out), identical in every IEEE 754 engine */
+export function sinCosDet(x, out = [0, 0]) {
+  const q = Math.round(x / PI_2); const r = x - q * PI_2; const r2 = r * r;
+  let sn = 1, cs = 1;
+  for (let k = SC_N; k >= 1; k--) { sn = 1 - r2 / ((2 * k) * (2 * k + 1)) * sn; cs = 1 - r2 / ((2 * k - 1) * (2 * k)) * cs; }
+  sn *= r;
+  const m = ((q % 4) + 4) % 4;
+  if (m === 0) { out[0] = sn; out[1] = cs; } else if (m === 1) { out[0] = cs; out[1] = -sn; } else if (m === 2) { out[0] = -sn; out[1] = -cs; } else { out[0] = -cs; out[1] = sn; }
+  return out;
+}
+const _sc = [0, 0];
+/** pointAt with the deterministic sine / cosine (commit path: the gear follower behind traj.js's main-gear caps) */
+export function pointAtDet(path, sCm, out = {}) {
+  const P = path.pieces;
+  if (!P.length) { out.x = 0; out.z = 0; out.hx = 0; out.hz = -1; return out; }
+  if (sCm <= 0) { const g = P[0].g; out.x = g.x0 + g.hx * sCm; out.z = g.z0 + g.hz * sCm; out.hx = g.hx; out.hz = g.hz; return out; }
+  const i = pieceAt(path, sCm); const p = P[i], g = p.g;
+  let u = (sCm - p.s0Cm) / p.lenCm;
+  if (i === P.length - 1 && u > 1) { endOfDet(p, out); const ex = (sCm - p.s0Cm - p.lenCm); out.x += out.hx * ex; out.z += out.hz * ex; return out; }
+  if (u > 1) u = 1;
+  if (p.kind === 'line') { const d = u * g.len; out.x = g.x0 + g.hx * d; out.z = g.z0 + g.hz * d; out.hx = g.hx; out.hz = g.hz; return out; }
+  sinCosDet(p.turn * u * g.th, _sc); const c = _sc[1], sn = _sc[0];
+  const rx = g.x0 - g.cx, rz = g.z0 - g.cz;
+  out.x = g.cx + rx * c - rz * sn; out.z = g.cz + rx * sn + rz * c;
+  out.hx = g.hx * c - g.hz * sn; out.hz = g.hx * sn + g.hz * c;
+  return out;
+}
+function endOfDet(p, out) {
+  const g = p.g;
+  if (p.kind === 'line') { out.x = g.x0 + g.hx * g.len; out.z = g.z0 + g.hz * g.len; out.hx = g.hx; out.hz = g.hz; return out; }
+  sinCosDet(p.turn * g.th, _sc); const c = _sc[1], sn = _sc[0], rx = g.x0 - g.cx, rz = g.z0 - g.cz;
   out.x = g.cx + rx * c - rz * sn; out.z = g.cz + rx * sn + rz * c; out.hx = g.hx * c - g.hz * sn; out.hz = g.hx * sn + g.hz * c; return out;
 }
 /** TEST: independent float evaluation of a piece's length with Math.hypot / Math.atan2 / Math.tan (integer vs float <= 1 cm) */

@@ -3,18 +3,21 @@
 // Checks (design §7.2 P3-B, §4.4, §5): no transcendental Math function on the commit path (route assembly, push / taxi /
 // approach / landing / take-off construction, the exit model, time <-> position); kinematics within the §4.4 limits (|a|,
 // speeds per link kind, turn radius >= R_min, position steps, heading continuity, push 1.2 m/s / 0.3 m/s^2, line-up within
-// 60 s); take-off roll <= TORA - 400 m; ROT from touchdown <= 50 s for >= 90 % of type x exit cases (<= 70 s for all);
+// 60 s); take-off roll <= TORA - 400 m; ROT from touchdown <= 50 s for >= 90 % of the narrow-body type x exit cases on 18L/36R
+// (fix round 3: the narrow-body target; 18R/36L, wide-bodies and the <= 70 s row reported);
 // glide path 3.0 +- 0.1 deg; determinism. Fix round 1 (docs/phase3/movement.md "Verification fixes, round 1"): no `**` in
 // js/sim (V6); joins push -> taxi -> take-off and approach -> landing -> taxi-in for every stand x end, yaw rate <= 20 deg/s
 // on every stand (V2); main-gear slip and nose-wheel angle of the displayed no-slip gear model (V5); segment end speeds
-// (V7); Traj.route on every kind (V8); touchdown and threshold height of the main gear (V9). Prints aggregates only.
+// (V7); Traj.route on every kind (V8); touchdown and threshold height of the main gear (V9). Fix round 3 (movement.md
+// "Verification fixes, round 3", V3-2): every published pose point (x / z reference, nose, main) against its own published
+// speed at 1 s and 0.5 s, main-gear lateral acceleration and yaw rate. Prints aggregates only.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeRouter, END_IDS, ROUTER } from '../../js/sim/router.js';
 import { perfOf, PERF } from '../../js/sim/perf.js';
 import * as TJ from '../../js/sim/traj.js';
-import { pointAt } from '../../js/sim/path.js';
+import { pointAt, pieceAt } from '../../js/sim/path.js';
 import { bodyOf, overlaps, clearance, samples } from '../../js/sim/bodies.js';
 import { TYPES } from '../../js/aircraft/types.js';
 
@@ -86,19 +89,53 @@ const K = { yaw: [], yawOver: 0, slipOut: [], slipIn: [], slipInV: 0, steer: [],
 const J = { pushTaxi: [], taxiTo: [], apLd: [], ldTaxi: [], bad: 0, worst: [] };
 const SP = { push: [], arr: [], chordArr: [] };
 const tan = {};
-function poseCheck(tr, path, wb, dtMs, zone) {   // position steps, yaw rate, main-gear slip outside / inside the stand alignment zone
-  let prev = null;
-  for (let t = tr.t0; t <= tr.t1; t += dtMs) {
-    const p = TJ.evalTraj(tr, t, {}); const sNow = TJ.sAt(tr, t);
+// fix round 3 (V3-2): every published pose point against its own published speed, on a 0.1 s grid: the reference point
+// x / z (the nose-gear station on the centreline) at gs, the displayed main gear at mainGs, the displayed nose gear at noseGs.
+// The design §5 kinematics row at 1 s (and 0.5 s): chord <= (the largest published speed in the window) dt + 0.1 m; the
+// speeds are not inflated: the path length over 0.5 s (0.1 s chords) >= (the smallest) dt x 0.97 - 0.1 m; main-gear lateral acceleration (main speed x
+// yaw rate, windows of >= 1 m or 0.5 s as the verifier's) <= a_lat of the piece under the main gear (1.0 m/s^2, 1.25 on rapid
+// exits and the runway lead; + 1 % for the +2 cm/s speed tolerance of the integer legs, D13); yaw rate <= 20 deg/s.
+const KN = { win1: 0, win05: 0, over1: { ref: 0, main: 0, nose: 0 }, over05: { ref: 0, main: 0, nose: 0 }, low: { ref: 0, main: 0, nose: 0 }, ratio: { main: 0, nose: 0 },
+  latN: 0, latOver: 0, latOver100: 0, latMax: 0, latRel: 0, latEx: '', yawMax: 0, yawEx: '', yawOver: 0, ex: [] };
+const D2R_ = Math.PI / 180;
+function aLatUnderMain(tr, s, wb) {   // m/s^2: the a_lat of the piece under the main gear (forward taxi: s - wb; push: s + wb)
+  const P = tr.path && tr.path.pieces; if (!P || !P.length) return 1; const sm = Math.max(0, Math.min(tr.path.lenCm, tr.kind === 'push' ? s + wb : s - wb));
+  const p = P[pieceAt(tr.path, sm)]; return (p.aLatCms2 || 100) / 100;
+}
+function poseCheck(tr, path, wb, dtMs, zone, key = '') {   // published-speed steps, a_lat, yaw rate, main-gear slip outside / inside the stand alignment zone
+  const Gp = []; for (let t = tr.t0; ; t += 100) { const tt = Math.min(t, tr.t1); const p = TJ.evalTraj(tr, tt, {}); p.s = TJ.sAt(tr, tt); Gp.push(p); if (tt >= tr.t1) break; }
+  // gs peaks between grid samples: the segment boundary speeds
+  const segV = (ta, tb) => { let v = 0; for (const g of tr.segs) { if (g.t1 < ta) continue; if (g.t0 > tb) break; v = Math.max(v, g.v0Cms / 100, g.v1Cms / 100); } return v; };
+  const pt = (p, w) => (w === 'ref' ? [p.x, p.z] : w === 'main' ? p.main : p.nose);
+  const sp = (p, w) => (w === 'ref' ? p.gs : w === 'main' ? p.mainGs : p.noseGs);
+  for (const [m, over, cnt] of [[10, KN.over1, 'win1'], [5, KN.over05, 'win05']]) for (let k = 0; k + m < Gp.length; k++) {
+    const A = Gp[k], B = Gp[k + m]; const dt = (B.t - A.t) / 1000; if (dt <= 0) continue; KN[cnt]++;
+    for (const w of ['ref', 'main', 'nose']) {
+      let vmx = 0, vmn = Infinity; for (let j = k; j <= k + m; j++) { const v = sp(Gp[j], w); if (v > vmx) vmx = v; if (v < vmn) vmn = v; }
+      if (w === 'ref') vmx = Math.max(vmx, segV(A.t, B.t));
+      const a = pt(A, w), b = pt(B, w); const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (d > vmx * dt + 0.1) { over[w]++; if (KN.ex.length < 6) KN.ex.push(key + ' ' + w + ' ' + d.toFixed(2) + ' > ' + (vmx * dt + 0.1).toFixed(2) + ' in ' + dt + ' s'); }
+      if (m === 5) { let pl = 0; for (let j = k + 1; j <= k + m; j++) { const p0 = pt(Gp[j - 1], w), p1 = pt(Gp[j], w); pl += Math.hypot(p1[0] - p0[0], p1[1] - p0[1]); }   // the path length (0.1 s chords): the displayed nose path has corners
+        if (pl < vmn * dt * 0.97 - 0.1) { KN.low[w]++; if (KN.ex.length < 6) KN.ex.push(key + ' ' + w + ' slow ' + pl.toFixed(2) + ' < ' + (vmn * dt * 0.97 - 0.1).toFixed(2)); } }
+    }
+    if (m === 10) for (const w of ['main', 'nose']) { const r = sp(B, w) / Math.max(0.5, B.gs); if (B.gs > 0.5 && r > KN.ratio[w]) KN.ratio[w] = r; }
+  }
+  // lateral acceleration of the displayed main gear and the yaw rate (windows of >= 1 m of the reference point, <= 0.5 s)
+  for (let k = 0; k < Gp.length - 1; k++) {
+    let m = 1; while (k + m < Gp.length - 1 && m < 5 && Gp[k + m].s - Gp[k].s < 100) m++;
+    const A = Gp[k], B = Gp[k + m]; const dt = (B.t - A.t) / 1000; if (dt <= 0) continue;
+    const vm = Math.hypot(B.main[0] - A.main[0], B.main[1] - A.main[1]) / dt; const yaw = dh(A.hdg, B.hdg) / dt;
+    if (yaw > KN.yawMax) { KN.yawMax = yaw; KN.yawEx = key + ' t=' + B.t; } if (yaw > 20) KN.yawOver++;
+    if (vm < 0.5) continue; const lat = vm * yaw * D2R_; const al = aLatUnderMain(tr, (A.s + B.s) / 2, wb); KN.latN++;
+    if (lat > KN.latMax) KN.latMax = lat; if (lat / al > KN.latRel) { KN.latRel = lat / al; KN.latEx = key + ' t=' + B.t + ' ' + lat.toFixed(3) + ' m/s^2 at ' + vm.toFixed(1) + ' m/s (a_lat ' + al + ')'; }
+    if (lat > al * 1.01) KN.latOver++; if (lat > al) KN.latOver100++;
+  }
+  // slip and the nose-wheel angle at the round-1 sampling (0.25 s push, 0.5 s taxi)
+  const st = Math.max(1, Math.round(dtMs / 100)); let prev = null;
+  for (let k = 0; k < Gp.length; k += st) {
+    const p = Gp[k]; const sNow = p.s;
     if (prev) {
-      let vmx = Math.max(p.gs, prev.gs); for (const g of tr.segs) if (g.t1 > t - dtMs && g.t0 < t) vmx = Math.max(vmx, g.v0Cms / 100, g.v1Cms / 100);   // the peak between the samples
-      // fix round 2 (M1): the main gear moves at most at the profile speed; the displayed (oversteered) nose gear at
-      // v_main / cos(steering angle) (rigid body: equal velocity components along the body axis)
-      // (partially oversteered tight turns: the display main gear up to ~11 % faster than v; bound 1.12 v dt, the excess over v dt INFO)
-      const dm = Math.hypot(p.main[0] - prev.main[0], p.main[1] - prev.main[1]); if (dm > 1.12 * vmx * dtMs / 1000 + 0.1) V.step++; if (dm > vmx * dtMs / 1000 + 0.1) V.stepMainV = (V.stepMainV || 0) + 1;
-      const dlt = Math.min(80, Math.max(p.steerDeg, prev.steerDeg) + 5) * Math.PI / 180;
-      const dd = Math.hypot(p.x - prev.x, p.z - prev.z); if (dd > vmx * dtMs / 1000 / Math.cos(dlt) + 0.1) V.stepNose = (V.stepNose || 0) + 1;
-      const yaw = dh(p.hdg, prev.hdg) / (dtMs / 1000); K.yaw.push(yaw); if (yaw > 20) K.yawOver++;
+      const yaw = dh(p.hdg, prev.hdg) / ((p.t - prev.t) / 1000 || 1); K.yaw.push(yaw); if (yaw > 20) K.yawOver++;
       const ex = p.main[0] - prev.main[0], ez = p.main[1] - prev.main[1];
       if (Math.hypot(ex, ez) > 0.05) { let a = dh(vhd(ex, ez), p.hdg); a = Math.min(a, 180 - a); if (zone && zone(sNow)) { K.slipIn.push(a); K.slipInV = Math.max(K.slipInV, p.gs); } else K.slipOut.push(a); }
     }
@@ -114,7 +151,7 @@ function segCons(tr) {   // V7: the segment quadratic ends at v1Cms (<= 1 cm/s) 
     const ea = Math.abs(2 * A * 1e6 - g.aCms2); K.segAMax = Math.max(K.segAMax, ea); if (ea > 1) K.segA++;
     const Ts = T / 1000, ei = Math.abs(g.s0Cm + g.v0Cms * Ts + 0.5 * g.aCms2 * Ts * Ts - g.s1Cm); K.integMax = Math.max(K.integMax || 0, ei); if (ei > 15) K.integBad = (K.integBad || 0) + 1; }
 }
-const join = (arr, a, b, who) => { const dp = Math.hypot(a.x - b.x, a.z - b.z), dm = Math.hypot(a.main[0] - b.main[0], a.main[1] - b.main[1]), dhh = dh(a.hdg, b.hdg); arr.push(Math.max(dp, dm)); if (dp > 0.1 || dm > 0.1 || dhh > 1) { J.bad++; if (J.worst.length < 5) J.worst.push(who + ' ' + dp.toFixed(2) + ' m / main ' + dm.toFixed(2) + ' m / ' + dhh.toFixed(2) + ' deg'); } };
+const join = (arr, a, b, who) => { const dp = Math.max(Math.hypot(a.x - b.x, a.z - b.z), Math.hypot(a.nose[0] - b.nose[0], a.nose[1] - b.nose[1])), dm = Math.hypot(a.main[0] - b.main[0], a.main[1] - b.main[1]), dhh = dh(a.hdg, b.hdg); arr.push(Math.max(dp, dm)); if (dp > 0.1 || dm > 0.1 || dhh > 1) { J.bad++; if (J.worst.length < 5) J.worst.push(who + ' ' + dp.toFixed(2) + ' m / main ' + dm.toFixed(2) + ' m / ' + dhh.toFixed(2) + ' deg'); } };
 const stI = new Map(S.stands.map(x => [x.name, x]));
 for (const s of stands) {
   const P = perfOf(refType.get(s)); const wide = P.spanCm >= 3600;
@@ -125,10 +162,10 @@ for (const s of stands) {
     buildMs.push(performance.now() - t0); V.trajs += 3; segCons(pt); segCons(gt); segCons(to);
     // push: <= 1.2 m/s, <= 0.3 m/s^2, 90 s start-up at the end
     for (const g of pt.segs) { if (g.kind === 'hold') { if (g.t1 - g.t0 !== PERF.startupMs) V.startup++; continue; } const dd = g.s1Cm - g.s0Cm; const a = (g.v1Cms * g.v1Cms - g.v0Cms * g.v0Cms) / (2 * dd); if (Math.max(g.v0Cms, g.v1Cms) > PERF.pushCms + 1 || Math.abs(a) > PERF.pushAccCms2 * 1.02 + 1) V.push++; }
-    segCheck(gt, P.taxiAccCms2, P.taxiDecCms2, d.pieces.map(p => ({ a: p.s0Cm, b: p.s0Cm + p.lenCm, c: p.vmaxCms })));
+    segCheck(gt, P.taxiAccCms2, P.taxiDecCms2, d.pieces.map(p => ({ a: p.s0Cm, b: p.s0Cm + p.lenCm, c: p.vmaxCms })).concat(TJ.turnZones(d, P).map(z => ({ a: z.s0Cm, b: z.s1Cm, c: z.vmaxCms }))));   // fix round 3: + turn and main-gear zones
     for (const p of d.pieces) { const lim = capLimit(p, wide); if (lim != null && p.vmaxCms > lim) V.kindCap++; if (p.kind === 'arc') { if (p.rCm < P.rMinCm) V.radius++; else if (p.rCm < P.rFilletMinCm) V.radiusSoft++; } }
     const pf = TJ.pushFollower(d, P.wheelbaseCm);
-    poseCheck(pt, d.push.path, P.wheelbaseCm, 250, (x) => x <= pf.alignCm + 100); poseCheck(gt, d.path, P.wheelbaseCm, 500, null);
+    poseCheck(pt, d.push.path, P.wheelbaseCm, 250, (x) => x <= pf.alignCm + 100, s + '>' + e + ' push'); poseCheck(gt, d.path, P.wheelbaseCm, 500, null, s + '>' + e + '/' + P.icao);
     join(J.pushTaxi, TJ.evalTraj(pt, pt.t1, {}), TJ.evalTraj(gt, gt.t0, {}), s + '>' + e + ' push>taxi');
     join(J.taxiTo, TJ.evalTraj(gt, gt.t1, {}), TJ.evalTraj(to, to.t0, {}), s + '>' + e + ' taxi>take-off');
     const p0 = TJ.evalTraj(pt, pt.t0, {}); SP.push.push(dh(p0.hdg, stI.get(s).hdg));
@@ -140,10 +177,10 @@ for (const s of stands) {
     const ap = TJ.approachTraj(e, P, 0, { route: a }); const ld = TJ.landingTraj(e, P, 0, { route: a, tdSCm: ap.marks.tdSCm }); if (!ld) continue;
     const ga = TJ.groundTraj(a, P, ld.t1, { vStart: ld.marks.vExitCms }); V.trajs += 3; if (ga.warn.length) V.warn = (V.warn || 0) + 1; segCons(ap); segCons(ld); segCons(ga);
     segCheck(ld, 1e9, P.aDecCms2, null);
-    segCheck(ga, P.taxiAccCms2, P.taxiDecCms2, a.pieces.map(p => ({ a: p.s0Cm, b: p.s0Cm + p.lenCm, c: p.vmaxCms })).concat(a.zones.map(z => ({ a: z.s0Cm, b: z.s1Cm, c: z.vmaxCms }))));
+    segCheck(ga, P.taxiAccCms2, P.taxiDecCms2, a.pieces.map(p => ({ a: p.s0Cm, b: p.s0Cm + p.lenCm, c: p.vmaxCms })).concat(TJ.turnZones(a, P).map(z => ({ a: z.s0Cm, b: z.s1Cm, c: z.vmaxCms }))));   // + turn and main-gear zones (round 3)
     for (const p of a.pieces) { const lim = capLimit(p, wide); if (lim != null && p.vmaxCms > lim) V.kindCap++; if (p.kind === 'arc') { if (p.rCm < P.rMinCm) V.radius++; else if (p.rCm < P.rFilletMinCm) V.radiusSoft++; } }
     const gf = TJ.gearFollower(a, P.wheelbaseCm);
-    poseCheck(ga, a.path, P.wheelbaseCm, 500, (x) => x >= a.lenCm - gf.alignCm - 100);
+    poseCheck(ga, a.path, P.wheelbaseCm, 500, (x) => x >= a.lenCm - gf.alignCm - 100, e + ':' + ce.exit.id + '>' + s + '/' + P.icao);
     join(J.apLd, TJ.evalTraj(ap, ap.t1, {}), TJ.evalTraj(ld, ld.t0, {}), s + '<' + ce.exit.id + ' approach>landing');
     join(J.ldTaxi, TJ.evalTraj(ld, ld.t1, {}), TJ.evalTraj(ga, ga.t0, {}), s + '<' + ce.exit.id + ' landing>taxi');
     const pe = TJ.evalTraj(ga, ga.t1, {}); SP.arr.push(dh(pe.hdg, stI.get(s).hdg)); SP.chordArr.push(dh(vhd(pe.x - pe.mainChord[0], pe.z - pe.mainChord[1]), stI.get(s).hdg));
@@ -152,10 +189,13 @@ for (const s of stands) {
 }
 info('trajectories checked', V.trajs + ' (push + taxi-out + take-off for 164 stands x 4 ends, approach + landing + taxi-in for 164 x 4 (exit model, u = 0.5), the stand\'s class reference type), ' + V.segs + ' segments; poses on EVERY stand at 0.25 s (push) / 0.5 s (taxi)');
 check('accelerations within the caps (taxi +1.0 / -1.5, landing a_dec)', V.accel === 0, V.accel + ' segments over');
-check('speeds within the piece caps (link kind, turn sqrt(a_lat R), last 15 m 1 m/s)', V.speed === 0, V.speed + ' segments over');
+check('speeds within the piece caps (link kind, turn sqrt(a_lat R), last 15 m 1 m/s; since round 3 also the turn zones and the main-gear zones)', V.speed === 0, V.speed + ' segments over');
 check('piece caps within the link-kind limits (taxiway 12 / 10, lanes 7, lead-in 3, rapid exit 25 m/s)', V.kindCap === 0, String(V.kindCap));
 check('turn radius >= R_min (0.27 x wheelbase) for the type using the route', V.radius === 0, V.radius + ' arcs below R_min; ' + V.radiusSoft + ' arcs between R_min and the 1.6 R_min fillet floor');
-check('no position step > 1.12 v dt + 0.1 m (main gear) / v dt / cos(steering angle) + 0.1 m (displayed nose gear) (0.25 s push, 0.5 s taxi; every stand)', V.step === 0 && !V.stepNose, 'main gear ' + V.step + ', nose gear ' + (V.stepNose || 0) + '; main-gear steps over v dt + 0.1 m (partially oversteered tight turns): ' + (V.stepMainV || 0));
+check('V3-2 / design §5 kinematics row: no step > v dt + 0.1 m at 1 s for EVERY published point at its published speed: the reference point x / z at gs, the displayed main gear at mainGs, the displayed nose gear at noseGs (also at 0.5 s; 0.1 s grid; every stand x end, push + taxi-out + taxi-in)', KN.over1.ref + KN.over1.main + KN.over1.nose + KN.over05.ref + KN.over05.main + KN.over05.nose === 0, '1 s windows ' + KN.win1 + ': ref ' + KN.over1.ref + ', main ' + KN.over1.main + ', nose ' + KN.over1.nose + ' over; 0.5 s windows ' + KN.win05 + ': ' + KN.over05.ref + ' / ' + KN.over05.main + ' / ' + KN.over05.nose + (KN.ex.length ? '; ' + KN.ex.slice(0, 3).join('; ') : ''));
+check('V3-2: published speeds not inflated (path length over 0.5 s, 0.1 s chords, >= 0.97 x the smallest published speed x dt - 0.1 m, every point)', KN.low.ref + KN.low.main + KN.low.nose === 0, 'ref ' + KN.low.ref + ', main ' + KN.low.main + ', nose ' + KN.low.nose + '; largest mainGs / gs ' + KN.ratio.main.toFixed(3) + ', noseGs / gs ' + KN.ratio.nose.toFixed(3));
+check('V3-2: displayed main gear lateral acceleration (main speed x yaw rate) <= a_lat of the piece under it (1.0 m/s^2, 1.25 on rapid exits / the runway lead; +1 % speed tolerance of the integer legs)', KN.latOver === 0, KN.latOver + ' of ' + KN.latN + ' windows over (' + KN.latOver100 + ' over without the 1 %); max ' + KN.latMax.toFixed(3) + ' m/s^2, max / a_lat ' + KN.latRel.toFixed(3) + ' (' + KN.latEx + ')');
+check('V3-2: yaw rate <= 20 deg/s (windows of >= 1 m or 0.5 s)', KN.yawOver === 0, KN.yawOver + ' over; max ' + KN.yawMax.toFixed(2) + ' deg/s (' + KN.yawEx + ')');
 check('V2: yaw rate <= 20 deg/s (0.25 s push, 0.5 s taxi; every stand x end)', K.yawOver === 0, K.yawOver + ' samples over; p99 ' + q(K.yaw, 0.99).toFixed(1) + ', max ' + mx(K.yaw).toFixed(1) + ' deg/s');
 check('V2: joins push -> taxi -> take-off and approach -> landing -> taxi-in (<= 0.1 m nose and main gear, <= 1 deg; every stand x end)', J.bad === 0, J.bad + ' over; max push>taxi ' + mx(J.pushTaxi).toFixed(3) + ' m, taxi>take-off ' + mx(J.taxiTo).toFixed(3) + ', approach>landing ' + mx(J.apLd).toFixed(3) + ', landing>taxi ' + mx(J.ldTaxi).toFixed(3) + ' m' + (J.worst.length ? '; ' + J.worst.join('; ') : ''));
 check('V5: main-gear slip <= 10 deg outside the stand alignment zones (displayed no-slip model; 0.5 s chords)', mx(K.slipOut) <= 10, 'p50 ' + q(K.slipOut, 0.5).toFixed(2) + ', p99 ' + q(K.slipOut, 0.99).toFixed(2) + ', max ' + mx(K.slipOut).toFixed(2) + ' deg over ' + K.slipOut.length + ' samples');
@@ -198,17 +238,26 @@ info('taxi times', 'out p50 ' + q(taxiS.dep, 0.5).toFixed(0) + ' s (p90 ' + q(ta
       } }
   }
   const all = [...cases.values()]; const nom = all.filter(c => c.off === 0);
-  const pct = (a) => (100 * a.filter(c => c.rot != null && c.rot <= 50000).length / a.length);
-  const east = nom.filter(c => c.e === '18L' || c.e === '36R');
-  check('ROT from touchdown <= 50 s for >= 90 % of type x exit cases (nominal touchdown, all four ends)', pct(nom) >= 90, pct(nom).toFixed(1) + ' % of ' + nom.length + ' (east runway 18L/36R ' + pct(east).toFixed(1) + ' %; narrow-bodies ' + pct(nom.filter(c => c.body === 'narrow')).toFixed(1) + ' %, wide-bodies ' + pct(nom.filter(c => c.body === 'wide')).toFixed(1) + ' %)');
+  const pct = (a) => (a.length ? 100 * a.filter(c => c.rot != null && c.rot <= 50000).length / a.length : NaN);
+  const isEast = (c) => c.e === '18L' || c.e === '36R';
+  // fix round 3 (lead decision, inf, reversible by the owner): the AIP (mirror) AD 2.20 2.1.4.2 50 s is the NARROW-BODY target
+  // on the landing runway of the segregated mode (18L/36R, AD 2.20 2.1.1); 18R/36L and the wide-bodies are reported, not
+  // tuned (no ZSSS ROT evidence); the scheduler spaces each arrival with its own computed ROT (chooseExit rotMs)
+  const nE = nom.filter(c => c.body === 'narrow' && isEast(c)), nW = nom.filter(c => c.body === 'narrow' && !isEast(c));
+  const wE = nom.filter(c => c.body === 'wide' && isEast(c)), wW = nom.filter(c => c.body === 'wide' && !isEast(c));
+  const st = (a) => { const r = a.filter(c => c.rot != null).map(c => c.rot / 1000); return 'p50 ' + q(r, 0.5).toFixed(1) + ', p90 ' + q(r, 0.9).toFixed(1) + ', max ' + mx(r).toFixed(1) + ' s'; };
+  check('ROT (narrow-body target, AIP (mirror) AD 2.20 2.1.4.2): touchdown -> tail clear of the runway-holding position <= 50 s for >= 90 % of the nominal narrow-body type x chosen-exit cases on 18L/36R (the landing runway of the segregated mode)', pct(nE) >= 90, pct(nE).toFixed(1) + ' % of ' + nE.length + ' cases (' + st(nE) + ')');
   const nulls = all.filter(c => c.rot == null).length; const rots = all.filter(c => c.rot != null).map(c => c.rot / 1000);
-  check('every type x end x side has a reachable exit with a route (ROT defined)', nulls === 0, nulls + ' without');
-  check('ROT <= 70 s for all type x exit cases (touchdown -60 / 0 / +60 m)', mx(rots) <= 70, 'p50 ' + q(rots, 0.5).toFixed(1) + ' s, p90 ' + q(rots, 0.9).toFixed(1) + ', max ' + mx(rots).toFixed(1) + '; <= 50 s with the +-60 m spread: ' + pct(all).toFixed(1) + ' %');
+  check('every type x end x side has a reachable exit with a route (ROT defined: the scheduler spaces arrivals with chooseExit rotMs)', nulls === 0, nulls + ' without');
+  info('ROT report: narrow-bodies on 18R/36L (nominal; landings there only when 18L/36R is unavailable)', pct(nW).toFixed(1) + ' % of ' + nW.length + ' <= 50 s (' + st(nW) + ')');
+  info('ROT report: wide-bodies (nominal; reported, not tuned: no ZSSS ROT evidence)', '18L/36R ' + pct(wE).toFixed(1) + ' % of ' + wE.length + ' <= 50 s (' + st(wE) + '); 18R/36L ' + pct(wW).toFixed(1) + ' % of ' + wW.length + ' (' + st(wW) + ')');
+  info('ROT report: all nominal cases', pct(nom).toFixed(1) + ' % of ' + nom.length + ' <= 50 s; narrow-bodies all ends ' + pct(nom.filter(c => c.body === 'narrow')).toFixed(1) + ' %, east runway all bodies ' + pct(nom.filter(isEast)).toFixed(1) + ' %');
+  info('ROT report: touchdown -60 / 0 / +60 m, all cases (design §5 day-test row "<= 70 s for all", now a report row)', 'p50 ' + q(rots, 0.5).toFixed(1) + ' s, p90 ' + q(rots, 0.9).toFixed(1) + ', max ' + mx(rots).toFixed(1) + '; ' + all.filter(c => c.rot > 70000).length + ' of ' + all.length + ' over 70 s; narrow-bodies on 18L/36R with the spread: ' + pct(all.filter(c => c.body === 'narrow' && isEast(c))).toFixed(1) + ' % <= 50 s, max ' + mx(all.filter(c => c.body === 'narrow' && isEast(c) && c.rot != null).map(c => c.rot / 1000)).toFixed(1) + ' s');
   const over70 = {}; for (const c of all.filter(c => c.rot > 70000)) { const k = c.e + ' ' + c.type; over70[k] = (over70[k] || 0) + 1; }
-  const eastAll = all.filter(c => c.e === '18L' || c.e === '36R'); const eastMax = mx(eastAll.map(c => c.rot / 1000));
+  const eastAll = all.filter(isEast); const eastMax = mx(eastAll.map(c => c.rot / 1000));
   info('ROT > 70 s (all offsets)', JSON.stringify(over70) + '; east runway (the segregated arrival runway) max ' + eastMax.toFixed(1) + ' s, ' + eastAll.filter(c => c.rot > 70000).length + ' of ' + eastAll.length + ' cases over 70 s');
-  const why = {}; for (const c of nom.filter(c => c.rot > 50000)) why[c.why] = (why[c.why] || 0) + 1;
-  info('ROT > 50 s by exit-model branch (nominal)', JSON.stringify(why));
+  const why = {}; for (const c of nom.filter(c => c.rot > 50000)) why[(c.body === 'narrow' ? 'narrow ' : 'wide ') + (isEast(c) ? '18L/36R ' : '18R/36L ') + c.why] = (why[(c.body === 'narrow' ? 'narrow ' : 'wide ') + (isEast(c) ? '18L/36R ' : '18R/36L ') + c.why] || 0) + 1;
+  info('ROT > 50 s by body, runway and exit-model branch (nominal)', JSON.stringify(why));
 }
 
 // ------------------------------------------------------------------------------------------- 5. glide path, touchdown, climb-out

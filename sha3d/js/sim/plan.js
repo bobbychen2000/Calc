@@ -343,19 +343,30 @@ export function buildDayPlan({ day, inputs, stands, overlay = null, notams, gate
   for (const d of nightStop) if (!d.side) d.side = d.tier === 'pub' ? 'T1' : sideOf(I, d.airline, d.intl);
   for (const s of fill.dep) slots.push(s);
 
-  // ---- 2b / 3b. repeated flight numbers (owner question Q1, default OFF; local only)
+  // ---- 2b / 3b. repeated flight numbers (owner question Q1, default OFF; local only). The candidates come from the
+  // local overlays, so a plan with a rep slot is identity 'derived' (in the hash; its endState is ignored by a public plan).
+  // Verification fix round 3, F22: the slot keys are unique ('rep:<flight>:<role>[:n]') and the rotation pairing, keyed by
+  // the old slot keys above, is re-keyed (a relabelled departure crashed the knock-on step before).
   if (opts.repeatFlights && Array.isArray(opts.repCandidates) && !useOv) {
-    const used = new Set();
+    const renamed = new Map(), nByKey = new Map();
     for (const c of opts.repCandidates) {
       const tLoc = hourStart(t0, Math.floor(c.minLocal / 60), I) + (c.minLocal % 60) * MIN;
       let best = null;
       for (const s of slots) {
-        if (s.tier !== 'inf' || s.biz || s.role !== c.role || s.airline !== c.airline || used.has(s.key)) continue;
+        if (s.tier !== 'inf' || s.biz || s.role !== c.role || s.airline !== c.airline) continue;
         const dtm = Math.abs(s.tSched - tLoc);
         if (dtm <= 20 * MIN && (!best || dtm < Math.abs(best.tSched - tLoc))) best = s;
       }
-      if (best) { used.add(best.key); best.tier = 'rep'; best.flight = c.flight; best.key = 'rep:' + c.flight + ':' + c.role; }
+      if (best) {
+        const base = 'rep:' + c.flight + ':' + c.role, n = nByKey.get(base) || 0;
+        nByKey.set(base, n + 1);
+        const nk = n ? base + ':' + n : base;
+        renamed.set(best.key, nk);
+        best.tier = 'rep'; best.flight = c.flight; best.key = nk;
+      }
     }
+    for (const [ok, nk] of renamed) if (pairOf.has(ok)) { pairOf.set(nk, pairOf.get(ok)); pairOf.delete(ok); }
+    counters.repRelabelled = renamed.size;
   }
 
   // ---- 8. delays (tiers 3 and 4 only; never tier 2 or continuations), knock-on for rotations, diversions
@@ -612,9 +623,15 @@ export function buildDayPlan({ day, inputs, stands, overlay = null, notams, gate
   notes.push('AIP combined wide-body positions (216E, 220E, 281E, 413E) are not placed in data/sha_stands.json: data request to tools/airport/build_stands.py (overflow step 1 skipped)');
   if (!P.refless) notes.push('the 4 OSM positions without a ref are not used (no route in the route table, no gate object)');
 
-  // identity: 'overlay' (tier 2 from a local overlay), 'derived' (no overlay, but a local end state of D-1 was used:
-  // F15), 'none' (the public plan). Part of the hash.
-  const identity = useOv ? 'overlay' : (prevUsed && prevTainted) ? 'derived' : 'none';
+  // identity: 'overlay' (tier 2 from a local overlay), 'derived' (no overlay, but a local end state of D-1 was used (F15)
+  // or a repeated flight number of the local overlays was assigned (tiers.rep > 0, Q1; round 3, F22)), 'none' (the
+  // public plan). Part of the hash, so endState(plan) carries it and a public plan of D+1 ignores it.
+  const identityFrom = [];
+  if (useOv) identityFrom.push('overlay');
+  if (prevUsed && prevTainted) identityFrom.push('prevEnd');
+  if (tiers.rep > 0) identityFrom.push('repeatFlights');
+  const identity = useOv ? 'overlay' : identityFrom.length ? 'derived' : 'none';
+  stats.identityFrom = identityFrom;
   stats.prevEnd = prevEnd == null ? null : { identity: prevIdentity, used: prevUsed, ignored: !prevUsed, entries: prevEntries.length };
   if (prevEnd != null && !prevUsed) notes.push(`warm start: an end state with identity '${prevIdentity}' was ignored (pass endState of the public plan of D-1, or opts.localPrev locally)`);
   const plan = {

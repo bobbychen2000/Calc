@@ -30,8 +30,8 @@
  },
  "output": {
   "file": "data/sha_routes.json",
-  "sha256_16": "90bcbf08a72dd899",
-  "bytes": 339464,
+  "sha256_16": "f3273304bb313e04",
+  "bytes": 339518,
   "licence": "ODbL 1.0 (derivative database of OSM through the taxi graph); runwayEnds / variants.F4552: short cited facts, not covered by ODbL"
  },
  "rules": "AIP (mirror) AD 2.20 2.1.4.2, 2.1.7, 2.2.5, 2.3.1, 2.3.2, 2.3.3, 3.1.5, 3.2.2.2 through sha_taxigraph.json rules.facts / routing.turns; design.md §4.1-4.2",

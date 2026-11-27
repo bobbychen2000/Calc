@@ -2558,7 +2558,15 @@ export class LiveGateSystem {
     return moving;
   }
   items(now = Date.now()) {
+    // (Phase 3 P3-E, additive: with the gate adapter attached - this._exact - the engine's own timers are retired at their
+    // own due times first (advance) and times are integer ms, so a forward play and a resetTo() give the same state; the
+    // static set is built per stand with caches (buildChunked). Both are off unless js/live/gate_sync.js turns them on.)
+    if (this._exact) { now = Math.floor(now); this.advance(now); }
     const moving = this.step(now);
+    if (this._chunked) {
+      if (this.dirty || !this._chunkSet) { this.dirty = false; this.buildChunked(now, true); }
+      else if (moving || this._hadDyn) this.build(now, false);
+    } else
     if (this.dirty || !this.staticMesh) { this.dirty = false; this.build(now, true); }
     else if (moving || this._hadDyn) this.build(now, false);
     this._hadDyn = moving;
@@ -2568,6 +2576,9 @@ export class LiveGateSystem {
     // that it can dim the glazed sides' night glow without touching the other buildings' uniforms)
     const OP = this.objProg || 'obj', OU = this.objUniforms || { uEmissiveBoost: 1 };
     if (this.staticMesh) out.push({ mesh: this.staticMesh, prog: OP, model: I4, bbox: this.bbox, castShadow: true, uniforms: OU });
+    if (this._chunked && this._chunkSet) for (const G of this._chunkSet.groups) { // (P3-E chunked build: one mesh per stand group)
+      if (G.mesh) out.push({ mesh: G.mesh, prog: OP, model: I4, bbox: G.bbox, castShadow: true, uniforms: OU });
+      if (G.sign) out.push({ mesh: G.sign, prog: 'gsign', bbox: G.bbox, castShadow: false, noCull: true, nearOnly: true, uniforms: { uAtlas: this.atlas.tex } }); }
     if (this.dynMesh) out.push({ mesh: this.dynMesh, prog: OP, model: I4, bbox: this.bbox, castShadow: true, uniforms: OU });
     if (this.signMesh) out.push({ mesh: this.signMesh, prog: 'gsign', bbox: this.bbox, castShadow: false, noCull: true, nearOnly: true, uniforms: { uAtlas: this.atlas.tex } });
     if (this.dynSign) out.push({ mesh: this.dynSign, prog: 'gsign', bbox: this.bbox, castShadow: false, noCull: true, nearOnly: true, uniforms: { uAtlas: this.atlas.tex } });
@@ -2580,6 +2591,10 @@ export class LiveGateSystem {
   // terminal outline and the vehicles already placed (review 2026-11-04: belt loaders were never placed - their test
   // box reached into the height-blind fuselage band - and the fuel truck's mesh overhung its test box)
   placeVehicles(g, Ps) {
+    // (Phase 3 P3-E, additive: a cold stand - setService(g, 'cold') - has no GSE, stairs or bus; the chunked build of
+    // the gate adapter takes the stand's placement from its cache. Neither is ever set by Phase 2 code.)
+    if (g._service === 'cold') return;
+    if (this._gseHit && this._gseHit(g, Ps)) return;
     // (sha3d: also at stands without a bridge - Ps empty: the type comes from the occupant; stairs + bus first)
     const T = Ps.length ? Ps[0].T : TYPES[g.acType]; if (!g.dock || !T || !T.wing) return;
     const R = rng(hash(g.id));
@@ -2684,7 +2699,276 @@ export class LiveGateSystem {
     const span = T.wing ? T.wing.span / 2 : 18;
     for (const [a, s] of [[-2.5, 0], [T.wing ? T.wing.rootLE + (span) * Math.tan((T.wing.sweep || 25) * Math.PI / 180) + 1 : T.L * 0.5, span + 1.2], [T.wing ? T.wing.rootLE + span * Math.tan((T.wing.sweep || 25) * Math.PI / 180) + 1 : T.L * 0.5, -(span + 1.2)], [T.L + 2, 0]]) { const v = at(a, s); if (ok(v, HULL.cone)) B.cone.push(inst(v.M)); }
   }
+  // ============================================================ Phase 3 package E: gate and time adapter (additive)
+  // docs/phase3/design.md §1.5 / §4.3 / §6.4 / §7.1, docs/phase3/gates_time.md. Nothing below runs unless the gate adapter
+  // (js/live/gate_sync.js) or a test calls it; every Phase 2 path (DEBUG ?park=, the jobs) is unchanged.
+  //  - now() / setTimeSource(fn): the engine's clock. Sim time (integer ms) while traffic runs, Date.now() otherwise
+  //    (js/scene.js asks gateSys.now() for items()). The DEBUG park keeps Date.now() and is refused while traffic runs.
+  //  - setService(g, 'turn' | 'cold', t): a cold stand keeps its aircraft and docked bridges but has no GSE, stairs or bus.
+  //  - dockAt / undockAt / pushAt: the three engine calls of a turnaround (setOccupant with the arrival; undockEarly at the
+  //    sim's undock time; setOccupant(g, null) at push start, with hurryUndock for a retraction still running), each also
+  //    in a snapped form (animate = false) for resetTo().
+  //  - advance(t): retires every engine timer (dock / undock animations, rest-height settles, rest-pose parks, departure
+  //    holds, announced arrivals) at its own due time, the first integer ms at which step() would retire it, so the state
+  //    no longer depends on when frames happen to come (with integer-ms frame times a forward play and a jump agree).
+  //  - resetTo(t, occupants): clears every runtime state and replays the occupants' engine calls: calls older than
+  //    t - RESET_HORIZON_S snapped (their animations and timers are long over), the rest animated at their own sim times
+  //    with advance() between them - the state of a forward play at t (docking, docked, early, pushing, empty).
+  //  - buildChunked(now, full) (with setChunked(true)): the static set per stand, cached by a signature of everything the
+  //    stand's geometry and GSE depend on, the GSE also in a small per-stand LRU, the stands' chunks merged in groups of
+  //    CHUNK_GROUP stands (one mesh per group): a change rebuilds only that stand and its neighbours (review M7).
+  now() { const f = this._timeSrc; if (f) { const t = f(); if (Number.isFinite(t)) return Math.floor(t); } return Date.now(); }
+  setTimeSource(fn) { this._timeSrc = typeof fn === 'function' ? fn : null; this._exact = !!this._timeSrc; return this._exact; }
+  trafficRunning() { return !!this._timeSrc; }
+  serviceOf(g) { return g && g._service === 'cold' ? 'cold' : 'turn'; }
+  setService(g, mode, t = this.now()) {
+    if (!g) return false; const m = mode === 'cold' ? 'cold' : 'turn';
+    if (this.serviceOf(g) === m) return false;
+    g._service = m; g._serviceT = t; this.dirty = true; return true;
+  }
+  dockAt(g, typeKey, t, pose, icao = null, opts = {}, animate = true) {
+    if (!g || !typeKey || !TYPES[typeKey]) return false;
+    this.setOccupant(g, typeKey, !!animate, t, pose, icao, { freighter: !!opts.freighter });
+    g._service = opts.service === 'cold' ? 'cold' : 'turn'; return true;
+  }
+  undockAt(g, t, animate = true) {
+    if (!g || !g.bridge || !g.acType) return 0;
+    if (animate) return this.undockEarly(g, t);
+    const e = { type: g.acType, pose: g.dock, icao: g.dockType, freighter: g.dockCargo, t };
+    this.setOccupant(g, null, false, t, null, null, { early: true }); g._early = e; return 0;
+  }
+  pushAt(g, t, animate = true) {
+    if (!g) return 0; const was = !!(g.acType || g._early);
+    this.setOccupant(g, null, !!animate, t, null, null);
+    g._early = null; g._service = null;
+    return was && animate ? this.hurryUndock(g, 0, t) : 0; // (a retraction still running finishes at the maximum rates)
+  }
+  // the first integer ms at which step() retires the engine's next timer (null: none; this._now: one pending now)
+  nextDue() {
+    let d = Infinity;
+    const first = (ok, m) => { let x = Math.ceil(m); while (ok(x - 1)) x--; while (!ok(x)) x++; return x; };
+    for (const a of this.anims.values()) d = Math.min(d, a.dur > 0 ? first((n) => Math.min(1, Math.max(0, (n - a.t0) / a.dur)) >= 1, a.t0 + a.dur) : this._now ?? 0);
+    if (this.settles) for (const s of this.settles.values()) d = Math.min(d, first((n) => Math.min(1, Math.max(0, (n - s.t0) / s.dur)) >= 1, s.t0 + s.dur));
+    if (this.parks) for (const p of this.parks.values()) d = Math.min(d, first((n) => n - p.t0 >= p.total * 1000, p.t0 + p.total * 1000));
+    if (this._holdG) for (const g of this._holdG) d = Math.min(d, g._parkHold ? Math.ceil(g._parkHold.until) : this._now ?? 0);
+    if (this._incG) for (const g of this._incG) d = Math.min(d, g._incoming ? Math.ceil(g._incoming.until) : this._now ?? 0);
+    if (this._parkG && this._parkG.length) d = Math.min(d, this._now ?? 0);
+    return d === Infinity ? null : d;
+  }
+  advance(t) {
+    let last = null, same = 0;
+    for (let i = 0; i < 20000; i++) {
+      const d = this.nextDue(); if (d == null || d > t) break;
+      if (d === last && ++same > 50) { this._advanceStuck = (this._advanceStuck || 0) + 1; break; } // (guard: never loops)
+      if (d !== last) same = 0; last = d; this.step(Math.max(d, this._now ?? d));
+    }
+  }
+  // occupants: [{gate (object or id), typeKey, icao, pose {nose: [x, z], dir}, freighter, service, state: 'empty' | 'docking'
+  //   | 'docked' | 'early' | 'pushing', tDock, tUndock, tPush (ms, sim; null: before the day / not known), prev: {typeKey,
+  //   icao, pose, freighter, tDock, tUndock, tPush} - the departed occupant whose holds may still run}]
+  resetTo(t, occupants = [], opts = {}) {
+    const p0 = (typeof performance !== 'undefined' ? performance : Date).now();
+    t = Math.floor(t); const H = (opts.horizonS ?? RESET_HORIZON_S) * 1000, tH = t - H, tLong = t - 48 * 3600e3;
+    // 1. every runtime state the forward play builds up (design §1.5, review H1)
+    this.anims.clear(); if (this.settles) this.settles.clear(); if (this.parks) this.parks.clear();
+    this._parkG = []; if (this._holdG) this._holdG.clear(); if (this._incG) this._incG.clear();
+    for (const g of this.gates) {
+      g.acType = null; g.empty = true; g.dock = null; g.dockType = null; g.dockCargo = false; g._lastType = null;
+      g._early = null; g._parkHold = null; g._incoming = null; g._service = null; g._serviceT = null;
+      for (const b of this.bridgesOf(g)) { if (!b.m) continue; if ((b.hRest ?? b.h0) !== b.h0 && b._plans) b._plans.clear(); b.hRest = b.h0; b._parkQ = null; }
+    }
+    this._now = tLong;
+    // 2. the engine calls of every occupant (and of the departed one, for its holds), in (t, kind, stand) order
+    const byId = this._byId || (this._byId = new Map(this.gates.map(g => [g.id, g])));
+    const calls = []; let bad = 0;
+    const add = (tc, kind, g, o) => { if (kind !== 'dock' && tc == null) return; calls.push({ t: tc == null ? tLong : Math.floor(tc), kind, g, o, i: calls.length }); };
+    // (an early stand without its undock time: undocked long ago; a pushing one without its push time: pushes now)
+    const life = (g, o, st) => { add(o.tDock, 'dock', g, o);
+      if (st === 'early' || st === 'pushing' || st === 'gone') { const tu = o.tUndock ?? (st === 'early' ? tLong + 1 : null); if (tu != null) add(tu, 'undock', g, o); }
+      if (st === 'pushing' || st === 'gone') add(o.tPush ?? t, 'push', g, o); };
+    for (const o of occupants || []) {
+      const g = o && (typeof o.gate === 'object' ? o.gate : byId.get(o.gate)); if (!g) { bad++; continue; }
+      if (o.prev && o.prev.typeKey && TYPES[o.prev.typeKey] && o.prev.tPush != null) life(g, o.prev, 'gone');
+      if (o.state && o.state !== 'empty' && o.typeKey && TYPES[o.typeKey]) life(g, o, o.state); else if (o.state && o.state !== 'empty') bad++;
+    }
+    const gi = this._gi || (this._gi = new Map(this.gates.map((g, i) => [g, i])));
+    calls.sort((a, b) => (a.t - b.t) || (EV_ORDER[a.kind] - EV_ORDER[b.kind]) || (gi.get(a.g) - gi.get(b.g)) || (a.i - b.i));
+    let snapped = 0, animated = 0;
+    for (const c of calls) {
+      if (c.t > t) continue;
+      const anim = c.t >= tH;
+      this.advance(c.t); this.step(Math.max(c.t, this._now ?? c.t));
+      if (c.kind === 'dock') this.dockAt(c.g, c.o.typeKey, c.t, c.o.pose || null, c.o.icao || null, { freighter: c.o.freighter }, anim);
+      else if (c.kind === 'undock') this.undockAt(c.g, c.t, anim);
+      else this.pushAt(c.g, c.t, anim);
+      if (anim) animated++; else snapped++;
+    }
+    this.advance(t); this.step(Math.max(t, this._now ?? t));
+    // 3. the service of every occupied stand (a field: GSE only, no timer)
+    for (const o of occupants || []) { const g = o && (typeof o.gate === 'object' ? o.gate : byId.get(o.gate)); if (g && g.acType && o.service === 'cold') g._service = 'cold'; }
+    this.dirty = true;
+    const ms = (typeof performance !== 'undefined' ? performance : Date).now() - p0;
+    return (this.lastReset = { t, ms: +ms.toFixed(1), calls: calls.length, snapped, animated, bad, horizonS: H / 1000 });
+  }
+  // the aircraft the engine knows at the stands (occupants and early departures): footprints for the GSE keep-out
+  occupantFootprints() {
+    const out = [];
+    for (const g of this.gates) { const e = g._early; const tk = g.acType || (e && e.type); const pose = g.acType ? g.dock : e && e.pose; const T = tk && TYPES[tk];
+      if (!T || !pose) continue; out.push(footprint([pose.nose[0], G, pose.nose[1]], [pose.dir[0], 0, pose.dir[1]], T, g)); }
+    return out;
+  }
+  // ------------------------------------------------------------ chunked static build (P3-E, review M7)
+  setChunked(on) {
+    on = !!on; if (on === !!this._chunked) return on;
+    this._chunked = on; this._gseHit = null;
+    if (on) { if (this.staticMesh) { this.staticMesh.dispose(); this.staticMesh = null; } if (this.signMesh) { this.signMesh.dispose(); this.signMesh = null; } }
+    else if (this._chunkSet) { for (const G of this._chunkSet.groups) { if (G.mesh) G.mesh.dispose(); if (G.sign) G.sign.dispose(); } this._chunkSet = null; this._chunks = null; this._gse = null; }
+    this.dirty = true; return on;
+  }
+  // place every deferred GSE now (a render job's screenshot; never needed for correctness)
+  flushGse(now = this.now()) { const b = this.gseBudgetMs; this.gseBudgetMs = Infinity; try { if (this._gsePending && this._gsePending.size) { this.dirty = true; this.items(now); } } finally { this.gseBudgetMs = b; } return this._gsePending ? this._gsePending.size : 0; }
+  // everything stand g's static chunk depends on (geometry: its bridges' static poses, the VDGS face; GSE: the occupant,
+  // its pose and service, the own bridges' solids, the other aircraft near it), exact (full float text)
+  standSig(g) {
+    let s = (g.acType || '') + '|' + (g._lastType || '') + '|' + (g.dockType || '') + '|' + (g.dockCargo ? 1 : 0) + '|' + (g._service || '') + '|';
+    if (g.dock) s += g.dock.nose[0] + ',' + g.dock.nose[1] + ',' + g.dock.dir[0] + ',' + g.dock.dir[1];
+    if (g.bridge) { s += this.anims.has(g.id) || this.settling(g) ? '|A' : '|S';
+      for (const b of this.bridgesOf(g)) { const q = b._parkQ; s += '|' + (b.hRest ?? b.h0) + (q ? ':' + q.a + ',' + q.e + ',' + q.t + ',' + q.h : ''); } }
+    if (g.acType) s += '|K' + this.keepSig(g);
+    return s;
+  }
+  keepSig(g) {
+    let s = '';
+    for (const o of this.keepNear(g)) s += o.nose[0] + ',' + o.nose[1] + ',' + o.f[0] + ',' + o.f[1] + ',' + this.typeKeyOf(o.T) + ';';
+    return s;
+  }
+  // the keep-out footprints that can touch stand g's ground equipment: those whose planform box (hitsAircraft cannot hit
+  // outside it) overlaps the box every GSE hull of g lies in (its aircraft's planform grown by 12 m fore and aft and to
+  // max(span / 2, R + 18) + 8 m either side: belt loaders, baggage train, catering, fuel, GPU, cones, stairs, buses) - the
+  // same placement as with the whole list
+  keepNear(g) {
+    const T = TYPES[g.acType]; const pose = g.dock; if (!T || !pose || !this.keepOut || !this.keepOut.length) return [];
+    const span = T.wing ? T.wing.span / 2 : 18;
+    const A = rectBox(pose.nose, pose.dir, -12, T.L + 12, Math.max(span, T.R + 18) + 8);
+    return this.keepOut.filter(o => { if (o.gate === g) return false; const B = o._box || (o._box = fpBox(o)); return B[0] <= A[2] && B[2] >= A[0] && B[1] <= A[3] && B[3] >= A[1]; });
+  }
+  standChunk(g) {
+    const geo = new Geo(), sgn = newSignGeo(); const VB = {}; for (const k in this.vehicleMeshes) VB[k] = [];
+    const keepV = this.vehicleBuckets, keepS = this.sprites; this.vehicleBuckets = VB; this.sprites = [];
+    // (the keep-out list cut to the aircraft within 200 m: hitsAircraft cannot hit beyond an aircraft's own extent, < 90 m
+    // from its nose, and every vehicle stays within ~90 m of this stand's nose - the same placement, about 10x faster)
+    const keepK = this.keepOut; this.keepOut = this.keepNear(g);
+    let spr;
+    try {
+      if (!g.bridge) this.remoteGeo(g, geo, sgn);
+      else { if (!this.anims.has(g.id) && !this.settling(g)) { const Ps = this.bridgesOf(g).map(b => this.bridgeGeo(g, b, g.acType && this.docks(g, b) ? 1 : 0, geo, sgn)); if (g.acType) this.placeVehicles(g, Ps); }
+        this.standGeo(g, geo, sgn); }
+    } finally { spr = this.sprites; this.vehicleBuckets = keepV; this.sprites = keepS; this.keepOut = keepK; }
+    const S = sgn.pos.length ? { pos: new Float32Array(sgn.pos), nrm: new Float32Array(sgn.nrm), uv: new Float32Array(sgn.uv), extra: new Float32Array(sgn.ext), idx: new Uint32Array(sgn.idx) } : null;
+    return { geo: geo.nv ? geo.data() : null, sgn: S, veh: VB, spr };
+  }
+  buildChunked(now, full) {
+    if (!full) return this.build(now, false);
+    const p0 = (typeof performance !== 'undefined' ? performance : Date).now();
+    this.keepOut = this.aircraftFootprints ? this.aircraftFootprints() : []; this._idleBoxes = [];
+    const C = this._chunks || (this._chunks = new Map()); const LRU = this._gse || (this._gse = new Map());
+    if (!this._chunkSet) {   // stand groups: area, then stand order; CHUNK_GROUP stands per mesh
+      const order = this.gates.slice().sort((a, b) => (a.area || '').localeCompare(b.area || '') || (parseInt(a.name, 10) - parseInt(b.name, 10)) || a.name.localeCompare(b.name));
+      const groups = []; for (let i = 0; i < order.length; i += CHUNK_GROUP) groups.push({ gates: order.slice(i, i + CHUNK_GROUP), ver: '', mesh: null, sign: null, bbox: this.bbox });
+      this._chunkSet = { groups, mast: null, mastKey: null };
+    }
+    let rebuilt = 0, gseHits = 0, gsePlaced = 0, deferred = 0; const P0 = (typeof performance !== 'undefined' ? performance : Date);
+    // the GSE of a stand from its LRU (key: the occupant, pose, service, the own bridges' state, the aircraft around); past
+    // the build's GSE budget (gseBudgetMs) a placement is deferred to the next build: the stand's geometry is current at
+    // once, its vehicles follow a frame later (a cold cache - the first build, a long jump - fills over several frames)
+    let curKey = null, skip = false; const budget = this.gseBudgetMs ?? GSE_BUDGET_MS; let spent = 0;
+    const pend = this._gsePending || (this._gsePending = new Set()); pend.clear();
+    this._gseHit = (g) => { const hit = curKey && LRU.get(curKey); if (hit) { for (const k in hit) for (const v of hit[k]) this.vehicleBuckets[k].push(v); gseHits++; return true; } return skip; };
+    for (const G of this._chunkSet.groups) {
+      if (G === this._chunkSet.mastG) continue;
+      let ver = '';
+      for (const g of G.gates) {
+        const sig = this.standSig(g); let c = C.get(g.id);
+        if (c && c.sig === sig + '#gse-pending' && !LRU.has(g.id + '#' + sig) && (spent >= budget || (spent > 0 && spent + ((this._gseCost && this._gseCost.get(g.id)) ?? 6) > budget))) { pend.add(g.id); deferred++; }   // (still deferred: keep its chunk)
+        else if (!c || c.sig !== sig) {
+          curKey = g.acType ? g.id + '#' + sig : null;
+          // (over budget: no GSE this build; a placement whose last measured cost would overrun the budget waits unless it is
+          // the build's first one)
+          const est = (this._gseCost && this._gseCost.get(g.id)) ?? 6;
+          skip = !!curKey && !LRU.has(curKey) && g._service !== 'cold' && (spent >= budget || (spent > 0 && spent + est > budget));
+          const t1 = P0.now();
+          c = this.standChunk(g); c.ver = (this._chunkVer = (this._chunkVer || 0) + 1); C.set(g.id, c); rebuilt++;
+          if (skip) { c.sig = sig + '#gse-pending'; pend.add(g.id); deferred++; }
+          else { c.sig = sig;
+            if (curKey && !LRU.has(curKey)) { const dt = P0.now() - t1; spent += dt; (this._gseCost || (this._gseCost = new Map())).set(g.id, dt); LRU.set(curKey, c.veh); gsePlaced++;
+              const mine = [...LRU.keys()].filter(k => k.startsWith(g.id + '#')); if (mine.length > GSE_LRU) LRU.delete(mine[0]); } }
+          curKey = null; skip = false;
+        }
+        ver += c.ver + ',';
+      }
+      if (ver !== G.ver) { G.ver = ver; if (G.mesh) G.mesh.dispose(); if (G.sign) G.sign.dispose(); const cs = G.gates.map(g => C.get(g.id));
+        const M = concatGeo(cs.map(c => c.geo)); G.mesh = M ? new Mesh(M) : null; G.bbox = M ? M.bbox : this.bbox;
+        const S = concatGeo(cs.map(c => c.sgn)); G.sign = S ? new Mesh(S) : null; }
+    }
+    this._gseHit = null;
+    // the floodlight masts (fixed once placed) and the staged idle stairs (cheap; they depend on every stand's occupancy)
+    const mk = (this.mastStats && this.mastStats.hash) + ':' + (this.masts || []).length;
+    if (this._chunkSet.mastKey !== mk) { const geo = new Geo(); const keep = this.staticSprites; this.staticSprites = []; this.mastGeo(geo); const spr = this.staticSprites; this.staticSprites = keep;
+      if (this._chunkSet.mast && this._chunkSet.mast.mesh) this._chunkSet.mast.mesh.dispose(); const D = geo.nv ? geo.data() : null;
+      this._chunkSet.mast = { mesh: D ? new Mesh(D) : null, bbox: D ? D.bbox : this.bbox, spr }; this._chunkSet.mastKey = mk;
+      if (!this._chunkSet.groups.includes(this._chunkSet.mastG)) { this._chunkSet.mastG = { gates: [], ver: 'masts', mesh: null, sign: null, bbox: this.bbox }; this._chunkSet.groups.push(this._chunkSet.mastG); }
+      this._chunkSet.mastG.mesh = this._chunkSet.mast.mesh; this._chunkSet.mastG.bbox = this._chunkSet.mast.bbox; }
+    this.vehicleBuckets = {}; for (const k in this.vehicleMeshes) this.vehicleBuckets[k] = [];
+    const spr = [];
+    for (const g of this.gates) { const c = C.get(g.id); if (!c) continue; for (const k in c.veh) for (const v of c.veh[k]) this.vehicleBuckets[k].push(v); for (const s of c.spr) spr.push(s); }
+    this.staticSprites = spr.concat(this._chunkSet.mast ? this._chunkSet.mast.spr : []); this.sprites = this.staticSprites;
+    this.idleGeo();
+    for (const k in this.vehicleBuckets) { const list = this.vehicleBuckets[k]; this.vehicleMeshes[k].setInstances(new Float32Array(list.flat()), list.length); }
+    if (pend.size) this.dirty = true;   // (the deferred placements: next build)
+    this.lastBuild = { ms: +((typeof performance !== 'undefined' ? performance : Date).now() - p0).toFixed(1), rebuilt, gseHits, gsePlaced, deferred, groups: this._chunkSet.groups.length };
+    return this.build(now, false);
+  }
   typeKeyOf(T) { if (!this._tk) { this._tk = new Map(); for (const [k, t] of Object.entries(TYPES)) if (t) this._tk.set(t, k); } return this._tk.get(T) || ''; }
+}
+// (Phase 3 P3-E) resetTo(): calls older than this are snapped (their animations, settles, parks and holds are over: the
+// longest chain - an undock, its rest-height settle, the 180 s departure hold and the rest-pose return after it - is about
+// 5 min; inf); the order of engine calls at one sim ms (gate_sync.js applies events in the same order); the stands per
+// mesh of the chunked build; the GSE placements kept per stand (a scrub back and forth re-uses them); the GSE placement
+// time one build may spend before it defers the rest to the next frames (one placement is 2-12 ms here). All inf.
+export const RESET_HORIZON_S = 1200;
+export const EV_ORDER = { dock: 0, undock: 1, push: 2, service: 3 };
+const CHUNK_GROUP = 8, GSE_LRU = 3, GSE_BUDGET_MS = 12;
+// world [x0, z0, x1, z1] of the rectangle x in [a, b] metres behind a nose at n (heading d), |y| <= w to either side
+function rectBox(n, d, a, b, w) {
+  const r = [-d[1], d[0]]; let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+  for (const x of [a, b]) for (const y of [-w, w]) { const px = n[0] - d[0] * x + r[0] * y, pz = n[1] - d[1] * x + r[1] * y; x0 = Math.min(x0, px); x1 = Math.max(x1, px); z0 = Math.min(z0, pz); z1 = Math.max(z1, pz); }
+  return [x0, z0, x1, z1];
+}
+// the box hitsAircraft(fp, ...) can return true in: fuselage, wings, engines, rear engines, tailplane (+ its margins)
+function fpBox(fp) {
+  const T = fp.T; let w = T.R + 0.6; if (T.wing) w = Math.max(w, T.wing.span / 2 + 0.5);
+  for (const e of T.eng || []) w = Math.max(w, Math.abs(e.z) + e.r + 0.8); if (T.rear) w = Math.max(w, T.rear.z + T.rear.r + 0.8); if (T.hstab) w = Math.max(w, T.hstab.span / 2 + 0.5);
+  let b = T.L + 1; for (const e of T.eng || []) b = Math.max(b, (T.wing ? T.wing.rootLE + Math.abs(e.z) * Math.tan((T.wing.sweep || 25) * Math.PI / 180) : T.L * 0.4) - (e.fwd || 3) + e.len + 1.5);
+  if (T.wing) b = Math.max(b, T.wing.rootLE + (T.wing.span / 2) * Math.tan((T.wing.sweep || 25) * Math.PI / 180) + T.wing.rootC + 0.5);
+  if (T.rear) b = Math.max(b, T.rear.x + T.rear.len + 1);
+  let a = -1; for (const e of T.eng || []) a = Math.min(a, (T.wing ? T.wing.rootLE + Math.abs(e.z) * Math.tan((T.wing.sweep || 25) * Math.PI / 180) : T.L * 0.4) - (e.fwd || 3) - 1.5);
+  return rectBox(fp.nose, fp.f, a - 0.5, b + 0.5, w + 0.5);
+}
+// merge per-stand geometry ({pos, nrm, uv, extra, idx[, col, bbox]} typed arrays, or null) into one mesh data object
+function concatGeo(list) {
+  let nv = 0, ni = 0, col = false; for (const d of list) if (d && d.pos.length) { nv += d.pos.length / 3; ni += d.idx.length; if (d.col) col = true; }
+  if (!nv) return null;
+  const pos = new Float32Array(nv * 3), nrm = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), extra = new Float32Array(nv * 4), idx = new Uint32Array(ni), C = col ? new Float32Array(nv * 4) : null;
+  const bb = [1e9, 1e9, 1e9, -1e9, -1e9, -1e9]; let ov = 0, oi = 0;
+  for (const d of list) {
+    if (!d || !d.pos.length) continue; const n = d.pos.length / 3;
+    pos.set(d.pos, ov * 3); nrm.set(d.nrm, ov * 3); uv.set(d.uv, ov * 2); extra.set(d.extra, ov * 4); if (C) { if (d.col) C.set(d.col, ov * 4); else C.fill(1, ov * 4, (ov + n) * 4); }
+    for (let i = 0; i < d.idx.length; i++) idx[oi + i] = d.idx[i] + ov;
+    const b = d.bbox; if (b) for (let k = 0; k < 3; k++) { bb[k] = Math.min(bb[k], b[k]); bb[k + 3] = Math.max(bb[k + 3], b[k + 3]); }
+    else for (let i = 0; i < d.pos.length; i += 3) for (let k = 0; k < 3; k++) { bb[k] = Math.min(bb[k], d.pos[i + k]); bb[k + 3] = Math.max(bb[k + 3], d.pos[i + k]); }
+    ov += n; oi += d.idx.length;
+  }
+  const out = { pos, nrm, uv, extra, idx, bbox: bb }; if (C) out.col = C; return out;
 }
 
 // exact plan intersection area of two oriented boxes ({c, u, hl, hw}): A clipped by B's four half-planes (Sutherland-Hodgman)

@@ -25,16 +25,17 @@ aggregates of an in-memory run; nothing from the overlay was written to disk out
 | `tools/sim/observed_overlay.py` | LOCAL: the overlay of one day from `refs/cache/observed_elsewhere/sha_observed_<day>.json`, allow-listed fields only, stdout only |
 | `sha_live_server.py` | `GET /api/observed_elsewhere?day=` (loopback only unless `--identity-lan`, Host header named localhost / loopback IP and no cross-site browser request (round 1, F4); `--no-identity`; malformed day 400; `{available: false}` without a file), `/api/ping` `features.identity`, banner line; METAR look-back `WX_HOURS` 12 → 26 h (§1.4) |
 | `tools/sim/test_observed_overlay.py`, `tools/live/test_relay.py` (+5) | overlay and endpoint tests (synthetic data only, plus counts on the real local tables) |
-| `tools/sim/audit_identity.py` | the exact-match audit of §9.1 (counts, paths and line numbers only; exit 1 on a hit or a forbidden `refs/cache` path, exit 2 on a file it could not read completely (REVIEW, round 2); `--selftest`) |
-| `tools/sim/test_plan.mjs` | every P3-A acceptance criterion of §7.2 plus the fill-turn distribution, the inputs' freshness, the warm-start identity and the plot sources (93 checks with the local overlay, 94 with `PLOTS=1`; round 2) |
+| `tools/sim/audit_identity.py` | the exact-match audit of §9.1 (counts, masked paths and line numbers only; exit 1 on a hit, a forbidden `refs/cache` path, any read / git failure (ERROR, round 3) or an incomplete identity set (round 4), exit 2 on a file it could not read completely (REVIEW, round 2; repository-wide since round 3); `--selftest`; `--install-hooks` puts it into the pre-commit and commit-msg hooks (round 4)) |
+| `tools/sim/test_plan.mjs` | every P3-A acceptance criterion of §7.2 plus the fill-turn distribution, the night-stop cap, the inputs' freshness, the warm-start identity, Q1 repeat flights and the plot sources (103 checks with the local overlay, 104 with `PLOTS=1`; 8 of them **known failures** that are reported but do not set the exit code: D2 and D8; round 3) |
 | `tools/live/build_snapshot.py` (+ `data/sha_snapshot.js/.json`) | `SHA_SNAPSHOT.days[]` for 10 / 12 / 13 / 14 / 20 Nov, `traffic: {kind: 'sim', day, planVersion}`, one-off AWC pull `--fetch-days` |
 
 ```bash
 python3 -I tools/sim/build_sim_inputs.py             # inputs (needs the local refs/cache aggregates source)
-node tools/sim/test_plan.mjs                         # plan tests (PLOTS=1 also writes out/phase3/plan/aggregates.json)
+node tools/sim/test_plan.mjs                         # plan tests (PLOTS=1 also writes out/phase3/plan/aggregates.json; with the
+                                                     #   local overlay also out/phase3/local/fingerprints.json for the audit)
 python3 -I tools/sim/test_observed_overlay.py        # overlay tool + endpoint (4 tests)
 python3 -I tools/live/test_relay.py                  # relay (12 tests: 7 old + 5 identity)
-python3 -I tools/sim/audit_identity.py --files ...   # or --staged / --diff / --docs; --selftest
+python3 -I tools/sim/audit_identity.py --files ...   # or --staged / --diff / --docs; --selftest; --install-hooks (lead, once per clone)
 python3 -I tools/live/build_snapshot.py              # snapshot + replay days from the cache (deterministic)
 ```
 
@@ -164,8 +165,8 @@ Local overlay plans (identity on, counts only, never written to disk):
 | 12 Nov | 803 | 550 / 72 / 181 | 15 / 57 | 35 / 90 (45 / 80) | 20 | 73.6 / 77.6 % | 79 / 113 / 159 min (274) | 0 |
 
 Tier 2 = the identified count (542 / 550) minus 0 out of window; 0 tier-2 delays. The local fill is only the residual of
-the observed day (45 / 43 turns: runway gap P50 120 / 133 min, reported, not tested); the test band applies to all turns
-of the local plan (observed, continuations and fill). Observed same-airframe pairs with a ground time below the type
+the observed day (45 / 43 turns: runway gap P50 120 / 133 min); since round 3 it is tested with the whole-day ±15 min band
+and 12 Nov is a **known failure** (D8). Observed same-airframe pairs with a ground time below the type
 minimum (t_sha kept, review M10): **9 / 9** (none ≤ 0), counted in `stats.counters.tier2ShortTurns`: the scheduler's
 holds (C1) must stretch them.
 
@@ -256,7 +257,8 @@ kept for the Phase 2 reader in `entry.js`).
 | Occupancy per side × class within capacity or counted overflow | pass | maxima above; cross-side 29-48 movements counted |
 | Unplaced 0 on 12 and 20 Nov | pass | 0 on every day, public and local |
 | Contact share per side (60-85 %) | pass | T1 65.8-78.4 %, T2 71.5-75.2 % public; 71.6-73.6 / 74.6-77.6 % local |
-| Fill turns follow the turnaround distribution (round 1, F5; band [inf]: P10 and P50 within ±15 min, < input P10 ≤ 15 %, at the minimum ≤ 12 %; local fill: P50 within ±30 min, round 2, F17) | pass | public: runway gap P50 113-120 min (input 110), P10 80-87 (82); below P10 4.8-10.2 %; at the minimum 7.4-9.8 %. Local fill (the residual, 45 / 43 turns): P50 120 / 133, P10 85 / 93, below P10 6.7 / 7.0 % (12 Nov P50 +23 min: outside ±15, inside the residual band ±30) |
+| Fill turns follow the turnaround distribution (round 1, F5; band [inf]: P10 and P50 within ±15 min, < input P10 ≤ 15 %, at the minimum ≤ 12 %; the same band for the local fill since round 3, F17) | **partly** | public: runway gap P50 113-120 min (input 110), P10 80-87 (82); below P10 4.8-10.2 %; at the minimum 7.4-9.8 %: pass. Local fill (the residual, 45 / 43 turns): 10 Nov P50 120, P10 85: pass; **12 Nov P50 133 (+23 min), P10 93: FAIL (known, D8)** |
+| Night-stoppers parked per side ≤ 0.85 × usable (design §2.2 step 7; checked since round 3) | **fail (known)** | parked T1 46-48 / 41, T2 82-86 / 73 public; T1 43 / 45, T2 83 / 80 local; unplaced 0; lead decision: the cap stays, D2 (data request) |
 | Non-observed day mix within ±3 points of the observed full plans | pass | ≤ 1.43 points |
 | 0 tier-2 delays | pass | local, both days |
 | Identical hash on two builds | pass | public and local |
@@ -264,7 +266,7 @@ kept for the Phase 2 reader in `entry.js`).
 | Public 12 Nov plan has no identity field; tier 2 = identified − out of window; continuations per side | pass | see §5 / §4 |
 | `test_observed_overlay.py` (allow-list, type format, no 6-hex, unavailable, bad day, non-loopback) | pass | 4 tests |
 | Relay tests still pass + new identity tests | pass | 12 / 12 (7 old + 5 identity, incl. the Host-header guard) |
-| `audit_identity.py` 0 hits on the package | pass | §5 and round 2: 0 hits, 0 REVIEW on every file of the package + `data/sha_snapshot.*`; 110 / 110 selftest cases |
+| `audit_identity.py` 0 hits on the package | pass | §5, rounds 2 and 3: 0 hits, 0 REVIEW, 0 ERROR on every file of the package + `data/sha_snapshot.*`; 173 / 173 selftest cases (round 3) |
 | `SHA_SNAPSHOT.days[]` 10 / 12 / 13 / 14 / 20 Nov complete | pass | §6 |
 
 ---
@@ -284,7 +286,9 @@ kept for the Phase 2 reader in `entry.js`).
   overlay plans 126 / 126). The cap 0.85 × usable (T1 41, T2 73) is applied to where the night-stoppers PARK, a side above
   its cap sends the rest to the other side while that side is below its own cap; both sides end above it: parked T1 46-48,
   T2 82-86 public (T1 43-45, T2 80-83 local). Every aircraft is placed (unplaced 0); the excess is counted cross-side. The
-  AIP combined positions (D4, data request) would relieve T2.
+  AIP combined positions (D4, data request) would relieve T2. **Lead decision (round 3, F16):** the cap is not relaxed; it is
+  kept as an honestly reported failure (`test_plan.mjs` checks it on every plan and prints `FAIL (known: plan.md D2 ...)`)
+  until the Phase 1 data owner places 216E / 220E / 281E / 413E (request below, D4).
 - **D3 Remote-first share.** The design's preference (contact first) gave T1 80-90 % and overall 82-84 % with the
   round-0 turns, above the 60-85 % band and the published 72-76.5 % bridge rate. A seeded share of visits tries the remote
   stands first (handling, airline and bus-gate choices are not modelled): 110 ‰ in round 0; since round 1, 50 ‰ plus every
@@ -305,13 +309,20 @@ kept for the Phase 2 reader in `entry.js`).
 - **Route table**: the taxi estimates read `data/sha_routes.json` (P3-B, still in its fix loop); rerun
   `build_sim_inputs.py` after a route-table rebuild (`inputs_sha256_16` shows the version used).
 - **Q1** (`rep` slots): implemented behind `opts.repeatFlights` with `repCandidates` from the local overlays (432
-  candidates on 10 / 12 Nov), OFF by default and never in the public plan.
-- **D8 Local fill-turn band (round 2, F17).** On an observed day the fill is the residual (target − observed −
-  continuations per hour): its arrivals fall mostly 14-23 h, its departures 07-10 h, so only 43-45 fill turns exist and
-  their runway-gap P50 is 120 / 133 min (input 110). The test applies the whole-day band to them except the P50, which has
-  a residual band of ±30 min [inf] (P10, below P10 and at the minimum keep ±15 min / 15 % / 12 %). The owner may tighten
-  it; a pairing tolerance (surplus ≤ 30-60 min) was tried and brought 12 Nov only to 124-129 min at the cost of 7-9 turns
-  and 3-6 more night-stoppers (D2), so it was not adopted.
+  candidates on 10 / 12 Nov), OFF by default (owner default) and never in the public plan. Since round 3 (F22) a plan with
+  `tiers.rep > 0` reports `identity: 'derived'` (`stats.identityFrom` lists why; in the hash, so its `endState` is
+  ignored by a public plan of the next day), slot keys are unique (`rep:<flight>:<role>[:n]`) and the rotation pairing is
+  re-keyed after the relabelling (the crash of round 3).
+- **D8 Local fill-turn band (round 2, F17; corrected in round 3).** On an observed day the fill is the residual (target −
+  observed − continuations per hour). Measured (verifier's `fill_hours.mjs`, re-run in round 3): the fill **arrivals**
+  cluster late, 71 / 88 (10 Nov) and 68 / 83 (12 Nov) in 14-24 h local; the fill **departures** are spread over the day,
+  32 / 103 and 29 / 94 in 04-10 h, 32 / 103 and 25 / 94 in 10-14 h, 39 / 103 and 40 / 94 in 14-24 h (round 2 wrongly said
+  "mostly 07-10 h"). A late arrival has few fill departures left after it, so only 43-45 fill turns exist and the ones that
+  pair are long: runway-gap P50 120 / 133 min (input 110; the verifier's own pair count gives 125 / 134 with 47 / 44 turns).
+  The ±30 min residual band of round 2 was set after the fact so that the result passes; it is **withdrawn** (round 3):
+  the local fill keeps the whole-day ±15 min band, 10 Nov passes, **12 Nov fails (+23 min) and is reported as a known
+  failure**. A pairing tolerance (surplus ≤ 30-60 min) was tried in round 2 and brought 12 Nov only to 124-129 min at the
+  cost of 7-9 turns and 3-6 more night-stoppers (D2), so it was not adopted.
 - **Interface notes (round 2, for C1 / D):** `endState()` returns `{v, day, hash, identity, entries}` (was the bare
   array; `buildDayPlan` ignores a bare array or a non-public end state unless `opts.localPrev`); `plan.identity` can be
   `'derived'`; `stats.prevEnd`; movements of tier `oe` carry `reg` (local only) and `airframes[].regTiers = ['oe']`: D
@@ -407,3 +418,64 @@ times are not in the `ftime` class. The 11 pre-existing files with public regist
 also occur in the identity set (fleet lists, Commons captions, livery credits, the Phase 0 survey, `js/live/lookup.js`,
 the committed tier-1 ZSSS extract) are unchanged and not this package's; `--docs` and a whole-tree `--files` run exit 1
 on them.
+
+---
+
+## Verification fixes, round 3
+
+A third adversarial verifier refuted 7 claims (F12 high; F13, F22 medium; F17, F24, F26, F27, F28 low). Each is fixed in
+this package's files; the lead decided F16 (night-stop cap: kept, reported). Every number below was re-measured after the
+fixes. Scratch evidence (gitignored, counts and masked names only): `out/phase3/A_fix3/` (`plant_audit3_rerun.txt`,
+`plant_audit3b_rerun.txt`, `plant_audit3c_rerun.txt`, `rep_taint_rerun.txt`, `fill_hours_rerun.txt`,
+`check_plan_public.txt`, `check_plan_local.txt`, `check_iface.txt`, `prevend_rerun.txt`, `fp_hunt_rerun.txt`,
+`small_cells_rerun.txt` = the verifier's own scripts re-run; `audit_selftest.txt`, `tree_audit_v3.txt`,
+`diff_audit_v3.txt`, `staged_audit_v3.txt`, `test_plan_final.txt`, `test_plan_plots.txt`, `test_overlay.txt`,
+`test_relay.txt`, `audit_package_final.txt`). Planted real values lived only under `sha3d/out/` and in temporary `GIT_DIR`s
+outside the repository and were deleted (each script prints "scratch removed: True"); the real index was never touched.
+
+| Id | Finding | Fix | Evidence after the fix |
+|---|---|---|---|
+| F12 (high) | the git modes failed open: a file staged under a non-ASCII name, a non-ASCII directory or a name with `"` scanned as empty (`git show :<quoted name>` exits 128, `check=False` made it a clean empty file); `--diff` scanned 0 files for those names; a symlink → file type change (status T) was dropped; REVIEW gated only under `sha3d/` | the git layer is one class `Git`: `git -c core.quotePath=false --literal-pathspecs`, NUL-separated `-z` lists; `--staged` reads `git diff --cached --raw -z --no-renames --no-abbrev --diff-filter=d` (every status except D: A C M R T U X B) and each **blob by its id** (`git cat-file blob`; a name like `1:x` is not read as a stage); a symlink's committed content (its target text) is scanned; **any** failure - a git command, a missing object, an unmerged or intent-to-add entry, a submodule, a listed work-tree path that is not a file - is **ERROR, exit 1**, never an empty file or an empty list; a staged `SOURCES.json` is read from the index; REVIEW gates every path (`REVIEW_EXEMPT` is empty); printed paths are masked where a component holds a value | selftest **20 / 20 git cases** in a scratch repository (work tree under `sha3d/out/`, `GIT_DIR` in a temporary directory): `--staged` with an ASCII name (control), a non-ASCII name, a non-ASCII directory, `"`, tab + backslash + newline, `1:x` → exit 1; a clean non-ASCII file → 0; an unknown binary at the top level → REVIEW 2; a symlink whose target text holds a registration → 1; a lost blob → ERROR 1; a `GIT_DIR` that is no repository → ERROR 1; T in `--diff` and `--staged` → 1; the value only in the index (`git add -p`) → 1; `--diff` of the three quoted names and of an untracked non-ASCII directory → 1; a deleted file and a clean tree → 0. The verifier's `plant_audit3.py` part 2: **9 / 9 caught** (was 2 / 9); `plant_audit3b.py` quoted path: exit 1 (was 0); `plant_audit3c.py` symlink → file (T): exit 1 (was 0); real index unchanged |
+| F13 (medium) | missed forms: a hard line wrap inside a flight number / callsign, the time before the date, compact `YYYYMMDDhhmmss` / `YYYYMMDD_hhmmss` stamps (also file names), an airline name before a number, callsign / flight split over JSON fields or CSV cells, an address as `hh:hh:hh` or decimal | **second matching pass** on a copy where a single line break plus indentation and a comment / quote prefix (`#`, `//`, `*`, `>`, `--`, `;`) becomes one space (none after a hyphen); only hits that span a joint count (no double count; tables and objects are left to the first pass, which spans lines already); **time before the date** (`hh:mm[:ss] [zone] [on \| , \| of] date`); **compact stamps** `YYYYMMDD[_-]?hhmm[ss]` and `YYYY-MM-DD[T_-]hh[-.]mm[-.ss]`, in text and path names; **airline names** of `data/lookup.js` AIRLINES (6,434 names, also without a trailing "Airlines" / "Airways" / ... while two words remain, plus the inputs' short names) before a number (also "flight" / "no." between) → ICAO callsign and IATA flight; **joined fields**: an airline-code field / column and a flight-number field / column of one flat JSON / JS / Python object or of one CSV / TSV / markdown table (header-named, any distance); **addresses** in address-named fields and columns and after an address keyword as `hh:hh:hh` / `hh-hh-hh` and as a decimal integer (placeholders `000000` / `ffffff` dropped from the set); also (round-2 admitted limits) `{"day": D, "tod_s": n}` (UTC and UTC+8), an Excel serial in text / CSV, a date cell and a time cell any columns apart, and Cyrillic / Greek look-alike letters folded to Latin | selftest **22 new form cases + 6 clean controls** (a lone revision time, a name + verb + count, a carrier column with a count column, an 8-hex id of no local file, a wrapped clean paragraph, a decimal after a non-address word), all pass; the verifier's `plant_audit3.py` part 1: **42 / 42** variants caught or REVIEW (was 22 caught): every listed miss and the three admitted round-2 limits caught; sqlite, npy and a zlib `.bin` stay REVIEW (exit 2) by design; `plant_audit3b.py`: 5 / 5 (the file-name stamp is caught - the audit now masks a path component that holds a value, so that script's base-name parser cannot attribute the line; alone: exit 1) |
+| F22 (medium) | `repeatFlights` with all 432 candidates threw at `plan.js:375` (the relabelled departure key was not in the pairing map); a plan with 156 `rep` flight numbers reported identity `none` and its end state warm-started the next day's public plan | relabelling gives unique slot keys `rep:<flight>:<role>[:n]` and **re-keys the pairing map**; a plan with `tiers.rep > 0` is **identity `derived`** (`stats.identityFrom: ['repeatFlights']`, in the hash), so `endState()` carries `derived` and a public plan of D+1 ignores it; the switch stays OFF by default (owner default Q1) | `test_plan.mjs` (local, 3 new checks): all 432 candidates and the 220 arrival candidates on 10 / 12 / 13 / 14 / 20 Nov → **10 builds, 0 errors**, 2,351 `rep` movements, unique slots, 0 stand violations, unplaced 0, deterministic; identity `derived` on all 10, every next-day public warm start ignores the end state (hash = no warm start); the public plans are unchanged (12 Nov `7e55ca232e02d0f4`, 20 Nov `641cede50130483c`, as in round 2). The verifier's `rep_taint.mjs`: no throw with 432 candidates; identity `derived` (307 / 156 rep); "accepted by 21 Nov public warm start: false" (was true) |
+| F17 (low) | the local fill band ±30 min was widened after the fact; the D8 basis was partly wrong | the ±30 min residual band is withdrawn: the local fill keeps the whole-day ±15 min band; `test_plan.mjs` evaluates it and prints `FAIL (known: plan.md D8)` for 12 Nov (known failures are listed and do not set the exit code; any other failure does); D8 corrected with the measured hour bands | 10 Nov local fill 45 turns P10 / P50 / P90 85 / 120 / 154: pass; **12 Nov 43 turns 93 / 133 / 194: FAIL (known)**; verifier's count 47 / 44 turns, P50 125 / 134. `fill_hours.mjs` re-run: arrivals 71 / 88 and 68 / 83 in 14-24 h; departures 32 / 103 and 29 / 94 in 04-10 h, 39 / 103 and 40 / 94 in 14-24 h (D8) |
+| F24 (low) | a value in a private PNG chunk, a zlib private chunk or after IEND was read nowhere and flagged nowhere; an opaque binary outside `sha3d/` was only a note in `--staged` / `--diff` | PNG: tEXt / zTXt / iTXt / eXIf / **iCCP** read; sPLT / pCAL / sCAL / gIFx as strings; **every unknown chunk** as strings and zlib-inflated strings **and REVIEW**; **bytes after IEND** likewise; a truncated chunk REVIEW; REVIEW gates every path in every mode (`REVIEW_EXEMPT = ()`, the lead clears by `--reviewed` / `REVIEWED`) | verifier: `prVt`, zlib `zzZz` and after-IEND plants caught; selftest: 4 PNG text cases, a clean private chunk → exit 2, clean bytes after IEND → exit 2, standard chunks only → exit 0; the 350 PNGs of the tree hold only standard chunks and no trailing bytes: **0 new REVIEW** |
+| F26 (low) | missed fingerprints: sha256[:16] of an overlay output, the git blob id and the SRI base64 digest of a day table, sha256[:10] | fingerprint set: hex prefixes **≥ 8** (was 12) of sha256 / sha1 / md5 / sha512 and the **git blob id** of every local file; the same of every observed day's **overlay** as printed and as canonical JSON (sorted compact, ASCII and UTF-8, `JSON.stringify` order, indent 2); **base64** (standard and URL-safe, SRI `sha256-...`) of sha1 / sha256 / sha384 / sha512, prefixes ≥ 16; the **local plan hashes** that `test_plan.mjs` computes (local overlay plans with the test and null gate times, the `localPrev` plan, the 10 repeat-flight plans, `hashOf` of each overlay: 19 hashes) are recorded in the gitignored `out/phase3/local/fingerprints.json` and loaded by the audit | verifier's `plant_audit3.py`: overlay sha256[:16], git blob id, SRI base64, sha256[:10] **all caught** (were missed); selftest 7 fingerprint cases (incl. sha1[:8] and a recorded local plan hash) + a clean 8-hex control; the verifier's `fp_hunt.py` over the 651 committable files: 0 files with a fingerprint |
+| F27 (low) | the round-2 claim "the same 11 files" was wrong: 12 files, the new one an ISO Wikipedia revision time equal to t_sha ± a taxi offset (`ftime`) | an `ftime` value (the weakest class) counts only in a **per-flight context** within 160 characters: a per-flight field name (`"t":`, `"tBlock":`, `"est":`, `"cs":` ...), a word such as landed / on-block / flight / stand / first fix, or an airline designator followed by a number; `t_sha` stays context-free | the whole tracked `sha3d/` tree (651 files): **the same 11 pre-existing files** as rounds 1-2 (142 hits: public fleet / livery / photo facts), 0 new false-positive files, 0 `t_sha` / `ftime` / uid / fingerprint hits, 0 REVIEW; the selftest's per-flight `ftime` cases still hit, the lone revision-time control does not |
+| F28 (low) | the inputs' `what` said "cells < 3 merged" for the airline weights, which hold cells of 1-2 callsigns a day | reworded in `data/sha_sim_inputs.*` and `data/SOURCES_sim.json`: the weights mirror the per-airline counts already committed in Phase 1 (`docs/phase1/observed_elsewhere_stats.json`), not merged; the type mix is merged (cells < 3) | rebuilt, `--check` identical; only the text changed (plan hashes unchanged); `small_cells.py` re-run: typeMix non-other cells with a true count < 3: 0 |
+| F16 (lead decision) | night-stop cap 0.85 × usable not met | kept as an honestly reported failure: `test_plan.mjs` checks it on all 7 plans (`FAIL (known: plan.md D2 ...)`); data request to the Phase 1 owner for the AIP combined positions 216E / 220E / 281E / 413E (D2, D4) | parked T1 46-48 / 41, T2 82-86 / 73 public; T1 43 / 45, T2 83 / 80 local; unplaced 0 |
+
+Measured again after the fixes: `test_plan.mjs` **95 / 103 pass, 8 known failures** (the night-stop cap on 7 plans, the
+12 Nov local residual fill), 0 other failures, exit 0 (`PLOTS=1`: 96 / 104, the F14 plot-source check passes);
+`test_observed_overlay.py` 4 / 4; `test_relay.py` 12 / 12; `audit_identity.py --selftest` **173 / 173** (110 of round 2 +
+39 round-3 cases: 22 forms, 6 clean controls, 4 PNG chunks, 7 fingerprints; + 1 file-name stamp, 3 PNG REVIEW exits, 20
+git cases); the verifier's `check_plan2.mjs`: public 0 failures, local only the known 12 Nov fill; `check_iface2.mjs`: no
+frozen name missing (fields added: `stats.identityFrom`, `stats.counters.repRelabelled` with the switch on);
+`prevend3.mjs`: 0 failures; `--diff` on the checkout (9-17 changed files of all packages during the round, after the lead's checkpoint) 0 hits; `--staged`
+(empty real index) 0 files, exit 0; audit of every file of the package (below) **0 hits, 0 REVIEW, 0 ERROR**. The audit
+takes about 6 s to load the identity set and 26 s for the whole tree.
+
+**Remaining limits of the audit (round 3, admitted):**
+- text rendered into image pixels (PNG IDAT, JPEG scan data, video frames) is not read (the harness's identity-`none`
+  assertion before committable shots covers renders, design §3 / H5);
+- opaque formats (SQLite, NumPy, an unknown or zlib binary, an encrypted member, an undecodable PDF filter, a text encoding
+  other than UTF-8 / 16 / 32 with non-ASCII bytes) are not read but always REVIEW (exit 2): a person must look;
+- a value split further than the joined forms: separators of more than one character (`B - nnnn`, `MU / nnnn`), parts in
+  different sentences, rows or objects, a line wrap inside a token without a hyphen or with another continuation (Python
+  implicit string concatenation `"MU"\n"nnnn"`, a TeX `%`), numbers written in words;
+- times: a date and a time further apart than one table row, one flat object or one line; relative times, other epoch
+  units (minutes, hours, µs), day fractions other than Excel serials; a lone per-flight time without a flight context
+  within 160 characters (by design, F27); a time of day without its date;
+- fingerprints: hex prefixes shorter than 8 characters (git's default 7-character short id), other algorithms (SHA-3,
+  BLAKE2, CRC-32), digests of a transformed copy (a re-serialised or filtered table, a CSV export), local plan hashes that
+  `test_plan.mjs` did not compute (other days or options);
+- airline names: only the English names of `data/lookup.js` AIRLINES and the inputs' short names (no Chinese names,
+  abbreviations or misspellings); look-alike letters only from Cyrillic and Greek;
+- `--diff` reads the work tree, not index-only changes (`--staged` does, and is the commit gate); the identity set holds
+  only what the local tables contain, without values shorter than 4 characters or equal to ICAO type designators.
+
+**Interface notes (round 3, for C1 / D):** `plan.identity` is `'derived'` also when `tiers.rep > 0` (Q1 on);
+`stats.identityFrom` lists `'overlay'`, `'prevEnd'`, `'repeatFlights'`; `rep` slots are `rep:<flight>:<role>[:n]`; the D
+in-page assertion `identity === 'none'` therefore also refuses a plan with repeat flights. `test_plan.mjs` writes
+`out/phase3/local/fingerprints.json` (local, gitignored) when the local tables exist; run it before the audit when the
+plan code changed, so the audit knows the current local plan hashes.

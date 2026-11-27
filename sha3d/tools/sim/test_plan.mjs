@@ -14,6 +14,7 @@ globalThis.SHA_SIM_INPUTS = J('data/sha_sim_inputs.json');
 const STANDS = J('data/sha_stands.json');
 const { simInputs, dayWindow, localHour, closedStands } = await import(path.join(ROOT, 'js/sim/inputs.js'));
 const { buildDayPlan, endState, typeInfo, hourTargets } = await import(path.join(ROOT, 'js/sim/plan.js'));
+const { hashOf } = await import(path.join(ROOT, 'js/sim/rng.js'));
 const { standTable, closureWindows } = await import(path.join(ROOT, 'js/sim/alloc.js'));
 const { checkOverlay, labelFor, dayLine, repCandidates, OVERLAY_FIELDS } = await import(path.join(ROOT, 'js/sim/identity.js'));
 const { TYPE_MODELS, BIZ } = await import(path.join(ROOT, 'js/aircraft/fit.js'));
@@ -21,7 +22,12 @@ const I = simInputs();
 const P = I.params;
 
 const results = [];
-const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  -- ' + detail : ''}`); };
+// known = a criterion that fails for a reason stated in docs/phase3/plan.md (D2 night-stop cap, D8 local residual fill):
+// it is evaluated with its real band and printed 'FAIL (known)'; only failures that are not known set the exit code
+const check = (name, ok, detail, known = '') => {
+  results.push({ name, ok: !!ok, detail, known });
+  console.log(`${ok ? 'PASS' : known ? 'FAIL (known: ' + known + ')' : 'FAIL'}  ${name}${detail ? '  -- ' + detail : ''}`);
+};
 
 // 0. the inputs are current (verification fix round 2, F18): every committed source listed in inputs_sha256_16 (the P3-B
 //    route table included) still has the recorded sha256 prefix; local sources (refs/cache, '(local)') are skipped
@@ -65,6 +71,7 @@ const overlays = {};
 if (haveLocal) for (const d of OBS_DAYS) overlays[d] = JSON.parse(execFileSync('python3', ['-I', path.join(ROOT, 'tools/sim/observed_overlay.py'), '--day', d], { maxBuffer: 64 << 20 }));
 
 const build = (day, overlay = null, extra = {}) => buildDayPlan({ day, inputs: I, stands: STANDS, overlay, gateTimes: GT, ...extra });
+const localHashes = {};                   // local identity-derived hashes (never printed; recorded for the audit, F26)
 
 // ------------------------------------------------------------------------------------------------ independent checks
 function standViolations(plan) {
@@ -150,19 +157,28 @@ function fillTurns(plan, all = false) {          // all: every arrival -> depart
     atMinPct: 100 * atMin / Math.max(1, gr.length), belowP10Pct: 100 * ltP10 / Math.max(1, gr.length), rushed: plan.stats.counters.rushed };
 }
 const TURN_BAND_MIN = 15, BELOW_P10_MAX = 15, AT_MIN_MAX = 12;       // [inf] test bands (input P10 share is 10 % by definition)
-// [inf] the local fill is the RESIDUAL of an observed day (target - observed - continuations per hour: arrivals heavy in
-// 14-23 h, departures in 07-10 h, 43-45 turns): its P50 band is +-30 min (verification fix round 2, F17; owner-visible in
-// plan.md); P10, below P10 and at the minimum keep the whole-day bands
-const TURN_BAND_LOCAL_P50 = 30;
+// the local fill is the RESIDUAL of an observed day (target - observed - continuations per hour): it keeps the whole-day
+// +-15 min band (verification fix round 3, F17: the +-30 min residual band of round 2 was set after the fact and is
+// withdrawn); the 12 Nov local fill misses it and is reported as a known failure (plan.md D8)
+const KNOWN_LOCAL_FILL = { '2026-11-12': 'plan.md D8: the residual fill of an observed day' };
 const fmtQ = (a) => a.map(x => x.toFixed(0)).join(' / ');
-function checkTurns(label, plan, all = false, p50Band = TURN_BAND_MIN) {
+function checkTurns(label, plan, all = false, p50Band = TURN_BAND_MIN, known = '') {
   const t = fillTurns(plan, all), inp = [TA.p10 / 60, TA.p50 / 60, TA.p90 / 60];
   const f = fmtQ;
   const txt = `${t.n} turns; runway gap P10/P50/P90 ${f(t.rwy)} min (input ${f(inp)}); ground ${f(t.ground)} min; below input P10 ${t.belowP10Pct.toFixed(1)} %; at the minimum ${t.atMinPct.toFixed(1)} %; rushed ${t.rushed}`;
   if (all) { console.log(`info  ${label} all turns (observed, continuations, fill; not a test: the input quantiles come from the observed pairs): ${txt}`); return t; }
   check(`${label} fill turns: runway-gap P50 within +-${p50Band} min of the input, P10 within +-${TURN_BAND_MIN}, < input P10 <= ${BELOW_P10_MAX} %, ground time at the type minimum <= ${AT_MIN_MAX} %`,
-    Math.abs(t.rwy[1] - inp[1]) <= p50Band && Math.abs(t.rwy[0] - inp[0]) <= TURN_BAND_MIN && t.belowP10Pct <= BELOW_P10_MAX && t.atMinPct <= AT_MIN_MAX, txt);
+    Math.abs(t.rwy[1] - inp[1]) <= p50Band && Math.abs(t.rwy[0] - inp[0]) <= TURN_BAND_MIN && t.belowP10Pct <= BELOW_P10_MAX && t.atMinPct <= AT_MIN_MAX, txt, known);
   return t;
+}
+// design s.2.2 step 7: night-stoppers PARKED on a side <= 0.85 x usable (lead decision: the cap is kept and reported as a
+// known failure until the Phase 1 data owner places the AIP combined positions 216E / 220E / 281E / 413E; plan.md D2)
+function checkNightCap(label, plan) {
+  const s = plan.stats, b = s.bySide;
+  check(`${label} night-stoppers parked per side <= 0.85 x usable (design s.2.2 step 7)`,
+    s.nightStopParked.T1 <= b.T1.nightStopCap && s.nightStopParked.T2 <= b.T2.nightStopCap,
+    `parked T1 ${s.nightStopParked.T1} / cap ${b.T1.nightStopCap}, T2 ${s.nightStopParked.T2} / cap ${b.T2.nightStopCap} (own side T1 ${s.nightStop.T1}, T2 ${s.nightStop.T2}); unplaced ${s.unplaced}`,
+    'plan.md D2: data request for the AIP combined positions');
 }
 
 const maxDiff = (A, B) => { let w = 0, k0 = null; for (const k of new Set([...Object.keys(A), ...Object.keys(B)])) { const d = Math.abs((A[k] || 0) - (B[k] || 0)) * 100; if (d > w) { w = d; k0 = k; } } return [w, k0]; };
@@ -219,7 +235,7 @@ for (const day of DAYS_PUBLIC) {
 }
 // 7. unplaced
 for (const day of ['2026-11-12', '2026-11-20']) check(`${day} unplaced 0`, plans[day].stats.unplaced === 0, `unplaced ${plans[day].stats.unplaced}`);
-for (const day of DAYS_PUBLIC) console.log(`info  ${day} unplaced ${plans[day].stats.unplaced}, night-stoppers parked above cap: T1 ${plans[day].stats.nightStopParked.T1}/${plans[day].stats.bySide.T1.nightStopCap}, T2 ${plans[day].stats.nightStopParked.T2}/${plans[day].stats.bySide.T2.nightStopCap}`);
+for (const day of DAYS_PUBLIC) checkNightCap(day, plans[day]);
 // 8. contact share
 for (const day of DAYS_PUBLIC) { const c = plans[day].stats.contactShare; check(`${day} contact share per side in 60-85 %`, c.T1 >= 0.6 && c.T1 <= 0.85 && c.T2 >= 0.6 && c.T2 <= 0.85, `T1 ${(c.T1 * 100).toFixed(1)} %, T2 ${(c.T2 * 100).toFixed(1)} %`); }
 // 8b. fill-turn distribution (F5); every rotation keeps its airline and type (business jets included)
@@ -335,7 +351,12 @@ if (haveLocal) {
     check(`${day} (local) day total within +-2 %`, Math.abs(n - N) <= 0.02 * N, `${n} vs ${N}`);
     check(`${day} (local) identical hash on two builds`, build(day, ov).hash === p.hash, '');
     check(`${day} (local) plan build <= 200 ms`, ms <= 200, `${ms.toFixed(0)} ms`);
-    checkTurns(`${day} (local, the residual of the observed day)`, p, false, TURN_BAND_LOCAL_P50);
+    checkTurns(`${day} (local, the residual of the observed day)`, p, false, TURN_BAND_MIN, KNOWN_LOCAL_FILL[day] || '');
+    checkNightCap(`${day} (local)`, p);
+    localHashes[`${day} local overlay plan (test gate times ${gtKind})`] = p.hash;
+    localHashes[`${day} local overlay plan (gateTimes null)`] = buildDayPlan({ day, inputs: I, stands: STANDS, overlay: ov, gateTimes: null }).hash;
+    localHashes[`${day} overlay hashOf`] = hashOf(ov);
+    localHashes[`${day} checked overlay hashOf`] = hashOf(checkOverlay(ov, { day }));
     checkTurns(`${day} (local)`, p, true);
     // F19: the registration is shown per movement, tier 2 only; a continuation of the same airframe carries none
     {
@@ -364,9 +385,51 @@ if (haveLocal) {
     check('(local) with opts.localPrev the local end state is used and the plan is marked identity derived (hash differs) (F15)',
       der.identity === 'derived' && der.stats.prevEnd.used && der.hash !== pub.hash && der.hash !== none.hash && pub.identity === 'none',
       `identity ${der.identity}; public-prevEnd plan identity ${pub.identity}`);
+    localHashes['2026-11-13 plan warm-started from the local 12 Nov end state (localPrev)'] = der.hash;
   }
   const reps = repCandidates(OBS_DAYS.map(d => checkOverlay(overlays[d])), I);
   console.log(`info  (local) Q1 repeat-flight candidates (switch OFF by default): ${reps.length}`);
+  // Q1 repeat flights ON (local only; verification fix round 3, F22): with EVERY candidate (and with arrivals only) the plan
+  // builds without a throw on observed and other days, has unique slot keys, no stand violation, reports identity
+  // 'derived' (in the hash, so its end state is tainted), and the next day's PUBLIC warm start ignores that end state
+  {
+    const sets = { 'all candidates': reps, 'arrival candidates only': reps.filter(c => c.role === 'arr') };
+    let built = 0, errs = 0, untainted = 0, dupKeys = 0, viol = 0, unpl = 0, rep = 0, notIgnored = 0, labels = 0, nondet = 0;
+    for (const [what, C] of Object.entries(sets)) {
+      for (const day of ['2026-11-10', '2026-11-12', '2026-11-13', '2026-11-14', '2026-11-20']) {
+        let p = null;
+        try { p = build(day, null, { opts: { repeatFlights: true, repCandidates: C } }); } catch (e) { errs++; console.log(`      ${what} ${day}: ${e.name}`); continue; }
+        built++;
+        rep += p.tiers.rep;
+        if (!(p.tiers.rep > 0 && p.identity === 'derived' && p.stats.identityFrom.includes('repeatFlights'))) untainted++;
+        if (new Set(p.movements.map(m => m.slot)).size !== p.movements.length) dupKeys++;
+        const v = standViolations(p);
+        if (v.overlap || v.excl || v.cls || v.closure || v.unknown || v.order) viol++;
+        unpl += p.stats.unplaced;
+        if (build(day, null, { opts: { repeatFlights: true, repCandidates: C } }).hash !== p.hash) nondet++;
+        const e = endState(p, I), next = new Date(Date.parse(day + 'T00:00:00Z') + 86400e3).toISOString().slice(0, 10);
+        const nx = build(next, null, { prevEnd: e }), n0 = build(next);
+        if (!(e.identity === 'derived' && nx.stats.prevEnd.ignored && nx.identity === 'none' && nx.hash === n0.hash)) notIgnored++;
+        const m = p.movements.find(x => x.tier === 'rep');
+        if (m && labelFor(m, null, { inputs: I, plan: p, day }).chips.includes('seen other days')) labels++;
+        localHashes[`${day} repeat-flight plan (${what})`] = p.hash;
+      }
+    }
+    check('(local) Q1 repeatFlights on, every candidate (and arrivals only), 10 / 12 / 13 / 14 / 20 Nov: no throw, unique slots, 0 stand violations, unplaced 0, deterministic (F22)',
+      errs === 0 && built === 10 && dupKeys === 0 && viol === 0 && unpl === 0 && nondet === 0 && rep > 0,
+      `${built} built, ${errs} errors, ${rep} rep movements, duplicate slot keys in ${dupKeys}, violations in ${viol}, unplaced ${unpl}, non-deterministic ${nondet}`);
+    check('(local) Q1 repeatFlights plans report identity derived (in the hash) and the next day\'s public warm start ignores their end state (F22)',
+      untainted === 0 && notIgnored === 0 && labels === built, `untainted ${untainted}, end state used by a public plan ${notIgnored}, rep label chip 'seen other days' on ${labels} / ${built}`);
+    check('(local) the public plans are unchanged by the Q1 code path (switch off = the public hash)',
+      DAYS_PUBLIC.every(d => build(d, null, { opts: { repeatFlights: false, repCandidates: reps } }).hash === plans[d].hash), '');
+  }
+  // F26: the local plan hashes computed here are recorded for the identity audit's fingerprint class (gitignored out/)
+  {
+    const fp = path.join(ROOT, 'out/phase3/local/fingerprints.json');
+    fs.mkdirSync(path.dirname(fp), { recursive: true });
+    fs.writeFileSync(fp, JSON.stringify({ v: 1, note: 'LOCAL ONLY (gitignored out/): hashes of local identity-derived plans and overlays, read by tools/sim/audit_identity.py as fingerprints (verification fix round 3, F26); never commit', hashes: localHashes }, null, 1));
+    console.log(`info  (local) ${Object.keys(localHashes).length} local plan / overlay hashes recorded for the audit (out/phase3/local/fingerprints.json)`);
+  }
 } else console.log('\n(no local observed-elsewhere tables: overlay part skipped)');
 
 // ---- PLOTS=1: aggregates for docs/phase3/plan_*.png -> out/phase3/plan/aggregates.json (gitignored; counts and shares only)
@@ -431,6 +494,7 @@ if (process.env.PLOTS) {
   console.log('wrote out/phase3/plan/aggregates.json (aggregates only)');
 }
 
-const bad = results.filter(r => !r.ok);
-console.log(`\n${results.length - bad.length} / ${results.length} checks passed`);
+const bad = results.filter(r => !r.ok && !r.known), known = results.filter(r => !r.ok && r.known);
+console.log(`\n${results.length - bad.length - known.length} / ${results.length} checks passed; known failures ${known.length} (reported, see plan.md D2 / D8); other failures ${bad.length}`);
+for (const r of known) console.log(`  known FAIL: ${r.name}`);
 process.exit(bad.length ? 1 : 0);

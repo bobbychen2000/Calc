@@ -2,7 +2,7 @@
  "v": 1,
  "built": "2026-11-27",
  "src": "inf",
- "what": "Committed inputs of the SHA Live 3D day plan (Phase 3): hourly profile, daily totals, airline weights and type mix (aggregates, cells < 3 merged), turnarounds, terminal rules, taxi estimates, delays, the published HKG / TSA rows of their own dates, NOTAM effect records. No observed-elsewhere identity, no per-flight time.",
+ "what": "Committed inputs of the SHA Live 3D day plan (Phase 3): hourly profile, daily totals, airline weights (shares that mirror the per-airline callsign counts already committed in Phase 1, docs/phase1/observed_elsewhere_stats.json: not merged, some cells stand for 1-2 callsigns a day), type mix (aggregates, every airline x type cell < 3 merged), turnarounds, terminal rules, taxi estimates, delays, the published HKG / TSA rows of their own dates, NOTAM effect records. No observed-elsewhere identity, no per-flight time.",
  "generator": "tools/sim/build_sim_inputs.py",
  "licence": {
   "aggregates": "Aggregates derived from adsb.lol globe_history archives: ODbL 1.0. Contains information from ADSB.lol (https://adsb.lol), made available under the ODbL. Routes: Virtual Radar Server standing data (CC0 1.0); aircraft data: Mictronics aircraft database (ODC-By 1.0).",
@@ -189,7 +189,7 @@
    }
   },
   "src": "inf",
-  "basis": "complement (observed days): share of (route-DB SHA callsigns - identified distinct callsigns) per airline (observed_elsewhere_stats.json, aggregates), mean of the two days; fullDay (every other day): the expected airline shares of a whole observed-day plan = identified + continuations + complement x fill, mean of the two days (design s.2.1, review M9) [inf]"
+  "basis": "complement (observed days): share of (route-DB SHA callsigns - identified distinct callsigns) per airline (observed_elsewhere_stats.json, aggregates), mean of the two days; fullDay (every other day): the expected airline shares of a whole observed-day plan = identified + continuations + complement x fill, mean of the two days (design s.2.1, review M9) [inf]; not merged below 3: the shares mirror the per-airline counts already committed in Phase 1 (verification fix round 3, F28)"
  },
  "typeMix": {
   "complement": {

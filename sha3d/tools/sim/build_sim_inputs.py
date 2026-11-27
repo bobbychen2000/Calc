@@ -567,9 +567,11 @@ def build():
 
     inputs = {
         'v': 1, 'built': BUILT, 'src': 'inf',
-        'what': 'Committed inputs of the SHA Live 3D day plan (Phase 3): hourly profile, daily totals, airline weights and type '
-                'mix (aggregates, cells < 3 merged), turnarounds, terminal rules, taxi estimates, delays, the published HKG / TSA '
-                'rows of their own dates, NOTAM effect records. No observed-elsewhere identity, no per-flight time.',
+        'what': 'Committed inputs of the SHA Live 3D day plan (Phase 3): hourly profile, daily totals, airline weights (shares '
+                'that mirror the per-airline callsign counts already committed in Phase 1, docs/phase1/observed_elsewhere_stats.json: '
+                'not merged, some cells stand for 1-2 callsigns a day), type mix (aggregates, every airline x type cell < 3 merged), '
+                'turnarounds, terminal rules, taxi estimates, delays, the published HKG / TSA rows of their own dates, NOTAM effect '
+                'records. No observed-elsewhere identity, no per-flight time.',
         'generator': 'tools/sim/build_sim_inputs.py',
         'licence': {
             'aggregates': 'Aggregates derived from adsb.lol globe_history archives: ODbL 1.0. Contains information from ADSB.lol '
@@ -590,7 +592,8 @@ def build():
                     'basis': 'complement (observed days): share of (route-DB SHA callsigns - identified distinct callsigns) per airline '
                              '(observed_elsewhere_stats.json, aggregates), mean of the two days; fullDay (every other day): the '
                              'expected airline shares of a whole observed-day plan = identified + continuations + complement x fill, '
-                             'mean of the two days (design s.2.1, review M9) [inf]'},
+                             'mean of the two days (design s.2.1, review M9) [inf]; not merged below 3: the shares mirror the '
+                             'per-airline counts already committed in Phase 1 (verification fix round 3, F28)'},
         'typeMix': {'complement': mix_comp, 'fullDay': full_mix, 'pool': {'complement': pool_comp, 'fullDay': pool_full}, 'src': 'inf',
                     'unit': 'relative weights (two-day counts; complement: wide-bodies x 0.5)',
                     'basis': 'ICAO type per airline of the identified movements of both observed days, cells < 3 merged into "other", '
@@ -676,7 +679,9 @@ def sources(inputs):
         'generator': 'tools/sim/build_sim_inputs.py', 'built': inputs['built'],
         'sections': {
             'profile, totals, weights, typeMix, turnaround, intl, checks': 'aggregates of the observed-elsewhere data (ODbL 1.0) and '
-                'published facts; every count cell < 3 merged; no identity, no per-flight time',
+                'published facts; typeMix: every airline x type count cell < 3 merged; weights: per-airline shares that mirror the '
+                'Phase 1 counts committed in docs/phase1/observed_elsewhere_stats.json (not merged: a cell can stand for 1-2 '
+                'callsigns a day; nothing beyond the committed counts); no identity, no per-flight time',
             'published': 'published schedule facts, not observed-elsewhere data (HKG: DATA.GOV.HK terms; TSA: OGDL v1.0); the only '
                          'section where flight numbers occur; allow-listed by tools/sim/audit_identity.py only for flight numbers '
                          'that occur in refs/cache/schedules_open/',

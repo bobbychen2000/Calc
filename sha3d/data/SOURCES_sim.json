@@ -3,7 +3,7 @@
  "generator": "tools/sim/build_sim_inputs.py",
  "built": "2026-11-27",
  "sections": {
-  "profile, totals, weights, typeMix, turnaround, intl, checks": "aggregates of the observed-elsewhere data (ODbL 1.0) and published facts; every count cell < 3 merged; no identity, no per-flight time",
+  "profile, totals, weights, typeMix, turnaround, intl, checks": "aggregates of the observed-elsewhere data (ODbL 1.0) and published facts; typeMix: every airline x type count cell < 3 merged; weights: per-airline shares that mirror the Phase 1 counts committed in docs/phase1/observed_elsewhere_stats.json (not merged: a cell can stand for 1-2 callsigns a day; nothing beyond the committed counts); no identity, no per-flight time",
   "published": "published schedule facts, not observed-elsewhere data (HKG: DATA.GOV.HK terms; TSA: OGDL v1.0); the only section where flight numbers occur; allow-listed by tools/sim/audit_identity.py only for flight numbers that occur in refs/cache/schedules_open/",
   "notams": "NOTAM effect records (ids, windows, targets) from the CAAC eAIP NOTAM Summary (OD3 short facts)",
   "params": "design parameters [inf], each with its basis"

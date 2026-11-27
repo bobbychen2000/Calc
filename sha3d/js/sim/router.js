@@ -100,6 +100,14 @@ export const ROUTER = {
   pushTurn: { maxDeg: 100, windowCm: 4000 },
   pushMergeMaxCos: -0.17364817766693033,   // push paths merge two corners only into one of < 100 deg (M2; taxi paths: 150 deg) [inf]   // the driven push path (stand -> push end) keeps the path-level turn rule (M2) [inf]
   wideFullLength: true,       // span >= 36 m (code D-F) always lines up at full length (design §4.2: code C may use H2 / H6) [inf]
+  // fix round 3 (V3-1): after a runway no-stop block (a crossing's strip, the landing roll to the vacate point) and an end
+  // box, the first stop the scheduler may plan leaves the WHOLE aircraft beyond the far runway-holding position: a no-stop
+  // marker block (kind 'clear', res: false = not a resource) over [block start, far end + tail], tail = the class's largest
+  // nose-gear -> tail distance (ROUTER.foot.tailCm: n 40 / w 71 / x 69 m, >= every perf.js type of the class) or
+  // opts.tailCm; the runway block carries tailClearCm (design §4.5 no-stop zones "crossing hold -> first block beyond the
+  // runway"; the 90 m holding position protects the strip only when the tail is past it, AIP (mirror) AD 2.20 holding
+  // positions via sha_taxigraph hold_inf) [inf]
+  tailClear: { kinds: ['crossing', 'landing', 'endbox'] },
   src: 'inf',
   basis: 'design.md §4.1-4.5; AIP (mirror) AD 2.20 2.1.4.2, 2.1.7, 2.2.5, 2.3.1-2.3.3, 3.1.5, 3.2.2.2 via sha_taxigraph rules.facts',
 };
@@ -787,7 +795,7 @@ export function makeRouter(G, o = {}) {
     return { ...path, pieces: P, lenCm: sEnd };
   }
 
-  function assembleDep(stand, end, entry, prec, spanCm, wideGeom, lite = false) {   // lite: path, turn and push checks only (depTurnFix)
+  function assembleDep(stand, end, entry, prec, spanCm, wideGeom, lite = false, tailOpt = null) {   // lite: path, turn and push checks only (depTurnFix)
     const seq = prec.seq; const rec = optionA(stand); const optA = rec && rec.run ? rec : null;
     const nPush = prec.nPush;
     const J = other(L[seq[nPush - 1][0]], seq[nPush - 1][1]);
@@ -918,7 +926,7 @@ export function makeRouter(G, o = {}) {
       const lo = tx(arc ? arc.s0Cm + arc.lenCm : sp) - ROUTER.boxPadCm, hi = tx(arc ? arc.s0Cm : sp) + ROUTER.boxPadCm;
       if (hi > 0) blocks.push({ id: 'j:' + v, kind: 'box', node: v, s0Cm: Math.max(0, lo), s1Cm: Math.min(path.lenCm, hi), noStop: (adj.get(v) || []).some(id => L[id].kind === 'taxiway'), start: lo <= 0 ? true : undefined, swing: true });
     }
-    for (const c of crossings) blocks.push({ id: 'rwy:' + c.runway, kind: 'rwy', s0Cm: c.sInCm, s1Cm: c.sOutCm, noStop: true, crossing: true });
+    for (const c of crossings) blocks.push({ id: 'rwy:' + c.runway, kind: 'rwy', s0Cm: c.sInCm, s1Cm: c.sOutCm, noStop: true, crossing: true, node: c.node });
     blocks.push({ id: 'rwy:' + E.rw, kind: 'rwy', s0Cm: luHold.s, s1Cm: path.lenCm, noStop: false, lineup: true });
     // footprints (fix round 2, H1): the push sweeps the push path from the stand to the push end with the fuselage behind the
     // nose gear (the push path up to push end + tail, tail by span class) and holds the straight start-up pose (nose gear ->
@@ -943,6 +951,7 @@ export function makeRouter(G, o = {}) {
     for (const ref of FP.lanes) { const lb = blocks.find(b => b.kind === 'lane' && b.id === 'lane:' + ref && b.s0Cm > 0 && b.s0Cm <= ROUTER.laneHoldCm); if (lb) { lb.s0Cm = 0; lb.held = true; } }
     const nGeoBox = geoBoxes(blocks, path.pieces, path.lenCm);
     const gaps = fillGaps(blocks, path.pieces, path.lenCm);
+    const clrTail = tailOpt != null ? tailOpt : tailCm; tailClear(blocks, path.lenCm, clrTail);   // fix round 3 (V3-1)
     blocks.sort((a, b) => a.s0Cm - b.s0Cm || a.s1Cm - b.s1Cm || (a.id < b.id ? -1 : 1));
     const tailVec = (() => { const a = PV[iJ], b = PV[Math.min(PV.length - 1, iJ + 1)]; const dx = b.x - a.x, dz = b.z - a.z; return [dx, dz]; })();
     // push + start-up resources (fix round 1, V4; fix round 2, H1): the push link and the run's blocks, the junction boxes
@@ -968,7 +977,7 @@ export function makeRouter(G, o = {}) {
       blocks, holds, crossings, lineup: { node: vRw.node, sCm: lineupS, rwySCm: rwyS, entrySCm: Math.round(alongEnd(end, vRw.x, vRw.z)), holdSCm: luHold.s, toraCm,
         // declared TORA: from the runway end (full length) or from the intersection (AIP (mirror) AD 2.13 'intersection')
         toraLeftCm: toraCm == null ? null : entry === 'full' ? toraCm - rwyS : toraCm - (rwyS - Math.round(alongEnd(end, vRw.x, vRw.z))) },
-      turn: turnSummary(path), gapFill: gaps, geoBoxes: nGeoBox,
+      turn: turnSummary(path), gapFill: gaps, geoBoxes: nGeoBox, tailCm: clrTail,
       push: { lenCm: pushEnd, pieces: pushPath.pieces, path: pushPath, verts: PV, nLinks: nPush, node: J, swing, swingVirtual, tailHdg: hdgOfVec(tailVec),
         chain: chainUsed.map(c => [c.lid, c.from]), onGraph, turn: pushTurn, startFoot: { blocks: FS.blocks, boxes: FS.boxes, lanes: FS.lanes, tailCm },
         run: { run: seq.slice(1, nPush).map(([id]) => id), node: J, swing, turnDeg: prec.turnDeg }, fallback: !!prec.fallback,
@@ -1009,11 +1018,32 @@ export function makeRouter(G, o = {}) {
     return add.length;
   }
   /**
+   * Tail clear (fix round 3, V3-1): every runway no-stop block (crossing, landing) and end box gets a no-stop marker over
+   * [its start, its far end + tailCm] (kind 'clear', `res: false`: it reserves nothing, it only extends the no-stop sequence;
+   * it spans the runway block too, so no boundary between the hold and the tail-clear station - the far holding position
+   * itself included - lies outside the open interior of a no-stop block): the first plannable stop, a block boundary outside
+   * every no-stop block, leaves the whole aircraft behind the far runway-holding position. The block itself gets
+   * `tailClearCm` (the nose station from which a stop may be planned) and `tailCm`. Called after the gap fill (a marker
+   * covers no metre of the route). Returns the markers added.
+   */
+  function tailClear(blocks, lenCm, tailCm) {
+    const add = [];
+    for (const b of blocks) {
+      const k = b.kind === 'endbox' ? 'endbox' : b.kind === 'rwy' && b.crossing ? 'crossing' : b.kind === 'rwy' && b.landing ? 'landing' : null;
+      if (!k || !b.noStop || !ROUTER.tailClear.kinds.includes(k)) continue;
+      const s1 = Math.min(lenCm, b.s1Cm + tailCm); b.tailClearCm = s1; b.tailCm = tailCm;
+      const tag = k === 'endbox' ? 'endbox:' + b.end : b.id.slice(4) + ':' + (k === 'crossing' ? b.node : 'vacate');
+      if (s1 > b.s1Cm) add.push({ id: 'clr:' + tag, kind: 'clear', of: b.id, s0Cm: b.s0Cm, s1Cm: s1, noStop: true, tailClear: true, res: false, tailCm });
+    }
+    for (const c of add) blocks.push(c);
+    return add;
+  }
+  /**
    * Every metre of a route inside some block (fix round 2, H1): the uncovered stretches get the block of the link nearest
    * the path there (geometric, `geo: true`). Returns the number of stretches filled.
    */
   function fillGaps(blocks, pieces, lenCm) {
-    const iv = blocks.filter(b => b.s1Cm > b.s0Cm).map(b => [b.s0Cm, b.s1Cm]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const iv = blocks.filter(b => b.s1Cm > b.s0Cm && b.res !== false).map(b => [b.s0Cm, b.s1Cm]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
     const gaps = []; let cur = 0;
     for (const [a, b] of iv) { if (a > cur + 1) gaps.push([cur, a]); if (b > cur) cur = b; }
     if (lenCm > cur + 1) gaps.push([cur, lenCm]);
@@ -1037,7 +1067,7 @@ export function makeRouter(G, o = {}) {
     const RE = (o.table && o.table.runwayEnds) || o.runwayEnds || null; const r = RE && RE[end]; if (!r) return null;
     if (entry === 'full') return r.toraCm; const it = r.intersections && r.intersections[entry]; return it ? it.toraCm : null;
   }
-  function assembleArr(exitId, stand, seq, spanCm, wideGeom, lite = false) {
+  function assembleArr(exitId, stand, seq, spanCm, wideGeom, lite = false, tailOpt = null) {
     const ex = exitById.get(exitId); const E = ENDS[ex.end];
     const v = nodeOf[ex.node]; const vx = Math.round(v.x * 100), vz = Math.round(v.z * 100);
     const V = [{ x: Math.round(vx - E.h[0] * ROUTER.rollLeadCm), z: Math.round(vz - E.h[1] * ROUTER.rollLeadCm), tag: { link: null, cap: ROUTER.caps.rapid, runway: E.rw }, node: null, li: -1 }];
@@ -1070,10 +1100,11 @@ export function makeRouter(G, o = {}) {
     if (box && box.noStop) leadS = box.s0Cm;
     const eb = endBoxes(V, vS);
     for (const b of eb) blocks.push(b);
-    for (const c of crossings) blocks.push({ id: 'rwy:' + c.runway, kind: 'rwy', s0Cm: c.sInCm, s1Cm: c.sOutCm, noStop: true, crossing: true });
+    for (const c of crossings) blocks.push({ id: 'rwy:' + c.runway, kind: 'rwy', s0Cm: c.sInCm, s1Cm: c.sOutCm, noStop: true, crossing: true, node: c.node });
     blocks.push({ id: 'rwy:' + E.rw, kind: 'rwy', s0Cm: 0, s1Cm: vac.s, noStop: true, landing: true });
     const nGeoBox = geoBoxes(blocks, path.pieces, path.lenCm);
     const gaps = fillGaps(blocks, path.pieces, path.lenCm);
+    const clrTail = tailOpt != null ? tailOpt : FO.tailCm[clsOf(spanCm)]; tailClear(blocks, path.lenCm, clrTail);   // fix round 3 (V3-1)
     blocks.sort((a, b) => a.s0Cm - b.s0Cm || a.s1Cm - b.s1Cm || (a.id < b.id ? -1 : 1));
     const holds = [];
     for (const c of crossings) holds.push({ sCm: c.sInCm, node: c.node, kind: 'rwyhold', runway: c.runway, ref: c.ref });
@@ -1088,7 +1119,7 @@ export function makeRouter(G, o = {}) {
       blocks, holds, crossings, lineup: null, push: null, zones,
       exit: { id: exitId, ref: ex.ref, node: ex.node, side: ex.side, sCm: sExit, rwySCm: ex.sCm, startRwySCm: ex.sCm - ROUTER.rollLeadCm,
         oppositeSide: ex.side !== standSide(stand, E.rw), reCross },
-      vacate: { sCm: vac.s, node: vac.node, src: vac.src }, endAround: ea, turn: turnSummary(path), gapFill: gaps, geoBoxes: nGeoBox, src: 'inf', variant: tableVariant || 'live',
+      vacate: { sCm: vac.s, node: vac.node, src: vac.src, tailClearCm: Math.min(path.lenCm, vac.s + clrTail) }, endAround: ea, turn: turnSummary(path), gapFill: gaps, geoBoxes: nGeoBox, tailCm: clrTail, src: 'inf', variant: tableVariant || 'live',
     };
   }
   const hdgOfVec = (d) => { const a = Math.round(hdgVecDet(d[0], d[1]) * 10) / 10; return a; };
@@ -1113,15 +1144,17 @@ export function makeRouter(G, o = {}) {
     const asked = opts.entry || 'full'; const span = opts.spanCm ?? 0; const wg = opts.geom ? opts.geom === 'wide' : span >= ROUTER.spanNarrowCm;
     // fix round 2 (C4): span >= 36 m (code D-F) lines up at full length; an intersection request is served as full length
     const entry = asked !== 'full' && ROUTER.wideFullLength && span >= ROUTER.spanNarrowCm ? 'full' : asked;
-    const ck = 'D|' + stand + '|' + end + '|' + entry + '|' + clsOf(span) + '|' + wg + '|' + asked; if (routeCache.has(ck)) return routeCache.get(ck);
-    const prec = depSeq(stand, end, entry); let r = prec ? finish(assembleDep(stand, end, entry, prec, span, wg)) : null;
+    const tailOpt = opts.tailCm != null && opts.tailCm >= 0 ? Math.round(opts.tailCm) : null;   // fix round 3 (V3-1): a type's own nose-gear -> tail
+    const ck = 'D|' + stand + '|' + end + '|' + entry + '|' + clsOf(span) + '|' + wg + '|' + asked + '|' + tailOpt; if (routeCache.has(ck)) return routeCache.get(ck);
+    const prec = depSeq(stand, end, entry); let r = prec ? finish(assembleDep(stand, end, entry, prec, span, wg, false, tailOpt)) : null;
     if (r && entry !== asked) { r.entryAsked = asked; r.entryNote = 'span >= 36 m: full-length line-up (design §4.2; AIP (mirror) AD 2.20 2.1.7 intersection entry for code C) [inf]'; }
     routeCache.set(ck, r); return r;
   }
   function arrival(exitId, stand, opts = {}) {
     const span = opts.spanCm ?? 0; const cls = clsOf(span); const wg = opts.geom ? opts.geom === 'wide' : span >= ROUTER.spanNarrowCm;
-    const ck = 'R|' + exitId + '|' + stand + '|' + cls + '|' + wg; if (routeCache.has(ck)) return routeCache.get(ck);
-    const seq = arrSeq(exitId, stand, cls); const r = seq ? finish(assembleArr(exitId, stand, seq, span, wg)) : null;
+    const tailOpt = opts.tailCm != null && opts.tailCm >= 0 ? Math.round(opts.tailCm) : null;   // fix round 3 (V3-1)
+    const ck = 'R|' + exitId + '|' + stand + '|' + cls + '|' + wg + '|' + tailOpt; if (routeCache.has(ck)) return routeCache.get(ck);
+    const seq = arrSeq(exitId, stand, cls); const r = seq ? finish(assembleArr(exitId, stand, seq, span, wg, false, tailOpt)) : null;
     routeCache.set(ck, r); return r;
   }
   return {

@@ -91,7 +91,8 @@ function reachFix(b) {
 }
 
 // the world the bridges and equipment are tested against: terminal outlines, apron lanes, pavement
-function gateWorld(airport, taxigraph, pavedAt) {
+// (Phase 3 P3-E: exported so that tools/sim/gl_stub.mjs boots the engine in node with exactly this world)
+export function gateWorld(airport, taxigraph, pavedAt) {
   const outlines = [];
   for (const b of airport.buildings || []) if (b.kind === 'terminal') for (const r of [b.ring, ...(b.more_rings || [])]) if (r && r.length >= 3) outlines.push({ ring: r, h: WALL_H[b.id] ?? b.height_m ?? 20, id: b.id });
   const lanes = [];
@@ -192,6 +193,8 @@ registerExtension({
     // ---- debug parking
     const byName = new Map(state.gates.map(g => [g.name, g]));
     async function park(name, icao = null, animate = false) {
+      // (Phase 3 P3-E, design §6.3: the DEBUG park and simulated traffic exclude each other; the park keeps Date.now())
+      if (sys.trafficRunning && sys.trafficRunning()) return { ok: false, why: 'simulated traffic runs: the DEBUG ?park= is off while it does (design §6.3)' };
       const g = byName.get(String(name)); if (!g) return { ok: false, why: 'no stand ' + name };
       const ty = (icao || debugType(g)).toUpperCase(); const m = TYPE_MODELS[ty]; const T = m && TYPES[m.t];
       if (!T) return { ok: false, why: 'no model for ' + ty };
@@ -224,6 +227,7 @@ registerExtension({
       app.ui.setNoteLine('debug-park', n ? `DEBUG ?park=: ${n} static aircraft (not traffic)` : '', { first: true });
     }
     app.qa.park = park; app.qa.unpark = unpark; app.qa.unparkAll = () => { for (const k of [...state.parked.keys()]) unpark(k); return true; };
+    sys.debugParkCount = () => state.parked.size;   // (P3-E: js/live/gate_sync.js attach() refuses while any is parked)
     app.qa.parked = () => [...state.parked.values()].map(P => ({ stand: P.gate.name, icao: P.icao, type: P.type }));
     app.qa.gates = () => state.info;
     app.qa.gate = (name) => gateDetail(sys, byName.get(String(name)));
@@ -296,6 +300,56 @@ function mastSprite(s, cp, fs) {
   const u = Math.min(1, Math.max(0, (d - MAST_FADE_M[0]) / (MAST_FADE_M[1] - MAST_FADE_M[0]))); const k = u * u * (3 - 2 * u); if (k <= 0) return null;
   const sMax = MAST_SPRITE_PX * Math.max(0.5, d - Math.min(2, 0.05 * d)) * fs / 1.6;
   return k >= 1 && s.s <= sMax ? s : { ...s, s: Math.min(s.s, sMax), i: s.i * k };
+}
+
+// ---------------------------------------------------------------- the gate-timing table (Phase 3 P3-E, design §1.5 / §7.1)
+// gateTimes(sys, gates, typeKeys, opts) -> GateTimes {v, src, stands: {'<name>': {'<typeKey>': [dock_s, undock_s, hurry_s,
+// pushClear_s]}}, dockN: {'<name>': {'<typeKey>': bridges that dock it}}, alt: {'238A': '238'}, ...}, measured on THIS engine
+// (which must be idle: no occupant, no DEBUG park; it is left empty, resetTo): per bridge stand (and per alternative position
+// on a base stand's bridges, with its own pose) and per type key that fits it, the type parked by the stop convention
+// (standTip: the nose wheel on the stop node), every other stand empty:
+//   dock_s      the dock call (dockAt = setOccupant, animated) -> docked: DOCK_DELAY 12 s + the docking path at the sheet's
+//               rates (the engine's own animation; with no bridge that docks the type, the engine's 22 s fallback)
+//   undock_s    undockEarly from docked -> every bridge back at rest (the levelled retraction at the sheet's rates)
+//   hurry_s     undockEta from docked (hurryPlans(undockPlans(g), 1).T: the retraction at the maximum rates)
+//   pushClear_s pushClearEta from docked (every bridge clear of the straight push-back sweep, at the maximum rates)
+// rounded up to 0.1 s (the sim never undercuts the engine). typeKeys: an array of TYPES keys (each stand takes those that
+// fit it), a function (gate) -> keys (used as given), or null (every key that fits). Fit: the engine's accepted types
+// (span <= max + 0.6 m, length <= max + 2 m; sha_stands class limits / span_max) plus the drawn model of every stand-in type
+// whose own span and length fit (opts.standIns = sha_sim_inputs params.standIns: C919 -> A320, C909 -> CRJ9). src inf.
+export function gateTimes(sys, gates, typeKeys = null, opts = {}) {
+  if (!sys) throw new Error('gateTimes: no gate engine');
+  if (sys === state.sys && state.parked.size) throw new Error('gateTimes: DEBUG ?park= aircraft are parked (the engine must be idle)');
+  if (sys.trafficRunning && sys.trafficRunning() && !opts.force) throw new Error('gateTimes: traffic runs (the engine must be idle)');
+  const byName = new Map(sys.gates.map(g => [g.name, g])); const T0 = opts.t0 ?? Date.UTC(2026, 0, 1);
+  const r1 = (x) => Math.ceil(x * 10 - 1e-6) / 10;
+  const ICAO = {}; for (const [icao, k] of Object.entries(ICAO_TYPES)) if (!ICAO[k]) ICAO[k] = icao;
+  const SI = opts.standIns || {};
+  const fit = (g) => { const keys = new Set(sys.acceptedTypes(g).map(a => a.key));
+    for (const s of Object.values(SI)) { const k = ICAO_TYPES[s.model]; if (k && TYPES[k] && s.spanM <= g.maxSpan && s.lenM <= g.maxLen) keys.add(k); }
+    return [...keys].filter(k => TYPES[k]).sort(); };
+  const out = { v: 1, src: 'inf', stands: {}, dockN: {}, alt: {} };
+  const list = (gates || sys.gates).map(g => byName.get(g.name) || g).filter(g => g.bridge || (g.sharesBridgesOf && byName.get(g.sharesBridgesOf) && byName.get(g.sharesBridgesOf).bridge));
+  let n = 0;
+  for (const g of list) {
+    const eg = g.sharesBridgesOf ? byName.get(g.sharesBridgesOf) : g; if (eg !== g) out.alt[g.name] = eg.name;
+    const keys = typeof typeKeys === 'function' ? typeKeys(g) : Array.isArray(typeKeys) ? fit(g).filter(k => typeKeys.includes(k)) : fit(g);
+    for (const k of keys) {
+      const T = TYPES[k]; if (!T) continue;
+      sys.resetTo(T0, []);
+      const tip = standTip(g, T); const pose = { nose: [tip[0], tip[2]], dir: g.dir.slice() };
+      sys.dockAt(eg, k, T0, pose, ICAO[k] || null, {}, true);
+      const a = sys.anims.get(eg.id); const dock = a ? (a.t0 - T0 + a.dur) / 1000 : 0;
+      const t1 = T0 + 3600e3; sys.advance(t1); sys.step(t1);
+      const nDock = sys.bridgesOf(eg).filter(b => sys.docks(eg, b)).length;
+      const hurry = sys.undockEta(eg, t1), push = sys.pushClearEta(eg, t1);
+      sys.undockAt(eg, t1, true); const a2 = sys.anims.get(eg.id); const undock = a2 && a2.to === 0 ? a2.dur / 1000 : 0;
+      (out.stands[g.name] || (out.stands[g.name] = {}))[k] = [r1(dock), r1(undock), r1(hurry), r1(push)];
+      (out.dockN[g.name] || (out.dockN[g.name] = {}))[k] = nDock; n++;
+    }
+  }
+  sys.resetTo(T0, []);
+  out.entries = n; return out;
 }
 
 // ---------------------------------------------------------------- statistics / diagnostics (QA, legend, report)

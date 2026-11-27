@@ -2,8 +2,10 @@
 
 Package P3-B of `docs/phase3/design.md` (§4.1-§4.6, §5, §7.1, §7.2), built 2026-11-27; **fix round 1** the same day
 answers the adversarial verification (V1-V17, section "Verification fixes, round 1"); **fix round 2** (also 2026-11-27)
-answers the second verification (H1, M1, M2, L1, C1-C5; last section "Verification fixes, round 2"). The tables below are
-re-measured after round 2. Everything here is **inferred**
+answers the second verification (H1, M1, M2, L1, C1-C5; section "Verification fixes, round 2"); **fix round 3** (also
+2026-11-27) answers the two findings of the third verification (V3-1 tail clear after runway blocks, V3-2 pose semantics and
+main-gear kinematics) and records the lead's ROT decision (last section "Verification fixes, round 3"). The tables below are
+re-measured after round 3. Everything here is **inferred**
 (`src: 'inf'`) except the taxi graph, the stands and the runway data it reads, which keep their own labels; airfield rules
 come from "AIP (mirror)" short facts carried in `data/sha_taxigraph.json` `rules.facts` / `routing.turns` and
 `data/sha_airport.json` `aip_facts`. No per-flight data is used or stored. No FAA constants and no SFO airfield values;
@@ -14,39 +16,41 @@ aircraft-type priors taken from sfo3d are cited and labelled inf.
 | `js/sim/router.js` | edge-based taxi router, lane rules, pushes (option A included), end-arounds, exits, holds, blocks, F4552 variant, route assembly |
 | `js/sim/path.js` | integer fillet geometry (route-level fillets, bounded corner merging, vertex stations by projection, turn profile), deterministic arctangent, display evaluation |
 | `js/sim/perf.js` | performance table per ICAO type (integers) |
-| `js/sim/traj.js` | push, taxi, approach, landing roll, line-up, take-off, climb-out trajectories; exit model; display poses with an oversteered nose and a no-slip main gear (round 2) |
+| `js/sim/traj.js` | push, taxi, approach, landing roll, line-up, take-off, climb-out trajectories; exit model; display poses with an oversteered nose and a no-slip main gear (round 2); main-gear speed caps from the deterministic gear follower, pose reference point (round 3) |
 | `js/sim/bodies.js` | aircraft planforms as bodies (forked from sfo3d@e3218d6 `js/live/ground.js`, degrees, no `antOf`) |
 | `tools/sim/build_routes.mjs` | builds `data/sha_routes.json` / `.js` and `data/SOURCES_routes.json` |
-| `tools/sim/test_router.mjs`, `tools/sim/test_traj.mjs` | the acceptance tests (56 and 26 checks) |
-| `data/sha_routes.json` / `.js` (`window.SHA_ROUTES`), `data/SOURCES_routes.json` | the route table (331.5 KiB) and its sources |
-| `docs/phase3/movement_{routes,rot,profiles}.png` | three aggregate figures (`movement_rot.png` re-made in fix round 2; the other two are round 0) |
+| `tools/sim/test_router.mjs`, `tools/sim/test_traj.mjs` | the acceptance tests (58 and 28 checks) |
+| `data/sha_routes.json` / `.js` (`window.SHA_ROUTES`), `data/SOURCES_routes.json` | the route table (331.6 KiB) and its sources |
+| `docs/phase3/movement_{routes,rot,profiles}.png` | three aggregate figures (`movement_rot.png` re-made in fix round 2; `movement_routes.png` and `movement_profiles.png` re-made from the round-3 code) |
 
 ```bash
-node tools/sim/build_routes.mjs            # -> data/sha_routes.json/.js + data/SOURCES_routes.json (about 11 s)
-node tools/sim/test_router.mjs [--quick]   # 56 checks (--quick skips the all-route pavement scan: about 2.5 min instead of 3.5)
-node tools/sim/test_traj.mjs               # 26 checks (about 15 s)
+node tools/sim/build_routes.mjs            # -> data/sha_routes.json/.js + data/SOURCES_routes.json (about 15 s)
+node tools/sim/test_router.mjs [--quick]   # 58 checks (--quick skips the all-route pavement scan: about 3 min instead of 4-5)
+node tools/sim/test_traj.mjs               # 28 checks (about 45 s: every published pose point on a 0.1 s grid)
 ```
 
 ---
 
 ## 0. Result in brief
 
-| Acceptance (design §7.2, P3-B) | Measured | Status |
+| Acceptance (design §7.2, P3-B; re-measured after fix round 3) | Measured | Status |
 |---|---|---|
 | 164 / 164 × 4 departure and arrival ends; option A for the 14 by rule, same runs as `optA_push.mjs` or shorter | departures 656 / 656, arrivals 656 / 656 (an exit on the stand side); option A: the 14 one-way stands found by rule, 14 same runs, 0 shorter, 0 other | pass |
 | 0 runway-link use outside line-up; 0 off-list crossings; 0 foreign lead-ins; 0 turns > 100° | 0 / 0 / 0 / 0 over 6,740 routes (306,703 graph transitions; max 100.0°, p99 41.7°). **Driven path** (fix round 1, V3): 0 arcs > 100° and 0 heading changes > 100° within 40 m over every served route (2,996 checked in `test_router`). **Driven push path** (fix round 2, M2): 0 of 984 pushes (max arc 97.9°, max 40 m window 98.3°) | pass |
-| Option A pushes: swept planform and every gear point on pavement, class reference | 14 stands × 4 ends: 0 of 37,416 gear samples, 0 of 162,136 outline samples off (round 2: pushes on the real chain) | pass |
+| Option A pushes: swept planform and every gear point on pavement, class reference | 14 stands × 4 ends: 0 of 37,416 gear samples, 0 of 162,136 outline samples off | pass |
 | End-around ≥ 90 % of span < 36 m west-side arrivals; never ≥ 65 m; 36-65 m via H2 / H6 | 372 / 372 = 100 %; 0 / 20; 352 / 352 via H2 / H6 | pass |
-| Route table deterministic (md5 twice), ≤ 0.6 MB, with the F4552 variant | md5 `f5c6b45363ffde00e15868b2e45ac323` twice; 339,464 B = 331.5 KiB; F4552 variant 828 routes, 0 using a closed link | pass |
-| Baked integer geometry = float path length within 1 cm per piece | 0 of 735,735 pieces > 1 cm (max 0.500 cm); integer geometry is rebuilt at run time from the stored link sequences (§6, D1). Since fix round 1 also: vertex stations within 0.05 m of where the path passes the node, blocks / boxes / holds / push end where the path is (V1); since fix round 2: every metre of every route inside some block, push resources and junction boxes from the geometry under and beside the aircraft (H1) | pass (with deviation D1) |
-| `test_traj`: trajectories within the §4.4 limits | 0 violations of accelerations, speeds, piece caps, R ≥ R_min, position steps (main gear ≤ 1.12 v dt, displayed nose ≤ v dt / cos δ; round 2), push limits; poses on every stand: yaw ≤ 14.4°/s, every join ≤ 0.08 m / 0.3°, main-gear slip ≤ 3.6° outside the stand alignment zones (V2, V5); segment end speeds ≤ 1 cm/s off (V7); line-up ≤ 60 s (max 29 s) | pass |
-| Take-off roll ≤ TORA − 400 m | 0 of 98 type × end × entry cases; smallest margin beyond the 400 m: 294 m; since round 2 a wide-body is never lined up at H2 / H6 (C4) | pass |
-| ROT from touchdown ≤ 50 s for ≥ 90 % of type × exit cases | **62.4 %** of 189 (narrow-bodies 89.1 %, wide-bodies 6.6 %; east runway 67.3 %) | **FAIL** |
+| Route table deterministic (md5 twice), ≤ 0.6 MB, with the F4552 variant | md5 `cb02dcb49de845a2bc8a1e7f30b1afdd` twice; 339,518 B = 331.6 KiB; F4552 variant 828 routes, 0 using a closed link (round 3 changed only `params.router.tailClear`: the link sequences are those of round 2) | pass |
+| Baked integer geometry = float path length within 1 cm per piece | 0 of 735,735 pieces > 1 cm (max 0.500 cm); integer geometry rebuilt at run time from the stored link sequences (§6, D1); vertex stations, blocks, boxes, holds and push end where the path is (round 1); every metre of every route inside some block, resources from the geometry (round 2) | pass (with deviation D1) |
+| **V3-1 (round 3): no planned stop with the tail inside a runway's far holding position** | 0 of 8,628 runway no-stop blocks / end boxes on 7,700 routes (all variants and span classes) whose first plannable stop leaves the tail of the class's longest type inside the far end (tail-clear markers, D20); verifier's `check_tailstop`: 0 of 17,848 (was 12,961); no hold inside a runway block or marker; queue room behind every such hold ≥ the class's longest type | pass |
+| `test_traj`: trajectories within the §4.4 limits | 0 violations of accelerations, speeds (piece caps, turn zones and the round-3 main-gear zones), R ≥ R_min, push limits; **V3-2 (round 3)**: every published pose point - the reference point x / z at `gs`, the displayed nose at `noseGs`, the displayed main gear at `mainGs` - with 0 steps > v dt + 0.1 m at 1 s and 0.5 s (≈ 5.0 M windows each; the verifier's endpoint rule on x / z: 0 of 570,053 1 s windows); displayed main-gear lateral acceleration ≤ the piece's a_lat + 1 % (max 1.007 × a_lat; 1.0 m/s², 1.25 on rapid exits); yaw ≤ 14.1°/s; joins ≤ 0.08 m / 0.3°; slip ≤ 3.3° outside the stand zones; line-up ≤ 60 s (max 29 s) | pass |
+| Take-off roll ≤ TORA − 400 m | 0 of 98 type × end × entry cases; smallest margin beyond the 400 m: 294 m; a wide-body is never lined up at H2 / H6 (C4) | pass |
+| ROT (round 3, D24: lead decision, inf, reversible by the owner): touchdown → tail clear ≤ 50 s (AIP (mirror) AD 2.20 2.1.4.2) for ≥ 90 % of the nominal **narrow-body** type × chosen-exit cases on **18L/36R** | **90.0 %** of 80 (p50 49.0 s, p90 50.0, max 57.2); zero margin (two cases at 49.99 s) | pass |
+| ROT report rows (not tuned): narrow-bodies on 18R/36L; wide-bodies; the design §5 "≤ 70 s for all" | 18R/36L narrow-bodies 87.5 % of 48 (max 69.0 s); wide-bodies 18L/36R 12.1 % of 33 (max 76.7 s), 18R/36L 0 % of 28 (max 75.7 s); all cases with the ±60 m spread: max 77.5 s, 61 of 566 over 70 s (east runway 4 of 337) | report |
 | Glide path 3.0° ± 0.1° | 2.981-3.044° (6,392 samples, 12 km to the flare) | pass |
-| No transcendental call on the commit path | 0 calls in 96 table route builds + 4 stands of live routing (turn-rule and push re-searches included), every trajectory builder, the exit model, `timeAtS` / `sAt`; 0 `**` operators (V6); the guard counts the display `evalTraj`. The verifier's `check_math2` re-run: 0 calls over 22,911 routes and 7,872 trajectories | pass |
-| (design §5 row, C2's day test) ROT ≤ 70 s for all | max **77.5 s** (p50 49.5, p90 72.6); every case over 70 s is a wide-body at a far-end connector or the second exit; east runway 4 of 337 cases over 70 s | **FAIL** |
+| No transcendental call on the commit path | 0 calls in 96 table route builds + 4 stands of live routing, every trajectory builder (since round 3 including the deterministic gear follower and its main-gear caps), the exit model, `timeAtS` / `sAt`; 0 `**` operators | pass |
 
-The two ROT rows are the honest failures; §7 explains them. Everything else passes (re-measured in fix round 2).
+The design's ROT rows are replaced by the narrow-body target and report rows (D24, §7). Everything else passes (re-measured in
+fix round 3).
 
 ---
 
@@ -75,7 +79,8 @@ const app = TJ.approachTraj('36R', P, tTd, { tdOffsetCm });                   //
 const land = TJ.landingTraj('36R', P, tTd, { route: ch.route, tdSCm: app.marks.tdSCm });
 const tin = TJ.groundTraj(ch.route, P, land.t1, { vStart: land.marks.vExitCms });
 const rot = TJ.rotMs(land, tin);                           // touchdown -> tail clear of the runway-holding position
-const pose = TJ.evalTraj(tin, t, {});                      // display only (floats, trigonometry)
+const pose = TJ.evalTraj(tin, t, {});                      // display only (floats, trigonometry); x / z = the reference point
+                                                           // (moves at gs), pose.nose / pose.main = the displayed gears (round 3)
 ```
 
 - `makeRouter(G, {table, closedLinks, stands, crossOnly, live, slim, runwayEnds})` -> `{departure(stand, end, {entry, spanCm, geom}),
@@ -87,7 +92,9 @@ const pose = TJ.evalTraj(tin, t, {});                      // display only (floa
   checked / re-routed / kept by the path-level turn rule; since round 2 also `pushBanned` / `pushKept`). `slim: true` (for C1)
   drops the assembly inputs (`verts`, `vS`, the paths' vertex stations) from served routes. Round 2: `runwayEnds` (traj.js
   `runwayGeom(airport)`) gives `lineup.toraCm` / `toraLeftCm` with `live: true` (C2); `departure(..., {entry: 'H2' | 'H6',
-  spanCm >= 3600})` is served at full length with `route.entryAsked` and `route.entryNote` (C4).
+  spanCm >= 3600})` is served at full length with `route.entryAsked` and `route.entryNote` (C4). Round 3: `departure(...)` /
+  `arrival(...)` take `opts.tailCm` (a type's own nose-gear -> tail distance for the tail-clear markers; default the span
+  class's largest, `ROUTER.foot.tailCm`).
 - **Route** (frozen fields + additions): `kind, stand, end, exitId, links: [[linkId, fromNode]], lenCm, pieces: [{kind:
   'line' | 'arc', lenCm, rCm, vmaxCms, linkId, + s0Cm, turn, tag, g}], blocks: [{id, s0Cm, s1Cm, noStop, + kind, node |
   link, dir, twoWay, start, crossing, landing, end}], push: {lenCm, optionA: {run, node, swing, turnDeg, record} | null, +
@@ -106,19 +113,30 @@ const pose = TJ.evalTraj(tin, t, {});                      // display only (floa
   {maxArcDeg, maxWinDeg, ok}` (the driven push path), `push.startFoot = {blocks, boxes, lanes, tailCm}` (the start-up
   fuselage's footprint); arrivals `exit.oppositeSide`, `exit.reCross` (`{node, ref, sCm, vacateFrom}` when the route
   re-crosses the runway it landed on).
+  Fix round 3 (V3-1) added: block kind `clear`, the **tail-clear marker** `{id: 'clr:<runway>:<crossing node>' |
+  'clr:<runway>:vacate' | 'clr:endbox:<end>', kind: 'clear', of: <the runway block / end box id>, s0Cm: its start, s1Cm: its far
+  end + tailCm, noStop: true, tailClear: true, res: false, tailCm}` - a no-stop stretch, **not a resource** (C1 reserves
+  nothing for it); on every runway no-stop block (`crossing`, `landing`) and end box `tailClearCm` (the nose station from which
+  a stop may be planned) and `tailCm`; on crossing blocks `node`; `route.tailCm`; `route.vacate.tailClearCm`; pieces
+  `aLatCms2` (the a_lat of the piece: 100, or 125 on rapid exits and the runway lead).
 - **Traj** = `{t0, t1, segs: [{t0, t1, s0Cm, v0Cms, aCms2, kind, + s1Cm, v1Cms}], route, phases: [[t, phase]], + kind,
   role, dir, perf, path | rwy, marks, warn}` (`route` is present on every kind since fix round 1: the route, or null for
   an approach / landing / take-off built without one; pass `opts.route`). **pose** = `{x, y, z, hdg, pitch, roll, gs, vs,
-  ground, gear, flaps, spoilers, phase, + main, mainChord, tip, steerDeg, t, nosePath}` (x, z = the DISPLAYED nose-gear
-  contact, oversteered outward in corners since round 2; `nosePath` = the path point at s; `main` = main-gear centre of the
-  displayed no-slip model; `mainChord` = round 0's chord model; `tip` = nose tip; `steerDeg` = nose-wheel angle; gs in m/s,
-  the speed along the path: in corners the displayed nose gear moves at gs / cos(steerDeg)).
+  ground, gear, flaps, spoilers, phase, + nose, main, noseGs, mainGs, mainChord, tip, steerDeg, t, nosePath}`. **Fix round 3
+  (V3-2): x, z = the REFERENCE point**, the nose-gear station s on the route centreline (push: the tug's nose gear on the push
+  path; runway / air: the nose gear on the runway axis), which moves at `gs` (m/s; the speed of the commit path); `nose` =
+  [x, z] the DISPLAYED nose-gear contact (oversteered outward in corners, round 2; = [x, z] on straights, pushes and the
+  runway) moving at `noseGs`; `main` = [x, z] the displayed no-slip main-gear centre moving at `mainGs`; `hdg` = the body axis
+  main -> displayed nose; `tip` = nose tip (from `nose` along `hdg`); `nosePath` = [x, z] (round 2 name); `mainChord` = round
+  0's chord model; `steerDeg` = nose-wheel angle. Draw the body from `nose` (or `main`) and `hdg`; every published point moves
+  consistently with its own published speed (round 2 had x, z on the displayed nose with gs of the centreline).
 - Extra exports: `router.js` `ROUTER, END_IDS, runwayOfEnd, graphFingerprint, closedLinksFor, simplify`; `path.js` `PATH,
   atanDet, atan2Det, angleDet, hdgDet, buildPath, projectOnPieces, turnProfile, pieceAt, pointAt, floatLen`; `perf.js`
   `PERF, WAKE, NM_CM, kt2cms`; `traj.js` `TRAJ, FOLLOW, runwayGeom, initTraj, isqrt, arrivalEntryCms, pushTraj, landingTraj,
   flareOverrunCm, wheelAimSCm, touchdownSCm, sAt, timeAtS, vAt, phaseAt, chooseExit, rotMs, gearFollower (round 2: `opts.model`
-  'over' | 'tractrix'), pushFollower, followAt, noseAt, turnZones (round 2), _internal` (tests only); `path.js` also
-  `arcPointDet` (round 2); `bodies.js` `samples, inside, bodyOf,
+  'over' | 'tractrix'), pushFollower, followAt, noseAt, turnZones (round 2), mainGearZones, followRatio (round 3), _internal`
+  (tests only); `path.js` also `arcPointDet` (round 2), `sinCosDet, pointAtDet` (round 3: deterministic sine / cosine and
+  point evaluation for the gear follower on the commit path); `bodies.js` `samples, inside, bodyOf,
   bodyFromNoseGear, overlaps, fusIn, clearance, gearOf, sweptSamples`.
 
 All modules are pure ES modules (node 22 and the browser): no DOM, no module-scope `window.*`; the data are passed in.
@@ -144,6 +162,16 @@ Headings at the interfaces are degrees true (`js/geo.js` `hdgVec`).
   gear is blended onto the lead-in (the chord position) so that the stand pose matches the gate engine's parked pose; the
   take-off roll continues the tractrix until it is on the centreline. The heading is main gear → nose gear. Round 0's
   chord model (both gears on the path, up to 48.7° of lateral slip) stays available as `pose.mainChord`.
+- **Fix round 3 (V3-2).** The pose's x / z is the reference point (the nose-gear station on the centreline, moving at gs);
+  the displayed gears are `pose.nose` / `pose.main` with their own speeds `noseGs` / `mainGs`. The follower is now
+  **deterministic** (path.js `pointAtDet`, `angleDet`: + − × ÷ √ only; Float64 samples) because it feeds the commit path:
+  where the oversteer weight is 1 and the main gear is within 0.5 mm of the centreline it stays exactly on P(s − wb) (the
+  10 cm pursuit steps alone drift ~0.1-1 mm at each curvature change); between the 1 m samples the displayed main gear is a
+  Catmull-Rom spline (round 2's linear interpolation put a ±2 % sawtooth on the body's yaw rate in every turn) or, on those
+  stretches, P(s − wb) itself. Per 1 m interval the follower records the peak main-gear speed ratio, yaw per metre and their
+  product (4 sub-steps), and `groundTraj` caps the nose-station speed wherever the displayed main gear would exceed the
+  piece's a_lat (1.0 m/s², 1.25 on rapid exits and the runway lead) or yaw faster than 20°/s (`mainGearZones`, part of
+  `turnZones`, §3.2).
 - Runway trajectories use the runway axis: s = cm from the physical runway end of that direction (negative on final),
   the **nose-gear** station like everything else; the glide path, flare and touchdown are defined for the **main gear**
   (`approachTraj` segments = main-gear stations + wheelbase; `marks.tdSCm` = main-gear touchdown station; V9).
@@ -166,7 +194,7 @@ runwayEnds, variants, groups, counts, format}`:
 - `runwayEnds`: per end the integer geometry (end point, unit direction, length, threshold and PAPI aim stations,
   TORA / TODA / ASDA / LDA, intersection entries, profile, extent distances). `exits`: the ranked exit list. `optionA`:
   the 14 option A records. `variants.F4552`: the closed link ids, window, `crossOnly` and the target record (§2.6).
-- 62 groups, 22,104 trie nodes; 984 departures (164 × 4 full length + 164 × 2 intersection entries) and 2,756 arrivals;
+- 62 groups, 22,287 trie nodes; 984 departures (164 × 4 full length + 164 × 2 intersection entries) and 2,756 arrivals;
   0 null routes in the base variant.
 - `graph_fp` is an FNV-1a fingerprint of the routable part of the taxi graph; the router uses the table only when the
   graph's fingerprint matches and the closure set is the base or a known variant, otherwise it routes live with the same
@@ -257,8 +285,10 @@ laterally) and an `endbox` hold 30 m before it (HP1-HP4 are not in the data: inf
   swing chain's blocks from the push end back to K on a departure (`swing: true`; round 2: every chain link with its real
   id, and the junction boxes at the chain's own nodes), junction boxes `j:<node>` = fillet region + 15 m (`noStop` when a
   taxiway touches the node; `start` for the box the route starts in), one-at-a-time lanes `lane:<ref>` (Y1-Y3, M1-M6,
-  L15-L17), runway strips `rwy:<runway>` (crossings and the landing roll noStop; the line-up block not), `endbox:<end>`.
-  About 100 blocks per route. Block windows (nose in to tail out + 5 s) are C1's.
+  L15-L17), runway strips `rwy:<runway>` (crossings and the landing roll noStop; the line-up block not), `endbox:<end>`;
+  since round 3 a tail-clear marker `clr:*` per runway no-stop block and end box (no-stop from the block's start to its far
+  end + the class's nose-gear → tail distance; `res: false`, not a resource; D20). About 100 blocks per route. Block windows
+  (nose in to tail out + 5 s) are C1's.
 - **Lanes by geometry (fix round 2, H1).** A lane block covers the pieces whose in- or out-link carries the ref (V4) and
   every stretch where the nose gear comes within 3 m (+0.5 m chord tolerance) of the lane's centreline in any direction,
   when the stretch contains a sample within 37° of the lane's direction (entering and leaving at an angle included); a bare
@@ -328,6 +358,13 @@ the previous one, its duration the whole ms (within 3 of the exact one) that end
 + 2 % (V7); segments `{t0, t1, s0Cm, s1Cm, v0Cms, v1Cms, aCms2, kind}` with integer ms boundaries;
 `timeAtS` uses τ = 2d / (b + √(b² + 4Ad)) (no cancellation). Stops `{sCm, dwellMs | untilMs}` are C1's block waits.
 Arrival taxi starts at `arrivalEntryCms` (the highest speed from which the caps ahead can be met at −1.5 m/s², ≤ 25 m/s).
+Fix round 3 (V3-2): the caps include the **main-gear zones** (`mainGearZones`: v ≤ √(a_lat / QW) and v ≤ 20°/s / YW per 1 m
+interval where that is below the piece / turn-zone cap; zones merged while their caps stay within 5 %), every speed
+maximum of the plan is **held ≥ 1 s** (`holdPeaks`, `TRAJ.peakHoldMs`: a triangular peak puts up to 0.3 m more into a 1 s
+step than its larger end speed × 1 s; the peak is lowered to the highest speed whose stretch is ≥ 1 s long, speeds only
+lowered), alternating with the short-leg merge until stable; in the chaining a planned plateau before a braking leg that is
+entered below its speed stays at the actual speed, and when no whole-ms duration meets both the end speed and the
+acceleration caps the caps win (the end speed then misses the target by at most one ms of quantization).
 
 ### 3.3 Push, approach, landing, take-off
 - `pushTraj`: tail first at ≤ 1.2 m/s, ±0.3 m/s², then the 90 s start-up hold (`marks.pushEndMs`).
@@ -348,8 +385,9 @@ Arrival taxi starts at `arrivalEntryCms` (the highest speed from which the caps 
 - `takeoffTraj(end, lineup, perf, tRoll)`: constant a_to to Vlof, rotate 3°/s to 8°, liftoff, climb γ 7° to 3,000 ft
   with +0.6 m/s² to 250 kt, straight on the runway heading; `marks.extentMs` at the extent edge, `fadeMs` 15 km beyond
   the far end. A320 on 36L: liftoff 38.6 s / 1,489 m; extent edge after 77 s at 424 m AGL; fade after 186 s at 914 m.
-- `evalTraj(traj, t, out)` (display): the displayed nose-gear x / z (oversteered in corners since round 2, `nosePath` the
-  path point), `main` (no-slip model, §1.2), `mainChord`, `tip`, `steerDeg` (the displayed nose gear's direction of motion
+- `evalTraj(traj, t, out)` (display): x / z the reference point (round 3; moves at gs), `nose` the displayed nose gear
+  (oversteered in corners since round 2) at `noseGs`, `main` (no-slip model, §1.2) at `mainGs`, `nosePath` (= x / z),
+  `mainChord`, `tip`, `steerDeg` (the displayed nose gear's direction of motion
   vs the body axis), y on the runway profile or the air path, heading (main → nose gear), pitch, roll 0, gs (m/s), vs,
   ground, gear / flaps / spoilers by phase (sfo3d attitude rules). `noseAt(gearFollower(route, wb), route.path, s)` gives
   the displayed nose without a trajectory (C2).
@@ -392,6 +430,7 @@ Arrival taxi starts at `arrivalEntryCms` (the highest speed from which the caps 
 | `laneTolCm`, `laneCos`, `laneGapCm`, `laneHoldCm` (fix round 2) | 3.5 m, 37°, 3 m, 60 m | lanes by geometry on the route path; a pushed lane continues from s = 0 when reached within 60 m (H1) |
 | `pushTurn`, `pushMergeMaxCos` (fix round 2) | 100° (arc, 40 m window); merges < 100° | the driven push path keeps the turn rule (M2) |
 | `wideFullLength` (fix round 2) | true | span ≥ 36 m always lines up at full length (design §4.2) (C4) |
+| `tailClear` (fix round 3) | kinds crossing, landing, endbox; tail = `foot.tailCm` (n 40 / w 71 / x 69 m, ≥ every perf.js type of the class: 39.7 / 70.8 / 68.5 m) or `opts.tailCm` | design §4.5 no-stop zones ("crossing hold → first block beyond the runway"); the holding position protects the strip only when the tail is past it (V3-1) |
 
 ### 4.2 Geometry (`PATH`)
 | Parameter | Value | Basis |
@@ -402,7 +441,7 @@ Arrival taxi starts at `arrivalEntryCms` (the highest speed from which the caps 
 | `cutTolCm` | 1 m | a small deflection may take the radius that cuts 1 m off the vertex |
 | `mergeMaxCos`, `mergeKinkTan` | 150°, 30° | merged corners < 150°; neighbour kinks < 30° absorbed |
 | `mergeDevCm` (fix round 1) | 8 m | a merge keeps every absorbed vertex within 8 m of the merged legs (4 m left 169 arcs < 15 m, 8 m 39; unbounded: 258 route nodes > 20 m off the path) |
-| `aLatCms2`, `aLatRapidCms2` | 1.0, 1.25 m/s² | design §4.4; RET design 93 km/h on a 550 m radius ≈ 1.2 m/s² (ICAO, from memory, unverified) |
+| `aLatCms2`, `aLatRapidCms2` | 1.0, 1.25 m/s² | design §4.4; RET design 93 km/h on a 550 m radius ≈ 1.2 m/s² (ICAO, from memory, unverified); since round 3 every piece carries its own `aLatCms2` (the main-gear caps use the piece under the main gear) |
 
 ### 4.3 Performance (`PERF`, `perfOf`)
 | Parameter | Value | Basis |
@@ -433,6 +472,9 @@ Arrival taxi starts at `arrivalEntryCms` (the highest speed from which the caps 
 | `FOLLOW` (fix round 1, display) | 10 cm steps, 1 m samples, stand alignment over 2.5 wheelbases + 10 m | no-slip main gear (V5) |
 | `FOLLOW.oversteer` (fix round 2, display) | nose ≤ 10 m off the centreline; none on fillets ≤ 10 m, partial to 20 m; ramps ≥ 10 m and ≥ 5 × the offset change; none over a departure's first wheelbase + 50 m; faded to 0 in the arrival's stand zone | judgemental oversteering, main gear on the centreline (M1); 10 m: measured best of 6 / 8 / 10 / 15 m (§5) |
 | turn zones (fix round 2) | an arc's cap held over [s0, s0 + len + wheelbase] | the main gear (and the yaw) is on the arc one wheelbase after the nose station (M1; `turnZones`) |
+| `FOLLOW.yawMaxDegS`, `capJoin` (fix round 3) | 20°/s; main-gear zones merged while within 5 % | the yaw guard is test_traj's bound since round 1 (V2); main-gear a_lat ≤ the piece's a_lat (design §4.4, D8) (V3-2) |
+| `FOLLOW.snapCm` (fix round 3) | 0.5 mm | a main gear this close to P(s − wb) where the oversteer weight is 1 stays on it exactly (pursuit-step drift) (V3-2) |
+| `TRAJ.peakHoldMs` (fix round 3) | 1 s | a speed maximum holds ≥ 1 s: no 1 s step of the reference point exceeds its larger end speed × 1 s + 0.1 m (design §5 kinematics row) (V3-2) |
 | `rotMaxMs` | 50 s | AIP (mirror) AD 2.20 2.1.4.2 |
 | `rolloutDecCms2` | 0.5 m/s² before braking | inf (idle reverse + drag) |
 
@@ -440,12 +482,12 @@ Arrival taxi starts at `arrivalEntryCms` (the highest speed from which the caps 
 
 ## 5. Test results (aggregates)
 
-Re-measured after fix round 2 (`out/phase3/B/fix2/test_router_full.txt`, `test_traj.txt`).
+Re-measured after fix round 3 (`out/phase3/B/fix3/test_router_full.txt`, `test_traj_final.txt`).
 
-`tools/sim/test_router.mjs`: **56 / 56 pass** (quick about 2.5 min; the full run adds the all-route pavement scans,
-about 3.5-4 min in this sandbox).
-- Table: two builds give the same md5 (`f5c6b45363ffde00e15868b2e45ac323`); the committed file is up to date; `.js` wraps
-  the same JSON; 331.5 KiB (.js 331.8 KiB); the router recognises the base and the F4552 closure set; table link sequences
+`tools/sim/test_router.mjs`: **58 / 58 pass** (quick about 3 min; the full run adds the all-route pavement scans, 4.0 min
+in this sandbox).
+- Table: two builds give the same md5 (`cb02dcb49de845a2bc8a1e7f30b1afdd`); the committed file is up to date; `.js` wraps
+  the same JSON; 331.6 KiB (.js 331.8 KiB); the router recognises the base and the F4552 closure set; table link sequences
   = live routing (base and F4552: 0 mismatches); stored route lengths = run-time rebuild (0 mismatches).
 - Rules over 6,740 routes (departures and arrivals, both variants, all span classes; 306,703 taxi transitions, 735,735
   pieces): every taxi transition is in the committed `turns` table (option A geometric starts excluded); one-way 0, use
@@ -470,37 +512,53 @@ about 3.5-4 min in this sandbox).
   left, H6 2,988 m.
 - **M1 pavement** (all base routes, class reference type, 2 m steps, 3,660,682 samples of 1 nose + 2 main wheels; off
   drawn incl. shoulders / load-bearing / the 11.5 m half-width corridor): displayed (oversteer) nose 2,233 / 2,717 / 0,
-  main wheels 4,918 / 7,267 / 348 (0.099 % off load-bearing, 786 routes); round-1 tractrix main wheels 5,338 / 46,942 /
-  39,873 (0.641 %); chord main wheels 4,827 / 6,851 / 275 (0.094 %). Junction list for the taxi-graph owner: round 2, M1.
+  main wheels 4,903 / 7,249 / 348 (0.099 % off load-bearing, 788 routes; round 2: 4,918 / 7,267 / 348); round-1 tractrix main
+  wheels 5,338 / 46,942 / 39,873 (0.641 %); chord main wheels 4,827 / 6,851 / 275 (0.094 %). Junction list for the taxi-graph
+  owner: round 2, M1.
+- Fix round 3 rows (V3-1; 7,700 routes: `allRoutes` + the departures of span classes w / x, both variants): 8,628 runway
+  no-stop blocks and end boxes (crossing 2,784, landing 5,100, end box 744), each with a tail-clear marker; first plannable
+  stop (a block boundary outside the open interior of every no-stop block, no chaining) minus the tail of the class's longest
+  perf.js type (n 39.7 / w 70.8 / x 68.5 m) behind the far end: 0 of 8,628; holds inside a runway block or marker 0 of
+  11,228 (INFO: 4,848 inside a no-stop junction box, round 0 on, §8); queue room behind a runway / line-up / end-box hold that
+  follows a tail-clear stretch: 3,528 holds, min 59 m, p10 117, p50 685 m (without the tail clear 99 / 756 m), 0 shorter than
+  the longest type of the class.
 - Route lengths: departures median 2,277 m, p90 3,183, max 3,919; arrivals median 2,485 m, p90 4,978, max 5,883 (the
   end-arounds). Option A pushes: 0 of 37,416 gear and 0 of 162,136 outline samples off. Other pushes (INFO): gear 0 of
   351,396 samples off; wing tips of the wide class references over verges on 17 stands (outline 6,948 of 1,522,716).
   Fillets over all routes: min 6.0 m, p01 18.2 m, p10 29.4 m.
 
-`tools/sim/test_traj.mjs`: **24 / 26 pass** (about 17 s; the 2 failures are the ROT rows, §7). 3,936 trajectories (push +
-taxi-out + take-off for 164 × 4, approach + landing + taxi-in for 164 × 4 with the exit model, the stand's class reference
-type), 192,781 segments, poses on every stand at 0.25 s (push) / 0.5 s (taxi).
-- Accelerations, speeds, piece caps, radius (0 below R_min; 18 arcs between R_min and 1.6 R_min): 0 violations. Position
-  steps: main gear ≤ 1.12 v·dt + 0.1 m and displayed nose ≤ v·dt / cos δ + 0.1 m: 0 (main-gear steps over v·dt + 0.1 m in
-  partially oversteered tight turns: 100, INFO). Yaw rate p99 11.2°/s, max 14.4°/s (limit 20); joins push → taxi 0.002 m,
-  taxi → take-off ≤ 0.082 m, approach → landing 0.000 m, landing → taxi-in ≤ 0.064 m. Main-gear slip outside the stand
-  alignment zones p99 2.77°, max 3.55°; inside them p99 16.3°, max 21.8° at ≤ 4.9 m/s (D11). Nose-wheel angle p99 43.4°,
-  max 65.8° (≤ 75°). Stand poses within 0.5° of the lead-in chord. Segments (V7): 0 of 219,439 over (end speed ≤ 0.999
-  cm/s off v1Cms); the frozen fields integrate to within 14.0 cm of s1Cm. Traj.route on every kind.
+`tools/sim/test_traj.mjs`: **28 / 28 pass** (about 45 s). 3,936 trajectories (push + taxi-out + take-off for 164 × 4,
+approach + landing + taxi-in for 164 × 4 with the exit model, the stand's class reference type), about 194,000 segments;
+since round 3 every push / taxi-out / taxi-in posed on a 0.1 s grid.
+- Accelerations, speeds (piece caps, turn zones and main-gear zones since round 3), radius (0 below R_min; 18 arcs between
+  R_min and 1.6 R_min): 0 violations. **V3-2 rows**: every published point against its own published speed (reference
+  x / z at gs, `nose` at noseGs, `main` at mainGs): 0 of 4,984,408 1 s windows and 0 of 4,994,248 0.5 s windows with a step
+  > (the largest published speed in the window) × dt + 0.1 m; speeds not inflated (0.5 s path length ≥ 0.97 × the smallest
+  speed × dt − 0.1 m): 0; mainGs / gs up to 1.217, noseGs / gs up to 1.727 (the displayed gears in transients and tight
+  oversteered turns); displayed main-gear lateral acceleration (main speed × yaw rate over ≥ 1 m or 0.5 s windows) ≤ the
+  piece's a_lat + 1 %: 0 of 4,341,108 windows over (12,035 over a_lat itself by ≤ 0.7 %: the +2 cm/s speed tolerance of the
+  integer legs, D13), max 1.251 m/s² on a rapid exit, max / a_lat 1.007; yaw rate max 14.07°/s on those windows (13.7°/s at
+  the 0.5 s sampling; limit 20). Joins push → taxi 0.002 m, taxi → take-off ≤ 0.082 m, approach → landing 0.000 m,
+  landing → taxi-in ≤ 0.064 m. Main-gear slip outside the stand alignment zones p99 2.86°, max 3.25°; inside them p99
+  16.1°, max 21.7° at ≤ 4.7 m/s (D11). Nose-wheel angle p99 43.3°, max 65.8° (≤ 75°). Stand poses within 0.5° of the lead-in
+  chord. Segments (V7): 0 of about 220,800 over (end speed ≤ 0.999 cm/s off v1Cms); the frozen fields integrate to within
+  14.0 cm of s1Cm. Traj.route on every kind.
 - Push 0 / start-up 0 violations; line-up from the hold p50 24 s, max 29 s; taxi-out p50 264 s (p90 346), taxi-in
-  (18L / 36R) p50 383 s (p90 567).
+  (18L / 36R) p50 383 s (p90 568).
 - Take-off: 0 of 98 cases over TORA − 400 m, smallest margin beyond it 294 m (18R / 36L full length, the heavies).
-- ROT: §7. Glide path 2.981-3.044°; main gear touchdown −8.9 .. +69.4 m from the PAPI abeam point, over the DTHR at
-  13.0-21.6 m. Determinism 16 / 16. Bodies: degrees and nose-tip placement verified. No transcendental call on the commit
-  path (96 builds incl. live routing); 0 `**` lines.
-- Cost (node, this sandbox, shared CPU): `makeRouter` with the table 20-30 ms; route + push + taxi + take-off build
-  p50 1.9 ms (max 20 ms); route assembly about 2.2 ms per departure, 1.35 ms per arrival (load average about 5);
-  `build_routes.mjs` about 11 s.
+- ROT (D24, §7): narrow-bodies on 18L/36R 90.0 % of 80 nominal cases ≤ 50 s (pass); report rows in §7. Glide path
+  2.981-3.044°; main gear touchdown −8.9 .. +69.4 m from the PAPI abeam point, over the DTHR at 13.0-21.6 m. Determinism
+  16 / 16. Bodies: degrees and nose-tip placement verified. No transcendental call on the commit path (96 builds incl. live
+  routing; the gear follower included since round 3); 0 `**` lines.
+- Cost (node, this sandbox, shared CPU): `makeRouter` with the table 20-30 ms; route + push + taxi + take-off build p50
+  8.3 ms (max 31 ms; round 2: 1.9 ms - the deterministic gear follower and its main-gear caps, D22); route assembly about
+  2.1 ms per departure, 1.35 ms per arrival (load average about 5); `build_routes.mjs` about 15 s.
 
 ![Route table usage](movement_routes.png)
 
-*Stored routes per taxi-graph link (departures × 4 ends, arrivals × the first / second exits of the stand side); the 14
-option A tail-first runs in orange.*
+*Stored routes per taxi-graph link (984 departures: 4 ends at full length + the H2 / H6 entries; 1,170 arrivals: the
+first / second exits of the stand side; span class n); the 14 option A tail-first runs in orange; runway links are never
+taxi links (thin gray). Re-made from the round-3 code.*
 
 ![ROT by type and exit](movement_rot.png)
 
@@ -509,8 +567,11 @@ option A tail-first runs in orange.*
 
 ![Speed and height profiles](movement_profiles.png)
 
-*Taxi-out A320 233 -> 36L against the piece caps; landing roll and exit on 18L (ROT 42 s); the approach on the 3° path
-(round 0 figure; fix round 1 changed the segment cutting, not the profiles' shape).*
+*Re-made from the round-3 code. Top: the first 400 m of the taxi-out A321 288 -> 18L (the verifier's V3-2 example) against
+the piece caps, the turn zones and the round-3 main-gear caps (orange: where the displayed main gear, still where the push
+left it and cutting inside the first fillets, would exceed a_lat 1.0 m/s²); the speed maxima are held ≥ 1 s. Middle:
+landing roll and exit, A320 on 18L to stand 233 (18L:B4, ROT 42 s). Bottom: the approach on the 3° path (main-gear wheels;
+the PAPI eye path dashed).*
 
 ---
 
@@ -575,27 +636,38 @@ option A tail-first runs in orange.*
   without reaching a holding position of it in between vacates on the far side of the re-crossing (no hold on the strip).
 - **D19 Wide-bodies at full length in the router (fix round 2, C4).** Design §4.2 lets code C use H2 / H6; the router
   now serves span ≥ 36 m at full length even when an intersection is asked (`entryAsked`, `entryNote`).
+- **D20 Tail-clear markers (fix round 3, V3-1).** Design §4.5's no-stop sequence "crossing hold → first block beyond the
+  runway" ended at the far holding position's nose station, so the first plannable stop could leave the tail inside the 90 m
+  line. Every runway no-stop block and end box now has a no-stop marker to its far end + the class's nose-gear → tail
+  distance (`kind: 'clear'`, `res: false`: not a resource, it only extends the no-stop sequence).
+- **D21 Pose reference point (fix round 3, V3-2).** `pose.x / z` is the design's reference point again (the nose-gear
+  station on the centreline, moving at `gs`, as in rounds 0-1); round 2's oversteered nose and the no-slip main gear are the
+  added fields `pose.nose` / `pose.main` with their own speeds `noseGs` / `mainGs`.
+- **D22 Main-gear speed caps on the commit path (fix round 3, V3-2).** The design caps turns on the centreline radius. The
+  displayed main gear (tractrix of the oversteered nose) cuts inside where the oversteer is limited and turns harder in
+  transients, so `groundTraj` also caps the speed from the gear follower, which is therefore deterministic and part of the
+  commit path (a trajectory now depends on `FOLLOW`); build cost route + push + taxi about 8.9 ms per departure (was ~2.6).
+- **D23 Speed maxima held ≥ 1 s (fix round 3, V3-2).** A triangular speed peak (accelerate, brake at once) is lowered to a
+  1 s plateau; taxi times change by < 1 s (taxi-out p50 264 s, taxi-in p50 383 s).
+- **D24 ROT acceptance as a narrow-body target (fix round 3; lead decision, inf, reversible by the owner).** Design §7.2
+  "ROT ≤ 50 s for ≥ 90 % of type × exit cases" and §5 "≤ 70 s for all" are replaced by: the AIP (mirror) AD 2.20 2.1.4.2 50 s
+  is the target for ≥ 90 % of the nominal narrow-body type × chosen-exit cases on the landing runway of the segregated mode
+  (18L/36R); 18R/36L and the wide-bodies are reported, not tuned (no ZSSS ROT evidence); C1 spaces each arrival with its own
+  computed ROT (`chooseExit(...).rotMs`). Braking and turn-off speeds are unchanged (§7).
 
 ---
 
 ## 7. What does not meet the acceptance, and limits
 
-- **ROT ≤ 50 s for ≥ 90 % of type × exit cases: 62.4 % (FAIL; round 1 62.6 %, round 0 64.7 %).** 189 nominal cases (19
-  types × 4 ends × 2 sides × the exits the model picks). Narrow-bodies 89.1 %, wide-bodies 6.6 %; east runway 67.3 %. Round
-  1's drop came from V9 (the wheels touch down at the touchdown station, the nose gear a wheelbase further down the
-  runway, so the first exit is reachable less often); round 2's turn zones (M1) hold the exit's turn speed until the main
-  gear has left the turn. Wide-bodies brake at 1.7 m/s² from 140-155 kt and are longer (the tail must clear the hold).
-  Branches of the nominal cases over 50 s: first exit (70 %) 9, second (30 %) 7, second because the first is not
-  reachable 31, a later rapid exit 1, far-end connector 21, first 2. Raising a_dec for wide-bodies or the turn-off speed
-  above 25 m/s would pass the test by assumption, not by evidence (no ZSSS ROT data are available here), so it was not
-  done. The owner may accept the AIP 50 s as a narrow-body target, or C1 may treat 50 s as the planning ROT for the
-  spacing and report the wide-body excess.
-- **ROT ≤ 70 s for all (design §5 row; C2): max 77.5 s (FAIL; round 1 75.9 s).** p50 49.5 s, p90 72.6 s; ≤ 50 s with the
-  ±60 m touchdown spread 55.3 %. The cases over 70 s are wide-bodies (and one B753) on 18R / 36L at the far-end connector
-  or the second exit, taken because no rapid exit of the stand's side is reachable (one east rapid exit per direction, B8
-  / B7 at about 1,950 m), which AD 2.20 2.1.4.2 ("first or second rapid exit") does not foresee; on 36R B744 / B77W (4 of
-  337 east-runway cases). In the segregated mode (AIP (mirror) AD 2.20 2.1.1) 18R / 36L takes landings only when
-  18L/36R is unavailable.
+- **ROT (fix round 3: the narrow-body target, D24).** On 18L/36R **90.0 %** of the 80 nominal narrow-body type × chosen-exit
+  cases vacate within 50 s (p50 49.0 s, p90 50.0, max 57.2) - **pass**, with no margin: two A320-family cases on 36R:B2
+  sit at 49.99 s. Reported, not tuned: narrow-bodies on 18R/36L 87.5 % of 48 (max 69.0 s; landings there only when
+  18L/36R is unavailable, AD 2.20 2.1.1); wide-bodies 12.1 % of 33 on 18L/36R (p50 55.8 s, max 76.7) and 0 % of 28 on
+  18R/36L (p50 73.7 s); all nominal cases 62.4 % of 189. With the seeded ±60 m touchdown spread: p50 49.5 s, p90 72.7, max
+  77.5; 61 of 566 cases over 70 s (east runway 4 of 337, all B744 / B77W). Wide-bodies brake at 1.7 m/s² from 140-155 kt,
+  are longer (the tail must clear the hold) and on 18R/36L often reach no rapid exit of the stand's side. Raising a_dec or the
+  25 m/s turn-off speed would pass by assumption, not evidence (no ZSSS ROT data here): not done. The scheduler spaces each
+  arrival with its own `rotMs` (C1, §8).
 - **Pavement: data gaps at a few junctions** (INFO, C2's acceptance; M1). With the oversteered display 0.099 % of the
   main wheels' samples (786 routes) are outside the half-width corridor and 7,267 of 3.66 M off the load-bearing pavement:
   wheels on or beside the centreline where the OSM pavement polygons stop short. Most of them at node 662 (276, −392), 544
@@ -611,7 +683,11 @@ option A tail-first runs in orange.*
   against the 40 MB budget; the display gear followers add up to about 40 kB per active movement (Float32, 1 m samples).
 - **Assembly cost**: about 2.2 ms per departure and 1.35 ms per arrival with the footprints and the geometric boxes
   (measured on this shared CPU, load average about 5; round 1 about 0.4 ms), i.e. about 1 s for a day's routes: C1 should
-  assemble lazily (time-sliced) and cache by (stand, end, entry, class).
+  assemble lazily (time-sliced) and cache by (stand, end, entry, class). Round 3: route + push + taxi about 8.9 ms per
+  departure (the deterministic gear follower and the main-gear caps on the commit path, D22), about 7 s for a day's first
+  builds; the design's "full-day commit ≤ 300 ms" (§5) needs time-slicing and caching by C1.
+- **Memory (round 3)**: a slim departure route 70.5 kB; with its push and taxi trajectories and the gear follower (Float64
+  samples, per-interval speed ratio / yaw) about 98 kB (A321; node --expose-gc, 500 departures).
 - **Lane block start** (verifier `dbg_lanes3` row `taxiStartWithoutLaneBlockFromS0`, 52): a departure that reaches a
   one-at-a-time lane after the taxi start gets the lane block where the nose reaches the lane (nose-in), not from s = 0,
   unless the push sweep held the lane (then from s = 0, `held`). This is the block semantics, not a gap: 0 of 1,555
@@ -630,25 +706,42 @@ option A tail-first runs in orange.*
   start at s = 0 (the start-up fuselage) and end with the tail passing their `s1Cm`; `geo` boxes are junctions beside
   the path; `lane:*` are the one-at-a-time lanes (`held`: continued from the push); `rwy:*` with `crossing` / `landing` /
   `lineup`; `endbox:*` on end-around arrivals (the departures' end-box windows are C1's, from `takeoffTraj` marks).
+  **Fix round 3 (V3-1): a no-stop sequence is the union of no-stop blocks that overlap or touch, and a stop may be planned
+  only at a block boundary outside the open interior of every no-stop block.** The tail-clear markers (`kind: 'clear'`,
+  `res: false`) run from each runway no-stop block's start (and each end box's) to its far end + the tail, so the first
+  plannable stop after a crossing or a vacate leaves the whole aircraft behind the far holding position; **reserve nothing
+  for a `res: false` block** (it is not a resource; the link blocks and boxes under it are). `tailClearCm` on the runway
+  block / end box is the same station. Holds are mandatory stops and **override the no-stop flag of a junction box** they
+  lie in (round 0 on: 4,848 of 11,228 holds on the 7,700 test routes lie inside a no-stop junction box - line-up 1,576,
+  end box 744, runway 901, lead-in 1,627: the 15 m pad reaches the hold line; the holding aircraft keeps that box reserved); no hold lies inside a runway block or a tail-clear marker (tested). The queue
+  room between a tail-clear end and the next runway / line-up hold is ≥ 59 m (p10 117 m) and longer than the longest type of
+  the class at every such hold. Arrivals: space each landing with its own computed ROT (`chooseExit(...).rotMs`, touchdown
+  → tail clear of the vacate point; D24).
   Holds: `rwyhold` (crossing), `lineup`, `leadin` (dwell 5 s, applied by `groundTraj` unless `leadinStop: false`),
   `endbox`. In the F4552 window pass `SHA_ROUTES.variants.F4552.closedLinks` and `.crossOnly` to `makeRouter` (a second
   router instance): the router recognises the stored variant; another closure set (e.g. `closedLinksFor(G,
   targets).ids` for a new NOTAM) routes live with the same code.
 - **C1**: build routes with `makeRouter(..., {slim: true})`, lazily and cached by (stand, end, entry, span class): 2.2 ms
-  per departure, 1.35 ms per arrival (§7). Pass `{route}` to `approachTraj` / `landingTraj` (Traj.route) and `tdSCm:
+  per departure, 1.35 ms per arrival (§7); since round 3 the first `groundTraj` of a (route, wheelbase) also builds the gear
+  follower and its main-gear caps (route + push + taxi about 8.9 ms per departure; cached on the route's path object, so
+  keep the route objects and reuse them across the commit iterations). Pass `{route}` to `approachTraj` / `landingTraj` (Traj.route) and `tdSCm:
   approach.marks.tdSCm` (the main-gear touchdown station) to `landingTraj`; `takeoffTraj` finds the route through
   `lineup.route`. Departure block windows start at the push end inside the swing chain (`swing: true` blocks). Wide-bodies
   are lined up at full length by the router (`entryAsked`, `entryNote`; C4): no need to enforce it.
-- **C2 (day suite)**: pose sampling via `evalTraj`; the displayed main gear centre is `pose.main` ([x, z] m; the no-slip
-  tractrix of the displayed, oversteered nose gear `pose.x / z`), `pose.nosePath` the centreline point, `pose.mainChord`
-  round 0's chord model; the nose tip `pose.tip`, the nose-wheel angle `pose.steerDeg` (the displayed nose gear moves at
-  gs / cos steerDeg). `noseAt(follower, path, s)` gives the displayed nose without a trajectory. Measure the pavement on
+- **C2 (day suite)**: pose sampling via `evalTraj`; since round 3 `pose.x / z` is the reference point (the nose-gear
+  station on the centreline; the §5 kinematics row at `gs`), the displayed gears `pose.nose` (the oversteered nose gear,
+  speed `noseGs`) and `pose.main` ([x, z] m, the no-slip tractrix of `pose.nose`, speed `mainGs`), `pose.mainChord` round
+  0's chord model; the nose tip `pose.tip`, the nose-wheel angle `pose.steerDeg`; check each displayed point against its
+  own speed. Gear points and the planform for the pavement and separation checks come from `pose.nose` / `pose.main` and
+  `pose.hdg`, not from `pose.x / z`. `noseAt(follower, path, s)` gives the displayed nose without a trajectory. Measure the pavement on
   three surfaces (drawn incl. shoulders, load-bearing, the 11.5 m half-width corridor) with these poses: a tractrix of the
   centreline (as the verifier's `check_routes2` gear rows) is round 1's model, not the display. The swept planform via
   `bodies.js` `sweptSamples(T, x, z, hdg)`. For a live router without the table pass `runwayEnds` (C2 finding) to get
   `lineup.toraCm`. Memory: 69.3 kB per slim route (§7), to be measured against the 40 MB budget. The ROT and pavement
   items above will show in the day test.
-- **D (app)**: `evalTraj` is display evaluation (floats); `phase` names: pushback, holding (start-up and stops), taxi,
+- **D (app)**: `evalTraj` is display evaluation (floats); **draw the aircraft from `pose.nose` (nose-gear contact) or
+  `pose.main` and `pose.hdg`** (since round 3 `pose.x / z` is the centreline reference point, up to 10 m inside the displayed
+  nose gear in corners); the label speed is `gs`; `phase` names: pushback, holding (start-up and stops), taxi,
   lineup, takeoff, departure (after liftoff), approach, final, landing (until the tail clears the vacate point).
   `SHA_ROUTES` is 331.5 KiB.
 - **Data owners (taxi graph / airport)**: the taxi graph lacks L11, L12, L14 (push holding points of AIP 232-235 / 262-265
@@ -875,7 +968,7 @@ samples (`out/phase3/B/fix2/pavement_junctions.json`): node 662 (276, −392; ta
 (−590, 1617) 171, 64 (−551, 2052; S) 167, 345 (377, 1145) 158, 376 (328, 816) 135, 149 (−347, 751; C4 / H5) 112, 159 (−506,
 759; C3 / H5) 94; request to the taxi-graph / airport owner (§8). The verifier's `check_routes2` gear rows model the nose on
 the centreline with their own tractrix (main 31,912 / 270,398 / 226,950 at 1 m, unchanged by design): they measure
-round 1's model, not `pose.main`; C2's day test should sample `pose.main` / `pose.x, z`.
+round 1's model, not `pose.main`; C2's day test should sample `pose.main` / `pose.x, z` (since round 3 `pose.main` / `pose.nose`).
 
 **M2 (medium) - driven push paths turning more than 100°: confirmed and fixed.** What was wrong: the path-level turn rule
 (round 1, V3) covered the taxi path only; push paths merged a corner at K with the push link's corner into one arc (102-131°
@@ -920,3 +1013,110 @@ the geometric boxes); about 500 routes a day ≈ 35 MB of the 40 MB budget: C2 m
 ms per departure and 1.35 ms per arrival on this shared CPU (load average about 5; round 1 about 0.4 ms; the footprints
 and the geometric boxes): about 1 s for a day's routes, so C1 should assemble lazily or time-sliced and cache by (stand,
 end, entry, class).
+
+---
+
+## Verification fixes, round 3
+
+The third adversarial verification (`out/phase3/B_verify3/`) still refuted two claims, V3-1 and V3-2 (both medium); the lead
+also decided how ROT is accepted. The verifier's scripts were copied to `out/phase3/B/fix3/verifier/` (import paths and the
+output directory changed) and re-run against the fixed code; `check_traj3_mainGs.mjs` there is a marked variant that reads
+the round-3 pose fields (below). Code: `js/sim/router.js`, `path.js`, `traj.js`; tests: `tools/sim/test_router.mjs` (56 → 58
+checks), `test_traj.mjs` (26 → 28 checks; the step rows re-stated, the ROT rows replaced); table rebuilt
+(`data/sha_routes.*`, md5 `cb02dcb49de845a2bc8a1e7f30b1afdd` twice, 339,518 B; only `params.router.tailClear` differs from
+round 2: the stored link sequences are identical, 22,287 trie nodes - §1.3's 22,104 was stale). Figures
+`movement_routes.png` and `movement_profiles.png` re-made from this code (§5; looked at). Scratch: `out/phase3/B/fix3/`
+(gitignored).
+
+**V3-1 (medium) - stops with the tail inside the far holding position: confirmed and fixed.** What was wrong: the runway
+no-stop blocks ended at the nose station of the far holding position (crossings `[sIn, sOut]`, the landing `[0, vacate]`),
+so the first block boundary outside every no-stop block - where C1 may plan a queue stop - left the tail of the aircraft
+inside the 90 m line (verifier: 12,961 of 17,848 events, p50 17.1 m, max 66.5 m). Change (`router.js tailClear`,
+`ROUTER.tailClear`, D20): every runway no-stop block (`crossing`, `landing`) and every end box gets a no-stop **tail-clear
+marker** `clr:<runway>:<crossing node> | clr:<runway>:vacate | clr:endbox:<end>` over [the block's start, its far end + tail],
+tail = the span class's largest nose-gear → tail distance (`ROUTER.foot.tailCm` n 40 / w 71 / x 69 m, above every perf.js
+type of the class: 39.7 / 70.8 / 68.5 m) or `opts.tailCm`; the marker spans the runway block too, so no boundary from the hold
+to the tail-clear station (the far holding position itself included) lies outside the open interior of a no-stop block,
+whether C1 chains touching no-stop blocks or not. The marker is `res: false` (not a resource: C1 reserves nothing for it; the
+link blocks and boxes under it are the resources) and is added after the gap fill (it covers no metre; `test_router`'s H1
+coverage ignores it). The runway block / end box carry `tailClearCm` and `tailCm`, crossing blocks their `node`, the route
+`tailCm`, the vacate `tailClearCm` (Route fields, §1.1). Evidence: the verifier's `check_tailstop.mjs` (11,808 routes,
+A321 on span-0 routes, the class reference otherwise): **0 of 17,848** events short (crossings 0 / 8,008, vacates
+0 / 9,840; was 12,961); `test_router` V3-1 rows over 7,700 routes (both variants, all span classes, departures of every
+class): 0 of 8,628 runway no-stop blocks and end boxes whose first plannable stop leaves the longest type's tail inside the
+far end; no hold inside a runway block or a marker (0 of 11,228); queue room from a tail-clear end to the next runway /
+line-up / end-box hold ≥ 59 m (p10 117 m, p50 685 m; 99 / 756 m without the markers) and longer than the longest type of the
+class at all 3,528 such holds. A pre-existing semantic made explicit (§8): 4,848 of those 11,228 holds lie inside a no-stop
+**junction box** (its 15 m pad reaches the hold line); a hold is a mandatory stop and overrides the box's no-stop flag.
+
+**V3-2 (medium) - pose semantics, main-gear speed and lateral acceleration: confirmed and fixed.** What was wrong: since
+round 2 `pose.x / z` was the displayed (oversteered) nose gear while `pose.gs` stayed the centreline speed, so no published
+point moved at gs (the displayed nose up to 1.72 × gs); where the oversteer is limited (the 10 m cap, tight fillets, a
+departure's first wheelbase + 50 m) the no-slip main gear cut inside and turned harder than the centreline arc whose cap the
+profile kept (main-gear lateral acceleration up to 1.17 m/s²); the yaw maximum quoted (14.4°/s) was at 0.5 s sampling. Changes
+(`traj.js`, `path.js`; D21-D23):
+- **pose**: x / z = the reference point, the nose-gear station on the centreline (push: the tug on the push path; runway /
+  air: the runway axis), moving at `gs`; `pose.nose` = the displayed nose gear at `noseGs`, `pose.main` = the displayed main
+  gear at `mainGs` (its own speed: up to 1.22 × gs in transients), `hdg` the body axis main → displayed nose, `tip` from
+  `nose`, `nosePath` = [x, z]. D draws the body from `nose` / `main` and `hdg` (§8);
+- **deterministic follower** on the commit path: `pointAtDet` (sine / cosine from `sinCosDet`, + − × ÷ only), `angleDet`
+  for the slip and yaw, Float64 samples; where the oversteer weight is 1 and the main gear is within 0.5 mm of P(s − wb) it
+  stays on it exactly (`FOLLOW.snapCm`; the pursuit steps had drifted 0.1-1 mm at every curvature change, 0.1-0.5 % of
+  spurious yaw), and the display then evaluates P(s − wb) itself; elsewhere the main gear between the 1 m samples is a
+  Catmull-Rom spline (the linear interpolation of rounds 1-2 put a ±2 % sawtooth on the body's yaw rate in every turn);
+- **main-gear caps** (`mainGearZones`, part of `turnZones` and so of `groundTraj`, `arrivalEntryCms` and the exit model):
+  per 1 m interval the peak (4 sub-steps) of main speed ratio × yaw per metre gives v ≤ √(a_lat / (ρ ψ')) with the a_lat of the
+  piece under the main gear (1.0 m/s², 1.25 on rapid exits and the runway lead; pieces carry `aLatCms2`), and v ≤ 20°/s / ψ'
+  (`FOLLOW.yawMaxDegS`), where that is below the piece / turn-zone cap; zones merged while within 5 %;
+- **speed profile**: every speed maximum held ≥ 1 s (`holdPeaks`, `TRAJ.peakHoldMs`; a triangular peak puts up to 0.3 m
+  more into a 1 s step than its larger end speed × 1 s); in the chaining a planned plateau before a braking leg entered below
+  its speed stays there, and when no whole-ms duration meets both the end speed and the acceleration caps the caps win (the
+  extra zone breakpoints had exposed 11-176 short high-speed braking legs at −1.55 to −1.66 m/s²).
+
+Evidence (`test_traj`, every stand × end, the class reference, 0.1 s grid): every published point against its own speed
+with 0 steps > (the largest published speed in the window) × dt + 0.1 m in 4,984,408 1 s and 4,994,248 0.5 s windows (ref,
+main and nose each); speeds not inflated (0.5 s path length ≥ 0.97 × the smallest speed × dt − 0.1 m): 0; displayed
+main-gear lateral acceleration ≤ the piece's a_lat + 1 % in all 4,341,108 windows (max 1.007 × a_lat; 12,035 windows within
+0.7 % above a_lat itself: the +2 cm/s tolerance of the integer legs, D13, (v + 2 cm/s)² / v²); yaw max 14.07°/s; accelerations,
+speeds (now against the turn and main-gear zones too), joins, slip, V7 segments: 0 violations. The verifier's
+`check_traj3.mjs` re-run (656 departures, 1,312 arrivals): the reference point x / z - its "nose" rows - **0 of 570,053 1 s
+windows** over gs × 1 s + 0.1 m (taxi-out 31,494 → 0, taxi-in 64,719 → 0) and 0 pose-pair steps over v dt + 0.1 m (96,120 /
+189,500 → 0), largest step / (v dt) 1.005; main-gear lateral acceleration max **1.007 m/s²** on taxi-out (was 1.169) and
+1.2512 on a rapid exit at 1.25 (was 1.2530); yaw max 13.77 / 14.00°/s (was 14.94 / 14.17); joins, ROT agreement unchanged
+(0 mismatches). Its main-gear rows still compare `pose.main` with `gs`: 131 + 130 one-second windows (101 + 98 trajectories;
+was 338 + 628) and 6 + 32 pose pairs exceed gs × dt + 0.1 m, because the displayed main gear has its own speed `mainGs` (up to
+1.15 × gs there). With the marked variant `check_traj3_mainGs.mjs` (main against `mainGs`, the displayed nose against `noseGs`,
+the body and the nose wheel from `pose.nose`; `out/phase3/B/fix3/verifier/check_traj3_mainGs2.json`): main-gear pose pairs
+0 + 0 over mainGs × dt + 0.1 m; one-second windows judged by their END speeds only 13 + 22 for the main gear and 148 + 490 for
+the displayed nose (their speeds peak inside the second: the main gear in transients, the nose at the corners of its path; the
+window's largest published speed - `test_traj` - leaves 0); the displayed nose's pose pairs 0 + 2; its x / z rows unchanged
+(0); with the body from `pose.nose` its other rows are back at round 3's verified state - behind blocks shorter than the
+body 532 (round 3: 534; 693 when the body is hung on the centreline point), nose wheels off the load-bearing pavement
+1,175 + 2,055 (1,172 + 2,058), main wheels 2,822 + 5,478 (2,826 + 5,439), main wheels outside the corridor 2 + 295 (2 + 296).
+
+**ROT (lead decision, recorded as inf and reversible by the owner; D24).** The AIP (mirror) AD 2.20 2.1.4.2 50 s is kept as
+the **narrow-body** target: ≥ 90 % of the nominal narrow-body type × chosen-exit cases on the landing runway of the
+segregated mode, 18L/36R, vacate (tail clear of the holding position) within 50 s. Wide-body ROT and 18R/36L are reported,
+not tuned (no ZSSS evidence); C1 spaces arrivals with each landing's own computed ROT (`rotMs`). `test_traj`: the target row
+**90.0 % of 80 cases** (p50 49.0 s, p90 50.0, max 57.2) - pass, with no margin: two A320-family cases on 36R:B2 sit at 49.99 s
+(49.98 s in round 2; an intermediate state of this round's main-gear caps put them at 50.01-50.02 s, the final caps leave
+the W = 1 stretches of the rapid exits untouched). Report rows: narrow-bodies on 18R/36L 87.5 % of 48 (max 69.0 s);
+wide-bodies 12.1 % of 33 on 18L/36R (max 76.7 s), 0 % of 28 on 18R/36L (max 75.7 s); all cases with the ±60 m spread
+p50 49.5 s, p90 72.7, max 77.5, 61 of 566 over 70 s (east runway 4 of 337). No braking or turn-off value was changed.
+
+**Re-measured** (§0, §5): `test_router` 58 / 58 (full run 4.0 min), `test_traj` 28 / 28 (43 s); route table md5 twice
+`cb02dcb49de845a2bc8a1e7f30b1afdd`; M1 pavement (displayed main wheels off load-bearing 7,249 of 3.66 M samples, 0.099 %);
+taxi-out p50 264 s, taxi-in p50 383 s; route + push + taxi + take-off build p50 8.3 ms (was 1.9; the follower on the commit
+path), a slim departure route 70.5 kB, with its push / taxi trajectories and follower about 98 kB (A321, 500 departures).
+The verifier's `capCheck` (its own caps: arcs next to a rapid segment at a_lat 1.0) now finds 2,184 1 m samples above its cap
++ 2 cm/s (round 3: 926), max +2.86 cm/s as before: speeds at the +2 cm/s tolerance of the integer legs (D13) on more stretches
+(the held plateaus and the main-gear zone breakpoints); none above +2.86 cm/s.
+
+**Still open (honest limits).** (1) The displayed gears are not the reference point: `pose.main` runs up to 1.22 × gs and the
+oversteered `pose.nose` up to 1.73 × gs (its path has corners where the main gear enters or leaves an arc: the nose-wheel
+angle jumps by up to atan(wb / R)); both publish their own speed, and a step check that takes the window's end speeds only
+(not the largest speed inside the window) still finds the speed peaks inside a second (variant numbers above). (2) Main-gear
+lateral acceleration and speeds keep the +2 cm/s integer-leg tolerance (≤ 0.7 % in a_lat). (3) The ROT target is met with no
+margin (90.0 %). (4) Holds inside no-stop junction boxes are a semantic C1 must apply (a hold overrides the box). (5) The
+gear follower on the commit path costs about 6 ms per (route, wheelbase) on its first build: C1 must keep and reuse the route
+objects (§7, §8).
