@@ -66,6 +66,7 @@ REGIONS = {
     'site.hedge_lawn_west': -0.55,
     'site.bed_maple_round': -0.35,
     'site.planter_lawn': 0.45,          # raised planter west of the lawn steps, wall top level with the lawn wall
+    'site.planter_terrace': 0.50,       # lower planter behind the chevron wall (frame 133400: cap ~0.6 above the deck)
     'site.hedge_path': 1.65,            # hedge strip between the planter wall and the gravel path (points 1.6-1.8)
     'site.play_area': 2.00,             # n 6097: 1.8 (west) .. 2.2 (east) (SLOPES)
     'site.strip_garden_play': 2.35,
