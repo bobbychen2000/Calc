@@ -118,7 +118,9 @@ const PL = { teleports: 0, teleports_hwd: 0, teleports_engine: 0, teleports_sign
   postland_toflaps_frames: 0, postland_toflaps_view_frames: 0, low_roll_rate_frames: 0, low_roll_rate_turn_frames: 0, taxi_speed_mismatch_frames: 0, label_lowpass_after_liftoff: 0,
   forced_low_bank_frames: 0, forced_speed_drop_frames: 0, handover_rate_frames: 0, handover_rate_raw_frames: 0, r5Log: [],
   // round 5 iteration 2: see r5i2Frame
-  bank_rock_episodes: 0, forced_roll_acc_frames: 0, ground_decel_frames: 0, ground_decel_plan_frames: 0, r5i2Log: [] };
+  bank_rock_episodes: 0, forced_roll_acc_frames: 0, ground_decel_frames: 0, ground_decel_plan_frames: 0, r5i2Log: [],
+  // round 5 iteration 3: see r5i3Frame
+  label_roll_backward: 0, route_runway_stop_frames: 0, r5i3Log: [] };
 // runway rectangle test (site.runways axes; m = extra half-width) - the pavement a take-off / landing roll uses
 const onRwy = (x, z, m = 3) => (site.runways || []).some(r => { const px = x - r.origin[0], pz = z - r.origin[1], al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1]; return al >= 0 && al <= r.length && Math.abs(ac) <= r.halfWidth + m; });
 const newLog = (...a) => { if (PL.newLog.length < 400) PL.newLog.push(a); };
@@ -325,6 +327,7 @@ function extraFrame(now) {
     if (fw) r4i3Frame(tr, D, td, t, s1, agl, kt, lab);
     if (fw) r5Frame(tr, D, td, t, s1, agl, kt, lab);
     if (fw) r5i2Frame(tr, D, td, t, s1, agl, kt, lab);
+    if (fw) r5i3Frame(tr, D, td, t, s1, agl, kt, lab);
   }
   for (let i = 0; i < air.length; i++) for (let j = i + 1; j < air.length; j++) {
     const A = air[i].disp, B = air[j].disp, d = Math.hypot(A.x - B.x, A.y - B.y, A.z - B.z); if (d >= 30) continue;
@@ -701,8 +704,9 @@ function r5Frame(tr, D, td, t, s1, agl, kt, lab) {
 //   ground_decel_frames     G5: on the ground within 4.5 km (both frames), the drawn speed (or the speed of the drawn position along the
 //                           heading, where the shown speed is >= 1 m/s) falling by more than 3.5 m/s2 (+ 0.1) over 0.3 s - a jolt at a mode
 //                           hand-over (plan -> fixes, landing roll -> runway taxi, fix-following -> route) or a dead stop - unless the target
-//                           itself brakes as hard and smoothly (<= 6 m/s2): INFO ground_decel_plan_frames (a planned roll-out's or the data's
-//                           own braking, not a hand-over)
+//                           itself brakes as hard and smoothly, within the engine's own roll braking limit (<= LIM.rollDec 3.5 + 0.1 m/s2;
+//                           round 5 iteration 3, G2: it was <= 6 m/s2, which excused bodies copying a target that brakes harder than the
+//                           engine allows): INFO ground_decel_plan_frames (a planned roll-out's or the data's own braking, not a hand-over)
 // The limits are design values [inf].
 const R5I2 = new Map();
 const r5i2Log = (...a) => { if (PL.r5i2Log.length < 900) PL.r5i2Log.push(a); };
@@ -736,11 +740,39 @@ function r5i2Frame(tr, D, td, t, s1, agl, kt, lab) {
     let dp = 0; if (q6 && q6[2] && q3[0] - q6[0] < 400 && q3[0] > q6[0] && q3[1] >= 1 && q6[1] >= 1) { const h = D.hdg * Math.PI / 180, ux = Math.sin(h), uz = -Math.cos(h);
       const v1 = ((q3[3] - q6[3]) * ux + (q3[4] - q6[4]) * uz) / ((q3[0] - q6[0]) / 1000), v2 = ((D.x - q3[3]) * ux + (D.z - q3[4]) * uz) / dt; if (v1 > 0.5) dp = (v1 - Math.max(0, v2)) / dt; }
     // (3.5 + 0.1: LIM.rollDec is 3.5 and a body braking at it reads 3.5x over 0.3 s; the target's own braking - a planned roll-out or the
-    // data, <= 6 m/s2 and as hard as the body's - is INFO ground_decel_target_frames; harder than the target, or a target that steps, counts)
+    // data, <= 3.6 m/s2 (round 5 iteration 3, G2: was 6) and as hard as the body's - is INFO ground_decel_plan_frames; harder than the target,
+    // harder than 3.6, or a target that steps, counts)
     const bd = Math.max(dv, dp);
     if (bd > 3.6) { const tdec = (q3[8] - (tr._tgtV || 0)) / dt;
-      if (tdec >= bd - 0.5 && tdec <= 6) PL.ground_decel_plan_frames++;
+      if (tdec >= bd - 0.5 && tdec <= 3.6) PL.ground_decel_plan_frames++;
       else { PL.ground_decel_frames++; if (!P.gd || td - P.gd > 1000) { P.gd = td; r5i2Log('ground_decel', t, lab, +dv.toFixed(1), +dp.toFixed(1), +tdec.toFixed(1), +(q3[1] / 0.514444).toFixed(1), +kt.toFixed(1), q3[6], tr._tgtMode || '', tr.phase); } } } }
+}
+// ---- round 5 iteration 3 (docs/phase2_run.md section 15; the recheck's findings G7 / G8), fixed-wing, drawn (alpha > 0.99), 10-Hz frames:
+//   label_roll_backward       G8: a ground roll from a drawn touchdown (airborne the frame before) until the body is airborne again or slower than
+//                             7.7 m/s: once 'Take-off roll' has been shown, 'Landing roll' or 'Touch-and-go' again (the label going backwards) -
+//                             episodes; a reconstructed touch-and-go read 'Take-off roll' at its 61-kt touchdown, 'Landing roll' 2.5 s later, then
+//                             'Take-off roll' again
+//   route_runway_stop_frames  G7: on the ground within 4.5 km, the target a taxi route ('route' mode), the drawn speed below 0.5 m/s, the body's
+//                             centre inside a runway's protected zone (nearer the centreline than the runway's holding position, taxigraph hold
+//                             bars, TaxiNet.holdDist; along it +-30 m past its ends) - a route that stops or nearly stops on or just beside a runway
+// The limits are design values [inf].
+const R5I3 = new Map();
+const r5i3Log = (...a) => { if (PL.r5i3Log.length < 900) PL.r5i3Log.push(a); };
+function r5i3Frame(tr, D, td, t, s1, agl, kt, lab) {
+  const P = R5I3.get(tr.key) || { air: null, ep: null }; R5I3.set(tr.key, P);
+  const ok = D.alpha > 0.99 && Math.hypot(D.x, D.z) < 4500;
+  if (!ok) { P.air = null; P.ep = null; return; }
+  // G8
+  if (D.ground && P.air === true) P.ep = { to: false, n: 0 };
+  if (!D.ground || D.gs < 7.7) P.ep = null;
+  if (P.ep) { const ph = tr.phase;
+    if (ph === 'takeoff_roll') P.ep.to = true;
+    else if (P.ep.to && (ph === 'landing_roll' || ph === 'touch_and_go')) { PL.label_roll_backward++; r5i3Log('label_roll_backward', t, lab, ph, +kt.toFixed(1), tr._tgtMode || ''); P.ep.to = false; } }
+  P.air = !D.ground;
+  // G7
+  if (D.ground && (tr._tgtMode || '') === 'route' && D.gs < 0.5) {
+    for (const r of site.runways || []) { const px = D.x - r.origin[0], pz = D.z - r.origin[1], al = px * r.dir[0] + pz * r.dir[1], ac = px * r.right[0] + pz * r.right[1];
+      if (al >= -30 && al <= r.length + 30 && Math.abs(ac) < traffic.net.holdDist(r)) { PL.route_runway_stop_frames++; if (!P.rs || td - P.rs > 1000) { P.rs = td; r5i3Log('route_runway_stop', t, lab, +kt.toFixed(1), Math.round(Math.abs(ac)), r.id); } break; } } }
 }
 const R43 = new Map();
 const r43Log = (...a) => { if (PL.r4i3Log.length < 900) PL.r4i3Log.push(a); };
@@ -891,7 +923,9 @@ const CHECKS = { teleports_engine: [PL.teleports_engine, 0], teleports_signal_hw
   postland_toflaps_frames: [PL.postland_toflaps_frames, 0], postland_toflaps_view_frames: [PL.postland_toflaps_view_frames, 0], low_roll_rate_frames: [PL.low_roll_rate_frames, 0], taxi_speed_mismatch_frames: [PL.taxi_speed_mismatch_frames, 0],
   label_lowpass_after_liftoff: [PL.label_lowpass_after_liftoff, 0], forced_low_bank_frames: [PL.forced_low_bank_frames, 0], forced_speed_drop_frames: [PL.forced_speed_drop_frames, 0], handover_rate_frames: [PL.handover_rate_frames, 0],
   // round 5 iteration 2 (r5i2Frame)
-  bank_rock_episodes: [PL.bank_rock_episodes, 0], forced_roll_acc_frames: [PL.forced_roll_acc_frames, 0], ground_decel_frames: [PL.ground_decel_frames, 0] };
+  bank_rock_episodes: [PL.bank_rock_episodes, 0], forced_roll_acc_frames: [PL.forced_roll_acc_frames, 0], ground_decel_frames: [PL.ground_decel_frames, 0],
+  // round 5 iteration 3 (r5i3Frame)
+  label_roll_backward: [PL.label_roll_backward, 0], route_runway_stop_frames: [PL.route_runway_stop_frames, 0] };
 // (iteration 2, F4) planted cases: each gate below must FIRE on its planted input and must NOT fire on its planted
 // exception - a gate that cannot fire is dead code (ground_air_reappear read a field that was never stored)
 { const last = { t: 0, x: 0, y: 12, z: 0, gs: 0, ground: true, cls: 'single_hw' }, Dp = { x: -800, y: 45, z: -400, gs: 36, ground: false };
@@ -1026,6 +1060,7 @@ if (PL.r4Log.length && args.includes('--log')) for (const r of PL.r4Log) console
 if (PL.r4i3Log.length && args.includes('--log')) for (const r of PL.r4i3Log) console.log('r43log', JSON.stringify(r));
 if (PL.r5Log.length && args.includes('--log')) for (const r of PL.r5Log) console.log('r5log', JSON.stringify(r));
 if (PL.r5i2Log.length && args.includes('--log')) for (const r of PL.r5i2Log) console.log('r5i2log', JSON.stringify(r));
+if (PL.r5i3Log.length && args.includes('--log')) for (const r of PL.r5i3Log) console.log('r5i3log', JSON.stringify(r));
 console.log('INFO', JSON.stringify(INFO));
 console.log('CHECKS', Object.entries(CHECKS).map(([k, [v, lim]]) => `${k} ${v} (<= ${lim}) ${v > lim ? 'FAIL' : 'ok'}`).join(' | '));
 console.log(FAILED.length ? 'RESULT: FAILED ' + FAILED.join(', ') : 'RESULT: ALL PLAUSIBILITY CHECKS PASSED');

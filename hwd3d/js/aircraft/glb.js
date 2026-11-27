@@ -44,6 +44,8 @@
 // ext = [roughness, metallic, mat id, emissive]; mat id 0 = the plain PBR path of the obj shader (opts.matId can map a
 // material to another id). Alpha-blended materials (alphaMode BLEND) go to the `glass` Geo of their group.
 
+import { Kinematics, DEFAULT_STATE } from './kinematics.js';
+
 const CT = { 5120: [1, Int8Array, 127], 5121: [1, Uint8Array, 255], 5122: [2, Int16Array, 32767], 5123: [2, Uint16Array, 65535], 5125: [4, Uint32Array, 0], 5126: [4, Float32Array, 0] };
 const NCOMP = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT2: 4, MAT3: 9, MAT4: 16 };
 
@@ -465,21 +467,42 @@ export function lampShape(a, prims, parts, toLocalPt) {
 //   the largest such value over every voxel whose cap comes within one cell diagonal of the cell centre, at the smallest b
 //   over that support (so the bilinear lookup between four cell centres never falls below the true reach there). Voxels with r + bV <= LAMPVIS.RMIN (the lamp's own housing) are left out: the shader's margin covers
 //   them.
-//   Flaps, control surfaces and doors are at rest in the table [inf]; above two pixels the depth test (which sees them) decides.
-//   lampTables(model, { yieldMs, NA, NE }) -> Promise<{ ms, rays, lamps, bladeTris, voxels }>: sets model.lights[k].occ.vis =
-//   { NA, NE, data } for every light with a lamp shape. yieldMs > 0: gives the event loop a turn every yieldMs of work
+//   Round 3 (recheck F1 / F3; docs/phase3_models.md 15.12): the pose is the DRAWN one (js/aircraft/kinematics.js): gear down
+//   = pose gear 1 (the SF50's nose doors open), gear up = pose gear 0 (channel 1 no longer drops the gear parts), and a lamp
+//   whose seen share the flaps change also gets one table per tabulated flap setting (lampFlapSettings; S.visF, mixed by
+//   js/shaders/sprites.js lampTable at lampFlapX of the flap angle); channel 3 (the reach) is one upper bound over the gear
+//   down / up / in transit and every tabulated flap setting. Control surfaces neutral, doors closed, gear doors in transit
+//   (the PC-12's nose clamshells, open only between the locks) not tabulated [inf]; above two pixels the depth test (which
+//   sees them) decides.
+//   lampTables(model, { yieldMs, NA, NE, flaps }) -> Promise<{ ms, rays, lamps, bladeTris, voxels, flapSet, flapLamps, posed }>:
+//   sets model.lights[k].occ.vis = { NA, NE, data } for every light with a lamp shape, and occ.visF = { set, tables: [{ NA,
+//   NE, data }, ..], dmax } | null (round 3: flaps false = no flap tables). yieldMs > 0: gives the event loop a turn every yieldMs of work
 //   (js/aircraft/models.js loadModel: the app stays responsive while a model's tables are computed). NA / NE: the grid (tools;
 //   default LAMPVIS). Needs the CPU geometry (groups), i.e. before js/aircraft/detailed.js drops it after the GPU upload.
-export const LAMPVIS = { NA: 128, NE: 64, G: 4, MINFOOT: 4, TOL: 0.005, TFS: 0.1, RHO: 0.5, VOX: 0.1, VS: 0.05, RMIN: 0.25 };
+export const LAMPVIS = { NA: 128, NE: 64, G: 4, MINFOOT: 4, TOL: 0.005, TFS: 0.1, RHO: 0.5, VOX: 0.1, VS: 0.05, RMIN: 0.25, FLAPDIFF: 3, BACK: 1.0 };
 const GEAR_KINDS = new Set(['gear', 'gear_door', 'brace']);
 // one turn of the event loop: a MessageChannel message (not a timer: browsers throttle the timers of a page that is not in
 // front to one per second or less, which would stretch a model's tables over minutes)
 const yieldTurn = () => new Promise(r => { if (typeof MessageChannel === 'undefined') { setTimeout(r, 0); return; }
   const ch = new MessageChannel(); ch.port1.onmessage = () => { ch.port1.close(); r(); }; ch.port2.postMessage(0); });
-export async function lampTables(model, { yieldMs = 0, NA = LAMPVIS.NA, NE = LAMPVIS.NE } = {}) {
-  const t0 = Date.now(); let tl = Date.now(), rays = 0, lamps = 0;
+// OD4 iteration 6, round 3 (recheck F3; docs/phase3_models.md 15.12): the FLAP SETTINGS tabulated besides flaps 0 - the
+// smallest and the largest non-zero setting of the model's flap pivots (`settings`; PC-12 0 / 15 / 30 / 40 -> 15, 40; SF50
+// 0 / 15 / 39 -> 15, 39: the take-off and the landing setting js/live/aircraft.js flies); a type without flap pivots: none
+export function lampFlapSettings(model) {
+  let set = null; for (const p of model.parts) if (p.pivot && !p.excluded && p.pivot.kind === 'flap') { const s = (p.pivot.settings || [p.pivot.max || 40]).filter(v => v > 0); if (s.length) set = s; }
+  if (!set) return []; const a = Math.min(...set), b = Math.max(...set); return a < b ? [a, b] : [b];
+}
+// the table position of a flap angle (deg) for js/shaders/sprites.js lampTable (iL5.w): 0 = flaps 0, 1 = set[0], 2 = set[1];
+// piecewise linear in between (PC-12 30 deg: 1.6) [inf: the share between two tabulated settings]
+export function lampFlapX(set, flaps) { if (!set || !set.length || !(flaps > 0)) return 0; if (flaps <= set[0]) return flaps / set[0];
+  return set.length < 2 ? 1 : 1 + Math.min(1, (flaps - set[0]) / (set[1] - set[0])); }
+const isIdent4 = (m) => !m || (Math.abs(m[0] - 1) < 1e-6 && Math.abs(m[5] - 1) < 1e-6 && Math.abs(m[10] - 1) < 1e-6 && Math.abs(m[1]) < 1e-6 && Math.abs(m[2]) < 1e-6 && Math.abs(m[4]) < 1e-6
+  && Math.abs(m[6]) < 1e-6 && Math.abs(m[8]) < 1e-6 && Math.abs(m[9]) < 1e-6 && Math.abs(m[12]) < 1e-6 && Math.abs(m[13]) < 1e-6 && Math.abs(m[14]) < 1e-6);
+export async function lampTables(model, { yieldMs = 0, NA = LAMPVIS.NA, NE = LAMPVIS.NE, flaps = true } = {}) {
+  const t0 = Date.now(); let tl = Date.now(), rays = 0, lamps = 0, flapLamps = 0;
   const parts = model.parts, mats = model.materials;
-  const gearChain = (pi) => { for (let q = pi; q >= 0; q = parts[q].parent) if (parts[q].pivot && GEAR_KINDS.has(parts[q].pivot.kind)) return true; return false; };
+  const chain = (pi, test) => { for (let q = pi; q >= 0; q = parts[q].parent) if (parts[q].pivot && test(parts[q].pivot.kind)) return true; return false; };
+  const gearChain = (pi) => chain(pi, (k) => GEAR_KINDS.has(k)), flapChain = (pi) => chain(pi, (k) => k === 'flap');
   // OD4 iteration 6, round 2 (recheck F1): the PROPELLER BLADES are not occluders of the tables. They were tabulated frozen
   // at rotor angle 0, but a lamp is only on with the engine running (idle ~110 rad/s taxiing, ~178 on the roll), where
   // js/aircraft/detailed.js draws the translucent disc instead of the blades (above PROP_BLUR[1]): the depth copy holds no
@@ -492,30 +515,60 @@ export async function lampTables(model, { yieldMs = 0, NA = LAMPVIS.NA, NE = LAM
   // is drawn through them [inf]
   const bladeChain = (pi) => { let pitch = false; for (let q = pi; q >= 0; q = parts[q].parent) { const k = parts[q].pivot && parts[q].pivot.kind;
     if (k === 'pitch') pitch = true; else if (k === 'spin') return pitch; } return false; };
-  const A = [], Gr = [];   // opaque triangles: not on the gear / on the gear (9 floats each, local frame at rest)
-  const push = (out, d, i) => { const a = d.idx[i] * 3, b = d.idx[i + 1] * 3, c = d.idx[i + 2] * 3;
-    out.push(d.pos[a], d.pos[a + 1], d.pos[a + 2], d.pos[b], d.pos[b + 1], d.pos[b + 2], d.pos[c], d.pos[c + 1], d.pos[c + 2]); };
+  // OD4 iteration 6, round 3 (recheck F1 / F3): the tables are of the pose that is DRAWN (js/aircraft/kinematics.js, the
+  // app's own pose code), not of the raw glTF rest geometry: gear down = pose({ gear: 1 }) - the SF50's nose-gear doors
+  // (seq 'down') stand open 85 deg beside the nose leg whenever the gear is down, and the raw rest geometry has them closed,
+  // so the table drew the SF50 taxi light through its own doors -, gear up = pose({ gear: 0 }) (legs retracted, doors shut;
+  // iteration 6 dropped the gear parts instead), and per tabulated flap setting the flaps posed (lampFlapSettings). Flaps
+  // 0, controls neutral, doors closed otherwise (DEFAULT_STATE).
+  const kin = new Kinematics(model), st = (o) => ({ ...DEFAULT_STATE, ...o });
+  const flapSet = flaps ? lampFlapSettings(model) : [];
+  const PD = kin.pose(st({ gear: 1 })), PU = kin.pose(st({ gear: 0 })), PM = kin.pose(st({ gear: 0.5 }));
+  const PF = [PD, ...flapSet.map(f => kin.pose(st({ gear: 1, flaps: f })))];
+  const NF = PF.length;   // flap states: 0 = flaps 0, k = flapSet[k - 1]
+  const pushX = (out, d, i, Mx) => { for (let v = 0; v < 3; v++) { const a = d.idx[i + v] * 3, x = d.pos[a], y = d.pos[a + 1], z = d.pos[a + 2];
+    if (!Mx) out.push(x, y, z); else out.push(Mx[0] * x + Mx[4] * y + Mx[8] * z + Mx[12], Mx[1] * x + Mx[5] * y + Mx[9] * z + Mx[13], Mx[2] * x + Mx[6] * y + Mx[10] * z + Mx[14]); } };
+  const mx = (P, mv) => mv >= 0 && !isIdent4(P[mv]) ? P[mv] : null;
+  // opaque triangles (9 floats each, local frame, posed): the airframe without gear and flaps (A), the gear chain gear down /
+  // up / in transit (GD / GU / GM), the flap chain per flap state (F[k])
+  const A = [], GD = [], GU = [], GM = [], F = PF.map(() => []);
   let bladeTris = 0;
-  for (const g of model.groups) { const d = g.opaque; if (!d || !d.idx) continue; if (g.mover >= 0 && bladeChain(g.mover)) { bladeTris += d.idx.length / 3; continue; }
-    const out = g.mover >= 0 && gearChain(g.mover) ? Gr : A; for (let i = 0; i < d.idx.length; i += 3) push(out, d, i); }
+  for (const g of model.groups) { const d = g.opaque; if (!d || !d.idx) continue; const mv = g.mover;
+    if (mv >= 0 && bladeChain(mv)) { bladeTris += d.idx.length / 3; continue; }
+    if (mv >= 0 && gearChain(mv)) { const a = mx(PD, mv), b = mx(PU, mv), c = mx(PM, mv); for (let i = 0; i < d.idx.length; i += 3) { pushX(GD, d, i, a); pushX(GU, d, i, b); pushX(GM, d, i, c); } }
+    else if (mv >= 0 && flapChain(mv)) { const M = PF.map(P => mx(P, mv)); for (let i = 0; i < d.idx.length; i += 3) for (let k = 0; k < NF; k++) pushX(F[k], d, i, M[k]); }
+    else { const a = mx(PD, mv); for (let i = 0; i < d.idx.length; i += 3) pushX(A, d, i, a); } }
   if (!A.length) return { ms: 0, rays: 0, lamps: 0, skipped: 'no CPU geometry' };
-  const BA = bvhBuild(new Float32Array(A)), BG = Gr.length ? bvhBuild(new Float32Array(Gr)) : null;
+  const bv = (T) => T.length ? bvhBuild(new Float32Array(T)) : null;
+  const BA = bv(A), BGD = bv(GD), BGU = bv(GU), BF = F.map(bv);
   const { TOL } = LAMPVIS, RB = 40;
-  const VX = reachVoxels([A, Gr]);   // channel 3: the surface (airframe + gear, no blades) as voxel centres
+  // channel 3: the surface (airframe, the gear down / up / in transit; no blades) as voxel centres - an upper bound over the
+  // gear poses - plus the flaps: at rest for a lamp's flaps-0 table and at each setting for its flap table (sprites.js
+  // lampTable takes the larger reach of the two tables it mixes, so a flap between two settings is covered by both); a lamp
+  // without flap tables gets the flaps of every setting in its one table
+  const VX = reachVoxels([A, GD, GU, GM, F[0]]), VF = F.map((T, k) => k ? reachVoxels([T]) : null);
+  const firstOr = (B, px, py, pz, d) => B ? bvhFirst(B, px, py, pz, d[0], d[1], d[2], TOL, RB) : -1;
+  const mn = (a, b) => a < 0 ? b : b < 0 ? a : Math.min(a, b);
+  const visD = new Float64Array(NF), visU = new Float64Array(NF), tfk = new Float64Array(NF), tF = new Float64Array(NF);
   for (const [k, L] of Object.entries(model.lights)) {
-    const S = L && L.occ; if (!S || !KINDS.includes(k)) continue;   // kinds that are drawn (js/aircraft/detailed.js)
+    const S0 = L && L.occ; if (!S0 || !KINDS.includes(k)) continue;   // kinds that are drawn (js/aircraft/detailed.js)
     const onGear = L.part >= 0 && gearChain(L.part);
+    // the lamp as drawn with the gear down (its mover's pose; every lamp of both types is at rest there - the taxi lights'
+    // nose legs are down - but a posed one is placed and its table is in its posed frame, the frame lampWorld gives the shader)
+    const P0 = mx(PD, L.part), S = P0 ? { ...S0, c: [0, 1, 2].map(q => P0[q] * S0.c[0] + P0[4 + q] * S0.c[1] + P0[8 + q] * S0.c[2] + P0[12 + q]),
+      ax: S0.ax.map(a => [0, 1, 2].map(q => P0[q] * a[0] + P0[4 + q] * a[1] + P0[8 + q] * a[2])) } : S0;
     // the lamp's own triangles (its lamp material on its mover, + the clear lens cover over it; centroid inside the shape x 1.05)
     let LB = null, LV = null;
     if (S.geom) { const V = [];
       for (const g of model.groups) { if (g.mover !== L.part) continue;
         for (const [d, sel] of [[g.opaque, (mi) => mats[mi] && mats[mi].name === S.mat], [g.glass, (mi) => S.cover > 0 && mats[mi] && mats[mi].cls === 'clear']]) { if (!d || !d.idx) continue;
-          for (let i = 0; i < d.idx.length; i += 3) { if (!sel(d.mat[d.idx[i]])) continue; const c = [0, 1, 2].map(q => (d.pos[d.idx[i] * 3 + q] + d.pos[d.idx[i + 1] * 3 + q] + d.pos[d.idx[i + 2] * 3 + q]) / 3);
-            if (inLamp(c, S, 1.05)) push(V, d, i); } } }
+          for (let i = 0; i < d.idx.length; i += 3) { if (!sel(d.mat[d.idx[i]])) continue; const T3 = []; pushX(T3, d, i, P0); const c = [0, 1, 2].map(q => (T3[q] + T3[3 + q] + T3[6 + q]) / 3);
+            if (inLamp(c, S, 1.05)) V.push(...T3); } } }
       LB = V.length ? bvhBuild(new Float32Array(V)) : null; LV = V.length ? new Float32Array(V) : null; }
     const e0 = S.ax[0], e1 = S.ax[1], e2 = [e0[1] * e1[2] - e0[2] * e1[1], e0[2] * e1[0] - e0[0] * e1[2], e0[0] * e1[1] - e0[1] * e1[0]];
     // one cell of an na x ne grid: GG x GG parallel rays over the lamp's footprint seen from the cell-centre direction ->
-    // [footprint rays, seen with the gear down, seen with the gear up, farthest first occluder of a hidden ray (m)]
+    // the footprint rays; per flap state k: visD[k] / visU[k] = rays seen with the gear down / up, tfk[k] = the farthest
+    // first occluder of a hidden ray (m, either gear state)
     const cell = (na, ne, je, ia, GG) => {
       const el = -Math.PI / 2 + (je + 0.5) / ne * Math.PI, az = (ia + 0.5) / na * 2 * Math.PI, ce = Math.cos(el), se = Math.sin(el), ca = Math.cos(az), sa = Math.sin(az);
       const d = [0, 1, 2].map(q => ce * ca * e0[q] + se * e1[q] + ce * sa * e2[q]);
@@ -530,7 +583,7 @@ export async function lampTables(model, { yieldMs = 0, NA = LAMPVIS.NA, NE = LAM
           const pr = x * R[0] + y * R[1] + z * R[2], pu = x * U[0] + y * U[1] + z * U[2]; if (pr < r0) r0 = pr; if (pr > r1) r1 = pr; if (pu < u0) u0 = pu; if (pu > u1) u1 = pu; }
         r0 -= 0.001; r1 += 0.001; u0 -= 0.001; u1 += 0.001; }
       else { const sR = lampSupport(S, R) * 1.05, sU = lampSupport(S, U) * 1.05; r0 = -sR; r1 = sR; u0 = -sU; u1 = sU; }
-      let foot = 0, visD = 0, visU = 0, tf = 0;
+      let foot = 0; visD.fill(0); visU.fill(0); tfk.fill(0);
       for (let j = 0; j < GG; j++) for (let i = 0; i < GG; i++) {
         const u = r0 + (i + 0.5) / GG * (r1 - r0), w = u0 + (j + 0.5) / GG * (u1 - u0);
         const ox = S.c[0] + R[0] * u + U[0] * w + d[0] * RB, oy = S.c[1] + R[1] * u + U[1] * w + d[1] * RB, oz = S.c[2] + R[2] * u + U[2] * w + d[2] * RB;
@@ -539,31 +592,39 @@ export async function lampTables(model, { yieldMs = 0, NA = LAMPVIS.NA, NE = LAM
         else { const iv = lampRay([ox, oy, oz], [-d[0], -d[1], -d[2]], S); if (!iv) continue; t = iv[0]; }
         foot++; rays++;
         const px = ox - d[0] * t, py = oy - d[1] * t, pz = oz - d[2] * t;
-        // an occluder between the lamp's surface (+ TOL) and the viewer: the airframe (A), the gear (G)
-        const tA = bvhFirst(BA, px, py, pz, d[0], d[1], d[2], TOL, RB), occA = tA >= 0;
-        if (occA && !onGear) { if (tA > tf) tf = tA; continue; }
-        const tG = BG ? bvhFirst(BG, px, py, pz, d[0], d[1], d[2], TOL, RB) : -1, occG = tG >= 0;
+        // an occluder between the lamp's surface (+ TOL) and the viewer: the airframe (A) hides it in every state
+        const tA = firstOr(BA, px, py, pz, d), occA = tA >= 0;
+        if (occA && !onGear) { for (let q = 0; q < NF; q++) if (tA > tfk[q]) tfk[q] = tA; continue; }
+        const tGD = firstOr(BGD, px, py, pz, d), tGU = firstOr(BGU, px, py, pz, d);
+        for (let q = 0; q < NF; q++) tF[q] = firstOr(BF[q], px, py, pz, d);
         // a lamp with geometry: the ray must also meet an opaque surface at or behind (lamp surface - TOL) - a ray through the
         // rim of a clear lens cover that meets nothing is not a view of the lamp (the ground truth's rule; a lamp with no lens
         // cover: the surface found IS an opaque lamp triangle, so the check holds by construction)
-        const back = (B) => !!B && bvhAny(B, px + d[0] * TOL, py + d[1] * TOL, pz + d[2] * TOL, -d[0], -d[1], -d[2], 0, 2 * RB);
-        const bA = LB && S.cover > 0 ? back(BA) : true, bG = !bA ? back(BG) : false;
-        if (!bA && !bG) continue;
-        if (onGear) { if (!occA && !occG) { visD++; visU++; } else tf = Math.max(tf, occA && occG ? Math.min(tA, tG) : occA ? tA : tG); continue; }   // a lamp on a gear leg is off unless the gear is down
-        if (!occG) visD++; else if (tG > tf) tf = tG;
-        if (bA) visU++;
+        // (round 3: within LAMPVIS.BACK = 1 m behind it, as the recheck's ray-cast truth - with 2 RB = 80 m a ray through the
+        // SF50 wing-tip landing light's clear cover that met the main gear legs 3 m behind counted as a view of the lamp with
+        // the gear down and not with it up: gear-down / gear-up shares 0.38 / 0.11 where the ray cast sees 0.08)
+        const back = (B) => !!B && bvhAny(B, px + d[0] * TOL, py + d[1] * TOL, pz + d[2] * TOL, -d[0], -d[1], -d[2], 0, LAMPVIS.BACK);
+        let bD = true, bU = true;
+        if (LB && S.cover > 0 && !back(BA)) { const bF = back(BF[0]); bD = bF || back(BGD); bU = bF || back(BGU); }
+        if (!bD && !bU) continue;
+        if (onGear) {   // a lamp on a gear leg is off unless the gear is down (its gear-up share = its gear-down share)
+          for (let q = 0; q < NF; q++) { const h = mn(mn(occA ? tA : -1, tGD), tF[q]); if (h < 0) { if (bD) { visD[q]++; visU[q]++; } } else if (h > tfk[q]) tfk[q] = h; }
+          continue; }
+        for (let q = 0; q < NF; q++) { const hD = mn(tGD, tF[q]), hU = mn(tGU, tF[q]);
+          if (hD < 0) { if (bD) visD[q]++; } else if (hD > tfk[q]) tfk[q] = hD;
+          if (hU < 0) { if (bU) visU[q]++; } else if (hU > tfk[q]) tfk[q] = hU; }
       }
-      return [foot, visD, visU, tf];
+      return foot;
     };
     // every cell of the NA x NE grid with G x G rays; a lamp seen nearly edge-on (fewer than MINFOOT rays meet its footprint:
     // a flat SF50 lamp patch) is cast again with 3G x 3G
-    const data = new Uint8Array(NA * NE * 4), hole = new Uint8Array(NA * NE);
+    const data = PF.map(() => new Uint8Array(NA * NE * 4)), hole = new Uint8Array(NA * NE);
     for (let je = 0; je < NE; je++) {
       for (let ia = 0; ia < NA; ia++) {
-        let [foot, visD, visU, tf] = cell(NA, NE, je, ia, LAMPVIS.G);
-        if (foot < LAMPVIS.MINFOOT) [foot, visD, visU, tf] = cell(NA, NE, je, ia, 3 * LAMPVIS.G);
+        let foot = cell(NA, NE, je, ia, LAMPVIS.G);
+        if (foot < LAMPVIS.MINFOOT) foot = cell(NA, NE, je, ia, 3 * LAMPVIS.G);
         const q = je * NA + ia; if (!foot) { hole[q] = 1; continue; }
-        data[q * 4] = Math.round(255 * visD / foot); data[q * 4 + 1] = Math.round(255 * visU / foot); data[q * 4 + 2] = Math.min(255, Math.ceil(tf / LAMPVIS.TFS));
+        for (let f = 0; f < NF; f++) { const D = data[f]; D[q * 4] = Math.round(255 * visD[f] / foot); D[q * 4 + 1] = Math.round(255 * visU[f] / foot); D[q * 4 + 2] = Math.min(255, Math.ceil(tfk[f] / LAMPVIS.TFS)); }
       }
       if (yieldMs > 0 && Date.now() - tl > yieldMs) { await yieldTurn(); tl = Date.now(); }
     }
@@ -571,15 +632,23 @@ export async function lampTables(model, { yieldMs = 0, NA = LAMPVIS.NA, NE = LAM
     // around them, so the bilinear lookup next to them is not pulled to 0 (a one-sided lamp seen from behind is hidden by
     // js/shaders/sprites.js anyway)
     for (let pass = 0; pass < 4 && hole.some(Boolean); pass++) { const fill = [];
-      for (let q = 0; q < NA * NE; q++) { if (!hole[q]) continue; const je = (q / NA) | 0, ia = q % NA; let n = 0, a0 = 0, a1 = 0, a2 = 0;
-        for (const [dj, di] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) { const j2 = je + dj; if (j2 < 0 || j2 >= NE) continue; const q2 = j2 * NA + (ia + di + NA) % NA; if (hole[q2]) continue; n++; a0 += data[q2 * 4]; a1 += data[q2 * 4 + 1]; a2 = Math.max(a2, data[q2 * 4 + 2]); }
-        if (n) fill.push([q, Math.round(a0 / n), Math.round(a1 / n), a2]); }
-      for (const [q, a0, a1, a2] of fill) { data[q * 4] = a0; data[q * 4 + 1] = a1; data[q * 4 + 2] = a2; hole[q] = 0; } }
-    reachSplat(data, NA, NE, S.c, e0, e1, e2, VX);
-    S.vis = { NA, NE, data }; lamps++;
+      for (let q = 0; q < NA * NE; q++) { if (!hole[q]) continue; const je = (q / NA) | 0, ia = q % NA; let n = 0; const acc = data.map(() => [0, 0, 0]);
+        for (const [dj, di] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) { const j2 = je + dj; if (j2 < 0 || j2 >= NE) continue; const q2 = j2 * NA + (ia + di + NA) % NA; if (hole[q2]) continue; n++;
+          data.forEach((D, f) => { acc[f][0] += D[q2 * 4]; acc[f][1] += D[q2 * 4 + 1]; acc[f][2] = Math.max(acc[f][2], D[q2 * 4 + 2]); }); }
+        if (n) fill.push([q, acc.map(a => [Math.round(a[0] / n), Math.round(a[1] / n), a[2]])]); }
+      for (const [q, v] of fill) { data.forEach((D, f) => { D[q * 4] = v[f][0]; D[q * 4 + 1] = v[f][1]; D[q * 4 + 2] = v[f][2]; }); hole[q] = 0; } }
+    // the flap tables, kept only for a lamp whose seen share some flap setting changes by more than FLAPDIFF / 255 somewhere
+    let dmax = 0; for (let f = 1; f < NF; f++) for (let q = 0; q < NA * NE * 4; q += 4) dmax = Math.max(dmax, Math.abs(data[f][q] - data[0][q]), Math.abs(data[f][q + 1] - data[0][q + 1]));
+    const keepF = dmax > LAMPVIS.FLAPDIFF;
+    reachSplat(data[0], NA, NE, S.c, e0, e1, e2, VX);
+    for (let f = 1; f < NF; f++) { for (let q = 0; q < NA * NE; q++) data[f][q * 4 + 3] = data[0][q * 4 + 3];
+      reachSplat(keepF ? data[f] : data[0], NA, NE, S.c, e0, e1, e2, VF[f], true); }
+    S0.vis = { NA, NE, data: data[0] }; lamps++;
+    S0.visF = keepF ? { set: flapSet.slice(), tables: data.slice(1).map(D => ({ NA, NE, data: D })), dmax } : null;
+    if (S0.visF) flapLamps++;
     if (yieldMs > 0 && Date.now() - tl > yieldMs) { await yieldTurn(); tl = Date.now(); }
   }
-  return { ms: Date.now() - t0, rays, lamps, bladeTris, voxels: VX.length / 3 };
+  return { ms: Date.now() - t0, rays, lamps, bladeTris, voxels: VX.length / 3, flapSet, flapLamps, posed: { gearTris: GD.length / 9, flapTris: F[0].length / 9 } };
 }
 // the opaque surface sampled at <= LAMPVIS.VS into LAMPVIS.VOX voxels -> Float32Array of voxel centres (x, y, z, ...)
 function reachVoxels(sets) {
@@ -596,7 +665,7 @@ function reachVoxels(sets) {
 }
 // channel 3 of a table (see LAMPVIS above): the largest along-distance r + bV of every voxel whose cylinder cap reaches each
 // cell (+ one cell diagonal), in TFS units
-function reachSplat(data, NA, NE, c, e0, e1, e2, VX) {
+function reachSplat(data, NA, NE, c, e0, e1, e2, VX, keep = false) {   // keep: raise the channel (max) instead of starting from 0
   const { VOX, VS, RHO, RMIN, TFS } = LAMPVIS, bV = VOX * Math.sqrt(3) / 2 + VS, dAz = 2 * Math.PI / NA, dEl = Math.PI / NE;
   const rel = new Float64Array(NE), sel = new Float64Array(NE), cel = new Float64Array(NE), del = new Float64Array(NE);
   const ang = (a1, e1_, a2, e2_) => Math.acos(Math.max(-1, Math.min(1, Math.sin(e1_) * Math.sin(e2_) + Math.cos(e1_) * Math.cos(e2_) * Math.cos(a1 - a2))));
@@ -605,7 +674,7 @@ function reachSplat(data, NA, NE, c, e0, e1, e2, VX) {
   const dMax = Math.max(...del);
   const cdx = new Float64Array(NA * NE), cdy = new Float64Array(NA * NE), cdz = new Float64Array(NA * NE);   // cell-centre directions (lamp frame)
   for (let j = 0; j < NE; j++) for (let i = 0; i < NA; i++) { const az = (i + 0.5) * dAz, q = j * NA + i; cdx[q] = cel[j] * Math.cos(az); cdy[q] = sel[j]; cdz[q] = cel[j] * Math.sin(az); }
-  for (let k = 0; k < NA * NE; k++) data[k * 4 + 3] = 0;
+  if (!keep) for (let k = 0; k < NA * NE; k++) data[k * 4 + 3] = 0;
   for (let o = 0; o < VX.length; o += 3) {
     const vx = VX[o] - c[0], vy = VX[o + 1] - c[1], vz = VX[o + 2] - c[2], r = Math.hypot(vx, vy, vz), val = r + bV;
     if (val <= RMIN) continue;
@@ -636,6 +705,15 @@ function reachSplat(data, NA, NE, c, e0, e1, e2, VX) {
 export function lampVisLookup(vis, S, dir, gearUp = 0) { const v = lampVisSample(vis, S, dir); return v[0] * (1 - gearUp) + v[1] * gearUp; }
 export function lampVisFar(vis, S, dir) { return lampVisSample(vis, S, dir)[2] * 255 * LAMPVIS.TFS; }
 export function lampVisReach(vis, S, dir) { return lampVisSample(vis, S, dir)[3] * 255 * LAMPVIS.TFS; }
+// round 3 (F3): the lookup with the flap tables as js/shaders/sprites.js lampTable mixes them (flapX = lampFlapX(S.visF.set,
+// flaps)) -> [seen share, farthest occluder (m), reach (m)]
+export function lampVisState(S, dir, gearUp = 0, flapX = 0) {
+  let v = lampVisSample(S.vis, S, dir);
+  if (S.visF && flapX > 0) { const t1 = lampVisSample(S.visF.tables[0], S, dir), t2 = S.visF.tables[1] ? lampVisSample(S.visF.tables[1], S, dir) : t1;
+    const mixv = (a, b, x) => [...[0, 1, 2].map(i => a[i] + (b[i] - a[i]) * x), Math.max(a[3], b[3])];   // the reach: the larger of the two
+    v = flapX <= 1 ? mixv(v, t1, flapX) : mixv(t1, t2, Math.min(1, flapX - 1)); }
+  return [v[0] * (1 - gearUp) + v[1] * gearUp, v[2] * 255 * LAMPVIS.TFS, v[3] * 255 * LAMPVIS.TFS];
+}
 function lampVisSample(vis, S, dir) {
   const e0 = S.ax[0], e1 = S.ax[1], e2 = [e0[1] * e1[2] - e0[2] * e1[1], e0[2] * e1[0] - e0[0] * e1[2], e0[0] * e1[1] - e0[1] * e1[0]];
   const l = Math.hypot(dir[0], dir[1], dir[2]) || 1, x = (dir[0] * e0[0] + dir[1] * e0[1] + dir[2] * e0[2]) / l, y = (dir[0] * e1[0] + dir[1] * e1[1] + dir[2] * e1[2]) / l, z = (dir[0] * e2[0] + dir[1] * e2[1] + dir[2] * e2[2]) / l;

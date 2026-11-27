@@ -127,7 +127,11 @@ idx bbox`) plus `mat` (per-vertex material index, CPU only). `KINDS` is exported
 lamp's self-visibility table, RGBA8: seen share gear down / up, the farthest occluder of the direction, section 15.10, and -
 round 2, 15.11 - the aircraft's reach in front of the lamp; the propeller blades are not occluders; needs the CPU geometry),
 `lampVisLookup(vis, shape, dir, gearUp)` / `lampVisFar(vis, shape, dir)` / `lampVisReach(vis, shape, dir)` (the GPU's
-bilinear lookups, for tools and tests), `LAMPVIS` (grid, ray, distance and reach constants).
+bilinear lookups, for tools and tests), `LAMPVIS` (grid, ray, distance and reach constants). Round 3 (15.12): the tables are
+of the DRAWN pose (`kinematics.js` pose gear 1 / gear 0; glb.js imports kinematics.js), `lampTables(model, {yieldMs, NA, NE,
+flaps})` also sets `occ.visF = {set, tables, dmax} | null` (one table per tabulated flap setting, for a lamp whose seen share
+the flaps change) and returns `flapSet`, `flapLamps`, `posed`; `lampFlapSettings(model)`, `lampFlapX(set, flaps)` (the flap
+position in the tables) and `lampVisState(shape, dir, gearUp, flapX)` (the shader's mixed lookup) are exported.
 
 ### kinematics.js
 `new Kinematics(model).pose(state) → Float32Array[16] per part` (column-major; the motion of each mover, local rest →
@@ -647,7 +651,11 @@ programs only; section 15).
   sprites (airfield lights, placeholders) are drawn exactly as before. **Round 2 (15.11)**: the atlas's alpha channel (unused
   before) carries each table's reach (the aircraft's own surfaces in front of the lamp), and the external-occluder taps count
   depth more than reach + 0.3 m in front of the lamp as another object (another aircraft, a wall), the bounding sphere only
-  for a tap beyond 0.5 m of the line of sight; no layout change in `js/scene.js`.
+  for a tap beyond 0.5 m of the line of sight; no layout change in `js/scene.js`. **Round 3 (15.12)**: `js/scene.js` packs
+  a lamp's flap tables (the first of their consecutive atlas bands, `LampVisAtlas.bandRun`) and the flap position into
+  iL5.z / iL5.w (the two floats that were 0; still 40 floats); `js/shaders/sprites.js` `lampTable` mixes them, measures the
+  near-range blend on the SEEN part of the lamp (the projected ellipse's minor half-axis × the table's share) and bounds the
+  depth test toward the table (`LENS_BM` 0.15, `LENS_BLO` 0.5). `js/gl.js` and `js/renderer.js` unchanged.
 - **Dev viewer lens probe** (`dev/model.js` `HWDM.lensProbe()`): reads the shader's visibility of every sprite of the last
   frame back from the GPU (QA only; the app does not call it).
 
@@ -1353,7 +1361,7 @@ its visibility is now tabulated per lamp and view direction, and the depth buffe
 | # | finding | root cause | fix (file) | result (before → after) |
 |---|---|---|---|---|
 | R1 major | beyond ~60 m a sub-pixel lamp the ray cast sees is hidden at 3–13 % of sub-pixel positions: it blinks on a moving aircraft (PC-12 belly beacon, strobes; GPU: bot150a / b, strR150, bot80c, strR80) | iteration 5 dropped taps that pass the lamp onto the background; a sub-pixel lamp's taps all read the one or two texels beside it (above) | **self-visibility tables** (`js/aircraft/glb.js` `lampTables`, `lampVisLookup`, `lampVisFar`, `LAMPVIS`): for every drawn light, once per model, the seen share of the lamp's projected area by view direction - the ground truth's own definition, by ray casting the model at rest (a compact BVH over the opaque triangles; per direction 4 × 4 parallel rays over the bounding rectangle of the lamp's projection, 12 × 12 for a lamp seen nearly edge-on; a ray meets the lamp's own triangles - its lamp material + the clear cover - or the shape of a lamp with no geometry; it sees the lamp when nothing opaque lies more than 5 mm in front of the lamp's surface and something lies at or behind it) on a **128 × 64 lat-long grid (2.8°) in the lamp shape's frame**, RGBA8: seen share gear down (the model at rest), gear up (without the gear legs, wheels, braces and gear doors), and the distance to the farthest occluder of the direction (below); 32 KB per lamp. `js/aircraft/models.js` `loadModel` computes them before handing the model out (time-sliced: a MessageChannel turn every 25 ms, so the page keeps running and a page in the background is not slowed by timer throttling; a still or a video sees the same test from its first frame). `js/aircraft/detailed.js` `lampWorld` passes the table, the gear-up share (kinematics `gearSequence` leg) and the aircraft's bounding sphere (rest bbox + 0.5 m); `js/scene.js` keeps the tables in one RGBA8 atlas (`uLampVis`) and packs 40 floats per sprite (iL4 bounding sphere, iL5 band / gear-up share); `js/shaders/sprites.js` `lensVisible`: **v = mix(max(v5 × g, T × g × vExt × n), T × g × vExt, w)**, w = q × (1 − smoothstep(1.5, 3, r)) with r = the smaller projected half extent of the lamp's ellipsoid in pixels, T = the table (bilinear) toward the camera, g = mix(1, smoothstep(0.04, 0.2, T), q), n = smoothstep(0.25, 0.5, T) × q, q = the near-camera guard (below), v5 = the iteration-5 test (a resolved lamp: it also sees flaps, gear and doors as posed, and other aircraft and buildings), vExt = the share of 3 × 3 taps (over the lamp, at least half a pixel apart) whose depth lies **in front of the aircraft's bounding sphere** (the occluders that are not the aircraft). Below 1.5 pixels the answer depends on the view direction only, not on the pixel grid | **CPU, all lights, full sphere, fov 45° / 1080 lines** (tables below): positions that hide a lamp seen ≥ 50 % at 80 / 150 / 300 / 400 m: PC-12 **1.90 / 3.98 / 4.96 / 6.19 % → 0 / 0 / 0 / 0**, SF50 **0.40 / 1.02 / 1.21 / 1.05 % → 0**; directions where such a lamp blinks: PC-12 **121 / 220 / 296 / 350 → 0**, SF50 **28 / 92 / 91 / 83 → 0** (belly beacon 42 / 71 / 62 / 69 → 0); false hides (≥ 25 % seen, drawn 0 somewhere) PC-12 285 / 377 / 449 / 493 → **0**, SF50 63 / 147 / 174 / 179 → **0**; at fov 30° / 1080 and 55° / 720 (40–300 m, `cpu/sw_h_*`) 0 hidden positions and 0 blinking directions for both types. **GPU, the recheck's range jobs** (`gpu/range_new/`, real lights, HWD world at night, one light at a time, four sub-pixel positions each): bot150a, bot150b and bot80c **0 / 255 / 255 / 255 → 255 × 4**, strR150 **0 / 0 / 255 / 255 → 255 × 4**, strR80 255 / 0 / 255 / 255 → 255 × 4 (peak sRGB at the anchor); probe 0.766–0.770, 0.619–0.624, 0.766–0.770, 0.838–0.850, 0.889–0.890 over the four positions; bot80a / b and bot300lo drawn before and after (`gpu/range_new/sheet_after.jpg`). GPU spot checks, the near-range GPU check and the temporal check below |
-| R2 minor | beyond ~100 m a lamp under 5–10 cm of winglet / tip skin is drawn again (E = 2 mm + 0.5 pixel outgrows the skin) | the pixel term of the allowance, the same depth-resolution limit | solved with R1: below 1.5 pixels the table decides (no allowance at all), between 1.5 and 3 pixels the table's veto g joins the iteration-5 test, above 3 pixels the iteration-5 allowance is below half the lamp's own size | hidden lamps (0 % seen) drawn at some position, 150 / 300 / 400 m: PC-12 navL **61 / 68 / 68 → 1 / 1 / 1**, navR 59 / 68 / 70 → 0, strobeL 55 / 64 / 65 → 5, strobeR 51 / 64 / 63 → 2; all PC-12 lights 324 / 421 / 449 → **22**, SF50 366 / 448 / 471 → **27**; "over" (≤ 9 % seen, drawn at ≥ 5/9) PC-12 383 / 562 / 601 → **1**, SF50 495 / 648 / 679 → **0**. What remains are directions within about one table cell (2.8°) of a lamp's visibility edge, where the bilinear table gives a small value (drawn dim at every position, not blinking: of the 22 PC-12 directions none blinks, of the 27 SF50 directions one) [round 2, 15.11: "dim" did not hold - up to 0.49 of full brightness on the PC-12; the error per light is stated there] |
+| R2 minor | beyond ~100 m a lamp under 5–10 cm of winglet / tip skin is drawn again (E = 2 mm + 0.5 pixel outgrows the skin) | the pixel term of the allowance, the same depth-resolution limit | solved with R1: below 1.5 pixels the table decides (no allowance at all), between 1.5 and 3 pixels the table's veto g joins the iteration-5 test, above 3 pixels the iteration-5 allowance is below half the lamp's own size | hidden lamps (0 % seen) drawn at some position, 150 / 300 / 400 m: PC-12 navL **61 / 68 / 68 → 1 / 1 / 1**, navR 59 / 68 / 70 → 0, strobeL 55 / 64 / 65 → 5, strobeR 51 / 64 / 63 → 2; all PC-12 lights 324 / 421 / 449 → **22**, SF50 366 / 448 / 471 → **27**; "over" (≤ 9 % seen, drawn at ≥ 5/9) PC-12 383 / 562 / 601 → **1**, SF50 495 / 648 / 679 → **0**. What remains are directions within about one table cell (2.8°) of a lamp's visibility edge, where the bilinear table gives a small value (drawn dim at every position, not blinking: of the 22 PC-12 directions none blinks, of the 27 SF50 directions one) [round 2, 15.11: "dim" did not hold - over every direction the PC-12 draws a hidden lamp at up to 0.8-0.99 of full brightness behind thin occluders (an edge-on stabilizer, an antenna, the nose leg); the error per light is stated there] |
 | R3 minor | the headline figures excluded the lower hemisphere and stopped at 40 m | sweep filter (eye y < 0.3 m dropped), 10 / 40 m only | full-sphere sweeps at 5–400 m with the 16-position jitter metric, before and after, both models, CPU + GPU (below) | tables below; the iteration-5 claim "lights that should show still do" did not hold beyond 40 m (false hides 64–493 per range, PC-12); it holds now at 10–400 m (0 false hides for the PC-12; SF50 1 at 10 m) and at 5 m all but 1 PC-12 / 4 SF50 directions of ~1,200 (iteration 5: 0 / 25) |
 | R4 minor | one veil value for the whole flight-deck glazing moved most sunlit windshield boxes away from the references for the side windows' gain | windshield and crew side windows shared material id 27 | `js/aircraft/models.js` `AC_PART_MAT`: on the deck glazing part, glass_windshield keeps **27**, the other glass (the PC-12's crew side windows) takes **28** (`AC_DECK_WINDSHIELD`); `js/aircraft/detailed.js` `GLASS_FS` `uVeilSunWs` / `uVeilSunSide`, **GLASS_VEIL_SUN_WS 0.9, GLASS_VEIL_SUN_SIDE 0.45** [inf: appearance fit] (0.65 both before), fitted separately over 11 windshield / 13 side-window boxes at the 12 reference cameras (renders at 0.3 and 1.0, interpolated in linear light; `tools/fitveil.py`: windshield 0.5 8.0, 0.65 5.6, 0.8 4.2, **0.9 3.9**, 1.0 4.0 levels outside the dev-stage range; side windows 0.3 5.4, **0.45 4.8**, 0.5 4.9, 0.65 5.5, 0.8 6.8). The SF50's windshield (id 27; it has no deck side-window glass) keeps **0.65** through `deck.veilWs` (`veilNote`): there are no SF50 reference boxes to fit it to | per box below; windshield boxes, mean distance outside the dev-stage range **5.7 → 4.6** sRGB levels, side-window boxes (the glass and what is seen through it) **4.6 → 4.0** |
 | R5 minor | the deck-light ramp (1 m) reached the SF50's second seat row; the PC-12's door window brightened, not compared with a reference | fixed `DECK_RAMP` 1 m | per-type ramp: `js/aircraft/models.js` `deck.ramp` → `ACOBJ_FS` `uDeckRamp`; **SF50 0.30 m** (ends at x 1.10, before the second row's front edge at x 1.06); **PC-12 keeps 1 m** (`deck.rampNote`): it has no bulkhead behind the crew seats, its first passenger row (front edge x 1.60) sits in the open forward cabin that the windshield and crew side windows light, and with a 0.3 m ramp the door window and the shaded crew side windows of the reference cameras read further from both references (below) [inf] | SF50 second row front edge: deck share 0.73 → **0** (smoothstep(−1, 0, −0.34) → smoothstep(−0.3, 0, −0.34)); the SF50 cabin windows' second row reads darker in the docs stills (below). PC-12 cockpit camera, door window: (26, 33, 41), 14.3 levels below the range of dev (45, 48, 50) / stage (57, 62, 65), unchanged with the 1 m ramp kept - a 0.3 m ramp gave (20, 28, 36), 19.7; the shaded crew side window by the port grazing camera 11.0 (0.3 m: 14.3). The door window stays darker than both references (it is a cabin window, id 24: its interior is the cabin's, owner-taste F5 / F6) |
@@ -1379,10 +1387,14 @@ lamps drawn 0 / 10 / 22 → 1 / 11 / 22; SF50 blinking directions 5 / 5 / 1 → 
 seen 0.54: 0.44 / 0.44 / 0.56 / 0.56; navL seen 0.81: 0.89 × 4); SF50 at 5–20 m (strobes, landR; the pre rule hid 1–11 of 16
 positions) **0 of 32**, values 0.50–1.00 (strobeR seen 0.55: 0.51 / 0.51 / 1 / 1; strobeL seen 0.50: 1 / 0.50 / 1 / 1) - at close
 range the brightness still moves with the sub-pixel position between the table's share and the depth test's, but never to
-off.
+off. [round 3, 15.12: "never to off" held only for lamps seen >= 50 % - the counts above are of those; partly seen lamps at 10–30 m
+(the SF50 tip strobes, 10–50 % seen) went fully on / off with the sub-pixel position. Fixed and measured with a jitter
+column there.]
 
 **R3: full-sphere range and sub-pixel figures, fov 45° / 1080 lines, 300 directions × 16 sub-pixel positions per light and
-range** (`out/od4_it6/cpu/sw_m_*_f45_h1080_centre.json` = `tools/merge_sw.py` over `sw_g` / `sw_k` / `sw_l` / `sw_n`;
+range** [round 3, 15.12: these tables are of the iteration-6 (round-1) tree, its truth and tables with the propeller blades at
+rest and the raw rest geometry; the final tree's figures at 5–400 m, with a sub-pixel jitter column, are in 15.12 and
+supersede them] (`out/od4_it6/cpu/sw_m_*_f45_h1080_centre.json` = `tools/merge_sw.py` over `sw_g` / `sw_k` / `sw_l` / `sw_n`;
 `tools/mktable.py`). Per light, each cell gives *blinking directions of a lamp seen ≥ 50 % (hidden at some of the 16
 positions, drawn at others) / hidden lamps (0 % seen) drawn at some position / false hides (≥ 25 % seen, drawn 0 at some
 position)*, before (iteration 5) → after (the final rule).
@@ -1518,8 +1530,8 @@ applied - they contain iteration 4's - and updated; new iteration-6 checks); thi
 down / up), so below 3 pixels a lamp's visibility ignores a deflected surface, an open door or gear in transit (above 3
 pixels the depth test sees them, but the near gate's floor can still draw a lamp that only a deflected surface hides);
 within ~one table cell (2.8°) of a visibility edge the bilinear table draws a hidden lamp dim or a visible one dimmer (the
-residual "hidden lamps drawn" above: drawn at every position, not blinking; round 2, 15.11: up to ~0.5, not "dim" - stated
-per light there), and a narrow aperture (two aligned cabin
+residual "hidden lamps drawn" above: drawn at every position, not blinking; round 2, 15.11: not "dim" - up to 0.8-0.99 behind thin occluders
+narrower than a cell; stated per light there), and a narrow aperture (two aligned cabin
 windows) is smoothed away; the gate / blend constants (`LENS_R1` 1.5, `LENS_R2` 3 pixels, `LENS_G0` 0.04, `LENS_G1` 0.2,
 `LENS_N0` 0.25, `LENS_N1` 0.5, `LENS_TF` 0.5 m) and the 0.5 m bounding-sphere margin are inferred; within the near-camera
 guard (a camera nearer than an occluder of the lamp's direction, i.e. within ~12 m) the test is iteration 5's, including its
@@ -1543,14 +1555,19 @@ truth alike; **truth** = 15.10's (11 × 11 rays over the lamp's support box × 1
 30 of the 121 meet the lamp (F3 below: a flat SF50 lamp patch seen nearly edge-on). Sweeps (`tools/sweep7.mjs`): the
 recheck's seeded random set of 300 directions per light (its `sw_a`), 16 sub-pixel positions, 25 / 35 / 50 / 60 / 120 / 250 m,
 fov 45° / 1080 lines, the app rig's near plane. **GPU**: the recheck's own tools (`out/od4_rc6_1/tools/gpu_rc.mjs`,
-`seq_rc.mjs`, `seq_truth_rc.mjs`) and jobs, unchanged; dev viewer, 1920 × 1080, night (2026-11-14 05:00Z), neutral pad.
+`seq_rc.mjs`, `seq_truth_rc.mjs`) and jobs, unchanged; dev viewer, 1920 × 1080, night (2026-11-14 05:00Z), neutral pad. The round was paused part-way (usage limit) and resumed; every result below was re-checked against
+the final tree (no runtime file changed after the resume). Re-run or added after the resume (`out/od4_it6r2b/`, gitignored): the F1 GPU
+jobs (the first run had loaded `sprites.js` before its last edit), the dense table-error check (F3), the tests, `check_airport`,
+an app smoke test with a detailed aircraft, and the docs stills the first run had not reached.
 Every image was looked at.
 
 | # | finding | root cause | fix (file) | result (before → after) |
 |---|---|---|---|---|
-| F1 major | the tables held the five Hartzell blades at rotor angle 0: the PC-12 taxi light (nose leg, 2.15 m behind the prop plane) faded out and back as a taxiing PC-12 turned in front of a camera; landing lights at larger angles | `lampTables` built its occluder BVH from every opaque triangle at rest. In the app a lit PC-12 runs its engine (idle ~110 rad/s), and above `PROP_BLUR[1]` (60 rad/s) the blades are replaced by the translucent disc, which is not in the depth copy: the lamp is seen through it | `js/aircraft/glb.js` `lampTables`: **every triangle of a part below a 'pitch' mover below the 'spin' mover is left out** of the occluders (`bladeChain`, = `detailed.js` `prop.blades`; 29,640 PC-12 triangles, none on the SF50, whose fan has no blade movers); the axisymmetric spinner stays | **CPU** (the recheck's `prop_taxi.mjs` grid, lamp at 150 m, el −20..+10° × az −40..+40°, 1,296 directions; table vs the blade-free truth, `out/od4_it6r2/cpu/prop_*.txt`): directions where the table is below 0.5 although the truth is 1.0: taxi **79 → 0** (below 0.25: 34 → 0), landL **9 → 0**, beaconBot 0 → 0; largest (truth − table) taxi 0.05. **GPU** (the recheck's `jobs_prop_taxi.json`, probe): all 36 jobs (150 / 60 / 20 m, rpm 1700 = the disc and rpm 0 = rest blades drawn) **1.000** (`gpu/prop_summary.json`): el 2° az 16° 0.000 → 1.000 at 150 and 60 m, 0.010 → 1.000 at 20 m; el 2° az −14° 0.222 → 1.000, el −2° az 18° 0.214 → 1.000, el −2° az −16° 0.223 → 1.000 (iteration 5: 1.000 at all; the glow looked at in `gpu/prop_after_sheet.jpg`). **Temporal** (the recheck's `taxi60`: idle prop turning 60° in front of a camera 60 m ahead, 1.7 m up, 60 frames): the taxi light is drawn at **1.00 in all 60 frames** (iteration 6: 10 frames below half of the blade-free truth, down to 0.04 in frames 11–17 and 41–45; iteration 5: 1.00), landL 0 on / off changes and 0 frames below half (iteration 6: 2 and 3; min 0.38, was 0), landR 0 below half (1); beaconTop and the strobes still 0 flicker (iteration 5: 12 / 2 / 2); `gpu/seq/taxi60_after_sheet.jpg` (looked at), `truth.json` (`seq_truth_rc.mjs`) |
-| F2 minor | external-occluder taps ignored every surface inside the aircraft's bounding sphere (11.6 m PC-12, 8.2 m SF50): another aircraft's wing or a hangar wall 1–3 m in front of a lamp did not hide it (sub-pixel; at near range through the floor) | `vExt` counted a tap only when its depth lay in front of the sphere's entry | **the table's fourth channel = the aircraft's reach in front of the lamp** (`js/aircraft/glb.js` `LAMPVIS.RHO` / `VOX` / `VS` / `RMIN`, `reachVoxels`, `reachSplat`, `lampVisReach`): per direction, an upper bound of how far in front of the lamp (from the plane through its centre, normal to the line of sight) any surface of the aircraft at rest (gear down, no blades) lies within RHO = 0.5 m of the line of sight - the first surface a ray in that cylinder meets coming from the camera is its farthest point in front, so the reach is the largest along-distance over the surface points in the cylinder; computed by splatting the surface (sampled at ≤ 5 cm into 10 cm voxels, each bounding its points within bV = 0.137 m) onto the grid, with one cell diagonal of slack so the bilinear lookup never falls below it; voxels within 0.25 m of the lamp (its housing) left out. `js/shaders/sprites.js` `lensVisible`: a tap's depth is **another object's when it lies more than reach + `LENS_XM` (0.3 m ≥ RMIN) in front of the lamp's plane**; the bounding sphere is kept only for a tap whose texel lies beyond `LENS_RHO` (= RHO) of the line of sight (its offset + `LENS_TXL` 0.71 px; fov 45° / 1080: beyond ~460 m). `lampTable` returns (share, farthest occluder, reach) | **GPU** (the recheck's `jobs_occW_*` / `jobs_occB.json`: a second aircraft of the same type as a pure occluder, its wing 1–2 m in front of navR, camera 90° to the side at el 1° / 3°, 35 / 60 / 150 m; probe / peak added sRGB at the anchor, round 2 vs iteration 6 vs iteration 5, `gpu/occW_{PC12,SF50}_sheet.jpg`): with the occluder, **PC-12 0.000 / 0 in 5 of 6 cases** and 0.051 / 238 at 150 m el 1° (iteration 6 0.152–0.191 / 250–255, iteration 5 0 / 0); **SF50 0.000 / 0 in 5 of 6** and 0.306 / 254 at 150 m el 1° (iteration 6 0.918–0.922 / 255, iteration 5 0 / 0). At 150 m el 1° the other wing is seen edge-on, a band one to two pixels tall whose edge runs through the lamp's pixel (`gpu/occW_edge_zoom.jpg`): 3 of the 9 taps see past it, the lamp is drawn at a third of its share. Without the occluder every value is iteration 6's (PC-12 0.152 / 0.191, SF50 0.918–0.926: the tables' share of a tip lamp seen from abeam). occB: navR behind the other aircraft's fuselage 0.000 (iteration 6: 0.152, the quad then depth-culled), the controls (occluder outside the sphere) 0.000, the belly-beacon cases unchanged (0.859 / 0.716, as iteration 6). **CPU**: the aircraft is never taken for another object - `it7` (reach rule) equals `it6` (sphere) in every count of both sweeps (5,700 light-directions × 6 ranges × 16 positions, `cpu/sw_a_*`); reach vs a brute-force ray cast (25 × 25 parallel rays in the disc, 200 random directions per light, `tools/reach_check.mjs`): never below it (beyond the RMIN housing allowance), median excess 0.26–0.54 m per light, 90th percentile 0.41–2.0 m |
-| F3 minor | near self-occlusion edges the drawn share departs from the ray-cast truth by up to ~0.5, steadily; 15.10 called the residual "dim" | two causes, separated this round: **(a)** the recheck's SF50 "hidden lamps drawn" (strobes 0.44 / 0.55) are mostly the truth's own sampling: a flat SF50 lamp patch (strobe h = 131 × 20 × 10 mm) seen nearly edge-on meets 1–8 of the truth's 121 rays, which read 0 / 0.25 / 1; with 61 × 61 rays the same directions read 0.24–0.52, where the table (its 12 × 12 re-cast over the patch's own outline) reads 0.38–0.47 (`tools/dbg_dir2.mjs`); **(b)** the rest is the bilinear 2.8° grid at sharp edges (an occluder metres away: the cabin roof for a tip strobe), steady at every sub-pixel position | **no change to the table**: measured and not taken - finer grids (`tools/grid_exp7.mjs`, same truth for all): 128 × 128 (1.4° rows) and 256 × 128 (1.4° cells) against today's 128 × 64, 300 random directions per light at 150 m: PC-12 strobes max |table − truth| 0.67 / 0.75 → 0.50 / 0.44 (128 × 128) → 0.54 / 0.87 (256 × 128), directions off by > 0.25 (of 300) 5 / 5 → 1 / 4 → 1 / 4, landR 5 → 0 → 0, the other PC-12 lights and every SF50 light within ±2 directions (SF50 strobes 0.31–0.36 at every grid: their residual is not the grid); table time (Node, this machine under load, two runs) PC-12 +52–56 % / +183 %, SF50 +38–74 % / +144–223 % (e.g. PC-12 6.5 → 9.8 → 18.2 s), the atlas 2× / 4× (64 / 128 KB per lamp, 19 lamps = 2,432 rows at NE 128, above the 2,048 a WebGL2 device must support) - a small gain at near double the load time, while the placeholder is shown; a "conservative minimum" for the hidden side moves the error onto visible lamps near every edge (dimmed or hidden: R1's failure mode). **15.10 corrected**: the residual is stated per light (table below) instead of "dim" | **per light at 120 and 250 m** (the table decides; both ranges alike), `cpu/sw_a_*` with the corrected truth, cell = largest \|drawn − truth\| / directions (of 300) off by more than 0.25 / hidden lamps (truth 0) drawn (largest value) / lamps seen ≥ 50 % drawn more than 0.25 below their share: **PC-12** navL 0.18 / 0 / 1 (0.04) / 0, navR 0.15 / 0 / 1 (0.07) / 0, tail 0.20 / 0 / 0 / 0, beaconTop 0.18 / 0 / 0 / 0, beaconBot 0.34 / 1 / 1 (0.34) / 0, strobeL 0.49 / 2 / 2 (0.49) / 0, strobeR 0.19 / 0 / 2 (0.02) / 0, landL 0.34 / 1 / 2 (0.34) / 0, landR 0.27 / 1 / 2 (0.03) / 0, taxi 0.46 / 1 / 2 (0.05) / 0; **SF50** navL 0.36 / 4 / 0 / 1, navR 0.31 / 4 / 1 (0.20) / 2, tail and strobeTail 0.17 / 0 / 0 / 0, strobeL 0.33 / 4 / 0 / 2, strobeR 0.38 / 6 / 0 / 1, landL 0.25 / 0 / 0 / 0, landR 0.31 / 1 / 0 / 0, taxi 0.16 / 0 / 2 (0.02) / 0 (the truth itself scatters by ~0.1 at 11 × 11 rays). So: a hidden lamp can be drawn at up to half its brightness within ~1.4° of an edge (PC-12 strobeL, beaconBot, landL: 1–2 directions of 300 each), a seen lamp drawn up to ~0.5 below its share there (the recheck's bank pass: strobeL across the cabin roof 0.49–0.73 for a truth of 1.0) - steady at every sub-pixel position, never blinking. With the recheck's 11 × 11 truth the SF50 strobes showed 13–14 hidden directions drawn (up to 0.55); with the corrected truth 0 |
+| F1 major | the tables held the five Hartzell blades at rotor angle 0: the PC-12 taxi light (nose leg, 2.15 m behind the prop plane) faded out and back as a taxiing PC-12 turned in front of a camera; landing lights at larger angles | `lampTables` built its occluder BVH from every opaque triangle at rest. In the app a lit PC-12 runs its engine (idle ~110 rad/s), and above `PROP_BLUR[1]` (60 rad/s) the blades are replaced by the translucent disc, which is not in the depth copy: the lamp is seen through it | `js/aircraft/glb.js` `lampTables`: **every triangle of a part below a 'pitch' mover below the 'spin' mover is left out** of the occluders (`bladeChain`, = `detailed.js` `prop.blades`; 29,640 PC-12 triangles, none on the SF50, whose fan has no blade movers); the axisymmetric spinner stays | **CPU** (the recheck's `prop_taxi.mjs` grid, lamp at 150 m, el −20..+10° × az −40..+40°, 1,296 directions; table vs the blade-free truth, `out/od4_it6r2/cpu/prop_*.txt`): directions where the table is below 0.5 although the truth is 1.0: taxi **79 → 0** (below 0.25: 34 → 0), landL **9 → 0**, beaconBot 0 → 0; largest (truth − table) taxi 0.05. **GPU** (the recheck's `jobs_prop_taxi.json`, probe): all 36 jobs (150 / 60 / 20 m, rpm 1700 = the disc and rpm 0 = rest blades drawn) **1.000** (`gpu/prop_summary.json`; re-run on the final tree after the resume, `out/od4_it6r2b/gpu/prop_after/`: all 36 again 1.000, peak 254–255, 0 page errors, the glow looked at in `prop_sheet.jpg`): el 2° az 16° 0.000 → 1.000 at 150 and 60 m, 0.010 → 1.000 at 20 m; el 2° az −14° 0.222 → 1.000, el −2° az 18° 0.214 → 1.000, el −2° az −16° 0.223 → 1.000 (iteration 5: 1.000 at all; the glow looked at in `gpu/prop_after_sheet.jpg`). **Temporal** (the recheck's `taxi60`: idle prop turning 60° in front of a camera 60 m ahead, 1.7 m up, 60 frames): the taxi light is drawn at **1.00 in all 60 frames** (iteration 6: 10 frames below half of the blade-free truth, down to 0.04 in frames 11–17 and 41–45; iteration 5: 1.00), landL 0 on / off changes and 0 frames below half (iteration 6: 2 and 3; min 0.38, was 0), landR 0 below half (1); beaconTop and the strobes still 0 flicker (iteration 5: 12 / 2 / 2); `gpu/seq/taxi60_after_sheet.jpg` (looked at), `truth.json` (`seq_truth_rc.mjs`) |
+| F2 minor | external-occluder taps ignored every surface inside the aircraft's bounding sphere (11.6 m PC-12, 8.2 m SF50): another aircraft's wing or a hangar wall 1–3 m in front of a lamp did not hide it (sub-pixel; at near range through the floor) | `vExt` counted a tap only when its depth lay in front of the sphere's entry | **the table's fourth channel = the aircraft's reach in front of the lamp** (`js/aircraft/glb.js` `LAMPVIS.RHO` / `VOX` / `VS` / `RMIN`, `reachVoxels`, `reachSplat`, `lampVisReach`): per direction, an upper bound of how far in front of the lamp (from the plane through its centre, normal to the line of sight) any surface of the aircraft at rest (gear down, no blades) lies within RHO = 0.5 m of the line of sight - the first surface a ray in that cylinder meets coming from the camera is its farthest point in front, so the reach is the largest along-distance over the surface points in the cylinder; computed by splatting the surface (sampled at ≤ 5 cm into 10 cm voxels, each bounding its points within bV = 0.137 m) onto the grid, with one cell diagonal of slack so the bilinear lookup never falls below it; voxels within 0.25 m of the lamp (its housing) left out. `js/shaders/sprites.js` `lensVisible`: a tap's depth is **another object's when it lies more than reach + `LENS_XM` (0.3 m ≥ RMIN) in front of the lamp's plane**; the bounding sphere is kept only for a tap whose texel lies beyond `LENS_RHO` (= RHO) of the line of sight (its offset + `LENS_TXL`, 0.71 of a pixel; fov 45° / 1080: beyond ~460 m). `lampTable` returns (share, farthest occluder, reach) | **GPU** (the recheck's `jobs_occW_*` / `jobs_occB.json`: a second aircraft of the same type as a pure occluder, its wing 1–2 m in front of navR, camera 90° to the side at el 1° / 3°, 35 / 60 / 150 m; probe / peak added sRGB at the anchor, round 2 vs iteration 6 vs iteration 5, `gpu/occW_{PC12,SF50}_sheet.jpg`): with the occluder, **PC-12 0.000 / 0 in 5 of 6 cases** and 0.051 / 238 at 150 m el 1° (iteration 6 0.152–0.191 / 250–255, iteration 5 0 / 0); **SF50 0.000 / 0 in 5 of 6** and 0.306 / 254 at 150 m el 1° (iteration 6 0.918–0.922 / 255, iteration 5 0 / 0). At 150 m el 1° the other wing is seen edge-on, a band one to two pixels tall whose edge runs through the lamp's pixel (`gpu/occW_edge_zoom.jpg`): 3 of the 9 taps see past it, the lamp is drawn at a third of its share. Without the occluder every value is iteration 6's (PC-12 0.152 / 0.191, SF50 0.918–0.926: the tables' share of a tip lamp seen from abeam). occB: navR behind the other aircraft's fuselage 0.000 (iteration 6: 0.152, the quad then depth-culled), the controls (occluder outside the sphere) 0.000, the belly-beacon cases unchanged (0.859 / 0.716, as iteration 6). **CPU**: the aircraft is never taken for another object - `it7` (reach rule) equals `it6` (sphere) in every count of both sweeps (5,700 light-directions × 6 ranges × 16 positions, `cpu/sw_a_*`); reach vs a brute-force ray cast (25 × 25 parallel rays in the disc, 200 random directions per light, `tools/reach_check.mjs`): never below it (beyond the RMIN housing allowance), median excess 0.26–0.54 m per light, 90th percentile 0.41–2.0 m |
+| F3 minor | near self-occlusion edges the drawn share departs from the ray-cast truth by up to ~0.5, steadily; 15.10 called the residual "dim" | two causes, separated this round: **(a)** the recheck's SF50 "hidden lamps drawn" (strobes 0.44 / 0.55) are mostly the truth's own sampling: a flat SF50 lamp patch (strobe h = 131 × 20 × 10 mm) seen nearly edge-on meets 1–8 of the truth's 121 rays, which read 0 / 0.25 / 1; with 61 × 61 rays the same directions read 0.24–0.52, where the table (its 12 × 12 re-cast over the patch's own outline) reads 0.38–0.47 (`tools/dbg_dir2.mjs`); **(b)** the rest is the bilinear 2.8° grid at sharp edges (an occluder metres away: the cabin roof for a tip strobe) and at **thin occluders** narrower than a cell as seen from the lamp (an edge-on stabilizer, an antenna, the nose leg: the grid never resolves them; found after the resume by the dense check below), steady at every sub-pixel position | **no change to the table**: measured and not taken - finer grids (`tools/grid_exp7.mjs`, same truth for all): 128 × 128 (1.4° rows) and 256 × 128 (1.4° cells) against today's 128 × 64, 300 random directions per light at 150 m: PC-12 strobes max |table − truth| 0.67 / 0.75 → 0.50 / 0.44 (128 × 128) → 0.54 / 0.87 (256 × 128), directions off by > 0.25 (of 300) 5 / 5 → 1 / 4 → 1 / 4, landR 5 → 0 → 0, the other PC-12 lights and every SF50 light within ±2 directions (SF50 strobes 0.31–0.36 at every grid: their residual is not the grid); table time (Node, this machine under load, two runs) PC-12 +52–56 % / +183 %, SF50 +38–74 % / +144–223 % (e.g. PC-12 6.5 → 9.8 → 18.2 s), the atlas 2× / 4× (64 / 128 KB per lamp, 19 lamps = 2,432 rows at NE 128, above the 2,048 a WebGL2 device must support) - a small gain at near double the load time, while the placeholder is shown; a "conservative minimum" for the hidden side moves the error onto visible lamps near every edge (dimmed or hidden: R1's failure mode). **15.10 corrected**: the residual is stated per light (table below) instead of "dim" | **per light at 120 and 250 m** (the table decides; both ranges alike), `cpu/sw_a_*` with the corrected truth, cell = largest \|drawn − truth\| / directions (of 300) off by more than 0.25 / hidden lamps (truth 0) drawn (largest value) / lamps seen ≥ 50 % drawn more than 0.25 below their share: **PC-12** navL 0.18 / 0 / 1 (0.04) / 0, navR 0.15 / 0 / 1 (0.07) / 0, tail 0.20 / 0 / 0 / 0, beaconTop 0.18 / 0 / 0 / 0, beaconBot 0.34 / 1 / 1 (0.34) / 0, strobeL 0.49 / 2 / 2 (0.49) / 0, strobeR 0.19 / 0 / 2 (0.02) / 0, landL 0.34 / 1 / 2 (0.34) / 0, landR 0.27 / 1 / 2 (0.03) / 0, taxi 0.46 / 1 / 2 (0.05) / 0; **SF50** navL 0.36 / 4 / 0 / 1, navR 0.31 / 4 / 1 (0.20) / 2, tail and strobeTail 0.17 / 0 / 0 / 0, strobeL 0.33 / 4 / 0 / 2, strobeR 0.38 / 6 / 0 / 1, landL 0.25 / 0 / 0 / 0, landR 0.31 / 1 / 0 / 0, taxi 0.16 / 0 / 2 (0.02) / 0 (the truth itself scatters by ~0.1 at 11 × 11 rays) [round 3,
+15.12: these figures and the truth were of the raw rest geometry; against the DRAWN pose (the SF50 nose doors open with the gear
+down) the SF50 taxi light's largest error was 0.96 - fixed there, restated with the final tree]. **Every direction** (after the resume: `out/od4_it6r2b/tools/dense_err.mjs`, `cpu/dense_err_*.json`; the shipped table as the shader reads it against a 512 × 256 table of the same estimator, 0.7° cells, at each of its 131,072 cell centres, weighted by solid angle; `dense_check.mjs`: at each light's worst direction the independent ray cast above, at 150 m, confirms the PC-12 values, e.g. beaconBot el −8.8° az 0.4° truth 0.00, drawn 0.88): the 300-direction sample understated the largest errors. **PC-12**, largest |drawn − truth| navL / navR 0.40, tail 0.50, beaconTop 0.44, beaconBot 0.88, strobeL / strobeR 0.99, landL / landR 0.95, taxi 0.80; directions off by more than 0.25: 0.07–1.1 % of the sphere per light (within ±15° of the aircraft's horizontal, where ground cameras sit: 0.27–3.4 %), more than 0.5: 0–0.23 % (ground band 0–0.87 %); hidden lamps drawn above 0.25: 0.07–1.1 % of each light's hidden directions (ground band 0.25–4.7 %, the taxi light the most); seen lamps (≥ 0.5) drawn more than 0.25 below their share: 0–1.3 % (ground band 0–3.4 %, largest 0.93). The largest errors are thin occluders: the stabilizer seen edge-on 10 m in front of a tip strobe (el 14°, az ±139°: drawn 0.99, truth 0), an antenna 4.3 m in front of a landing light (0.95), the nose leg 4.5 m in front of the belly beacon from ahead and below (0.88), the far wing and winglet edge-on 8 m in front of the taxi light (0.80); then sharp edges (the recheck's bank pass: strobeL across the cabin roof 0.49–0.73 for a truth of 1.0). **SF50**: the fine table's own estimator (4 × 4 rays, 12 × 12 for a lamp nearly edge-on) is off by up to 0.4 on its flat lamp patches (at the worst directions the ray cast reads the strobes 0.67 where the fine table says 0.25, the landing lights 0.38–0.42 for 1.0; the drawn value is within 0.15 of the ray cast there except navL / navR from nearly overhead, 0.24 for 0.57), so its dense maxima (0.23–0.63) are upper bounds and the sample above stands (largest 0.16–0.38). So: steady at every sub-pixel position and never blinking, but not "dim": in a narrow band of directions behind a thin occluder a hidden PC-12 lamp is drawn at up to full brightness (it does not wink out for the frame or two in which the occluder passes over it), and near a sharp edge a seen lamp can be drawn dimmer, by up to ~0.9 in the worst cell. With the recheck's 11 × 11 truth the SF50 strobes showed 13–14 hidden directions drawn (up to 0.55); with the corrected truth 0 |
 
 **What the sweeps show (CPU, `out/od4_it6r2/cpu/sw_a_*`, it7 = this tree).** No regression of R1–R3: for both types and at
 every range (25–250 m) 0 blinking directions of a lamp seen ≥ 50 %, 0 positions hiding such a lamp, 0 lamps hidden at every
@@ -1565,10 +1582,11 @@ each; `gpu/range_after/`, `range80_after/`, `gpu/range_sheet.jpg`) read exactly 
 the two iteration-5 false hides tail150 0.502 / navL150 0.416 at every position (CPU truth 0.49 / 0.38; the CPU replica gives
 0.502 / 0.416 at the same cameras, `tools/dbg_eye.mjs`). The bank pass (`seq/bank150_PC12`, the recheck's path) is frame for
 frame identical to iteration 6 (strobeL across the cabin roof 0.49–0.73 in 15 frames whose truth is 1.0: F3's residual,
-unchanged). POSED_DETAIL
+unchanged). **Posed movers** (`gpu/jobs_posed.json`, `gpu/posed_after/`): the reach is a bound of the aircraft at rest, so a moved part beside a lamp's line of sight could be taken for another object. The ten R1 range cameras above (80 / 150 / 300 m, first sub-pixel position) with flaps 40°, the gear at 0.5 (in transit), both, and full control deflection (roll, pitch, yaw 1): all 40 posed probes equal their rest values (beaconBot 0.624–1.000, tail 0.502, navL 0.416, strobeR 0.838 / 0.889) - at these cameras no moved part comes within the taps' 0.5 m cylinder beyond reach + 0.3 m. Not shown: a posed part that does (open item below).
 
-**Tests**: `node tools/models/test_models.mjs` → **112 PASS, 13 KNOWN, 0 FAIL**, 4 INFO (`out/od4_it6r2/test_models_run1.txt`;
-15.10: 107 PASS). The proposed patch `out/pc12_look_it4/test_models_it4_checks.patch` no longer applies and is not needed: its
+**Tests**: `node tools/models/test_models.mjs` → **112 PASS, 13 KNOWN, 0 FAIL**, 4 INFO (final tree after the resume,
+`out/od4_it6r2b/test_models_final2.txt`; the first run after the resume failed one provenance check on a raster-reading token
+(a number followed by the pixel unit) this section had used, reworded; 15.10: 107 PASS). The proposed patch `out/pc12_look_it4/test_models_it4_checks.patch` no longer applies and is not needed: its
 checks (G1–G4) were applied with iteration 5's patch in iteration 6 and are in the file (updated since). New / changed checks:
 the propeller blades are not in the tables (PC-12: 29,640 blade triangles left out, all of them; SF50: none) and the PC-12
 taxi light's table is ≥ 0.9 at el 2° az ±16°, el 2° az −14°, el −2° az 18° / −16°, el 6° az ±12° (it is 1.00 at each; with the
@@ -1577,12 +1595,12 @@ independent ray cast without BVH, 81 parallel rays in the RHO disc, 16 direction
 mean excess 0.76 / 0.47 m); the shader's external taps use the reach (`LENS_RHO` = `LAMPVIS.RHO`, `LENS_XM` ≥ `LAMPVIS.RMIN`, the
 tap threshold); the independent ray cast of the table check leaves the blades out as the tables do (mean |table − ray cast|
 PC-12 0.022, SF50 0.058, unchanged). **`python3 -I -B tools/check_airport.py`** → **RESULT: ALL HARD CHECKS PASSED**
-(`out/od4_it6r2/check_airport.txt`). APP_SMOKE
+(`out/od4_it6r2/check_airport.txt`; final tree after the resume: again ALL HARD CHECKS PASSED, `out/od4_it6r2b/check_airport.txt`). **App smoke test** (after the resume, `out/od4_it6r2b/tools/app_smoke2.mjs`, `app/`, looked at): the live app (`live.html`, snapshot mode) on a local recorded pack (gitignored) at an instant when a PC-12 taxis, the environment at night (`?t=`): `loadModel` computed the PC-12's tables in the app, the atlas holds them (4 bands: the lights drawn), the depth copy runs, and from the app's follow camera at 45 and 150 m the starboard nav light is drawn (the port one is behind the fuselage, the tail light faces away); 0 console errors (15.10's smoke run had no detailed aircraft in view).
 
 **Load cost**: the reach adds ~0.9 s of splatting per PC-12 (profile: `reachSplat` 0.89 of 4.3 s) and ~0.7 s per SF50; the
 tables now take 4.7–6.3 s (PC-12) and 7.9 s (SF50) in the dev page on this machine under load (the recheck's runs of
 iteration 6: 4.0–4.2 s PC-12), before the drawable leaves its placeholder. The BVH walk now visits the near child first
-(identical tables, a few per cent faster). Docs stills: STILLS
+(identical tables, a few per cent faster). **Docs stills** (`out/od4_it6r2/stills/`, the jobs of 15.10, the last two rendered after the resume; compared with the committed ones by `out/od4_it6r2b/tools/docs_cmp7.py`, sheets `out/od4_it6r2b/docs_cmp/docs_sheet{1,2,3}.jpg`, looked at): the nine PC-12 stills, the twelve SF50 day stills and the SF50 dusk still render the same (mean |difference| ≤ 0.041 sRGB levels, at most 5 pixels off by more than 24: viewer_sf50_front, a seam), so `docs/phase3/` and its captions are unchanged this round.
 
 **Files changed in this round**: `js/aircraft/glb.js` (`lampTables`: blades left out, `bladeTris`, `NA` / `NE` options, the
 reach channel - `reachVoxels`, `reachSplat`, `LAMPVIS.RHO` / `VOX` / `VS` / `RMIN`; `lampVisReach`; the BVH's split axis and
@@ -1594,9 +1612,319 @@ detailed.js`, `models.js`, `kinematics.js`, `js/renderer.js`, `js/gl.js`, `dev/m
 
 **Open / not verified (round 2)**: the reach is a bound for the aircraft **at rest** (gear down, flaps 0, controls neutral,
 doors closed): a moved part beside a lamp's line of sight and more than reach + 0.3 m in front of it is taken for another
-object (POSED); an occluder within reach + 0.3 m in front of a lamp is still not seen while the lamp is sub-pixel (in grazing
+object (POSED) [round 3, 15.12: the tables and the reach are now of the drawn gear-down / gear-up pose, the reach covers the gear
+in transit and the tabulated flap settings, and the flaps have their own tables; the belly-beacon case the recheck found is
+fixed there]; an occluder within reach + 0.3 m in front of a lamp is still not seen while the lamp is sub-pixel (in grazing
 directions the reach is metres: the PC-12 taxi light from ahead 2.7 m); beyond ~460 m (fov 45° / 1080 lines) the outer taps
-fall back to the bounding sphere; with a slowly turning, drawn propeller (below `PROP_BLUR[1]`: engine start / stop) a lamp
+fall back to the bounding sphere [round 3, 15.12: corrected - the corner taps start to fall back at ~370 m there (complete at
+~460 m), at ~195 m on a 720-line canvas at 55°; the formula and the per-light blind-window shares are in 15.12]; with a slowly turning, drawn propeller (below `PROP_BLUR[1]`: engine start / stop) a lamp
 behind the blades is drawn through them wherever the reach covers the blades (the taxi light from ahead; iteration 6 hid it
-in fixed directions whatever the rotor angle); the tables' residual near edges is as stated above (no grid change); RHO, VOX,
+in fixed directions whatever the rotor angle); the tables' residual near edges and behind thin occluders is as stated above (F3: on the PC-12 up to 0.99 of full brightness for a
+hidden lamp in narrow bands of directions, over every direction; no grid change); RHO, VOX,
 VS, RMIN and `LENS_XM` are inferred. Laptop GPU frame time still not measured.
+
+### 15.12 OD4 iteration 6, round 3 (recheck of 2026-11-27, findings F1–F5): dispositions
+The recheck of round 2 (its tools, renders and measurements `out/od4_rc6_2/`, gitignored) found the five issues below.
+**Before** = round 2 as handed over (copies of its runtime files in `out/od4_it6r3/head/`), **after** = this tree; tools,
+renders and measurements of this round: `out/od4_it6r3/` (gitignored). **Truth** = the recheck's own ray cast
+(`out/od4_rc6_2/tools/rc2lib.mjs` `truthRC`: 21 × 21 perspective rays over the lamp's support, 61 × 61 when fewer than 60
+meet the lamp; the model posed by the app's own `Kinematics.pose` with the state of the run, no propeller blades) - the
+DRAWN pose, which none of round 2's sweeps, tests or tables used (F1). **CPU replica** of the new shader:
+`out/od4_it6r3/tools/lens8.mjs` `it8Test` (round 2's `it7Test` plus the flap tables and the F2 rule; `IT8_OLD` = round 2's
+rule on this round's tables); sweeps `tools/sw8.mjs` on the recheck's own seeded direction sets (500 uniform + 250 within
+±12° of the aircraft's horizontal per light, 16 sub-pixel camera positions, fov 45° / 1080 lines, the app rig's near plane),
+so every before / after pair below is the same directions, cameras and truth. **GPU**: the recheck's tools and jobs unchanged
+(`out/od4_rc6_1/tools/gpu_rc.mjs` lens probe and on / off renders, `out/od4_rc6_2/tools/seq_rc2.mjs` sequences); dev viewer,
+1920 × 1080, night (2026-11-14 05:00Z), neutral pad. The GPU equals the CPU replica in every value compared this round (below).
+Every image was looked at.
+
+| # | finding | root cause | fix (file) | result (before → after) |
+|---|---|---|---|---|
+| F1 major | the SF50 taxi light was drawn through its own open nose-gear doors, at every range (2.5–400 m): the table said "seen" (0.87–0.92) where the drawn door hides the lamp completely, and from the ground band nearly head-on it drew ~2× the seen share; 15.11 gave its largest error as 0.16, against the drawn pose 0.96 | `js/aircraft/glb.js` `lampTables` ray-cast the **raw glTF rest geometry**, where the SF50's nose doors are closed. In every drawn gear-down state they stand open: `js/aircraft/kinematics.js` `gearSequence` `doorDown` = 1 with the gear down and the doors' pivot `seq: 'down'` (the SF50 builder: "open whenever the gear is down", AFM Fig 1-1 shows them open) - correct, and unchanged. The doors lie within the reach + 0.3 m, so vExt did not see them, and at near range the floor tq × n(T) kept the table's value although v5 saw the door. Round 2's sweeps, the test's ray cast and the 15.11 F3 figures used the same rest geometry, so none of them could see it; the gear-up channel likewise dropped the gear parts instead of posing them | **the tables are of the DRAWN pose** (`lampTables`; glb.js now imports kinematics.js): occluders posed by `Kinematics(model).pose(...)` - the airframe and the gear with `{ gear: 1 }` for channel 0 (gear down), the gear with `{ gear: 0 }` for channel 1 (gear up: legs retracted, doors shut; was "without the gear parts"), the lamp placed with its mover's gear-down pose (every lamp of both types is at rest there); the blade exclusion kept; the reach (channel 3) an upper bound over the gear down / up / in transit (0.5) and the flaps (F3). The near floor needs no change: with a table that sees the door, T ≈ 0 behind it and the floor with it. **Also found**: the "surface behind the lamp" rule of a lamp under a clear cover looked 80 m back, so a ray through the SF50 tip landing light's cover that met the main gear legs 3 m behind counted as a view of the lamp with the gear down and not with it up (gear-down / gear-up 0.38 / 0.11 where the ray cast sees 0.08); it now looks `LAMPVIS.BACK` = 1 m behind, the recheck truth's own rule (the SF50 tables change; the PC-12 lamps have no cover). `tools/models/test_models.mjs`: the independent ray cast is of the drawn gear-down pose; new checks - the gear-up and flap tables against an independent ray cast of that pose, the reach as read in those poses an upper bound of the posed aircraft, the SF50 taxi light ≤ 0.1 at the recheck's three cameras | **CPU** (`out/od4_rc6_2/tools/sf50taxi.mjs`, 750 directions at 150 m): hidden in the drawn pose but drawn **44 → 0**; grid (`tools/grid8.mjs`, 2°, el −10..40°, az ±90°, `cpu/grid8_SF50_taxi_gear1_final.txt`): hidden cells drawn above 0.25 **792 of 1,252 → 0**, seen cells drawn more than 0.25 below 0, largest error 0.16; F3 check (`cpu/f3check_SF50.json`, 2,000 + 1,000 directions, 150 m): SF50 taxi off by more than 0.25 **20.9 % → 0.0 %** of the sphere (95 % interval 0.0–0.2 %), **32.6 % → 0.0 %** of the ground band, largest error **0.96 → 0.21**; the full sweep (below): SF50 hidden lamps drawn above 0.25 at 10–400 m 41–45 → **0**, at 5–30 m 44–50 → **0**. **GPU** (the recheck's `jobs_sf50taxi.json`; `gpu/sf50taxi/`, `cmp.json`): probe 0.875–0.901 → **0.000 in all 18 jobs** (el 13.1° az 18.5° at 150 m × 4 sub-pixel positions, 40 m × 4, 12 m and 4 m; el 16.5° az 38.5° and el 8° az 16.2° at 150 m × 4), peak added sRGB 252–255 → **0**; the crops (`gpu/sf50taxi_crops_sel.jpg`, looked at) show the open door and no glow. Re-run after the cover-rule change (`gpu/sf50taxi_final/`): the first position of each case and a 4 m close-up, **0.000 in all 6**, the GPU equal to the CPU replica. **Temporal** (the recheck's `curve150_SF50` path, 30 frames, `seq/curve150_SF50`): the taxi light drawn 0.50–1.00 for a truth of 0.42–0.97, largest \|drawn − truth\| **0.09**, **0 of 30** frames off by more than 0.25 (round 2, the recheck's 90-frame run of the same arc: drawn 0.875–1.00 for the same truth range, 76 of 90 frames off by more than 0.25, largest 0.56); 0 flicker for every light |
+| F2 major | at 10–30 m partly seen lamps (10–50 %) blinked with the sub-pixel position on a moving aircraft - mostly the SF50: tip strobes fully on / off, landing and nav lights swinging 0.3–0.7; 15.10's "never to off" held only for lamps seen ≥ 50 % and no jitter amplitude was reported | (a) the blend radius r = min(\|h·pr\|, \|h·pu\|) was the lamp ellipsoid's support along the screen x / y axes, not the minor half-axis of its projected ellipse: for the thin SF50 strobe patch (131 × 20 × 10 mm) seen tilted r was 3.8–4.7 pixels for a 0.7–0.9 pixels sliver, so w = 0 and iteration 5's v5 alone decided, its 3 × 3 taps straddling the sliver (0 or 1); (b) the near floor tq × n(T) is ~0 for T < 0.25–0.5, so v5's jitter was unbounded for partly seen lamps | `js/shaders/sprites.js` `lensVisible`: **r = the minor half-axis of the projected ellipse** (√ of the smaller eigenvalue of Σ h_i² p_i p_iᵀ, p_i = (a_i·R, a_i·U)) **× the table's share T** - the width of the SEEN part of the lamp in the worst case (a sliver along its long axis): one depth sample per pixel cannot resolve a seen part narrower than ~1.5 pixels, so the table decides there; and where the table holds (qn), **the depth test is bounded toward the table's value tq = T g vExt**: never below max(tq n(T), tq − `LENS_BM`, tq × `LENS_BLO`), never above tq + `LENS_BM` (`LENS_BM` 0.15, `LENS_BLO` 0.5; round 2's floor kept as the first term). Chosen with the CPU replica over ten variants (`cpu/sw8_nearX_*`: 250 directions × 5–40 m × 16 positions, both types; an exploration on the tables before the cover-rule change below; SF50: r alone still 1–4 on / off at 5–25 m, spreads up to 0.60; r × T alone 1 on / off at 5 m, spreads up to 0.55; the bound alone ±0.25 / ±0.15 on / off at 5–25 m / none, spreads up to 0.48 / 0.33; r × √T + bound ±0.15 0 on / off, 0.33 / 0.30 at 5 / 10 m; r × T + bound ±0.15 the smallest: 0 on / off, largest spread 0.33 at 5 m and ≤ 0.20 from 10 m; its cost on the PC-12: more steady table residuals at 5–15 m, below) [inf] | **CPU, the recheck's direction sets** (`cpu/sw8_near_*`, `sw8_main_*`; tables below, before = the recheck's own sweeps of the round-2 tree): SF50 on / off of lamps seen ≥ 25 % at 5 / 10 / 15 / 20 / 25 / 30 m **8 / 10 / 8 / 7 / 6 / 3 → 0**; light-directions whose drawn value varies by more than 0.25 between sub-pixel positions **1.9 / 3.5 / 3.8 / 3.9 / 3.2 / 2.5 % → 0.1 / 0 / 0 / 0 / 0 / 0 %**, largest spread **0.82 / 0.99 / 1.00 / 1.00 / 0.94 / 1.00 → 0.33 / 0.28 / 0.15 / 0.15 / 0.13 / 0.07** (strobes 1.00 → 0.01–0.02 from 15 m); PC-12 spread > 0.25 0.4–1.4 % → **0**, largest 0.33–0.44 → 0.04–0.27; from 40 m both types ≤ 0.02. **GPU** (the recheck's `jobs_near3_SF50.json`, its four cases × four sub-pixel positions, `gpu/near3_SF50/cmp.json`; the GPU equals the CPU replica in all 16 values): strobeR 15 m (truth 0.35–0.36) **1.000 / 0.004 / 0.004 / 1.000 → 0.270 / 0.269 / 0.267 / 0.267**; strobeL 20 m (truth 0.12) 0.33 / 1 / 1 / 1 → **0.206–0.207**; landL 25 m (truth 0.25) 0.25 / 0.001 / 0.66 / 0.33 → **0.217 × 4**; navR 20 m (truth 0.49) 0.291–0.292; the crops (`gpu/near3_sheet.jpg`, looked at) show the same disc at every position. **Temporal** (the recheck's `crawl15_SF50`: an SF50 taxiing at 1 m/s, the camera ~15 m from the right tip strobe, 40 frames at 30 fps; `seq/crawl15_SF50_truth.txt`): strobeR (truth 0.33–0.37 in every frame) drawn **0–0.5 with 8 on / off flickers → 0.25–0.28, 0 flickers, 0 jumps**; landL (truth 0.49–0.54) 0.33–0.75 with 2 jumps → **0.36–0.39, 0 jumps**; the taxi light (truth 0.05, F1) 0.875 → 0.01–0.04. At 25 m (`crawl25_SF50`, new, the same path with the camera 27 m away): 0 flicker and 0 jumps for every light; strobeR 0.46–0.50 for a truth of 0.47–0.49, landL 0.44–0.51 for 0.60–0.64 |
+| F3 minor | with flaps 40 the deployed Fowler flaps hide the PC-12 belly beacon from beside the aircraft at low elevation (az ±72–90°, el −8…+5°: a runway-side camera on a landing PC-12), but the flaps-0 table drew it at 0.76–1.0, and the deployed flap lay within reach + 0.3 m | the tables were at flaps 0 | **flap tables** (`js/aircraft/glb.js` `lampTables`, `lampFlapSettings`, `lampFlapX`, `lampVisState`): per lamp, one more table per tabulated flap setting - the smallest and the largest non-zero setting of the model's flap pivots, PC-12 15 / 40, SF50 15 / 39 (the take-off and landing settings `js/live/aircraft.js` flies) - ray cast in the same pass (the flap parts posed per setting, small BVHs); kept only for a lamp whose seen share some setting changes by more than 3 / 255 (PC-12: 7 of 10 lamps - the beacons, strobes, landing and taxi lights; SF50: the taxi light), 32 KB each. `js/scene.js` places a lamp's flap tables in consecutive atlas bands (`LampVisAtlas.bandRun`; a run that does not fit is dropped and the sprite keeps its flaps-0 table) and packs the first band and the flap position into iL5.z / iL5.w; `js/aircraft/detailed.js` `lampWorld` passes them (`lampFlapX` of the drawable's flap angle: 0 / 1 / 2 at 0 / 15 / 40°, piecewise linear, PC-12 30° = 1.6 [inf]); `js/shaders/sprites.js` `lampTable` mixes the shares and the farthest occluder linearly and takes the larger reach of the two tables (each a bound for its own setting). The reach of a lamp's flaps-0 table covers the flaps at rest, each flap table its own setting (a lamp without flap tables: every setting) | **CPU, the recheck's grid** (`tools/grid8.mjs`, 1°, el −20..10°, az 0..180°, flaps 40, `cpu/grid8_PC12_beaconBot_flaps40.txt`): hidden belly-beacon cells drawn above 0.25 **137 → 23** of 1,044 (without / with the flap tables), largest error 1.0 → 0.9 (a few cells at the flap's edge); **posed sweeps** (the recheck's `posLand` / `posClimb` states and direction sets, 80 / 150 / 300 m, `cpu/sw8_pos*`): PC-12 flaps 40 hidden lamps drawn above 0.25 **107 → 12** per range (beaconBot 5 → 1, landL 46 → 0–1, landR 46 → 1: the landing lights hidden from behind by the flaps), flaps 15 + gear up 43 → 9; SF50 0 → 0; no blinking and spread ≤ 0.02 before and after. **GPU** (the recheck's `jobs_posed_PC12.json`, `gpu/posed_PC12/cmp.json`, GPU = CPU replica): flaps 40, el 2° az 77° at 150 m **0.761–0.764 → 0.000**, el −3° az 83° at 80 m **1.000 → 0.000** (truth 0 at all positions); control flaps 0, el 0° az 80° 0.916–0.917 (truth 0.95), unchanged. Tests: the belly beacon's flap tables ≤ 0.15 at those two cameras with flaps 40 and 0.918 at the control |
+| F4 minor | the external-occluder blind window [0, reach + 0.3 m] is large for the PC-12 in the ground band and 15.11 described it only qualitatively; the bounding-sphere fallback starts earlier than "beyond ~460 m" | the fallback distance was quoted for the edge of the corner tap's full fallback, not its start; the window was not measured per light | **documented** (below, the `js/shaders/sprites.js` header and 15.11 corrected): the per-light shares of seen directions with a window of 3 m or more, and the fallback distances with their scaling. Not done: telling the aircraft's own pixels apart in the depth copy (an aircraft id) would remove the window, but the near pass is multisampled and its resolve averages an id across a silhouette's samples - where a sub-pixel lamp's taps fall - and the aux target's four channels are in use (distance, motion, alpha); a renderer change beyond this round [inf] | per light below; the round-3 reach (per pose) leaves the flaps-0 window as round 2's: PC-12 ground band 16–60 % of seen directions have a window ≥ 3 m (belly beacon 59.9 %), whole sphere 4–27 %; SF50 ≤ 6.7 % |
+| F5 minor | 15.10's R3 tables were of the round-1 tree (rest blades in tables and truth); the final tree's figures at the R3 ranges were not in the docs; the F3 shares were quoted without their sampling uncertainty | the round-2 sweeps used a different direction set and ranges | the final tree's figures at 5–400 m with a jitter column (below; 15.10's tables annotated as superseded), on the recheck's own direction sets and truth, before (= the recheck's runs of the round-2 tree) → after; the F3 shares with Wilson 95 % intervals | below |
+
+**The final tree at 5–400 m (F2, F5).** CPU, the recheck's direction sets and truth (500 uniform + 250 ground-band directions per
+light, 16 sub-pixel positions, fov 45° / 1080 lines; 5–30 m seeds 4343 / 4444, 10–400 m seed 4242), before = the recheck's own
+sweeps of the round-2 tree (`out/od4_rc6_2/cpu/sw_near_*`, `sw_main_PC12`, `sw_main2_SF50`), after = `cpu/sw8_near_*`,
+`cpu/sw8_main_*` (variant `it8`; `tools/mk15.py`). Per light and range: *on / off* = directions of a lamp seen ≥ 25 % drawn
+below 0.02 at some position and above 0.25 at another; *hidden drawn* = lamps the truth sees 0 % of drawn above 0.25 somewhere;
+*false hides* = lamps seen ≥ 25 % drawn 0 somewhere; the **jitter** = the largest sub-pixel spread (max − min over the 16
+positions) of the light at that range. These supersede 15.10's R3 tables.
+
+**PC12, 5–30 m** (cell: on / off of a lamp seen ≥ 25 % / hidden lamps drawn > 0.25 / false hides / jitter = largest sub-pixel spread; before → after)
+
+| light | 5 m | 15 m | 20 m | 25 m | 30 m |
+|---|---|---|---|---|---|
+| navL | 0→0 / 0→0 / 0→0 / 0.33→0.27 | 0→0 / 0→1 / 0→0 / 0.43→0.09 | 0→0 / 0→1 / 0→0 / 0.41→0.02 | 0→0 / 0→0 / 0→0 / 0.28→0.01 | 0→0 / 0→0 / 0→0 / 0.20→0.01 |
+| navR | 0→0 / 0→0 / 0→0 / 0.33→0.26 | 0→0 / 0→0 / 0→0 / 0.44→0.09 | 0→0 / 0→0 / 0→0 / 0.43→0.04 | 0→0 / 0→0 / 0→0 / 0.28→0.04 | 0→0 / 0→0 / 0→0 / 0.19→0.04 |
+| tail | 0→0 / 0→0 / 0→0 / 0.33→0.15 | 0→0 / 0→0 / 0→0 / 0.03→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 |
+| beaconTop | 0→0 / 0→0 / 0→0 / 0.33→0.22 | 0→0 / 0→0 / 0→0 / 0.32→0.08 | 0→0 / 0→0 / 0→0 / 0.20→0.01 | 0→0 / 0→0 / 0→0 / 0.07→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 |
+| beaconBot | 0→0 / 1→3 / 0→0 / 0.28→0.21 | 0→0 / 3→4 / 0→0 / 0.19→0.03 | 0→0 / 3→3 / 0→0 / 0.02→0.02 | 0→0 / 3→3 / 0→0 / 0.02→0.02 | 0→0 / 2→2 / 0→0 / 0.02→0.02 |
+| strobeL | 0→0 / 0→0 / 0→0 / 0.33→0.17 | 0→0 / 3→4 / 0→0 / 0.29→0.05 | 0→0 / 4→4 / 0→0 / 0.23→0.02 | 0→0 / 4→4 / 0→0 / 0.15→0.02 | 0→0 / 4→4 / 0→0 / 0.05→0.02 |
+| strobeR | 0→0 / 0→0 / 0→0 / 0.22→0.15 | 0→0 / 5→6 / 0→0 / 0.29→0.05 | 0→0 / 6→6 / 0→0 / 0.22→0.02 | 0→0 / 5→5 / 0→0 / 0.13→0.02 | 0→0 / 5→5 / 0→0 / 0.03→0.02 |
+| landL | 0→0 / 0→2 / 0→0 / 0.33→0.22 | 0→0 / 3→3 / 0→0 / 0.04→0.02 | 0→0 / 3→3 / 0→0 / 0.02→0.02 | 0→0 / 3→3 / 0→0 / 0.02→0.02 | 0→0 / 3→3 / 0→0 / 0.02→0.02 |
+| landR | 0→0 / 0→1 / 0→0 / 0.33→0.11 | 0→0 / 2→2 / 0→0 / 0.05→0.02 | 0→0 / 2→2 / 0→0 / 0.02→0.02 | 0→0 / 2→2 / 0→0 / 0.02→0.02 | 0→0 / 2→2 / 0→0 / 0.02→0.02 |
+| taxi | 0→0 / 0→0 / 1→1 / 0.33→0.21 | 0→0 / 1→4 / 0→0 / 0.33→0.11 | 0→0 / 1→3 / 0→0 / 0.33→0.05 | 0→0 / 3→3 / 0→0 / 0.22→0.01 | 0→0 / 3→3 / 0→0 / 0.09→0.01 |
+
+| PC12, all lights | 5 m | 15 m | 20 m | 25 m | 30 m |
+|---|---|---|---|---|---|
+| light-directions | 7284 → 7284 | 7500 → 7500 | 7500 → 7500 | 7500 → 7500 | 7500 → 7500 |
+| on / off (seen ≥ 25 %) | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| blinking (seen ≥ 50 %, drawn 0 somewhere) | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| light-directions with a sub-pixel spread > 0.25 | 0.4 % → 0.0 % | 1.4 % → 0.0 % | 0.6 % → 0.0 % | 0.1 % → 0.0 % | 0.0 % → 0.0 % |
+| jitter (largest sub-pixel spread) | 0.33 → 0.27 | 0.44 → 0.11 | 0.43 → 0.05 | 0.28 → 0.04 | 0.20 → 0.04 |
+| hidden lamps drawn > 0.25 | 1 → 6 | 17 → 24 | 19 → 22 | 20 → 20 | 19 → 19 |
+| false hides (seen ≥ 25 %, drawn 0) | 1 → 1 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| mean abs error | 0.035 → 0.030 | 0.032 → 0.025 | 0.029 → 0.025 | 0.027 → 0.025 | 0.026 → 0.025 |
+
+**PC12, 10–400 m** (cell: on / off of a lamp seen ≥ 25 % / hidden lamps drawn > 0.25 / false hides / jitter = largest sub-pixel spread; before → after)
+
+| light | 10 m | 40 m | 80 m | 150 m | 300 m | 400 m |
+|---|---|---|---|---|---|---|
+| navL | 0→0 / 0→0 / 2→2 / 0.42→0.14 | 0→0 / 0→0 / 2→2 / 0.03→0.01 | 0→0 / 0→0 / 2→2 / 0.01→0.01 | 0→0 / 0→0 / 2→2 / 0.01→0.01 | 0→0 / 0→0 / 2→2 / 0.01→0.01 | 0→0 / 0→0 / 2→2 / 0.01→0.01 |
+| navR | 0→0 / 0→1 / 0→0 / 0.33→0.15 | 0→0 / 1→1 / 0→0 / 0.03→0.01 | 0→0 / 1→1 / 0→0 / 0.01→0.01 | 0→0 / 1→1 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 |
+| tail | 0→0 / 2→2 / 0→0 / 0.32→0.05 | 0→0 / 2→2 / 0→0 / 0.01→0.01 | 0→0 / 2→2 / 0→0 / 0.01→0.01 | 0→0 / 2→2 / 0→0 / 0.01→0.01 | 0→0 / 2→2 / 0→0 / 0.01→0.01 | 0→0 / 2→2 / 0→0 / 0.01→0.01 |
+| beaconTop | 0→0 / 0→0 / 0→0 / 0.33→0.15 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 |
+| beaconBot | 0→0 / 0→1 / 0→0 / 0.33→0.14 | 0→0 / 1→1 / 0→0 / 0.01→0.01 | 0→0 / 1→1 / 0→0 / 0.01→0.01 | 0→0 / 1→1 / 0→0 / 0.01→0.01 | 0→0 / 1→1 / 0→0 / 0.01→0.01 | 0→0 / 1→1 / 0→0 / 0.01→0.01 |
+| strobeL | 0→0 / 4→7 / 0→0 / 0.33→0.14 | 0→0 / 11→11 / 0→0 / 0.02→0.02 | 0→0 / 11→11 / 0→0 / 0.02→0.02 | 0→0 / 11→11 / 0→0 / 0.02→0.02 | 0→0 / 11→11 / 0→0 / 0.02→0.02 | 0→0 / 11→11 / 0→0 / 0.02→0.02 |
+| strobeR | 0→0 / 0→0 / 0→0 / 0.30→0.15 | 0→0 / 5→5 / 0→0 / 0.01→0.01 | 0→0 / 5→5 / 0→0 / 0.01→0.01 | 0→0 / 5→5 / 0→0 / 0.01→0.01 | 0→0 / 4→4 / 0→0 / 0.01→0.01 | 0→0 / 4→4 / 0→0 / 0.01→0.01 |
+| landL | 0→0 / 2→8 / 0→0 / 0.27→0.07 | 0→0 / 8→8 / 0→0 / 0.02→0.02 | 0→0 / 8→8 / 0→0 / 0.02→0.02 | 0→0 / 8→8 / 0→0 / 0.02→0.02 | 0→0 / 8→8 / 0→0 / 0.02→0.02 | 0→0 / 8→8 / 0→0 / 0.02→0.02 |
+| landR | 0→0 / 3→6 / 1→1 / 0.28→0.07 | 0→0 / 5→5 / 1→1 / 0.02→0.02 | 0→0 / 4→4 / 1→1 / 0.02→0.02 | 0→0 / 4→4 / 1→1 / 0.02→0.02 | 0→0 / 4→4 / 1→1 / 0.02→0.02 | 0→0 / 4→4 / 1→1 / 0.02→0.02 |
+| taxi | 0→0 / 1→4 / 0→0 / 0.33→0.16 | 0→0 / 3→3 / 0→0 / 0.01→0.01 | 0→0 / 3→3 / 0→0 / 0.01→0.01 | 0→0 / 3→3 / 0→0 / 0.01→0.01 | 0→0 / 3→3 / 0→0 / 0.01→0.01 | 0→0 / 3→3 / 0→0 / 0.01→0.01 |
+
+| PC12, all lights | 10 m | 40 m | 80 m | 150 m | 300 m | 400 m |
+|---|---|---|---|---|---|---|
+| light-directions | 7441 → 7441 | 7500 → 7500 | 7500 → 7500 | 7500 → 7500 | 7500 → 7500 | 7500 → 7500 |
+| on / off (seen ≥ 25 %) | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| blinking (seen ≥ 50 %, drawn 0 somewhere) | 1 → 1 | 1 → 1 | 1 → 1 | 1 → 1 | 1 → 1 | 1 → 1 |
+| light-directions with a sub-pixel spread > 0.25 | 1.1 % → 0.0 % | 0.0 % → 0.0 % | 0.0 % → 0.0 % | 0.0 % → 0.0 % | 0.0 % → 0.0 % | 0.0 % → 0.0 % |
+| jitter (largest sub-pixel spread) | 0.42 → 0.16 | 0.03 → 0.02 | 0.02 → 0.02 | 0.02 → 0.02 | 0.02 → 0.02 | 0.02 → 0.02 |
+| hidden lamps drawn > 0.25 | 12 → 29 | 36 → 36 | 35 → 35 | 35 → 35 | 33 → 33 | 33 → 33 |
+| false hides (seen ≥ 25 %, drawn 0) | 3 → 3 | 3 → 3 | 3 → 3 | 3 → 3 | 3 → 3 | 3 → 3 |
+| mean abs error | 0.037 → 0.029 | 0.026 → 0.026 | 0.025 → 0.025 | 0.025 → 0.025 | 0.025 → 0.025 | 0.025 → 0.025 |
+
+**SF50, 5–30 m** (cell: on / off of a lamp seen ≥ 25 % / hidden lamps drawn > 0.25 / false hides / jitter = largest sub-pixel spread; before → after)
+
+| light | 5 m | 15 m | 20 m | 25 m | 30 m |
+|---|---|---|---|---|---|
+| navL | 0→0 / 0→0 / 0→0 / 0.33→0.20 | 0→0 / 0→0 / 0→0 / 0.45→0.15 | 0→0 / 0→0 / 0→0 / 0.60→0.11 | 1→0 / 0→0 / 0→0 / 0.46→0.04 | 2→0 / 0→0 / 0→0 / 0.50→0.04 |
+| navR | 0→0 / 0→0 / 0→0 / 0.55→0.28 | 0→0 / 0→0 / 0→0 / 0.51→0.15 | 0→0 / 0→0 / 0→0 / 0.53→0.11 | 0→0 / 0→0 / 0→0 / 0.47→0.04 | 0→0 / 0→0 / 0→0 / 0.45→0.01 |
+| tail | 0→0 / 0→0 / 0→0 / 0.33→0.14 | 0→0 / 0→0 / 0→0 / 0.27→0.02 | 0→0 / 0→0 / 0→0 / 0.05→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 |
+| strobeL | 4→0 / 0→0 / 4→0 / 0.67→0.15 | 3→0 / 0→0 / 3→0 / 1.00→0.02 | 3→0 / 0→0 / 2→0 / 1.00→0.02 | 0→0 / 0→0 / 0→0 / 0.94→0.02 | 0→0 / 0→0 / 0→0 / 1.00→0.02 |
+| strobeR | 2→0 / 0→0 / 0→0 / 0.82→0.15 | 2→0 / 0→0 / 1→0 / 1.00→0.01 | 2→0 / 0→0 / 1→0 / 0.97→0.01 | 0→0 / 0→0 / 0→0 / 0.92→0.01 | 0→0 / 0→0 / 0→0 / 0.96→0.01 |
+| strobeTail | 0→0 / 0→0 / 0→0 / 0.33→0.14 | 0→0 / 0→0 / 0→0 / 0.26→0.02 | 0→0 / 0→0 / 0→0 / 0.05→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 |
+| landL | 0→0 / 0→0 / 2→0 / 0.36→0.33 | 1→0 / 0→0 / 1→0 / 0.66→0.15 | 1→0 / 0→0 / 1→0 / 0.50→0.15 | 2→0 / 0→0 / 0→0 / 0.75→0.12 | 1→0 / 0→0 / 1→0 / 0.60→0.06 |
+| landR | 1→0 / 0→0 / 1→0 / 0.46→0.33 | 1→0 / 0→0 / 1→0 / 0.60→0.15 | 1→0 / 0→0 / 1→0 / 0.50→0.15 | 3→0 / 0→0 / 0→0 / 0.50→0.13 | 0→0 / 0→0 / 0→0 / 0.60→0.07 |
+| taxi | 1→0 / 44→0 / 0→0 / 0.50→0.16 | 1→0 / 48→0 / 0→0 / 0.37→0.15 | 0→0 / 50→0 / 0→0 / 0.35→0.09 | 0→0 / 50→0 / 0→0 / 0.17→0.03 | 0→0 / 50→0 / 0→0 / 0.05→0.01 |
+
+| SF50, all lights | 5 m | 15 m | 20 m | 25 m | 30 m |
+|---|---|---|---|---|---|
+| light-directions | 6628 → 6628 | 6750 → 6750 | 6750 → 6750 | 6750 → 6750 | 6750 → 6750 |
+| on / off (seen ≥ 25 %) | 8 → 0 | 8 → 0 | 7 → 0 | 6 → 0 | 3 → 0 |
+| blinking (seen ≥ 50 %, drawn 0 somewhere) | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| light-directions with a sub-pixel spread > 0.25 | 1.9 % → 0.1 % | 3.8 % → 0.0 % | 3.9 % → 0.0 % | 3.2 % → 0.0 % | 2.5 % → 0.0 % |
+| jitter (largest sub-pixel spread) | 0.82 → 0.33 | 1.00 → 0.15 | 1.00 → 0.15 | 0.94 → 0.13 | 1.00 → 0.07 |
+| hidden lamps drawn > 0.25 | 44 → 0 | 48 → 0 | 50 → 0 | 50 → 0 | 50 → 0 |
+| false hides (seen ≥ 25 %, drawn 0) | 7 → 0 | 6 → 0 | 5 → 0 | 0 → 0 | 1 → 0 |
+| mean abs error | 0.079 → 0.046 | 0.079 → 0.042 | 0.073 → 0.043 | 0.070 → 0.043 | 0.066 → 0.043 |
+
+**SF50, 10–400 m** (cell: on / off of a lamp seen ≥ 25 % / hidden lamps drawn > 0.25 / false hides / jitter = largest sub-pixel spread; before → after)
+
+| light | 10 m | 40 m | 80 m | 150 m | 300 m | 400 m |
+|---|---|---|---|---|---|---|
+| navL | 0→0 / 0→0 / 0→0 / 0.55→0.15 | 0→0 / 0→0 / 0→0 / 0.20→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 |
+| navR | 1→0 / 0→0 / 1→0 / 0.50→0.15 | 0→0 / 0→0 / 0→0 / 0.41→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 |
+| tail | 0→0 / 0→0 / 0→0 / 0.42→0.14 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 |
+| strobeL | 1→0 / 0→0 / 1→0 / 0.69→0.06 | 0→0 / 0→0 / 0→0 / 0.51→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 |
+| strobeR | 2→0 / 0→0 / 2→0 / 0.99→0.04 | 0→0 / 0→0 / 0→0 / 0.47→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 | 0→0 / 0→0 / 0→0 / 0.02→0.02 |
+| strobeTail | 0→0 / 0→0 / 0→0 / 0.38→0.14 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 |
+| landL | 1→0 / 0→0 / 1→0 / 0.40→0.26 | 0→0 / 0→0 / 0→0 / 0.35→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 |
+| landR | 4→0 / 0→0 / 3→0 / 0.50→0.28 | 0→0 / 0→0 / 0→0 / 0.34→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 | 0→0 / 0→0 / 0→0 / 0.01→0.01 |
+| taxi | 1→0 / 41→0 / 2→0 / 0.38→0.15 | 0→0 / 45→0 / 0→0 / 0.01→0.01 | 0→0 / 44→0 / 0→0 / 0.01→0.01 | 0→0 / 44→0 / 0→0 / 0.01→0.01 | 0→0 / 44→0 / 0→0 / 0.01→0.01 | 0→0 / 44→0 / 0→0 / 0.01→0.01 |
+
+| SF50, all lights | 10 m | 40 m | 80 m | 150 m | 300 m | 400 m |
+|---|---|---|---|---|---|---|
+| light-directions | 6747 → 6747 | 6750 → 6750 | 6750 → 6750 | 6750 → 6750 | 6750 → 6750 | 6750 → 6750 |
+| on / off (seen ≥ 25 %) | 10 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| blinking (seen ≥ 50 %, drawn 0 somewhere) | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| light-directions with a sub-pixel spread > 0.25 | 3.5 % → 0.0 % | 0.3 % → 0.0 % | 0.0 % → 0.0 % | 0.0 % → 0.0 % | 0.0 % → 0.0 % | 0.0 % → 0.0 % |
+| jitter (largest sub-pixel spread) | 0.99 → 0.28 | 0.51 → 0.02 | 0.02 → 0.02 | 0.02 → 0.02 | 0.02 → 0.02 | 0.02 → 0.02 |
+| hidden lamps drawn > 0.25 | 41 → 0 | 45 → 0 | 44 → 0 | 44 → 0 | 44 → 0 | 44 → 0 |
+| false hides (seen ≥ 25 %, drawn 0) | 10 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| mean abs error | 0.082 → 0.044 | 0.062 → 0.044 | 0.060 → 0.044 | 0.060 → 0.044 | 0.060 → 0.044 | 0.060 → 0.044 |
+
+So: no light of either type goes on / off with the sub-pixel position at any range (SF50 before: 3–10 per range at 5–30 m), no
+lamp seen ≥ 50 % is hidden anywhere it was not before (the one PC-12 landR direction under the belly, drawn 0.00–0.02 for a
+truth of 0.71 at every range, is round 2's: a narrow aperture, steady), the jitter is ≤ 0.33 at 5 m, ≤ 0.28 at 10 m, ≤ 0.15
+from 15 m and ≤ 0.02 from 40 m for both types, and the SF50's taxi-light leaks (F1) are gone. **The cost** is on the PC-12 at
+5–20 m: hidden lamps drawn above 0.25 at 5 / 10 / 15 / 20 m 1 / 12 / 17 / 19 → **6 / 29 / 24 / 22** (of ~1,700 hidden
+light-directions per range): directions where the table is wrong high near an edge (the round-2 F3 residual: strobes and
+landing lights in the ground band, drawn 0.24–0.76, steady at every position) and where round 2's depth test, which saw the
+lamp hidden, used to decide - with r × T the table decides a lamp whose seen part is under ~1.5 pixels. From 25 m the counts are
+round 2's (19–36 per range, the table residual of 15.11). The mean absolute error falls at every range (PC-12 0.037 → 0.029 at
+10 m, SF50 0.082 → 0.044).
+
+**F3 residuals restated with their sampling uncertainty (F5)** (`tools/f3check.mjs` = the recheck's, on this tree; 2,000 uniform + 1,000
+ground-band directions per light at 150 m, the table regime: drawn = T × smoothstep(0.04, 0.2, T); truth on the drawn gear-down pose;
+before = the recheck's run on the round-2 tables (`out/od4_rc6_2/cpu/f3check_*.json`) → after (`cpu/f3check_*.json`), Wilson 95 %
+interval of the after value in brackets; `tools/f3ci.py`). The PC-12 tables at flaps 0 / gear down are round 2's, so its figures are
+unchanged (the recheck's own numbers, which ran slightly higher than 15.11's dense check: e.g. taxi hidden-drawn in the ground band 7.5 %
+(3.8–14.1 %) of 107 against 15.11's 4.7 % - within the interval); the SF50 taxi light is F1's fix, the SF50 landing lights the cover rule's.
+
+| PC12 light | set | off > 0.25 % | off > 0.5 % | hidden drawn > 0.25 % (of hidden) | seen ≥ 0.5 drawn > 0.25 below % | largest error |
+|---|---|---|---|---|---|---|
+| navL | all | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–1.0) | 0.0 → 0.0 (0.0–0.7) | 0.24 → 0.24 |
+| navL | ground | 0.3 → 0.3 (0.1–0.9) | 0.0 → 0.0 (0.0–0.4) | 0.8 → 0.8 (0.2–3.0) | 0.0 → 0.0 (0.0–2.5) | 0.27 → 0.27 |
+| navR | all | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–1.0) | 0.0 → 0.0 (0.0–0.7) | 0.19 → 0.19 |
+| navR | ground | 0.1 → 0.1 (0.0–0.6) | 0.0 → 0.0 (0.0–0.4) | 0.4 → 0.4 (0.1–2.1) | 0.0 → 0.0 (0.0–2.5) | 0.34 → 0.34 |
+| tail | all | 0.2 → 0.2 (0.1–0.6) | 0.0 → 0.0 (0.0–0.2) | 0.5 → 0.5 (0.1–2.6) | 0.0 → 0.0 (0.0–0.3) | 0.5 → 0.5 |
+| tail | ground | 0.6 → 0.6 (0.3–1.3) | 0.0 → 0.0 (0.0–0.4) | 1.4 → 1.4 (0.5–4.1) | 0.0 → 0.0 (0.0–0.7) | 0.48 → 0.48 |
+| beaconTop | all | 0.1 → 0.1 (0.0–0.3) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–0.7) | 0.0 → 0.0 (0.0–0.5) | 0.29 → 0.29 |
+| beaconTop | ground | 0.1 → 0.1 (0.0–0.6) | 0.0 → 0.0 (0.0–0.4) | 0.7 → 0.7 (0.1–3.6) | 0.0 → 0.0 (0.0–1.4) | 0.29 → 0.29 |
+| beaconBot | all | 0.3 → 0.3 (0.2–0.7) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–0.4) | 0.4 → 0.4 (0.2–1.0) | 0.37 → 0.37 |
+| beaconBot | ground | 1.2 → 1.2 (0.7–2.1) | 0.1 → 0.1 (0.0–0.6) | 1.2 → 1.2 (0.5–3.1) | 0.7 → 0.7 (0.3–1.7) | 0.51 → 0.51 |
+| strobeL | all | 0.7 → 0.7 (0.4–1.2) | 0.3 → 0.3 (0.2–0.7) | 1.4 → 1.4 (0.6–2.9) | 0.7 → 0.7 (0.3–1.3) | 0.78 → 0.78 |
+| strobeL | ground | 1.8 → 1.8 (1.1–2.8) | 0.5 → 0.5 (0.2–1.2) | 1.5 → 1.5 (0.7–3.3) | 1.9 → 1.9 (1.0–3.5) | 0.74 → 0.74 |
+| strobeR | all | 0.7 → 0.7 (0.4–1.2) | 0.1 → 0.1 (0.0–0.3) | 0.9 → 0.9 (0.4–2.4) | 0.7 → 0.7 (0.3–1.3) | 0.52 → 0.52 |
+| strobeR | ground | 1.4 → 1.4 (0.8–2.3) | 0.3 → 0.3 (0.1–0.9) | 1.2 → 1.2 (0.5–2.8) | 1.7 → 1.7 (0.9–3.3) | 0.76 → 0.76 |
+| landL | all | 1.0 → 1.0 (0.6–1.5) | 0.1 → 0.1 (0.0–0.3) | 0.5 → 0.5 (0.2–1.2) | 1.1 → 1.1 (0.6–2.0) | 0.69 → 0.69 |
+| landL | ground | 3.8 → 3.8 (2.8–5.2) | 1.2 → 1.2 (0.7–2.1) | 2.1 → 2.1 (1.1–4.1) | 4.1 → 4.1 (2.8–6.1) | 0.78 → 0.78 |
+| landR | all | 1.2 → 1.2 (0.8–1.8) | 0.3 → 0.3 (0.1–0.7) | 0.6 → 0.6 (0.3–1.3) | 1.4 → 1.4 (0.9–2.4) | 0.7 → 0.7 |
+| landR | ground | 2.9 → 2.9 (2.0–4.1) | 0.8 → 0.8 (0.4–1.6) | 2.2 → 2.2 (1.2–4.1) | 2.4 → 2.4 (1.4–4.0) | 0.78 → 0.78 |
+| taxi | all | 0.3 → 0.3 (0.1–0.7) | 0.0 → 0.0 (0.0–0.2) | 0.5 → 0.5 (0.2–1.4) | 0.1 → 0.1 (0.0–0.5) | 0.4 → 0.4 |
+| taxi | ground | 1.2 → 1.2 (0.7–2.1) | 0.2 → 0.2 (0.1–0.7) | 7.5 → 7.5 (3.8–14.1) | 0.3 → 0.3 (0.1–1.0) | 0.69 → 0.69 |
+
+| SF50 light | set | off > 0.25 % | off > 0.5 % | hidden drawn > 0.25 % (of hidden) | seen ≥ 0.5 drawn > 0.25 below % | largest error |
+|---|---|---|---|---|---|---|
+| navL | all | 1.4 → 1.4 (0.9–2.0) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–1.0) | 2.0 → 2.0 (1.3–3.0) | 0.39 → 0.39 |
+| navL | ground | 0.5 → 0.5 (0.2–1.2) | 0.0 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–0.9) | 0.0 → 0.0 (0.0–0.9) | 0.3 → 0.3 |
+| navR | all | 0.9 → 0.9 (0.6–1.5) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–1.0) | 1.0 → 1.0 (0.6–1.8) | 0.41 → 0.41 |
+| navR | ground | 0.2 → 0.2 (0.1–0.7) | 0.0 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–0.9) | 0.0 → 0.0 (0.0–0.9) | 0.27 → 0.27 |
+| tail | all | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–1.0) | 0.0 → 0.0 (0.0–0.7) | 0.2 → 0.2 |
+| tail | ground | 0.0 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–1.2) | 0.0 → 0.0 (0.0–1.1) | 0.16 → 0.16 |
+| strobeL | all | 1.4 → 1.4 (1.0–2.1) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–0.8) | 0.1 → 0.1 (0.0–0.7) | 0.34 → 0.34 |
+| strobeL | ground | 6.6 → 6.6 (5.2–8.3) | 0.0 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–1.3) | 0.5 → 0.5 (0.1–1.6) | 0.36 → 0.36 |
+| strobeR | all | 2.0 → 2.0 (1.5–2.7) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–0.8) | 0.7 → 0.7 (0.3–1.6) | 0.4 → 0.4 |
+| strobeR | ground | 6.5 → 6.5 (5.1–8.2) | 0.0 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–1.5) | 0.4 → 0.4 (0.1–1.5) | 0.4 → 0.4 |
+| strobeTail | all | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–1.0) | 0.0 → 0.0 (0.0–0.7) | 0.2 → 0.2 |
+| strobeTail | ground | 0.0 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–1.2) | 0.0 → 0.0 (0.0–1.1) | 0.16 → 0.16 |
+| landL | all | 0.6 → 0.1 (0.0–0.4) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–1.2) | 0.1 → 0.1 (0.0–0.5) | 0.39 → 0.31 |
+| landL | ground | 0.7 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–1.0) | 0.0 → 0.0 (0.0–0.9) | 0.39 → 0.2 |
+| landR | all | 0.5 → 0.1 (0.1–0.4) | 0.0 → 0.0 (0.0–0.2) | 0.0 → 0.0 (0.0–1.1) | 0.3 → 0.3 (0.1–0.8) | 0.39 → 0.27 |
+| landR | ground | 0.6 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–0.4) | 0.0 → 0.0 (0.0–0.9) | 0.0 → 0.0 (0.0–0.8) | 0.44 → 0.23 |
+| taxi | all | 20.9 → 0.0 (0.0–0.2) | 9.6 → 0.0 (0.0–0.2) | 17.9 → 0.0 (0.0–0.4) | 15.4 → 0.0 (0.0–0.7) | 0.96 → 0.21 |
+| taxi | ground | 32.6 → 0.0 (0.0–0.4) | 17.7 → 0.0 (0.0–0.4) | 36.2 → 0.0 (0.0–1.9) | 11.8 → 0.0 (0.0–1.6) | 0.95 → 0.16 |
+
+**F4: the external-occluder blind window and the fallback.** A sub-pixel lamp (w = 1) is hidden by another object (another
+aircraft, a building) only through the external-occluder taps, which count a depth sample as another object's when it lies more
+than reach + `LENS_XM` (0.3 m) in front of the lamp. Anything nearer the lamp than that - the window [0, reach + 0.3 m] - does not
+hide it; beyond 3 m in front of the lamp the sprite's depth pull (3 m) hides the disc anyway. Per light, the share of the seen
+directions (table ≥ 0.25) whose window is 3 m or more (no protection 0–3 m in front of the lamp) and the median / 90th percentile
+window (`tools/reach_stats.mjs` = the recheck's, on this tree's flaps-0 tables; 4,000 uniform / 2,000 ground-band directions,
+`cpu/reach_stats_final.txt`; round 2's (`out/od4_rc6_2/cpu/reach_stats.txt`) are the same within 0.4 points - the gear-up and
+in-transit gear add to the reach only near the wells, the deployed flaps only in a lamp's flap tables - except the SF50 taxi light,
+whose seen directions are now the drawn pose's (1,590 instead of 1,888: the open doors hide it from the others) and whose
+window grew with the doors in front of it: 0.3 / 1.2 % → 1.5 / 2.8 %):
+
+| light | whole sphere: seen directions, median / 90th-percentile window (m), window >= 3 m | ground band (el within ±15°): the same |
+|---|---|---|
+| PC12 navL | 1,996, 0.90 / 1.70, **5.9 %** | 922, 0.61 / 9.50, **17.1 %** |
+| PC12 navR | 1,995, 0.86 / 1.70, **4.4 %** | 927, 0.60 / 9.23, **15.7 %** |
+| PC12 tail | 3,030, 1.16 / 3.00, **10.5 %** | 1,295, 1.35 / 3.10, **30.3 %** |
+| PC12 beaconTop | 2,220, 0.96 / 3.27, **11.4 %** | 1,345, 1.50 / 10.08, **33.5 %** |
+| PC12 beaconBot | 2,193, 1.63 / 4.26, **26.9 %** | 1,353, 3.30 / 6.16, **59.9 %** |
+| PC12 strobeL | 2,485, 0.90 / 2.22, **7.8 %** | 1,058, 0.91 / 10.43, **27.4 %** |
+| PC12 strobeR | 2,453, 0.90 / 2.09, **6.6 %** | 1,050, 0.85 / 10.16, **23.3 %** |
+| PC12 landL | 2,048, 1.68 / 4.98, **16.8 %** | 1,243, 2.65 / 6.33, **43.8 %** |
+| PC12 landR | 2,055, 1.70 / 5.04, **17.4 %** | 1,232, 2.60 / 6.13, **41.9 %** |
+| PC12 taxi | 2,495, 1.40 / 4.90, **15.8 %** | 1,694, 2.01 / 7.80, **36.2 %** |
+| SF50 navL | 2,457, 0.70 / 1.20, **0.0 %** | 972, 0.70 / 1.21, **0.0 %** |
+| SF50 navR | 2,524, 0.71 / 1.23, **0.0 %** | 1,017, 0.70 / 1.25, **0.0 %** |
+| SF50 tail | 1,824, 0.85 / 1.46, **2.4 %** | 932, 0.70 / 1.23, **0.0 %** |
+| SF50 strobeL | 1,943, 0.74 / 1.30, **0.0 %** | 970, 0.70 / 1.34, **0.0 %** |
+| SF50 strobeR | 1,981, 0.70 / 1.30, **0.0 %** | 1,053, 0.70 / 1.30, **0.0 %** |
+| SF50 strobeTail | 1,824, 0.85 / 1.46, **2.4 %** | 932, 0.70 / 1.23, **0.0 %** |
+| SF50 landL | 2,615, 0.80 / 1.26, **1.6 %** | 999, 0.72 / 1.45, **6.7 %** |
+| SF50 landR | 2,663, 0.80 / 1.30, **1.6 %** | 1,009, 0.70 / 1.43, **6.3 %** |
+| SF50 taxi | 1,590, 1.10 / 1.51, **1.5 %** | 845, 1.30 / 1.69, **2.8 %** |
+
+The window is wide where the aircraft itself runs along the line of sight - the PC-12 belly beacon and landing lights seen from
+low abeam / ahead (the wing, the belly fairing and the nose leg within 0.5 m of the sight line, metres in front of the lamp), the
+tip lamps along the wing (90th percentiles of ~10 m) - and narrow on the SF50 (median 0.7–1.3 m). A second aircraft parked within
+that distance of such a lamp, in that line, does not hide it while the lamp is under ~1.5 pixels; a resolved lamp's depth test (w <
+1) sees it. **Fallback to the bounding sphere**: a sub-pixel lamp's taps lie `LENS_QMIN` = 0.5 pixels apart, so a tap's texel lies
+off = (tap offset + `LENS_TXL`) pixels from the line of sight - 1.414 pixels for a corner tap, 1.207 pixels for an edge tap, 0.707 pixels for the
+centre - and the reach is replaced by the sphere over off = 0.8 … 1 × `LENS_RHO` (0.4 … 0.5 m). With fp = d × 2 tan(fov / 2) /
+lines, a tap starts to fall back at d = 0.4 m × lines / (2 tan(fov / 2) × off) and has fully fallen back at 0.5 m × …:
+
+| canvas | corner taps (4 of 9) start / complete | edge taps (4) | centre tap |
+|---|---|---|---|
+| fov 45°, 1080 lines (the follow camera) | 369 / 461 m | 432 / 540 m | 737 / 922 m |
+| fov 40°, 1080 lines (the videos' typical) | 420 / 525 m | 492 / 614 m | 839 / 1,049 m |
+| fov 30°, 1080 lines | 570 / 712 m | 668 / 835 m | 1,140 / 1,425 m |
+| fov 55°, 720 lines (a laptop canvas) | 196 / 244 m | 229 / 286 m | 391 / 489 m |
+
+(15.11 said "beyond ~460 m"; that is where the corner taps have fully fallen back at fov 45° / 1080, not where they start.)
+Beyond the start, an object inside the aircraft's bounding sphere (11.6 m PC-12, 8.2 m SF50) and in front of the lamp does not
+count at that tap.
+
+**GPU** (the recheck's tools, `out/od4_it6r3/gpu/`, every job's `cmp.json` against the CPU replica of this tree; page errors 0):
+`sf50taxi` 18 + `sf50taxi_final` 6 values, `near3_SF50` 16, `posed_PC12` 12, `f3_PC12` 8: the GPU equals the CPU replica in
+every value (max |GPU − CPU| 0.000). The four documented worst F3 directions (`jobs_f3_PC12.json`, unchanged by this round's
+tables) read strobeL 0.993–0.994, beaconBot 0.872–0.875, landL 0.956, taxi 0.797 against a truth of 0 - the documented 0.99 / 0.88 / 0.95 / 0.80, unchanged: the PC-12's flaps-0 / gear-down tables are round 2's. The temporal sequences are above (F1, F2).
+
+**Tests**: `node tools/models/test_models.mjs` → **123 PASS, 13 KNOWN, 0 FAIL**, 4 INFO (`out/od4_it6r3/test_models_run3.txt`;
+round 2: 112 PASS). The recheck's suggestion is in: the independent ray cast of the table check is of the **drawn** default pose
+(`Kinematics.pose({gear: 1})`, mean |table − ray cast| PC-12 0.022, SF50 0.058) - it would have caught both this round's F1 and
+round 2's F1. New: the gear-up tables against a ray cast of `pose({gear: 0})` where the gear changes the table by more than 0.3
+(PC-12 24 directions: mean |error| 0.000; SF50: no such direction), the flaps-40 / 39 tables against a ray cast of that pose
+(PC-12 25 directions: mean 0.031, max 0.23 at a flap edge; SF50: none), the reach the shader reads in each of those poses an upper
+bound of the posed aircraft (PC-12 144 + 160, SF50 128 + 144 directions, all), the SF50 taxi light ≤ 0.1 at the recheck's three
+cameras (table 0.000, ray cast 0.000; round 2's table 0.87–0.92), the belly beacon's flap tables (above), the shader's F2 rule
+(`rm`, `w`, the bound, `LENS_BM` / `LENS_BLO`) and the flap wiring (scene.js iL5.z / w, `bandRun`, lampWorld, `lampFlapX`). The
+proposed patch `out/pc12_look_it4/test_models_it4_checks.patch` still does not apply (`git apply --check`) and is not needed: its
+checks have been in the file since 15.10 (as 15.11 found). **`python3 -I -B tools/check_airport.py`** → **RESULT: ALL HARD CHECKS
+PASSED** (`out/od4_it6r3/check_airport_final.txt`, after this section was written).
+
+**App** (`out/od4_it6r3/tools/app_smoke3.mjs` = round 2's smoke test with a longer wait; `app/`, looked at): the live app,
+snapshot mode, a local recorded pack (gitignored) at an instant when an SF50 taxis, night environment: `loadModel` computed the
+SF50's tables in the app (25.5–29 s on this machine at a load average of 10–15), and from the follow camera at 45 and 150 m the
+depth copy runs and the atlas holds the table of the light in view; 0 page errors. Found on the way: `DetailedAircraft.lightSprites`
+swallowed any exception and drew no light at all; it now warns once in the console (`js/aircraft/detailed.js`).
+
+**Docs stills**: the four stills with aircraft lights on (`pc12_chase`, `viewer_sf50_chase`, `viewer_sf50_gear_half`,
+`viewer_sf50_lights_dusk`; the others draw no light sprite, and the tables change nothing else) re-rendered with this tree
+(`out/od4_it6r3/stills/`) and compared with the committed ones (`tools/docs_cmp8.py`): mean |difference| ≤ 0.004 sRGB levels, at most
+1 pixel off by more than 24 - unchanged, so `docs/phase3/` and its captions are unchanged this round (the dusk still looked at: its
+camera, low ahead-right, sees no taxi-light glow before or after).
+
+**Load cost** (Node, this machine, load average ~10): the tables take PC-12 8.2–9.0 s, SF50 9.9–12.0 s (round 2's code in the same
+conditions 7.2 / 8.4–9.2 s): per ray one more walk for the posed gear-up and one per flap state, on small BVHs (gear 13,560 / 32,864
+triangles, flaps 4,048 / 3,780). Memory: the flap tables add 32 KB each - PC-12 7 lamps × 2, SF50 1 × 2 = 512 KB; the atlas then
+holds 35 bands (19 + 16) when both types are drawn, more than its first allocation of 32 bands (2,048 rows), so it doubles to 4,096
+rows; on a device whose `MAX_TEXTURE_SIZE` is the WebGL2 minimum of 2,048 a table that does not fit is dropped (that sprite keeps
+the depth test alone, or its flaps-0 table) [not seen on any device here].
+
+**Files changed in this round**: `js/aircraft/glb.js` (`lampTables`: the drawn poses via kinematics.js, gear-up posed, flap tables,
+per-pose reach, the 1 m surface-behind rule `LAMPVIS.BACK`, `FLAPDIFF`; `lampFlapSettings`, `lampFlapX`, `lampVisState`;
+`reachSplat` keep option; header), `js/shaders/sprites.js` (`lampTable` + `flapMix`, the projected-ellipse r × T, the bound
+`LENS_BM` / `LENS_BLO`, header incl. F4's distances), `js/scene.js` (`LampVisAtlas.bandRun`, iL5.z / w), `js/aircraft/detailed.js`
+(`lampWorld` visF / flapX, the light-sprite warning), `tools/models/test_models.mjs` (the checks above), this file (sections 3, 8,
+15.10 / 15.11 annotations, 15.12). Not changed: `js/aircraft/kinematics.js` (`gearSequence` `doorDown` is right: the drawn pose is
+what the tables now follow), `js/aircraft/models.js`, `js/renderer.js`, `js/gl.js`, `dev/model*`, `docs/phase3/*`, the glb files,
+`js/live/**`, `js/video/**`.
+
+**Open / not verified (round 3)**: controls deflected and cabin doors open are still not tabulated (above ~1.5 pixels of seen lamp the
+depth test sees them; below, a lamp a deflected aileron or an open airstair door hides is drawn at its table value - bounded at
+near range by the table, not by the depth test); the PC-12 nose clamshells, open only in transit, are not in either gear table
+(gear-in-transit lamps are mixed from the down / up tables by the leg's travel); between two tabulated flap settings the shares
+are interpolated (PC-12 30° = 0.6 of the way from 15° to 40°) [inf]; the near-range bound trades jitter for the table's own error:
+at 5–20 m the PC-12 draws 6–29 hidden light-directions per range above 0.25 (steady; round 2 1–19) and a seen lamp can be drawn up
+to `LENS_BM` away from what its resolved depth test says; `LENS_BM` 0.15, `LENS_BLO` 0.5 and the r × T measure are inferred from the
+CPU exploration; the external-occluder blind window (F4) is unchanged and documented, not removed; the flap tables need the atlas to
+grow past 2,048 rows when both types are drawn; laptop GPU frame time still not measured. A video-determinism comparison spanning
+this round will see the SF50 taxi light behind its doors, the PC-12 belly beacon and landing lights behind the deployed flaps, and
+the steadier near-range lamps.

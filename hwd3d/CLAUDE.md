@@ -143,6 +143,10 @@ aircraft), follow / chase / free camera, and About / statistics / ATC bottom she
   (`docs/phase2_run.md` 14): the drawn bank follows a smoothed turn rate (`bank_rock_episodes` 0-25 per window, was 23-710),
   polyline air paths turn smoothly (`motion.js polyAtSmooth`), and a ground body whose moving target falls back to it at a mode
   hand-over runs on past its trail end instead of stopping dead (G5 is only partly fixed: `ground_decel_frames` still fails, 14.7).
+  Round 5 iteration 3 (`docs/phase2_run.md` 15): a moving ground body anticipates its target's stops and abrupt slow-downs
+  (`traffic.js groundAhead`; `ground_decel_frames` 0-196 -> 0-98 per window, partly fixed), forced climb-outs turn evenly, inferred routes
+  spread their spare time and never stop on a runway, reconstructed touch-and-goes read 'Touch-and-go', and holds A1 / Z1 are painted the
+  right way round; the fix-following wing rock and a stop at the start of a planned back-taxi turn remain (15.7).
 
   Integration notes: `docs/phase2_app.md`.
 - **Phase 3 — aircraft** (`docs/PLAN.md` §7): real GA models (C172, PA-28, SR22, C182, the PC-12 from `pc12/`, a bizjet

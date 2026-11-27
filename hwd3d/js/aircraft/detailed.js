@@ -29,6 +29,7 @@ import { m4 } from '../math.js';
 import { GaAircraft } from './placeholder.js';
 import { Kinematics, DEFAULT_STATE, xform, xdir, gearSequence } from './kinematics.js';
 import { aircraftSprites } from '../env/aircraft_lights.js';
+import { lampFlapX } from './glb.js';
 import '../shaders/common.js';   // shader chunks 'common', 'shadow' (side effect: defineChunk)
 import '../shaders/ground.js';   // shader chunks 'vout', 'fout' (camera-relative clip + the colour / aux outputs)
 
@@ -497,7 +498,9 @@ export class DetailedAircraft {
   // js/aircraft/models.js loadModel; its frame is the lamp shape's, a0 / a1 here), the gear-up share of the table
   // (kinematics gearSequence leg: 0 down .. 1 retracted) and the aircraft's bounding sphere in the world (the model's rest
   // bbox + LAMPVIS_BS_MARGIN for the posed movers: js/shaders/sprites.js counts only depth in front of it against a sub-pixel
-  // lamp, the aircraft itself being in the table)
+  // lamp, the aircraft itself being in the table). Round 3 (recheck F1 / F3, 15.12): the tables are of the drawn pose (gear
+  // down / up) and, for a lamp the flaps hide from somewhere, of each tabulated flap setting (o.visF; glb.js lampFlapX gives
+  // the position of the current flap angle in them)
   lampWorld(L) {
     const o = L.occ, P = this._pose, M = L.part >= 0 && P && P[L.part] ? m4.mul(this.model, P[L.part]) : this.model;
     const un = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
@@ -506,7 +509,8 @@ export class DetailedAircraft {
       this._bs = { c: m4.xform(this.model, [(b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2]), r: Math.hypot(b[3] - b[0], b[4] - b[1], b[5] - b[2]) / 2 + LAMPVIS_BS_MARGIN }; }
     return { c: m4.xform(M, o.c), a0: un(m4.xdir(M, o.ax[0])), a1: un(m4.xdir(M, o.ax[1])), h: o.h, shape: o.shape === 'box' ? 2 : 1, geom: o.geom ? 1 : 0,
       face: o.face ? { n: un(m4.xdir(M, o.face.n)), cos: o.face.cos } : null,
-      vis: o.vis || null, gearUp: o.vis ? gearSequence(this.gear).leg : 0, bs: this._bs };
+      vis: o.vis || null, gearUp: o.vis ? gearSequence(this.gear).leg : 0, bs: this._bs,
+      visF: o.vis && o.visF ? o.visF : null, flapX: o.vis && o.visF ? lampFlapX(o.visF.set, this.flaps) : 0 };   // round 3 (F3): the flap tables, the flap position in them
   }
   lightSprites(t) {
     if (!this.loaded) { const p = this.syncPlaceholder(); return p ? p.lightSprites(t) : []; }
@@ -540,7 +544,9 @@ export class DetailedAircraft {
       for (const sp of S) { let k = null; for (const kk in W) if (W[kk] && W[kk] === sp.p) { k = kk; break; }
         if (k && Lc[k] && Lc[k].occ) sp.occ = occ[k] || (occ[k] = this.lampWorld(Lc[k])); }
       return S;
-    } catch (e) { return []; }
+    } catch (e) {   // OD4 it. 6 round 3: no longer silent - a light failure drew no light at all, with nothing in the console
+      if (!this._lightErr) { this._lightErr = true; console.warn('detailed aircraft: light sprites failed:', e && e.message); }
+      return []; }
   }
   commit() { this.prevModel = this.model; const t = this._prev; this._prev = this._cur; this._cur = t; if (this.placeholder) this.placeholder.commit(); }
   dispose() { if (this.placeholder) this.placeholder.dispose(); }   // GPU meshes are shared per model (released with the page)

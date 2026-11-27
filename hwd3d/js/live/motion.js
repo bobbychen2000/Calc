@@ -168,14 +168,28 @@ export function profilePath(R, D, v0, v1, opt) {
       for (let it = 0; it < 30; it++) { const m = (lo + hi) / 2; if (run(m, -1).T > D) lo = m; else hi = m; }
       pr = run(hi, -1);
     } else {
+      // (round 5 iteration 3, G7) unless the path starts or ends at rest (a wait there, below), the spare time is spread over the whole path
+      // first: the cruise goes on down to opt.vSlow before a stop is put in - a stop at the slowest point of a route that crossed 28R put the
+      // landed PC-12 of case P to 0.6 kt at the far runway edge, then it accelerated again
+      let spread = null;
+      if (start >= 0.5 && end >= 0.5 && opt.vSlow > 0 && opt.vSlow < vTyp && run(opt.vSlow, -1).T >= D) {
+        let lo = opt.vSlow, hi = vTyp;
+        for (let it = 0; it < 30; it++) { const m = (lo + hi) / 2; if (run(m, -1).T > D) lo = m; else hi = m; }
+        spread = run(hi, -1); out.spread = hi;
+      }
+      if (spread) pr = spread;
+      else {
       // where to stop: at the start if v0 is (nearly) zero, at the end if v1 is, else at the slowest interior point
       let k;
       if (start < 0.5) k = 0;
       else if (end < 0.5) k = n - 1;
       // (F2: never inside a line-up section - the speed there only falls - but before it)
-      else { const iEnd = iM > 1 ? iM : n - 1; let bi = Math.floor(iEnd / 2), bv = 1e9; for (let i = 1; i < iEnd; i++) if (cap[i] < bv - 1e-6) { bv = cap[i]; bi = i; } k = bi; }
+      // (round 5 iteration 3, G7: and never where opt.stopOk says no - on a runway or between it and its holding position)
+      else { const iEnd = iM > 1 ? iM : n - 1; let bi = -1, bv = 1e9; for (let i = 1; i < iEnd; i++) if (cap[i] < bv - 1e-6 && (!opt.stopOk || opt.stopOk(S[i]))) { bv = cap[i]; bi = i; }
+        if (bi < 0) { bv = 1e9; bi = Math.floor(iEnd / 2); for (let i = 1; i < iEnd; i++) if (cap[i] < bv - 1e-6) { bv = cap[i]; bi = i; } } k = bi; }
       const pr2 = run(vTyp, k); const extra = Math.max(0, D - pr2.T); dwell[k] += extra; pr = run(vTyp, k);
       out.stop = { i: k, s: S[k], dur: extra };
+      }
     }
   }
   out.v = pr.v; out.tA = pr.tA; out.T = pr.T; out.scale = pr.T > 0 ? pr.T / D : 1;
@@ -289,7 +303,9 @@ export function straightHermite(p0, d0, s0, p1, d1, s1, D, e, fin = 0, n = 48) {
   // (round 5 iteration 2: atRaw - the direction of the polyline segment, as before polyAtSmooth; the plan validators' bank checks read it,
   // so a plan is chosen as it was)
   const atRaw = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAt(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
-  return { at, atRaw, len: R.len, k, kMax, gentle: true };
+  // (round 5 iteration 3, G3) atS(s): the point and smooth direction at arc length s (traffic.js retimePath re-times the path along it)
+  const atS = (s) => polyAtSmooth(R, s);
+  return { at, atRaw, atS, len: R.len, k, kMax, gentle: true };
 }
 export function turnFlight(p0, d0, s0, p1, d1, s1, D, r, opt = {}) {
   // opt.initial: m flown straight on the initial heading first (a climb-out before the first turn)
@@ -310,5 +326,6 @@ export function turnFlight(p0, d0, s0, p1, d1, s1, D, r, opt = {}) {
   const k = R.len / (D * Math.max(1e-3, (s0 + s1) / 2));
   const at = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAtSmooth(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
   const atRaw = (t) => { const tt = clamp(t, 0, D), v = k * (s0 + (s1 - s0) * tt / D), s = k * (s0 * tt + (s1 - s0) * tt * tt / (2 * D)); const p = polyAt(R, s); return { x: p.x, z: p.z, vx: p.ux * v, vz: p.uz * v, s, v }; };
-  return { at, atRaw, len: R.len, k, dubins: true };
+  const atS = (s) => polyAtSmooth(R, s);
+  return { at, atRaw, atS, len: R.len, k, dubins: true };
 }

@@ -19,6 +19,9 @@
 // keeps in one RGBA8 atlas texture (uLampVis: one band of NE rows per table, uploaded the first time a table is seen; the band
 // index and the gear-up share s.occ.gearUp go with the sprite). The scene still imports nothing from js/aircraft/**: the
 // tables arrive as data on the sprites.
+// OD4 iteration 6, round 3 (recheck F3, docs/phase3_models.md 15.12): a lamp whose seen share the flaps change also carries
+// its flap tables (s.occ.visF: one per tabulated setting, placed in consecutive bands, LampVisAtlas.bandRun) and the flap
+// position s.occ.flapX: iL5.z / iL5.w (the floats that were 0).
 // Dropped: parkAtGates (video era), the GateSystem / jet bridges, the procedural airliner programs ('aircraft', 'acr':
 // P3 registers its own programs), stDir (SFO airport grid).
 import { Mesh, gl, texture } from './gl.js';
@@ -35,15 +38,20 @@ const LAMPVIS_BANDS = 32;
 class LampVisAtlas {
   constructor() { this.tex = null; this.na = 0; this.ne = 0; this.cap = 0; this.bands = new Map(); this.list = []; }
   // band index of a table { NA, NE, data: Uint8Array RGBA }, -1 when it cannot be placed (a table of another size than the first)
-  band(vis) {
-    if (!vis || !vis.data) return -1;
-    const b = this.bands.get(vis); if (b !== undefined) return b;
-    if (!this.na) { this.na = vis.NA; this.ne = vis.NE; }
-    if (vis.NA !== this.na || vis.NE !== this.ne || vis.data.length !== vis.NA * vis.NE * 4) return -1;
-    const i = this.list.length;
-    if (i >= this.cap) { const cap = Math.max(LAMPVIS_BANDS, this.cap * 2); if (this.ne * cap > gl.getParameter(gl.MAX_TEXTURE_SIZE)) return -1;   // no room: the sprite keeps the depth test alone
-      this.list.push(vis); this.bands.set(vis, i); this.grow(cap); }
-    else { this.list.push(vis); this.bands.set(vis, i); this.upload(i); }
+  band(vis) { return vis ? this.bandRun([vis]) : -1; }
+  // OD4 iteration 6, round 3 (recheck F3): the first band of a run of tables placed in CONSECUTIVE bands (a lamp's flap
+  // tables: js/shaders/sprites.js lampTable reads band and band + 1), -1 when the run cannot be placed whole (the sprite then
+  // keeps its flaps-0 table)
+  bandRun(tabs) {
+    if (!tabs || !tabs.length || tabs.some(v => !v || !v.data)) return -1;
+    const b = this.bands.get(tabs[0]); if (b !== undefined) return b;
+    if (!this.na) { this.na = tabs[0].NA; this.ne = tabs[0].NE; }
+    if (tabs.some(v => v.NA !== this.na || v.NE !== this.ne || v.data.length !== v.NA * v.NE * 4)) return -1;
+    const i = this.list.length, n = tabs.length;
+    if (i + n > this.cap) { let cap = Math.max(LAMPVIS_BANDS, this.cap * 2); while (cap < i + n) cap *= 2;
+      if (this.ne * cap > gl.getParameter(gl.MAX_TEXTURE_SIZE)) return -1;   // no room: the sprite keeps the depth test alone
+      tabs.forEach((v, q) => { this.list.push(v); this.bands.set(v, i + q); }); this.grow(cap); }
+    else tabs.forEach((v, q) => { this.list.push(v); this.bands.set(v, i + q); this.upload(i + q); });
     return i;
   }
   grow(cap) {
@@ -102,8 +110,11 @@ export class Scene {
         // OD4 it. 6 (R1 / R2): iL4 = the aircraft's bounding sphere (world centre, radius; 0 = none), iL5 = (table band | -1,
         // gear-up share)
         const bs = L.bs; B[o + 32] = bs ? bs.c[0] : 0; B[o + 33] = bs ? bs.c[1] : 0; B[o + 34] = bs ? bs.c[2] : 0; B[o + 35] = bs ? bs.r : 0;
-        B[o + 36] = L.vis ? this.lampVis.band(L.vis) : -1; B[o + 37] = L.gearUp || 0; B[o + 38] = 0; B[o + 39] = 0; }
-      else { for (let k = 14; k < SPRITE_F; k++) B[o + k] = 0; B[o + 31] = -2; B[o + 36] = -1; }
+        B[o + 36] = L.vis ? this.lampVis.band(L.vis) : -1; B[o + 37] = L.gearUp || 0;
+        // round 3 (F3): iL5.z = the first band of the lamp's flap tables (-1: none), iL5.w = the flap position in them
+        // (js/aircraft/glb.js lampFlapX: 0 = flaps 0 .. 1 = the first tabulated setting .. 2 = the second)
+        B[o + 38] = L.vis && L.visF ? this.lampVis.bandRun(L.visF.tables) : -1; B[o + 39] = L.flapX || 0; }
+      else { for (let k = 14; k < SPRITE_F; k++) B[o + k] = 0; B[o + 31] = -2; B[o + 36] = -1; B[o + 38] = -1; }
       n++;
     };
     for (const d of this.drawables) { if (d.visible === false || !d.lightSprites) continue; const L = d.lightSprites(t); for (let i = 0; i < L.length; i++) put(L[i]); }

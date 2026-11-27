@@ -420,7 +420,7 @@ iteration-3 tree (local run of round 4 iteration 3):
 | P stopped at the end of the taxi-in | Stopped | **0** | 15 |
 
 (A snapshot opened at an instant draws the model at its flap target at once; in continuous play the PC-12's flaps are still retracting
-through the post-landing hold-short - 21° → 5° in video P, up from frame ~2185, `docs/phase3_video.md` 16 as corrected in round 5
+through the post-landing hold-short - 21° → 5° in video P, up (< 0.05°) from frame ~2166 *(round 5 iteration 3, 15.3 G9: this said ~2185)*, `docs/phase3_video.md` 16 as corrected in round 5
 iteration 2, G7.)
 
 The wheels touch the ground within -4.2 / +1.8 cm in every ground case; E8: no pose, label or card change in 90 frames at the frozen
@@ -457,3 +457,27 @@ exit): the wheel contacts read -2.3 / +2.1 cm both at the first read and after t
 at once). The recheck's job, run once more for three of the cases: its FIRST case of the session read -1,142 to -1,146 cm, the same case
 after the freeze +0.3 / -0.3 / -1.1 cm, its later cases correctly - the first loaded model's matrix is set by the first drawn frame. A probe
 artefact: the app draws frames continuously, and nothing drawn is affected.
+
+## 14. Fix round 5, iteration 3 (2026-11-27): ground hand-overs, bank, the hold marking, routes, roll labels (findings G2, G3, G6-G8)
+
+No app-shell file changed. What the app shows changed with the engine and the world paint (`docs/phase2_run.md` section 15):
+- **Ground hand-overs (G2).** A moving ground aircraft looks ahead along its target's path (0.3-8 s) and starts braking before its target
+  stops or slows abruptly (a hand-over from the fixes to a route that turns round, from a planned landing roll to the fixes, a Hermite that
+  stops between two fixes); it follows the target's path speed where the fixes' reported speed disagrees with their positions. The recheck's
+  probe of speed drops faster than 3.6 m/s² over 0.3 s finds 12 episodes in the seven windows where it found 46 (residuals:
+  `docs/phase2_run.md` 15.7).
+- **Bank (G3).** A forced take-off plan's climb-out turns evenly (the re-timed plan path is evaluated along its own arc; the body keeps the
+  lateral part of its acceleration first behind a plan): the forced climb-out that rocked 13 <-> 25° banks at 18-19°.
+- **The hold marking (G6).** The runway holding-position markings on the two taxiways that run parallel to 28L at its east end (A1, Z1) now
+  have their solid lines on the side away from the runway entry, as on every other hold: video S's SF50 at its hold faces the solid lines
+  (looked at in the app, snapshot mode, local).
+- **Routes (G7).** An inferred taxi route with spare time taxis slower over its whole length (down to 3.9 kt) before it stops, and never stops
+  on a runway or between a runway and its holding position: the landed PC-12 of video P crosses 28R and taxis on at ~8 kt.
+- **Roll labels (G8).** A reconstructed landing roll whose next fixes take off again reads 'Touch-and-go' from the touchdown to the lift-off,
+  never 'Take-off roll' -> 'Landing roll' -> 'Take-off roll'.
+
+App check (`livetest.mjs`, the app on the final tree, the local job of section 13 with a top-down view added, snapshot mode on the
+type-only video packs, 4 cases): video S's SF50 at its hold (Holding short, take-off flaps 15°) and video P's PC-12 at its post-landing
+hold-short, crossing 28R at 7.0 kt and taxiing in at 9.1 kt - wheel contacts -2.2 to +1.8 cm against `site.groundY`, the 90-frame freeze at
+the frozen clock changes neither pose nor card, the card type-only; the 16 images looked at (the hold marking as above; the PC-12 on the
+pavement, wheels on the ground, across the runway edge line at 7 kt). Local only (`out/`), not committed: they show recorded traffic.

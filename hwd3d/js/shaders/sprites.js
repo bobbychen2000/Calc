@@ -6,7 +6,9 @@
 // lamp's self-visibility table (js/aircraft/glb.js lampTables, uLampVis) x a test of the occluders outside the aircraft's
 // bounding sphere, instance attributes iL4 / iL5 at locations 13-14; round 2, recheck F2, section 15.11: other occluders are
 // depth more than the aircraft's reach (table channel A) in front of the lamp, the bounding sphere only beyond the reach's
-// radius). Dropped: nothing.
+// radius); round 3, recheck F1-F4, section 15.12: the tables are of the drawn pose (gear down / up) with per-flap-setting
+// tables (iL5.z / w), the near-range blend measures the SEEN part of the lamp (the projected ellipse's minor half-axis x the
+// table's share) and bounds the depth test toward the table). Dropped: nothing.
 // Additive light sprites (instanced billboards)
 export const SPRITE_VS = `
 #include <common>
@@ -83,15 +85,25 @@ const float LENS_TAP = 0.55, LENS_E0 = 0.002, LENS_KPX = 0.5, LENS_ZEPS = 1.8e-7
 // depth counts as another object's when it lies more than reach + LENS_XM in front of the plane through the lamp normal to
 // the line of sight (LENS_XM 0.3 m >= LAMPVIS.RMIN, the lamp housing left out of the reach, + posed movers near rest [inf]).
 // The reach holds for depth samples within LENS_RHO (= LAMPVIS.RHO, 0.5 m) of the line of sight: a tap's texel lies within
-// its offset + LENS_TXL px; a tap beyond (fov 45 deg / 1080 lines: beyond ~460 m) falls back to the bounding sphere.
+// its offset + LENS_TXL px; a tap beyond falls back to the bounding sphere, blended over off = 0.8..1 x LENS_RHO. Round 3
+// (recheck F4) corrected the distances: a sub-pixel lamp's taps lie LENS_QMIN px apart, so off = (sqrt 2 x 0.5 + 0.7072) fp =
+// 1.414 fp for a corner tap, 1.207 fp for an edge tap, 0.707 fp for the centre (fp = the pixel footprint, d x 2 tan(fov / 2)
+// / lines): the corner taps start to fall back at fp > 0.283 m and are fully on the sphere at fp >= 0.354 m, i.e. from d =
+// 0.283 m x lines / (2 tan(fov / 2)) - fov 45 deg / 1080 lines 369 m (complete 461 m; edge taps 432 / 540 m, centre 737 / 922
+// m), fov 30 deg / 1080 570 / 712 m, fov 55 deg / 720 lines 196 / 244 m (docs/phase3_models.md 15.12).
 // Limit: an occluder that lies within reach + LENS_XM in front of the lamp is still not seen while the lamp is sub-pixel (the
 // reach is a conservative bound: 0.3-0.5 m beyond the aircraft's true reach in most directions, metres where the aircraft
-// itself runs along the line of sight - the PC-12 taxi light from ahead, 2.7 m; docs/phase3_models.md 15.11).
+// itself runs along the line of sight - the PC-12 taxi light from ahead, 2.7 m; docs/phase3_models.md 15.11). Round 3: the
+// blind window [0, reach + LENS_XM] is 3 m or more (no protection by the window nor by the 3 m depth pull) in 16-60 % of the
+// PC-12's seen ground-band directions per light (belly beacon the most), <= 7 % on the SF50 - per light in 15.12. Telling
+// the aircraft's own pixels apart (an id in the depth copy) would remove the window; not done: the near pass is MSAA, and
+// its resolve averages an id across a silhouette's samples, exactly where a sub-pixel lamp's taps fall.
 layout(location=13) in vec4 iL4; layout(location=14) in vec4 iL5;
 uniform sampler2D uLampVis; uniform float uLampVisNE;
 const float LENS_R1 = 1.5, LENS_R2 = 3.0, LENS_G0 = 0.04, LENS_G1 = 0.2, LENS_QMIN = 0.5;
 const float LENS_N0 = 0.25, LENS_N1 = 0.5, LENS_TF = 0.5;
 const float LENS_XM = 0.3, LENS_RHO = 0.5, LENS_TXL = 0.7072;
+const float LENS_BM = 0.15, LENS_BLO = 0.5;
 vec3 nz3(vec3 v){ return vec3(v.x >= 0.0 ? max(v.x, 1e-6) : min(v.x, -1e-6), v.y >= 0.0 ? max(v.y, 1e-6) : min(v.y, -1e-6), v.z >= 0.0 ? max(v.z, 1e-6) : min(v.z, -1e-6)); }
 // ray (origin os, direction ds, both in the shape's frame) vs the shape of half extents h -> (t0, t1); t0 > t1 = miss
 vec2 lampHit(vec3 os, vec3 ds, vec3 h, float box){
@@ -106,11 +118,20 @@ vec2 lampHit(vec3 os, vec3 ds, vec3 h, float box){
 // first / last row centre, so the bilinear filter never reads the next band); R = gear down, G = gear up, B = the farthest
 // occluder of the direction (x 25.5 m), A = the aircraft's reach in front of the lamp (x 25.5 m) -> (seen share, farthest
 // occluder in m, reach in m)
-vec3 lampTable(vec3 dl, float band, float gearUp){
+// round 3 (F3): a lamp the flaps hide from somewhere has its flap tables in bands fband, fband + 1 (the tabulated settings,
+// js/aircraft/glb.js lampFlapSettings), fx = the flap position (0 = flaps 0, 1 = the first setting, 2 = the second): the
+// shares and the farthest occluder piecewise linear in fx, the reach the larger of the two tables' (each is a bound for its
+// own setting; a flap between two settings is covered by both)
+vec4 flapMix(vec4 a, vec4 b, float x){ return vec4(mix(a.rgb, b.rgb, x), max(a.a, b.a)); }
+vec3 lampTable(vec3 dl, float band, float gearUp, float fband, float fx){
   float NE = uLampVisNE, H = float(textureSize(uLampVis, 0).y);
   float u = atan(dl.z, dl.x) * 0.15915494309;
   float y = clamp((asin(clamp(dl.y, -1.0, 1.0)) * 0.31830988618 + 0.5) * NE, 0.5, NE - 0.5);
   vec4 t = textureLod(uLampVis, vec2(u, (band * NE + y) / H), 0.0);
+  if (fband > -0.5 && fx > 0.0) {
+    vec4 t1 = textureLod(uLampVis, vec2(u, (fband * NE + y) / H), 0.0);
+    t = fx <= 1.0 ? flapMix(t, t1, fx) : flapMix(t1, textureLod(uLampVis, vec2(u, ((fband + 1.0) * NE + y) / H), 0.0), min(fx - 1.0, 1.0));
+  }
   return vec3(mix(t.r, t.g, gearUp), t.b * 25.5, t.a * 25.5);
 }
 float lensVisible(vec3 p){
@@ -128,9 +149,16 @@ float lensVisible(vec3 p){
   float fp = dc * uFovScale;                                 // pixel footprint at the lamp (m)
   // iteration 6: the share of the self-visibility table (sub-pixel lamps) and its veto g
   bool tab = rec && iL5.x > -0.5;
-  vec3 tt = tab ? lampTable(At * (toC / dc), iL5.x, iL5.y) : vec3(1.0, 0.0, 0.0);
+  vec3 tt = tab ? lampTable(At * (toC / dc), iL5.x, iL5.y, iL5.z, iL5.w) : vec3(1.0, 0.0, 0.0);
   float T = tt.x, qn = tab ? smoothstep(tt.y, tt.y + LENS_TF, dc) : 0.0;   // qn < 1: the camera is nearer than an occluder
-  float w = qn * (1.0 - smoothstep(LENS_R1, LENS_R2, min(length(h * pr), length(h * pu)) / fp));
+  // round 3 (recheck F2): r = the minor half-axis of the projected ellipse of the lamp's ellipsoid (sqrt of the smaller
+  // eigenvalue of sum h_i^2 p_i p_i^T, p_i = (a_i . R, a_i . U)) - round 2's smaller support along the screen x / y axes
+  // over-stated a thin tilted patch (the SF50 strobe, 131 x 20 x 10 mm: 3.8-4.7 px for a 0.7-0.9 px sliver) - times the
+  // table's seen share T: the width of the SEEN part of the lamp in the worst case (a sliver along its long axis), so a lamp
+  // whose seen part the depth buffer cannot resolve is the table's
+  vec3 h2 = h * h; float ea = dot(h2, pr * pr), eb = dot(h2, pr * pu), ec = dot(h2, pu * pu);
+  float rm = sqrt(max(0.5 * (ea + ec) - sqrt(0.25 * (ea - ec) * (ea - ec) + eb * eb), 0.0));
+  float w = qn * (1.0 - smoothstep(LENS_R1, LENS_R2, rm * T / fp));
   float g = mix(1.0, smoothstep(LENS_G0, LENS_G1, T), qn);
   float e = LENS_E0 + LENS_KPX * fp;
   vec4 beta = uViewProj * vec4(0.0, 0.0, 0.0, 1.0); vec3 os = At * (uCamPos - c);
@@ -183,7 +211,12 @@ float lensVisible(vec3 p){
     }
     vx = den > 0.0 ? num / den : 1.0;
   }
-  return mix(max(v5, vt * vx * smoothstep(LENS_N0, LENS_N1, T) * qn), vt * vx, w);
+  // round 3 (recheck F2): where the table holds (qn), the depth test is bounded toward the table's value tq = T g vExt:
+  // never below max(tq n(T), tq - LENS_BM, tq LENS_BLO) (round 2's floor tq n(T), now also for a partly seen lamp: never to
+  // off), never above tq + LENS_BM - v5's 3 x 3 taps straddle a lamp's own rim and read 0 or 1 by sub-pixel position
+  float tq = vt * vx;
+  float lo = max(max(tq * smoothstep(LENS_N0, LENS_N1, T), tq - LENS_BM), tq * LENS_BLO), hi = min(1.0, tq + LENS_BM);
+  return mix(mix(v5, clamp(v5, lo, hi), qn), tq, w);
 }
 void main(){
   vec3 p = iM0.xyz; float size = iM0.w;
