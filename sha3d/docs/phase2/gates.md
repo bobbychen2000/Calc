@@ -838,3 +838,286 @@ Evidence: `fix3_gates_fly_day.png`, `fix3_gates_night_238A.png`, `fix3_gates_v4_
 4. Handoff (buildings, `js/live/terminals.js`): its `pavement(api)` hook is now also called by `gates.js vectorPavement`
    (a recording api: `fill` / `line`, `rect` null, `res` 1). It only reads the data and sets `fillInfo` to the same values,
    so nothing needs to change; keep it free of call-count side effects.
+
+## Fix round 4 (2026-11-27)
+
+Answers `docs/phase2/review_visual_fix3.md` **F1** (medium: a 30 m mast is the largest foreground object of the app's Tower
+view), **F3** (low: masts at 45-80 m that frame the subject of a "Fly to stand" view), **F4** (low: a mast plate on a painted
+envelope line) and **F7** (low: ~1.4 s of main-thread start-up). This round owned all of gates, markings and buildings
+(`markings.md` and `buildings.md` have F2 / F5 and F6); the regression checks for the whole round are at the end of this
+section. Files changed: `js/live/gate_system.js` (Tower view cameras, near field 55 m, envelope clearance, finer gap fill,
+dry pass, inputs hash and stored placement), `js/live/gates.js` (tower anchor, `data/sha_masts.json` prefetch, pavement
+signature, `SHA.qa.mastsLive`, legend), `js/live/shell.js` (comment), `jobs/gates.mjs` (Tower view, middle distance, envelope
+and cache checks; sets `fix4`, `masts`), new `data/sha_masts.json` / `.js`. "Before" is HEAD (96aafa9), run in an exported
+copy of the tree (`out/fix4/beforeroot/`) with the new job, so both sides use the same checks; renders in `out/fix4/`
+(gitignored), SOFTGL llvmpipe, 1280 x 720, deviceScaleFactor 1, high tier unless noted; I looked at all of them.
+
+### What changed
+
+1. **Tower view cameras in the placement (F1)**. `towerViewCams(anchors.tower, runways)` rebuilds the app's Tower view
+   (`app.js view('tower')`, same formulas: eye 0.5 m inside the cab glass at `eyeY`, facing the 18L/36R midpoint, `cabYaw`)
+   in both framings: landscape (vertical 46 deg, pitch from `terraceHalf / terraceY` = -7.0 deg, 16:9) and portrait (pitch
+   -11 deg; one frame holding every phone of aspect 0.46-0.66: half width tan 20 deg, half height 36 deg). Both are kept clear
+   like a contact stand's side +1: no mast in their near field (`TOWER_CAM.nearDepth` **90 m**: head or pole above 10 m in
+   the frame closer than 90 m, or the pole within 25 m of the eye) and none in their subject / centre band (the view target,
+   +-8 deg in front of it). The review asked for about 70 m: with 70 m the gap fill re-placed mast "115" at 79 m, still the
+   largest object in the laptop frame (45 px, lower left); with 90 m it lands out of both frames and also covers 121. All inf.
+   `standCamNear` / `standCamPos` take the frame (`W.tanX / tanY`) and near depth per camera for this.
+2. **Near field 45 -> 55 m (F3)**. `STAND_CAM.nearDepth` 55 m for every stand camera (both sides; the shell's "Fly to stand"
+   side choice uses the same function, so placement and UI agree): past 45 m the 4.2 m head was still 60-72 px at
+   1280 x 720; at 55 m a head in the frame is at most ~59 px. The review's alternative (a pole nearer than 60 m keeping
+   2 x subjDeg from the subject hull) was implemented and tried with it: at 55 m it rejected nothing more (same mast hash), so
+   it was removed again. Alone (with 45 m) it gave 57 masts, 4 uncovered and still 5 heads >= 60 px. inf.
+3. **Gap fill grid** (coverage after 1 and 2): `MAST_GAP_GRID` radii 18-114 m by 6 m, every 7.5 deg (was 24-108 m by 12 m,
+   every 15 deg). With the old grid the 55 m rule left 269 uncovered (56 masts). inf.
+4. **Envelope clearance (F4)**: `MAST_ENV_CLEAR` 2 m - a candidate is rejected when its base plate is within 2 m of a painted
+   envelope line (`SHA.markings.apron().envelopes`, the safety line), i.e. its foot within 3.13 m, in the main pass and the gap
+   fill (rejection 'envelope clearance'). inf.
+5. **Stored placement (F7)**. The placement is deterministic and tier-independent, so it is stored: `jobs/gates.mjs SET=masts`
+   loads the page with `?masts=live`, takes the page's own live pass and writes `data/sha_masts.json` / `.js` (`inputs`,
+   `hash`, `masts`, `uncovered`, `stats` without times). The page (`gates.js`) fetches the JSON in `buildWorld` (so `start()`
+   finds it resolved: awaiting a fetch in `start()` let the render loop draw one more llvmpipe frame first, 1-3 s) and
+   `placeMasts({cache})` uses it only when `cache.inputs` equals the FNV-1a hash of this page's inputs: the source text of the
+   placement code (`placeMasts`, `camSubject`, the camera tests, `towerViewCams`, the footprint / building helpers), its
+   constants and rules, and every derived input (stands, footprints, lead-in sweeps, bridge parts and docking sweeps, posts,
+   building outlines, lanes, runways, envelopes, equipment areas, the pavement signature `vectorPavement().sig`, the stand
+   and Tower cameras). Otherwise (or with `?masts=live`) the live pass runs and the page logs (console.log, not a warning)
+   that the file is stale and how to rebuild it. `stats.source` says 'cache' / 'live'; `SHA.qa.mastsLive(rules)` runs a dry
+   live pass (places nothing). Deferring the pass after the first frame was the alternative; it was not chosen because every
+   consumer (light map, legend, shell, jobs) reads the list right after `__shaReady`.
+6. Legend: "... kept out of the "Fly to stand" views and the Tower view's foreground ...".
+7. `jobs/gates.mjs`: the fix3 checks now also print and require (a) no mast in the near field (90 m) of the app's real Tower
+   camera (`SHA.qa.view('tower')`, read from `SHA.rig.camera()`, independent of `towerViewCams`) at the job viewport and at the
+   iPhone 15 portrait viewport 393 x 659, (b) no foot within 3.13 m of an envelope line, (c) the page used the stored list and
+   it equals a dry live pass; they print the heads >= 40 px at >= 45 m on the side "Fly to stand" takes (F3). `SET=fix4`
+   renders the views below; `SET=masts` writes the stored placement.
+
+### Result (`jobs/gates.mjs SET='fix3;fix3low' CHECK_ONLY=1`; `out/fix4/before/check.log`, `out/fix4/gates/check2.log`)
+
+| | before (HEAD) | after |
+|---|---|---|
+| masts (high / low), hash | 58 / 58, `edc568b` | **58 / 58**, `84264519`, identical lists (tiers SAME) |
+| stands with no mast within 120 m | 3 (310, 121, 126) | **2** (310, 126) |
+| Tower view, laptop 1280 x 720: masts in the 90 m near field; largest head | 1 ("115", depth 52 m); 65 px | **0**; 3 px (1.3 km) |
+| Tower view, phone 393 x 659: same | 1 ("115"); 41 px | **0**; 2 px (1.4 km) |
+| feet within 3.13 m of a painted envelope line (F4) | 3 (289 1.18 m, 328 2.25 m, 268 2.96 m) | **0** (nearest 3.35 m, "112") |
+| "Fly to stand" (side taken): stands with a head >= 60 px at >= 45 m | 8 (contact 6: 115, 224, 229, 260, 261, 274; remote 307, 317) | **0** |
+| same, head >= 40 px (40-72 px band) | 74 (contact 18) | 66 (contact 13; largest 54 px at 259) |
+| contact-stand cameras with a near-field mast (sampled / app / review 60 px test) | 0 / 0 / 0 (at 45 m) | 0 / 0 / 0 (at 55 m) |
+| feet within 2 m of an equipment area; plates + 1 m off pavement | 0; 0 | 0 (nearest 3.17 m); 0 |
+| "Fly to stand" side -1 (contact) | 42 (0) | 44 (0) |
+| placement on the page (llvmpipe) | 1.08-1.20 s | **24-58 ms** (stored; prep 6-7 ms + hash 13-17 ms); the live pass of the new rules 1.9-2.5 s |
+| page source | live | `cache`, inputs `904af9ec` equal on high and low; equal to a dry live pass |
+
+By area unchanged (T2 apron 2: 22, east apron 11, east remote 8, west remote 6, south-west 4, T1 north 3, business 3, T1
+west 1); by placement: ahead of a stand front 25, between stand noses 11, rotunda line 7, gap fill 15 (was 27 / 10 / 13 / 8).
+The T1 west face mast "115" moved from the rotunda line (440.5, 124.6) to (399.2, 186.2) by the gap fill, behind the 115 /
+120 tails, out of both Tower frames; it now also covers 121. Rejections include 'tower view near field' 4 and 'envelope
+clearance' 451. Rule variants tried (dry passes, `out/fix4/exp.mjs`): subject band 8 deg / 60 m with 45 m: 57 masts / 4
+uncovered / 5 heads >= 60 px; 55 m, old grid: 56 / 4 / 0; 50 m: 57 / 4 / 1; 55 m + new grid, tower 70 m: 58 / 3 / 0
+(the "115" mast at 79 m in the laptop frame); tower 90 m or 110 m: 58 / 2 / 0 (chosen: 90 m). With every new rule off, the
+refactored pass reproduces the HEAD hash `edc568b`.
+
+**Start-up (F7)** (`out/fix4/f7probe.mjs`; time from navigation to `__shaReady`, llvmpipe, other agents loading the 4 CPUs,
+load 3-5): HEAD 10.9-12.8 s with a 1.08-1.20 s placement; interleaved loads of this round: stored list 8.9-11.5 s (placement
+33-47 ms) against `?masts=live` 12.0-13.1 s (placement 1.9-2.1 s). The light map's pool pass (markings, on the first frame
+after the masts) is unchanged at 0.20-0.36 s. So the ~1.4 s is now ~0.25 s; the remaining part is the pool pass.
+
+### Renders (looked at; `fix4_gates_tower_envelope.png`, `fix4_gates_fly_middle.png`)
+
+- **Tower view** (`view_towercab`, `view_phone_towercab`, `out/fix4/gates/a_fix4_towercab.png`): the "115" mast is gone from
+  both framings; the laptop frame shows the shadow of the re-placed mast at its lower left edge (the pole stands 111 m from
+  the eye, 46 deg left of the view axis, outside the frame); the next mast heads are 2-3 px at 1.3-1.4 km.
+- **"Fly to stand" 274, 229, 260, 115, 224** (aircraft parked; before/after): the 47-50 m masts that framed the subject are
+  gone; at 260 and 115 a pole now stands far behind the aircraft (small heads near the top); at 224 only a pole's shadow enters the
+  left edge; 274 and 229 have no mast in the foreground or middle distance.
+- **The mast by 290** from straight above: before, the plate sat on the red 290 line; after, the nearest mast is 3.35 m
+  (foot) from any envelope line.
+- **Named views**: `view_towercab` / `view_phone_towercab` clear; `view_tower` (the orbit view from outside) now shows the
+  re-placed "115" on the T1 west apron in the foreground, as a mast seen from outside the cab should be; `view_stand_113`
+  shows the same "112" mast at the right as in round 3 (its position did not change; at 51.6 m it is now inside the 55 m
+  near field of this QA view, which is not the app's "Fly to stand" camera for 113 - that one is clear); **`view_bridge_230`
+  and day `view_t2pier` show a new pole next to the B77W at 230**: the gap-fill mast for 231 at (-816.2, -234.2), placed
+  because the 55 m rule removed the mast that covered 231 in round 3. It passes every rule and is outside the 230 / 231
+  "Fly to stand" frames' 40 px band, but in `view_bridge_230` it is the strongest vertical in the frame (open below).
+
+### Checks
+
+- `jobs/gates.mjs SET='fix3;fix3low' CHECK_ONLY=1`: "fix3 requirements: met" on high and low (contact near field 0, equipment
+  0, plates 0, Tower view 0, envelope 0, stored list used and equal to a live pass), tiers SAME, console 0 / 0 / 0.
+- `SET=fix4` (renders, DEBUG park 113, 115, 224, 229, 233, 260, 274): every bridge docked, console clean.
+- No-browser tests and the named views: see "Regression checks (whole round)" below.
+
+### Regression checks (whole round 4: gates, markings, buildings)
+
+- `jobs/markings.mjs LIGHTTABLE=1` (21:30): 58 masts, **0 of 164 stand nodes below the stand level** (1.137; 55 at it, min /
+  p10 / median / max 1.137 / 1.137 / 1.324 / 1.98), `check926` other-apron min / stand mean **0.500** (stands avg:min 1.13,
+  other 1.38). The job compared the node factor rounded to 3 decimals with the level rounded to 4 and listed 55 nodes at the
+  level as "below" (1.137 < 1.1373); it now compares the unrounded factor (tolerance 0.0005, below one 8-bit step 0.0098).
+- Named view set re-rendered with the four commands of `integration.md` "Fix round 3" I3 (25 `view_*.png`, all looked at, in
+  before / after sheets `out/fix4/sheets/`): pixels changed > 8 levels: 0.0-0.1 % in the runway, T1, T2, overview, stand
+  233 / 102 / 404 and laptop stand views (mast positions only; `view_hold_H1` and `view_stand_404` identical), 0.3-0.8 % in
+  `t2pier`, `stand_113`, `tower`, `towercab`, `bridge_230`, `phone_towercab`, 1.4-2.2 % in the two legend views (the legend's
+  new wording), and by design the night views: `view_night_hold_H1` 94 % (F5: the black ground is now dark grey),
+  `view_night_stand_233` 39 % (F5 beyond the taxilane; F2 under the bridges), `view_night_t2pier` 8 %. All 10 parked aircraft
+  placed, all bridges docked, orientation checks ok.
+- Console: `MOCK_RELAY=1 SCENES=snapshot,park,live jobs/integration.mjs` -> "INTEGRATION: all scenes clean" (each scene 0
+  errors, 0 warnings, 0 page errors, HTTP >= 400 0, failed requests 0; the fetch of `data/sha_masts.json` included).
+- No-browser: `test_buildings3d.mjs` all passed (stand-head fill 21 rings / 69 stands), `test_geo_js.mjs` passed,
+  `test_relay.py` 11 / 11 OK, `test_metar_zsss_js.mjs` passed, `test_frame.py` OK; `node --check` on every changed module and job.
+
+### Open after this round
+
+1. The gap-fill mast for 231 stands beside the B77W at 230 in `view_bridge_230` and `view_t2pier` (both QA / named views,
+   not app cameras). Moving it needs either another camera in the placement (not a UI view) or a gap-fill preference for
+   positions behind the stand rows; left for the review to judge.
+2. `view_stand_113` (QA view, 75 m / 22 deg) has the "112" head at 51.6 m, inside 55 m; unchanged position since round 3.
+3. 310 and 126 still have no mast within 120 m (business apron: plate + 2 m off pavement or in a lane clearance; T1 west face:
+   stand camera / building).
+4. The stored placement must be rebuilt (`SOFTGL=1 SET=masts node livetest.mjs jobs/gates.mjs`) after any change to the
+   placement code or its inputs (stands, bridges, markings envelopes / equipment areas, pavement fills, the tower anchor);
+   until then the page places the masts live (correct, ~2 s slower) and `jobs/gates.mjs fix3` reports FAILED. Package P3-E
+   may add methods to `gate_system.js`; methods outside the hashed list do not invalidate the file.
+5. The pool pass (0.20-0.36 s, first frame after the masts) was not changed.
+
+## Verification fixes, round 1 (2026-11-27)
+
+Answers the adversarial verification of fix round 4 (findings F1-wide-aspect medium, F3-gapfill-frames-subject low,
+NAMED-231-mast low, F7-stale-cost low; F2 in `markings.md`; F4, F5, F6 and the regression checks were confirmed). Files
+changed: `js/live/gate_system.js` (`TOWER_CAM`, `standCamHead`, the gap-fill rank, `MAST_GAP_HEAD` / `MAST_GAP_SUBJ`),
+`js/live/gates.js` (stale-cache warning), `jobs/gates.mjs` (Tower view at five viewports, the review probe's test, the 1440 x 900
+and gap-fill head lines), `data/sha_masts.json` / `.js` (rebuilt), `docs/phase2/fix4_verify_tower_fly.png` (new composite),
+the 25 named views, `CLAUDE.md`. "Before" = the fix-round-4 state (stored hash `84264519`, inputs `904af9ec`; the verifier's
+renders in `out/review4/`); scratch, probes and renders in `out/fix4/v1/` (gitignored). All parameters below are inf (UI
+camera choices). I looked at every render named here.
+
+### F1-wide-aspect (medium): the Tower view at any aspect
+
+The verifier was right: `app.js view('tower')` keeps a 46 deg vertical field on every landscape aspect, so a 1920 x 970
+window shows 80 deg across and the gap-fill mast "112" (139 m from the eye, 38.5 deg off the axis) stood in the frame with a
+45 px head; `towerViewCams` had tested only a 16:9 frame. `app.js` is not a file of this package, so the fix is in the
+placement:
+
+- `TOWER_CAM.land.aspect` 16/9 -> **2.4**: the widest landscape frame in practice (21:9 monitors 2.33-2.39, iPhone 15
+  landscape 2.14, 1920 x 970 1.98); every narrower landscape frame lies inside it (the pitch does not depend on the aspect).
+- `TOWER_CAM.port.tanX` tan 20 deg -> **tan 29 deg**: the union of every portrait frame of aspect 0.3-1 (the app's portrait
+  field is 58-72 deg vertical; at aspect 0.66-1, e.g. a portrait tablet, the half width reaches 29 deg).
+- The near field as an angle: `TOWER_CAM.headDeg` **1.0 deg** -> `nearDepth` 4.4 m / tan 1 deg = **250 m** (was 90 m): a
+  head in either frame is < 15 px at 1280 x 720, < 20 px at 1920 x 970, < 22 px at 1920 x 1080.
+
+Why 250 m and not less (dry passes in one page, `out/fix4/v1/exp.mjs`, wide frames + the gap-fill rank below):
+
+| tower near depth | masts | stands without a mast within 120 m | nearest mast in a Tower frame (1280 x 720 / 1920 x 970 px) |
+|---|---|---|---|
+| 90 m (wide frames) | 59 | 3 (310, 121, 126) | "114" at 111 m, 34 / 46 px; "113" at 181 m (fails the review probe) |
+| 120 m, 150 m | 58 | 6 (310, 114, 115, 120, 121, 126) | "113" at 181 m, 23 / 31 px (fails the review probe: >= 20 px within 300 m) |
+| 200 m, **250 m** (chosen) | **57** | **7** (310, **113, 114, 115, 120**, 121, 126) | 1.22 km, 3-5 px |
+
+The T1 west face stands 113-121 are 57-168 m from the tower eye, right in front of it: every position the other rules
+(stand cameras, building, lanes, envelopes, equipment areas) leave for a mast near them is in the Tower frame 100-181 m from
+the eye. So the clear Tower view costs the T1 west face its masts (the brief's "keep T1 west face coverage" could be met only
+with a mast in the Tower foreground, which the verifier's own probe fails). Those stands stay lit to the stand level at night
+by the light map's floors (fix round 3, V1; `jobs/markings.mjs LIGHTTABLE=1` below: 0 of 164 nodes below the level). The
+alternative that would keep them: cap the horizontal field in `app.js view('tower')` at ~74 deg on wide screens (lower the
+vertical field when aspect > 16:9) - then the 16:9 frame and 90 m of round 4 suffice. That is the lead's file and call
+(requests list).
+
+Result (`jobs/gates.mjs SET='fix3;fix3low' CHECK_ONLY=1`, `out/fix4/v1/check.log`; the job now tests the app's own camera at
+the job viewport 1280 x 720, 1920 x 970, iPhone 15 landscape 734 x 343, iPhone 15 portrait 393 x 659 and a portrait tablet
+820 x 1080, with two tests each: the sampled near field (< 250 m) and the review probe's (a head in the frame within 300 m
+that is >= 20 px)): **0 / 0 at all five viewports, both tiers**; the nearest head in any frame is 1.22-1.50 km away (1-5 px).
+The verifier's own probe (`out/review4/rv4.mjs`, run unchanged at 1920 x 970, 1440 x 900 and 734 x 343,
+`out/fix4/v1/rv/*_probe.json`): `f1fail` [] at all three (before: ["112"] at 1920 x 970), nearest mast in frame 1,220 m
+(before 139 m). Renders: `out/fix4/v1/rv/{fhd,lap,pland}_towercab.png` - the "112" pole at the right edge and the
+re-placed "115" mast's shadow at the lower left are gone (`fix4_verify_tower_fly.png`, top two rows). `jobs/gates.mjs`
+requirement: no mast in the near field and none in the probe's test at any of the five viewports.
+
+### F3-gapfill-frames-subject (low) and NAMED-231-mast (low): the gap fill's choice
+
+The gap fill took the nearest grid candidate that passed every rule, so its masts stood 55-70 m in front of stand cameras
+("268" left of the 268 nose, "259" in its own view, "112" in 113's). It now ranks the grid (`placeMasts`, `headCost`):
+
+- for each candidate, the largest lamp head it shows in the camera each stand takes ("Fly to stand": side +1 of a contact
+  stand, side +1 of a remote stand while clear, else side -1; `standCamHead` = 2 x headR / depth when the head is in the
+  16:9 frame) divided by `MAST_GAP_HEAD` = tan 3.0 deg (a 4.4 m head at >= 84 m: < 40 px at 1280 x 720, < 50 px at
+  1440 x 900 with the 50 deg field), and in the Tower view cameras divided by tan `TOWER_CAM.headDeg`;
+- `MAST_GAP_SUBJ` 2: a candidate within 2 x the subject margin of a taken camera's subject (`standCamPos` d < 2, i.e. within
+  8 deg of the parked aircraft, rotundas and cabs) ranks as if its head were 2 / d times the limit;
+- candidates under both limits are equal and stay nearest first (as before); the rest follow by ascending cost (stable sort,
+  deterministic; the hash is the same on both tiers).
+
+Stated as angles, so the metric does not depend on the viewport (the verifier's request). Tried and not kept: the same rank in
+the main pass (59 masts, 311 also uncovered, heads >= 60 px at 1440 x 900 at 7 stands instead of 5); `MAST_GAP_SUBJ` 0 / 1.5 /
+3 (3 moves the 231 mast, see below).
+
+| "Fly to stand", side taken | before (round 4) | after |
+|---|---|---|
+| job: stands with a head >= 40 px at 1280 x 720 at >= 45 m | 66 (contact 13) | **56 (contact 4**: 102 42 px, 110 43, 246 40, 256 50 - all main-pass masts) |
+| job: stands with a head >= 60 px at 1440 x 900 (x 1.25) | 10 (contact 5) | **5 (contact 1**: 256) |
+| job: gap-fill masts with a head >= 40 px at 1280 x 720 in a taken camera | 9 (largest "259" 54 px in 259's view) | 4 ("309" 41, "323" 40, "335" 43, "336" 41 px: east remote apron rows with no candidate under the limit) |
+| review probe (`rv4.mjs`, 1440 x 900, head box nearest corner): heads >= 40 px | 71 (contact 14) | **62 (contact 7)** |
+| review probe: heads >= 60 px at 1440 x 900 | 23 | **17** (all main-pass masts: 284 / 280 / 326 / 301 / 305 at 55-65 m beside remote stands, 256) |
+| review probe: 268 / 259 / 113 / 261 (largest head) | 48 px (268) / 56 (259) / 51 (112) / 44 (263) | none >= 30 / 37 px at 87 m / none >= 30 / 40 px at 82 m |
+| near field (55 m) on a contact stand's taken side | 0 | 0 |
+
+Renders (1440 x 900, aircraft parked as the verifier had them, `out/fix4/v1/day/`, pairs `out/fix4/v1/cmp_fly*.png`):
+**268** - the pole left of the nose is gone (the nearest mast is now the "264" gap fill beyond the bridges, 134 m, 30 px);
+**113** - the "112" pole beside the aircraft is gone, no mast in the view; **259** - its mast moved from 60 m beside the
+aircraft to 90 m behind it, on the open apron (45 px at 900 rows); **261**, **260** - similar to before, the masts slightly
+farther. `fix4_verify_tower_fly.png` (rows 3-4).
+
+**NAMED-231 stays open.** The "231" gap-fill mast (-816.2, -234.2) did not move: in every app camera its head is < 40 px
+(230: 103 m, 32 px at 1440 x 900; 231: 102 m), so the rank has no reason to move it; it remains beside the B77W at 230 in the
+QA views `view_bridge_230` (69 m, 47 px at 1280 x 720) and `view_t2pier`. `MAST_GAP_SUBJ` 3 does move it (to -757, -236), but
+into 231's own "Fly to stand" frame (80 m, 40 px at 1280 x 720) and `view_stand_233` (120 m); trading an app camera for a QA
+view, so not kept. Putting the QA views themselves into the placement is possible but would tune the app to its test set;
+left for the owner / next review.
+
+### F7-stale-cost (low)
+
+A stored placement whose `inputs` do not match is now a console **warning** (`gates.js`), so every job that requires a clean
+console (`jobs/integration.mjs`, `jobs/gates.mjs`, the review probes) fails on a stale file. Tested by serving a copy with
+`inputs` "deadbeef" (`out/fix4/v1/stale.mjs`, `page.route`): `stats.source` "live (cache stale: inputs deadbeef)", the live
+pass 1.76 s, the same hash `1b7bccfe`, and the warning "[gates] masts: data/sha_masts.json does not match this page ...
+rebuild it with SOFTGL=1 SET=masts node livetest.mjs jobs/gates.mjs". Package P3-E (edits `gates.js` / `gate_system.js`) should
+end with `SOFTGL=1 SET=masts node livetest.mjs jobs/gates.mjs` and then `SET='fix3;fix3low' CHECK_ONLY=1` (requests list,
+CLAUDE.md conventions).
+
+### Stored placement and checks after the fixes
+
+- `SET=masts`: 57 masts, hash **`1b7bccfe`**, inputs **`db34b7b8`**, uncovered 7, live pass 1.88 s; equal to the dry pass of the
+  experiments. By area: T2 apron 2 22, east apron 11, east remote 8, west remote 6, south-west 4, T1 north 3, business 3,
+  T1 west face 0 (was 1). By placement: ahead of a stand front 25, between stand noses 11, rotunda line 7, gap fill 14 (was
+  15). Rejections 'tower view near field' 64 (was 4).
+- `SET='fix3;fix3low' CHECK_ONLY=1` (`out/fix4/v1/check.log`): **"fix3 requirements: met" on high and low**, tiers SAME
+  (`1b7bccfe`); contact near field 0 (sampled, app and review tests), side -1 at 38 stands (contact 0), equipment 0 (nearest
+  3.17 m), plates 0, envelope 0 (nearest foot 3.51 m, "112" to 111's line), the named stand views clear (`stand:113` too:
+  the 51.6 m "112" of round 4 is gone), Tower view 0 at five viewports, page source `cache`, equal to a live pass; placement
+  on the page 36-38 ms, the live pass 2.2-2.4 s; console 0 / 0 / 0.
+- Pages ready in 4.8-5.3 s (review probe, three viewports, stored list used).
+
+### Regression checks (round 4 + this round)
+
+- `jobs/markings.mjs LIGHTTABLE=1` (21:30, `out/fix4/v1/markings/lighttable.log`): 57 masts, **0 of 164 stand nodes below the
+  stand level** (51 at it; min / p10 / median / max 1.098 / 1.098 / 1.235 / 1.98), `check926` other min / stand mean
+  **0.500** (stands avg:min 1.15, other 1.40). The stand level is 1.098 (was 1.137: fewer pools near T1 lower the pools' mean
+  over the envelopes; the floors follow it).
+- Named views re-rendered with the four commands of `integration.md` "Fix round 3" I3 (`out/fix4/v1/views/views.sh`, 16.5
+  min; all 25 looked at, contact sheets `out/fix4/v1/all_*.png`, pairs `out/fix4/v1/sheet_*.png`): pixels changed > 8 levels
+  against round 4: `view_tower` 0.40 % (the T1 west face mast in the foreground is gone), `view_towercab` 0.24 % (its shadow
+  gone), `view_stand_113` 0.94 % (the "112" pole right of the aircraft and the "115" mast at the left gone), `view_night_t2pier`
+  1.01 % (lamp positions), `view_phone_t2_legend` 2.20 % / `view_laptop_live_t2` 0.15 % (the legend says 57), `view_stand_102`
+  0.14 %, the rest 0.00-0.07 % (`view_hold_H1`, `view_night_hold_H1`, `view_stand_404`, `view_phone_stand_233` identical). All
+  22 DEBUG parked aircraft placed, all 20 bridges docked, orientation checks ok (4 x 3), no stale-cache warning in any log.
+- Console: `MOCK_RELAY=1 SCENES=snapshot,park,live jobs/integration.mjs` -> "INTEGRATION: all scenes clean" (0 errors, 0
+  warnings, 0 page errors, HTTP >= 400 0, failed requests 0 in each).
+- No-browser: `test_buildings3d.mjs` all checks passed (stand-head fill 21 rings / 69 stands / 28,181 m2), `test_geo_js.mjs`
+  passed, `test_relay.py` 12 tests OK, `test_metar_zsss_js.mjs` passed, `test_frame.py` OK; `node --check` on the changed files.
+
+### Open after this round
+
+1. NAMED-231 (above): the "231" gap-fill mast beside the B77W at 230 in the QA views `view_bridge_230` / `view_t2pier`.
+2. The T1 west face (113, 114, 115, 120, 121) and 310, 126 have no mast within 120 m; reversible by an `app.js` field cap
+   (lead) plus `TOWER_CAM` back to 16:9 / 90 m.
+3. Main-pass masts still show 50-59 px heads (1280 x 720) at 55-65 m beside some remote stands (284 / 280 / 326 / 301 / 305)
+   and at 256 (rotunda line); the main pass was left as designed (ranking it did not help, above).

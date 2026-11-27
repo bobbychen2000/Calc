@@ -430,3 +430,62 @@ Per-stand light at the stop node, × the stand level (59 masts; `c` = contact st
 Open after this round: the table is from the gates package's 59-mast placement as it stood during this round. The floors
 do not depend on it, but the values above the floor do. The stored G is rounded up (ceil) since the last code change; the
 67-mast table and the `a4n_*` renders predate that (at most 1 LSB, 0.01 in factor), the table above and `a5n_night_stand_233` do not. Aircraft and bridges still cast no shadow in the flood.
+
+## Fix round 4 (2026-11-27)
+
+Answers `docs/phase2/review_visual_fix3.md` **F2** (low: the fill under the contact bridges lit at 2.5 x the open apron) and
+**F5** (low: at night the aerodrome is a pure-black, hard-edged hole). Files changed: `js/live/markings.js`
+(`applyMastPools` band split, `apronLight().at` 4th element), `js/live/caac_markings.js` (`apronFlood.standFillApron`, the
+`standFillLevel` note), `js/shaders/ground.js` (`AERO_NIGHT`, `shaApronLit`, the night block), `jobs/markings.mjs` (stand-level
+comparison). The gates / buildings parts of this round and the round's regression checks are in `gates.md` "Fix round 4".
+"Before" = HEAD (96aafa9) in an exported copy of the tree; probes in `out/fix4/` (gitignored); night instant 2026-11-20
+13:30Z (21:30 UTC+8), 58 masts; renders SOFTGL llvmpipe, 1280 x 720, deviceScaleFactor 1, looked at.
+
+| Id | What changed | Evidence | Status |
+|---|---|---|---|
+| F2 | **The split** (`applyMastPools`): the fill under the bridges of contact stands (stand flag 2) is lit at `standFillLevel` 1.25 x the stand mean only where it is the asphalt service band along the facades (`SHA_BUILDINGS3D.airside_fill.polys`, rasterised even-odd, 2,285 texels, 1,961 of them under bridges); the apron-kind fill there (`airside_fill.apron_polys`, `stand_head_fill`: apron concrete since fix round 3 N6) is held at the new `CAAC.apronFlood.standFillApron` 1.0 x the reference = `standFloor`, like the painted stand (inf, 9.2.6-1; photos 13 / 19, obs: the band along the facade brightest, the concrete beyond it at the stand level). The soft edge (`standEdge` 12 m) still carries the band's level ~12-24 m into the concrete next to it, as light would. `apronLight().at(x, z)` returns a 4th element (1 on the band); stats `standFillApron`, `standFillApronFloorFactor`, `standFillBandTexels`, `bandTexels`. | Light-map classes projected into the renders (`out/fix4/f2probe.mjs`: every 2 m texel within 90 m of 233 / 220 m of the pier tip, classified by `at()`, its pixel sampled; `f2px.py`). **Under 233** (the named view `stand:233,-,70,1,24`): fill (apron kind) factor **1.578 -> 1.402** = **1.42 -> 1.23 x the 233 envelope** (1.108 -> 1.137, the gain moved 1.108 -> 1.131); render L (median sRGB luminance) fill 136 -> 129, envelope 122 -> 122, so L fill / envelope **1.12 -> 1.07**, fill / open apron L 1.45 -> 1.37. At the review's own camera under 233: light 1.42 -> 1.23 x the envelope, L 1.04 -> 0.99. **Pier tip** (`t2pier` framing): fill median 1.578 -> 1.451 against the open apron in view 0.765 (2.06 -> 1.90 x), L fill / open 1.49 -> 1.39; the asphalt band 1.578 -> 1.598 (L 54 -> 53: asphalt). `fix4_markings_night.png` (bottom row). | **fixed in light** (fill 1.23 x the envelope, inside 1.1-1.3); **not in render luminance** (1.07 x at the named view, 0.99 x at the review camera; it was 1.12 / 1.04 before, so the luminance reading of 1.1-1.3 was not met before either) |
+| F5 | **Aerodrome night ambient** (`ground.js`, inf): `AERO_NIGHT` = {k 0.10, featherLod 5.5, tint = `URBAN_NIGHT.tint`}. (a) every aerodrome texel gets k x albedo x uNight (warm sky glow; the review's 0.05-0.1, top of the range); (b) the landside urban glow is feathered into the aerodrome: the aerodrome mask is read again from a coarse mip (lod 5.5, ~180 m texels, trilinear) of the context map's alpha, and the glow term is `ext x (1 - water) x ((1 - aero) + max(aero - aeroF, 0) x dark)`, i.e. unchanged outside, fading in over ~200-400 m inside. Both are multiplied by `dark = 1 - shaApronLit()` (the flood's lit area: apron, light-map lit area and spill), so the lit apron keeps its fix round 3 level (first try without it brightened the open apron in the 233 view from L 94 to 109; with it 94 -> 94.5, envelope 121.5 -> 121.5). One extra texture fetch, night only. | Night overview (`out/fix4/before/bn_night_overview.png` vs `out/fix4/markings/dn_night_overview.png`): aerodrome patches **(0, 0, 0) -> (5-9, 3-5, 1-2)** median, p90 L 0-1 -> 12-21; runways and taxiways readable as darker / lighter ground; the boundary is a gradient; the T2 apron and the landside patches unchanged. `view_night_hold_H1`: pure black around the lit signs -> dark ground with the holding bar and designation readable. `view_night_stand_233`: the area beyond the taxilane (black before) now shows the grass and the next taxiway. `fix4_markings_night.png`. | fixed |
+
+**Stand floors** (`jobs/markings.mjs LIGHTTABLE=1`, 21:30, 58 masts): standLevel 1.137, stand mean 1.279, other floor 0.639,
+gain 1.131; **0 of 164 stand nodes below the stand level** (55 at it; min / p10 / median / max 1.137 / 1.137 / 1.324 / 1.98),
+every node on a stand texel; `check926` stands avg:min 1.13, other avg:min 1.38, other min / stand mean **0.500**. The job
+first listed the 55 nodes at the level as "below": it compared the factor rounded to 3 decimals (1.137) with the level rounded
+to 4 (1.1373); it now compares the unrounded factor (tolerance 0.0005; one 8-bit step of the map is 0.0098). Pool pass
+0.20-0.36 s once (unchanged; `gates.md` F7).
+
+Commands (from `sha3d/`):
+```
+SOFTGL=1 OUT=out/fix4/markings PREFIX=t T=2026-11-20T13:30:00Z LIGHTTABLE=1 VIEWS=';' node livetest.mjs jobs/markings.mjs
+SOFTGL=1 OUT=out/fix4/markings PREFIX=f2c node livetest.mjs out/fix4/f2probe.mjs && python3 out/fix4/f2px.py out/fix4/markings/f2c_probe.json
+SOFTGL=1 OUT=out/fix4/markings PREFIX=dn T=2026-11-20T13:30:00Z VIEWS='overview@night_overview' node livetest.mjs jobs/views.mjs
+```
+
+Open: F2's "1.1-1.3 x the envelope" holds for the light factor, not for render luminance: L ratio 1.1 would need a light
+ratio of ~1.35, outside the band, so the two readings exclude each other at this camera; the band level spreading into the
+concrete (standEdge) is what keeps the fill at 1.23 x. Airfield lighting (runway / taxiway lights, stop bars) is still Phase 5;
+the F5 glow is a stand-in until then.
+
+## Verification fixes, round 1 (2026-11-27)
+
+The verifier confirmed F5 and found F2 met once occluded samples are left out (finding F2-luminance-corrected); no code of this
+package changed in this round. The gates part (Tower view, gap fill, 57 masts) is in `gates.md` "Verification fixes, round 1".
+
+- **F2: correction of the luminance statement above.** The "1.07 x at the named view / 0.99 x at the review camera" readings
+  of fix round 4 counted ground samples whose line of sight is blocked by T2 parts, the bridges or the parked aircraft (the
+  233 envelope is mostly under the B738, so many "envelope" and "fill" samples were pixels of the aircraft or a bridge).
+  Counting only unoccluded samples (the verifier's `out/review4/occl.py`: samples whose sight line misses the T2 parts, the
+  bridge boxes and rotundas and the parked aircraft boxes), re-run on this round's state (57 masts, stand level 1.098;
+  `out/fix4/v1/night2/`, `rv4.mjs` with light-map sample classes - every lit 2 m texel of each class in the frame, not only
+  within 70 m of 233 as the verifier filtered them -, 21:30 UTC+8): review camera under 233
+  (`look:-786,2.5,-118,160,35,70`, 233 parked): fill / envelope **luma 1.28 x** (fill n 255, envelope n 2,486; linear Y 1.68 x),
+  light factor 1.382 / 1.098 = 1.26 x; named view `stand:233,70,1,24` (229-234 parked): fill / envelope **luma 1.14 x** (fill
+  n 84, envelope n 161), fill / the five visible 233 envelope texels 1.18 x. The verifier's own numbers on the round-4 state
+  were 1.12-1.14 x (luma), 1.27-1.33 x (linear). So F2 meets 1.1-1.3 x the envelope in light factor and in rendered luminance:
+  **fixed**. (The light factor moved from 1.23 x to 1.26 x because the stand level fell from 1.137 to 1.098 with the T1 west
+  face masts gone; the band and fill levels are relative to it, the fill sits at its floor 1.38.)
+- **F5**: unchanged (k 0.10). The verifier's nit (the H1 taxiway at night reads like dusk, about 1/3 of the flood-lit apron)
+  is left to the owner: `ground.js AERO_NIGHT.k` 0.05-0.07 darkens it.
+- **Stand floors** with this round's 57 masts (`jobs/markings.mjs LIGHTTABLE=1`, `out/fix4/v1/markings/lighttable.log`):
+  standLevel 1.098, stand mean 1.266, other floor 0.633, gain 1.098; **0 of 164 stand nodes below the stand level** (51 at it;
+  min / p10 / median / max 1.098 / 1.098 / 1.235 / 1.98), every node on a stand texel; `check926` stands avg:min 1.15, other
+  avg:min 1.40, other min / stand mean **0.500**.

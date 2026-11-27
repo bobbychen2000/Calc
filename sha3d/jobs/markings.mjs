@@ -35,10 +35,12 @@ export default async ({ page, shot, base }) => {
     const L = SHA.markings.apronLight && SHA.markings.apronLight(); if (!L || !L.masts) return null;
     const M = L.masts; const ST = (SHA.data && SHA.data.stands ? SHA.data.stands.stands : (window.SHA_STANDS || {}).stands) || [];
     const rows = ST.map(s => { const a = L.at(s.nose[0], s.nose[1]); const contact = !!(s.contact || (s.bridges && s.bridges.length));
-      return { n: s.name, cls: s.cls, contact, f: +a[1].toFixed(3), rel: +(a[1] / M.standLevel).toFixed(3), relMean: +(a[1] / M.standMeanFactor).toFixed(3), stand: a[2] }; });
+      return { n: s.name, cls: s.cls, contact, fr: a[1], f: +a[1].toFixed(3), rel: +(a[1] / M.standLevel).toFixed(3), relMean: +(a[1] / M.standMeanFactor).toFixed(3), stand: a[2] }; });
     const fs = rows.map(r => r.f).sort((a, b) => a - b);
     return { masts: M.n, standLevel: M.standLevel, standMean: M.standMeanFactor, otherFloor: M.otherFloorFactor, gain: M.gain, nodes: rows.length,
-      belowStandLevel: rows.filter(r => r.f < M.standLevel - 1e-6).map(r => r.n), atStandLevel: rows.filter(r => Math.abs(r.f - M.standLevel) < 0.006).length,
+      // (fix round 4) the unrounded factor against standLevel (4 decimals): r.f is rounded to 3 decimals, so 1.13725 read
+      // 1.137 < 1.1373 (0.0005 is far below one 8-bit step of the map, 2.5 / 255 = 0.0098)
+      belowStandLevel: rows.filter(r => r.fr < M.standLevel - 5e-4).map(r => r.n), atStandLevel: rows.filter(r => Math.abs(r.fr - M.standLevel) < 0.006).length,
       min: fs[0], p10: fs[Math.floor(fs.length * 0.1)], median: fs[Math.floor(fs.length / 2)], max: fs[fs.length - 1], notStandTexel: rows.filter(r => !r.stand).map(r => r.n), rows };
   });
   if (lt) { const { rows, ...sum } = lt; console.log('apron light pools', JSON.stringify(await page.evaluate(() => SHA.markings.apronLight().masts)));

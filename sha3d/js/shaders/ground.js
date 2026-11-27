@@ -52,6 +52,14 @@ vec3 shaGroundFarHaze(vec3 col, vec3 wp, float dist, vec3 V, float ext, float ni
 // ramp when this export exists): k replaces the old 0.10 factor of the urban glow, road = street lighting on landside roads
 // (x albedo, warm).
 export const URBAN_NIGHT = { k: 0.8, road: 0.3, tint: [1.0, 0.75, 0.5], src: 'inf: rendering levels (lit city at night), review_visual_fix2.md V5' };
+// Aerodrome night ambient (fix round 4, review_visual_fix3.md F5) [inf]: with the landside lit (V5) the aerodrome read as a
+// pure-black hole with straight polygon edges in the night overview (runway / taxiway lighting is Phase 5). Two terms:
+//  - k: a faint sky glow on the whole aerodrome ground, k x albedo x uNight, URBAN_NIGHT tint (the city's light scattered
+//    back by the sky; dark, never black);
+//  - feather: the landside urban glow reaches into the aerodrome over ~200-400 m, faded by the aerodrome mask read from a
+//    coarse mip (featherLod) of the context map's alpha (0.5 x extent + 0.5 x aerodrome, 4 m texels: lod 5.5 ~ 180 m
+//    texels, trilinear), so the boundary is a gradient, not a polygon edge. Outside the aerodrome nothing changes.
+export const AERO_NIGHT = { k: 0.10, featherLod: 5.5, tint: URBAN_NIGHT.tint, src: 'inf: rendering levels (sky glow over the dark airfield until the Phase 5 airfield lighting), review_visual_fix3.md F5' };
 export const APRON_FLOOD = { level: 0.42, tint: [1.0, 0.82, 0.6], gScale: 2.5, src: 'inf: level and tint chosen against photos 12/13/19/20 (= the mean over the lit area); shape: light map (CAAC.apronFlood: 9.2.6-1 stand floor, 9.2.6-2 other-apron floor)' };
 export const APRON_FLOOD_GLSL = `
 uniform sampler2D uApLight; uniform vec4 uApLightRect; uniform float uApLightOn;   // light map: R lit area + spill, G pool factor / gScale
@@ -61,6 +69,13 @@ vec3 shaApronFlood(vec3 wp, vec4 apt, float paved, float nLarge, float nMid){
   float k = 1.0;
   if (uApLightOn > 0.5) { apronN = max(apronN, L.r); k = ${APRON_FLOOD.gScale.toFixed(2)} * L.g; }
   return vec3(${APRON_FLOOD.tint.map(v => v.toFixed(3)).join(', ')}) * apronN * k * (0.75 + 0.25 * nLarge) * (0.85 + 0.15 * nMid) * ${APRON_FLOOD.level.toFixed(3)};
+}
+// the flood's lit area (0..1: apron, the light map's lit area and spill), as shaApronFlood weighs it (fix round 4, F5: the
+// aerodrome's night ambient stays off the flood-lit apron)
+float shaApronLit(vec3 wp, vec4 apt, float paved){
+  float apronN = paved * smoothstep(0.86, 0.95, apt.g);
+  if (uApLightOn > 0.5) apronN = max(apronN, texture(uApLight, (wp.xz - uApLightRect.xy) / max(uApLightRect.zw, vec2(1.0))).r);
+  return apronN;
 }`;
 defineChunk('sha_apron_flood', APRON_FLOOD_GLSL);
 
@@ -171,7 +186,13 @@ void main(){
   // ---- night [inf]: a faint urban glow outside the aerodrome and the apron flood (shaApronFlood: apron + airside fill + spill,
   //      mast pools when the light map is bound, fix round 2)
   if (uNight > 0.001) {
-    float urbanN = ext * (1.0 - aero) * (1.0 - water);
+    // F5 (fix round 4): the aerodrome mask feathered (a coarse mip of the context map's alpha): the urban glow fades into the
+    // aerodrome instead of stopping at its polygon; every aerodrome texel also gets the faint sky glow AERO_NIGHT.k. Both stay
+    // off the flood-lit apron (shaApronLit: apron, airside fill and their spill keep their fix round 3 level)
+    vec4 ctxF = inRect(cuv) ? textureLod(uCtxMap, cuv, ${AERO_NIGHT.featherLod.toFixed(2)}) : vec4(0.0);
+    float aeroF = clamp(ctxF.a * 2.0 - 1.0, 0.0, 1.0), dark = 1.0 - shaApronLit(wp, apt, paved);
+    float urbanN = ext * (1.0 - water) * ((1.0 - aero) + max(aero - aeroF, 0.0) * dark);
+    col += alb * vec3(${AERO_NIGHT.tint.map(v => v.toFixed(3)).join(', ')}) * aero * dark * (1.0 - water) * ${AERO_NIGHT.k.toFixed(3)} * uNight;
     col += alb * vec3(1.0, 0.75, 0.5) * urbanN * (0.3 + 0.7 * nzB.g * nzC.b) * ${URBAN_NIGHT.k.toFixed(3)} * uNight;   // V5: was 0.10
     col += alb * vec3(1.0, 0.75, 0.5) * road * ext * (1.0 - aero) * ${URBAN_NIGHT.road.toFixed(3)} * uNight;   // V5: landside street lighting
     col += alb * shaApronFlood(wp, apt, paved, nzA.g, nzB.r) * uNight;

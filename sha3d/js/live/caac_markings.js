@@ -228,7 +228,12 @@ export const CAAC = {
     // ... and is lit at this multiple of the stand mean (>= 1.0: it is stand; above it: photos 13 and 19, obs, show the band
     // under the bridges along the T2 face as the brightest part of the apron at night - from fittings the model does not
     // draw (terminal face, bridges); the asphalt there (albedo ~0.085 against 0.30 for concrete) still reads darker)
-    standFillLevel: P(1.25, 'inf: 9.2.6-1 (>= the stand average); 1.25 chosen against photos 13 / 19 (obs: the band under the bridges brightest at night)'),
+    // fix round 4 (review_visual_fix3.md F2): the split - standFillLevel only on the asphalt service band along the facades
+    // (SHA_BUILDINGS3D.airside_fill.polys, 12 m); the apron-kind fill under the bridges (airside_fill.apron_polys and the
+    // stand-head fill, apron concrete since fix round 3 N6) at standFillApron x the reference, i.e. the painted stand's level.
+    // 1.25 had been tuned on asphalt (albedo ~0.085); on concrete (0.30) it lit that band at 2.5 x the open apron
+    standFillLevel: P(1.25, 'inf: 9.2.6-1 (>= the stand average); 1.25 chosen against photos 13 / 19 (obs: the band under the bridges brightest at night); fix round 4: the asphalt service band only'),
+    standFillApron: P(1.0, 'inf: 9.2.6-1 (= standFloor: the apron-kind fill under the bridges as lit as the painted stand); fix round 4 split against photos 13 / 19 (the band along the facade brightest, the concrete beyond it at the stand level)'),
     // the raised floor (stand areas, fill) falls off over ~2 x this distance past the outline (dilate + box blur), like light
     standEdge: P(12, 'inf: soft edge of the stand floor (m); the review asked for light pools, not polygon edges (N4)'),
     standFillR: P(60, 'inf: 9.2.6-1 / 9.2.2 (the ground under the bridges is a stand work area; radius chosen to reach the pier-tip fill, review V1 "~60 m")'),

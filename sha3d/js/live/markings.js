@@ -352,6 +352,10 @@ function runwayUniforms(plan, glyphTex, edgeTex) {
 // under the bridges): their factor is >= standFloor x the reference (the pools' mean over the envelopes), whatever the
 // masts do; every other texel is >= floor x the resulting stand mean. So a stand is lit even where the gates package has no
 // mast near it (the gates package moves masts out of the stand cameras); the masts shape the light above that level.
+// Fix round 4 (review_visual_fix3.md F2): standFillLevel (1.25 x the stand mean) only on the asphalt service band along the
+// facades (SHA_BUILDINGS3D.airside_fill.polys); the apron-kind fill under the bridges (airside_fill.apron_polys, the
+// stand-head fill: apron concrete since fix round 3, N6) is held at standFillApron (standFloor, 1.0 x the reference) like
+// the painted stand. Tuned on asphalt, 1.25 on concrete had lit that band at 2.5 x the open apron.
 const AF = CAAC.apronFlood;
 function apronLightMap(ctx) {
   const M = ctx.ground && ctx.ground.maps && ctx.ground.maps.apt, pavedAt = ctx.ground && ctx.ground.pavedAt; if (!M || !pavedAt) return null;
@@ -388,8 +392,9 @@ function apronLightMap(ctx) {
   return { tex, W, H, res, rect, data, area, addedPav, stats: { texels: [W, H], res_m: res, apronTexels: nApron, fillTexels: nFill, fillKm2: +(nFill * res * res / 1e6).toFixed(3), spill_m: sp, masts: null, ms: Math.round(performance.now() - t0), src: src(AF.res) } };
 }
 /** mast pools into G (once the gates package has placed its masts); the texture is updated in place.
- *  apron = SHA.markings.apron() rings (envelopes, bridge, equipment); stands = data stands (contact-stand nodes) */
-function applyMastPools(L, masts, apron, stands) {
+ *  apron = SHA.markings.apron() rings (envelopes, bridge, equipment); stands = data stands (contact-stand nodes);
+ *  band = the asphalt service band rings (SHA_BUILDINGS3D.airside_fill.polys: [outer, ...holes]; fix round 4, F2) */
+function applyMastPools(L, masts, apron, stands, band = []) {
   const t0 = performance.now(); const { W, H, res, rect, data } = L; const n = W * H;
   const R = val(AF.poolR), reach = val(AF.poolReach), ahead = val(AF.poolAhead), w0 = 1 / (1 + (reach / R) * (reach / R));
   const sum = new Float32Array(n); const rT = Math.ceil(reach / res);
@@ -419,7 +424,14 @@ function applyMastPools(L, masts, apron, stands) {
   const norm = c && s > 0 ? s / c : 1;
   // fix round 3 (review V1): stand texels = envelopes + bridge areas + equipment areas (the painted stand) + the package-added
   // airside pavement (fill, stand-head fill) within standFillR of a contact-stand node (the ground under the bridges)
-  const stand = raster([A.envelopes, A.bridge, A.equipment]); let nFillStand = 0, nContact = 0;
+  const stand = raster([A.envelopes, A.bridge, A.equipment]); let nFillStand = 0, nContact = 0, nFillBand = 0;
+  // (fix round 4, F2) the asphalt service band (even-odd: outer ring + holes)
+  const bandM = new Uint8Array(n); if (band && band.length) {
+    const cv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(W, H) : Object.assign(document.createElement('canvas'), { width: W, height: H });
+    const cx = cv.getContext('2d', { willReadFrequently: true }); cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H); cx.fillStyle = '#fff';
+    for (const pl of band) { cx.beginPath(); for (const r of pl || []) { if (!r || r.length < 3) continue; r.forEach((p, i) => { const x = (p[0] - rect[0]) / res, y = (p[1] - rect[1]) / res; i ? cx.lineTo(x, y) : cx.moveTo(x, y); }); cx.closePath(); } cx.fill('evenodd'); }
+    const px = cx.getImageData(0, 0, W, H).data; for (let k = 0; k < n; k++) if (px[k * 4] > 127) bandM[k] = 1;
+    if (cv.width) { cv.width = cv.height = 1; } }
   const fr = val(AF.standFillR), rS = Math.ceil(fr / res);
   for (const st of stands || []) {
     if (!(st.contact || (st.bridges && st.bridges.length)) || !st.nose) continue; nContact++;
@@ -429,7 +441,7 @@ function applyMastPools(L, masts, apron, stands) {
       if (Math.hypot(i - ci, j - cj) * res <= fr) { if (!stand[k]) nFillStand++; stand[k] = 2; }
     }
   }
-  const lo = val(AF.floor), hi = val(AF.cap), sf = val(AF.standFloor), sb = val(AF.standFillLevel);
+  const lo = val(AF.floor), hi = val(AF.cap), sf = val(AF.standFloor), sb = val(AF.standFillLevel), sa = val(AF.standFillApron);
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   // the stand mean S (x the reference): the mean over the envelopes with the stand floor applied
   let sS = 0, sN = 0; for (let k = 0; k < n; k++) if (env[k]) { sS += clamp(sum[k] / norm, sf, hi); sN++; }
@@ -438,7 +450,9 @@ function applyMastPools(L, masts, apron, stands) {
   // texel floor x S (9.2.6-2: >= 50 % of the stand average); then max-dilated and box-blurred by standEdge, so the raised
   // level falls off over ~2 x standEdge past a stand's outline instead of stepping at the painted line (light, not paint)
   // and is never lowered inside it (dilation radius = blur radius) [inf]
-  let T = new Float32Array(n); for (let k = 0; k < n; k++) T[k] = stand[k] === 2 ? Math.max(sf, sb * S) : stand[k] ? sf : loO;
+  // (fix round 4, F2) standFillLevel x S on the asphalt service band under the bridges, standFillApron x the reference on
+  // the apron-kind fill there
+  let T = new Float32Array(n); for (let k = 0; k < n; k++) { if (stand[k] === 2 && bandM[k]) nFillBand++; T[k] = stand[k] === 2 ? (bandM[k] ? Math.max(sf, sb * S) : Math.max(sf, sa)) : stand[k] ? sf : loO; }
   const re = Math.max(0, Math.round(val(AF.standEdge) / res));
   if (re > 0) {
     const pass = (src, dst, op, horiz) => {   // separable max / box filter over (2 re + 1) texels
@@ -471,7 +485,7 @@ function applyMastPools(L, masts, apron, stands) {
   gl.bindTexture(gl.TEXTURE_2D, L.tex.tex); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, W, H, gl.RG, gl.UNSIGNED_BYTE, data);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4); gl.generateMipmap(gl.TEXTURE_2D); gl.bindTexture(gl.TEXTURE_2D, null);
-  L.stand = stand;
+  L.stand = stand; L.band = bandM;
   // factors are the shader's multiplier of the APRON_FLOOD level (map G x gScale); standLevel = standFloor x reference x gain,
   // as stored (8 bit): every stand texel, every stand node included, reads >= it through apronLight().at
   L.stats.masts = { n: masts.length, standTexels: c, norm: +norm.toFixed(3), gain: +gain.toFixed(3),
@@ -479,6 +493,8 @@ function applyMastPools(L, masts, apron, stands) {
     otherMeanFactor: +(otherN ? otherS / otherN : 0).toFixed(3),
     check926: { standAvgOverMin: +((standN ? standS / standN : 1) / standMin).toFixed(2), otherAvgOverMin: +((otherN ? otherS / otherN : 1) / otherMin).toFixed(2), otherMinOverStandMean: +(otherMin / (standN ? standS / standN : 1)).toFixed(3), rule: '9.2.6-1 stands avg:min <= 4; 9.2.6-2 other >= 0.5 x stand avg, avg:min <= 4' },
     standFillLevel: sb, standFillFloorFactor: +(Math.max(sf, sb * S) * gain).toFixed(3), standFillMinFactor: +fillMin.toFixed(3), standEdge_m: re * res,
+    // (fix round 4, F2) the split: the service band under the bridges at standFillLevel, the apron-kind fill at standFillApron
+    standFillApron: sa, standFillApronFloorFactor: +(Math.max(sf, sa) * gain).toFixed(3), standFillBandTexels: nFillBand, bandTexels: bandM.reduce((a, v) => a + v, 0),
     otherFloorFactor: +(loF * gain).toFixed(3), otherMinFactor: +otherMin.toFixed(3), litMeanFactor: 1, litMinFactor: +litMin.toFixed(3), litMaxFactor: +(hi * gain).toFixed(3),
     standFloor: sf, floor: lo, cap: hi, standAreaTexels: nStand, standFillTexels: nFillStand, contactStands: nContact, standFillR_m: fr,
     poolR_m: R, reach_m: reach, ahead_m: ahead, ms: Math.round(performance.now() - t0), src: src(AF.standFloor) + ' | ' + src(AF.floor) };
@@ -519,8 +535,9 @@ registerExtension({
   start(app) {
     app.markings = { plan: () => state.plan, holds: () => state.holds || [], signs: () => state.signList || [], apron: () => state.apron, info: () => ({ edge: state.edgeStats, decals: state.decals, signs: state.signs, apronLight: state.light ? state.light.stats : null }), params: paramList, CAAC,
       // at(x, z) -> [lit (map R), factor (the shader's multiplier: map G x gScale; fix round 3: was G x 2, i.e. 0.8 x the
-      // factor), stand (1 painted stand area, 2 fill under the bridges of a contact stand, 0 other)] of the texel holding (x, z)
-      apronLight: () => (state.light ? { ...state.light.stats, rect: state.light.rect, at: (x, z) => { const L = state.light; const i = Math.floor((x - L.rect[0]) / L.res), j = Math.floor((z - L.rect[1]) / L.res); if (i < 0 || j < 0 || i >= L.W || j >= L.H) return [0, 0, 0]; const k = j * L.W + i; return [L.data[k * 2] / 255, L.data[k * 2 + 1] / 255 * APRON_FLOOD.gScale, L.stand ? L.stand[k] : 0]; } } : null),
+      // factor), stand (1 painted stand area, 2 fill under the bridges of a contact stand, 0 other), band (fix round 4: 1 on
+      // the asphalt service band of the airside fill)] of the texel holding (x, z)
+      apronLight: () => (state.light ? { ...state.light.stats, rect: state.light.rect, at: (x, z) => { const L = state.light; const i = Math.floor((x - L.rect[0]) / L.res), j = Math.floor((z - L.rect[1]) / L.res); if (i < 0 || j < 0 || i >= L.W || j >= L.H) return [0, 0, 0, 0]; const k = j * L.W + i; return [L.data[k * 2] / 255, L.data[k * 2 + 1] / 255 * APRON_FLOOD.gScale, L.stand ? L.stand[k] : 0, L.band ? L.band[k] : 0]; } } : null),
       setRunwayPaint: (on) => { app.world.groundU.uMkOn = on ? 1 : 0; } };
   },
   // the masts are placed by the gates package in its start() (after this one): add their pools to the light map on the first
@@ -529,7 +546,9 @@ registerExtension({
     if (state.lightDone || !state.light) return [];
     const M = app.qa && app.qa.masts ? app.qa.masts() : null; if (!M) return [];
     state.lightDone = true;
-    try { applyMastPools(state.light, M.masts || [], state.apron || {}, state.stands || []); console.log('[markings] apron light pools ' + JSON.stringify(state.light.stats.masts)); }
+    // (fix round 4, F2) the asphalt service band of the airside fill (buildings data, injected as window.SHA_BUILDINGS3D)
+    const B3 = (typeof window !== 'undefined' && window.SHA_BUILDINGS3D) || null; const band = (B3 && B3.airside_fill && B3.airside_fill.polys) || [];
+    try { applyMastPools(state.light, M.masts || [], state.apron || {}, state.stands || [], band); console.log('[markings] apron light pools ' + JSON.stringify(state.light.stats.masts)); }
     catch (err) { console.warn('[markings] apron light pools', err); }
     return [];
   },

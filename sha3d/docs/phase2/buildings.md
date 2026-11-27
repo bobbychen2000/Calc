@@ -550,3 +550,33 @@ python3 -I tools/buildings/band_contrast.py --terrace docs/phase2/view_towercab.
    view frames to 1° below the cab terrace (`anchors.tower.terraceHalf / terraceY`, vertical field 46°)"; under package jobs:
    "`jobs/buildings.mjs FIX3=off` (round-3 shader terms off) and `tools/buildings/band_contrast.py` (band / detail contrast,
    `--terrace`)".
+
+## Fix round 4 (2026-11-27)
+
+Answers `docs/phase2/review_visual_fix3.md` **F6** (low, data only: `stand_head_fill` overlapped the airside fill's apron
+part). Files changed: `tools/buildings/build_buildings3d.py`, `data/sha_buildings3d.json` / `.js` (rebuilt). The other parts of
+this round are in `gates.md` (F1, F3, F4, F7 and the round's regression checks) and `markings.md` (F2, F5).
+
+| Id | What changed | Evidence | Status |
+|---|---|---|---|
+| F6 | `main()`: `h2` (the airside fill that `stand_head_fill` is cut against, and the "before" pavement for the stand-head check) is built from `fill['polys'] + fill['apron_polys']` - the 12 m asphalt service band and its apron part - instead of the band alone (fix round 3, N6 split the fill and left the apron part out). | Shapely on the data, before -> after: **37 rings / 98 stands / 35,099 m² -> 21 rings / 69 stands / 28,181 m²** (stats `area_m2` 35,105.46 -> 28,180.77), overlap with `airside_fill.apron_polys` **6,918 -> 0 m²**, with the band 0 -> 0, outside both 28,181 -> 28,181 m² (= the round-2 area). Only `stand_head_fill`, `checks.stand_head_fill`, `checks.stand_heads_unpaved_before`, `counts` and the generator / `caac_markings.js` provenance hashes changed; the drawn pavement is the same (both fills draw as apron). | fixed |
+
+**Determinism and tests.** The generator was run twice after each change: byte-identical (final `sha_buildings3d.json` md5
+330a443b712df2472280b23785d628af, `.js` 8a0fa34c698600053b41ebd9aae1b281). It was re-run once more after the markings part
+of this round changed `js/live/caac_markings.js` (`apronFlood.standFillApron`): only `inputs_sha256_16["js/live/caac_markings.js"]`
+changed (0ebaeb6a48fadc88 -> 74162823ff8870f3; the tool parses `stand.clearB`, `noseE`, `classLetter`, which did not change).
+`node tools/buildings/test_buildings3d.mjs`: all checks passed ("stand-head fill: 21 rings for 69 stands; off pavement:
+nodes 0, nose tips 0, envelope fronts 0 of 164"; airside fill 3 rings + 2 apron rings, fixed-link points off pavement 0 / 539).
+The mast placement's pavement test reads the same union (the overlap was drawn twice): the mast list hash was `84264519`
+before and after the rebuild (the stored placement's inputs hash includes the pavement signature, so it was written after it).
+
+```
+python3 -I tools/buildings/build_buildings3d.py && node tools/buildings/test_buildings3d.mjs
+```
+
+## Verification fixes, round 1 (2026-11-27)
+
+The verifier confirmed F6 (`stand_head_fill` 21 rings / 69 stands / 28,182 m2 by Shapely, no overlap with the asphalt band or
+`apron_polys`, two scratch rebuilds md5-identical, differing from the committed file only in the `inputs_sha256_16` path key);
+nothing changed in this package. `test_buildings3d.mjs` re-run: all checks passed (stand-head fill 21 rings / 69 stands /
+28,180.77 m2). The round's gates changes (Tower view, gap fill) are in `gates.md` "Verification fixes, round 1".

@@ -20,7 +20,7 @@ import { Geo } from '../geom.js';
 import { m4, v3 } from '../math.js';
 import { TYPES, ICAO_TYPES } from '../aircraft/types.js';
 import { TYPE_MODELS } from '../aircraft/fit.js';
-import { LiveGateSystem, setGateWorld, footprint, DEPARTURE_LEVELS, PBB, noseGearX, standTip } from './gate_system.js';
+import { LiveGateSystem, setGateWorld, footprint, DEPARTURE_LEVELS, PBB, noseGearX, standTip, fnvHash } from './gate_system.js';
 import { GSIGN_VS, GSIGN_FS } from './gate_signs.js';
 import { OBJ_VS, OBJ_FS } from '../shaders/objects.js';
 import { LiveAircraft } from './aircraft.js';
@@ -110,8 +110,8 @@ function gateWorld(airport, taxigraph, pavedAt) {
 // (even-odd per fill call, as the canvas fills them; lines by their half width). Drawing detail may still vary by tier;
 // what is placed does not.
 function vectorPavement(airport, exts) {
-  const EZ = 25; const fills = [], lines = [];
-  const add = (rings) => { const R = (rings || []).filter(r => r && r.length >= 3); if (!R.length) return; const F = { bb: [1e9, 1e9, -1e9, -1e9], rows: new Map() };
+  const EZ = 25; const fills = [], lines = []; const SIG = fnvHash();   // (fix round 4, F7) signature of every ring / line, in order
+  const add = (rings) => { const R = (rings || []).filter(r => r && r.length >= 3); if (!R.length) return; SIG.any(R); const F = { bb: [1e9, 1e9, -1e9, -1e9], rows: new Map() };
     for (const r of R) for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[j], b = r[i];
       F.bb[0] = Math.min(F.bb[0], b[0]); F.bb[1] = Math.min(F.bb[1], b[1]); F.bb[2] = Math.max(F.bb[2], b[0]); F.bb[3] = Math.max(F.bb[3], b[1]);
       if (a[1] === b[1]) continue; const e = [a[0], a[1], b[0], b[1]]; for (let k = Math.floor(Math.min(a[1], b[1]) / EZ); k <= Math.floor(Math.max(a[1], b[1]) / EZ); k++) { if (!F.rows.has(k)) F.rows.set(k, []); F.rows.get(k).push(e); } }
@@ -120,7 +120,7 @@ function vectorPavement(airport, exts) {
   for (const k of ['runway', 'runway_shoulders_blast_pads', 'taxiway', 'taxiway_shoulders']) for (const p of S[k] || []) add(pr(p));
   for (const a of airport.aprons || []) add(pr(a)); for (const h of airport.helipads || []) add(pr(h));
   const R_KIND = (k) => !['concrete', 'apron', 'shoulder'].includes(k);   // the kinds that paint the R (pavement) channel
-  const api = { fill: (rs, kind = 'paved') => { if (R_KIND(kind)) add(rs); }, line: (pts, w, kind = 'paved') => { if (R_KIND(kind) && pts && pts.length > 1) lines.push({ pts, hw: w / 2 }); }, rect: null, res: 1 };
+  const api = { fill: (rs, kind = 'paved') => { if (R_KIND(kind)) add(rs); }, line: (pts, w, kind = 'paved') => { if (R_KIND(kind) && pts && pts.length > 1) { SIG.any([pts, w]); lines.push({ pts, hw: w / 2 }); } }, rect: null, res: 1 };
   for (const e of exts || []) if (e.pavement) { try { e.pavement(api, airport); } catch (err) { console.warn('[gates] vector pavement ' + e.name, err); } }
   const inF = (F, x, z) => { if (x < F.bb[0] || x > F.bb[2] || z < F.bb[1] || z > F.bb[3]) return false; const L = F.rows.get(Math.floor(z / EZ)); if (!L) return false; let c = false;
     for (const e of L) if (((e[1] > z) !== (e[3] > z)) && (x < (e[2] - e[0]) * (z - e[1]) / (e[3] - e[1]) + e[0])) c = !c; return c; };
@@ -128,6 +128,7 @@ function vectorPavement(airport, exts) {
     if (Math.hypot(a[0] + ex * t - x, a[1] + ez * t - z) < Ln.hw) return true; } return false; };
   const fn = (x, z) => fills.some(F => inF(F, x, z)) || lines.some(Ln => nearL(Ln, x, z));
   fn.info = { fills: fills.length, lines: lines.length, src: 'the polygons of the airfield map (OSM obs + package fills inf)' };
+  fn.sig = SIG.hex();   // (fix round 4, F7) part of the mast placement's inputs hash
   return fn;
 }
 
@@ -152,7 +153,7 @@ function pushOverlay(gates, G) {
 }
 
 // ---------------------------------------------------------------- the extension
-const state = { sys: null, gates: [], parked: new Map(), overlay: null, info: null, G: 0, airport: null };
+const state = { sys: null, gates: [], parked: new Map(), overlay: null, info: null, G: 0, airport: null, mastCache: null };
 
 registerExtension({
   name: 'gates', order: 30,
@@ -164,6 +165,11 @@ registerExtension({
     // of a terminal facade's (photo 18, a T2 bridge at night, shows a lit but not facade-bright tunnel; inf)
     R.addProgram('objG', OBJ_VS, OBJ_FS);
     const gates = shaGates(stands, geo.hdgVec); state.gates = gates;
+    // (fix round 4, F7) the stored mast placement, fetched now so that start() finds it resolved (an await there would yield
+    // to the render loop: one more frame before the app is ready, 1-3 s on llvmpipe); ?masts=live skips it
+    const qm = new URLSearchParams(location.search).get('masts') === 'live';
+    state.mastCache = qm ? Promise.resolve(null) : (typeof window !== 'undefined' && window.SHA_MASTS) ? Promise.resolve(window.SHA_MASTS)
+      : fetch(new URL('../../data/sha_masts.json', import.meta.url)).then(r => (r.ok ? r.json() : null)).catch(() => null);
     setGateWorld(gateWorld(airport, taxigraph, ctx.ground && ctx.ground.pavedAt));
     const t0 = performance.now();
     const sys = new LiveGateSystem(gates, { atlasExtra: Object.keys(ICAO_TYPES) }); state.sys = sys;
@@ -243,8 +249,20 @@ registerExtension({
     const apron = (app.markings && app.markings.apron && app.markings.apron()) || {};
     let paved = null; try { paved = state.airport ? vectorPavement(state.airport, extensions()) : null; } catch (e) { console.error('[gates] vector pavement', e); }
     try { sys.stageIdleStairs(apron.equipment || [], paved); } catch (e) { console.error('[gates] idle stairs', e); }
-    try { sys.placeMasts({ runways: (app.geo && app.geo.RUNWAYS) || [], envelopes: apron.envelopes || [], equipment: apron.equipment || [], paved }); } catch (e) { console.error('[gates] masts', e); }
+    // (fix round 4, F1) the app's Tower view cameras come from the tower anchor (terminals package; core placeholder otherwise)
+    const mastArgs = { runways: (app.geo && app.geo.RUNWAYS) || [], envelopes: apron.envelopes || [], equipment: apron.equipment || [], paved,
+      tower: (app.world && app.world.anchors && app.world.anchors.tower) || null };
+    // (fix round 4, review_visual_fix3.md F7) the placement is deterministic and tier-independent, so a stored copy
+    // (data/sha_masts.json, written by jobs/gates.mjs SET=masts; window.SHA_MASTS if a page script provides it) is used when
+    // its inputs hash matches this page's inputs; otherwise (or with ?masts=live) the live pass runs (1.2-2.2 s on llvmpipe)
+    let cache = null; try { cache = await state.mastCache; } catch (e) { cache = null; }
+    try { sys.placeMasts({ ...mastArgs, cache }); } catch (e) { console.error('[gates] masts', e); }
+    // (fix round 4 verification, review F7-stale-cost) a stale file is a build defect (the page then spends ~2 s on the live
+    // pass and jobs/gates.mjs fix3 fails), so it is a console WARNING: the harness jobs that require a clean console catch it
+    if (cache && sys.mastStats && sys.mastStats.source !== 'cache') { try { console.warn('[gates] masts: data/sha_masts.json does not match this page (stored inputs ' + cache.inputs + ', now ' + sys.mastStats.inputs + '): placed live (~2 s); rebuild it with SOFTGL=1 SET=masts node livetest.mjs jobs/gates.mjs'); } catch (e) { } }
     app.qa.pavedVec = (x, z) => paved ? paved(x, z) : null;   // QA: the placement's pavement test (true / false)
+    // QA: a live placement pass with the same inputs (rules: overrides, see placeMasts) that places nothing: {masts, stats, uncovered}
+    app.qa.mastsLive = (rules = {}) => sys.placeMasts({ ...mastArgs, rules, dry: true });
     state.info.masts = sys.mastStats || null; state.info.idleStairs = sys.idleStats || null;
     app.qa.masts = () => ({ stats: sys.mastStats || null, masts: sys.masts || [], uncovered: sys.mastUncovered || [] });
     // (fix round 2, N1) the stand camera's subject points as the mast placement used them (shell.js flyToStand side choice)
@@ -318,7 +336,8 @@ function legendHtml(I) {
     `bridge model, rest pose, levels, VDGS position and ground equipment ${N}. Stand signs: CAAC MH 5001-2021 8.5, placement ${N}. ` +
     `Aircraft park with the nose wheel on the stop line (MH 5001-2021 6.2.16-7). ` +
     // (fix round 3, review N5) the same count on every quality tier; V2: none in the "Fly to stand" views
-    (M ? `Apron floodlight masts: ${M.masts}, about one per ${Math.max(2, Math.round((M.standsConsidered || 162) / Math.max(1, M.masts)))} stands, kept out of the "Fly to stand" views; as in photos, but positions and form ${N}. ` : '') +
+    // (fix round 4, F1) and out of the Tower view's foreground
+    (M ? `Apron floodlight masts: ${M.masts}, about one per ${Math.max(2, Math.round((M.standsConsidered || 162) / Math.max(1, M.masts)))} stands, kept out of the "Fly to stand" views and the Tower view's foreground; as in photos, but positions and form ${N}. ` : '') +
     (Q ? `Idle airstairs: ${Q.placed}, at most one per ${Q.perStands} remote stands, staged in the equipment areas: cues ${N}, not seen.` : '');
 }
 function ctx_log(app, msg) { try { console.log('[gates] ' + msg); } catch (e) { } }

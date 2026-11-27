@@ -24,7 +24,16 @@ backtrack curves stop at the runway edge (V6); masts out of the near field of ev
 equipment areas, base plates on pavement, the same 58 masts on every quality tier (V2, V4, N5); a night ambient on the
 terminal roofs, a lit landside and far ground at night (V3, V5); a boundary-layer far haze (L9); the pier-tip fill as
 apron concrete (N6); the laptop tower view framed above the cab terrace (L3); the laptop UI views pinned to the snapshot
-instant (V7). "Fix round 3" sections in the same reports. Conventions that changed are listed under "Conventions".
+instant (V7). "Fix round 3" sections in the same reports. **Fix round 4 (2026-11-27)** answered
+`docs/phase2/review_visual_fix3.md` F1-F7: no mast in the app's Tower view foreground (laptop and phone; F1), stand-camera
+near field 55 m (F3), mast plates 2 m clear of the envelope lines (F4), the fill under the bridges split into the asphalt
+band and apron-kind fill (F2), a dark (not black) aerodrome at night (F5), `stand_head_fill` cut against the whole airside
+fill (F6), the mast placement stored in `data/sha_masts.json` (F7; ~1.1 s less start-up). "Fix round 4" sections in
+`gates.md` (with the round's regression checks), `markings.md`, `buildings.md`. Conventions that changed are listed under
+"Conventions". **Verification fixes, round 1** (same day, sections of that name in `gates.md` / `markings.md`): the Tower view
+is clear at every aspect the app shows (wide landscape windows and phones, portrait tablets; near field 250 m = a head
+under 1 deg), at the price of the T1 west face masts (57 masts; 113-121 have none within 120 m); the gap fill ranks its
+candidates by the head size they show in the "Fly to stand" cameras; a stale `data/sha_masts.json` is a console warning.
 
 ## Rules (owner decisions and working defaults; non-negotiable unless the owner says otherwise)
 
@@ -107,9 +116,13 @@ factor at every stand node against the stand level), `jobs/gates.mjs` (`SET='fix
 idle stairs; `SET='fix2;fix2night'`: the "Fly to stand" cameras, every stand camera against the masts, the stands without a
 mast, the mast-lamp cap; `SET='fix3;fix3night;fix3low'` (`CHECK_ONLY=1`: checks without renders): every stand's "Fly to
 stand" camera and the named stand views against the near field (contact stands must be 0), equipment areas, base plates,
-coverage, the high / low tier hash; prints "fix3 requirements: met" or FAILED (exit 1); view kinds `fly: stand: mast:
-vdgs:`), `jobs/buildings.mjs` (photo-match views; `FILLCHECK=1` counts fixed-link points, rotundas and VDGS posts on
-pavement; `HEADCHECK=1` is the review's pavement probe: stop nodes, nose tips, equipment areas, envelopes, mast feet, idle
+coverage, the high / low tier hash; since fix round 4 also the app's Tower view (from the app's own camera at the job viewport,
+1920 x 970, iPhone 15 landscape 734 x 343 and portrait 393 x 659, tablet portrait 820 x 1080: no mast in the frame nearer than
+250 m and none >= 20 px within 300 m), feet >= 3.13 m from the envelope lines, the heads >= 40 px beyond 45 m, and the
+stored placement (used by the page, equal to a live pass); prints "fix3 requirements: met" or FAILED (exit 1); `SET=masts`
+rewrites `data/sha_masts.json` / `.js` from the page's live pass - run it after any change to the placement code or its
+inputs; `SET=fix4`: Tower view, F3 "Fly to stand" renders; view kinds `fly: stand: mast: vdgs: tower masttop:`),
+`jobs/buildings.mjs` (photo-match views; `FILLCHECK=1` counts fixed-link points, rotundas and VDGS posts on pavement; `HEADCHECK=1` is the review's pavement probe: stop nodes, nose tips, equipment areas, envelopes, mast feet, idle
 stairs; prints a console tally; `FIX3=off` switches the fix-round-3 shader terms off for before / after pairs),
 `tools/buildings/band_contrast.py` (band / detail contrast of a render, `--terrace`: the cab terrace's share of the tower
 view), `jobs/ui.mjs` (`SCENES=snapshot,offline,live`; also checks that the card leaves the credit strip free and the strip's
@@ -129,14 +142,17 @@ cfg, mode, hooks, quality, runwayMode(), setRunwayRule(), observed, markings}`; 
 `__shaError`; storage prefix `shalive.`. `SHA.qa`: `hideUI, look, view, threshold, stand, tower, placeModel` (QA only),
 `clearModels, info`; gates: `park, unpark, unparkAll, parked, gates, gate, bridgeView`; shell: `selectStand, closeCard,
 openAbout, openSettings, openLegend, sheet, search, standLabels, runway, mode, standCam(name)` (the "Fly to stand" side,
-both clearances and the near-field masts per side); gates: `masts()` (58 inferred apron floodlight masts, the same list on
-every quality tier (`stats.hash`), base plate + 2 m on pavement, clear of the stand cameras incl. their near field and of
-the equipment areas; `stats.cameras`, `uncovered`), `pavedVec(x, z)` (the placement's tier-independent pavement test),
+both clearances and the near-field masts per side); gates: `masts()` (57 inferred apron floodlight masts since the fix-4 verification round, the same list on
+every quality tier (`stats.hash`), base plate + 2 m on pavement, clear of the stand cameras incl. their near field, of the
+Tower view, of the equipment areas and 2 m of the envelope lines; `stats.cameras` (incl. `tower`), `uncovered`,
+`stats.source` 'cache' = `data/sha_masts.json` / 'live'), `mastsLive(rules)` (a dry live placement pass with the page's inputs,
+places nothing), `pavedVec(x, z)` (the placement's tier-independent pavement test),
 `idleStairs()` (staged idle stair cues), `camSubject(name)` (the stand camera's subject points);
 `SHA.markings.holds() / signs() / info() / apron() / plan() / apronLight()` (`apron()`: equipment areas, stand envelopes,
 bridge areas as world rings, src inf; `apronLight()`: the night light-map statistics incl. `masts.standLevel`,
 `standMeanFactor`, `otherFloorFactor`, `check926`; `at(x, z)` -> [lit, factor = G × `APRON_FLOOD.gScale` (the shader's
-factor; before fix round 3 it returned G × 2), stand flag: 1 painted stand, 2 fill under contact bridges, 0 other]).
+factor; before fix round 3 it returned G × 2), stand flag: 1 painted stand, 2 fill under contact bridges, 0 other, band: 1 on
+the asphalt service band (fix round 4)]).
 
 ## Architecture
 
@@ -177,7 +193,8 @@ liveries; never `refs/`, `tools/`, `docs/`, `out/`, `jobs/`).
   reference parked that way. The painted envelopes, safety lines, hatching and equipment areas (`caac_decals.js`) are
   shifted forward by `nose_gear_m`; the stop line, lead-in and alignment line stay at the node. The stand card says so.
 - **Stand-head fill** (fix round 2): `sha_buildings3d.json` `stand_head_fill` (src inf: OSM apron gap ahead of the edge
-  stands, Sentinel-2 grass test; 37 rings) is drawn by `terminals.js` through the `pavement(api)` hook as **apron** (paved + G 255:
+  stands, Sentinel-2 grass test; 21 rings for 69 stands, 28,181 m², cut against the whole airside fill - band and apron part -
+  since fix round 4, F6) is drawn by `terminals.js` through the `pavement(api)` hook as **apron** (paved + G 255:
   apron concrete and the apron flood). Its head rectangle uses `nose_gear_m`, `stand.noseE` and `clearB` read from
   `js/live/caac_markings.js`, so a value change there needs `python3 -I tools/buildings/build_buildings3d.py`.
   Every stop node, class nose tip and envelope front is on pavement (`test_buildings3d.mjs` checks it).
@@ -190,12 +207,16 @@ liveries; never `refs/`, `tools/`, `docs/`, `out/`, `jobs/`).
   reference: it is updated in place, not replaced. **Floors** (fix round 3, V1; none of them depends on where the masts
   stand): painted stand texels (envelopes, bridge and equipment areas) >= `standFloor` 1.0 × the stand level (the pools'
   mean over the envelopes; MH 5001-2021 9.2.6-1, inf); the airside / stand-head fill within `standFillR` 60 m of a
-  contact-stand node (the ground under the bridges) >= `standFillLevel` 1.25 × the stand mean (inf, photos 13 / 19); every
-  other lit texel >= 0.5 × the stand mean (9.2.6-2); the raised level falls off over `standEdge` 12 m; the stored G is
-  rounded up. The **landside** inside the extent glows at night at `URBAN_NIGHT` (`ground.js`: k 0.8 × albedo on built-up
+  contact-stand node (the ground under the bridges) >= `standFillLevel` 1.25 × the stand mean on the asphalt service band
+  (`airside_fill.polys`) and >= `standFillApron` 1.0 × the reference (= `standFloor`) on the apron-kind fill there
+  (`apron_polys`, `stand_head_fill`) (fix round 4, F2; inf, photos 13 / 19); every other lit texel >= 0.5 × the stand mean
+  (9.2.6-2); the raised level falls off over `standEdge` 12 m; the stored G is rounded up. The **landside** inside the extent glows at night at `URBAN_NIGHT` (`ground.js`: k 0.8 × albedo on built-up
   ground, road 0.3 × albedo on landside roads, warm, inf; fix round 3, V5), the far ground beyond it at `terminals.js`
-  `uFarNight` / `uFarNightAir` (built-up glow and a warm night airlight in the far haze, inf). Airfield lighting (runway /
-  taxiway lights, stop bars) is **not modelled** (Phase 5); the legend and About say so.
+  `uFarNight` / `uFarNightAir` (built-up glow and a warm night airlight in the far haze, inf). The **aerodrome** is dark, not
+  black, at night (fix round 4, F5; `ground.js AERO_NIGHT`, inf): a sky glow k 0.10 × albedo (URBAN_NIGHT tint) and the urban
+  glow feathered ~200-400 m into it (mip `featherLod` 5.5 of the context map's aerodrome alpha), both kept off the flood-lit
+  apron (`shaApronLit`). Airfield lighting (runway / taxiway lights, stop bars) is **not modelled** (Phase 5); the legend and
+  About say so.
 - **Object and aircraft flood** (fix round 2): chunk `sha_obj_flood` (`js/shaders/objects.js` `shaObjFlood`, inf) gives
   object surfaces over the lit apron the ground's flood (faded out 14-24 m above the ground). The object programs and
   both aircraft programs (`aircraft.js` AC_FS, `aircraft_real.js` ACR_FS) include it; `app.js floodUniforms` binds the
@@ -213,12 +234,25 @@ liveries; never `refs/`, `tools/`, `docs/`, `out/`, `jobs/`).
   mast candidate in image space against each stand's camera (`standCamPos`: 4° from the class reference, rotundas and
   cabs; ±8° centre band): side +1 of every contact stand stays clear, at least one side of every remote stand. "Fly to
   stand" (`shell.js`) takes the clear side. Mast lamp sprites are capped at 24 px and fade within 40 m of the camera.
-  Since fix round 3 (V2) each camera also has a **near field** (`STAND_CAM.nearDepth` 45 m, `nearDist` 25 m, `nearPoleMin`
-  10 m, `standCamNear`, inf): a side is clear only when no mast is in its subject / centre margins or its near field (the
-  head or the pole above 10 m in the 16:9 frame closer than 45 m, or the pole within 25 m of the camera); contact stands keep
+  Since fix round 3 (V2) each camera also has a **near field** (`STAND_CAM.nearDepth` 55 m since fix round 4, F3 (was 45 m),
+  `nearDist` 25 m, `nearPoleMin` 10 m, `standCamNear`, inf): a side is clear only when no mast is in its subject / centre
+  margins or its near field (the head or the pole above 10 m in the 16:9 frame closer than 55 m, or the pole within 25 m of
+  the camera); contact stands keep
   side +1 clear, remote stands one side; "Fly to stand" takes side +1 if clear, else a clear side -1; 238A / 259A have their
   own camera. Masts: the base plate + 2 m on pavement at its centre and four corners, 2 m clear of every equipment area
-  (V4); stands still without a mast within 120 m get a gap-fill try; placement is **tier-independent** (`gates.js
+  (V4) and of every painted envelope line (`MAST_ENV_CLEAR`, fix round 4, F4: foot >= 3.13 m); the app's **Tower view** is a
+  camera too (`towerViewCams` from `anchors.tower`: the widest landscape frame, aspect 2.4 - `app.js` keeps the 46 deg vertical
+  field on every landscape aspect - and the union of all portrait frames, half width 29 deg; `TOWER_CAM.nearDepth` 250 m =
+  a 4.4 m head under `headDeg` 1.0 deg, and its subject / centre band; fix round 4 F1 and its verification round, inf; the
+  T1 west face stands 113-121 have no mast within 120 m because of it); stands still without a mast within 120 m get a
+  gap-fill try (`MAST_GAP_GRID` radii 18-114 m by 6 m, every 7.5 deg) ranked by the largest head a candidate shows in any
+  stand's "Fly to stand" camera (`MAST_GAP_HEAD` 3.0 deg = < 40 px at 1280 x 720; the Tower view at 1.0 deg) and its
+  closeness to their subjects (`MAST_GAP_SUBJ` 2 x the subject margin), nearest first among the candidates under the limits
+  (verification round; `standCamHead`); the result is stored in `data/sha_masts.json` and used when its `inputs` equals the
+  hash of the page's placement inputs (code, constants, stands, bridges, envelopes, pavement, cameras; else the live pass runs,
+  ~2 s on llvmpipe, and the page logs a console **warning**, so the clean-console jobs fail; fix round 4, F7): after any change
+  to the placement code or its inputs run `SOFTGL=1 SET=masts node livetest.mjs jobs/gates.mjs`, then
+  `SET='fix3;fix3low' CHECK_ONLY=1`; placement is **tier-independent** (`gates.js
   vectorPavement`: the polygons the airfield map is painted from plus the packages' `pavement(api)` fills - a package that
   adds pavement through that hook counts automatically, and its hook is called a second time, with `api.rect` null and
   `api.res` 1; keep it free of call-count side effects).
@@ -247,6 +281,7 @@ liveries; never `refs/`, `tools/`, `docs/`, `out/`, `jobs/`).
 | `sha_ground_s2.js` | `SHA_GROUND_S2` | Sentinel-2 L2A ground-colour hint, 10 m, inside the extent | `tools/terrain/s2_ground_hint.py` |
 | `sha_buildings3d.js/.json` | `SHA_BUILDINGS3D` | building parts, towers, hangars, claims, `airside_fill` (asphalt band + `apron_polys`), `stand_head_fill` (inf) | `tools/buildings/build_buildings3d.py` (also reads `js/live/caac_markings.js`) |
 | `sha_landcover_far.js` | `SHA_LANDCOVER_FAR` | ESA WorldCover 2021 at 50 m beyond the extent (CC BY 4.0) | `tools/terrain/worldcover_far.py` |
+| `sha_masts.js/.json` | `SHA_MASTS` (the page fetches the `.json`) | the stored apron floodlight mast placement (inf): `inputs` hash, `hash`, `masts`, `uncovered`, `stats` | `jobs/gates.mjs SET=masts` (the page's own live pass) |
 | `sha_snapshot.js/.json` | `SHA_SNAPSHOT` | snapshot instant 2026-11-20 04:15Z, 11 METARs + TAF, empty traffic set | `tools/live/build_snapshot.py` |
 | `meas/*.json` | - | measurements (runway ends, taxiway refit, SAR / S2 stand evidence, building heights) | `tools/airport/*`, B3 |
 | `models/manifest.js`, `dock_foot.js`, `liveries/manifest.js`, `lookup.js`, `brands.js` | - | copied sfo3d metadata (`.sfom` and textures stay in sfo3d) | sfo3d |

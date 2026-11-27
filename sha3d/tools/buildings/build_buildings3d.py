@@ -585,7 +585,9 @@ def main():
     fill, fill_stats = airside_fill(A, S, [poly_of(B[i]) for i in AIRSIDE_FILL_OF if i in B])
     checks['airside_fill'] = fill_stats
     # ------------------------------------------------------------------------------------------------ stand-head fill (fix 2, R1)
-    h2 = unary_union([Polygon(pl[0], pl[1:]).buffer(0) for pl in fill['polys']])
+    # (fix round 4, review_visual_fix3.md F6) against the whole airside fill: the asphalt service band AND its apron part
+    # (fix round 3, N6 split the fill; with only the band here, 6,918 m2 of stand-head fill lay on the apron part)
+    h2 = unary_union([Polygon(pl[0], pl[1:]).buffer(0) for pl in fill['polys'] + fill.get('apron_polys', [])])
     head, head_stats, head_geom = stand_head_fill(A, S, h2)
     checks['stand_head_fill'] = head_stats
     checks['stand_heads_unpaved_before'] = stand_head_check(A, S, [h2])

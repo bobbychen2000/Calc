@@ -151,7 +151,7 @@ function standLabels(app) {
 // every remote stand clear, so side -1 is only taken at remote stands. Uses the stand's exact heading (not the rounded card
 // record) and the subject points the mast placement used (SHA.qa.camSubject; without the gates package, the data's).
 // (fix round 3, review_visual_fix2.md V2) A side is clear only when no mast is in its near field either (gate_system.js
-// standCamNear: the head or the pole above 10 m in the frame at a depth under 45 m, or the pole within 25 m of the
+// standCamNear: the head or the pole above 10 m in the frame at a depth under 55 m (45 m before fix round 4, F3), or the pole within 25 m of the
 // camera). Order: side +1 if clear; side -1 if clear; else side +1 if its subject is clear; else the side with the larger
 // subject clearance.
 function standCam(app, s, side) {
