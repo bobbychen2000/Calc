@@ -23,7 +23,8 @@ OVER = 0.40                          # eave line -> wall face
 UPPER = {
     'UA_left': dict(rect=(1.96, 2.40, 11.40, 10.40)),
     'UA_bay': dict(rect=(2.54, 1.95, 6.26, 6.5), gable=('y0',), ridge='y'),
-    'UB_rear_left_gable': dict(rect=(1.96, 6.0, 6.40, 11.60), gable=('y1',), ridge='y'),
+    'UB_rear_left': dict(rect=(1.96, 6.0, 6.40, 11.60), ridge='y'),
+    'UW2_flat': dict(rect=(14.4, 6.0, 17.6, 10.05), z_cap=7.6),
     'UC_rear_mid': dict(rect=(10.38, 5.0, 15.18, 13.20), ridge='y'),
     'UD_mid': dict(rect=(8.5, 2.90, 18.0, 8.80), ridge='x', gable=('x0', 'x1')),
     'UE_right_gable': dict(rect=(14.38, 0.38, 19.82, 6.5), gable=('y0',), ridge='y'),
@@ -34,22 +35,24 @@ UPPER = {
 # would show a V between their hips)
 LOWER = {
     'LB1_garage_left': dict(rect=(0.10, 0.15, 10.4, 13.20)),
+    'LB1r_leanto': dict(rect=(6.0, 5.0, 14.7, 13.20), ridge='x', gable=('x0', 'x1'), z=4.003),
     'LP_base': dict(rect=(6.60, -2.47, 19.80, 4.0), z_cap=4.82),
     'LP_left': dict(rect=(6.60, -3.30, 14.85, 4.0), z_cap=4.82),
     'LP_entry': dict(rect=(10.40, -3.55, 14.85, 4.0), z_cap=4.82),
-    'LB3_wing': dict(rect=(19.40, -1.67, 25.95, 13.06)),
+    'LB3_wing': dict(rect=(14.9, -1.67, 25.95, 13.06), ridge='y'),
     'LB3b_wing_bay': dict(rect=(14.85, -2.22, 25.03, 3.0), z_cap=4.6),
     'LB3c_wing_gable': dict(rect=(20.45, -1.97, 24.05, 1.0), gable=('y0',), ridge='y', z=4.3),
-    'LB4_rear_family': dict(rect=(12.0, 8.0, 20.80, 14.35)),
+    'LB4_great_room': dict(rect=(15.10, 8.0, 20.80, 14.35), ridge='y'),
     'LB5_rear_bay': dict(rect=(10.38, 9.0, 15.10, 16.47), z_cap=4.75),
-    'LB6_rear_left': dict(rect=(6.68, 8.0, 15.10, 13.88)),
+    'LB6_kitchen_gable': dict(rect=(6.68, 8.0, 10.37, 13.88), gable=('y1',), ridge='y'),
 }
 
 
 def blocks():
     out = {}
     for name, b in UPPER.items():
-        out[name] = hip_roof(name, *b['rect'], Z_E2, SL_UP, 'roof_shingle', gable=b.get('gable', ()), ridge=b.get('ridge'), storey=2)
+        out[name] = hip_roof(name, *b['rect'], Z_E2, SL_UP, 'roof_shingle', gable=b.get('gable', ()), ridge=b.get('ridge'),
+                             z_cap=b.get('z_cap'), storey=2)
     for name, b in LOWER.items():
         out[name] = hip_roof(name, *b['rect'], b.get('z', Z_E1), SL_LO, 'roof_seam', gable=b.get('gable', ()),
                              ridge=b.get('ridge'), z_cap=b.get('z_cap'), storey=1)
@@ -141,15 +144,30 @@ GROUND = [
     dict(name='wing_bay_e', a=(24.5, -1.8), b=(24.5, -1.26), z0=FLOOR, ops=[], mat='siding_bb'),
     dict(name='wing_front_r', a=(24.5, -1.26), b=(25.55, -1.26), z0=FLOOR, ops=[]),
     dict(name='east', a=(25.55, -1.26), b=(25.55, 12.66), z0=FLOOR, ops=[]),
-    dict(name='wing_rear', a=(25.55, 12.66), b=(20.4, 12.66), z0=FLOOR, ops=[]),
-    dict(name='family_east', a=(20.4, 12.66), b=(20.4, 13.95), z0=FLOOR, ops=[]),
-    dict(name='family_rear', a=(20.4, 13.95), b=(14.7, 13.95), z0=FLOOR, ops=[]),
-    dict(name='rear_bay_east', a=(14.7, 13.95), b=(14.7, 16.07), z0=FLOOR, ops=[]),
-    dict(name='rear_bay', a=(14.7, 16.07), b=(10.78, 16.07), z0=FLOOR, ops=[]),
-    dict(name='rear_bay_west', a=(10.78, 16.07), b=(10.78, 13.48), z0=FLOOR, ops=[]),
-    dict(name='rear_left_mid', a=(10.78, 13.48), b=(7.08, 13.48), z0=FLOOR, ops=[]),
-    dict(name='rear_left_step', a=(7.08, 13.48), b=(7.08, 12.8), z0=FLOOR, ops=[]),
-    dict(name='rear_left', a=(7.08, 12.8), b=(0.5, 12.8), z0=FLOOR, ops=[]),
+    dict(name='bedroom_rear', a=(25.55, 12.66), b=(20.4, 12.66), z0=FLOOR, ops=[
+        (OP.slider, 1.15, 0.0, (), dict(w=2.85, h=2.44, panels=2, lights=3, seed=31))],
+        lanterns=[(0.81, 1.73), (4.58, 1.73)], awning=dict(x=2.6, z=2.5, w=5.1, rods=0, proj=1.4, slats=6)),
+    dict(name='great_room_east', a=(20.4, 12.66), b=(20.4, 13.95), z0=FLOOR, ops=[]),
+    dict(name='great_room_rear', a=(20.4, 13.95), b=(14.7, 13.95), z0=FLOOR, ops=[
+        (OP.slider, 1.2, 0.0, (), dict(w=3.8, h=2.44, panels=2, lights=5, seed=32))],
+        lanterns=[(0.84, 1.73), (5.36, 1.73)]),
+    dict(name='nook_east', a=(14.7, 13.95), b=(14.7, 16.07), z0=FLOOR, ops=[
+        (OP.window, 0.9, 0.63, (0.5, 1.92), dict(n=1, lights=2, seed=33))]),
+    dict(name='nook_rear', a=(14.7, 16.07), b=(10.78, 16.07), z0=FLOOR, ops=[
+        (OP.window, 0.585, 0.63, (2.75, 1.92), dict(n=3, lights=2, seed=34))],
+        lanterns=[(0.27, 1.73), (3.65, 1.73)]),
+    dict(name='nook_west', a=(10.78, 16.07), b=(10.78, 12.8), z0=FLOOR, ops=[
+        (OP.window, 0.65, 0.63, (0.5, 1.92), dict(n=1, lights=2, seed=35))]),
+    dict(name='recess', a=(10.78, 12.8), b=(9.97, 12.8), z0=FLOOR, ops=[]),
+    dict(name='kitchen_east', a=(9.97, 12.8), b=(9.97, 13.55), z0=FLOOR, ops=[]),
+    dict(name='kitchen_rear', a=(9.97, 13.55), b=(7.08, 13.55), z0=FLOOR, gable=(0.4, 0.4), ops=[
+        (OP.window, 0.47, 0.82, (1.95, 1.8), dict(n=3, lights=2, seed=36))],
+        lanterns=[(0.19, 1.73), (2.70, 1.73)]),
+    dict(name='kitchen_west', a=(7.08, 13.55), b=(7.08, 12.8), z0=FLOOR, ops=[]),
+    dict(name='laundry_rear', a=(7.08, 12.8), b=(0.5, 12.8), z0=FLOOR, ops=[
+        (OP.dutch_door_wood, 2.97, 0.0, (), dict(w=0.91, h=2.44, seed=37)),
+        (OP.window, 4.57, 1.84, (1.18, 0.6), dict(n=1, lights=0, seed=38))],
+        lanterns=[(2.36, 1.73)]),
     dict(name='west', a=(0.5, 12.8), b=(0.5, 0.55), z0=Z_SLAB, ops=[]),
 ]
 ZU = Z_E1                              # base of the upper facades (the upper floor is ~0.4 above it)
@@ -177,20 +195,82 @@ UPPER_WALLS = [
     dict(name='uf_front', a=(19.42, 1.35), b=(22.7, 1.35), ops=[
         (OP.window, 1.75, 1.59, (0.8, 0.73), dict(n=1, lights=0, seed=27))]),
     dict(name='uf_east', a=(22.7, 1.35), b=(22.7, 9.65), ops=[]),
-    dict(name='uf_rear', a=(22.7, 9.65), b=(17.2, 9.65), gable=(0.4, 0.4), mat='siding_bb', ops=[]),
-    dict(name='uc_east', a=(14.78, 9.65), b=(14.78, 12.8), ops=[]),
-    dict(name='uc_rear', a=(14.78, 12.8), b=(10.78, 12.8), ops=[]),
-    dict(name='uc_west', a=(10.78, 12.8), b=(10.78, 10.0), ops=[]),
-    dict(name='ua_rear', a=(10.78, 10.0), b=(6.0, 10.0), ops=[]),
-    dict(name='ub_east', a=(6.0, 10.0), b=(6.0, 11.2), ops=[]),
-    dict(name='ub_rear', a=(6.0, 11.2), b=(2.36, 11.2), gable=(0.4, 0.4), mat='siding_bb', ops=[]),
-    dict(name='ua_west', a=(2.36, 11.2), b=(2.36, 2.8), ops=[]),
+    dict(name='uf_rear', a=(22.7, 9.65), b=(17.2, 9.65), gable=(0.4, 0.4), mat='siding_bb', ops=[
+        (OP.window, 1.77, 1.2, (1.8, 1.4), dict(n=2, lights=2, seed=41))]),
+    dict(name='w2_rear', a=(17.2, 9.65), b=(14.78, 9.65), ops=[
+        (OP.window, 0.7, 1.4, (1.13, 1.2), dict(n=3, lights=1, seed=42))]),
+    dict(name='media_east', a=(14.78, 9.65), b=(14.78, 12.8), ops=[
+        (OP.window, 0.84, 1.3, (2.07, 1.4), dict(n=3, lights=2, seed=43))]),
+    dict(name='media_rear', a=(14.78, 12.8), b=(10.78, 12.8), ops=[
+        (OP.slider, 0.45, 0.45, (), dict(w=3.1, h=2.3, panels=4, lights=2, seed=44))],
+        lanterns=[(0.22, 2.15), (3.78, 2.15)]),
+    dict(name='media_west', a=(10.78, 12.8), b=(10.78, 10.0), ops=[
+        (OP.window, 0.24, 1.3, (2.07, 1.4), dict(n=3, lights=2, seed=45))]),
+    dict(name='w3_rear', a=(10.78, 10.0), b=(6.0, 10.0), ops=[
+        (OP.window, 1.11, 1.5, (0.9, 0.95), dict(n=1, lights=0, seed=46))]),
+    dict(name='u1_east', a=(6.0, 10.0), b=(6.0, 11.2), ops=[]),
+    dict(name='u1_rear', a=(6.0, 11.2), b=(2.36, 11.2), ops=[
+        (OP.window, 0.25, 0.95, (1.6, 1.65), dict(n=2, lights=2, seed=47))]),
+    dict(name='u1_west', a=(2.36, 11.2), b=(2.36, 2.8), ops=[
+        (OP.window, 0.9, 1.2, (0.6, 1.3), dict(n=1, lights=2, seed=48))]),
 ]
 COLUMNS = [(7.85, -3.05), (11.35, -3.30), (14.4, -3.30), (14.4, -2.22), (18.95, -2.22)]      # centres, porch floor to beam
 COL_LANTERN = [0, 1, 2, 4]
 CHIMNEYS = [dict(x=(19.25, 20.45), y=(0.7, 2.2), z0=4.0, top=9.5, cap=True),
             dict(x=(17.47, 18.04), y=(6.96, 7.52), z0=7.0, top=9.3, cap=True),
             dict(x=(24.05, 24.95), y=(9.7, 10.45), z0=4.0, top=6.3, cap=True)]
+
+
+# roof-top equipment, plan rectangles read from the aerial photo (corrected for the roof's height)
+SOLAR = [(2.62, 4.56, 4.08, 8.85), (20.66, 3.96, 22.04, 9.71), (11.47, 8.85, 12.5, 10.48), (13.36, 8.85, 14.3, 10.48),
+         (10.1, 6.5, 11.8, 7.5)]
+SKYLIGHTS = [(14.87, 7.18), (16.76, 7.18), (15.98, 3.65), (21.65, 3.61), (24.17, 6.2)]
+VENTS = [(8.3, 7.96), (9.6, 7.96), (9.24, 3.47), (9.75, 3.47), (16.2, 1.9), (4.0, 9.6), (20.6, 11.6)]
+
+
+def _top_plane(ps, x, y):
+    best = None
+    for p in ps:
+        if p.contains(x, y) and (best is None or p.z(x, y) > best.z(x, y)):
+            best = p
+    return best
+
+
+def _roof_frame(p, x, y):
+    """Point on the plane, unit vector along the eave (to the right looking up the slope), unit vector up the slope."""
+    dn = p.downhill
+    sl = float(np.hypot(p.abc[0], p.abc[1]))
+    up = np.array([-dn[0], -dn[1], sl])
+    up /= np.linalg.norm(up)
+    n = np.array([-p.abc[0], -p.abc[1], 1.0])
+    n /= np.linalg.norm(n)
+    return np.array([x, y, p.z(x, y)]), np.cross(up, n), up
+
+
+def roof_equipment(geo, ps):
+    mw, ml = FX.MODULE
+    for x0, y0, x1, y1 in SOLAR:
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        p = _top_plane(ps, cx, cy)
+        if p is None or p.pitch < 2:
+            continue
+        o, r, up = _roof_frame(p, cx, cy)
+        ext = np.array([x1 - x0, y1 - y0, 0.0])
+        along, across = abs(ext @ r), abs(ext[:2] @ p.downhill) / max(1e-6, np.hypot(up[0], up[1]))
+        mod = (mw, ml) if (along > 1.9 or across > 1.3) else (ml, mw)             # single modules lie landscape
+        cols, rows = max(1, int(round(along / (mod[0] + 0.012)))), max(1, int(round(across / (mod[1] + 0.012))))
+        W, Lh = cols * mod[0] + (cols - 1) * 0.012, rows * mod[1] + (rows - 1) * 0.012
+        FX.solar_array(geo, o - r * W / 2 - up * Lh / 2, r, up, rows, cols, module=mod)
+    for x, y in SKYLIGHTS:
+        p = _top_plane(ps, x, y)
+        if p is not None and p.pitch > 2:
+            o, r, up = _roof_frame(p, x, y)
+            FX.skylight(geo, o, r, up)
+    for x, y in VENTS:
+        p = _top_plane(ps, x, y)
+        if p is not None:
+            o, r, up = _roof_frame(p, x, y) if p.pitch > 2 else (np.array([x, y, p.z(x, y)]), None, None)
+            FX.vent_stack(geo, o, np.array([-p.abc[0], -p.abc[1], 1.0]))
 
 
 def _frame(w):
@@ -228,6 +308,7 @@ def build():
     ps = [p for q in bl.values() for p in q]
     roof_planes(roofs, ps)
     roof_details(roofs, bl)
+    roof_equipment(extras, ps)
     for w in GROUND:
         _facade(walls, extras, w, w['z0'], PLATE1 - w['z0'])
         a, right, out, L = _frame(w)                   # foundation band down into the ground

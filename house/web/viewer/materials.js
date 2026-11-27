@@ -62,6 +62,7 @@ export const FALLBACK = {
   furniture_wood: { color: 0x8a5a36, roughness: 0.7 },
   cushion: { color: 0xdcdcd8, roughness: 0.95 },
   neighbor_wall: { color: 0xb5b9bd, roughness: 0.9 },
+  ground_far: { color: 0x717d66, roughness: 1.0 },
   neighbor_roof: { color: 0x5c5d60, roughness: 0.95 },
   interior_glow: { color: 0xffe2b0, roughness: 1.0, emissive: 0xffc98a, emissiveDay: 0.0, emissiveDusk: 2.2 },
 };

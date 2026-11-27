@@ -17,6 +17,7 @@ for (let i = 0; i < args.length;) {
 const port = process.env.HOUSE_PORT || 8777;
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+page.setDefaultTimeout(240000);
 const logs = [];
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') logs.push(m.type() + ': ' + m.text()); });
 page.on('pageerror', (e) => logs.push('pageerror: ' + e));
@@ -35,7 +36,7 @@ for (const j of jobs) {
   await page.goto(url);
   const info = await page.evaluate(async () => {
     const t0 = performance.now();
-    while (!window.viewer && performance.now() - t0 < 30000) await new Promise((r) => setTimeout(r, 50));
+    while (!window.viewer && performance.now() - t0 < 60000) await new Promise((r) => setTimeout(r, 50));
     const r = await window.viewer.ready;
     await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
     window.viewer.renderNow();

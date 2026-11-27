@@ -30,6 +30,7 @@ MATERIALS = {
     'lawn': dict(color=(0.078, 0.195, 0.025), roughness=1.0),
     'mulch': dict(color=(0.10, 0.042, 0.019), roughness=1.0),
     'soil': dict(color=(0.068, 0.045, 0.030), roughness=1.0),
+    'ground_far': dict(color=(0.16, 0.20, 0.13), roughness=1.0),
     'asphalt': dict(color=(0.07, 0.07, 0.074), roughness=0.95),
     'light_fixture': dict(color=(0.007, 0.008, 0.008), roughness=0.5, metallic=0.4),
     'light_glow': dict(color=(1.0, 0.88, 0.62), roughness=0.4, emissive=(1.0, 0.7, 0.35)),
