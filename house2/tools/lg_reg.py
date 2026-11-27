@@ -242,6 +242,8 @@ def fit_camera(uv, X, w, h, cam0=None, free=('f', 'k1'), f0=None):
                                              flags=cv2.SOLVEPNP_EPNP)
         if ok and inl is not None and (best is None or len(inl) > best[0]):
             best = (len(inl), f, rv, tv, inl.ravel())
+    if best is None:
+        raise SystemExit('no PnP solution from %d pairs (the views do not overlap enough)' % len(uv))
     n, f, rv, tv, inl = best
     R = cv2.Rodrigues(rv)[0]
     cam = CAMS.make(w, h, f, R, -R.T @ tv.ravel())
