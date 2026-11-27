@@ -1,9 +1,7 @@
-"""Register the reference images against the drone SfM model through hand-picked landmarks (a small bundle
-adjustment), in the upright, lot-aligned SfM frame "S" (X right from the street, Y into the lot, Z up; arbitrary
-scale and origin until tools/frame.py fixes them).
+"""Register the photos of the second house through hand-picked landmarks (a small bundle adjustment), in WORLD
+metres (model/frame.py: X = the aerial's image right, Y = its image up, Z up).
 
-    python3 -I tools/register.py export     # SfM cameras -> refs/cache/cams_sfm.json (S frame)
-    python3 -I tools/register.py solve      # survey/landmarks.json -> refs/cache/cams_S.json + landmarks_S.json + report
+    python3 -I tools/register.py solve      # survey/landmarks*.json -> refs/cache/cams_S.json + landmarks_S.json + report
     python3 -I tools/register.py check IMG  # residual table for one image
     python3 -I tools/register.py freeze IMG [IMG ...]   # fix these images' solved cameras for all later solves
     python3 -I tools/register.py where NAME # where a solved landmark should appear in the other registered images
@@ -11,8 +9,12 @@ scale and origin until tools/frame.py fixes them).
 
 survey/landmarks.json and survey/landmarks_*.json (merged by landmark name):
     { "name": { "desc": "...", "obs": { "<image rel. to refs/cache>": [u, v], ... } }, ... }
-Pixel coordinates are in ORIGINAL pixels of each image.  SfM frames (frames/seg002_033..053, seg141_031..049) are
-fixed cameras; every other image gets a camera fitted (focal length free, principal point at the centre).
+Pixel coordinates are in ORIGINAL pixels of each image.  The aerial (photos/p29) is the fixed camera (its VGGT pose,
+survey/frame.json; seeded into refs/cache/cams_fixed.json) and every image frozen with `freeze`; every other image gets a
+camera fitted (focal length free, principal point at the centre), started from its VGGT camera.
+survey/constraints.json fixes what one fixed camera cannot (the scale about it) and adds what is known:
+    {"dist": [[landmark A, landmark B, metres, sigma m], ...], "z": [[landmark, metres, sigma m], ...],
+     "same_z": [[landmark A, landmark B, sigma m], ...]}
 A landmark needs >= 2 observations to count; a new image needs >= 6 landmarks whose position is already known.
 """
 import json
@@ -26,27 +28,15 @@ from scipy.spatial.transform import Rotation
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, HERE)
 from tools import cams as CAMS  # noqa: E402
-from tools import sfm_frame  # noqa: E402
 
 CACHE = os.path.join(HERE, 'refs', 'cache')
 LM = os.path.join(HERE, 'survey', 'landmarks.json')
+AERIAL = 'photos/p29_ddf5dc.jpg'
 
 
-def export():
-    cams, P, col, err, ntr = sfm_frame.load()
-    B, _ = sfm_frame.upright(cams, P)
-    A = B                                          # sfm -> S (X right, Y into the lot, Z up)
-    out = {}
-    for name, c in cams.items():
-        key = 'frames/' + name.split('/')[-1]
-        out[key] = CAMS.make(c['w'], c['h'], c['f'], c['R'] @ A.T, A @ c['C'], k1=c['k1'], cx=c['cx'], cy=c['cy'],
-                             fixed=True)
-    CAMS.save(out, os.path.join(CACHE, 'cams_sfm.json'))
-    np.savez_compressed(os.path.join(CACHE, 'sfm_points_S.npz'), P=(P @ A.T).astype(np.float32), col=col, err=err,
-                        ntr=ntr)
-    print('exported', len(out), 'cameras,', len(P), 'points')
-    for k in sorted(out)[::5]:
-        print('  ', k, CAMS.describe(out[k]))
+def constraints():
+    p = os.path.join(HERE, 'survey', 'constraints.json')
+    return json.load(open(p)) if os.path.exists(p) else {}
 
 
 def landmarks():
@@ -70,8 +60,11 @@ def landmarks():
 
 def fixed_cams():
     """Cameras that are not adjusted: the SfM frames and every image frozen with `freeze`."""
-    fixed = CAMS.load(os.path.join(CACHE, 'cams_sfm.json'))
-    fixed.update(CAMS.load(os.path.join(CACHE, 'cams_fixed.json')))
+    p = os.path.join(CACHE, 'cams_fixed.json')
+    if not os.path.exists(p):                      # seed: the aerial at its VGGT pose defines the frame
+        v = CAMS.load(os.path.join(CACHE, 'cams_world_vggt.json'))
+        _write({AERIAL: dict(v[AERIAL], fixed=True)}, p, cams=True)
+    fixed = CAMS.load(p)
     return fixed
 
 
@@ -97,14 +90,8 @@ def freeze(images):
 def guesses():
     """Rough cameras predicted by the multi-view network (tools/vggt_align.py), converted to the S frame: good to a
     few degrees / metres - starting points for the fits and for finding a landmark in an unregistered image."""
-    p = os.path.join(CACHE, 'vggt', 'run1_cams.json')
-    if not os.path.exists(p):
-        return {}
-    from model import frame
-    out = {}
-    for k, c in json.load(open(p)).items():
-        out[k] = CAMS.make(c['w'], c['h'], c['f'], np.array(c['R']) @ frame._rz(), frame.to_S(c['C']))
-    return out
+    p = os.path.join(CACHE, 'cams_world_vggt.json')
+    return CAMS.load(p) if os.path.exists(p) else {}
 
 
 def _size(img):
@@ -170,9 +157,21 @@ def solve(verbose=True):
         XX = {n: p[7 * len(free) + 3 * k:7 * len(free) + 3 * k + 3] for k, n in enumerate(names)}
         return cc, XX
 
+    K = constraints()
+
     def resid(p):
         cc, XX = unpack(p)
-        return np.concatenate([CAMS.project(cc[i], XX[n])[0] - uv for n, i, uv in obs])
+        r = [np.concatenate([CAMS.project(cc[i], XX[n])[0] - uv for n, i, uv in obs])]
+        for a, b, m, sg in K.get('dist', []):
+            if a in XX and b in XX:
+                r.append([(np.linalg.norm(XX[a] - XX[b]) - m) / sg])
+        for a, m, sg in K.get('z', []):
+            if a in XX:
+                r.append([(XX[a][2] - m) / sg])
+        for a, b, sg in K.get('same_z', []):
+            if a in XX and b in XX:
+                r.append([(XX[a][2] - XX[b][2]) / sg])
+        return np.concatenate([np.ravel(x) for x in r])
 
     if not obs:
         print('no landmark has two observations in registered images yet (%d landmarks in the file)' % len(lm))
@@ -181,7 +180,7 @@ def solve(verbose=True):
     sol = least_squares(resid, p0, loss='soft_l1', f_scale=4.0, x_scale='jac') if len(p0) else None
     px = sol.x if sol is not None else p0
     cams2, X2 = unpack(px)
-    r = resid(px).reshape(-1, 2)
+    r = resid(px)[:2 * len(obs)].reshape(-1, 2)
     e = np.linalg.norm(r, axis=1)
     if verbose:
         print('landmarks %d (of %d), images %d fixed + %d fitted, observations %d, rms %.2f px, median %.2f, max %.2f'
@@ -267,9 +266,7 @@ def mark(img, out, scale=1.0, box=None):
 
 
 if __name__ == '__main__':
-    if sys.argv[1] == 'export':
-        export()
-    elif sys.argv[1] == 'solve':
+    if sys.argv[1] == 'solve':
         solve()
     elif sys.argv[1] == 'check':
         check(sys.argv[2])

@@ -1,6 +1,7 @@
-"""World frame: metres, X right along the street, Y into the lot, Z up (see survey/frame.json for the origin).
-
-The reference cameras are solved in the SfM frame S (tools/register.py); to_world() converts cameras and points.
+"""World frame of the second house: metres, X = the aerial's image right, Y = its image up (into the lot, away from the
+street at the image bottom), Z up; built from the VGGT run by tools/vggt_frame.py (survey/frame.json).  There is no
+separate SfM frame here: the landmark solve (tools/register.py) works in world metres directly, so to_world / to_S /
+cam_to_world are identities, kept for the tools shared with house/.
 """
 import json
 import os
@@ -12,37 +13,32 @@ FRAME = json.load(open(os.path.join(HERE, 'survey', 'frame.json')))
 
 
 def _rz():
-    a = np.radians(FRAME['yaw_deg'])
-    c, s = np.cos(a), np.sin(a)
-    return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1.0]])
+    return np.eye(3)
 
 
 def to_world(P):
-    P = np.asarray(P, float)
-    return FRAME['scale'] * (P - np.array(FRAME['origin_S'])) @ _rz().T
+    return np.asarray(P, float)
 
 
 def to_S(P):
-    P = np.asarray(P, float)
-    return (P / FRAME['scale']) @ _rz() + np.array(FRAME['origin_S'])
+    return np.asarray(P, float)
 
 
 def cam_to_world(cam):
-    c = dict(cam)
-    c['C'] = to_world(cam['C'])
-    c['R'] = np.asarray(cam['R'], float) @ _rz().T
-    return c
+    return dict(cam)
 
 
 def world_cams():
-    """All registered cameras (refs/cache/cams_S.json, else the SfM frames alone) in world metres."""
+    """All cameras in world metres: VGGT's (refs/cache/cams_world_vggt.json), replaced by the landmark solve's
+    (refs/cache/cams_S.json) and by survey/cams_world.json where those exist."""
     import sys
     sys.path.insert(0, HERE)
     from tools import cams as CAMS
-    p = os.path.join(HERE, 'refs', 'cache', 'cams_S.json')
-    if not os.path.exists(p):
-        p = os.path.join(HERE, 'refs', 'cache', 'cams_sfm.json')
-    out = {k: cam_to_world(c) for k, c in CAMS.load(p).items()}
+    out = {}
+    for f in ('cams_world_vggt.json', 'cams_S.json'):           # the network's cameras, then the landmark solve's
+        p = os.path.join(HERE, 'refs', 'cache', f)
+        if os.path.exists(p):
+            out.update({k: cam_to_world(c) for k, c in CAMS.load(p).items()})
     extra = os.path.join(HERE, 'survey', 'cams_world.json')          # cameras fitted on the model itself (tools/fit_world.py)
     if os.path.exists(extra):
         for k, c in json.load(open(extra)).items():
