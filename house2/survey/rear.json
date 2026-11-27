@@ -1,0 +1,4429 @@
+{
+ "zone": "rear",
+ "images": [
+  "photos/p21_160d78.jpg",
+  "photos/p28_7ae0dd.jpg",
+  "photos/p26_cacb52.jpg",
+  "photos/p22_50e8b3.jpg",
+  "photos/p23_e4717a.jpg",
+  "photos/p24_5e2477.jpg",
+  "photos/p20_f249da.jpg",
+  "photos/p18_150f57.jpg",
+  "photos/p19_1e145e.jpg",
+  "photos/p27_8c90d5.jpg",
+  "photos/p29_ddf5dc.jpg"
+ ],
+ "elements": [
+  {
+   "id": "rear.ncp_porch",
+   "type": "covered_porch",
+   "desc": "North covered porch / dining patio (NCP): one-storey porch along the EAST face of two-storey block NC that wraps its NE corner onto the north face. Low hip roof in charcoal asphalt shingles (seen only from above, p28), white painted header beam / fascia, flat white ceiling with deep white beams (p23, taken from under it), white square columns with a moulded capital; bluestone floor 2 risers above the pool deck. Holds the 10-seat teak dining table.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1503,
+    860,
+    1820,
+    1062
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1695,
+      1277,
+      1835,
+      1420
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      0,
+      0,
+      1300,
+      372
+     ]
+    }
+   ],
+   "attrs": {
+    "on": "NC east wall (+ north face return)",
+    "adjacent": [
+     "rear.bg_patio (south, flush)",
+     "rear.lawn_side_north (north-east)"
+    ],
+    "roof_id": [
+     "roof.ncp_n",
+     "roof.ncp_e",
+     "roof.block_north_porch"
+    ],
+    "floor_risers": 2,
+    "note": "p21 camera is about at eave height: the porch roof does not show above the beam there"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.ncp_beam",
+   "type": "beam",
+   "desc": "White painted header beam / eave fascia of the north porch along the NC east face (its north end hidden by the Japanese maple).",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1503,
+    860,
+    1717,
+    887
+   ],
+   "also": [
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "polyline": [
+      [
+       0,
+       211
+      ],
+      [
+       544,
+       322
+      ],
+      [
+       644,
+       322
+      ],
+      [
+       2010,
+       160
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "p23": "underside lines of the two deep ceiling beams meeting over the corner column (L in plan)"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.ncp_column_ne",
+   "type": "column",
+   "desc": "NE corner column of the north porch: white square column (~0.3 m) with a stepped moulded capital, no taper; beams of the porch ceiling run off it to the north and to the south.",
+   "image": "photos/p23_e4717a.jpg",
+   "bbox": [
+    428,
+    300,
+    672,
+    1150
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      1790,
+      957,
+      1820,
+      1023
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1735,
+      1362,
+      1755,
+      1420
+     ]
+    }
+   ],
+   "attrs": {
+    "capital_bbox_p23": [
+     428,
+     300,
+     672,
+     372
+    ],
+    "shaft_bbox_p23": [
+     461,
+     372,
+     644,
+     1150
+    ]
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.ncp_doors",
+   "type": "glass_doors",
+   "desc": "Wide set of glazed doors (4 panels, black frames, full lites) in the NC east wall under the north porch, behind the dining table.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1507,
+    890,
+    1640,
+    1030
+   ],
+   "attrs": {
+    "on": "NC east wall, ground floor",
+    "est_height_m": 2.4
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.ncp_wall_lower",
+   "type": "wall",
+   "desc": "Ground-floor NC east wall under the porch right of the doors: cedar shingles (reads light grey in the shade), with a wall lantern.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1642,
+    889,
+    1739,
+    1005
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.ncp_lantern",
+   "type": "light",
+   "desc": "Black wall lantern on the NC east wall under the north porch.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1664,
+    905,
+    1677,
+    925
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.ncp_dining",
+   "type": "furniture",
+   "desc": "Dining set under the north porch: long weathered-teak plank table (~3 m) with 10 teak slat-back chairs (white seat cushions) and a black metal lantern box as centrepiece.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1503,
+    973,
+    1720,
+    1035
+   ],
+   "also": [
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      0,
+      1080,
+      2500,
+      1667
+     ]
+    }
+   ],
+   "attrs": {
+    "chairs": 10
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.ncp_steps",
+   "type": "steps",
+   "desc": "Two bluestone risers from the north porch floor down to the pool deck.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1547,
+    1031,
+    1667,
+    1062
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.ncp_pot",
+   "type": "planter",
+   "desc": "Grey planter pot with a shrub beside the porch corner column.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1760,
+    993,
+    1783,
+    1023
+   ],
+   "conf": 0.5
+  },
+  {
+   "id": "rear.nc_upper_wall_e",
+   "type": "wall",
+   "desc": "Upper-storey EAST wall of two-storey block NC (north of the balcony gable): grey cedar shingles, white corner boards; one window.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1503,
+    673,
+    1797,
+    860
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1590,
+      1240,
+      1715,
+      1325
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1490,
+      545,
+      1720,
+      640
+     ]
+    }
+   ],
+   "attrs": {
+    "storey": 2,
+    "adjacent": "right (north) of rear.bg_gable_end; above rear.ncp_porch"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.nc_window_e",
+   "type": "window",
+   "desc": "Upper window on the NC east wall: near-square, white trim, black sash with two lites in the top sash.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1673,
+    697,
+    1731,
+    756
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1687,
+      1267,
+      1711,
+      1305
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1585,
+      583,
+      1637,
+      610
+     ]
+    }
+   ],
+   "attrs": {
+    "est_size_m": [
+     1.0,
+     1.0
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.nc_eave_e",
+   "type": "eave",
+   "desc": "East eave of block NC: dark shingle roof edge with exposed white rafter tails under a narrow fascia (Craftsman), ~0.6 m overhang.",
+   "image": "photos/p21_160d78.jpg",
+   "polyline": [
+    [
+     1503,
+     679
+    ],
+    [
+     1800,
+     683
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "polyline": [
+      [
+       1490,
+       548
+      ],
+      [
+       1710,
+       572
+      ]
+     ]
+    }
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.nc_downspout",
+   "type": "downspout",
+   "desc": "Downspout at the north end of the NC east wall (from the eave gutter down to the porch roof).",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1739,
+    686,
+    1747,
+    772
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.nc_north_wall",
+   "type": "wall",
+   "desc": "NC north wall (side facade) above the north porch roof: grey shingles, one window, a satellite dish on it.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1720,
+    1240,
+    1810,
+    1300
+   ],
+   "conf": 0.55
+  },
+  {
+   "id": "rear.nc_window_n",
+   "type": "window",
+   "desc": "Window on the NC north wall, white trim.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1740,
+    1250,
+    1770,
+    1290
+   ],
+   "conf": 0.55
+  },
+  {
+   "id": "rear.satellite_dish",
+   "type": "utility",
+   "desc": "Small white satellite dish wall-mounted on the NC north wall.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1785,
+    1247,
+    1805,
+    1277
+   ],
+   "attrs": {
+    "roof_note": "roof.json: on the north face of NC"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.chimney_n",
+   "type": "chimney",
+   "desc": "North stone chimney: tall stacked-fieldstone stack (tan / rust / grey) from grade beside the AC units, at the junction of the north wing and block NC, rising above both roofs; light grey cap with a round spark arrestor.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1815,
+    1222,
+    1852,
+    1375
+   ],
+   "attrs": {
+    "roof_id": "roof.chimney_n",
+    "cap_bbox": [
+     1815,
+     1222,
+     1850,
+     1247
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.north_wing_wall_n",
+   "type": "wall",
+   "desc": "North wall of the one-storey north wing (side / service yard): grey shingles; along it the electric panel, gas meter, two AC condensers, blue / grey bins and a yellow stepladder. Solar array a2 on the roof above.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1852,
+    1200,
+    1960,
+    1375
+   ],
+   "attrs": {
+    "storey": 1,
+    "roof_id": "roof.cw_n"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "rear.ac_units",
+   "type": "utility",
+   "desc": "Two grey AC condensers on pads at the foot of the north chimney.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1848,
+    1323,
+    1878,
+    1363
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.bins",
+   "type": "utility",
+   "desc": "Blue recycling and grey rubbish bins against the north wing wall.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1860,
+    1305,
+    1907,
+    1333
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.ladder",
+   "type": "misc",
+   "desc": "Yellow stepladder leaning on the north wing wall.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1880,
+    1273,
+    1898,
+    1308
+   ],
+   "conf": 0.5
+  },
+  {
+   "id": "rear.utility_meters",
+   "type": "utility",
+   "desc": "Electric panel and gas meter on the north wing wall.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1915,
+    1250,
+    1950,
+    1285
+   ],
+   "conf": 0.5
+  },
+  {
+   "id": "rear.bg_gable_end",
+   "type": "gable_end",
+   "desc": "East gable end of the two-storey balcony wing (faces the pool): shingled gable face, white raked bargeboards with exposed purlin ends, a white header beam across its foot; the covered upstairs balcony sits under it.",
+   "image": "photos/p21_160d78.jpg",
+   "polyline": [
+    [
+     1187,
+     648
+    ],
+    [
+     1345,
+     567
+    ],
+    [
+     1540,
+     666
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "polyline": [
+      [
+       1205,
+       465
+      ],
+      [
+       1347,
+       415
+      ],
+      [
+       1535,
+       540
+      ]
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "polyline": [
+      [
+       1422,
+       1217
+      ],
+      [
+       1490,
+       1205
+      ],
+      [
+       1565,
+       1250
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "roof_id": "roof.gable_end_bg",
+    "est_pitch": "~6.5/12 (rise ~1.6 m over a ~2.9 m half-span)",
+    "est_span_m": 5.9
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.bg_gable_vent",
+   "type": "vent",
+   "desc": "Triangular louvred gable vent with white trim and a centre king post, high in the BG gable.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1252,
+    594,
+    1431,
+    643
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1310,
+      450,
+      1410,
+      510
+     ]
+    }
+   ],
+   "conf": 0.8
+  },
+  {
+   "id": "rear.bg_brackets",
+   "type": "bracket",
+   "desc": "White knee-brace brackets under the gable eave ends (north one visible; south one behind the tree).",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1487,
+    653,
+    1517,
+    707
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1465,
+      525,
+      1510,
+      590
+     ]
+    }
+   ],
+   "conf": 0.65
+  },
+  {
+   "id": "rear.bg_header_beam",
+   "type": "beam",
+   "desc": "White header beam at the gable foot over the balcony.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1193,
+    663,
+    1484,
+    688
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1280,
+      530,
+      1470,
+      565
+     ]
+    }
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "rear.bg_balcony",
+   "type": "balcony",
+   "desc": "Covered upstairs balcony off the primary suite, under the BG gable: open to the east, white square posts at both corners, white railing, white fascia band at floor level (= ceiling of the patio below); side returns of the railing seen in p28.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1184,
+    663,
+    1503,
+    888
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1437,
+      1205,
+      1595,
+      1310
+     ]
+    }
+   ],
+   "attrs": {
+    "est_width_m": 5.4,
+    "floor_level_above_patio_m": 3.4
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.bg_balcony_railing",
+   "type": "railing",
+   "desc": "Balcony railing: white top and bottom rails with ~20 square white balusters, ~1.0 m high.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1209,
+    782,
+    1474,
+    840
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1447,
+      1255,
+      1592,
+      1307
+     ]
+    }
+   ],
+   "conf": 0.8
+  },
+  {
+   "id": "rear.bg_balcony_doors",
+   "type": "glass_doors",
+   "desc": "Balcony sliding / French glass doors (3 panels, dark frames, white curtains inside), white trim.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1252,
+    700,
+    1434,
+    782
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "rear.bg_post_upper_n",
+   "type": "column",
+   "desc": "Upper (balcony) post at the north corner: white square post with a base block at the railing.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1474,
+    685,
+    1503,
+    841
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "rear.bg_post_upper_s",
+   "type": "column",
+   "desc": "Upper (balcony) post at the south corner (partly hidden by the tree).",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1184,
+    688,
+    1209,
+    841
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.bg_floor_fascia",
+   "type": "beam",
+   "desc": "White fascia band at the balcony floor / patio ceiling level.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1187,
+    844,
+    1503,
+    888
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "rear.bg_patio",
+   "type": "covered_patio",
+   "desc": "Ground-floor covered patio under the balcony: bluestone floor 2 risers above the pool deck, a glazed door and a three-light window in the shingled wall, two wicker armchairs + side table, potted climbers (wisteria) twining up both posts.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1180,
+    853,
+    1507,
+    1087
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1440,
+      1300,
+      1600,
+      1405
+     ]
+    }
+   ],
+   "attrs": {
+    "adjacent": "north: rear.ncp_porch (same floor); south: rear.court_beam"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.bg_post_lower_n",
+   "type": "column",
+   "desc": "Ground-floor post at the BG north corner: white square column with base block, carries the balcony.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1474,
+    853,
+    1503,
+    1063
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1547,
+      1260,
+      1565,
+      1400
+     ]
+    }
+   ],
+   "attrs": {
+    "p28_note": "p28 box covers the full two-storey post line"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.bg_post_lower_s",
+   "type": "column",
+   "desc": "Ground-floor post at the BG south corner (white square, base block).",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1180,
+    870,
+    1213,
+    1063
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1437,
+      1225,
+      1452,
+      1360
+     ]
+    }
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "rear.bg_patio_door",
+   "type": "door",
+   "desc": "Single full-glass door (black frame, white casing) in the BG ground-floor wall.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1243,
+    893,
+    1297,
+    1037
+   ],
+   "attrs": {
+    "est_size_m": [
+     0.9,
+     2.4
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.bg_patio_window",
+   "type": "window",
+   "desc": "Three-light window (black sash, white trim) right of the door in the BG ground-floor wall.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1317,
+    893,
+    1453,
+    997
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "rear.bg_patio_chairs",
+   "type": "furniture",
+   "desc": "Two dark wicker lounge armchairs with white cushions and a small table between them.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1303,
+    993,
+    1447,
+    1047
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1505,
+      1335,
+      1540,
+      1368
+     ]
+    }
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.bg_pots_vines",
+   "type": "planter",
+   "desc": "Two dark planter pots at the foot of the BG posts with climbers (wisteria) trained up the posts.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1210,
+    987,
+    1473,
+    1060
+   ],
+   "attrs": {
+    "left_pot": [
+     1210,
+     987,
+     1240,
+     1060
+    ],
+    "right_pot": [
+     1443,
+     987,
+     1473,
+     1060
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.bg_steps",
+   "type": "steps",
+   "desc": "Two bluestone risers along the full front of the BG patio down to the pool deck.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    1183,
+    1043,
+    1507,
+    1087
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.court_upper_wall",
+   "type": "wall",
+   "desc": "Two-storey shingled walls round the open garden court south of the balcony wing (the CC east wall and the NE-facing 45-degree wall), seen through the two court trees; eave above with solar array a5 on the roof.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    840,
+    676,
+    1187,
+    862
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1300,
+      1170,
+      1440,
+      1245
+     ]
+    }
+   ],
+   "conf": 0.55
+  },
+  {
+   "id": "rear.court_windows",
+   "type": "window",
+   "desc": "Upper windows on the court walls: in p28 a triple window (white trim) on the NE-facing wall and a single window on the CC east wall to its right; in p21 the same group is behind the tree branches (two frames read).",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    900,
+    680,
+    1185,
+    810
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1317,
+      1184,
+      1385,
+      1219
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1410,
+      1185,
+      1432,
+      1217
+     ]
+    }
+   ],
+   "conf": 0.45
+  },
+  {
+   "id": "rear.court_beam",
+   "type": "beam",
+   "desc": "White painted beam spanning the open court at first-floor-ceiling level from the patio wing's west column to the BG south post (no roof over it: the court is open in p29).",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    850,
+    862,
+    1187,
+    890
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1312,
+      1242,
+      1435,
+      1256
+     ]
+    }
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.court_column",
+   "type": "column",
+   "desc": "White square column at the court corner / west end of the covered patio PB.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    990,
+    888,
+    1016,
+    1022
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.court_seating",
+   "type": "furniture",
+   "desc": "Outdoor sofa / chairs with light cushions in the shaded west end of the covered patio by the court.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    860,
+    985,
+    990,
+    1040
+   ],
+   "conf": 0.45
+  },
+  {
+   "id": "rear.tree_court_a",
+   "type": "tree",
+   "desc": "Court tree A (multi-stem, smooth pale bark, fresh leaves) in the court bed; trunk base.",
+   "image": "photos/p21_160d78.jpg",
+   "point": [
+    901,
+    1110
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1270,
+      1240,
+      1330,
+      1380
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.tree_patio_a"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.tree_court_b",
+   "type": "tree",
+   "desc": "Court tree B (multi-stem) in the bed in front of the BG patio; trunk base.",
+   "image": "photos/p21_160d78.jpg",
+   "point": [
+    1138,
+    1090
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1380,
+      1240,
+      1430,
+      1375
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.tree_patio_b"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pb_roof",
+   "type": "roof",
+   "desc": "One-storey hip roof (charcoal asphalt shingles) of the patio wing PB east of the south block; its north eave (white gutter) faces the pool, its west end runs in under the two-storey eaves; covers an outdoor dining patio on its north side.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    985,
+    1180,
+    1300,
+    1330
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      0,
+      778,
+      728,
+      875
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      1826,
+      600,
+      2500,
+      690
+     ]
+    },
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      780,
+      715,
+      1030,
+      772
+     ]
+    }
+   ],
+   "attrs": {
+    "roof_id": [
+     "roof.pb_n",
+     "roof.pb_e",
+     "roof.pb_s"
+    ],
+    "storey": 1
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.pb_eave_n",
+   "type": "eave",
+   "desc": "North eave of PB: white gutter + fascia over a white beam, exposed rafter tails.",
+   "image": "photos/p21_160d78.jpg",
+   "polyline": [
+    [
+     454,
+     872
+    ],
+    [
+     723,
+     862
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "polyline": [
+      [
+       1826,
+       673
+      ],
+      [
+       2447,
+       688
+      ]
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "polyline": [
+      [
+       1157,
+       1327
+      ],
+      [
+       1290,
+       1257
+      ]
+     ]
+    }
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.pb_eave_e",
+   "type": "eave",
+   "desc": "East eave of PB (hip end) with white gutter.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "polyline": [
+    [
+     990,
+     1268
+    ],
+    [
+     1157,
+     1327
+    ]
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.pb_column_ne",
+   "type": "column",
+   "desc": "NE corner column of the PB patio: white square column, slight capital, on the patio floor; a downspout beside it.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    1906,
+    712,
+    1950,
+    929
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      400,
+      895,
+      462,
+      1203
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1147,
+      1327,
+      1165,
+      1390
+     ]
+    },
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      1159,
+      811,
+      1182,
+      902
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      694,
+      1069,
+      769,
+      1206
+     ]
+    }
+   ],
+   "attrs": {
+    "note": "p21 / p20 identification by order (left of the window pair, by the tall planter), not by a unique feature"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.pb_column_mid",
+   "type": "column",
+   "desc": "Middle column of the PB patio front (white square).",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    690,
+    888,
+    750,
+    1075
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1260,
+      1260,
+      1280,
+      1310
+     ]
+    }
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.pb_glass_door",
+   "type": "door",
+   "desc": "Single full-glass door (black frame, white casing, satin lever) in the patio's back (south) wall at its east end, right beside the stone section (p28: just inside the NE corner).",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    2050,
+    732,
+    2129,
+    921
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1117,
+      1317,
+      1140,
+      1350
+     ]
+    }
+   ],
+   "attrs": {
+    "est_size_m": [
+     0.9,
+     2.4
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pb_window_pair",
+   "type": "window",
+   "desc": "Pair of tall windows (black sashes, upper lites divided, white trim) on the patio back wall behind the table.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    462,
+    906,
+    537,
+    1044
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      2300,
+      715,
+      2482,
+      871
+     ]
+    }
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.pb_window_single",
+   "type": "window",
+   "desc": "Tall narrow window (white trim) on the patio back wall right of the pair.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    587,
+    900,
+    625,
+    1025
+   ],
+   "conf": 0.65
+  },
+  {
+   "id": "rear.pb_lantern",
+   "type": "light",
+   "desc": "Black wall lantern beside the middle column.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    675,
+    915,
+    690,
+    937
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pb_french_doors",
+   "type": "glass_doors",
+   "desc": "Pair of glazed French doors (black frames, full lites) at the west part of the patio back wall.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    755,
+    895,
+    850,
+    1030
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.pb_stone_wall",
+   "type": "wall",
+   "desc": "Fieldstone-clad wall section (same tan / rust stone as the chimneys) at the north end of the PB wing's EAST face, beside the NE corner column (seen edge-on in p26 as a narrow stone pilaster behind the planter).",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1072,
+    1300,
+    1117,
+    1358
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      1966,
+      724,
+      1988,
+      925
+     ]
+    },
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      1035,
+      787,
+      1060,
+      890
+     ]
+    }
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pb_east_wall",
+   "type": "wall",
+   "desc": "East wall of the enclosed (south) part of the PB wing: grey shingles with a charcoal door; faces the side garden with the stepping stones.",
+   "image": "photos/p18_150f57.jpg",
+   "bbox": [
+    797,
+    770,
+    1035,
+    885
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1010,
+      1275,
+      1120,
+      1360
+     ]
+    }
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pb_door_e",
+   "type": "door",
+   "desc": "Charcoal-painted door with a small top light, white casing, in the PB east wall (service / pool-bath door?).",
+   "image": "photos/p18_150f57.jpg",
+   "bbox": [
+    902,
+    787,
+    948,
+    880
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1017,
+      1280,
+      1037,
+      1343
+     ]
+    }
+   ],
+   "attrs": {
+    "est_size_m": [
+     0.9,
+     2.1
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pb_dining",
+   "type": "furniture",
+   "desc": "Weathered-teak plank dining table with two benches under the PB patio.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    487,
+    1031,
+    644,
+    1112
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      2268,
+      871,
+      2500,
+      944
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1185,
+      1302,
+      1230,
+      1335
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      481,
+      1062,
+      575,
+      1119
+     ]
+    }
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.pb_steps",
+   "type": "steps",
+   "desc": "Two bluestone risers along the PB patio front (and the court part) down to the pool deck.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    387,
+    1035,
+    960,
+    1237
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      1865,
+      929,
+      2182,
+      965
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      456,
+      1187,
+      831,
+      1262
+     ]
+    }
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.pb_planter",
+   "type": "planter",
+   "desc": "Tall tapered grey planter with ornamental grass by the PB NE column (+ a small black cube box beside it in p26).",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    453,
+    1069,
+    500,
+    1177
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      1941,
+      868,
+      2032,
+      929
+     ]
+    }
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pb_downspout",
+   "type": "downspout",
+   "desc": "Downspout at the PB NE corner.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1147,
+    1327,
+    1151,
+    1393
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      1862,
+      697,
+      1868,
+      726
+     ]
+    }
+   ],
+   "conf": 0.5
+  },
+  {
+   "id": "rear.sb_upper_wall_ne",
+   "type": "wall",
+   "desc": "Two-storey shingled wall above the PB roof (NE side of the south block), eave with box gutter above, one downspout.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    469,
+    684,
+    900,
+    781
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1095,
+      1120,
+      1280,
+      1185
+     ]
+    }
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.sb_eave_ne",
+   "type": "eave",
+   "desc": "Upper eave over the PB roof: dark shingle edge, white fascia / gutter.",
+   "image": "photos/p21_160d78.jpg",
+   "polyline": [
+    [
+     469,
+     678
+    ],
+    [
+     715,
+     680
+    ]
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.sb_downspout",
+   "type": "downspout",
+   "desc": "Downspout from the upper eave onto the PB roof.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    635,
+    684,
+    646,
+    768
+   ],
+   "conf": 0.55
+  },
+  {
+   "id": "rear.chimney_s",
+   "type": "chimney",
+   "desc": "South stone chimney on the EAST wall of the two-storey south block: fieldstone chase on the wall from the porch / patio roof up through the eave, stone stack above the roof, a white crown band and a dark metal hipped shroud cap (p18).",
+   "image": "photos/p18_150f57.jpg",
+   "bbox": [
+    723,
+    558,
+    780,
+    745
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1130,
+      1075,
+      1165,
+      1180
+     ]
+    },
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      254,
+      545,
+      369,
+      640
+     ]
+    }
+   ],
+   "attrs": {
+    "roof_id": "roof.chimney_s",
+    "cap_p18": [
+     724,
+     559,
+     780,
+     588
+    ],
+    "above_roof_p18": [
+     729,
+     593,
+     776,
+     645
+    ],
+    "on_wall_p18": [
+     734,
+     652,
+     776,
+     745
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.sb_wall_e",
+   "type": "wall",
+   "desc": "Upper-storey east wall of the south block (side facade toward the synthetic lawn): grey shingles, the stone chimney chase in it; upper eave with exposed rafter tails.",
+   "image": "photos/p18_150f57.jpg",
+   "bbox": [
+    605,
+    643,
+    995,
+    745
+   ],
+   "attrs": {
+    "eave_polyline_p18": [
+     [
+      605,
+      643
+     ],
+     [
+      880,
+      660
+     ]
+    ]
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.bcb_gable",
+   "type": "gable_end",
+   "desc": "Small two-storey gable bump on the south block's south hip end (SE corner in p18): bracketed rake, a tall narrow window below.",
+   "image": "photos/p18_150f57.jpg",
+   "bbox": [
+    555,
+    610,
+    610,
+    745
+   ],
+   "attrs": {
+    "roof_id": "roof.gable_end_bcb",
+    "window_p18": [
+     585,
+     665,
+     603,
+     733
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.ep_porch",
+   "type": "covered_porch",
+   "desc": "East leg of the wraparound porch along the south block (one storey): low hip roof, white square Craftsman columns (6 visible in p18, a cluster where it turns the SE corner), white railing at its NE corner (p28), a French door / window in the wall behind; roses in front.",
+   "image": "photos/p18_150f57.jpg",
+   "bbox": [
+    462,
+    737,
+    855,
+    870
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1003,
+      1160,
+      1097,
+      1245
+     ]
+    }
+   ],
+   "attrs": {
+    "roof_id": "roof.ep",
+    "columns_p18": [
+     [
+      492,
+      800,
+      510,
+      868
+     ],
+     [
+      510,
+      797,
+      530,
+      865
+     ],
+     [
+      530,
+      792,
+      550,
+      862
+     ],
+     [
+      552,
+      790,
+      575,
+      860
+     ],
+     [
+      667,
+      787,
+      690,
+      852
+     ],
+     [
+      772,
+      790,
+      795,
+      860
+     ]
+    ],
+    "columns_p28": [
+     [
+      1025,
+      1193,
+      1037,
+      1227
+     ],
+     [
+      1068,
+      1207,
+      1077,
+      1222
+     ]
+    ],
+    "railing_p28": [
+     1040,
+     1210,
+     1068,
+     1230
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pool",
+   "type": "pool",
+   "desc": "Rectangular pool (long axis NW-SE), dark-blue-green plaster reading turquoise in sun, dark waterline tile; ~15 x 7 m. Automatic cover at the NW end, spa in the E corner, wide entry steps across the SE end. Poly = water edge (inside the coping) in p26, looking SE down its length.",
+   "image": "photos/p26_cacb52.jpg",
+   "poly": [
+    [
+     1023,
+     983
+    ],
+    [
+     1523,
+     980
+    ],
+    [
+     2063,
+     1260
+    ],
+    [
+     530,
+     1262
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "polyline": [
+      [
+       794,
+       1344
+      ],
+      [
+       1670,
+       1120
+      ],
+      [
+       2087,
+       1178
+      ],
+      [
+       1700,
+       1517
+      ]
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      0,
+      1167,
+      2500,
+      1365
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1672,
+      994,
+      2500,
+      1250
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1205,
+      1448,
+      1600,
+      1620
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1750,
+      1025,
+      2500,
+      1267
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.pool_water",
+    "est_size_m": [
+     15,
+     7
+    ],
+    "p21_polyline": "SW long side -> far NW end (autocover) -> NE long side down to the spa",
+    "p22_far_edge": [
+     [
+      430,
+      1172
+     ],
+     [
+      2121,
+      1178
+     ]
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.pool_coping",
+   "type": "coping",
+   "desc": "Coping: ~0.45 m band of square-cut light bluestone with a rounded edge round the water, flush with the flagstone deck.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    480,
+    960,
+    2120,
+    1290
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      760,
+      1095,
+      2120,
+      1667
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      0,
+      1150,
+      2500,
+      1385
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.pool_coping"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pool_autocover",
+   "type": "pool_cover",
+   "desc": "Automatic pool cover track / lid: white-grey metal strip along the NW end coping (the cover rolls from under it).",
+   "image": "photos/p26_cacb52.jpg",
+   "polyline": [
+    [
+     530,
+     1263
+    ],
+    [
+     2063,
+     1263
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "polyline": [
+      [
+       1700,
+       1127
+      ],
+      [
+       2087,
+       1177
+      ]
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "polyline": [
+      [
+       0,
+       1284
+      ],
+      [
+       429,
+       1167
+      ]
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "polyline": [
+      [
+       1672,
+       1000
+      ],
+      [
+       2350,
+       1244
+      ]
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "polyline": [
+      [
+       1561,
+       1448
+      ],
+      [
+       1598,
+       1488
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.pool_autocover"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.spa",
+   "type": "spa",
+   "desc": "Spa in the pool's E corner: square, its two pool-side walls topped by a ~0.15 m band of iridescent grey / bronze glass mosaic just above the pool water, its outer sides on the coping; bench seat inside, round jets / light. Polyline = the tile-topped dividing walls.",
+   "image": "photos/p21_160d78.jpg",
+   "polyline": [
+    [
+     1126,
+     1540
+    ],
+    [
+     1390,
+     1408
+    ],
+    [
+     1706,
+     1524
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "polyline": [
+      [
+       1783,
+       1180
+      ],
+      [
+       1900,
+       1245
+      ],
+      [
+       2312,
+       1245
+      ]
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      990,
+      978,
+      1223,
+      1013
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.spa",
+    "p21_bbox": [
+     1120,
+     1405,
+     1710,
+     1667
+    ],
+    "est_size_m": [
+     2.4,
+     2.4
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.pool_steps",
+   "type": "pool_steps",
+   "desc": "Three wide shallow entry treads along the SE end of the pool between the SW wall and the spa (lighter plaster).",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    822,
+    1312,
+    1186,
+    1448
+   ],
+   "attrs": {
+    "site_id": "site.pool_steps_se",
+    "treads": 3
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.pool_fittings",
+   "type": "pool_fitting",
+   "desc": "Underwater light / return fitting on the SW wall near the steps.",
+   "image": "photos/p21_160d78.jpg",
+   "point": [
+    1232,
+    1253
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      690,
+      1164,
+      717,
+      1177
+     ]
+    }
+   ],
+   "conf": 0.5
+  },
+  {
+   "id": "rear.patio_pool",
+   "type": "patio",
+   "desc": "Main pool terrace of large irregular rectangular bluestone flagstones (grey-blue with buff / rust stones, laid on the pool's diagonal) between the house porches, the pool, the fireplace lounge, the stairs and the arbor; drains / round lids set in it.",
+   "image": "photos/p21_160d78.jpg",
+   "bbox": [
+    0,
+    1040,
+    2500,
+    1667
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      0,
+      940,
+      2500,
+      1475
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      0,
+      1090,
+      2500,
+      1667
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1150,
+      1360,
+      1620,
+      1500
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.patio_pool",
+    "fittings_p21": {
+     "round_lid_ne": [
+      1907,
+      1443,
+      1957,
+      1460
+     ],
+     "round_lid_sw": [
+      954,
+      1264,
+      990,
+      1272
+     ],
+     "drain": [
+      520,
+      1490,
+      543,
+      1497
+     ]
+    }
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.fireplace",
+   "type": "outdoor_fireplace",
+   "desc": "Outdoor fireplace on the pool deck's NE side, facing the pool across the lounge: tapered stacked-fieldstone chimney (tan / rust / grey ashlar), a shaft with a stone crown and flue box on top, sloped shoulders to a wide firebox body, bluestone mantel shelf on two dark timber corbels, arched brick-lined firebox, a recessed bluestone diamond-pattern panel (wreath) above the mantel; flanked by the low hearth / seat wall. Poly = its outline seen from the pool (p22).",
+   "image": "photos/p22_50e8b3.jpg",
+   "poly": [
+    [
+     1194,
+     720
+    ],
+    [
+     1322,
+     720
+    ],
+    [
+     1322,
+     756
+    ],
+    [
+     1334,
+     760
+    ],
+    [
+     1334,
+     812
+    ],
+    [
+     1378,
+     875
+    ],
+    [
+     1378,
+     1050
+    ],
+    [
+     1137,
+     1050
+    ],
+    [
+     1137,
+     875
+    ],
+    [
+     1181,
+     812
+    ],
+    [
+     1181,
+     760
+    ],
+    [
+     1194,
+     756
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p24_5e2477.jpg",
+     "bbox": [
+      1250,
+      0,
+      2242,
+      1260
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1792,
+      528,
+      2063,
+      856
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      0,
+      532,
+      293,
+      1011
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.fireplace",
+    "est_size_m": {
+     "width": 2.0,
+     "depth": 1.0,
+     "height": 4.0
+    },
+    "adjacent": "between rear.wall_lower_planter (both sides) with rear.wall_upper_retaining and rear.fence_upper_terrace behind",
+    "p28": "hidden under the oak canopy"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.fireplace_firebox",
+   "type": "firebox",
+   "desc": "Arched firebox opening, brick-lined, iron grate (lit in p23 / p24).",
+   "image": "photos/p24_5e2477.jpg",
+   "bbox": [
+    1367,
+    875,
+    1633,
+    1150
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1200,
+      980,
+      1316,
+      1050
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1906,
+      783,
+      2006,
+      850
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      125,
+      900,
+      236,
+      1000
+     ]
+    }
+   ],
+   "attrs": {
+    "est_width_m": 0.9
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.fireplace_mantel",
+   "type": "mantel",
+   "desc": "Bluestone mantel slab across the fireplace front.",
+   "image": "photos/p24_5e2477.jpg",
+   "bbox": [
+    1217,
+    697,
+    1758,
+    717
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1153,
+      934,
+      1362,
+      943
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1867,
+      741,
+      2044,
+      752
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      79,
+      839,
+      293,
+      846
+     ]
+    }
+   ],
+   "conf": 0.8
+  },
+  {
+   "id": "rear.fireplace_corbels",
+   "type": "bracket",
+   "desc": "Two dark-stained timber corbels under the mantel.",
+   "image": "photos/p24_5e2477.jpg",
+   "bbox": [
+    1258,
+    717,
+    1708,
+    875
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1169,
+      943,
+      1347,
+      972
+     ]
+    }
+   ],
+   "attrs": {
+    "left_p24": [
+     1258,
+     717,
+     1333,
+     842
+    ],
+    "right_p24": [
+     1600,
+     717,
+     1708,
+     875
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.fireplace_panel",
+   "type": "panel",
+   "desc": "Recessed bluestone panel set with a diamond pattern above the mantel, a hydrangea wreath hung on it.",
+   "image": "photos/p24_5e2477.jpg",
+   "bbox": [
+    1392,
+    150,
+    1583,
+    617
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1222,
+      806,
+      1294,
+      916
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1928,
+      633,
+      1994,
+      706
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      150,
+      693,
+      232,
+      793
+     ]
+    }
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "rear.fireplace_crown",
+   "type": "cap",
+   "desc": "Stone crown and flue box (open sides) on top of the chimney shaft.",
+   "image": "photos/p22_50e8b3.jpg",
+   "bbox": [
+    1191,
+    720,
+    1325,
+    756
+   ],
+   "also": [
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1839,
+      528,
+      2014,
+      567
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      0,
+      532,
+      230,
+      590
+     ]
+    }
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.hearth_wall",
+   "type": "seat_wall",
+   "desc": "Low fieldstone hearth / seat wall with a thick bluestone cap in front of and beside the firebox (seat height ~0.5 m), running on as the lower planter wall.",
+   "image": "photos/p24_5e2477.jpg",
+   "bbox": [
+    1058,
+    1067,
+    2083,
+    1617
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1162,
+      1050,
+      1450,
+      1081
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      29,
+      986,
+      371,
+      1057
+     ]
+    }
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "rear.fireplace_candles",
+   "type": "decor",
+   "desc": "Two green-glass candle lanterns on the hearth.",
+   "image": "photos/p24_5e2477.jpg",
+   "bbox": [
+    1233,
+    1050,
+    1725,
+    1258
+   ],
+   "conf": 0.5
+  },
+  {
+   "id": "rear.lounge_set",
+   "type": "furniture",
+   "desc": "Fireplace lounge: weathered-teak frames with taupe cushions -- two 3-seat sofas set at right angles, three lounge armchairs, a square slatted teak coffee table and a small side table, on the flagstone in front of the hearth.",
+   "image": "photos/p22_50e8b3.jpg",
+   "bbox": [
+    1050,
+    1019,
+    1460,
+    1147
+   ],
+   "also": [
+    {
+     "image": "photos/p24_5e2477.jpg",
+     "bbox": [
+      0,
+      990,
+      1410,
+      1667
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      196,
+      929,
+      789,
+      1082
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1900,
+      826,
+      2425,
+      956
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.lounge_furniture",
+    "p22": {
+     "armchair_l": [
+      1050,
+      1028,
+      1166,
+      1144
+     ],
+     "armchair_r": [
+      1344,
+      1031,
+      1460,
+      1144
+     ],
+     "sofa_l": [
+      1100,
+      1019,
+      1206,
+      1088
+     ],
+     "sofa_r": [
+      1297,
+      1019,
+      1412,
+      1100
+     ],
+     "coffee_table": [
+      1203,
+      1084,
+      1306,
+      1140
+     ]
+    },
+    "p26": {
+     "armchair": [
+      196,
+      954,
+      357,
+      1082
+     ],
+     "sofa_backview": [
+      443,
+      957,
+      693,
+      1082
+     ],
+     "armchair_pillow": [
+      389,
+      932,
+      493,
+      1014
+     ],
+     "sofa_right": [
+      629,
+      929,
+      789,
+      1036
+     ],
+     "coffee_table": [
+      339,
+      1007,
+      450,
+      1082
+     ],
+     "side_table": [
+      686,
+      996,
+      721,
+      1043
+     ]
+    }
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.umbrella",
+   "type": "umbrella",
+   "desc": "Closed taupe market umbrella on a bronze pole set in a square pinkish-tan concrete / stone base block, at the lounge's pool-side corner near the pool's NE side.",
+   "image": "photos/p22_50e8b3.jpg",
+   "bbox": [
+    1472,
+    759,
+    1590,
+    1147
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      2033,
+      1130,
+      2263,
+      1567
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      743,
+      682,
+      820,
+      921
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      2372,
+      583,
+      2500,
+      948
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.umbrella_lounge",
+    "base_p22": [
+     1472,
+     1112,
+     1590,
+     1147
+    ],
+    "base_p21": [
+     2033,
+     1427,
+     2263,
+     1567
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.planters_fireplace",
+   "type": "planter",
+   "desc": "Dark square planter with a fatsia at the hearth wall's right end (another at its left end in p22).",
+   "image": "photos/p24_5e2477.jpg",
+   "bbox": [
+    2050,
+    1483,
+    2425,
+    1667
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1000,
+      1050,
+      1037,
+      1100
+     ]
+    }
+   ],
+   "conf": 0.5
+  },
+  {
+   "id": "rear.path_lights",
+   "type": "light",
+   "desc": "Low bronze path lights in the planter beds along the lounge.",
+   "image": "photos/p22_50e8b3.jpg",
+   "bbox": [
+    1566,
+    1078,
+    1578,
+    1100
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1769,
+      1088,
+      1781,
+      1127
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1594,
+      900,
+      1611,
+      922
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1794,
+      900,
+      1806,
+      917
+     ]
+    },
+    {
+     "image": "photos/p24_5e2477.jpg",
+     "bbox": [
+      417,
+      1133,
+      467,
+      1158
+     ]
+    }
+   ],
+   "conf": 0.5
+  },
+  {
+   "id": "rear.wall_lower_planter",
+   "type": "retaining_wall",
+   "desc": "Low planter wall (~0.5 m) of light tan ashlar fieldstone with a bluestone cap, running from left of the fireplace (as its hearth wall) to the stairs; lavender / salvia bed on it.",
+   "image": "photos/p22_50e8b3.jpg",
+   "bbox": [
+    0,
+    1040,
+    2142,
+    1135
+   ],
+   "also": [
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      1150,
+      856,
+      1917,
+      906
+     ]
+    },
+    {
+     "image": "photos/p24_5e2477.jpg",
+     "bbox": [
+      183,
+      892,
+      700,
+      1075
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      789,
+      934,
+      914,
+      972
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.wall_fireplace_east",
+    "top_polyline_p22": [
+     [
+      0,
+      1060
+     ],
+     [
+      1137,
+      1050
+     ],
+     [
+      1450,
+      1050
+     ],
+     [
+      2142,
+      1060
+     ]
+    ]
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.wall_upper_retaining",
+   "type": "retaining_wall",
+   "desc": "Upper retaining wall (~1.1 m) of grey segmental concrete block (rock-faced, dry-stacked) behind the planter, holding the upper terrace with shrubs (and the board fence) behind the fireplace.",
+   "image": "photos/p23_e4717a.jpg",
+   "bbox": [
+    1150,
+    761,
+    2428,
+    856
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      0,
+      955,
+      2081,
+      1060
+     ]
+    },
+    {
+     "image": "photos/p24_5e2477.jpg",
+     "bbox": [
+      0,
+      742,
+      1250,
+      975
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      357,
+      854,
+      757,
+      929
+     ]
+    },
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      0,
+      767,
+      1300,
+      1033
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.wall_terrace_upper",
+    "p23_left_part_note": "the same wall continues left (north) behind the side lawn, p23 [0,767,1300,1033]"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.wall_lawn_planter",
+   "type": "retaining_wall",
+   "desc": "Low tan fieldstone planter wall with bluestone cap along the side lawn (left of the fireplace in p23).",
+   "image": "photos/p23_e4717a.jpg",
+   "bbox": [
+    800,
+    878,
+    1300,
+    939
+   ],
+   "attrs": {
+    "site_id": "site.wall_terrace_lower"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "rear.fence_upper_terrace",
+   "type": "fence",
+   "desc": "Weathered vertical-board wood fence (~1.5 m, dog-eared boards with small gaps, top rail) on the upper terrace behind the fireplace.",
+   "image": "photos/p23_e4717a.jpg",
+   "bbox": [
+    1722,
+    617,
+    2372,
+    680
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      1450,
+      822,
+      1506,
+      884
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.fence_upper_terrace"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.stairs_terrace",
+   "type": "steps",
+   "desc": "Broad stone stairs (~10 bluestone treads on stone risers, ~1.8 m wide) from the pool deck up to the gravel path / play-area level, black metal handrail on the north side, stone cheek wall with a sloped cap on the south side.",
+   "image": "photos/p22_50e8b3.jpg",
+   "bbox": [
+    2127,
+    912,
+    2369,
+    1150
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      867,
+      819,
+      1011,
+      962
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1085,
+      1555,
+      1140,
+      1600
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.stairs_patio_path",
+    "treads": 10
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.stairs_handrail",
+   "type": "railing",
+   "desc": "Black metal pipe handrail on posts along the stairs' north side, returning over the top landing.",
+   "image": "photos/p22_50e8b3.jpg",
+   "polyline": [
+    [
+     2146,
+     1119
+    ],
+    [
+     2250,
+     823
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "polyline": [
+      [
+       921,
+       956
+      ],
+      [
+       846,
+       800
+      ]
+     ]
+    },
+    {
+     "image": "photos/p19_1e145e.jpg",
+     "bbox": [
+      2278,
+      1028,
+      2494,
+      1100
+     ]
+    }
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.stairs_cheek_wall",
+   "type": "retaining_wall",
+   "desc": "Stone cheek wall with a sloped bluestone cap along the stairs' south side.",
+   "image": "photos/p22_50e8b3.jpg",
+   "bbox": [
+    2327,
+    1012,
+    2419,
+    1165
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      896,
+      816,
+      1011,
+      959
+     ]
+    }
+   ],
+   "conf": 0.65
+  },
+  {
+   "id": "rear.wall_chevron_planter",
+   "type": "retaining_wall",
+   "desc": "Raised planter wall (tan fieldstone, bluestone cap, ~0.5 m) from the stairs' south cheek to the arbor, with a \"<\"-shaped front to the pool deck; roses / shrubs and a Japanese maple in it.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    1002,
+    909,
+    1336,
+    962
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      2327,
+      1088,
+      2500,
+      1165
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.wall_planter_chevron"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.arbor",
+   "type": "arbor",
+   "desc": "BBQ arbor (the pavilion): open timber pergola SE of the pool -- dark-stained heavy beams and a close layer of notched rafters on square WHITE columns, smothered in pale-pink climbing roses on a twisted old vine trunk; a raised bar counter with stools faces the pool (NW side), the grill counter is on the back (SE) side.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    1290,
+    700,
+    1735,
+    955
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      250,
+      590,
+      1967,
+      1550
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      950,
+      1350,
+      1130,
+      1500
+     ]
+    },
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      1245,
+      795,
+      1485,
+      900
+     ]
+    },
+    {
+     "image": "photos/p19_1e145e.jpg",
+     "bbox": [
+      2278,
+      833,
+      2500,
+      1094
+     ]
+    },
+    {
+     "image": "photos/p27_8c90d5.jpg",
+     "bbox": [
+      0,
+      700,
+      240,
+      860
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.arbor",
+    "est_size_m": [
+     6.5,
+     3.5
+    ],
+    "est_column_height_m": 2.4
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.arbor_columns",
+   "type": "column",
+   "desc": "Arbor columns: square white columns (~0.3 m) with a simple cap; the ones at the bar stand on the stone counter, the rest run to the deck.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    1332,
+    792,
+    1697,
+    950
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      269,
+      1050,
+      456,
+      1500
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      850,
+      1075,
+      969,
+      1306
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1487,
+      1100,
+      1669,
+      1400
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1725,
+      1119,
+      1756,
+      1262
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      965,
+      1460,
+      992,
+      1495
+     ]
+    },
+    {
+     "image": "photos/p19_1e145e.jpg",
+     "bbox": [
+      2350,
+      967,
+      2444,
+      1094
+     ]
+    }
+   ],
+   "attrs": {
+    "p26_each": {
+     "front_left_on_counter": [
+      1340,
+      795,
+      1383,
+      875
+     ],
+     "back_left": [
+      1332,
+      802,
+      1342,
+      885
+     ],
+     "middle": [
+      1595,
+      800,
+      1627,
+      932
+     ],
+     "front_right": [
+      1650,
+      792,
+      1697,
+      950
+     ]
+    },
+    "count_seen": "4 in p26, 4 in p20 (likely 6 in all)"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.arbor_beams",
+   "type": "beam",
+   "desc": "Dark-stained main beam with a close layer of rafters / purlins with notched tails on top.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    1300,
+    750,
+    1732,
+    802
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      250,
+      912,
+      1900,
+      1037
+     ]
+    }
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "rear.arbor_vines",
+   "type": "vine",
+   "desc": "Pale-pink climbing roses (and greenery) covering the arbor top; in winter (p28) a yellow-orange leafy mass.",
+   "image": "photos/p20_f249da.jpg",
+   "bbox": [
+    425,
+    592,
+    1967,
+    933
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      1290,
+      700,
+      1715,
+      757
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      950,
+      1350,
+      1130,
+      1460
+     ]
+    }
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.arbor_vine_trunk",
+   "type": "vine",
+   "desc": "Old twisted vine trunk wrapped round the arbor's NE column (pool side).",
+   "image": "photos/p20_f249da.jpg",
+   "bbox": [
+    1531,
+    950,
+    1750,
+    1387
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.arbor_lanterns",
+   "type": "light",
+   "desc": "Black metal box lanterns hung on the arbor columns.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    1382,
+    805,
+    1652,
+    827
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      400,
+      1094,
+      475,
+      1181
+     ]
+    },
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1419,
+      1150,
+      1487,
+      1250
+     ]
+    }
+   ],
+   "attrs": {
+    "p26_each": [
+     [
+      1382,
+      807,
+      1395,
+      827
+     ],
+     [
+      1582,
+      810,
+      1595,
+      827
+     ],
+     [
+      1640,
+      805,
+      1652,
+      825
+     ]
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.bar_counter",
+   "type": "counter",
+   "desc": "Raised bar counter on the arbor's pool side: tan fieldstone base, light bluestone top (~1.05 m high), stone pier under the left column.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    1340,
+    872,
+    1600,
+    952
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1050,
+      1156,
+      1494,
+      1275
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.bar_counter",
+    "top_p26_y": 872
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.bar_stools",
+   "type": "furniture",
+   "desc": "Five teak bar stools at the counter: four with slat backs and one backless.",
+   "image": "photos/p26_cacb52.jpg",
+   "bbox": [
+    1392,
+    870,
+    1600,
+    952
+   ],
+   "also": [
+    {
+     "image": "photos/p20_f249da.jpg",
+     "bbox": [
+      1006,
+      1137,
+      1387,
+      1319
+     ]
+    }
+   ],
+   "attrs": {
+    "count": 5
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.bbq_counter",
+   "type": "outdoor_kitchen",
+   "desc": "BBQ kitchen counter on the arbor's back (SE) side: L-shaped, tan fieldstone base, bluestone top, built-in stainless grill, a small bar sink, open dark shelving / fridge under the bar.",
+   "image": "photos/p20_f249da.jpg",
+   "bbox": [
+    412,
+    1306,
+    1500,
+    1550
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      0,
+      1317,
+      350,
+      1667
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.bbq_kitchen",
+    "sink_p20": [
+     1312,
+     1387,
+     1412,
+     1437
+    ],
+    "under_counter_p20": [
+     1175,
+     1262,
+     1487,
+     1400
+    ],
+    "p21_note": "p21 is taken from just behind this counter: its NW end / grill hood at the lower left"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.bbq_grill",
+   "type": "grill",
+   "desc": "Built-in stainless steel gas grill (closed hood) in the BBQ counter.",
+   "image": "photos/p20_f249da.jpg",
+   "bbox": [
+    819,
+    1306,
+    1131,
+    1412
+   ],
+   "also": [
+    {
+     "image": "photos/p21_160d78.jpg",
+     "bbox": [
+      157,
+      1317,
+      320,
+      1420
+     ]
+    }
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.lawn_side_north",
+   "type": "lawn",
+   "desc": "Natural grass side lawn north of the pool deck, edged by the planter walls and mulch beds.",
+   "image": "photos/p23_e4717a.jpg",
+   "bbox": [
+    0,
+    930,
+    1520,
+    1150
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      0,
+      1117,
+      550,
+      1183
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1686,
+      1459,
+      1843,
+      1551
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.lawn_side_north"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.rose_garden",
+   "type": "planting_bed",
+   "desc": "Rose garden in the side garden SE of the house: standard (tree-form) roses on staked trunks, shrub roses, lilyturf edging, bark mulch, clipped round hedges behind; looks east to the orchard terrace wall and the synthetic lawn.",
+   "image": "photos/p27_8c90d5.jpg",
+   "bbox": [
+    0,
+    700,
+    2500,
+    1667
+   ],
+   "also": [
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      555,
+      835,
+      765,
+      893
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.bed_front_south"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "rear.rose_walk",
+   "type": "walk",
+   "desc": "Curved bluestone flagstone walk through the rose garden (~1.2 m wide).",
+   "image": "photos/p27_8c90d5.jpg",
+   "poly": [
+    [
+     1000,
+     1667
+    ],
+    [
+     956,
+     1567
+    ],
+    [
+     911,
+     1467
+    ],
+    [
+     878,
+     1378
+    ],
+    [
+     767,
+     1289
+    ],
+    [
+     622,
+     1228
+    ],
+    [
+     489,
+     1206
+    ],
+    [
+     489,
+     1190
+    ],
+    [
+     633,
+     1200
+    ],
+    [
+     767,
+     1218
+    ],
+    [
+     922,
+     1248
+    ],
+    [
+     1067,
+     1315
+    ],
+    [
+     1200,
+     1389
+    ],
+    [
+     1333,
+     1489
+    ],
+    [
+     1456,
+     1667
+    ]
+   ],
+   "attrs": {
+    "site_id": "site.walk_rear_curved"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.rose_path_light",
+   "type": "light",
+   "desc": "Bronze pagoda-hat path light in the rose bed.",
+   "image": "photos/p27_8c90d5.jpg",
+   "bbox": [
+    1394,
+    1211,
+    1483,
+    1367
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.hedges_side",
+   "type": "hedge",
+   "desc": "Row of clipped round shrubs (boxwood / pittosporum) between the house side garden and the synthetic lawn.",
+   "image": "photos/p18_150f57.jpg",
+   "bbox": [
+    400,
+    875,
+    995,
+    975
+   ],
+   "also": [
+    {
+     "image": "photos/p27_8c90d5.jpg",
+     "bbox": [
+      1000,
+      900,
+      2500,
+      1150
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.hedge_lawn_west"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.lawn_synthetic",
+   "type": "synthetic_lawn",
+   "desc": "Synthetic lawn (artificial turf, uniform bright green) SE of the house: long rectangle, bark-mulch border with hedges on the house (west) end, the grey block retaining wall of the orchard terrace along its north side.",
+   "image": "photos/p18_150f57.jpg",
+   "poly": [
+    [
+     0,
+     1150
+    ],
+    [
+     117,
+     1027
+    ],
+    [
+     600,
+     987
+    ],
+    [
+     977,
+     958
+    ],
+    [
+     1310,
+     995
+    ],
+    [
+     1395,
+     1000
+    ],
+    [
+     2500,
+     1125
+    ],
+    [
+     2500,
+     1667
+    ],
+    [
+     0,
+     1667
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "poly": [
+      [
+       393,
+       1448
+      ],
+      [
+       707,
+       1326
+      ],
+      [
+       771,
+       1346
+      ],
+      [
+       800,
+       1448
+      ],
+      [
+       404,
+       1590
+      ]
+     ]
+    },
+    {
+     "image": "photos/p27_8c90d5.jpg",
+     "bbox": [
+      1564,
+      927,
+      1645,
+      1050
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.lawn_synthetic"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.lawn_benches",
+   "type": "furniture",
+   "desc": "Teak bench at the synthetic lawn's west end (two Adirondack chairs beside it in p28).",
+   "image": "photos/p18_150f57.jpg",
+   "bbox": [
+    20,
+    983,
+    107,
+    1067
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      657,
+      1309,
+      732,
+      1337
+     ]
+    }
+   ],
+   "conf": 0.55
+  },
+  {
+   "id": "rear.wall_lawn_north",
+   "type": "retaining_wall",
+   "desc": "Retaining wall (~0.9-1.0 m) of dark grey segmental block with a cap course along the synthetic lawn's north edge, holding the orchard terrace (bare soil, fruit trees); it continues past the steps.",
+   "image": "photos/p18_150f57.jpg",
+   "poly": [
+    [
+     1395,
+     920
+    ],
+    [
+     2500,
+     965
+    ],
+    [
+     2500,
+     1125
+    ],
+    [
+     1395,
+     1000
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p27_8c90d5.jpg",
+     "bbox": [
+      1405,
+      891,
+      1795,
+      927
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "polyline": [
+      [
+       404,
+       1590
+      ],
+      [
+       800,
+       1448
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.wall_lawn_north"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.steps_lawn",
+   "type": "steps",
+   "desc": "Stone steps (~5 treads, block cheeks) from the synthetic lawn up to the gravel path, black metal handrail.",
+   "image": "photos/p18_150f57.jpg",
+   "bbox": [
+    1310,
+    865,
+    1490,
+    995
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      771,
+      1444,
+      807,
+      1476
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.stairs_path_lawn",
+    "handrail_p18": [
+     1385,
+     805,
+     1525,
+     990
+    ],
+    "top_wall_p18": [
+     1485,
+     862,
+     1605,
+     890
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.orchard_terrace",
+   "type": "orchard",
+   "desc": "Orchard terrace above the lawn wall: bare soil / mulch with small fruit trees (bare-stemmed, open crowns).",
+   "image": "photos/p18_150f57.jpg",
+   "bbox": [
+    1480,
+    700,
+    2500,
+    965
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      490,
+      1470,
+      940,
+      1730
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.orchard",
+    "trunks_p18": [
+     [
+      1755,
+      750,
+      1785,
+      875
+     ],
+     [
+      2145,
+      720,
+      2180,
+      860
+     ],
+     [
+      2470,
+      700,
+      2500,
+      800
+     ]
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.play_structure",
+   "type": "play_structure",
+   "desc": "Wooden play structure (weathered grey cedar): a main tower with a gabled board roof and slatted deck rails, a second taller fort with high slat walls joined to it, a swing beam out to an A-frame with two green bucket / belt swings and a tire swing, two green wavy plastic slides, green climbing rungs, an A-frame climbing ladder at the tower front.",
+   "image": "photos/p19_1e145e.jpg",
+   "bbox": [
+    50,
+    300,
+    1700,
+    1460
+   ],
+   "also": [
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      2092,
+      585,
+      2500,
+      896
+     ]
+    },
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      880,
+      1570,
+      1190,
+      1825
+     ]
+    },
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      1940,
+      670,
+      2475,
+      820
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      371,
+      571,
+      486,
+      671
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.play_structure",
+    "est_height_m": 4.0
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.play_tower_main",
+   "type": "play_tower",
+   "desc": "Main tower: ~1.5 m deck on 4x4 posts, slatted rails with grab handles, gabled board roof.",
+   "image": "photos/p19_1e145e.jpg",
+   "bbox": [
+    255,
+    300,
+    1029,
+    1293
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1000,
+      1615,
+      1080,
+      1690
+     ]
+    }
+   ],
+   "attrs": {
+    "roof_p19": [
+     364,
+     300,
+     1029,
+     643
+    ],
+    "roof_apex_p19": [
+     550,
+     304
+    ],
+    "body_p19": [
+     371,
+     421,
+     871,
+     1293
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.play_fort",
+   "type": "play_tower",
+   "desc": "Second, taller fort / bridge behind the main tower: high slatted walls, open top.",
+   "image": "photos/p19_1e145e.jpg",
+   "bbox": [
+    886,
+    450,
+    1300,
+    1079
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      890,
+      1570,
+      1020,
+      1650
+     ]
+    },
+    {
+     "image": "photos/p22_50e8b3.jpg",
+     "bbox": [
+      2292,
+      585,
+      2500,
+      692
+     ]
+    }
+   ],
+   "conf": 0.65
+  },
+  {
+   "id": "rear.play_slide_1",
+   "type": "slide",
+   "desc": "Green wavy plastic slide off the main tower.",
+   "image": "photos/p19_1e145e.jpg",
+   "bbox": [
+    50,
+    864,
+    386,
+    1186
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      970,
+      1720,
+      1050,
+      1825
+     ]
+    }
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.play_slide_2",
+   "type": "slide",
+   "desc": "Second green wavy slide off the rear fort.",
+   "image": "photos/p19_1e145e.jpg",
+   "bbox": [
+    1300,
+    764,
+    1629,
+    1043
+   ],
+   "also": [
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      861,
+      766,
+      955,
+      819
+     ]
+    },
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      2400,
+      735,
+      2475,
+      785
+     ]
+    },
+    {
+     "image": "photos/p27_8c90d5.jpg",
+     "bbox": [
+      268,
+      705,
+      328,
+      832
+     ]
+    }
+   ],
+   "attrs": {
+    "p27_note": "the green-blue slide in deep shade beyond the arbor in p27, identification probable"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.play_swing_beam",
+   "type": "swing_beam",
+   "desc": "Swing beam from the tower out to a splayed A-frame end.",
+   "image": "photos/p19_1e145e.jpg",
+   "bbox": [
+    871,
+    743,
+    1700,
+    1336
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "bbox": [
+      1100,
+      1610,
+      1185,
+      1680
+     ]
+    }
+   ],
+   "attrs": {
+    "beam_p19": [
+     871,
+     743,
+     1700,
+     793
+    ],
+    "aframe_p19": [
+     1521,
+     743,
+     1700,
+     1336
+    ]
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.play_swings",
+   "type": "swing",
+   "desc": "Two green bucket / belt swings on chains under the beam.",
+   "image": "photos/p19_1e145e.jpg",
+   "bbox": [
+    1029,
+    971,
+    1143,
+    1021
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "rear.play_tire_swing",
+   "type": "swing",
+   "desc": "Tire swing on ropes from the beam.",
+   "image": "photos/p19_1e145e.jpg",
+   "bbox": [
+    1200,
+    1157,
+    1357,
+    1229
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "rear.play_aframe_ladder",
+   "type": "ladder",
+   "desc": "A-frame climbing ladder / brace on a sole board at the main tower's front.",
+   "image": "photos/p19_1e145e.jpg",
+   "bbox": [
+    279,
+    907,
+    657,
+    1450
+   ],
+   "conf": 0.55
+  },
+  {
+   "id": "rear.play_area",
+   "type": "play_area",
+   "desc": "Play yard of loose tan wood chips with a dark timber edge board.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "poly": [
+    [
+     940,
+     1542
+    ],
+    [
+     1255,
+     1690
+    ],
+    [
+     1000,
+     1875
+    ],
+    [
+     565,
+     1780
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p19_1e145e.jpg",
+     "bbox": [
+      0,
+      990,
+      2139,
+      1667
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.play_area",
+    "p28_note": "south corner below the frame edge / trees"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.play_edging",
+   "type": "edging",
+   "desc": "Dark timber edge board on stakes between the wood chips and the gravel path.",
+   "image": "photos/p19_1e145e.jpg",
+   "polyline": [
+    [
+     1683,
+     1006
+    ],
+    [
+     1956,
+     1022
+    ],
+    [
+     2139,
+     1667
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p19_1e145e.jpg",
+     "polyline": [
+      [
+       214,
+       1479
+      ],
+      [
+       800,
+       1664
+      ]
+     ]
+    }
+   ],
+   "conf": 0.65
+  },
+  {
+   "id": "rear.gravel_path",
+   "type": "path",
+   "desc": "Garden path of blue-grey crushed stone (~1.5 m) along the play yard from the top of the terrace stairs; timber edge on the play side.",
+   "image": "photos/p19_1e145e.jpg",
+   "poly": [
+    [
+     1956,
+     1022
+    ],
+    [
+     2117,
+     1039
+    ],
+    [
+     2206,
+     1167
+    ],
+    [
+     2272,
+     1300
+    ],
+    [
+     2417,
+     1467
+    ],
+    [
+     2500,
+     1522
+    ],
+    [
+     2500,
+     1667
+    ],
+    [
+     2139,
+     1667
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p28_7ae0dd.jpg",
+     "polyline": [
+      [
+       770,
+       1490
+      ],
+      [
+       950,
+       1535
+      ],
+      [
+       1360,
+       1740
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.path_gravel"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.fence_play",
+   "type": "fence",
+   "desc": "Low weathered wood picket / lattice fence along the play yard's far side.",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1140,
+    1740,
+    1300,
+    1810
+   ],
+   "attrs": {
+    "site_id": "site.fence_play_north"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "rear.garden_enclosure",
+   "type": "fenced_garden",
+   "desc": "Fenced vegetable garden with four square raised timber beds on gravel: NOT visible in the ground photos or p28 (behind the trees); position from the aerial (site.json).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1975,
+     148
+    ],
+    [
+     2257,
+     148
+    ],
+    [
+     2257,
+     422
+    ],
+    [
+     1975,
+     422
+    ]
+   ],
+   "attrs": {
+    "site_id": "site.garden_enclosure",
+    "raised_beds_p29": [
+     [
+      2012,
+      195,
+      2080,
+      262
+     ],
+     [
+      2137,
+      189,
+      2205,
+      260
+     ],
+     [
+      2010,
+      320,
+      2077,
+      388
+     ],
+     [
+      2137,
+      315,
+      2202,
+      385
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.outdoor_shower",
+   "type": "outdoor_shower",
+   "desc": "Outdoor shower (listing feature): not identified. Candidate: the PB wing's east end (fieldstone wall section + charcoal door facing the side garden with the stepping stones, a a small black bowl on a pedestal -- birdbath / fire bowl -- in front of it in p28).",
+   "image": "photos/p28_7ae0dd.jpg",
+   "bbox": [
+    1072,
+    1297,
+    1140,
+    1370
+   ],
+   "also": [
+    {
+     "image": "photos/p18_150f57.jpg",
+     "bbox": [
+      900,
+      785,
+      1060,
+      890
+     ]
+    }
+   ],
+   "attrs": {
+    "site_id": "site.outdoor_shower",
+    "basin_p28": [
+     1112,
+     1355,
+     1128,
+     1367
+    ]
+   },
+   "conf": 0.2
+  }
+ ],
+ "notes": [
+  "Coordinates are ORIGINAL pixels (x right, y down) of the photo named in \"image\" (also-entries name their own photo). Image sizes: p26 2500 x 1475, p28 / p29 2500 x 1875, all others 2500 x 1667.",
+  "Plan directions follow p29 / roof.json (N = image top of the near-nadir aerial): the house front faces SW; the REAR (pool side) faces NE / E. The rear facade from north to south: one-storey north wing (north chimney, service yard) -> two-storey block NC with the north porch NCP wrapping its NE corner -> the two-storey balcony gable BG (covered patio below, balcony above) -> the open inner garden court (white beam across it, two trees) -> the one-storey patio wing PB (hip roof, covered dining patio on its pool side, enclosed room + stone wall section at its east end) -> the south block with the south chimney on its east wall and the east leg EP of the wraparound porch.",
+  "Camera orientation of the rear photos: p21 from above / behind the BBQ counter at the SE end of the pool looking WNW at the rear (left = south: PB, centre = BG, right = NC); p26 from the NW end of the pool looking SE down its length (left = fireplace / lounge, centre = arbor, right = PB patio); p22 from the pool's SW side looking NE at the fireplace (spa at right = SE end, stairs / play structure right); p23 from under the north porch looking E (side lawn left, fireplace centre, pool right); p24 close front-left view of the fireplace and lounge; p20 from behind (SE of) the arbor looking NW through it at the BBQ counter, with BG over the roses; p18 from the synthetic lawn's east end looking W at the house's SE side; p19 the play structure from the south; p27 the rose garden SE of the house looking E (the arbor's dark beams at its upper left); p28 high oblique drone from the NE (over the play area) looking SW.",
+  "Materials: walls grey cedar shingles with white trim / corner boards / columns / beams; roofs charcoal asphalt shingles with white gutters and exposed white rafter tails; windows black sashes in white casings; chimneys, fireplace, hearth / planter walls and the counters tan-rust-grey fieldstone ashlar with bluestone caps; deck / porches / walks bluestone flagstone; terrace retaining walls grey segmental concrete block; arbor dark-stained timber on white columns.",
+  "Rough metric scale on the rear facade in p21 (BG, from the 0.9 x 2.4 m patio door): ~60 px/m at the BG face; BG ~5.4 m wide, balcony floor ~3.4 m above the patio, railing ~1 m, gable rise ~1.6 m. All est_* attrs are such estimates, not measurements.",
+  "The ground-floor porches / patios (NCP, BG patio, PB patio) are one continuous raised bluestone floor 2 risers above the pool deck (steps along their whole fronts); the court between BG and PB is open above the white beam.",
+  "site.json (p29) already has the plan outlines of the pool, spa, fireplace, arbor, lounge, lawns, walls, stairs, play area and garden; attrs.site_id links each element here to it.  roof_id links to roof.json."
+ ],
+ "open_questions": [
+  "Outdoor shower (listing): not identified in any photo. Best candidate: the PB wing's east end facing the shaded side garden (stone wall section + charcoal door, small dark basin at its foot in p28; site.side_slab / site.outdoor_shower nearby).",
+  "p21 / p20 identification of the PB NE corner column relies on order (left of the window pair, by the tall planter); p26 shows a stone wall section and a glass door between that column and the window pair which p21 cannot see (behind the maple).",
+  "Court windows (rear.court_windows): which window in p21 is the p28 triple window (NE-facing 45-degree wall) and which the CC east window is not resolved through the tree branches.",
+  "North porch roof form: pitched low hip in p28 but the p21 camera sees no roof above its beam -- the pitch / eave height should be fitted with the cameras.",
+  "Arbor column count and layout: 4 columns visible in p26 and in p20, probably 6 (3 per long side) -- the back row and the BBQ-side columns overlap in every view.",
+  "Lounge layout: the two sofas and three armchairs are seen from three sides (p22, p23, p26) but the exact arrangement (which sofa faces the fireplace) is ambiguous; the furniture is movable anyway.",
+  "Play structure: towers / slides / swing beam are clear in p19 but their plan orientation needs p28 / p29 (site.slide_north / slide_south); p19 is the only ground view.",
+  "Synthetic lawn far (west) end and the hedge line: p18 sees it obliquely, p28 under trees -- use site.lawn_synthetic for the plan.",
+  "South block east wall: only p18 shows it, low and oblique; windows other than the gable-bump window are not visible."
+ ]
+}

@@ -1,2 +1,10 @@
-{"scale": 1.0, "origin_S": [0.0, 0.0, 0.0], "yaw_deg": 0.0,
- "note": "S (the upright SfM frame of model 1, tools/register.py export) -> world metres: world = scale * (S - origin_S) rotated by yaw about Z.  Provisional until the aerial is registered (axes) and a known length fixes the scale."}
+{
+ "scale": 8.5482,
+ "origin_S": [
+  1.1358,
+  -1.0232,
+  -2.1507
+ ],
+ "yaw_deg": -171.746,
+ "note": "world = scale * Rz(yaw) (p_S - origin_S). Scale: the pool water length (aerial p29 rays on the deck plane fitted to every SfM point on the deck) taken as 40 ft = 12.192 m (pool 2.06:1 = 20 x 40 ft; the roof PV modules (0.798 m) at their SfM height give 8.15-8.5 m/unit, the raised beds ~6 ft). Axes: +X = the aerial p29 image right (horizontal), +Y = its image up = into the lot (street + gate at the image bottom-left, driveway up the left edge), Z up. Origin: the centre of the pool water, Z = 0 the pool deck plane (rear flagstone patio). Upright: the drone gimbal (camera x axes level, 90 frames, ~1 deg); the deck plane then slopes 1.3 deg (drainage)."
+}

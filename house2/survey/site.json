@@ -24,15 +24,19 @@
    "poly": [
     [
      60,
-     350
+     340
     ],
     [
-     225,
-     350
+     215,
+     340
     ],
     [
-     255,
-     368
+     240,
+     352
+    ],
+    [
+     262,
+     366
     ],
     [
      286,
@@ -173,7 +177,10 @@
    "attrs": {
     "material": "pavers (tumbled, light grey-beige, ~15x22 cm units)",
     "width_entry_px": 190,
-    "note": "top edge y~350 under the big bare tree is uncertain (branches); the part y>1700 is hidden by the street tree screen; motor-court right edge = roof eaves (walls ~0.3-0.6 m inside)"
+    "note": "top edge y~350 under the big bare tree is uncertain (branches); the part y>1700 is hidden by the street tree screen; motor-court right edge = roof eaves (walls ~0.3-0.6 m inside)",
+    "checker": [
+     "top edge / NW curve re-read at 1.6x: pavers show to y ~340 under the branches, the curve meets the garage eave at (286,376)"
+    ]
    },
    "conf": 0.75
   },
@@ -201,80 +208,144 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     477,
+     478,
      1050
     ],
     [
+     477,
+     1077
+    ],
+    [
+     474,
+     1100
+    ],
+    [
+     468,
+     1123
+    ],
+    [
+     458,
+     1145
+    ],
+    [
      445,
-     1150
+     1167
     ],
     [
-     420,
-     1200
+     430,
+     1186
     ],
     [
-     414,
-     1210
+     415,
+     1205
     ],
     [
-     392,
-     1223
-    ],
-    [
-     347,
-     1240
-    ],
-    [
-     284,
-     1236
-    ],
-    [
-     234,
+     400,
      1216
     ],
     [
-     222,
-     1248
+     383,
+     1226
     ],
     [
-     274,
+     360,
+     1234
+    ],
+    [
+     343,
+     1237
+    ],
+    [
+     314,
+     1237
+    ],
+    [
+     280,
+     1234
+    ],
+    [
+     257,
+     1227
+    ],
+    [
+     237,
+     1214
+    ],
+    [
+     228,
+     1203
+    ],
+    [
+     229,
+     1266
+    ],
+    [
+     301,
      1269
     ],
     [
-     353,
-     1274
+     329,
+     1267
     ],
     [
-     406,
-     1254
+     351,
+     1264
     ],
     [
-     416,
-     1248
+     371,
+     1260
+    ],
+    [
+     400,
+     1253
+    ],
+    [
+     423,
+     1247
+    ],
+    [
+     440,
+     1241
     ],
     [
      455,
-     1238
+     1237
     ],
     [
-     546,
-     1256
+     483,
+     1237
     ],
     [
-     583,
-     1284
+     510,
+     1241
     ],
     [
-     608,
-     1313
+     533,
+     1248
     ],
     [
-     615,
-     1333
+     550,
+     1258
     ],
     [
-     603,
-     1334
+     566,
+     1271
+    ],
+    [
+     584,
+     1285
+    ],
+    [
+     607,
+     1312
+    ],
+    [
+     618,
+     1331
+    ],
+    [
+     612,
+     1352
     ],
     [
      609,
@@ -293,44 +364,56 @@
      1496
     ],
     [
-     740,
-     1499
-    ],
-    [
-     799,
-     1499
-    ],
-    [
-     800,
+     750,
      1505
     ],
     [
-     880,
-     1485
+     790,
+     1508
     ],
     [
-     930,
-     1467
+     821,
+     1509
     ],
     [
-     980,
-     1462
+     846,
+     1503
     ],
     [
-     1262,
-     1462
+     875,
+     1492
     ],
     [
-     1262,
-     1425
+     900,
+     1480
+    ],
+    [
+     917,
+     1470
+    ],
+    [
+     933,
+     1463
+    ],
+    [
+     967,
+     1461
+    ],
+    [
+     1010,
+     1460
     ],
     [
      1180,
-     1427
+     1462
     ],
     [
      1180,
-     1445
+     1446
+    ],
+    [
+     811,
+     1447
     ],
     [
      790,
@@ -353,28 +436,36 @@
      1376
     ],
     [
-     645,
+     660,
+     1352
+    ],
+    [
+     672,
      1330
     ],
     [
-     634,
-     1331
+     686,
+     1312
     ],
     [
-     640,
-     1322
+     697,
+     1297
     ],
     [
-     700,
-     1318
+     709,
+     1286
     ],
     [
-     808,
-     1318
+     735,
+     1284
     ],
     [
-     808,
-     1298
+     757,
+     1276
+    ],
+    [
+     728,
+     1251
     ],
     [
      717,
@@ -393,20 +484,40 @@
      1256
     ],
     [
-     565,
-     1235
+     576,
+     1241
+    ],
+    [
+     559,
+     1224
     ],
     [
      540,
-     1210
+     1207
     ],
     [
-     515,
+     523,
+     1180
+    ],
+    [
+     516,
      1160
     ],
     [
+     511,
+     1117
+    ],
+    [
      510,
-     1095
+     1097
+    ],
+    [
+     512,
+     1077
+    ],
+    [
+     518,
+     1057
     ],
     [
      530,
@@ -426,18 +537,18 @@
      "image": "photos/hero_721b4a.jpg",
      "bbox": [
       0,
-      1580,
+      1600,
       2500,
-      1780
+      1860
      ]
     },
     {
      "image": "photos/p01_768294.jpg",
      "bbox": [
       0,
-      1230,
+      1250,
       2500,
-      1400
+      1410
      ]
     }
    ],
@@ -447,29 +558,29 @@
     "parts_centerline": {
      "connector": [
       [
-       228,
-       1232
+       229,
+       1236
       ],
       [
-       280,
+       300,
        1253
       ],
       [
        350,
-       1257
+       1251
       ],
       [
        400,
-       1238
+       1236
       ],
       [
        432,
-       1218
+       1215
       ]
      ],
      "under_birch": [
       [
-       624,
+       630,
        1332
       ],
       [
@@ -482,27 +593,42 @@
       ],
       [
        740,
-       1478
+       1480
       ],
       [
        805,
-       1478
+       1480
       ]
      ]
     },
-    "note": "in the house shadow from x 545 to 1180; upper edge along the lower wing (y~1435) hidden by the eave; under the birch canopy (x 640-800) the outline is inferred"
+    "note": "in the house shadow from x 545 to 1180; upper edge along the lower wing (y~1435) hidden by the eave; under the birch canopy (x 640-800) the outline is inferred",
+    "checker": [
+     "west edge of the leg was 10-16 px inside the lawn (y 1080-1160), the connector bottom 7-10 px low, the landing ran 25-30 px into the shrub bed east of it (now the bed edge (735,1284)-(672,1330)), the east end now stops at the house corner x 1180 (it overlapped walk_rear_curved x 1180-1262)"
+    ]
    },
    "conf": 0.6
   },
   {
    "id": "site.stepping_stones_side",
    "type": "stepping_stones",
-   "desc": "Eight rectangular flagstone stepping stones (~0.5 x 0.7 m) set in mulch, from the south walk (1190,1392) up-right toward a grey slab / bench against the SE wing (side yard under the eave, in shadow).",
+   "desc": "Eleven rectangular flagstone stepping stones (~0.5 x 0.7 m) set in mulch: two just north of the curved walk (1192,1409/1422), then nine in a diagonal run up-right to the grey slab / bench against the SE wing (side yard under the eave, in shadow).",
    "image": "photos/p29_ddf5dc.jpg",
    "polyline": [
     [
-     1190,
-     1392
+     1194,
+     1422
+    ],
+    [
+     1192,
+     1409
+    ],
+    [
+     1192,
+     1393
+    ],
+    [
+     1201,
+     1381
     ],
     [
      1215,
@@ -514,30 +640,33 @@
     ],
     [
      1248,
-     1353
+     1355
     ],
     [
-     1262,
-     1345
+     1261,
+     1348
     ],
     [
-     1273,
-     1340
+     1274,
+     1343
     ],
     [
      1285,
-     1337
+     1338
     ],
     [
-     1298,
-     1328
+     1300,
+     1327
     ]
    ],
    "attrs": {
-    "count": 8,
+    "count": 11,
     "stone_px": [
      15,
      20
+    ],
+    "checker": [
+     "counted at 3.5x: 9 stones in the diagonal run (the old line skipped (1201,1381)) + 2 by the walk"
     ]
    },
    "conf": 0.6
@@ -559,86 +688,265 @@
    "conf": 0.35
   },
   {
+   "id": "site.side_yard_shade",
+   "type": "ground_unknown",
+   "desc": "Deep-shadowed strip under the SE wing's south eave: the surface is not readable (dark). A white box and the downspout with a blue object stand in it, the grey slab (site.side_slab) along its south edge; candidate place of the outdoor shower / utility side yard.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1181,
+     1258
+    ],
+    [
+     1393,
+     1258
+    ],
+    [
+     1340,
+     1300
+    ],
+    [
+     1182,
+     1300
+    ]
+   ],
+   "attrs": {
+    "adjacent": [
+     "site.bed_se_wing",
+     "site.side_slab",
+     "site.house_eave_outline"
+    ]
+   },
+   "conf": 0.3
+  },
+  {
+   "id": "site.box_side_yard",
+   "type": "utility_box",
+   "desc": "Small white box (equipment / utility cabinet?) on the ground in the shaded side yard under the SE wing's eave.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    1222,
+    1268
+   ],
+   "attrs": {
+    "bbox_px": [
+     1214,
+     1259,
+     1230,
+     1277
+    ]
+   },
+   "conf": 0.4
+  },
+  {
+   "id": "site.wood_step_se",
+   "type": "step",
+   "desc": "Tan timber step / low wooden box against the SE wing's east wall inside the bed (a side-door step?).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "bbox": [
+    1395,
+    1127,
+    1411,
+    1170
+   ],
+   "attrs": {
+    "on": "site.bed_se_wing"
+   },
+   "conf": 0.35
+  },
+  {
    "id": "site.walk_rear_curved",
    "type": "walk",
    "desc": "Curved FLAGSTONE walk (same bluestone) from the side yard (stepping stones) north-east through the planting beds to the pool patio beside the outdoor-kitchen arbor, with a short branch east to the synthetic lawn's top-left corner. Roses / small shrubs either side (likely the rose walk of p27).",
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     1536,
-     1237
+     1443,
+     1067
     ],
     [
-     1534,
-     1191
-    ],
-    [
-     1477,
-     1192
-    ],
-    [
-     1476,
-     1090
-    ],
-    [
-     1438,
+     1440,
      1090
     ],
     [
      1437,
-     1131
+     1117
+    ],
+    [
+     1436,
+     1140
+    ],
+    [
+     1440,
+     1163
+    ],
+    [
+     1445,
+     1183
+    ],
+    [
+     1448,
+     1203
+    ],
+    [
+     1446,
+     1223
     ],
     [
      1441,
-     1242
+     1240
     ],
     [
-     1427,
-     1283
+     1437,
+     1255
     ],
     [
-     1380,
-     1373
+     1430,
+     1272
+    ],
+    [
+     1420,
+     1288
+    ],
+    [
+     1408,
+     1309
+    ],
+    [
+     1397,
+     1330
+    ],
+    [
+     1387,
+     1351
+    ],
+    [
+     1374,
+     1367
+    ],
+    [
+     1358,
+     1384
     ],
     [
      1337,
-     1407
+     1397
     ],
     [
-     1260,
+     1308,
+     1409
+    ],
+    [
+     1274,
+     1417
+    ],
+    [
+     1233,
      1424
     ],
     [
-     1171,
-     1427
+     1180,
+     1429
     ],
     [
-     1173,
-     1465
-    ],
-    [
-     1263,
+     1180,
      1462
     ],
     [
-     1353,
+     1233,
+     1459
+    ],
+    [
+     1274,
+     1457
+    ],
+    [
+     1308,
+     1451
+    ],
+    [
+     1337,
      1442
     ],
     [
+     1362,
+     1428
+    ],
+    [
+     1382,
+     1409
+    ],
+    [
+     1397,
+     1392
+    ],
+    [
      1412,
-     1394
+     1367
     ],
     [
-     1462,
-     1298
+     1424,
+     1342
     ],
     [
-     1478,
+     1435,
+     1317
+    ],
+    [
+     1445,
+     1292
+    ],
+    [
+     1453,
+     1272
+    ],
+    [
+     1466,
      1251
     ],
     [
-     1478,
+     1482,
      1238
+    ],
+    [
+     1536,
+     1237
+    ],
+    [
+     1536,
+     1215
+    ],
+    [
+     1513,
+     1212
+    ],
+    [
+     1495,
+     1203
+    ],
+    [
+     1480,
+     1190
+    ],
+    [
+     1470,
+     1170
+    ],
+    [
+     1467,
+     1140
+    ],
+    [
+     1470,
+     1113
+    ],
+    [
+     1480,
+     1087
+    ],
+    [
+     1497,
+     1069
     ]
    ],
    "also": [
@@ -657,45 +965,56 @@
     "width_px": 38,
     "centerline": [
      [
-      1172,
+      1180,
       1446
      ],
      [
-      1262,
-      1443
+      1254,
+      1438
      ],
      [
-      1345,
+      1323,
       1425
      ],
      [
-      1395,
-      1385
+      1370,
+      1400
      ],
      [
-      1425,
-      1330
+      1398,
+      1361
      ],
      [
-      1445,
-      1290
+      1416,
+      1323
      ],
      [
-      1460,
-      1245
+      1433,
+      1272
      ],
      [
       1458,
-      1190
+      1225
      ],
      [
       1456,
-      1130
+      1190
      ],
      [
-      1457,
+      1452,
+      1140
+     ],
+     [
+      1458,
       1090
+     ],
+     [
+      1470,
+      1068
      ]
+    ],
+    "checker": [
+     "curve re-traced: the old band lay 10-20 px inside the walk on the bend (y 1340-1440); now starts at x 1180 (house corner) and ends at the patio line y 1067; the wide part east (1482-1536, 1190-1237) is the flagstone link toward the synthetic lawn, continuing hidden under the maple"
     ]
    },
    "conf": 0.6
@@ -751,20 +1070,24 @@
      470
     ],
     [
-     1660,
-     720
+     1657,
+     719
     ],
     [
-     1620,
-     795
+     1657,
+     770
     ],
     [
      1615,
-     830
+     808
     ],
     [
-     1670,
-     898
+     1615,
+     852
+    ],
+    [
+     1665,
+     902
     ],
     [
      1730,
@@ -779,28 +1102,32 @@
      1075
     ],
     [
-     1476,
-     1078
+     1500,
+     1068
     ],
     [
-     1440,
-     1095
+     1443,
+     1067
     ],
     [
-     1442,
-     1065
+     1412,
+     1067
+    ],
+    [
+     1412,
+     1110
     ],
     [
      1395,
-     1065
+     1110
     ],
     [
      1393,
-     965
+     966
     ],
     [
      1300,
-     965
+     966
     ],
     [
      1300,
@@ -815,6 +1142,14 @@
      935
     ],
     [
+     1125,
+     966
+    ],
+    [
+     1012,
+     861
+    ],
+    [
      1045,
      878
     ],
@@ -827,12 +1162,28 @@
      757
     ],
     [
-     1090,
+     1089,
      757
     ],
     [
+     1081,
+     634
+    ],
+    [
+     1084,
+     527
+    ],
+    [
+     990,
+     527
+    ],
+    [
+     1007,
+     487
+    ],
+    [
      1088,
-     485
+     487
     ],
     [
      1088,
@@ -879,7 +1230,11 @@
      "site.spa",
      "site.pool_coping"
     ],
-    "note": "north-east part (lounge) is in tree shade and reads darker; boundary under the arbor and beside the fireplace partly inferred"
+    "note": "north-east part (lounge) is in tree shade and reads darker; boundary under the arbor and beside the fireplace partly inferred",
+    "checker": [
+     "added the flagstone between bed_patio_nw and the house (x 1007-1088, y 487-527) and the strip along the SE wing wall (x 1395-1412, y 1067-1110); east edge on the chevron wall face; bottom edge at the rear walk y 1067; house side on the re-traced eave",
+     "the flagstone strip between the rear-courtyard / tree beds and the diagonal eave (1012,861)-(1125,966) added"
+    ]
    },
    "conf": 0.6
   },
@@ -1052,50 +1407,54 @@
   {
    "id": "site.pool_steps_corner",
    "type": "pool_steps",
-   "desc": "Small corner entry steps in the pool's WEST corner (lighter turquoise treads along the SW wall).",
+   "desc": "Corner entry steps in the pool's WEST corner: 3-4 treads (light grey-turquoise) along the SW wall from ~0.5 m past the corner, ~2.3 m long and ~0.37 m deep, risers stepping down toward the SE.",
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     1160,
-     540
+     1169,
+     550
     ],
     [
-     1172,
-     528
+     1177,
+     542
     ],
     [
-     1215,
-     575
-    ],
-    [
-     1205,
+     1225,
      592
+    ],
+    [
+     1218,
+     600
     ]
    ],
-   "attrs": {},
-   "conf": 0.45
+   "attrs": {
+    "checker": [
+     "moved 14 px along the wall (they start ~16 px from the corner and end ~86 px from it, not 2-70) and narrowed from 17 to 11 px (6x zoom)"
+    ]
+   },
+   "conf": 0.6
   },
   {
    "id": "site.pool_steps_se",
    "type": "pool_steps",
-   "desc": "Wide entry steps / sun ledge across the SE end between the SW wall and the spa (3 treads in p21), lighter turquoise.",
+   "desc": "Entry steps in the pool's SOUTH corner (the shallow end): 3 treads parallel to the SW wall, stacked along the SE wall; ~1.6 m along the SE wall (about 40 % of the way to the spa) and ~2.5 m along the SW wall, the outer treads longer (p21 shows the top tread short at the corner, the third reaching furthest).",
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     1457,
+     1456,
      832
     ],
     [
-     1540,
-     745
+     1490,
+     798
     ],
     [
-     1512,
-     717
+     1433,
+     740
     ],
     [
-     1427,
-     804
+     1406,
+     778
     ]
    ],
    "also": [
@@ -1109,8 +1468,13 @@
      ]
     }
    ],
-   "attrs": {},
-   "conf": 0.55
+   "attrs": {
+    "treads": 3,
+    "checker": [
+     "was drawn as a 120 x 41 px strip along the whole SE wall to the spa; p29 (5x, contrast) and p21 show a 49 x ~75 px block in the south corner with tread edges parallel to the SW wall"
+    ]
+   },
+   "conf": 0.6
   },
   {
    "id": "site.pool_lights",
@@ -1229,10 +1593,10 @@
     {
      "image": "photos/p24_5e2477.jpg",
      "bbox": [
-      590,
+      1200,
       0,
-      1090,
-      1460
+      2250,
+      1610
      ]
     },
     {
@@ -1274,29 +1638,76 @@
       346
      ]
     ],
-    "height_m_est": 4.5
+    "height_m_est": 4.5,
+    "checker": [
+     "p24 box was on the tree left of the fireplace; now on the fireplace"
+    ]
    },
    "conf": 0.6
   },
   {
+   "id": "site.seat_wall_fireplace",
+   "type": "seat_wall",
+   "desc": "Low stone seat wall / raised hearth (stacked stone, flat light bluestone cap ~0.35 m wide) along the NE edge of the lounge terrace; the fireplace is built into its middle (p24: about seat height, plants behind it).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1533,
+     361
+    ],
+    [
+     1546,
+     353
+    ],
+    [
+     1650,
+     447
+    ],
+    [
+     1642,
+     457
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p24_5e2477.jpg",
+     "bbox": [
+      1060,
+      1060,
+      2500,
+      1620
+     ]
+    }
+   ],
+   "attrs": {
+    "on": "site.patio_pool NE edge",
+    "adjacent": [
+     "site.fireplace",
+     "site.lounge_furniture"
+    ],
+    "height_m_est": 0.45
+   },
+   "conf": 0.55
+  },
+  {
    "id": "site.lounge_furniture",
    "type": "furniture",
-   "desc": "Fireplace lounge set on the flagstone in front of the fireplace: 2 three-seat sofas, 3 lounge armchairs, a square wood coffee table, a small side table; grey cushions on grey teak frames.",
+   "desc": "Fireplace lounge set on the flagstone in front of the fireplace (counted in p29 at 2.4x): 2 two-seat sofas (loveseats), 2 lounge armchairs, a square wood coffee table, a small wood side table and a dark square side table; grey cushions on grey teak frames.",
    "image": "photos/p29_ddf5dc.jpg",
    "bbox": [
     1440,
-    400,
-    1600,
-    570
+    388,
+    1595,
+    548
    ],
    "also": [
     {
      "image": "photos/p24_5e2477.jpg",
      "bbox": [
       0,
-      1050,
-      1150,
-      1650
+      1000,
+      1420,
+      1660
      ]
     },
     {
@@ -1307,52 +1718,76 @@
       2420,
       950
      ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      200,
+      930,
+      890,
+      1090
+     ]
     }
    ],
    "attrs": {
     "items_px": {
      "sofa_w": [
-      1440,
-      420,
-      1480,
-      485
+      1442,
+      430,
+      1494,
+      488
      ],
      "sofa_s": [
       1500,
-      480,
-      1555,
-      525
+      490,
+      1554,
+      542
      ],
      "chair_n": [
-      1510,
-      395,
-      1545,
-      425
+      1508,
+      390,
+      1540,
+      428
      ],
      "chair_e": [
-      1555,
-      440,
+      1554,
+      442,
       1592,
-      475
+      476
      ],
      "coffee_table": [
-      1478,
-      460,
-      1522,
-      500
+      1475,
+      463,
+      1525,
+      509
+     ],
+     "side_table_wood": [
+      1481,
+      417,
+      1512,
+      447
+     ],
+     "side_table_dark": [
+      1537,
+      476,
+      1567,
+      505
      ]
-    }
+    },
+    "checker": [
+     "items re-measured: 2 loveseats + 2 armchairs (not 2 three-seaters + 3 chairs), 2 side tables"
+    ]
    },
    "conf": 0.6
   },
   {
    "id": "site.umbrella_lounge",
    "type": "umbrella",
-   "desc": "Closed grey market umbrella on a square base beside the lounge (east side).",
+   "desc": "Closed grey market umbrella on a square base beside the lounge (east side). Cantilever (offset-pole) umbrella, closed (p26). Point = its square base (1521-1562, 542-572); the closed canopy top leans to (1553,535).",
    "image": "photos/p29_ddf5dc.jpg",
    "point": [
-    1557,
-    540
+    1540,
+    558
    ],
    "also": [
     {
@@ -1371,6 +1806,15 @@
       600,
       2490,
       920
+     ]
+    },
+    {
+     "image": "photos/p26_cacb52.jpg",
+     "bbox": [
+      740,
+      685,
+      830,
+      935
      ]
     }
    ],
@@ -1574,36 +2018,68 @@
      1027
     ],
     [
-     477,
+     478,
      1050
     ],
     [
-     462,
+     477,
+     1077
+    ],
+    [
+     474,
      1100
     ],
     [
-     445,
-     1150
+     468,
+     1123
     ],
     [
-     420,
-     1200
+     458,
+     1145
+    ],
+    [
+     445,
+     1167
+    ],
+    [
+     430,
+     1186
+    ],
+    [
+     415,
+     1205
     ],
     [
      400,
-     1215
+     1216
     ],
     [
-     350,
-     1240
+     383,
+     1226
+    ],
+    [
+     360,
+     1234
+    ],
+    [
+     343,
+     1237
+    ],
+    [
+     314,
+     1237
     ],
     [
      280,
-     1235
+     1234
     ],
     [
-     245,
-     1218
+     257,
+     1227
+    ],
+    [
+     237,
+     1214
     ],
     [
      228,
@@ -1627,7 +2103,10 @@
     ]
    ],
    "attrs": {
-    "material": "natural turf"
+    "material": "natural turf",
+    "checker": [
+     "east (walk) side moved out 10-16 px to the grass edge"
+    ]
    },
    "conf": 0.8
   },
@@ -1638,64 +2117,96 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     300,
-     1272
+     301,
+     1269
     ],
     [
-     350,
-     1272
+     329,
+     1267
+    ],
+    [
+     351,
+     1264
+    ],
+    [
+     371,
+     1260
     ],
     [
      400,
      1253
     ],
     [
+     423,
+     1247
+    ],
+    [
+     440,
+     1241
+    ],
+    [
      455,
-     1238
+     1237
     ],
     [
-     520,
-     1250
+     483,
+     1237
     ],
     [
-     546,
-     1256
+     510,
+     1241
     ],
     [
-     583,
-     1284
+     533,
+     1248
     ],
     [
-     608,
-     1313
+     550,
+     1258
+    ],
+    [
+     566,
+     1271
+    ],
+    [
+     584,
+     1285
+    ],
+    [
+     607,
+     1312
+    ],
+    [
+     618,
+     1331
     ],
     [
      612,
-     1350
+     1352
     ],
     [
-     612,
-     1392
+     609,
+     1387
     ],
     [
-     640,
-     1430
+     614,
+     1399
     ],
     [
-     668,
-     1459
+     664,
+     1454
     ],
     [
-     700,
-     1485
+     729,
+     1496
     ],
     [
-     735,
-     1500
+     750,
+     1505
     ],
     [
      790,
-     1502
+     1508
     ],
     [
      795,
@@ -1755,7 +2266,10 @@
     }
    ],
    "attrs": {
-    "material": "natural turf"
+    "material": "natural turf",
+    "checker": [
+     "top edge (connector) raised 7-10 px; right edge shares the walk vertices"
+    ]
    },
    "conf": 0.75
   },
@@ -1942,10 +2456,22 @@
     ],
     [
      2092,
-     595
+     570
+    ],
+    [
+     2122,
+     572
+    ],
+    [
+     2122,
+     598
     ],
     [
      2080,
+     603
+    ],
+    [
+     2078,
      700
     ],
     [
@@ -1958,7 +2484,7 @@
     ],
     [
      2022,
-     770
+     780
     ],
     [
      1912,
@@ -1978,11 +2504,15 @@
     ],
     [
      2000,
-     610
+     612
     ],
     [
      1873,
      615
+    ],
+    [
+     1857,
+     625
     ],
     [
      1848,
@@ -2063,7 +2593,10 @@
       687
      ]
     ],
-    "height_m_est": 4.0
+    "height_m_est": 4.0,
+    "checker": [
+     "east side on the bridge edge (x 2075-2080), the small east platform (2092-2122, 570-598) added, bottom of the hex tower at y ~780, A-frame legs to y 625"
+    ]
    },
    "conf": 0.6
   },
@@ -2075,15 +2608,15 @@
    "polyline": [
     [
      2087,
-     537
+     543
     ],
     [
-     2115,
-     532
+     2113,
+     540
     ],
     [
      2140,
-     545
+     546
     ]
    ],
    "attrs": {},
@@ -2253,13 +2786,13 @@
   {
    "id": "site.garden_gate",
    "type": "gate",
-   "desc": "Garden gate in the west fence of the vegetable garden, where the gravel path arrives.",
+   "desc": "Garden gate in the west fence of the vegetable garden, where the gravel path arrives (path y 288-321 at the fence). North of it a leaning slatted panel (1954-1986, 256-288): possibly the gate leaf swung open, or a trellis.",
    "image": "photos/p29_ddf5dc.jpg",
    "bbox": [
-    1965,
-    295,
+    1968,
+    287,
     1990,
-    330
+    316
    ],
    "attrs": {
     "on": "site.garden_enclosure west fence"
@@ -2301,52 +2834,72 @@
      880
     ],
     [
-     1779,
-     922
+     1777,
+     921
     ],
     [
-     1803,
-     977
+     1790,
+     948
     ],
     [
-     1823,
+     1808,
+     980
+    ],
+    [
+     1822,
      1012
     ],
     [
-     1829,
-     1047
+     1827,
+     1040
     ],
     [
-     1829,
-     1088
+     1826,
+     1071
+    ],
+    [
+     1822,
+     1098
+    ],
+    [
+     1813,
+     1118
+    ],
+    [
+     1806,
+     1148
+    ],
+    [
+     1863,
+     1150
+    ],
+    [
+     1870,
+     1103
+    ],
+    [
+     1872,
+     1071
+    ],
+    [
+     1870,
+     1035
+    ],
+    [
+     1863,
+     1003
+    ],
+    [
+     1849,
+     971
+    ],
+    [
+     1831,
+     939
     ],
     [
      1820,
-     1147
-    ],
-    [
-     1862,
-     1153
-    ],
-    [
-     1871,
-     1093
-    ],
-    [
-     1871,
-     1041
-    ],
-    [
-     1861,
-     995
-    ],
-    [
-     1841,
-     958
-    ],
-    [
-     1821,
-     914
+     907
     ],
     [
      1817,
@@ -2441,6 +2994,43 @@
       1841,
       1150
      ]
+    ],
+    "visible_west_edge": [
+     [
+      1940,
+      294
+     ],
+     [
+      1880,
+      300
+     ],
+     [
+      1840,
+      318
+     ],
+     [
+      1804,
+      356
+     ],
+     [
+      1790,
+      400
+     ],
+     [
+      1788,
+      500
+     ],
+     [
+      1788,
+      620
+     ],
+     [
+      1780,
+      700
+     ]
+    ],
+    "checker": [
+     "band kept 42-44 px (as measured y 700-950); north of y~660 and round the top bend the visible gravel stops 10-15 px inside the band (ground cover / hedge over its west edge: attrs.visible_west_edge); south end re-traced (west edge 1806-1827, y 1040-1148)"
     ]
    },
    "conf": 0.7
@@ -2452,16 +3042,20 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     1870,
+     1820,
      900
     ],
     [
-     2325,
+     2321,
      897
     ],
     [
-     2330,
-     1205
+     2356,
+     900
+    ],
+    [
+     2357,
+     1207
     ],
     [
      1875,
@@ -2469,11 +3063,35 @@
     ],
     [
      1872,
-     1105
+     1150
+    ],
+    [
+     1870,
+     1103
     ],
     [
      1872,
-     1000
+     1071
+    ],
+    [
+     1870,
+     1035
+    ],
+    [
+     1863,
+     1003
+    ],
+    [
+     1849,
+     971
+    ],
+    [
+     1831,
+     939
+    ],
+    [
+     1820,
+     907
     ]
    ],
    "also": [
@@ -2488,7 +3106,10 @@
     }
    ],
    "attrs": {
-    "surface": "soil / sparse grass"
+    "surface": "soil / sparse grass",
+    "checker": [
+     "west edge now follows the path (a 20-30 px strip of grass at y 900-1000 was unassigned); east edge to the wall end x ~2357 (the orchard floor continues past the play-area line)"
+    ]
    },
    "conf": 0.7
   },
@@ -2576,7 +3197,22 @@
    "attrs": {
     "rises_toward": "+x (east)",
     "treads": 9,
-    "handrail": "north side, polyline (1665,662)-(1785,660)"
+    "handrail": "north side, polyline (1658,670)-(1787,659)",
+    "risers_x": [
+     1657,
+     1668,
+     1680,
+     1691,
+     1704,
+     1716,
+     1729,
+     1741,
+     1754,
+     1766
+    ],
+    "checker": [
+     "counted at 5x: 9 treads of ~12 px (0.4 m) between 10 riser lines, a landing 1766-1785"
+    ]
    },
    "conf": 0.75
   },
@@ -2627,19 +3263,19 @@
    "polyline": [
     [
      347,
-     145
+     146
     ],
     [
      950,
-     142
+     145
     ],
     [
      1180,
-     136
+     146
     ],
     [
      1370,
-     136
+     141
     ]
    ],
    "also": [
@@ -2655,7 +3291,10 @@
    ],
    "attrs": {
     "width_px": 20,
-    "gap": "x 950-1030 hidden by a shrub"
+    "gap": "x 950-1030 hidden by a shrub",
+    "checker": [
+     "on the middle of the stone band (y 137-154 = cap + its south face) instead of its top"
+    ]
    },
    "conf": 0.6
   },
@@ -2756,23 +3395,27 @@
    "image": "photos/p29_ddf5dc.jpg",
    "polyline": [
     [
-     1630,
+     1645,
      395
     ],
     [
-     1700,
-     448
-    ],
-    [
-     1668,
-     470
+     1705,
+     456
     ],
     [
      1665,
+     472
+    ],
+    [
+     1663,
      665
     ]
    ],
-   "attrs": {},
+   "attrs": {
+    "checker": [
+     "first segment = the light cap behind the seat wall (1652,402)-(1705,456); the vertical cap at x 1663"
+    ]
+   },
    "conf": 0.4
   },
   {
@@ -2782,23 +3425,31 @@
    "image": "photos/p29_ddf5dc.jpg",
    "polyline": [
     [
-     1667,
-     720
+     1663,
+     719
     ],
     [
-     1620,
-     795
+     1663,
+     768
     ],
     [
-     1615,
-     830
+     1621,
+     809
     ],
     [
-     1670,
+     1621,
+     850
+    ],
+    [
+     1668,
      898
     ]
    ],
-   "attrs": {},
+   "attrs": {
+    "checker": [
+     "cap centreline re-traced at 3x: vertical from the stairs to y 768 before the diagonal (it was one diagonal from (1667,720))"
+    ]
+   },
    "conf": 0.55
   },
   {
@@ -2879,20 +3530,20 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     1652,
-     1125
+     1657,
+     1142
     ],
     [
      1800,
-     1125
+     1142
     ],
     [
      1800,
-     1215
+     1214
     ],
     [
-     1652,
-     1215
+     1657,
+     1214
     ]
    ],
    "also": [
@@ -2906,7 +3557,11 @@
      ]
     }
    ],
-   "attrs": {},
+   "attrs": {
+    "checker": [
+     "top wall at y 1142 (was 1125: 17 px into the branches above it), left wall at x 1657"
+    ]
+   },
    "conf": 0.5
   },
   {
@@ -2916,8 +3571,8 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     1667,
-     720
+     1663,
+     719
     ],
     [
      1707,
@@ -2932,16 +3587,20 @@
      1078
     ],
     [
-     1670,
+     1668,
      898
     ],
     [
-     1615,
-     830
+     1621,
+     850
     ],
     [
-     1620,
-     795
+     1621,
+     809
+    ],
+    [
+     1663,
+     768
     ]
    ],
    "attrs": {},
@@ -2999,23 +3658,23 @@
   {
    "id": "site.fence_play_east",
    "type": "fence",
-   "desc": "East edge of the play area / orchard: thin dark line (timber edge or a low fence), trees beyond.",
+   "desc": "East edge of the play area: thin dark timber edging (or a very low fence), trees beyond. Not visible along the orchard further south.",
    "image": "photos/p29_ddf5dc.jpg",
    "polyline": [
     [
-     2325,
-     452
+     2323,
+     457
     ],
     [
-     2325,
-     895
-    ],
-    [
-     2330,
-     1205
+     2323,
+     897
     ]
    ],
-   "attrs": {},
+   "attrs": {
+    "checker": [
+     "orchard segment (2325,895)-(2330,1205) removed: no line there in p29"
+    ]
+   },
    "conf": 0.35
   },
   {
@@ -3044,19 +3703,19 @@
    "polyline": [
     [
      0,
-     37
+     38
     ],
     [
-     640,
-     32
+     700,
+     30
     ],
     [
-     1260,
-     22
+     1300,
+     13
     ],
     [
      1900,
-     8
+     0
     ]
    ],
    "also": [
@@ -3079,7 +3738,11 @@
      ]
     }
    ],
-   "attrs": {},
+   "attrs": {
+    "checker": [
+     "re-read at 3x: a bundle of 2-3 wires ~8 px apart at y 30-40 (x 200), 25-33 (x 700), 10-16 (x 1300); out of frame past x ~1900"
+    ]
+   },
    "conf": 0.45
   },
   {
@@ -3101,16 +3764,20 @@
      376
     ],
     [
-     255,
-     368
+     262,
+     366
     ],
     [
-     225,
-     350
+     240,
+     352
+    ],
+    [
+     215,
+     340
     ],
     [
      60,
-     350
+     340
     ],
     [
      40,
@@ -3130,11 +3797,11 @@
    "poly": [
     [
      25,
-     350
+     340
     ],
     [
      60,
-     350
+     340
     ],
     [
      65,
@@ -3185,8 +3852,24 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     290,
-     700
+     292,
+     712
+    ],
+    [
+     295,
+     709
+    ],
+    [
+     370,
+     710
+    ],
+    [
+     370,
+     727
+    ],
+    [
+     520,
+     727
     ],
     [
      527,
@@ -3206,7 +3889,10 @@
     ]
    ],
    "attrs": {
-    "material": "bark mulch"
+    "material": "bark mulch",
+    "checker": [
+     "north edge on the stepped garage eave instead of a diagonal"
+    ]
    },
    "conf": 0.55
   },
@@ -3217,24 +3903,47 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     527,
-     727
+     520,
+     710
     ],
     [
-     634,
-     727
+     591,
+     708
     ],
     [
-     634,
+     591,
+     688
+    ],
+    [
+     630,
+     687
+    ],
+    [
+     636,
+     800
+    ],
+    [
+     528,
      800
     ],
     [
      527,
-     800
+     762
+    ],
+    [
+     527,
+     727
+    ],
+    [
+     520,
+     727
     ]
    ],
    "attrs": {
-    "material": "bark mulch"
+    "material": "bark mulch",
+    "checker": [
+     "fills the whole notch between the garage and front-wing eaves (the eave steps to y 708 / 687 there)"
+    ]
    },
    "conf": 0.45
   },
@@ -3277,8 +3986,8 @@
      1270
     ],
     [
-     300,
-     1270
+     301,
+     1269
     ],
     [
      292,
@@ -3325,16 +4034,36 @@
      1226
     ],
     [
-     540,
-     1210
+     559,
+     1224
     ],
     [
-     515,
+     540,
+     1207
+    ],
+    [
+     523,
+     1180
+    ],
+    [
+     516,
      1160
     ],
     [
+     511,
+     1117
+    ],
+    [
      510,
-     1095
+     1097
+    ],
+    [
+     512,
+     1077
+    ],
+    [
+     518,
+     1057
     ]
    ],
    "attrs": {
@@ -3389,16 +4118,36 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     640,
-     1322
+     672,
+     1330
     ],
     [
-     700,
-     1318
+     686,
+     1312
     ],
     [
-     808,
-     1318
+     697,
+     1297
+    ],
+    [
+     709,
+     1286
+    ],
+    [
+     735,
+     1284
+    ],
+    [
+     757,
+     1276
+    ],
+    [
+     790,
+     1294
+    ],
+    [
+     811,
+     1276
     ],
     [
      811,
@@ -3409,20 +4158,27 @@
      1450
     ],
     [
-     745,
-     1458
+     746,
+     1457
     ],
     [
-     690,
-     1420
+     694,
+     1424
     ],
     [
      650,
-     1375
+     1376
+    ],
+    [
+     660,
+     1352
     ]
    ],
    "attrs": {
-    "material": "bark mulch"
+    "material": "bark mulch",
+    "checker": [
+     "top edge raised to the shrub-bed edge (the shrubs at 713-797,1285-1335 lay outside it); it reaches the porch eave (757,1276)-(790,1294)"
+    ]
    },
    "conf": 0.45
   },
@@ -3434,51 +4190,91 @@
    "poly": [
     [
      800,
-     1505
+     1510
     ],
     [
-     880,
-     1487
+     846,
+     1503
     ],
     [
-     930,
-     1469
+     875,
+     1492
     ],
     [
-     980,
-     1464
+     900,
+     1480
     ],
     [
-     1170,
-     1464
+     917,
+     1470
     ],
     [
-     1262,
+     933,
+     1463
+    ],
+    [
+     967,
+     1461
+    ],
+    [
+     1010,
+     1460
+    ],
+    [
+     1180,
      1462
     ],
     [
-     1345,
-     1445
+     1233,
+     1459
     ],
     [
-     1380,
-     1430
+     1274,
+     1457
     ],
     [
-     1415,
+     1308,
+     1451
+    ],
+    [
+     1337,
+     1442
+    ],
+    [
+     1362,
+     1428
+    ],
+    [
+     1382,
+     1409
+    ],
+    [
+     1397,
      1392
     ],
     [
-     1437,
-     1350
+     1412,
+     1367
     ],
     [
-     1448,
-     1315
+     1424,
+     1342
     ],
     [
-     1462,
-     1275
+     1435,
+     1317
+    ],
+    [
+     1445,
+     1292
+    ],
+    [
+     1453,
+     1272
+    ],
+    [
+     1466,
+     1251
     ],
     [
      1482,
@@ -3510,7 +4306,10 @@
     ]
    ],
    "attrs": {
-    "material": "bark mulch"
+    "material": "bark mulch",
+    "checker": [
+     "north edge = the re-traced walk edges"
+    ]
    },
    "conf": 0.5
   },
@@ -3562,67 +4361,122 @@
     ],
     [
      1395,
-     1065
+     1110
     ],
     [
-     1442,
-     1065
+     1412,
+     1110
+    ],
+    [
+     1412,
+     1067
+    ],
+    [
+     1443,
+     1067
     ],
     [
      1440,
-     1095
+     1090
     ],
     [
      1437,
-     1180
+     1117
     ],
     [
-     1450,
-     1205
+     1436,
+     1140
     ],
     [
      1440,
-     1245
+     1163
+    ],
+    [
+     1445,
+     1183
+    ],
+    [
+     1448,
+     1203
+    ],
+    [
+     1446,
+     1223
+    ],
+    [
+     1441,
+     1240
+    ],
+    [
+     1437,
+     1255
     ],
     [
      1430,
-     1270
+     1272
     ],
     [
-     1415,
-     1295
+     1420,
+     1288
     ],
     [
-     1400,
-     1335
+     1408,
+     1309
     ],
     [
-     1380,
-     1380
+     1397,
+     1330
     ],
     [
-     1345,
-     1425
+     1387,
+     1351
     ],
     [
-     1182,
-     1438
+     1374,
+     1367
+    ],
+    [
+     1358,
+     1384
+    ],
+    [
+     1337,
+     1397
+    ],
+    [
+     1308,
+     1409
+    ],
+    [
+     1274,
+     1417
+    ],
+    [
+     1233,
+     1424
+    ],
+    [
+     1180,
+     1429
     ]
    ],
    "attrs": {
-    "material": "bark mulch"
+    "material": "bark mulch",
+    "checker": [
+     "walk-side edge re-traced; the flagstone strip x 1395-1412 along the house wall (y 1067-1110) is patio, not bed; a timber step / box at (1395-1411,1127-1170) inside it is site.wood_step_se"
+    ]
    },
    "conf": 0.5
   },
   {
    "id": "site.bed_maple_round",
    "type": "planting_bed",
-   "desc": "Round mulch bed between the rear walk and the arbor with a Japanese maple and a shrub. Brown bark mulch.",
+   "desc": "Round mulch bed east of the curved rear walk, under the big Japanese maple (jmaple_arbor_se), running east under the arbor's south corner to the lawn planter; a lamp at (1625,1197) and a timber edge (1618-1652, ~1204) at its south side.",
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     1476,
-     1080
+     1497,
+     1069
     ],
     [
      1560,
@@ -3633,24 +4487,59 @@
      1100
     ],
     [
-     1600,
-     1180
+     1655,
+     1130
     ],
     [
-     1540,
-     1205
+     1657,
+     1214
+    ],
+    [
+     1567,
+     1232
+    ],
+    [
+     1536,
+     1237
+    ],
+    [
+     1536,
+     1215
+    ],
+    [
+     1513,
+     1212
+    ],
+    [
+     1495,
+     1203
     ],
     [
      1480,
-     1200
+     1190
     ],
     [
      1470,
+     1170
+    ],
+    [
+     1467,
      1140
+    ],
+    [
+     1470,
+     1113
+    ],
+    [
+     1480,
+     1087
     ]
    ],
    "attrs": {
-    "material": "bark mulch"
+    "material": "bark mulch",
+    "checker": [
+     "extended east to the planter (the ground under the maple / arbor corner was unassigned); west edge = the walk"
+    ]
    },
    "conf": 0.4
   },
@@ -3750,15 +4639,15 @@
    "poly": [
     [
      1362,
-     310
+     299
     ],
     [
      1398,
-     293
+     298
     ],
     [
-     1480,
-     293
+     1483,
+     298
     ],
     [
      1512,
@@ -3766,15 +4655,22 @@
     ],
     [
      1475,
-     388
+     386
     ],
     [
-     1395,
-     388
+     1398,
+     386
+    ],
+    [
+     1364,
+     340
     ]
    ],
    "attrs": {
-    "material": "bark mulch"
+    "material": "bark mulch",
+    "checker": [
+     "added the lawn-corner vertex (1364,340): the bed edge runs down the lawn to y 340 then diagonally to (1398,386)"
+    ]
    },
    "conf": 0.6
   },
@@ -3813,7 +4709,7 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     1015,
+     997,
      757
     ],
     [
@@ -3829,12 +4725,19 @@
      878
     ],
     [
-     1015,
-     860
+     1012,
+     861
+    ],
+    [
+     997,
+     846
     ]
    ],
    "attrs": {
-    "material": "bark mulch"
+    "material": "bark mulch",
+    "checker": [
+     "west edge to the eave (997); the strip x 997-1015 is the shaded wall face under it"
+    ]
    },
    "conf": 0.5
   },
@@ -3869,6 +4772,145 @@
     "material": "bark mulch"
    },
    "conf": 0.7
+  },
+  {
+   "id": "site.bed_lawn_terrace",
+   "type": "planting_bed",
+   "desc": "Narrow bark-mulch bed (lavender, small grasses) wrapping the side lawn: along its north edge under the north wall, then down its NE diagonal at the foot of the lower terrace wall to the lounge bed.",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1012,
+     153
+    ],
+    [
+     1250,
+     152
+    ],
+    [
+     1386,
+     290
+    ],
+    [
+     1362,
+     299
+    ],
+    [
+     1365,
+     312
+    ],
+    [
+     1230,
+     175
+    ],
+    [
+     1012,
+     177
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p23_e4717a.jpg",
+     "bbox": [
+      640,
+      860,
+      1800,
+      960
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "bark mulch",
+    "adjacent": [
+     "site.lawn_side_north",
+     "site.wall_terrace_lower",
+     "site.wall_north",
+     "site.bed_lounge"
+    ]
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "site.bed_maple_stairs",
+   "type": "planting_bed",
+   "desc": "Planting bed between the fireplace's back wall and the gravel path, north of the patio stairs: dense dark ground cover / low hedge round the bare Japanese maple (jmaple_stairs).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1663,
+     665
+    ],
+    [
+     1665,
+     472
+    ],
+    [
+     1705,
+     456
+    ],
+    [
+     1720,
+     420
+    ],
+    [
+     1779,
+     420
+    ],
+    [
+     1776,
+     500
+    ],
+    [
+     1775,
+     662
+    ]
+   ],
+   "attrs": {
+    "material": "ground cover + mulch",
+    "adjacent": [
+     "site.wall_fireplace_east",
+     "site.stairs_patio_path",
+     "site.path_gravel",
+     "site.trees_north"
+    ]
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "site.bed_lawn_south",
+   "type": "planting_bed",
+   "desc": "Bark-mulch strip along the south edge of the synthetic lawn, under the edge of the south shrub / tree belt (visible 0.5-1.5 m wide).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1560,
+     1607
+    ],
+    [
+     2326,
+     1612
+    ],
+    [
+     2340,
+     1620
+    ],
+    [
+     2000,
+     1630
+    ],
+    [
+     1560,
+     1640
+    ]
+   ],
+   "attrs": {
+    "material": "bark mulch",
+    "adjacent": [
+     "site.lawn_synthetic",
+     "site.trees_south"
+    ]
+   },
+   "conf": 0.6
   },
   {
    "id": "site.hedge_lawn_west",
@@ -3925,24 +4967,40 @@
      725
     ],
     [
-     1775,
+     1776,
      722
     ],
     [
-     1782,
-     940
+     1777,
+     921
     ],
     [
-     1825,
-     1010
+     1790,
+     948
     ],
     [
-     1830,
-     1060
+     1808,
+     980
     ],
     [
-     1812,
-     1110
+     1822,
+     1012
+    ],
+    [
+     1827,
+     1040
+    ],
+    [
+     1826,
+     1071
+    ],
+    [
+     1822,
+     1098
+    ],
+    [
+     1813,
+     1118
     ],
     [
      1760,
@@ -4492,52 +5550,55 @@
    "desc": "Large rounded shrub (clipped or naturally round, green / yellow-green).",
    "image": "photos/p29_ddf5dc.jpg",
    "point": [
-    1150,
-    1580
+    1125,
+    1556
    ],
    "attrs": {
     "radius_px": 30,
     "crown_poly": [
      [
-      1180,
-      1580
-     ],
-     [
-      1174,
-      1598
-     ],
-     [
       1159,
-      1609
+      1556
      ],
      [
-      1141,
-      1609
+      1153,
+      1576
      ],
      [
-      1126,
-      1598
+      1136,
+      1588
      ],
      [
-      1120,
-      1580
+      1114,
+      1588
      ],
      [
-      1126,
-      1562
+      1097,
+      1576
      ],
      [
-      1141,
-      1551
+      1091,
+      1556
      ],
      [
-      1159,
-      1551
+      1097,
+      1536
      ],
      [
-      1174,
-      1562
+      1114,
+      1524
+     ],
+     [
+      1136,
+      1524
+     ],
+     [
+      1153,
+      1536
      ]
+    ],
+    "checker": [
+     "moved (-25,-24) onto the shrub"
     ]
    },
    "conf": 0.5
@@ -4625,58 +5686,58 @@
     "species_guess": "young deciduous (ornamental)",
     "trunk_visible": true,
     "crown_center": [
-     345,
-     1095
+     320,
+     1100
     ],
     "crown_radius_px": 62,
     "crown_poly": [
      [
-      407,
-      1095
+      382,
+      1100
      ],
      [
-      399,
-      1126
+      374,
+      1131
      ],
      [
-      376,
-      1149
+      351,
+      1154
      ],
      [
-      345,
-      1157
+      320,
+      1162
      ],
      [
-      314,
-      1149
+      289,
+      1154
      ],
      [
-      291,
-      1126
+      266,
+      1131
      ],
      [
-      283,
-      1095
+      258,
+      1100
      ],
      [
-      291,
-      1064
+      266,
+      1069
      ],
      [
-      314,
-      1041
+      289,
+      1046
      ],
      [
-      345,
-      1033
+      320,
+      1038
      ],
      [
-      376,
-      1041
+      351,
+      1046
      ],
      [
-      399,
-      1064
+      374,
+      1069
      ]
     ]
    },
@@ -5010,65 +6071,65 @@
    "desc": "Small bare tree in the patio bed at the house's NE corner.",
    "image": "photos/p29_ddf5dc.jpg",
    "point": [
-    1050,
-    430
+    1056,
+    446
    ],
    "attrs": {
     "species_guess": "small deciduous",
     "trunk_visible": false,
     "crown_center": [
-     1045,
-     425
+     1050,
+     440
     ],
-    "crown_radius_px": 45,
+    "crown_radius_px": 42,
     "crown_poly": [
      [
-      1090,
-      425
+      1092,
+      440
      ],
      [
-      1084,
-      448
+      1086,
+      461
      ],
      [
-      1068,
-      464
+      1071,
+      476
      ],
      [
-      1045,
-      470
+      1050,
+      482
      ],
      [
-      1022,
-      464
+      1029,
+      476
      ],
      [
-      1006,
-      448
+      1014,
+      461
      ],
      [
-      1000,
-      425
+      1008,
+      440
      ],
      [
-      1006,
-      402
+      1014,
+      419
      ],
      [
-      1022,
-      386
+      1029,
+      404
      ],
      [
-      1045,
-      380
+      1050,
+      398
      ],
      [
-      1068,
-      386
+      1071,
+      404
      ],
      [
-      1084,
-      402
+      1086,
+      419
      ]
     ]
    },
@@ -5098,58 +6159,58 @@
     "species_guess": "crape myrtle (smooth tan multi-stem bark, p21 / p23)",
     "trunk_visible": true,
     "crown_center": [
-     1110,
-     790
+     1135,
+     785
     ],
     "crown_radius_px": 95,
     "crown_poly": [
      [
-      1205,
-      790
+      1230,
+      785
      ],
      [
-      1192,
-      838
+      1217,
+      832
      ],
      [
-      1158,
-      872
+      1182,
+      867
      ],
      [
-      1110,
-      885
+      1135,
+      880
      ],
      [
-      1062,
-      872
+      1088,
+      867
      ],
      [
-      1028,
-      838
+      1053,
+      832
      ],
      [
-      1015,
-      790
+      1040,
+      785
      ],
      [
-      1028,
-      742
+      1053,
+      738
      ],
      [
-      1062,
-      708
+      1088,
+      703
      ],
      [
-      1110,
-      695
+      1135,
+      690
      ],
      [
-      1158,
-      708
+      1182,
+      703
      ],
      [
-      1192,
-      742
+      1217,
+      738
      ]
     ]
    },
@@ -5323,8 +6384,8 @@
    "desc": "Japanese maple (layered crown, green in p22) on the planter left of the patio stairs.",
    "image": "photos/p29_ddf5dc.jpg",
    "point": [
-    1680,
-    560
+    1688,
+    548
    ],
    "also": [
     {
@@ -5341,57 +6402,57 @@
     "species_guess": "Japanese maple",
     "trunk_visible": false,
     "crown_center": [
-     1680,
+     1690,
      545
     ],
     "crown_radius_px": 85,
     "crown_poly": [
      [
-      1765,
+      1775,
       545
      ],
      [
-      1754,
+      1764,
       588
      ],
      [
-      1722,
+      1732,
       619
      ],
      [
-      1680,
+      1690,
       630
      ],
      [
-      1638,
+      1648,
       619
      ],
      [
-      1606,
+      1616,
       588
      ],
      [
-      1595,
+      1605,
       545
      ],
      [
-      1606,
+      1616,
       502
      ],
      [
-      1638,
+      1648,
       471
      ],
      [
-      1680,
+      1690,
       460
      ],
      [
-      1722,
+      1732,
       471
      ],
      [
-      1754,
+      1764,
       502
      ]
     ]
@@ -5404,66 +6465,69 @@
    "desc": "Small red-twigged Japanese maple in the raised planter beside the arbor.",
    "image": "photos/p29_ddf5dc.jpg",
    "point": [
-    1660,
-    850
+    1675,
+    840
    ],
    "attrs": {
     "species_guess": "Japanese maple",
     "trunk_visible": false,
     "crown_center": [
-     1660,
-     850
+     1678,
+     832
     ],
-    "crown_radius_px": 40,
+    "crown_radius_px": 42,
     "crown_poly": [
      [
-      1700,
-      850
+      1720,
+      832
      ],
      [
-      1695,
-      870
+      1714,
+      853
      ],
      [
-      1680,
-      885
+      1699,
+      868
      ],
      [
-      1660,
-      890
+      1678,
+      874
      ],
      [
-      1640,
-      885
+      1657,
+      868
      ],
      [
-      1625,
-      870
+      1642,
+      853
      ],
      [
-      1620,
-      850
+      1636,
+      832
      ],
      [
-      1625,
-      830
+      1642,
+      811
      ],
      [
-      1640,
-      815
+      1657,
+      796
      ],
      [
-      1660,
-      810
+      1678,
+      790
      ],
      [
-      1680,
-      815
+      1699,
+      796
      ],
      [
-      1695,
-      830
+      1714,
+      811
      ]
+    ],
+    "checker": [
+     "moved ~20 px onto the red maple (1644-1712, 791-872)"
     ]
    },
    "conf": 0.4
@@ -5474,8 +6538,8 @@
    "desc": "Japanese maple (pinkish bare twigs) in the round bed SE of the arbor, beside the rear walk.",
    "image": "photos/p29_ddf5dc.jpg",
    "point": [
-    1540,
-    1150
+    1572,
+    1170
    ],
    "also": [
     {
@@ -5492,59 +6556,62 @@
     "species_guess": "Japanese maple",
     "trunk_visible": false,
     "crown_center": [
-     1540,
-     1160
+     1575,
+     1166
     ],
-    "crown_radius_px": 75,
+    "crown_radius_px": 72,
     "crown_poly": [
      [
-      1615,
-      1160
+      1647,
+      1166
      ],
      [
-      1605,
-      1198
+      1637,
+      1202
      ],
      [
-      1578,
-      1225
+      1611,
+      1228
      ],
      [
-      1540,
-      1235
+      1575,
+      1238
      ],
      [
-      1502,
-      1225
+      1539,
+      1228
      ],
      [
-      1475,
-      1198
+      1513,
+      1202
      ],
      [
-      1465,
-      1160
+      1503,
+      1166
      ],
      [
-      1475,
-      1122
+      1513,
+      1130
      ],
      [
-      1502,
-      1095
+      1539,
+      1104
      ],
      [
-      1540,
-      1085
+      1575,
+      1094
      ],
      [
-      1578,
-      1095
+      1611,
+      1104
      ],
      [
-      1605,
-      1122
+      1637,
+      1130
      ]
+    ],
+    "checker": [
+     "the dome spans x 1504-1648: trunk / crown moved ~35 px east"
     ]
    },
    "conf": 0.45
@@ -6138,7 +7205,7 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     286,
+     0,
      0
     ],
     [
@@ -6196,6 +7263,14 @@
     [
      286,
      145
+    ],
+    [
+     40,
+     150
+    ],
+    [
+     0,
+     150
     ]
    ],
    "also": [
@@ -6239,6 +7314,18 @@
     [
      2340,
      1620
+    ],
+    [
+     2357,
+     1210
+    ],
+    [
+     2356,
+     900
+    ],
+    [
+     2325,
+     897
     ]
    ],
    "attrs": {},
@@ -6313,7 +7400,7 @@
   {
    "id": "site.structure_south",
    "type": "context_building",
-   "desc": "Wood-shake roof (hip, weathered cedar shakes) beyond the street-side screen at the bottom edge, plus a dark flat surface east of it: a neighbouring building across the street, or an entry structure. Unclear.",
+   "desc": "Wood-shake roof (hip, weathered cedar shakes) beyond the street-side screen at the bottom edge, plus a dark flat surface east of it: a neighbouring building across the street, or an entry structure. Unclear. East of it (552-672, 1818-1875) a dark grey roof (same building or a carport), then shade.",
    "image": "photos/p29_ddf5dc.jpg",
    "bbox": [
     264,
@@ -6322,9 +7409,34 @@
     1875
    ],
    "attrs": {
-    "beyond_lot": "probably"
+    "beyond_lot": "probably",
+    "dark_roof_bbox": [
+     552,
+     1818,
+     672,
+     1875
+    ]
    },
    "conf": 0.3
+  },
+  {
+   "id": "site.box_nw",
+   "type": "utility_box",
+   "desc": "Small grey square box / lid (~0.8 m) on the ground under the big bare tree, NW of the motor court (utility box, or a stone).",
+   "image": "photos/p29_ddf5dc.jpg",
+   "point": [
+    243,
+    273
+   ],
+   "attrs": {
+    "bbox_px": [
+     231,
+     262,
+     256,
+     284
+    ]
+   },
+   "conf": 0.35
   },
   {
    "id": "site.lid_green",
@@ -6333,7 +7445,7 @@
    "image": "photos/p29_ddf5dc.jpg",
    "point": [
     1237,
-    1547
+    1541
    ],
    "attrs": {
     "radius_px": 15
@@ -6372,8 +7484,8 @@
    "desc": "Small green box / lid in the NE-corner patio bed (irrigation valve box?).",
    "image": "photos/p29_ddf5dc.jpg",
    "point": [
-    1080,
-    445
+    1082,
+    450
    ],
    "attrs": {},
    "conf": 0.5
@@ -6381,11 +7493,11 @@
   {
    "id": "site.lid_patio",
    "type": "utility_lid",
-   "desc": "Small round cover and a dark square grate on the flagstone near the house's NE corner.",
+   "desc": "Square dark grate / drain or vault lid (~0.6 m) in the flagstone just south of the NW patio bed.",
    "image": "photos/p29_ddf5dc.jpg",
    "point": [
-    1067,
-    490
+    1070,
+    501
    ],
    "attrs": {
     "grate_bbox": [
@@ -6393,6 +7505,9 @@
      500,
      1075,
      510
+    ],
+    "checker": [
+     "moved 11 px down onto the grate"
     ]
    },
    "conf": 0.4
@@ -6416,112 +7531,144 @@
    "image": "photos/p29_ddf5dc.jpg",
    "poly": [
     [
-     286,
+     287,
      300
     ],
     [
-     584,
-     300
+     585,
+     299
     ],
     [
-     584,
-     316
+     585,
+     319
     ],
     [
-     1006,
-     316
+     1007,
+     319
     ],
     [
-     1006,
-     525
+     1007,
+     411
     ],
     [
-     1086,
-     525
+     990,
+     411
     ],
     [
-     1090,
+     990,
+     527
+    ],
+    [
+     1084,
+     527
+    ],
+    [
+     1081,
+     634
+    ],
+    [
+     1089,
      757
     ],
     [
-     1015,
+     997,
      757
     ],
     [
-     1015,
-     860
+     997,
+     846
     ],
     [
-     1125,
-     965
+     1121,
+     968
+    ],
+    [
+     1392,
+     966
     ],
     [
      1393,
-     965
+     1257
     ],
     [
-     1394,
-     1256
-    ],
-    [
-     1180,
-     1258
+     1179,
+     1257
     ],
     [
      1180,
-     1447
+     1446
     ],
     [
      811,
-     1447
+     1446
     ],
     [
      811,
      1275
     ],
     [
-     792,
-     1292
+     790,
+     1294
     ],
     [
-     687,
-     1195
+     728,
+     1251
     ],
     [
-     687,
-     1175
+     686,
+     1193
     ],
     [
-     535,
-     1175
+     704,
+     1171
     ],
     [
-     527,
+     531,
+     1173
+    ],
+    [
+     528,
      800
     ],
     [
-     634,
+     636,
      800
     ],
     [
-     634,
+     630,
+     687
+    ],
+    [
+     591,
+     688
+    ],
+    [
+     591,
+     708
+    ],
+    [
+     520,
+     710
+    ],
+    [
+     520,
      727
     ],
     [
-     590,
+     428,
      725
     ],
     [
-     361,
-     725
+     370,
+     727
     ],
     [
-     361,
-     707
+     370,
+     710
     ],
     [
-     286,
-     707
+     295,
+     709
     ]
    ],
    "also": [
@@ -6547,7 +7694,10 @@
       1283
      ]
     ],
-    "note": "traced at ~5 px; the roof zone has the exact eaves"
+    "note": "eave re-traced by the checker at 1.8-2x (the west eave runs 287->295 down the garage, steps at the garage south side (370-520 at y 725-727, 520-591 at 708, 591-630 at 687), the NE step at y 411 (1007->990), the porch-roof bend at (728,1251)); roof.json outline_all agrees except its vertices (634,508),(640,868)",
+    "checker": [
+     "eave outline re-traced; old one cut the garage-south steps, the y 411 step, the porch roof bend and used the wall base (1015) instead of the eave (997) at the rear recess"
+    ]
    },
    "conf": 0.5
   }
@@ -6559,7 +7709,8 @@
   "Perspective: tall things lean AWAY from the image centre (~1250, 937): chimney caps, the arbor roof, the play structure, fence tops and tree crowns are displaced outward from their bases; trunk points are at the base where the trunk shadow starts, crowns where the foliage is.",
   "Sun: shadows fall toward +y (down the image); the walls running along x cast dark bands south of them, the house shades its front (south) side, so the front beds / porch are in shadow.",
   "Materials: driveway = tumbled pavers; every walk / patio = bluestone flagstone (irregular rectangles, grey-blue with buff and rust stones); coping = lighter square-cut stone; garden path + garden floor = blue-grey crushed stone / DG; walls = dry-stacked fieldstone with light caps; beds = brown bark mulch; play area = tan wood chips; synthetic lawn = artificial turf; front + side lawns = natural grass.",
-  "Walk and path outlines were generated as constant-width bands around hand-read centre lines (centre lines kept in attrs) and unioned with hand-traced landings; their edges are good to ~5 px."
+  "Walk and path outlines were generated as constant-width bands around hand-read centre lines (centre lines kept in attrs) and unioned with hand-traced landings; their edges are good to ~5 px.",
+  "CHECKER (2026-11-27): every element was drawn on its photo and read at 1.5-6x. Re-traced: house eave outline, front walk + both front lawns, the curved rear walk and the beds on both sides of it, the patio outline (house side, the SE wall strip, the chevron wall), both pool step sets (SE steps were a strip along the whole SE wall: they are a 3-tread block in the south corner), the chevron / fireplace / north wall lines, the lawn planter, the gravel path ends, the play structure, the stepping stones (11, not 8), the lounge set (2 loveseats + 2 armchairs + 2 side tables), the power lines and a dozen tree / shrub / lid points (moved 10-35 px). Added: bed_lawn_terrace, bed_maple_stairs, bed_lawn_south, seat_wall_fireplace, side_yard_shade, box_side_yard, wood_step_se, box_nw. Per-element changes are listed in attrs.checker."
  ],
  "open_questions": [
   "Street and gated entrance are hidden by the bottom-left tree screen: gate position / type and where the street runs (along the bottom? the wood-shake roof at (264-552, 1808+) may be across it).",
@@ -6568,6 +7719,8 @@
   "Big bare tree at the motor-court NW corner: species (valley oak?) and whether the round dark disc at (242,315) is its trunk.",
   "Terraced walls NE of the side lawn / behind the lounge and the fireplace: two parallel walls are visible only as caps; heights and the run behind the fireplace are guesses.",
   "Lot boundary lines: no fence is visible in the aerial except the garden / play-area fences; the west hedge, north stone wall and the tree belts are taken as the edges.",
-  "Utility pole carrying the north overhead lines is out of frame (seen in p22 / p26 beyond the fireplace)."
+  "Utility pole carrying the north overhead lines is out of frame (seen in p22 / p26 beyond the fireplace).",
+  "Big Japanese maple east of the rear walk (jmaple_arbor_se) and the bed under it: the flagstone link from the rear walk east toward the synthetic lawn (1482-1536, 1190-1237) may continue under the canopy to the lawn; not visible.",
+  "Gravel path north of y ~660: ground cover / hedge spills over its west edge, so the 42-44 px band is the path bed, not the visible gravel (attrs.visible_west_edge)."
  ]
 }

@@ -81,7 +81,7 @@
   {
    "id": "roof.g_w",
    "type": "roof_plane",
-   "desc": "Long west plane of the garage wing along the driveway; eave the full length of the west side. Dark grey architectural asphalt shingles.",
+   "desc": "Long west plane of the garage wing along the driveway; eave the full length of the west side. Its top is the short garage ridge (415,440)-(416,457) and (418,529)-(418,556); between them it runs on, apparently without a crease, into the north wing's west hip-end facet t1 (no ridge cap / valley flashing along x~417). Dark grey architectural asphalt shingles.",
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
@@ -91,6 +91,14 @@
     [
      415,
      440
+    ],
+    [
+     416,
+     457
+    ],
+    [
+     418,
+     529
     ],
     [
      418,
@@ -126,6 +134,28 @@
       "a": [
        415,
        440
+      ],
+      "b": [
+       416,
+       457
+      ],
+      "kind": "ridge"
+     },
+     {
+      "a": [
+       416,
+       457
+      ],
+      "b": [
+       418,
+       529
+      ],
+      "kind": "coplanar_with_t1"
+     },
+     {
+      "a": [
+       418,
+       529
       ],
       "b": [
        418,
@@ -467,8 +497,8 @@
      440
     ],
     [
-     423,
-     458
+     416,
+     457
     ],
     [
      585,
@@ -495,15 +525,15 @@
        440
       ],
       "b": [
-       423,
-       458
+       416,
+       457
       ],
-      "kind": "junction"
+      "kind": "ridge"
      },
      {
       "a": [
-       423,
-       458
+       416,
+       457
       ],
       "b": [
        585,
@@ -550,8 +580,8 @@
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
-     420,
-     532
+     418,
+     529
     ],
     [
      418,
@@ -578,14 +608,14 @@
     "edges": [
      {
       "a": [
-       420,
-       532
+       418,
+       529
       ],
       "b": [
        418,
        556
       ],
-      "kind": "junction"
+      "kind": "ridge"
      },
      {
       "a": [
@@ -615,8 +645,8 @@
        688
       ],
       "b": [
-       420,
-       532
+       418,
+       529
       ],
       "kind": "valley"
      }
@@ -634,79 +664,64 @@
   {
    "id": "roof.t1",
    "type": "roof_plane",
-   "desc": "Small junction facet east of the garage ridge where the north-wing ridge (E-W) runs into the garage roof; bounded east by two short dark lines meeting at the north-wing ridge end. Exact geometry ambiguous (see open questions). Dark grey architectural asphalt shingles.",
+   "desc": "West hip-end facet of the north wing CW: its two hips (dark caps) run from the CW ridge end (442,491) down-west to the garage ridge line at (416,457) and (418,529). No ridge cap or valley flashing along x~417 between them, so it reads as coplanar with the garage west plane g_w (CW ridge slightly above the garage ridge). Dark grey architectural asphalt shingles.",
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
-     415,
-     440
+     416,
+     457
     ],
     [
      442,
-     490
-    ],
-    [
-     420,
-     532
+     491
     ],
     [
      418,
-     556
+     529
     ]
    ],
    "attrs": {
-    "block": "garage_wing",
+    "block": "north_wing",
     "storey": 1,
     "downhill_img": [
-     1.0,
+     -1.0,
      0.0
     ],
-    "lower_edge": "no eave (drains into valleys / onto deck)",
+    "lower_edge": "none (continues into g_w)",
     "gutter": false,
     "edges": [
      {
       "a": [
-       415,
-       440
+       416,
+       457
       ],
       "b": [
        442,
-       490
+       491
       ],
-      "kind": "junction"
+      "kind": "hip"
      },
      {
       "a": [
        442,
-       490
-      ],
-      "b": [
-       420,
-       532
-      ],
-      "kind": "junction"
-     },
-     {
-      "a": [
-       420,
-       532
+       491
       ],
       "b": [
        418,
-       556
+       529
       ],
-      "kind": "junction"
+      "kind": "hip"
      },
      {
       "a": [
        418,
-       556
+       529
       ],
       "b": [
-       415,
-       440
+       416,
+       457
       ],
-      "kind": "ridge"
+      "kind": "coplanar_with_g_w"
      }
     ],
     "lum": 141.6,
@@ -718,7 +733,7 @@
      "roof.cw_s"
     ]
    },
-   "conf": 0.35
+   "conf": 0.5
   },
   {
    "id": "roof.cw_n",
@@ -727,12 +742,12 @@
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
-     423,
-     458
+     416,
+     457
     ],
     [
      442,
-     490
+     491
     ],
     [
      633,
@@ -771,19 +786,19 @@
     "edges": [
      {
       "a": [
-       423,
-       458
+       416,
+       457
       ],
       "b": [
        442,
-       490
+       491
       ],
-      "kind": "junction"
+      "kind": "hip"
      },
      {
       "a": [
        442,
-       490
+       491
       ],
       "b": [
        633,
@@ -852,8 +867,8 @@
        321
       ],
       "b": [
-       423,
-       458
+       416,
+       457
       ],
       "kind": "valley"
      }
@@ -878,19 +893,23 @@
    "poly": [
     [
      442,
-     490
+     491
     ],
     [
-     420,
-     532
+     418,
+     529
     ],
     [
      590,
      688
     ],
     [
-     630,
-     687
+     626,
+     686
+    ],
+    [
+     634,
+     676
     ],
     [
      633,
@@ -910,18 +929,18 @@
      {
       "a": [
        442,
-       490
+       491
       ],
       "b": [
-       420,
-       532
+       418,
+       529
       ],
-      "kind": "junction"
+      "kind": "hip"
      },
      {
       "a": [
-       420,
-       532
+       418,
+       529
       ],
       "b": [
        590,
@@ -935,15 +954,26 @@
        688
       ],
       "b": [
-       630,
-       687
+       626,
+       686
       ],
       "kind": "eave"
      },
      {
       "a": [
-       630,
-       687
+       626,
+       686
+      ],
+      "b": [
+       634,
+       676
+      ],
+      "kind": "hip"
+     },
+     {
+      "a": [
+       634,
+       676
       ],
       "b": [
        633,
@@ -958,7 +988,7 @@
       ],
       "b": [
        442,
-       490
+       491
       ],
       "kind": "ridge"
      }
@@ -968,10 +998,97 @@
      "roof.ge_s",
      "roof.t1",
      "roof.cw_n",
-     "roof.cc_w"
+     "roof.cc_w",
+     "roof.cwk"
     ]
    },
    "conf": 0.75
+  },
+  {
+   "id": "roof.cwk",
+   "type": "roof_plane",
+   "desc": "Narrow one-storey roof strip along the west wall of the central block CC, on the east side of the light-well court, joining the north-wing roof CW_S to the porch roof A_N (a covered walk); hips at both ends, eave (white gutter) on the court side x~626; most of it hidden under the CC eave (x~635). Dark grey architectural asphalt shingles.",
+   "image": "p29_ddf5dc.jpg",
+   "poly": [
+    [
+     626,
+     686
+    ],
+    [
+     634,
+     676
+    ],
+    [
+     635,
+     810
+    ],
+    [
+     626,
+     801
+    ]
+   ],
+   "attrs": {
+    "block": "porch_1st",
+    "storey": 1,
+    "downhill_img": [
+     -1.0,
+     0.0
+    ],
+    "lower_edge": "eave with white gutter/fascia line",
+    "gutter": true,
+    "edges": [
+     {
+      "a": [
+       626,
+       686
+      ],
+      "b": [
+       634,
+       676
+      ],
+      "kind": "hip"
+     },
+     {
+      "a": [
+       634,
+       676
+      ],
+      "b": [
+       635,
+       810
+      ],
+      "kind": "under_upper_eave"
+     },
+     {
+      "a": [
+       635,
+       810
+      ],
+      "b": [
+       626,
+       801
+      ],
+      "kind": "hip"
+     },
+     {
+      "a": [
+       626,
+       801
+      ],
+      "b": [
+       626,
+       686
+      ],
+      "kind": "eave"
+     }
+    ],
+    "adjacent": [
+     "roof.cw_s",
+     "roof.a_n",
+     "roof.cc_w"
+    ]
+   },
+   "conf": 0.7
   },
   {
    "id": "roof.nc_n",
@@ -1255,6 +1372,10 @@
      330
     ],
     [
+     991,
+     412
+    ],
+    [
      990,
      527
     ],
@@ -1319,6 +1440,17 @@
       "a": [
        989,
        330
+      ],
+      "b": [
+       991,
+       412
+      ],
+      "kind": "eave_over_lower_roof"
+     },
+     {
+      "a": [
+       991,
+       412
       ],
       "b": [
        990,
@@ -1632,8 +1764,8 @@
      971
     ],
     [
-     850,
-     1081
+     848,
+     1083
     ],
     [
      752,
@@ -1678,15 +1810,15 @@
        971
       ],
       "b": [
-       850,
-       1081
+       848,
+       1083
       ],
       "kind": "top edge of SE plane"
      },
      {
       "a": [
-       850,
-       1081
+       848,
+       1083
       ],
       "b": [
        752,
@@ -1835,8 +1967,8 @@
      1077
     ],
     [
-     850,
-     1081
+     848,
+     1083
     ]
    ],
    "attrs": {
@@ -1877,15 +2009,15 @@
        1077
       ],
       "b": [
-       850,
-       1081
+       848,
+       1083
       ],
       "kind": "valley"
      },
      {
       "a": [
-       850,
-       1081
+       848,
+       1083
       ],
       "b": [
        960,
@@ -2675,11 +2807,7 @@
      997
     ],
     [
-     572,
-     1108
-    ],
-    [
-     563,
+     565,
      1108
     ],
     [
@@ -2718,25 +2846,14 @@
        997
       ],
       "b": [
-       572,
+       565,
        1108
       ],
       "kind": "hip"
      },
      {
       "a": [
-       572,
-       1108
-      ],
-      "b": [
-       563,
-       1108
-      ],
-      "kind": "eave_over_lower_roof"
-     },
-     {
-      "a": [
-       563,
+       565,
        1108
       ],
       "b": [
@@ -2800,7 +2917,7 @@
      1107
     ],
     [
-     572,
+     565,
      1108
     ]
    ],
@@ -2853,14 +2970,14 @@
        1107
       ],
       "b": [
-       572,
+       565,
        1108
       ],
       "kind": "eave_over_lower_roof"
      },
      {
       "a": [
-       572,
+       565,
        1108
       ],
       "b": [
@@ -2891,12 +3008,12 @@
      997
     ],
     [
-     850,
-     1081
+     848,
+     1083
     ],
     [
-     862,
-     1104
+     854,
+     1095
     ],
     [
      728,
@@ -2927,26 +3044,26 @@
        997
       ],
       "b": [
-       850,
-       1081
+       848,
+       1083
       ],
       "kind": "deck_edge"
      },
      {
       "a": [
-       850,
-       1081
+       848,
+       1083
       ],
       "b": [
-       862,
-       1104
+       854,
+       1095
       ],
-      "kind": "ridge"
+      "kind": "junction"
      },
      {
       "a": [
-       862,
-       1104
+       854,
+       1095
       ],
       "b": [
        728,
@@ -3006,8 +3123,8 @@
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
-     862,
-     1104
+     866,
+     1106
     ],
     [
      965,
@@ -3034,8 +3151,8 @@
     "edges": [
      {
       "a": [
-       862,
-       1104
+       866,
+       1106
       ],
       "b": [
        965,
@@ -3071,8 +3188,8 @@
        1233
       ],
       "b": [
-       862,
-       1104
+       866,
+       1106
       ],
       "kind": "valley"
      }
@@ -3102,12 +3219,16 @@
      1116
     ],
     [
-     862,
-     1104
+     854,
+     1095
+    ],
+    [
+     866,
+     1106
     ],
     [
      746,
-     1213
+     1214
     ]
    ],
    "attrs": {
@@ -3137,26 +3258,37 @@
        1116
       ],
       "b": [
-       862,
-       1104
+       854,
+       1095
       ],
       "kind": "valley"
      },
      {
       "a": [
-       862,
-       1104
+       854,
+       1095
+      ],
+      "b": [
+       866,
+       1106
+      ],
+      "kind": "junction"
+     },
+     {
+      "a": [
+       866,
+       1106
       ],
       "b": [
        746,
-       1213
+       1214
       ],
       "kind": "ridge"
      },
      {
       "a": [
        746,
-       1213
+       1214
       ],
       "b": [
        698,
@@ -3170,7 +3302,8 @@
      "roof.swf_a",
      "roof.fg_se",
      "roof.sp",
-     "roof.swp"
+     "roof.swp_nw",
+     "roof.swp_se"
     ]
    },
    "conf": 0.8
@@ -3183,11 +3316,11 @@
    "poly": [
     [
      746,
-     1213
+     1214
     ],
     [
-     862,
-     1104
+     866,
+     1106
     ],
     [
      850,
@@ -3211,18 +3344,18 @@
      {
       "a": [
        746,
-       1213
+       1214
       ],
       "b": [
-       862,
-       1104
+       866,
+       1106
       ],
       "kind": "ridge"
      },
      {
       "a": [
-       862,
-       1104
+       866,
+       1106
       ],
       "b": [
        850,
@@ -3248,7 +3381,7 @@
       ],
       "b": [
        746,
-       1213
+       1214
       ],
       "kind": "rake"
      }
@@ -3257,8 +3390,9 @@
     "adjacent": [
      "roof.swf_b",
      "roof.fg_nw",
-     "roof.swp",
-     "roof.wpb"
+     "roof.wpb",
+     "roof.swp_nw",
+     "roof.swp_se"
     ]
    },
    "conf": 0.8
@@ -3270,15 +3404,15 @@
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
-     850,
-     1081
+     848,
+     1083
     ],
     [
      1021,
      1077
     ],
     [
-     1088,
+     1091,
      1148
     ],
     [
@@ -3286,8 +3420,12 @@
      1205
     ],
     [
-     862,
-     1104
+     866,
+     1106
+    ],
+    [
+     854,
+     1095
     ]
    ],
    "attrs": {
@@ -3302,8 +3440,8 @@
     "edges": [
      {
       "a": [
-       850,
-       1081
+       848,
+       1083
       ],
       "b": [
        1021,
@@ -3317,14 +3455,14 @@
        1077
       ],
       "b": [
-       1088,
+       1091,
        1148
       ],
       "kind": "eave_over_lower_roof"
      },
      {
       "a": [
-       1088,
+       1091,
        1148
       ],
       "b": [
@@ -3339,21 +3477,32 @@
        1205
       ],
       "b": [
-       862,
-       1104
+       866,
+       1106
       ],
       "kind": "ridge"
      },
      {
       "a": [
-       862,
-       1104
+       866,
+       1106
       ],
       "b": [
-       850,
-       1081
+       854,
+       1095
       ],
-      "kind": "ridge"
+      "kind": "junction"
+     },
+     {
+      "a": [
+       854,
+       1095
+      ],
+      "b": [
+       848,
+       1083
+      ],
+      "kind": "junction"
      }
     ],
     "lum": 161.6,
@@ -3466,12 +3615,12 @@
      1205
     ],
     [
-     1088,
+     1091,
      1148
     ],
     [
-     1088,
-     1394
+     1092,
+     1399
     ],
     [
      968,
@@ -3494,26 +3643,26 @@
        1205
       ],
       "b": [
-       1088,
+       1091,
        1148
       ],
       "kind": "hip"
      },
      {
       "a": [
-       1088,
+       1091,
        1148
       ],
       "b": [
-       1088,
-       1394
+       1092,
+       1399
       ],
       "kind": "eave_over_lower_roof"
      },
      {
       "a": [
-       1088,
-       1394
+       1092,
+       1399
       ],
       "b": [
        968,
@@ -3558,8 +3707,8 @@
      1302
     ],
     [
-     1088,
-     1394
+     1092,
+     1399
     ],
     [
      1054,
@@ -3601,15 +3750,15 @@
        1302
       ],
       "b": [
-       1088,
-       1394
+       1092,
+       1399
       ],
       "kind": "hip"
      },
      {
       "a": [
-       1088,
-       1394
+       1092,
+       1399
       ],
       "b": [
        1054,
@@ -3843,8 +3992,8 @@
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
-     1121,
-     966
+     1133,
+     965
     ],
     [
      1392,
@@ -3863,8 +4012,8 @@
      1077
     ],
     [
-     1123,
-     972
+     1125,
+     970
     ]
    ],
    "attrs": {
@@ -3879,8 +4028,8 @@
     "edges": [
      {
       "a": [
-       1121,
-       966
+       1133,
+       965
       ],
       "b": [
        1392,
@@ -3927,21 +4076,21 @@
        1077
       ],
       "b": [
-       1123,
-       972
+       1125,
+       970
       ],
       "kind": "under_upper_eave"
      },
      {
       "a": [
-       1123,
-       972
+       1125,
+       970
       ],
       "b": [
-       1121,
-       966
+       1133,
+       965
       ],
-      "kind": "short"
+      "kind": "hip"
      }
     ],
     "lum": 138.8,
@@ -4026,6 +4175,92 @@
    "conf": 0.85
   },
   {
+   "id": "roof.pb_ne",
+   "type": "roof_plane",
+   "desc": "Narrow return of the patio roof PB running NW along the foot of the NE-facing 45-degree core wall (under the NE plane's eave) for ~1.3 m; its own white gutter line (1100,932)-(1133,965) faces the planting bed; ends at the flagstone terrace. Mostly hidden under the two-storey eave. Dark grey architectural asphalt shingles.",
+   "image": "p29_ddf5dc.jpg",
+   "poly": [
+    [
+     1090,
+     937
+    ],
+    [
+     1100,
+     932
+    ],
+    [
+     1133,
+     965
+    ],
+    [
+     1125,
+     970
+    ]
+   ],
+   "attrs": {
+    "block": "patio_1st",
+    "storey": 1,
+    "downhill_img": [
+     0.707,
+     -0.707
+    ],
+    "lower_edge": "eave with white gutter/fascia line",
+    "gutter": true,
+    "edges": [
+     {
+      "a": [
+       1090,
+       937
+      ],
+      "b": [
+       1100,
+       932
+      ],
+      "kind": "end (terrace)"
+     },
+     {
+      "a": [
+       1100,
+       932
+      ],
+      "b": [
+       1133,
+       965
+      ],
+      "kind": "eave"
+     },
+     {
+      "a": [
+       1133,
+       965
+      ],
+      "b": [
+       1125,
+       970
+      ],
+      "kind": "hip"
+     },
+     {
+      "a": [
+       1125,
+       970
+      ],
+      "b": [
+       1090,
+       937
+      ],
+      "kind": "under_upper_eave"
+     }
+    ],
+    "adjacent": [
+     "roof.pb_n",
+     "roof.ne",
+     "roof.se"
+    ]
+   },
+   "conf": 0.6
+  },
+  {
    "id": "roof.pb_s",
    "type": "roof_plane",
    "desc": "South plane of the patio roof; two pipe vents; eave over the garden with the stepping stones. Dark grey architectural asphalt shingles.",
@@ -4053,7 +4288,7 @@
     ],
     [
      1091,
-     1144
+     1148
     ]
    ],
    "attrs": {
@@ -4117,14 +4352,14 @@
       ],
       "b": [
        1091,
-       1144
+       1148
       ],
       "kind": "under_upper_eave"
      },
      {
       "a": [
        1091,
-       1144
+       1148
       ],
       "b": [
        1064,
@@ -4161,8 +4396,8 @@
      1446
     ],
     [
-     1090,
-     1373
+     1092,
+     1372
     ]
    ],
    "attrs": {
@@ -4203,15 +4438,15 @@
        1446
       ],
       "b": [
-       1090,
-       1373
+       1092,
+       1372
       ],
       "kind": "hip"
      },
      {
       "a": [
-       1090,
-       1373
+       1092,
+       1372
       ],
       "b": [
        1091,
@@ -4239,8 +4474,12 @@
      800
     ],
     [
-     636,
-     800
+     626,
+     801
+    ],
+    [
+     635,
+     810
     ],
     [
      639,
@@ -4267,15 +4506,26 @@
        800
       ],
       "b": [
-       636,
-       800
+       626,
+       801
       ],
       "kind": "eave"
      },
      {
       "a": [
-       636,
-       800
+       626,
+       801
+      ],
+      "b": [
+       635,
+       810
+      ],
+      "kind": "hip"
+     },
+     {
+      "a": [
+       635,
+       810
       ],
       "b": [
        639,
@@ -4310,7 +4560,8 @@
     "adjacent": [
      "roof.cc_w",
      "roof.ww_n",
-     "roof.a_w"
+     "roof.a_w",
+     "roof.cwk"
     ]
    },
    "conf": 0.7
@@ -4354,11 +4605,7 @@
      1072
     ],
     [
-     563,
-     1108
-    ],
-    [
-     572,
+     565,
      1108
     ],
     [
@@ -4459,25 +4706,14 @@
        1072
       ],
       "b": [
-       563,
+       565,
        1108
       ],
       "kind": "under_upper_eave"
      },
      {
       "a": [
-       563,
-       1108
-      ],
-      "b": [
-       572,
-       1108
-      ],
-      "kind": "under_upper_eave"
-     },
-     {
-      "a": [
-       572,
+       565,
        1108
       ],
       "b": [
@@ -4522,7 +4758,7 @@
      1173
     ],
     [
-     572,
+     565,
      1108
     ],
     [
@@ -4539,7 +4775,7 @@
     ],
     [
      707,
-     1171
+     1172
     ]
    ],
    "attrs": {
@@ -4558,14 +4794,14 @@
        1173
       ],
       "b": [
-       572,
+       565,
        1108
       ],
       "kind": "hip"
      },
      {
       "a": [
-       572,
+       565,
        1108
       ],
       "b": [
@@ -4603,14 +4839,14 @@
       ],
       "b": [
        707,
-       1171
+       1172
       ],
-      "kind": "hip"
+      "kind": "valley"
      },
      {
       "a": [
        707,
-       1171
+       1172
       ],
       "b": [
        531,
@@ -4625,15 +4861,15 @@
      "roof.swf_a",
      "roof.fg_nw",
      "roof.a_w",
-     "roof.swp"
+     "roof.swp_nw"
     ]
    },
    "conf": 0.75
   },
   {
-   "id": "roof.swp",
+   "id": "roof.swp_nw",
    "type": "roof_plane",
-   "desc": "Diagonal front leg of the porch under the front gable (faces SW, in shade); carries the small entry gable over the steps (see porch_entry_gable). Dark grey architectural asphalt shingles.",
+   "desc": "NW plane of the one-storey ENTRY PORCH GABLE over the front steps (in deep shade). The entry gable spans the whole diagonal front porch leg under the two-storey front gable FG (hero / p01: a bracketed gable on the two column pairs either side of the door, as wide as FG): ridge NE-SW on the FG axis, gable end facing SW = the V in the porch eave line. The pale patch over its rake is a sun gap in the house shadow (it runs on across the rake onto the paving), not a separate plane. Dark grey architectural asphalt shingles.",
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
@@ -4642,43 +4878,31 @@
     ],
     [
      707,
-     1171
+     1172
     ],
     [
-     686,
-     1193
+     687,
+     1192
     ],
     [
-     720,
-     1241
+     725,
+     1249
     ],
     [
-     728,
-     1251
-    ],
-    [
-     790,
-     1294
-    ],
-    [
-     811,
-     1274
-    ],
-    [
-     820,
-     1264
+     755,
+     1220
     ],
     [
      746,
-     1213
+     1214
     ]
    ],
    "attrs": {
     "block": "porch_1st",
     "storey": 1,
     "downhill_img": [
-     -0.697,
-     0.717
+     -0.707,
+     -0.707
     ],
     "lower_edge": "eave with white gutter/fascia line",
     "gutter": true,
@@ -4690,108 +4914,176 @@
       ],
       "b": [
        707,
-       1171
+       1172
       ],
-      "kind": "hip"
+      "kind": "valley"
      },
      {
       "a": [
        707,
-       1171
+       1172
       ],
       "b": [
-       686,
-       1193
+       687,
+       1192
       ],
       "kind": "eave"
      },
      {
       "a": [
-       686,
-       1193
+       687,
+       1192
       ],
       "b": [
-       720,
-       1241
+       725,
+       1249
       ],
-      "kind": "eave"
+      "kind": "rake"
      },
      {
       "a": [
-       720,
-       1241
+       725,
+       1249
       ],
       "b": [
-       728,
-       1251
+       755,
+       1220
       ],
-      "kind": "eave"
+      "kind": "ridge"
      },
      {
       "a": [
-       728,
-       1251
-      ],
-      "b": [
-       790,
-       1294
-      ],
-      "kind": "eave"
-     },
-     {
-      "a": [
-       790,
-       1294
-      ],
-      "b": [
-       811,
-       1274
-      ],
-      "kind": "eave"
-     },
-     {
-      "a": [
-       811,
-       1274
-      ],
-      "b": [
-       820,
-       1264
-      ],
-      "kind": "hip"
-     },
-     {
-      "a": [
-       820,
-       1264
+       755,
+       1220
       ],
       "b": [
        746,
-       1213
+       1214
       ],
-      "kind": "under_upper_eave"
+      "kind": "under_upper_rake"
      },
      {
       "a": [
        746,
-       1213
+       1214
       ],
       "b": [
        698,
        1147
       ],
-      "kind": "under_upper_eave"
+      "kind": "under_upper_rake"
      }
     ],
     "lum": 46.2,
     "adjacent": [
-     "roof.fg_nw",
-     "roof.fg_se",
      "roof.sp",
+     "roof.swp_se",
+     "roof.fg_nw",
+     "roof.fg_se"
+    ]
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "roof.swp_se",
+   "type": "roof_plane",
+   "desc": "SE plane of the one-storey entry porch gable (see swp_nw); its short SE eave meets the porch leg WPB in a valley at (809,1274). Dark grey architectural asphalt shingles.",
+   "image": "p29_ddf5dc.jpg",
+   "poly": [
+    [
+     755,
+     1220
+    ],
+    [
+     725,
+     1249
+    ],
+    [
+     790,
+     1295
+    ],
+    [
+     809,
+     1274
+    ],
+    [
+     820,
+     1264
+    ]
+   ],
+   "attrs": {
+    "block": "porch_1st",
+    "storey": 1,
+    "downhill_img": [
+     0.707,
+     0.707
+    ],
+    "lower_edge": "eave with white gutter/fascia line",
+    "gutter": true,
+    "edges": [
+     {
+      "a": [
+       755,
+       1220
+      ],
+      "b": [
+       725,
+       1249
+      ],
+      "kind": "ridge"
+     },
+     {
+      "a": [
+       725,
+       1249
+      ],
+      "b": [
+       790,
+       1295
+      ],
+      "kind": "rake"
+     },
+     {
+      "a": [
+       790,
+       1295
+      ],
+      "b": [
+       809,
+       1274
+      ],
+      "kind": "eave"
+     },
+     {
+      "a": [
+       809,
+       1274
+      ],
+      "b": [
+       820,
+       1264
+      ],
+      "kind": "valley"
+     },
+     {
+      "a": [
+       820,
+       1264
+      ],
+      "b": [
+       755,
+       1220
+      ],
+      "kind": "under_upper_rake"
+     }
+    ],
+    "adjacent": [
+     "roof.swp_nw",
+     "roof.fg_se",
      "roof.wpb"
     ]
    },
-   "conf": 0.65
+   "conf": 0.7
   },
   {
    "id": "roof.wpb",
@@ -4820,7 +5112,7 @@
      1446
     ],
     [
-     811,
+     810,
      1274
     ]
    ],
@@ -4884,21 +5176,21 @@
        1446
       ],
       "b": [
-       811,
+       810,
        1274
       ],
       "kind": "eave"
      },
      {
       "a": [
-       811,
+       810,
        1274
       ],
       "b": [
        820,
        1264
       ],
-      "kind": "hip"
+      "kind": "valley"
      }
     ],
     "lum": 74.1,
@@ -4906,8 +5198,8 @@
      "roof.swf_b",
      "roof.fg_se",
      "roof.bc_w",
-     "roof.swp",
-     "roof.spb"
+     "roof.spb",
+     "roof.swp_se"
     ]
    },
    "conf": 0.7
@@ -4947,12 +5239,12 @@
      1400
     ],
     [
-     1088,
-     1394
+     1092,
+     1399
     ],
     [
-     1090,
-     1373
+     1092,
+     1372
     ],
     [
      1180,
@@ -5041,26 +5333,26 @@
        1400
       ],
       "b": [
-       1088,
-       1394
+       1092,
+       1399
       ],
       "kind": "under_upper_eave"
      },
      {
       "a": [
-       1088,
-       1394
+       1092,
+       1399
       ],
       "b": [
-       1090,
-       1373
+       1092,
+       1372
       ],
       "kind": "under_upper_eave"
      },
      {
       "a": [
-       1090,
-       1373
+       1092,
+       1372
       ],
       "b": [
        1180,
@@ -5135,15 +5427,11 @@
      688
     ],
     [
-     420,
-     532
+     418,
+     529
     ],
     [
-     442,
-     490
-    ],
-    [
-     424,
+     416,
      457
     ],
     [
@@ -5164,8 +5452,7 @@
      "roof.gb_w",
      "roof.gb_e",
      "roof.ge_n",
-     "roof.ge_s",
-     "roof.t1"
+     "roof.ge_s"
     ]
    },
    "conf": 0.7
@@ -5177,16 +5464,20 @@
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
-     420,
-     532
+     418,
+     529
     ],
     [
      590,
      688
     ],
     [
-     630,
-     687
+     626,
+     686
+    ],
+    [
+     634,
+     676
     ],
     [
      633,
@@ -5213,19 +5504,16 @@
      321
     ],
     [
-     423,
-     458
-    ],
-    [
-     442,
-     490
+     416,
+     457
     ]
    ],
    "attrs": {
     "storeys": 1,
     "planes": [
      "roof.cw_n",
-     "roof.cw_s"
+     "roof.cw_s",
+     "roof.t1"
     ]
    },
    "conf": 0.7
@@ -5257,36 +5545,20 @@
      1116
     ],
     [
-     862,
-     1104
+     854,
+     1095
     ],
     [
-     850,
-     1233
-    ],
-    [
-     863,
-     1236
-    ],
-    [
-     965,
-     1205
-    ],
-    [
-     862,
-     1104
-    ],
-    [
-     850,
-     1081
+     848,
+     1083
     ],
     [
      1021,
      1077
     ],
     [
-     1123,
-     972
+     1125,
+     970
     ],
     [
      998,
@@ -5331,7 +5603,26 @@
      "roof.se",
      "roof.swf_a",
      "roof.swf_b"
-    ]
+    ],
+    "extra_poly": [
+     [
+      866,
+      1106
+     ],
+     [
+      965,
+      1205
+     ],
+     [
+      863,
+      1236
+     ],
+     [
+      850,
+      1233
+     ]
+    ],
+    "note": "poly = the main core outline; extra_poly = plane swf_b, the part of the SW-facing core plane SE of the front gable, which touches the rest only through the FG / BC_N junction."
    },
    "conf": 0.7
   },
@@ -5447,7 +5738,7 @@
     ],
     [
      746,
-     1213
+     1214
     ],
     [
      820,
@@ -5458,8 +5749,12 @@
      1233
     ],
     [
-     862,
-     1104
+     866,
+     1106
+    ],
+    [
+     854,
+     1095
     ],
     [
      728,
@@ -5482,15 +5777,19 @@
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
-     850,
-     1081
+     848,
+     1083
     ],
     [
-     862,
-     1104
+     854,
+     1095
     ],
     [
-     964,
+     866,
+     1106
+    ],
+    [
+     965,
      1205
     ],
     [
@@ -5522,11 +5821,11 @@
      1400
     ],
     [
-     1088,
-     1394
+     1092,
+     1399
     ],
     [
-     1088,
+     1091,
      1148
     ],
     [
@@ -5559,7 +5858,7 @@
     ],
     [
      1091,
-     1144
+     1148
     ],
     [
      1091,
@@ -5578,12 +5877,20 @@
      965
     ],
     [
-     1121,
-     966
+     1133,
+     965
     ],
     [
-     1123,
-     972
+     1100,
+     932
+    ],
+    [
+     1090,
+     937
+    ],
+    [
+     1125,
+     970
     ]
    ],
    "attrs": {
@@ -5591,7 +5898,8 @@
     "planes": [
      "roof.pb_n",
      "roof.pb_e",
-     "roof.pb_s"
+     "roof.pb_s",
+     "roof.pb_ne"
     ]
    },
    "conf": 0.7
@@ -5599,7 +5907,7 @@
   {
    "id": "roof.block_porch_1st",
    "type": "roof_block",
-   "desc": "One-storey wraparound porch roof: north, west and south of the west wing, the diagonal front under the entry gable, then west, south and east of the south block to the patio roof. Mostly in shade.",
+   "desc": "One-storey wraparound porch roof: north, west and south of the west wing, the diagonal front leg = the entry porch gable (swp_nw / swp_se), the covered strip CWK along the light-well court, then west, south and east of the south block to the patio roof. Mostly in shade.",
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
@@ -5611,24 +5919,24 @@
      1173
     ],
     [
-     706,
-     1171
+     707,
+     1172
     ],
     [
-     686,
-     1193
+     687,
+     1192
     ],
     [
-     728,
-     1251
+     725,
+     1249
     ],
     [
      790,
-     1294
+     1295
     ],
     [
-     811,
-     1275
+     810,
+     1274
     ],
     [
      811,
@@ -5647,12 +5955,12 @@
      1176
     ],
     [
-     1090,
-     1373
+     1092,
+     1372
     ],
     [
-     1088,
-     1394
+     1092,
+     1399
     ],
     [
      1054,
@@ -5667,7 +5975,7 @@
      1427
     ],
     [
-     898,
+     897,
      1416
     ],
     [
@@ -5692,7 +6000,7 @@
     ],
     [
      746,
-     1213
+     1214
     ],
     [
      698,
@@ -5707,7 +6015,7 @@
      1107
     ],
     [
-     563,
+     565,
      1108
     ],
     [
@@ -5739,8 +6047,20 @@
      877
     ],
     [
-     636,
-     800
+     635,
+     810
+    ],
+    [
+     634,
+     676
+    ],
+    [
+     626,
+     686
+    ],
+    [
+     626,
+     801
     ]
    ],
    "attrs": {
@@ -5750,9 +6070,11 @@
      "roof.a_n",
      "roof.a_w",
      "roof.sp",
-     "roof.swp",
+     "roof.swp_nw",
+     "roof.swp_se",
      "roof.wpb",
-     "roof.spb"
+     "roof.spb",
+     "roof.cwk"
     ]
    },
    "conf": 0.7
@@ -5800,7 +6122,7 @@
   {
    "id": "roof.outline_all",
    "type": "roof_outline",
-   "desc": "Outer outline of all house roofs (eave / gutter line as seen from above, incl. porches, patio and garage wing). Heights lean the upper eaves up-left (away from the image centre) by up to a few tens of px.",
+   "desc": "Outer outline of all house roofs (eave / gutter line as seen from above, incl. porches, patio and garage wing). Heights lean the upper eaves up-left (away from the image centre) by up to a few tens of px. The open light-well court (x 528-626, y 686-801) and the inner garden court (NE of the core) lie outside it.",
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
@@ -5840,20 +6162,12 @@
      688
     ],
     [
-     630,
-     687
+     626,
+     686
     ],
     [
-     634,
-     508
-    ],
-    [
-     640,
-     868
-    ],
-    [
-     636,
-     800
+     626,
+     801
     ],
     [
      528,
@@ -5864,24 +6178,24 @@
      1173
     ],
     [
-     706,
-     1171
+     707,
+     1172
     ],
     [
-     686,
-     1193
+     687,
+     1192
     ],
     [
-     728,
-     1251
+     725,
+     1249
     ],
     [
      790,
-     1294
+     1295
     ],
     [
-     811,
-     1275
+     810,
+     1274
     ],
     [
      811,
@@ -5904,12 +6218,16 @@
      965
     ],
     [
-     1121,
-     966
+     1133,
+     965
     ],
     [
-     1121,
-     970
+     1100,
+     932
+    ],
+    [
+     1090,
+     937
     ],
     [
      998,
@@ -5934,10 +6252,6 @@
     [
      990,
      527
-    ],
-    [
-     989,
-     392
     ],
     [
      991,
@@ -6090,14 +6404,49 @@
       642,
       472
      ]
-    ]
+    ],
+    "visible_poly": [
+     [
+      523,
+      368
+     ],
+     [
+      681,
+      368
+     ],
+     [
+      681,
+      390
+     ],
+     [
+      631,
+      390
+     ],
+     [
+      631,
+      472
+     ],
+     [
+      485,
+      472
+     ],
+     [
+      485,
+      420
+     ],
+     [
+      523,
+      418
+     ]
+    ],
+    "note": "poly = full panel extent; the top row east of x~631 is visible only above the pa eave (y<390), the 5th bottom-row panel only to x~631 (CC eave)."
    },
    "conf": 0.85
   },
   {
    "id": "roof.solar_a3",
    "type": "solar_array",
-   "desc": "Large PV array on the central block west plane (faces west, not visible in p28): two columns of landscape panels (7 + 8) and a third column of 4 portrait panels on the east (ridge) side.",
+   "desc": "Large PV array on the central block west plane (faces west, not visible in p28): two columns of panels that are wide in the image (7 + 8; long side down the slope, i.e. portrait on the roof) and a third column of 4 panels tall in the image (long side along the ridge, landscape on the roof) on the east (ridge) side.",
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
@@ -6369,10 +6718,10 @@
     {
      "image": "p28_7ae0dd.jpg",
      "bbox": [
-      1190,
-      1100,
-      1214,
-      1112
+      1266,
+      1102,
+      1301,
+      1116
      ]
     }
    ],
@@ -6396,10 +6745,10 @@
     {
      "image": "p28_7ae0dd.jpg",
      "bbox": [
-      1140,
-      1105,
-      1157,
-      1116
+      1188,
+      1112,
+      1212,
+      1125
      ]
     }
    ],
@@ -6414,10 +6763,10 @@
    "desc": "Tall stone chimney at the north wall where the north wing meets the two-storey north block (stands from the ground beside the bins / AC units in p28). Seen here: its square grey cap with a round spark arrestor, leaning up-left, and its sunlit stone east face.",
    "image": "p29_ddf5dc.jpg",
    "bbox": [
-    715,
+    714,
     290,
-    776,
-    327
+    773,
+    331
    ],
    "also": [
     {
@@ -6433,26 +6782,32 @@
    "attrs": {
     "cap_bbox": [
      715,
-     290,
-     743,
+     291,
+     741,
      320
     ],
     "arrestor_bbox": [
-     722,
-     296,
-     737,
-     315
+     724,
+     301,
+     738,
+     317
     ],
     "stone_face_bbox": [
-     743,
-     290,
-     776,
-     327
+     753,
+     297,
+     773,
+     331
     ],
     "adjacent": [
      "roof.cw_n",
      "roof.ncp_n",
      "roof.nc_n"
+    ],
+    "shroud_side_bbox": [
+     741,
+     290,
+     753,
+     329
     ]
    },
    "conf": 0.8
@@ -6541,11 +6896,11 @@
   {
    "id": "roof.vent_04",
    "type": "roof_vent",
-   "desc": "Box vent.",
+   "desc": "Box vent (lit top, shaded south face).",
    "image": "p29_ddf5dc.jpg",
    "point": [
-    912,
-    372
+    916,
+    376
    ],
    "attrs": {
     "on": "roof.nc_n"
@@ -6777,6 +7132,48 @@
    "conf": 0.75
   },
   {
+   "id": "roof.vent_21",
+   "type": "roof_vent",
+   "desc": "Pipe vent with a white cap (dark shadow trailing south), just NW of box vent vent_04.",
+   "image": "p29_ddf5dc.jpg",
+   "point": [
+    908,
+    363
+   ],
+   "attrs": {
+    "on": "roof.nc_n"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "roof.vent_22",
+   "type": "roof_vent",
+   "desc": "Small pipe vent just below the bottom-left corner of array a3 (light top, long thin shadow south).",
+   "image": "p29_ddf5dc.jpg",
+   "point": [
+    689,
+    754
+   ],
+   "attrs": {
+    "on": "roof.cc_w"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "roof.vent_23",
+   "type": "roof_vent",
+   "desc": "Round dome vent sitting on the SE hip of the patio roof (shadow down to the eave).",
+   "image": "p29_ddf5dc.jpg",
+   "point": [
+    1362,
+    1220
+   ],
+   "attrs": {
+    "on": "roof.pb_e / roof.pb_s hip"
+   },
+   "conf": 0.6
+  },
+  {
    "id": "roof.conduit_1",
    "type": "conduit",
    "desc": "PV conduit from array a1 east across the north wing plane, then south to the two-storey eave.",
@@ -6879,15 +7276,9 @@
   },
   {
    "id": "roof.porch_entry_gable",
-   "type": "roof_gable",
-   "desc": "Small entry-porch gable over the front steps (hero / p01: a bracketed gable on two columns, right under the front gable FG, same centre line). From above it is hard to separate from the shaded porch leg SWP: its sunlit NW plane shows as the pale patch on the porch roof below the FG apex; its gable end is at the jog in the porch eave.",
+   "type": "gable_end",
+   "desc": "Gable end of the one-storey entry porch gable (faces SW over the front steps): white rakes forming the V in the porch eave line, apex leaning SW in this view; NW eave (707,1172)-(687,1192), SE eave (790,1295)-(809,1274). Hero / p01: bracketed gable with a shingled face on the column pairs flanking the door, directly under the two-storey front gable.",
    "image": "p29_ddf5dc.jpg",
-   "bbox": [
-    700,
-    1205,
-    760,
-    1255
-   ],
    "also": [
     {
      "image": "hero_721b4a.jpg",
@@ -6917,31 +7308,53 @@
     }
    ],
    "attrs": {
-    "on": "roof.swp",
-    "ridge_dir_img": [
-     -0.73,
-     0.68
+    "planes": [
+     "roof.swp_nw",
+     "roof.swp_se"
     ],
-    "nw_plane_patch": [
+    "faces": "SW",
+    "ridge_dir_img": [
+     0.707,
+     -0.707
+    ],
+    "sun_patch": [
      [
-      710,
+      701,
+      1233
+     ],
+     [
+      713,
       1227
      ],
      [
+      731,
+      1222
+     ],
+     [
       737,
-      1223
+      1225
      ],
      [
-      728,
-      1241
-     ],
-     [
-      720,
+      721,
       1241
      ]
     ]
    },
-   "conf": 0.35
+   "conf": 0.75,
+   "polyline": [
+    [
+     687,
+     1192
+    ],
+    [
+     725,
+     1249
+    ],
+    [
+     790,
+     1295
+    ]
+   ]
   },
   {
    "id": "roof.gable_end_fg",
@@ -6955,7 +7368,7 @@
     ],
     [
      746,
-     1213
+     1214
     ],
     [
      820,
@@ -7219,21 +7632,41 @@
   {
    "id": "roof.court_lightwell",
    "type": "open_court",
-   "desc": "Small open court (in shadow, a tree below) between the north wing south eave, the CC west eave and the north porch roof A_N; opens west to the motor court. Not roofed.",
+   "desc": "Open light-well court (deep shadow, a bare tree in it) between the garage south eave (y~707), the north-wing south eave (y~687), the covered strip CWK (x~626) and the porch roof A_N (y~801); open to the west toward the motor court (its west side x~528 is only the porch eave line). Not roofed.",
    "image": "p29_ddf5dc.jpg",
-   "bbox": [
-    592,
-    688,
-    627,
-    800
-   ],
    "attrs": {},
-   "conf": 0.6
+   "conf": 0.6,
+   "poly": [
+    [
+     528,
+     708
+    ],
+    [
+     591,
+     707
+    ],
+    [
+     590,
+     688
+    ],
+    [
+     626,
+     686
+    ],
+    [
+     626,
+     801
+    ],
+    [
+     528,
+     801
+    ]
+   ]
   },
   {
    "id": "roof.court_garden",
    "type": "open_court",
-   "desc": "Inner garden court (planting bed, trees) in the re-entrant corner between the balcony gable, the CC east wall, the NE 45-degree plane and the patio roof; open to the pool terrace on the NE. Not roofed.",
+   "desc": "Inner garden court (planting, flagstone path, bare trees) in the re-entrant corner between the balcony gable BG, the CC east wall, the NE 45-degree plane and the patio-roof return PB_NE; open to the pool terrace on the NE (the line (1089,757)-(1100,932) is only a nominal boundary). Not roofed.",
    "image": "p29_ddf5dc.jpg",
    "poly": [
     [
@@ -7245,12 +7678,12 @@
      757
     ],
     [
-     1121,
-     965
+     1100,
+     932
     ],
     [
-     1123,
-     972
+     1090,
+     937
     ],
     [
      998,
@@ -7271,13 +7704,14 @@
   "The front of the house faces SW (the front lawns at the lower left): entry under FG on the 45-deg facade, the porch wrapping left (south of the west wing) and right (west of the south block) - matches p01 / hero. p28 looks from the NE (over the play area) at the pool side: from its left to right it shows PB + EP + BC (south chimney), BG (balcony gable with a4), NC with the NCP porch corner post and the north chimney, then the north wing (a2) and the garage wing (a1).",
   "Roofing: dark charcoal architectural asphalt shingles everywhere except the low-slope deck (dark membrane); white / cream fascia and gutters; open metal (silver) valleys; dark ridge / hip caps. Craftsman details from the front photos: exposed rafter tails, knee-brace brackets under the gable rakes, shingled gable faces with louvered vents.",
   "Solar: six arrays, 50 panels total, all on planes facing N, W, E or NE (none on the south faces); the listing says 50 panels, so the count is complete.",
-  "No dormers, crickets or balconies cut into the roof are visible; the upstairs balcony is under the BG gable roof (open east end). A satellite dish is wall-mounted on the north face of NC (p28), not on the roof."
+  "No dormers, crickets or balconies cut into the roof are visible; the upstairs balcony is under the BG gable roof (open east end). A satellite dish is wall-mounted on the north face of NC (p28), not on the roof.",
+  "CHECK (2026-11-27, second agent): every element was drawn on its photo and compared at 2-8x. Fixed: outline_all (two spike vertices (634,508) and (989,392) removed), t1 / ge_n / ge_s / cw_n / cw_s / g_w at the NW junction, the WW SW corner (565,1108; was 572), the light-well court (was only its east strip), a covered strip CWK along the CC west wall and a patio-roof return PB_NE under the NE eave (both new), the south block east eave x~1091-1092 (was 1088), the patio NW corner (1133,965), the FG / SWF / BC_N junction at the deck's south corner ((848,1083), (854,1095), (866,1106)), the entry porch: SWP split into the two planes of the entry gable, the north chimney bbox, the p28 skylight boxes (bce had been drawn on the chimney); vents: vent_04 split into a box vent + pipe vent (vent_21), vent_22 / vent_23 added. Counted again: a1 6, a2 10 (2 x 5), a3 19 (7 + 8 + 4), a4 5 (4 + 1), a5 7 (4 + 3), a6 3 = 50."
  ],
  "open_questions": [
-  "NW wing junction (G_N / T1 / GE_n / GE_s / CW_N / CW_S, around (415-445, 440-560)): which ridge is higher, garage wing or north wing? The short dark lines meeting at (442,490) and the parallel hip + white-valley pairs fit two crossing hip roofs of similar height, but perspective (~40 px between ridge and eave level here) makes the exact topology uncertain; the north wing could also be a taller one-storey room.",
+  "NW wing junction (around (416-442, 440-560)): resolved in part by the check -- the two short dark caps meeting at (442,491) are the hips of the north wing's west hip-end facet t1, which runs into the garage west plane g_w without a cap or valley (read as coplanar, so the CW ridge is a little above the garage ridge). Still open: the relative ridge heights and whether t1 is truly coplanar with g_w or a very shallow crease.",
   "Storeys of the north wing CW (with the stone chimney): read as one storey from p28 (its eave is below NC eaves, bins / AC at its wall), but the wing is wide (N-S ~11-12 m) for a one-storey hip.",
   "Depth of the hidden one-storey roofs under two-storey eaves: north porch NCP (p28 shows a full porch with a corner post, p29 only 10-20 px), and how far the north wing CW_N and patio PB_N run in under the core eaves.",
-  "Exact form of the small entry-porch gable over the front steps on the SW porch leg (hero / p01) - barely separable in p29.",
+  "Entry porch gable (checked): it is not a small gable on the porch but spans the whole diagonal front porch leg (swp_nw / swp_se, gable end (687,1192)-(725,1249)-(790,1295)); open: its ridge height / pitch and the exact visible ridge (725,1249)-(755,1219) under the deep shadow.",
   "Deck: height relative to the CC ridge (the CC south hip-end drains onto it, the surrounding planes start at its edges, so it sits just below the CC ridge) and its drainage direction.",
   "Array a4 panels (and the landscape panel of a1) look pale in p29 but dark PV in p28 - assumed PV (the 50-panel total only works if they are PV).",
   "Eave overhang depths and gutter presence on every eave are not measurable from p29 (white lines are visible along almost all eaves; they may be fascia rather than gutters)."

@@ -43,6 +43,11 @@ def features(path, max_side=1600, n=4096, mask=None):
     return dict(kp=kp[keep], desc=f.descriptors[torch.from_numpy(keep)], size=(w, h), scale=(sx, sy))
 
 
+def _hw(f):
+    """(h, w) of the image the keypoints were detected in (the resized one)."""
+    return int(round(f['size'][1] / f['scale'][1])), int(round(f['size'][0] / f['scale'][0]))
+
+
 def match(fa, fb):
     import kornia.feature as KF
 
@@ -51,7 +56,7 @@ def match(fa, fb):
         return KF.laf_from_center_scale_ori(kp, torch.ones(1, kp.shape[1], 1, 1))
     with torch.inference_mode():
         d, idx = _models()['lg'](fa['desc'], fb['desc'], lafs(fa), lafs(fb),
-                                 hw1=torch.tensor(fa['size'][::-1]), hw2=torch.tensor(fb['size'][::-1]))
+                                 hw1=torch.tensor(_hw(fa)), hw2=torch.tensor(_hw(fb)))
     idx = idx.numpy()
     pa, pb = fa['kp'][idx[:, 0]], fb['kp'][idx[:, 1]]
     if len(pa) < 8:
