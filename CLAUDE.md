@@ -9,3 +9,7 @@ The house exterior reconstruction (a 3-D model rebuilt from listing photos and v
 are in `house/CLAUDE.md`:
 
 @house/CLAUDE.md
+
+The second house (same method) lives in `house2/`; its notes are in `house2/CLAUDE.md`:
+
+@house2/CLAUDE.md

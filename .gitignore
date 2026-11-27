@@ -18,3 +18,8 @@ house/refs/cache/
 house/out/
 house/web/three_local/
 house/dist/
+# house2/: the second house, same rules as house/
+house2/refs/cache/
+house2/out/
+house2/web/three_local/
+house2/dist/
