@@ -5,7 +5,7 @@
 Up = the normal of the ground plane fitted to the aerial's (p29) farthest points (lawns, drive, patio); +Y = the aerial
 image's "up" direction laid on the ground (into the lot, away from the street at the image bottom), +X = image right;
 origin = the ground plane under the aerial camera; metres = VGGT units x SCALE (survey/frame.json 'scale').
-Writes survey/frame.json, refs/cache/cams_world_vggt.json (every photo's camera in world metres, original pixels),
+Writes survey/frame_vggt.json (superseded by the SfM frame: survey/frame.json), refs/cache/cams_world_vggt.json (every photo's camera in world metres, original pixels),
 refs/cache/aerial_points.npz (the aerial's per-pixel points in world metres, original-pixel coordinates u, v).
 """
 import json
@@ -20,7 +20,7 @@ AERIAL = 'photos/p29_ddf5dc.jpg'
 
 
 def main():
-    old = json.load(open(os.path.join(HERE, 'survey', 'frame.json'))) if os.path.exists(os.path.join(HERE, 'survey', 'frame.json')) else {}
+    old = json.load(open(os.path.join(HERE, 'survey', 'frame_vggt.json'))) if os.path.exists(os.path.join(HERE, 'survey', 'frame_vggt.json')) else {}
     scale = float(sys.argv[1]) if len(sys.argv) > 1 else float(old.get('scale', 50.0))
     d = np.load(os.path.join(CACHE, 'vggt', 'run1.npz'), allow_pickle=True)
     names = [str(n) for n in d['names']]
@@ -55,7 +55,7 @@ def main():
     to_w = lambda p: (np.asarray(p) - o) @ R.T * scale          # noqa: E731
     frame = dict(scale=scale, R=R.tolist(), origin_vggt=o.tolist(), up_vggt=n.tolist(),
                  note='world = (p_vggt - origin_vggt) @ R.T * scale; X image-right, Y image-up of the aerial, Z up')
-    json.dump(frame, open(os.path.join(HERE, 'survey', 'frame.json'), 'w'), indent=1)
+    json.dump(frame, open(os.path.join(HERE, 'survey', 'frame_vggt.json'), 'w'), indent=1)
     cams = {}
     for i, nm in enumerate(names):
         w, h, nw, nh, left, top = [float(v) for v in pad[i]]

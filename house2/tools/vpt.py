@@ -16,7 +16,7 @@ _D = {}
 def _load():
     if not _D:
         d = np.load(os.path.join(HERE, 'refs', 'cache', 'vggt', 'run1.npz'), allow_pickle=True)
-        fr = json.load(open(os.path.join(HERE, 'survey', 'frame.json')))
+        fr = json.load(open(os.path.join(HERE, 'survey', 'frame_vggt.json')))
         _D.update(names=[str(n) for n in d['names']], P=d['world_points'], pad=d['pad'], conf=d['world_points_conf'],
                   R=np.array(fr['R']), o=np.array(fr['origin_vggt']), s=fr['scale'])
     return _D

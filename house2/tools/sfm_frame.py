@@ -16,7 +16,7 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SFM = os.path.join(HERE, 'refs', 'cache', 'sfm')
 
 
-def load(model='1', skip=('v1_',)):
+def load(model='1', skip=('zz_',)):
     import pycolmap
     r = pycolmap.Reconstruction(os.path.join(SFM, 'sparse', model))
     cams = {}
@@ -86,28 +86,26 @@ def vertical_vp(path, f, cx, cy, k1=0.0):
     return v / np.linalg.norm(v), int(inl.sum()), len(seg)
 
 
-def upright(cams, P, frames=('seg002_033', 'seg002_039', 'seg002_045', 'seg002_051', 'seg141_033', 'seg141_039',
-                             'seg141_045')):
-    """Rotation sfm -> provisional upright axes (rows x', y', z' = up) and the spread of the up estimates (deg)."""
-    ups = []
-    for name, c in cams.items():
-        if not name.split('/')[-1].startswith(frames):
-            continue
-        path = os.path.join(SFM, 'images', name)
-        down, n_in, n = vertical_vp(path, c['f'], c['cx'], c['cy'])
-        ups.append(-(down @ c['R']))
-        print('   vertical VP %-40s inliers %3d / %3d' % (name, n_in, n))
-    ups = np.array(ups)
-    up = ups.mean(0)
-    up /= np.linalg.norm(up)
-    spread = float(np.degrees(np.arccos(np.clip(ups @ up, -1, 1))).max())
-    # horizontal basis
+DRONE_SHOTS = ('vq_orbit', 'vg_play_pool', 'vl_top_play', 'vb_pool_top', 'vp_rear_d', 'vi_rear_a', 'vj_rear_b', 'vk_rear_c',
+               'vm_lawn')
+
+
+def upright(cams, P):
+    """Rotation sfm -> S (rows x, y, z = up) and the roll spread (deg).  Up: the drone's gimbal keeps every frame's x axis
+    level, so up is the direction perpendicular to all of them (the smallest singular vector; the orbit's headings make
+    it well conditioned).  Horizontal axes: along the house's roof lines (peaky histograms of the roof points), the
+    quarter turn whose +Y is the mean view direction."""
+    X = np.array([c['R'][0] for n, c in cams.items() if n.split('/')[0] in DRONE_SHOTS])
+    up = np.linalg.svd(X)[2][2]
+    fw = np.array([c['R'][2] for n, c in cams.items() if n.split('/')[0] in DRONE_SHOTS])
+    if np.median(fw @ up) > 0:
+        up = -up
+    spread = float(np.degrees(np.abs(np.arcsin(np.clip(X @ up, -1, 1)))).max())
     a = np.cross(up, [1, 0, 0])
     a /= np.linalg.norm(a)
     b = np.cross(up, a)
-    B = np.stack([a, b, up])               # rows: provisional x, y, z
+    B = np.stack([a, b, up])
     Q = P @ B.T
-    # heading from the HOUSE only: the dense roof points (far neighbours pull an all-points histogram elsewhere)
     med = np.median(Q[:, :2], 0)
     near = np.linalg.norm(Q[:, :2] - med, axis=1) < 0.75 * np.percentile(np.linalg.norm(Q[:, :2] - med, axis=1), 60)
     zr = np.percentile(Q[near, 2], [55, 99.5])
@@ -121,19 +119,12 @@ def upright(cams, P, frames=('seg002_033', 'seg002_039', 'seg002_045', 'seg002_0
         for v in (x, y):
             h, _ = np.histogram(v, bins=300, range=np.percentile(v, [0.5, 99.5]))
             p = h / h.sum()
-            score += (p * p).sum()         # peaky histograms = ridges / eaves / shingle rows line up with the axes
+            score += (p * p).sum()
         if best is None or score > best[0]:
             best = (score, ang)
-    fwd = np.mean([c['R'][2] for c in cams.values()], 0) @ B.T
-    out = None
-    for quarter in range(4):               # of the four axis-aligned frames take the one whose +Y is the view direction
-        ang = best[1] + quarter * np.pi / 2
-        c, s_ = np.cos(ang), np.sin(ang)
-        Rz = np.array([[c, s_, 0], [-s_, c, 0], [0, 0, 1]])
-        f = Rz @ fwd
-        if out is None or f[1] > out[0]:
-            out = (f[1], Rz)
-    return out[1] @ B, spread
+    c, s_ = np.cos(best[1]), np.sin(best[1])
+    Rz = np.array([[c, s_, 0], [-s_, c, 0], [0, 0, 1]])
+    return Rz @ B, spread
 
 
 def plots(Q, col, out):

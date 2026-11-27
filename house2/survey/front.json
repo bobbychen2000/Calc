@@ -1,0 +1,3921 @@
+{
+ "zone": "front",
+ "images": [
+  "photos/hero_721b4a.jpg",
+  "photos/p01_768294.jpg",
+  "photos/p29_ddf5dc.jpg"
+ ],
+ "elements": [
+  {
+   "id": "front.wall_upper_triple",
+   "type": "wall",
+   "desc": "Upper-storey wall carrying the triple window (left part of the front, above the porch roof). Grey cedar shingles in straight courses (~5 in exposure: ~24 px per course in hero near the window), sunlit. Its top is the frieze under the hipped eave with shaped rafter tails; its foot dies into the lower (porch) roof. Its eave line falls steeply to the right in both photos: the wall recedes to the right (it is NOT parallel to the entry gable).",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     116,
+     252
+    ],
+    [
+     694,
+     400
+    ],
+    [
+     694,
+     758
+    ],
+    [
+     400,
+     712
+    ],
+    [
+     116,
+     656
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       825,
+       662
+      ],
+      [
+       1100,
+       718
+      ],
+      [
+       1100,
+       885
+      ],
+      [
+       825,
+       840
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "storey": 2,
+    "siding": "grey cedar shingle, ~5 in (0.127 m) exposure",
+    "on": "upper storey, left of the main gable",
+    "right_corner_x_hero": 694,
+    "right_corner_x_p01": 1100
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.wall_upper_corner_face",
+   "type": "wall",
+   "desc": "Narrow sunlit shingled face at the LEFT end of the triple-window wall (between the left block and the triple-window wall): a short return or canted corner face. Visible from both cameras and lit like the right-facing column faces, so it probably faces right, i.e. the block on its left stands forward of the triple-window wall (see open questions).",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     46,
+     262
+    ],
+    [
+     116,
+     252
+    ],
+    [
+     116,
+     656
+    ],
+    [
+     46,
+     650
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       791,
+       655
+      ],
+      [
+       824,
+       662
+      ],
+      [
+       824,
+       840
+      ],
+      [
+       791,
+       836
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "storey": 2,
+    "siding": "grey cedar shingle",
+    "width_px_hero": 70,
+    "width_px_p01": 33
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.wall_upper_left_block",
+   "type": "wall",
+   "desc": "Front face of the upper-storey block at the far left (the block whose LEFT-facing gable shows in p01). In hero only a shaded strip at the image edge; in p01 a narrow lit strip right of the side gable wall. Grey cedar shingle.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     0,
+     285
+    ],
+    [
+     46,
+     280
+    ],
+    [
+     46,
+     650
+    ],
+    [
+     0,
+     648
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       753,
+       650
+      ],
+      [
+       791,
+       655
+      ],
+      [
+       791,
+       836
+      ],
+      [
+       753,
+       835
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "storey": 2,
+    "siding": "grey cedar shingle"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "front.wall_upper_side_gable",
+   "type": "wall",
+   "desc": "Upper-storey wall under the side gable at the far left, facing left-front (p01 only): grey cedar shingle, a narrow double-hung window under a deep gable with heavy knee brackets.",
+   "image": "photos/p01_768294.jpg",
+   "poly": [
+    [
+     641,
+     763
+    ],
+    [
+     641,
+     705
+    ],
+    [
+     700,
+     655
+    ],
+    [
+     753,
+     650
+    ],
+    [
+     753,
+     835
+    ],
+    [
+     641,
+     845
+    ]
+   ],
+   "attrs": {
+    "storey": 2,
+    "siding": "grey cedar shingle",
+    "faces": "left / left-front (toward the driveway)"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.wall_upper_recess",
+   "type": "wall",
+   "desc": "Shaded upper-storey wall between the triple-window wall (right corner) and the main gable wall (left corner); grey cedar shingle in shade, carries the cream downspout. Probably recessed (in the shadow of the projecting parts); no openings.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     694,
+     368
+    ],
+    [
+     868,
+     380
+    ],
+    [
+     868,
+     763
+    ],
+    [
+     694,
+     760
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       1100,
+       712
+      ],
+      [
+       1185,
+       712
+      ],
+      [
+       1185,
+       890
+      ],
+      [
+       1100,
+       885
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "storey": 2,
+    "siding": "grey cedar shingle",
+    "openings": 0
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.wall_upper_gable",
+   "type": "wall",
+   "desc": "Main front gable wall of the upper storey, centred over the entry: grey cedar shingle, the twin window, a louvred gable vent with a decorative kingpost truss above; its foot is cut by the porch (entry) gable roof. The right corner is hidden by the birch in hero (~x 1357) and in p01 (~x 1420).",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     868,
+     340
+    ],
+    [
+     1357,
+     340
+    ],
+    [
+     1357,
+     651
+    ],
+    [
+     1208,
+     574
+    ],
+    [
+     868,
+     732
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       1185,
+       690
+      ],
+      [
+       1420,
+       690
+      ],
+      [
+       1420,
+       840
+      ],
+      [
+       1349,
+       802
+      ],
+      [
+       1185,
+       884
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "storey": 2,
+    "siding": "grey cedar shingle",
+    "left_corner_x_hero": 868,
+    "left_corner_x_p01": 1185,
+    "faces": "same direction as the entry (toward the hero camera)"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.eave_upper_left",
+   "type": "eave",
+   "desc": "Eave of the hipped upper roof over the triple-window wall: cream ogee (K-style) gutter on a cream fascia; the line falls steeply to the right (wall receding). Turns at an outside corner at the left end (hero (53,160) / p01 (796,606)) and runs on, shorter, over the recessed wall to the main gable.",
+   "image": "photos/hero_721b4a.jpg",
+   "polyline": [
+    [
+     0,
+     195
+    ],
+    [
+     53,
+     160
+    ],
+    [
+     725,
+     362
+    ],
+    [
+     800,
+     378
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "polyline": [
+      [
+       756,
+       632
+      ],
+      [
+       796,
+       606
+      ],
+      [
+       1115,
+       705
+      ],
+      [
+       1180,
+       712
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "gutter": "cream K-style (ogee) gutter",
+    "fascia": "cream",
+    "corner_hero": [
+     53,
+     160
+    ],
+    "corner_p01": [
+     796,
+     606
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.rafter_tails_upper_left",
+   "type": "rafter_tails",
+   "desc": "Exposed shaped rafter tails under the upper-left eave (cream painted, curved / ogee undercut ends, ~1.4 m apart in hero perspective), with solid frieze blocks between them; one larger diagonal hip-rafter tail at the left corner.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    7,
+    193,
+    725,
+    409
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      756,
+      606,
+      1185,
+      725
+     ]
+    }
+   ],
+   "attrs": {
+    "tail_boxes_hero": [
+     [
+      12,
+      196,
+      119,
+      265
+     ],
+     [
+      120,
+      210,
+      177,
+      247
+     ],
+     [
+      227,
+      247,
+      287,
+      277
+     ],
+     [
+      359,
+      286,
+      421,
+      315
+     ],
+     [
+      486,
+      318,
+      548,
+      351
+     ],
+     [
+      605,
+      361,
+      660,
+      392
+     ],
+     [
+      687,
+      380,
+      725,
+      409
+     ]
+    ],
+    "count_hero": 7,
+    "colour": "cream"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.frieze_vents_upper_left",
+   "type": "vent",
+   "desc": "Round screened vents in the frieze blocks between the upper-left rafter tails, two per bay (~7 cm dia).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    170,
+    230,
+    785,
+    395
+   ],
+   "attrs": {
+    "points_hero": [
+     [
+      178,
+      238
+     ],
+     [
+      207,
+      248
+     ],
+     [
+      297,
+      275
+     ],
+     [
+      323,
+      282
+     ],
+     [
+      430,
+      313
+     ],
+     [
+      455,
+      320
+     ],
+     [
+      553,
+      348
+     ],
+     [
+      576,
+      354
+     ],
+     [
+      674,
+      382
+     ],
+     [
+      748,
+      389
+     ],
+     [
+      776,
+      389
+     ]
+    ],
+    "per_bay": 2,
+    "diameter_px_hero": 13
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.bracket_corner_upper_left",
+   "type": "bracket",
+   "desc": "Large diagonal hip-rafter tail / corner bracket at the left corner of the upper-left eave (cream).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    7,
+    193,
+    123,
+    265
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      756,
+      618,
+      830,
+      668
+     ]
+    }
+   ],
+   "conf": 0.55
+  },
+  {
+   "id": "front.gable_side_left",
+   "type": "gable",
+   "desc": "Left-facing side gable at the far left of the upper storey (p01): wide cream rake boards over a deep overhang with exposed purlins / boarded soffit, two heavy curved knee brackets under the rake, a small dark louvred vent in the gable peak. Asphalt shingle roof plane visible above the right rake.",
+   "image": "photos/p01_768294.jpg",
+   "polyline": [
+    [
+     581,
+     729
+    ],
+    [
+     637,
+     589
+    ],
+    [
+     726,
+     623
+    ]
+   ],
+   "attrs": {
+    "knee_brackets_p01": [
+     [
+      587,
+      694,
+      653,
+      766
+     ],
+     [
+      674,
+      631,
+      741,
+      714
+     ]
+    ],
+    "louvre_vent_p01": [
+     656,
+     666,
+     693,
+     706
+    ],
+    "roof_plane_p01": [
+     655,
+     590,
+     760,
+     632
+    ],
+    "apex_p01": [
+     637,
+     589
+    ],
+    "rake_colour": "cream"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.window_upper_side_gable",
+   "type": "window",
+   "desc": "Narrow window on the left-facing side-gable wall (p01, oblique): dark frame, cream casing; appears as a pair of narrow sashes / a double-hung with divided upper sash.",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    664,
+    700,
+    725,
+    840
+   ],
+   "attrs": {
+    "frame": "dark bronze / black",
+    "casing": "cream flat casing"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "front.gable_main_rakes",
+   "type": "gable",
+   "desc": "Main front gable over the entry: wide flat cream rake boards (bargeboards, ~0.13 m face) with a small fascia/gutter line on top, deep overhang; boxed rake soffit with small purlin blocks. Right rake disappears into the birch.",
+   "image": "photos/hero_721b4a.jpg",
+   "polyline": [
+    [
+     762,
+     288
+    ],
+    [
+     1180,
+     92
+    ],
+    [
+     1357,
+     180
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "polyline": [
+      [
+       1135,
+       668
+      ],
+      [
+       1335,
+       573
+      ],
+      [
+       1421,
+       615
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "apex_hero": [
+     1180,
+     92
+    ],
+    "apex_p01": [
+     1335,
+     573
+    ],
+    "left_rake_end_hero": [
+     762,
+     285,
+     772,
+     330
+    ],
+    "left_rake_end_p01": [
+     1135,
+     665,
+     1148,
+     685
+    ],
+    "purlin_blocks_hero": [
+     [
+      957,
+      257
+     ],
+     [
+      1072,
+      200
+     ],
+     [
+      1280,
+      202
+     ]
+    ],
+    "purlin_blocks_p01": [
+     [
+      1229,
+      652
+     ],
+     [
+      1284,
+      625
+     ],
+     [
+      1385,
+      625
+     ]
+    ],
+    "colour": "cream"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.gable_main_vent",
+   "type": "vent",
+   "desc": "Triangular louvred gable vent filling the main gable peak: dark brown horizontal louvres (~15 slats), split in two by the kingpost, framed below by the tie beam and above by the inner (truss) rafters.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     937,
+     325
+    ],
+    [
+     1165,
+     198
+    ],
+    [
+     1165,
+     325
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       1220,
+       683
+      ],
+      [
+       1329,
+       612
+      ],
+      [
+       1414,
+       645
+      ],
+      [
+       1414,
+       683
+      ]
+     ],
+     "note": "both halves together"
+    }
+   ],
+   "attrs": {
+    "right_half_hero": [
+     [
+      1195,
+      198
+     ],
+     [
+      1345,
+      270
+     ],
+     [
+      1345,
+      325
+     ],
+     [
+      1195,
+      325
+     ]
+    ],
+    "colour": "dark brown",
+    "louvres": "horizontal"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.gable_main_truss",
+   "type": "truss",
+   "desc": "Decorative kingpost truss in the main gable (cream): a horizontal tie beam / collar across the gable foot, a square kingpost with a chamfered top block at the apex, and two inner rafters parallel to the rakes.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    937,
+    135,
+    1345,
+    340
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1220,
+      592,
+      1414,
+      692
+     ]
+    }
+   ],
+   "attrs": {
+    "kingpost_hero": [
+     1165,
+     135,
+     1195,
+     312
+    ],
+    "kingpost_p01": [
+     1329,
+     592,
+     1343,
+     677
+    ],
+    "tie_beam_hero": [
+     937,
+     322,
+     1345,
+     340
+    ],
+    "tie_beam_p01": [
+     1221,
+     680,
+     1414,
+     692
+    ],
+    "inner_rafter_left_hero": [
+     [
+      937,
+      320
+     ],
+     [
+      1165,
+      195
+     ]
+    ],
+    "inner_rafter_right_hero": [
+     [
+      1195,
+      195
+     ],
+     [
+      1345,
+      262
+     ]
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.gable_main_knee_brace_left",
+   "type": "bracket",
+   "desc": "Large cream knee brace at the left end of the main gable: a projecting beam end (outrigger) under the rake with a vertical post / brace dropping down the wall. Its right twin is hidden by the birch.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    900,
+    267,
+    940,
+    445
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1200,
+      656,
+      1220,
+      740
+     ]
+    }
+   ],
+   "attrs": {
+    "pair": true,
+    "right_one": "hidden (expected near hero x 1345-1385)"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.gable_main_rake_bracket_left",
+   "type": "bracket",
+   "desc": "Curved rafter-tail bracket under the left end of the main gable rake overhang (cream).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    800,
+    300,
+    867,
+    410
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1147,
+      677,
+      1185,
+      725
+     ]
+    }
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "front.window_upper_gable_pair",
+   "type": "window",
+   "desc": "Twin window centred in the main gable: two units, each with a 4-lite (2 x 2) upper part over a single large lower lite (Craftsman 4-over-1 look, read as casements / fixed with simulated divided upper lites), dark bronze / black frames; flat cream casing (~0.11 m) with a wide mullion casing between the units, a head casing with a projecting cap, a sill. Lower part partly hidden by the porch gable roof.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    980,
+    362,
+    1347,
+    672
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1241,
+      702,
+      1418,
+      846
+     ]
+    }
+   ],
+   "attrs": {
+    "units": 2,
+    "lites": "2x2 upper + 1 lower per unit",
+    "unit_boxes_hero": [
+     [
+      1012,
+      392,
+      1165,
+      652
+     ],
+     [
+      1192,
+      392,
+      1342,
+      652
+     ]
+    ],
+    "unit_boxes_p01": [
+     [
+      1254,
+      715,
+      1329,
+      840
+     ],
+     [
+      1341,
+      715,
+      1414,
+      840
+     ]
+    ],
+    "muntin_rows_hero_y": [
+     460,
+     522
+    ],
+    "frame": "dark bronze / black",
+    "casing": "cream",
+    "on": "front.wall_upper_gable"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.window_upper_triple",
+   "type": "window",
+   "desc": "Triple window on the upper-left wall: three units, each with a 4-lite (2 x 2) upper part over one large lower lite (casement style; the right unit appears slightly open), dark bronze / black frames; flat cream casing with mullion casings between units, a projecting head cap and a sill with apron.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     205,
+     299
+    ],
+    [
+     643,
+     413
+    ],
+    [
+     647,
+     708
+    ],
+    [
+     198,
+     636
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       867,
+       672
+      ],
+      [
+       1077,
+       722
+      ],
+      [
+       1077,
+       867
+      ],
+      [
+       864,
+       832
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "units": 3,
+    "lites": "2x2 upper + 1 lower per unit",
+    "unit_boxes_hero": [
+     [
+      233,
+      337,
+      355,
+      635
+     ],
+     [
+      375,
+      375,
+      487,
+      662
+     ],
+     [
+      506,
+      410,
+      610,
+      686
+     ]
+    ],
+    "unit_boxes_p01": [
+     [
+      882,
+      690,
+      937,
+      832
+     ],
+     [
+      950,
+      707,
+      1002,
+      845
+     ],
+     [
+      1012,
+      725,
+      1062,
+      855
+     ]
+    ],
+    "mullion_casings_hero_x": [
+     [
+      355,
+      375
+     ],
+     [
+      487,
+      506
+     ]
+    ],
+    "frame": "dark bronze / black",
+    "casing": "cream",
+    "on": "front.wall_upper_triple"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.downspout_upper",
+   "type": "downspout",
+   "desc": "Cream rectangular downspout down the recessed upper wall from the upper-left gutter, discharging onto the porch roof.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    756,
+    384,
+    772,
+    758
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1131,
+      712,
+      1140,
+      888
+     ]
+    }
+   ],
+   "attrs": {
+    "colour": "cream",
+    "on": "front.wall_upper_recess"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.roof_porch_left",
+   "type": "roof_plane",
+   "desc": "Porch (first-floor) roof plane left of the entry gable: charcoal / black dimensional asphalt shingles, low pitch, running from the upper walls down to the porch gutter.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     0,
+     646
+    ],
+    [
+     116,
+     656
+    ],
+    [
+     400,
+     712
+    ],
+    [
+     695,
+     760
+    ],
+    [
+     868,
+     763
+    ],
+    [
+     764,
+     790
+    ],
+    [
+     560,
+     781
+    ],
+    [
+     0,
+     700
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       655,
+       845
+      ],
+      [
+       825,
+       840
+      ],
+      [
+       1100,
+       885
+      ],
+      [
+       1185,
+       890
+      ],
+      [
+       1135,
+       905
+      ],
+      [
+       1120,
+       903
+      ],
+      [
+       689,
+       857
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "asphalt dimensional shingle, charcoal"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.eave_porch",
+   "type": "eave",
+   "desc": "Porch roof eave (front run, left of the entry gable): cream K-style gutter on a deep cream fascia, shaped rafter tails below. In p01 it continues round the porch corner and back along the left (side) run.",
+   "image": "photos/hero_721b4a.jpg",
+   "polyline": [
+    [
+     0,
+     733
+    ],
+    [
+     560,
+     800
+    ],
+    [
+     764,
+     827
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "polyline": [
+      [
+       357,
+       975
+      ],
+      [
+       689,
+       857
+      ],
+      [
+       1120,
+       903
+      ]
+     ],
+     "note": "side run then front run; corner near (689,857)"
+    }
+   ],
+   "attrs": {
+    "gutter_top_hero": [
+     [
+      0,
+      707
+     ],
+     [
+      764,
+      810
+     ]
+    ],
+    "gutter": "cream K-style"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.rafter_tails_porch",
+   "type": "rafter_tails",
+   "desc": "Exposed shaped (curved-end) cream rafter tails under the porch eave, closely spaced; many along the left side run in p01.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    0,
+    745,
+    890,
+    870
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      357,
+      850,
+      760,
+      990
+     ]
+    }
+   ],
+   "conf": 0.55
+  },
+  {
+   "id": "front.porch_beam",
+   "type": "beam",
+   "desc": "Wide cream box beam / frieze along the column tops of the porch (front run left of the entry), from the gutter down to the beam soffit; continues round the corner along the side run (p01).",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     0,
+     735
+    ],
+    [
+     764,
+     827
+    ],
+    [
+     887,
+     840
+    ],
+    [
+     887,
+     908
+    ],
+    [
+     652,
+     908
+    ],
+    [
+     117,
+     843
+    ],
+    [
+     0,
+     830
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       357,
+       985
+      ],
+      [
+       689,
+       870
+      ],
+      [
+       1120,
+       915
+      ],
+      [
+       1120,
+       975
+      ],
+      [
+       757,
+       925
+      ],
+      [
+       427,
+       1000
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "colour": "cream"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.porch_ceiling",
+   "type": "ceiling",
+   "desc": "Porch ceiling: tongue-and-groove beadboard, cream / white (reads grey-brown in shade over the entry); boards run parallel to the wall.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    983,
+    885,
+    1390,
+    924
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      632,
+      921,
+      819,
+      975
+     ],
+     "note": "side-run ceiling in sun"
+    },
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1236,
+      953,
+      1445,
+      971
+     ],
+     "note": "entry"
+    }
+   ],
+   "attrs": {
+    "also_hero_left": [
+     0,
+     800,
+     180,
+     860
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.porch_gable",
+   "type": "gable",
+   "desc": "Entry (porch) gable projecting from the porch roof over the steps: wide cream rake boards, deep overhang with curved rafter-tail brackets under both rake ends, gable field of grey shingles (in shade), decorative kingpost.",
+   "image": "photos/hero_721b4a.jpg",
+   "polyline": [
+    [
+     765,
+     800
+    ],
+    [
+     1208,
+     578
+    ],
+    [
+     1655,
+     810
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "polyline": [
+      [
+       1135,
+       915
+      ],
+      [
+       1349,
+       806
+      ],
+      [
+       1553,
+       918
+      ]
+     ]
+    },
+    {
+     "image": "photos/p29_ddf5dc.jpg",
+     "bbox": [
+      700,
+      1195,
+      760,
+      1260
+     ],
+     "note": "aerial: small entry-gable roof on the diagonal porch eave; weak"
+    }
+   ],
+   "attrs": {
+    "apex_hero": [
+     1208,
+     578
+    ],
+    "apex_p01": [
+     1349,
+     806
+    ],
+    "left_rake_end_hero": [
+     765,
+     781,
+     775,
+     827
+    ],
+    "right_rake_end_hero": [
+     1647,
+     796,
+     1661,
+     828
+    ],
+    "left_rake_end_p01": [
+     1135,
+     903,
+     1141,
+     925
+    ],
+    "right_rake_end_p01": [
+     1550,
+     912,
+     1557,
+     925
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.porch_gable_field",
+   "type": "gable_field",
+   "desc": "Gable field of the entry gable: grey cedar shingles (in shade, reads brownish grey) between the rakes and the beam.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     947,
+     803
+    ],
+    [
+     1208,
+     598
+    ],
+    [
+     1458,
+     803
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       1223,
+       914
+      ],
+      [
+       1349,
+       822
+      ],
+      [
+       1470,
+       914
+      ]
+     ]
+    }
+   ],
+   "conf": 0.7
+  },
+  {
+   "id": "front.porch_gable_kingpost",
+   "type": "truss",
+   "desc": "Cream kingpost with a chamfered cap block, from the entry-gable apex down to the beam.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1186,
+    631,
+    1226,
+    821
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1340,
+      830,
+      1358,
+      919
+     ]
+    }
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "front.porch_gable_beam",
+   "type": "beam",
+   "desc": "Deep cream header beam spanning the entry columns under the entry gable.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    947,
+    803,
+    1458,
+    878
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1223,
+      914,
+      1470,
+      949
+     ]
+    }
+   ],
+   "conf": 0.8
+  },
+  {
+   "id": "front.porch_gable_knee_braces",
+   "type": "bracket",
+   "desc": "Two heavy cream knee braces / outrigger brackets under the entry gable rakes, standing on the entry column caps: a projecting beam end at the top and a vertical brace down the column face.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    906,
+    764,
+    1519,
+    949
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1204,
+      894,
+      1495,
+      982
+     ]
+    }
+   ],
+   "attrs": {
+    "left_hero": [
+     906,
+     764,
+     947,
+     946
+    ],
+    "right_hero": [
+     1461,
+     767,
+     1519,
+     949
+    ],
+    "left_p01": [
+     1204,
+     894,
+     1225,
+     982
+    ],
+    "right_p01": [
+     1470,
+     894,
+     1495,
+     982
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.porch_gable_rake_brackets",
+   "type": "bracket",
+   "desc": "Curved rafter-tail brackets under both rake ends of the entry gable (cream).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    808,
+    792,
+    1619,
+    869
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1152,
+      916,
+      1548,
+      944
+     ]
+    }
+   ],
+   "attrs": {
+    "left_hero": [
+     806,
+     792,
+     890,
+     869
+    ],
+    "right_hero": [
+     1522,
+     792,
+     1619,
+     867
+    ],
+    "left_p01": [
+     1152,
+     916,
+     1195,
+     944
+    ],
+    "right_p01": [
+     1495,
+     916,
+     1548,
+     944
+    ]
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.light_entry_ceiling",
+   "type": "light",
+   "desc": "Small round flush-mount ceiling light in the entry ceiling under the gable.",
+   "image": "photos/hero_721b4a.jpg",
+   "point": [
+    1180,
+    900
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "point": [
+      1336,
+      960
+     ]
+    }
+   ],
+   "conf": 0.65
+  },
+  {
+   "id": "front.eave_porch_right",
+   "type": "eave",
+   "desc": "Porch roof eave right of the entry gable (cream gutter / fascia); mostly hidden by the birch.",
+   "image": "photos/hero_721b4a.jpg",
+   "polyline": [
+    [
+     1580,
+     790
+    ],
+    [
+     1670,
+     838
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "polyline": [
+      [
+       1557,
+       918
+      ],
+      [
+       1640,
+       930
+      ]
+     ]
+    }
+   ],
+   "conf": 0.35
+  },
+  {
+   "id": "front.wall_porch_w1",
+   "type": "wall",
+   "desc": "Ground-storey wall at the far left of the front porch (hero edge) around window W1; grey cedar shingle in the porch shade. In p01 the house corner under the porch is just behind column C5.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     0,
+     850
+    ],
+    [
+     69,
+     856
+    ],
+    [
+     69,
+     1247
+    ],
+    [
+     0,
+     1247
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       748,
+       962
+      ],
+      [
+       825,
+       965
+      ],
+      [
+       825,
+       1124
+      ],
+      [
+       748,
+       1124
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "storey": 1,
+    "siding": "grey cedar shingle"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.wall_porch_corner_face",
+   "type": "wall",
+   "desc": "Short shingled return between wall W1 and the wall of the French-door group W2 (a step in the porch back wall, directly under the upper corner face).",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     69,
+     856
+    ],
+    [
+     117,
+     860
+    ],
+    [
+     117,
+     1247
+    ],
+    [
+     69,
+     1247
+    ]
+   ],
+   "attrs": {
+    "storey": 1,
+    "siding": "grey cedar shingle"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "front.wall_porch_w2",
+   "type": "wall",
+   "desc": "Ground-storey back wall of the front porch left of the entry: grey cedar shingle (in shade, warm grey-brown), the tall three-unit glazed group W2; continues behind column C6 to the entry.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     117,
+     860
+    ],
+    [
+     880,
+     923
+    ],
+    [
+     880,
+     1253
+    ],
+    [
+     117,
+     1247
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       825,
+       965
+      ],
+      [
+       1194,
+       975
+      ],
+      [
+       1194,
+       1124
+      ],
+      [
+       825,
+       1124
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "storey": 1,
+    "siding": "grey cedar shingle"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.wall_entry",
+   "type": "wall",
+   "desc": "Entry wall between / behind the entry columns, around the door surround: grey cedar shingle in deep shade.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     880,
+     925
+    ],
+    [
+     1408,
+     925
+    ],
+    [
+     1408,
+     1418
+    ],
+    [
+     880,
+     1418
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       1135,
+       970
+      ],
+      [
+       1500,
+       970
+      ],
+      [
+       1500,
+       1212
+      ],
+      [
+       1135,
+       1212
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "storey": 1,
+    "siding": "grey cedar shingle"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.wall_porch_right",
+   "type": "wall",
+   "desc": "Ground-storey back wall of the porch right of the entry, behind the birch: window group W3, a plain shingled section (possibly a shallow bay: vertical corners at hero x 2104 / 2311, p01 x 1775 / 1881), then glazed door W4 near the porch corner. Grey cedar shingle; facade roughly parallel to the hero image plane.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     1523,
+     925
+    ],
+    [
+     2446,
+     960
+    ],
+    [
+     2446,
+     1248
+    ],
+    [
+     1523,
+     1250
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       1500,
+       975
+      ],
+      [
+       1940,
+       985
+      ],
+      [
+       1940,
+       1127
+      ],
+      [
+       1500,
+       1127
+      ]
+     ]
+    }
+   ],
+   "attrs": {
+    "storey": 1,
+    "siding": "grey cedar shingle",
+    "plain_section_hero": [
+     2104,
+     955,
+     2311,
+     1248
+    ],
+    "plain_section_p01": [
+     1775,
+     992,
+     1881,
+     1127
+    ]
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.wall_porch_left_side",
+   "type": "wall",
+   "desc": "House wall along the LEFT (side) run of the wrap-around porch (p01 only), behind columns C1-C3: grey cedar shingle with one narrow window.",
+   "image": "photos/p01_768294.jpg",
+   "poly": [
+    [
+     480,
+     1000
+    ],
+    [
+     686,
+     975
+    ],
+    [
+     686,
+     1127
+    ],
+    [
+     480,
+     1135
+    ]
+   ],
+   "attrs": {
+    "storey": 1,
+    "siding": "grey cedar shingle"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "front.window_porch_w1",
+   "type": "window",
+   "desc": "Window W1 at the far left of the front porch (partial in hero: right casing only): dark frame / glass, cream flat casing with head. In p01 behind column C5; a second unit at its left is on the porch side wall.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    0,
+    931,
+    69,
+    1247
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      748,
+      974,
+      802,
+      1124
+     ],
+     "note": "front unit"
+    },
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      667,
+      1001,
+      690,
+      1124
+     ],
+     "note": "side-wall unit"
+    }
+   ],
+   "attrs": {
+    "frame": "dark",
+    "casing": "cream"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "front.window_porch_w2",
+   "type": "window",
+   "desc": "W2: tall glazed group of three units (French doors or tall casements) on the porch back wall left of the entry: dark frames, no visible muntins, cream flat casing with head casing and mullion casings; the bottoms are hidden by the railing; a fourth unit may hide behind column C6 / the dogwood.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    258,
+    933,
+    660,
+    1250
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      894,
+      977,
+      1083,
+      1126
+     ]
+    }
+   ],
+   "attrs": {
+    "units_visible": 3,
+    "unit_boxes_hero": [
+     [
+      289,
+      947,
+      400,
+      1250
+     ],
+     [
+      425,
+      947,
+      528,
+      1250
+     ],
+     [
+      550,
+      947,
+      647,
+      1250
+     ]
+    ],
+    "unit_boxes_p01": [
+     [
+      909,
+      990,
+      969,
+      1126
+     ],
+     [
+      974,
+      990,
+      1026,
+      1126
+     ],
+     [
+      1031,
+      990,
+      1080,
+      1126
+     ]
+    ],
+    "frame": "dark bronze / black",
+    "casing": "cream"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.window_porch_side",
+   "type": "window",
+   "desc": "Narrow window on the house side wall under the left porch run (p01), between columns C2 and C3; cream casing.",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    540,
+    1050,
+    568,
+    1127
+   ],
+   "attrs": {
+    "casing": "cream"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "front.window_porch_w3",
+   "type": "window",
+   "desc": "W3: group of tall dark-framed units (windows or French doors, lower ones with divided lites) with cream casings and mullions on the porch wall right of the entry, mostly behind the birch.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1739,
+    990,
+    2080,
+    1248
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1602,
+      1004,
+      1711,
+      1127
+     ]
+    }
+   ],
+   "attrs": {
+    "unit_boxes_hero": [
+     [
+      1739,
+      990,
+      1804,
+      1248
+     ],
+     [
+      1825,
+      990,
+      1939,
+      1248
+     ],
+     [
+      1963,
+      990,
+      2080,
+      1248
+     ]
+    ],
+    "frame": "dark",
+    "casing": "cream"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "front.door_porch_w4",
+   "type": "door",
+   "desc": "W4: tall glazed door (with a glass sidelight?) near the right end of the porch, dark frame, cream casing; glass reflects the garden.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    2325,
+    969,
+    2435,
+    1231
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1884,
+      986,
+      1940,
+      1127
+     ]
+    }
+   ],
+   "attrs": {
+    "frame": "dark",
+    "casing": "cream"
+   },
+   "conf": 0.4
+  },
+  {
+   "id": "front.door_surround",
+   "type": "door_surround",
+   "desc": "Front door assembly frame: dark espresso-stained wood frame and flat head casing with a cap, holding the door and two sidelights. NO transom (shingled wall directly above the head casing).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    979,
+    998,
+    1364,
+    1419
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1241,
+      1008,
+      1421,
+      1210
+     ]
+    }
+   ],
+   "attrs": {
+    "transom": false,
+    "head_casing_hero": [
+     979,
+     998,
+     1364,
+     1013
+    ],
+    "colour": "dark espresso stain"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.door_front",
+   "type": "door",
+   "desc": "Front door: dark espresso-stained wood Craftsman door, three tall leaded / bevelled glass lites (stylised leaf pattern) in the upper part above a dentil shelf, two flat vertical panels below, long dark pull handle on the left stile (hinged right). About 3 ft 6 in x 8 ft.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1082,
+    1019,
+    1261,
+    1416
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1287,
+      1024,
+      1375,
+      1208
+     ]
+    }
+   ],
+   "attrs": {
+    "lites": 3,
+    "lite_boxes_hero": [
+     [
+      1111,
+      1051,
+      1144,
+      1151
+     ],
+     [
+      1155,
+      1051,
+      1188,
+      1151
+     ],
+     [
+      1199,
+      1051,
+      1232,
+      1151
+     ]
+    ],
+    "lite_boxes_p01": [
+     [
+      1303,
+      1032,
+      1319,
+      1080
+     ],
+     [
+      1324,
+      1032,
+      1340,
+      1080
+     ],
+     [
+      1345,
+      1032,
+      1360,
+      1080
+     ]
+    ],
+    "dentil_shelf_hero": [
+     1099,
+     1154,
+     1244,
+     1169
+    ],
+    "dentil_shelf_p01": [
+     1300,
+     1080,
+     1362,
+     1087
+    ],
+    "handle_hero": [
+     1091,
+     1239,
+     1102,
+     1313
+    ],
+    "size_m_assumed": [
+     1.07,
+     2.44
+    ]
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.sidelight_left",
+   "type": "sidelight",
+   "desc": "Left sidelight: tall narrow leaded / bevelled glass panel with a stylised leaf (wheat) pattern, in the dark frame.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1023,
+    1051,
+    1064,
+    1360
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1260,
+      1030,
+      1280,
+      1192
+     ]
+    }
+   ],
+   "attrs": {
+    "glass": "leaded bevelled"
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.sidelight_right",
+   "type": "sidelight",
+   "desc": "Right sidelight: same as the left one.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1280,
+    1049,
+    1319,
+    1367
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1382,
+      1030,
+      1403,
+      1180
+     ]
+    }
+   ],
+   "attrs": {
+    "glass": "leaded bevelled"
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.house_number_plaque",
+   "type": "house_number",
+   "desc": "House number plaque: individual black numerals mounted vertically on the front face of the left entry column (number itself not recorded).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    918,
+    1030,
+    940,
+    1162
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1209,
+      1022,
+      1221,
+      1087
+     ]
+    }
+   ],
+   "attrs": {
+    "on": "front.col_entry_left"
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.doorbell",
+   "type": "fixture",
+   "desc": "Small black device under the house number on the left entry column (doorbell / video doorbell).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    922,
+    1170,
+    939,
+    1206
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1211,
+      1088,
+      1220,
+      1106
+     ]
+    }
+   ],
+   "attrs": {
+    "on": "front.col_entry_left"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "front.col_side_1",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Farthest column of the LEFT (side) run of the wrap-around porch (p01 only).",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    430,
+    1006,
+    473,
+    1137
+   ],
+   "attrs": {
+    "cap_p01": [
+     427,
+     1000,
+     473,
+     1010
+    ],
+    "pier_p01": [
+     421,
+     1142,
+     457,
+     1217
+    ],
+    "run": "left side run"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.col_side_2",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Middle column of the left (side) run (p01 only).",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    492,
+    983,
+    542,
+    1133
+   ],
+   "attrs": {
+    "cap_p01": [
+     490,
+     977,
+     543,
+     990
+    ],
+    "pier_p01": [
+     486,
+     1137,
+     525,
+     1212
+    ],
+    "run": "left side run"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.col_side_3",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Nearest column of the left (side) run (p01 only).",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    575,
+    952,
+    634,
+    1127
+   ],
+   "attrs": {
+    "cap_p01": [
+     571,
+     946,
+     636,
+     962
+    ],
+    "pier_p01": [
+     569,
+     1133,
+     613,
+     1225
+    ],
+    "run": "left side run"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "front.col_side_inner",
+   "type": "column",
+   "desc": "Narrow column / pilaster partly hidden behind col_side_3 (p01): probably the inner corner post where the side run meets the house wall.",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    630,
+    1017,
+    650,
+    1127
+   ],
+   "conf": 0.4
+  },
+  {
+   "id": "front.col_corner_left",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Front-left CORNER column of the wrap-around porch (p01 only; left of the hero frame).",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    686,
+    917,
+    755,
+    1119
+   ],
+   "attrs": {
+    "cap_p01": [
+     682,
+     904,
+     757,
+     927
+    ],
+    "pier_p01": [
+     677,
+     1121,
+     769,
+     1183
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.col_front_left",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Front run, left of the entry (behind the dogwood in p01).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    657,
+    933,
+    760,
+    1250
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1080,
+      974,
+      1135,
+      1128
+     ]
+    }
+   ],
+   "attrs": {
+    "cap_hero": [
+     652,
+     908,
+     752,
+     933
+    ],
+    "plinth_hero": [
+     613,
+     1250,
+     787,
+     1277
+    ],
+    "pier_hero": [
+     662,
+     1276,
+     780,
+     1445
+    ],
+    "pier_p01": [
+     1080,
+     1133,
+     1144,
+     1205
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "front.col_entry_left",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Left entry column under the entry gable (carries the house number).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    885,
+    901,
+    985,
+    1242
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1194,
+      955,
+      1239,
+      1126
+     ]
+    }
+   ],
+   "attrs": {
+    "cap_hero": [
+     879,
+     875,
+     982,
+     904
+    ],
+    "base_trim_hero": [
+     858,
+     1242,
+     1008,
+     1272
+    ],
+    "cap_p01": [
+     1191,
+     948,
+     1241,
+     966
+    ],
+    "base_trim_p01": [
+     1182,
+     1124,
+     1250,
+     1137
+    ],
+    "width_px_hero_top_base": [
+     82,
+     100
+    ]
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.col_entry_right",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Right entry column under the entry gable.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1408,
+    901,
+    1523,
+    1242
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1444,
+      958,
+      1498,
+      1126
+     ]
+    }
+   ],
+   "attrs": {
+    "cap_hero": [
+     1411,
+     874,
+     1519,
+     917
+    ],
+    "base_trim_hero": [
+     1373,
+     1239,
+     1549,
+     1272
+    ],
+    "pier_hero": [
+     1382,
+     1272,
+     1467,
+     1392
+    ],
+    "cap_p01": [
+     1448,
+     948,
+     1500,
+     966
+    ],
+    "pier_p01": [
+     1433,
+     1137,
+     1467,
+     1197
+    ]
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.col_front_right",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Front run, right of the entry (birch in front).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1632,
+    928,
+    1739,
+    1252
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1550,
+      974,
+      1605,
+      1128
+     ]
+    }
+   ],
+   "conf": 0.75
+  },
+  {
+   "id": "front.col_corner_right",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Front-RIGHT corner column of the porch (hero: at the right image edge).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    2470,
+    976,
+    2500,
+    1224
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1955,
+      998,
+      2005,
+      1115
+     ]
+    }
+   ],
+   "attrs": {
+    "pier_hero": [
+     2446,
+     1248,
+     2500,
+     1397
+    ],
+    "plinth_hero": [
+     2428,
+     1221,
+     2500,
+     1252
+    ],
+    "pier_p01": [
+     1940,
+     1112,
+     2022,
+     1192
+    ]
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.col_rside_1",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Right (side) run, first column behind the right corner (p01 only).",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    2055,
+    1018,
+    2110,
+    1121
+   ],
+   "attrs": {
+    "pier_p01": [
+     2078,
+     1127,
+     2114,
+     1192
+    ]
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.col_rside_2",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Right run, farther column (narrow; may stand on the far side of the porch).",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    2146,
+    1027,
+    2178,
+    1127
+   ],
+   "attrs": {
+    "pier_p01": [
+     2149,
+     1127,
+     2187,
+     1209
+    ]
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "front.col_rside_3",
+   "type": "column",
+   "desc": "Tapered square Craftsman column, cream / white painted, with a flat stepped cap and a base trim, standing on a ledgestone pier that rises from the porch floor to railing height (pier capped by a cream plinth). Right run, last visible column (p01 right edge of the house).",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    2187,
+    998,
+    2228,
+    1130
+   ],
+   "attrs": {
+    "pier_p01": [
+     2205,
+     1130,
+     2237,
+     1203
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "front.railing_front_left",
+   "type": "railing",
+   "desc": "White porch railing: flat top rail with a cap, a bottom rail held off the floor, plain square balusters (~2 in) at ~4 in clear spacing, running between the stone piers at their cap height. Front run between the corner column C5 and column C6.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    0,
+    1247,
+    667,
+    1440
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      766,
+      1126,
+      1089,
+      1217
+     ]
+    }
+   ],
+   "attrs": {
+    "balusters_visible_hero": 21,
+    "balusters_p01": 20,
+    "top_rail_hero": [
+     [
+      0,
+      1247
+     ],
+     [
+      667,
+      1287
+     ]
+    ],
+    "bottom_rail_hero": [
+     [
+      0,
+      1403
+     ],
+     [
+      667,
+      1440
+     ]
+    ],
+    "baluster_x_hero": [
+     48,
+     83,
+     119,
+     152,
+     185,
+     219,
+     250,
+     283,
+     315,
+     347,
+     377,
+     408,
+     440,
+     470,
+     499,
+     529,
+     559,
+     589,
+     617,
+     648
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.railing_entry_left",
+   "type": "railing",
+   "desc": "White porch railing: flat top rail with a cap, a bottom rail held off the floor, plain square balusters (~2 in) at ~4 in clear spacing, running between the stone piers at their cap height. Short run between column C6 pier and the left step post.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    778,
+    1264,
+    872,
+    1428
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1140,
+      1133,
+      1183,
+      1205
+     ]
+    }
+   ],
+   "conf": 0.55
+  },
+  {
+   "id": "front.railing_entry_right",
+   "type": "railing",
+   "desc": "White porch railing: flat top rail with a cap, a bottom rail held off the floor, plain square balusters (~2 in) at ~4 in clear spacing, running between the stone piers at their cap height. Short run between the right step post and column C9 (behind shrubs).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1570,
+    1270,
+    1632,
+    1420
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1523,
+      1133,
+      1552,
+      1205
+     ]
+    }
+   ],
+   "conf": 0.4
+  },
+  {
+   "id": "front.railing_front_right",
+   "type": "railing",
+   "desc": "White porch railing: flat top rail with a cap, a bottom rail held off the floor, plain square balusters (~2 in) at ~4 in clear spacing, running between the stone piers at their cap height. Front run right of the entry between column C9 and the right corner pier.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1721,
+    1240,
+    2446,
+    1430
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1605,
+      1124,
+      1943,
+      1215
+     ]
+    }
+   ],
+   "attrs": {
+    "balusters_est_hero": 24,
+    "baluster_pitch_px_hero": 32,
+    "top_rail_hero": [
+     [
+      1721,
+      1245
+     ],
+     [
+      2446,
+      1250
+     ]
+    ],
+    "bottom_rail_hero": [
+     [
+      1756,
+      1397
+     ],
+     [
+      2325,
+      1428
+     ]
+    ]
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.railing_side_left",
+   "type": "railing",
+   "desc": "White porch railing: flat top rail with a cap, a bottom rail held off the floor, plain square balusters (~2 in) at ~4 in clear spacing, running between the stone piers at their cap height. Left (side) run: short closely-slatted panels between the side-run piers (p01).",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    455,
+    1129,
+    678,
+    1212
+   ],
+   "attrs": {
+    "panels_p01": [
+     [
+      455,
+      1142,
+      488,
+      1208
+     ],
+     [
+      523,
+      1137,
+      569,
+      1212
+     ],
+     [
+      609,
+      1129,
+      678,
+      1200
+     ]
+    ]
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.railing_side_right",
+   "type": "railing",
+   "desc": "White porch railing: flat top rail with a cap, a bottom rail held off the floor, plain square balusters (~2 in) at ~4 in clear spacing, running between the stone piers at their cap height. Right (side) run panels between the right-run piers (p01).",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    2028,
+    1124,
+    2211,
+    1198
+   ],
+   "attrs": {
+    "panels_p01": [
+     [
+      2028,
+      1124,
+      2081,
+      1186
+     ],
+     [
+      2184,
+      1133,
+      2211,
+      1198
+     ]
+    ]
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "front.porch_floor",
+   "type": "floor",
+   "desc": "Porch floor: blue-grey bluestone slabs (seen at the top of the steps), with a thick bluestone coping / nosing along the porch edge under the railings.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    970,
+    1418,
+    1390,
+    1461
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1262,
+      1210,
+      1430,
+      1228
+     ]
+    }
+   ],
+   "attrs": {
+    "edge_coping_hero_left": [
+     0,
+     1440,
+     673,
+     1463
+    ],
+    "edge_coping_hero_right": [
+     1752,
+     1431,
+     2497,
+     1459
+    ],
+    "material": "bluestone"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.porch_stone_skirt",
+   "type": "foundation",
+   "desc": "Stone veneer skirt / foundation wall of the raised porch below the bluestone coping: ledgestone (tan, buff, grey, rust) in roughly coursed rectangular pieces; mostly hidden by planting. Foundation (grade) line not visible.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    0,
+    1460,
+    2500,
+    1505
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      380,
+      1200,
+      2240,
+      1245
+     ]
+    }
+   ],
+   "attrs": {
+    "visible_hero_left": [
+     0,
+     1463,
+     673,
+     1500
+    ],
+    "visible_hero_right": [
+     1752,
+     1459,
+     2497,
+     1500
+    ],
+    "material": "ledgestone veneer"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "front.stone_piers",
+   "type": "pier",
+   "desc": "Ledgestone piers under every porch column, from grade through the porch floor to railing height, each capped by a cream stepped plinth carrying the column base. (Individual pier boxes are in each column element.)",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    613,
+    1250,
+    2500,
+    1460
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      421,
+      1112,
+      2237,
+      1225
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "ledgestone veneer, tan / buff / grey / rust",
+    "cap": "cream painted plinth"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.entry_steps",
+   "type": "steps",
+   "desc": "Entry steps from the front walk up to the porch: 4 risers of coursed ledgestone (~0.18 m) under thick blue-grey bluestone treads with eased nosings; ~2.5 m wide, between two white step posts.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    960,
+    1418,
+    1390,
+    1568
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1238,
+      1210,
+      1430,
+      1282
+     ]
+    }
+   ],
+   "attrs": {
+    "risers": 4,
+    "tread_nosings_hero_y": [
+     1449,
+     1474,
+     1505,
+     1536
+    ],
+    "riser_bands_hero_y": [
+     [
+      1461,
+      1474
+     ],
+     [
+      1492,
+      1505
+     ],
+     [
+      1522,
+      1536
+     ],
+     [
+      1553,
+      1568
+     ]
+    ],
+    "tread_nosings_p01_y": [
+     1222,
+     1235,
+     1250,
+     1263
+    ],
+    "riser_m_est": 0.18,
+    "porch_height_m_est": 0.72
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "front.step_post_left",
+   "type": "post",
+   "desc": "White square post at the left foot of the entry steps, with a flared cap and a sloped wedge-shaped top piece (probably the lower end of a sloped stair cheek / rail cap).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    854,
+    1256,
+    968,
+    1528
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1183,
+      1128,
+      1235,
+      1260
+     ]
+    }
+   ],
+   "attrs": {
+    "cap_hero": [
+     854,
+     1288,
+     964,
+     1316
+    ],
+    "wedge_top_hero": [
+     906,
+     1256,
+     948,
+     1296
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.step_post_right",
+   "type": "post",
+   "desc": "White square post at the right foot of the entry steps (twin of the left one).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1452,
+    1254,
+    1570,
+    1513
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1471,
+      1128,
+      1523,
+      1253
+     ]
+    }
+   ],
+   "attrs": {
+    "wedge_top_hero": [
+     1462,
+     1254,
+     1512,
+     1300
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.wing_left_wall",
+   "type": "wall",
+   "desc": "Gable-end wall of the one-storey wing at the left of p01 (faces the paver motor court): grey cedar shingle above a cream water-table band and a stone base.",
+   "image": "photos/p01_768294.jpg",
+   "poly": [
+    [
+     0,
+     985
+    ],
+    [
+     258,
+     993
+    ],
+    [
+     258,
+     1137
+    ],
+    [
+     0,
+     1137
+    ]
+   ],
+   "attrs": {
+    "storey": 1,
+    "siding": "grey cedar shingle"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "front.wing_left_gable",
+   "type": "gable",
+   "desc": "Front-facing gable of the left wing: wide cream rake boards, a triangular dark louvred vent split by a cream kingpost, a cream knee bracket under the right rake end and a curved bracket at the rake foot; asphalt shingle roof.",
+   "image": "photos/p01_768294.jpg",
+   "polyline": [
+    [
+     0,
+     934
+    ],
+    [
+     117,
+     905
+    ],
+    [
+     308,
+     1001
+    ]
+   ],
+   "attrs": {
+    "apex_p01": [
+     117,
+     905
+    ],
+    "vent_p01": [
+     15,
+     920,
+     206,
+     984
+    ],
+    "kingpost_p01": [
+     106,
+     920,
+     125,
+     984
+    ],
+    "knee_bracket_p01": [
+     221,
+     976,
+     244,
+     1036
+    ],
+    "rake_foot_bracket_p01": [
+     258,
+     990,
+     292,
+     1010
+    ],
+    "roof_plane_p01": [
+     [
+      180,
+      926
+     ],
+     [
+      377,
+      980
+     ],
+     [
+      377,
+      999
+     ],
+     [
+      312,
+      1001
+     ]
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.wing_left_window",
+   "type": "window",
+   "desc": "Twin window in the left wing gable wall: two units each with a 2 x 2 upper part over one lower lite, dark frames, flat cream casing with head cap, sill on the water table.",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    19,
+    1003,
+    202,
+    1136
+   ],
+   "attrs": {
+    "units": 2,
+    "unit_boxes_p01": [
+     [
+      37,
+      1018,
+      108,
+      1130
+     ],
+     [
+      121,
+      1022,
+      187,
+      1132
+     ]
+    ],
+    "lites": "2x2 upper + 1 lower"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "front.wing_left_water_table",
+   "type": "trim",
+   "desc": "Cream water-table / sill band on top of the wing stone base.",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    0,
+    1135,
+    267,
+    1146
+   ],
+   "conf": 0.6
+  },
+  {
+   "id": "front.wing_left_stone_base",
+   "type": "foundation",
+   "desc": "Ledgestone veneer base of the left wing (tan / buff / grey), behind dark shrubs.",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    0,
+    1145,
+    262,
+    1240
+   ],
+   "attrs": {
+    "material": "ledgestone veneer"
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.wing_left_side_wall",
+   "type": "wall",
+   "desc": "Shingled wall of the left wing running back toward the porch (right of the gable wall, under a plain eave), behind a flowering vine / tree; no visible openings; a dark vertical line near its right end may be a downspout.",
+   "image": "photos/p01_768294.jpg",
+   "poly": [
+    [
+     258,
+     995
+    ],
+    [
+     423,
+     1003
+    ],
+    [
+     423,
+     1180
+    ],
+    [
+     258,
+     1180
+    ]
+   ],
+   "attrs": {
+    "eave_p01": [
+     [
+      312,
+      995
+     ],
+     [
+      381,
+      1003
+     ]
+    ],
+    "possible_downspout_p01": [
+     385,
+     1110,
+     388,
+     1157
+    ]
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "front.wing_left_fixture",
+   "type": "light",
+   "desc": "Small dark wall fixture (light / sensor) on the left wing wall near its corner.",
+   "image": "photos/p01_768294.jpg",
+   "point": [
+    260,
+    1025
+   ],
+   "conf": 0.35
+  },
+  {
+   "id": "front.walk_front",
+   "type": "walk",
+   "desc": "Curved bluestone flagstone front walk (irregular rectangular slabs, grey-blue to buff) passing in front of the porch, widening into a landing at the foot of the entry steps; in p01 it starts from the paver driveway at the left.",
+   "image": "photos/hero_721b4a.jpg",
+   "poly": [
+    [
+     0,
+     1690
+    ],
+    [
+     667,
+     1666
+    ],
+    [
+     857,
+     1640
+    ],
+    [
+     960,
+     1566
+    ],
+    [
+     1250,
+     1566
+    ],
+    [
+     1331,
+     1609
+    ],
+    [
+     1440,
+     1694
+    ],
+    [
+     1726,
+     1751
+    ],
+    [
+     2202,
+     1775
+    ],
+    [
+     2500,
+     1785
+    ],
+    [
+     2500,
+     1856
+    ],
+    [
+     1821,
+     1809
+    ],
+    [
+     1250,
+     1780
+    ],
+    [
+     667,
+     1732
+    ],
+    [
+     0,
+     1737
+    ]
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "poly": [
+      [
+       105,
+       1250
+      ],
+      [
+       276,
+       1303
+      ],
+      [
+       571,
+       1336
+      ],
+      [
+       857,
+       1331
+      ],
+      [
+       1250,
+       1300
+      ],
+      [
+       1412,
+       1303
+      ],
+      [
+       1631,
+       1365
+      ],
+      [
+       2012,
+       1381
+      ],
+      [
+       2345,
+       1350
+      ],
+      [
+       2374,
+       1312
+      ],
+      [
+       2440,
+       1231
+      ],
+      [
+       2500,
+       1231
+      ],
+      [
+       2500,
+       1360
+      ],
+      [
+       2393,
+       1389
+      ],
+      [
+       2012,
+       1417
+      ],
+      [
+       1631,
+       1403
+      ],
+      [
+       1250,
+       1350
+      ],
+      [
+       1048,
+       1355
+      ],
+      [
+       667,
+       1365
+      ],
+      [
+       286,
+       1374
+      ],
+      [
+       0,
+       1398
+      ],
+      [
+       0,
+       1330
+      ]
+     ],
+     "note": "S-curve from the paver driveway (left) past the steps landing (~1240-1430, 1280-1310) to the right side yard; edges ~8 px"
+    }
+   ],
+   "attrs": {
+    "material": "bluestone flagstone",
+    "landing_hero": [
+     857,
+     1561,
+     1250,
+     1647
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.bed_left",
+   "type": "planting_bed",
+   "desc": "Planting bed between the walk and the porch, left of the steps: bark mulch, lavender, salvia / perennials, a path light, the dogwood.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    0,
+    1400,
+    1100,
+    1690
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      290,
+      1240,
+      1250,
+      1335
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.bed_right",
+   "type": "planting_bed",
+   "desc": "Planting bed right of the steps under the birches: bark mulch, lavender, pink azaleas / roses, hostas, a path light.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1330,
+    1420,
+    2500,
+    1790
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1270,
+      1250,
+      2420,
+      1360
+     ]
+    }
+   ],
+   "attrs": {
+    "material": "bark mulch"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "front.path_light_left",
+   "type": "light",
+   "desc": "Landscape path light, bronze, pagoda / hat-shaped head on a slim stem (~0.5 m), in the left bed.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    167,
+    1494,
+    243,
+    1650
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      852,
+      1246,
+      886,
+      1317
+     ]
+    }
+   ],
+   "attrs": {
+    "base_hero": [
+     210,
+     1648
+    ],
+    "base_p01": [
+     870,
+     1317
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.path_light_right",
+   "type": "light",
+   "desc": "Landscape path light (same type) in the right bed by the birches; hero shows only its head at the right edge.",
+   "image": "photos/p01_768294.jpg",
+   "bbox": [
+    1950,
+    1270,
+    1993,
+    1365
+   ],
+   "also": [
+    {
+     "image": "photos/hero_721b4a.jpg",
+     "bbox": [
+      2460,
+      1551,
+      2500,
+      1590
+     ],
+     "note": "partial, at the image edge"
+    }
+   ],
+   "attrs": {
+    "base_p01": [
+     1972,
+     1365
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "front.tree_dogwood",
+   "type": "tree",
+   "desc": "Small white-flowering dogwood in the left bed in front of the porch (left of the steps).",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    330,
+    850,
+    800,
+    1440
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      850,
+      960,
+      1300,
+      1260
+     ]
+    }
+   ],
+   "attrs": {
+    "trunk_hero": [
+     [
+      700,
+      1440
+     ],
+     [
+      690,
+      1250
+     ]
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "front.birches",
+   "type": "tree",
+   "desc": "Multi-stem white-barked birch clump in the right bed, crowns hiding the right half of the upper storey in both photos.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    1330,
+    0,
+    2500,
+    1700
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      1400,
+      0,
+      2500,
+      1300
+     ]
+    }
+   ],
+   "attrs": {
+    "trunks_hero": [
+     [
+      1966,
+      1045,
+      2069,
+      1542
+     ],
+     [
+      2317,
+      700,
+      2397,
+      1675
+     ]
+    ],
+    "trunks_p01": [
+     [
+      1700,
+      900,
+      1760,
+      1270
+     ],
+     [
+      1880,
+      880,
+      1925,
+      1300
+     ],
+     [
+      2100,
+      950,
+      2140,
+      1260
+     ]
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "front.lawn_front",
+   "type": "lawn",
+   "desc": "Front lawn (natural grass) in the foreground below the walk.",
+   "image": "photos/hero_721b4a.jpg",
+   "bbox": [
+    0,
+    1730,
+    2500,
+    1875
+   ],
+   "also": [
+    {
+     "image": "photos/p01_768294.jpg",
+     "bbox": [
+      0,
+      1330,
+      2500,
+      1667
+     ]
+    }
+   ],
+   "conf": 0.7
+  }
+ ],
+ "notes": [
+  "Coordinates are ORIGINAL pixels of the named photo (hero 2500x1875, p01 2500x1667); bboxes are [x0, y0, x1, y1]. Edges read on 1.4-3.5x crops with 10-25 px ticks: good to ~3-6 px where an edge is crisp, ~10 px for trim lines in shade and for anything partly behind foliage.",
+  "Facade (left to right): upper storey = left block with a left-facing side gable (p01 only) | narrow corner face | triple-window wall under a hipped eave with shaped rafter tails and round frieze vents | shaded recessed wall with the downspout | main front gable (twin window, louvred vent, kingpost truss, knee braces) centred over the entry; right part hidden by the birches. Ground storey = wrap-around porch under a low asphalt roof with a cream box beam: left side run (C1-C3, p01), corner column C5, front run (C6), entry gable on two columns (C7, C8), front run right (C9 to corner C10), right side run (p01: three more columns).",
+  "Trim colour: cream / warm off-white everywhere (casings, rakes, brackets, beams, columns, gutters, downspouts, railings); window frames dark bronze / black; front door and its frame dark espresso-stained wood; siding grey cedar shingle (~5 in exposure, light blue-grey in sun, warm grey-brown in the porch shade).",
+  "Window pattern used throughout: units with a 2 x 2 divided upper part over a single large lower lite (4-over-1 look); no 6-over-1 seen.",
+  "No dentils anywhere: the eave friezes carry shaped rafter tails with round vents instead. No transom over the front door. No wall lanterns on the front; lights = entry ceiling light + two landscape path lights.",
+  "Scales: door leaf 179 x 397 px in hero (3 ft 6 in x 8 ft assumed => ~163 px/m at the door); shingle courses ~24 px at the upper triple window (~190 px/m there); entry risers ~30 px (~0.18 m), 4 risers => porch floor ~0.7 m above the walk.",
+  "Lighting: sun from the right-front (columns: left faces shaded, front faces lit); the porch interior and entry are in shade, so shingle / ceiling colours under the porch read darker and warmer than in sun.",
+  "Not recorded on purpose: the house number itself (only its plaque position)."
+ ],
+ "open_questions": [
+  "Plan of the upper-left part: the narrow sunlit face at hero x 46-116 / p01 x 791-824 and the eave corner above it (hero (53,160)) read inconsistently -- the face looks right-facing (visible from both cameras, lit like right-facing column faces, narrower in p01), but the eave turns there like an OUTSIDE corner of a projecting bay. Whether the triple-window wall projects or is recessed relative to the left block (and how the left-facing side gable joins it) needs the aerial / roof zone or a camera solve.",
+  "Depths of the ground-floor porch walls (W1 wall, the short return, W2 wall, entry wall, right wall with its plain section) and of the upper recessed wall are not measurable from these two photos; only their image outlines are given. The upper-left eave falls steeply to the right in both photos, so that wall is not parallel to the entry gable face.",
+  "The right half of the upper storey, the right main-gable knee brace and most of the right porch run are hidden by the birches; p01 shows three more columns along a right side run (col_rside_1..3) whose order in depth is unclear.",
+  "The white posts at the foot of the steps carry a sloped wedge on top: lower end of a sloped stair rail / cheek cap, or a decorative cap? No stair handrail is visible.",
+  "W2 / W3 / W4: French doors or tall windows (bottoms hidden by the railing); W2 may have a fourth unit behind column C6."
+ ]
+}

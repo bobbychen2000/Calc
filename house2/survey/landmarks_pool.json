@@ -1,0 +1,93 @@
+{
+ "pool_A_cover_end_corner": {
+  "desc": "pool water corner, cover end, long side toward the house (p29 top corner)",
+  "obs": {
+   "photos/p29_ddf5dc.jpg": [
+    1298.6,
+    394.3
+   ],
+   "frames_all/frames/frame_022100ms.jpg": [
+    1163.1,
+    573.75
+   ]
+  }
+ },
+ "pool_B_cover_end_corner2": {
+  "desc": "pool water corner, cover end, other long side (p29 left corner)",
+  "obs": {
+   "photos/p29_ddf5dc.jpg": [
+    1160.7,
+    538.6
+   ],
+   "frames_all/frames/frame_022100ms.jpg": [
+    1163.0,
+    348.8
+   ]
+  }
+ },
+ "pool_C_far_end_corner": {
+  "desc": "pool water corner, far end (p29 bottom corner)",
+  "obs": {
+   "photos/p29_ddf5dc.jpg": [
+    1448.6,
+    821.4
+   ],
+   "frames_all/frames/frame_022100ms.jpg": [
+    700.6,
+    350.0
+   ]
+  }
+ },
+ "spa_outer_corner_D": {
+  "desc": "spa coping outer corner at the pool corner D",
+  "obs": {
+   "photos/p29_ddf5dc.jpg": [
+    1594,
+    687
+   ],
+   "frames_all/frames/frame_022100ms.jpg": [
+    700.6,
+    573.75
+   ]
+  }
+ },
+ "spa_corner_far_end": {
+  "desc": "spa coping corner on the pool far-end edge",
+  "obs": {
+   "photos/p29_ddf5dc.jpg": [
+    1544,
+    741
+   ],
+   "frames_all/frames/frame_022100ms.jpg": [
+    700.6,
+    485.6
+   ]
+  }
+ },
+ "spa_corner_long_side": {
+  "desc": "spa coping corner on the long side",
+  "obs": {
+   "photos/p29_ddf5dc.jpg": [
+    1537,
+    636
+   ],
+   "frames_all/frames/frame_022100ms.jpg": [
+    790.0,
+    571.9
+   ]
+  }
+ },
+ "spa_inner_corner": {
+  "desc": "spa coping corner inside the pool",
+  "obs": {
+   "photos/p29_ddf5dc.jpg": [
+    1484,
+    691
+   ],
+   "frames_all/frames/frame_022100ms.jpg": [
+    790.0,
+    485.6
+   ]
+  }
+ }
+}
