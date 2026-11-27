@@ -17,7 +17,7 @@ from model import materials as _materials  # noqa: E402
 
 MATERIALS = _materials.MATERIALS
 
-ZONES = ['ground', 'pool', 'yard', 'planting', 'house']
+ZONES = ['ground', 'pool', 'yard', 'planting', 'house', 'roof_details']
 # fit: how a view keeps its width on a narrow (portrait) screen - 'dolly' steps back, 'fov' widens (web/viewer/stage.js)
 VIEWS = {
     'front': dict(label='Front', pos=(-40.0, -44.0, 6.5), target=(-15.0, -13.0, 3.5), fov=42, fit='dolly'),
