@@ -17,19 +17,19 @@ from model import materials as _materials  # noqa: E402
 
 MATERIALS = _materials.MATERIALS
 
-ZONES = ['site', 'house']
+ZONES = ['ground', 'pool', 'yard', 'planting', 'house']
 # fit: how a view keeps its width on a narrow (portrait) screen - 'dolly' steps back, 'fov' widens (web/viewer/stage.js)
 VIEWS = {
-    'front': dict(label='Front', pos=(4.0, -26.0, 5.5), target=(13.0, 6.0, 3.5), fov=42, fit='dolly'),
-    'aerial': dict(label='Aerial', pos=(-14.0, -24.0, 26.0), target=(13.0, 14.0, 2.0), fov=42, fit='dolly'),
-    'rear': dict(label='Rear', pos=(1.5, 33.3, 3.3), target=(13.0, 19.0, 2.7), fov=62),
-    'patio': dict(label='Patio', pos=(24.5, 23.5, 2.5), target=(17.0, 13.5, 2.4), fov=58),
-    'pool': dict(label='Pool', pos=(0.2, 29.7, 3.0), target=(20.0, 30.6, 2.3), fov=52),
-    'entry': dict(label='Entry', pos=(9.0, -13.5, 2.3), target=(13.2, 0.0, 2.7), fov=50),
+    'front': dict(label='Front', pos=(-40.0, -44.0, 6.5), target=(-15.0, -13.0, 3.5), fov=42, fit='dolly'),
+    'aerial': dict(label='Aerial', pos=(-48.0, -62.0, 38.0), target=(-12.0, -8.0, 1.0), fov=42, fit='dolly'),
+    'rear': dict(label='Rear', pos=(14.0, 8.0, 3.0), target=(-12.0, -6.0, 4.0), fov=60),
+    'pool': dict(label='Pool', pos=(8.0, -10.0, 2.2), target=(-6.0, 6.0, 1.5), fov=58),
+    'entry': dict(label='Entry', pos=(-30.0, -30.0, 2.0), target=(-20.0, -18.0, 3.0), fov=50),
+    'play': dict(label='Play area', pos=(30.0, 20.0, 8.0), target=(8.0, -2.0, 1.0), fov=55),
 }
 # The sun as in the daylight photographs: on the REAR side of the lot (the aerial's shadows fall toward the street, a
 # 3 m pergola throws 5 m), so the street front stands in open shade.  az from +Y toward +X.
-SUN = dict(az=351.0, el=32.0)
+SUN = dict(az=345.0, el=35.0)        # house 2: the aerial's shadows fall toward the image bottom (-Y): sun to the north
 # photographs cast onto the model in the viewer (web/viewer/photo.js): registered camera, output file, the parts of
 # the image never used (0..1 from the top-left: burnt-in titles and watermarks) and a weight
 # `cut`: polygons (original pixels) painted in the key colour, which the viewer never uses: things that stand in front
@@ -37,7 +37,7 @@ SUN = dict(az=351.0, el=32.0)
 # surfaces only (ground and roofs take the aerial alone: an eye-level camera is fitted on the walls, not the lawn).
 KEY = (255, 0, 255)
 OAK_P26 = [(1700, 613), (1740, 673), (1787, 733), (1827, 800), (1867, 867), (1920, 933), (1923, 1000), (1895, 1215), (2045, 1215), (2033, 1000), (2053, 913), (2083, 867), (2080, 820), (2100, 767), (2137, 720), (2127, 700), (2107, 660), (2123, 600), (2047, 600), (2013, 660), (2000, 720), (1993, 787), (1993, 867), (1987, 907), (1960, 867), (1920, 827), (1880, 773), (1843, 720), (1810, 660), (1787, 600), (1700, 600)]
-PROJECTORS = [
+PROJECTORS = [] and [
     dict(name='aerial', cam='photos/p30_b7b282.jpg', image='proj_aerial.jpg', masks=[], gain=1.0, clean_lawns=True),
     dict(name='front', cam='frames/seg002_053.jpg', image='proj_front.jpg', masks=[[0.0, 0.66, 1.0, 1.0]], gain=1.0, walls=True),
     dict(name='rear', cam='photos/p26_08c1ce.jpg', image='proj_rear.jpg', masks=[[0.0, 0.0, 0.24, 1.0]], gain=1.0, walls=True,
@@ -98,7 +98,7 @@ def projectors(cams):
         if c is None or not os.path.exists(src):
             continue
         im = Image.open(src).convert('RGB')
-        if p.get('clean_lawns'):
+        if False and p.get('clean_lawns'):
             im = clean_lawns(im, c)
         d = ImageDraw.Draw(im)
         for m in p['masks']:
@@ -119,6 +119,7 @@ def build(zones=None, out='house'):
     for z in zones or ZONES:
         mod = importlib.import_module('model.zones.' + z)
         ps = mod.build()
+        MATERIALS.update(getattr(mod, 'MATERIALS', {}))     # a zone's own materials (model/materials.py holds the shared ones)
         if zones:                                   # a test build: the zone's own views replace the house's
             views = dict(getattr(mod, 'VIEWS', views))
         parts += ps
@@ -141,7 +142,7 @@ def build(zones=None, out='house'):
         cams[k] = dict(w=c['w'], h=c['h'], f=c['f'], R=np.round(c['R'], 8).tolist(), C=np.round(c['C'], 4).tolist())
     meta = dict(glb=out + '.glb', centre=[float(v) for v in (V.min(0) + V.max(0)) / 2], sun=SUN, views=views,
                 start=next(iter(views)), cameras=cams, projectors=projectors(wc) if zones is None else [],
-                swatches=swatch.make(wc) if zones is None else {},
+                swatches={},                                   # house 2: the swatches come with the finished look
                 stats=dict(triangles=int(sum(p.ntri for p in parts)), bytes=n,
                            parts={p.name: p.ntri for p in parts}))
     json.dump(meta, open(os.path.join(HERE, 'out', out + '_meta.json'), 'w'))

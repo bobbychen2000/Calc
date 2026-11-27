@@ -72,21 +72,33 @@ class SfM:
             self._vis[frame] = (sel, uv[sel], z[sel], cKDTree(uv[sel]))
         return self._vis[frame]
 
-    def lift(self, frame, uv, r=12.0):
-        """3-D points for frame pixels: the median depth of the front-most SfM points within r px, laid along the
-        pixel's ray (NaN where fewer than 3 points or their depths disagree by > 3 %: a depth edge)."""
+    def lift(self, frame, uv, r=12.0, kmin=5, tol=0.03):
+        """3-D points for frame pixels: inverse depth fitted as a plane in (u, v) over the front-most SfM points within
+        r px (exact for a planar patch, so close oblique ground works), laid along the pixel's ray.  NaN where fewer
+        than kmin points remain or the fit misses them by > tol (relative): a depth edge, foliage."""
         sel, puv, pz, tree = self.visible(frame)
         cam = self.cams[frame]
         o, d = CAMS.ray(cam, uv)
         dz = d @ cam['R'][2]
         out = np.full((len(uv), 3), np.nan)
         for i, nb in enumerate(tree.query_ball_point(uv, r)):
-            if len(nb) < 3:
+            if len(nb) < kmin:
                 continue
-            zz = np.sort(pz[nb])
-            zz = zz[zz < zz[0] * 1.04 + 0.005]
-            if len(zz) >= 3 and (zz[-1] - zz[0]) < 0.03 * zz[0]:
-                out[i] = o + d[i] * (np.median(zz) / dz[i])
+            nb = np.array(nb)
+            iz = 1.0 / pz[nb]
+            keep = iz > iz.max() * 0.80                      # the front-most surface (within 25 % in depth)
+            for _ in range(3):
+                if keep.sum() < kmin:
+                    break
+                A = np.c_[puv[nb][keep] - uv[i], np.ones(keep.sum())]
+                coef, *_ = np.linalg.lstsq(A, iz[keep], rcond=None)
+                res = np.abs(np.c_[puv[nb] - uv[i], np.ones(len(nb))] @ coef - iz) / iz
+                keep = keep & (res < 2.5 * max(np.median(res[keep]), 0.004))
+            if keep.sum() < kmin or coef[2] <= 0:
+                continue
+            res = np.abs(np.c_[puv[nb][keep] - uv[i], np.ones(keep.sum())] @ coef - iz[keep]) / iz[keep]
+            if np.sqrt(np.mean(res ** 2)) < tol:
+                out[i] = o + d[i] * ((1.0 / coef[2]) / dz[i])
         return out
 
 
@@ -305,7 +317,10 @@ def main():
             if m.any():
                 print('    %-26s %4d / %4d inliers, median %.2f px' % (fr.split('/')[-1], (keep & m).sum(), m.sum(),
                                                                        np.median(err[m & keep]) if (keep & m).any() else -1))
-    if '--save' in args:
+    rms_k = np.sqrt(np.mean(err[keep] ** 2))
+    if '--save' in args and (keep.sum() < 60 or rms_k > 3.0):
+        print('NOT saved: %d inliers, rms %.2f px (needs >= 60 and < 3)' % (keep.sum(), rms_k))
+    elif '--save' in args:
         fixed = CAMS.load(os.path.join(CACHE, 'cams_fixed.json'))
         fixed[target] = dict(cam, fixed=True, src='lg_reg %d pairs rms %.2f' % (keep.sum(), np.sqrt(np.mean(err[keep] ** 2))))
         CAMS.save(fixed, os.path.join(CACHE, 'cams_fixed.json'))

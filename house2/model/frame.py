@@ -43,6 +43,9 @@ def world_cams():
     if not os.path.exists(p):
         p = os.path.join(HERE, 'refs', 'cache', 'cams_sfm.json')
     out = {k: cam_to_world(c) for k, c in CAMS.load(p).items()}
+    fixed = os.path.join(HERE, 'refs', 'cache', 'cams_fixed.json')     # photos registered later (tools/lg_reg.py --save)
+    for k, c in CAMS.load(fixed).items():
+        out[k] = cam_to_world(c)
     extra = os.path.join(HERE, 'survey', 'cams_world.json')          # cameras fitted on the model itself (tools/fit_world.py)
     if os.path.exists(extra):
         for k, c in json.load(open(extra)).items():

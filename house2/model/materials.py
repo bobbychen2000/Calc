@@ -3,6 +3,7 @@ material by NAME with its own library (web/viewer/materials.js LIBRARY).  Names 
 in both tables; build.py reports any that do not."""
 MATERIALS = {
     'siding_lap': dict(color=(0.87, 0.86, 0.83), roughness=0.72),
+    'siding_shingle': dict(color=(0.55, 0.56, 0.55), roughness=0.85),        # grey cedar shingle
     'siding_bb': dict(color=(0.87, 0.86, 0.83), roughness=0.75),
     'trim_white': dict(color=(0.90, 0.89, 0.86), roughness=0.6),
     'soffit_white': dict(color=(0.81, 0.80, 0.77), roughness=0.8),
