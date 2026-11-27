@@ -117,7 +117,11 @@ async function boot() {
     o.castShadow = !(k.glass || k.water || k.noShadow);
     o.receiveShadow = true;
   });
-  for (const n of (Q.get('hide') || '').split(',')) { const o = root.getObjectByName(n); if (o) o.visible = false; }
+  // (an empty name would match the root itself, whose glTF name is empty: filter it out)
+  for (const n of (Q.get('hide') || '').split(',').map((x) => x.trim()).filter(Boolean)) {
+    const o = root.getObjectByName(n);
+    if (o && o !== root) o.visible = false;
+  }
   stage.scene.add(root);
   root.updateMatrixWorld(true);
   photo.bake(stage.scene, root);
@@ -147,9 +151,16 @@ async function boot() {
   status('');
   const still = Q.get('still') === '1';
   const t0 = performance.now();
+  // the loop must survive an exception in one frame (a failed texture upload, a driver hiccup): report it once and go on
+  let reported = false;
   const loop = () => {
-    if (mats.tick(still ? 0 : (performance.now() - t0) / 1000) && !still) stage.needs = true;
-    stage.frame();
+    try {
+      if (mats.tick(still ? 0 : (performance.now() - t0) / 1000) && !still) stage.needs = true;
+      stage.frame();
+    } catch (e) {
+      viewer.errors.push(String(e && e.stack || e));
+      if (!reported) { reported = true; status('Drawing failed: ' + (e && e.message || e)); }
+    }
     requestAnimationFrame(loop);
   };
   loop();
