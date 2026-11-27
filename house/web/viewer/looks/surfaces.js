@@ -515,7 +515,7 @@ export function register(lib) {
   // roofs
   lib.add('roof_shingle', (ctx) => surface(ctx, { ...shingleTex(ctx), color: C.shingle, roughness: 0.96,
     detail: { kind: 'grit', size: 0.31, albedo: 0.4, normal: 0.55 }, macro: { s1: 6.3, s2: 23, amount: 0.12 } }));
-  lib.add('roof_seam', (ctx) => surface(ctx, { ...seamTex(ctx), color: C.seam, roughness: 0.46, metalness: 0.0, normalScale: 1,
+  lib.add('roof_seam', (ctx) => surface(ctx, { ...seamTex(ctx), color: C.seam, roughness: 0.58, metalness: 0.0, normalScale: 1,
     detail: { kind: 'grit', size: 0.4, albedo: 0.02, normal: 0.012, rough: 0.03 }, macro: { s1: 5.1, s2: 17, amount: 0.06 } }));
   lib.add('roof_flat', (ctx) => surface(ctx, { ...flatRoofTex(ctx), color: C.flat, roughness: 0.95,
     detail: { kind: 'grit', size: 0.29, albedo: 0.36, normal: 0.5 }, macro: { s1: 4.7, s2: 13, amount: 0.12 } }));

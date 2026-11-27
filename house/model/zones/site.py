@@ -25,6 +25,9 @@ CAB = dict(x0=21.4, x1=26.0, y0=27.5, y1=34.0, plate=4.05)          # cabana wal
 TERR = dict(x0=17.75, x1=27.6, y0=24.8, y1=35.9)                    # cabana terrace
 
 
+LAWNS = []          # every lawn outline (world), for cleaning the aerial photograph of the oak's branches
+
+
 def flat(g, mat, ring, z, holes=()):
     """Ground polygon facing up, whatever the ring's winding; z a height or a function of (x, y)."""
     zf = z if callable(z) else (lambda x, y: z)
@@ -32,7 +35,10 @@ def flat(g, mat, ring, z, holes=()):
     area = sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(ring, ring[1:] + ring[:1]))
     if area < 0:
         ring = ring[::-1]
-    g.poly(mat, [(x, y, zf(x, y)) for x, y in ring], holes=[[(x, y, zf(x, y)) for x, y in h] for h in holes])
+    g.poly(mat, [(x, y, zf(x, y)) for x, y in ring], holes=[[(x, y, zf(x, y)) for x, y in h] for h in holes],
+           uv_u=(1.0, 0.0, 0.0), uv_o=(0.0, 0.0, 0.0))            # textures anchored to the world: no jump between pieces
+    if mat == 'lawn':
+        LAWNS.append(([(x, y, zf(x, y)) for x, y in ring], [[(x, y, zf(x, y)) for x, y in h] for h in holes]))
 
 
 def rect(x0, y0, x1, y1):
@@ -72,14 +78,16 @@ def ground(g):
     g.poly('asphalt', [(-150, -40, Z_ST), (180, -40, Z_ST), (180, wall_y(180) - 1.1, Z_ST), (-150, wall_y(-150) - 1.1, Z_ST)])
     g.poly('concrete', [(-150, wall_y(-150) - 1.1, Z_ST), (180, wall_y(180) - 1.1, Z_ST), (180, wall_y(180) - 0.2, Z_ST + 0.1),
                         (-150, wall_y(-150) - 0.2, Z_ST + 0.1)])
-    flat(g, 'ground_far', rect(-260, -260, 290, 300), -0.6)
-    flat(g, 'soil', rect(-6, -11.5, 31, 40), -0.05)
+    flat(g, 'ground_far', rect(-260, -260, 290, 300), -0.62)
+    flat(g, 'soil', [(FENCE_W, 0.8), (FENCE_E, -1.3), (FENCE_E, FENCE_N), (FENCE_W, FENCE_N)], -0.05)
     # driveway (pavers), in strips along its fall; the bay in front of the right-hand door
     ys = [-11.4, -9.2, -7.4, -5.5, -2.5, 0.55]
     for a, b in zip(ys[:-1], ys[1:]):
-        g.poly('paver_drive', [(-1.9, a, drive_z(a)), (6.05, a, drive_z(a)), (6.05, b, drive_z(b)), (-1.9, b, drive_z(b))])
+        g.poly('paver_drive', [(-1.9, a, drive_z(a)), (6.05, a, drive_z(a)), (6.05, b, drive_z(b)), (-1.9, b, drive_z(b))],
+               uv_u=(1.0, 0.0, 0.0), uv_o=(0.0, 0.0, 0.0))
     for a, b in ((-4.2, -2.5), (-2.5, 0.55)):
-        g.poly('paver_drive', [(6.05, a, drive_z(a)), (7.6, a, drive_z(a)), (7.6, b, drive_z(b)), (6.05, b, drive_z(b))])
+        g.poly('paver_drive', [(6.05, a, drive_z(a)), (7.6, a, drive_z(a)), (7.6, b, drive_z(b)), (6.05, b, drive_z(b))],
+               uv_u=(1.0, 0.0, 0.0), uv_o=(0.0, 0.0, 0.0))
     g.poly('paver_drive', [(6.05, -8.85, -0.15), (7.1, -8.85, -0.15), (7.1, -7.45, -0.15), (6.05, -7.45, -0.15)])   # landing
     for k in range(3):                                 # steps from the walk down to the driveway
         g.box('bluestone', (7.1 + 0.235 * k, -8.85, -0.3), (7.1 + 0.235 * (k + 1), -7.45, 0.44 - 0.148 * (3 - k)), faces='xyYZ')
@@ -244,6 +252,7 @@ def backdrop(g, trees):
 
 
 def build():
+    LAWNS.clear()
     gnd, site, cab, plants, trees, back = Geo(), Geo(), Geo(), Geo(), Geo(), Geo()
     ground(gnd)
     pool_terrace(gnd)

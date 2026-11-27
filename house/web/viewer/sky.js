@@ -9,7 +9,7 @@ export const SKIES = {
     sun: 0xfff6e4, glow: 0.55, clouds: 0.42, cloudLit: 0xffffff, cloudShade: 0xb9c3cf,
     light: 1.0,                 // radiance scale of the lighting copy
     bounce: 0xc4beb0,           // what the lower hemisphere sends back up in the lighting copy: sunlit paving, lawn, walls
-    lightDesat: 0.45,           // the lighting copy is less blue than the sky looks: shade on white walls is near neutral in the photos
+    lightDesat: 0.7,           // the lighting copy is less blue than the sky looks: shade on white walls is near neutral in the photos
   },
   dusk: {
     zenith: 0x8d9cc4, mid: 0xb7b4d2, horizon: 0xe6c3c8, ground: 0x4a4d50,

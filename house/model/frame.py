@@ -42,4 +42,9 @@ def world_cams():
     p = os.path.join(HERE, 'refs', 'cache', 'cams_S.json')
     if not os.path.exists(p):
         p = os.path.join(HERE, 'refs', 'cache', 'cams_sfm.json')
-    return {k: cam_to_world(c) for k, c in CAMS.load(p).items()}
+    out = {k: cam_to_world(c) for k, c in CAMS.load(p).items()}
+    extra = os.path.join(HERE, 'survey', 'cams_world.json')          # cameras fitted on the model itself (tools/fit_world.py)
+    if os.path.exists(extra):
+        for k, c in json.load(open(extra)).items():
+            out[k] = dict(c, R=np.array(c['R'], float), C=np.array(c['C'], float))
+    return out

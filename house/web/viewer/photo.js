@@ -9,7 +9,7 @@
 // as modelled, and they are left out of the depth maps (the photos' trees are not where the model's twigs are).
 import * as THREE from 'three';
 
-const PAINT = new Set(['lawn', 'paver_drive', 'bluestone', 'concrete', 'mulch', 'soil', 'coping', 'roof_shingle', 'roof_seam',
+const PAINT = new Set(['lawn', 'paver_drive', 'bluestone', 'concrete', 'mulch', 'soil', 'roof_shingle', 'roof_seam',
   'roof_flat', 'siding_lap', 'siding_bb', 'trim_white', 'soffit_white', 'stone_veneer', 'chimney_white']);
 const SKIP_PARTS = new Set(['plants', 'trees', 'backdrop']);
 const LAYER = 5;
@@ -45,15 +45,15 @@ export class PhotoLayer {
       const rt = new THREE.WebGLRenderTarget(Math.round(c.w * s), Math.round(c.h * s), { depthBuffer: true });
       rt.depthTexture = new THREE.DepthTexture(rt.width, rt.height, THREE.UnsignedIntType);
       rt.depthTexture.minFilter = rt.depthTexture.magFilter = THREE.NearestFilter;
-      const masks = [new THREE.Vector4(2, 2, 2, 2), new THREE.Vector4(2, 2, 2, 2)];
-      (p.masks || []).slice(0, 2).forEach((m, i) => masks[i].set(m[0], m[1], m[2], m[3]));
+      const masks = [new THREE.Vector4(2, 2, 2, 2), new THREE.Vector4(2, 2, 2, 2), new THREE.Vector4(2, 2, 2, 2)];
+      (p.masks || []).slice(0, 3).forEach((m, i) => masks[i].set(m[0], m[1], m[2], m[3]));
       this.list.push({
         name: p.name, cam, rt,
         u: {
           T: { value: tex }, D: { value: rt.depthTexture }, C: { value: gl3(c.C) },
           Rx: { value: right }, Ry: { value: down }, Rz: { value: fwd },
           K: { value: new THREE.Vector4(c.f, c.cx, c.cy, c.k1 || 0) }, S: { value: new THREE.Vector4(c.w, c.h, cam.near, cam.far) },
-          M: { value: masks }, G: { value: p.gain === undefined ? 1 : p.gain },
+          M: { value: masks }, G: { value: p.gain === undefined ? 1 : p.gain }, V: { value: p.walls ? 1 : 0 },
         },
       });
     }
@@ -91,7 +91,7 @@ export class PhotoLayer {
       list.forEach((p, i) => {
         for (const k of Object.keys(p.u)) shader.uniforms[`uPh${k}${i}`] = p.u[k];
         decl += `uniform sampler2D uPhT${i}; uniform sampler2D uPhD${i}; uniform vec3 uPhC${i}, uPhRx${i}, uPhRy${i}, uPhRz${i};
-uniform vec4 uPhK${i}, uPhS${i}; uniform vec4 uPhM${i}[2]; uniform float uPhG${i};\n`;
+uniform vec4 uPhK${i}, uPhS${i}; uniform vec4 uPhM${i}[3]; uniform float uPhG${i}, uPhV${i};\n`;
         body += `{
   vec3 d = vPhW - uPhC${i};
   vec3 q = vec3(dot(uPhRx${i}, d), dot(uPhRy${i}, d), dot(uPhRz${i}, d));
@@ -107,11 +107,16 @@ uniform vec4 uPhK${i}, uPhS${i}; uniform vec4 uPhM${i}[2]; uniform float uPhG${i
       float vis = step(q.z, zm + 0.07 + 0.004 * q.z + 0.05 * (1.0 - cosv) / max(cosv, 0.15));
       vec2 e = min(uv, 1.0 - uv);
       float w = pow(smoothstep(0.12, 0.45, cosv), 1.5) * vis * smoothstep(0.0, 0.03, min(e.x, e.y)) * uPhG${i};
-      for (int k = 0; k < 2; k++) {
+      for (int k = 0; k < 3; k++) {
         vec4 m = uPhM${i}[k];
         w *= 1.0 - step(m.x, uv.x) * step(uv.x, m.z) * step(m.y, uv.y) * step(uv.y, m.w);
       }
-      if (w > 0.0) { phC += w * texture2D(uPhT${i}, vec2(uv.x, 1.0 - uv.y)).rgb; phW += w; }
+      w *= mix(1.0, 1.0 - smoothstep(0.35, 0.6, abs(phN.y)), uPhV${i});
+      if (w > 0.0) {
+        vec3 c = texture2D(uPhT${i}, vec2(uv.x, 1.0 - uv.y)).rgb;
+        w *= 1.0 - smoothstep(0.06, 0.14, min(c.r, c.b) - c.g);          // the key colour: parts of the photo never used
+        phC += w * c; phW += w;
+      }
     }
   }
 }\n`;

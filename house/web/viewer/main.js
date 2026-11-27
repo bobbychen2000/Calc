@@ -1,7 +1,8 @@
 // Boot: load the model + meta, wire the controls, expose a small API for tests and screenshots (window.viewer).
 // URL parameters (dev / screenshots): ?view=NAME (a named view or a photo-matched camera of the meta file),
 // ?cam=x,y,z&tgt=x,y,z&fov=DEG (a free camera in world metres), ?mode=white, ?time=dusk, ?glb=FILE&meta=FILE,
-// ?hide=part,part (leave parts out: faster test renders), ?photo=0 (no photo layer), ?ui=0 (hide the controls), ?still=1 (no animation: one deterministic frame), ?hq=N (refine the still over N passes).
+// ?hide=part,part (leave parts out: faster test renders), ?photo=1 (whole photographs cast onto the model: a test
+// layer), ?swatch=0 (no photo swatches on the materials), ?ui=0 (hide the controls), ?still=1 (no animation: one deterministic frame), ?hq=N (refine the still over N passes).
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Stage, toGL } from './stage.js';
@@ -21,7 +22,7 @@ for (const m of [CLAY, CLAY_GLASS, CLAY_WATER]) stage.picture.hook(m);
 // ?hq=N refines stills over N passes (soft shadows, sky-light shading, antialiasing); hq=0 turns it off
 if (Q.has('hq')) { stage.refine = +Q.get('hq') > 0; stage.picture.passes = Math.max(1, +Q.get('hq')); }
 const state = { mode: Q.get('mode') === 'white' ? 'white' : 'full', time: Q.get('time') === 'dusk' ? 'dusk' : 'day', view: null, meta: null,
-  photo: Q.get('photo') !== '0' };
+  photo: Q.get('photo') === '1' };
 const viewer = window.viewer = { stage, mats, state, photo, ready: null, errors: [] };
 window.addEventListener('error', (e) => viewer.errors.push(String(e.message)));
 
@@ -74,10 +75,23 @@ viewer.settle = () => new Promise((res) => {
 async function loadGLB(name) {
   const loader = new GLTFLoader(), parts = (CFG.b64 || {})[name];
   if (!parts) return loader.loadAsync(CFG.data + name);
-  const texts = await Promise.all(Array.from({ length: parts }, (_, i) => fetch(`${CFG.data}${name}.b64.${i}.txt`).then((r) => {
+  let got = 0;
+  const total = (state.meta && state.meta.stats ? state.meta.stats.bytes : 0) * 4 / 3;
+  const texts = await Promise.all(Array.from({ length: parts }, async (_, i) => {
+    const r = await fetch(`${CFG.data}${name}.b64.${i}.txt`);
     if (!r.ok) throw new Error(`${name}: part ${i} ${r.status}`);
-    return r.text();
-  })));
+    if (!r.body) return r.text();
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    let t = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      t += dec.decode(value, { stream: true });
+      got += value.length;
+      if (total) status(`Loading the model… ${Math.min(99, Math.round(100 * got / total))} %`);
+    }
+    return t + dec.decode();
+  }));
   const bins = texts.map((t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0)));
   const all = new Uint8Array(bins.reduce((n, b) => n + b.length, 0));
   let o = 0;
@@ -89,8 +103,12 @@ async function boot() {
   const metaUrl = CFG.data + (Q.get('meta') || 'house_meta.json');
   const meta = state.meta = await (await fetch(metaUrl)).json();
   status('Loading the model…');
-  if (Q.get('photo') !== '0') await photo.load(meta, CFG.data);
+  mats.onChange = () => { stage.needs = true; };
+  if (Q.get('swatch') !== '0') mats.setSwatches(meta.swatches, CFG.data);
+  if (Q.get('photo') === '1') await photo.load(meta, CFG.data);
   const gltf = await loadGLB(Q.get('glb') || meta.glb || 'house.glb');
+  status('Preparing the scene…');
+  await new Promise((r) => setTimeout(r, 30));
   const root = gltf.scene;
   root.traverse((o) => {
     if (!o.isMesh) return;

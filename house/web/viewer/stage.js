@@ -158,10 +158,28 @@ export class Stage {
   skyRadiance(d) { return skyRadiance(this.time, d, LOOK[this.time].env); }
 
   // one animation frame: a plain render when something changed, else refinement passes until the still converges
+  // Exposure follows the view as a photographer's would: looking at the faces the sun lights, the calibrated value;
+  // looking at the shaded side (toward the sun's side of the sky), opened up - the daylight photographs of the street
+  // front show its shaded white walls near 235, not 180.
+  meter() {
+    const L = LOOK[this.time];
+    let k = 1;
+    if (this.time === 'day' && this.sunDir && this.autoExposure !== false) {
+      const f = this.camera.getWorldDirection(new THREE.Vector3());
+      const az = THREE.MathUtils.degToRad(this.sunDir.az);
+      const sun = toGL([Math.sin(az), Math.cos(az), 0]);
+      const flat = Math.hypot(f.x, f.z);
+      const toward = flat > 1e-6 ? (f.x * sun.x + f.z * sun.z) / flat : 0;
+      k = 1 + 0.5 * THREE.MathUtils.smoothstep(toward, -0.15, 0.75) * THREE.MathUtils.smoothstep(flat, 0.35, 0.8);
+    }
+    this.renderer.toneMappingExposure = L.exposure * k;
+  }
+
   frame() {
     if (!this.fixed) this.controls.update();
     if (this.needs) {
       this.needs = false;
+      this.meter();
       this.picture.reset();
       if (this.refine) { this.picture.pass(); } else { this.renderer.render(this.scene, this.camera); }
       this.frames = (this.frames || 0) + 1;

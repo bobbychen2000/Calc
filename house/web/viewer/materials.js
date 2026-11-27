@@ -109,9 +109,34 @@ export class Materials {
       m.userData.spec = e;
     }
     m.name = name;
+    this.applySwatch(name, m);
     if (this.hook) this.hook(m);
     this.cache.set(name, m);
     return m;
+  }
+
+  // Swatches: small patches cut from the photographs (model/swatch.py), tiled with the model's UVs (metres).  The
+  // patch carries the material's colour, so the base colour goes white; the relief of the procedural look stays.
+  setSwatches(list, base) {
+    this.swatches = list || {};
+    this.swatchBase = base;
+    for (const [name, m] of this.cache) this.applySwatch(name, m);
+  }
+
+  applySwatch(name, m) {
+    const s = (this.swatches || {})[name];
+    if (!s || m.userData.swatch || !m.isMeshStandardMaterial) return;
+    m.userData.swatch = true;
+    new THREE.TextureLoader().load(this.swatchBase + s.image, (t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(1 / s.size[0], 1 / s.size[1]);
+      t.anisotropy = this.ctx.anisotropy;
+      m.map = t;
+      m.color.setRGB(1, 1, 1);
+      m.needsUpdate = true;
+      if (this.onChange) this.onChange();
+    });
   }
 
   clay(name) {

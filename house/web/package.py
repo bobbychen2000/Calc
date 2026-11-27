@@ -68,6 +68,10 @@ def main():
     meta.pop('cameras', None)
     if '--no-photos' in a:
         meta['projectors'] = []
+    if '--photo-layer' not in a:                      # whole photographs cast onto the model: a test layer, left out
+        meta['projectors'] = []
+    for sw in meta.get('swatches', {}).values():      # material patches cut from the photographs
+        shutil.copy(HOUSE / 'out' / sw['image'], out / 'data' / sw['image'])
     for p in meta.get('projectors', []):          # the photographs the viewer casts onto the model (private bundles only)
         shutil.copy(HOUSE / 'out' / p['image'], out / 'data' / p['image'])
     json.dump(meta, open(out / 'data' / 'house_meta.json', 'w'), separators=(',', ':'))
