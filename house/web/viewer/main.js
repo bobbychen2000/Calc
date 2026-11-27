@@ -53,7 +53,7 @@ function applyTime() {
 
 function setView(name) {
   const m = state.meta, v = (m.views || {})[name], c = (m.cameras || {})[name];
-  if (v) stage.setOrbit(v.pos, v.target, v.fov || 40);
+  if (v) stage.setOrbit(v.pos, v.target, v.fov || 40, { fit: v.fit, aspect: v.aspect });
   else if (c) stage.setPhotoCamera(c);
   else return false;
   state.view = name;

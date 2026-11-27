@@ -239,8 +239,7 @@ def planting(g, trees):
 def backdrop(g, trees):
     """Neighbouring houses as plain masses and a few big trees beyond the fences (for context only)."""
     for x0, y0, x1, y1, h in ((32.5, 2.0, 44.0, 19.0, 5.4), (-19.0, 0.0, -7.5, 15.0, 5.4), (2.0, 44.0, 17.0, 54.0, 3.2),
-                              (34.0, 30.0, 45.0, 41.0, 3.2), (-21.0, 25.0, -9.0, 38.0, 3.2), (-2.0, -40.0, 12.0, -28.0, 3.2),
-                              (18.0, -41.0, 32.0, -29.0, 5.4)):
+                              (34.0, 30.0, 45.0, 41.0, 3.2), (-21.0, 25.0, -9.0, 38.0, 3.2)):
         g.box('neighbor_wall', (x0, y0, -0.6), (x1, y1, h), faces='xXyY')
         roof_planes(g, hip_roof('nb', x0 - 0.5, y0 - 0.5, x1 + 0.5, y1 + 0.5, h + 0.2, 0.42, 'neighbor_roof'))
     for k, (x, y, h, r) in enumerate(((36.0, 26.0, 21, 3.2), (38.5, 35.0, 24, 3.4), (30.0, 45.0, 19, 3.0), (-12.0, 44.0, 22, 3.2),

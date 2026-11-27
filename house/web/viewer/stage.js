@@ -62,6 +62,7 @@ export class Stage {
     this.controls.minDistance = 2;
     this.controls.maxDistance = 220;
     this.controls.addEventListener('change', () => { this.fixed = null; this.needs = true; });
+    this.controls.addEventListener('start', () => { this.design = null; });   // the user moves: resizes keep their camera
 
     this.sky = new SkyDome();
     this.scene.add(this.sky.mesh);
@@ -134,22 +135,42 @@ export class Stage {
     this.camera.position.copy(toGL(cam.C));
     this.camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(cam.h / 2 / cam.f));
     this.fixed = { aspect: cam.w / cam.h };
+    this.design = null;
     this.controls.target.copy(this.camera.position).addScaledVector(fwd, 15);
     this.resize();
   }
 
-  setOrbit(pos, target, fov = 40) {
+  // A named view is composed for a landscape screen (opts.aspect, 16:9).  On a narrower screen it keeps most of its
+  // width: 'dolly' views (from outside the lot or above it) step back along their line of sight, 'fov' views (eye level
+  // inside the lot, where stepping back would put a fence in front of the lens) widen the lens up to 74 deg instead.
+  setOrbit(pos, target, fov = 40, opts = {}) {
     this.fixed = null;
-    this.camera.position.copy(toGL(pos));
-    this.controls.target.copy(toGL(target));
-    this.camera.fov = fov;
-    this.camera.lookAt(this.controls.target);
+    this.design = { pos: toGL(pos), target: toGL(target), fov, fit: opts.fit || 'fov', aspect: opts.aspect || 16 / 9 };
     this.resize();
+  }
+
+  frameDesign(a) {
+    const d = this.design, rad = THREE.MathUtils.degToRad;
+    let fov = d.fov;
+    const pos = d.pos.clone();
+    if (a < d.aspect) {
+      const cover = a < 1 ? 0.8 : 1;                              // portrait: 80 % of the composed width
+      let tv = Math.tan(rad(d.fov / 2)) * d.aspect * cover / a;   // tan(half vertical fov) that shows it
+      const tvMax = Math.tan(rad(d.fit === 'dolly' ? d.fov / 2 + 6 : 37));
+      if (d.fit === 'dolly' && tv > tvMax) pos.sub(d.target).multiplyScalar(tv / tvMax).add(d.target);
+      tv = Math.min(tv, tvMax);
+      fov = THREE.MathUtils.radToDeg(2 * Math.atan(tv));
+    }
+    this.camera.position.copy(pos);
+    this.controls.target.copy(d.target);
+    this.camera.fov = fov;
+    this.camera.lookAt(d.target);
   }
 
   resize() {
     const w = this.canvas.clientWidth || window.innerWidth, h = this.canvas.clientHeight || window.innerHeight;
     this.renderer.setSize(w, h, false);
+    if (this.design && !this.fixed) this.frameDesign(w / h);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.needs = true;

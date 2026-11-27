@@ -18,9 +18,10 @@ from model import materials as _materials  # noqa: E402
 MATERIALS = _materials.MATERIALS
 
 ZONES = ['site', 'house']
+# fit: how a view keeps its width on a narrow (portrait) screen - 'dolly' steps back, 'fov' widens (web/viewer/stage.js)
 VIEWS = {
-    'front': dict(label='Front', pos=(4.0, -26.0, 5.5), target=(13.0, 6.0, 3.5), fov=42),
-    'aerial': dict(label='Aerial', pos=(-14.0, -24.0, 26.0), target=(13.0, 14.0, 2.0), fov=42),
+    'front': dict(label='Front', pos=(4.0, -26.0, 5.5), target=(13.0, 6.0, 3.5), fov=42, fit='dolly'),
+    'aerial': dict(label='Aerial', pos=(-14.0, -24.0, 26.0), target=(13.0, 14.0, 2.0), fov=42, fit='dolly'),
     'rear': dict(label='Rear', pos=(1.5, 33.3, 3.3), target=(13.0, 19.0, 2.7), fov=62),
     'patio': dict(label='Patio', pos=(24.5, 23.5, 2.5), target=(17.0, 13.5, 2.4), fov=58),
     'pool': dict(label='Pool', pos=(0.2, 29.7, 3.0), target=(20.0, 30.6, 2.3), fov=52),
