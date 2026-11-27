@@ -43,21 +43,36 @@ function makeCanvas(w, h) {
 }
 
 // ---- bark ---------------------------------------------------------------------------------------------------------------
-// A height field of plates between furrows: two layers of cell noise (cells stretched along the stem and warped so the
-// ridges wander and braid), tileable.  Colour and normal map follow from the height.
+// tileable value noise on a px x py lattice
+function lattice(R, px, py) {
+  const v = new Float32Array(px * py);
+  for (let i = 0; i < v.length; i++) v[i] = R();
+  return (X, Y) => {
+    const x = X * px, y = Y * py, x0 = Math.floor(x), y0 = Math.floor(y);
+    let fx = x - x0, fy = y - y0;
+    fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+    const i0 = ((x0 % px) + px) % px, i1 = (i0 + 1) % px, j0 = ((y0 % py) + py) % py, j1 = (j0 + 1) % py;
+    return lerp(lerp(v[j0 * px + i0], v[j0 * px + i1], fx), lerp(v[j1 * px + i0], v[j1 * px + i1], fx), fy);
+  };
+}
+
+// A height field of plates between furrows: cell noise whose cells are stretched along the stem and pushed about by
+// smooth noise (the ridges wander, merge and split), broken across by a second layer of cracks, with a fibrous grain.
+// Colour and normal map follow from the height.  Tileable.
 function barkMaps(ctx, o) {
   const { THREE } = ctx;
   const N = ctx.quality === 'low' ? o.size / 2 : o.size;
   const R = rng(o.seed);
   const layer = (gu, gv) => {
     const px = new Float32Array(gu * gv), py = new Float32Array(gu * gv), pr = new Float32Array(gu * gv);
-    for (let i = 0; i < gu * gv; i++) { px[i] = 0.15 + 0.7 * R(); py[i] = 0.1 + 0.8 * R(); pr[i] = R(); }
+    for (let i = 0; i < gu * gv; i++) { px[i] = 0.12 + 0.76 * R(); py[i] = 0.08 + 0.84 * R(); pr[i] = R(); }
     return { gu, gv, px, py, pr };
   };
   const A = layer(o.cells[0], o.cells[1]), B = layer(o.cells2[0], o.cells2[1]);
-  const ph = Array.from({ length: 12 }, () => R() * Math.PI * 2);
+  const w1 = lattice(R, 3, 7), w2 = lattice(R, 7, 17), w3 = lattice(R, 4, 5);
+  const e1 = lattice(R, 48, 20), g1 = lattice(R, 40, 12), g2 = lattice(R, 96, 30), g3 = lattice(R, 200, 70), g4 = lattice(R, 400, 180);
+  const l1 = lattice(R, 3, 3), l2 = lattice(R, 9, 7);
   const H = new Float32Array(N * N), C = new Float32Array(N * N), L = new Float32Array(N * N);
-  const TAU = Math.PI * 2;
   const cell = (Lr, u, v, out) => {
     const cu = Math.floor(u), cv = Math.floor(v);
     let d1 = 1e9, d2 = 1e9, id = 0;
@@ -74,40 +89,37 @@ function barkMaps(ctx, o) {
     out[1] = Lr.pr[id];
   };
   const tmp = [0, 0];
+  const s = N / o.size;                                   // the lattices are laid out for the full size
   for (let y = 0; y < N; y++) {
     const Y = y / N;
     for (let x = 0; x < N; x++) {
       const X = x / N, k = y * N + x;
-      // warp: the ridges wander sideways along the stem
-      const wu = o.warp * (Math.sin(TAU * (2 * Y + ph[0])) + 0.6 * Math.sin(TAU * (5 * Y + X + ph[1])) + 0.4 * Math.sin(TAU * (9 * Y - 2 * X + ph[2])));
-      const wv = o.warp * 0.5 * (Math.sin(TAU * (3 * X + Y + ph[3])) + 0.5 * Math.sin(TAU * (7 * X - 2 * Y + ph[4])));
-      const low = 0.5 + 0.25 * Math.sin(TAU * (X + 2 * Y + ph[5])) + 0.15 * Math.sin(TAU * (3 * X - Y + ph[6])) + 0.1 * Math.sin(TAU * (4 * X + 5 * Y + ph[7]));
+      const wu = o.warp * ((w1(X, Y) - 0.5) * 2 + (w2(X, Y) - 0.5) * 0.8);
+      const wv = o.warp * 0.4 * (w3(X, Y) - 0.5) * 2;
       cell(A, X * A.gu + wu, Y * A.gv + wv, tmp);
-      const dA = tmp[0], rA = tmp[1];
-      cell(B, X * B.gu + wu * 2.3, Y * B.gv + wv * 2.3, tmp);
-      const dB = tmp[0];
-      let h = Math.pow(sstep(0.0, o.edge, dA), o.round) * (0.72 + 0.28 * rA);
-      h *= 1 - o.crack * (1 - sstep(0.0, 0.22, dB)) * sstep(0.15, 0.5, h);
-      // fibres along the stem
-      const fib = Math.sin(TAU * (X * o.fibre + 0.35 * Math.sin(TAU * (Y * 3 + ph[8])) + ph[9])) * Math.sin(TAU * (X * o.fibre * 0.37 + Y * 2 + ph[10]));
-      h += o.fib * fib * (0.3 + 0.7 * h);
-      H[k] = h; C[k] = rA; L[k] = low;
+      const dA = tmp[0] + o.ragged * (e1(X, Y) - 0.5), rA = tmp[1];
+      cell(B, X * B.gu + wu * B.gu / A.gu, Y * B.gv + wv * B.gv / A.gv, tmp);
+      const dB = tmp[0], rB = tmp[1];
+      let h = Math.pow(sstep(0.02, o.edge, dA), o.round) * (0.7 + 0.3 * rA);
+      h *= 1 - o.crack * (1 - sstep(0.0, 0.16, dB)) * sstep(0.2, 0.55, h) * (rB > 0.3 ? 1 : 0.35);
+      const grain = 0.4 * g1(X, Y) + 0.3 * g2(X, Y) + 0.2 * g3(X, Y) + (s >= 1 ? 0.1 * g4(X, Y) : 0.05);
+      h += o.fib * (grain - 0.5) * 2 * (0.35 + 0.65 * h);
+      H[k] = h; C[k] = 0.6 * rA + 0.4 * rB; L[k] = 0.6 * l1(X, Y) + 0.4 * l2(X, Y) + 0.5 * (grain - 0.5);
     }
   }
   const col = new Uint8Array(N * N * 4), nrm = new Uint8Array(N * N * 4);
-  const s = o.depth / (2 * BARK_TILE / N) / 255 * 255;
-  const hash = rng(o.seed + 99);
+  const sl = o.depth / (2 * o.tile[0] / N);
   for (let y = 0; y < N; y++) {
     const yu = ((y - 1 + N) % N) * N, yd = ((y + 1) % N) * N;
     for (let x = 0; x < N; x++) {
       const k = y * N + x, h = Math.min(1, Math.max(0, H[k]));
-      let c = mix3(o.furrow, o.side, sstep(0.0, 0.42, h));
-      c = mix3(c, o.top, sstep(0.38, 0.92, h));
-      let b = (0.84 + 0.3 * C[k]) * (0.86 + 0.28 * L[k]) * (0.93 + 0.14 * hash());
-      const li = sstep(0.62, 0.8, L[k] + 0.25 * C[k]) * sstep(0.5, 0.9, h) * o.lichen;
+      let c = mix3(o.furrow, o.side, sstep(0.0, 0.4, h));
+      c = mix3(c, o.top, sstep(0.35, 0.9, h));
+      const b = (0.8 + 0.4 * C[k]) * (0.82 + 0.36 * L[k]);
+      const li = sstep(0.5, 0.72, L[k] + 0.2 * C[k]) * sstep(0.45, 0.85, h) * o.lichen;
       c = mix3(c, o.lichenCol, li);
       col[k * 4] = Math.min(255, c[0] * b); col[k * 4 + 1] = Math.min(255, c[1] * b); col[k * 4 + 2] = Math.min(255, c[2] * b); col[k * 4 + 3] = 255;
-      const dx = (H[y * N + (x + 1) % N] - H[y * N + (x - 1 + N) % N]) * s, dy = (H[yd + x] - H[yu + x]) * s;
+      const dx = (H[y * N + (x + 1) % N] - H[y * N + (x - 1 + N) % N]) * sl, dy = (H[yd + x] - H[yu + x]) * sl * o.tile[0] / o.tile[1];
       const il = 1 / Math.sqrt(dx * dx + dy * dy + 1);
       nrm[k * 4] = (-dx * il * 0.5 + 0.5) * 255; nrm[k * 4 + 1] = (-dy * il * 0.5 + 0.5) * 255; nrm[k * 4 + 2] = (il * 0.5 + 0.5) * 255; nrm[k * 4 + 3] = 255;
     }
@@ -126,12 +138,12 @@ function barkMaps(ctx, o) {
 }
 
 const BARKS = {
-  // the oak: blocky plates 5 x 13 cm between deep furrows, grey with pale lichen
-  oak: { size: 1024, seed: 5, cells: [22, 9], cells2: [48, 26], warp: 0.55, edge: 0.34, round: 0.7, crack: 0.5, fibre: 90, fib: 0.07, depth: 0.02,
-    furrow: [34, 29, 25], side: [92, 82, 72], top: [146, 137, 124], lichen: 0.55, lichenCol: [168, 168, 148], tile: [BARK_TILE, BARK_TILE],
-    rough: 0.95, lichenUp: [0.62, 0.62, 0.55, 0.6] },
+  // the oak: grey ridges about 6 cm wide and a hand long between deep furrows, pale lichen
+  oak: { size: 1024, seed: 5, cells: [20, 5], cells2: [9, 24], warp: 0.85, ragged: 0.22, edge: 0.4, round: 0.75, crack: 0.6, fib: 0.2, depth: 0.014,
+    furrow: [30, 26, 22], side: [88, 79, 70], top: [142, 133, 121], lichen: 0.5, lichenCol: [166, 166, 148], tile: [BARK_TILE, BARK_TILE],
+    rough: 0.96, lichenUp: [0.56, 0.56, 0.5, 0.42] },
   // redwood: long stringy ridges, red-brown
-  redwood: { size: 512, seed: 9, cells: [20, 2], cells2: [44, 7], warp: 0.35, edge: 0.4, round: 0.8, crack: 0.35, fibre: 70, fib: 0.12, depth: 0.03,
+  redwood: { size: 512, seed: 9, cells: [18, 2], cells2: [8, 9], warp: 0.5, ragged: 0.2, edge: 0.45, round: 0.8, crack: 0.3, fib: 0.3, depth: 0.02,
     furrow: [44, 24, 18], side: [112, 62, 42], top: [150, 92, 64], lichen: 0.0, lichenCol: [150, 92, 64], tile: [BARK_TILE, BARK_TILE * 1.6],
     rough: 0.97, lichenUp: [0.4, 0.3, 0.25, 0.0] },
 };
@@ -152,8 +164,8 @@ function barkMaterial(ctx, o) {
         vec3 plUp = inverseTransformDirection( nonPerturbedNormal, viewMatrix );
         float plLow = texture2D( map, vMapUv * 0.131 + vec2( 0.37, 0.11 ) ).g;
         float plLow2 = texture2D( map, vMapUv * 0.047 + vec2( 0.13, 0.71 ) ).r;
-        diffuseColor.rgb *= 0.74 + 0.9 * plLow2;
-        float plM = smoothstep( 0.0, 0.8, plUp.y + ( plLow - 0.2 ) * 1.5 ) * uPlLichen.a;
+        diffuseColor.rgb *= 0.8 + 0.75 * plLow2;
+        float plM = smoothstep( 0.1, 0.9, plUp.y + ( plLow - 0.25 ) * 1.6 ) * uPlLichen.a;
         float plLum = dot( diffuseColor.rgb, vec3( 0.3, 0.6, 0.1 ) );
         diffuseColor.rgb = mix( diffuseColor.rgb, uPlLichen.rgb * ( 0.3 + 2.4 * plLum ), plM );
       }`);
@@ -228,7 +240,7 @@ function leaf(c, R, x, y, ang, len, wid, col, o = {}) {
     c.beginPath(); c.moveTo(len * 0.12, -wid * 0.12);
     c.bezierCurveTo(len * 0.35, -wid * 0.75, len * 0.7, -wid * 0.5, len * 0.9, -wid * 0.06);
     c.bezierCurveTo(len * 0.7, -wid * 0.2, len * 0.35, -wid * 0.25, len * 0.12, -wid * 0.12);
-    c.fillStyle = `rgba(206,222,214,${o.gloss * (0.3 + 0.7 * R())})`; c.fill();
+    c.fillStyle = `rgba(168,196,160,${o.gloss * (0.3 + 0.7 * R())})`; c.fill();
   }
   if (o.rib) {
     c.strokeStyle = o.rib; c.lineWidth = Math.max(len * 0.035, 0.0018);
@@ -264,8 +276,8 @@ function spray(c, R, x, y, ang, len, w, depth, o, tip) {
 }
 
 const PAL = {
-  oakLeaf: [[112, 110, 56], [126, 106, 56], [88, 98, 48], [148, 128, 76], [100, 92, 46], [136, 118, 60]],
-  oakTwig: { thin: [164, 152, 134], thick: [104, 93, 80] },
+  oakLeaf: [[98, 96, 48], [110, 92, 48], [76, 86, 42], [128, 110, 64], [86, 80, 40], [116, 100, 50]],
+  oakTwig: { thin: [122, 110, 96], thick: [86, 76, 66] },
   green: { main: [[58, 94, 36], [74, 110, 42], [50, 82, 32], [66, 102, 40]], accent: [[112, 136, 50], [140, 152, 62], [40, 66, 28]], twig: [58, 48, 38] },
   gold: { main: [[218, 164, 30], [230, 182, 46], [204, 144, 24], [224, 172, 36]], accent: [[168, 152, 44], [240, 202, 84], [196, 116, 22], [150, 140, 50]], twig: [70, 56, 40] },
   red: { main: [[172, 36, 24], [198, 50, 28], [146, 26, 22], [184, 42, 26]], accent: [[216, 88, 30], [122, 20, 28], [206, 116, 40], [160, 30, 40]], twig: [52, 36, 30] },
@@ -279,20 +291,20 @@ const PAL = {
 
 // --- the oak's twig sprays: cells 0, 1 bare; 2 a few leaf remnants; 3 a leafy spray
 function drawOak(c, R, k) {
-  const o = { ...PAL.oakTwig, bend: 0.55, zig: [0.18, 0.55], fork: [0.55, 1.25], side2: 0.45, minW: 0.0021, leafW: 0.0042 };
+  const o = { ...PAL.oakTwig, bend: 0.55, zig: [0.18, 0.55], fork: [0.55, 1.25], side2: 0.4, minW: 0.0027, leafW: 0.0046 };
   const leaves = [];
-  const nl = [0, 0, 0.3, 1.0][k];
+  const nl = [0, 0, 0.2, 0.62][k];
   const tip = nl > 0 ? (x, y, a, w) => { if (R() < nl) leaves.push([x, y, a]); } : null;
   const stems = k === 1 ? 4 : 3;
   for (let i = 0; i < stems; i++) {
     const a = -Math.PI / 2 + (i - (stems - 1) / 2) * (0.5 + 0.15 * R()) + (R() - 0.5) * 0.3;
-    spray(c, R, 0.5 + (i - (stems - 1) / 2) * 0.012, 0.992, a, 0.2 + R() * 0.07, 0.0125 - 0.002 * Math.abs(i - 1), k === 1 ? 6 : 5, o, tip);
+    spray(c, R, 0.5 + (i - (stems - 1) / 2) * 0.012, 0.992, a, 0.2 + R() * 0.07, 0.016 - 0.003 * Math.abs(i - 1), k === 1 ? 6 : 5, o, tip);
   }
   for (const [x, y, a] of leaves) {
-    const n = 1 + Math.floor(R() * (k === 3 ? 4 : 2.2));
+    const n = 1 + Math.floor(R() * (k === 3 ? 2.6 : 1.6));
     for (let i = 0; i < n; i++) {
-      const col = pick(R, PAL.oakLeaf), len = 0.03 + R() * 0.022;
-      leaf(c, R, x + (R() - 0.5) * 0.02, y + (R() - 0.5) * 0.02, a + (R() - 0.5) * 2.6, len, len * 0.3, mix3(col, [60, 56, 30], R() * 0.4), { lobes: 4, belly: 0.4, tipw: 0.6, shade: 0.2 });
+      const col = pick(R, PAL.oakLeaf), len = 0.026 + R() * 0.02;
+      leaf(c, R, x + (R() - 0.5) * 0.02, y + (R() - 0.5) * 0.02, a + (R() - 0.5) * 2.6, len, len * 0.3, mix3(col, [56, 52, 28], R() * 0.4), { lobes: 4, belly: 0.4, tipw: 0.6, shade: 0.2 });
     }
   }
 }
@@ -421,80 +433,106 @@ function drawRose(c, R, k) {
   }
 }
 
-// --- conifer boughs: 0, 1 a frond (the bough along the cell's axis), 2 the same, wider; 3 a dense hanging fan
+// --- conifer boughs.  0: a bough from the side (the cell's left = its under side, where the sprays hang),
+//     1: a flat frond from above, 2: the tuft at a bough's end seen end-on, 3: a dark dense mass
 function drawConifer(c, R, k) {
   const pal = PAL.conifer;
   const sprig = (x, y, a, len, b) => {                        // a branchlet feathered with needles
     const x1 = x + Math.cos(a) * len, y1 = y + Math.sin(a) * len;
-    if (!inside(x1, y1, 0.02)) return;
-    const col = R() < 0.16 ? pick(R, pal.accent) : pick(R, pal.main), cc = css(col, b * (0.8 + 0.4 * R()));
+    if (!inside(x1, y1, 0.045) || !inside(x, y, 0.045)) return;
+    const col = R() < 0.18 ? pick(R, pal.accent) : pick(R, pal.main), cc = css(col, b * (0.8 + 0.4 * R()));
     c.strokeStyle = cc; c.lineCap = 'round';
-    c.lineWidth = 0.0042;
+    c.lineWidth = 0.0046;
     c.beginPath(); c.moveTo(x, y); c.lineTo(x1, y1); c.stroke();
-    c.lineWidth = 0.0034;
-    const n = Math.max(4, Math.round(len / 0.011));
+    c.lineWidth = 0.0038;
+    const n = Math.max(4, Math.round(len / 0.0105));
     c.beginPath();
     for (let i = 0; i < n; i++) {
-      const t = (i + 0.5) / n, px = lerp(x, x1, t), py = lerp(y, y1, t), nl = 0.017 * (1 - 0.5 * t);
+      const t = (i + 0.5) / n, px = lerp(x, x1, t), py = lerp(y, y1, t), nl = 0.019 * (1 - 0.5 * t);
       for (const s of [-1, 1]) { c.moveTo(px, py); c.lineTo(px + Math.cos(a + s * 0.95) * nl, py + Math.sin(a + s * 0.95) * nl); }
     }
     c.stroke();
   };
-  const frond = (x, y, a, len, w, depth, b) => {
+  const frond = (x, y, a, len, w, depth, b, taper = 0.45) => {
     const x1 = x + Math.cos(a) * len, y1 = y + Math.sin(a) * len;
-    if (!inside(x1, y1, 0.03)) return;
+    if (!inside(x1, y1, 0.05)) return;
     stroke(c, x, y, x1, y1, w, css(pal.twig, 0.8 + 0.3 * R()));
-    const n = Math.round(len / 0.035);
+    const n = Math.round(len / 0.032);
     for (let i = 1; i <= n; i++) {
       const t = i / (n + 0.5), px = lerp(x, x1, t), py = lerp(y, y1, t);
       for (const s of [-1, 1]) {
-        const aa = a + s * (0.75 + R() * 0.45), ll = len * (0.34 + 0.2 * R()) * (1 - 0.45 * t);
-        if (depth > 0 && ll > 0.07) frond(px, py, aa, ll, w * 0.6, depth - 1, b);
+        const aa = a + s * (0.7 + R() * 0.45), ll = len * (0.36 + 0.2 * R()) * (1 - taper * t);
+        if (depth > 0 && ll > 0.07) frond(px, py, aa, ll, w * 0.6, depth - 1, b, taper);
         else sprig(px, py, aa, Math.max(0.03, ll), b);
       }
     }
     sprig(x1, y1, a, 0.05, b);
   };
   const up = -Math.PI / 2;
-  if (k === 3) {
-    for (let pass = 0; pass < 2; pass++) for (let i = 0; i < 7; i++) frond(0.5 + (i - 3) * 0.035, 0.99, up + (i - 3) * 0.3 + (R() - 0.5) * 0.2, 0.5 + R() * 0.3, 0.008, 1, pass ? 1 : 0.55);
-  } else {
-    const wide = k === 2 ? 1.25 : 1;
+  if (k === 0) {
     for (let pass = 0; pass < 2; pass++) {
-      frond(0.5, 0.99, up + (R() - 0.5) * 0.08, 0.86, 0.013, 2, pass ? 1 : 0.55);
-      for (const s of [-1, 1]) frond(0.5, 0.99 - 0.1 * R(), up + s * 0.42 * wide, 0.62, 0.008, 1, pass ? 1 : 0.6);
+      const b = pass ? 1 : 0.55;
+      stroke(c, 0.56, 0.99, 0.6, 0.08, 0.012, css(pal.twig));
+      for (let i = 0; i < 17; i++) {
+        const t = (i + R()) / 17, x = lerp(0.56, 0.6, t), y = lerp(0.97, 0.1, t);
+        frond(x, y, Math.PI + 0.25 + R() * 0.5, (0.2 + 0.24 * R()) * (1 - 0.45 * t), 0.006, 1, b, 0.3);   // hanging
+        if (R() < 0.8) frond(x, y, -0.75 - R() * 0.4, (0.1 + 0.1 * R()) * (1 - 0.3 * t), 0.005, 0, b, 0.3);  // the upper side
+      }
+      frond(0.6, 0.12, up - 0.15, 0.07, 0.005, 0, b);
+    }
+  } else if (k === 1) {
+    for (let pass = 0; pass < 2; pass++) {
+      const b = pass ? 1 : 0.55;
+      stroke(c, 0.5, 0.99, 0.5, 0.07, 0.012, css(pal.twig));
+      for (let i = 0; i < 18; i++) {
+        const t = (i + R()) / 18, y = lerp(0.96, 0.1, t), w = 0.36 * Math.sin(Math.PI * Math.min(1, 0.18 + 0.9 * t)) * (1 - 0.35 * t);
+        for (const s of [-1, 1]) frond(0.5, y, up + s * (0.95 + R() * 0.3), w * (0.8 + 0.4 * R()), 0.006, 1, b, 0.35);
+      }
+    }
+  } else {
+    const dark = k === 3 ? 0.55 : 1, n = k === 3 ? 30 : 17, rad = k === 3 ? 0.4 : 0.34;
+    for (let pass = 0; pass < 2; pass++) {
+      const b = (pass ? 1 : 0.5) * dark;
+      for (let i = 0; i < n; i++) {
+        let a = R() * 6.283;
+        if (k === 2 && Math.sin(a) < -0.2 && R() < 0.6) a = -a;                // more of them hang than rise
+        const r0 = R() * 0.1;
+        frond(0.5 + Math.cos(a) * r0, 0.5 + Math.sin(a) * r0, a + (R() - 0.5) * 0.5, rad * (0.55 + 0.45 * R()), 0.006, 1, b, 0.3);
+      }
     }
   }
 }
 
 // ---- the atlases ------------------------------------------------------------------------------------------------------
+// through: colour and amount of the light that comes through the leaves; vary: [brightness +-, warm / cool +-, the
+// shade of class 0]; sway: m at the card's tip
 const LEAVES = {
-  leaf_oak: { size: 1024, seed: 101, draw: drawOak, rough: 0.85, cut: 0.3, sway: 0.012, through: [1.0, 0.92, 0.6, 0.25], vary: [0.16, 0.05, 0.6], env: 0.8 },
-  leaf_green: { size: 1024, seed: 202, rough: 0.62, cut: 0.38, sway: 0.03, through: [0.95, 1.05, 0.35, 0.75], vary: [0.14, 0.06, 0.42], env: 0.8,
-    draw: drawCluster(PAL.green, { n: 330, len: 0.085, wid: 0.2, rad: 0.42, hang: 0.5, rib: 'rgba(150,170,90,0.45)',
-      cells: [{}, { n: 300, core: 0.5 }, { n: 230, holes: 0.25 }, { n: 110, rad: 0.36, holes: 0.05, twigs: 8 }] }) },
-  leaf_gold: { size: 1024, seed: 303, rough: 0.6, cut: 0.38, sway: 0.03, through: [1.25, 1.0, 0.3, 1.0], vary: [0.12, 0.05, 0.5], env: 0.8,
-    draw: drawCluster(PAL.gold, { n: 320, len: 0.075, wid: 0.3, rad: 0.42, hang: 0.6, belly: 0.5, tipw: 0.8, rib: 'rgba(250,224,130,0.4)', accent: 0.24,
-      cells: [{}, { n: 290, core: 0.5 }, { n: 220, holes: 0.25 }, { n: 100, rad: 0.36, holes: 0.05, twigs: 8 }] }) },
-  leaf_red: { size: 512, seed: 404, rough: 0.6, cut: 0.38, sway: 0.03, through: [1.3, 0.55, 0.3, 1.0], vary: [0.14, 0.05, 0.4], env: 0.7,
-    draw: drawCluster(PAL.red, { n: 380, len: 0.075, wid: 0.26, rad: 0.43, hang: 0.5, rib: 'rgba(230,120,70,0.35)', accent: 0.26,
-      cells: [{}, { n: 350, core: 0.5 }, { n: 270, holes: 0.3 }, { n: 120, rad: 0.36, holes: 0.05, twigs: 8 }] }) },
-  leaf_olive: { size: 512, seed: 505, rough: 0.7, cut: 0.38, sway: 0.025, through: [0.9, 1.0, 0.45, 0.45], vary: [0.14, 0.05, 0.42], env: 0.8,
-    draw: drawCluster(PAL.olive, { n: 380, len: 0.07, wid: 0.2, rad: 0.42, hang: 0.3, accent: 0.22,
-      cells: [{}, { n: 340, core: 0.5 }, { n: 260, holes: 0.25 }, { n: 120, rad: 0.36, holes: 0.05, twigs: 8 }] }) },
-  leaf_sapling: { size: 512, seed: 606, rough: 0.65, cut: 0.38, sway: 0.03, through: [0.95, 1.05, 0.45, 0.6], vary: [0.14, 0.05, 0.6], env: 0.8,
-    draw: drawShoot(PAL.sapling, { len: 0.15, wid: 0.19, stems: 2, fan: 0.7, segs: 8, height: 0.78, per: 2, rib: 'rgba(170,180,130,0.5)', accent: 0.2,
+  leaf_oak: { size: 1024, seed: 101, draw: drawOak, rough: 1.0, cut: 0.3, sway: 0.012, through: [1.0, 0.92, 0.6, 0.2], vary: [0.14, 0.04, 0.62], env: 0.9 },
+  leaf_green: { size: 1024, seed: 202, rough: 0.92, cut: 0.38, sway: 0.03, through: [0.95, 1.05, 0.35, 0.7], vary: [0.1, 0.05, 0.38], env: 0.9,
+    draw: drawCluster(PAL.green, { n: 330, len: 0.085, wid: 0.33, rad: 0.43, hang: 0.5, rib: 'rgba(150,170,90,0.4)',
+      cells: [{}, { n: 300, core: 0.5 }, { n: 230, holes: 0.25 }, { n: 100, rad: 0.36, holes: 0.05, twigs: 8 }] }) },
+  leaf_gold: { size: 1024, seed: 303, rough: 0.92, cut: 0.38, sway: 0.03, through: [1.25, 1.0, 0.3, 1.0], vary: [0.09, 0.04, 0.45], env: 0.9,
+    draw: drawCluster(PAL.gold, { n: 300, len: 0.08, wid: 0.36, rad: 0.43, hang: 0.6, belly: 0.5, tipw: 0.8, rib: 'rgba(250,224,130,0.35)', accent: 0.24,
+      cells: [{}, { n: 270, core: 0.5 }, { n: 200, holes: 0.25 }, { n: 90, rad: 0.36, holes: 0.05, twigs: 8 }] }) },
+  leaf_red: { size: 512, seed: 404, rough: 0.92, cut: 0.38, sway: 0.03, through: [1.3, 0.55, 0.3, 1.0], vary: [0.1, 0.04, 0.36], env: 0.9,
+    draw: drawCluster(PAL.red, { n: 330, len: 0.085, wid: 0.34, rad: 0.43, hang: 0.5, rib: 'rgba(230,120,70,0.3)', accent: 0.26,
+      cells: [{}, { n: 300, core: 0.5 }, { n: 230, holes: 0.3 }, { n: 100, rad: 0.36, holes: 0.05, twigs: 8 }] }) },
+  leaf_olive: { size: 512, seed: 505, rough: 0.95, cut: 0.38, sway: 0.025, through: [0.9, 1.0, 0.45, 0.4], vary: [0.1, 0.04, 0.38], env: 0.9,
+    draw: drawCluster(PAL.olive, { n: 360, len: 0.075, wid: 0.3, rad: 0.43, hang: 0.3, accent: 0.22,
+      cells: [{}, { n: 330, core: 0.5 }, { n: 250, holes: 0.25 }, { n: 110, rad: 0.36, holes: 0.05, twigs: 8 }] }) },
+  leaf_sapling: { size: 512, seed: 606, rough: 0.92, cut: 0.38, sway: 0.03, through: [0.95, 1.05, 0.45, 0.6], vary: [0.12, 0.05, 0.6], env: 0.9,
+    draw: drawShoot(PAL.sapling, { len: 0.16, wid: 0.3, stems: 2, fan: 0.7, segs: 8, height: 0.78, per: 2, rib: 'rgba(170,180,130,0.5)', accent: 0.2,
       cells: [{}, { stems: 3 }, { stems: 1, per: 3 }, { stems: 2, segs: 6, height: 0.6 }] }) },
-  leaf_boxwood: { size: 512, seed: 707, rough: 0.55, cut: 0.4, sway: 0.006, through: [0.9, 1.05, 0.35, 0.35], vary: [0.16, 0.05, 0.35], env: 0.9,
-    draw: drawCluster(PAL.boxwood, { n: 300, len: 0.075, wid: 0.3, rad: 0.44, belly: 0.5, tipw: 0.85, gloss: 0.22, accent: 0.22, twigs: 3,
-      cells: [{}, { n: 280, core: 0.5 }, { n: 230, holes: 0.3 }, { n: 60, rad: 0.3, cy: 0.6, twigs: 4, core: 1.0 }] }) },
-  leaf_laurel: { size: 1024, seed: 808, rough: 0.38, cut: 0.4, sway: 0.012, through: [0.85, 1.05, 0.35, 0.4], vary: [0.14, 0.04, 0.35], env: 1.0,
+  leaf_boxwood: { size: 512, seed: 707, rough: 0.9, cut: 0.4, sway: 0.006, through: [0.9, 1.05, 0.35, 0.35], vary: [0.12, 0.04, 0.35], env: 0.9,
+    draw: drawCluster(PAL.boxwood, { n: 330, len: 0.07, wid: 0.42, rad: 0.45, belly: 0.5, tipw: 0.85, gloss: 0.1, accent: 0.22, twigs: 3,
+      cells: [{}, { n: 310, core: 0.5 }, { n: 260, holes: 0.35 }, { n: 60, rad: 0.3, cy: 0.6, twigs: 4, core: 1.0 }] }) },
+  leaf_laurel: { size: 1024, seed: 808, rough: 0.85, cut: 0.4, sway: 0.012, through: [0.85, 1.05, 0.35, 0.4], vary: [0.12, 0.04, 0.32], env: 0.9,
     draw: (c, R, k) => (k === 3
-      ? drawShoot(PAL.laurel, { len: 0.3, wid: 0.17, stems: 1, segs: 7, height: 0.66, per: 2, spread: 0.75, gloss: 0.5, rib: 'rgba(130,160,90,0.7)', stemW: 0.014 })
-      : drawCluster(PAL.laurel, { n: 52, len: 0.27, wid: 0.17, rad: 0.33, belly: 0.4, tipw: 0.5, gloss: 0.5, rib: 'rgba(120,150,84,0.7)', hang: 0.35, core: 0.8, twigs: 3,
-        cells: [{}, { n: 46 }, { n: 36, holes: 0.5 }] }))(c, R, k) },
-  leaf_rose: { size: 1024, seed: 909, draw: drawRose, rough: 0.6, cut: 0.4, sway: 0.015, through: [0.9, 1.05, 0.4, 0.5], vary: [0.1, 0.03, 0.4], env: 0.9 },
-  leaf_conifer: { size: 1024, seed: 1010, draw: drawConifer, rough: 0.75, cut: 0.33, sway: 0.02, through: [0.9, 1.0, 0.45, 0.3], vary: [0.18, 0.06, 0.3], env: 0.75 },
+      ? drawShoot(PAL.laurel, { len: 0.3, wid: 0.2, stems: 1, segs: 7, height: 0.66, per: 2, spread: 0.75, gloss: 0.3, rib: 'rgba(130,160,90,0.7)', stemW: 0.014 })
+      : drawCluster(PAL.laurel, { n: 60, len: 0.27, wid: 0.2, rad: 0.34, belly: 0.4, tipw: 0.5, gloss: 0.3, rib: 'rgba(120,150,84,0.7)', hang: 0.35, core: 0.8, twigs: 3,
+        cells: [{}, { n: 54 }, { n: 42, holes: 0.5 }] }))(c, R, k) },
+  leaf_rose: { size: 1024, seed: 909, draw: drawRose, rough: 0.9, cut: 0.4, sway: 0.015, through: [0.9, 1.05, 0.4, 0.5], vary: [0.08, 0.03, 0.4], env: 0.9 },
+  leaf_conifer: { size: 1024, seed: 1010, draw: drawConifer, rough: 1.0, cut: 0.33, sway: 0.02, through: [0.9, 1.0, 0.45, 0.25], vary: [0.14, 0.05, 0.3], env: 0.85 },
 };
 
 // colour of empty texels = the colour of the nearest leaf (two sweeps), so mip-maps and soft edges do not darken
@@ -561,8 +599,14 @@ function foliageMaterial(ctx, spec) {
     uPlTex: { value: new THREE.Vector2(map.image.width, map.image.height) },
     uPlThrough: { value: new THREE.Vector3(spec.through[0], spec.through[1], spec.through[2]).multiplyScalar(spec.through[3]) },
     uPlVar: { value: new THREE.Vector3(...spec.vary) },
+    uPlMode: { value: new THREE.Vector2(a2c ? 0 : 2, 0) },      // x: 0 alpha to coverage, 1 stochastic, 2 plain cut-out; y: frame
   };
   m.userData.plant = U;
+  // the refinement passes of picture.js render into a target without multisampling: there the cut-out is stochastic
+  m.onBeforeRender = (renderer) => {
+    const rt = renderer.getRenderTarget();
+    U.uPlMode.value.set(rt ? (rt.samples > 0 ? 0 : 1) : (a2c ? 0 : 2), renderer.info.render.frame % 4096);
+  };
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader
@@ -593,6 +637,7 @@ function foliageMaterial(ctx, spec) {
       uniform vec3 uPlThrough;
       uniform vec3 uPlVar;
       uniform vec2 uPlTex;
+      uniform vec2 uPlMode;
       varying vec3 vPl;
       float plCov = 1.0;
       vec3 plSun = vec3( 0.0 );
@@ -603,17 +648,27 @@ function foliageMaterial(ctx, spec) {
         diffuseColor.rgb *= ( 1.0 + uPlVar.x * ( plH1 * 2.0 - 1.0 ) ) * mix( vec3( 1.0 + uPlVar.y, 1.0, 1.0 - uPlVar.y ), vec3( 1.0 - uPlVar.y, 1.0, 1.0 + 0.5 * uPlVar.y ), plH2 );
         diffuseColor.rgb *= mix( uPlVar.z, 1.0, clamp( vPl.y / 7.0, 0.0, 1.0 ) );
       }`)
-      .replace('#include <alphatest_fragment>', a2c ? `
+      .replace('#include <alphatest_fragment>', `
+      #ifdef USE_ALPHATEST
       {
         float plA = diffuseColor.a;
         vec2 plT = vMapUv * uPlTex;
         float plLod = 0.5 * log2( max( dot( dFdx( plT ), dFdx( plT ) ), dot( dFdy( plT ), dFdy( plT ) ) ) + 1e-8 );
         float plSharp = clamp( ( plA - alphaTest ) / max( fwidth( plA ), 1e-4 ) + 0.5, 0.0, 1.0 );
-        plCov = mix( plSharp, clamp( plA * 1.35, 0.0, 1.0 ), clamp( plLod - 0.3, 0.0, 1.0 ) );
-        float plN = fract( 52.9829189 * fract( dot( gl_FragCoord.xy, vec2( 0.06711056, 0.00583715 ) ) ) );
-        if ( plCov < 0.999 ) plCov = clamp( plCov + ( plN - 0.5 ) * 0.22, 0.0, 1.0 );
-        if ( plCov < 0.03 ) discard;
-      }` : '#include <alphatest_fragment>')
+        plCov = mix( plSharp, clamp( plA * 1.12, 0.0, 1.0 ), clamp( plLod - 0.3, 0.0, 1.0 ) );
+        float plN = fract( 52.9829189 * fract( dot( gl_FragCoord.xy + 5.588238 * uPlMode.y, vec2( 0.06711056, 0.00583715 ) ) ) );
+        if ( uPlMode.x > 1.5 ) {                 // no multisampling at all: a plain cut-out
+          if ( plA < alphaTest ) discard;
+          plCov = 1.0;
+        } else if ( uPlMode.x > 0.5 ) {          // a refinement pass into a plain target: stochastic, the passes average to the coverage
+          if ( plCov <= plN * 0.98 + 0.01 ) discard;
+          plCov = 1.0;
+        } else {                                 // alpha to coverage on the multisampled canvas
+          if ( plCov < 0.999 ) plCov = clamp( plCov + ( plN - 0.5 ) * 0.22, 0.0, 1.0 );
+          if ( plCov < 0.03 ) discard;
+        }
+      }
+      #endif`)
       .replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace('normal *= faceDirection;', ''))
       .replace('#include <lights_fragment_begin>', lightsChunk)
       .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n\treflectedLight.directDiffuse += plThrough * BRDF_Lambert( material.diffuseColor * uPlThrough );')

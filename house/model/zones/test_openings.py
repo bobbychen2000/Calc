@@ -18,21 +18,23 @@ from model.kit import Geo, Part
 W, D, H = 17.0, 8.0, 6.3            # the box: x 0..W, y 0..D, z 0..H; upper floor at Z2
 Z2 = 3.25
 
+# The viewer's orbit camera cannot sit below its target (it would be lifted to the target's height), so every view
+# looks level or down.
 VIEWS = {
-    'front': dict(label='Front 12 m', pos=(8.5, -12.0, 2.0), target=(8.5, 0.0, 3.0), fov=46),
+    'front': dict(label='Front 12 m', pos=(8.5, -12.0, 3.0), target=(8.5, 0.0, 3.0), fov=46),
     'oblique': dict(label='Oblique 3 m', pos=(5.9, -3.0, 1.6), target=(11.4, 0.0, 1.55), fov=55),
     'entry': dict(label='Entry 4 m', pos=(7.83, -4.0, 1.6), target=(7.83, 0.0, 1.3), fov=38),
     'french': dict(label='French 4 m', pos=(10.78, -4.0, 1.6), target=(10.78, 0.0, 1.2), fov=38),
     'garage': dict(label='Garage 4.5 m', pos=(3.36, -4.5, 1.6), target=(3.36, 0.0, 1.3), fov=50),
-    'bay': dict(label='Bay 6 m', pos=(14.9, -6.0, 1.6), target=(14.43, 0.0, 1.75), fov=30),
-    'upper': dict(label='Upper close', pos=(5.2, -4.6, 1.6), target=(3.0, 0.0, 4.85), fov=24),
-    'rear': dict(label='Rear 12 m', pos=(8.5, 20.0, 2.0), target=(8.5, 8.0, 3.0), fov=46),
+    'bay': dict(label='Bay 6 m', pos=(14.9, -6.0, 1.75), target=(14.43, 0.0, 1.75), fov=30),
+    'upper': dict(label='Upper 5 m', pos=(5.4, -4.6, 4.95), target=(3.0, 0.0, 4.85), fov=24),
+    'rear': dict(label='Rear 12 m', pos=(8.5, 20.0, 3.0), target=(8.5, 8.0, 3.0), fov=46),
     'slider': dict(label='Slider 4 m', pos=(14.15, 12.0, 1.6), target=(14.15, 8.0, 1.3), fov=48),
     'dutch': dict(label='Dutch 4 m', pos=(5.75, 12.0, 1.6), target=(5.75, 8.0, 1.3), fov=38),
-    'corner': dict(label='Corner 8 m', pos=(-5.2, 13.6, 1.8), target=(1.1, 6.9, 4.9), fov=36),
-    'east': dict(label='East 10 m', pos=(27.0, 4.6, 1.8), target=(17.0, 4.0, 2.6), fov=44),
-    'west': dict(label='West 10 m', pos=(-10.0, 3.4, 1.8), target=(0.0, 4.0, 2.6), fov=44),
-    'far': dict(label='Front 30 m', pos=(-6.0, -30.0, 1.7), target=(8.5, 0.0, 3.0), fov=30),
+    'corner': dict(label='Corner 8 m', pos=(-5.0, 13.4, 4.9), target=(0.9, 7.1, 4.7), fov=38),
+    'east': dict(label='East 10 m', pos=(27.0, 4.6, 2.8), target=(17.0, 4.0, 2.8), fov=44),
+    'west': dict(label='West 10 m', pos=(-10.0, 3.4, 2.8), target=(0.0, 4.0, 2.8), fov=44),
+    'far': dict(label='Front 30 m', pos=(-6.0, -30.0, 3.0), target=(8.5, 0.0, 3.0), fov=30),
 }
 
 

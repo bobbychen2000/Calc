@@ -838,9 +838,9 @@ def fire_bowl(geo, at, diameter=1.18, height=0.33):
     R, H, e = diameter / 2, height, 0.035
     zb = 0.05
     _revolve(g, 'firebowl_concrete', [(0.38, zb), (R - e, zb), (R - 0.01, zb + 0.012), (R, zb + e), (R, H - e),
-                                      (R - 0.01, H - 0.012), (R - e, H), (R - 0.115, H), (R - 0.115, H - 0.035)], n=28)
-    _revolve(g, 'firebowl_media', [(R - 0.115, H - 0.035), (0.0, H - 0.03)], n=28)
-    _revolve(g, BLACK, [(0.40, 0.0), (0.40, zb)], n=20)
+                                      (R - 0.01, H - 0.012), (R - e, H), (R - 0.115, H), (R - 0.115, H - 0.035)], n=24)
+    _revolve(g, 'firebowl_media', [(R - 0.115, H - 0.035), (0.0, H - 0.03)], n=24)
+    _revolve(g, BLACK, [(0.40, 0.0), (0.40, zb)], n=16)
     return _place(geo, g, at, 0.0)
 
 

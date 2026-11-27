@@ -28,6 +28,7 @@ from model.kit import Geo, Part
 # names this family adds to the brief's list
 materials.register('pool_plaster', color=(0.72, 0.80, 0.82), roughness=0.7)
 materials.register('paving_pale', color=(0.60, 0.58, 0.52), roughness=0.8)
+materials.register('fence_frame', color=(0.20, 0.085, 0.036), roughness=0.85)
 
 LAP = 0.122            # siding exposure (m): 20 courses per 2.44 m door
 BATTEN = 0.406         # board-and-batten spacing
@@ -224,37 +225,60 @@ def build():
     wall(g, 'fence_wood', (fx1, fy + 0.02), (fx0, fy + 0.02), 0.05, fh)
     for i in range(6):                                                        # posts every 2.4 m, cap rail
         x = fx0 + i * 2.4
-        g.box('fence_wood', (x - 0.07, fy - 0.06, 0.0), (x + 0.07, fy + 0.08, fh + 0.32), faces='xXyYZ')
-    g.box('fence_wood', (fx0, fy - 0.045, fh), (fx1, fy + 0.065, fh + 0.04), faces='xXyYzZ')
-    g.box('fence_wood', (fx0, fy - 0.045, fh + 0.28), (fx1, fy + 0.065, fh + 0.32), faces='xXyYzZ')
+        g.box('fence_frame', (x - 0.07, fy - 0.06, 0.0), (x + 0.07, fy + 0.08, fh + 0.32), faces='xXyYZ')
+    g.box('fence_frame', (fx0, fy - 0.045, fh), (fx1, fy + 0.065, fh + 0.04), faces='xXyYzZ')
+    g.box('fence_frame', (fx0, fy - 0.045, fh + 0.28), (fx1, fy + 0.065, fh + 0.32), faces='xXyYzZ')
+    for i in range(int((fx1 - fx0) / 0.06)):                                   # the lattice of square balusters
+        x = fx0 + 0.03 + i * 0.06
+        g.box('fence_frame', (x - 0.011, fy - 0.001, fh + 0.04), (x + 0.011, fy + 0.021, fh + 0.28), faces='xXyY')
     for z in (0.35, 1.05):
-        g.box('fence_wood', (fx0, fy - 0.04, z), (fx1, fy, z + 0.09), faces='xXyzZ')
+        g.box('fence_frame', (fx0, fy - 0.04, z), (fx1, fy, z + 0.09), faces='xXyzZ')
     parts.append(Part('fence', g, group='site'))
     return parts
 
 
+def _view(label, pos, at, fov=45):
+    """A camera at pos looking at the point `at`; the orbit target is pushed out to >= 3 m (the viewer keeps the
+    camera at least 2 m from its target), so close-ups really are close."""
+    p, a = np.asarray(pos, float), np.asarray(at, float)
+    d = a - p
+    L = float(np.linalg.norm(d))
+    if L < 3.0:
+        a = p + d / L * 3.0
+    return dict(label=label, pos=tuple(float(v) for v in p), target=tuple(float(v) for v in a), fov=fov)
+
+
 VIEWS = {
-    'all': dict(label='Everything', pos=(-9.0, -20.0, 11.0), target=(17.0, 10.0, 0.5), fov=42),
-    'walls_6m': dict(label='Walls 6 m', pos=(4.2, 7.6, 1.65), target=(4.6, 14.5, 1.55), fov=48),
-    'siding_1p5m': dict(label='Siding 1.5 m', pos=(2.55, 12.5, 1.6), target=(2.75, 14.0, 1.45), fov=45),
-    'doors_3m': dict(label='Doors 3 m', pos=(3.2, 11.2, 1.6), target=(3.3, 14.5, 1.3), fov=50),
-    'bb_garage_6m': dict(label='Board & batten, garage 6 m', pos=(9.2, 8.0, 1.65), target=(9.4, 14.0, 1.5), fov=48),
-    'stone_1p5m': dict(label='Stone 1.5 m', pos=(-0.35, 11.75, 1.25), target=(0.45, 13.1, 0.3), fov=45),
-    'stone_6m': dict(label='Planter wall 6 m', pos=(15.6, 4.2, 1.6), target=(16.0, 10.0, 0.5), fov=40),
-    'paving_1p5m': dict(label='Paving 1.5 m', pos=(6.2, -1.0, 1.6), target=(6.2, 1.2, 0.0), fov=50),
-    'paving_6m': dict(label='Paving 6 m', pos=(9.5, -6.5, 2.2), target=(9.5, 4.0, 0.0), fov=50),
-    'steps_3m': dict(label='Bluestone steps 3 m', pos=(18.2, -2.4, 1.5), target=(21.2, 1.0, 0.3), fov=45),
-    'pool_3m': dict(label='Pool corner 3 m', pos=(-1.3, 5.2, 1.7), target=(2.6, 9.4, -0.3), fov=50),
-    'ground_3m': dict(label='Mulch, soil, pale paving 3 m', pos=(12.6, 4.6, 1.7), target=(13.4, 9.0, 0.0), fov=55),
-    'lawn_1p5m': dict(label='Lawn 1.5 m', pos=(-4.0, -4.0, 1.5), target=(-3.2, -2.0, 0.0), fov=50),
-    'lawn_30m': dict(label='Lawn 30 m', pos=(-14.0, -18.0, 1.7), target=(8.0, -2.0, 0.0), fov=40),
-    'roofs_6m': dict(label='Roofs 6 m', pos=(30.6, -4.6, 3.6), target=(30.8, 3.6, 2.2), fov=50),
-    'roofs_top': dict(label='Roofs from above', pos=(33.0, 4.4, 30.0), target=(33.0, 5.2, 0.0), fov=30),
-    'roofs_30m': dict(label='Roofs 30 m', pos=(22.0, -26.0, 9.0), target=(33.0, 5.0, 1.5), fov=30),
-    'roof_shingle_2m': dict(label='Shingles 2 m', pos=(27.6, 0.4, 2.6), target=(28.0, 3.2, 2.1), fov=45),
-    'roof_seam_2m': dict(label='Standing seam 2 m', pos=(32.6, 0.4, 2.6), target=(33.0, 3.2, 2.1), fov=45),
-    'pergola_6m': dict(label='Pergola, flat roof 6 m', pos=(34.0, 0.5, 4.4), target=(38.2, 7.0, 1.8), fov=50),
-    'fence_1p5m': dict(label='Fence 1.5 m', pos=(16.6, 22.5, 1.55), target=(16.9, 24.0, 1.2), fov=45),
-    'fence_6m': dict(label='Fence 6 m', pos=(17.0, 18.0, 1.65), target=(18.0, 24.0, 1.0), fov=48),
-    'far_30m': dict(label='Walls 30 m', pos=(2.0, -16.0, 1.7), target=(8.0, 14.0, 1.6), fov=30),
+    # the long shot of everything, then each family at 30 m / 6 m / 1.5 m
+    'all': _view('Everything', (-9.0, -20.0, 11.0), (17.0, 10.0, 0.5), 42),
+    'far_30m': _view('Walls 30 m', (2.0, -16.0, 1.7), (8.0, 14.0, 1.6), 30),
+    'walls_6m': _view('Walls 6 m', (4.2, 7.6, 1.65), (4.6, 14.5, 1.55), 48),
+    'bb_garage_6m': _view('Board & batten, garage 6 m', (9.2, 8.0, 1.65), (9.4, 14.0, 1.5), 48),
+    'siding_1p5m': _view('Siding, door 1.5 m', (2.45, 12.5, 1.55), (2.5, 14.0, 1.5), 45),
+    'siding_corner_1p5m': _view('Siding corners 1.5 m', (4.0, 13.2, 1.6), (3.0, 14.6, 1.5), 50),
+    'doors_1p5m': _view('Timber door 1.5 m', (4.9, 13.4, 1.5), (4.4, 15.0, 1.35), 45),
+    'garage_1p5m': _view('Garage door, awning 1.5 m', (10.2, 12.4, 1.55), (10.6, 14.0, 1.6), 50),
+    'soffit_3m': _view('Soffit, gutter 3 m', (3.0, 10.6, 1.5), (3.0, 13.4, 3.0), 45),
+    'stone_1p5m': _view('Stone 1.5 m', (0.35, 11.7, 0.75), (0.5, 13.1, 0.27), 40),
+    'stone_6m': _view('Planter wall 6 m', (15.6, 4.2, 1.6), (16.0, 10.0, 0.5), 40),
+    'paving_1p5m': _view('Bluestone | pavers 1.5 m', (6.2, -0.6, 1.5), (6.2, 0.9, 0.0), 50),
+    'paving_6m': _view('Paving 6 m', (9.5, -6.5, 2.2), (9.5, 4.0, 0.0), 50),
+    'steps_3m': _view('Bluestone steps 3 m', (18.2, -2.4, 1.5), (21.2, 1.0, 0.3), 45),
+    'concrete_1p5m': _view('Asphalt | concrete 1.5 m', (15.8, 1.4, 1.5), (15.8, 3.0, 0.0), 50),
+    'pool_3m': _view('Pool corner 3 m', (-1.3, 5.2, 1.7), (2.6, 9.4, -0.3), 50),
+    'pool_1p5m': _view('Coping, tile 1.5 m', (1.6, 6.3, 1.3), (2.3, 7.55, -0.05), 45),
+    'ground_3m': _view('Mulch, soil, pale paving 3 m', (12.6, 4.6, 1.7), (13.4, 9.0, 0.0), 55),
+    'mulch_1p5m': _view('Pale paving | mulch | soil 1.5 m', (14.1, 6.4, 1.4), (14.1, 7.9, 0.0), 60),
+    'lawn_1p5m': _view('Lawn 1.5 m', (-4.0, -4.0, 1.5), (-3.6, -2.6, 0.0), 50),
+    'lawn_6m': _view('Lawn 6 m', (-12.0, -6.0, 1.65), (-7.0, -2.0, 0.0), 45),
+    'lawn_30m': _view('Lawn 30 m', (-14.0, -18.0, 1.7), (8.0, -2.0, 0.0), 40),
+    'roofs_6m': _view('Roofs 6 m', (30.6, -4.6, 3.6), (30.8, 3.6, 2.2), 50),
+    'roofs_top': _view('Roofs from above', (33.0, 4.4, 30.0), (33.0, 5.2, 0.0), 30),
+    'roofs_30m': _view('Roofs 30 m', (22.0, -26.0, 9.0), (33.0, 5.0, 1.5), 30),
+    'roofs_back_6m': _view('Roofs, shaded side 6 m', (30.6, 15.0, 3.6), (30.8, 7.0, 2.2), 50),
+    'roof_shingle_1p5m': _view('Shingles 1.5 m', (27.6, 1.2, 2.5), (28.0, 2.6, 1.9), 45),
+    'roof_seam_1p5m': _view('Standing seam 1.5 m', (32.6, 1.2, 2.5), (33.0, 2.6, 1.9), 45),
+    'pergola_6m': _view('Pergola, flat roof, chimney 6 m', (34.0, 0.5, 4.4), (38.2, 7.0, 1.8), 50),
+    'fence_6m': _view('Fence 6 m', (17.0, 18.0, 1.65), (18.0, 24.0, 1.0), 48),
+    'fence_1p5m': _view('Fence 1.5 m', (16.6, 22.5, 1.55), (16.9, 24.0, 1.2), 45),
 }

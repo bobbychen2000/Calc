@@ -167,32 +167,69 @@ def footprint_walls(geo: Geo, mat, corners, z0, planes=(), z1=None, skip=()):
     return frames
 
 
-def hip_roof(name, x0, y0, x1, y1, z_eave, pitch_deg, mat='roof_shingle', gable=(), **kw):
-    """Planes of a hip roof over the eave rectangle; gable = subset of ('x0', 'x1', 'y0', 'y1'): ends that are gables
-    (the ridge then runs to that end).  The ridge runs along the longer side unless both ends of the other are gables."""
+def _clip_below(pts, z_cap):
+    """Clip a 3-D polygon to z <= z_cap (Sutherland-Hodgman against the horizontal plane)."""
+    out = []
+    n = len(pts)
+    for i in range(n):
+        a, b = np.asarray(pts[i], float), np.asarray(pts[(i + 1) % n], float)
+        ia, ib = a[2] <= z_cap + 1e-9, b[2] <= z_cap + 1e-9
+        if ia:
+            out.append(a)
+        if ia != ib:
+            t = (z_cap - a[2]) / (b[2] - a[2])
+            out.append(a + t * (b - a))
+    return out
+
+
+def hip_roof(name, x0, y0, x1, y1, z_eave, slope, mat='roof_shingle', gable=(), z_cap=None, cap_mat='roof_flat',
+             ridge=None, **kw):
+    """Planes of a hip roof over the eave rectangle; slope = rise / run.  gable = subset of ('x0', 'x1', 'y0', 'y1'):
+    ends that are gables (the ridge runs to that end).  The ridge runs along the longer side unless ridge='x' / 'y'.
+    z_cap: cut the roof flat at that height (a hipped skirt round a flat roof) - the flat part gets cap_mat."""
     w, d = x1 - x0, y1 - y0
-    t = np.tan(np.radians(pitch_deg))
     planes = []
-    if w >= d:                                          # ridge along x
-        h = d / 2 * t
+    along_x = (w >= d) if ridge is None else (ridge == 'x')
+    if along_x:                                         # ridge along x
+        h = d / 2 * slope
         ym, zr = (y0 + y1) / 2, z_eave + h
         ra = x0 if 'x0' in gable else x0 + d / 2
         rb = x1 if 'x1' in gable else x1 - d / 2
-        planes.append(RoofPlane(name + '_y0', [(x0, y0, z_eave), (x1, y0, z_eave), (rb, ym, zr), (ra, ym, zr)], mat, **kw))
-        planes.append(RoofPlane(name + '_y1', [(x1, y1, z_eave), (x0, y1, z_eave), (ra, ym, zr), (rb, ym, zr)], mat, **kw))
+        if ra > rb:                                     # a square-ish block hipped at both ends: a pyramid
+            ra = rb = (x0 + x1) / 2
+            zr = z_eave + w / 2 * slope
+        polys = [('_y0', [(x0, y0, z_eave), (x1, y0, z_eave), (rb, ym, zr), (ra, ym, zr)]),
+                 ('_y1', [(x1, y1, z_eave), (x0, y1, z_eave), (ra, ym, zr), (rb, ym, zr)])]
         if 'x0' not in gable:
-            planes.append(RoofPlane(name + '_x0', [(x0, y1, z_eave), (x0, y0, z_eave), (ra, ym, zr)], mat, **kw))
+            polys.append(('_x0', [(x0, y1, z_eave), (x0, y0, z_eave), (ra, ym, zr)]))
         if 'x1' not in gable:
-            planes.append(RoofPlane(name + '_x1', [(x1, y0, z_eave), (x1, y1, z_eave), (rb, ym, zr)], mat, **kw))
+            polys.append(('_x1', [(x1, y0, z_eave), (x1, y1, z_eave), (rb, ym, zr)]))
     else:                                               # ridge along y
-        h = w / 2 * t
+        h = w / 2 * slope
         xm, zr = (x0 + x1) / 2, z_eave + h
         ra = y0 if 'y0' in gable else y0 + w / 2
         rb = y1 if 'y1' in gable else y1 - w / 2
-        planes.append(RoofPlane(name + '_x0', [(x0, y1, z_eave), (x0, y0, z_eave), (xm, ra, zr), (xm, rb, zr)], mat, **kw))
-        planes.append(RoofPlane(name + '_x1', [(x1, y0, z_eave), (x1, y1, z_eave), (xm, rb, zr), (xm, ra, zr)], mat, **kw))
+        if ra > rb:
+            ra = rb = (y0 + y1) / 2
+            zr = z_eave + d / 2 * slope
+        polys = [('_x0', [(x0, y1, z_eave), (x0, y0, z_eave), (xm, ra, zr), (xm, rb, zr)]),
+                 ('_x1', [(x1, y0, z_eave), (x1, y1, z_eave), (xm, rb, zr), (xm, ra, zr)])]
         if 'y0' not in gable:
-            planes.append(RoofPlane(name + '_y0', [(x0, y0, z_eave), (x1, y0, z_eave), (xm, ra, zr)], mat, **kw))
+            polys.append(('_y0', [(x0, y0, z_eave), (x1, y0, z_eave), (xm, ra, zr)]))
         if 'y1' not in gable:
-            planes.append(RoofPlane(name + '_y1', [(x1, y1, z_eave), (x0, y1, z_eave), (xm, rb, zr)], mat, **kw))
+            polys.append(('_y1', [(x1, y1, z_eave), (x0, y1, z_eave), (xm, rb, zr)]))
+    for suffix, pts in polys:
+        pts = [q for i, q in enumerate(pts) if i == 0 or np.linalg.norm(np.subtract(q, pts[i - 1])) > 1e-6]
+        if z_cap is not None and z_cap < zr:
+            pts = _clip_below(pts, z_cap)
+        if len(pts) >= 3:
+            planes.append(RoofPlane(name + suffix, pts, mat, **kw))
+    if z_cap is not None and z_cap < zr:
+        r = (z_cap - z_eave) / slope                   # the cap is the eave rectangle inset by this run (gables: none)
+        cx0 = x0 if 'x0' in gable else x0 + r
+        cx1 = x1 if 'x1' in gable else x1 - r
+        cy0 = y0 if 'y0' in gable else y0 + r
+        cy1 = y1 if 'y1' in gable else y1 - r
+        if cx1 - cx0 > 0.02 and cy1 - cy0 > 0.02:
+            planes.append(RoofPlane(name + '_cap', [(cx0, cy0, z_cap), (cx1, cy0, z_cap), (cx1, cy1, z_cap), (cx0, cy1, z_cap)], cap_mat, **kw))
     return planes

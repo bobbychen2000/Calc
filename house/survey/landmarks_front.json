@@ -1,0 +1,22 @@
+{
+ "chimB_rim_SW": {"desc": "",
+  "obs": {"photos/p01_57ca6a.jpg": [1857.5, 563.2], "photos/p02_1ea535.jpg": [1039.0, 122.6]}},
+ "chimB_rim_SE": {"desc": "",
+  "obs": {"photos/p01_57ca6a.jpg": [1940.7, 567.5], "photos/p02_1ea535.jpg": [1117.8, 176.0]}},
+ "chimB_rim_NW": {"desc": "",
+  "obs": {"photos/p01_57ca6a.jpg": [1831.5, 585.0], "photos/p02_1ea535.jpg": [970.3, 157.8]}},
+ "gable_right_apex": {"desc": "",
+  "obs": {"photos/p01_57ca6a.jpg": [1711.4, 677.0], "photos/p02_1ea535.jpg": [939.0, 161.0]}},
+ "gable_gar_apex": {"desc": "",
+  "obs": {"photos/p01_57ca6a.jpg": [566.5, 710.5]}},
+ "vent1_top": {"desc": "",
+  "obs": {"photos/p01_57ca6a.jpg": [888.7, 756.0]}},
+ "vent2_top": {"desc": "",
+  "obs": {"photos/p01_57ca6a.jpg": [1013.3, 759.8]}},
+ "vent3_top": {"desc": "",
+  "obs": {"photos/p01_57ca6a.jpg": [1135.0, 785.8]}},
+ "front_winR_TR": {"desc": "upper right front gable (beside the big chimney): its window, top-right outer corner of the black frame (frame plane, where it meets the right reveal)",
+  "obs": {"frames/seg002_033.jpg": [1963.5, 444.5], "frames/seg002_053.jpg": [1978.5, 345.5], "photos/p01_57ca6a.jpg": [1771.3, 839.0], "photos/p02_1ea535.jpg": [979.0, 469.0]}},
+ "front_winR_BR": {"desc": "upper right front gable window: bottom-right outer corner of the black frame (frame plane, at the sill)",
+  "obs": {"frames/seg002_033.jpg": [1950.0, 578.0], "frames/seg002_053.jpg": [1968.3, 488.5], "photos/p01_57ca6a.jpg": [1771.0, 966.5]}}
+}

@@ -57,7 +57,6 @@ MATS = {
     'fx_speaker': dict(color=(0.008, 0.008, 0.009), roughness=0.85),
     'fx_fence_post': dict(color=(0.076, 0.041, 0.032), roughness=0.9),
     'fx_fence_pickets': dict(color=(0.30, 0.16, 0.085), roughness=0.85, double=True),
-    'fx_porch_ceiling': dict(color=(0.80, 0.80, 0.78), roughness=0.8),
     'fx_iron': dict(color=(0.007, 0.007, 0.007), roughness=0.6, metallic=0.5),
 }
 for _k, _v in MATS.items():
@@ -116,8 +115,6 @@ def _revolve(geo, mat, a, axis, prof, n=10, caps=(False, False), cap_mat=None):
         if ln < 1e-9:
             continue
         nrm = (rad * dz - ax * dr) / ln
-        if dz < 0:
-            nrm = -nrm if False else nrm          # a profile walking back down the axis faces inward: keep
         A = a + z0 * ax + r0 * rad
         B = a + z1 * ax + r1 * rad
         rm = 0.5 * (r0 + r1)
@@ -159,17 +156,27 @@ class Loc:
     def vec(self, a, b, c):
         return a * self.ex + b * self.ey + c * self.ez
 
-    def poly(self, geo, mat, pts, n, **kw):
-        if 'uv_u' in kw and kw['uv_u'] is not None:
+    def poly(self, geo, mat, pts, n, grain=None, **kw):
+        """Polygon from local points, facing local direction n.  grain: local direction the texture's v axis
+        (the wood grain / board length) should follow on this face; uv_u: local direction of texture u."""
+        nw = self.vec(*n)
+        if grain is not None:
+            g = self.vec(*grain)
+            u = np.cross(g, _unit(nw))
+            if np.linalg.norm(u) > 0.3:
+                kw['uv_u'] = u
+        elif kw.get('uv_u') is not None:
             kw['uv_u'] = self.vec(*kw['uv_u'])
-        _poly(geo, mat, [self.pt(*p) for p in pts], self.vec(*n), **kw)
+        if kw.get('uv_u') is None:
+            kw.pop('uv_u', None)
+        _poly(geo, mat, [self.pt(*p) for p in pts], nw, **kw)
 
     def poly_uv(self, geo, mat, pts, uvs, n):
         _poly_uv(geo, mat, [self.pt(*p) for p in pts], uvs, self.vec(*n))
 
-    def box(self, geo, mat, lo, hi, faces='xXyYzZ', mats=None, uv_u=None):
+    def box(self, geo, mat, lo, hi, faces='xXyYzZ', mats=None, grain=None, uv_o=None):
         """Box lo..hi in local coordinates; faces: which of -a +a -b +b -c +c ('xXyYzZ') to emit;
-        mats: {face letter: material}; uv_u: local direction of texture u (default: the kit's)."""
+        mats: {face letter: material}; grain: local direction of the texture's v axis (see poly)."""
         (a0, b0, c0), (a1, b1, c1) = np.minimum(lo, hi), np.maximum(lo, hi)
         mats = mats or {}
         q = {
@@ -182,7 +189,7 @@ class Loc:
         }
         for f in faces:
             pts, n = q[f]
-            self.poly(geo, mats.get(f, mat), pts, n, uv_u=uv_u)
+            self.poly(geo, mats.get(f, mat), pts, n, grain=grain, **({} if uv_o is None else {'uv_o': uv_o}))
 
 
 def wall_frame(origin, right, out):
@@ -309,7 +316,7 @@ def ridge_cap(geo, a, b, kind='seam', n1=None, n2=None, pitch=26.6, half=None, l
 
     n1, n2: the upward normals of the two faces (use poly_normal); without them the cap folds symmetrically about
     the vertical plane through the line, each wing dropping `pitch` degrees.
-    kind 'seam':    a bold folded metal cap, 2 x half (0.10) wide, standing `lift` (0.042) above the faces so it
+    kind 'seam':    a bold folded metal cap, 2 x half (0.125) wide, standing `lift` (0.042) above the faces so it
                     sits over the seam ribs, hemmed down to the roof on both edges.  16 triangles.
     kind 'shingle': a course of cap shingles, 2 x half (0.15) wide, `expo` m exposure, each tab's butt (thick
                     end) toward a - so give a = the LOW end of a hip.  8 triangles per tab."""
@@ -334,7 +341,7 @@ def ridge_cap(geo, a, b, kind='seam', n1=None, n2=None, pitch=26.6, half=None, l
     m = _unit(n1 + n2)
     ca = float(n1 @ m)
     if kind == 'seam':
-        half = 0.10 if half is None else half
+        half = 0.125 if half is None else half
         lift = 0.042 if lift is None else lift
         mat = mat or 'roof_seam'
         off = [half * w1, half * w1 + lift * n1, (lift / ca) * m, half * w2 + lift * n2, half * w2]
@@ -376,19 +383,22 @@ def fascia(geo, a, b, out, h=0.20, t=0.025, step=0.075, step_in=0.02, mat='trim_
     sweep(geo, mat, prof, [a, b], UP, s_sign, closed=False, caps=(ends, ends))
 
 
-# K-style gutter (5 in): back, bottom, the ogee front, the rolled lip and the leaf-guard mesh on top (p02)
+# K-style gutter (5 in): back, bottom, the ogee front, the rolled lip, the leaf-guard mesh on top (p02) and the
+# drip edge that covers the fascia's top strip behind it
 GUTTER = [(0.0, -0.092), (0.072, -0.092), (0.079, -0.070), (0.108, -0.040), (0.127, -0.034), (0.127, -0.005),
-          (0.119, 0.0), (0.110, -0.004), (0.110, -0.012), (0.0, -0.012)]
+          (0.119, 0.0), (0.110, -0.004), (0.110, -0.012), (0.004, -0.012), (0.004, 0.016)]
 
 
-def gutter(geo, a, b, out, drop=0.012, mat='gutter_dark', ends=(True, True)):
-    """K-style gutter on a fascia.  a, b: the eave line (top outer edge of the fascia) - or a longer polyline
-    [p0, p1, p2, ...] round outside corners, mitred; out: horizontal outward direction of the FIRST segment.
-    The gutter is 0.127 wide x 0.092 deep and hangs `drop` below the line.  18 triangles per straight run
-    (+ 8 per closed end), so <= 40 per metre from 0.9 m up."""
-    path = [np.asarray(p, float) for p in ([a, b] if np.ndim(a) == 1 else list(a))]
-    if np.ndim(a) != 1:
-        out = b
+def gutter(geo, a, b, out=None, drop=0.012, mat='gutter_dark', ends=(True, True)):
+    """K-style gutter on a fascia: gutter(geo, a, b, out) along one eave, or gutter(geo, [p0, p1, p2, ...], out)
+    along a polyline round the corners, mitred.  a, b / the points: the eave line (top outer edge of the fascia);
+    out: horizontal outward direction of the FIRST segment.
+    The gutter is 0.127 wide x 0.092 deep and hangs `drop` below the line.  20 triangles per straight run
+    (+ 9 per closed end), so <= 40 per metre from 1 m up."""
+    if out is None:
+        path, out = [np.asarray(p, float) for p in a], b
+    else:
+        path = [np.asarray(a, float), np.asarray(b, float)]
     d = _unit(path[1] - path[0])
     s_sign = 1.0 if np.cross(d, UP) @ np.asarray(out, float) > 0 else -1.0
     path = [p - np.array([0, 0, drop]) for p in path]
@@ -452,7 +462,7 @@ def vent_stack(geo, p, roof_n=UP, h=0.36, r=0.048, n=10):
     if us[2] < 0:
         us = -us
     L = Loc(p + 0.004 * rn, e, us, rn)
-    L.poly(geo, 'fx_flashing', [(-0.20, -0.20, 0), (0.20, -0.20, 0), (0.20, 0.26, 0), (-0.20, 0.26, 0)], (0, 0, 1))
+    L.poly(geo, 'fx_flashing', [(-0.16, -0.15, 0), (0.16, -0.15, 0), (0.16, 0.20, 0), (-0.16, 0.20, 0)], (0, 0, 1))
     # cone boot: base ring in the roof plane, top ring horizontal
     ang = np.linspace(0.0, 2 * np.pi, n + 1)
     rad = np.outer(np.cos(ang), X) + np.outer(np.sin(ang), Y)
@@ -638,14 +648,13 @@ def downlight(geo, p, normal=-UP, r=0.055, trim='fx_can_trim', glow='fx_can_glow
     p = np.asarray(p, float)
     nn = _unit(normal)
     _annulus(geo, trim, p + nn * 0.004, nn, r * 0.74, r, n)
-    _revolve(geo, trim, p + nn * 0.004, nn, [(0.0, r), (-0.004, r)], n) if False else None
     ax, u, v = _perp(nn)
     ang = np.linspace(0.0, 2 * np.pi, n, endpoint=False)
     _poly(geo, glow, [p - nn * 0.012 + r * 0.74 * (math.cos(t) * u + math.sin(t) * v) for t in ang], nn)
     return p
 
 
-def porch_ceiling(geo, origin, right, back, w, d, lights=(), mat='fx_porch_ceiling'):
+def porch_ceiling(geo, origin, right, back, w, d, lights=(), mat='soffit_white'):
     """Porch ceiling panel (p02: painted boards running along the porch, small recessed down-lights).
     origin: one corner at ceiling height; right: along the porch front; back: toward the house; w x d its size.
     The panel faces down; its boards run along `right` (texture u).  lights: [(a, b), ...] positions from the
@@ -757,15 +766,14 @@ def lantern(geo, origin, right, out, h=0.66, w=0.17, d=0.115):
     for sg in (-1, 1):
         a = sg * (hw - t * 0.5)
         q = [(a, bp, c0), (a, d - t, c0), (a, d - t, c1), (a, bp, c1)]
-        L.poly_uv(geo, gl, q, [(0.5 + 0.5 * (p[1] - bp) / (d - t - bp) * 0.0 + 0.32 * sg, (p[2] + hh) / h) for p in q],
-                  (sg, 0, 0))
+        L.poly_uv(geo, gl, q, [(0.5 + 0.30 * sg, (p[2] + hh) / h) for p in q], (sg, 0, 0))
     # the candle: socket, sleeve, flame tip
     lb = bp + (d - bp) * 0.5
     z0 = c0
     _revolve(geo, 'fx_lamp_base', L.pt(0, lb, z0), L.ez, [(0.0, 0.016), (0.045, 0.016), (0.045, 0.0)], 8)
     zt = z0 + 0.045 + 0.62 * (c1 - c0 - 0.045)
     _revolve(geo, 'fx_lamp_glow', L.pt(0, lb, z0 + 0.045), L.ez,
-             [(0.0, 0.0085), (zt - z0 - 0.045, 0.0085), (zt - z0 - 0.045 + 0.02, 0.0)], 6)
+             [(0.0, 0.0085), (zt - z0 - 0.045, 0.0085), (zt - z0 - 0.045 + 0.007, 0.006), (zt - z0 - 0.045 + 0.011, 0.0)], 6)
     return L.pt(0, lb, 0.5 * (z0 + zt))
 
 
@@ -858,7 +866,7 @@ def pergola(geo, origin, right, back, w, d, h=3.07, post=0.15, beam_w=0.10, uppe
                 L.box(geo, mat, (a + da - 0.008, face_b + sgn * 0.016, c - 0.008), (a + da + 0.008, face_b + sgn * 0.008, c + 0.008),
                       faces='xXzZ' + ('y' if sgn < 0 else 'Y'))
 
-    for a in (post + 0.04, w - post - 0.04):
+    for a in (post * 0.62, w - post * 0.62):
         plate(a, z_lo1 + 0.005, z_up0 - 0.005, 0.085)
     for a in (post * 0.5, w - post * 0.5):
         plate(a, z_up0 + 0.03, h - 0.03, 0.10)
@@ -902,10 +910,11 @@ def pergola(geo, origin, right, back, w, d, h=3.07, post=0.15, beam_w=0.10, uppe
     # heaters under the side beams, tilted inward
     if heaters:
         hl = min(1.45, d * 0.42)
-        for sg, a in ((1, bw + 0.20), (-1, w - bw - 0.20)):
+        for sg, a, ab in ((1, bw + 0.19, bw / 2), (-1, w - bw - 0.19, w - bw / 2)):
             fc = L.vec(sg * math.sin(math.radians(40)), 0, -math.cos(math.radians(40)))
-            c = L.pt(a, d * 0.58, z_lo0 - 0.16)
-            heater(geo, c, L.ey, fc, length=hl, drop=0.10, hang=UP)
+            c = L.pt(a, d * 0.58, z_lo0 - 0.17)
+            v = L.pt(ab, d * 0.58, z_lo0) - (c - 0.035 * fc)       # from the heater's back to the beam soffit
+            heater(geo, c, L.ey, fc, length=hl, drop=float(np.linalg.norm(v)) - 0.07, hang=v)
             out['heaters'].append(c)
     for a, c in speakers:
         out['speakers'].append(speaker(geo, L.pt(a, d, c), -L.ex, -L.ey))
@@ -916,7 +925,7 @@ def pergola(geo, origin, right, back, w, d, h=3.07, post=0.15, beam_w=0.10, uppe
 # fence and gate
 # =====================================================================================================================
 BAY = 2.44            # post spacing (8 ft): p27, 200 px at 82 px / m
-BOARD = 0.184         # board module (1 x 8 boards, board-on-board)
+BOARD = 0.140         # board module = the fence_wood texture's (looks/surfaces.js): joints at u = k * 0.140
 PICKET = 0.094        # picket spacing of the top band (2 x 2 pickets)
 
 
@@ -926,36 +935,36 @@ def _fence_panel(geo, L, x0, x1, h, band, kick, rail_step, board=BOARD, wood='fe
     span = x1 - x0
     if span < 0.05:
         return
-    V = (0, 0, 1)                                       # wood grain runs up the boards: texture u along c
+    A = (1, 0, 0)                                       # grain of the horizontal members: along the run
     cap_t, tr, br = 0.038, 0.07, 0.09
     z_cap = h - cap_t
     z_tr = z_cap - tr
     z_br1 = z_tr - band
     z_br0 = z_br1 - br
     # band rails (texture u along the rail: grain along it)
-    L.box(geo, wood, (x0, -0.019, z_tr), (x1, 0.019, z_cap), faces='yYz')
-    L.box(geo, wood, (x0, -0.026, z_br0), (x1, 0.026, z_br1), faces='yYzZ')
+    L.box(geo, wood, (x0, -0.019, z_tr), (x1, 0.019, z_cap), faces='yYz', grain=A)
+    L.box(geo, wood, (x0, -0.026, z_br0), (x1, 0.026, z_br1), faces='yYzZ', grain=A)
     # pickets: three cut-out layers through the band's depth (front face, middle, back face)
     npk = max(1, int(round(span / PICKET)))
     for b in (-0.019, 0.0, 0.019):
         L.poly_uv(geo, 'fx_fence_pickets', [(x0, b, z_br1), (x1, b, z_br1), (x1, b, z_tr), (x0, b, z_tr)],
                   [(0, 0), (npk, 0), (npk, 1), (0, 1)], (0, 1, 0))
-    # boards: a continuous inner layer and proud outer boards on the rail side; the far side is flat
+    # boards: a continuous inner layer and every other board standing proud on the rail side (board-on-board);
+    # the far side is flat.  The texture's board joints (u = k * board from the panel's start) are the edges.
     b_in, b_out, b_far = -0.027, -0.008, -0.046
-    o = tuple(L.pt(x0, 0, 0))
+    o = L.pt(x0, 0, 0)
     L.poly(geo, wood, [(x0, b_in, kick), (x1, b_in, kick), (x1, b_in, z_br0), (x0, b_in, z_br0)], (0, 1, 0), uv_o=o)
     L.poly(geo, wood, [(x0, b_far, kick), (x1, b_far, kick), (x1, b_far, z_br0), (x0, b_far, z_br0)], (0, -1, 0), uv_o=o)
-    nbd = max(1, int(round(span / board)))
-    pitch = span / nbd
-    bwid = pitch * 0.76
-    for i in range(nbd):
-        a = x0 + (i + 0.5) * pitch
-        L.box(geo, wood, (a - bwid / 2, b_in, kick), (a + bwid / 2, b_out, z_br0), faces='xXY')
+    k = 1
+    while x0 + k * board < x1 - 0.03:
+        a0, a1 = x0 + k * board, min(x0 + (k + 1) * board, x1)
+        L.box(geo, wood, (a0, b_in, kick), (a1, b_out, z_br0), faces='xXY', uv_o=o)
+        k += 2
     # horizontal rails on the rail side
     nr = max(2, int(round((z_br0 - kick) / rail_step)))
     for k in range(nr):
         z = kick + 0.10 + (z_br0 - kick - 0.10) * k / nr
-        L.box(geo, frame or wood, (x0, b_out, z), (x1, b_out + 0.038, z + 0.089), faces='YzZ', uv_u=V)
+        L.box(geo, frame or wood, (x0, b_out, z), (x1, b_out + 0.038, z + 0.089), faces='YzZ', grain=A)
 
 
 def fence(geo, polyline, h=2.13, band=0.25, bay=BAY, post=0.14, side=1, kick=0.04, rail_step=1.0, cap=True,
@@ -968,7 +977,7 @@ def fence(geo, polyline, h=2.13, band=0.25, bay=BAY, post=0.14, side=1, kick=0.0
     ~3.4 m, with a rail every ~1.0 m); band: clear height of the square-picket band under the cap.
     side: +1 puts the RAIL side (posts proud, horizontal rails, the side seen from the yard in p27) on the LEFT
     of the polyline's direction of travel seen from above, -1 on the right; the other side shows flat boards.
-    Boards are board-on-board on a 0.184 m module, pickets every 0.094 m (fx_fence_pickets: a cut-out texture,
+    Boards are board-on-board on the 0.140 m module of the fence_wood texture, pickets every 0.094 m (fx_fence_pickets: a cut-out texture,
     one picket per unit of u).  Panels follow sloping ground (racked).  About 56 triangles per metre.
     Returns the post positions."""
     pts = [np.array([p[0], p[1], p[2] if len(p) > 2 else 0.0], float) for p in polyline]
@@ -990,15 +999,14 @@ def fence(geo, polyline, h=2.13, band=0.25, bay=BAY, post=0.14, side=1, kick=0.0
             if (first and not end_posts[0]) or (last and not end_posts[1]):
                 continue
             Lp = Loc(Lc.pt(x, 0, 0), ex, ey, UP)
-            Lp.box(geo, post_mat, (-post / 2, -post / 2, 0), (post / 2, post / 2, h - 0.038), faces='xXyY',
-                   uv_u=(0, 0, 1))
+            Lp.box(geo, post_mat, (-post / 2, -post / 2, 0), (post / 2, post / 2, h - 0.038), faces='xXyY')
             posts.append(Lc.pt(x, 0, 0))
         for k in range(nb):
             x0, x1 = Lh * k / nb + post / 2, Lh * (k + 1) / nb - post / 2
             _fence_panel(geo, Lc, x0, x1, h, band, kick, rail_step, wood=wood)
         if cap:                                         # the cap runs through over the posts
             Lc.box(geo, wood, (-post / 2 - 0.01, -0.075, h - 0.038), (Lh + post / 2 + 0.01, 0.075, h),
-                   faces='xXyYzZ', uv_u=(0, 1, 0) if False else None)
+                   faces='xXyYzZ', grain=(1, 0, 0))
     return posts
 
 
@@ -1017,7 +1025,7 @@ def gate(geo, a, b, h=2.13, band=0.25, post=0.14, side=1, open_deg=0.0, wood='fe
     for on, p in zip(posts, (a, b)):
         if on:
             Loc(p, ex, ey, UP).box(geo, frame_mat, (-post / 2, -post / 2, 0), (post / 2, post / 2, h + 0.06),
-                                   faces='xXyYZ', uv_u=(0, 0, 1))
+                                   faces='xXyYZ')
     # the leaf in its own frame, hinged at the first post's inner face
     th = math.radians(open_deg)
     lx = math.cos(th) * ex + math.sin(th) * ey
@@ -1028,13 +1036,11 @@ def gate(geo, a, b, h=2.13, band=0.25, post=0.14, side=1, open_deg=0.0, wood='fe
     g = Geo()
     _fence_panel(g, Lg, 0.0, wl, h - 0.02, band, 0.07, 1.0, wood=wood, frame=frame_mat)
     geo.merge(g)
-    Lg.box(geo, wood, (0, -0.06, h - 0.058), (wl, 0.06, h - 0.02), faces='xXyYzZ')
+    Lg.box(geo, wood, (0, -0.06, h - 0.058), (wl, 0.06, h - 0.02), faces='xXyYzZ', grain=(1, 0, 0))
     # frame stiles and the brace on the rail side
     z1 = h - 0.058 - 0.07 - band - 0.09
     for x0 in (0.0, wl - 0.089):
-        Lg.box(geo, frame_mat, (x0, -0.008, 0.07), (x0 + 0.089, 0.030, z1), faces='xXY', uv_u=(0, 0, 1))
-    dz, dx = z1 - 0.07 - 0.3, wl - 0.2
-    ln = math.hypot(dz, dx)
+        Lg.box(geo, frame_mat, (x0, -0.008, 0.07), (x0 + 0.089, 0.030, z1), faces='xXY')
     p0, p1 = Lg.pt(0.10, 0.011, 0.07 + 0.15), Lg.pt(wl - 0.10, 0.011, z1 - 0.15)
     sweep(geo, frame_mat, _rect(0.089, 0.038), [p0, p1], Lg.ey, closed=True, caps=(False, False))
     # hardware: strap hinges and a thumb latch

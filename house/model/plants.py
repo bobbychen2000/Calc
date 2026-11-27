@@ -109,7 +109,7 @@ def _noise3(rs, t, kink=0.0, octs=((1.2, 1.0), (2.7, 0.5), (5.9, 0.22))):
         fr = f * rs.uniform(0.75, 1.3, 3)
         out += a * np.sin(2 * math.pi * fr[None] * t[:, None] + ph[None])
     if kink > 0:
-        m = max(3, len(t) // 5)
+        m = max(3, len(t) // 7)
         kn = rs.normal(size=(m + 2, 3))
         x = t * m
         i0 = np.minimum(x.astype(int), m)
@@ -199,9 +199,30 @@ def _frames(P):
     return T, U, np.cross(T, U)
 
 
+_LOD = ((0.42, 22), (0.24, 16), (0.13, 11), (0.07, 8), (0.035, 6), (0.016, 4), (0.0, 3))   # radius above -> sides
+
+
 def _nseg(r):
-    return 22 if r > 0.42 else 16 if r > 0.24 else 12 if r > 0.13 else 9 if r > 0.07 else 7 if r > 0.035 else \
-        5 if r > 0.016 else 4
+    return next(n for r0, n in _LOD if r > r0)
+
+
+def _tube_lod(buf, P, R, rs=None, lump=0.0, shape=None, tile=BARK_TILE):
+    """A long tapering axis as a chain of tubes, each with the number of sides (and the bark scale) its girth needs."""
+    P, R = np.asarray(P, float), np.asarray(R, float)
+    cuts = [0]
+    for r0, _ in _LOD[:-1]:
+        below = np.nonzero(R < r0)[0]
+        below = below[below > cuts[-1] + 1]
+        if len(below) and R[cuts[-1]] >= r0 and below[0] < len(P) - 2:
+            cuts.append(int(below[0]))
+    cuts.append(len(P) - 1)
+    for a, b in zip(cuts[:-1], cuts[1:]):
+        sh = None
+        if shape is not None:
+            S = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))])
+            sh = (lambda th, s, o=S[a]: shape(th, s + o))
+        _tube(buf, P[a:b + 1], R[a:b + 1], nseg=_nseg(float(R[a:b + 1].mean()) * 1.15), rs=rs, tile=tile,
+              lump=lump if R[a] > 0.05 else 0.0, shape=sh, tip=(b == len(P) - 1))
 
 
 def _tube(buf, P, R, nseg=None, rs=None, tile=BARK_TILE, lump=0.0, shape=None, tip=True, v0=None):
@@ -391,7 +412,7 @@ def _blob(buf, centre, radii, rs, nu=9, nv=5, lump=0.18, tile=0.5, zmin=None):
 
 
 def _shell_cards(buf, rs, centre, radii, n, size, cells, nfn, tilt=0.9, zmin=0.02, shade=(3, 7), out_bias=0.0,
-                 top=1.0, tints=8):
+                 top=1.0, tint=None):
     """n small cards scattered over an ellipsoid shell (centre, radii): each lies loosely on the surface (tilted by up
     to `tilt` rad), random roll.  cells: atlas cells to draw from; shade: class at the bottom .. at the top."""
     centre, radii = np.asarray(centre, float), np.asarray(radii, float)
@@ -416,7 +437,8 @@ def _shell_cards(buf, rs, centre, radii, n, size, cells, nfn, tilt=0.9, zmin=0.0
         if (root + ax * s)[2] < zmin:
             continue
         sh = int(round(shade[0] + (shade[1] - shade[0]) * _smooth(d[2], -0.5, 0.7))) + rs.randint(-1, 2)
-        _card(buf, root, ax, side, s, s, cells[rs.randint(len(cells))], rs.randint(tints), int(np.clip(sh, 0, 7)),
+        tc = rs.randint(8) if tint is None else int(np.clip(tint + rs.randint(-1, 2), 0, 7))
+        _card(buf, root, ax, side, s, s, cells[rs.randint(len(cells))], tc, int(np.clip(sh, 0, 7)),
               nfn, flip=rs.uniform() < 0.5)
 
 
@@ -443,7 +465,7 @@ def _kmeans_az(az, w, k, iters=12):
 
 
 def oak(geo, base=(0.0, 0.0, 0.0), lean_az=300.0, lean=7.0, limbs=None, height=None, crown_radius=None,
-        trunk_d=1.35, fork_h=2.9, scaffolds=3, seed=7, leaf_density=0.3, twig_density=1.0, detail=1.0):
+        trunk_d=1.35, fork_h=2.9, scaffolds=2, seed=7, leaf_density=0.22, twig_density=1.0, detail=1.0):
     """The great oak: a massive leaning trunk, heavy sinuous limbs, a haze of twigs with sparse late-autumn leaves.
 
     base          the centre of the trunk at the ground (world m).
@@ -455,7 +477,7 @@ def oak(geo, base=(0.0, 0.0, 0.0), lean_az=300.0, lean=7.0, limbs=None, height=N
     height        if given, the tip heights are rescaled so the highest twigs reach it (m; this specimen ~17).
     crown_radius  if given, the reaches are rescaled so the longest limb's twigs reach it (m; this specimen ~14).
     trunk_d       trunk diameter at breast height (m); the root flare is about 1.6 x wider.
-    leaf_density  0 = bare .. 1 = every twig spray carries leaves (late autumn here: 0.3).
+    leaf_density  0 = bare .. 1 = every twig spray carries leaves (late autumn here: 0.22).
     twig_density  scales the number of twig sprays;  detail: scales the amount of fine branching (triangles).
     Triangles: about 95k at the defaults (budget 120k).  Returns the number of triangles added."""
     rs = np.random.RandomState(seed)
@@ -481,15 +503,20 @@ def oak(geo, base=(0.0, 0.0, 0.0), lean_az=300.0, lean=7.0, limbs=None, height=N
     mains = []                                               # the main limbs (level 1)
     groups = sorted(range(len(cen)), key=lambda j: -lens[lab == j].sum() if (lab == j).any() else 0)
     total = lens.sum()
+
+    def limb_r0(L, rpar):
+        return min(0.78 * rpar, 0.022 * L ** 1.02 + 0.035)
+
     for gi, j in enumerate(groups):
         idx = [i for i in range(len(L0)) if lab[i] == j]
         if not idx:
             continue
         lead = max(idx, key=lambda i: lens[i])
+        others = sorted([i for i in idx if i != lead], key=lambda i: L0[i][2] - 0.15 * L0[i][1])
         share = lens[idx].sum() / total
-        rsc = rt * 0.86 * share ** 0.36                      # radius of this scaffold stem at the fork
+        rsc = rt * 0.9 * share ** 0.33                       # radius of this scaffold stem at the fork
         el = math.degrees(math.atan2(np.mean([L0[i][2] for i in idx]) - fork_h, np.mean([L0[i][1] for i in idx])))
-        sdir = _azv(cen[j], float(np.clip(el + 22, 38, 68)))
+        sdir = _azv(cen[j], float(np.clip(el + 26, 48, 72)))
         tip = tips[lead]
         hd = _unit((tip - fork) * np.array([1, 1, 0]))
         t1 = _unit(hd + UP * rs.uniform(0.0, 0.25))
@@ -498,49 +525,54 @@ def oak(geo, base=(0.0, 0.0, 0.0), lean_az=300.0, lean=7.0, limbs=None, height=N
             zs = np.arange(-0.35, fork_h - 0.2, 0.22)
             sway = np.outer(np.sin(zs * 1.3 + rs.uniform(0, 6)) * 0.07 * _smooth(zs, 0.2, 1.5), _perp(ldir))
             Pt = base[None] + np.outer(zs, UP) + np.outer(zs * tl, ldir) + sway
-            Pl = _limb_path(rs, fork, tip, 0.55 * tdir + 0.45 * sdir, t1, 0.3, wig=0.05, kink=0.5)
+            Pl = _limb_path(rs, fork, tip, 0.5 * tdir + 0.5 * sdir, t1, 0.3, wig=0.075, kink=0.9)
             P = np.vstack([Pt, Pl[1:]])
             ax = _Ax(P, P[:, 0], 0)
             sf = ax.S[len(Pt) - 1]                           # arc length of the fork
-            Ll = ax.L - sf
-            r_l = np.where(ax.S <= sf, rt,
-                           0.02 + (rsc - 0.02) * np.clip(1 - (ax.S - sf) / Ll, 0, 1) ** 1.15)
-            blend = _smooth(ax.S, sf - 0.9, sf + 1.3)
-            ax.R = rt * (1 - blend) + r_l * blend
-            ax.R = np.where(ax.S > sf, np.minimum(ax.R, r_l * (1 + 0.6 * np.exp(-(ax.S - sf) / 0.9))), ax.R)
-            ax.fork_s = sf
+        else:
+            S0 = fork - tdir * 0.6 + _azv(cen[j]) * rt * 0.3
+            P = _limb_path(rs, S0, tip, 0.3 * tdir + 0.7 * sdir, t1, 0.3, wig=0.075, kink=0.9)
+            ax = _Ax(P, P[:, 0], 1)
+            sf = 0.6
+        ax.fork_s = sf
+        # the other limbs of the group leave this stem one after the other, the low ones first, over its first metres
+        span = min(5.2, 0.45 * (ax.L - sf))
+        sbs = [sf + 1.5 + span * (n + rs.uniform(0.15, 0.85)) / max(len(others), 1) for n in range(len(others))]
+        s_last = max(sbs) if sbs else sf + 1.0
+        # radii: the stem keeps its weight until the last limb has left it, then it is a limb itself
+        r_lead = limb_r0(ax.L - s_last, rsc) * 1.12
+        u = np.clip((ax.S - sf) / max(s_last - sf, 1e-6), 0, 1)
+        stem = rsc + (r_lead - rsc) * u ** 0.85
+        v = np.clip((ax.S - s_last) / max(ax.L - s_last, 1e-6), 0, 1)
+        r_l = np.where(ax.S <= s_last, stem, 0.02 + (r_lead - 0.02) * (1 - v) ** 0.82)
+        if gi == 0:
+            blend = _smooth(ax.S, sf - 1.0, sf + 0.9)
+            ax.R = rt * (1 - blend) + np.minimum(r_l, rt) * blend
             trunk_ax = ax
         else:
-            S0 = fork - tdir * 0.55 + _azv(cen[j]) * rt * 0.25
-            P = _limb_path(rs, S0, tip, 0.35 * tdir + 0.65 * sdir, t1, 0.3, wig=0.05, kink=0.5)
-            ax = _Ax(P, P[:, 0], 1)
-            ax.R = _taper(ax.S, rsc, 0.02, 1.15, collar=0.3)
-            ax.fork_s = 0.55
+            ax.R = r_l * (1 + 0.3 * np.exp(-ax.S / 0.8))
         axes.append(ax)
         mains.append(ax)
-        # the other limbs of the group leave this stem one after the other, the low ones first
-        others = sorted([i for i in idx if i != lead], key=lambda i: L0[i][2] - 0.15 * L0[i][1])
         for n, i in enumerate(others):
-            sb = ax.fork_s + 0.9 + (n + rs.uniform(0.1, 0.6)) * min(1.25, 4.6 / max(len(others), 1))
-            p, t, r = ax.at(sb)
+            p, t, r = ax.at(sbs[n])
             hd = _unit((tips[i] - p) * np.array([1, 1, 0]))
             rise = (tips[i] - p)[2] / max(np.linalg.norm((tips[i] - p)[:2]), 0.5)
-            t0 = _unit(0.35 * t + 0.65 * hd + UP * float(np.clip(0.25 + 0.5 * rise, 0.1, 1.2)))
-            Pl = _limb_path(rs, p, tips[i], t0, _unit(hd + UP * rs.uniform(-0.05, 0.3)), 0.3, wig=0.065, kink=0.6)
+            t0 = _unit(0.3 * t + 0.7 * hd + UP * float(np.clip(0.3 + 0.6 * rise, 0.15, 1.3)))
+            Pl = _limb_path(rs, p, tips[i], t0, _unit(hd + UP * rs.uniform(-0.05, 0.3)), 0.3, wig=0.085, kink=1.0)
             li = _Ax(Pl, Pl[:, 0], 1)
-            r0 = L0[i][3] if len(L0[i]) > 3 else min(0.74 * r, 0.021 * li.L ** 1.02 + 0.02)
-            li.R = _taper(li.S, r0, 0.02, 1.1, collar=0.4)
+            r0 = L0[i][3] if len(L0[i]) > 3 else limb_r0(li.L, r)
+            li.R = _taper(li.S, r0, 0.02, 0.82, collar=0.4)
+            li.fork_s = -1.2
             axes.append(li)
             mains.append(li)
 
     # ---- the finer branching: sub-limbs, branches, twiglets ----
     lvl2, lvl3, lvl4 = [], [], []
     for ax in mains:
-        s_from = (ax.fork_s + 2.2) if hasattr(ax, 'fork_s') else 0.22 * ax.L
-        lvl2 += _children(rs, ax, min(s_from, 0.5 * ax.L), 0.97 * ax.L, 1.35 / detail ** 0.5,
-                          lambda s, rem: min(5.5, 0.9 + rem * rs.uniform(0.3, 0.62)) * rs.uniform(0.7, 1.1),
-                          angle=(42, 78), rmax=0.66, rk=0.023, rexp=1.12, r_tip=0.014, step=0.26, wig=0.5,
-                          lift=0.35, droop=0.25, kink=0.7, lvl=2)
+        lvl2 += _children(rs, ax, min(ax.fork_s + 3.2, 0.5 * ax.L), 0.97 * ax.L, 1.7 / detail ** 0.5,
+                          lambda s, rem: min(5.0, 0.9 + rem * rs.uniform(0.3, 0.62)) * rs.uniform(0.7, 1.1),
+                          angle=(40, 80), rmax=0.62, rk=0.026, rexp=1.12, r_tip=0.014, step=0.26, wig=0.7,
+                          lift=0.35, droop=0.3, kink=1.1, gamma=0.85, lvl=2)
     for ax in lvl2:
         lvl3 += _children(rs, ax, 0.22 * ax.L, 0.98 * ax.L, 0.72 / detail ** 0.5,
                           lambda s, rem: min(2.4, 0.55 + rem * rs.uniform(0.3, 0.6)),
@@ -569,28 +601,15 @@ def oak(geo, base=(0.0, 0.0, 0.0), lean_az=300.0, lean=7.0, limbs=None, height=N
 
     for ax in axes:
         if ax is trunk_ax:
-            # in sections, so the texture keeps a sensible scale from the 4 m girth down to a twig
-            cuts = [0] + [int(np.argmax(ax.R < r)) for r in (0.42, 0.24, 0.13, 0.07) if (ax.R < r).any()] + \
-                   [len(ax.P) - 1]
-            cuts = sorted(set(c for c in cuts if 0 <= c <= len(ax.P) - 1))
-            for a, b in zip(cuts[:-1], cuts[1:]):
-                if b - a < 1:
-                    continue
-                sh = (lambda th, S, o=ax.S[a]: flare(th, S + o)) if ax.S[a] < 3.0 else None
-                _tube(bark, ax.P[a:b + 1], ax.R[a:b + 1], rs=rs, lump=0.1, shape=sh, tip=(b == len(ax.P) - 1))
-        elif ax.lvl <= 1:
-            cuts = [0] + [int(np.argmax(ax.R < r)) for r in (0.13, 0.07) if (ax.R < r).any() and ax.R[0] > r * 1.4] + \
-                   [len(ax.P) - 1]
-            cuts = sorted(set(cuts))
-            for a, b in zip(cuts[:-1], cuts[1:]):
-                if b - a >= 1:
-                    _tube(bark, ax.P[a:b + 1], ax.R[a:b + 1], rs=rs, lump=0.09, tip=(b == len(ax.P) - 1))
+            _tube_lod(bark, ax.P, ax.R, rs=rs, lump=0.1, shape=lambda th, S: np.where((S < 3.2)[:, None], flare(th, S), 1.0))
+        elif ax.lvl <= 3:
+            _tube_lod(bark, ax.P, ax.R, rs=rs, lump=0.09 if ax.lvl <= 1 else 0.07)
         else:
-            _tube(bark, ax.P, ax.R, rs=rs, lump=0.07 if ax.lvl == 2 else 0.0)
+            _tube(bark, ax.P, ax.R, rs=rs)
 
     # ---- twig sprays and leaf remnants (cards of the leaf_oak atlas: 0, 1 bare sprays, 2 a few leaves, 3 leafy) ----
     leaf = out['leaf_oak']
-    nfn = _round_normals(crown_c, squash=0.8, up=0.55)
+    nfn = _round_normals(crown_c, squash=0.8, up=0.25)
     rmax = max(l[1] for l in L0)
 
     def spray(p, d, L, lv):
@@ -679,11 +698,12 @@ def sapling(geo, base=(0.0, 0.0, 0.0), h=4.0, crown_r=0.65, clear=1.9, seed=1, s
               int(np.clip(4 + 3 * rel + rs.randint(0, 2), 0, 7)), nfn, droop=0.25, rows=2, flip=rs.uniform() < 0.5)
 
     for b in br + tw + [tr]:
-        sprig(b, b.L, rs.uniform(0.34, 0.5))
+        sprig(b, b.L, rs.uniform(0.36, 0.52))
+        sprig(b, b.L, rs.uniform(0.3, 0.44))
         if b is not tr:
-            n = 2 if b in br else 1
+            n = 4 if b.lvl == 1 else 2
             for k in range(n):
-                sprig(b, b.L * rs.uniform(0.35, 0.9), rs.uniform(0.28, 0.42))
+                sprig(b, b.L * rs.uniform(0.3, 0.92), rs.uniform(0.28, 0.44))
     if stake:
         sd = _perp(_azv(lean_az + rs.uniform(-20, 20)))
         for sgn in (-1, 1):
@@ -725,9 +745,9 @@ def shrub(geo, base=(0.0, 0.0, 0.0), r=0.42, h=0.75, seed=1, kind='boxwood', loo
     nfn = _round_normals(c - UP * h * 0.15, squash=0.85, up=0.3)
     n = int(250 * min(1.0, (r / 0.42) ** 1.2 * (0.27 / size) ** 2 * 1.0 + 0.25))
     n = int(np.clip(n, 120, 300))
-    _shell_cards(out[mat], rs, c, radii * 0.93, n, size, (0, 1, 2), nfn, tilt=0.5 + 0.6 * loose, zmin=base[2] + 0.02,
+    _shell_cards(out[mat], rs, c, radii * 0.93, n, size, (0, 1, 2), nfn, tilt=0.3 + 0.5 * loose, zmin=base[2] + 0.02,
                  shade=(2, 7), top=0.72)
-    for _ in range(int(4 + 14 * loose)):                              # shoots breaking the outline
+    for _ in range(int(3 + 10 * loose)):                              # shoots breaking the outline
         d = _unit(np.array([rs.normal(), rs.normal(), abs(rs.normal()) + 0.6]))
         p = c + d * radii * 0.8
         _card(out[mat], p, _unit(d + UP * 0.4), _perp(d) if rs.uniform() < 0.5 else np.cross(d, _perp(d)),
@@ -740,7 +760,7 @@ def boxwood(geo, base=(0.0, 0.0, 0.0), r=0.4, h=0.7, seed=1, loose=0.3):
     return shrub(geo, base, r=r, h=h, seed=seed, kind='boxwood', loose=loose)
 
 
-def rose_bush(geo, base=(0.0, 0.0, 0.0), h=1.1, r=0.55, seed=1, blooms=14, canes=7):
+def rose_bush(geo, base=(0.0, 0.0, 0.0), h=1.1, r=0.55, seed=1, blooms=16, canes=9):
     """A loose white-flowering shrub rose: arching canes, leaf sprays along them, `blooms` white flowers at the cane
     ends and over the top.  h: height, r: radius (m).  About 1.1-1.4k triangles (budget 1.5k)."""
     rs = np.random.RandomState(seed)
@@ -768,7 +788,7 @@ def rose_bush(geo, base=(0.0, 0.0, 0.0), h=1.1, r=0.55, seed=1, blooms=14, canes
             _card(leaf, p, d, side, Lc, Lc, rs.randint(2), rs.randint(8),
                   int(np.clip(2 + 5 * (p[2] - base[2]) / h + rs.randint(0, 2), 0, 7)), nfn, droop=0.5, rows=1,
                   flip=rs.uniform() < 0.5)
-            s += rs.uniform(0.09, 0.16)
+            s += rs.uniform(0.06, 0.11)
         ends.append(ax.at(ax.L))
     # blooms: a spray with flowers at the cane ends, single open flowers facing up and out
     for k in range(blooms):
@@ -788,7 +808,7 @@ def rose_bush(geo, base=(0.0, 0.0, 0.0), h=1.1, r=0.55, seed=1, blooms=14, canes
             a1 = _perp(fn)
             _card(leaf, p + fn * 0.02 - a1 * s * 0.5, a1, np.cross(fn, a1), s, s, 3, rs.randint(3), 7, nfn, rows=1)
     # filler foliage low in the bush
-    _shell_cards(leaf, rs, c - UP * h * 0.12, np.array([r * 0.8, r * 0.8, h * 0.42]), 70, 0.3, (0, 1), nfn, tilt=1.0,
+    _shell_cards(leaf, rs, c - UP * h * 0.12, np.array([r * 0.8, r * 0.8, h * 0.42]), 150, 0.3, (0, 1), nfn, tilt=1.0,
                  zmin=base[2] + 0.03, shade=(1, 6), top=0.6)
     return out.flush(geo)
 
@@ -845,7 +865,7 @@ def hedge(geo, polyline, h=1.7, w=1.1, seed=1, loose=0.7, kind='laurel', spacing
 
 # ---- backdrop trees ----------------------------------------------------------------------------------------------------
 _SHAPES = {                     # crown radii as (horizontal x crown_r, vertical x crown height / 2), top-heaviness
-    'round': (1.0, 1.0, 0.0), 'oval': (0.8, 1.0, 0.1), 'upright': (0.55, 1.0, 0.25), 'spreading': (1.25, 0.8, -0.1),
+    'round': (1.0, 1.0, 0.0), 'oval': (0.8, 1.0, 0.1), 'upright': (0.6, 1.0, 0.2), 'spreading': (1.2, 0.82, -0.1),
 }
 
 
@@ -853,9 +873,10 @@ def broadleaf(geo, base=(0.0, 0.0, 0.0), h=9.0, crown_r=3.4, palette='green', sh
               density=1.0, trunk_d=None, bark='bark', lean_az=0.0, lean=3.0):
     """A medium garden / street tree for the surroundings.  h: height (m), crown_r: crown radius (m),
     palette: 'green' | 'gold' | 'red' | 'olive' (leaf_<palette>), shape: 'round' | 'oval' | 'upright' | 'spreading',
-    trunk_h: clear trunk (m, default 0.28 h), density: 0.5 = open crown .. 1.3 = dense, bark: 'bark' | 'bark_young'.
-    The crown is a cloud of leaf-cluster cards gathered round the ends of a real branch skeleton, irregular in outline.
-    About 4.5k triangles (budget 5k)."""
+    trunk_h: clear trunk (m, default 0.28 h), density: 0.6 = open crown with sky between the masses .. 1.3 = dense,
+    bark: 'bark' | 'bark_young'.  The crown is built as a tree grows it: a branch skeleton whose ends carry separate
+    masses of foliage (cards of leaf clusters, each mass shaded as a volume), irregular in outline, with gaps.
+    About 4.7k triangles (budget 5k)."""
     rs = np.random.RandomState(seed)
     out = _Out()
     base = np.asarray(base, float)
@@ -867,129 +888,153 @@ def broadleaf(geo, base=(0.0, 0.0, 0.0), h=9.0, crown_r=3.4, palette='green', sh
     rad = np.array([crown_r * kx, crown_r * kx, ch * 0.5 * kz])
     tile = BARK_TILE if bark != 'bark_young' else YOUNG_TILE
     d0 = _unit(UP + _azv(lean_az) * math.tan(math.radians(lean)))
-    P = _path(rs, base - UP * 0.15, d0, th + ch * 0.45, 0.45, wig=0.08, kink=0.3)
+    P = _path(rs, base - UP * 0.15, d0, th + ch * 0.5, 0.45, wig=0.08, kink=0.3)
     tr = _Ax(P, P[:, 0], 0)
     tr.R = _taper(tr.S, td / 2, td * 0.12, 0.8) * (1 + 0.35 * np.exp(-tr.S / 0.35))
     _tube(out[bark], tr.P, tr.R, nseg=9, rs=rs, tile=tile, lump=0.06)
-    # puffs: lumps of foliage on the crown's shell and inside it
-    npuff = int(np.clip(26 * density * (crown_r * kx / 3.4) ** 0.6, 12, 40))
-    puffs = []
-    for k in range(npuff):
-        z = 1 - 1.75 * (k + 0.5) / npuff                      # top .. below the equator
-        ph = k * 2.399963 + rs.uniform(-0.4, 0.4)
+    # the masses of foliage: on the crown's shell, pushed in and out so the outline is irregular, a few inside
+    nc = int(np.clip(22 * density ** 0.7 * (crown_r * kx / 3.4) ** 0.5, 12, 30))
+    ph0, lob = rs.uniform(0, 6.28, 3), rs.uniform(0.12, 0.22)
+    cl = []
+    for k in range(nc):
+        z = 1 - 1.62 * (k + 0.5) / nc                         # the top .. below the equator
+        ph = k * 2.399963 + rs.uniform(-0.45, 0.45)
         rr = math.sqrt(max(1 - z * z, 0))
         d = np.array([rr * math.cos(ph), rr * math.sin(ph), z])
-        dist = rs.uniform(0.62, 0.9) if k % 4 else rs.uniform(0.25, 0.5)
-        puffs.append(cc + d * rad * dist * (1 + 0.12 * rs.normal()))
-    puffs = np.array(puffs)
-    # scaffold branches from the upper trunk to the far puffs, twigs to the rest
-    far = np.argsort(-np.linalg.norm((puffs - cc) / rad, axis=1))
+        bulge = 1 + lob * math.sin(2 * ph + ph0[0]) + 0.6 * lob * math.sin(3 * ph + 2.2 * z + ph0[1])
+        dist = (rs.uniform(0.6, 0.78) if k % 5 else rs.uniform(0.2, 0.42)) * bulge
+        cl.append(cc + d * rad * dist)
+    cl = np.array(cl)
+    rc0 = 0.44 * min(rad[0], rad[2] * 1.3) * (22.0 / nc) ** 0.33
+    # scaffold branches from the upper trunk to the far masses, twigs to the rest
+    far = np.argsort(-np.linalg.norm((cl - cc) / rad, axis=1) - 0.3 * (cl[:, 2] < cc[2]))
     nmain = int(np.clip(5 + crown_r * 0.4, 5, 8))
     mains, used = [], set()
     for i in far:
         if len(mains) >= nmain:
             break
-        if any(np.linalg.norm(puffs[i] - puffs[j]) < 0.7 * crown_r * kx for j in used):
+        if any(np.linalg.norm(cl[i] - cl[j]) < 0.8 * crown_r * kx for j in used):
             continue
-        s0 = tr.L * rs.uniform(0.5, 0.95)
-        p, t, r = tr.at(s0)
-        hd = _unit(puffs[i] - p)
-        Pb = _limb_path(rs, p, puffs[i], _unit(0.5 * t + 0.5 * hd), _unit(hd + UP * 0.3), 0.55, wig=0.05, kink=0.4)
+        p, t, r = tr.at(tr.L * rs.uniform(0.45, 0.95))
+        hd = _unit(cl[i] - p)
+        Pb = _limb_path(rs, p, cl[i], _unit(0.6 * t + 0.4 * hd), _unit(hd + UP * 0.3), 0.55, wig=0.06, kink=0.5)
         b = _Ax(Pb, Pb[:, 0], 1)
-        b.R = _taper(b.S, min(0.6 * r, 0.02 * b.L + 0.02), 0.012, 1.0, collar=0.3)
+        b.R = _taper(b.S, min(0.62 * r, 0.02 * b.L + 0.02), 0.012, 0.9, collar=0.3)
         _tube(out[bark], b.P, b.R, nseg=6, rs=rs, tile=tile)
         mains.append(b)
         used.add(i)
     allax = mains + [tr]
-    for i in range(npuff):
+    for i in range(nc):
         if i in used:
             continue
-        # from the nearest point of a main branch
         best = None
         for b in allax:
-            dd = np.linalg.norm(b.P - puffs[i], axis=1)
+            dd = np.linalg.norm(b.P - cl[i], axis=1)
             j = int(np.argmin(dd))
             if best is None or dd[j] < best[0]:
                 best = (dd[j], b, j)
         _, b, j = best
         j = max(1, min(j, len(b.P) - 2))
-        hd = _unit(puffs[i] - b.P[j])
-        Pb = _limb_path(rs, b.P[j], puffs[i], _unit(hd + UP * 0.2), hd, 0.6, wig=0.06, kink=0.4)
+        hd = _unit(cl[i] - b.P[j])
+        Pb = _limb_path(rs, b.P[j], cl[i], _unit(hd + UP * 0.2), hd, 0.6, wig=0.07, kink=0.5)
         c = _Ax(Pb, Pb[:, 0], 2)
         c.R = _taper(c.S, min(0.55 * b.R[j], 0.014 * c.L + 0.012), 0.008, 1.0)
         _tube(out[bark], c.P, c.R, nseg=4, rs=rs, tile=tile, tip=False)
-    # foliage cards
-    left = 4850 - out.ntri
-    ncard = max(200, int(left / 2))
-    per = max(6, int(ncard * min(1.0, density) / npuff))
+    # the cards of every mass
+    per = max(8, int((4800 - out.ntri) / 2 / nc))
     leaf = out['leaf_' + palette]
-    nfn = _round_normals(cc - UP * ch * 0.1, squash=0.9, up=0.3)
-    psz = 0.36 * crown_r * kx * (26.0 / npuff) ** 0.33
-    for i in range(npuff):
-        rel = (puffs[i] - cc) / rad
-        depth = float(np.clip(np.linalg.norm(rel), 0, 1))
-        sh = (int(1 + 3 * depth + 2 * _smooth(rel[2], -0.6, 0.6)), 7 if depth > 0.5 else 5)
-        pr = psz * rs.uniform(0.8, 1.2) * np.array([1.0, 1.0, 0.8])
-        _shell_cards(leaf, rs, puffs[i], pr, per, psz * 1.15, (0, 1, 2, 3), nfn, tilt=1.2, zmin=base[2] + 0.4,
-                     shade=sh, top=0.95)
+    cdown = cc - UP * ch * 0.12
+    for i in range(nc):
+        rel = (cl[i] - cc) / rad
+        depth = float(np.clip(np.linalg.norm(rel) / 0.75, 0, 1))
+        rc = rc0 * rs.uniform(0.78, 1.25)
+        pr = rc * np.array([1.0, 1.0, 0.78])
+        ci = cl[i]
+
+        def nfn(V, ci=ci):
+            n = 0.55 * _unit(V - (ci - UP * 0.3 * rc)) + 0.45 * _unit(V - cdown)
+            n[:, 2] += 0.2
+            return _unit(n)
+        hi = int(round(4 + 3 * depth * _smooth(rel[2], -0.7, 0.2)))
+        _shell_cards(leaf, rs, ci, pr, per, rc * 1.3, (0, 1, 1, 2), nfn, tilt=0.75, zmin=base[2] + 0.5,
+                     shade=(max(0, hi - 4), hi), top=0.9, tint=rs.randint(8))
+        for _ in range(3):                                         # sprigs that feather the outline
+            d = _unit(rs.normal(size=3) + _unit(ci - cc) * 0.9)
+            _card(leaf, ci + d * pr * 0.75, d, _perp(d), rc * 1.0, rc * 0.9, 3, rs.randint(8), min(7, hi + 1), nfn,
+                  rows=1, flip=rs.uniform() < 0.5)
     return out.flush(geo)
 
 
 def conifer(geo, base=(0.0, 0.0, 0.0), h=20.0, r=3.2, seed=1, clear=None, tops=1):
-    """A tall dark redwood / cedar for the backdrop: a straight red-brown trunk and whorls of drooping boughs in a
-    narrow, ragged cone.  h: height (15-25 m), r: radius of the lowest boughs (m), clear: bare trunk (m, default
-    0.14 h), tops: > 1 adds lesser leaders beside the main one (the multi-topped trees behind the cabana).
-    About 4.5k triangles (budget 5k)."""
+    """A tall dark redwood / cedar for the backdrop: a straight red-brown trunk and whorls of boughs that hang and turn
+    up at their ends, in a narrow ragged cone.  h: height (15-25 m), r: reach of the lowest boughs (m), clear: bare
+    trunk (m, default 0.12 h), tops: > 1 adds lesser leaders beside the main one (the many-topped trees behind the
+    cabana).  About 4.5k triangles (budget 5k)."""
     rs = np.random.RandomState(seed)
     out = _Out()
     base = np.asarray(base, float)
-    clear = 0.14 * h if clear is None else clear
+    clear = 0.12 * h if clear is None else clear
     leaf = out['leaf_conifer']
     leaders = [(base, h, r, clear)]
     for k in range(1, tops):
         a = rs.uniform(0, 360)
-        leaders.append((base + _azv(a) * r * rs.uniform(0.35, 0.6), h * rs.uniform(0.72, 0.92), r * 0.7,
-                        clear + h * rs.uniform(0.15, 0.3)))
-    budget = 4800 // len(leaders)
+        leaders.append((base + _azv(a) * r * rs.uniform(0.4, 0.65), h * rs.uniform(0.7, 0.9), r * 0.72,
+                        clear + h * rs.uniform(0.12, 0.25)))
+    budget = 4700.0 / sum(l[1] for l in leaders)                  # triangles per metre of height
     for li, (b0, hh, rr, cl) in enumerate(leaders):
         P = _path(rs, b0 - UP * 0.2, UP, hh + 0.2, hh / 9.0, wig=0.012)
         tr = _Ax(P, P[:, 0], 0)
         tr.R = _taper(tr.S, 0.021 * hh, 0.02, 0.9) * (1 + 0.5 * np.exp(-tr.S / 0.6))
         _tube(out['bark_redwood'], tr.P, tr.R, nseg=8 if li == 0 else 6, rs=rs, lump=0.04)
-        ntier = int((budget - 200) / (12 * 5.5))
-        zs = cl + (hh - cl) * (np.arange(ntier) + rs.uniform(0.1, 0.9, ntier)) / ntier
-        for z in zs:
+        nb = 5
+        ntier = max(8, int((budget * hh - 250) / (nb * 12 + 4)))
+        zs = cl + (hh - cl - 0.8) * (np.arange(ntier) + rs.uniform(0.15, 0.85, ntier)) / ntier
+        wob = rs.uniform(0, 6.28, 3)
+        for ti, z in enumerate(zs):
             f = (z - cl) / (hh - cl)                              # 0 at the lowest boughs .. 1 at the tip
-            reach = rr * (1 - f) ** 0.8 * (0.82 + 0.22 * math.sin(f * 21.0 + li)) + 0.35
-            nb = 5 if f < 0.75 else 4
+            reach0 = rr * (1 - f) ** 0.82 * (0.85 + 0.2 * math.sin(f * 17.0 + wob[0])) + 0.3
             a0 = rs.uniform(0, 360)
+            pz = tr.at(z - b0[2] + 0.2)[0]
             for k in range(nb):
-                az = a0 + 360.0 * k / nb + rs.uniform(-22, 22)
-                Lb = reach * rs.uniform(0.7, 1.12)
-                if rs.uniform() < 0.07:
+                if rs.uniform() < 0.08:
                     continue                                       # a gap
-                el = 12 - 30 * (1 - f) + rs.uniform(-8, 8)         # low boughs hang, high ones reach up
+                az = a0 + 360.0 * k / nb + rs.uniform(-24, 24)
+                Lb = reach0 * rs.uniform(0.72, 1.15) * (1 + 0.12 * math.sin(math.radians(az) * 2 + wob[1]))
+                el = -20 + 32 * f + rs.uniform(-7, 7)              # low boughs hang, high ones reach up
                 d = _azv(az, el)
-                p = tr.at(z - b0[2] + 0.2)[0]
                 side = _perp(d)
                 upn = np.cross(side, d)
-                sh = int(np.clip(3 + 4 * f + rs.randint(0, 2), 0, 7))
-                cfn = _round_normals(p - UP * 0.3 * Lb, squash=0.6, up=0.45)
-                # the bough seen from the side: a hanging frond in the vertical plane through it
-                _card(leaf, p, d, upn, Lb, Lb * rs.uniform(0.42, 0.6), rs.randint(2), rs.randint(8), sh, cfn,
-                      droop=0.2 / max(Lb, 1.0), rows=2, flip=rs.uniform() < 0.5)
-                # seen from above and below: the flat spray
-                _card(leaf, p, d, side, Lb, Lb * rs.uniform(0.55, 0.75), 2, rs.randint(8), min(7, sh + 1), cfn,
-                      droop=0.2 / max(Lb, 1.0), rows=2, flip=rs.uniform() < 0.5)
-                # seen end-on: curtains across the bough
-                for q in (0.45, 0.82):
-                    c = p + d * Lb * q - UP * 0.2 * q * q * Lb
-                    wq = Lb * (0.75 - 0.3 * q)
-                    _card(leaf, c + UP * wq * 0.25, -UP, side, wq * 0.9, wq, 3 if q < 0.6 else rs.randint(2),
-                          rs.randint(8), max(0, sh - (2 if q < 0.6 else 0)), cfn, rows=1, flip=rs.uniform() < 0.5)
+                if upn[2] < 0:
+                    upn = -upn
+                sh = int(np.clip(2.5 + 4.5 * f + rs.randint(0, 2), 0, 7))
+                rad_dir = _azv(az)
+
+                def cfn(V, pz=pz, rad_dir=rad_dir):
+                    n = _unit((V - pz) * np.array([1.0, 1.0, 0.25])) * 0.7 + rad_dir * 0.3
+                    n[:, 2] += 0.45
+                    return _unit(n)
+                tc = rs.randint(8)
+                up_k = -rs.uniform(0.1, 0.22) / max(Lb, 0.8)       # the ends turn up
+                # from above and below: the flat frond
+                _card(leaf, pz, d, side, Lb, Lb * rs.uniform(0.6, 0.78), 1, tc, min(7, sh + 1), cfn, droop=up_k,
+                      rows=2, flip=rs.uniform() < 0.5)
+                # from the side: sprays hanging under the bough (u = 0 is the under side of cell 0)
+                _card(leaf, pz, d, upn, Lb, Lb * rs.uniform(0.5, 0.66), 0, tc, sh, cfn, droop=up_k, rows=2)
+                # end-on: tufts across the bough
+                for q, cell in ((0.6, 2), (0.97, 2)):
+                    c = pz + d * Lb * q - UP * up_k * (q * Lb) ** 2
+                    s = Lb * (0.62 - 0.22 * q) * rs.uniform(0.85, 1.15)
+                    _card(leaf, c - UP * s * 0.5, UP, side, s, s, cell, tc, max(0, sh - (1 if q < 0.8 else 0)), cfn,
+                          rows=1, flip=rs.uniform() < 0.5)
+            # dark masses round the trunk, so the tree is not see-through
+            for k in range(2):
+                s = max(0.5, reach0 * 0.75)
+                a = _azv(a0 + 90 * k + 30 * ti)
+                _card(leaf, pz - UP * s * 0.55, UP, a, s, s * 1.2, 3, rs.randint(8), max(0, int(1 + 3 * f)),
+                      lambda V, pz=pz: _unit((V - pz) * np.array([1.0, 1.0, 0.2]) + UP * 0.3), rows=1)
         # the tip
-        cfn = _round_normals(tr.P[-1] - UP * 1.5, squash=0.5, up=0.3)
+        top = tr.P[-1]
         for k in range(3):
-            _card(leaf, tr.P[-1] - UP * 1.6, UP, _azv(60 * k + rs.uniform(0, 30)), 2.4, 1.2, rs.randint(2),
-                  rs.randint(8), 7, cfn, rows=1)
+            _card(leaf, top - UP * 1.9, UP, _azv(60 * k + rs.uniform(0, 30)), 2.5, 1.15, 1, rs.randint(8), 7,
+                  lambda V, top=top: _unit((V - top + UP * 1.5) * np.array([1.0, 1.0, 0.3]) + UP * 0.5), rows=1)
     return out.flush(geo)

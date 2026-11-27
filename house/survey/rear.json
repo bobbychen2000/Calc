@@ -1,0 +1,6971 @@
+{
+ "zone": "rear",
+ "overview": "ORIENTATION: every rear view (p25, p26, seg141_0xx, seg123_0xx) looks from the pool toward the street, so image-LEFT = STREET-RIGHT. The pergola, ground-floor bedroom, outdoor fireplace and cabana are at the street-RIGHT end; the big oak, AC condensers and the laundry Dutch door are at the street-LEFT (garage) end. LOCAL FRAME used in attrs.local_m (metres, my estimate from the plan photo p30 calibrated with p25): Xl = distance along the rear from the house's street-left rear wall corner toward street-right; Yl = distance toward the pool from the main rear wall plane (the plane shared by the laundry wall and the bedroom wall); heights are above the bluestone patio (= ground-floor level within ~0.05 m). In p30 (eave-level pixels, ~52 px/m, walls assumed 0.45 m inside the eave lines) the main rear wall plane is y~1300 and Xl=0 is x~273. GROUND FLOOR, street-left to street-right: (1) LAUNDRY WALL, Xl 0-6.9, Yl 0: Dutch door with 2 stone steps, a high awning window, AC disconnects, floodlight; two condensers stand against its street-right end; the oak (trunk ~4.5 m out from this wall) hides its middle. (2) KITCHEN GABLE projection, Xl 6.9-10.0, steps out ~0.8 m: small pool-facing gable with a triple sink window flanked by two lanterns. (3) a 0.9 m recess strip with a downspout. (4) BREAKFAST-NOOK BAY, Xl 10.9-15.0, projecting ~3.55 m from the main plane (2.25 m beyond the great-room wall): triple window on the rear face, a tall narrow window on each side face, hipped standing-seam skirt roof with a flat centre. (5) GREAT-ROOM WALL, Xl 15.0-21.1, Yl +1.3: one 4.0 m two-panel sliding door; the free-standing dark louvred PERGOLA (6.2 x ~4.2 m, four 10-inch posts, double-rail frame) covers the bluestone patio in front of it. (6) BEDROOM WALL, Xl 21.1-26.5, back on the main plane (recessed 1.3 m): a 3.1 m two-panel slider under a flat slatted dark metal canopy; the lounge seating and the white ledgestone outdoor FIREPLACE stand on the patio beyond the house's street-right corner. All one-storey parts have ~3.2 m eaves and dark standing-seam roofs (hips / lean-tos, ~4:12) that climb to the upper-floor walls. UPPER FLOOR (set back, charcoal asphalt-shingle roofs ~5:12): at street-left a hip-roofed volume (U1) with a rear window behind the oak; a small jog (U2, hidden); a recessed wall with one square window (U3/W3); the GLASS-CORNER MEDIA ROOM box, Xl 11.0-15.05, rear face on the main plane directly above/behind the nook bay, with a four-panel glass wall to the pool and three-unit window bands on both sides, hip roof; then a recessed eave wall with a small three-lite window (W2, flat roof behind it); and at street-right a pool-facing GABLE (primary bedroom) with a two-sash window (W1). A white chimney with a black flared metal shroud rises at the upper storey's street-right rear corner. Walls are white horizontal siding (5 in exposure) with white trim; all windows/doors have black exterior frames (mahogany-stained inside); the Dutch door is stained mahogany.",
+ "elements": [
+  {
+   "id": "rear.wall_laundry",
+   "type": "wall",
+   "on": "main rear wall plane, street-LEFT end (laundry / utility), storey 1",
+   "desc": "White horizontal siding wall on the main rear plane from the house's street-left rear corner to the kitchen gable projection. Carries (street-left to street-right) two grey electrical boxes, a twin floodlight, a high awning window, the mahogany Dutch door with stone steps, one lantern (hidden by the oak in p26), then the two AC condensers standing against it. Exposed concrete foundation 0.3-0.45 m below the siding (lawn is lower here). White frieze board under a boxed white soffit; standing-seam lean-to roof above.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1845,
+      930
+     ],
+     [
+      2448,
+      926
+     ],
+     [
+      2448,
+      1184
+     ],
+     [
+      2200,
+      1165
+     ],
+     [
+      1845,
+      1141
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      2470,
+      850,
+      2560,
+      1190
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2255,
+      700,
+      2560,
+      1000
+     ]
+    }
+   ],
+   "size_est_m": [
+    6.9,
+    3.2
+   ],
+   "size_basis": "length from p30 eave line (x250-615 at ~52 px/m, 0.45 m overhang assumed); height = siding base to soffit, 26 siding courses of 127 mm in p26",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      0,
+      6.9
+     ],
+     "Yl": [
+      0,
+      0
+     ],
+     "z_above_patio": [
+      0,
+      3.05
+     ]
+    },
+    "plan_p30_px": [
+     [
+      273,
+      1299
+     ],
+     [
+      631,
+      1299
+     ]
+    ],
+    "siding_px_per_course_p26": 9.25,
+    "note": "p26 is wide-angle and this wall is at its right edge: horizontal scale ~87 px/m but vertical ~73 px/m; trust the plan length. x1930-2040 of the wall is hidden by the oak trunk in p26."
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.wall_kitchen_gable",
+   "type": "wall",
+   "on": "kitchen-sink gable projection, pool-facing face, storey 1",
+   "desc": "Pool-facing face of the small one-storey gabled projection (kitchen sink). White siding, corner boards; triple window with its head right under the gable base; a lantern each side of the window; gable triangle above is siding too (see rear.gable_kitchen). Two faint rectangular outlines on the siding under the window (flush panels or just light patches).",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1642,
+      934
+     ],
+     [
+      1727,
+      902
+     ],
+     [
+      1838,
+      934
+     ],
+     [
+      1838,
+      1144
+     ],
+     [
+      1642,
+      1130
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2000,
+      641,
+      2250,
+      955
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1985,
+      662,
+      2240,
+      975
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.0,
+    3.1
+   ],
+   "size_basis": "width from p30 gable roof x615-807 minus rake overhangs, cross-checked 196 px at ~66 px/m in p26; height siding base to gable base line",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      6.9,
+      10.0
+     ],
+     "Yl": [
+      0.8,
+      0.8
+     ],
+     "z_above_patio": [
+      0,
+      3.05
+     ]
+    },
+    "projects_from_main_plane_m": 0.8,
+    "plan_p30_px": [
+     [
+      631,
+      1257
+     ],
+     [
+      791,
+      1257
+     ]
+    ],
+    "faint_outlines_under_window_p26": [
+     1660,
+     1081,
+     1820,
+     1114
+    ]
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.wall_kitchen_return_left",
+   "type": "wall",
+   "on": "kitchen gable projection, short return wall facing street-left, storey 1",
+   "desc": "~0.8 m deep return wall of the kitchen projection facing street-left. Seen only edge-on in p26 (the white corner strip). Interior photos p07/p08 show a tall narrow casement window with a 2-lite top band on this return, beside the sink.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1838,
+     934,
+     1846,
+     1144
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.8,
+    3.05
+   ],
+   "size_basis": "depth = projection of the gable face in p30 (rake y1237 vs laundry eave y1276)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      6.9,
+      6.9
+     ],
+     "Yl": [
+      0,
+      0.8
+     ]
+    },
+    "window_evidence": [
+     "photos/p08_c956d3.jpg bbox [45,400,140,820]",
+     "photos/p07_a8046c.jpg bbox [1118,505,1183,775]"
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.wall_recess_strip",
+   "type": "wall",
+   "on": "main rear wall plane between the kitchen gable projection and the nook bay, storey 1",
+   "desc": "Narrow (~0.9 m) strip of the main rear wall between the kitchen projection and the nook bay's street-left side wall; only a 20-30 px sliver shows in p26. The lower downspout runs down it at the inside corner beside the kitchen projection.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1612,
+      937
+     ],
+     [
+      1642,
+      934
+     ],
+     [
+      1642,
+      1130
+     ],
+     [
+      1612,
+      1129
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1968,
+      724,
+      2000,
+      945
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.9,
+    3.05
+   ],
+   "size_basis": "gap between bay roof edge (p30 x815) and kitchen gable roof edge (x807) plus the two overhangs",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      10.0,
+      10.9
+     ],
+     "Yl": [
+      0,
+      0
+     ]
+    }
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.wall_bay_rear",
+   "type": "wall",
+   "on": "breakfast-nook bay, pool-facing face, storey 1",
+   "desc": "Pool-facing face of the one-storey nook bay: white siding, large triple window centred, a tall lantern each side of the window, white frieze and boxed soffit, standing-seam hip skirt roof above. Rose shrubs along its base; foundation 0.2-0.3 m exposed.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1279,
+      933
+     ],
+     [
+      1509,
+      933
+     ],
+     [
+      1509,
+      1139
+     ],
+     [
+      1279,
+      1128
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      2087,
+      500,
+      2500,
+      1225
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1586,
+      723,
+      1839,
+      944
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1578,
+      742,
+      1828,
+      965
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1560,
+      880,
+      1810,
+      1105
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.9,
+    3.2
+   ],
+   "size_basis": "p25/p26: 2.85 m window + 2 x 0.48 m margins = 3.8 m; p30 bay roof x817-1077 (5.0 m eave) minus 2 x 0.45 m overhang = 4.1 m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      10.9,
+      15.0
+     ],
+     "Yl": [
+      3.55,
+      3.55
+     ],
+     "z_above_patio": [
+      0,
+      3.05
+     ]
+    },
+    "plan_p30_px": [
+     [
+      840,
+      1115
+     ],
+     [
+      1054,
+      1115
+     ]
+    ],
+    "depth_check": "siding course pitch in p25: 34.75 px here vs 26.5 px on the great-room wall => this face is 2.2 m nearer the pool than the great-room wall"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.wall_bay_side_left",
+   "type": "wall",
+   "on": "breakfast-nook bay, side wall facing street-left, storey 1",
+   "desc": "Street-left side wall of the nook bay, running from the bay's rear corner back to the main rear wall plane. White siding; one tall narrow window near the pool end; an outlet low near the house end.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1509,
+      933
+     ],
+     [
+      1612,
+      937
+     ],
+     [
+      1612,
+      1129
+     ],
+     [
+      1509,
+      1139
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1839,
+      723,
+      1968,
+      945
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1828,
+      742,
+      1960,
+      965
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1810,
+      880,
+      1950,
+      1105
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.55,
+    3.2
+   ],
+   "size_basis": "p30: bay rear eave y1092 to main-plane eave y1276",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      10.9,
+      10.9
+     ],
+     "Yl": [
+      0,
+      3.55
+     ]
+    },
+    "outlet_p26": [
+     1586,
+     1100,
+     1594,
+     1111
+    ]
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.wall_bay_side_right",
+   "type": "wall",
+   "on": "breakfast-nook bay, side wall facing street-right (toward the pergola), storey 1",
+   "desc": "Street-right side wall of the nook bay, from the bay's rear corner back to the great-room wall (inside corner where the pergola's back post stands). One tall narrow window; a brass hose bib low at the inside corner; a white PVC cleanout at the base. The pergola's street-left side rail runs along this wall.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "poly": [
+     [
+      1892,
+      560
+     ],
+     [
+      2087,
+      505
+     ],
+     [
+      2087,
+      1225
+     ],
+     [
+      1892,
+      1150
+     ]
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    2.25,
+    3.2
+   ],
+   "size_basis": "p30: bay rear eave y1092 vs great-room eave y1210 = 2.27 m; p25 siding-pitch depth 2.2 m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.0,
+      15.0
+     ],
+     "Yl": [
+      1.3,
+      3.55
+     ]
+    },
+    "hose_bib_p25": [
+     1875,
+     1012,
+     1904,
+     1033
+    ],
+    "pvc_cleanout_p25": [
+     2025,
+     1171,
+     2058,
+     1200
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.wall_great_room",
+   "type": "wall",
+   "on": "great-room rear wall (under the pergola), storey 1",
+   "desc": "Great-room rear wall, 1.3 m nearer the pool than the main plane. From street-right: 1.33 m of siding with a lantern, the 4.0 m two-panel sliding door, 0.64 m of siding with a lantern, then the inside corner with the nook bay. Black wedge speakers above both top corners of the slider, outlets low, security camera at the bay corner.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "poly": [
+     [
+      640,
+      560
+     ],
+     [
+      1892,
+      560
+     ],
+     [
+      1892,
+      1150
+     ],
+     [
+      640,
+      1135
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       1113,
+       968
+      ],
+      [
+       1279,
+       965
+      ],
+      [
+       1279,
+       1128
+      ],
+      [
+       1113,
+       1100
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      2113,
+      620,
+      2560,
+      935
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1745,
+      300,
+      2475,
+      600
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1395,
+      900,
+      1560,
+      1085
+     ]
+    }
+   ],
+   "size_est_m": [
+    6.05,
+    3.2
+   ],
+   "size_basis": "p25: 1252 px at 4.79 mm/px (26.5 px per 127 mm siding course); p30 eave x1077-1393",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.0,
+      21.1
+     ],
+     "Yl": [
+      1.3,
+      1.3
+     ],
+     "z_above_patio": [
+      0,
+      3.05
+     ]
+    },
+    "plan_p30_px": [
+     [
+      1054,
+      1233
+     ],
+     [
+      1370,
+      1233
+     ]
+    ],
+    "p26_note": "only Xl ~16.7-21.1 is visible in p26 (the bay hides the rest); the dark vertical at p26 x1241-1252 is the slider's meeting stile, not a post",
+    "outlets_p25": [
+     [
+      827,
+      1029,
+      848,
+      1060
+     ]
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.wall_great_room_return",
+   "type": "wall",
+   "on": "return wall of the great-room projection facing street-right, storey 1",
+   "desc": "1.3 m return wall between the great-room wall plane and the recessed bedroom wall, facing street-right. Not visible in any view (the pergola's back post stands at its outside corner and the rear views look past it); inferred from the 1.3 m offset of the two walls.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     598,
+     548,
+     640,
+     1150
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    1.3,
+    3.2
+   ],
+   "size_basis": "offset of eave lines in p30 (y1210 vs y1279) and siding-pitch ratio 26.5/23.25 in p25",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      21.1,
+      21.1
+     ],
+     "Yl": [
+      0,
+      1.3
+     ]
+    },
+    "inferred": true
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "rear.wall_bedroom",
+   "type": "wall",
+   "on": "ground-floor bedroom rear wall, street-RIGHT end, main rear plane, storey 1",
+   "desc": "Bedroom rear wall, recessed 1.3 m behind the great-room wall. From the great-room return: ~1.0 m of siding (lantern + black speaker above it, outlet low), the 3.1 m two-panel slider, ~1.1 m of siding (lantern, speaker, small camera, outlet) to the house's street-right rear corner. A flat slatted dark canopy covers the whole wall just under the eave.",
+   "ref": {
+    "image": "frames/seg123_059.jpg",
+    "poly": [
+     [
+      1647,
+      596
+     ],
+     [
+      2089,
+      620
+     ],
+     [
+      2089,
+      912
+     ],
+     [
+      1647,
+      880
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      0,
+      588,
+      597,
+      1098
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1315,
+      300,
+      1745,
+      560
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      992,
+      968,
+      1110,
+      1105
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1280,
+      900,
+      1400,
+      1075
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.3,
+    3.2
+   ],
+   "size_basis": "p30 eave x1393-1675; p25/seg123: 1.0 + 3.1 + 1.1 m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      21.1,
+      26.5
+     ],
+     "Yl": [
+      0,
+      0
+     ],
+     "z_above_patio": [
+      0,
+      3.05
+     ]
+    },
+    "plan_p30_px": [
+     [
+      1370,
+      1302
+     ],
+     [
+      1652,
+      1302
+     ]
+    ],
+    "house_corner_p26_x": 992,
+    "house_corner_seg123_059_x": 1647
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.wall_upper_gable_W1",
+   "type": "wall",
+   "on": "upper-floor pool-facing gable wall at the street-RIGHT end (primary bedroom), storey 2",
+   "desc": "Upper-floor gable wall facing the pool, set back ~3 m behind the main rear plane above the bedroom/great-room roofs. White siding, white rake boards with a boxed eave return at the street-right foot; one two-sash window (W1). The gable is asymmetric as seen: the ridge is ~3.3 m from the street-right corner and the street-left slope ends after ~2 m at the lower flat-roofed W2 section.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1179,
+      813
+     ],
+     [
+      1265,
+      747
+     ],
+     [
+      1353,
+      790
+     ],
+     [
+      1395,
+      790
+     ],
+     [
+      1395,
+      885
+     ],
+     [
+      1179,
+      873
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "poly": [
+      [
+       503,
+       107
+      ],
+      [
+       740,
+       0
+      ],
+      [
+       1150,
+       0
+      ],
+      [
+       1271,
+       39
+      ],
+      [
+       1271,
+       218
+      ],
+      [
+       503,
+       218
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1470,
+      519,
+      1705,
+      690
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1450,
+      680,
+      1690,
+      830
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1700,
+      0,
+      2140,
+      110
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.3,
+    4.2
+   ],
+   "size_basis": "p25: wall x503-1271 at ~7.0 mm/px (depth-scaled from the great-room wall); height = wall above lower roof (~2.9 m) + gable rise",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      17.9,
+      23.1
+     ],
+     "Yl": [
+      -3.0,
+      -3.0
+     ]
+    },
+    "rake_slope_p25": 0.39,
+    "apex_p25_extrapolated": [
+     975,
+     -76
+    ],
+    "apex_p26": [
+     1265,
+     734
+    ],
+    "heights_above_patio_m": {
+     "soffit_at_corner": 6.5,
+     "apex_soffit": 7.75,
+     "ridge": 8.0
+    }
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.wall_upper_W2",
+   "type": "wall",
+   "on": "upper-floor recessed eave wall between the gable (W1) and the media box, storey 2",
+   "desc": "Short upper-floor wall with a horizontal eave (dark gutter, white fascia, soffit shadow) and a flat roof behind it; one small three-lite window (W2). In p26/seg141 it is almost completely hidden behind the media box (only a slit shows).",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "poly": [
+     [
+      1271,
+      78
+     ],
+     [
+      1629,
+      78
+     ],
+     [
+      1629,
+      218
+     ],
+     [
+      1271,
+      218
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1353,
+      772,
+      1395,
+      885
+     ]
+    }
+   ],
+   "size_est_m": [
+    2.4,
+    2.7
+   ],
+   "size_basis": "p25: 358 px at ~7.0 mm/px; p30 eave x1098-1240 at upper-eave scale",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.5,
+      17.9
+     ],
+     "Yl": [
+      -3.05,
+      -3.05
+     ]
+    },
+    "eave_gutter_p25": [
+     1271,
+     32,
+     1629,
+     46
+    ]
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "rear.wall_media_rear",
+   "type": "wall",
+   "on": "upper-floor glass-corner media room, pool-facing face, storey 2",
+   "desc": "Pool-facing face of the media-room box. Almost entirely a four-panel black-framed glass wall between two white corner piers; a tall lantern on each pier; white fascia/soffit and dark gutter above; hip shingle roof. The face stands on the main rear plane, directly above the back of the nook bay's flat roof.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1395,
+      760
+     ],
+     [
+      1620,
+      740
+     ],
+     [
+      1620,
+      890
+     ],
+     [
+      1395,
+      893
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      1790,
+      0,
+      2500,
+      262
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1711,
+      500,
+      1964,
+      690
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1700,
+      520,
+      1955,
+      710
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1690,
+      670,
+      1940,
+      850
+     ]
+    }
+   ],
+   "size_est_m": [
+    4.05,
+    2.7
+   ],
+   "size_basis": "p30 media roof x812-1098 converted to eave-level frame (Xl 10.6-15.5 eave); same width as the nook bay below",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      11.0,
+      15.05
+     ],
+     "Yl": [
+      0,
+      0
+     ]
+    },
+    "floor_level_above_patio_m": 3.5,
+    "eave_above_patio_m": 6.3
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.wall_media_side_left",
+   "type": "wall",
+   "on": "media room box, side wall facing street-left, storey 2",
+   "desc": "Street-left side wall of the media box, running back ~2.7 m to the recessed W3 wall. White siding with a three-unit window band; the lower lean-to roof meets it below the sill.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1623,
+      745
+     ],
+     [
+      1687,
+      748
+     ],
+     [
+      1687,
+      860
+     ],
+     [
+      1623,
+      890
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1968,
+      505,
+      2054,
+      690
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1955,
+      525,
+      2040,
+      710
+     ]
+    }
+   ],
+   "size_est_m": [
+    2.7,
+    2.7
+   ],
+   "size_basis": "p30: media rear eave y1277 vs W3 wall eave y1437, corrected for eave heights",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      11.0,
+      11.0
+     ],
+     "Yl": [
+      -2.7,
+      0
+     ]
+    }
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.wall_media_side_right",
+   "type": "wall",
+   "on": "media room box, side wall facing street-right, storey 2",
+   "desc": "Street-right side wall of the media box (toward the W2 wall / gable), with the matching three-unit window band; visible only in p25, obliquely.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "poly": [
+     [
+      1640,
+      0
+     ],
+     [
+      1790,
+      0
+     ],
+     [
+      1790,
+      218
+     ],
+     [
+      1640,
+      218
+     ]
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    3.0,
+    2.7
+   ],
+   "size_basis": "mirror of the street-left side; p30 media side eave x1098, y1282-1455",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.05,
+      15.05
+     ],
+     "Yl": [
+      -3.05,
+      0
+     ]
+    }
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.wall_upper_W3",
+   "type": "wall",
+   "on": "upper-floor recessed rear wall street-left of the media box (U3), storey 2",
+   "desc": "Upper-floor wall set back ~2.7 m behind the main plane, between the media box and the oak. White siding, one square window (W3), a downspout at the corner with the media box; the kitchen lean-to roof rises to its base.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1687,
+      748
+     ],
+     [
+      1900,
+      752
+     ],
+     [
+      1900,
+      850
+     ],
+     [
+      1687,
+      850
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2054,
+      505,
+      2250,
+      640
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      2040,
+      525,
+      2235,
+      660
+     ]
+    }
+   ],
+   "size_est_m": [
+    2.65,
+    2.7
+   ],
+   "size_basis": "p30 upper eave x657-810 (153 px at ~58 px/m)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      7.9,
+      10.6
+     ],
+     "Yl": [
+      -2.7,
+      -2.7
+     ]
+    }
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "rear.wall_upper_U2_jog",
+   "type": "wall",
+   "on": "upper-floor rear wall jog between U3 and the street-left volume U1, storey 2",
+   "desc": "~1.4 m wide upper wall section standing ~1 m forward of the W3 wall. Known only from the roof-eave outline in p30; hidden by the oak in every rear view.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      572,
+      1377
+     ],
+     [
+      657,
+      1377
+     ],
+     [
+      657,
+      1385
+     ],
+     [
+      572,
+      1385
+     ]
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    1.4,
+    2.7
+   ],
+   "size_basis": "p30 eave x572-657 at y1377.5",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      6.5,
+      7.9
+     ],
+     "Yl": [
+      -1.7,
+      -1.7
+     ]
+    },
+    "hidden_by": "oak"
+   },
+   "conf": 0.35
+  },
+  {
+   "id": "rear.wall_upper_U1",
+   "type": "wall",
+   "on": "upper-floor street-LEFT volume (U1), pool-facing wall, storey 2",
+   "desc": "Pool-facing wall of the hip-roofed upper volume at the street-left end, set back ~1.3 m behind the main plane above the laundry lean-to roof. White siding, one large window (left part behind the oak trunk in p26), downspout at its street-left corner, white band at its base where the lean-to roof meets it.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      2100,
+      700
+     ],
+     [
+      2277,
+      690
+     ],
+     [
+      2277,
+      848
+     ],
+     [
+      2100,
+      848
+     ]
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    3.5,
+    2.6
+   ],
+   "size_basis": "p30 eave x350-572 at upper-eave scale minus overhangs (2.9-3.8 m); p26 wall base y848 to gutter y~680 = 168 px at ~73 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      3.1,
+      6.0
+     ],
+     "Yl": [
+      -1.3,
+      -1.3
+     ]
+    },
+    "street_left_corner_p26_x": 2277,
+    "left_part_hidden_by": "oak trunk (extends left to about p26 x1980)"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.wall_upper_U1_side",
+   "type": "wall",
+   "on": "upper-floor street-LEFT volume (U1), side wall facing street-left, storey 2",
+   "desc": "Street-left side wall of U1 seen very obliquely at the right edge of p26, with one narrow white-trimmed window near the rear corner. (Belongs mostly to the left-side zone.)",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      2280,
+      695
+     ],
+     [
+      2313,
+      760
+     ],
+     [
+      2313,
+      842
+     ],
+     [
+      2280,
+      848
+     ]
+    ]
+   },
+   "also": [],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.35
+  },
+  {
+   "id": "rear.door_dutch_laundry",
+   "type": "door",
+   "on": "laundry wall (main rear plane, street-left end), storey 1",
+   "desc": "Mahogany-stained wood DUTCH door (two leaves split at mid height), swings in. Upper leaf: one large clear glass lite; lower leaf: one recessed/raised rectangular panel. Dark stained frame, white casing with a thin projecting head cap. Opens onto a bluestone-capped landing + one lower step.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2126,
+     970,
+     2200,
+     1159
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.91,
+    2.44
+   ],
+   "size_basis": "8 ft door assumed (187 px = 20 siding courses of 127 mm = 2.55 m incl. frame/threshold); width 74 px at ~87 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      2.85,
+      3.75
+     ],
+     "Yl": [
+      0,
+      0
+     ]
+    },
+    "split_y_p26": 1077,
+    "upper_lite_p26": [
+     2147,
+     982,
+     2189,
+     1075
+    ],
+    "lower_panel_p26": [
+     2139,
+     1089,
+     2187,
+     1145
+    ],
+    "head_cap_p26": [
+     2109,
+     967,
+     2216,
+     971
+    ],
+    "interior_view": "photos/p14_2b3e85.jpg (upper leaf open; oak trunk and pool visible straight outside)",
+    "colour": "#5a2012 sunlit, #47160c shade"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.window_awning_laundry",
+   "type": "window",
+   "on": "laundry wall, between the Dutch door and the street-left corner, storey 1",
+   "desc": "Small horizontal high window (awning / hopper type, looks like a single lite, possibly two), head aligned with the Dutch door head. black exterior frame (aluminium-clad, mahogany-stained wood inside), white flat casing ~90 mm with a slightly projecting white head/drip cap.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2272,
+     969,
+     2381,
+     1016
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    1.25,
+    0.6
+   ],
+   "size_basis": "109 px at ~87 px/m horizontal, 47 px at ~73 px/m vertical",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      0.8,
+      2.05
+     ],
+     "Yl": [
+      0,
+      0
+     ],
+     "z_above_patio": [
+      1.95,
+      2.55
+     ]
+    },
+    "lites": "1 (uncertain)",
+    "room": "not the laundry seen in p14 - the room street-left of it (bath / mud room / garage rear)"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.window_kitchen_sink",
+   "type": "window",
+   "on": "kitchen gable projection, pool-facing face, storey 1",
+   "desc": "Triple window (3 equal units, mulled, the outer two probably casements): each unit has a top band of 2 small lites over one tall pane. Head directly under the gable base (higher than the other ground-floor heads), sill at counter height. black exterior frame (aluminium-clad, mahogany-stained wood inside), white flat casing ~90 mm with a slightly projecting white head/drip cap.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1672,
+     936,
+     1808,
+     1069
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2038,
+      721,
+      2209,
+      873
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      2025,
+      741,
+      2196,
+      891
+     ]
+    },
+    {
+     "image": "frames/seg141_007.jpg",
+     "bbox": [
+      2042,
+      721,
+      2212,
+      875
+     ]
+    }
+   ],
+   "size_est_m": [
+    2.0,
+    1.8
+   ],
+   "size_basis": "136 x 133 px at ~66-73 px/m; interior p08 shows the sill just above the 0.92 m counter",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      7.45,
+      9.45
+     ],
+     "Yl": [
+      0.8,
+      0.8
+     ],
+     "z_above_patio": [
+      1.0,
+      2.8
+     ]
+    },
+    "units": 3,
+    "top_band_lites_per_unit": 2,
+    "mullions_p26_x": [
+     [
+      1712,
+      1724
+     ],
+     [
+      1759,
+      1770
+     ]
+    ],
+    "band_muntin_y_p26": 962,
+    "interior_view": "photos/p08_c956d3.jpg bbox [180,425,530,810]"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.window_kitchen_return",
+   "type": "window",
+   "on": "kitchen gable projection, return wall facing street-left, storey 1",
+   "desc": "Tall narrow single casement with a 2-lite top band, on the 0.8 m return wall beside the sink. Known from interior photos only (exterior view is edge-on).",
+   "ref": {
+    "image": "photos/p08_c956d3.jpg",
+    "bbox": [
+     45,
+     400,
+     142,
+     822
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p07_a8046c.jpg",
+     "bbox": [
+      1118,
+      505,
+      1183,
+      778
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.45,
+    1.8
+   ],
+   "size_basis": "proportion in p08 next to the triple window",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      6.9,
+      6.9
+     ],
+     "Yl": [
+      0.15,
+      0.65
+     ]
+    },
+    "evidence": "interior only"
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "rear.window_nook_rear",
+   "type": "window",
+   "on": "nook bay, pool-facing face, storey 1",
+   "desc": "Large triple window: 3 equal units (~0.87 m each) mulled together, each with a top band of 2 small lites over one tall pane. black exterior frame (aluminium-clad, mahogany-stained wood inside), white flat casing ~90 mm with a slightly projecting white head/drip cap. Sill ~0.63 m, head ~2.55 m above the patio.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1308,
+      975
+     ],
+     [
+      1478,
+      975
+     ],
+     [
+      1478,
+      1107
+     ],
+     [
+      1308,
+      1097
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      2219,
+      550,
+      2500,
+      1075
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1616,
+      769,
+      1806,
+      910
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1607,
+      789,
+      1795,
+      930
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1592,
+      930,
+      1787,
+      1075
+     ]
+    },
+    {
+     "image": "frames/seg141_007.jpg",
+     "bbox": [
+      1619,
+      769,
+      1808,
+      911
+     ]
+    }
+   ],
+   "size_est_m": [
+    2.85,
+    1.92
+   ],
+   "size_basis": "p25: left unit 239-249 px wide, 525 px tall at 3.65 mm/px (siding-pitch scale of the bay face)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      11.5,
+      14.4
+     ],
+     "Yl": [
+      3.55,
+      3.55
+     ],
+     "z_above_patio": [
+      0.63,
+      2.55
+     ]
+    },
+    "units": 3,
+    "top_band_lites_per_unit": 2,
+    "mullions_p26_x": [
+     [
+      1358,
+      1368
+     ],
+     [
+      1418,
+      1429
+     ]
+    ],
+    "band_muntin_y_p26": 1000,
+    "band_height_m": 0.42,
+    "interior_view": "photos/p08_c956d3.jpg"
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "rear.window_nook_side_left",
+   "type": "window",
+   "on": "nook bay, side wall facing street-left, storey 1",
+   "desc": "Tall narrow single unit (casement) with a 2-lite top band over one pane; same head/sill as the nook rear window. black exterior frame (aluminium-clad, mahogany-stained wood inside), white flat casing ~90 mm with a slightly projecting white head/drip cap.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1535,
+     974,
+     1574,
+     1102
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1873,
+      768,
+      1921,
+      907
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1861,
+      787,
+      1911,
+      926
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1847,
+      927,
+      1902,
+      1070
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.5,
+    1.92
+   ],
+   "size_basis": "height as the nook rear window; width from interior p08",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      10.9,
+      10.9
+     ],
+     "Yl": [
+      2.3,
+      2.8
+     ],
+     "z_above_patio": [
+      0.63,
+      2.55
+     ]
+    },
+    "top_band_lites": 2
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.window_nook_side_right",
+   "type": "window",
+   "on": "nook bay, side wall facing street-right, storey 1",
+   "desc": "Tall narrow single unit with a top band (muntin at p25 y675) over one pane, wide white casing; mirror of the street-left one.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     1958,
+     575,
+     1994,
+     1042
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.5,
+    1.92
+   ],
+   "size_basis": "467 px tall at ~4.2 mm/px (between bay-face and great-room-wall scales)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.0,
+      15.0
+     ],
+     "Yl": [
+      2.2,
+      2.7
+     ],
+     "z_above_patio": [
+      0.63,
+      2.55
+     ]
+    },
+    "band_muntin_y_p25": 675
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.door_slider_great_room",
+   "type": "door",
+   "on": "great-room rear wall under the pergola, storey 1",
+   "desc": "Two-panel black-framed sliding glass door (each panel ~2.0 m wide; one slides over the other). Each panel: top band of 5 small lites over one full-height pane. Sill flush with the patio.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     917,
+     602,
+     1758,
+     1117
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      2263,
+      656,
+      2560,
+      927
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1896,
+      313,
+      2404,
+      584
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1165,
+      985,
+      1279,
+      1105
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1450,
+      925,
+      1565,
+      1085
+     ]
+    }
+   ],
+   "size_est_m": [
+    4.0,
+    2.45
+   ],
+   "size_basis": "841 x 515 px at 4.79 mm/px (26.5 px per 127 mm siding course) => 8 ft door",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.65,
+      19.7
+     ],
+     "Yl": [
+      1.3,
+      1.3
+     ],
+     "z_above_patio": [
+      0,
+      2.55
+     ]
+    },
+    "panels": 2,
+    "top_band_lites_per_panel": 5,
+    "meeting_stile_p25_x": [
+     1319,
+     1343
+    ],
+    "band_muntin_y_p25": 700,
+    "band_height_m": 0.42,
+    "interior_view": "photos/p06_0e678a.jpg"
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "rear.door_slider_bedroom",
+   "type": "door",
+   "on": "bedroom rear wall (street-right end), storey 1",
+   "desc": "Two-panel black-framed sliding glass door; each panel has a top band of 3 small lites over one full-height pane. Sill flush with the patio. Only its street-left panel is inside the p25 frame.",
+   "ref": {
+    "image": "frames/seg123_059.jpg",
+    "bbox": [
+     1749,
+     651,
+     2044,
+     906
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      0,
+      627,
+      523,
+      1093
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1420,
+      313,
+      1696,
+      543
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1036,
+      985,
+      1107,
+      1105
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1315,
+      925,
+      1400,
+      1075
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.1,
+    2.45
+   ],
+   "size_basis": "p25: one panel 285 px at 5.46 mm/px = 1.55 m; seg123_039: 350 px wide vs 292 px tall (2.44 m)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      22.1,
+      25.2
+     ],
+     "Yl": [
+      0,
+      0
+     ],
+     "z_above_patio": [
+      0,
+      2.55
+     ]
+    },
+    "panels": 2,
+    "top_band_lites_per_panel": 3,
+    "meeting_stile_p25_x": [
+     225,
+     250
+    ],
+    "band_muntin_y_p25": 715,
+    "interior_view": "photos/p13_f99155.jpg (fireplace and cabana seen through it)"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.window_upper_W1",
+   "type": "window",
+   "on": "upper-floor pool-facing gable wall (street-right), storey 2",
+   "desc": "Two-sash window (2 units side by side), each with a top band of 2 small lites over one pane. black exterior frame (aluminium-clad, mahogany-stained wood inside), white flat casing ~90 mm with a slightly projecting white head/drip cap. In p25 only its top band shows above the pergola rail.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1244,
+     813,
+     1305,
+     868
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      764,
+      154,
+      1030,
+      218
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1553,
+      603,
+      1618,
+      660
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1544,
+      623,
+      1611,
+      680
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1532,
+      762,
+      1597,
+      820
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1849,
+      0,
+      2018,
+      79
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.86,
+    1.4
+   ],
+   "size_basis": "p25: 266 px at ~7.0 mm/px; height from the aspect in seg141/p18",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      19.7,
+      21.6
+     ],
+     "Yl": [
+      -3.0,
+      -3.0
+     ]
+    },
+    "head_above_patio_m": 6.15,
+    "units": 2,
+    "top_band_lites_per_unit": 2,
+    "mullion_p26_x": 1275,
+    "band_muntin_y_p26": 832,
+    "interior_view": "photos/p18_3e06ae.jpg (left window)"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.window_upper_W2",
+   "type": "window",
+   "on": "upper-floor recessed eave wall between gable and media box, storey 2",
+   "desc": "Small window with 3 lites across visible at its top (three narrow sashes or a 3-lite band); lower part hidden by the pergola in p25, and the whole window nearly hidden behind the media box in p26.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     1331,
+     159,
+     1503,
+     218
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1388,
+      803,
+      1395,
+      860
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.2,
+    1.2
+   ],
+   "size_basis": "p25: 172 px at ~7.0 mm/px; height unknown (assumed similar head/sill to W1)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      16.2,
+      17.4
+     ],
+     "Yl": [
+      -3.05,
+      -3.05
+     ]
+    },
+    "head_above_patio_m": 6.1,
+    "lites_across": 3,
+    "bars_p25_x": [
+     1390,
+     1441
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.door_media_glass_wall",
+   "type": "door",
+   "on": "media-room box, pool-facing face, storey 2",
+   "desc": "Four-panel black-framed glass wall (sliding: in interior photo p17 the two centre panels are slid open over the outer ones). Each panel has a top band of 2 small lites over one full-height pane; floor-to-soffit. Opens onto the flat roof over the nook bay (no railing visible in any view). White roller shades inside.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1414,
+      772
+     ],
+     [
+      1597,
+      753
+     ],
+     [
+      1597,
+      879
+     ],
+     [
+      1414,
+      885
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      1855,
+      0,
+      2500,
+      262
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "poly": [
+      [
+       1737,
+       556
+      ],
+      [
+       1943,
+       526
+      ],
+      [
+       1943,
+       665
+      ],
+      [
+       1737,
+       669
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1725,
+      548,
+      1932,
+      691
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1706,
+      694,
+      1917,
+      832
+     ]
+    },
+    {
+     "image": "frames/seg141_007.jpg",
+     "bbox": [
+      1736,
+      527,
+      1947,
+      675
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.3,
+    2.3
+   ],
+   "size_basis": "183 px of the 225 px wide face (4.05 m); height 127 px at ~55 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      11.4,
+      14.7
+     ],
+     "Yl": [
+      0,
+      0
+     ]
+    },
+    "panels": 4,
+    "top_band_lites_per_panel": 2,
+    "mullions_p26_x": [
+     1458,
+     1505,
+     1550
+    ],
+    "mullions_p25_x": [
+     2017,
+     2177,
+     2357
+    ],
+    "interior_view": "photos/p17_23c8de.jpg"
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.window_media_side_left",
+   "type": "window",
+   "on": "media-room box, side wall facing street-left, storey 2",
+   "desc": "Band of 3 mulled units (tilt-turn/casement), each with a top band of small lites over one pane; sill ~0.9 m above the upper floor, head as the glass wall. black exterior frame (aluminium-clad, mahogany-stained wood inside), white flat casing ~90 mm with a slightly projecting white head/drip cap.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1626,
+     754,
+     1677,
+     837
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1979,
+      526,
+      2045,
+      616
+     ]
+    },
+    {
+     "image": "frames/seg141_007.jpg",
+     "bbox": [
+      1980,
+      527,
+      2047,
+      614
+     ]
+    }
+   ],
+   "size_est_m": [
+    2.2,
+    1.4
+   ],
+   "size_basis": "51 px of the 64 px wide side wall (2.7 m); 83 px tall at ~55 px/m; interior p17",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      11.0,
+      11.0
+     ],
+     "Yl": [
+      -2.45,
+      -0.25
+     ]
+    },
+    "units": 3,
+    "interior_view": "photos/p17_23c8de.jpg"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.window_media_side_right",
+   "type": "window",
+   "on": "media-room box, side wall facing street-right, storey 2",
+   "desc": "Matching band of 3 mulled units on the street-right side of the media box (seen obliquely in p25 above the pergola rail, and from inside in p17).",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     1680,
+     30,
+     1770,
+     218
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    2.2,
+    1.4
+   ],
+   "size_basis": "mirror of the street-left band",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.05,
+      15.05
+     ],
+     "Yl": [
+      -2.45,
+      -0.25
+     ]
+    },
+    "units": 3
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "rear.window_upper_W3",
+   "type": "window",
+   "on": "upper-floor recessed wall street-left of the media box (U3), storey 2",
+   "desc": "Single squarish window, white casing; no muntins readable (may have a top band). In the seg141 frames one sash looks tilted open.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1746,
+     779,
+     1796,
+     830
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2131,
+      543,
+      2193,
+      605
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      2116,
+      564,
+      2179,
+      623
+     ]
+    },
+    {
+     "image": "frames/seg141_007.jpg",
+     "bbox": [
+      2133,
+      543,
+      2196,
+      603
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.95,
+    0.95
+   ],
+   "size_basis": "50 x 51 px at ~55 px/m, wall seen ~25 deg oblique",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      8.7,
+      9.65
+     ],
+     "Yl": [
+      -2.7,
+      -2.7
+     ]
+    }
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.window_upper_U1",
+   "type": "window",
+   "on": "upper-floor street-left volume U1, pool-facing wall, storey 2",
+   "desc": "Large window, right edge and full height visible in p26, left part behind the oak trunk. Interior photo p21 shows a two-sash unit (each sash with a 2-lite top band over one pane) looking at the oak - most likely this window.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2082,
+     717,
+     2157,
+     838
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    1.7,
+    1.65
+   ],
+   "size_basis": "121 px tall at ~73 px/m; width from p21 (2 sashes), only >=75 px visible",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      3.9,
+      5.6
+     ],
+     "Yl": [
+      -1.3,
+      -1.3
+     ]
+    },
+    "visible_part_only": true,
+    "interior_view": "photos/p21_55a587.jpg (right-hand window)"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.window_upper_U1_side",
+   "type": "window",
+   "on": "upper-floor street-left volume U1, side wall facing street-left, storey 2",
+   "desc": "Narrow white-trimmed window on U1's street-left side wall near the rear corner, seen very obliquely.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2288,
+     757,
+     2312,
+     840
+    ]
+   },
+   "also": [],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.35
+  },
+  {
+   "id": "rear.gable_kitchen",
+   "type": "gable",
+   "on": "kitchen-sink projection, pool-facing, storey 1",
+   "desc": "Small pool-facing gable over the kitchen window: white raking fascia boards (~0.2 m deep) with boxed eave returns at both feet, white soffit under the rake overhang (~0.35 m), siding in the gable triangle, dark standing-seam roof with a dark rake trim on top. Pitch ~4:12.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1619,
+      924
+     ],
+     [
+      1728,
+      870
+     ],
+     [
+      1870,
+      924
+     ],
+     [
+      1838,
+      934
+     ],
+     [
+      1727,
+      902
+     ],
+     [
+      1642,
+      934
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "poly": [
+      [
+       1971,
+       716
+      ],
+      [
+       2111,
+       641
+      ],
+      [
+       2286,
+       712
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1960,
+      662,
+      2275,
+      745
+     ]
+    },
+    {
+     "image": "frames/seg141_007.jpg",
+     "bbox": [
+      1975,
+      650,
+      2289,
+      717
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.7,
+    0.75
+   ],
+   "size_basis": "roof width p30 x615-807; rise 32 px inner apex over 98 px half width",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      6.55,
+      10.35
+     ],
+     "Yl": [
+      0.8,
+      1.15
+     ]
+    },
+    "apex_outer_p26": [
+     1728,
+     870
+    ],
+    "apex_inner_p26": [
+     1727,
+     902
+    ],
+    "pitch": "~4:12 (0.32)",
+    "ridge_dir": "perpendicular to the rear wall"
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.gable_upper_W1",
+   "type": "gable",
+   "on": "upper-floor pool-facing gable (street-right), storey 2",
+   "desc": "Upper pool-facing gable: white bargeboards and soffit, boxed eave return at the street-right foot with the end of a dark gutter, charcoal shingle roof. Rake slope measured 0.39 (about 5:12). The street-left slope of this roof is visible in p26 to the right of the apex.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1163,
+      806
+     ],
+     [
+      1265,
+      734
+     ],
+     [
+      1353,
+      778
+     ],
+     [
+      1353,
+      790
+     ],
+     [
+      1265,
+      747
+     ],
+     [
+      1179,
+      813
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "poly": [
+      [
+       421,
+       68
+      ],
+      [
+       750,
+       0
+      ],
+      [
+       1150,
+       0
+      ],
+      [
+       1271,
+       39
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "poly": [
+      [
+       1470,
+       605
+      ],
+      [
+       1579,
+       519
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "poly": [
+      [
+       1450,
+       757
+      ],
+      [
+       1555,
+       680
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.9,
+    1.3
+   ],
+   "size_basis": "p25: eave tip x421 to ridge x975 = 3.9 m at 7.0 mm/px, street-left slope 2.0 m; rise 0.39 x 3.3 m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      17.9,
+      23.6
+     ],
+     "Yl": [
+      -3.0,
+      -2.6
+     ]
+    },
+    "pitch": "~5:12 (0.39 measured in p25)",
+    "ridge_from_street_right_corner_m": 3.3
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.roof_laundry_leanto",
+   "type": "roof_plane",
+   "on": "over the laundry wall, street-left end, storey 1 roof",
+   "desc": "Lean-to roof plane sloping down toward the pool from the base of the upper volume U1 to the eave over the laundry wall; hipped at the street-left corner into the side lean-to that runs toward the street. dark (matte black / dark bronze) standing-seam metal, seams ~0.45-0.5 m apart, dark box gutter at the eave over a white fascia and boxed white soffit (~0.45 m overhang). Two black round roof-jack vents on it.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      250,
+      1276
+     ],
+     [
+      617,
+      1276
+     ],
+     [
+      660,
+      1320
+     ],
+     [
+      657,
+      1377
+     ],
+     [
+      572,
+      1377
+     ],
+     [
+      572,
+      1356
+     ],
+     [
+      350,
+      1356
+     ],
+     [
+      330,
+      1356
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       2057,
+       905
+      ],
+      [
+       2487,
+       902
+      ],
+      [
+       2262,
+       843
+      ],
+      [
+       2105,
+       848
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    7.0,
+    2.0
+   ],
+   "size_basis": "p30: eave x250-617, plan depth eave y1276 to upper wall y1356 (corrected for heights ~1.9 m)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      -0.45,
+      6.6
+     ],
+     "Yl": [
+      -1.3,
+      0.45
+     ]
+    },
+    "slope_dir": "down toward the pool",
+    "pitch": "~4:12",
+    "eave_above_patio_m": 3.2,
+    "hip_p30": [
+     [
+      250,
+      1277
+     ],
+     [
+      350,
+      1375
+     ]
+    ],
+    "hip_p26": [
+     [
+      2490,
+      895
+     ],
+     [
+      2262,
+      843
+     ]
+    ]
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.roof_kitchen_gable",
+   "type": "roof_plane",
+   "on": "over the kitchen-sink projection, storey 1 roof",
+   "desc": "Small cross-gable roof: ridge perpendicular to the rear wall, two planes facing street-left and street-right, dying into the lean-to roof behind along two valleys. dark (matte black / dark bronze) standing-seam metal, seams ~0.45-0.5 m apart, dark box gutter at the eave over a white fascia and boxed white soffit (~0.45 m overhang).",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      615,
+      1237
+     ],
+     [
+      807,
+      1237
+     ],
+     [
+      807,
+      1277
+     ],
+     [
+      710,
+      1370
+     ],
+     [
+      700,
+      1360
+     ],
+     [
+      617,
+      1277
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       1619,
+       924
+      ],
+      [
+       1728,
+       870
+      ],
+      [
+       1870,
+       924
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.7,
+    2.6
+   ],
+   "size_basis": "p30 px at ~52 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      6.55,
+      10.3
+     ],
+     "Yl": [
+      -1.35,
+      1.2
+     ]
+    },
+    "ridge_p30": [
+     [
+      705,
+      1237
+     ],
+     [
+      705,
+      1370
+     ]
+    ],
+    "valleys_p30": [
+     [
+      [
+       617,
+       1277
+      ],
+      [
+       700,
+       1360
+      ]
+     ],
+     [
+      [
+       807,
+       1277
+      ],
+      [
+       710,
+       1370
+      ]
+     ]
+    ],
+    "pitch": "~4:12"
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.roof_leanto_behind_kitchen",
+   "type": "roof_plane",
+   "on": "between the kitchen gable, the media box and the upper W3 wall, storey 1 roof",
+   "desc": "Lean-to plane sloping toward the pool from the base of the upper W3 wall, between the media box's street-left wall and the kitchen cross-gable (which sits on it). dark (matte black / dark bronze) standing-seam metal, seams ~0.45-0.5 m apart, dark box gutter at the eave over a white fascia and boxed white soffit (~0.45 m overhang). Carries the dark exhaust hood box.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      710,
+      1370
+     ],
+     [
+      807,
+      1277
+     ],
+     [
+      812,
+      1277
+     ],
+     [
+      812,
+      1437
+     ],
+     [
+      657,
+      1437
+     ],
+     [
+      657,
+      1377
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       1687,
+       850
+      ],
+      [
+       1900,
+       850
+      ],
+      [
+       1870,
+       924
+      ],
+      [
+       1728,
+       870
+      ],
+      [
+       1700,
+       880
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    3.0,
+    3.1
+   ],
+   "size_basis": "p30: eave y1277 to upper wall y1437",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      7.4,
+      10.4
+     ],
+     "Yl": [
+      -2.7,
+      0.45
+     ]
+    },
+    "slope_dir": "down toward the pool",
+    "pitch": "~4:12"
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "rear.roof_bay_skirt",
+   "type": "roof_plane",
+   "on": "over the nook bay, storey 1 roof",
+   "desc": "Hipped standing-seam skirt on three sides of the nook bay (rear, street-left, street-right), each ~1.1 m deep in plan, rising to a flat / very low-slope dark deck in the centre that runs back to the media room's glass wall. dark (matte black / dark bronze) standing-seam metal, seams ~0.45-0.5 m apart, dark box gutter at the eave over a white fascia and boxed white soffit (~0.45 m overhang).",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      815,
+      1092
+     ],
+     [
+      1077,
+      1092
+     ],
+     [
+      1077,
+      1272
+     ],
+     [
+      815,
+      1272
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       1252,
+       923
+      ],
+      [
+       1517,
+       916
+      ],
+      [
+       1617,
+       920
+      ],
+      [
+       1600,
+       893
+      ],
+      [
+       1477,
+       888
+      ],
+      [
+       1340,
+       892
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1560,
+      690,
+      1975,
+      735
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1525,
+      840,
+      1950,
+      895
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.0,
+    3.5
+   ],
+   "size_basis": "p30 px at ~52 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      10.45,
+      15.45
+     ],
+     "Yl": [
+      0.45,
+      4.0
+     ]
+    },
+    "skirt_plan_depth_m": 1.1,
+    "flat_centre_p30": [
+     [
+      875,
+      1150
+     ],
+     [
+      1019,
+      1150
+     ],
+     [
+      1019,
+      1272
+     ],
+     [
+      875,
+      1272
+     ]
+    ],
+    "rear_plane_p26": [
+     [
+      1252,
+      923
+     ],
+     [
+      1517,
+      916
+     ],
+     [
+      1477,
+      888
+     ],
+     [
+      1340,
+      892
+     ]
+    ],
+    "pitch": "~4:12 on the skirt",
+    "eave_above_patio_m": 3.2
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.roof_bay_flat_deck",
+   "type": "roof_plane",
+   "on": "centre of the nook bay roof, in front of the media room glass wall, storey 1 roof / storey 2 floor level",
+   "desc": "Flat (membrane-looking, dark grey) roof deck inside the hip skirt, ~2.8 m wide x ~2.4 m deep, at about the upper floor level; the media room's sliding glass wall opens onto it. Seen from above in p30 and as a pale surface beyond the threshold in interior p17.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      875,
+      1150
+     ],
+     [
+      1019,
+      1150
+     ],
+     [
+      1019,
+      1272
+     ],
+     [
+      875,
+      1272
+     ]
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    2.8,
+    2.4
+   ],
+   "size_basis": "p30 px",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      11.6,
+      14.4
+     ],
+     "Yl": [
+      0.45,
+      2.8
+     ]
+    },
+    "railing": "none visible"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.roof_great_room_hip",
+   "type": "roof_plane",
+   "on": "over the great room (behind the pergola), storey 1 roof",
+   "desc": "Hip-ended roof projecting toward the pool: triangular rear plane (eave over the great-room wall), ridge running back perpendicular to the wall from the apex to the upper W2 wall, and two side planes that end in valleys against the lean-to planes either side. dark (matte black / dark bronze) standing-seam metal, seams ~0.45-0.5 m apart, dark box gutter at the eave over a white fascia and boxed white soffit (~0.45 m overhang).",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      1077,
+      1210
+     ],
+     [
+      1393,
+      1210
+     ],
+     [
+      1393,
+      1279
+     ],
+     [
+      1219,
+      1453
+     ],
+     [
+      1100,
+      1335
+     ],
+     [
+      1100,
+      1282
+     ],
+     [
+      1077,
+      1272
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1700,
+      70,
+      2460,
+      230
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       1090,
+       934
+      ],
+      [
+       1250,
+       927
+      ],
+      [
+       1330,
+       866
+      ],
+      [
+       1162,
+       897
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1250,
+      820,
+      1560,
+      900
+     ]
+    }
+   ],
+   "size_est_m": [
+    6.9,
+    4.7
+   ],
+   "size_basis": "p30: eave x1038-1393 (part under the bay roof), apex 3.6 m behind the eave",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      14.7,
+      21.55
+     ],
+     "Yl": [
+      -3.0,
+      1.75
+     ]
+    },
+    "apex_p30": [
+     1219,
+     1397
+    ],
+    "ridge_p30": [
+     [
+      1219,
+      1397
+     ],
+     [
+      1219,
+      1455
+     ]
+    ],
+    "hips_p30": [
+     [
+      [
+       1038,
+       1210
+      ],
+      [
+       1219,
+       1397
+      ]
+     ],
+     [
+      [
+       1393,
+       1210
+      ],
+      [
+       1219,
+       1397
+      ]
+     ]
+    ],
+    "valley_street_right_p30": [
+     [
+      1393,
+      1279
+     ],
+     [
+      1219,
+      1453
+     ]
+    ],
+    "apex_p26": [
+     1330,
+     866
+    ],
+    "apex_seg123_039": [
+     2168,
+     71
+    ],
+    "pitch": "~4:12 (apex ~1.2 m above the eave)",
+    "eave_above_patio_m": 3.25
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.roof_bedroom_leanto",
+   "type": "roof_plane",
+   "on": "over the ground-floor bedroom (street-right end), storey 1 roof",
+   "desc": "Lean-to plane sloping toward the pool from the base of the upper gable wall, with a hip at the street-right rear corner turning into the street-right side lean-to. dark (matte black / dark bronze) standing-seam metal, seams ~0.45-0.5 m apart, dark box gutter at the eave over a white fascia and boxed white soffit (~0.45 m overhang).",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      1393,
+      1279
+     ],
+     [
+      1675,
+      1279
+     ],
+     [
+      1510,
+      1458
+     ],
+     [
+      1219,
+      1458
+     ],
+     [
+      1219,
+      1453
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      1600,
+      420,
+      2060,
+      590
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1278,
+      110,
+      1727,
+      236
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       972,
+       939
+      ],
+      [
+       1097,
+       941
+      ],
+      [
+       1160,
+       897
+      ],
+      [
+       1087,
+       895
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.4,
+    3.5
+   ],
+   "size_basis": "p30 px at ~52 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      21.55,
+      26.95
+     ],
+     "Yl": [
+      -3.0,
+      0.45
+     ]
+    },
+    "hip_p30": [
+     [
+      1675,
+      1279
+     ],
+     [
+      1510,
+      1458
+     ]
+    ],
+    "slope_dir": "down toward the pool",
+    "pitch": "~4:12",
+    "eave_above_patio_m": 3.25
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.roof_media_hip",
+   "type": "roof_plane",
+   "on": "over the media-room box, storey 2 roof",
+   "desc": "Hip roof end facing the pool over the media room: rear triangular plane and two side planes, ridge running back toward the main roof. charcoal architectural asphalt shingles, dark gutters, white fascia and boxed soffit. Solar panels on both side slopes behind the hip.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      812,
+      1277
+     ],
+     [
+      1098,
+      1277
+     ],
+     [
+      1098,
+      1455
+     ],
+     [
+      956,
+      1426
+     ],
+     [
+      812,
+      1437
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       1370,
+       750
+      ],
+      [
+       1625,
+       720
+      ],
+      [
+       1553,
+       697
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      975,
+      375,
+      1350,
+      525
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1693,
+      462,
+      2071,
+      523
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.5,
+    3.4
+   ],
+   "size_basis": "p30 px at upper-eave scale ~58 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      10.6,
+      15.5
+     ],
+     "Yl": [
+      -3.0,
+      0.45
+     ]
+    },
+    "apex_p30": [
+     956,
+     1426
+    ],
+    "pitch": "~5:12",
+    "eave_above_patio_m": 6.3
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.roof_flat_behind_W2",
+   "type": "roof_plane",
+   "on": "behind the upper W2 eave wall, storey 2 roof",
+   "desc": "Flat / low-slope roof section (grey-brown membrane) behind the W2 wall's eave, between the media roof and the gable roof.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      1072,
+      1463
+     ],
+     [
+      1238,
+      1463
+     ],
+     [
+      1238,
+      1574
+     ],
+     [
+      1072,
+      1574
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1308,
+      429,
+      1467,
+      471
+     ]
+    }
+   ],
+   "size_est_m": [
+    2.9,
+    1.9
+   ],
+   "size_basis": "p30 px at ~58 px/m",
+   "attrs": {},
+   "conf": 0.45
+  },
+  {
+   "id": "rear.roof_upper_gable_W1",
+   "type": "roof_plane",
+   "on": "over the upper street-right gable volume, storey 2 roof",
+   "desc": "Gable roof with ridge perpendicular to the rear wall (rake at the pool-facing gable wall); street-right slope carries a long solar array and ends at the upper storey's street-right eave; the street-left slope is short. charcoal architectural asphalt shingles, dark gutters, white fascia and boxed soffit.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      1240,
+      1460
+     ],
+     [
+      1567,
+      1460
+     ],
+     [
+      1567,
+      1700
+     ],
+     [
+      1240,
+      1700
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       1265,
+       734
+      ],
+      [
+       1353,
+       778
+      ],
+      [
+       1395,
+       770
+      ],
+      [
+       1300,
+       730
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.6,
+    4.0
+   ],
+   "size_basis": "p30 px at ~58 px/m (extent toward the street belongs to the roof zone)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      17.9,
+      23.6
+     ],
+     "Yl": [
+      -7.0,
+      -2.6
+     ]
+    },
+    "ridge_position": "~3.3 m from the street-right corner per p25; not clearly readable in p30",
+    "pitch": "~5:12"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.roof_U1_hip",
+   "type": "roof_plane",
+   "on": "over the upper street-left volume U1, storey 2 roof",
+   "desc": "Hip roof end facing the pool over U1 (rear eave with gutter, hips from both rear corners), with a small notch at its street-left rear corner. charcoal architectural asphalt shingles, dark gutters, white fascia and boxed soffit. Mostly under the oak canopy.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      350,
+      1356
+     ],
+     [
+      572,
+      1356
+     ],
+     [
+      460,
+      1480
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       2117,
+       633
+      ],
+      [
+       2305,
+       663
+      ],
+      [
+       2305,
+       690
+      ],
+      [
+       2117,
+       660
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    4.0,
+    2.5
+   ],
+   "size_basis": "p30 px at ~58 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      2.65,
+      6.45
+     ],
+     "Yl": [
+      -3.5,
+      -0.85
+     ]
+    },
+    "notch_p30": [
+     [
+      312,
+      1356
+     ],
+     [
+      350,
+      1377
+     ]
+    ],
+    "pitch": "~5:12"
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.chimney_main",
+   "type": "chimney",
+   "on": "street-right rear corner of the upper storey, rising from the street-right side lean-to roof",
+   "desc": "Full-height white (siding-clad) chimney ~1.2 m square in plan, topped by a tall black flared standing-seam metal shroud with a round flue cap inside. Its top is above the upper eave. Seen behind the media box in p26.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1406,
+     682,
+     1453,
+     737
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1567,
+      1416,
+      1630,
+      1474
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1732,
+      457,
+      1782,
+      512
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1704,
+      620,
+      1755,
+      672
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1533,
+      321,
+      1604,
+      437
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.2,
+    8.5
+   ],
+   "size_basis": "p30: 63 x 58 px at ~55 px/m; top ~1 m above the upper eave (6.3 m) + shroud",
+   "attrs": {
+    "shroud_y_p26": [
+     682,
+     715
+    ],
+    "shaft_y_p26": [
+     715,
+     737
+    ],
+    "shroud_height_m": 0.9
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pergola",
+   "type": "pergola",
+   "on": "bluestone patio in front of the great-room wall, storey 1",
+   "desc": "Free-standing motorised louvred pergola, dark bronze / charcoal powder-coated aluminium. Four square posts (~0.25 m). The perimeter frame is a DOUBLE rail: a deep top rail (~0.26 m) and a slimmer lower rail (~0.16 m) ~0.20 m below it, joined by short bolted stubs at the posts and at mid-span; the louvre blades lie between/behind the rails. Louvre blades run front-to-back (perpendicular to the house). Roof field divided by a centre front-to-back beam, plus a solid light strip at each quarter point with 3 recessed downlights. Two infrared strip heaters hang under the side rails. Back rail tucks under the great-room eave (top of pergola = bottom of the house fascia); the street-left side rail runs along the nook bay's side wall; front posts stand at the patio's pool-side edge.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     81,
+     215,
+     2423,
+     1442
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      944,
+      943,
+      1279,
+      1141
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1054,
+      1005,
+      1377,
+      1208
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1243,
+      741,
+      1586,
+      944
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1234,
+      760,
+      1580,
+      966
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1222,
+      895,
+      1560,
+      1110
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1593,
+      228,
+      2467,
+      661
+     ]
+    },
+    {
+     "image": "frames/seg141_040.jpg",
+     "bbox": [
+      1304,
+      396,
+      1400,
+      429
+     ]
+    }
+   ],
+   "size_est_m": [
+    6.2,
+    3.23
+   ],
+   "size_basis": "p25: outer span 2342 px at 2.65 mm/px (front plane; scale tied to the 127 mm siding courses via the perspective of the post bases, horizon y~797, camera 1.65 m); height = top of top rail",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.0,
+      21.2
+     ],
+     "Yl": [
+      1.45,
+      5.7
+     ],
+     "z_above_patio": [
+      0,
+      3.23
+     ]
+    },
+    "depth_m": 4.2,
+    "depth_basis": "p30 y1005-1208 visible + ~0.3 m under the eave; p25 post-base perspective gives 4.0 m between front and back post faces",
+    "lower_rail_underside_m": 2.6,
+    "lower_rail_m": 0.16,
+    "gap_m": 0.2,
+    "top_rail_m": 0.26,
+    "post_m": 0.25,
+    "back_posts_off_wall_m": 0.35,
+    "louvre_dir": "front-to-back",
+    "louvre_pitch_m": "~0.18-0.2 (30-36 blades)",
+    "fb_beams_p30_x": [
+     1124,
+     1217,
+     1306
+    ],
+    "stubs_p25_x": [
+     [
+      143,
+      196
+     ],
+     [
+      1225,
+      1287
+     ],
+     [
+      2321,
+      2362
+     ]
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.pergola_post_front_SR",
+   "type": "column",
+   "on": "pergola, pool-side corner at the street-right end",
+   "desc": "Square post dark bronze / charcoal powder-coated aluminium, bolted base plate on the patio edge.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     81,
+     452,
+     177,
+     1435
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      944,
+      982,
+      956,
+      1119
+     ]
+    },
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      1923,
+      606,
+      1949,
+      927
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1244,
+      751,
+      1257,
+      916
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1234,
+      769,
+      1247,
+      937
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1222,
+      907,
+      1234,
+      1080
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1593,
+      300,
+      1633,
+      661
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.25,
+    2.6
+   ],
+   "size_basis": "96 px wide, 981 px to the lower-rail underside at 2.65 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      21.0,
+      21.2
+     ],
+     "Yl": [
+      5.45,
+      5.7
+     ]
+    }
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.pergola_post_front_SL",
+   "type": "column",
+   "on": "pergola, pool-side corner at the street-left end (in line with the nook bay's side wall)",
+   "desc": "Square post dark bronze / charcoal powder-coated aluminium; stands in front of the nook bay's rear-wall corner, ~1.9 m further toward the pool than the bay face.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     2325,
+     454,
+     2422,
+     1429
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1186,
+      982,
+      1201,
+      1141
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1482,
+      751,
+      1500,
+      944
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1475,
+      771,
+      1493,
+      966
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1455,
+      910,
+      1480,
+      1110
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.25,
+    2.6
+   ],
+   "size_basis": "as the other front post",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.0,
+      15.25
+     ],
+     "Yl": [
+      5.45,
+      5.7
+     ]
+    }
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.pergola_post_back_SR",
+   "type": "column",
+   "on": "pergola, house-side corner at the street-right end (at the great-room wall's outside corner)",
+   "desc": "Square post dark bronze / charcoal powder-coated aluminium standing ~0.35 m off the wall at the corner where the great-room wall steps back to the bedroom wall; hides the bedroom wall's inner lantern from p25.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     598,
+     548,
+     640,
+     1150
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      2089,
+      654,
+      2113,
+      912
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1735,
+      300,
+      1763,
+      575
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1107,
+      982,
+      1116,
+      1085
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.25,
+    2.6
+   ],
+   "size_basis": "42 px at ~4.8 mm/px = 0.2 m (partly hidden)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      20.95,
+      21.2
+     ],
+     "Yl": [
+      1.6,
+      1.85
+     ]
+    },
+    "p26_box_conf": 0.4
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.pergola_post_back_SL",
+   "type": "column",
+   "on": "pergola, house-side corner at the street-left end (inside corner great-room wall / nook bay side wall)",
+   "desc": "Square post dark bronze / charcoal powder-coated aluminium in the inside corner between the great-room wall and the bay's street-right side wall; a white security camera sits beside its top. Hidden by the bay in p26/seg141.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     1848,
+     550,
+     1892,
+     1150
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.25,
+    2.6
+   ],
+   "size_basis": "44 px at ~4.8 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.0,
+      15.25
+     ],
+     "Yl": [
+      1.6,
+      1.85
+     ]
+    }
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.pergola_rail_front_top",
+   "type": "beam",
+   "on": "pergola, pool-side face, upper rail",
+   "desc": "Deep top rail of the double-rail frame, full width, with bolted end plates (5 bolts) at both ends.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     81,
+     215,
+     2423,
+     315
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       944,
+       949
+      ],
+      [
+       1201,
+       944
+      ],
+      [
+       1201,
+       957
+      ],
+      [
+       944,
+       962
+      ]
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1593,
+      228,
+      2467,
+      262
+     ]
+    }
+   ],
+   "size_est_m": [
+    6.2,
+    0.26
+   ],
+   "size_basis": "100 px at 2.65 mm/px",
+   "attrs": {
+    "z_above_patio": [
+     2.97,
+     3.23
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.pergola_rail_front_lower",
+   "type": "beam",
+   "on": "pergola, pool-side face, lower rail between the posts",
+   "desc": "Slimmer lower rail spanning between the front posts, ~0.20 m below the top rail; short bolted stubs connect the two rails at both ends and at mid-span.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     145,
+     392,
+     2325,
+     452
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       956,
+       974
+      ],
+      [
+       1186,
+       972
+      ],
+      [
+       1186,
+       981
+      ],
+      [
+       956,
+       982
+      ]
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.7,
+    0.16
+   ],
+   "size_basis": "60 px at 2.65 mm/px",
+   "attrs": {
+    "z_above_patio": [
+     2.6,
+     2.76
+    ]
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.pergola_rails_sides_back",
+   "type": "beam",
+   "on": "pergola, two side frames and the back frame",
+   "desc": "Same double-rail frame on the two sides and along the house. Street-left side: runs from the front post back along the nook bay's side wall to the back post. Street-right side: from the front post back to the back post at the great-room corner. Back: along the great-room wall just under the eave gutter.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1201,
+      944
+     ],
+     [
+      1277,
+      943
+     ],
+     [
+      1277,
+      956
+     ],
+     [
+      1201,
+      957
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      1923,
+      590,
+      2560,
+      660
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1054,
+      1005,
+      1377,
+      1208
+     ]
+    }
+   ],
+   "size_est_m": [
+    4.2,
+    0.62
+   ],
+   "size_basis": "depth from p30 / p25 perspective",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pergola_louvres",
+   "type": "other",
+   "on": "pergola roof",
+   "desc": "Louvre blades (same dark metal), running front-to-back, rotating about their long axis; shown part-open in p25 (sky stripes between blades) and closed/flat in p30. Two bays split by a centre beam; a solid strip with 3 recessed round downlights at mid-bay on each side.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "bbox": [
+     1060,
+     1010,
+     1372,
+     1205
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      196,
+      315,
+      2321,
+      552
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.7,
+    3.8
+   ],
+   "size_basis": "p30 px",
+   "attrs": {
+    "blade_count_est": 32,
+    "downlights_p25": [
+     [
+      667,
+      377
+     ],
+     [
+      804,
+      498
+     ],
+     [
+      850,
+      533
+     ],
+     [
+      1844,
+      379
+     ],
+     [
+      1683,
+      498
+     ],
+     [
+      1625,
+      536
+     ]
+    ]
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.pergola_heater_SR",
+   "type": "equipment",
+   "on": "pergola, under the street-right side rail",
+   "desc": "Infrared strip heater: slim dark box ~1.0 m long with a mirrored reflector, on swivel brackets under the side rail, tilted inward/down.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     327,
+     457,
+     542,
+     568
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1010,
+      962,
+      1057,
+      974
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.0,
+    0.2
+   ],
+   "size_basis": "typical 1 m unit; 215 px at ~3.3 mm/px (tilted)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      21.0,
+      21.0
+     ],
+     "Yl": [
+      3.0,
+      4.2
+     ],
+     "z_above_patio": [
+      2.4,
+      2.6
+     ]
+    }
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.pergola_heater_SL",
+   "type": "equipment",
+   "on": "pergola, under the street-left side rail (beside the nook bay wall)",
+   "desc": "Second infrared strip heater, mirror of the first.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     1952,
+     462,
+     2167,
+     567
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    1.0,
+    0.2
+   ],
+   "size_basis": "as the other",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      15.2,
+      15.2
+     ],
+     "Yl": [
+      2.2,
+      3.4
+     ],
+     "z_above_patio": [
+      2.4,
+      2.6
+     ]
+    }
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.canopy_bedroom",
+   "type": "awning",
+   "on": "bedroom rear wall, above the slider, storey 1",
+   "desc": "Flat open-slatted dark metal eyebrow canopy fixed just under the eave over the whole bedroom wall: a ~0.2 m deep dark fascia frame with ~6 slats parallel to the wall. It projects ~1.5 m, so its front edge continues the line of the pergola's back rail, and its street-right end reaches (or slightly passes) the house corner.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     0,
+     505,
+     597,
+     586
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1396,
+      1218,
+      1651,
+      1274
+     ]
+    },
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      1581,
+      606,
+      1923,
+      627
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1251,
+      268,
+      1593,
+      287
+     ]
+    }
+   ],
+   "size_est_m": [
+    5.2,
+    1.5
+   ],
+   "size_basis": "p30: x1396-1651, slats visible y1218-1274 plus the part under the eave",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      21.2,
+      26.6
+     ],
+     "Yl": [
+      0,
+      1.5
+     ],
+     "z_above_patio": [
+      2.85,
+      3.05
+     ]
+    },
+    "slats": 6,
+    "slat_spacing_m": 0.19,
+    "fascia_p25_y": [
+     505,
+     547
+    ],
+    "underside_p25_y": [
+     547,
+     586
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.light_bedroom_SR",
+   "type": "light",
+   "on": "bedroom rear wall, street-right of the slider, storey 1",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp.",
+   "ref": {
+    "image": "frames/seg123_059.jpg",
+    "bbox": [
+     1702,
+     663,
+     1720,
+     721
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1010,
+      983,
+      1016,
+      1010
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1369,
+      324,
+      1387,
+      383
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1295,
+      940,
+      1305,
+      967
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "p25: 36.5 x 135 px at 4.79 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": 25.65,
+     "Yl": 0.0,
+     "z_above_patio": [
+      1.8,
+      2.45
+     ]
+    }
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.light_bedroom_SL",
+   "type": "light",
+   "on": "bedroom rear wall, street-left of the slider (behind the pergola's back post), storey 1",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp. Partly hidden by the pergola post in every view.",
+   "ref": {
+    "image": "frames/seg123_059.jpg",
+    "bbox": [
+     2078,
+     662,
+     2090,
+     727
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      583,
+      650,
+      597,
+      767
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1729,
+      323,
+      1741,
+      384
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "p25: 36.5 x 135 px at 4.79 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": 21.65,
+     "Yl": 0.0,
+     "z_above_patio": [
+      1.8,
+      2.45
+     ]
+    }
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.light_great_room_SR",
+   "type": "light",
+   "on": "great-room wall, street-right of the slider, storey 1",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     827,
+     625,
+     864,
+     760
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1146,
+      983,
+      1155,
+      1014
+     ]
+    },
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      2215,
+      662,
+      2237,
+      733
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1855,
+      319,
+      1877,
+      390
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1430,
+      939,
+      1441,
+      972
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "p25: 36.5 x 135 px at 4.79 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": 20.15,
+     "Yl": 1.3,
+     "z_above_patio": [
+      1.8,
+      2.45
+     ]
+    }
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "rear.light_great_room_SL",
+   "type": "light",
+   "on": "great-room wall, street-left of the slider, storey 1",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     1800,
+     627,
+     1837,
+     760
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      2424,
+      315,
+      2448,
+      392
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "p25: 36.5 x 135 px at 4.79 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": 15.35,
+     "Yl": 1.3,
+     "z_above_patio": [
+      1.8,
+      2.45
+     ]
+    }
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.light_bay_SR",
+   "type": "light",
+   "on": "nook bay rear face, street-right of the window, storey 1",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     2127,
+     557,
+     2183,
+     735
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1283,
+      982,
+      1293,
+      1020
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1589,
+      776,
+      1601,
+      817
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1579,
+      796,
+      1591,
+      837
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1566,
+      937,
+      1579,
+      979
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      2507,
+      309,
+      2537,
+      398
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "p25: 36.5 x 135 px at 4.79 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": 14.7,
+     "Yl": 3.55,
+     "z_above_patio": [
+      1.8,
+      2.45
+     ]
+    }
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "rear.light_bay_SL",
+   "type": "light",
+   "on": "nook bay rear face, street-left of the window, storey 1",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1486,
+     982,
+     1498,
+     1024
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1813,
+      775,
+      1827,
+      823
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1801,
+      794,
+      1816,
+      843
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1789,
+      936,
+      1804,
+      985
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "p25: 36.5 x 135 px at 4.79 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": 11.2,
+     "Yl": 3.55,
+     "z_above_patio": [
+      1.8,
+      2.45
+     ]
+    }
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "rear.light_kitchen_SR",
+   "type": "light",
+   "on": "kitchen gable face, street-right of the window, storey 1",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1648,
+     982,
+     1660,
+     1022
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2009,
+      773,
+      2025,
+      821
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1996,
+      793,
+      2012,
+      841
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1984,
+      936,
+      2001,
+      982
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "p25: 36.5 x 135 px at 4.79 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": 9.7,
+     "Yl": 0.8,
+     "z_above_patio": [
+      1.8,
+      2.45
+     ]
+    }
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "rear.light_kitchen_SL",
+   "type": "light",
+   "on": "kitchen gable face, street-left of the window, storey 1",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1815,
+     981,
+     1828,
+     1026
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2218,
+      773,
+      2236,
+      824
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      2204,
+      793,
+      2223,
+      844
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "p25: 36.5 x 135 px at 4.79 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": 7.2,
+     "Yl": 0.8,
+     "z_above_patio": [
+      1.8,
+      2.45
+     ]
+    }
+   },
+   "conf": 0.85
+  },
+  {
+   "id": "rear.light_laundry",
+   "type": "light",
+   "on": "laundry wall, street-right of the Dutch door (behind the oak in p26), storey 1",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp. Only seen in the seg141 frames, to the right of the oak trunk above the grey condenser; exact position along the wall uncertain (+-0.6 m). No lantern on the street-left side of the door.",
+   "ref": {
+    "image": "frames/seg141_025.jpg",
+    "bbox": [
+     2531,
+     932,
+     2558,
+     990
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "p25: 36.5 x 135 px at 4.79 mm/px",
+   "attrs": {
+    "local_m": {
+     "Xl": 4.4,
+     "Yl": 0.0,
+     "z_above_patio": [
+      1.8,
+      2.45
+     ]
+    }
+   },
+   "conf": 0.45
+  },
+  {
+   "id": "rear.light_media_SR",
+   "type": "light",
+   "on": "media-room box rear face, street-right corner pier, storey 2",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1397,
+     777,
+     1406,
+     813
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1714,
+      560,
+      1725,
+      596
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1689,
+      720,
+      1699,
+      757
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "same fixture as below",
+   "attrs": {
+    "local_m": {
+     "Xl": 14.9,
+     "Yl": 0.0
+    }
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.light_media_SL",
+   "type": "light",
+   "on": "media-room box rear face, street-left corner pier, storey 2",
+   "desc": "Tall slim black box wall lantern (~0.19 x 0.65 m, ~0.18 m deep) with clear glass sides and a candle-type lamp.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1600,
+     754,
+     1611,
+     794
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      1812,
+      0,
+      1835,
+      80
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1948,
+      526,
+      1961,
+      567
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.19,
+    0.65
+   ],
+   "size_basis": "same fixture as below",
+   "attrs": {
+    "local_m": {
+     "Xl": 11.2,
+     "Yl": 0.0
+    }
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.light_flood_kitchen_corner",
+   "type": "light",
+   "on": "laundry wall just street-left of the kitchen projection, above the white condenser, storey 1",
+   "desc": "White twin-head security floodlight on a round base.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1877,
+     995,
+     1894,
+     1003
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2300,
+      789,
+      2325,
+      796
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      2274,
+      951,
+      2298,
+      960
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.3,
+    0.12
+   ],
+   "size_basis": "typical",
+   "attrs": {
+    "local_m": {
+     "Xl": 6.4,
+     "Yl": 0.0,
+     "z_above_patio": 2.25
+    }
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.light_flood_left_corner",
+   "type": "light",
+   "on": "laundry wall near the street-left rear corner, storey 1",
+   "desc": "White twin-head security floodlight.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2401,
+     994,
+     2429,
+     1010
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.3,
+    0.15
+   ],
+   "size_basis": "typical",
+   "attrs": {
+    "local_m": {
+     "Xl": 0.35,
+     "Yl": 0.0,
+     "z_above_patio": 2.2
+    }
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.wallbox_white",
+   "type": "other",
+   "on": "laundry wall just street-left of the kitchen projection, high under the soffit",
+   "desc": "Small white box (~0.15 m) high on the wall above the floodlight - vent cap / junction box.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1878,
+     940,
+     1890,
+     950
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2300,
+      721,
+      2318,
+      737
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.15,
+    0.13
+   ],
+   "size_basis": "px",
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "rear.speaker_great_room_SR",
+   "type": "other",
+   "on": "great-room wall, above the slider's street-right top corner",
+   "desc": "Black wedge-shaped outdoor loudspeaker (~0.3 x 0.2 m) fixed high on the wall, angled down.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     850,
+     554,
+     917,
+     604
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.32,
+    0.22
+   ],
+   "size_basis": "px at 4.79 mm/px",
+   "attrs": {
+    "z_above_patio": [
+     2.57,
+     2.8
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.speaker_great_room_SL",
+   "type": "other",
+   "on": "great-room wall, above the slider near its street-left end",
+   "desc": "Black wedge-shaped outdoor loudspeaker (~0.3 x 0.2 m) fixed high on the wall, angled down.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     1575,
+     554,
+     1643,
+     607
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.32,
+    0.22
+   ],
+   "size_basis": "px",
+   "attrs": {
+    "z_above_patio": [
+     2.57,
+     2.8
+    ]
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.speaker_bedroom_SL",
+   "type": "other",
+   "on": "bedroom wall, above the inner lantern next to the pergola post",
+   "desc": "Black wedge-shaped outdoor loudspeaker (~0.3 x 0.2 m) fixed high on the wall, angled down.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     550,
+     602,
+     597,
+     640
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.3,
+    0.2
+   ],
+   "size_basis": "px",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "rear.speaker_bedroom_SR",
+   "type": "other",
+   "on": "bedroom wall, above the street-right lantern",
+   "desc": "Black wedge-shaped outdoor loudspeaker (~0.3 x 0.2 m) fixed high on the wall, angled down.",
+   "ref": {
+    "image": "frames/seg123_059.jpg",
+    "bbox": [
+     1695,
+     638,
+     1725,
+     658
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1361,
+      300,
+      1393,
+      320
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.3,
+    0.2
+   ],
+   "size_basis": "px",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "rear.camera_bedroom_corner",
+   "type": "other",
+   "on": "bedroom wall, high at the street-right rear corner",
+   "desc": "Small white/blue security camera.",
+   "ref": {
+    "image": "frames/seg123_059.jpg",
+    "bbox": [
+     1667,
+     645,
+     1674,
+     655
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.08,
+    0.08
+   ],
+   "size_basis": "px",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "rear.camera_pergola_corner",
+   "type": "other",
+   "on": "inside corner great-room wall / nook bay, beside the top of the pergola's back post",
+   "desc": "White bullet security camera.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     1857,
+     571,
+     1885,
+     596
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.13,
+    0.1
+   ],
+   "size_basis": "px",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "rear.camera_laundry_corner",
+   "type": "other",
+   "on": "laundry wall, under the soffit at the street-left rear corner",
+   "desc": "White bullet/turret security camera; a second one is on the side wall just round the corner (p26 [2455,934,2465,942]).",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2406,
+     931,
+     2420,
+     941
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.12,
+    0.1
+   ],
+   "size_basis": "px",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "rear.outlets",
+   "type": "other",
+   "on": "ground-floor rear walls, ~0.45 m above the patio",
+   "desc": "White weatherproof outlet covers: bedroom wall both sides of the slider, great-room wall street-right portion, nook bay side wall (street-left) near the house end.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     827,
+     1029,
+     848,
+     1060
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      550,
+      1008,
+      571,
+      1038
+     ]
+    },
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      1724,
+      843,
+      1732,
+      855
+     ]
+    },
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      2060,
+      862,
+      2068,
+      875
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1586,
+      1100,
+      1594,
+      1111
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.08,
+    0.13
+   ],
+   "size_basis": "px",
+   "attrs": {
+    "count_seen": 5
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.hose_bib",
+   "type": "other",
+   "on": "base of the pergola's back post / bay side wall inside corner",
+   "desc": "Brass hose bib ~0.45 m above the patio.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     1875,
+     1012,
+     1904,
+     1033
+    ]
+   },
+   "also": [],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "rear.condenser_white",
+   "type": "equipment",
+   "on": "against the laundry wall, immediately street-left of the kitchen projection",
+   "desc": "Tall white side-discharge heat-pump condenser with two stacked round fan grilles facing the pool (~0.95 w x 1.35 h x 0.35 d m) on a pad.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1855,
+     1076,
+     1904,
+     1170
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2268,
+      884,
+      2350,
+      994
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      2257,
+      905,
+      2336,
+      1016
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      2260,
+      1047,
+      2330,
+      1157
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.95,
+    1.35
+   ],
+   "size_basis": "94 px tall at ~70 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      5.9,
+      6.85
+     ],
+     "Yl": [
+      0.05,
+      0.45
+     ]
+    }
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.condenser_grey",
+   "type": "equipment",
+   "on": "against the laundry wall, street-left of the white condenser (behind the oak in p26)",
+   "desc": "Second tall outdoor unit, light grey cabinet with a red brand stripe near the top (~0.9 w x 1.6 h m).",
+   "ref": {
+    "image": "frames/seg141_025.jpg",
+    "bbox": [
+     2484,
+     1055,
+     2539,
+     1186
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2513,
+      891,
+      2557,
+      1016
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      2494,
+      909,
+      2543,
+      1034
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1904,
+      1078,
+      1928,
+      1170
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.9,
+    1.6
+   ],
+   "size_basis": "131 px tall vs the white unit's 110 px in seg141_025",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      4.8,
+      5.75
+     ],
+     "Yl": [
+      0.05,
+      0.5
+     ]
+    }
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "rear.ac_disconnects",
+   "type": "equipment",
+   "on": "laundry wall near the street-left rear corner, ~1.1 m above the floor",
+   "desc": "Two small grey electrical boxes (disconnect switches / covered outlets) side by side, a conduit dropping from the left one to the foundation.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2396,
+     1090,
+     2439,
+     1109
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.2,
+    0.25
+   ],
+   "size_basis": "15 px wide each at ~75 px/m",
+   "attrs": {
+    "boxes_p26": [
+     [
+      2396,
+      1090,
+      2411,
+      1108
+     ],
+     [
+      2424,
+      1091,
+      2439,
+      1109
+     ]
+    ]
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.roof_exhaust_hood",
+   "type": "vent",
+   "on": "on the lean-to roof above the kitchen, street-left of the kitchen gable ridge",
+   "desc": "Dark metal hooded roof exhaust box (likely the kitchen range vent), ~0.9 x 0.6 x 0.45 m.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1803,
+     850,
+     1853,
+     880
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      655,
+      1350,
+      682,
+      1380
+     ]
+    },
+    {
+     "image": "frames/seg141_007.jpg",
+     "bbox": [
+      2206,
+      625,
+      2269,
+      658
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2200,
+      626,
+      2257,
+      655
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.9,
+    0.45
+   ],
+   "size_basis": "p30: 27 x 30 px at 52 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": 7.6,
+     "Yl": -1.25
+    }
+   },
+   "conf": 0.55
+  },
+  {
+   "id": "rear.roof_vents_laundry",
+   "type": "vent",
+   "on": "laundry lean-to roof, near the street-left hip",
+   "desc": "Two black round roof-jack vent caps (~0.3 m dia, ~0.4 m tall).",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2280,
+     837,
+     2302,
+     867
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      2357,
+      837,
+      2380,
+      862
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      338,
+      1329,
+      352,
+      1343
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      293,
+      1365,
+      307,
+      1379
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.3,
+    0.4
+   ],
+   "size_basis": "px",
+   "attrs": {},
+   "conf": 0.7
+  },
+  {
+   "id": "rear.downspout_recess",
+   "type": "downspout",
+   "on": "inside corner between the kitchen projection and the recess strip, storey 1",
+   "desc": "Dark (black / dark bronze) rectangular downspout. From the lower eave gutter to grade.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1629,
+     937,
+     1640,
+     1129
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1989,
+      724,
+      2001,
+      941
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      1979,
+      743,
+      1991,
+      962
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1970,
+      885,
+      1982,
+      1105
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.08,
+    3.1
+   ],
+   "size_basis": "eave to grade",
+   "attrs": {
+    "local_m": {
+     "Xl": 10.1,
+     "Yl": 0.05
+    }
+   },
+   "conf": 0.8
+  },
+  {
+   "id": "rear.downspout_upper_media_SL",
+   "type": "downspout",
+   "on": "corner of the media box's street-left wall and the W3 wall, storey 2",
+   "desc": "Dark (black / dark bronze) rectangular downspout. From the upper gutter down onto the kitchen lean-to roof.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1711,
+     744,
+     1721,
+     847
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2089,
+      512,
+      2099,
+      623
+     ]
+    },
+    {
+     "image": "frames/seg141_017.jpg",
+     "bbox": [
+      2075,
+      532,
+      2086,
+      643
+     ]
+    }
+   ],
+   "size_est_m": [
+    0.08,
+    2.4
+   ],
+   "size_basis": "px",
+   "attrs": {
+    "local_m": {
+     "Xl": 10.5,
+     "Yl": -2.6
+    }
+   },
+   "conf": 0.75
+  },
+  {
+   "id": "rear.downspout_upper_media_SR",
+   "type": "downspout",
+   "on": "junction of the W2 eave wall and the media box's street-right wall, storey 2",
+   "desc": "Dark (black / dark bronze) rectangular downspout. With an offset near the top; drops onto the great-room roof.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     1621,
+     60,
+     1638,
+     218
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.08,
+    2.4
+   ],
+   "size_basis": "px",
+   "attrs": {
+    "local_m": {
+     "Xl": 15.5,
+     "Yl": -3.0
+    }
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.downspout_U1_corner",
+   "type": "downspout",
+   "on": "street-left rear corner of the upper volume U1, storey 2",
+   "desc": "Dark (black / dark bronze) rectangular downspout. From U1's gutter corner down to the laundry lean-to roof.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2275,
+     693,
+     2281,
+     837
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.08,
+    2.3
+   ],
+   "size_basis": "px",
+   "attrs": {},
+   "conf": 0.65
+  },
+  {
+   "id": "rear.downspout_laundry_corner",
+   "type": "downspout",
+   "on": "street-left rear corner of the laundry wall, storey 1",
+   "desc": "Thin brownish vertical line at the corner, read as a downspout (could be a corner shadow).",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2446,
+     930,
+     2452,
+     1185
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    0.08,
+    3.2
+   ],
+   "size_basis": "px",
+   "attrs": {},
+   "conf": 0.3
+  },
+  {
+   "id": "rear.gutter_lower",
+   "type": "gutter",
+   "on": "all one-storey eaves on the rear (laundry, kitchen lean-to, bay skirt, great room, bedroom)",
+   "desc": "Dark box gutter forming the eave edge of the standing-seam roofs, over a white fascia; boxed white soffit ~0.45 m; white frieze board at the top of the siding. Eave (fascia bottom) ~3.2 m above the patio.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1252,
+      921
+     ],
+     [
+      1517,
+      914
+     ],
+     [
+      1517,
+      920
+     ],
+     [
+      1252,
+      927
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      2057,
+      900,
+      2487,
+      912
+     ]
+    },
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      1600,
+      567,
+      2560,
+      600
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {
+    "eave_above_patio_m": 3.2,
+    "overhang_m": 0.45
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.gutter_upper",
+   "type": "gutter",
+   "on": "upper-floor eaves on the rear (U1, W3 wall, media box, W2 wall)",
+   "desc": "Dark gutter on a white fascia with boxed soffit at the shingle roofs' eaves (looks dark bronze; reads coppery-brown from above in p30). Upper eave ~6.3 m above the patio.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1370,
+      748
+     ],
+     [
+      1625,
+      718
+     ],
+     [
+      1625,
+      724
+     ],
+     [
+      1370,
+      754
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      1271,
+      32,
+      1629,
+      46
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      2117,
+      633,
+      2305,
+      690
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {
+    "eave_above_patio_m": 6.3
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.steps_laundry",
+   "type": "steps",
+   "on": "at the Dutch door, laundry wall",
+   "desc": "Two bluestone-capped masonry steps: a landing at the threshold (~1.3 m wide, ~0.45 m deep) and one lower, longer step (~2 m wide) that merges into the concrete foundation ledge running street-left along the wall. Three risers of ~0.15 m from lawn to floor.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     2084,
+     1157,
+     2300,
+     1200
+    ]
+   },
+   "also": [],
+   "size_est_m": [
+    2.0,
+    0.45
+   ],
+   "size_basis": "floor ~0.45 m above the lawn here (32 px of foundation at 73 px/m)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      2.3,
+      4.3
+     ],
+     "Yl": [
+      0,
+      0.8
+     ]
+    },
+    "landing_p26": [
+     2091,
+     1157,
+     2210,
+     1177
+    ],
+    "lower_step_p26": [
+     2084,
+     1176,
+     2300,
+     1200
+    ],
+    "risers": 3
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.foundation_line",
+   "type": "other",
+   "on": "base of all rear walls",
+   "desc": "Exposed concrete stem wall below the siding: ~0 at the patio (bluestone at floor level under the pergola), ~0.25 m along the nook bay and kitchen projection, ~0.45 m at the laundry wall's street-left end (lawn falls toward street-left). Dark louvred crawl-space vents (~0.35 x 0.18 m) in it.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "poly": [
+     [
+      1642,
+      1130
+     ],
+     [
+      1838,
+      1144
+     ],
+     [
+      1838,
+      1164
+     ],
+     [
+      1642,
+      1150
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       2200,
+       1165
+      ],
+      [
+       2397,
+       1180
+      ],
+      [
+       2397,
+       1212
+      ],
+      [
+       2300,
+       1200
+      ]
+     ]
+    },
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      2090,
+      1225,
+      2500,
+      1250
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {
+    "vents": [
+     {
+      "image": "photos/p26_08c1ce.jpg",
+      "bbox": [
+       1793,
+       1150,
+       1819,
+       1163
+      ]
+     },
+     {
+      "image": "frames/seg141_025.jpg",
+      "bbox": [
+       2227,
+       1115,
+       2262,
+       1125
+      ]
+     },
+     {
+      "image": "frames/seg141_009.jpg",
+      "bbox": [
+       2189,
+       969,
+       2229,
+       984
+      ]
+     }
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.fireplace",
+   "type": "other",
+   "on": "bluestone patio beyond the house's street-right rear corner, by the side fence; firebox faces street-left toward the lounge seating",
+   "desc": "Free-standing outdoor fireplace clad in white stacked ledgestone: a ~1.5 m wide x ~0.9 m deep x ~1.6 m tall body with a square firebox opening (~0.9 x 0.95 m, sill ~0.4 m up, cream herringbone firebrick lining), tapered shoulders, then a ~0.85 x 0.7 m chimney shaft to ~3.5 m with a flat metal (copper-toned) cap.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     845,
+     930,
+     922,
+     1100
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      1415,
+      543,
+      1557,
+      903
+     ]
+    },
+    {
+     "image": "frames/seg123_039.jpg",
+     "bbox": [
+      1088,
+      201,
+      1227,
+      551
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1598,
+      1116,
+      1701,
+      1192
+     ]
+    },
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      1150,
+      885,
+      1205,
+      1030
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1200,
+      780,
+      1229,
+      880
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.5,
+    3.5
+   ],
+   "size_basis": "seg123_059: 360 px tall at ~95 px/m (lantern = 0.65 m); p26: 170 px at ~53 px/m",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      25.2,
+      26.6
+     ],
+     "Yl": [
+      2.2,
+      3.8
+     ]
+    },
+    "opening_p26": [
+     872,
+     1031,
+     917,
+     1075
+    ],
+    "opening_seg123_059": [
+     1490,
+     766,
+     1549,
+     863
+    ],
+    "shaft_p26": [
+     859,
+     939,
+     904,
+     994
+    ],
+    "shoulders_p26_y": [
+     994,
+     1020
+    ],
+    "interior_view": "photos/p13_f99155.jpg (seen through the bedroom slider)"
+   },
+   "conf": 0.7
+  },
+  {
+   "id": "rear.patio",
+   "type": "paving",
+   "on": "ground, in front of the great-room and bedroom walls",
+   "desc": "Bluestone patio at floor level: blue-grey rectangular flags (~0.6 x 0.9 m, staggered courses, pale joints). Covers the pergola footprint plus a ~0.6 m margin on its street-left side in front of the bay, and extends street-right in front of the bedroom wall to the planting bed by the fireplace; pool-side edge is a straight line at the pergola's front posts, flush with the lawn.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      1022,
+      1016
+     ],
+     [
+      1598,
+      1016
+     ],
+     [
+      1598,
+      1276
+     ],
+     [
+      1393,
+      1276
+     ],
+     [
+      1393,
+      1210
+     ],
+     [
+      1077,
+      1210
+     ],
+     [
+      1077,
+      1092
+     ],
+     [
+      1022,
+      1092
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      0,
+      1093,
+      2500,
+      1442
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      830,
+      1085,
+      1290,
+      1150
+     ]
+    }
+   ],
+   "size_est_m": [
+    11.7,
+    4.6
+   ],
+   "size_basis": "p30 px at ~49 px/m (ground level)",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      14.4,
+      26.1
+     ],
+     "Yl": [
+      0,
+      5.75
+     ]
+    },
+    "edge_p25_y": 1437
+   },
+   "conf": 0.65
+  },
+  {
+   "id": "rear.furniture_dining",
+   "type": "furniture",
+   "on": "under the pergola",
+   "desc": "Rectangular grey slatted outdoor dining table (~2.2 x 1.0 m) with 6-8 dark grey round-backed armchairs with grey cushions.",
+   "ref": {
+    "image": "photos/p25_0c0464.jpg",
+    "bbox": [
+     905,
+     1010,
+     1790,
+     1320
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1105,
+      1075,
+      1255,
+      1210
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      1095,
+      1075,
+      1230,
+      1130
+     ]
+    }
+   ],
+   "size_est_m": [
+    2.2,
+    1.0
+   ],
+   "size_basis": "p25 px mid-depth",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "rear.furniture_lounge",
+   "type": "furniture",
+   "on": "patio in front of the bedroom wall, facing the fireplace",
+   "desc": "Teak slatted lounge set with white cushions: a 3-seat sofa with its back to the pool, a loveseat / two armchairs along the pergola side, and a low teak coffee table.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "bbox": [
+     1375,
+     1053,
+     1538,
+     1203
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      0,
+      1033,
+      471,
+      1283
+     ]
+    },
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      851,
+      1075,
+      1080,
+      1115
+     ]
+    },
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      1530,
+      860,
+      1900,
+      940
+     ]
+    }
+   ],
+   "size_est_m": [
+    2.4,
+    0.9
+   ],
+   "size_basis": "sofa 129 px in p30",
+   "attrs": {
+    "sofa_p30": [
+     1409,
+     1053,
+     1538,
+     1097
+    ],
+    "chairs_p30": [
+     1375,
+     1097,
+     1412,
+     1203
+    ],
+    "table_p30": [
+     1446,
+     1137,
+     1514,
+     1174
+    ]
+   },
+   "conf": 0.6
+  },
+  {
+   "id": "rear.oak",
+   "type": "tree",
+   "on": "rear lawn, ~4.5 m out from the laundry wall, in front of / slightly street-right of the Dutch door",
+   "desc": "Huge heritage oak: trunk ~1.4 m diameter flaring to >2 m at the base, leaning, splitting into massive limbs from ~3 m up; canopy covers the whole street-left half of the rear yard and overhangs the roofs. Mulch ring at its base. IT HIDES (in p26): the laundry wall between the Dutch door and the condensers (plain siding, the lantern beside the door, most of the grey condenser), the left half of the upper U1 window, the U2 wall jog and the street-left end of the W3 wall.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1880,
+     600,
+     2100,
+     1215
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_025.jpg",
+     "bbox": [
+      2290,
+      430,
+      2560,
+      1215
+     ]
+    },
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      2314,
+      380,
+      2557,
+      1040
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      505,
+      1040,
+      565,
+      1100
+     ]
+    }
+   ],
+   "size_est_m": [
+    1.4,
+    15.0
+   ],
+   "size_basis": "trunk 120 px at ~75 px/m in p26; height a guess",
+   "attrs": {
+    "local_m": {
+     "Xl": [
+      3.7,
+      4.7
+     ],
+     "Yl": [
+      3.9,
+      5.3
+     ]
+    },
+    "trunk_hides_p26_x": [
+     1930,
+     2040
+    ]
+   },
+   "conf": 0.5
+  },
+  {
+   "id": "rear.shrubs_bay",
+   "type": "shrub",
+   "on": "planting strip along the base of the nook bay's rear and side walls",
+   "desc": "Row of 5-6 small rose bushes (0.4-0.7 m, white/pink blooms) in a mulch strip.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1290,
+     1095,
+     1620,
+     1165
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg141_009.jpg",
+     "bbox": [
+      1600,
+      901,
+      1990,
+      985
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.6
+  },
+  {
+   "id": "rear.shrubs_kitchen",
+   "type": "shrub",
+   "on": "base of the kitchen projection",
+   "desc": "Two or three low clipped shrubs in front of the foundation.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     1640,
+     1128,
+     1800,
+     1168
+    ]
+   },
+   "also": [],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "rear.shrub_patio_corner",
+   "type": "shrub",
+   "on": "pool-side edge of the patio near the cabana terrace steps (street-right)",
+   "desc": "Bushy ~1 m shrub with yellow-green new leaves at the patio/lawn corner.",
+   "ref": {
+    "image": "frames/seg123_059.jpg",
+    "bbox": [
+     2052,
+     880,
+     2181,
+     1001
+    ]
+   },
+   "also": [],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "rear.planting_bed_fence",
+   "type": "shrub",
+   "on": "between the patio and the street-right side fence, around the fireplace",
+   "desc": "Mulched bed with white climbing/shrub roses and mixed shrubs along the cedar fence.",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "bbox": [
+     1598,
+     1016,
+     1722,
+     1300
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "bbox": [
+      925,
+      1010,
+      992,
+      1095
+     ]
+    },
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      1280,
+      690,
+      1440,
+      900
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.5
+  },
+  {
+   "id": "rear.lawn_rear",
+   "type": "lawn",
+   "on": "between the house / patio and the pool",
+   "desc": "Level lawn; flush with the patio at the pergola and ~0.45 m below floor level at the laundry door. A narrow pale concrete band crosses it parallel to the pool (seen in p26 at y~1150-1290).",
+   "ref": {
+    "image": "photos/p30_b7b282.jpg",
+    "poly": [
+     [
+      250,
+      960
+     ],
+     [
+      1700,
+      960
+     ],
+     [
+      1700,
+      1012
+     ],
+     [
+      1022,
+      1012
+     ],
+     [
+      1022,
+      1092
+     ],
+     [
+      815,
+      1092
+     ],
+     [
+      797,
+      1237
+     ],
+     [
+      615,
+      1237
+     ],
+     [
+      615,
+      1247
+     ],
+     [
+      250,
+      1247
+     ]
+    ]
+   },
+   "also": [
+    {
+     "image": "photos/p26_08c1ce.jpg",
+     "poly": [
+      [
+       820,
+       1125
+      ],
+      [
+       2500,
+       1215
+      ],
+      [
+       2500,
+       1420
+      ],
+      [
+       820,
+       1230
+      ]
+     ]
+    },
+    {
+     "image": "photos/p25_0c0464.jpg",
+     "bbox": [
+      0,
+      1442,
+      2500,
+      1667
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.45
+  },
+  {
+   "id": "rear.fence_street_right",
+   "type": "fence",
+   "on": "street-right property line beside the patio and fireplace",
+   "desc": "Cedar/redwood board fence ~2 m tall with a square-lattice / spindle top band and dark posts.",
+   "ref": {
+    "image": "photos/p26_08c1ce.jpg",
+    "bbox": [
+     700,
+     960,
+     992,
+     1100
+    ]
+   },
+   "also": [
+    {
+     "image": "frames/seg123_059.jpg",
+     "bbox": [
+      1280,
+      610,
+      1647,
+      850
+     ]
+    },
+    {
+     "image": "photos/p30_b7b282.jpg",
+     "bbox": [
+      1722,
+      950,
+      1760,
+      1700
+     ]
+    }
+   ],
+   "size_est_m": null,
+   "size_basis": "",
+   "attrs": {},
+   "conf": 0.5
+  }
+ ],
+ "relations": [
+  "Orientation: in p25, p26, seg141_007-025 and seg123_037-061 image-left = street-RIGHT. Street-left to street-right along the ground floor: laundry wall -> kitchen gable projection -> 0.9 m recess with downspout -> nook bay -> great-room wall (pergola) -> bedroom wall -> fireplace beyond the corner.",
+  "Plan offsets toward the pool, measured from eave lines in p30 (~52 px/m at eave height): laundry wall and bedroom wall share the main rear plane (Yl 0); kitchen gable face ~0.8 m in front of it; great-room wall ~1.3 m in front; nook bay rear face ~3.55 m in front (2.25 m beyond the great-room wall; p25 siding-pitch ratio independently gives 2.2 m).",
+  "Lengths along the rear (m): laundry wall 6.9; kitchen projection 3.0; recess 0.9; nook bay 3.9-4.1; great-room wall 6.05; bedroom wall 5.3; total about 26.5 m between the house's rear corners.",
+  "The media-room box on the upper floor has the same width and lateral position as the nook bay below (Xl ~11.0-15.05); its glass rear face stands on the main rear plane, i.e. ~3.5 m BEHIND the nook bay's rear wall; the bay's roof (hip skirt + flat centre) lies in front of it.",
+  "Upper-floor rear walls relative to the main plane: U1 (street-left volume) ~1.3 m behind; U2 jog ~1.7 m behind; W3 wall ~2.7 m behind; media box face on the plane; W2 wall and the W1 gable wall ~3.0 m behind.",
+  "All ground-floor door/window heads are at one height, ~2.55 m above the patio (sliders, nook windows, Dutch door, awning window); only the kitchen sink window is higher (head ~2.8 m, under the gable). The small top-lite band on every unit is ~0.42 m tall with its muntin ~2.08 m above the patio.",
+  "Lanterns are all the same fixture, top ~2.45 m above the patio (just below the door heads): two on the bedroom wall flanking the slider, two on the great-room wall flanking the slider, two flanking the nook window, two flanking the kitchen window, one beside the Dutch door (street-right side only), two on the media-room corner piers.",
+  "One-storey eaves (bottom of white fascia) are ~3.2 m above the patio on every rear roof; the pergola's top (3.23 m) sits immediately under/behind the great-room fascia and the bedroom canopy (2.85-3.05 m) sits just below the bedroom eave.",
+  "The pergola's front posts stand at the pool-side edge of the patio, ~4.2 m out from the great-room wall and ~1.7-1.9 m further toward the pool than the nook bay's rear face; its street-left side is in line with the bay's street-right side wall; its back posts stand ~0.35 m off the great-room wall at the wall's two ends (inside corner with the bay; outside corner at the bedroom recess).",
+  "The bedroom canopy's front edge continues the line of the pergola's back rail; canopy + pergola together read as one dark horizontal band across the street-right 11 m of the rear.",
+  "The patio is at floor level (sliders have flush sills); the lawn is flush with the patio at the pergola but ~0.25 m below the siding at the nook bay and ~0.45 m below floor at the laundry door (2 stone steps, 3 risers).",
+  "The fireplace stands ~2-4 m toward the pool from the bedroom wall line, at/just beyond the house's street-right end, with its firebox facing street-left; the lounge sofa sits between it and the pergola; the cabana terrace steps start a few metres further toward the back of the lot.",
+  "The oak trunk is ~4.5 m out from the laundry wall, roughly opposite the Dutch door / slightly street-right of it (interior p14 shows it straight outside the door).",
+  "Along the laundry wall from the kitchen projection going street-left: white condenser (floodlight and small white box on the wall above it) - grey condenser - lantern - Dutch door - awning window - two disconnect boxes with the second floodlight above - corner with camera.",
+  "Lower roofs are standing seam (hips, lean-tos, the small kitchen gable, ~4:12); every upper roof is charcoal shingle (~5:12). The great-room roof's apex is about level with the sill of the W1 window.",
+  "Siding course exposure 127 mm (5 in): 26.5 px per course on the great-room wall in p25 and 9.25 px per course on the laundry wall in p26."
+ ],
+ "materials": [
+  {
+   "name": "white horizontal siding",
+   "where": "all rear walls, both storeys, gable triangles, chimney shaft",
+   "colour_srgb": "#f5f0ec",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     2225,
+     1085,
+     2250,
+     1110
+    ]
+   },
+   "notes": "Smooth painted boards, 127 mm (5 in) exposure, crisp shadow lines (lap or nickel-gap shiplap). Sunlit #f5f0ec; open shade #e0e7ea (p25 [690,780,800,900]); deep tree shade ~#747576. White corner boards, frieze, fascia and window casings in the same white."
+  },
+  {
+   "name": "standing-seam metal roof",
+   "where": "all one-storey roofs (laundry and kitchen lean-tos, kitchen gable, nook bay skirt, great-room hip, bedroom lean-to)",
+   "colour_srgb": "#3a3b3e",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     2150,
+     872,
+     2230,
+     895
+    ]
+   },
+   "notes": "Matte black / dark bronze; seams ~0.45-0.5 m apart, ~30 mm high, hip and ridge caps, dark box gutter at the eave. Sample reads #5a595c sunlit at a low angle; planes facing the sky go pale blue-grey from sky reflection (p30 [1150,1240,1200,1300] = #d8dbdf), shaded planes #535966."
+  },
+  {
+   "name": "asphalt shingle roof",
+   "where": "all upper-floor roofs (media hip, W1 gable roof, U1 hip, main roof)",
+   "colour_srgb": "#5c5a59",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     1480,
+     700,
+     1560,
+     740
+    ]
+   },
+   "notes": "Architectural shingles, charcoal with lighter grey variegation; #585656 oblique in p26, warm mid-grey #d6d0cc in the overexposed top-down p30 [880,1300,1000,1340]."
+  },
+  {
+   "name": "black window / door frames",
+   "where": "every window, both sliders, the media glass wall",
+   "colour_srgb": "#282a2c",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     1456,
+     800,
+     1460,
+     870
+    ]
+   },
+   "notes": "Black aluminium-clad exterior, satin; mahogany-stained wood on the inside (visible through the glass). Glass reads dark with sky/tree reflections; lit interiors amber at dusk."
+  },
+  {
+   "name": "mahogany stained wood",
+   "where": "Dutch door (laundry)",
+   "colour_srgb": "#5a2012",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     2150,
+     1095,
+     2180,
+     1140
+    ]
+   },
+   "notes": "Red-brown stained, satin varnish; sample #49170c in tree shade."
+  },
+  {
+   "name": "pergola / canopy metal",
+   "where": "louvred pergola, bedroom canopy, heaters",
+   "colour_srgb": "#46423f",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     1000,
+     951,
+     1150,
+     960
+    ]
+   },
+   "notes": "Dark bronze-charcoal powder coat, satin. #514946 sunlit in p26; #3b3e42 on the shaded post in p25 [100,600,170,1300]; the sky-lit top rail in p25 reads #898f92."
+  },
+  {
+   "name": "bluestone paving",
+   "where": "patio, laundry step caps",
+   "colour_srgb": "#aeb9bf",
+   "sample": {
+    "image": "photos/p25_0c0464.jpg",
+    "rect": [
+     700,
+     1250,
+     1000,
+     1400
+    ]
+   },
+   "notes": "Blue-grey sawn bluestone flags ~0.6 x 0.9 m in staggered courses with pale joints; #bbc9cf in the bright p25, #c1bdbc top-down in p30 [1090,1480,1220,1560]."
+  },
+  {
+   "name": "white ledgestone",
+   "where": "outdoor fireplace",
+   "colour_srgb": "#efedee",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     865,
+     950,
+     895,
+     990
+    ]
+   },
+   "notes": "Stacked thin split-face stone strips (20-40 mm courses), white with light grey variation; firebox lined with cream herringbone firebrick; metal cap."
+  },
+  {
+   "name": "concrete foundation",
+   "where": "exposed stem wall under the siding (street-left half)",
+   "colour_srgb": "#c2b7ab",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     2230,
+     1183,
+     2290,
+     1193
+    ]
+   },
+   "notes": "Smooth warm-grey concrete, sunlit sample."
+  },
+  {
+   "name": "lawn",
+   "where": "between house and pool",
+   "colour_srgb": "#5f7642",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     1100,
+     1160,
+     1250,
+     1185
+    ]
+   },
+   "notes": "Mown turf; #4c6f3e in p25 [300,1550,2200,1640]."
+  },
+  {
+   "name": "oak bark",
+   "where": "oak trunk",
+   "colour_srgb": "#6d6157",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     1960,
+     1050,
+     2030,
+     1150
+    ]
+   },
+   "notes": "Deeply furrowed grey-brown bark."
+  },
+  {
+   "name": "cedar fence",
+   "where": "street-right side fence behind the fireplace",
+   "colour_srgb": "#834825",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     700,
+     1000,
+     760,
+     1050
+    ]
+   },
+   "notes": "Warm red-brown boards with a lattice top band and dark posts."
+  },
+  {
+   "name": "teak furniture",
+   "where": "lounge set by the fireplace",
+   "colour_srgb": "#7a5a45",
+   "sample": {
+    "image": "photos/p25_0c0464.jpg",
+    "rect": [
+     330,
+     1105,
+     440,
+     1170
+    ]
+   },
+   "notes": "Oiled teak slats (#664f45 in shade), white cushions; dining set is dark grey metal with grey cushions."
+  },
+  {
+   "name": "chimney shroud",
+   "where": "top of the main chimney",
+   "colour_srgb": "#3f424a",
+   "sample": {
+    "image": "photos/p26_08c1ce.jpg",
+    "rect": [
+     1412,
+     690,
+     1448,
+     712
+    ]
+   },
+   "notes": "Black standing-seam metal, flared."
+  }
+ ],
+ "open_questions": [
+  "Laundry wall behind the oak (Xl ~4.7-6.0): exact position of the lantern beside the Dutch door and whether anything else (hose bib, vent) is on that stretch - a frame from seg141_011-023 with the trunk shifted, or a view from the lawn between oak and house, would settle it.",
+  "Upper volume U1: full width and muntin pattern of its rear window (left half behind the oak), and the U2 wall jog (known only from the p30 eave outline; any window on it is unknown).",
+  "Whether the awning window right of the Dutch door is one lite or two, and which room it serves.",
+  "The kitchen projection's return walls: the street-left return has a narrow window (interior evidence only); whether the street-right return (facing the bay, 0.9 m gap) has one too is unknown.",
+  "Media room: is there any guard/railing in front of the sliding glass wall (none visible), and is the bay roof's centre truly flat (it reads flat and dark in p30, but only the hip skirt is visible from the ground).",
+  "Eave overhang: assumed 0.45 m when converting p30 eave lines to wall lines; the nook bay comparison suggests it could be ~0.6 m. Wall positions from the plan carry +-0.15 m from this.",
+  "Roof pitches: standing seam ~4:12 and shingles ~5:12 are estimates (kitchen gable rise in p26; W1 rake slope 0.39 in p25); the registered drone frames or the DSM should replace them.",
+  "W2 (small upper window between gable and media box): sill height and sash layout hidden by the pergola in p25; W3 muntins not readable.",
+  "W1 gable: ridge position (asymmetric, ~3.3 m from the street-right corner per p25) and how its street-left slope meets the flat roof behind the W2 wall are not clear in p30.",
+  "Bedroom canopy: projection (~1.5 m) and whether it oversails the house's street-right corner (seg123 frames suggest ~0.5 m, p30 suggests it stops at the corner).",
+  "Pergola: exact blade count, whether the solid strips at the quarter points are beams or light bars, and the pergola's depth (4.0-4.4 m).",
+  "Second (grey) outdoor unit: its type and exact footprint; it is partly behind the oak in every view.",
+  "What stands beyond the street-left rear corner (p26 x2451-2500: a lower white surface with orange/red objects above it) - looks like stored materials in the side yard, not building.",
+  "Absolute scale rests on 127 mm siding courses <-> 8 ft (2.44 m) sliding doors; if the registered cameras give a different scale, scale every size_est_m together."
+ ]
+}

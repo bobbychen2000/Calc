@@ -1,0 +1,145 @@
+{
+ "perg_SW": {
+  "desc": "cabana pergola: south-west outer top corner of the frame (front-right corner seen from the pool)",
+  "obs": {
+   "photos/p27_a7bd4e.jpg": [
+    1765.0,
+    700.3
+   ],
+   "frames/seg123_023.jpg": [
+    1768.9,
+    523.7
+   ],
+   "frames/seg123_035.jpg": [
+    1779.7,
+    523.7
+   ]
+  }
+ },
+ "cab_ridge_N": {
+  "desc": "cabana roof: north end of the ridge (left end seen from the pool)",
+  "obs": {
+   "photos/p27_a7bd4e.jpg": [
+    1191.0,
+    650.3
+   ],
+   "frames/seg123_023.jpg": [
+    1250.5,
+    484.3
+   ],
+   "frames/seg123_035.jpg": [
+    1251.5,
+    485.6
+   ]
+  }
+ },
+ "cab_ridge_S": {
+  "desc": "cabana roof: south end of the ridge (right end seen from the pool)",
+  "obs": {
+   "photos/p27_a7bd4e.jpg": [
+    1366.7,
+    649.7
+   ],
+   "frames/seg123_023.jpg": [
+    1402.5,
+    483.6
+   ],
+   "frames/seg123_035.jpg": [
+    1402.5,
+    485.6
+   ]
+  }
+ },
+ "pool_SE_inner": {
+  "desc": "pool: south-east inner corner of the coping (top arris) at the spa",
+  "obs": {
+   "photos/p27_a7bd4e.jpg": [
+    1693.0,
+    1146.5
+   ],
+   "frames/seg123_023.jpg": [
+    1706.8,
+    928.5
+   ],
+   "frames/seg123_035.jpg": [
+    1716.8,
+    940.0
+   ]
+  }
+ },
+ "spa_NE": {
+  "desc": "spa: north wall outer edge where it meets the east pool wall (at the waterline)",
+  "obs": {
+   "photos/p27_a7bd4e.jpg": [
+    1381.0,
+    1168.5
+   ],
+   "frames/seg123_023.jpg": [
+    1422.2,
+    943.9
+   ],
+   "frames/seg123_035.jpg": [
+    1425.6,
+    953.9
+   ]
+  }
+ },
+ "cabana_pool_NE_inner": {
+  "desc": "pool: north-east inner corner of the coping (top arris, water corner at the cabana end, back-fence side)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1169.5,
+    241.7
+   ],
+   "frames/seg141_031.jpg": [
+    1004.5,
+    319.0
+   ],
+   "frames/seg141_039.jpg": [
+    1008.8,
+    296.5
+   ],
+   "frames/seg141_049.jpg": [
+    1015.8,
+    263.2
+   ],
+   "photos/p27_a7bd4e.jpg": [
+    940.8,
+    1145.2
+   ],
+   "frames/seg123_023.jpg": [
+    1024.9,
+    925.8
+   ],
+   "frames/seg123_035.jpg": [
+    1015.5,
+    936.5
+   ]
+  }
+ },
+ "cabana_perg_NW": {
+  "desc": "cabana pergola: north-west outer top corner of the frame (front-left corner seen from the pool)",
+  "obs": {
+   "photos/p30_b7b282.jpg": [
+    1234.5,
+    96.0
+   ],
+   "frames/seg141_031.jpg": [
+    1005.5,
+    181.0
+   ],
+   "photos/p27_a7bd4e.jpg": [
+    774.1,
+    702.8
+   ],
+   "frames/seg123_023.jpg": [
+    881.0,
+    525.0
+   ],
+   "frames/seg123_035.jpg": [
+    869.7,
+    525.0
+   ]
+  }
+ }
+}

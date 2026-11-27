@@ -16,7 +16,7 @@ from model import materials as _materials  # noqa: E402
 
 MATERIALS = _materials.MATERIALS
 
-ZONES = ['site', 'massing']
+ZONES = ['site', 'house']
 VIEWS = {
     'front': dict(label='Front', pos=(4.0, -26.0, 5.5), target=(13.0, 6.0, 3.5), fov=42),
     'aerial': dict(label='Aerial', pos=(-14.0, -24.0, 26.0), target=(13.0, 14.0, 2.0), fov=42),

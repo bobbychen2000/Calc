@@ -1,0 +1,25 @@
+{
+ "_note": "Rear-yard landmarks (group: photos/p26, frames/seg141_009, seg141_025, photos/p25, frames/seg022_013). Original pixels. Names without the rear_ prefix add observations to landmarks of survey/landmarks.json.",
+
+ "perg_SW": {"obs": {"photos/p26_08c1ce.jpg": [520, 834.5]}},
+ "pool_SE_inner": {"obs": {"photos/p26_08c1ce.jpg": [488.8, 1126]}},
+ "garW_roof_NW": {"obs": {"photos/p26_08c1ce.jpg": [2495, 894]}},
+ "chimB_rim_NW": {"obs": {"photos/p26_08c1ce.jpg": [1438.5, 682]}},
+ "chimB_rim_SW": {"obs": {"photos/p26_08c1ce.jpg": [1447.5, 686]}},
+
+ "rear_hperg_NE": {
+  "desc": "house louvred pergola (rear patio): top outer corner of the frame, north-east (away from the house, fence / fireplace side); left end of the front beam in p26",
+  "obs": {"photos/p30_b7b282.jpg": [1378, 1004], "frames/seg141_049.jpg": [1384.5, 380], "photos/p26_08c1ce.jpg": [944, 949]}},
+ "rear_gableE_apex": {
+  "desc": "upper-floor rear gable on the east (fireplace) side, white gable wall with one window: apex of the roof edge (north end of the shingle ridge)",
+  "obs": {"photos/p30_b7b282.jpg": [1404.5, 1467], "frames/seg141_049.jpg": [1588.5, 315], "photos/p26_08c1ce.jpg": [1263, 732]}},
+ "rear_ventW_top": {
+  "desc": "one-storey metal roof at the rear-left (north-west) corner of the house: the vent nearest the corner, on the west slope behind the hip (right one of two in p26): centre of the cap top",
+  "obs": {"photos/p30_b7b282.jpg": [301, 1372], "frames/seg141_049.jpg": [446, 719], "photos/p26_08c1ce.jpg": [2369.5, 837]}},
+ "rear_nbN_NW": {
+  "desc": "east neighbour's house, north (far from the street) shingled chimney with the white cap band: top of the cap, north-west corner (left silhouette corner from the drone, edge between the two visible faces in p26)",
+  "obs": {"frames/seg002_043.jpg": [2232.5, 243], "frames/seg141_049.jpg": [2256.5, 122], "photos/p26_08c1ce.jpg": [693, 795.5]}},
+ "rear_nbN_SW": {
+  "desc": "east neighbour's north chimney: top of the white cap, south-west corner (edge between the two visible faces from the drone, right silhouette corner in p26)",
+  "obs": {"frames/seg002_043.jpg": [2271, 243], "frames/seg141_049.jpg": [2291, 139.5], "photos/p26_08c1ce.jpg": [723, 799]}}
+}

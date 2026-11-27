@@ -46,15 +46,13 @@ from model import materials as _materials
 from model.kit import Geo, UP, _unit
 
 ROOM_LIVING, ROOM_BARE, ROOM_DARK, ROOM_HALL = 0, 1, 2, 3
+PLANK = 0.1524            # board module of the door_garage finish (web/viewer/looks/surfaces.js MODULES.garagePlank)
 
 # ---- materials of this family (plain PBR fallback for the GLB; the viewer's looks are in glazing.js) -------------
-_materials.register('frame_black', color=(0.012, 0.012, 0.014), roughness=0.40, metallic=0.25)
-_materials.register('glass', color=(0.016, 0.026, 0.034), roughness=0.05)
-_materials.register('door_navy', color=(0.016, 0.023, 0.052), roughness=0.34)
-_materials.register('door_garage', color=(0.88, 0.87, 0.84), roughness=0.55)
-_materials.register('door_wood', color=(0.105, 0.028, 0.012), roughness=0.38)
-_materials.register('hardware_black', color=(0.010, 0.010, 0.011), roughness=0.36, metallic=0.85)
-_materials.register('threshold_bronze', color=(0.030, 0.027, 0.024), roughness=0.42, metallic=0.8)
+# frame_black, glass, door_navy, door_wood, door_garage and trim_white are in model/materials.py already (the door
+# paints and the trim are looked after by the surfaces family); new here:
+_materials.register('hardware_black', color=(0.010, 0.010, 0.011), roughness=0.34, metallic=0.85)
+_materials.register('threshold_bronze', color=(0.042, 0.034, 0.026), roughness=0.42, metallic=0.8)
 
 
 # =====================================================================================================================
@@ -125,16 +123,59 @@ class _B:
                 uv = [(b, a) for a, b in uv]
             self.quad(mat, pts, hint, uv)
 
-    def ring(self, mat, x0, z0, x1, z1, wl, wr, wb, wt, yb, yf, outer=''):
-        """A frame of four members (stiles full height, rails between them): front faces + the faces that look
-        into the opening; outer = which outer edge faces to add ('l', 'r', 't', 'b')."""
+    def ring(self, mat, x0, z0, x1, z1, wl, wr, wb, wt, yb, yf, outer='', bevel=0.0):
+        """A frame of four members (stiles full height, rails between them; wb or wt = 0: no such rail): front
+        faces + the faces that look into the opening; outer = which outer edge faces to add ('l', 'r', 't', 'b');
+        bevel > 0 chamfers the edge round the opening by that much (a glazing bead: it catches the sky)."""
         o = ''.join(c for c in outer if c in 'tb')
-        self.box(mat, x0, x0 + wl, z0, z1, yb, yf, 'fr' + o + ('l' if 'l' in outer else ''))
-        self.box(mat, x1 - wr, x1, z0, z1, yb, yf, 'fl' + o + ('r' if 'r' in outer else ''))
+        bv = bevel
+        self.box(mat, x0, x0 + wl - bv, z0, z1, yb, yf, 'f' + o + ('l' if 'l' in outer else '') + ('' if bv else 'r'))
+        self.box(mat, x1 - wr + bv, x1, z0, z1, yb, yf, 'f' + o + ('r' if 'r' in outer else '') + ('' if bv else 'l'))
+        a, c = x0 + wl - bv, x1 - wr + bv                     # the rails run between the stiles' front faces
         if wb > 0:
-            self.box(mat, x0 + wl, x1 - wr, z0, z0 + wb, yb, yf, 'ft' + ('b' if 'b' in outer else ''), swap=True)
+            self.box(mat, a, c, z0, z0 + wb - bv, yb, yf, 'f' + ('b' if 'b' in outer else '') + ('' if bv else 't'),
+                     swap=True)
         if wt > 0:
-            self.box(mat, x0 + wl, x1 - wr, z1 - wt, z1, yb, yf, 'fb' + ('t' if 't' in outer else ''), swap=True)
+            self.box(mat, a, c, z1 - wt + bv, z1, yb, yf, 'f' + ('t' if 't' in outer else '') + ('' if bv else 'b'),
+                     swap=True)
+        if not bv:
+            return
+        # the bead: sloped faces from the front faces' inner edge down to the opening, then square returns
+        e, f = x0 + wl, x1 - wr                                # the opening
+        g = z0 + wb if wb > 0 else z0
+        h = z1 - wt if wt > 0 else z1
+        ga = g - bv if wb > 0 else z0
+        ha = h + bv if wt > 0 else z1
+        y1 = yf - bv
+        self.quad(mat, [(a, ga, yf), (e, g, y1), (e, h, y1), (a, ha, yf)], (1, 0, 1), [(a, ga), (e, g), (e, h), (a, ha)])
+        self.quad(mat, [(f, g, y1), (c, ga, yf), (c, ha, yf), (f, h, y1)], (-1, 0, 1), [(f, g), (c, ga), (c, ha), (f, h)])
+        self.box(mat, e - 1.0, e, g, h, yb, y1, 'r')
+        self.box(mat, f, f + 1.0, g, h, yb, y1, 'l')
+        if wb > 0:
+            self.quad(mat, [(a, ga, yf), (c, ga, yf), (f, g, y1), (e, g, y1)], (0, 1, 1), [(ga, a), (ga, c), (g, f), (g, e)])
+            self.box(mat, e, f, g - 1.0, g, yb, y1, 't', swap=True)
+        if wt > 0:
+            self.quad(mat, [(e, h, y1), (f, h, y1), (c, ha, yf), (a, ha, yf)], (0, -1, 1), [(h, e), (h, f), (ha, c), (ha, a)])
+            self.box(mat, e, f, h, h + 1.0, yb, y1, 'b', swap=True)
+
+    def bar(self, mat, x0, x1, z0, z1, yg, yf, vertical):
+        """A muntin bar on the glass (simulated divided light): a trapezoid section, half as wide at its face."""
+        if vertical:
+            c = (x1 - x0) * 0.27
+            self.quad(mat, [(x0 + c, z0, yf), (x1 - c, z0, yf), (x1 - c, z1, yf), (x0 + c, z1, yf)], (0, 0, 1),
+                      [(x0 + c, z0), (x1 - c, z0), (x1 - c, z1), (x0 + c, z1)])
+            self.quad(mat, [(x0, z0, yg), (x0 + c, z0, yf), (x0 + c, z1, yf), (x0, z1, yg)], (-1, 0, 1),
+                      [(x0, z0), (x0 + c, z0), (x0 + c, z1), (x0, z1)])
+            self.quad(mat, [(x1 - c, z0, yf), (x1, z0, yg), (x1, z1, yg), (x1 - c, z1, yf)], (1, 0, 1),
+                      [(x1 - c, z0), (x1, z0), (x1, z1), (x1 - c, z1)])
+        else:
+            c = (z1 - z0) * 0.27
+            self.quad(mat, [(x0, z0 + c, yf), (x1, z0 + c, yf), (x1, z1 - c, yf), (x0, z1 - c, yf)], (0, 0, 1),
+                      [(z0 + c, x0), (z0 + c, x1), (z1 - c, x1), (z1 - c, x0)])
+            self.quad(mat, [(x0, z0, yg), (x1, z0, yg), (x1, z0 + c, yf), (x0, z0 + c, yf)], (0, -1, 1),
+                      [(z0, x0), (z0, x1), (z0 + c, x1), (z0 + c, x0)])
+            self.quad(mat, [(x0, z1 - c, yf), (x1, z1 - c, yf), (x1, z1, yg), (x0, z1, yg)], (0, 1, 1),
+                      [(z1 - c, x0), (z1 - c, x1), (z1, x1), (z1, x0)])
 
     def glass(self, G, x0, z0, x1, z1, y, mat='glass'):
         pts = [(x0, z0, y), (x1, z0, y), (x1, z1, y), (x0, z1, y)]
@@ -149,10 +190,10 @@ class _B:
             return
         ybar = yg + 0.018 if ybar is None else ybar
         zb = z1 - light_h - bar
-        self.box(mat, x0, x1, zb, zb + bar, yg, ybar, 'ftb', swap=True)
+        self.bar(mat, x0, x1, zb, zb + bar, yg, ybar, False)
         for i in range(1, int(lights)):
             xc = x0 + (x1 - x0) * i / lights
-            self.box(mat, xc - bar / 2, xc + bar / 2, zb + bar, z1, yg, ybar, 'flr')
+            self.bar(mat, xc - bar / 2, xc + bar / 2, zb + bar * 0.73, z1, yg, ybar, True)
 
     def panel(self, mat, x0, z0, x1, z1, yf, depth=0.012, bevel=0.022, raised=0.0, margin=0.045):
         """A door panel sunk `depth` behind the face yf inside x0..x1, z0..z1, with a bevelled (sticking) edge;
@@ -455,7 +496,7 @@ def window(geo, origin, right, w, h, n=2, lights=2, light_h=0.27, widths=None, f
             st, sb, face = 0.020, 0.020, yf - 0.006
         else:
             st, sb, face = stile, stile + 0.012, ys
-        b.ring(frame_mat, xa, frame, xb, h - frame, st, st, sb, st, yg, face)
+        b.ring(frame_mat, xa, frame, xb, h - frame, st, st, sb, st, yg, face, bevel=0.008)
         b.lite(G, xa + st, frame + sb, xb - st, h - frame - st, yg, lights[i], light_h, bar, face - 0.003, frame_mat,
                glass_mat)
         xa = xb + mull
@@ -545,7 +586,7 @@ def entry_door(geo, origin, right, w=1.86, h=2.46, door_w=1.0, lights=3, side_li
         xb = xa + sw
         b.box(mat, (xb if xa == jamb else xa - post), (xb + post if xa == jamb else xa), thr, top, yb, yf, 'flr')
         ys = yf - 0.010
-        b.ring(mat, xa, thr, xb, top, 0.022, 0.022, 0.19, 0.035, ys - 0.025, ys)
+        b.ring(mat, xa, thr, xb, top, 0.022, 0.022, 0.19, 0.035, ys - 0.025, ys, bevel=0.008)
         b.lite(G, xa + 0.022, thr + 0.19, xb - 0.022, top - 0.035, ys - 0.025, side_lights, light_h + 0.085, 0.028,
                ys - 0.003, mat, glass_mat)
     # the leaf: 3 mm shadow gaps to the posts, the two halves 4 mm apart
@@ -566,7 +607,7 @@ def entry_door(geo, origin, right, w=1.86, h=2.46, door_w=1.0, lights=3, side_li
     b.box(mat, a - 0.002, c + 0.002, split - 0.014, split + 0.020, yl, yl + 0.038, 'ftblr', swap=True)
     # upper leaf
     z0, z1 = split + 0.004, top - g
-    b.ring(mat, a, z0, c, z1, st, st, 0.125, 0.14, ylb, yl, outer='b')
+    b.ring(mat, a, z0, c, z1, st, st, 0.125, 0.14, ylb, yl, outer='b', bevel=0.009)
     yg = yl - 0.024
     b.lite(G, a + st, z0 + 0.125, c - st, z1 - 0.14, yg, lights, light_h, 0.028, yl - 0.004, mat, glass_mat)
     # lever on the latch stile of the upper leaf
@@ -602,7 +643,7 @@ def french_doors(geo, origin, right, w=2.10, h=2.42, leaves=2, lights=3, side_l=
     yg = yl - 0.022
 
     def sidelight(xa, xb):
-        b.ring(frame_mat, xa, thr, xb, top, 0.03, 0.03, rb, 0.035, yg, yf - 0.008)
+        b.ring(frame_mat, xa, thr, xb, top, 0.03, 0.03, rb, 0.035, yg, yf - 0.008, bevel=0.008)
         b.lite(G, xa + 0.03, thr + rb, xb - 0.03, top - 0.035, yg, side_lights, light_h + 0.037, 0.028, yl - 0.003,
                frame_mat, glass_mat)
 
@@ -618,7 +659,7 @@ def french_doors(geo, origin, right, w=2.10, h=2.42, leaves=2, lights=3, side_l=
     lw = (x1 - x0) / leaves
     for i in range(leaves):
         a, c = x0 + i * lw + 0.002, x0 + (i + 1) * lw - 0.002
-        b.ring(frame_mat, a, thr + 0.004, c, top - 0.003, st, st, rb, rt, yg, yl)
+        b.ring(frame_mat, a, thr + 0.004, c, top - 0.003, st, st, rb, rt, yg, yl, bevel=0.008)
         b.lite(G, a + st, thr + 0.004 + rb, c - st, top - 0.003 - rt, yg, lights, light_h, 0.028, yl - 0.003,
                frame_mat, glass_mat)
         if i:                                              # astragal over the meeting stiles
@@ -658,7 +699,7 @@ def slider(geo, origin, right, w=3.7, h=2.44, panels=2, lights=5, light_h=0.27, 
         c = a + pw
         face = yf - 0.012 - (0.045 if i % 2 else 0.0)
         outer = ('r' if i < panels - 1 and not i % 2 else '') + ('l' if i and not i % 2 else '')
-        b.ring(frame_mat, a, thr, c, top, st, st, rb, rt, face - 0.04, face, outer=outer)
+        b.ring(frame_mat, a, thr, c, top, st, st, rb, rt, face - 0.04, face, outer=outer, bevel=0.008)
         b.lite(G, a + st, thr + rb, c - st, top - rt, face - 0.024, lights, light_h, 0.028, face - 0.003, frame_mat,
                glass_mat)
         if pulls and (i == 0 or i == panels - 1):
@@ -693,7 +734,7 @@ def dutch_door_wood(geo, origin, right, w=0.91, h=2.44, split=0.98, lights=0, li
     b.panel(mat, a + st, z0 + 0.21, c - st, z1 - 0.12, yl, depth=0.014, bevel=0.022, raised=0.009, margin=0.045)
     b.box(mat, a - 0.002, c + 0.002, split - 0.014, split + 0.020, yl, yl + 0.038, 'ftblr', swap=True)
     z0, z1 = split + 0.004, top
-    b.ring(mat, a, z0, c, z1, st, st, 0.13, 0.13, ylb, yl, outer='b')
+    b.ring(mat, a, z0, c, z1, st, st, 0.13, 0.13, ylb, yl, outer='b', bevel=0.009)
     b.lite(G, a + st, z0 + 0.13, c - st, z1 - 0.13, yl - 0.024, lights, light_h, 0.028, yl - 0.004, mat, glass_mat)
     xh, d = (c - st / 2, -1.0) if hinge == 'l' else (a + st / 2, 1.0)
     b.lever(hw_mat, xh, split - 0.10, yl, direction=d, plate_h=0.16)
@@ -705,12 +746,16 @@ def dutch_door_wood(geo, origin, right, w=0.91, h=2.44, split=0.98, lights=0, li
 
 def garage_door(geo, origin, right, w=2.44, h=2.44, leaves=2, lights=3, planks=6, light_h=0.445, setback=0.06,
                 casing=0.10, casing_t=0.022, head=0.14, sides='lr', ext_l=None, ext_r=None, seed=0, shade=0,
-                room=ROOM_BARE, out=None, mat='door_garage', casing_mat='trim_white', glass_mat='glass',
-                seal_mat='frame_black'):
+                room=ROOM_BARE, out=None, mat='trim_white', plank_mat='door_garage', casing_mat='trim_white',
+                glass_mat='glass', seal_mat='frame_black'):
     """One white carriage-style garage door (an overhead door dressed as a pair of swing leaves): each of the
     `leaves` has stiles and rails round a row of `lights` small upright lights at the top and a sunk panel of
     `planks` vertical V-grooved boards below.  w x h = the door (= the hole); casing: jamb trim width or
-    (left, right); head: head trim height.  Returns the hole (0, 0, w, h)."""
+    (left, right); head: head trim height.
+
+    Materials: stiles, rails and light bars are plain painted boards (mat); the sunk panel is ONE face of
+    plank_mat = door_garage, the surfaces family's V-groove plank finish (grooves at u = k * 0.1524): its u is
+    scaled so that exactly `planks` boards fill the panel, a joint on each edge.  Returns the hole (0, 0, w, h)."""
     F = Frame(origin, right, out)
     b = _B(geo, F)
     G = _GlassCode(w, h, 0.0, seed, shade, room)
@@ -719,7 +764,7 @@ def garage_door(geo, origin, right, w=2.44, h=2.44, leaves=2, lights=3, planks=6
     b.box(seal_mat, 0.0, w, 0.0, 0.012, yd - 0.03, yd + 0.004, 'ft')      # bottom seal
     leaves = max(1, int(leaves))
     lw = w / leaves
-    st, rtop, rmid, rbot, g = 0.135, 0.13, 0.12, 0.215, 0.004
+    st, rtop, rmid, rbot, g = 0.15, 0.13, 0.12, 0.215, 0.004
     for i in range(leaves):
         a, c = i * lw + g, (i + 1) * lw - g
         z0, z1 = 0.012, h - g
@@ -729,7 +774,10 @@ def garage_door(geo, origin, right, w=2.44, h=2.44, leaves=2, lights=3, planks=6
         zp0 = z0 + rbot
         b.ring(mat, a, z0, c, z1, st, st, rbot, rtop, yd - 0.03, yd, outer='lr')
         b.box(mat, a + st, c - st, zp1, zl0, yd - 0.03, yd, 'ftb', swap=True)
-        b.planks(mat, a + st, zp0, c - st, zp1, yd - 0.014, planks)
+        pa, pc, yp = a + st, c - st, yd - 0.014
+        ku = planks * PLANK / (pc - pa)
+        b.quad(plank_mat, [(pa, zp0, yp), (pc, zp0, yp), (pc, zp1, yp), (pa, zp1, yp)], (0, 0, 1),
+               [(0.0, zp0), ((pc - pa) * ku, zp0), ((pc - pa) * ku, zp1), (0.0, zp1)])
         b.glass(G, a + st, zl0, c - st, zl1, yd - 0.02, glass_mat)
         m = 0.04
         for k in range(1, int(lights)):

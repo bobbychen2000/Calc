@@ -1,12 +1,250 @@
 {
-  "chimB_rim_SW": {"obs": {"frames/seg002_031.jpg": [1460.0, 790.5]}},
-  "chimB_rim_NW": {"obs": {"frames/seg002_031.jpg": [1471.0, 771.5]}},
-  "chimB_rim_SE": {"obs": {"frames/seg002_031.jpg": [1506.5, 801.0]}},
-  "chimA_rim_SW": {"obs": {"frames/seg002_031.jpg": [1449.6, 658.3]}},
-  "chimA_rim_NW": {"obs": {"frames/seg002_031.jpg": [1455.6, 649.0]}},
-  "chimA_rim_SE": {"obs": {"frames/seg002_031.jpg": [1476.2, 662.5]}},
-  "vent1_top": {"obs": {"frames/seg002_031.jpg": [995.0, 716.7]}},
-  "vent2_top": {"obs": {"frames/seg002_031.jpg": [1060.7, 728.3]}},
-  "vent3_top": {"obs": {"frames/seg002_031.jpg": [1127.7, 747.7]}},
-  "gable_gar_apex": {"obs": {"frames/seg002_031.jpg": [817.5, 736.5]}}
+ "chimB_rim_SW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1460.0,
+    790.5
+   ]
+  }
+ },
+ "chimB_rim_NW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1471.0,
+    771.5
+   ]
+  }
+ },
+ "chimB_rim_SE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1506.5,
+    801.0
+   ]
+  }
+ },
+ "chimA_rim_SW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1449.6,
+    658.3
+   ]
+  }
+ },
+ "chimA_rim_NW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1455.6,
+    649.0
+   ]
+  }
+ },
+ "chimA_rim_SE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1476.2,
+    662.5
+   ]
+  }
+ },
+ "vent1_top": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    995.0,
+    716.7
+   ]
+  }
+ },
+ "vent2_top": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1060.7,
+    728.3
+   ]
+  }
+ },
+ "vent3_top": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1127.7,
+    747.7
+   ]
+  }
+ },
+ "gable_gar_apex": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    817.5,
+    736.5
+   ]
+  }
+ },
+ "pool_water_SW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1054.2,
+    443.7
+   ]
+  }
+ },
+ "pool_SE_inner": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1650.0,
+    539.6
+   ]
+  }
+ },
+ "spa_NE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1665.6,
+    508.8
+   ]
+  }
+ },
+ "cab_ridge_S": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1912.0,
+    399.5
+   ]
+  }
+ },
+ "cab_ridge_N": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1924.0,
+    369.5
+   ]
+  }
+ },
+ "cab_eave_SE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1989.5,
+    493.0
+   ]
+  }
+ },
+ "cab_bay_SW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1834.5,
+    482.5
+   ]
+  }
+ },
+ "perg_SW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1669.0,
+    447.5
+   ]
+  }
+ },
+ "gable_right_apex": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1344.5,
+    871.0
+   ]
+  }
+ },
+ "sky1_SW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1322.2,
+    788.9
+   ]
+  }
+ },
+ "sky1_NW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1328.9,
+    773.9
+   ]
+  }
+ },
+ "sky1_SE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1350.9,
+    788.9
+   ]
+  }
+ },
+ "solar_SW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    773.5,
+    682.5
+   ]
+  }
+ },
+ "solar_SE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    833.5,
+    669.0
+   ]
+  }
+ },
+ "gen_top_NE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    672.1,
+    794.3
+   ]
+  }
+ },
+ "gen_top_SE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    648.6,
+    830.0
+   ]
+  }
+ },
+ "porch_roof_SW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    842.5,
+    1025.0
+   ]
+  }
+ },
+ "porch_roof_SE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1195.5,
+    1100.5
+   ]
+  }
+ },
+ "walk_slab_NE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1033.3,
+    1301.3
+   ]
+  }
+ },
+ "walk_slab_SW": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1005.0,
+    1310.0
+   ]
+  }
+ },
+ "walk_slab_SE": {
+  "obs": {
+   "frames/seg002_031.jpg": [
+    1028.0,
+    1313.8
+   ]
+  }
+ }
 }

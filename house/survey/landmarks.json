@@ -2,625 +2,292 @@
  "chimB_rim_SW": {
   "desc": "front (large, right) chimney: top rim of the black metal shroud, front-left (street side / garage side) corner",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1390.8,
-    2075.8
-   ],
-   "frames/seg002_043.jpg": [
-    2061.0,
-    47.6
-   ],
-   "frames/seg141_039.jpg": [
-    2000.0,
-    433.6
-   ]
+   "photos/p30_b7b282.jpg": [1390.8, 2075.8],
+   "frames/seg002_043.jpg": [2061.0, 47.6],
+   "frames/seg141_039.jpg": [2000.0, 433.6]
   }
  },
  "chimB_rim_NW": {
   "desc": "front chimney: top rim of the shroud, back-left corner",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1391.2,
-    2025.3
-   ],
-   "frames/seg002_043.jpg": [
-    2004.4,
-    54.4
-   ],
-   "frames/seg141_039.jpg": [
-    1957.0,
-    411.0
-   ]
+   "photos/p30_b7b282.jpg": [1391.2, 2025.3],
+   "frames/seg002_043.jpg": [2004.4, 54.4],
+   "frames/seg141_039.jpg": [1957.0, 411.0]
   }
  },
  "chimB_rim_SE": {
   "desc": "front chimney: top rim of the shroud, front-right corner",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1454.3,
-    2075.8
-   ],
-   "frames/seg002_043.jpg": [
-    2131.0,
-    51.6
-   ],
-   "frames/seg141_039.jpg": [
-    2066.5,
-    420.2
-   ]
+   "photos/p30_b7b282.jpg": [1454.3, 2075.8],
+   "frames/seg002_043.jpg": [2131.0, 51.6],
+   "frames/seg141_039.jpg": [2066.5, 420.2]
   }
  },
  "chimA_rim_SW": {
   "desc": "middle (rear) chimney next to the two skylights: top rim of the black shroud, front-left corner",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1254.0,
-    1673.5
-   ],
-   "frames/seg002_043.jpg": [
-    1559.3,
-    136.1
-   ],
-   "frames/seg141_039.jpg": [
-    1571.1,
-    332.9
-   ]
+   "photos/p30_b7b282.jpg": [1254.0, 1673.5],
+   "frames/seg002_043.jpg": [1559.3, 136.1],
+   "frames/seg141_039.jpg": [1571.1, 332.9]
   }
  },
  "chimA_rim_NW": {
   "desc": "middle chimney: top rim of the shroud, back-left corner",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1253.8,
-    1639.4
-   ],
-   "frames/seg002_043.jpg": [
-    1532.6,
-    136.9
-   ],
-   "frames/seg141_039.jpg": [
-    1551.4,
-    321.7
-   ]
+   "photos/p30_b7b282.jpg": [1253.8, 1639.4],
+   "frames/seg002_043.jpg": [1532.6, 136.9],
+   "frames/seg141_039.jpg": [1551.4, 321.7]
   }
  },
  "chimA_rim_SE": {
   "desc": "middle chimney: top rim of the shroud, front-right corner",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1288.1,
-    1672.5
-   ],
-   "frames/seg002_043.jpg": [
-    1595.4,
-    136.4
-   ],
-   "frames/seg141_039.jpg": [
-    1604.6,
-    328.2
-   ]
+   "photos/p30_b7b282.jpg": [1288.1, 1672.5],
+   "frames/seg002_043.jpg": [1595.4, 136.4],
+   "frames/seg141_039.jpg": [1604.6, 328.2]
   }
  },
  "sky1_SW": {
   "desc": "front skylight (west slope of the right front gable roof, beside the valley): top frame outer corner, front-left (low, street side)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1124.2,
-    1881.3
-   ],
-   "frames/seg002_043.jpg": [
-    1611.7,
-    264.2
-   ],
-   "frames/seg141_039.jpg": [
-    1598.3,
-    571.7
-   ]
+   "photos/p30_b7b282.jpg": [1127.6, 1881.6],
+   "frames/seg002_043.jpg": [1611.7, 264.2],
+   "frames/seg141_039.jpg": [1598.3, 571.7]
   }
  },
  "sky1_SE": {
   "desc": "front skylight: top frame outer corner, front-right (high, street side)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1170.8,
-    1881.7
-   ],
-   "frames/seg002_043.jpg": [
-    1658.3,
-    244.2
-   ],
-   "frames/seg141_039.jpg": [
-    1640.0,
-    547.5
-   ]
+   "photos/p30_b7b282.jpg": [1170.8, 1881.7],
+   "frames/seg002_043.jpg": [1658.3, 244.2],
+   "frames/seg141_039.jpg": [1640.0, 547.5]
   }
  },
  "sky1_NW": {
   "desc": "front skylight: top frame outer corner, back-left",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1123.5,
-    1837.5
-   ],
-   "frames/seg002_043.jpg": [
-    1575.3,
-    264.2
-   ],
-   "frames/seg141_039.jpg": [
-    1568.3,
-    550.8
-   ]
+   "photos/p30_b7b282.jpg": [1127.6, 1838.3],
+   "frames/seg002_043.jpg": [1575.3, 264.2],
+   "frames/seg141_039.jpg": [1568.3, 550.8]
   }
  },
  "vent1_top": {
   "desc": "main front roof slope: left one of three mushroom vents, centre of the cap top",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    669.0,
-    1859.0
-   ],
-   "frames/seg002_043.jpg": [
-    936.3,
-    244.3
-   ],
-   "frames/seg141_039.jpg": [
-    1029.0,
-    676.3
-   ]
+   "photos/p30_b7b282.jpg": [669.0, 1859.0],
+   "frames/seg002_043.jpg": [936.3, 244.3],
+   "frames/seg141_039.jpg": [1029.0, 676.3]
   }
  },
  "vent2_top": {
   "desc": "main front roof slope: middle mushroom vent, centre of the cap top",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    760.6,
-    1858.4
-   ],
-   "frames/seg002_043.jpg": [
-    1087.5,
-    245.8
-   ],
-   "frames/seg141_039.jpg": [
-    1152.0,
-    648.8
-   ]
+   "photos/p30_b7b282.jpg": [760.6, 1858.4],
+   "frames/seg002_043.jpg": [1087.5, 245.8],
+   "frames/seg141_039.jpg": [1152.0, 648.8]
   }
  },
  "vent3_top": {
   "desc": "main front roof slope: right mushroom vent (right of the hip ridge, with a thin pipe beside it), centre of the cap top",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    851.6,
-    1850.0
-   ],
-   "frames/seg002_043.jpg": [
-    1222.5,
-    272.5
-   ],
-   "frames/seg141_039.jpg": [
-    1263.3,
-    636.3
-   ]
+   "photos/p30_b7b282.jpg": [851.6, 1850.0],
+   "frames/seg002_043.jpg": [1222.5, 272.5],
+   "frames/seg141_039.jpg": [1263.3, 636.3]
   }
  },
  "lawn_grate": {
   "desc": "front right lawn: centre of the square drain grate",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1547.0,
-    2198.7
-   ],
-   "frames/seg141_031.jpg": [
-    2497.1,
-    1209.2
-   ],
-   "frames/seg141_049.jpg": [
-    2394.5,
-    1203.3
-   ]
+   "photos/p30_b7b282.jpg": [1547.0, 2198.7],
+   "frames/seg141_031.jpg": [2497.1, 1209.2],
+   "frames/seg141_049.jpg": [2394.5, 1203.3]
   }
  },
  "pooldeck_NW": {
   "desc": "pool: west deck paving, north-west outer corner of the block that projects north of the coping (far left corner)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    239.5,
-    189.0
-   ],
-   "frames/seg141_031.jpg": [
-    271.1,
-    403.3
-   ],
-   "frames/seg141_049.jpg": [
-    303.3,
-    360.0
-   ],
-   "frames/seg002_033.jpg": [
-    174.0,
-    531.2
-   ]
+   "photos/p30_b7b282.jpg": [239.5, 189.0],
+   "frames/seg141_031.jpg": [271.1, 403.3],
+   "frames/seg141_049.jpg": [303.3, 360.0],
+   "frames/seg002_033.jpg": [174.0, 531.2]
   }
  },
  "pooldeck_SW": {
   "desc": "pool: west deck paving, south-west outer corner (paving / lawn)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    240.4,
-    548.5
-   ],
-   "frames/seg141_031.jpg": [
-    278.2,
-    513.8
-   ],
-   "frames/seg141_049.jpg": [
-    320.7,
-    484.0
-   ]
+   "photos/p30_b7b282.jpg": [240.4, 548.5],
+   "frames/seg141_031.jpg": [278.2, 513.8],
+   "frames/seg141_049.jpg": [320.7, 484.0]
   }
  },
  "pool_water_SW": {
   "desc": "pool: south-west inner corner of the coping (water corner, west end, house side)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    286.5,
-    523.6
-   ],
-   "frames/seg141_031.jpg": [
-    325.6,
-    494.4
-   ],
-   "frames/seg141_049.jpg": [
-    364.4,
-    461.1
-   ]
+   "photos/p30_b7b282.jpg": [286.5, 523.6],
+   "frames/seg141_031.jpg": [325.6, 494.4],
+   "frames/seg141_049.jpg": [364.4, 461.1]
   }
  },
  "pool_SE_inner": {
   "desc": "pool: south-east inner corner of the coping at the spa (spa tile / coping corner, house side, cabana end)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1169.4,
-    531.0
-   ],
-   "frames/seg141_031.jpg": [
-    1069.1,
-    378.7
-   ],
-   "frames/seg141_049.jpg": [
-    1081.8,
-    337.3
-   ]
+   "photos/p30_b7b282.jpg": [1169.4, 531.0],
+   "frames/seg141_031.jpg": [1069.1, 378.7],
+   "frames/seg141_049.jpg": [1081.8, 337.3]
   }
  },
  "spa_NE": {
   "desc": "spa: north-east corner of the dark-blue spa wall top where it meets the east coping",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1169.4,
-    415.0
-   ],
-   "frames/seg141_031.jpg": [
-    1045.5,
-    361.5
-   ],
-   "frames/seg141_049.jpg": [
-    1057.8,
-    312.2
-   ]
+   "photos/p30_b7b282.jpg": [1169.4, 415.0],
+   "frames/seg141_031.jpg": [1045.5, 361.5],
+   "frames/seg141_049.jpg": [1057.8, 312.2]
   }
  },
  "cab_ridge_S": {
   "desc": "cabana roof: south end of the ridge (apex of the south hip triangle)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1565.8,
-    333.0
-   ],
-   "frames/seg141_031.jpg": [
-    1268.6,
-    165.7
-   ],
-   "frames/seg141_049.jpg": [
-    1276.3,
-    116.3
-   ]
+   "photos/p30_b7b282.jpg": [1565.8, 333.0],
+   "frames/seg141_031.jpg": [1268.6, 165.7],
+   "frames/seg141_049.jpg": [1276.3, 116.3]
   }
  },
  "cab_eave_SE": {
   "desc": "cabana roof: south-east eave corner (right front corner seen from the house)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1690.0,
-    506.3
-   ],
-   "frames/seg141_031.jpg": [
-    1400.9,
-    218.0
-   ],
-   "frames/seg141_049.jpg": [
-    1405.5,
-    169.0
-   ]
+   "photos/p30_b7b282.jpg": [1690.0, 506.3],
+   "frames/seg141_031.jpg": [1400.9, 218.0],
+   "frames/seg141_049.jpg": [1405.5, 169.0]
   }
  },
  "cab_bay_SW": {
   "desc": "cabana roof: south-west corner of the eave of the projecting window bay (where the gutter jogs, left of the window)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1466.3,
-    522.5
-   ],
-   "frames/seg141_031.jpg": [
-    1261.4,
-    242.9
-   ],
-   "frames/seg141_049.jpg": [
-    1270.5,
-    203.0
-   ]
+   "photos/p30_b7b282.jpg": [1466.3, 522.5],
+   "frames/seg141_031.jpg": [1261.4, 242.9],
+   "frames/seg141_049.jpg": [1270.5, 203.0]
   }
  },
  "perg_SW": {
   "desc": "cabana pergola: south-west outer top corner of the frame (corner post nearest the pool / house)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1226.9,
-    515.6
-   ],
-   "frames/seg141_031.jpg": [
-    1101.4,
-    256.3
-   ],
-   "frames/seg141_049.jpg": [
-    1111.3,
-    216.3
-   ]
+   "photos/p30_b7b282.jpg": [1226.9, 515.6],
+   "frames/seg141_031.jpg": [1101.4, 256.3],
+   "frames/seg141_049.jpg": [1111.3, 216.3]
   }
  },
  "gen_top_NE": {
   "desc": "left side yard: big grey equipment cabinet (generator) by the fence, top face north-east corner (far right corner seen from the street)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    178.5,
-    1605.0
-   ],
-   "frames/seg141_039.jpg": [
-    255.3,
-    1108.0
-   ],
-   "frames/seg141_049.jpg": [
-    309.4,
-    1104.3
-   ]
+   "photos/p30_b7b282.jpg": [178.5, 1605.0],
+   "frames/seg141_039.jpg": [255.3, 1108.0],
+   "frames/seg141_049.jpg": [309.4, 1104.3]
   }
  },
  "gen_top_SE": {
   "desc": "left side yard: grey equipment cabinet, top face south-east corner (near right corner seen from the street)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    178.5,
-    1690.6
-   ],
-   "frames/seg141_039.jpg": [
-    258.3,
-    1191.3
-   ],
-   "frames/seg141_049.jpg": [
-    315.9,
-    1187.1
-   ]
+   "photos/p30_b7b282.jpg": [178.5, 1690.6],
+   "frames/seg141_039.jpg": [258.3, 1191.3],
+   "frames/seg141_049.jpg": [315.9, 1187.1]
   }
  },
  "gable_gar_apex": {
   "desc": "upper-floor front gable over the garage (left gable with the big window): apex of the gable at the front (front end of its ridge, vertex of the rake edges)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    452.7,
-    1961.5
-   ],
-   "frames/seg002_043.jpg": [
-    561.6,
-    260.3
-   ],
-   "frames/seg141_039.jpg": [
-    752.9,
-    846.8
-   ]
+   "photos/p30_b7b282.jpg": [452.7, 1961.5],
+   "frames/seg002_043.jpg": [561.6, 260.3],
+   "frames/seg141_039.jpg": [752.9, 846.8]
   }
  },
  "gable_right_apex": {
   "desc": "upper-floor right front gable (beside the big chimney): apex of the gable at the front (front end of its ridge, vertex of the rake edges)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1226.0,
-    2101.5
-   ],
-   "frames/seg002_043.jpg": [
-    1953.9,
-    229.4
-   ],
-   "frames/seg141_039.jpg": [
-    1878.2,
-    648.8
-   ]
+   "photos/p30_b7b282.jpg": [1225.5, 2099.0],
+   "frames/seg002_043.jpg": [1953.9, 229.4],
+   "frames/seg141_039.jpg": [1878.2, 648.8]
   }
  },
  "walk_slab_NE": {
   "desc": "front walkway: the one clearly darker paving slab (4th-5th slab row from the porch steps, right half of the walk): its north-east corner (house side, right)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    899.2,
-    2241.8
-   ],
-   "frames/seg002_053.jpg": [
-    1959.3,
-    1325.7
-   ],
-   "frames/seg002_043.jpg": [
-    1935.0,
-    1413.1
-   ]
+   "photos/p30_b7b282.jpg": [899.2, 2241.8],
+   "frames/seg002_053.jpg": [1959.3, 1325.7],
+   "frames/seg002_043.jpg": [1935.0, 1413.1]
   }
  },
  "walk_slab_SW": {
   "desc": "front walkway: the darker paving slab, south-west corner (street side, left)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    871.3,
-    2271.3
-   ],
-   "frames/seg002_053.jpg": [
-    1960.7,
-    1385.7
-   ]
+   "photos/p30_b7b282.jpg": [871.3, 2271.3],
+   "frames/seg002_053.jpg": [1960.7, 1385.7]
   }
  },
  "walk_slab_SE": {
   "desc": "front walkway: the darker paving slab, south-east corner (street side, right)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    899.2,
-    2271.3
-   ],
-   "frames/seg002_053.jpg": [
-    2025.0,
-    1365.0
-   ]
+   "photos/p30_b7b282.jpg": [899.2, 2271.3],
+   "frames/seg002_053.jpg": [2025.0, 1365.0]
   }
  },
  "porch_roof_SW": {
   "desc": "front porch roof: front-left corner of the metal roof itself (roof edge at the lower end of the left hip, inside the gutter) - garage side",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    620.5,
-    2181.5
-   ],
-   "frames/seg002_043.jpg": [
-    1086.0,
-    864.6
-   ],
-   "frames/seg141_039.jpg": [
-    1167.0,
-    1386.7
-   ]
+   "photos/p30_b7b282.jpg": [620.5, 2181.5],
+   "frames/seg002_043.jpg": [1086.0, 864.6],
+   "frames/seg141_039.jpg": [1167.0, 1386.7]
   }
  },
  "porch_roof_SE": {
   "desc": "front porch roof: front-right corner of the metal roof itself (roof edge at the lower end of the right hip, inside the gutter)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1062.0,
-    2192.0
-   ],
-   "frames/seg002_043.jpg": [
-    1997.0,
-    741.4
-   ],
-   "frames/seg141_039.jpg": [
-    1842.1,
-    1142.9
-   ]
+   "photos/p30_b7b282.jpg": [1062.0, 2192.0],
+   "frames/seg002_043.jpg": [1997.0, 741.4],
+   "frames/seg141_039.jpg": [1842.1, 1142.9]
   }
  },
  "solar_NW": {
   "desc": "left solar array (4 panels on the west slope of the main roof): north-west corner of the array (far, low/eave side)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    326.8,
-    1529.2
-   ],
-   "frames/seg141_031.jpg": [
-    432.6,
-    590.4
-   ],
-   "frames/seg141_039.jpg": [
-    457.2,
-    620.3
-   ],
-   "frames/seg141_049.jpg": [
-    491.9,
-    643.0
-   ]
+   "photos/p30_b7b282.jpg": [326.8, 1529.2],
+   "frames/seg141_031.jpg": [432.6, 590.4],
+   "frames/seg141_039.jpg": [457.2, 620.3],
+   "frames/seg141_049.jpg": [491.9, 643.0]
   }
  },
  "solar_SW": {
   "desc": "left solar array: south-west corner (near, low/eave side)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    326.8,
-    1800.2
-   ],
-   "frames/seg141_031.jpg": [
-    473.0,
-    770.2
-   ],
-   "frames/seg141_039.jpg": [
-    503.0,
-    809.8
-   ],
-   "frames/seg141_049.jpg": [
-    543.4,
-    841.1
-   ]
+   "photos/p30_b7b282.jpg": [326.8, 1800.2],
+   "frames/seg141_031.jpg": [473.0, 770.2],
+   "frames/seg141_039.jpg": [503.0, 809.8],
+   "frames/seg141_049.jpg": [543.4, 841.1]
   }
  },
  "solar_SE": {
   "desc": "left solar array: south-east corner (near, high/ridge side)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    415.5,
-    1804.6
-   ],
-   "frames/seg141_031.jpg": [
-    618.0,
-    683.0
-   ],
-   "frames/seg141_039.jpg": [
-    641.8,
-    725.8
-   ],
-   "frames/seg141_049.jpg": [
-    672.7,
-    759.8
-   ]
+   "photos/p30_b7b282.jpg": [415.5, 1804.6],
+   "frames/seg141_031.jpg": [618.0, 683.0],
+   "frames/seg141_039.jpg": [641.8, 725.8],
+   "frames/seg141_049.jpg": [672.7, 759.8]
   }
  },
  "garW_roof_NW": {
   "desc": "one-storey metal roof along the left (west) side of the house / garage: its rear-left (north-west) corner, outer corner of the eave edge band (beside the roof vent pipe, at the lawn)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    247.5,
-    1273.5
-   ],
-   "frames/seg141_031.jpg": [
-    305.7,
-    704.3
-   ],
-   "frames/seg141_039.jpg": [
-    332.3,
-    715.8
-   ],
-   "frames/seg141_049.jpg": [
-    370.0,
-    717.2
-   ]
+   "photos/p30_b7b282.jpg": [247.5, 1273.5],
+   "frames/seg141_031.jpg": [305.7, 704.3],
+   "frames/seg141_039.jpg": [332.3, 715.8],
+   "frames/seg141_049.jpg": [370.0, 717.2]
   }
  },
  "cab_ridge_N": {
   "desc": "cabana roof: north end of the ridge (where the two rear hips meet the ridge cap)",
   "obs": {
-   "photos/p30_b7b282.jpg": [
-    1564.8,
-    235.1
-   ],
-   "frames/seg141_031.jpg": [
-    1241.0,
-    143.8
-   ],
-   "frames/seg141_049.jpg": [
-    1248.1,
-    89.3
-   ]
+   "photos/p30_b7b282.jpg": [1564.8, 235.1],
+   "frames/seg141_031.jpg": [1241.0, 143.8],
+   "frames/seg141_049.jpg": [1248.1, 89.3]
   }
  }
 }
