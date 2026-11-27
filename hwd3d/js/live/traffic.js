@@ -3522,8 +3522,10 @@ export class Traffic {
     // (round 6, H7) a turn at walking speed or at rest (a pivot - an observed true heading at a hold, a planned pivot) that would swing a main
     // wheel off the pavement where it is now on it waits instead: a business jet holding short pivoted 108 deg and back at the hold with one
     // main wheel over the taxiway edge for ~3 s (off_pavement_moving) [counters.pivotEdgeHold]
-    // (only a pivot toward a resting target's heading - c.pivotObs or a stop: a slow turn along a route still turns)
-    if ((c.pivotObs || o.stop) && Math.abs(c.v) < 0.5 && Math.abs(w) > 1e-4 && T && T.track && T.cls !== 'heli' && !tr.vehicle) {
+    // (only a pivot toward a resting target's heading - c.pivotObs or a stop: a slow turn along a route still turns - and only in place: within
+    // 1 m of the trail's end and of the target. A business jet stopped 5.6 m short of its resting target could never pivot toward it, stood
+    // there for minutes and slid 9 m sideways at 0 kt of drawn speed when the target moved off - ground_pos_step_frames) [inf: 1 m]
+    if ((c.pivotObs || o.stop) && Math.abs(c.v) < 0.5 && Math.abs(w) > 1e-4 && gap < 1 && Math.hypot(o.x - c.x, o.z - c.z) < 1 && T && T.track && T.cls !== 'heli' && !tr.vehicle) {
       const offAt = (psi) => samples(T, c.x, c.z, toDeg(psi)).gear.some(g => !this.paved(g[0], g[1]));
       if (offAt(c.psi + w) && !offAt(c.psi)) { w = 0; this.counters.pivotEdgeHold = (this.counters.pivotEdgeHold || 0) + 1; } }
     c.psi = wrapPi(c.psi + w); c.w = w / dt;
