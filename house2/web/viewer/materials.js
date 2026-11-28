@@ -81,6 +81,8 @@ export class Materials {
     this.tickFns = [];
     this.time = 'day';
     this.ctx = { THREE, renderer, quality, time: 'day', envGain: 1, anisotropy: renderer ? renderer.capabilities.getMaxAnisotropy() : 1 };
+    // a look that changes what it draws after the first frame (foliage: geometry prepared on first render) asks for another
+    this.ctx.changed = () => { if (this.onChange) this.onChange(); };
     const lib = {
       add: (name, entry, kind) => { this.entries.set(name, entry); if (kind) this.kinds.set(name, kind); },
       onTime: (fn) => this.timeFns.push(fn),

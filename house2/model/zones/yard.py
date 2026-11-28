@@ -61,20 +61,29 @@ FP_TOP = 4.10
 LOUNGE = dict(sofa_w=(2.77, 4.32), sofa_s=(4.53, 2.62), chair_n=(4.43, 5.78), chair_e=(5.88, 4.30),
               coffee=(3.72, 3.52), side_wood=(3.62, 5.11), side_dark=(5.26, 3.37))
 UMBRELLA = (4.98, 1.46)
-# arbor: west corner of the rafter field (aerial outline at z 3), x along its pool side (toward NE), -y into it (SE)
-AR_O, AR_ANG = (2.2, -11.2), 45.0
-AR_L, AR_D = 5.7, 5.0                 # rafter field: along the pool side x rafter length
-AR_COL_X, AR_COL_Y = (0.55, 5.15), (-1.0, -4.4)
-AR_BEAM_Z, AR_TOP = 2.35, 3.00        # under the beams (survey est. column 2.4); rafter top: p26 / frame 134300 (0.65 m of timber)
-# play structure (aligned with the lot axes; heights above the chips: typical swing-set values checked on p19)
-PL_TOWER = (18.25, 0.45)              # centre of the roofed tower
-PL_TOWER_S = 2.0                      # its deck, square
-PL_DECK, PL_RAIL, PL_EAVE, PL_RIDGE, PL_BEAM = 1.30, 2.10, 2.30, 3.35, 2.15     # ridge / fort top: p28
-PL_BRIDGE_X = 18.55                   # bridge centre line, runs south to the fort
-# fort deck: a ~1.5 m hexagon turned 45 deg (frame 140500 corners at deck height); edge 0-1 = the bridge's, 3-4 = the slide's
+# arbor: the column grid solved on p20 (rms 4.1 px; checked through p26 / frame 133700): origin = the pool-side SW
+# column's centre, x along the pool side toward the NE column (45.5 deg), y toward the pool (NW); BBQ row at y -4.066
+AR_O, AR_ANG = (3.125, -11.149), 45.5
+AR_COLS = ((0.0, 0.0), (4.414, 0.0), (0.0, -4.066), (4.413, -4.067))     # SWp, NEp (on the bar's pier), SWb, NEb
+AR_BX = (-0.85, 5.26)                 # beam ends: ~0.6 m past the column faces (p20, p26: 0.86 m past the centre)
+AR_RY = (0.55, -4.62)                 # rafter ends: ~0.55 m past the beams (aerial outline at z 2.85)
+AR_BEAM_Z, AR_TOP = 2.26, 2.90        # beam underside: p20 2.28, p26 2.20; beam 0.28 + rafters 0.30 + slats 0.06 (p26)
+AR_SHAFT, AR_PLINTH, AR_PLINTH_H = 0.46, 0.55, 0.32    # p26 (square on) / p20: shaft 0.46-0.47, plinth 0.55 x 0.32
+# play structure (aligned with the lot axes).  Heights ABSOLUTE (p19 rms 2.9 px, p22, aerial): the chips under the tower
+# triangulate at ~2.2 (plan.ground_z there is ~1.97); feet and frames stand on plan.ground_z.
+PL_TOWER = (17.72, 0.475)             # roof eave corners NW (16.70, 1.42), SW (16.76, -0.50), NE (18.68, 1.45) (p19)
+PL_TOWER_S, PL_ROOF_S = 1.56, 1.96    # deck square, roof square
+Z_DECK, Z_RAIL, Z_EAVE, Z_RIDGE = 3.65, 4.30, 4.85, 5.90      # p19: eave 4.85, ridge 5.85-5.95 (48 deg); deck / rail
+Z_BEAM = 3.87                         # swing beam centre (its end 3.94 at the top, p19)
+Z_BRIDGE, Z_BRIDGE_TOP = 4.70, 5.90   # the RAISED bridge: floor under the tower's eave (p22 4.9, p19 swing tops 4.5)
+PL_BRIDGE = ((18.10, -0.45), (17.97, -3.59))   # centre line, tower end -> fort end (aerial + frame 140500 at z 4.6)
+# fort deck: a ~1.5 m hexagon turned 45 deg (frame 140500 + aerial triangulate the deck at 3.3, 1 px); edge 0-1 = the
+# bridge's side (an upper landing at the bridge's level), 3-4 = the long slide's
 PL_FORT = [(18.24, -3.60), (19.06, -4.17), (19.13, -4.75), (18.45, -5.46), (17.75, -4.75), (17.70, -4.11)]
-PL_FORT_TOP = 2.65
-PL_AFRAME_X, PL_BEAM_Y = 13.55, 0.30
+Z_FORT, Z_FORT_TOP = 3.30, 4.55
+PL_AFRAME = ((13.49, 1.44), (13.59, -0.93), (13.73, 0.40))     # feet N / S, apex (p19)
+PL_BEAM_Y = (0.28, 0.52)              # the two rails of the swing beam (monkey bars): aerial 0.37 / 0.62, p19 0.21
+PL_TIRE = (15.27, 0.30, 2.44)         # tyre centre, its top face (p19)
 # vegetable garden: fence base (aerial, on the ground), beds (aerial boxes at the bed tops)
 GARDEN = [(16.76, 7.24), (16.78, 4.67), (24.22, 4.61), (24.18, 12.23), (16.71, 12.32), (16.75, 8.08)]
 BEDS = [((17.60, 8.98), (19.49, 10.85)), ((21.04, 9.00), (22.92, 10.98)), ((17.58, 5.49), (19.44, 7.39)),
@@ -157,14 +166,15 @@ def fireplace():
     n = np.array([-math.sin(a), math.cos(a)])                     # back (NE)
     o = np.array(FP_CAP_C) - 0.47 * n                             # the front plane under the shaft's centre
     L = Fr((o[0], o[1], 0.0), FP_ANG)
-    hw, dp = 1.35, 1.25                                            # firebox body: half width, depth
+    hw, dp = 1.32, 1.25                                            # body: half width (p22 frontal 2.65-2.70), depth
     # hearth / seat wall along the front (site.seat_wall_fireplace: 1.9 m left, 2.3 m right of the shaft axis)
     hz = 0.52                                                      # hearth top (p22)
     L.box(geo, STONE, (-2.0, -0.50, -0.3), (2.35, 0.0, hz - 0.06), 'xXyY')
     L.box(geo, CAP, (-2.03, -0.54, hz - 0.06), (2.38, 0.02, hz))
-    # body, vertical to 2.45 (p22 proportions on the 4.10 m top and the 2.7 m body width), arched firebox 1.24 wide
+    # body, vertical to 2.45 (p22 proportions on the 4.10 m top and the 2.65 m body width), firebox 1.28 wide under a
+    # flat segmental arch: springing 1.12, crown 1.33 (p22: 61 / 72 px above the hearth; p23 alike)
     zb = 2.45
-    ow, oz0, oz1, rise = 0.62, hz, 0.98, 0.32
+    ow, oz0, oz1, rise = 0.64, hz, 1.12, 0.21
     arch = [(-ow, 0, oz0), (ow, 0, oz0), (ow, 0, oz1)] + [
         (ow * math.cos(t), 0, oz1 + rise * math.sin(t)) for t in np.linspace(0, math.pi, 9)[1:-1]] + [(-ow, 0, oz1)]
     L.poly(geo, STONE, [(-hw, 0, hz), (hw, 0, hz), (hw, 0, zb), (-hw, 0, zb)], holes=[arch])

@@ -180,7 +180,7 @@ float glzCrowns(float x, float N, float sd, out float u, out float id) {
 
 // What a pane mirrors: the sky of the image-based light, a line of trees (round crowns, a few conifers, the fresh
 // greens of spring), neighbouring houses between them, a clipped screen and hedge at their foot, lawn and paving below.
-vec3 glzWorld(vec3 P, vec3 R, vec3 sunDir, vec3 sunCol, vec3 skyAmb, float aa) {
+vec3 glzWorld(vec3 P, vec3 R, vec3 sunDir, vec3 sunCol, vec3 skyAmb, float aa, float tk) {
   vec3 col = vec3(0.0);
   #ifdef ENVMAP_TYPE_CUBE_UV
     col = textureCubeUV(envMap, normalize(vec3(R.x, max(R.y, 0.0), R.z)), 0.02).rgb * uGlzEnvK;
@@ -198,13 +198,14 @@ vec3 glzWorld(vec3 P, vec3 R, vec3 sunDir, vec3 sunCol, vec3 skyAmb, float aa) {
   // large trees
   float u1, id1;
   float c1 = glzCrowns(xa * 34.0, 34.0, 1.0, u1, id1);
-  float sk = 0.05 + 0.40 * c1 + 0.03 * fine * (glzF2(vec2(xa * 700.0, tn * 30.0)) - 0.5);
+  float sk = (0.05 + 0.40 * c1) * tk + 0.03 * fine * (glzF2(vec2(xa * 700.0, tn * 30.0)) - 0.5);
   float tree = (1.0 - smoothstep(sk - aa, sk + aa, tn)) * step(0.02, c1);
   float v1 = clamp(tn / max(sk, 0.01), 0.0, 1.0);
   float clump = mix(0.5, glzF2(vec2(xa * 520.0, tn * 46.0) + id1), fine);
   float kind = glzH(id1 * 7.7 + 0.3);
   vec3 leaf = kind > 0.8 ? vec3(0.030, 0.062, 0.030) : mix(vec3(0.055, 0.105, 0.028), vec3(0.12, 0.20, 0.045), clump);
   leaf = mix(leaf, mix(vec3(0.20, 0.27, 0.05), vec3(0.15, 0.20, 0.06), step(0.55, kind)), step(0.36, kind) * step(kind, 0.66) * smoothstep(0.2, 0.55, clump));
+  leaf = mix(vec3(dot(leaf, vec3(0.30, 0.59, 0.11))), leaf, tk);           // seen dimly in a dark pane: a grey-green
   float shade = clamp(0.25 + 0.55 * v1 + 0.30 * u1 * side, 0.08, 1.0) * (0.45 + 1.1 * clump);
   vec3 treeCol = leaf * (sunE * 2.4 * front * shade + skyAmb * (0.45 + 0.55 * v1));
   treeCol = mix(treeCol, col, 0.35 * fine * smoothstep(0.62, 0.8, clump) * smoothstep(0.35, 0.9, v1));   // sky through the crown
@@ -283,9 +284,10 @@ const MAIN_FRAGMENT = /* glsl */`
       gRoom = glzRoom(vec3(gP, 0.0), normalize(gRd), gS, gW, gHead, gKind, gShade, gSky, gAA);
     #endif
     if (gPlain > 0.5) gRoom = vec4(mix(vec3(0.016, 0.018, 0.020), vec3(0.95, 0.70, 0.40) * (0.35 + 0.65 * glzH(gS + 0.5)), uGlzDusk), 0.04);
-    // reflection: the pane is not quite flat
-    vec3 gNn = normalize(gNw + gT * (0.011 * sin(gP.x * 2.3 + gS) + 0.006 * sin(gP.y * 3.1 + gS * 1.7))
-      + vec3(0.0, 1.0, 0.0) * (0.008 * sin(gP.y * 1.9 + gP.x * 0.7 + gS * 2.3)));
+    // reflection: the pane is not quite flat (a plain pane a little flatter: its warped bands read as a swirl)
+    float gWob = mix(1.0, 0.35, gPlain);
+    vec3 gNn = normalize(gNw + gWob * gT * (0.011 * sin(gP.x * 2.3 + gS) + 0.006 * sin(gP.y * 3.1 + gS * 1.7))
+      + gWob * vec3(0.0, 1.0, 0.0) * (0.008 * sin(gP.y * 1.9 + gP.x * 0.7 + gS * 2.3)));
     float gC = clamp(dot(-gV, gNn), 0.0, 1.0);
     float gF = 0.15 + 0.85 * pow(1.0 - gC, 5.0);                          // insulated unit: four surfaces
     vec3 gR = reflect(gV, gNn);
@@ -295,11 +297,13 @@ const MAIN_FRAGMENT = /* glsl */`
       gSunC = directionalLights[0].color;
     #endif
     float gRA = clamp(length(fwidth(gR)) * 1.2, 0.003, 0.2);
-    glzSpec = glzWorld(vGlzW, gR, gSunD, gSunC, gSky, gRA) * gF;
-    if (gPlain > 0.5) {                                                   // no lit room behind to balance it: a quieter, greyer mirror image (hero: panes ~35-50 with a faint sky)
+    glzSpec = glzWorld(vGlzW, gR, gSunD, gSunC, gSky, gRA, mix(1.0, 0.5, gPlain)) * gF;
+    if (gPlain > 0.5) {
+      // no lit room behind: the pane is a dark mirror of the sky -- blue-grey where it sees the sky (hero / p01 upper
+      // windows sRGB ~ 80 100 125), darker where trees stand in it (~35-50), never a bright green; a soft knee keeps
+      // sunlit things from glaring
       float gL = dot(glzSpec, vec3(0.2126, 0.7152, 0.0722));
-      glzSpec = mix(vec3(gL), glzSpec, 0.45) * 0.55;
-      glzSpec *= 0.06 / max(0.06, gL * 0.6 + 0.03);                       // soft ceiling: sunlit trees do not glare off a dark pane
+      glzSpec = mix(vec3(gL), glzSpec, 0.85) * (0.16 / (gL + 0.16));
     }
     totalEmissiveRadiance += gRoom.rgb * (1.0 - gF) * vec3(0.87, 0.91, 0.89);
     diffuseColor.rgb = vec3(0.80, 0.78, 0.73) * gRoom.a * (1.0 - gF) * 0.9;
@@ -325,7 +329,7 @@ function glassMaterial(ctx, shared) {
       // perfectly smooth pane would only add fireflies
       .replace('vec3 totalSpecular = reflectedLight.directSpecular + reflectedLight.indirectSpecular;', 'vec3 totalSpecular = glzSpec;');
   };
-  m.customProgramCacheKey = () => 'glazing-glass-5-' + ss;
+  m.customProgramCacheKey = () => 'glazing-glass-6-' + ss;
   return m;
 }
 

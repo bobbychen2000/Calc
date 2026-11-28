@@ -376,6 +376,9 @@ const FOL_VERT = `
 vPlP = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;
 vPlN = normalize( mat3( modelMatrix ) * objectNormal );
 `;
+// crowns (prepFoliage below): the crown's centre in the world and its radius + 1000 (0: none / not prepared yet)
+const FOL_VERT_CROWN_PARS = 'attribute vec4 plCrown;\nvarying vec4 vPlC;';
+const FOL_VERT_CROWN = 'vPlC = vec4( ( modelMatrix * vec4( plCrown.xyz, 1.0 ) ).xyz, plCrown.w );';
 const FOL_FRAG_PARS = `
 varying vec3 vPlP;
 varying vec3 vPlN;
@@ -386,7 +389,13 @@ uniform vec4 uPlK;          // cut face-on, cut at the outline, depth tone of th
 uniform vec3 uPlThrough;    // colour of the light through the leaves
 uniform float uPlUp;
 uniform float uPlVar;       // crown-to-crown variation of tone and hue
+uniform float uPlRound;     // share of the crown's round form in the shading normal
+uniform vec4 uPlFar;        // far sheets: share of open fields, of roofs, haze start (m), haze distance (m)
 uniform vec4 uPlBloom;     // flowers on the top leaves: colour, share
+varying vec4 vPlC;
+float plCR = -1.0;           // the crown's radius (m), < 0 where the mesh carries no crown
+float plIn = 1.0;            // depth in the crown: 0 at its centre, 1 at its rim
+vec3 plCh = vec3( 0.5 );     // three random numbers per crown
 float plClump = 0.5;
 float plLeafH = 0.5;
 vec3 plSun = vec3( 0.0 );
@@ -397,6 +406,12 @@ vec4 plTri( sampler2D t, vec3 p, vec3 w ) {
 `;
 const FOL_FRAG = `
 {
+  plCR = vPlC.w - 1000.0;
+  if ( plCR > 0.0 ) {
+    plIn = clamp( length( vPlP - vPlC.xyz ) / plCR, 0.0, 1.2 );
+    plCh = fract( sin( vec3( dot( vPlC.xyz, vec3( 12.9898, 78.233, 37.719 ) ), dot( vPlC.xyz, vec3( 39.346, 11.135, 83.155 ) ),
+      dot( vPlC.xyz, vec3( 73.156, 52.235, 9.151 ) ) ) ) * 43758.5453 );
+  }
   vec3 plW = abs( normalize( vPlN ) );
   plW = plW * plW; plW /= ( plW.x + plW.y + plW.z );
   #ifdef PL_FAR      // a canopy seen from far off, on a near-flat sheet: two turned copies of each field, so no period shows
@@ -405,6 +420,7 @@ const FOL_FRAG = `
   vec4 plC2 = 0.5 + 0.6 * ( texture2D( uPlNoise, plQ * ( uPlS.x * 2.9 ) + 0.37 ) + texture2D( uPlNoise, plQ2 * ( uPlS.x * 4.3 ) + 0.71 ) - 1.0 );
   vec4 plL = 0.5 * ( texture2D( uPlLeaf, plQ1 * uPlS.y ) + texture2D( uPlLeaf, plQ2 * ( uPlS.y * 0.63 ) + 0.21 ) );
   plL.r = smoothstep( 0.15, 0.75, plL.r );
+  plL = mix( plL, vec4( 0.62, 0.5, 0.5, 0.5 ), smoothstep( 220.0, 800.0, length( vViewPosition ) ) );      // no grain rows out there
   #else
   vec4 plC = plTri( uPlNoise, vPlP * uPlS.x, plW );
   vec4 plC2 = plTri( uPlNoise, vPlP.yzx * ( uPlS.x * 2.9 ) + 0.37, plW.yzx );
@@ -420,18 +436,37 @@ const FOL_FRAG = `
   vec3 plHue = mix( vec3( 1.0 + uPlK.w, 1.0, 1.0 - uPlK.w ), vec3( 1.0 - uPlK.w, 1.0, 1.0 + 0.6 * uPlK.w ), plL.b );
   diffuseColor.rgb *= plShade * ( 0.72 + 0.56 * plL.g ) * plHue * ( 0.8 + 0.4 * plC.b );
   diffuseColor.rgb = mix( diffuseColor.rgb, uPlBloom.rgb * ( 0.7 + 0.3 * plClump ) * ( 0.85 + 0.3 * plL.g ), step( 1.0 - uPlBloom.a, plL.b ) * smoothstep( 0.3, 0.55, plLeafH ) );
-  {      // one crown is not the next: tone and hue drift over ~10 m (olive / yellow-green / blue-green)
+  {      // one crown is not the next: tone and hue per crown (olive / yellow-green / blue-green), a slow drift besides
     vec4 plV = texture2D( uPlNoise, vPlP.xz * 0.083 + 0.19 ), plV2 = texture2D( uPlNoise, vPlP.zx * 0.031 + 0.63 );
     float plT = clamp( ( plV.r + plV2.g - 1.0 ) * 2.2, -1.0, 1.0 ), plU = clamp( ( plV.b + plV2.r - 1.0 ) * 2.2, -1.0, 1.0 );
+    if ( plCR > 0.0 ) { plT = mix( plT * 0.35, plCh.x * 2.0 - 1.0, 0.8 ); plU = mix( plU * 0.35, plCh.y * 2.0 - 1.0, 0.8 ); }
     diffuseColor.rgb *= 1.0 + uPlVar * 0.3 * plT;
     diffuseColor.rgb *= mix( vec3( 1.0 ), plU > 0.0 ? vec3( 1.16, 1.03, 0.78 ) : vec3( 0.80, 0.95, 1.10 ), uPlVar * abs( plU ) );
+    // inside the crown the leaves shade each other: what a gap in the outer leaves shows is dark
+    diffuseColor.rgb *= mix( 0.42, 1.0, smoothstep( 0.30, 0.92, plIn ) );
   }
+  #ifdef PL_FAR
+  {      // land use seen from far off (p28): open fields and dry grass, darker groves, light roofs among the trees
+    vec2 plF = vPlP.xz;
+    float plFld = texture2D( uPlNoise, plF / 410.0 + 0.31 ).r * 0.6 + texture2D( uPlNoise, plF / 170.0 + 0.77 ).g * 0.4;
+    float plGrove = texture2D( uPlNoise, plF / 260.0 + 0.53 ).b;
+    float plOpen = smoothstep( 0.56, 0.64, plFld ) * uPlFar.x;
+    diffuseColor.rgb = mix( diffuseColor.rgb, mix( vec3( 0.17, 0.18, 0.085 ), vec3( 0.25, 0.22, 0.13 ), texture2D( uPlNoise, plF / 90.0 ).r ), plOpen );
+    diffuseColor.rgb *= mix( 1.0, 0.72, smoothstep( 0.55, 0.7, plGrove ) * ( 1.0 - plOpen ) );
+    vec2 plCell = floor( plF / 28.0 ), plIn2 = fract( plF / 28.0 );
+    float plH = fract( sin( dot( plCell, vec2( 127.1, 311.7 ) ) ) * 43758.5453 ), plH2 = fract( plH * 17.13 );
+    vec2 plRo = abs( plIn2 - 0.5 - 0.15 * ( vec2( plH2, fract( plH * 31.7 ) ) - 0.5 ) );
+    float plRoof = step( 1.0 - uPlFar.y, plH ) * step( plRo.x, 0.12 + 0.08 * plH2 ) * step( plRo.y, 0.17 - 0.05 * plH2 ) * ( 1.0 - plOpen );
+    diffuseColor.rgb = mix( diffuseColor.rgb, plH2 > 0.62 ? vec3( 0.36, 0.17, 0.09 ) : vec3( 0.42, 0.42, 0.40 ), plRoof );
+  }
+  #endif
   if ( ! gl_FrontFacing ) diffuseColor.rgb *= 0.3;
 }
 `;
 const FOL_BUMP = `
 {
   normal = normalize( normal + uPlUp * ( viewMatrix * vec4( 0.0, 1.0, 0.0, 0.0 ) ).xyz );      // crowns are lit from above: soften the facets
+  if ( plCR > 0.0 && gl_FrontFacing ) normal = normalize( mix( normal, normalize( ( viewMatrix * vec4( vPlP - vPlC.xyz, 0.0 ) ).xyz ), uPlRound ) );
   float plHt = uPlS.z * plClump + uPlS.w * plLeafH;
   vec3 plDx = dFdx( - vViewPosition ), plDy = dFdy( - vViewPosition );
   float plHx = dFdx( plHt ), plHy = dFdy( plHt );
@@ -459,8 +494,97 @@ function throughLights() {
   return lightsChunk;
 }
 
+// The planting zone writes every crown as flat-shaded blobs (own vertices per face, no crown data).  On a geometry's
+// first draw the look welds it by position and (1) gives it smooth, area-weighted vertex normals -- no facet shows --
+// and (2) finds the crowns: the blobs (connected pieces) are grouped where they overlap deeply (a tree's satellites round
+// its main crown; neighbours in a belt only touch), and each vertex carries its crown's centre and radius (plCrown):
+// the shader varies tone and hue per crown, darkens the crown's inside and rounds the shading over the whole crown.
+const FOL_PREPPED = new WeakSet();
+function prepFoliage(geo) {
+  const pos = geo.attributes.position, nrm = geo.attributes.normal;
+  if (!pos || geo.attributes.plCrown) return false;
+  const n = pos.count, idx = geo.index ? geo.index.array : null, nt = idx ? idx.length / 3 : n / 3;
+  const P = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { P[3 * i] = pos.getX(i); P[3 * i + 1] = pos.getY(i); P[3 * i + 2] = pos.getZ(i); }
+  const keys = new Map(), wid = new Int32Array(n);
+  let nw = 0;
+  for (let i = 0; i < n; i++) {
+    const k = Math.round(P[3 * i] * 2000) + ',' + Math.round(P[3 * i + 1] * 2000) + ',' + Math.round(P[3 * i + 2] * 2000);
+    let w = keys.get(k);
+    if (w === undefined) { w = nw++; keys.set(k, w); }
+    wid[i] = w;
+  }
+  const WP = new Float32Array(nw * 3), NS = new Float32Array(nw * 3), par = new Int32Array(nw);
+  for (let i = 0; i < n; i++) { const w = wid[i]; WP[3 * w] = P[3 * i]; WP[3 * w + 1] = P[3 * i + 1]; WP[3 * w + 2] = P[3 * i + 2]; }
+  for (let i = 0; i < nw; i++) par[i] = i;
+  const find = (a) => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+  const unite = (a, b) => { a = find(a); b = find(b); if (a !== b) par[a] = b; };
+  for (let t = 0; t < nt; t++) {
+    const a = idx ? idx[3 * t] : 3 * t, b = idx ? idx[3 * t + 1] : 3 * t + 1, c = idx ? idx[3 * t + 2] : 3 * t + 2;
+    const ux = P[3 * b] - P[3 * a], uy = P[3 * b + 1] - P[3 * a + 1], uz = P[3 * b + 2] - P[3 * a + 2];
+    const vx = P[3 * c] - P[3 * a], vy = P[3 * c + 1] - P[3 * a + 1], vz = P[3 * c + 2] - P[3 * a + 2];
+    let cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx;
+    if (nrm && cx * nrm.getX(a) + cy * nrm.getY(a) + cz * nrm.getZ(a) < 0) { cx = -cx; cy = -cy; cz = -cz; }      // the builder's outward side
+    for (const v of [a, b, c]) { const w = wid[v]; NS[3 * w] += cx; NS[3 * w + 1] += cy; NS[3 * w + 2] += cz; }
+    unite(wid[a], wid[b]); unite(wid[a], wid[c]);
+  }
+  // pieces: centre and radius
+  const comp = new Int32Array(nw), cid = new Map(), C = [];
+  for (let w = 0; w < nw; w++) {
+    const r = find(w);
+    let k = cid.get(r);
+    if (k === undefined) { k = C.length; cid.set(r, k); C.push({ s: [0, 0, 0], m: 0, r: 0 }); }
+    comp[w] = k;
+    const q = C[k]; q.s[0] += WP[3 * w]; q.s[1] += WP[3 * w + 1]; q.s[2] += WP[3 * w + 2]; q.m++;
+  }
+  for (const q of C) q.c = q.s.map((v) => v / q.m);
+  for (let w = 0; w < nw; w++) {
+    const q = C[comp[w]], dx = WP[3 * w] - q.c[0], dy = WP[3 * w + 1] - q.c[1], dz = WP[3 * w + 2] - q.c[2];
+    q.r = Math.max(q.r, Math.sqrt(dx * dx + dy * dy + dz * dz));
+  }
+  // crowns: pieces that overlap deeply, found through a grid of 6 m cells
+  const cp = C.map((_, i) => i), cf = (a) => { while (cp[a] !== a) { cp[a] = cp[cp[a]]; a = cp[a]; } return a; };
+  const G = new Map(), cell = 6, gk = (x, y, z) => x + ',' + y + ',' + z;
+  C.forEach((q, i) => { if (q.r > 40) return; const k = gk(Math.floor(q.c[0] / cell), Math.floor(q.c[1] / cell), Math.floor(q.c[2] / cell)); (G.get(k) || G.set(k, []).get(k)).push(i); });
+  C.forEach((q, i) => {
+    if (q.r > 40) return;
+    const gx = Math.floor(q.c[0] / cell), gy = Math.floor(q.c[1] / cell), gz = Math.floor(q.c[2] / cell);
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let d = -1; d <= 1; d++) {
+      for (const j of G.get(gk(gx + a, gy + b, gz + d)) || []) {
+        if (j <= i) continue;
+        const o = C[j], dd = Math.hypot(q.c[0] - o.c[0], q.c[1] - o.c[1], q.c[2] - o.c[2]);
+        if (dd < 0.55 * (q.r + o.r)) { const x = cf(i), y = cf(j); if (x !== y) cp[x] = y; }
+      }
+    }
+  });
+  const T = new Map();
+  C.forEach((q, i) => {
+    const k = cf(i);
+    let t = T.get(k);
+    if (!t) { t = { s: [0, 0, 0], m: 0, r: 0, big: false, list: [] }; T.set(k, t); }
+    const wgt = q.r * q.r * q.r;
+    t.s[0] += q.c[0] * wgt; t.s[1] += q.c[1] * wgt; t.s[2] += q.c[2] * wgt; t.m += wgt; t.list.push(q);
+    if (q.r > 40) t.big = true;
+  });
+  for (const t of T.values()) {
+    t.c = t.s.map((v) => v / Math.max(t.m, 1e-9));
+    for (const q of t.list) t.r = Math.max(t.r, Math.hypot(q.c[0] - t.c[0], q.c[1] - t.c[1], q.c[2] - t.c[2]) + q.r);
+  }
+  const NO = new Float32Array(n * 3), CR = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    const w = wid[i], l = Math.hypot(NS[3 * w], NS[3 * w + 1], NS[3 * w + 2]) || 1;
+    NO[3 * i] = NS[3 * w] / l; NO[3 * i + 1] = NS[3 * w + 1] / l; NO[3 * i + 2] = NS[3 * w + 2] / l;
+    const t = T.get(cf(comp[w]));
+    if (!t.big) { CR[4 * i] = t.c[0]; CR[4 * i + 1] = t.c[1]; CR[4 * i + 2] = t.c[2]; CR[4 * i + 3] = 1000 + t.r; }
+  }
+  geo.setAttribute('normal', new THREE.BufferAttribute(NO, 3));
+  geo.setAttribute('plCrown', new THREE.BufferAttribute(CR, 4));
+  return true;
+}
+
 /** spec = { color (linear), clump (m), leaf (m, the leaf tile's size), bump: [clumps, leaves] (m), cut: [face-on, outline],
- *           depth, hue, through: [r, g, b, k], kind: 'broad' | 'needle', rough, twoSided } */
+ *           depth, hue, through: [r, g, b, k], kind: 'broad' | 'needle', rough, twoSided, round (share of the crown's
+ *           round form in the shading) } */
 function foliage(ctx, spec) {
   const two = spec.twoSided !== false;
   const m = new THREE.MeshStandardMaterial({ roughness: spec.rough ?? 0.82, metalness: 0, side: two ? THREE.DoubleSide : THREE.FrontSide });
@@ -471,11 +595,13 @@ function foliage(ctx, spec) {
   const U = {
     uPlNoise: { value: macroNoise(ctx) },
     uPlLeaf: { value: leafTile(ctx, spec.kind || 'broad') },
-    uPlS: { value: new THREE.Vector4(1 / (spec.clump || 3.4), 1 / (spec.leaf || 0.62), bump[0], bump[1]) },
+    uPlS: { value: new THREE.Vector4(1 / (spec.clump || 3.4), 1 / (spec.leaf || 0.36), bump[0], bump[1]) },
     uPlK: { value: new THREE.Vector4(cut[0], cut[1], spec.depth ?? 0.22, spec.hue ?? 0.12) },
     uPlThrough: { value: new THREE.Vector3(th[0], th[1], th[2]).multiplyScalar(th[3]) },
-    uPlUp: { value: spec.up ?? 0.7 },
+    uPlUp: { value: spec.up ?? 0.35 },
     uPlVar: { value: spec.vary ?? (spec.far ? 0.5 : 1) },
+    uPlRound: { value: spec.round ?? 0.35 },
+    uPlFar: { value: new THREE.Vector4(...(spec.land || [0, 0, 150, 1400])) },
     uPlBloom: { value: new THREE.Vector4(...(spec.bloom || [1, 1, 1, 0])) },
   };
   m.userData.foliage = U;
@@ -483,7 +609,8 @@ function foliage(ctx, spec) {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\n' + FOL_VERT_PARS)
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\n' + FOL_VERT);
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n' + FOL_VERT + FOL_VERT_CROWN)
+      .replace('#include <common>', '#include <common>\n' + FOL_VERT_CROWN_PARS);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\n' + FOL_FRAG_PARS)
       .replace('#include <map_fragment>', '#include <map_fragment>\n' + FOL_FRAG)
@@ -492,12 +619,17 @@ function foliage(ctx, spec) {
       .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n\treflectedLight.directDiffuse += plThrough * BRDF_Lambert( material.diffuseColor * uPlThrough );')
       // the far canopy fades into the haze of the valley (p28)
       .replace('#include <tonemapping_fragment>', `#ifdef PL_FAR
-      gl_FragColor.rgb = mix( gl_FragColor.rgb, vec3( 0.56, 0.63, 0.72 ) * clamp( max( plSun.r, plSun.g ) / 3.0, 0.25, 1.0 ), 1.0 - exp( - max( length( vViewPosition ) - 110.0, 0.0 ) / 800.0 ) );
+      gl_FragColor.rgb = mix( gl_FragColor.rgb, vec3( 0.60, 0.67, 0.76 ) * clamp( max( plSun.r, plSun.g ) / 3.0, 0.25, 1.0 ), 1.0 - exp( - max( length( vViewPosition ) - uPlFar.z, 0.0 ) / uPlFar.w ) );
       #endif
       #include <tonemapping_fragment>`);
   };
   if (spec.far) m.defines = { PL_FAR: '' };
-  m.customProgramCacheKey = () => 'h2-foliage-2' + (spec.far ? 'f' : '');
+  m.onBeforeRender = (renderer, scene, camera, geometry) => {
+    if (FOL_PREPPED.has(geometry)) return;
+    FOL_PREPPED.add(geometry);
+    try { if (prepFoliage(geometry) && ctx.changed) ctx.changed(); } catch (e) { console.warn('foliage prep', e); }
+  };
+  m.customProgramCacheKey = () => 'h2-foliage-3' + (spec.far ? 'f' : '');
   return m;
 }
 
@@ -561,17 +693,17 @@ function bark(ctx, spec) {
 const LEAVES = {
   pl_leaf: { color: [0.070, 0.115, 0.030] },
   pl_leaf_light: { color: [0.115, 0.17, 0.042], through: [0.8, 1.0, 0.2, 0.55] },
-  pl_leaf_dark: { color: [0.036, 0.058, 0.024], depth: 0.25, through: [0.7, 1.0, 0.3, 0.25], leaf: 0.55 },
+  pl_leaf_dark: { color: [0.036, 0.058, 0.024], depth: 0.25, through: [0.7, 1.0, 0.3, 0.25], leaf: 0.33 },
   pl_leaf_yellow: { color: [0.17, 0.20, 0.04], through: [0.9, 1.0, 0.15, 0.55] },
-  pl_leaf_maple: { color: [0.11, 0.16, 0.038], leaf: 0.55, clump: 3.2, through: [0.85, 1.0, 0.2, 0.6] },
-  pl_leaf_red: { color: [0.19, 0.05, 0.036], leaf: 0.55, clump: 3.2, hue: 0.06, vary: 0.4, through: [1.0, 0.35, 0.2, 0.6] },
-  pl_leaf_conifer: { color: [0.026, 0.048, 0.027], kind: 'needle', leaf: 0.6, clump: 2.6, depth: 0.2, cut: [0.12, 0.8], through: [0.7, 1.0, 0.4, 0.2] },
-  pl_blossom: { color: [0.085, 0.13, 0.036], leaf: 0.5, clump: 1.6, bump: [0.35, 0.03], hue: 0.08, vary: 0.4, bloom: [0.80, 0.78, 0.73, 0.42] },
-  yard_vine: { color: [0.07, 0.12, 0.03], leaf: 0.6, clump: 2.4, bump: [0.2, 0.03] },
-  pl_far_canopy: { color: [0.085, 0.10, 0.05], clump: 23, leaf: 9, bump: [2.0, 0.4], up: 0, cut: [-1, 0], depth: 0.6, twoSided: false, far: true },
-  pl_far_hill: { color: [0.13, 0.14, 0.10], clump: 310, leaf: 131, bump: [10.0, 1.5], up: 0, cut: [-1, 0], depth: 0.85, twoSided: false, far: true },
+  pl_leaf_maple: { color: [0.11, 0.16, 0.038], leaf: 0.33, clump: 3.2, through: [0.85, 1.0, 0.2, 0.6] },
+  pl_leaf_red: { color: [0.19, 0.05, 0.036], leaf: 0.33, clump: 3.2, hue: 0.06, vary: 0.4, through: [1.0, 0.35, 0.2, 0.6] },
+  pl_leaf_conifer: { color: [0.026, 0.048, 0.027], kind: 'needle', leaf: 0.4, clump: 2.6, depth: 0.2, cut: [0.12, 0.8], through: [0.7, 1.0, 0.4, 0.2] },
+  pl_blossom: { color: [0.085, 0.13, 0.036], leaf: 0.3, clump: 1.6, bump: [0.35, 0.03], hue: 0.08, vary: 0.4, bloom: [0.80, 0.78, 0.73, 0.42] },
+  yard_vine: { color: [0.07, 0.12, 0.03], leaf: 0.36, clump: 2.4, bump: [0.2, 0.03] },
+  pl_far_canopy: { color: [0.075, 0.088, 0.048], clump: 23, leaf: 9, bump: [2.0, 0.4], up: 0, cut: [-1, 0], depth: 0.6, twoSided: false, far: true, land: [0.5, 0.16, 140, 1300] },
+  pl_far_hill: { color: [0.10, 0.11, 0.08], clump: 310, leaf: 131, bump: [10.0, 1.5], up: 0, cut: [-1, 0], depth: 0.85, twoSided: false, far: true, land: [0.35, 0.10, 140, 1100] },
   foliage_dark: { color: [0.036, 0.058, 0.024], depth: 0.25 },
-  ground_far: { color: [0.12, 0.13, 0.085], clump: 70, leaf: 31, bump: [1.0, 0.2], up: 0, cut: [-1, 0], depth: 0.8, twoSided: false, far: true },
+  ground_far: { color: [0.12, 0.13, 0.085], clump: 70, leaf: 31, bump: [1.0, 0.2], up: 0, cut: [-1, 0], depth: 0.8, twoSided: false, far: true, land: [0.4, 0, 140, 1300] },
 };
 
 // ------------------------------------------------------------------------------------------------ registry
@@ -586,13 +718,13 @@ export function register(lib) {
   const shingle = (ctx, k) => surface(ctx, { ...cedarTex(ctx), color: C.shingleSiding, roughness: 0.9, swatchFade: [14, 40],
     heightTint: { y0: 3.0, y1: 3.7, k },
     detail: { kind: 'fibre', size: 0.21, albedo: 0.1, normal: 0.15 }, macro: { s1: 4.3, s2: 15, amount: 0.05, tint: [1.06, 1.0, 0.93], tintAmount: 0.25 } });
-  lib.add('siding_shingle', (ctx) => shingle(ctx, [0.80, 0.75, 0.66]));
+  lib.add('siding_shingle', (ctx) => shingle(ctx, [0.72, 0.645, 0.53]));
   const trimPaint = (ctx) => surface(ctx, { color: C.trim, roughness: 0.55, detail: { kind: 'fibre', size: 0.11, albedo: 0.035, normal: 0.05, rough: 0.06 }, macro: { s1: 1.7, s2: 6.1, amount: 0.035 } });
   lib.add('trim_cream', trimPaint);
   lib.add('yard_column_white', trimPaint);
   // the front lower storey is NOT lap siding: the hero at full size shows staggered shingles under the porch (x 0-650,
   // y 850-1500), only darker and warmer -- a name the house zone gives those walls gets the same shingle, taupe all over
-  const taupe = (ctx) => shingle(ctx, [0.70, 0.64, 0.54]);
+  const taupe = (ctx) => shingle(ctx, [0.66, 0.60, 0.50]);
   for (const n of ['siding_lap', 'siding_lap_taupe', 'siding_taupe', 'siding_shingle_taupe']) lib.add(n, taupe);
   lib.add('gutter_cream', (ctx) => paint(ctx, C.gutter, 0.4));
   lib.add('soffit_white', (ctx) => paint(ctx, [0.80, 0.785, 0.725], 0.6, grooveTex(ctx, 'soffit', false, 0.14, 0.005, 0.003)));
