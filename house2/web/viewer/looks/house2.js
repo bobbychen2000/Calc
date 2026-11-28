@@ -801,14 +801,23 @@ export function register(lib) {
   // p01's garage wing and porch, p21's patio walls): the same shingle (staggered butts at full size, not lap siding) in
   // the porches' shade and their warm bounce light, which the plain viewer does not shade (no sky occlusion until a
   // refined still) -- carried by the material below EAVE_1 (render 116 121 129 above -> ~80 77 69 under the porch)
-  const shingle = (ctx, k) => surface(ctx, { ...cedarTex(ctx), color: C.shingleSiding, roughness: 0.9, swatchFade: [14, 40],
-    heightTint: { y0: 3.0, y1: 3.7, k },
+  const shingle = (ctx, k, all = false) => surface(ctx, { ...cedarTex(ctx), color: C.shingleSiding, roughness: 0.9, swatchFade: [14, 40],
+    heightTint: all ? { y0: 1e4, y1: 1e4 + 1, k } : { y0: 3.0, y1: 3.7, k },
     detail: { kind: 'fibre', size: 0.21, albedo: 0.1, normal: 0.15 }, macro: { s1: 4.3, s2: 15, amount: 0.05, tint: [1.06, 1.0, 0.93], tintAmount: 0.25 } });
   // (k: hero 83 77 67 / p01 70 65 52 under the porches against the render's neutral 66 / 68 at [0.54, 0.46, 0.32]
   // and an olive 69 71 60 / 71 73 62 at [0.62, 0.50, 0.29] -- the blue patch times the sky light needs R / G ~1.5 in k
   // to read R > G > B; p21's rear loggia reads darker in its own exposure: the stage's meter, not the wall)
   const TAUPE_K = [0.76, 0.49, 0.28];
-  lib.add('siding_shingle', (ctx) => shingle(ctx, TAUPE_K));
+  // The warm tone belongs under the porch roofs only (p01's one-storey garage wing in the sun reads the upper storey's
+  // grey, 88 86 93): once the house zone gives the porch walls a name of their own (siding_taupe & co. below, taupe all
+  // over), the plain shingle drops its height tint -- every material is made before the first frame, so the flag is
+  // set by then
+  const SIDING = { taupeNamed: false };
+  lib.add('siding_shingle', (ctx) => {
+    const m = shingle(ctx, TAUPE_K);
+    m.onBeforeRender = () => { if (SIDING.taupeNamed && m.userData.surf.surfHTk) m.userData.surf.surfHTk.value.set(1, 1, 1); };
+    return m;
+  });
   const trimPaint = (ctx) => surface(ctx, { color: C.trim, roughness: 0.55, detail: { kind: 'fibre', size: 0.11, albedo: 0.035, normal: 0.05, rough: 0.06 }, macro: { s1: 1.7, s2: 6.1, amount: 0.035 } });
   lib.add('trim_cream', trimPaint);
   lib.add('yard_column_white', trimPaint);
@@ -817,7 +826,7 @@ export function register(lib) {
     detail: { kind: 'fibre', size: 0.11, albedo: 0.035, normal: 0.05, rough: 0.06 }, macro: { s1: 1.7, s2: 6.1, amount: 0.035 } }));
   // the front lower storey is NOT lap siding: the hero at full size shows staggered shingles under the porch (x 0-650,
   // y 850-1500), only darker and warmer -- a name the house zone gives those walls gets the same shingle, taupe all over
-  const taupe = (ctx) => shingle(ctx, TAUPE_K);
+  const taupe = (ctx) => { SIDING.taupeNamed = true; return shingle(ctx, TAUPE_K, true); };
   for (const n of ['siding_lap', 'siding_lap_taupe', 'siding_taupe', 'siding_shingle_taupe']) lib.add(n, taupe);
   lib.add('gutter_cream', (ctx) => paint(ctx, C.gutter, 0.4));
   lib.add('soffit_white', (ctx) => paint(ctx, [0.80, 0.785, 0.725], 0.6, grooveTex(ctx, 'soffit', false, 0.14, 0.005, 0.003)));

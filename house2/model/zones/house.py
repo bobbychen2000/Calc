@@ -914,6 +914,77 @@ def rafter_tail(geo, q, inward, along, z_us, tn, run, w=0.055, d=0.13):
     geo.prism(TRIM, [(sg * r, z) for r, z in prof], a, b, up=(0, 0, 1.0))
 
 
+def upper_tails(geo, planes, fp):
+    """The two-storey eaves facing the street (W / SW / S; hero / p01, round 3): exposed shaped rafter tails ~0.6 m apart
+    from the fascia back into the upper wall, a cream frieze band (the blocking between the rafters) on the wall right
+    under the soffit, and two round screened vents (~7 cm) in it between every pair of tails."""
+    from shapely.ops import nearest_points
+    Ub = _rings(fp['U'])
+    street = np.array([-0.7071, -0.7071])
+    for p in planes:
+        src = p['src']
+        if src.get('storey') != 2 or 'edges' not in src or src.get('flat'):
+            continue
+        rp = p['rp']
+        dn = rp.downhill
+        if dn @ street < 0.2:
+            continue
+        P = np.array(src['poly'], float)
+        tn = np.tan(np.radians(rp.pitch))
+        for k, kind in enumerate(src['edges']):
+            if kind not in ('eave', 'eave_over_lower_roof'):
+                continue
+            A, B = P[k, :2], P[(k + 1) % len(P), :2]
+            L = float(np.linalg.norm(B - A))
+            if L < 1.6:
+                continue
+            e = (B - A) / L
+            for j, other in ((k, (k - 1) % len(P)), ((k + 1) % len(P), (k + 1) % len(P))):
+                # a heavier diagonal tail under each hip corner (hero: the upper-left corner), along the hip
+                if src['edges'][other] != 'hip':
+                    continue
+                Cn = P[j, :2]
+                Hn = P[(j - 1) % len(P), :2] if j == k else P[(j + 1) % len(P), :2]
+                hd = (Hn - Cn) / max(np.linalg.norm(Hn - Cn), 1e-6)
+                th = float(-(rp.abc[0] * hd[0] + rp.abc[1] * hd[1]))     # rise along the hip, inward
+                rafter_tail(geo, Cn, hd, np.array([-hd[1], hd[0]]), rp.z(*Cn) - rp.t, -th, OVERHANG[2] * 1.41 + 0.1,
+                            w=0.14, d=0.22)
+            m = max(2, int(round((L - 1.0) / 0.60)) + 1)
+            ss = np.linspace(0.5, L - 0.5, m)
+            prev = None
+            for s0 in ss:
+                q = A + e * s0
+                walls = [nearest_points(g.exterior, Point(*(q - dn * OVERHANG[2])))[0] for g in Ub]
+                wp = min(walls, key=lambda w_: w_.distance(Point(*(q - dn * OVERHANG[2]))))
+                wq = np.array(wp.coords[0])
+                if np.linalg.norm(wq - (q - dn * OVERHANG[2])) > 0.25:
+                    prev = None
+                    continue
+                run = float((q - wq) @ dn) + 0.12
+                if run < 0.3 or run > 1.2:
+                    prev = None
+                    continue
+                z_us = rp.z(*q) - rp.t
+                rafter_tail(geo, q, -dn, e, z_us, tn, run, w=0.10, d=0.17)
+                zw = z_us + (run - 0.12) * tn                         # soffit at the wall face
+                if prev is not None:
+                    wa, za = prev
+                    d3 = np.array([dn[0], dn[1], 0.0])
+                    a3 = np.array([wa[0], wa[1], 0.0]) + d3 * 0.015
+                    b3 = np.array([wq[0], wq[1], 0.0]) + d3 * 0.015
+                    u = b3 - a3
+                    Lb = float(np.linalg.norm(u[:2]))
+                    if 0.3 < Lb < 1.0:
+                        r3 = np.array([u[0], u[1], 0.0]) / Lb
+                        geo.obox(TRIM, a3, r3, d3, (0, 0, 1), (0.05, -0.02, min(za, zw) - 0.17),
+                                 (Lb - 0.05, 0.02, min(za, zw) + 0.01), 'xXyYz')
+                        for f in (0.38, 0.62):
+                            c3 = a3 + r3 * Lb * f + np.array([0, 0, min(za, zw) - 0.08])
+                            ring = [(0.035 * np.cos(t_), 0.035 * np.sin(t_)) for t_ in np.linspace(0, 2 * np.pi, 9)[:-1]]
+                            geo.prism('vent_louvre', ring, c3 + d3 * 0.02, c3 + d3 * 0.026, up=r3)
+                prev = (wq, zw)
+
+
 def gable_trim(geo, planes):
     """Louvred vents, king posts and brackets on the street gables: the front gable FG (hero: a king-post corbel through
     the vent, a tall corbel on the wall under each rake end, a curved bracket under each eave end), the west gable WG
@@ -1020,6 +1091,7 @@ def build():
     eaves = ROOF['eaves']
     rear(geo, fp, planes, eaves)
     gable_trim(geo, planes)
+    upper_tails(geo, planes, fp)
     front_porch(geo, eaves)
     porch_floor(geo, fp)
     porch_soffit(geo, fp, planes)

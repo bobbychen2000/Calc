@@ -3,7 +3,7 @@ material by NAME with its own library (web/viewer/materials.js LIBRARY).  Names 
 in both tables; build.py reports any that do not."""
 MATERIALS = {
     'siding_lap': dict(color=(0.87, 0.86, 0.83), roughness=0.72),
-    'siding_shingle': dict(color=(0.55, 0.56, 0.55), roughness=0.85),        # grey cedar shingle
+    'siding_shingle': dict(color=(0.18, 0.21, 0.26), roughness=0.85),        # grey cedar shingle (the siding swatch's mean, p21 / hero)
     'siding_bb': dict(color=(0.87, 0.86, 0.83), roughness=0.75),
     'trim_white': dict(color=(0.90, 0.89, 0.86), roughness=0.6),
     'soffit_white': dict(color=(0.81, 0.80, 0.77), roughness=0.8),
@@ -19,8 +19,8 @@ MATERIALS = {
     'metal_awning': dict(color=(0.019, 0.021, 0.024), roughness=0.45, metallic=0.7),
     'chimney_white': dict(color=(0.87, 0.86, 0.83), roughness=0.75),
     'chimney_cap': dict(color=(0.018, 0.020, 0.023), roughness=0.45, metallic=0.7),
-    'stone_veneer': dict(color=(0.45, 0.40, 0.32), roughness=0.9),
-    'bluestone': dict(color=(0.21, 0.25, 0.29), roughness=0.8),
+    'stone_veneer': dict(color=(0.19, 0.16, 0.12), roughness=0.9),         # piers / chimneys: grey-brown (veneer swatch mean)
+    'bluestone': dict(color=(0.49, 0.47, 0.43), roughness=0.8),            # full-range flagstone (flagstone swatch mean)
     'paver_drive': dict(color=(0.25, 0.24, 0.22), roughness=0.9),
     'concrete': dict(color=(0.49, 0.47, 0.42), roughness=0.9),
     'coping': dict(color=(0.69, 0.66, 0.58), roughness=0.8),
@@ -44,7 +44,7 @@ MATERIALS = {
     'bark': dict(color=(0.11, 0.087, 0.061), roughness=1.0),
     'furniture_dark': dict(color=(0.034, 0.037, 0.042), roughness=0.7),
     'furniture_wood': dict(color=(0.25, 0.10, 0.037), roughness=0.7),
-    'cushion': dict(color=(0.72, 0.72, 0.69), roughness=0.95),
+    'cushion': dict(color=(0.175, 0.16, 0.165), roughness=0.95),           # taupe-grey canvas (p22)
     'neighbor_wall': dict(color=(0.46, 0.49, 0.51), roughness=0.9),
     'neighbor_roof': dict(color=(0.107, 0.109, 0.117), roughness=0.95),
     'interior_glow': dict(color=(1.0, 0.76, 0.43), roughness=1.0, emissive=(1.0, 0.58, 0.25)),
