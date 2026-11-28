@@ -81,7 +81,7 @@ PL_ROOF_S = 1.96                      # roof square (aerial outline at z 4.85 ag
 PL_DECK_XY = (16.94, 18.80, -0.305, 1.255)    # deck / corner posts (p19: NW post under the roof's NW eave, NE post
                                               # under its NE corner)
 Z_DECK, Z_RAIL, Z_EAVE, Z_RIDGE = 3.65, 4.30, 4.85, 5.90      # p19: eave 4.85, ridge 5.85-5.95 (48 deg); deck / rail
-Z_BEAM = 3.87                         # swing beam centre (its end 3.94 at the top, p19)
+Z_BEAM = 3.94                         # swing beam centre: p19 reads the end face 0.76-0.80 px rows 764-797 (top ~4.0)
 Z_BRIDGE, Z_BRIDGE_TOP = 4.70, 5.90   # the RAISED bridge: floor under the tower's eave (p22 4.9, p19 swing tops 4.5)
 PL_BRIDGE = ((18.10, -0.45), (17.97, -3.59))   # centre line, tower end -> fort end (aerial + frame 140500 at z 4.6)
 # fort deck: a ~1.5 m hexagon turned 45 deg (frame 140500 + aerial triangulate the deck at 3.3, 1 px); edge 0-1 = the
@@ -173,15 +173,19 @@ def fireplace():
     n = np.array([-math.sin(a), math.cos(a)])                     # back (NE)
     o = np.array(FP_CAP_C) - 0.47 * n                             # the front plane under the shaft's centre
     L = Fr((o[0], o[1], 0.0), FP_ANG)
-    hw, dp = 1.32, 1.25                                            # body: half width (p22 frontal 2.65-2.70), depth
+    # body: p22 looks square at the front (the NW side edge-on): body 241 px, mantel 207 px, firebox 115 px, all centred
+    # on one axis, at ~92.5 px / m = 2.60 / 2.20 / 1.24 m.  (p23's "front as wide as the mantel" is the 0.28 m deep
+    # mantel's perspective from the west; the plan position is the aerial cap's, and frame 125900 -- SfM, looking north --
+    # puts the body's NW front corner and the cap on the model within 1 px.)
+    hw, dp = 1.30, 1.25
     # hearth / seat wall along the front (site.seat_wall_fireplace: 1.9 m left, 2.3 m right of the shaft axis)
     hz = 0.52                                                      # hearth top (p22)
     L.box(geo, STONE, (-2.0, -0.50, -0.3), (2.35, 0.0, hz - 0.06), 'xXyY')
     L.box(geo, CAP, (-2.03, -0.54, hz - 0.06), (2.38, 0.02, hz))
-    # body, vertical to 2.45 (p22 proportions on the 4.10 m top and the 2.65 m body width), firebox 1.28 wide under a
-    # flat segmental arch: springing 1.12, crown 1.33 (p22: 61 / 72 px above the hearth; p23 alike)
+    # body, vertical to 2.45, firebox 1.24 wide under a flat segmental arch: springing 1.15, crown 1.31 (triangulated
+    # on p22 / p23 / p26 pairs: 1.11-1.17 and 1.25-1.33; p22 alone 1.17 / 1.31)
     zb = 2.45
-    ow, oz0, oz1, rise = 0.64, hz, 1.12, 0.21
+    ow, oz0, oz1, rise = 0.62, hz, 1.15, 0.16
     arch = [(-ow, 0, oz0), (ow, 0, oz0), (ow, 0, oz1)] + [
         (ow * math.cos(t), 0, oz1 + rise * math.sin(t)) for t in np.linspace(0, math.pi, 9)[1:-1]] + [(-ow, 0, oz1)]
     L.poly(geo, STONE, [(-hw, 0, hz), (hw, 0, hz), (hw, 0, zb), (-hw, 0, zb)], holes=[arch])
@@ -192,14 +196,28 @@ def fireplace():
     L.poly(geo, 'yard_firebrick', [(ow, fd, oz0), (ow, 0, oz0), (ow, 0, oz1 + rise), (ow, fd, oz1 + rise)])
     L.poly(geo, 'yard_soot', [(-ow, 0, oz1 + rise), (-ow, fd, oz1 + rise), (ow, fd, oz1 + rise), (ow, 0, oz1 + rise)][::-1])
     L.poly(geo, CAP, [(-ow, 0, oz0 + 0.001), (ow, 0, oz0 + 0.001), (ow, fd, oz0 + 0.001), (-ow, fd, oz0 + 0.001)])
-    # mantel shelf (2.3 m, narrower than the body) on two dark corbels, bluestone panel above it
-    L.box(geo, CAP, (-1.16, -0.28, 1.72), (1.16, 0.0, 1.80))
-    for x in (-0.88, 0.88):
-        L.box(geo, TIMBER, (x - 0.07, -0.22, 1.42), (x + 0.07, 0.0, 1.72))
+    # mantel shelf (2.2 m, centred, the body's stone showing 0.2 m beyond each end: p22) on two dark corbels (p22:
+    # +-0.86 m), bluestone panel above it
+    L.box(geo, CAP, (-1.10, -0.28, 1.72), (1.10, 0.0, 1.80))
+    for x in (-0.86, 0.86):
+        L.box(geo, TIMBER, (x - 0.075, -0.22, 1.42), (x + 0.075, 0.0, 1.72))
     L.box(geo, CAP, (-0.42, -0.012, 2.00), (0.42, 0.0, 3.15), 'xXyzZ')
-    # shoulders straight into the crown (no separate shaft), crown slab, flue box, flat cap
+    # shoulders into the crown (no separate shaft): the NW one a concave cove (p22's left silhouette: 0.53 then 0.34
+    # m / m; p26 sees it lit as a hollow curve), the SE one and the back straight (p22 / p23); crown slab, flue box, cap
     sw, sd, zs = 0.80, 0.98, 3.65
-    L.frustum(geo, STONE, (-hw, 0, hw, dp), zb, (-sw, 0, sw, sd), zs)
+    ns = 6
+    for i in range(ns):
+        t0, t1 = i / ns, (i + 1) / ns
+        xl = lambda t: -hw + (hw - sw) * (1 - (1 - t) ** 1.8)
+        xr = lambda t: hw - (hw - sw) * t
+        yb = lambda t: dp - (dp - sd) * t
+        r0, r1 = (xl(t0), 0, xr(t0), yb(t0)), (xl(t1), 0, xr(t1), yb(t1))
+        z0_, z1_ = zb + (zs - zb) * t0, zb + (zs - zb) * t1
+        c0 = [(r0[0], r0[1], z0_), (r0[2], r0[1], z0_), (r0[2], r0[3], z0_), (r0[0], r0[3], z0_)]
+        c1 = [(r1[0], r1[1], z1_), (r1[2], r1[1], z1_), (r1[2], r1[3], z1_), (r1[0], r1[3], z1_)]
+        for k in range(4):
+            j = (k + 1) % 4
+            L.poly(geo, STONE, [c0[k], c0[j], c1[j], c1[k]])
     L.box(geo, CAP, (-sw - 0.04, -0.05, zs), (sw + 0.04, sd + 0.05, zs + 0.08))
     L.box(geo, STONE, (-0.68, 0.08, zs + 0.08), (0.68, sd - 0.08, FP_TOP - 0.08), 'xXyY')
     L.box(geo, 'yard_soot', (-0.22, 0.075, zs + 0.13), (0.22, 0.08, FP_TOP - 0.13), 'y')      # flue opening (front)
@@ -445,10 +463,15 @@ def arbor():
     L.box(geo, STEEL, (xg - 0.55, gy1 - 0.01, 0.30), (xg + 0.55, gy1 + 0.015, 0.84), 'xXYzZ')   # doors
     L.box(geo, STEEL, (lx0 + 0.15, -3.10, 0.951), (gx1 - 0.15, -2.65, 0.956), 'Z')           # sink (p20)
     geo.cylinder(STEEL, L.pt(gx1 - 0.12, -2.88, 0.95), L.pt(gx1 - 0.12, -2.88, 1.25), 0.012, n=6)
-    # lanterns (p20 / p26): on each column's face toward the bay's middle along its row, top ~2.05
+    # lanterns (p20 / p26): each hangs from a dark scroll bracket on the column's face toward the bay's middle along
+    # its row, ~0.12 m off the face; body ~0.30 m tall centred at ~2.0 (p20: the SWb one 1.95, the NEb one 2.03)
     for k, (cx, cy) in enumerate(AR_COLS):
         sg = 1 if cx < 2 else -1
-        X.lantern(geo, L.pt(cx + sg * hs, cy, 1.85), L.ey * sg, L.ex * sg, h=0.40, w=0.17, d=0.115)
+        x0 = cx + sg * hs
+        bar(geo, 'fx_lantern_frame', L.pt(x0, cy, 2.24), L.pt(x0 + sg * 0.22, cy, 2.24), 0.025, 0.03)
+        bar(geo, 'fx_lantern_frame', L.pt(x0, cy, 2.14), L.pt(x0 + sg * 0.10, cy, 2.24), 0.015, 0.015)
+        bar(geo, 'fx_lantern_frame', L.pt(x0 + sg * 0.19, cy, 2.24), L.pt(x0 + sg * 0.19, cy, 2.17), 0.012, 0.012)
+        X.lantern(geo, L.pt(x0 + sg * 0.105, cy, 2.0), L.ey * sg, L.ex * sg, h=0.30, w=0.18, d=0.17)
     return Part('yard_arbor', geo, group='yard')
 
 
@@ -692,7 +715,7 @@ def play():
     # ---- swing beam west to the A-frame: two rails with rungs (monkey bars, aerial / frame 140500), the A-frame's
     # legs two-board ladders (p19) on a bottom rail, the tyre swing on three chains and a swivel
     (fn, fs, ap) = PL_AFRAME
-    apex = np.array([ap[0], ap[1], Z_BEAM - 0.05])
+    apex = np.array([ap[0], ap[1], Z_BEAM + 0.10])                # p19: the legs cross above the beam
     for y in PL_BEAM_Y:
         bar(geo, W, (13.73, y, Z_BEAM), (tx0, y, Z_BEAM), 0.09, 0.14)                            # end: p19
     for x in np.arange(ap[0] + 0.35, tx0 - 0.1, 0.32):
@@ -720,7 +743,7 @@ def play():
     bar(geo, W, (b0[0], b0[1], z0_ + 0.06), (b1[0], b1[1], z1_ + 0.06), 0.09, 0.14)
     m = (b0 + b1) / 2
     gs = gz(*m)
-    ap2 = np.array([m[0], m[1] - 0.45, 3.52])                  # p19: the bar enters the tower just under its deck
+    ap2 = np.array([m[0], m[1] - 0.45, 3.60])                  # p19: the bar enters the tower just under its deck
     for p_ in (b0, b1, m):
         bar(geo, W, (p_[0], p_[1], gz(*p_) + 0.12), ap2, 0.05, 0.12)
     bar(geo, SLIDE, ap2 + np.array([0.0, 0.0, -0.02]), (tx0 + 0.05, ty1, ap2[2] - 0.02), 0.04, 0.04)
@@ -896,8 +919,9 @@ def small():
     z = gz(x, y)
     geo.cylinder('light_fixture', (x, y, z), (x, y, z + 0.45), 0.012, n=6, cap=False)
     F._revolve(geo, 'light_glow', [(0.0, 0.45), (0.07, 0.48), (0.10, 0.55), (0.07, 0.62), (0.0, 0.65)], n=10, centre=(x, y, z))
-    # frame 134300: one in the bed at the lounge's north corner; p22: one in the bed behind the umbrella's base
-    for p in ((-0.42, 8.03), (5.8, 1.9)):
+    # frame 134300: one in the bed at the lounge's north corner; p23: two in the bed in front of the lower terrace wall
+    # NW of the fireplace; p22: two in the bed along the wall SE of the umbrella (rays met at the bed level, ~0.05)
+    for p in ((-0.42, 8.03), (0.55, 7.80), (3.35, 6.74), (7.95, 3.45), (6.90, 0.46)):
         path_light(geo, p)
     # frame 158300: a backless teak bench on the synthetic lawn's south edge near its SW corner, facing the lawn,
     # and two Adirondack chairs at the corner

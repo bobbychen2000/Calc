@@ -257,9 +257,9 @@ const MAIN_FRAGMENT = /* glsl */`
     float gS = gSeed + 3.7 * gWc + 1.3 * gHc;                             // equal seeds still differ by size
     vec3 gNw = normalize(vGlzN);
     vec3 gT = normalize(cross(vec3(0.0, 1.0, 0.0), gNw));                 // "right" seen from outside
-    float gPlain = step(gWc, 0.5);
+    float gPlain = step(gWc, 0.5), gUp = step(3.6, vGlzW.y);
     if (gWc < 0.5) {                                                      // a pane without the code in its UVs: no room to cast -- a dark interior by day, a warm glow at dusk
-      float gx = dot(vGlzW, gT), gUp = step(3.6, vGlzW.y);
+      float gx = dot(vGlzW, gT);
       gP = vec2(mod(gx, 4.0), vGlzW.y - mix(0.45, 3.75, gUp));
       gW = 4.0; gHead = 2.4; gShade = 1.0; gKind = 0.0;
       gS = mod(floor(gx / 4.0) * 3.0 + gUp * 11.0 + floor(gNw.x * 2.0 + 0.5) * 5.0 + floor(gNw.z * 2.0 + 0.5) * 13.0, 32.0);
@@ -297,14 +297,32 @@ const MAIN_FRAGMENT = /* glsl */`
       gSunC = directionalLights[0].color;
     #endif
     float gRA = clamp(length(fwidth(gR)) * 1.2, 0.003, 0.2);
-    glzSpec = glzWorld(vGlzW, gR, gSunD, gSunC, gSky, gRA, mix(1.0, 0.5, gPlain)) * gF;
-    if (gPlain > 0.5) {
-      // no lit room behind: the pane is a dark mirror of the sky -- blue-grey where it sees the sky (hero / p01 upper
-      // windows sRGB ~ 80 100 125), darker where trees stand in it (~35-50), never a bright green; a soft knee keeps
-      // sunlit things from glaring
-      glzSpec *= 2.2;                                                     // a dark room behind: the mirror image is all one sees
-      float gL = dot(glzSpec, vec3(0.2126, 0.7152, 0.0722));
-      glzSpec *= 0.4 / (gL + 0.4);
+    if (gPlain < 0.5) {
+      glzSpec = glzWorld(vGlzW, gR, gSunD, gSunC, gSky, gRA, 1.0) * gF;
+    } else {
+      // No room behind (uncoded panes): the pane is a dark mirror.  A low, grey-green tree line in it (tk 0.3).
+      vec3 gW = glzWorld(vGlzW, gR, gSunD, gSunC, gSky, gRA, 0.3);
+      float gTn = gR.y / max(length(gR.xz), 1e-4);
+      float gL;
+      if (gUp > 0.5) {
+        // UPPER STOREY: open sky above -- the panes mirror it deep blue at ~0.55 of the sky they face (hero: upper
+        // panes sRGB 75-84 122-142 175-221 under a sky of 127 168 239), the ground below the horizon only at the
+        // pane's Fresnel (seen from the drone the windows stay dark, p28 / p29); a knee for the sun's glint
+        glzSpec = gW * mix(gF, 0.55, smoothstep(-0.03, 0.12, gTn));
+        gL = dot(glzSpec, vec3(0.2126, 0.7152, 0.0722));
+        glzSpec /= 1.0 + max(gL - 0.6, 0.0) * 1.5;
+      } else {
+        // GROUND FLOOR: every ground-floor window and door of this house stands under a porch roof (the wraparound
+        // front porch, the rear loggia, the north porch): above eye level the pane mirrors the porch ceiling in shade,
+        // the sunlit garden only in a band about the horizon, the porch floor below -- the panes read near black
+        // (hero: 32 31 31), the door's lites catch the garden as light glints, never a green sheet
+        vec3 gCeil = vec3(0.80, 0.78, 0.72) * gSky * 0.12;
+        float gBand = smoothstep(0.10, 0.03, gTn) * smoothstep(-0.09, -0.02, gTn);
+        vec3 gFloor = gW * 0.35;
+        glzSpec = mix(mix(gFloor, gCeil, smoothstep(-0.02, 0.06, gTn)), gW * 0.8, gBand);
+        gL = dot(glzSpec, vec3(0.2126, 0.7152, 0.0722));
+        glzSpec = mix(vec3(gL), glzSpec, 0.6) * gF;                     // dimly seen: half the garden's colour
+      }
     }
     totalEmissiveRadiance += gRoom.rgb * (1.0 - gF) * vec3(0.87, 0.91, 0.89);
     diffuseColor.rgb = vec3(0.80, 0.78, 0.73) * gRoom.a * (1.0 - gF) * 0.9;
@@ -330,7 +348,7 @@ function glassMaterial(ctx, shared) {
       // perfectly smooth pane would only add fireflies
       .replace('vec3 totalSpecular = reflectedLight.directSpecular + reflectedLight.indirectSpecular;', 'vec3 totalSpecular = glzSpec;');
   };
-  m.customProgramCacheKey = () => 'glazing-glass-6-' + ss;
+  m.customProgramCacheKey = () => 'glazing-glass-7-' + ss;
   return m;
 }
 

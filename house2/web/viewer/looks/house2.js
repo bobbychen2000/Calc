@@ -56,11 +56,12 @@ const C = {
   edging: [0.055, 0.047, 0.04],
   timberDark: [0.050, 0.036, 0.027],       // the arbor's dark stain
   woodGrey: [0.155, 0.135, 0.115],         // weathered cedar of the play structure: silver-grey boards, darker brown-grey ones (p19, p22)
-  teakGrey: [0.29, 0.28, 0.265],          // silvered teak: as light as the cushions (p23 162 162 160 / 138 135 137, p24 130 132 141 / 140 143 154)
+  teakGrey: [0.20, 0.19, 0.18],           // silvered teak frames: p22 in sun ~ the flagstone's shade, f134 76 74 74 beside a flagstone of 193
   picket: [0.25, 0.215, 0.175],           // the garden's pickets: browner and newer than the play set (p28)
   slide: [0.030, 0.19, 0.095],
   umbrella: [0.10, 0.10, 0.105],
-  cushion: [0.30, 0.295, 0.29],           // mid-light grey canvas (p23, p24; f134 a shade darker in the video)
+  cushion: [0.175, 0.16, 0.165],          // taupe-grey canvas: p22 sunlit 120 112 115, shaded 80 76 80 (the render read 137-158 at 0.30)
+  pillow: [0.36, 0.38, 0.41],             // the throw pillows: light blue-grey print (p22)
   rope: [0.52, 0.48, 0.38],
 };
 
@@ -744,21 +745,24 @@ function bark(ctx, spec) {
   return m;
 }
 
-// spring crowns (p21, p22, p26, the video): fresh yellow-greens, olive evergreen oaks; LINEAR, the fully lit leaf
+// spring crowns (p21, p22, p26, the video): fresh yellow-greens, olive evergreen oaks; LINEAR, the fully lit leaf.
+// Measured through the photo cameras (r3): the render's crowns read ~0.6 x the photos' in linear terms and greener
+// (p22's Japanese maple 68 79 24 against 48 64 20, the hero's birch 102 112 73 against 64 76 46): the broadleaf
+// albedos raised ~1.4 x and turned toward yellow; the evergreen belts (pl_leaf_dark, conifers) stay dark olive
 const LEAVES = {
-  pl_leaf: { color: [0.070, 0.115, 0.030] },
-  pl_leaf_light: { color: [0.115, 0.17, 0.042], through: [0.8, 1.0, 0.2, 0.55] },
-  pl_leaf_dark: { color: [0.036, 0.058, 0.024], depth: 0.25, through: [0.7, 1.0, 0.3, 0.25], leaf: 0.33 },
-  pl_leaf_yellow: { color: [0.17, 0.20, 0.04], through: [0.9, 1.0, 0.15, 0.55] },
-  pl_leaf_maple: { color: [0.11, 0.16, 0.038], leaf: 0.33, clump: 3.2, through: [0.85, 1.0, 0.2, 0.6] },
+  pl_leaf: { color: [0.098, 0.150, 0.034], vary: 1.2 },
+  pl_leaf_light: { color: [0.165, 0.225, 0.046], through: [0.85, 1.0, 0.2, 0.6], vary: 1.1 },
+  pl_leaf_dark: { color: [0.044, 0.066, 0.027], depth: 0.25, through: [0.7, 1.0, 0.3, 0.25], leaf: 0.3, vary: 1.2 },
+  pl_leaf_yellow: { color: [0.23, 0.26, 0.045], through: [0.9, 1.0, 0.15, 0.6] },
+  pl_leaf_maple: { color: [0.185, 0.235, 0.040], leaf: 0.3, clump: 3.2, through: [0.9, 1.0, 0.15, 0.7], vary: 0.7 },
   pl_leaf_red: { color: [0.19, 0.05, 0.036], leaf: 0.33, clump: 3.2, hue: 0.06, vary: 0.4, through: [1.0, 0.35, 0.2, 0.6] },
   pl_leaf_conifer: { color: [0.026, 0.048, 0.027], kind: 'needle', leaf: 0.4, clump: 2.6, depth: 0.2, cut: [0.12, 0.8], through: [0.7, 1.0, 0.4, 0.2] },
   pl_blossom: { color: [0.085, 0.13, 0.036], leaf: 0.3, clump: 1.6, bump: [0.35, 0.03], hue: 0.08, vary: 0.4, bloom: [0.80, 0.78, 0.73, 0.42] },
   yard_vine: { color: [0.07, 0.12, 0.03], leaf: 0.36, clump: 2.4, bump: [0.2, 0.03], bloom: [0.78, 0.45, 0.52, 0.30] },      // climbing roses over the arbor (p20)
-  pl_far_canopy: { color: [0.075, 0.088, 0.048], clump: 23, leaf: 9, bump: [2.0, 0.4], up: 0, cut: [-1, 0], depth: 0.6, twoSided: false, far: true, land: [0.5, 0.16, 140, 1300] },
-  pl_far_hill: { color: [0.10, 0.11, 0.08], clump: 310, leaf: 131, bump: [10.0, 1.5], up: 0, cut: [-1, 0], depth: 0.85, twoSided: false, far: true, land: [0.35, 0.10, 140, 1100] },
+  pl_far_canopy: { color: [0.075, 0.088, 0.048], clump: 23, leaf: 9, bump: [2.0, 0.4], up: 0, cut: [-1, 0], depth: 0.6, twoSided: false, far: true, land: [0.55, 0.16, 80, 620] },
+  pl_far_hill: { color: [0.10, 0.11, 0.08], clump: 310, leaf: 131, bump: [10.0, 1.5], up: 0, cut: [-1, 0], depth: 0.85, twoSided: false, far: true, land: [0.4, 0.10, 80, 560] },
   foliage_dark: { color: [0.036, 0.058, 0.024], depth: 0.25 },
-  ground_far: { color: [0.12, 0.13, 0.085], clump: 70, leaf: 31, bump: [1.0, 0.2], up: 0, cut: [-1, 0], depth: 0.8, twoSided: false, far: true, land: [0.4, 0, 140, 1300] },
+  ground_far: { color: [0.12, 0.13, 0.085], clump: 70, leaf: 31, bump: [1.0, 0.2], up: 0, cut: [-1, 0], depth: 0.8, twoSided: false, far: true, land: [0.45, 0, 80, 620] },
 };
 
 // ------------------------------------------------------------------------------------------------ registry
@@ -774,13 +778,19 @@ export function register(lib) {
   const shingle = (ctx, k) => surface(ctx, { ...cedarTex(ctx), color: C.shingleSiding, roughness: 0.9, swatchFade: [14, 40],
     heightTint: { y0: 3.0, y1: 3.7, k },
     detail: { kind: 'fibre', size: 0.21, albedo: 0.1, normal: 0.15 }, macro: { s1: 4.3, s2: 15, amount: 0.05, tint: [1.06, 1.0, 0.93], tintAmount: 0.25 } });
-  lib.add('siding_shingle', (ctx) => shingle(ctx, [0.54, 0.46, 0.32]));
+  // (k: hero 83 77 67 / p01 70 65 52 under the porches against the render's neutral 66 / 68 at [0.54, 0.46, 0.32]:
+  // warmer, a little lighter; p21's rear loggia reads darker in its own exposure -- the stage's meter, not the wall)
+  const TAUPE_K = [0.62, 0.50, 0.29];
+  lib.add('siding_shingle', (ctx) => shingle(ctx, TAUPE_K));
   const trimPaint = (ctx) => surface(ctx, { color: C.trim, roughness: 0.55, detail: { kind: 'fibre', size: 0.11, albedo: 0.035, normal: 0.05, rough: 0.06 }, macro: { s1: 1.7, s2: 6.1, amount: 0.035 } });
   lib.add('trim_cream', trimPaint);
   lib.add('yard_column_white', trimPaint);
+  // the porch columns' capitals and the entry's box beam band (house zone: p01 ~0.6 x the shaft): the same paint, taupe
+  lib.add('trim_taupe', (ctx) => surface(ctx, { color: [0.48, 0.425, 0.32], roughness: 0.6,
+    detail: { kind: 'fibre', size: 0.11, albedo: 0.035, normal: 0.05, rough: 0.06 }, macro: { s1: 1.7, s2: 6.1, amount: 0.035 } }));
   // the front lower storey is NOT lap siding: the hero at full size shows staggered shingles under the porch (x 0-650,
   // y 850-1500), only darker and warmer -- a name the house zone gives those walls gets the same shingle, taupe all over
-  const taupe = (ctx) => shingle(ctx, [0.50, 0.43, 0.31]);
+  const taupe = (ctx) => shingle(ctx, TAUPE_K);
   for (const n of ['siding_lap', 'siding_lap_taupe', 'siding_taupe', 'siding_shingle_taupe']) lib.add(n, taupe);
   lib.add('gutter_cream', (ctx) => paint(ctx, C.gutter, 0.4));
   lib.add('soffit_white', (ctx) => paint(ctx, [0.80, 0.785, 0.725], 0.6, grooveTex(ctx, 'soffit', false, 0.14, 0.005, 0.003)));
@@ -809,9 +819,22 @@ export function register(lib) {
   lib.add('dish_white', (ctx) => paint(ctx, [0.72, 0.72, 0.70], 0.4));
 
   // ---- paving, walls, grounds
-  lib.add('bluestone', (ctx) => (surface(ctx, { ...piecesTex(ctx, 'h2flag', FLAG), color: C.flag, roughness: 1.0, swatchFade: [22, 60], worldUV: 0.80,      // laid square to the pool and the house (45.8 deg in plan)
-   
-    detail: { kind: 'grit', size: 0.27, albedo: 0.2, normal: 0.3, rough: 0.05 }, macro: { s1: 7.9, s2: 29, amount: 0.07, tint: [1.05, 1.0, 0.93], tintAmount: 0.3 } })));
+  // the zones lay the flights of steps (ground_steps) in the terrace's name: their treads are thermal-finish bluestone,
+  // blue-grey and dark (hero's entry, p22's stair: 24 26 30 in shade against the terrace's light full-range stone) --
+  // such a mesh is handed the treads' entry on its first draw (until the zones name the treads themselves)
+  const STEPS = /(^|_)(steps|stairs?|treads?)(_|$)/i;
+  lib.add('bluestone', (ctx) => {
+    const m = surface(ctx, { ...piecesTex(ctx, 'h2flag', FLAG), color: C.flag, roughness: 1.0, swatchFade: [22, 60], worldUV: 0.80,      // laid square to the pool and the house (45.8 deg in plan)
+      detail: { kind: 'grit', size: 0.27, albedo: 0.2, normal: 0.3, rough: 0.05 }, macro: { s1: 7.9, s2: 29, amount: 0.07, tint: [1.05, 1.0, 0.93], tintAmount: 0.3 } });
+    m.onBeforeRender = (renderer, scene, camera, geometry, object) => {
+      if (!ctx.get || object.material !== m) return;
+      if (STEPS.test(object.name) || (object.parent && STEPS.test(object.parent.name))) {
+        object.material = ctx.get('bluestone_thermal');
+        Promise.resolve().then(() => ctx.changed && ctx.changed());
+      }
+    };
+    return m;
+  });
   // the front walks, should the ground zone give them their own name with UVs running along the walk
   const walk = (ctx) => surface(ctx, { ...piecesTex(ctx, 'h2flag', FLAG), color: C.flag, roughness: 1.0, swatchFade: [22, 60], level: true,
     detail: { kind: 'grit', size: 0.27, albedo: 0.2, normal: 0.3, rough: 0.05 }, macro: { s1: 7.9, s2: 29, amount: 0.07, tint: [1.05, 1.0, 0.93], tintAmount: 0.3 } });
@@ -841,7 +864,8 @@ export function register(lib) {
   lib.add('stone_veneer', (ctx) => surface(ctx, { ...piecesTex(ctx, 'h2pier', PIER), color: [1, 1, 1], roughness: 1.0, swatchFade: [25, 70],
     detail: { kind: 'grit', size: 0.23, albedo: 0.2, normal: 0.45 }, macro: { s1: 2.1, s2: 6.7, amount: 0.06 } }));
   lib.add('pl_nb_stone', (ctx) => surface(ctx, { ...piecesTex(ctx, 'h2fire', FIRE), color: [1, 1, 1], roughness: 1.0 }));
-  lib.add('yard_firebrick', (ctx) => surface(ctx, { ...coursedTex(ctx, 'h2firebrick', FIREBRICK), color: [1, 1, 1], roughness: 1.0,
+  // the firebox: brick under years of soot -- near black in p22 / p24 / p26, the brick courses barely showing
+  lib.add('yard_firebrick', (ctx) => surface(ctx, { ...coursedTex(ctx, 'h2firebrick', FIREBRICK), color: [0.22, 0.2, 0.19], roughness: 1.0,
     detail: { kind: 'grit', size: 0.2, albedo: 0.2, normal: 0.3 } }));
   lib.add('yard_soot', { color: 0x1c1a18, roughness: 1.0 });
 
@@ -886,6 +910,7 @@ export function register(lib) {
   lib.add('yard_cushion_white', (ctx) => canvasCloth(ctx, C.cushion));
   lib.add('cushion', (ctx) => canvasCloth(ctx, C.cushion));
   lib.add('cushion_edge', (ctx) => canvasCloth(ctx, C.cushion));
+  lib.add('furn_fabric_white', (ctx) => canvasCloth(ctx, C.pillow));      // the furniture kit's throw pillows: not white here
   lib.add('furniture_wood', (ctx) => weathered(ctx, C.teakGrey, 0.85));      // the teak sofas and chairs: silvered like the rest (p23, p24, f134)
   lib.add('furn_wood_taupe', (ctx) => weathered(ctx, [0.25, 0.235, 0.215], 0.8));
   lib.add('yard_tire', (ctx) => paint(ctx, [0.02, 0.02, 0.021], 0.85));

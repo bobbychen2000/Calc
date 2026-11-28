@@ -33,7 +33,11 @@ Z_BASE = -2.5                            # walls start below every ground level;
 Z2 = 3.45                                # upper floor level: the upper walls start here, the ground walls stop under it
 SLAB_T = 0.25
 FLOOR = plan.FLOOR                       # main floor above the pool deck
-PORCH_FLOOR = plan.FRONT_PORCH_FLOOR     # wraparound porch (4 risers above the front walk)
+# wraparound porch floor: round 3 measured it 0.14 m under plan.FRONT_PORCH_FLOOR (0.42) through the level p01 camera --
+# the four step nosings (v 1222 / 1237 / 1252 / 1265, walk 1280) fit a floor at 0.21-0.25 over the walk at -0.25..-0.31,
+# the front run's bottom rail ends at z 0.31 (a 4 cm gap above the floor), and hero's 4 risers read ~0.14 m each:
+# 0.28 (4 risers of ~0.14 over the walk at -0.27); the front door's sill 0.35 (p01 ray on the door wall)
+PORCH_FLOOR = 0.28
 PATIO_FLOOR = plan.REAR_PATIO_FLOOR      # covered rear patios (BG, the NC recess, PB)
 WALL = 'siding_shingle'
 TRIM = 'trim_cream'
@@ -67,8 +71,9 @@ COL_BAY_W = 3.0                          # west-run bays
 COL_X_MIRROR = -23.0                     # the south leg's column line is the mirror of the old west line (no photograph)
 COL_TOP = 3.06                           # underside of the porch box beam = top of the column capitals
 BEAM_H = 0.34                            # beam face 0.35 m deep (hero: 75 px at 213 px/m)
-PIER_H = 0.78                            # stone pier over the porch floor (p01 / hero: 0.43-0.50 of the column above it)
-PIER_CAP = 0.06                          # its cream cap; the column base sits on it
+PIER_H = 0.83                            # stone pier over the porch floor (p01 front run: stone top z 1.11, floor 0.28)
+PIER_BAND = 0.08                         # a cream band flush with the stone on top of it (p01: 1.11-1.19; hero 20 px)
+PIER_CAP = 0.055                         # then the cream cap slab 0.72 wide; the shaft stands on it (no plinth: hero)
 PORCH_INSET = 1.0                        # eave -> porch floor edge / column line of the wraparound porch
 
 
@@ -264,9 +269,11 @@ def column_sq(geo, x, y, z0, z1, s=0.28, ang=0.0, mat=TRIM):
     geo.obox(mat, (x, y, 0), ex, ey, (0, 0, 1), (-h - 0.05, -h - 0.05, z1 - 0.14), (h + 0.05, h + 0.05, z1), 'xXyYz')
 
 
-def column_craft(geo, x, y, z0, z1, ang=0.0, pier=0.60, pier_h=PIER_H, s0=0.48, s1=0.36, ground=None):
-    """Tapered square Craftsman column (cream) on a ledgestone pier with a cream cap (the wraparound porch; p01 / hero):
-    a two-step cream base, the shaft tapering s0 -> s1, a taupe capital (neck, block, cap plate) under the beam."""
+def column_craft(geo, x, y, z0, z1, ang=0.0, pier=0.62, pier_h=PIER_H, s0=0.45, s1=0.36, ground=None):
+    """Tapered square Craftsman column (cream) on a ledgestone pier (the wraparound porch; hero / p01, round 3): the stone
+    pier with a flush cream band and a cream cap slab 0.72 wide on top, the shaft standing straight on the slab (no base
+    plinth) and tapering s0 -> s1 (hero, entry column: 90 -> 72 px over a 125 px pier, a 144 px slab), a taupe capital
+    (neck, block, cap plate: ~1.3 x the shaft top, 0.20 m tall) under the beam."""
     ex, ey = np.array([np.cos(ang), np.sin(ang), 0.0]), np.array([-np.sin(ang), np.cos(ang), 0.0])
     o = np.array([x, y, 0.0])
     zb = z0 - 1.0 if ground is None else min(ground, z0) - 0.3
@@ -275,19 +282,17 @@ def column_craft(geo, x, y, z0, z1, ang=0.0, pier=0.60, pier_h=PIER_H, s0=0.48, 
     h = pier / 2
     zp = z0 + pier_h
     sq(h, zb, zp, 'stone_veneer')
-    sq(h + 0.05, zp, zp + PIER_CAP, TRIM, 'xXyYzZ')                       # cream cap, 5 cm proud
-    zc = zp + PIER_CAP
-    sq(s0 / 2 + 0.05, zc, zc + 0.08, TRIM, 'xXyYZ')                       # base: plinth + a smaller step
-    sq(s0 / 2 + 0.025, zc + 0.08, zc + 0.13, TRIM, 'xXyYZ')
-    za, zt = zc + 0.13, z1 - 0.19
+    sq(h + 0.005, zp, zp + PIER_BAND, TRIM, 'xXyYz')                     # flush cream band
+    sq(h + 0.05, zp + PIER_BAND, zp + PIER_BAND + PIER_CAP, TRIM, 'xXyYzZ')   # cap slab, 5 cm proud
+    za, zt = zp + PIER_BAND + PIER_CAP, z1 - 0.20
     c0 = [o + ex * sx * s0 / 2 + ey * sy * s0 / 2 + (0, 0, za) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
     c1 = [o + ex * sx * s1 / 2 + ey * sy * s1 / 2 + (0, 0, zt) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
     for i in range(4):
         j = (i + 1) % 4
         geo.poly(TRIM, [c0[i], c0[j], c1[j], c1[i]])
-    sq(s1 / 2 + 0.02, zt, zt + 0.04, TAUPE, 'xXyYz')                       # capital: neck, block, cap plate
-    sq(s1 / 2 + 0.08, zt + 0.04, zt + 0.15, TAUPE, 'xXyYz')
-    sq(s1 / 2 + 0.11, zt + 0.15, z1, TAUPE, 'xXyYz')
+    sq(s1 / 2 + 0.012, zt, zt + 0.04, TAUPE, 'xXyYz')                     # capital: neck, block, cap plate
+    sq(s1 / 2 + 0.035, zt + 0.04, zt + 0.15, TAUPE, 'xXyYz')
+    sq(s1 / 2 + 0.06, zt + 0.15, z1, TAUPE, 'xXyYz')
 
 
 def corbel(geo, top, out, along, L=0.86, D=0.22, w=0.18, mat=TRIM):
@@ -302,9 +307,9 @@ def corbel(geo, top, out, along, L=0.86, D=0.22, w=0.18, mat=TRIM):
     geo.prism(mat, [(sg * a, b) for a, b in prof], top - along * w / 2, top + along * w / 2, up=(0, 0, 1.0))
 
 
-def railing(geo, a, b, z0, h=0.80, gap=0.122, mat=TRIM, inset=0.0):
+def railing(geo, a, b, z0, h=0.80, gap=0.122, mat=TRIM, inset=0.0, bw=0.048, bot=(0.06, 0.14)):
     """Porch railing between plan points a and b (floor at z0): a flat cap board on the top rail, a bottom rail held off
-    the floor, plain square balusters at `gap` centres (hero: ~0.12 m; p01: continuous between the piers)."""
+    the floor (bot = its underside / top over the floor), plain square balusters bw wide at `gap` centres."""
     r, n, L = _frame(a, b)
     L -= 2 * inset
     if L < 0.25:
@@ -312,11 +317,18 @@ def railing(geo, a, b, z0, h=0.80, gap=0.122, mat=TRIM, inset=0.0):
     o = np.array([a[0], a[1], 0.0]) + r * inset
     _lbox(geo, mat, o, r, n, (0, -0.06, z0 + h - 0.035), (L, 0.06, z0 + h), 'yYzZ')            # cap board
     _lbox(geo, mat, o, r, n, (0, -0.04, z0 + h - 0.11), (L, 0.04, z0 + h - 0.035), 'yYz')      # top rail
-    _lbox(geo, mat, o, r, n, (0, -0.04, z0 + 0.06), (L, 0.04, z0 + 0.14), 'yYzZ')              # bottom rail
+    _lbox(geo, mat, o, r, n, (0, -0.04, z0 + bot[0]), (L, 0.04, z0 + bot[1]), 'yYzZ')          # bottom rail
     k = max(1, int(round(L / gap)))
+    hb = bw / 2
     for i in range(k):
         s = (i + 0.5) * L / k
-        _lbox(geo, mat, o, r, n, (s - 0.024, -0.024, z0 + 0.14), (s + 0.024, 0.024, z0 + h - 0.11), 'xXyY')
+        _lbox(geo, mat, o, r, n, (s - hb, -hb, z0 + bot[1]), (s + hb, hb, z0 + h - 0.11), 'xXyY')
+
+
+# the wraparound porch's railing (p01 through the level camera on the front run's plane, round 3): cap board top level
+# with the piers' cream band (z 1.20 = 0.92 over the floor), square balusters ~0.07 at 0.165-0.175 m centres (12 in the
+# front run's 2.1 m between piers), the bottom rail 0.04-0.17 over the floor
+FRONT_RAIL = dict(h=0.92, gap=0.168, bw=0.068, bot=(0.04, 0.17))
 
 
 def _bx(geo, mat, o, r, n, x0, x1, z0, z1, y0, y1, faces='xXyYzZ'):
@@ -725,8 +737,8 @@ def front_porch(geo, eaves):
         a, b = line[i], line[i + 1]
         beam(geo, a, b, COL_TOP, top, t=0.30)
         if i != 6 and 0 < i < len(line) - 2:                        # no railing across the steps / at the wall returns
-            railing(geo, a, b, zf, inset=0.32)
-    railing(geo, cols[-1], PORCH_END_E, zf, inset=0.32)             # east leg: railed up to the patio wing
+            railing(geo, a, b, zf, inset=0.31, **FRONT_RAIL)
+    railing(geo, cols[-1], PORCH_END_E, zf, inset=0.31, **FRONT_RAIL)   # east leg: railed up to the patio wing
     # entry: box beam under the pediment, 4 risers down to the front walk, a short cream post at each side of the foot
     el, er = np.array(cols[5]), np.array(cols[6])
     beam(geo, el, er, COL_TOP, top, t=0.34)
@@ -825,6 +837,33 @@ def rafter_tail(geo, q, inward, along, z_us, tn, run, w=0.055, d=0.13):
     geo.prism(TRIM, [(sg * r, z) for r, z in prof], a, b, up=(0, 0, 1.0))
 
 
+def front_door_casing(geo, fp):
+    """One cream casing round the front door unit (door + sidelights; p01 / hero: a flat casing outside the dark frame)."""
+    D = np.array(FRONT_DOOR)
+    best = None
+    for g in _rings(fp['G']):
+        ring = np.array(g.exterior.coords)
+        for a, b in zip(ring[:-1], ring[1:]):
+            d = LineString([a, b]).distance(Point(*D))
+            if best is None or d < best[0]:
+                best = (d, a, b)
+    _, a, b = best
+    r, n, L = _frame(a, b)
+    if Polygon(np.array(_rings(fp['G'])[0].exterior.coords)).exterior.is_ccw is False:
+        pass
+    if (D - a) @ n[:2] > 0.0 or True:
+        pass
+    s0 = float((D - a) @ r[:2])
+    o = np.array([a[0], a[1], 0.0]) + r * s0
+    if Polygon(_rings(fp['G'])[0].exterior.coords).contains(Point(*(o[:2] + n[:2] * 0.3))):
+        n = -n                                                          # face out of the house
+        r = -r
+    z0, z1 = PORCH_FLOOR + 0.05, PORCH_FLOOR + 0.05 + 2.34
+    for sg in (-1, 1):
+        _lbox(geo, TRIM, o + r * sg * 0.875, r, n, (-0.065, -0.02, z0), (0.065, 0.04, z1 + 0.08), 'xXYz')
+    _lbox(geo, TRIM, o, r, n, (-0.97, -0.02, z1 + 0.08), (0.97, 0.05, z1 + 0.22), 'xXYzZ')
+
+
 def gable_trim(geo, planes):
     """Louvred vents, king posts and brackets on the street gables: the front gable FG (hero: a king-post corbel through
     the vent, a tall corbel on the wall under each rake end, a curved bracket under each eave end), the west gable WG
@@ -868,19 +907,24 @@ def gable_trim(geo, planes):
 # camera onto the wall planes; rear: p21 / p28.  Sills hidden by railings are assumed 0.55 m above the floor.
 F0 = FLOOR
 GARAGE_WIN = (-26.53, -3.45)
+FRONT_DOOR = (-16.29, -16.40)
 OPENINGS = [
     # ---- street side -------------------------------------------------------------------------------------------
     ('win', 'g', (-18.90, -13.71), F0 + 0.55, 2.40, 1.80, dict(units=3)),              # W2 behind the left front run
     ('win', 'g', (-21.26, -13.22), F0 + 0.55, 0.70, 1.80, {}),                          # W1 on the bay's return
-    ('door', 'g', (-16.29, -16.40), F0 - 0.02, 1.02, 2.10, dict(kind='wood')),          # the espresso front door
-    ('win', 'g', (-16.87, -15.84), F0 + 0.10, 0.30, 1.90, dict(divided=False, sill=False, casing=0.07)),
-    ('win', 'g', (-15.71, -16.96), F0 + 0.10, 0.30, 1.90, dict(divided=False, sill=False, casing=0.07)),
+    # the front door unit (p01 rays on the entry wall, round 3): sill 0.35, head 2.67, the leaf 1.02 wide, two narrow
+    # sidelights ~0.2 m glass at +-0.70 from its middle, tight to it (one frame: the door's casing is the mullion)
+    ('door', 'g', FRONT_DOOR, PORCH_FLOOR + 0.05, 1.02, 2.34, dict(kind='wood', casing=0.06)),
+    ('win', 'g', (-16.777, -15.911), PORCH_FLOOR + 0.15, 0.22, 2.20, dict(divided=False, sill=False, casing=0.01)),
+    ('win', 'g', (-15.803, -16.889), PORCH_FLOOR + 0.15, 0.22, 2.20, dict(divided=False, sill=False, casing=0.01)),
     ('win', 'g', (-13.23, -19.00), F0 + 0.55, 2.30, 1.80, dict(units=3)),               # W3 right of the entry
-    ('door', 'g', (-13.23, -20.85), F0 - 0.02, 0.85, 2.10, dict(kind='glass', lights=0)),   # W4
+    ('door', 'g', (-13.23, -20.85), PORCH_FLOOR + 0.05, 0.85, 2.20, dict(kind='glass', lights=0)),   # W4 (porch door)
     ('win', 'u', (-19.26, -13.71), 4.45, 2.50, 1.60, dict(units=3)),                    # triple window, upper left
     ('win', 'u', (-16.21, -16.48), 4.50, 1.85, 1.55, dict(units=2)),                    # twin window in the front gable
     ('win', 'u', (-21.57, -11.25), 4.65, 0.80, 1.50, {}),                               # west gable
-    ('win', 'g', GARAGE_WIN, 1.45, 1.62, 1.40, dict(units=2)),        # garage gable (p01, level camera: x -27.35..-25.73)
+    # garage gable (p01, level camera, rays on the wall y -3.40, +0.08 for the camera's 6 px there): frame x -27.35..-25.73,
+    # z 1.41..2.96; flat casings ~0.17 wide, the stone wainscot's water table right under the sill
+    ('win', 'g', GARAGE_WIN, 1.41, 1.62, 1.55, dict(units=2, casing=0.16)),
     ('garage', 'g', (-30.45, 5.60), None, 2.60, 2.30, {}),                              # 3 garage doors on the motor
     ('garage', 'g', (-30.45, 2.40), None, 2.60, 2.30, {}),                              # court (assumed sizes: no
     ('garage', 'g', (-30.45, -0.80), None, 2.60, 2.30, {}),                             # photograph shows them)

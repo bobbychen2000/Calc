@@ -83,6 +83,9 @@ export class Materials {
     this.ctx = { THREE, renderer, quality, time: 'day', envGain: 1, anisotropy: renderer ? renderer.capabilities.getMaxAnisotropy() : 1 };
     // a look that changes what it draws after the first frame (foliage: geometry prepared on first render) asks for another
     this.ctx.changed = () => { if (this.onChange) this.onChange(); };
+    // a look may hand one mesh another entry of the library (onBeforeRender: object.material = ctx.get(name)), e.g. the
+    // flagstone name on a flight of steps wearing the treads' stone
+    this.ctx.get = (name) => this.get(name);
     const lib = {
       add: (name, entry, kind) => { this.entries.set(name, entry); if (kind) this.kinds.set(name, kind); },
       onTime: (fn) => this.timeFns.push(fn),
