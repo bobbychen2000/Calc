@@ -1,7 +1,7 @@
 """Register a listing photo into the video's SfM frame S with learned matches (DISK + LightGlue), guided.
 
     python3 -I tools/lg_reg.py TARGET FRAME_MS[,FRAME_MS..] [--init LANDMARKS.json] [--iters 3] [--save]
-                               [--mode warp|direct|synth] [--free f,k1] [--f F]
+                               [--mode warp|direct|synth] [--free f,k1] [--f F] [--out CANDIDATES.json]
 
 TARGET is a path under refs/cache (photos/p29_ddf5dc.jpg).  The photos differ from the video in season, light and
 heading (the aerial is winter and turned ~150 deg), which a matcher does not bridge on its own; so the target is first
@@ -320,6 +320,12 @@ def main():
                 print('    %-26s %4d / %4d inliers, median %.2f px' % (fr.split('/')[-1], (keep & m).sum(), m.sum(),
                                                                        np.median(err[m & keep]) if (keep & m).any() else -1))
     rms_k = np.sqrt(np.mean(err[keep] ** 2))
+    if '--out' in args:                              # a candidate camera for comparison, cams_fixed.json untouched
+        path = args[args.index('--out') + 1]
+        cand = CAMS.load(path) if os.path.exists(path) else {}
+        cand[target] = dict(cam, fixed=True, src='lg_reg candidate %d pairs rms %.2f' % (keep.sum(), rms_k))
+        CAMS.save(cand, path)
+        print('candidate written to', path)
     if '--save' in args and (keep.sum() < 60 or rms_k > 3.0):
         print('NOT saved: %d inliers, rms %.2f px (needs >= 60 and < 3)' % (keep.sum(), rms_k))
     elif '--save' in args:

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Package the viewer as a self-contained static bundle (also the claude.ai Artifact layout).
 
-    python3 web/package.py [--out DIR]          # default house/dist/ (git-ignored)
+    python3 web/package.py [--out DIR] [--white] [--model-dir DIR]   # default house2/dist/ (git-ignored)
+
+--white: a white-model-only bundle (opens in the white mode, no look toggle).  --model-dir: take house.glb +
+house_meta.json from DIR instead of out/ (e.g. a clean checkout's out/ while builders edit the working tree).
 
 DIR/index.html        the page WITHOUT doctype / html / head / body tags (an Artifact host wraps it in its own
                       skeleton); DIR/_local.html wraps it the same way for local tests.
@@ -24,8 +27,11 @@ from pathlib import Path
 
 WEB = Path(__file__).resolve().parent
 HOUSE = WEB.parent
-TITLE = 'Farmhouse Exterior Model'
-DESCRIPTION = 'A navigable 3-D reconstruction of a house exterior and its grounds, rebuilt from listing photos and video.'
+TITLE = 'Craftsman House Model'
+DESCRIPTION = 'A navigable 3-D reconstruction of a Craftsman house and its grounds, rebuilt from listing photos and video.'
+TITLE_WHITE = 'Craftsman White Model'
+DESCRIPTION_WHITE = ('The Craftsman house and its grounds as a plain white model: roofs, porches, pool, yard and trees '
+                     'rebuilt from the listing photos and video, before materials.')
 B64_PART = 9_000_000          # characters per base64 text part (text files are limited to 16 MB)
 TYPES = {'.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.txt': 'text/plain', '.html': 'text/html',
          '.jpg': 'image/jpeg'}
@@ -49,6 +55,9 @@ def follow_imports(entry: Path, three_src: Path, seen: dict):
 def main():
     a = sys.argv[1:]
     out = Path(a[a.index('--out') + 1]) if '--out' in a else HOUSE / 'dist'
+    white = '--white' in a
+    src_out = Path(a[a.index('--model-dir') + 1]) if '--model-dir' in a else HOUSE / 'out'
+    title, desc = (TITLE_WHITE, DESCRIPTION_WHITE) if white else (TITLE, DESCRIPTION)
     if out.exists():
         shutil.rmtree(out)
     (out / 'data').mkdir(parents=True)
@@ -64,18 +73,18 @@ def main():
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(src, dst)
     # data: meta without the reference-photo cameras, model as base64 text parts
-    meta = json.load(open(HOUSE / 'out' / 'house_meta.json'))
+    meta = json.load(open(src_out / 'house_meta.json'))
     meta.pop('cameras', None)
     if '--no-photos' in a:
         meta['projectors'] = []
     if '--photo-layer' not in a:                      # whole photographs cast onto the model: a test layer, left out
         meta['projectors'] = []
     for sw in meta.get('swatches', {}).values():      # material patches cut from the photographs
-        shutil.copy(HOUSE / 'out' / sw['image'], out / 'data' / sw['image'])
+        shutil.copy(src_out / sw['image'], out / 'data' / sw['image'])
     for p in meta.get('projectors', []):          # the photographs the viewer casts onto the model (private bundles only)
-        shutil.copy(HOUSE / 'out' / p['image'], out / 'data' / p['image'])
+        shutil.copy(src_out / p['image'], out / 'data' / p['image'])
     json.dump(meta, open(out / 'data' / 'house_meta.json', 'w'), separators=(',', ':'))
-    raw = (HOUSE / 'out' / meta.get('glb', 'house.glb')).read_bytes()
+    raw = (src_out / meta.get('glb', 'house.glb')).read_bytes()
     text = base64.b64encode(raw).decode()
     step = B64_PART - B64_PART % 4
     parts = [text[i:i + step] for i in range(0, len(text), step)] or ['']
@@ -86,10 +95,11 @@ def main():
     src = (WEB / 'index.html').read_text()
     body = src[src.index('<body>') + 6:src.index('</body>')]
     body = re.sub(r'<script>window\.HOUSE_CONFIG = .*?</script>',
-                  '<script>window.HOUSE_CONFIG = ' + json.dumps({'data': './data/', 'three': './three/', 'b64': {'house.glb': len(parts)},
-                                                                  'threeBuild': 'build/three.module.min.js'}) + ';</script>', body, flags=re.S)
+                  '<script>window.HOUSE_CONFIG = ' + json.dumps(dict({'data': './data/', 'three': './three/', 'b64': {'house.glb': len(parts)},
+                                                                  'threeBuild': 'build/three.module.min.js'},
+                                                                 **({'mode': 'white', 'whiteOnly': True} if white else {}))) + ';</script>', body, flags=re.S)
     page = ('<title>%s</title>\n<meta name="claude:viewport-fit-sides" content="cover">\n'
-            '<link rel="stylesheet" href="viewer/viewer.css">\n' % TITLE) + body.strip() + '\n'
+            '<link rel="stylesheet" href="viewer/viewer.css">\n' % title) + body.strip() + '\n'
     (out / 'index.html').write_text(page)
     (out / '_local.html').write_text('<!doctype html><html lang="en"><head><meta charset="utf-8">'
                                      '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
@@ -100,7 +110,7 @@ def main():
             rel = str(f.relative_to(out))
             files[rel] = {'from': rel, 'contentType': TYPES.get(f.suffix, 'application/octet-stream'), 'bytes': f.stat().st_size}
             total += f.stat().st_size
-    man = {'title': TITLE, 'description': DESCRIPTION, 'icon': 'house', 'page': 'index.html',
+    man = {'title': title, 'description': desc, 'icon': 'house', 'page': 'index.html',
            'page_bytes': (out / 'index.html').stat().st_size, 'files': files, 'total_bytes': total}
     json.dump(man, open(out / 'ARTIFACT.json', 'w'), indent=1)
     print('bundle', out, '-', len(files), 'files, %.2f MB; model %.2f MB in %d base64 part(s)' % (total / 1e6, len(raw) / 1e6, len(parts)))

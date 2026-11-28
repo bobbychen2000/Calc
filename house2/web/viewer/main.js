@@ -51,7 +51,7 @@ mats.hook = (m) => { photo.hook(m); stage.picture.hook(m); };
 for (const m of [CLAY, CLAY_GLASS, CLAY_WATER]) stage.picture.hook(m);
 // ?hq=N refines stills over N passes (soft shadows, sky-light shading, antialiasing); hq=0 turns it off
 if (Q.has('hq')) { stage.refine = +Q.get('hq') > 0; stage.picture.passes = Math.max(1, +Q.get('hq')); }
-const state = { mode: Q.get('mode') === 'white' ? 'white' : 'full', time: Q.get('time') === 'dusk' ? 'dusk' : 'day', view: null, meta: null,
+const state = { mode: (Q.get('mode') || CFG.mode) === 'white' ? 'white' : 'full', time: Q.get('time') === 'dusk' ? 'dusk' : 'day', view: null, meta: null,
   photo: Q.get('photo') === '1' };
 const viewer = window.viewer = { stage, mats, state, photo, phone: PHONE, ready: null, errors: [] };
 const logError = (s) => { viewer.errors.push(String(s).slice(0, 2000)); if (viewer.errors.length > 20) viewer.errors.shift(); };
@@ -262,6 +262,7 @@ async function boot() {
   } catch (e) { logError('compile: ' + e); }
   if (Q.get('ui') === '0') { $('bar').hidden = true; $('status').hidden = true; }
   $('b-mode').addEventListener('click', () => viewer.setMode(state.mode === 'white' ? 'full' : 'white'));
+  if (CFG.whiteOnly) $('b-mode').hidden = true;      // a white-model-only bundle (package.py --white)
   $('b-time').addEventListener('click', () => viewer.setTime(state.time === 'dusk' ? 'day' : 'dusk'));
   $('b-photo').addEventListener('click', () => viewer.setPhoto(!state.photo));
   for (const b of document.querySelectorAll('#bar button')) b.disabled = false;
