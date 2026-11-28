@@ -43,7 +43,8 @@ photos (CPU, ~20 min).
   warped into each near-nadir frame's view by a homography and matched there (winter vs spring, ~150 deg turned: raw
   matches fail); p28 / the rear ground photos match the orbit / rear frames directly.  Frame pixels take their 3-D
   point from the SfM points around them (inverse depth fitted as a local plane).  Saved cameras go to
-  `refs/cache/cams_fixed.json`; `model/frame.py world_cams()` merges them.  p29: 794 inliers, 1.4 px; p28: 215, 1.8 px.
+  `refs/cache/cams_fixed.json`; `model/frame.py world_cams()` merges them.  p29: 794 inliers, 1.4 px; p28 (re-fit with k1 free on the 16 orbit frames): 406, 1.9 px, hand-picked pool corners
+  4 / 9 px; p21: 272, 1.8 px.  The other rear ground photos stand where the video never flew: fit them on the model.
 - World frame (`survey/frame.json`): X = the aerial's image right, Y = its image up (into the lot; street + gate at
   the image bottom-left, driveway up the left edge), Z up; origin = the pool water's centre, Z = 0 = the pool deck.
   Scale 8.548 m per S unit from the pool = 20 x 40 ft (PV modules 0.798 m and the 6 ft raised beds agree within 3 %).
