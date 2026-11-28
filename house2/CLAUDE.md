@@ -45,14 +45,21 @@ photos (CPU, ~20 min).
   point from the SfM points around them (inverse depth fitted as a local plane).  Saved cameras go to
   `refs/cache/cams_fixed.json`; `model/frame.py world_cams()` merges them.  p29: 794 inliers, 1.4 px; p28 (re-fit with k1 free on the 16 orbit frames): 406, 1.9 px, hand-picked pool corners
   4 / 9 px; p21: 272, 1.8 px.  The other rear ground photos stand where the video never flew: fit them on the model.
-- World frame (`survey/frame.json`): X = the aerial's image right, Y = its image up (into the lot; street + gate at
-  the image bottom-left, driveway up the left edge), Z up; origin = the pool water's centre, Z = 0 = the pool deck.
+- World frame (`survey/frame.json`): X = the aerial's image right, Y = its image up (into the lot; the gate at the
+  image bottom-left, driveway up the left edge; the STREET itself lies ~50 m south behind the tile-roofed neighbour,
+  reached by a lane from the SW gate: ground.STREET), Z up; origin = the pool water's centre, Z = 0 = the pool deck.
   Scale 8.548 m per S unit from the pool = 20 x 40 ft (PV modules 0.798 m and the 6 ft raised beds agree within 3 %).
 - Heights (tools/epi.py: an aerial pixel's ray drawn into p28 / a rear frame with height ticks): one-storey eaves
   3.1 (north porch) - 3.6 (patio wing), two-storey eaves 6.3-6.5, the core's hip apex ~8.5, the balcony gable 7.5-8.0,
   covered rear patio floor +0.15.  `model/roof_solve.py` -> `survey/roof_3d.json`: every roof plane of roof.json in 3-D
   (vertices on their aerial rays, planes, level eaves, pitch prior 28 deg; one-storey roofs never share vertices with
-  two-storey ones).  Corrections to the survey live in its REPLACE table (the diagonal entry-porch leg).
+  two-storey ones).  Two-stage solve; corrections live in roof_solve.py: REPLACE (the diagonal entry-porch leg),
+  PITCH_BLOCK / PITCH_PLANE (garage + north wing ~19 deg), RIDGE_Z (balcony gable 7.97), UNDER_WALL, garage_gable
+  (symmetric 26 deg south gable).  roof_3d.json is the single source: roof_details reads it, and imports
+  house.footprints / _planes / OPENINGS / entry_frame() (keep those names).
+- Cameras fitted on the MODEL (photos the drone never saw): hero / p01 in survey/cams_world.json (pairs_world.json),
+  every other photo / video frame in survey/photo_cams/<name>.cam.json (+ .pairs.json; tools/fit_world.py PAIRS OUT);
+  model/frame.py world_cams() loads SfM < cams_fixed < cams_world < photo_cams (the last wins).
 
 ## Builder conventions (zones)
 - `model/plan.py` is the shared plan: `aerial_xy(uv, z)` / `aerial_ring(poly, z)` (aerial pixel -> world at height z:
@@ -82,3 +89,8 @@ photos (CPU, ~20 min).
   142000-146000 step 400; rear low 153500-156500 step 300; high orbit 157500-160500 step 200).  The front photos
   (hero, p01) are not registered: fit them on the model with `tools/fit_world.py` (survey/pairs_world.json).
   Software GL: ~1-3 min a frame; render only what you need, 1000-1400 px wide, scratch files in out/tmp/ (ignored).
+- Finished look: `model/swatch.py` cuts photo patches (straightened on their plane at true scale, delit, tiled, mean
+  albedo set) into out/swatch_*.jpg (never committed) for full builds; the viewer's looks for house 2's material names
+  are in `web/viewer/looks/house2.js` (unknown names fall back to the GLB's colour).  Packaging ships the whole viewer
+  folder and every swatch the meta lists.  White-model-only bundle: `python3 web/package.py --white`.
+- Artifacts: the white model https://claude.ai/artifact/4XqAGij5ZB9PctWLKJ86qx (private; update it in place).

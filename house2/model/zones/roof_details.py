@@ -4,8 +4,10 @@ Source: survey/roof.json (aerial p29 pixels) + survey/roof_3d.json (every roof p
 pixel becomes a world point by meeting its camera ray with the plane the survey names ('on'), lifted by the height of
 the thing above the shingles -- so panels, vents and skylights land where the aerial shows them whatever the height.
 
-  * solar arrays a1-a6 = 50 panels (6 + 10 + 19 + 5 + 7 + 3): the survey's panel rectangles split into single modules,
-    each a framed slab 5 cm over its plane;
+  * solar arrays a1-a6 = 50 panels (6 + 10 + 19 + 5 + 7 + 3): real 0.798 x 1.559 m modules, square to their roof
+    plane, in the survey's counts / rows / orientation and centred on the survey's rectangles; each a framed slab
+    5 cm over its plane (test: every module corner has the house's roof 5 cm under it, except a2's east end -- see
+    the note at ARRAYS);
   * 2 curb skylights, 23 roof vents by kind (box / pipe / dome / turbine / riser), the 2 PV conduits;
   * 2 stacked-stone chimneys with cream metal shrouds: an OPEN-topped box (drip band, sides leaning in to a thin rim)
     with the round flue cap inside, below the rim (p29 looks straight into them).  Rims = the aerial's top frames at
@@ -51,8 +53,13 @@ MATERIALS = {
 
 PANEL_LIFT = 0.05          # panel underside above the shingles
 PANEL_T = 0.04
-PANEL_GAP = 0.012          # half the joint between neighbouring modules
-# survey rectangles (p29 px: x0, y0, x1, y1) -> (n along image x, n along image y) modules
+MODULE = (0.798, 1.559)    # m: the SunPower 225 W module (the surveyed rectangles read ~10 % large: blooming)
+MODULE_JOINT = 0.02        # m between neighbouring modules
+ROW_JOINT = {'a1': 0.09, 'a2': 0.09}   # the two garage-side arrays stand apart on their rails (p29: pale strips)
+# survey rectangles (p29 px: x0, y0, x1, y1) -> (n along image x, n along image y) modules: they give each block's
+# centre, counts and orientation; the modules themselves are MODULE, square to the roof plane
+# a2's east end (2 modules of the north row, 1 of the south row) runs in under the two-storey eave, as p29 / p28 show;
+# the house zone's cw_n mesh stops at the aerial's visible edge there, 0.3-1.3 m short of these modules.
 ARRAYS = {
     'a1': ('g_n', [((348, 304, 507, 355), 5, 1), ((390, 357, 453, 384), 1, 1)]),
     'a2': ('cw_n', [((523, 368, 681, 418), 5, 1), ((485, 420, 642, 472), 5, 1)]),
@@ -70,10 +77,10 @@ CHIMNEYS = {
 }
 # large skylight: its four outer corners re-read in p29 (the survey's first edge was 14 deg off the shingle courses)
 SKYLIGHT_BCN = [(898.7, 1102.0), (918.7, 1086.0), (953.3, 1122.0), (934.7, 1140.7)]
-# satellite dish: p28 only.  Its mast foot's ray meets the north porch roof plane ncp_n at about (-16.5, 6.1), 1.2 m
-# uphill of the surveyed strip, under the two-storey eave (which hides it in the aerial); it stands on the part of
-# the porch roof the house zone runs on under that eave.
-DISH = dict(plane='ncp_n', xy=(-16.5, 6.55), mast=0.75, r=0.38, aim=(0.45, -0.60, 0.66))
+# satellite dish: p28 only (the two-storey eave hides it in the aerial).  Its mount's foot, p28 px (1795, 1273), on
+# its ray meets the north porch roof plane ncp_n (roof_3d.json runs it up to the NC wall at y 5.60) 0.45 m from the wall.
+DISH = dict(plane='ncp_n', image='photos/p28_7ae0dd.jpg', px=(1795, 1273), mast=0.45, r=0.25, aim=(0.85, 0.15, 0.50))
+# (aim: p28 from the NE looks almost square into the disc: a broad ellipse, ~0.47 m across)
 WALL_MIN, WALL_MAX = 0.25, 1.00   # m: a downspout needs a wall this far behind the gutter line
 GUTTER_KINDS = ('eave', 'eave_over_lower_roof', 'eave_end')
 GUTTER = [(0.0, -0.035), (0.0, -0.145), (0.075, -0.145), (0.115, -0.10), (0.115, -0.06), (0.13, -0.035)]
@@ -127,42 +134,88 @@ def _slab(geo, corners, n, t, mat, mat_top=None, inset=0.0):
         geo.poly(mat_top or mat, top)
 
 
-def _split(q, nu, nv, gap):
-    """Split quad q (p00, p10, p11, p01) into nu x nv cells, each shrunk by `gap` on every side."""
-    q = np.asarray(q, float)
-    f = lambda u, v: (q[0] * (1 - u) * (1 - v) + q[1] * u * (1 - v) + q[2] * u * v + q[3] * (1 - u) * v)  # noqa: E731
-    out = []
-    lu = np.linalg.norm(q[1] - q[0]) / nu
-    lv = np.linalg.norm(q[3] - q[0]) / nv
-    gu, gv = gap / lu, gap / lv
-    for i in range(nu):
-        for j in range(nv):
-            u0, u1, v0, v1 = (i + gu) / nu, (i + 1 - gu) / nu, (j + gv) / nv, (j + 1 - gv) / nv
-            out.append([f(u0, v0), f(u1, v0), f(u1, v1), f(u0, v1)])
-    return out
+def _block(pid, O, ex, ey, px, n_img, joint=MODULE_JOINT):
+    """A survey rectangle (aerial px corners) as a block of whole modules in the plane frame (s along the eave, t up
+    the slope): its surveyed centre and extent, the module counts along s / t and the size it has with real modules."""
+    q = on_plane(pid, px, 0.0)
+    st = np.c_[(q - O) @ ex, (q - O) @ ey]
+    lo, hi = st.min(0), st.max(0)
+    u = q[1] - q[0]
+    cnt = np.array(n_img if abs(u @ ex) >= abs(u @ ey) else n_img[::-1])
+    pitch = (hi - lo) / cnt
+    mod = np.array(MODULE if pitch[0] <= pitch[1] else MODULE[::-1])
+    return dict(c=(lo + hi) / 2, ext=hi - lo, cnt=cnt, mod=mod, joint=joint, size=cnt * mod + (cnt - 1) * joint)
+
+
+def _layout(blocks):
+    """New centres of an array's blocks: real module sizes, neighbours that abut in the survey abut again (one joint
+    apart; edges that were flush stay flush), the whole array centred on the surveyed array."""
+    C = [b['c'].copy() for b in blocks]
+    for i, bi in enumerate(blocks[1:], 1):
+        for j in range(i):
+            bj = blocks[j]
+            d = bi['c'] - bj['c']
+            gap = np.abs(d) - (bi['ext'] + bj['ext']) / 2
+            k = int(np.argmax(gap))                              # the axis they are stacked along
+            o = 1 - k
+            if gap[k] > 0.30 or gap[o] > -0.20:
+                continue
+            C[i][k] = C[j][k] + np.sign(d[k]) * ((bi['size'][k] + bj['size'][k]) / 2 + MODULE_JOINT)
+            lo_i, lo_j = bi['c'][o] - bi['ext'][o] / 2, bj['c'][o] - bj['ext'][o] / 2
+            hi_i, hi_j = bi['c'][o] + bi['ext'][o] / 2, bj['c'][o] + bj['ext'][o] / 2
+            if abs(lo_i - lo_j) < 0.15:
+                C[i][o] = C[j][o] - bj['size'][o] / 2 + bi['size'][o] / 2
+            elif abs(hi_i - hi_j) < 0.15:
+                C[i][o] = C[j][o] + bj['size'][o] / 2 - bi['size'][o] / 2
+            else:
+                C[i][o] = C[j][o] + d[o] * (bi['size'][o] + bj['size'][o]) / (bi['ext'][o] + bj['ext'][o])
+            break
+    box = lambda cs, key: (np.min([c - b[key] / 2 for c, b in zip(cs, blocks)], 0) +          # noqa: E731
+                           np.max([c + b[key] / 2 for c, b in zip(cs, blocks)], 0)) / 2
+    shift = box([b['c'] for b in blocks], 'ext') - box(C, 'size')
+    return [c + shift for c in C]
+
+
+def solar_modules():
+    """Every module: (array id, plane id, its 4 corners on the plane surface, counter-clockwise from above)."""
+    out, rails = [], []
+    arrays = [(aid, pid, [([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], (nu, nv)) for (x0, y0, x1, y1), nu, nv in rects])
+              for aid, (pid, rects) in ARRAYS.items()]
+    pid, poly, k = A6
+    arrays.append(('a6', pid, [([poly[1], poly[2], poly[3], poly[0]], (k, 1))]))
+    for aid, pid, rects in arrays:
+        n, ex, ey = plane_frame(pid)
+        O = on_plane(pid, rects[0][0][0], 0.0)[0]
+        blocks = [_block(pid, O, ex, ey, px, cnt, ROW_JOINT.get(aid, MODULE_JOINT)) for px, cnt in rects]
+        for b, c in zip(blocks, _layout(blocks)):
+            lo = c - b['size'] / 2
+            P = lambda s, t: O + ex * s + ey * t                                               # noqa: E731
+            for i in range(b['cnt'][0]):
+                for j in range(b['cnt'][1]):
+                    s0 = lo[0] + i * (b['mod'][0] + b['joint'])
+                    t0 = lo[1] + j * (b['mod'][1] + b['joint'])
+                    s1, t1 = s0 + b['mod'][0], t0 + b['mod'][1]
+                    out.append((aid, pid, np.array([P(s0, t0), P(s1, t0), P(s1, t1), P(s0, t1)])))
+            k = int(np.argmax(b['size']))                         # two rails under each block, along its longer side
+            for f in (0.25, 0.75):
+                e = [lo.copy(), lo.copy()]
+                e[0][1 - k] = e[1][1 - k] = lo[1 - k] + b['size'][1 - k] * f
+                e[1][k] += b['size'][k]
+                rails.append((pid, P(*e[0]), P(*e[1])))
+    return out, rails
 
 
 def solar(geo):
     count = {}
-    quads = []
-    for aid, (pid, rects) in ARRAYS.items():
-        for (x0, y0, x1, y1), nu, nv in rects:
-            q = on_plane(pid, [(x0, y0), (x1, y0), (x1, y1), (x0, y1)], PANEL_LIFT)
-            quads.append((aid, pid, q, nu, nv))
-    pid, poly, k = A6
-    quads.append(('a6', pid, on_plane(pid, [poly[1], poly[2], poly[3], poly[0]], PANEL_LIFT), k, 1))
-    for aid, pid, q, nu, nv in quads:
+    mods, rails = solar_modules()
+    for aid, pid, q in mods:
         n = plane_frame(pid)[0]
-        for cell in _split(q, nu, nv, PANEL_GAP):
-            _slab(geo, cell, n, PANEL_T, 'solar_frame', 'solar', inset=0.02)
-            count[aid] = count.get(aid, 0) + 1
-        # two mounting rails under each block, along its longer side
-        e_u, e_v = q[1] - q[0], q[3] - q[0]
-        along, across = (e_u, e_v) if np.linalg.norm(e_u) > np.linalg.norm(e_v) else (e_v, e_u)
-        for f in (0.25, 0.75):
-            a0 = q[0] + across * f - n * PANEL_LIFT * 0.5
-            geo.prism('solar_frame', [(-0.02, -0.025), (0.02, -0.025), (0.02, 0.025), (-0.02, 0.025)], a0, a0 + along,
-                      up=n, cap=False)
+        _slab(geo, q + n * PANEL_LIFT, n, PANEL_T, 'solar_frame', 'solar', inset=0.02)
+        count[aid] = count.get(aid, 0) + 1
+    for pid, a0, a1 in rails:
+        n = plane_frame(pid)[0]
+        geo.prism('solar_frame', [(-0.02, -0.025), (0.02, -0.025), (0.02, 0.025), (-0.02, 0.025)],
+                  a0 + n * PANEL_LIFT * 0.5, a1 + n * PANEL_LIFT * 0.5, up=n, cap=False)
     return count
 
 
@@ -320,8 +373,9 @@ def chimneys(geo):
 def dish(geo):
     """The satellite dish on the north porch roof (p28): a mast, an arm, a shallow white disc aimed up to the south."""
     a, b, c = PLANES[DISH['plane']]['plane']
-    x, y = DISH['xy']
-    foot = np.array([x, y, a * x + b * y + c])
+    o, d = CAMS.ray(frame.world_cams()[DISH['image']], [DISH['px']])
+    d = d[0]
+    foot = o + (a * o[0] + b * o[1] + c - o[2]) / (d[2] - a * d[0] - b * d[1]) * d
     top = foot + UP * DISH['mast']
     aim = np.asarray(DISH['aim'], float)
     aim /= np.linalg.norm(aim)
@@ -332,7 +386,7 @@ def dish(geo):
     arm = ctr + aim * 0.42 - UP * 0.22
     geo.cylinder('vent_metal', ctr - UP * DISH['r'] * 0.9, arm, 0.012, n=5, cap=False)
     geo.obox('dish_white', arm, (1, 0, 0), (0, 1, 0), UP, (-0.04, -0.04, -0.04), (0.04, 0.04, 0.06))
-    return tuple(np.round(foot, 2))
+    return tuple(float(v) for v in np.round(foot, 2))
 
 
 def _edges(kinds):
@@ -353,7 +407,13 @@ def _edges(kinds):
 def gutters(geo):
     """A cream box gutter under every eave edge; downspouts at the ends of the longer runs that reach the ground."""
     runs, spouts = 0, 0
-    for p, a, b in _edges(GUTTER_KINDS):
+    for p, a, b in _edges(GUTTER_KINDS) + _entry_eaves():
+        if p['id'] == 'swp':                                       # the house builds the entry gable over this leg
+            continue
+        if p['id'] == 'g_s':                                       # built without its notch: one straight eave
+            P = np.asarray(p['poly'], float)
+            e = (P[0] - P[2]) / np.linalg.norm(P[0] - P[2])
+            a, b = P[2] + e * ((a - P[2]) @ e), P[2] + e * ((b - P[2]) @ e)
         L = np.linalg.norm((b - a)[:2])
         if L < 0.35:
             continue
@@ -414,6 +474,22 @@ def gutters(geo):
         spouts += 1
     gutters.spouts = placed
     return runs, spouts
+
+
+def _entry_eaves():
+    """The two eaves of the house zone's entry gable (it replaces plane swp), interior on the left of a -> b."""
+    try:
+        from model.zones import house
+        M, t, n, half, eave = house.entry_frame()
+    except Exception as e:
+        print('roof_details: entry gable unavailable (%s)' % e)
+        return []
+    E = lambda q: np.array([q[0], q[1], eave])                      # noqa: E731
+    out = []
+    for sgn in (1, -1):
+        a, b = E(M + t * sgn * half), E(M + n * 3.1 + t * sgn * half)
+        out.append(({'id': 'entry_gable'}, a, b) if sgn > 0 else ({'id': 'entry_gable'}, b, a))
+    return out
 
 
 def _walls():

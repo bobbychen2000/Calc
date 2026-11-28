@@ -296,8 +296,15 @@ uniform sampler2D surfDetail;
 uniform vec4 surfDetailP;    // uv scale (1 / m) x, y; albedo amount; normal amount
 uniform float surfDetailRough;
 #endif
+#ifdef SURF_SWATCH
+uniform sampler2D surfSwatch;   // a photo patch that takes over from the drawn pattern with distance
+uniform vec4 surfSwatchP;       // uv scale (1 / m) x, y; fade from .. to (m from the eye)
+#endif
 `;
 const FRAG_ALBEDO = `
+#ifdef SURF_SWATCH
+diffuseColor.rgb = mix( diffuseColor.rgb, texture2D( surfSwatch, vSurfUv * surfSwatchP.xy ).rgb, smoothstep( surfSwatchP.z, surfSwatchP.w, length( vViewPosition ) ) );
+#endif
 #ifdef SURF_MACRO
 {
   vec3 sn1 = texture2D( surfNoise, vSurfUv * surfMacro.x ).rgb;
@@ -331,6 +338,12 @@ const FRAG_NORMAL = `
   mapN.z = sqrt( max( 1.0 - dot( mapN.xy, mapN.xy ), 0.04 ) );
   normal = normalize( tbn * mapN );
 #endif
+#ifdef SURF_WORLD_UV
+{      // paving laid on a faceted terrain: the stones lie level, the facets of the mesh should not show in the light
+  vec3 surfUp = normalize( ( viewMatrix * vec4( 0.0, 1.0, 0.0, 0.0 ) ).xyz );
+  if ( dot( nonPerturbedNormal, surfUp ) > 0.6 ) normal = normalize( normal + 0.85 * ( surfUp - nonPerturbedNormal ) );
+}
+#endif
 `;
 
 /** MeshStandardMaterial of a surface.
@@ -361,18 +374,30 @@ export function surface(ctx, o) {
     U.surfDetailP = { value: new THREE.Vector4(1 / s, 1 / (o.detail.sizeV || s), o.detail.albedo ?? 0.1, o.detail.normal ?? 0.2) };
     U.surfDetailRough = { value: o.detail.rough ?? 0 };
   }
+  if (o.swatchFade) {      // [from, to] metres: ../materials.js applySwatch lays the photo patch in here instead of over the map
+    U.surfSwatch = { value: null };
+    U.surfSwatchP = { value: new THREE.Vector4(1, 1, o.swatchFade[0], o.swatchFade[1]) };
+    m.userData.swatchFade = (t, size) => {
+      U.surfSwatch.value = t; U.surfSwatchP.value.x = 1 / size[0]; U.surfSwatchP.value.y = 1 / size[1];
+      m.defines.SURF_SWATCH = ''; m.needsUpdate = true;
+    };
+  }
+  if (o.worldUV !== undefined) {      // worldUV = the pattern's turn in plan (radians, from +X toward +Y of the model)
+    m.defines.SURF_WORLD_UV = '';
+    U.surfWorldRot = { value: new THREE.Vector2(Math.cos(o.worldUV), Math.sin(o.worldUV)) };
+  }      // metres in plan instead of the mesh's UVs (ground surfaces)
   m.userData.surf = U;
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <uv_pars_vertex>', '#include <uv_pars_vertex>\nvarying vec2 vSurfUv;')
-      .replace('#include <uv_vertex>', '#include <uv_vertex>\nvSurfUv = uv;');
+      .replace('#include <uv_pars_vertex>', '#include <uv_pars_vertex>\nvarying vec2 vSurfUv;\n#ifdef SURF_WORLD_UV\nuniform vec2 surfWorldRot;\n#endif')
+      .replace('#include <uv_vertex>', '#include <uv_vertex>\nvSurfUv = uv;\n#ifdef SURF_WORLD_UV\nif ( abs( normalize( mat3( modelMatrix ) * normal ).y ) > 0.6 ) { vec4 surfW = modelMatrix * vec4( position, 1.0 ); vSurfUv = vec2( surfWorldRot.x * surfW.x - surfWorldRot.y * surfW.z, - surfWorldRot.y * surfW.x - surfWorldRot.x * surfW.z );\n#ifdef USE_MAP\nvMapUv = ( mapTransform * vec3( vSurfUv, 1.0 ) ).xy;\n#endif\n#ifdef USE_NORMALMAP\nvNormalMapUv = ( normalMapTransform * vec3( vSurfUv, 1.0 ) ).xy;\n#endif\n}\n#endif');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <map_pars_fragment>', '#include <map_pars_fragment>\n' + FRAG_PARS)
       .replace('#include <map_fragment>', '#include <map_fragment>\n' + FRAG_ALBEDO)
       .replace('#include <roughnessmap_fragment>', FRAG_ROUGH)
       .replace('#include <normal_fragment_maps>', FRAG_NORMAL);
   };
-  m.customProgramCacheKey = () => 'surfaces-1';
+  m.customProgramCacheKey = () => 'surfaces-2';
   return m;
 }

@@ -46,12 +46,12 @@ def world_cams():
     fixed = os.path.join(HERE, 'refs', 'cache', 'cams_fixed.json')     # photos registered later (tools/lg_reg.py --save)
     for k, c in CAMS.load(fixed).items():
         out[k] = cam_to_world(c)
-    import glob
-    for f in sorted(glob.glob(os.path.join(HERE, 'survey', 'photo_cams', '*.cam.json'))):   # photos fitted on the model, one file each
-        for k, c in json.load(open(f)).items():
-            out[k] = dict(c, R=np.array(c['R'], float), C=np.array(c['C'], float))
     extra = os.path.join(HERE, 'survey', 'cams_world.json')          # cameras fitted on the model itself (tools/fit_world.py)
     if os.path.exists(extra):
         for k, c in json.load(open(extra)).items():
+            out[k] = dict(c, R=np.array(c['R'], float), C=np.array(c['C'], float))
+    import glob
+    for f in sorted(glob.glob(os.path.join(HERE, 'survey', 'photo_cams', '*.cam.json'))):   # photos fitted on the model, one file each (they win)
+        for k, c in json.load(open(f)).items():
             out[k] = dict(c, R=np.array(c['R'], float), C=np.array(c['C'], float))
     return out

@@ -34,7 +34,7 @@ export const WATER = {
   spaRipple: 1.7,
   glintRough: 0.035,
   reflDist: 12.0,                        // m: where the mirrored things are assumed to stand when a ripple bends the ray
-  caustic: [1.9, 1.37, 0.55],            // tile A (m), tile B (m), strength
+  caustic: [1.9, 1.37, 0.34],            // tile A (m), tile B (m), strength
   lightDusk: [0.72, 0.95, 1.0, 5.5],     // colour and intensity of the pool lights at dusk
   skyline: { day: [0.050, 0.070, 0.040], dusk: [0.020, 0.024, 0.022] },   // 'low' only: what stands round the yard
 };

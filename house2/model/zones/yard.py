@@ -253,14 +253,18 @@ def arbor():
     for cx in AR_COL_X:
         for cy in AR_COL_Y:
             p = L.pt(cx, cy)
-            z0 = min(gz(p[0], p[1]), 0.45)
+            # the columns stand on the deck (level 0): two of them touch a planter wall / the bed edge, where the
+            # terrain breaks -- the base is set on the deck level under it and runs down past the lowest terrain
+            b = cw + 0.03
+            zs = [gz(*L.pt(cx + sx * b, cy + sy * b)[:2]) for sx in (-1, 0, 1) for sy in (-1, 0, 1)]
+            z0, zlo = min(zs, key=abs), min(zs) - 0.2
             if cx == AR_COL_X[1] and cy == AR_COL_Y[0]:
-                L.box(geo, STONE, (cx - 0.30, cy - 0.30, z0 - 0.2), (cx + 0.30, cy + 0.30, 1.02), 'xXyY')
+                L.box(geo, STONE, (cx - 0.30, cy - 0.30, zlo), (cx + 0.30, cy + 0.30, 1.02), 'xXyY')
                 L.box(geo, CAP, (cx - 0.33, cy - 0.33, 1.02), (cx + 0.33, cy + 0.33, 1.08))
                 z0 = 1.08
                 L.box(geo, WHITE, (cx - cw - 0.03, cy - cw - 0.03, z0), (cx + cw + 0.03, cy + cw + 0.03, z0 + 0.10), 'xXyYZ')
             else:
-                L.box(geo, WHITE, (cx - cw - 0.03, cy - cw - 0.03, z0 - 0.2), (cx + cw + 0.03, cy + cw + 0.03, z0 + 0.26), 'xXyYZ')
+                L.box(geo, WHITE, (cx - cw - 0.03, cy - cw - 0.03, zlo), (cx + cw + 0.03, cy + cw + 0.03, z0 + 0.26), 'xXyYZ')
             L.box(geo, WHITE, (cx - cw, cy - cw, z0), (cx + cw, cy + cw, AR_BEAM_Z - 0.10), 'xXyY')
             L.box(geo, WHITE, (cx - cw - 0.04, cy - cw - 0.04, AR_BEAM_Z - 0.10), (cx + cw + 0.04, cy + cw + 0.04, AR_BEAM_Z))
     # double beams over each column row, rafters across with tails, three purlins on top
@@ -288,15 +292,15 @@ def arbor():
     # bar counter on the pool side from the NE column's pier over ~70 % of the bay (p26), 5 stools outside it: four
     # with backs, the backless one at the SW end (rear.bar_stools)
     bx0, bx1, by0, by1 = 1.90, AR_COL_X[1] - 0.30, -1.55, -0.95
-    L.box(geo, STONE, (bx0, by0, 0), (bx1, by1, 1.02), 'xXyY')
+    L.box(geo, STONE, (bx0, by0, -0.45), (bx1, by1, 1.02), 'xXyY')
     L.box(geo, CAP, (bx0 - 0.05, by0 - 0.05, 1.02), (bx1 + 0.05, by1 + 0.25, 1.08))
     for i, x in enumerate((1.80, 2.32, 3.05, 3.78, 4.50)):
         stool(geo, L, x, -0.42, back=i != 0)
     # BBQ counter along the back row with the grill, an L leg up the NE end to the bar
     gx0, gx1, gy0, gy1 = 0.95, 4.85, -4.75, -4.05
-    L.box(geo, STONE, (gx0, gy0, 0), (gx1, gy1, 0.90), 'xXyY')
+    L.box(geo, STONE, (gx0, gy0, -0.45), (gx1, gy1, 0.90), 'xXyY')     # down into the ground at the bed edge
     L.box(geo, CAP, (gx0 - 0.04, gy0 - 0.04, 0.90), (gx1 + 0.04, gy1 + 0.04, 0.95))
-    L.box(geo, STONE, (gx1 - 0.65, gy1, 0), (gx1, by0, 0.90), 'xXyY')
+    L.box(geo, STONE, (gx1 - 0.65, gy1, -0.45), (gx1, by0, 0.90), 'xXyY')
     L.box(geo, CAP, (gx1 - 0.69, gy1 + 0.04, 0.90), (gx1 + 0.04, by0 + 0.04, 0.95))
     L.box(geo, STEEL, (2.15, gy0 + 0.06, 0.95), (3.05, gy1 - 0.08, 1.02))
     L.box(geo, STEEL, (2.17, gy0 + 0.16, 1.02), (3.03, gy1 - 0.10, 1.26))

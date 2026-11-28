@@ -9,7 +9,8 @@ Every zone builder uses this module so that things sit on the same ground and in
     plan.site('site.pool_water')       # a site.json element (dict); plan.site_ring('site.pool_water') its ring
     plan.ground_ring(poly_px)          # ring placed on the terrain (rays meet the ground, 2 iterations)
 
-World frame (survey/frame.json): X = the aerial's image right (along the street, which runs along the image bottom),
+World frame (survey/frame.json): X = the aerial's image right (the street lies ~50 m south of the lot, behind the
+neighbour, reached by a lane from the gate at the image bottom-left),
 Y = its image up (into the lot), Z up, metres; origin = the pool water's centre, Z = 0 the pool deck (rear flagstone
 patio).  The aerial p29 is near-nadir from 49 m: things above the ground lean outward from the image centre, so a
 pixel's world position depends on the height you give it (roof eaves at 3.4 / 6.4 m are 0.5-2 m off their ground

@@ -124,6 +124,7 @@ export class Materials {
 
   // Swatches: small patches cut from the photographs (model/swatch.py), tiled with the model's UVs (metres).  The
   // patch carries the material's colour, so the base colour goes white; the relief of the procedural look stays.
+  // userData.swatchOwn: the look keeps its own colour (no patch); userData.swatchFade: patch only at a distance.
   setSwatches(list, base) {
     this.swatches = list || {};
     this.swatchBase = base;
@@ -132,11 +133,14 @@ export class Materials {
 
   applySwatch(name, m) {
     const s = (this.swatches || {})[name];
-    if (!s || m.userData.swatch || !m.isMeshStandardMaterial) return;
+    if (!s || m.userData.swatch || !m.isMeshStandardMaterial || m.userData.swatchOwn) return;
     m.userData.swatch = true;
     new THREE.TextureLoader().load(this.swatchBase + s.image, (t) => {
       t.colorSpace = THREE.SRGBColorSpace;
       t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      // a look that draws its own pieces (flagstone, shingles, stacked stone) keeps them up close, where a patch of
+      // ~1 cm a pixel is a blur, and lets the photo patch take over with distance (textures.js surface swatchFade)
+      if (m.userData.swatchFade) { t.anisotropy = this.ctx.anisotropy; m.userData.swatchFade(t, s.size); if (this.onChange) this.onChange(); return; }
       t.repeat.set(1 / s.size[0], 1 / s.size[1]);
       t.anisotropy = this.ctx.anisotropy;
       m.map = t;

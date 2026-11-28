@@ -6,21 +6,28 @@ into the high oblique p28 (out/tmp/planting/tracks.py) and the spring orbit fram
 height is a typical one for the species (marked 'typ' in TREES).
 
 Parts:
-  plant_trees     the 21 site trees: the big spreading tree at the motor court's NW corner, two weeping white-birch
-                  clumps by the front porch (feet / curtain from hero rays), the two multi-stem patio trees (crape
-                  myrtle type), Japanese maples, five compact fruit trees on the orchard terrace, small lawn / bed trees
+  plant_trees     the 21 site trees.  Open-limbed forms (open_tree: a trunk to the fork, ascending limbs, one leaf
+                  cluster per limb on the crown's envelope; FORMS holds each tree's envelope as p21 / the aerial show
+                  it): the two airy patio trees and the small one at the house's NE corner, the tall planter maple,
+                  the closed domes of the Japanese maples, the small lawn / bed trees; the two white-birch clumps by
+                  the front porch (birch: separate white trunks, an irregular oval crown, a weeping skirt); the big
+                  spreading tree at the motor court's NW corner; five compact fruit trees on the orchard terrace.
+                  Every crown keeps CLEAR (0.42 m) from the house and never reaches under a roof (the house zone's
+                  mesh is the obstacle: _obstacle / house_bad; clusters are shrunk, pushed off or dropped).
   plant_shrubs    the 10 round shrubs, the three hedges (a row of clipped balls west of the synthetic lawn, the hedge
                   mass along the gravel path, the tall west boundary screen), low mounds in the planting beds (dense in
                   the front beds) and the two shrubs flanking the entry steps
   plant_belts     the tree belts inside the aerial's footprint: north (dark evergreen oaks; a low line NW of the
-                  pool), east (leafy trees), south (the yellow-green street-side screen with a few birches), each with
-                  a closed hedge / understorey along its lot side; all broadleaf, kept under the sight lines of the
-                  views that see the yard (SIGHT_EYES)
+                  pool), east (leafy trees), south (the yellow-green screen with a few birches), west (a lower
+                  screen), each with a closed hedge / understorey along its lot side; four crown forms and a spread
+                  of sizes (belt_tree), none on the driveway's run to the lot edge; all broadleaf, kept under the
+                  sight lines of the views that see the yard (SIGHT_EYES)
   plant_context   beyond the aerial: neighbour buildings seen in p28 (positions = p28 rays on the ground plane, +-2 m:
                   the tile-roofed house south of the lot and the one across its road, the shake-roofed building at the
-                  SW corner, the grey-roofed house and the pool + pool house to the west), a scatter of trees around
-                  them (rounded broadleaf crowns, three far conifer clumps), three columnar poplars, a far canopy and wooded hills
-                  on the horizon.
+                  SW corner, the grey-roofed house and the pool + pool house to the west), trees around them in
+                  clumps with clearings between (small garden trees, oaks, a few big crowns, single tall conifers and
+                  three far conifer clumps; none on zone ground's street / lane), standing on the far ground as zone
+                  ground lays it (_far_z), three columnar poplars, a far canopy and wooded hills on the horizon.
 
 Crowns are flat-shaded displaced icospheres ("blobs"); trunks 5/6-sided tapered tubes.  Everything is seeded.
 """
@@ -62,7 +69,7 @@ MATERIALS = {
 }
 
 # ---- the site trees: kind, crown-top height above the ground (m), how the height was found ------------------------
-#   kind: big / birch / multi (multi-stem vase) / maple (low layered) / fruit / round
+#   kind: big / birch / fruit / blossom; the others are built by their FORMS entry (the kind is a label)
 TREES = {
     'tree_big_nw': ('big', 12.0, 'p28 ray: crown 5..11.5 m'),
     'tree_lawn1': ('round', 5.0, 'typ (young ornamental)'),
@@ -90,11 +97,11 @@ LEAFY = 1.12            # crowns in leaf are this much wider than the bare limbs
 #   (not the fruit trees / the porch tree / the birches: the in-leaf frames and hero show them compact)
 
 # birch_a through the hero camera (rays at the clump's range, 13.6 m): the main trunk's foot, a second white trunk
-# 1.2 m to its SE, the weeping foliage hanging NW of the feet down to ~2 m; p21 sees only a slim top NW of the feet
-RSCALE = {'tree_patio_nw': 1.1, 'jmaple_stairs': 1.15}      # in-leaf crown width / bare outline, where a frame shows it
+# 1.2 m to its SE; the weeping curtain reaches 2.6 m NW of the trunks (hero: its left edge at 0.53 of the frame, the
+# trunks at 0.82) and on out of the frame to the SE, down to ~2.2 m: a crown of r 2.6 about the feet
 SHIFT = {'tree_porch': (0.2, -0.33)}      # hero render vs photo: the crown sat 0.4 m left of the photo's
 BIRCH = {
-    'birch_a': dict(feet=[(-18.81, -23.36), (-18.29, -24.48), (-19.45, -22.85)], crown=(-19.6, -22.3), top=(-20.0, -21.6)),
+    'birch_a': dict(feet=[(-18.81, -23.36), (-18.29, -24.48), (-19.45, -22.85)], crown=(-19.0, -23.2), top=(-19.4, -22.6)),
 }
 
 # Views that are known to see these surfaces unobstructed by the boundary trees (camera centres in world metres, from
@@ -147,8 +154,78 @@ def _flat(geo, mat, V, F):
     geo.mesh(mat).add(P, N, P[:, :2].copy(), np.arange(len(P)).reshape(-1, 3))
 
 
-def blob(geo, mat, c, r, rs, level=1, lump=0.22, zmin=None):
-    """A lumpy ellipsoid: centre c, radii r (scalar or 3), flat-shaded.  zmin: nothing hangs below this height."""
+# ---- the house as an obstacle ------------------------------------------------------------------------------------------
+# Crowns keep CLEAR m from every house surface and never reach under a roof (review r2: crowns ran through the balcony,
+# its railing and the eaves).  The obstacle is the house zone's own mesh (read-only: house.build()), sampled every
+# 0.1 m: a KD-tree for distances + a grid of the highest house surface per 0.2 m cell for "under a roof".
+CLEAR = 0.42
+_OBS = {}
+
+
+def _obstacle():
+    if 'tree' in _OBS:
+        return _OBS
+    _OBS['tree'] = None
+    try:
+        from scipy.spatial import cKDTree
+        from model.zones import house
+        P = []
+        st = np.random.RandomState(3)
+        for part in house.build():
+            for m in part.geo.meshes():
+                V = np.asarray(m.V, float)
+                T = V[np.asarray(m.F, int).reshape(-1, 3)]
+                a, b, c = T[:, 0], T[:, 1], T[:, 2]
+                ar = 0.5 * np.linalg.norm(np.cross(b - a, c - a), axis=1)
+                idx = np.repeat(np.arange(len(T)), np.maximum(1, (ar / 0.01).astype(int)))
+                u, v = st.rand(len(idx)), st.rand(len(idx))
+                f = u + v > 1
+                u[f], v[f] = 1 - u[f], 1 - v[f]
+                P += [a[idx] + u[:, None] * (b - a)[idx] + v[:, None] * (c - a)[idx], V]
+        P = np.vstack(P)
+        lo, hi = P.min(0), P.max(0)
+        g = 0.2
+        H = np.full((int((hi[1] - lo[1]) / g) + 3, int((hi[0] - lo[0]) / g) + 3), -1e9)
+        i, j = ((P[:, 1] - lo[1]) / g).astype(int) + 1, ((P[:, 0] - lo[0]) / g).astype(int) + 1
+        for di in (-1, 0, 1):                               # one cell wider: the eave's edge counts as roof
+            for dj in (-1, 0, 1):
+                np.maximum.at(H, (i + di, j + dj), P[:, 2])
+        _OBS.update(tree=cKDTree(P), P=P, lo=lo, hi=hi, g=g, H=H)
+    except Exception as e:                                  # the house zone does not build: plant unguarded
+        print('planting: no house obstacle (%s)' % e)
+    return _OBS
+
+
+def house_bad(V, clear=CLEAR, roof_z=2.0):
+    """Which points are closer than `clear` to the house, or (above roof_z) stand under one of its roofs."""
+    V = np.asarray(V, float).reshape(-1, 3)
+    o = _obstacle()
+    bad = np.zeros(len(V), bool)
+    if o['tree'] is None:
+        return bad
+    near = np.all(V > o['lo'] - 1.0, axis=1) & np.all(V[:, :2] < o['hi'][:2] + 1.0, axis=1)
+    if not near.any():
+        return bad
+    W = V[near]
+    d, _ = o['tree'].query(W, distance_upper_bound=clear + 0.05)
+    b = d < clear
+    i = np.clip(((W[:, 1] - o['lo'][1]) / o['g']).astype(int) + 1, 0, o['H'].shape[0] - 1)
+    j = np.clip(((W[:, 0] - o['lo'][0]) / o['g']).astype(int) + 1, 0, o['H'].shape[1] - 1)
+    b |= (o['H'][i, j] > W[:, 2]) & (W[:, 2] > roof_z)
+    bad[near] = b
+    return bad
+
+
+def _probe(V, F):
+    """Vertices + edge midpoints + face centres of a mesh (what the guard tests)."""
+    T = V[F]
+    return np.vstack([V, T.mean(1), (T[:, 0] + T[:, 1]) / 2, (T[:, 1] + T[:, 2]) / 2, (T[:, 2] + T[:, 0]) / 2])
+
+
+def blob(geo, mat, c, r, rs, level=1, lump=0.22, zmin=None, guard=True):
+    """A lumpy ellipsoid: centre c, radii r (scalar or 3), flat-shaded.  zmin: nothing hangs below this height.
+    guard: near the house it is shrunk / pushed away until it is clear (dropped if it cannot be); returns True if
+    it was placed."""
     U, F = _ico(level)
     r = np.broadcast_to(np.asarray(r, float), (3,))
     d = np.zeros(len(U))
@@ -156,10 +233,32 @@ def blob(geo, mat, c, r, rs, level=1, lump=0.22, zmin=None):
         k = rs.normal(size=3)
         k2 = rs.normal(size=3)
         d += a * np.sin(f * (U @ k) + rs.uniform(0, 6.28)) * np.cos(f * 0.7 * (U @ k2) + rs.uniform(0, 6.28))
-    V = U * (1.0 + lump * d)[:, None] * r + np.asarray(c, float)
+    c = np.asarray(c, float)
+    D = U * (1.0 + lump * d)[:, None] * r
+    V = D + c
+    if guard:
+        o = _obstacle()
+        if o['tree'] is not None and np.all(c > o['lo'] - 8.0) and np.all(c[:2] < o['hi'][:2] + 8.0):
+            low = c[2] + r[2] < 1.6                         # bed plants / low shrubs may stand against a wall
+            k = 1.0
+            for it in range(9):
+                V = D * k + c
+                if zmin is not None:
+                    V[:, 2] = np.maximum(V[:, 2], zmin)
+                if not house_bad(_probe(V, F), 0.06 if low else CLEAR).any():
+                    break
+                k *= 0.84
+                q = o['P'][o['tree'].query(c)[1]]
+                v = (c - q) * (1.0, 1.0, 0.3)
+                n = np.linalg.norm(v)
+                if n > 1e-6 and not low:
+                    c = c + v / n * 0.12 * r.max()
+            else:
+                return False
     if zmin is not None:
         V[:, 2] = np.maximum(V[:, 2], zmin)
     _flat(geo, mat, V, F)
+    return True
 
 
 def tube(geo, mat, pts, radii, n=6):
@@ -251,25 +350,6 @@ def multi_tree(geo, xy, h, r, rs, leaf='pl_leaf', bark='pl_bark_tan', stems=4, s
         blob(geo, leaf, (t[0], t[1], t[2] - 0.75 * rr - droop * h * 0.1), (rr, rr, rr * (0.9 + droop)), rs, level=1)
 
 
-def maple(geo, xy, h, r, rs, leaf='pl_leaf_maple'):
-    """Japanese maple: low, wide, layered; short forked stems."""
-    x, y = xy
-    z = _gz(x, y)
-    for i in range(3):
-        a = rs.uniform(0, 6.28)
-        t = (x + 0.35 * r * math.cos(a), y + 0.35 * r * math.sin(a), z + 0.62 * h)
-        tube(geo, 'pl_bark', [(x, y, z - 0.1), (x + 0.1 * r * math.cos(a), y + 0.1 * r * math.sin(a), z + 0.3 * h), t],
-             [0.07, 0.055, 0.02], n=5)
-    blob(geo, leaf, (x, y, z + 0.72 * h), (0.70 * r, 0.70 * r, 0.27 * h), rs, level=2, lump=0.2)
-    n = 5
-    a0 = rs.uniform(0, 6.28)
-    for i in range(n):
-        a = a0 + i * 6.283 / n
-        rr = r * rs.uniform(0.42, 0.52)
-        blob(geo, leaf, (x + 0.55 * r * math.cos(a), y + 0.55 * r * math.sin(a), z + h * rs.uniform(0.52, 0.66)),
-             (rr, rr, 0.20 * h), rs, level=1, lump=0.2)
-
-
 def big_tree(geo, xy, h, r, rs):
     """The very large spreading tree: a 0.5 m trunk forking at ~3 m into heavy limbs, a wide domed crown."""
     x, y = xy
@@ -305,34 +385,136 @@ def fruit_tree(geo, xy, h, r, rs):
          rs, level=0, lump=0.16)
 
 
+def _prof(t, tw):
+    """Crown radius profile (0..1) at the fraction t of the crown's depth; widest at tw."""
+    if t < tw:
+        return 0.35 + 0.65 * (max(t, 0.0) / tw) ** 0.7
+    return max(0.22, math.sqrt(max(0.0, 1.0 - ((t - tw) / (1.0 - tw)) ** 2)))
+
+
+def limb(geo, bark, a, c, r0, sag=0.12, n=5):
+    """A limb from a to c, arched upward; skipped (False) where it would pass through the house."""
+    a, c = np.asarray(a, float), np.asarray(c, float)
+    L = np.linalg.norm(c - a)
+    m = a + (c - a) * 0.55 + (0, 0, sag * L)
+    m[:2] = a[:2] + (c[:2] - a[:2]) * 0.42                  # steep first, then out: a vase
+    pts = [a, m, c]
+    probe = np.vstack([a + (m - a) * t for t in (0.5, 1.0)] + [m + (c - m) * t for t in (0.33, 0.66, 1.0)])
+    if house_bad(probe, 0.15).any():
+        return False
+    tube(geo, bark, pts, [r0, r0 * 0.6, r0 * 0.22], n=n)
+    return True
+
+
+def open_tree(geo, foot, h, r, rs, leaf='pl_leaf', bark='pl_bark', clear=None, fork=None, tw=0.5, n=10, cl=0.32,
+              flat=0.7, tr=None, off=(0.0, 0.0), lump=0.22, shell=0.9, leaf2=None, stems=1, level=1):
+    """An open-limbed tree: a trunk to the fork, ascending limbs, each carrying one leaf cluster.  The clusters lie on
+    the crown's envelope (centre line foot -> foot + off, from `clear` to h above the ground, radius r * _prof, widest
+    at the fraction tw of its depth) and stay inside it; cl = cluster radius / r, n clusters: small cl = airy (the
+    patio trees, the planter maple), large = a closed crown (the Japanese maples in leaf).  Clusters and limbs that
+    would come within CLEAR of the house are shrunk, pushed off or dropped."""
+    foot = np.asarray(foot, float)
+    off = np.asarray(off, float)
+    z = _gz(foot[0], foot[1])
+    clear = 0.4 * h if clear is None else clear
+    fork = 0.6 * clear if fork is None else fork
+    tr = tr or max(0.05, 0.02 * h)
+    zb, zt = z + clear, z + h
+    forks = []
+    if stems == 1:
+        F = np.array([foot[0] + off[0] * 0.2, foot[1] + off[1] * 0.2, z + fork])
+        tube(geo, bark, [(foot[0], foot[1], z - 0.15), (foot[0] + off[0] * 0.08, foot[1] + off[1] * 0.08, z + fork * 0.5),
+                         F], [tr, tr * 0.85, tr * 0.75], n=6)
+        forks.append(F)
+    else:
+        a0 = rs.uniform(0, 6.28)
+        for i in range(stems):
+            a = a0 + i * 6.283 / stems + rs.uniform(-0.3, 0.3)
+            k = rs.uniform(0.25, 0.4) * r
+            F = np.array([foot[0] + off[0] * 0.2 + k * math.cos(a), foot[1] + off[1] * 0.2 + k * math.sin(a),
+                          z + fork * rs.uniform(0.9, 1.25)])
+            b = (foot[0] + 0.1 * math.cos(a), foot[1] + 0.1 * math.sin(a), z - 0.15)
+            tube(geo, bark, [b, (np.asarray(b) + F) / 2 + (0, 0, 0.1 * fork), F], [tr, tr * 0.85, tr * 0.7], n=5)
+            forks.append(F)
+    a0 = rs.uniform(0, 6.28)
+    order = rs.permutation(n)
+    placed = 0
+    for i in range(n):
+        t = 0.10 + 0.84 * (order[i] + rs.uniform(0.2, 0.8)) / n
+        a = a0 + i * 2.39996 + rs.uniform(-0.35, 0.35)
+        pr = _prof(t, tw)
+        rr = cl * r * rs.uniform(0.8, 1.22) * (0.72 + 0.28 * pr)
+        k = max(0.0, r * pr - rr * 1.05) * rs.uniform(shell, 1.0)
+        ax = foot[:2] + off * (0.2 + 0.8 * t)
+        zc = min(zb + t * (zt - zb), zt - rr * flat * 1.05)
+        c = np.array([ax[0] + k * math.cos(a), ax[1] + k * math.sin(a), zc])
+        F = min(forks, key=lambda f: np.linalg.norm(f[:2] - c[:2]))
+        m = leaf2 if (leaf2 and rs.rand() < 0.3) else leaf
+        g = Geo()
+        if not blob(g, m, c, (rr, rr, rr * flat), rs, level=level, lump=lump):
+            continue
+        if not limb(geo, bark, F, c - (0, 0, 0.25 * rr * flat), tr * 0.42):
+            continue
+        for me in g.meshes():
+            geo.mesh(me.mat).add(me.V, me.N, me.UV, me.F)
+        placed += 1
+    return placed
+
+
 def birch(geo, feet, crown, top, h, r, rs):
-    """A white-birch clump: separate white trunks leaning together, a slim top and a curtain of weeping lobes that
-    hangs down to ~2 m above the ground (hero)."""
+    """A white-birch clump (hero / p01): two or three white trunks rising separately to most of the height, an AIRY,
+    IRREGULAR OVAL crown about twice as tall as wide (clusters of different sizes on the envelope, a rounded uneven
+    top, never a point) and a weeping skirt: short hanging sprays round its lower edge down to ~2.2-3.5 m."""
     feet = [np.asarray(f, float) for f in feet]
     crown, top = np.asarray(crown, float), np.asarray(top, float)
     z = _gz(feet[0][0], feet[0][1])
+    tips = []
     for i, f in enumerate(feet):
-        k = (1.0, 0.86, 0.74)[i % 3]
-        t = top + rs.normal(scale=0.25, size=2) + (f - feet[0]) * 0.5
-        m = f + (t - f) * 0.42 + rs.normal(scale=0.12, size=2)
-        tr = 0.11 * (1.0, 0.8, 0.7)[i % 3]
-        tube(geo, 'pl_bark_white', [(f[0], f[1], z - 0.1), (m[0], m[1], z + 0.45 * h * k), (t[0], t[1], z + 0.93 * h * k)],
-             [tr, tr * 0.7, tr * 0.2], n=5)
-    # the slim top
-    blob(geo, 'pl_leaf_light', (top[0], top[1], z + 0.80 * h), (0.42 * r, 0.42 * r, 0.21 * h), rs, level=1, lump=0.2)
-    mid = (crown + top) / 2
-    blob(geo, 'pl_leaf_light', (mid[0], mid[1], z + 0.62 * h), (0.62 * r, 0.62 * r, 0.20 * h), rs, level=1, lump=0.2)
-    # weeping lobes: tall narrow drops round the crown centre, their feet ~2 m over the ground
-    n = 8
+        k = (0.93, 0.82, 0.70)[i % 3]
+        a = rs.uniform(0, 6.28)
+        t = crown + (top - crown) * k + 0.28 * r * np.array([math.cos(a), math.sin(a)]) + (f - feet[0]) * 0.35
+        m1 = f + (t - f) * 0.30 + rs.normal(scale=0.10, size=2)
+        m2 = f + (t - f) * 0.68 + rs.normal(scale=0.15, size=2)
+        tr = 0.125 * (1.0, 0.82, 0.7)[i % 3]
+        zf = _gz(f[0], f[1])
+        P = [(f[0], f[1], zf - 0.15), (m1[0], m1[1], z + 0.30 * h * k), (m2[0], m2[1], z + 0.66 * h * k),
+             (t[0], t[1], z + 0.97 * h * k)]
+        tube(geo, 'pl_bark_white', P, [tr, tr * 0.8, tr * 0.5, tr * 0.15], n=6)
+        tips.append(np.array(P))
+    zb, zt = z + 0.30 * h, z + h
+    n = 28
     a0 = rs.uniform(0, 6.28)
+    order = rs.permutation(n)
     for i in range(n):
-        a = a0 + i * 6.283 / n + rs.uniform(-0.25, 0.25)
-        k = r * rs.uniform(0.35, 0.75)
-        rr = r * rs.uniform(0.30, 0.40)
-        z0 = z + rs.uniform(1.9, 3.2)                       # the drop's foot
-        z1 = z + h * rs.uniform(0.52, 0.64)
-        blob(geo, 'pl_leaf_light', (crown[0] + k * math.cos(a), crown[1] + k * math.sin(a), (z0 + z1) / 2),
-             (rr, rr, (z1 - z0) / 2), rs, level=1, lump=0.18)
+        t = 0.06 + 0.88 * (order[i] + rs.uniform(0.15, 0.85)) / n
+        a = a0 + i * 2.39996 + rs.uniform(-0.5, 0.5)
+        pr = _prof(t, 0.45)
+        rr = r * rs.uniform(0.24, 0.44) * (0.75 + 0.25 * pr)
+        el = rs.uniform(1.0, 1.5)                            # hanging foliage: taller than wide
+        k = max(0.0, r * pr - rr) * (rs.uniform(0.6, 1.0) if i % 3 else rs.uniform(0.0, 0.5))
+        ax = crown + (top - crown) * t
+        zc = min(zb + t * (zt - zb), zt - rr * el * rs.uniform(1.0, 1.6))       # an uneven, rounded top
+        c = np.array([ax[0] + k * math.cos(a), ax[1] + k * math.sin(a), zc])
+        if not blob(geo, 'pl_leaf_light' if i % 4 else 'pl_leaf', c, (rr, rr, rr * el), rs, level=1, lump=0.24):
+            continue
+        if i % 3 == 0:                                       # a thin white limb from the nearest trunk
+            T = min(tips, key=lambda P: np.linalg.norm(P[2, :2] - c[:2]))
+            j = 1 if zc < T[2, 2] else 2
+            s0 = T[j] + (T[min(j + 1, 3)] - T[j]) * 0.5
+            if s0[2] < c[2] + 0.5:
+                limb(geo, 'pl_bark_white', s0, c, 0.035, sag=0.05, n=4)
+    # the weeping skirt: short hanging sprays at staggered heights round the crown's lower edge (hero: the curtain
+    # ends ~2.2 m over the lawn, ragged)
+    m = 14
+    for i in range(m):
+        a = a0 + 1.0 + i * 6.283 / m + rs.uniform(-0.3, 0.3)
+        k = r * rs.uniform(0.45, 0.98)
+        rr = r * rs.uniform(0.15, 0.24)
+        hh = rs.uniform(0.55, 1.0)                           # half-length of the spray
+        zc = z + rs.uniform(2.3, 0.34 * h) + hh
+        ax = crown + (top - crown) * 0.15
+        blob(geo, 'pl_leaf_light', (ax[0] + k * math.cos(a), ax[1] + k * math.sin(a), zc), (rr, rr, hh), rs, level=1,
+             lump=0.2)
 
 
 def conifer(geo, xy, h, r, rs, z=None, tiers=3):
@@ -352,20 +534,58 @@ def poplar(geo, xy, h, r, rs, z=None):
     blob(geo, 'pl_leaf', (x, y, z + 0.58 * h), (r, r, 0.43 * h), rs, level=1, lump=0.12)
 
 
-def belt_tree(geo, xy, h, r, rs, leaf, z=None):
-    """A cheap backdrop / belt tree: a short stem and a crown that starts ~1-1.5 m over the ground (the photos show
-    the boundaries as closed green screens, no bare trunks)."""
+def belt_tree(geo, xy, h, r, rs, leaf, z=None, form=None, far=False):
+    """A cheap backdrop / belt tree.  Forms (drawn at random unless given), so that a belt is not a row of copies:
+    0 round (a crown with three shoulders, closed to ~1 m over the ground), 1 broad oak (a low wide dome with lobes
+    round its rim), 2 upright oval, 3 high-crowned (a bare stem to 0.4 h, loose clusters).  far: 0 in the lot's belts, 1 / 2 / 3 = the
+    surroundings by distance (fewer shoulders, coarser lobes)."""
     x, y = xy
     z = _gz(x, y) if z is None else z
-    tube(geo, 'pl_bark', [(x, y, z - 0.2), (x, y, z + 0.45 * h)], [0.025 * h, 0.012 * h], n=4)
-    blob(geo, leaf, (x, y, z + 0.57 * h), (0.74 * r, 0.74 * r, 0.44 * h), rs, level=1, lump=0.22)
+    form = rs.choice(4, p=(0.34, 0.26, 0.2, 0.2)) if form is None else form
+    lump = rs.uniform(0.16, 0.30)
+    lv = 0 if (far or r < 2.2) else 1
+    if far >= 3 and form == 3:
+        form = 0
     a0 = rs.uniform(0, 6.28)
-    for i in range(3):
-        a = a0 + i * 2.094
-        rr = r * rs.uniform(0.45, 0.58)
-        zc = z + h * rs.uniform(0.30, 0.52)
-        blob(geo, leaf, (x + 0.5 * r * math.cos(a), y + 0.5 * r * math.sin(a), zc),
-             (rr, rr, min(rr, zc - z - 0.6)), rs, level=0 if r < 2.2 else 1, lump=0.22)
+    if form == 0:
+        tube(geo, 'pl_bark', [(x, y, z - 0.2), (x, y, z + 0.45 * h)], [0.025 * h, 0.012 * h], n=4)
+        blob(geo, leaf, (x, y, z + 0.57 * h), (0.74 * r, 0.74 * r, 0.44 * h), rs, level=1, lump=lump)
+        for i in range(3 if far < 2 else 4 - far):
+            a = a0 + i * 2.094 + rs.uniform(-0.3, 0.3)
+            rr = r * rs.uniform(0.42, 0.60)
+            zc = z + h * rs.uniform(0.30, 0.55)
+            blob(geo, leaf, (x + 0.5 * r * math.cos(a), y + 0.5 * r * math.sin(a), zc),
+                 (rr, rr, min(rr, zc - z - 0.6)), rs, level=lv, lump=lump)
+    elif form == 1:
+        tube(geo, 'pl_bark', [(x, y, z - 0.2), (x, y, z + 0.5 * h)], [0.035 * h, 0.02 * h], n=5)
+        blob(geo, leaf, (x, y, z + 0.70 * h), (0.80 * r, 0.80 * r, 0.30 * h), rs, level=1, lump=lump)
+        n = 5 if not far else 5 - far
+        for i in range(n):
+            a = a0 + i * 6.283 / n + rs.uniform(-0.3, 0.3)
+            rr = r * rs.uniform(0.40, 0.55)
+            zc = z + h * rs.uniform(0.48, 0.66)
+            blob(geo, leaf, (x + 0.68 * r * math.cos(a), y + 0.68 * r * math.sin(a), zc), (rr, rr, 0.7 * rr), rs,
+                 level=lv, lump=lump)
+    elif form == 2:
+        tube(geo, 'pl_bark', [(x, y, z - 0.2), (x, y, z + 0.35 * h)], [0.022 * h, 0.012 * h], n=4)
+        blob(geo, leaf, (x, y, z + 0.60 * h), (0.58 * r, 0.58 * r, 0.42 * h), rs, level=1, lump=lump)
+        for i in range(2):
+            a = a0 + i * 3.14 + rs.uniform(-0.6, 0.6)
+            rr = r * rs.uniform(0.36, 0.48)
+            zc = z + h * rs.uniform(0.34, 0.5)
+            blob(geo, leaf, (x + 0.42 * r * math.cos(a), y + 0.42 * r * math.sin(a), zc), (rr, rr, 1.3 * rr), rs,
+                 level=lv, lump=lump)
+    else:
+        top = np.array([x + rs.normal(scale=0.04 * h), y + rs.normal(scale=0.04 * h), z + 0.8 * h])
+        tube(geo, 'pl_bark', [(x, y, z - 0.2), (x, y, z + 0.42 * h), top], [0.03 * h, 0.022 * h, 0.008 * h], n=5)
+        n = 6 if not far else 5 - far
+        for i in range(n):
+            a = a0 + i * 2.39996
+            t = (i + 0.5) / n
+            rr = r * rs.uniform(0.40, 0.58)
+            k = r * (0.62 - 0.45 * abs(t - 0.4)) * rs.uniform(0.6, 1.0)
+            blob(geo, leaf, (top[0] + k * math.cos(a), top[1] + k * math.sin(a), z + h * (0.50 + 0.42 * t) - 0.5 * rr),
+                 (rr, rr, 0.75 * rr), rs, level=1 if i < (3 if far < 2 else 1) else lv, lump=lump)
 
 
 _SIGHT = None
@@ -419,42 +639,74 @@ def _seed(name):
     return np.random.RandomState(sum(ord(ch) * (i + 7) for i, ch in enumerate(name)) % 100000)
 
 
+# Open-limbed forms (review r2).  r = the crown's radius in leaf (m, the envelope: nothing reaches beyond it), foot =
+# the trunk's foot where a photo shows it; the crown's centre line runs from the foot to the aerial's crown centre.
+#   tree_patio_a / _b  p21: one pale trunk forking at ~1.5 m into steep limbs, an AIRY vase 3-7 m up, tops at the
+#                      balcony gable's height; widths 4.2 / 5.6 m (290 / 450 px at 18.6 / 16.0 m); feet = the trunks'
+#                      bases in the winter aerial (1132, 788) / (1224, 868), which p21's foot rays confirm (0.3 m)
+#   tree_patio_nw      p21: foot ray (1745, 1070) -> (-8.85, 4.57), fork ~2 m, crown 3.8 m wide, top 5.6-5.8 m
+#   jmaple_planter     p21's left edge: a tall maple, long ascending limbs to the frame's top, sprays out to 1.7-2.2 m
+#                      north of the trunk (rays (670, 450), (440, 100) at the tree's range); sky between the limbs
+#   jmaple_stairs      p21's right edge (trunk outside the frame, 5.4 m from the camera): a closed layered dome whose
+#                      left edge stands at az 24.8 deg at 3.2 m (r 2.5), 33.5 deg at 4.4 m (r 1.8), 39.5 deg at 5.4 m
+#                      (r 1.2); foliage down to ~2.2 m.  (r1 built r 3.5: it filled the right half of the rear view.)
+FORMS = {
+    'tree_patio_a': dict(r=2.3, foot_px=(1132, 788), clear=2.8, fork=1.5, tw=0.5, n=14, cl=0.36, flat=0.78, tr=0.13, shell=0.85,
+                         bark='pl_bark_tan'),
+    'tree_patio_b': dict(r=2.8, foot_px=(1224, 868), clear=2.8, fork=1.5, tw=0.5, n=16, cl=0.33, flat=0.78, tr=0.14, shell=0.85,
+                         bark='pl_bark_tan'),
+    'tree_patio_nw': dict(r=1.6, foot=(-8.85, 4.57), clear=2.3, fork=1.9, tw=0.5, n=9, cl=0.40, flat=0.75, tr=0.08, shell=0.6,
+                          bark='pl_bark_tan'),
+    'jmaple_planter': dict(r=2.0, clear=1.7, fork=0.9, tw=0.5, n=22, cl=0.25, flat=0.65, tr=0.09, off=(0.15, 0.55), shell=0.7, lump=0.3,
+                           leaf='pl_leaf_maple', leaf2='pl_leaf_light'),
+    'jmaple_stairs': dict(r=2.5, clear=1.9, fork=0.8, tw=0.25, n=28, cl=0.36, flat=0.8, tr=0.10, shell=0.72,
+                          leaf='pl_leaf_maple', lump=0.26),
+    'jmaple_arbor_se': dict(k=1.05, clear=1.6, fork=0.7, tw=0.25, n=24, cl=0.38, flat=0.8, tr=0.09, shell=0.72,
+                            leaf='pl_leaf_maple', lump=0.2),
+    'jmaple_upper': dict(k=1.05, clear=0.9, fork=0.4, tw=0.3, n=11, cl=0.45, flat=0.8, tr=0.06, shell=0.6,
+                         leaf='pl_leaf_red', lump=0.2),
+    'tree_planter_lawn': dict(k=1.2, clear=2.6, fork=1.8, tw=0.45, n=13, cl=0.40, flat=0.75, shell=0.6,
+                              leaf='pl_leaf_light', leaf2='pl_leaf'),
+    'tree_lawn1': dict(k=1.1, clear=1.9, fork=1.5, tw=0.45, n=8, cl=0.42, flat=0.8, shell=0.6),
+    'tree_court_recess': dict(k=1.1, clear=1.8, fork=1.4, tw=0.45, n=7, cl=0.42, flat=0.8, shell=0.6),
+    'tree_play_ne': dict(k=1.1, clear=1.9, fork=1.5, tw=0.45, n=8, cl=0.42, flat=0.8, shell=0.6, leaf='pl_leaf_light'),
+    'tree_north_yg': dict(k=1.1, clear=2.0, fork=1.6, tw=0.45, n=8, cl=0.42, flat=0.8, shell=0.6, leaf='pl_leaf_light'),
+}
+
+
 def site_trees():
     geo = Geo()
     for name, (kind, h, _) in TREES.items():
         rs = _seed(name)
         c, r = _crown(name, h, zc=3.0 if kind == 'big' else None)
         c = c + SHIFT.get(name, (0.0, 0.0))
-        if kind not in ('fruit', 'blossom', 'birch'):
-            r *= LEAFY * RSCALE.get(name, 1.0)
-        if kind == 'big':
-            big_tree(geo, c, h, r, rs)
+        if name in FORMS:
+            f = dict(FORMS[name])
+            foot = c
+            if 'foot_px' in f:
+                foot = np.asarray(plan.aerial_xy(f.pop('foot_px'), 0.05), float)
+            elif 'foot' in f:
+                foot = c = np.asarray(f.pop('foot'), float)
+            off = np.asarray(f.pop('off', (0.0, 0.0)), float) + (c - foot)
+            rr = f.pop('r', None) or r * f.pop('k', 1.0)
+            f.pop('k', None)
+            open_tree(geo, foot, h, rr, rs, off=off, **f)
+        elif kind == 'big':
+            big_tree(geo, c, h, r * LEAFY, rs)
         elif kind == 'birch':
             # the aerial outline is the spread of the bare limbs of the whole clump (and leans with the aerial's
-            # perspective); in leaf the crown is slim and weeping: half the outline
+            # perspective); hero: the crown in leaf is 5-6 m wide at 12 m high, 0.72 of the outline
             b = BIRCH.get(name)
             if b is None:
                 feet = [c + (0.15, -0.25), c + (0.75, -1.25), c + (-0.5, 0.2)]
-                b = dict(feet=feet, crown=c + (-0.5, 0.6), top=c + (-0.9, 1.3))
-            birch(geo, b['feet'], b['crown'], b['top'], h, 0.5 * r, rs)
-        elif kind == 'multi':
-            multi_tree(geo, c, h, r * 0.9, rs, leaf='pl_leaf', bark='pl_bark_tan', stems=5, spread=0.6, crown=0.5)
-        elif kind == 'maple':
-            maple(geo, c, h, r, rs)
-        elif kind == 'maple_red':
-            maple(geo, c, h, r, rs, leaf='pl_leaf_red')
-        elif kind == 'maple_tall':
-            round_tree(geo, c, h, r, rs, leaf='pl_leaf_maple', level=1, nsat=4, clear=0.3 * h)
+                b = dict(feet=feet, crown=c + (-0.3, 0.3), top=c + (-0.6, 0.8))
+            birch(geo, b['feet'], b['crown'], b['top'], h, 0.72 * r, rs)
         elif kind == 'fruit':
             fruit_tree(geo, c, h, min(r, 1.2), rs)
         elif kind == 'blossom':
             round_tree(geo, c, h, 0.8 * r, rs, leaf='pl_blossom', level=1, nsat=3, clear=0.4 * h, lean=0.0)
-        elif name == 'tree_planter_lawn':
-            round_tree(geo, c, h, r * 1.15, rs, leaf='pl_leaf_light', level=2, nsat=5)
-        elif kind == 'light':
-            round_tree(geo, c, h, r, rs, leaf='pl_leaf_light', level=1)
         else:
-            round_tree(geo, c, h, r, rs, level=2 if r > 2.5 else 1)
+            round_tree(geo, c, h, r * LEAFY, rs, level=2 if r > 2.5 else 1)
     return Part('plant_trees', geo, group='trees')
 
 
@@ -584,12 +836,17 @@ def shrubs():
 
 # ---- tree belts inside the aerial's footprint -----------------------------------------------------------------------
 def _belt(geo, pg, step, rs, pick, inner):
-    """Trees on a jittered grid inside the belt polygon; a crown may overhang the lot side by 1 m at most and stays
-    under the sight lines of the views that see the yard (sight_cap)."""
+    """Trees on a jittered grid inside the belt polygon (one in seven left out, sizes spread: a belt is a ragged
+    screen, not a row of equal crowns); a crown may overhang the lot side by 1 m at most and stays under the sight
+    lines of the views that see the yard (sight_cap)."""
     from shapely.geometry import Point
     n = 0
-    for q in _scatter(pg.buffer(-0.8), step, rs, jitter=0.3):
+    for q in _scatter(pg.buffer(-0.8), step, rs, jitter=0.42):
         kind, h, r, leaf = pick(q, rs)
+        if rs.rand() < 0.14:
+            continue
+        k = rs.choice((0.72, 0.88, 1.0, 1.0, 1.18))
+        h, r = h * k, r * (0.5 + 0.5 * k) * rs.uniform(0.85, 1.1)
         d_in = pg.boundary.distance(Point(q))
         r = min(r, max(1.4, d_in + 1.0)) if _near_lot(q, pg) else r
         cap = sight_cap(q[0], q[1], r) - _gz(q[0], q[1])
@@ -639,6 +896,56 @@ def _near_lot(q, pg, margin=2.5):
     return min(q[0] - x0, x1 - q[0], q[1] - y0, y1 - q[1]) > margin
 
 
+def _street():
+    """Zone ground's street and the lane to the driveway (read-only): centre line points, widths, the lane's x."""
+    try:
+        from model.zones import ground
+        S = dict(ground.STREET)
+    except Exception:
+        S = dict(line=((0.9, -102.1), (-34.7, -89.9)), w=6.5, lane_w=4.5, reach=260.0)
+    dr = np.asarray(plan.site_ring('site.driveway'), float)[:, :2]
+    south = dr[dr[:, 1] < dr[:, 1].min() + 1.5]
+    S['ax'] = (float(south[:, 0].min()) - 2.0, float(south[:, 0].max()) + 0.5)       # the apron at the lot's edge
+    S['xl'] = float(south[:, 0].min() + south[:, 0].max()) / 2
+    S['y_top'] = float(south[:, 1].max())
+    return S
+
+
+def _drive_keep(margin=1.2):
+    """Where no tree stands: the driveway, its run to the lot's south edge, the lane to the street, the street."""
+    from shapely.geometry import LineString, Polygon, box
+    from shapely.ops import unary_union
+    S = _street()
+    P0, P1 = np.array(S['line'][0], float), np.array(S['line'][1], float)
+    u = (P1 - P0) / np.linalg.norm(P1 - P0)
+    J = P0 + u * (S['xl'] - P0[0]) / u[0]
+    y0 = plan.EXTENT[1]
+    parts = [Polygon(np.asarray(plan.site_ring('site.driveway'), float)[:, :2]).buffer(0).buffer(0.3),
+             box(S['ax'][0] - margin, y0 - 0.5, S['ax'][1] + margin, S['y_top'] + 0.5),
+             box(S['xl'] - S['lane_w'] / 2 - margin - 1.0, J[1] - 1.0, S['xl'] + S['lane_w'] / 2 + margin + 1.0, y0 + 0.5),
+             LineString([J - u * S['reach'], J + u * S['reach']]).buffer(S['w'] / 2 + margin + 1.5)]
+    return unary_union(parts)
+
+
+def _far_z(x, y, zm=None):
+    """The ground outside the aerial's footprint, as zone ground lays it (its _far): from the lot edge's level down
+    to the far level over a 40 m ring, radially from the footprint's centre."""
+    zm = ZFAR if zm is None else zm
+    x0, y0, x1, y1 = plan.EXTENT
+    c = np.array([(x0 + x1) / 2, (y0 + y1) / 2])
+    hin = np.array([(x1 - x0) / 2, (y1 - y0) / 2])
+    v = np.array([x, y], float) - c
+    k_in = float(np.min(hin / np.maximum(np.abs(v), 1e-9)))
+    k_out = float(np.min((hin + 40.0) / np.maximum(np.abs(v), 1e-9)))
+    if k_in >= 1:
+        return _gz(x, y)
+    if k_out <= 1:
+        return zm
+    e = c + v * k_in
+    t = (1 - k_in) / (k_out - k_in)
+    return _gz(e[0], e[1]) * (1 - t) + zm * t
+
+
 def belts():
     from shapely.geometry import box, Polygon
     from shapely.ops import unary_union
@@ -675,9 +982,16 @@ def belts():
     pe = unary_union([_poly('site.trees_east', 5.0), rest.intersection(box(ix1 - 0.5, y0, x1, iy1 - 0.5))])
     ps = unary_union([_poly('site.trees_south', 4.0), rest.intersection(box(x0, y0, ix1 - 0.5, iy0 + 0.5))])
     pw = rest.intersection(box(x0, iy0 + 0.5, ix0 + 0.5, iy1 - 0.5))
+    # nothing on the driveway, its hidden run to the lot's south edge, the lane beyond (zone ground: STREET)
+    free = _drive_keep()
+    pn, pe, ps, pw = (g.difference(free) for g in (pn, pe, ps, pw))
+
+    def west(q, rs):                                    # the aerial's left edge: a hedge screen with small trees
+        return 'oak', rs.uniform(5.0, 8.5), rs.uniform(2.2, 3.2), ('pl_leaf_dark', 'pl_leaf', 'pl_leaf_light')[
+            rs.randint(3)]
     n = 0
-    for pg, step, name, pick in ((pn, 4.2, 'belt_n', north), (pe, 4.0, 'belt_e', east), (ps, 3.7, 'belt_s', south),
-                                 (pw, 4.2, 'belt_w', east)):
+    for pg, step, name, pick in ((pn, 4.4, 'belt_n', north), (pe, 4.3, 'belt_e', east), (ps, 3.9, 'belt_s', south),
+                                 (pw, 4.6, 'belt_w', west)):
         for g in getattr(pg, 'geoms', [pg]):
             if g.area > 4.0:
                 n += _belt(geo, g, step, _seed(name), pick, lot)
@@ -760,54 +1074,65 @@ def context():
     _block(geo, cs, (L - 1.0, W - 1.0), math.degrees(math.atan2(p1[1] - p0[1], p1[0] - p0[0])), -1.0, 2.6, 24,
            'pl_nb_stucco', 'pl_nb_shake')
     # the western neighbour's pool, deck and lawn
-    z = ZFAR + 0.06
+    z = max(_far_z(p[0], p[1]) for p in NB_DECK + [(-47.5, -14), (-47.5, 20), (-68, 22), (-68, -12)]) + 0.06
     geo.poly('pl_nb_lawn', [(-47.5, -14, z - 0.02), (-47.5, 20, z - 0.02), (-68, 22, z - 0.02), (-68, -12, z - 0.02)][::-1])
     geo.poly('pl_nb_deck', [(p[0], p[1], z) for p in NB_DECK][::-1] if Polygon(NB_DECK).exterior.is_ccw is False
              else [(p[0], p[1], z) for p in NB_DECK])
     pool = NB_POOL if Polygon(NB_POOL).exterior.is_ccw else NB_POOL[::-1]
     geo.poly('pl_nb_water', [(p[0], p[1], z + 0.03) for p in pool])
-    # trees around: none on the buildings, the neighbour's pool lawn, the street band, the aerial's own footprint
+    # trees around: none on the buildings, the neighbour's pool lawn, the street + lane (zone ground), the aerial's own
+    # footprint.  p28 and the high orbit show a wooded neighbourhood, NOT a closed canopy: crowns of every size in
+    # clumps, lawns, roofs and roads between them, tall dark conifers standing singly above the oaks.  (r1 laid equal
+    # crowns on a grid: a carpet that swallowed the lot in the aerial view.)
     x0, y0, x1, y1 = plan.EXTENT
-    keep = [box(x0, y0, x1, y1), Polygon(NB_DECK).buffer(3.0), box(-68, -14, -47.5, 22),
-            box(-400, y0 - 9.5, 400, y0 - 1.0),                        # zone ground's street band
-            box(-45, -100, 5, -78).buffer(3)]                           # the road in front of house B (p28)
+    keep = [box(x0, y0, x1, y1), Polygon(NB_DECK).buffer(3.0), box(-68, -14, -47.5, 22), _drive_keep(2.5)]
     for nb in NEIGHBOURS:
         keep.append(Point(nb['c']).buffer(max(nb['size']) * 0.62 + 2.5))
     keep.append(Point(cs).buffer(L * 0.6 + 1.5))
+    # clearings: lawns / paddocks between the houses (p28: the open field NW, lawns round the neighbours)
+    for cx, cy, rx, ry in ((-95, 60, 34, 22), (70, -75, 22, 30), (-70, -60, 16, 20), (88, 5, 14, 24), (20, 75, 20, 12),
+                           (-20, -100, 26, 9), (-120, -20, 18, 26), (110, 90, 26, 18)):
+        from shapely import affinity
+        keep.append(affinity.scale(Point(cx, cy).buffer(1.0), rx, ry))
     keep = unary_union(keep)
     ring = box(x0 - 105, y0 - 105, x1 + 105, y1 + 105).difference(keep)
     mats = ['pl_leaf_dark', 'pl_leaf', 'pl_leaf', 'pl_leaf_light', 'pl_leaf_yellow']
     n = 0
     lotc = np.array([(x0 + x1) / 2, (y0 + y1) / 2])
-    for q in _scatter(ring, 9.2, rs, jitter=0.42):
-        d = max(abs(q[0] - lotc[0]) - (x1 - x0) / 2, abs(q[1] - lotc[1]) - (y1 - y0) / 2)
-        if rs.rand() < 0.10 + 0.25 * d / 105:           # thinner farther out (the far canopy takes over)
+    for q in _scatter(ring, 8.6, rs, jitter=0.48):
+        x, y = q
+        d = max(abs(x - lotc[0]) - (x1 - x0) / 2, abs(y - lotc[1]) - (y1 - y0) / 2)
+        # clumps and gaps: a slow field decides how many grid points carry a tree (15 .. 90 %)
+        f = (math.sin(x / 23.0 + 1.3) * math.cos(y / 19.0 + 0.7) + 0.6 * math.sin((x + y) / 31.0 + 2.1)
+             + 0.4 * math.sin((x - 2 * y) / 17.0))
+        if rs.rand() > min(0.95, max(0.22, 0.66 + 0.27 * f)) - 0.10 * d / 105:
             continue
-        # the canopy round the lot is almost purely broadleaf (rounded oaks 7-12 m): conifers only as three far
-        # redwood clumps, none where the rear cameras look
-        if min(math.hypot(q[0] - cx, q[1] - cy) for cx, cy in CONIFER_CLUMPS) < 13.0 and rs.rand() < 0.75:
-            conifer(geo, q, rs.uniform(16, 24), rs.uniform(2.8, 3.8), rs, z=ZFAR, tiers=2)
+        zg = _far_z(x, y)
+        u = rs.rand()
+        clump = min(math.hypot(x - cx, y - cy) for cx, cy in CONIFER_CLUMPS) < 13.0
+        if (clump and u < 0.75) or (d > 22 and u < 0.07):
+            conifer(geo, q, rs.uniform(15, 24), rs.uniform(2.6, 3.8), rs, z=zg, tiers=2)
             n += 1
             continue
-        h, r = rs.uniform(7, 12), rs.uniform(3.4, 5.2)
-        x, y = q
-        cap = sight_cap(x, y, r) - ZFAR
+        if u < 0.36:
+            h, r = rs.uniform(4.0, 7.0), rs.uniform(1.9, 3.0)            # small garden trees
+        elif u < 0.86:
+            h, r = rs.uniform(7.0, 11.5), rs.uniform(3.0, 4.6)           # the oaks
+        else:
+            h, r = rs.uniform(12.0, 16.0), rs.uniform(5.0, 6.6)          # a few big ones
+        cap = sight_cap(x, y, r) - zg
         if cap < 4.0:
             continue
-        h = min(h, cap)
-        tube(geo, 'pl_bark', [(x, y, ZFAR), (x, y, ZFAR + 0.4 * h)], [0.2, 0.1], n=4)
-        m = mats[rs.randint(len(mats))]
-        blob(geo, m, (x, y, ZFAR + 0.57 * h), (r, r, 0.44 * h), rs, level=1, lump=0.25)
-        if d < 30:
-            a = rs.uniform(0, 6.28)
-            blob(geo, m, (x + 0.55 * r * math.cos(a), y + 0.55 * r * math.sin(a), ZFAR + 0.38 * h),
-                 (0.6 * r, 0.6 * r, 0.3 * h), rs, level=0, lump=0.25)
+        if cap < h:
+            r *= max(0.6, cap / h)
+            h = cap
+        belt_tree(geo, q, h, r, rs, mats[rs.randint(len(mats))], z=zg - 0.1, far=1 + (d > 28) + (d > 60))
         n += 1
     # the columnar poplars seen SE of the lot in the spring frames (beyond the south belt; position approximate)
     for q, h in (((14.0, -41.0), 19.0), ((17.5, -42.5), 21.0), ((21.0, -41.5), 18.0)):
         if q[1] > y0:
             q = (q[0], y0 - 0.5)
-        poplar(geo, q, h, 1.7, rs, z=ZFAR)
+        poplar(geo, q, h, 1.7, rs, z=_far_z(q[0], q[1]) - 0.1)
     # far canopy: a lumpy green annulus 110 .. 700 m out, tops 9-14 m
     R = [118.0, 170.0, 260.0, 420.0, 700.0]
     na = 56
@@ -852,7 +1177,7 @@ def build():
 
 
 VIEWS = {
-    'aerial': dict(label='Aerial', pos=(-48.0, -62.0, 38.0), target=(-12.0, -8.0, 1.0), fov=42, fit='dolly'),
+    'aerial': dict(label='Aerial', pos=(-58.0, -62.0, 38.0), target=(-12.0, -8.0, 2.0), fov=42, fit='dolly'),
 }
 
 if __name__ == '__main__':
