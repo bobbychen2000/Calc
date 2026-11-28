@@ -199,6 +199,27 @@ def entry_frame():
     return M, t, n, float(np.linalg.norm(R - L)) / 2, float(swp[3:5, 2].mean())
 
 
+def swp_pieces(planes):
+    """The diagonal porch roof SWP round the entry gable: its plane (grown under the front gable's eave to the walls)
+    minus the plan triangle where the gable stands above it -- the gable's valleys run from its eave corners up to the
+    ridge, dep = (half - |u|) tan(pitch) / swp's slope along n.  (Round 3: SWP had been left out whole, which opened a
+    hole beside the gable down to the ground-floor wall tops, seen from the drone.)"""
+    sp = next(p for p in planes if p['src']['id'] == 'swp')['rp']
+    M, t, n, half, eave = entry_frame()
+    a, b, c = sp.abc
+    slope = a * n[0] + b * n[1]
+    k = np.tan(np.radians(ENTRY_PITCH)) / max(slope, 0.05)
+    w = half + 0.03
+    tri = Polygon([M + t * u + n * d for u, d in ((-w, -1.5), (w, -1.5), (w, 0.0), (0.0, k * w), (-w, 0.0))])
+    rest = Polygon(sp.xy).buffer(0).difference(tri)
+    out = []
+    for i, g in enumerate(_rings(rest, 0.05)):
+        xy = np.array(g.exterior.coords)[:-1]
+        out.append(RoofPlane('swp_%d' % i, np.c_[xy, a * xy[:, 0] + b * xy[:, 1] + c], mat=sp.mat, thickness=sp.t,
+                             storey=1, fascia=TRIM))
+    return out
+
+
 def entry_gable(geo, planes):
     """The entry gable over the front steps: the whole diagonal porch leg is one gable facing SW (aerial: its outer eave
     is the gable foot, 4.2 m wide), ridge running NE under the front gable FG's eave into its wall."""
@@ -459,6 +480,23 @@ def gable_vent(geo, o, r, n, w, h):
     for P, Q in ((A, B), (A, C), (B, C)):
         geo.prism(TRIM, [(-0.05, -0.02), (0.05, -0.02), (0.05, 0.03), (-0.05, 0.03)], P + n * 0.05, Q + n * 0.05, up=n, cap=False)
     geo.prism(TRIM, [(-0.05, -0.03), (0.05, -0.03), (0.05, 0.03), (-0.05, 0.03)], o + n * 0.06, C + n * 0.06, up=n, cap=False)
+
+
+def curved_bracket(geo, top, out, along, L=0.60, H=0.95, t=0.10, w=0.13, d=0.16, mat=TRIM):
+    """Heavy Craftsman gable bracket (p01, the west gable): a horizontal outrigger d deep from the wall out L under the
+    rake (top = the middle of its top edge on the wall face) and a curved strut t thick, a quarter ellipse from the wall
+    H under the outrigger's top up into the outrigger's outer part, bowed toward the corner."""
+    top, out, along = (np.asarray(v, float) for v in (top, out, along))
+    side = np.cross(along, (0, 0, 1.0))
+    sg = 1.0 if side @ out > 0 else -1.0
+    geo.prism(mat, [(sg * a, b) for a, b in [(0, 0), (L, 0), (L, -d), (0, -d)]],
+              top - along * w / 2, top + along * w / 2, up=(0, 0, 1.0))
+    a0, b0 = 0.82 * L, H - d * 0.5                                    # ellipse centred at (0.82 L, -H)
+    th = np.linspace(0, np.pi / 2, 13)
+    inner = [(0.82 * L - a0 * np.cos(q), -H + b0 * np.sin(q)) for q in th]
+    outer = [(0.82 * L - (a0 + t) * np.cos(q), -H + (b0 + t) * np.sin(q)) for q in th][::-1]
+    prof = [(max(x, -0.02), z) for x, z in inner + outer]
+    geo.prism(mat, [(sg * a, b) for a, b in prof], top - along * w * 0.4, top + along * w * 0.4, up=(0, 0, 1.0))
 
 
 def knee_brace(geo, p, n, side, size=0.75, t=0.11):
@@ -794,10 +832,11 @@ def front_porch(geo, eaves):
     for sgn in (-1, 1):
         q = edge + t * sgn * (hw + 0.45) - n * 1.05
         o = np.array([q[0], q[1], 0.0])
-        geo.obox(TRIM, o, t3, n3, (0, 0, 1), (-0.17, -0.17, zw + 0.1), (0.17, 0.17, zf + 0.45), 'xXyY')
-        geo.obox(TRIM, o, t3, n3, (0, 0, 1), (-0.21, -0.21, zf + 0.45), (0.21, 0.21, zf + 0.53))
+        zc = zf + 0.59                                                 # p01 ray: cap 0.87-0.95, wedge top 1.15
+        geo.obox(TRIM, o, t3, n3, (0, 0, 1), (-0.17, -0.17, zw + 0.1), (0.17, 0.17, zc), 'xXyY')
+        geo.obox(TRIM, o, t3, n3, (0, 0, 1), (-0.21, -0.21, zc), (0.21, 0.21, zc + 0.08))
         geo.prism(TRIM, [(-0.10, 0.0), (0.12, 0.0), (0.12, 0.08), (0.02, 0.19), (-0.10, 0.12)],
-                  o - t3 * 0.09 + (0, 0, zf + 0.53), o + t3 * 0.09 + (0, 0, zf + 0.53), up=(0, 0, 1.0))
+                  o - t3 * 0.09 + (0, 0, zc + 0.08), o + t3 * 0.09 + (0, 0, zc + 0.08), up=(0, 0, 1.0))
 
 
 def porch_soffit(geo, fp, planes):
@@ -878,7 +917,7 @@ def rafter_tail(geo, q, inward, along, z_us, tn, run, w=0.055, d=0.13):
 def gable_trim(geo, planes):
     """Louvred vents, king posts and brackets on the street gables: the front gable FG (hero: a king-post corbel through
     the vent, a tall corbel on the wall under each rake end, a curved bracket under each eave end), the west gable WG
-    and the garage gable (p01: a king-post block and a tall corbel under each rake end)."""
+    (p01: two heavy curved brackets) and the garage gable (p01: a king-post block and a tall corbel under each rake end)."""
     P = {p['id']: np.array(p['poly']) for p in ROOF['planes']}
     up = np.array([0, 0, 1.0])
 
@@ -904,6 +943,13 @@ def gable_trim(geo, planes):
                 corbel(geo, mid + rr * sgn * u + up * (us(u) + 0.01), n, rr, L=us(u) + 0.01 - (ze - 0.59), D=0.26,
                        w=0.21)
             return
+        if corbels == 'curved':
+            # p01 (round 3): two heavy curved brackets under the rakes near the wall's ends, an outrigger from the wall
+            # out to the fascia right under the rake soffit and a curved strut ~0.9 m down the wall; no apex brace
+            for sgn in (-1, 1):
+                u = half - 0.18
+                curved_bracket(geo, mid + rr * sgn * u + up * (us(u) + 0.01), n, rr, L=inset - 0.06, H=0.95)
+            return
         if not corbels:
             for sgn in (-1, 1):
                 knee_brace(geo, mid + rr * sgn * (hr - 0.62) + up * (ze - brace - 0.30), n, rr * sgn, size=brace)
@@ -918,7 +964,7 @@ def gable_trim(geo, planes):
     fg = P['fg_nw'], P['fg_se']
     face(fg[0][4], fg[0][0], fg[1][3], OVERHANG[2], 2.3, 0.75, 0.18, corbels=True)
     wg = P['wg_n'], P['wg_s']
-    face(wg[0][3], wg[0][0], wg[1][3], OVERHANG[2], 1.3, 0.5, 0.30, brace=0.6)    # feet N -> S: the face looks west
+    face(wg[0][3], wg[0][0], wg[1][3], OVERHANG[2], 1.3, 0.5, 0.30, corbels='curved')   # feet N -> S: faces west
     gg = garage_gable()
     # garage gable vent (p01): frame base z ~3.57, 2.15 wide, its top under the king-post block at ~4.19
     face(gg['apex'], gg['foot_w'], gg['foot_e'], OVERHANG[1], 2.15, 0.62, 0.16, corbels='garage')
@@ -968,7 +1014,7 @@ def build():
     planes = _planes()
     geo = Geo()
     entry_gable(geo, planes)
-    roof_planes(geo, [p['rp'] for p in planes if p['src']['id'] != 'swp'])
+    roof_planes(geo, [p['rp'] for p in planes if p['src']['id'] != 'swp'] + swp_pieces(planes))
     fp = footprints(planes)
     walls(geo, fp, planes)
     eaves = ROOF['eaves']

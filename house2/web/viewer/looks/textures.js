@@ -301,6 +301,9 @@ uniform sampler2D surfDetail;
 uniform vec4 surfDetailP;    // uv scale (1 / m) x, y; albedo amount; normal amount
 uniform float surfDetailRough;
 #endif
+#ifdef SURF_FACE
+uniform vec3 surfFaceK;         // the colour x this on the upright faces, x 1 on the level ones
+#endif
 #ifdef SURF_SWATCH
 uniform sampler2D surfSwatch;   // a photo patch that takes over from the drawn pattern with distance
 uniform vec4 surfSwatchP;       // uv scale (1 / m) x, y; fade from .. to (m from the eye)
@@ -326,6 +329,9 @@ diffuseColor.rgb *= 1.0 + surfDetailP.z * ( surfDt.b * 2.0 - 1.0 );
 #endif
 #ifdef SURF_HTINT
 diffuseColor.rgb *= mix( surfHTk, vec3( 1.0 ), smoothstep( surfHT.x, surfHT.y, vSurfY ) );
+#endif
+#ifdef SURF_FACE
+diffuseColor.rgb *= mix( surfFaceK, vec3( 1.0 ), smoothstep( 0.5, 0.8, abs( inverseTransformDirection( normalize( vNormal ), viewMatrix ).y ) ) );
 #endif
 `;
 const FRAG_ROUGH = `
@@ -435,6 +441,10 @@ export function surface(ctx, o) {
     m.defines.SURF_HTINT = '';
     U.surfHT = { value: new THREE.Vector2(o.heightTint.y0, o.heightTint.y1) };
     U.surfHTk = { value: new THREE.Vector3(...o.heightTint.k) };
+  }
+  if (o.faceK) {      // [r, g, b]: the upright faces' colour x this (a tile band whose top and faces differ)
+    m.defines.SURF_FACE = '';
+    U.surfFaceK = { value: new THREE.Vector3(...o.faceK) };
   }
   if (o.worldUV !== undefined) {      // worldUV = the pattern's turn in plan (radians, from +X toward +Y of the model)
     m.defines.SURF_WORLD_UV = '';

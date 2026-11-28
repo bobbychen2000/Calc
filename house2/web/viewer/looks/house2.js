@@ -262,8 +262,10 @@ function flecksTex(ctx, key, o) {
     return { map: canvasTexture(ctx, c, W, W), nr: canvasNR(ctx, g, n, W, o.relief, 1) };
   }));
 }
-const CHIPS = {      // playground fibre: golden straw / tan (p28 239 191 132, p29, p19)
-  seed: 19, tile: 1.2, density: 16, ground: [0.42, 0.25, 0.10], len: [0.012, 0.04], width: [1.2, 3.0], relief: 0.04,
+// playground fibre: golden straw / tan (p28 239 191 132, p29, p19).  r3: p19 at 3 - 10 m shows the strands themselves,
+// 2 - 7 cm long, in a loose criss-cross with dark gaps; r2's 1 - 2 cm flecks averaged into a smooth beige
+const CHIPS = {
+  seed: 19, tile: 1.2, density: 10, ground: [0.30, 0.17, 0.065], len: [0.02, 0.058], width: [1.6, 3.6], relief: 0.06,
   palette: [[[0.74, 0.47, 0.19], 0.5], [[0.64, 0.38, 0.15], 0.25], [[0.84, 0.58, 0.27], 0.17], [[0.48, 0.28, 0.11], 0.08]],
 };
 const LITTER = {
@@ -273,9 +275,11 @@ const LITTER = {
 // the play-yard path and the garden's floor: decomposed granite / fine crushed stone -- grains 3 - 9 mm in a compacted
 // fines bed, low contrast (p28: an even light blue-grey band round the chip yard; the colour is the swatch's); the
 // first pea-gravel look (12 - 23 mm grains, light flecks) read as terrazzo / concrete with white speckle
+// r3: p19 at 3 - 8 m shows the stones themselves (1 - 2 cm, grey with darker and lighter ones, blue-grey in the shade):
+// the 3 - 9 mm grains of r2 averaged out into a smooth 'poured concrete' band at every distance the viewer sees it from
 const GRAVEL = {
-  seed: 29, tile: 0.6, density: 15, ground: [0.30, 0.29, 0.275], len: [0.002, 0.005], width: [3, 7], relief: 0.02, round: true,
-  palette: [[[0.36, 0.35, 0.335], 0.4], [[0.31, 0.30, 0.29], 0.3], [[0.40, 0.385, 0.36], 0.18], [[0.24, 0.235, 0.225], 0.12]],
+  seed: 29, tile: 0.9, density: 9, ground: [0.22, 0.215, 0.205], len: [0.003, 0.008], width: [5, 12], relief: 0.035, round: true,
+  palette: [[[0.36, 0.35, 0.335], 0.34], [[0.30, 0.295, 0.285], 0.26], [[0.43, 0.42, 0.40], 0.16], [[0.21, 0.205, 0.20], 0.16], [[0.33, 0.30, 0.26], 0.08]],
 };
 
 // synthetic turf: short, even, fine blades; no dry patches (p18: 120 150 40 sunlit, p28 109 114 57)
@@ -321,8 +325,11 @@ function solarTex(ctx) {            // 2 x 2 cells of 156 mm: pseudo-square mono
   }));
 }
 
-const MOSAIC = { key: 'spa_mosaic', t: 8, W: 8 * 0.0254 * 1.06, rough: 0.2,      // the spa dam: 25 mm dark slate-blue glass with a few bronze / pearl tiles (p21)
-  pal: [[[0.065, 0.085, 0.105], 0.4], [[0.085, 0.105, 0.125], 0.25], [[0.13, 0.105, 0.08], 0.12], [[0.17, 0.18, 0.20], 0.08], [[0.045, 0.06, 0.08], 0.15]] };
+// the spa dam (p21 at full size, r3): a band of 25 mm glass tiles on its top -- pearl grey, beige and taupe with a few
+// bronze and blue ones, light in the sun -- and the same tiles on its faces, wet and in the water's shade: dark
+// (spa_mosaic faceK).  r2's all-dark slate-blue read as a brown band where the photo shows a light mosaic rim
+const MOSAIC = { key: 'spa_mosaic2', t: 8, W: 8 * 0.0254 * 1.06, rough: 0.2, grout: [0.30, 0.29, 0.27],
+  pal: [[[0.40, 0.385, 0.35], 0.30], [[0.32, 0.29, 0.25], 0.24], [[0.34, 0.345, 0.35], 0.18], [[0.20, 0.16, 0.12], 0.14], [[0.12, 0.17, 0.25], 0.06], [[0.46, 0.45, 0.43], 0.08]] };
 const WATERLINE = { key: 'pool_tile', t: 4, W: 4 * 0.1524, rough: 0.22,       // the waterline band: dark slate-blue 6 in tile (p21, p22)
   pal: [[[0.045, 0.068, 0.09], 0.4], [[0.058, 0.08, 0.10], 0.3], [[0.038, 0.055, 0.078], 0.3]] };
 function mosaicTex(ctx, o) {
@@ -336,7 +343,8 @@ function mosaicTex(ctx, o) {
       for (let x = 0; x < n; x++) {
         const i = y * n + x, tl = tiles[((y / ts) | 0) * t + ((x / ts) | 0)], lx = x % ts, ly = y % ts;
         const e = Math.min(lx, ts - 1 - lx, ly, ts - 1 - ly) + 0.5, m = smooth(1.0, 2.6, e);
-        put(alb, i * 4, 0.11 + (tl.c[0] * tl.l - 0.11) * m, 0.105 + (tl.c[1] * tl.l - 0.105) * m, 0.10 + (tl.c[2] * tl.l - 0.10) * m);
+        const G = o.grout || [0.11, 0.105, 0.10];
+        put(alb, i * 4, G[0] + (tl.c[0] * tl.l - G[0]) * m, G[1] + (tl.c[1] * tl.l - G[1]) * m, G[2] + (tl.c[2] * tl.l - G[2]) * m);
         hgt[i] = m * (0.0008 + ((lx - ts / 2) * tl.tx + (ly - ts / 2) * tl.ty) / ts * W / t * 8) - (1 - m) * 0.0008;
         rgh[i] = o.rough + (1 - m) * 0.75;
       }
@@ -483,7 +491,9 @@ const FOL_FRAG = `
   float plNdv = abs( dot( normalize( vNormal ), normalize( vViewPosition ) ) );
   float plEdge = 1.0 - plNdv;
   float plCov = plLeafH * ( 0.4 + 1.0 * plClump );
-  if ( plCov < uPlK.x + uPlK.y * plEdge * plEdge ) discard;
+  // a gap in the near leaves shows the crown's dark inside (the far side's back faces), not the wall or sky behind it:
+  // the back faces are cut at the outline only -- r2's white specks through the middle of the entry shrubs
+  if ( plCov < ( gl_FrontFacing ? uPlK.x : 0.0 ) + uPlK.y * plEdge * plEdge * ( gl_FrontFacing ? 1.0 : 0.6 ) ) discard;
   float plShade = mix( uPlK.z, 1.0, smoothstep( 0.05, 0.8, plLeafH ) ) * mix( 0.4, 1.15, plClump );
   vec3 plHue = mix( vec3( 1.0 + uPlK.w, 1.0, 1.0 - uPlK.w ), vec3( 1.0 - uPlK.w, 1.0, 1.0 + 0.6 * uPlK.w ), plL.b );
   diffuseColor.rgb *= plShade * ( 0.72 + 0.56 * plL.g ) * plHue * ( 0.8 + 0.4 * plC.b ) * ( 0.82 + 0.36 * plCid );
@@ -699,7 +709,7 @@ function foliage(ctx, spec) {
       try { if (prepFoliage(geometry) && ctx.changed) ctx.changed(); } catch (e) { console.warn('foliage prep', e); }
     });
   };
-  m.customProgramCacheKey = () => 'h2-foliage-6' + (spec.far ? 'f' : '');
+  m.customProgramCacheKey = () => 'h2-foliage-7' + (spec.far ? 'f' : '');
   return m;
 }
 
@@ -882,6 +892,9 @@ export function register(lib) {
   lib.add('yard_firebrick', (ctx) => surface(ctx, { ...coursedTex(ctx, 'h2firebrick', FIREBRICK), color: [0.22, 0.2, 0.19], roughness: 1.0,
     detail: { kind: 'grit', size: 0.2, albedo: 0.2, normal: 0.3 } }));
   lib.add('yard_soot', { color: 0x1c1a18, roughness: 1.0 });
+  // the sand pit under the play tower (yard zone, p19 in shade): fine, raked, a few darker damp patches
+  lib.add('yard_sand', (ctx) => surface(ctx, { ...groundTex(ctx, 'h2sand', { tile: 1.2, ox: 517, oy: 91, cloud: 0.12, grain: 0.10, speck: 0.08, warm: 0.03, relief: 0.003 }),
+    color: [0.40, 0.335, 0.25], roughness: 1.0, detail: { kind: 'grit', size: 0.17, albedo: 0.18, normal: 0.35 }, macro: { s1: 1.9, s2: 5.3, amount: 0.12 } }));
 
   lib.add('turf_synthetic', (ctx) => surface(ctx, { ...turfTex(ctx), color: C.turf, roughness: 0.92, normalScale: 0.6, swatchFade: [12, 40],
     detail: { kind: 'blades', size: 0.3, albedo: 0.22, normal: 0.3 }, macro: { s1: 9.1, s2: 33, amount: 0.07 } }));
@@ -906,7 +919,7 @@ export function register(lib) {
   lib.add('lid_green', { color: 0x2c6b40, roughness: 0.65 });
 
   // ---- pool
-  lib.add('spa_mosaic', (ctx) => { const m = surface(ctx, { ...mosaicTex(ctx, MOSAIC), color: [1, 1, 1], roughness: 1.0 }); m.envMapIntensity = envK(ctx) * 1.5; m.userData.envK = 1.5; metals.push(m); return m; });
+  lib.add('spa_mosaic', (ctx) => { const m = surface(ctx, { ...mosaicTex(ctx, MOSAIC), color: [1, 1, 1], roughness: 1.0, faceK: [0.30, 0.30, 0.32] }); m.envMapIntensity = envK(ctx) * 1.5; m.userData.envK = 1.5; metals.push(m); return m; });
   lib.add('pool_tile', (ctx) => { const m = surface(ctx, { ...mosaicTex(ctx, WATERLINE), color: [1, 1, 1], roughness: 1.0 }); m.envMapIntensity = envK(ctx); metals.push(m); return m; });
   lib.add('lawn', (ctx) => surface(ctx, { ...lawnTex(ctx), color: [1.02, 1.02, 0.95], roughness: 0.9, normalScale: 0.7, swatchFade: [12, 40],
     detail: { kind: 'blades', size: 0.45, albedo: 0.3, normal: 0.35 }, macro: { s1: 8.3, s2: 37, amount: 0.18, tint: [1.2, 1.06, 0.8], tintAmount: 0.4 } }));

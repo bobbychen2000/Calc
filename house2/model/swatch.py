@@ -364,7 +364,7 @@ SWATCHES = [
     # grass: the pattern from the winter aerial, the colour of the spring photographs (p01's and the hero's sunlit front
     # lawn, p18's turf: yellow-green, little blue)
     # r3: +25 % (p01's sunlit lawn 144 167 77 against the render's 127 150 77 at the same flagstone; the hero alike)
-    dict(name='lawn', mats=['lawn'], ppm=48, delight=0.6, contrast=1.15, clip=(0.7, 1.35), albedo=(0.205, 0.325, 0.072),
+    dict(name='lawn', mats=['lawn'], ppm=48, delight=0.6, contrast=1.15, clip=(0.7, 1.35), albedo=(0.205, 0.325, 0.062),
          expect='lawn', pieces=[dict(photo='p29', px=(400, 1440), off=(1.04, 1.67), size=(4.6, 3.8))]),
     # synthetic turf: p18's sunlit field 148 149 50 against the render's 127 136 60 -- yellower and brighter
     dict(name='turf', mats=['turf_synthetic'], ppm=48, delight=0.8, contrast=1.2, albedo=(0.21, 0.225, 0.028),
