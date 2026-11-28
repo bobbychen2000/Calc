@@ -36,7 +36,7 @@ MERGE_PX = 4.5
 # zones/roof_details.py both read survey/roof_3d.json and apply no height corrections of their own) -------------------
 # garage + north wing: the 28 deg prior stood 0.5-0.65 m above the roof's silhouette in p01 (front photo, fitted
 # camera); ~19 deg puts the garage ridge at ~4.8 and the north wing's at ~5.1.
-PITCH_BLOCK = {'garage_wing': (19.0, 1.0), 'north_wing': (19.0, 1.0)}
+PITCH_BLOCK = {'garage_wing': (18.5, 1.0), 'north_wing': (18.0, 1.0)}
 # the garage's south gable: 26 deg (the aerial's ridge displacement + p01's apex); the balcony gable ~27.5 deg
 PITCH_PLANE = {'gb_w': (26.0, 1.5), 'gb_e': (26.0, 1.5), 'bg_n': (27.5, 2.0), 'bg_s': (27.5, 2.0)}
 # measured ridge heights (plane id -> (z, sigma)): the balcony gable's apex (p21: 0.2 m under the first solve; epi 7.5-8.0)
@@ -212,6 +212,8 @@ def solve(verbose=True):
             free[N + 3 * i:N + 3 * i + 3] = True
             for k in pv[i]:
                 free[k] = k not in other
+        for k, _, _ in ridge_z:              # a measured ridge moves even where it runs into a held roof
+            free[k] = True
         for b in blocks:
             if all(i in aff for i, p in enumerate(planes) if p['attrs']['block'] == b):
                 free[N + 3 * M + bidx[b]] = True
