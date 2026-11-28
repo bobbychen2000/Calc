@@ -52,7 +52,7 @@ REGIONS = {
     'site.trees_east': 1.0,             # falls from the play area to the lawn's east curb (SLOPES)
     'site.trees_south': -0.6,           # street-side screen (SLOPES)
     'site.patio_pool': 0.0,             # n 7132
-    'site.lawn_side_north': -0.20,      # n 1170 (points -0.1 .. -0.4)
+    'site.lawn_side_north': -0.15,      # n 1170 (points -0.1 .. -0.4); flush with the patio's edge (SLOPES)
     'site.bed_lounge': 0.0,
     'site.bed_lawn_terrace': -0.05,
     'site.bed_patio_tree': 0.0,
@@ -65,16 +65,18 @@ REGIONS = {
     'site.bed_lawn_south': -0.65,
     'site.hedge_lawn_west': -0.55,
     'site.bed_maple_round': -0.35,
-    'site.planter_lawn': 0.45,          # raised planter west of the lawn steps, wall top level with the lawn wall
+    'site.planter_lawn': 0.40,          # raised planter west of the lawn steps, wall top (0.50) level with the lawn wall
     'site.planter_terrace': 0.50,       # lower planter behind the chevron wall (frame 133400: cap ~0.6 above the deck)
     'site.hedge_path': 1.65,            # hedge strip between the planter wall and the gravel path (points 1.6-1.8)
     'site.play_area': 2.00,             # n 6097: 1.8 (west) .. 2.2 (east) (SLOPES)
     'site.strip_garden_play': 2.35,
     'site.garden_enclosure': 2.55,      # n 608
-    # site.path_gravel is NOT an area: it follows the membrane between the play area, the hedge strip, the orchard
-    # and the lawn steps (1.7 at the patio stairs, ~2.2 at the garden gate, falling to the lawn steps at the south end)
+    # the gravel path: level with the play area's timber edge (no cross-fall).  Its ends are not level: zone 'ground'
+    # (ground.PROFILES) takes it up to ~2.45 at the garden gate and down to 0.50 at the top of the lawn steps
+    'site.path_gravel': 1.80,
+    'site.bed_maple_stairs': 1.10,      # the bank between the wall east of the patio (0.5 behind its cap) and the path (SLOPES)
     'site.orchard': 1.20,               # 1.9-2.0 along the play area, a bank down to the lawn wall (SLOPES)
-    'site.driveway': -0.40,             # n 90, p30 -0.26; falls toward the street (SLOPES)
+    'site.driveway': -0.40,             # n 90, p30 -0.26; level along the garage, falls toward the street (SLOPES)
     'site.walk_front': FRONT_WALK,
     'site.lawn_front_upper': -0.35,
     'site.lawn_front_lower': -0.55,
@@ -91,9 +93,13 @@ REGIONS = {
 }
 SLOPES = {
     # the driveway falls from the motor court (garage) toward the gate at the image bottom-left
-    'site.driveway': (((300, 760), -0.30), ((150, 1100), -0.40), ((120, 1800), -1.10)),
+    # one plane, no cross-fall (zone 'ground' meshes it in two pieces: level -0.30 to v 1000, then the fall to the gate)
+    'site.driveway': (((100, 540), -0.30), ((500, 540), -0.30), ((120, 1750), -0.95)),
+    'site.lawn_side_north': (((1270, 342), -0.05), ((1060, 359), -0.05), ((1120, 177), -0.22)),
+    'site.bed_maple_stairs': (((1668, 500), 0.35), ((1668, 660), 0.35), ((1775, 580), 1.70)),
     'site.play_area': (((1830, 500), 1.85), ((1830, 880), 1.85), ((2320, 690), 2.20)),
-    'site.orchard': (((1900, 905), 1.90), ((2300, 905), 2.00), ((1950, 1200), 0.55), ((2300, 1200), 0.60)),
+    # the lawn wall's cap is at 0.45-0.5 (aerial ray into frame 144000): the soil behind it just below the cap
+    'site.orchard': (((1900, 905), 1.90), ((2300, 905), 2.00), ((1950, 1200), 0.42), ((2300, 1200), 0.47)),
     'site.trees_north': (((400, 60), 0.80), ((1300, 60), 1.20), ((2100, 60), 2.40), ((1300, 140), 1.20)),
     'site.trees_east': (((2420, 500), 2.20), ((2420, 1100), 1.00), ((2420, 1500), -0.20), ((2480, 1100), 1.00)),
     'site.trees_south': (((300, 1750), -1.00), ((1200, 1720), -0.60), ((2300, 1700), -0.55), ((1200, 1850), -0.70)),
@@ -203,6 +209,10 @@ def _dtm():
     if len(free):
         A[0, 0] += 1e-9
         Z[~fixed] = spsolve(A.tocsr(), b)
+    # the ground zone's refinement (wall breaks, the path's profile, the level motor court): every zone stands on it
+    _DTM['refined'] = True
+    from model.zones import ground
+    Z = ground.refine_dtm(xs, ys, Z)
     _DTM['g'] = (xs, ys, Z)
     return _DTM['g']
 

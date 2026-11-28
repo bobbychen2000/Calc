@@ -208,6 +208,7 @@ async function boot() {
   root.traverse((o) => {
     if (!o.isMesh) return;
     o.userData.matName = o.material.name;
+    mats.seed(o.material);                 // a name the look library lacks keeps the GLB's own colour / roughness
     names.add(o.material.name);
     const k = mats.kind(o.material.name);
     o.castShadow = !(k.glass || k.water || k.noShadow);

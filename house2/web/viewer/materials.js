@@ -89,6 +89,12 @@ export class Materials {
     for (const mod of [surfaces, water, plants, fixtures, glazing, furniture]) if (mod.register) mod.register(lib);
   }
 
+  // the GLB's own factors for a name the look modules do not define (zone builders add materials faster than looks)
+  seed(m) {
+    if (!m || !m.name || this.entries.has(m.name) || !m.color) return;
+    this.entries.set(m.name, { color: m.color.getHex(), roughness: m.roughness ?? 0.8, metalness: m.metalness ?? 0 });
+  }
+
   kind(name) {
     const e = this.entries.get(name);
     return this.kinds.get(name) || (e && typeof e === 'object' ? { glass: !!e.glass, water: !!e.water } : {});

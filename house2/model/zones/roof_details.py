@@ -7,12 +7,16 @@ the thing above the shingles -- so panels, vents and skylights land where the ae
   * solar arrays a1-a6 = 50 panels (6 + 10 + 19 + 5 + 7 + 3): the survey's panel rectangles split into single modules,
     each a framed slab 5 cm over its plane;
   * 2 curb skylights, 23 roof vents by kind (box / pipe / dome / turbine / riser), the 2 PV conduits;
-  * 2 stacked-stone chimneys with cream metal shrouds and round spark arrestors.  Tops by tools/epi.py (cap centre's
-    aerial ray drawn into p28): north shroud top ~5.6 m (it stands from the ground at the north wing's wall and ends
-    BELOW the two-storey eave), south ~9.1 m (through the east eave of the south block, 2.7 m above it);
-  * gutters on every eave edge (cream K-style box under the roof edge), downspouts at the ends of the main runs
-    [typical positions: the photographs resolve only a few], light metal caps on ridges and hips (they read pale grey in
-    p29 / p28, not dark), a flashing band round the flat deck.
+  * 2 stacked-stone chimneys with cream metal shrouds: an OPEN-topped box (drip band, sides leaning in to a thin rim)
+    with the round flue cap inside, below the rim (p29 looks straight into them).  Rims = the aerial's top frames at
+    the heights tools/epi.py gave in p28: north rim ~5.6 m (it stands from the ground at the north wing's wall and
+    ends BELOW the two-storey eave), south ~9.1 m (through the east eave of the south block);
+  * the satellite dish on the north porch roof beside the north chimney (p28 only: the chimney's shadow hides it in
+    the aerial);
+  * gutters on every eave edge (cream K-style box under the roof edge); downspouts [typical positions, no photograph
+    resolves them] only where a house wall stands under the eave and no lower roof lies under the drop (walls from the
+    house zone's footprints): none at the open porches / patios; shingle caps on ridges and hips (a shade lighter
+    than the field), a pale metal flashing band round the flat deck.
 """
 import json
 import os
@@ -20,6 +24,9 @@ import os
 import numpy as np
 
 from model import frame, plan
+from shapely.geometry import Point, Polygon
+from shapely.ops import nearest_points
+
 from model.kit import Geo, Part
 from tools import cams as CAMS
 
@@ -33,7 +40,9 @@ UP = np.array([0.0, 0.0, 1.0])
 MATERIALS = {
     'solar_frame': dict(color=(0.55, 0.56, 0.58), roughness=0.4, metallic=0.8),
     'gutter_cream': dict(color=(0.86, 0.84, 0.78), roughness=0.55),
-    'ridge_cap': dict(color=(0.50, 0.51, 0.53), roughness=0.45, metallic=0.5),
+    'ridge_cap': dict(color=(0.36, 0.37, 0.39), roughness=0.85),            # shingle caps, a shade lighter than the field
+    'deck_flashing': dict(color=(0.62, 0.63, 0.64), roughness=0.45, metallic=0.5),
+    'dish_white': dict(color=(0.80, 0.80, 0.78), roughness=0.5),
     'vent_metal': dict(color=(0.20, 0.20, 0.21), roughness=0.6, metallic=0.4),
     'vent_white': dict(color=(0.82, 0.82, 0.80), roughness=0.5),
     'chimney_shroud': dict(color=(0.66, 0.66, 0.62), roughness=0.5, metallic=0.4),
@@ -55,9 +64,17 @@ A6 = ('ne', [(952, 899), (995, 857), (1063, 923), (1019, 965)], 3)       # quad,
 
 # chimneys: aerial cap centre + cap box, heights from tools/epi.py into p28 (stone top, shroud top)
 CHIMNEYS = {
+    # cap = the shroud's top RIM in p29 (the frame round the dark interior), which lies at z_top
     'chimney_n': dict(cap=(715, 291, 741, 320), z_stone=5.05, z_top=5.60),
-    'chimney_s': dict(cap=(1036, 1255, 1080, 1290), z_stone=8.30, z_top=9.10),
+    'chimney_s': dict(cap=(1037, 1274, 1080, 1306), z_stone=8.30, z_top=9.10),
 }
+# large skylight: its four outer corners re-read in p29 (the survey's first edge was 14 deg off the shingle courses)
+SKYLIGHT_BCN = [(898.7, 1102.0), (918.7, 1086.0), (953.3, 1122.0), (934.7, 1140.7)]
+# satellite dish: p28 only.  Its mast foot's ray meets the north porch roof plane ncp_n at about (-16.5, 6.1), 1.2 m
+# uphill of the surveyed strip, under the two-storey eave (which hides it in the aerial); it stands on the part of
+# the porch roof the house zone runs on under that eave.
+DISH = dict(plane='ncp_n', xy=(-16.5, 6.55), mast=0.75, r=0.38, aim=(0.45, -0.60, 0.66))
+WALL_MIN, WALL_MAX = 0.25, 1.00   # m: a downspout needs a wall this far behind the gutter line
 GUTTER_KINDS = ('eave', 'eave_over_lower_roof', 'eave_end')
 GUTTER = [(0.0, -0.035), (0.0, -0.145), (0.075, -0.145), (0.115, -0.10), (0.115, -0.06), (0.13, -0.035)]
 DOWNSPOUT_MIN_RUN = 4.0    # m: a gutter run this long gets a downspout at its lower-X / lower-Y end
@@ -150,18 +167,18 @@ def solar(geo):
 
 
 def skylights(geo):
-    e = SURVEY['roof.skylight_bcn']
     x0, y0, x1, y1 = SURVEY['roof.skylight_bce']['bbox']
-    for pid, px in (('bc_n', e['poly']), ('bc_e', [(x0, y0), (x1, y0), (x1, y1), (x0, y1)])):
-        n = plane_frame(pid)[0]
+    for pid, px in (('bc_n', SKYLIGHT_BCN), ('bc_e', [(x0, y0), (x1, y0), (x1, y1), (x0, y1)])):
+        n, ex, ey = plane_frame(pid)
         q = on_plane(pid, px, 0.0)
-        # square the surveyed quad up: a rectangle about its centre along its own longest edge
+        # a rectangle square to the plane (along the courses / up the slope) about the surveyed centre, its long and
+        # short sides the surveyed quad's mean edge lengths
         c = q.mean(0)
-        e_u = q[1] - q[0]
-        e_u /= np.linalg.norm(e_u)
-        e_v = np.cross(n, e_u)
-        hu = 0.5 * np.mean([abs((q[1] - q[0]) @ e_u), abs((q[2] - q[3]) @ e_u)])
-        hv = 0.5 * np.mean([abs((q[3] - q[0]) @ e_v), abs((q[2] - q[1]) @ e_v)])
+        l1 = 0.5 * (np.linalg.norm(q[1] - q[0]) + np.linalg.norm(q[2] - q[3]))
+        l2 = 0.5 * (np.linalg.norm(q[2] - q[1]) + np.linalg.norm(q[3] - q[0]))
+        d_long = (q[1] - q[0]) if l1 >= l2 else (q[2] - q[1])
+        e_u, e_v = (ex, ey) if abs(d_long @ ex) >= abs(d_long @ ey) else (ey, ex)
+        hu, hv = 0.5 * max(l1, l2), 0.5 * min(l1, l2)
         r = [c - e_u * hu - e_v * hv, c + e_u * hu - e_v * hv, c + e_u * hu + e_v * hv, c - e_u * hu + e_v * hv]
         _slab(geo, [p - n * 0.02 for p in r], n, 0.16, 'trim_white', 'skylight_glass', inset=0.05)
 
@@ -193,10 +210,16 @@ def vents(geo):
         h = {'box': 0.07, 'dome': 0.08, 'turbine': 0.15, 'tall': 0.45, 'riser': 0.12}.get(k, 0.18)
         p = on_plane(pid, e['point'], h)[0] - n * h              # the foot of something whose middle the pixel shows
         if k == 'box':                                           # low slant-back box vent
-            geo.obox('vent_metal', p, ex, ey, n, (-0.20, -0.20, -0.01), (0.20, 0.20, 0.03))
-            geo.obox('vent_metal', p, ex, ey, n, (-0.15, -0.13, 0.03), (0.15, 0.15, 0.14))
-        elif k in ('pipe', 'pipe_white', 'tall'):
-            L = 0.90 if k == 'tall' else 0.36
+            geo.obox('vent_metal', p, ex, ey, n, (-0.15, -0.15, -0.01), (0.15, 0.15, 0.02))       # ~0.30 m square in p29
+            geo.obox('vent_metal', p, ex, ey, n, (-0.11, -0.10, 0.02), (0.11, 0.11, 0.12))
+        elif k == 'tall':                                        # the capped flue beside the ridge (p28: ~0.9 m mast)
+            geo.obox('vent_metal', p, ex, ey, n, (-0.20, -0.20, -0.01), (0.20, 0.20, 0.015))
+            geo.cylinder('vent_metal', p - UP * 0.05, p + UP * 0.80, 0.075, n=10)
+            geo.cylinder('vent_metal', p + UP * 0.80, p + UP * 0.84, 0.11, n=10)
+            geo.cylinder('vent_metal', p + UP * 0.84, p + UP * 0.93, 0.095, n=10)
+            geo.cylinder('vent_metal', p + UP * 0.93, p + UP * 0.96, 0.13, n=10)
+        elif k in ('pipe', 'pipe_white'):
+            L = 0.36
             geo.obox('vent_metal', p, ex, ey, n, (-0.14, -0.14, -0.01), (0.14, 0.14, 0.015))       # flashing
             geo.cylinder('vent_metal', p - UP * 0.03, p + UP * L, 0.04, n=8)
             if k == 'pipe_white':
@@ -253,34 +276,63 @@ def conduits(geo):
     return n_seg
 
 
+def _ring(cx, cy, hx, hy, z):
+    return [np.array([cx - hx, cy - hy, z]), np.array([cx + hx, cy - hy, z]), np.array([cx + hx, cy + hy, z]),
+            np.array([cx - hx, cy + hy, z])]
+
+
 def chimneys(geo):
     info = {}
     for name, c in CHIMNEYS.items():
         x0, y0, x1, y1 = c['cap']
         zt, zs = c['z_top'], c['z_stone']
-        ring = plan.aerial_ring([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], zs + 0.1)
+        ring = plan.aerial_ring([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], zt)       # the rim, at its own height
         cx, cy = ring.mean(0)
-        hx = 0.5 * (np.abs(ring[:, 0] - cx).mean() * 2)
-        hy = 0.5 * (np.abs(ring[:, 1] - cy).mean() * 2)
-        sx, sy = hx - 0.09, hy - 0.09                             # the stone shaft inside the shroud's drip edge
+        hx = float(np.abs(ring[:, 0] - cx).mean())
+        hy = float(np.abs(ring[:, 1] - cy).mean())
+        sx, sy = hx + 0.02, hy + 0.02                              # stone shaft: about the rim's size (p28)
         zg = float(plan.ground_z(cx, cy)) - 0.3
         geo.box('stone_veneer', (cx - sx, cy - sy, zg), (cx + sx, cy + sy, zs))
-        # shroud: a drip band, then a hipped lid with a flat top, the round spark arrestor on it
-        geo.box('chimney_shroud', (cx - hx, cy - hy, zs - 0.06), (cx + hx, cy + hy, zs + 0.14))
-        z1, z2 = zs + 0.14, zt - 0.22
-        k = 0.45
-        lo = [(cx - hx, cy - hy), (cx + hx, cy - hy), (cx + hx, cy + hy), (cx - hx, cy + hy)]
-        hi = [(cx - hx * k, cy - hy * k), (cx + hx * k, cy - hy * k), (cx + hx * k, cy + hy * k), (cx - hx * k, cy + hy * k)]
+        # shroud: a drip band wider than the stone, sides leaning in to a thin rim, OPEN on top: a recessed deck with
+        # the round flue cap inside, its top below the rim
+        bx, by = sx + 0.07, sy + 0.07
+        z1 = zs + 0.12
+        geo.box('chimney_shroud', (cx - bx, cy - by, zs - 0.07), (cx + bx, cy + by, z1), faces='xXyYz')
+        lo, hi = _ring(cx, cy, bx, by, z1), _ring(cx, cy, hx, hy, zt)
+        t = 0.03
+        zd = zs + 0.20
+        inn, deck = _ring(cx, cy, hx - t, hy - t, zt), _ring(cx, cy, hx - t, hy - t, zd)
         for i in range(4):
             j = (i + 1) % 4
-            geo.poly('chimney_shroud', [(*lo[i], z1), (*lo[j], z1), (*hi[j], z2), (*hi[i], z2)])
-        geo.poly('chimney_shroud', [(*p, z2) for p in hi])
-        r = min(hx, hy) * 0.36
-        geo.cylinder('chimney_cap', (cx, cy, z2), (cx, cy, zt - 0.03), r, n=12)
-        geo.cylinder('chimney_shroud', (cx, cy, zt - 0.03), (cx, cy, zt), r * 1.25, n=12)
+            geo.poly('chimney_shroud', [lo[i], lo[j], hi[j], hi[i]])                 # outer wall
+            geo.poly('chimney_shroud', [hi[i], hi[j], inn[j], inn[i]])               # rim
+            geo.poly('chimney_shroud', [inn[i], inn[j], deck[j], deck[i]])           # inner wall
+        geo.poly('chimney_cap', deck)
+        r = min(hx, hy) * 0.50
+        geo.cylinder('vent_metal', (cx, cy, zd), (cx, cy, zt - 0.22), r * 0.7, n=12)
+        geo.cylinder('vent_white', (cx, cy, zt - 0.22), (cx, cy, zt - 0.10), r, n=14)
         info[name] = dict(xy=(round(float(cx), 2), round(float(cy), 2)), size=(round(2 * sx, 2), round(2 * sy, 2)),
                           z_top=zt)
+    info['dish'] = dish(geo)
     return info
+
+
+def dish(geo):
+    """The satellite dish on the north porch roof (p28): a mast, an arm, a shallow white disc aimed up to the south."""
+    a, b, c = PLANES[DISH['plane']]['plane']
+    x, y = DISH['xy']
+    foot = np.array([x, y, a * x + b * y + c])
+    top = foot + UP * DISH['mast']
+    aim = np.asarray(DISH['aim'], float)
+    aim /= np.linalg.norm(aim)
+    geo.obox('vent_metal', foot, (1, 0, 0), (0, 1, 0), UP, (-0.10, -0.10, -0.02), (0.10, 0.10, 0.03))
+    geo.cylinder('vent_metal', foot - UP * 0.05, top, 0.025, n=6)
+    ctr = top + aim * 0.10
+    geo.cylinder('dish_white', ctr - aim * 0.03, ctr + aim * 0.02, DISH['r'], n=16)
+    arm = ctr + aim * 0.42 - UP * 0.22
+    geo.cylinder('vent_metal', ctr - UP * DISH['r'] * 0.9, arm, 0.012, n=5, cap=False)
+    geo.obox('dish_white', arm, (1, 0, 0), (0, 1, 0), UP, (-0.04, -0.04, -0.04), (0.04, 0.04, 0.06))
+    return tuple(np.round(foot, 2))
 
 
 def _edges(kinds):
@@ -309,51 +361,79 @@ def gutters(geo):
         a2, b2 = a - d * 0.07, b + d * 0.07                        # close the corners
         geo.prism('gutter_cream', GUTTER, a2, b2)
         runs += 1
-    # downspouts: at outer corners where two ground-reaching eaves of one storey meet (one per corner), every other one
+    # downspouts: at the ends of ground-reaching eave runs, but only where a house wall stands under the eave and no
+    # other roof lies under the drop
+    walls = _walls()
+    if walls is None:
+        return runs, 0
+    lower = [(Polygon(np.asarray(p['poly'])[:, :2]).buffer(0.9, join_style=2), p) for p in ROOF['planes']]
     corners = []
     for p, a, b in _edges(('eave',)):
         if np.linalg.norm((b - a)[:2]) < DOWNSPOUT_MIN_RUN:
             continue
         for q, other in ((a, b), (b, a)):
             if all(np.linalg.norm(q - c[0]) > 0.6 for c in corners):
-                corners.append((q, other, p['storey']))
-    for q, other, storey in corners:
+                corners.append((q, other, p))
+    sec = [(-0.04, -0.03), (0.04, -0.03), (0.04, 0.03), (-0.04, 0.03)]
+    placed = []
+    for q, other, p in corners:
         d = (other - q)[:2]
         d /= np.linalg.norm(d)
-        inw = np.array([-d[1], d[0]])
-        # the wall stands back from the eave by the overhang: find the inward side by testing the plane's centroid
-        cen = np.asarray(PLANES_BY_POINT(q), float)
-        if (cen - q[:2]) @ inw < 0:
-            inw = -inw
-        over = 0.50 if storey == 1 else 0.60
-        top = np.array([*(q[:2] + d * 0.45 - inw * 0.06), q[2] - 0.15])
-        wall = np.array([*(q[:2] + d * 0.45 + inw * (over - 0.05)), q[2] - 0.15 - over * 0.8])
-        zg = float(plan.ground_z(wall[0], wall[1]))
-        if wall[2] - zg < 1.0:
+        W = walls[p['storey']]
+        for s_along in (0.90, 1.5, 2.2, 3.0):                        # step along the run until a wall lies behind it
+            g = q[:2] + d * s_along
+            w = np.array(nearest_points(W.boundary, Point(g))[0].coords[0])
+            dist = float(np.linalg.norm(w - g))
+            if WALL_MIN < dist < WALL_MAX and not W.contains(Point(g)):
+                inw = (w - g) / dist                               # ... and the wall runs on to both sides (no corner)
+                if all(W.contains(Point(w + inw * 0.12 + d * k)) for k in (-0.25, 0.25)) and \
+                        all(np.linalg.norm(w - o[:2]) > o[2] / 2 + 0.30 for o in walls['openings']):
+                    break
+        else:
             continue
-        sec = [(-0.04, -0.03), (0.04, -0.03), (0.04, 0.03), (-0.04, 0.03)]
-        geo.prism('gutter_cream', sec, top, wall, up=np.array([inw[0], inw[1], 0.0]) + UP * 0.01)
-        geo.box('gutter_cream', (wall[0] - 0.04, wall[1] - 0.04, zg + 0.05), (wall[0] + 0.04, wall[1] + 0.04, wall[2] + 0.03))
+        out = (g - w) / dist
+        if abs(out @ d) > 0.5:                                     # the nearest wall is round a corner, not behind
+            continue
+        pipe = w + out * 0.05
+        if any(np.linalg.norm(pipe - o) < 2.5 for o in placed):   # one per corner
+            continue
+        # the ground-floor wall must run on under an upper one, and no other roof may lie under the drop
+        if p['storey'] == 2 and walls[1].boundary.distance(Point(w)) > 0.15:
+            continue
+        ztop = q[2] - 0.15 - dist * 0.8
+        if any(pp is not p and poly.contains(Point(pipe))
+               and pp['plane'][0] * pipe[0] + pp['plane'][1] * pipe[1] + pp['plane'][2] < ztop - 0.2 for poly, pp in lower):
+            continue
+        zg = float(plan.ground_z(pipe[0], pipe[1]))
+        if ztop - zg < 1.0:
+            continue
+        top = np.array([g[0], g[1], q[2] - 0.15])
+        geo.prism('gutter_cream', sec, top, np.array([pipe[0], pipe[1], ztop]), up=np.array([out[0], out[1], 0.0]) + UP * 0.01)
+        geo.box('gutter_cream', (pipe[0] - 0.04, pipe[1] - 0.04, zg + 0.05), (pipe[0] + 0.04, pipe[1] + 0.04, ztop + 0.03))
+        placed.append(pipe)
         spouts += 1
+    gutters.spouts = placed
     return runs, spouts
 
 
-def PLANES_BY_POINT(q):
-    """Plan centroid of the eave-carrying plane with a vertex at q (to tell inward from outward)."""
-    best, bd = None, 1e9
-    for p in ROOF['planes']:
-        P = np.asarray(p['poly'], float)
-        d = np.linalg.norm(P - q, axis=1).min()
-        if d < bd:
-            best, bd = P[:, :2].mean(0), d
-    return best
+def _walls():
+    """Closed wall outlines per storey (plan polygons) from the house zone's footprints: {1: ground, 2: upper},
+    and its openings (a pipe never crosses a window or door)."""
+    try:
+        from model.zones import house
+        fp = house.footprints(house._planes())
+        ops = [np.array([o[2][0], o[2][1], o[4]]) for o in house.OPENINGS]       # (x, y, width) of every opening
+        return {1: fp['G'], 2: fp['U'], 'openings': ops}
+    except Exception as e:                                         # no walls known: no downspouts
+        print('roof_details: house footprints unavailable (%s): no downspouts' % e)
+        return None
 
 
 def caps(geo):
     """Ridge and hip caps (one per shared edge) and the flashing band round the flat deck."""
     seen = []
     n = 0
-    sec = [(-0.13, -0.035), (0.13, -0.035), (0.045, 0.045), (-0.045, 0.045)]
+    sec = [(-0.10, -0.03), (0.10, -0.03), (0.04, 0.03), (-0.04, 0.03)]
     for p, a, b in _edges(('ridge', 'hip')):
         if np.linalg.norm(b - a) < 0.3:
             continue
@@ -375,7 +455,7 @@ def caps(geo):
         a, b = P[i], P[(i + 1) % len(P)]
         if np.linalg.norm(b - a) > 0.2:
             d = (b - a) / np.linalg.norm(b - a)
-            geo.prism('ridge_cap', band, a - d * 0.1, b + d * 0.1)
+            geo.prism('deck_flashing', band, a - d * 0.1, b + d * 0.1)
     return n
 
 

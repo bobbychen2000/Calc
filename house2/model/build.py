@@ -20,12 +20,13 @@ MATERIALS = _materials.MATERIALS
 ZONES = ['ground', 'pool', 'yard', 'planting', 'house', 'roof_details']
 # fit: how a view keeps its width on a narrow (portrait) screen - 'dolly' steps back, 'fov' widens (web/viewer/stage.js)
 VIEWS = {
-    'front': dict(label='Front', pos=(-40.0, -44.0, 6.5), target=(-15.0, -13.0, 3.5), fov=42, fit='dolly'),
-    'aerial': dict(label='Aerial', pos=(-48.0, -62.0, 38.0), target=(-12.0, -8.0, 1.0), fov=42, fit='dolly'),
-    'rear': dict(label='Rear', pos=(14.0, 8.0, 3.0), target=(-12.0, -6.0, 4.0), fov=60),
-    'pool': dict(label='Pool', pos=(8.0, -10.0, 2.2), target=(-6.0, 6.0, 1.5), fov=58),
-    'entry': dict(label='Entry', pos=(-30.0, -30.0, 2.0), target=(-20.0, -18.0, 3.0), fov=50),
-    'play': dict(label='Play area', pos=(30.0, 20.0, 8.0), target=(8.0, -2.0, 1.0), fov=55),
+    # positions ray-checked against the built model (out/tmp/viewcheck.py): clear of trees / structures, line of sight
+    'front': dict(label='Front', pos=(-38.0, -31.0, 2.2), target=(-16.8, -16.5, 3.0), fov=48, fit='dolly'),
+    'aerial': dict(label='Aerial', pos=(-58.0, -62.0, 38.0), target=(-12.0, -8.0, 2.0), fov=42, fit='dolly'),
+    'rear': dict(label='Rear', pos=(11.9, -3.3, 3.6), target=(-3.1, -3.4, 3.8), fov=72),          # p21's vantage
+    'pool': dict(label='Pool', pos=(-4.2, 11.2, 1.6), target=(-1.75, -3.6, 1.2), fov=70),         # video frame 133.4 s
+    'entry': dict(label='Entry', pos=(-26.3, -26.0, 1.65), target=(-18.8, -18.5, 2.2), fov=52),
+    'play': dict(label='Play area', pos=(10.0, 10.0, 6.0), target=(19.0, -1.0, 2.5), fov=55),
 }
 # The sun as in the daylight photographs: on the REAR side of the lot (the aerial's shadows fall toward the street, a
 # 3 m pergola throws 5 m), so the street front stands in open shade.  az from +Y toward +X.

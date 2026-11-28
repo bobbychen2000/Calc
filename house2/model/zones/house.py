@@ -53,6 +53,12 @@ DIAG = ((-10.8, -7.7), (-7.7, -10.7))    # the core's NE-facing 45 deg upper wal
 DIAG_BACK = 1.5
 PB_ROOM = (-9.0, -17.9, -0.6, -14.3)     # the enclosed part of the patio wing (x0, y0, x1, y1)
 PB_COL_Y = -11.5                         # column line of its covered patio
+# front colonnade (p01: the 4 west-run columns as pairs of the camera fit, rms 7 px): the column line stands ~1.15 m
+# inside the eave (deep overhang with exposed rafter tails), the box beam's underside at 3.12
+COL_X_W, COL_Y_S, COL_Y_N = -23.0, -15.42, -7.6
+COL_TOP = 3.12                           # underside of the porch box beam = top of the column capitals
+BEAM_H = 0.34                            # the south leg's flat roof (14 deg) leaves no more over the column line
+PORCH_INSET = 1.0                        # eave -> porch floor edge / column line of the wraparound porch
 
 
 def _upper_outline():
@@ -67,6 +73,12 @@ def _planes():
     for p in ROOF['planes']:
         P = np.array(p['poly'], float)
         a, b, c = p['plane']
+        if p['block'] in LOW_PITCH_K:    # heights above the block's eave scaled (affine: the plane stays a plane)
+            ze = ROOF['eaves'][p['block']]
+            P = P.copy()
+            P[:, 2] = ze + (P[:, 2] - ze) * LOW_PITCH_K[p['block']]
+            c = ze + (c - ze) * LOW_PITCH_K[p['block']]
+            a, b = a * LOW_PITCH_K[p['block']], b * LOW_PITCH_K[p['block']]
         Q = P
         if p['storey'] == 1 and any(k.startswith('under_upper') for k in p['edges']):
             # grow the plane under the upper roof only (hidden there), so it runs into the upper walls
@@ -76,9 +88,46 @@ def _planes():
                 g = max(g.geoms, key=lambda q: q.area)
             xy = np.array(g.exterior.coords)[:-1]
             Q = np.c_[xy, a * xy[:, 0] + b * xy[:, 1] + c]
+        if p['id'] == 'ncp_n':
+            # the aerial sees only the strip outside the upper eave: the porch roof runs on up-slope to the NC north wall
+            xy = [P[0, :2], P[1, :2], P[2, :2], (P[2, 0], NC_Y_N - 0.12), (P[3, 0], NC_Y_N - 0.12)]
+            xy = np.array(xy, float)
+            Q = np.c_[xy, a * xy[:, 0] + b * xy[:, 1] + c]
+        elif p['id'] == 'ncp_e':
+            xy = np.array([P[0, :2], P[1, :2], (BG_X_WALL - 0.12, P[2, 1]), (BG_X_WALL - 0.12, P[3, 1])], float)
+            Q = np.c_[xy, a * xy[:, 0] + b * xy[:, 1] + c]
+        elif p['id'] in ('gb_w', 'gb_e'):
+            Q = garage_gable()[p['id']]
+        elif p['id'] == 'g_s':
+            Q = P[:3]                    # no notch: the (lower) gable runs into this plane and is buried where it is lower
+        elif p['id'] in BG_RIDGE_K:
+            Q = P.copy()
+            ze = P[:, 2].min()
+            Q[:, 2] = ze + (P[:, 2] - ze) * BG_RIDGE_K[p['id']]
         mat = 'roof_flat' if p['flat'] else 'roof_shingle'
         out.append(dict(rp=RoofPlane(p['id'], Q, mat=mat, thickness=0.22, storey=p['storey'], fascia=TRIM), src=p))
     return out
+
+
+GARAGE_GABLE_PITCH = 26.0                # the aerial's symmetric gable (ridge displaced 17 px by its height) + p01's apex
+# garage + north wing roofs: the solve's 23-27 deg (its pitch prior) stood 0.5-0.65 m above the roof's silhouette in
+# p01; at ~19 deg the garage gable's ridge (26 deg, apex 4.44) meets g_s exactly at the surveyed valley apex
+LOW_PITCH_K = {'garage_wing': 0.70, 'north_wing': 0.70}
+BG_RIDGE_K = {'bg_n': 0.886, 'bg_s': 0.886}   # balcony gable ridge 8.17 -> 7.97 (p21: apex 0.2 m lower; epi: 7.5-8.0)
+
+
+def garage_gable():
+    """The garage's south gable rebuilt symmetric about the middle of its two rake feet (the solve put its ridge
+    0.3 m off centre and 0.45 m high: 30 / 37 deg planes).  Returns both planes + apex / feet for the trim."""
+    P = {p['id']: np.array(p['poly']) for p in ROOF['planes'] if p['id'] in ('gb_w', 'gb_e')}
+    fw, fe = P['gb_w'][2], P['gb_e'][2]                              # rake feet (fascia line)
+    yb = P['gb_w'][0][1]                                             # the old valley apex: far enough to be buried
+    xr, ze = (fw[0] + fe[0]) / 2, (fw[2] + fe[2]) / 2
+    za = ze + (fe[0] - fw[0]) / 2 * np.tan(np.radians(GARAGE_GABLE_PITCH))
+    yf = (fw[1] + fe[1]) / 2
+    return {'gb_w': np.array([(xr, yb, za), (xr, yf, za), (fw[0], yf, ze), (fw[0], yb, ze)]),
+            'gb_e': np.array([(xr, yb, za), (fe[0], yb, ze), (fe[0], yf, ze), (xr, yf, za)]),
+            'apex': np.array([xr, yf, za]), 'foot_w': np.array([fw[0], yf, ze]), 'foot_e': np.array([fe[0], yf, ze])}
 
 
 def _aerial_xy(uv, z):
@@ -141,9 +190,21 @@ def _frame(a, b):
     return r, np.array([r[1], -r[0], 0.0]), L                  # right, out (to the right of a -> b), length
 
 
-def beam(geo, a, b, z0, z1, t=0.20, mat=TRIM):
+def _lbox(geo, mat, o, r, n, lo, hi, faces='xXyYzZ'):
+    """Box in a wall frame (r right, n out, z up).  That frame is LEFT-handed (r x n = -z), which would turn every face
+    inside out in Geo.obox: build it in the right-handed frame (r, -n, z) instead; face letters y / Y keep their meaning
+    (y = the side toward the house, Y = the side facing out)."""
+    (x0, y0, z0), (x1, y1, z1) = lo, hi
+    nn = -np.asarray(n, float)
+    geo.obox(mat, o, r, nn, (0, 0, 1), (x0, -y1, z0), (x1, -y0, z1), faces.translate(str.maketrans('yY', 'Yy')))
+
+
+def beam(geo, a, b, z0, z1, t=0.20, mat=TRIM, e0=None, e1=None):
+    """Box beam from a to b; e0 / e1 = how far it runs past its ends (default half its thickness)."""
     r, n, L = _frame(a, b)
-    geo.obox(mat, (a[0], a[1], 0.0), r, n, (0, 0, 1), (-t / 2, -t / 2, z0), (L + t / 2, t / 2, z1))
+    e0 = t / 2 if e0 is None else e0
+    e1 = t / 2 if e1 is None else e1
+    _lbox(geo, mat, (a[0], a[1], 0.0), r, n, (-e0, -t / 2, z0), (L + e1, t / 2, z1))
 
 
 def column_sq(geo, x, y, z0, z1, s=0.28, ang=0.0, mat=TRIM):
@@ -180,16 +241,16 @@ def railing(geo, a, b, z0, h=0.92, gap=0.14, mat=TRIM, inset=0.0):
     if L < 0.25:
         return
     o = np.array([a[0], a[1], 0.0]) + r * inset
-    geo.obox(mat, o, r, n, (0, 0, 1), (0, -0.045, z0 + h - 0.07), (L, 0.045, z0 + h), 'yYzZ')
-    geo.obox(mat, o, r, n, (0, 0, 1), (0, -0.035, z0 + 0.10), (L, 0.035, z0 + 0.17), 'yYzZ')
+    _lbox(geo, mat, o, r, n, (0, -0.045, z0 + h - 0.07), (L, 0.045, z0 + h), 'yYzZ')
+    _lbox(geo, mat, o, r, n, (0, -0.035, z0 + 0.10), (L, 0.035, z0 + 0.17), 'yYzZ')
     k = max(1, int(round(L / gap)))
     for i in range(k):
         s = (i + 0.5) * L / k
-        geo.obox(mat, o, r, n, (0, 0, 1), (s - 0.022, -0.022, z0 + 0.17), (s + 0.022, 0.022, z0 + h - 0.07), 'xXyY')
+        _lbox(geo, mat, o, r, n, (s - 0.022, -0.022, z0 + 0.17), (s + 0.022, 0.022, z0 + h - 0.07), 'xXyY')
 
 
 def _bx(geo, mat, o, r, n, x0, x1, z0, z1, y0, y1, faces='xXyYzZ'):
-    geo.obox(mat, o, r, n, (0, 0, 1), (x0, y0, z0), (x1, y1, z1), faces)
+    _lbox(geo, mat, o, r, n, (x0, y0, z0), (x1, y1, z1), faces)
 
 
 def window(geo, o, r, n, w, h, units=1, divided=True, casing=0.11, sill=True, glass='glass'):
@@ -293,12 +354,12 @@ def knee_brace(geo, p, n, side, size=0.75, t=0.11):
 # =====================================================================================================================
 # footprints and walls
 # =====================================================================================================================
-def _footprint(planes, blocks, storey):
+def _footprint(planes, blocks, storey, inset=None):
     """Eave outline of the given blocks (plan union of their visible planes) set in by the overhang."""
     polys = [Polygon(np.array(p['src']['poly'])[:, :2]).buffer(0.02) for p in planes
              if 'poly' in p['src'] and p['src']['block'] in blocks]
     u = unary_union(polys).buffer(0.25, join_style=2).buffer(-0.25, join_style=2)     # close slivers between planes
-    return u.buffer(-OVERHANG[storey], join_style=2)
+    return u.buffer(-(OVERHANG[storey] if inset is None else inset), join_style=2)
 
 
 def _rings(geom, amin=1.0):
@@ -324,7 +385,8 @@ def footprints(planes):
     bridge = both.buffer(0.8, join_style=2).buffer(-0.8, join_style=2).intersection(box(-23.5, -3.2, -16.0, 9.0))
     G = unary_union([both, bridge, box(*PB_ROOM)]).difference(unary_union([rear_open, diag]))
     patio_pb = box(PB_ROOM[0], PB_ROOM[3], PB_ROOM[2] + 0.15, PB_COL_Y + 0.2).union(diag).difference(G)
-    patio_bg = box(REAR_X_GROUND, BG_Y[0] - 0.2, BG_X_POST + 0.2, NC_Y_N).difference(G)
+    patio_bg = unary_union([box(REAR_X_GROUND, BG_Y[0] - 0.2, BG_X_POST + 0.2, BG_Y[1] + 0.2),
+                            box(REAR_X_GROUND, BG_Y[1], BG_X_WALL + 0.15, NC_Y_N)]).difference(G)   # N of BG: the recess only
     return dict(f2=f2, U=_simplify(U), G=_simplify(G), patio_pb=patio_pb, patio_bg=patio_bg, diag=diag)
 
 
@@ -399,11 +461,11 @@ def rear(geo, fp, planes, eaves):
     zf = Z2 + 0.12                                              # balcony floor
     # balcony floor + its cream fascia band, posts below and above, header beam, the gable face with its vent
     geo.box('bluestone', (xw - 0.05, y0 - 0.14, zf - 0.06), (xp + 0.14, y1 + 0.14, zf))
-    geo.box(TRIM, (xw - 0.05, y0 - 0.16, zf - 0.42), (xp + 0.16, y1 + 0.16, zf - 0.06), 'xXyYz')
+    geo.box(TRIM, (xw - 0.05, y0 - 0.20, zf - 0.60), (xp + 0.20, y1 + 0.20, zf - 0.06), 'xXyYz')      # p21: ~0.55 deep
     zh = eaves['balcony_gable_2st'] - 0.22
     for y in (y0, y1):
-        column_sq(geo, xp, y, PATIO_FLOOR, zf - 0.42, s=0.30)
-        column_sq(geo, xp, y, zf, zh - 0.30, s=0.26)
+        column_sq(geo, xp, y, PATIO_FLOOR, zf - 0.60, s=0.42)             # p21 / frame 134000: 0.40-0.45
+        column_sq(geo, xp, y, zf, zh - 0.30, s=0.38)
         beam(geo, (xw, y), (xp, y), zh - 0.30, zh, t=0.22)
         railing(geo, (xw, y), (xp, y), zf, h=1.0, inset=0.13)
     beam(geo, (xp, y0), (xp, y1), zh - 0.30, zh, t=0.24)
@@ -419,7 +481,7 @@ def rear(geo, fp, planes, eaves):
     (ax, ay), (bx, by) = DIAG
     cc = (ax + 0.25, ay - 0.25)
     column_sq(geo, cc[0], cc[1], PATIO_FLOOR, zb, s=0.30, ang=np.pi / 4)
-    beam(geo, DIAG[0], DIAG[1], zb - 0.10, Z2, t=0.24)
+    beam(geo, DIAG[0], DIAG[1], zb - 0.10, Z2, t=0.24, e1=-0.45)      # stops short of the PB roof at the far end
     beam(geo, cc, (xp, y0), zb - 0.05, Z2, t=0.20)
     # patio wing PB: columns + beam along its pool side, floor
     ze = eaves['patio_1st'] - 0.24
@@ -466,7 +528,7 @@ def _outer_edges(poly, closed, tol=0.35):
 def porch_auto(geo, poly, closed, z_floor, eave_z, craft=True, rail=False, span=3.2, skip=None):
     """A roof on columns: columns at the ends of every open edge and every ~span metres, a box beam, the floor
     (stone skirt, bluestone top).  skip: a plan region whose columns / beams are built elsewhere."""
-    top = eave_z - 0.24
+    top = (COL_TOP + BEAM_H) if craft else eave_z - 0.24
     seen = []
     for a, b in _outer_edges(poly, closed):
         r, n, L = _frame(a, b)
@@ -482,10 +544,10 @@ def porch_auto(geo, poly, closed, z_floor, eave_z, craft=True, rail=False, span=
             if skip is not None and skip.contains(Point(p)):
                 continue
             if craft:
-                column_craft(geo, p[0], p[1], z_floor, top - 0.30, ang, ground=plan.ground_z(p[0], p[1]))
+                column_craft(geo, p[0], p[1], z_floor, COL_TOP, ang, ground=plan.ground_z(p[0], p[1]))
             else:
                 column_sq(geo, p[0], p[1], z_floor, top - 0.30, ang=ang)
-        beam(geo, a, b, top - 0.30, top, t=0.26)
+        beam(geo, a, b, COL_TOP if craft else top - 0.30, top, t=0.30 if craft else 0.26)
         if rail:
             for i in range(k):
                 railing(geo, pts[i], pts[i + 1], z_floor, inset=0.32)
@@ -501,9 +563,9 @@ def front_columns():
     M, t, n, half, eave = entry_frame()
     c = M[0] - M[1]
     mir = lambda q: (q[1] + c, q[0] - c)                              # noqa: E731  (reflection in the entry's axis)
-    xw, ys = -23.66, -16.08
-    west = [(xw, -6.48), (xw, -9.13), (xw, -11.43), (xw, -13.73)]
-    sw, bl = (xw, ys), (-19.10, -16.12)
+    xw, ys = COL_X_W, COL_Y_S
+    west = [(xw, y) for y in np.linspace(COL_Y_N, ys, 4)[:3]]       # p01: 3 + the corner, evenly spaced
+    sw, bl = (xw, ys), (-18.67, ys)                                  # bl: p01 / hero bearings onto the south line
     el, er = tuple(M - t * 1.25 + n * 0.6), tuple(M + t * 1.25 + n * 0.6)
     return west + [sw, bl, el, er, mir(bl), mir(sw)]
 
@@ -512,19 +574,20 @@ def front_porch(geo, eaves):
     M, t, n, half, eave = entry_frame()
     cols = front_columns()
     zf = PORCH_FLOOR
-    top = eaves['porch_1st'] - 0.24
+    top = COL_TOP + BEAM_H
     for i, q in enumerate(cols):
         a, b = cols[max(i - 1, 0)], cols[min(i + 1, len(cols) - 1)]
-        ang = float(np.arctan2(b[1] - a[1], b[0] - a[0])) if i not in (4, 9) else 0.0
-        column_craft(geo, q[0], q[1], zf, top - 0.30, ang, ground=plan.ground_z(q[0], q[1]))
+        ang = float(np.arctan2(b[1] - a[1], b[0] - a[0])) if i not in (3, 4, 7, 8) else 0.0
+        column_craft(geo, q[0], q[1], zf, COL_TOP, ang, ground=plan.ground_z(q[0], q[1]))
+    beam(geo, cols[0], (cols[0][0] + 1.9, cols[0][1]), COL_TOP, top, t=0.30)       # return to the wall at the north end
     for i in range(len(cols) - 1):
         a, b = cols[i], cols[i + 1]
-        beam(geo, a, b, top - 0.30, top, t=0.26)
-        if i != 6:                                                  # no railing across the steps
+        beam(geo, a, b, COL_TOP, top, t=0.30)
+        if i != 5:                                                  # no railing across the steps
             railing(geo, a, b, zf, inset=0.32)
     # entry: box beam under the pediment, 4 risers down to the front walk, a short cream post at each side of the foot
-    el, er = np.array(cols[6]), np.array(cols[7])
-    beam(geo, el, er, top - 0.30, top + 0.06, t=0.30)
+    el, er = np.array(cols[5]), np.array(cols[6])
+    beam(geo, el, er, COL_TOP, top + 0.06, t=0.34)
     t3, n3 = np.array([t[0], t[1], 0.0]), np.array([n[0], n[1], 0.0])
     rise = (zf - plan.FRONT_WALK) / 4
     edge = M + n * 0.42                                              # the porch floor's edge under the gable
@@ -561,8 +624,8 @@ def gable_trim(geo, planes):
     face(fg[0][4], fg[0][0], fg[1][3], OVERHANG[2], 2.3, 0.75, 0.18)
     wg = P['wg_n'], P['wg_s']
     face(wg[0][3], wg[1][3], wg[0][0], OVERHANG[2], 1.3, 0.5, 0.30, brace=0.6)
-    gb = P['gb_w'], P['gb_e']
-    face(gb[0][1], gb[0][2], gb[1][2], OVERHANG[1], 2.4, 0.75, 0.12, brace=0.55)
+    gg = garage_gable()
+    face(gg['apex'], gg['foot_w'], gg['foot_e'], OVERHANG[1], 2.2, 0.6, 0.10, brace=0.5)
 
 
 # openings: (kind, storey, plan point on the wall, sill z, width, height, options).  Front: p01 through the fitted
@@ -580,18 +643,18 @@ OPENINGS = [
     ('win', 'u', (-19.26, -13.71), 4.45, 2.50, 1.60, dict(units=3)),                    # triple window, upper left
     ('win', 'u', (-16.21, -16.48), 4.50, 1.85, 1.55, dict(units=2)),                    # twin window in the front gable
     ('win', 'u', (-21.57, -11.25), 4.65, 0.80, 1.50, {}),                               # west gable
-    ('win', 'g', (-25.80, -3.45), 1.05, 1.70, 1.45, dict(units=2)),                     # garage south gable
+    ('win', 'g', (-26.53, -3.45), 1.50, 1.95, 1.50, dict(units=2)),                     # garage south gable
     ('garage', 'g', (-30.45, 5.60), None, 2.60, 2.30, {}),                              # 3 garage doors on the motor
     ('garage', 'g', (-30.45, 2.40), None, 2.60, 2.30, {}),                              # court (assumed sizes: no
     ('garage', 'g', (-30.45, -0.80), None, 2.60, 2.30, {}),                             # photograph shows them)
     # ---- pool side ---------------------------------------------------------------------------------------------
-    ('door', 'u', (BG_X_WALL, -1.90), Z2 + 0.12, 3.80, 2.35, dict(kind='glass', leaves=4)),   # balcony doors
+    ('door', 'u', (BG_X_WALL, -1.85), Z2 + 0.12, 4.30, 2.50, dict(kind='glass', leaves=4)),   # balcony doors
     ('door', 'g', (REAR_X_GROUND, -3.06), PATIO_FLOOR + 0.05, 1.00, 2.40, dict(kind='glass')),      # BG patio door
     ('win', 'g', (REAR_X_GROUND, -0.87), 0.90, 2.50, 1.75, dict(units=3)),              # BG patio window
     ('door', 'g', (REAR_X_GROUND, 2.75), PATIO_FLOOR + 0.05, 3.20, 2.40, dict(kind='glass', leaves=4)),   # NC doors
-    ('win', 'u', (BG_X_WALL, 4.80), 4.55, 1.00, 1.35, {}),                              # NC east, upper
+    ('win', 'u', (BG_X_WALL, 4.80), 4.45, 1.00, 1.65, {}),                              # NC east, upper
     ('win', 'u', (-13.60, NC_Y_N), 4.40, 2.40, 1.45, dict(units=3)),                    # NC north, upper
-    ('win', 'u', (-9.39, -9.03), 4.70, 2.40, 1.35, dict(units=3)),                      # court, the diagonal wall
+    ('win', 'u', (-9.39, -9.03), 4.90, 2.40, 1.45, dict(units=3)),                      # court, the diagonal wall
     ('win', 'u', (-10.79, -6.55), 4.70, 0.90, 1.35, {}),                                # court, CC east wall
     ('door', 'g', (-9.61, -10.94), PATIO_FLOOR + 0.05, 1.70, 2.40, dict(kind='glass', leaves=2)),   # French doors
     ('win', 'g', (-6.40, PB_ROOM[3]), 0.80, 1.80, 2.00, dict(units=2)),                 # PB patio back wall
@@ -613,9 +676,9 @@ def build():
     gable_trim(geo, planes)
     closed = fp['G']
     front_porch(geo, eaves)
-    explicit = box(-25.0, -24.6, -15.2, -6.3)
+    explicit = box(-25.0, -24.6, -14.9, -6.3)
     for blk, zf, craft in (('porch_1st', PORCH_FLOOR, True),):
-        f = _footprint(planes, {blk}, 1).difference(closed.buffer(0.02))
+        f = _footprint(planes, {blk}, 1, inset=PORCH_INSET).difference(closed.buffer(0.02))
         for g in _rings(f):
             porch_auto(geo, g, closed, zf, eaves[blk], craft=craft, rail=craft, skip=explicit if craft else None)
     return [Part('house', geo, group='house')]

@@ -12,18 +12,22 @@ LOCAL FRAME (metres; `_frame()`):
     The spa fills the EAST corner: x in [L - SPA, L], y in [W - SPA, W].
 
 Read from the images:
-    spa        2.45 m square outside; its mosaic-topped dam (0.37 m wide) on the two pool sides is FLUSH with the
-               coping (tools/epi.py, aerial spa corner -> p21: the dam's top corner lies at z -0.1 .. 0.0, and p21
-               shows the mosaic meeting the coping top without a step) -- not raised above the deck; a bench along
-               its SW side, the foot well against the NE coping, two round floor fittings (p21)
-    steps S    3 treads in the south corner, edges parallel to the SW wall, nested (p21, aerial)
+    spa        2.42 m square outside; its mosaic-topped dam (0.34 m wide) on the two pool sides lies a step BELOW the
+               coping, just above the water (its plan outline from the aerial projected into p21 and frame 154700
+               fits the outer corner at z -0.14 and the inner at -0.09 in both: DAM_Z -0.11) -- not raised above the
+               deck; inside a bench ring ~0.47 m wide round a central foot well (aerial; p21 rays put the SW bench's
+               front 0.4-0.5 m from the dam), four floor fittings 0.87 x 0.46 m apart (aerial, frame 022100; p21
+               shows the NW pair), a step block in the east corner (aerial; weak)
+    steps S    3 treads in the south corner, edges parallel to the SW wall, nested; the top one narrow (p21 and
+               frame 154700 rays at refracted depths: outer corners 1.3 / 0.2-0.35, 2.25 / 1.1, 2.65 / 1.35; aerial)
     steps W    narrow steps along the SW wall from 0.5 m past the west corner, descending toward the SE (aerial)
-    ledge N    a short ledge on the NE wall 1.3-2.2 m from the north corner (aerial; weak)
+    ledge N    a ledge on the NE wall 0.5-1.75 m from the north corner (frame 022100's light strip; aerial)
     cover      the lid strip 0.28 m wide along the NW end, inside the water outline (aerial: bright double strip)
-    light      one on the SW wall 3.95 m from the NW end (p21 ray onto the wall plane)
+    light      one on the SW wall 8.15 m from the NW end (p21 ray onto the wall plane; apparent depth 0.37)
     drains     two on the deep floor (the aerial's bright dots: x 2.3, y 2.55 / 3.55)
-    deck lids  three round lids read in the aerial (0.6-1.0 m outside the long walls), two more from p21's rays at z 0
-Typical values (not measurable): water 0.12 m under the coping top, depths 2.4 m (NW) -> 1.0 m (SE), tread depths,
+    deck lids  three round lids read in the aerial (0.6-1.0 m outside the long walls), two more from p21's rays at z 0,
+               a small white one on the SE coping beside the spa (p21)
+Typical values (not measurable): water 0.14 m under the coping top, depths 2.4 m (NW) -> 1.0 m (SE), tread depths,
 spa bench 0.45 m / well 0.95 m under its water, coping 50 mm thick, tile band 0.24 m."""
 from __future__ import annotations
 
@@ -49,22 +53,27 @@ MATERIALS = {
 }
 
 # ---- sizes (metres) -------------------------------------------------------------------------------------------------
-WATER_DROP = 0.12            # water surface under the coping top
-SPA_DROP = 0.10
+WATER_DROP = 0.14            # water surface under the coping top
+SPA_DROP = 0.17              # spa water under the coping top (two tile rows under the dam top, p21)
+DAM_Z = -0.11                # top of the spa's mosaic dam: a step below the coping (p21, frame 154700), just above the water
 COPING_T, OVERHANG, GAP = 0.05, 0.02, 0.01
 TILE_BOT = -0.30             # bottom of the waterline tile band
 STONE = 0.61                 # coping stone length
 JOINT = 0.004
 DEPTH = ((0.0, 2.4), (0.30, 2.4), (0.62, 1.1), (1.0, 1.0))     # (fraction of the length from the NW end, water depth)
 DEEP_UNTIL = 0.46            # floor strips whose middle lies before this fraction take the darker plaster
-SPA, DAM = 2.45, 0.37
-SPA_BENCH_W, SPA_BENCH_D, SPA_WELL_D = 0.75, 0.45, 0.95
+SPA, DAM = 2.42, 0.34
+SPA_BENCH = dict(sw=0.47, nw=0.47, ne=0.47, se=0.47)      # bench widths; the foot well is what they leave
+SPA_BENCH_D, SPA_WELL_D = 0.45, 0.80
+SPA_STEP = (0.45, 0.22)      # east-corner step block: (side, depth under the spa water)
+SPA_FIT = (0.87, 0.46)       # spacing of the four floor fittings along x, y (aerial; p21 shows the NW pair)
 COVER_W = 0.28
-STEPS_S = ((1.5, 0.70, 0.25), (2.1, 1.10, 0.50), (2.5, 1.50, 0.75))    # (along the SW wall, out from it, depth)
+STEPS_S = ((1.3, 0.35, 0.20), (2.2, 1.10, 0.45), (2.6, 1.45, 0.70))    # (along the SW wall, out from it, depth)
 STEPS_W = dict(x0=0.5, run=0.53, out=0.40, n=4, rise=0.30)
-LEDGE_N = dict(x0=1.3, x1=2.2, out=0.35, depth=0.5)
-LIGHTS = ((3.95, 0.50),)     # on the SW wall: (x, depth under the coping top)
+LEDGE_N = dict(x0=0.5, x1=1.75, out=0.48, depth=0.5)
+LIGHTS = ((8.15, 0.42),)     # on the SW wall: (x, depth under the coping top)
 DRAINS = ((2.3, 2.55), (2.3, 3.55))
+DECK_FITTINGS = ((12.75, 4.98, 0.055),)      # small white round lid on the SE coping beside the spa (p21 ray): x, y, r
 SKIMMERS = ((10.72, -0.62), (2.29, 6.60), (4.34, 7.07), (7.43, -1.05), (8.69, 6.50))    # deck lids (local x, y)
 
 
@@ -82,6 +91,12 @@ def _frame():
     W = 0.5 * ((n - w) @ ey + (e - s) @ ey)
     o = c - ex * L / 2 - ey * W / 2
     return o, ex, ey, float(L), float(W)
+
+
+def spa_well(L, W):
+    """The spa's foot well (x0, y0, x1, y1) in the local frame."""
+    b = SPA_BENCH
+    return L - SPA + DAM + b['nw'], W - SPA + DAM + b['sw'], L - b['se'], W - b['ne']
 
 
 def _face(g, mat, pts, toward):
@@ -209,27 +224,36 @@ def build():
     _block(g, PLASTER, e['x0'], W - e['out'], e['x1'], W, wl - e['depth'], fz(0), faces='xXy')
 
     # ---- spa -------------------------------------------------------------------------------------------------------
-    # dam top (mosaic, flush with the coping): an L along the two pool sides
-    _top(g, MOSAIC, xs, ys, L, yi, 0.0)
-    _top(g, MOSAIC, xs, yi, xi, W, 0.0)
-    _vwall(g, MOSAIC, (xs, ys), (L, ys), TILE_BOT, 0.0, (0, -1, 0))       # outer faces, mosaic to under the water
-    _vwall(g, MOSAIC, (xs, ys), (xs, W), TILE_BOT, 0.0, (-1, 0, 0))
+    # dam top (mosaic, a step below the coping): an L along the two pool sides
+    zd = DAM_Z
+    _top(g, MOSAIC, xs, ys, L, yi, zd)
+    _top(g, MOSAIC, xs, yi, xi, W, zd)
+    _vwall(g, MOSAIC, (xs, ys), (L, ys), TILE_BOT, zd, (0, -1, 0))        # outer faces, mosaic to under the water
+    _vwall(g, MOSAIC, (xs, ys), (xs, W), TILE_BOT, zd, (-1, 0, 0))
+    _vwall(g, 'pool_gap', (L - OVERHANG, ys), (L - OVERHANG, yi), zd, -COPING_T, (-1, 0, 0))   # under the coping at
+    _vwall(g, 'pool_gap', (xs, W - OVERHANG), (xi, W - OVERHANG), zd, -COPING_T, (0, -1, 0))   # the dam's two ends
     sw = -SPA_DROP
     zb, zw = sw - SPA_BENCH_D, sw - SPA_WELL_D
     for a, b, nrm, dam in (((xi, yi), (L, yi), (0, 1, 0), True), ((xi, yi), (xi, W), (1, 0, 0), True),
                            ((xi, W), (L, W), (0, -1, 0), False), ((L, yi), (L, W), (-1, 0, 0), False)):
-        top = 0.0 if dam else zt
+        top = zd if dam else zt
         _vwall(g, MOSAIC if dam else 'pool_tile', a, b, TILE_BOT, top, nrm)
         if not dam:
             _vwall(g, 'pool_gap', a, b, zt, -COPING_T, nrm)
-        _vwall(g, PLASTER, a, b, zw, TILE_BOT, nrm)
-    yb = yi + SPA_BENCH_W
-    _top(g, PLASTER, xi, yi, L, yb, zb)                                   # bench along the SW dam
-    _vwall(g, PLASTER, (xi, yb), (L, yb), zw, zb, (0, 1, 0))
-    _top(g, PLASTER, xi, yb, L, W, zw)                                    # foot well
-    for fx, fy in ((0.30, 0.35), (0.62, 0.30), (0.50, 0.72)):          # three round floor fittings (aerial, p21)
-        _disc(g, 'pool_light', (xi + (L - xi) * fx, yb + (W - yb) * fy, zw + 0.004), (0, 0, 1), 0.11)
-    for fx in (0.3, 0.7):                                                 # jets in the bench's back wall
+        _vwall(g, PLASTER, a, b, zb, TILE_BOT, nrm)
+    wx0, wy0, wx1, wy1 = spa_well(L, W)                                   # the central foot well
+    g.poly(PLASTER, [(xi, yi, zb), (L, yi, zb), (L, W, zb), (xi, W, zb)],  # the bench ring round it
+           holes=[[(wx0, wy0, zb), (wx0, wy1, zb), (wx1, wy1, zb), (wx1, wy0, zb)]])
+    for a, b, nrm in (((wx0, wy0), (wx1, wy0), (0, 1, 0)), ((wx0, wy1), (wx1, wy1), (0, -1, 0)),
+                      ((wx0, wy0), (wx0, wy1), (1, 0, 0)), ((wx1, wy0), (wx1, wy1), (-1, 0, 0))):
+        _vwall(g, PLASTER, a, b, zw, zb, nrm)
+    _top(g, PLASTER, wx0, wy0, wx1, wy1, zw)
+    st = SPA_STEP                                                         # entry step block in the east corner
+    _block(g, PLASTER, L - st[0], W - st[0], L, W, sw - st[1], zb, faces='xy')
+    cx, cy, hx, hy = (wx0 + wx1) / 2, (wy0 + wy1) / 2, SPA_FIT[0] / 2, SPA_FIT[1] / 2
+    for dx, dy in ((-hx, -hy), (hx, -hy), (hx, hy), (-hx, hy)):                   # four round floor fittings (aerial, 022100)
+        _disc(g, 'pool_light', (cx + dx, cy + dy, zw + 0.004), (0, 0, 1), 0.10)
+    for fx in (0.3, 0.7):                                                 # jets in the SW bench's back wall
         _disc(g, 'pool_fitting', (xi + (L - xi) * fx, yi + 0.004, sw - 0.25), (0, 1, 0), 0.035, seg=8)
 
     # ---- fittings --------------------------------------------------------------------------------------------------
@@ -241,6 +265,8 @@ def build():
     for x, y in SKIMMERS:                                                 # round lids in the deck
         _disc(g, 'skimmer_lid', (x, y, 0.006), (0, 0, 1), 0.14)
         _disc(g, 'pool_gap', (x, y, 0.004), (0, 0, 1), 0.155)
+    for x, y, r in DECK_FITTINGS:
+        _disc(g, 'pool_fitting', (x, y, 0.005), (0, 0, 1), r, seg=10)
 
     # ---- water -----------------------------------------------------------------------------------------------------
     water = Geo()

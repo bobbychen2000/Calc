@@ -50,7 +50,6 @@ SURFACES = [
     ('site.planter_lawn', 'mulch'), ('site.planter_terrace', 'mulch'),
     ('site.lawn_synthetic', 'turf_synthetic'), ('site.lawn_front_upper', 'lawn'), ('site.lawn_front_lower', 'lawn'),
     ('site.lawn_side_north', 'lawn'), ('site.play_area', 'wood_chips'), ('site.garden_enclosure', 'crushed_stone'),
-    ('site.side_yard_shade', 'gravel_path'),
     ('site.bed_lounge', 'mulch'), ('site.bed_lawn_terrace', 'mulch'), ('site.bed_patio_tree', 'mulch'),
     ('site.bed_patio_nw', 'mulch'), ('site.bed_rear_courtyard', 'mulch'), ('site.bed_upper_terrace', 'mulch'),
     ('site.bed_lawn_south', 'mulch'), ('site.hedge_lawn_west', 'mulch'), ('site.bed_maple_round', 'mulch'),
@@ -62,35 +61,275 @@ SURFACES = [
     ('site.orchard', 'orchard_soil'), ('site.strip_garden_play', 'soil'),
     ('site.trees_north', 'leaf_litter'), ('site.trees_east', 'leaf_litter'), ('site.trees_south', 'leaf_litter'),
 ]
-HOLES = ['site.pool_coping', 'site.stairs_patio_path', 'site.stairs_path_lawn']
+# surfaces that are not survey elements: (material, aerial pixels, level), placed before the SURFACES entry `before`
+EXTRA_SURF = [
+    # the turf runs to the foot of the lawn walls (p18; the surveyed polygon stops ~0.4 m short of them)
+    ('turf_synthetic', [(1657, 1205), (2345, 1200), (2345, 1614), (2320, 1614), (2320, 1226), (1657, 1232)], -0.70,
+     'site.lawn_synthetic'),
+]
+GROW = 0.12         # every area is grown by this much before the partition: closes the slivers between neighbours
 
 # retaining walls: id -> (width m, top: number = level, or ('above', dz) = the higher ground beside it + dz)
 WALLS = {
     'site.wall_north': (0.55, ('above', 0.10)),
     'site.wall_terrace_lower': (0.36, 0.58),
     'site.wall_terrace_upper': (0.40, 1.50),
-    'site.wall_fireplace_east': (0.36, 0.50),
-    'site.wall_planter_chevron': (0.36, None),          # top = the planter's level + 0.10 (see build)
+    'site.wall_fireplace_east': (0.36, 0.60),
+    'site.wall_planter_chevron': (0.36, 0.62),          # frame 133400: the cap ~0.6 above the deck
     'site.wall_planter_mid': (0.36, ('above', 0.10)),
-    'site.wall_lawn_north': (0.40, ('above', 0.08)),
+    'site.wall_lawn_north': (0.40, 0.50),               # cap 0.45-0.5 (aerial ray into frame 144000), ~1.2 above the turf
     'site.wall_lawn_east': (0.85, ('above', 0.10)),
 }
+# walls that are not survey elements (aerial pixels): the raised planter west of the lawn steps (its south, west and
+# east walls level with the lawn wall, its north wall holds the hedge strip) and the return wall along the east side
+# of the lawn steps / the path's south end, which holds the orchard bank (cap seen in the aerial at u 1866-1880)
+PLANTER = (1657, 1142, 1800, 1214)                      # = site.planter_lawn's box
+EXTRA_WALLS = [
+    ('planter_lawn_swe', [(1800, 1142), (1800, 1214), (1657, 1214), (1657, 1142)], 0.36, 0.50),
+    ('planter_lawn_n', [(1657, 1142), (1800, 1142)], 0.36, ('above', 0.08)),
+    ('lawn_steps_return', [(1873, 1105), (1873, 1213)], 0.36, ('above', 0.08)),
+]
+LAWN_STEPS = dict(u=(1803, 1866), v_top=1154, v_bottom=1212, z_top=0.50, treads=6)   # 7 risers (frame 144000, p18)
+
+# level profiles along a centre line (aerial pixels, level at each vertex): no cross-fall, the level of the nearest
+# point of the line.  The gravel path: level beside the play area, up to the garden gate at its north end, down to the
+# top of the lawn steps at its south end.  The driveway: the motor court level, then the fall to the gate.
+PROFILES = {
+    'site.path_gravel': ([(1975, 315), (1880, 318), (1812, 365), (1797, 500), (1796, 880), (1822, 968), (1850, 1045),
+                          (1841, 1150)], [2.45, 2.30, 2.00, 1.80, 1.80, 1.37, 0.99, 0.50]),
+    'site.driveway': ([(150, 300), (150, 1000), (150, 1750), (150, 1875)], [-0.30, -0.30, -0.95, -1.05]),
+}
+WALL_R = 1.1        # each side of a wall line keeps its own level this far from the line (the level break)
+WALL_D = 0.45       # terrain vertices closer than this to a wall line read the ground this far out on their side
+
+
+# ---- the refined terrain grid -----------------------------------------------------------------------------------
+# plan.ground_z is a membrane between the surveyed areas: across a retaining wall it is a ramp that starts on the
+# lower area.  refine_dtm() turns it into the ground this zone meshes: (1) PROFILES, (2) a level BREAK on every wall
+# line (the ground keeps its own side's level right up to the wall), (3) the membrane solved again around them.
+# Everything in this file stands on gz().  plan._dtm() may call refine_dtm(xs, ys, Z) itself (then plan.ground_z is
+# the same ground for every zone: set plan._DTM['refined'] = True); it only uses plan.aerial_xy, never plan.ground_z.
+_G = {}
+
+
+def _bil(g, x, y):
+    xs, ys, Z = g
+    x = np.asarray(x, float)
+    y = np.asarray(y, float)
+    st = xs[1] - xs[0]
+    fx = np.clip((x - xs[0]) / st, 0, len(xs) - 1.001)
+    fy = np.clip((y - ys[0]) / st, 0, len(ys) - 1.001)
+    i, j = fy.astype(int), fx.astype(int)
+    ty, tx = fy - i, fx - j
+    return (Z[i, j] * (1 - tx) * (1 - ty) + Z[i, j + 1] * tx * (1 - ty) + Z[i + 1, j] * (1 - tx) * ty
+            + Z[i + 1, j + 1] * tx * ty)
+
+
+def _on(pts_px, zf, iters=2):
+    """Aerial pixels -> world xy where their rays meet the ground zf."""
+    pts = np.atleast_2d(np.asarray(pts_px, float))
+    z = np.zeros(len(pts))
+    for _ in range(iters):
+        xy = np.atleast_2d(plan.aerial_xy(pts, z))
+        z = np.atleast_1d(zf(xy[:, 0], xy[:, 1]))
+    return np.atleast_2d(plan.aerial_xy(pts, z))
+
+
+def _at(pts_px, z):
+    pts = np.atleast_2d(np.asarray(pts_px, float))
+    return np.atleast_2d(plan.aerial_xy(pts, np.broadcast_to(np.asarray(z, float), (len(pts),))))
+
+
+def _wall_specs(zf):
+    """Every wall as a world polyline (the surveyed line is the cap: placed at the cap's height)."""
+    out = []
+    items = [(eid, plan.site(eid)['polyline'], w, top) for eid, (w, top) in WALLS.items()] + EXTRA_WALLS
+    for name, px, w, top in items:
+        px = _dense(px)
+        if isinstance(top, tuple):
+            line = _on(px, zf)
+            for _ in range(2):
+                tops = _above(line, w, top[1], zf=zf)
+                line = _at(px, tops)
+        else:
+            line = _at(px, top)
+        out.append(dict(name=name, line=line, w=w, top=top))
+    return out
+
+
+def _profile(c, zs, x, y):
+    """Level of the nearest point of the polyline c (levels zs at its vertices)."""
+    P = np.stack([x, y], -1)
+    best = np.full(len(P), np.inf)
+    out = np.zeros(len(P))
+    for a, b, za, zb in zip(c[:-1], c[1:], zs[:-1], zs[1:]):
+        ab = b - a
+        t = np.clip(((P - a) @ ab) / (ab @ ab), 0, 1)
+        d2 = ((P - (a + t[:, None] * ab)) ** 2).sum(1)
+        m = d2 < best
+        best[m] = d2[m]
+        out[m] = (za + (zb - za) * t)[m]
+    return out
+
+
+def _membrane(Z, fixed):
+    """Laplace membrane over the free cells (natural boundary at the grid's border)."""
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.linalg import spsolve
+    H, W = Z.shape
+    free = ~fixed
+    n = int(free.sum())
+    if not n:
+        return Z
+    idx = -np.ones(Z.shape, int)
+    idx[free] = np.arange(n)
+    I, J = np.nonzero(free)
+    k = idx[I, J]
+    diag = np.zeros(n)
+    b = np.zeros(n)
+    rows, cols = [], []
+    for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        p, q = I + di, J + dj
+        ok = (p >= 0) & (p < H) & (q >= 0) & (q < W)
+        kk, p, q = k[ok], p[ok], q[ok]
+        diag[kk] += 1
+        pf = fixed[p, q]
+        b[kk[pf]] += Z[p[pf], q[pf]]
+        rows.append(kk[~pf])
+        cols.append(idx[p[~pf], q[~pf]])
+    rows, cols = np.concatenate(rows), np.concatenate(cols)
+    A = coo_matrix((np.r_[diag, -np.ones(len(rows))], (np.r_[np.arange(n), rows], np.r_[np.arange(n), cols])),
+                   shape=(n, n)).tocsc()
+    Z = Z.copy()
+    Z[free] = spsolve(A, b)
+    return Z
+
+
+def refine_dtm(xs, ys, Zb):
+    """The terrain grid of plan._dtm() -> the same grid with profiles and wall breaks (see above)."""
+    import shapely
+    from shapely import contains_xy
+    from shapely.geometry import LineString, Polygon
+    g0 = (xs, ys, Zb)
+    specs = _wall_specs(lambda x, y: _bil(g0, x, y))
+    _G['walls'] = specs
+    X, Y = np.meshgrid(xs, ys)
+    Z = Zb.copy()
+    fixed = np.zeros(Z.shape, bool)
+    for eid in plan.REGIONS:
+        if eid in plan.SITE and 'poly' in plan.SITE[eid]:
+            fixed |= contains_xy(Polygon(plan.aerial_ring(plan.SITE[eid]['poly'], plan.REGIONS[eid])).buffer(0), X, Y)
+    for eid, (cl, zs) in PROFILES.items():
+        zs = np.asarray(zs, float)
+        m = contains_xy(Polygon(plan.aerial_ring(plan.SITE[eid]['poly'], float(np.median(zs)))).buffer(0), X, Y)
+        Z[m] = _profile(_at(cl, zs), zs, X[m], Y[m])
+        fixed |= m
+    # wall breaks: side of the nearest wall line for every cell near one
+    st = xs[1] - xs[0]
+    dmin = np.full(Z.shape, np.inf)
+    side = np.zeros(Z.shape, np.int8)
+    for s in specs:
+        L = LineString(s['line'])
+        x0, y0, x1, y1 = L.bounds
+        mb = (X > x0 - 2.5) & (X < x1 + 2.5) & (Y > y0 - 2.5) & (Y < y1 + 2.5)
+        pts = shapely.points(X[mb], Y[mb])
+        d = shapely.distance(L, pts)
+        t = shapely.line_locate_point(L, pts)
+        qa = shapely.get_coordinates(shapely.line_interpolate_point(L, np.maximum(t - 0.05, 0)))
+        qb = shapely.get_coordinates(shapely.line_interpolate_point(L, np.minimum(t + 0.05, L.length)))
+        q = shapely.get_coordinates(shapely.line_interpolate_point(L, t))
+        tg = qb - qa
+        sg = np.sign(tg[:, 0] * (Y[mb] - q[:, 1]) - tg[:, 1] * (X[mb] - q[:, 0])).astype(np.int8)
+        de = d + 0.6 * ((t < 1e-6) | (t > L.length - 1e-6))      # beyond a wall's end: another wall's flank wins
+        upd = de < dmin[mb]
+        dm, sd = dmin[mb], side[mb]
+        dm[upd], sd[upd] = de[upd], sg[upd]
+        dmin[mb], side[mb] = dm, sd
+    side[dmin > WALL_R + 2 * st] = 0
+    todo = (dmin < WALL_R) & ~fixed
+    filled = fixed & ~todo
+    fixed2 = fixed.copy()
+    H, W = Z.shape
+    for _ in range(80):
+        if not todo.any():
+            break
+        acc = np.zeros(Z.shape)
+        cnt = np.zeros(Z.shape)
+        for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            src = np.zeros(Z.shape, bool)
+            val = np.zeros(Z.shape)
+            sds = np.zeros(Z.shape, np.int8)
+            a = (slice(max(di, 0), H + min(di, 0)), slice(max(dj, 0), W + min(dj, 0)))       # neighbour
+            c = (slice(max(-di, 0), H + min(-di, 0)), slice(max(-dj, 0), W + min(-dj, 0)))   # cell
+            src[c], val[c], sds[c] = filled[a], Z[a], side[a]
+            ok = todo & src & ((sds == side) | (sds == 0) | (side == 0))
+            acc[ok] += val[ok]
+            cnt[ok] += 1
+        new = cnt > 0
+        if not new.any():
+            break
+        Z[new] = acc[new] / cnt[new]
+        filled |= new
+        fixed2 |= new
+        todo &= ~new
+    return _membrane(Z, fixed2)
+
+
+def _grid():
+    if 'g' not in _G:
+        xs, ys, Zb = plan._dtm()
+        if plan._DTM.get('refined'):                     # plan applies refine_dtm itself
+            if 'walls' not in _G:
+                _G['walls'] = _wall_specs(plan.ground_z)
+            _G['g'] = (xs, ys, Zb)
+        else:
+            _G['g'] = (xs, ys, refine_dtm(xs, ys, Zb))
+        from shapely.geometry import LineString, MultiLineString
+        _G['wl'] = MultiLineString([LineString(s['line']) for s in _G['walls']])
+    return _G['g']
+
+
+def gz(x, y):
+    """The ground of this zone's meshes: the refined grid; next to a wall line, the level of that side."""
+    import shapely
+    g = _grid()
+    x = np.array(x, float)
+    y = np.array(y, float)
+    shp = x.shape
+    x, y = x.ravel().copy(), y.ravel().copy()
+    pts = shapely.points(x, y)
+    d = shapely.distance(_G['wl'], pts)
+    near = (d < WALL_D) & (d > 1e-6)
+    if near.any():
+        c = shapely.get_coordinates(shapely.shortest_line(_G['wl'], pts[near])).reshape(-1, 2, 2)
+        v = c[:, 1] - c[:, 0]
+        p = c[:, 0] + v / np.linalg.norm(v, axis=1)[:, None] * WALL_D
+        x[near], y[near] = p[:, 0], p[:, 1]
+    z = _bil(g, x, y).reshape(shp)
+    return z if z.ndim else float(z)
+
+
+def wall_footprints():
+    from shapely.geometry import LineString
+    from shapely.ops import unary_union
+    _grid()
+    return unary_union([LineString(s['line']).buffer(s['w'] / 2, cap_style='flat', join_style='bevel')
+                        for s in _G['walls']])
 
 
 # ---- helpers ------------------------------------------------------------------------------------------------
 def _ring(eid):
     """A site polygon as a world ring at its level (REGIONS; sloping / unlisted areas: on the terrain)."""
-    if eid in plan.REGIONS and eid not in plan.SLOPES:
+    if eid in plan.REGIONS and eid not in plan.SLOPES and eid not in PROFILES:
         return plan.aerial_ring(plan.site(eid)['poly'], plan.REGIONS[eid])
-    return plan.ground_ring(plan.site(eid)['poly'])
+    return _on(plan.site(eid)['poly'], gz)
 
 
 def _px(pts, z=None):
     """Aerial pixels -> world xy; on the terrain, or at height(s) z."""
-    pts = np.atleast_2d(np.asarray(pts, float))
     if z is None:
-        return plan.ground_ring(pts)
-    return np.atleast_2d(plan.aerial_xy(pts, np.broadcast_to(np.asarray(z, float), (len(pts),))))
+        return _on(pts, gz)
+    return _at(pts, z)
 
 
 def _tris(geo, mat, T):
@@ -115,7 +354,7 @@ def _surface(geo, mat, pg, zf=None):
     import shapely
     if pg.is_empty:
         return
-    zf = zf or plan.ground_z
+    zf = zf or gz
     x0, y0, x1, y1 = pg.bounds
     ox, oy = plan.EXTENT[0], plan.EXTENT[1]
     i0, i1 = int(np.floor((x0 - ox) / STEP)), int(np.ceil((x1 - ox) / STEP))
@@ -194,18 +433,21 @@ def _wall(geo, line, w, tops, piece=3.0, mat='fieldstone', cap='wall_cap', level
             ss = np.linspace(0, 1, 5)
             pts = p + (q - p) * ss[:, None]
             s = np.array([-(q - p)[1], (q - p)[0]]) / max(np.linalg.norm(q - p), 1e-9)
-            zb = min(float(plan.ground_z(*(pts + s * e).T).min()) for e in (-w / 2 - 0.1, w / 2 + 0.1)) - 0.15
+            zb = min(float(gz(*(pts + s * e).T).min()) for e in (-w / 2 - 0.1, w / 2 + 0.1)) - 0.15
+            zh = max(float(gz(*(pts + s * e).T).max()) for e in (-w / 2 - 0.1, w / 2 + 0.1)) + 0.06
+            z0, z1 = max(z0, zh), max(z1, zh)               # a wall always closes the gap its footprint leaves
             _hexa(geo, mat, p, q, w, zb, z0, z1, cap=cap, ext=w / 2 if (i in (0, n - 1)) else 0.0)
 
 
-def _above(line, w, dz, reach=0.9):
+def _above(line, w, dz, reach=0.9, zf=None):
     """Per-vertex wall tops: the higher ground beside the line (sampled `reach` m off both sides) + dz."""
     line = np.asarray(line, float)
+    zf = zf or gz
     tops = []
     for k, p in enumerate(line):
         d = line[min(k + 1, len(line) - 1)] - line[max(k - 1, 0)]
         s = np.array([-d[1], d[0]]) / max(np.linalg.norm(d), 1e-9)
-        tops.append(max(plan.ground_z(*(p + s * reach)), plan.ground_z(*(p - s * reach))) + dz)
+        tops.append(max(float(zf(*(p + s * reach))), float(zf(*(p - s * reach)))) + dz)
     return np.array(tops)
 
 
@@ -226,7 +468,8 @@ def _terrain():
     from shapely.ops import unary_union
     geo = Geo()
     ext = box(*plan.EXTENT)
-    holes = unary_union([Polygon(_ring(h)).buffer(0) for h in HOLES])
+    holes = unary_union([Polygon(_ring('site.pool_coping')).buffer(0)] + [Polygon(f['hole']) for f in _flights()]
+                        + [wall_footprints()])
     # the driveway's hidden end: carried on to the street band at the lot's south edge (a guess)
     drv = Polygon(_ring('site.driveway')).buffer(0)
     dr = np.asarray(drv.exterior.coords)
@@ -234,12 +477,20 @@ def _terrain():
     apron = Polygon([(south[:, 0].min(), south[:, 1].max()), (south[:, 0].max(), south[:, 1].max()),
                      (south[:, 0].max() + 0.5, plan.EXTENT[1]), (south[:, 0].min() - 2.0, plan.EXTENT[1])])
     taken = holes
-    polys = [(mat, Polygon(_ring(eid)).buffer(0)) for eid, mat in SURFACES]
+    polys = [(mat, Polygon(_ring(eid)).buffer(0).buffer(GROW, join_style='mitre')) for eid, mat in SURFACES]
     polys.insert(4, ('paver_drive', apron))
+    for mat, px, lvl, before in EXTRA_SURF:
+        k = [i for i, (eid, _) in enumerate(SURFACES) if eid == before][0] + 1       # + 1: the apron
+        polys.insert(k, (mat, Polygon(_at(px, lvl)).buffer(0)))
     for mat, pg in polys:
         pg = pg.intersection(ext).difference(taken)
         _surface(geo, mat, pg)
         taken = unary_union([taken, pg])
+    # under the house's roofs (walls, and the roofed open floors: covered patios, porches): flagstone, not mulch;
+    # the surveyed beds inside the eave line are already taken (the outline is the eave: placed at eave height)
+    pg = Polygon(_at(plan.site('site.house_eave_outline')['poly'], plan.EAVE_1)).buffer(0).difference(taken)
+    _surface(geo, 'bluestone', pg)
+    taken = unary_union([taken, pg])
     # the rest: mulch inside the aerial's footprint, far ground outside it
     img = Polygon(plan.aerial_ring([(0, 0), (2500, 0), (2500, 1875), (0, 1875)], 0.0)).buffer(0)
     rest = ext.difference(taken)
@@ -263,7 +514,7 @@ def _far(geo, apron):
     v = edge - c
     k = np.min(half / np.maximum(np.abs(v), 1e-9), axis=1)
     outer = c + v * k[:, None]
-    ze = plan.ground_z(edge[:, 0], edge[:, 1])
+    ze = gz(edge[:, 0], edge[:, 1])
     T = []
     n = len(edge) - 1                                   # the ring is closed (last = first)
     for i in range(n):
@@ -285,7 +536,7 @@ def _far(geo, apron):
              uv_u=(1, 0, 0), uv_o=(0, 0, zs))
     ax = np.asarray(apron.exterior.coords)
     ax0, ax1 = ax[ax[:, 1] < y0 + 0.01][:, 0].min(), ax[ax[:, 1] < y0 + 0.01][:, 0].max()
-    za, zb = plan.ground_z(ax0, y0), plan.ground_z(ax1, y0)
+    za, zb = gz(ax0, y0), gz(ax1, y0)
     geo.poly('paver_drive', [(ax0 - 1.0, ys1, zs + 0.01), (ax1 + 1.0, ys1, zs + 0.01), (ax1, y0, zb + 0.02),
                              (ax0, y0, za + 0.02)], uv_u=(1, 0, 0))
 
@@ -314,8 +565,10 @@ def _flight(geo, lo_a, lo_b, hi_a, hi_b, z_lo, z_hi, n_treads=None, landing=0.0,
     for i in range(nr):
         x0 = i * run
         x1 = L if i == nr - 1 else (i + 1) * run
-        geo.obox(mat, org, ex, ey, ez, (x0, w0, zb if i == 0 else (i - 1) * rise), (x1, w1, (i + 1) * rise),
-                 faces='xXyYZ')
+        top = (i + 1) * rise
+        if x1 - x0 < 1e-6:                                  # no landing: the top riser, its tread is the ground above
+            x1, top = L + 0.30, top - 0.01
+        geo.obox(mat, org, ex, ey, ez, (x0, w0, zb if i == 0 else (i - 1) * rise), (x1, w1, top), faces='xXyYZ')
     ct = 0.32
     for on, wy, sg in ((cheeks[0], w0, -1), (cheeks[1], w1, 1)):
         if not on:
@@ -346,61 +599,62 @@ def _flight(geo, lo_a, lo_b, hi_a, hi_b, z_lo, z_hi, n_treads=None, landing=0.0,
                          0.018, n=6, cap=False)
 
 
-def _steps():
-    geo = Geo()
+def _flights():
+    """The two flights: plan corners, levels, and the hole each leaves in the terrain."""
+    if 'fl' in _G:
+        return _G['fl']
+    out = []
     # patio stairs: 9 treads between 10 riser lines (aerial x), a landing, rising east; handrail on the north side
     e = plan.site('site.stairs_patio_path')
     rx = e['attrs']['risers_x']
-    ys = sorted({p[1] for p in e['poly']})
     yn, ysd = 667.0, 720.0
     z_lo = plan.REGIONS['site.patio_pool']
     x_top = max(p[0] for p in e['poly'])
-    top_mid = _px([(x_top + 6, (yn + ysd) / 2)])[0]
-    z_hi = float(plan.ground_z(*top_mid))
+    z_hi = float(gz(*_px([(x_top + 8, (yn + ysd) / 2)])[0]))
     lo = _px([(rx[0], yn), (rx[0], ysd)], z_lo)
     hi = _px([(x_top, yn), (x_top, ysd)], z_hi)
     land = float(np.linalg.norm(_px([(rx[-1], 690)], z_hi)[0] - _px([(x_top, 690)], z_hi)[0]))
-    _flight(geo, lo[0], lo[1], hi[0], hi[1], z_lo, z_hi, n_treads=len(rx) - 1, landing=land, rail='a')
-    # path steps down to the synthetic lawn (descending south = +v in the aerial)
-    e = plan.site('site.stairs_path_lawn')
-    P = np.asarray(e['poly'], float)
-    x0, x1, y0, y1 = P[:, 0].min(), P[:, 0].max(), P[:, 1].min(), P[:, 1].max()
-    z_lo = plan.REGIONS['site.lawn_synthetic']
-    z_hi = float(plan.ground_z(*_px([((x0 + x1) / 2, y0 - 8)])[0]))
-    lo = _px([(x0 + 2, y1), (x1, y1)], z_lo)
-    hi = _px([(x0 + 2, y0), (x1, y0)], z_hi)
-    _flight(geo, lo[0], lo[1], hi[0], hi[1], z_lo, z_hi, cheeks=(True, True))
-    info = dict(patio_stairs=dict(z_lo=plan.REGIONS['site.patio_pool'], z_hi=round(float(plan.ground_z(*top_mid)), 2)),
-                lawn_steps=dict(z_lo=z_lo, z_hi=round(z_hi, 2)))
+    out.append(dict(name='patio_stairs', lo=lo, hi=hi, z_lo=z_lo, z_hi=z_hi, n_treads=len(rx) - 1, landing=land,
+                    cheeks=(True, True), rail='a'))
+    # lawn steps: from the path's south end down to the turf at the lawn wall's face (descending south = +v), between
+    # the raised planter's east wall and the return wall; black handrail on the east side (p18)
+    L = LAWN_STEPS
+    z_lo, z_hi = plan.REGIONS['site.lawn_synthetic'], L['z_top']
+    lo = _px([(L['u'][0], L['v_bottom']), (L['u'][1], L['v_bottom'])], z_lo)
+    hi = _px([(L['u'][0], L['v_top']), (L['u'][1], L['v_top'])], z_hi)
+    out.append(dict(name='lawn_steps', lo=lo, hi=hi, z_lo=z_lo, z_hi=z_hi, n_treads=L['treads'], landing=0.0,
+                    cheeks=(False, False), rail='b'))
+    for f in out:
+        f['hole'] = [f['lo'][0], f['lo'][1], f['hi'][1], f['hi'][0]]
+    _G['fl'] = out
+    return out
+
+
+def _steps():
+    geo = Geo()
+    info = {}
+    for f in _flights():
+        _flight(geo, f['lo'][0], f['lo'][1], f['hi'][0], f['hi'][1], f['z_lo'], f['z_hi'], n_treads=f['n_treads'],
+                landing=f['landing'], cheeks=f['cheeks'], rail=f['rail'])
+        info[f['name']] = dict(z_lo=round(f['z_lo'], 2), z_hi=round(f['z_hi'], 2), risers=f['n_treads'] + 1)
     return geo, info
 
 
 # ---- walls ----------------------------------------------------------------------------------------------------
 def _walls():
     geo = Geo()
-    planter = plan.REGIONS.get('site.planter_terrace', 0.8)
-    for eid, (w, top) in WALLS.items():
-        px = _dense(plan.site(eid)['polyline'])
-        if top is None:
-            top = planter + 0.12
+    _grid()
+    for sp in _G['walls']:
+        line, w, top = sp['line'], sp['w'], sp['top']
         if isinstance(top, tuple):
-            line = _px(px)
-            for _ in range(2):                           # the surveyed line is the cap: place it at its height
-                tops = _above(line, w, top[1])
-                line = _px(px, tops)
-            if eid == 'site.wall_lawn_east':             # at least a kerb above the turf
+            tops = _above(line, w, top[1])
+            if sp['name'] == 'site.wall_lawn_east':      # at least a kerb above the turf
                 tops = np.maximum(tops, plan.REGIONS['site.lawn_synthetic'] + 0.35)
+            if sp['name'] == 'lawn_steps_return':        # never below the lawn wall it returns from
+                tops = np.maximum(tops, WALLS['site.wall_lawn_north'][1])
         else:
-            line, tops = _px(px, top), top
+            tops = top
         _wall(geo, line, w, tops)
-    # raised planter by the lawn steps: walls on its south and west sides (its north / east run into the hedge
-    # strip and the steps' cheek), tops level with the lawn wall
-    soil = plan.REGIONS['site.planter_lawn']
-    top = soil + 0.12
-    P = np.asarray(plan.site('site.planter_lawn')['poly'], float)
-    x0, x1, y0, y1 = P[:, 0].min(), P[:, 0].max(), P[:, 1].min(), P[:, 1].max()
-    ring = _px([(x1, y1), (x0, y1), (x0, y0), (x1, y0)], top)
-    _wall(geo, ring, 0.36, top)
     return geo
 
 
@@ -409,7 +663,7 @@ def _slab(geo, mat, c, d, lx, ly, h, sink=0.03):
     """A slab centred on plan point c, long axis along d, standing h above the ground."""
     c, d = np.asarray(c, float), np.asarray(d, float)
     d = d / np.linalg.norm(d)
-    z = float(plan.ground_z(*c))
+    z = float(gz(*c))
     geo.obox(mat, (c[0], c[1], z), (d[0], d[1], 0), (-d[1], d[0], 0), (0, 0, 1), (-lx / 2, -ly / 2, -sink),
              (lx / 2, ly / 2, h), faces='xXyYZ')
 
@@ -435,11 +689,11 @@ def _details():
     line = _px(plan.site('site.edging_lawn_south')['polyline'])
     _slab(geo, 'trim_white', line.mean(0), line[1] - line[0], np.linalg.norm(line[1] - line[0]), 0.06, 0.14)
     # dark edging along the gravel path
-    ring = plan.ground_ring(plan.site('site.path_gravel')['poly'])
+    ring = _px(plan.site('site.path_gravel')['poly'])
     for a, b in zip(ring, np.roll(ring, -1, 0)):
         L = np.linalg.norm(b - a)
         if L > 0.5:
-            za, zb = plan.ground_z(*a), plan.ground_z(*b)
+            za, zb = gz(*a), gz(*b)
             geo.prism('edging_dark', [(-0.02, -0.03), (0.02, -0.03), (0.02, 0.05), (-0.02, 0.05)],
                       (a[0], a[1], za), (b[0], b[1], zb), cap=False)
     # grates and lids (flush, 1.5 cm proud so they read)
@@ -452,7 +706,7 @@ def _details():
     _slab(geo, 'grate_metal', c, (1, 1), 0.45, 0.30, 0.012)
     e = plan.site('site.lid_green')
     c = _px([e['point']])[0]
-    z = float(plan.ground_z(*c))
+    z = float(gz(*c))
     geo.cylinder('lid_green', (c[0], c[1], z - 0.02), (c[0], c[1], z + 0.03), 0.45, n=16)
     x0, y0, x1, y1 = plan.site('site.box_nw')['attrs']['bbox_px']
     c = _px([((x0 + x1) / 2, (y0 + y1) / 2)])[0]

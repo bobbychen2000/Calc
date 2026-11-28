@@ -65,17 +65,18 @@ UMBRELLA = (4.98, 1.46)
 AR_O, AR_ANG = (2.2, -11.2), 45.0
 AR_L, AR_D = 5.7, 5.0                 # rafter field: along the pool side x rafter length
 AR_COL_X, AR_COL_Y = (0.55, 5.15), (-1.0, -4.4)
-AR_BEAM_Z, AR_TOP = 2.35, 2.85        # under the beams (survey est. column 2.4), top of the rafters
+AR_BEAM_Z, AR_TOP = 2.35, 3.00        # under the beams (survey est. column 2.4); rafter top: p26 / frame 134300 (0.65 m of timber)
 # play structure (aligned with the lot axes; heights above the chips: typical swing-set values checked on p19)
 PL_TOWER = (18.25, 0.45)              # centre of the roofed tower
 PL_TOWER_S = 2.0                      # its deck, square
 PL_DECK, PL_RAIL, PL_EAVE, PL_RIDGE, PL_BEAM = 1.30, 2.10, 2.30, 3.35, 2.15     # ridge / fort top: p28
 PL_BRIDGE_X = 18.55                   # bridge centre line, runs south to the fort
-PL_FORT = [(17.55, -3.35), (19.55, -3.35), (19.55, -4.75), (18.95, -5.45), (17.95, -5.45), (17.55, -4.55)]
+# fort deck: a ~1.5 m hexagon turned 45 deg (frame 140500 corners at deck height); edge 0-1 = the bridge's, 3-4 = the slide's
+PL_FORT = [(18.24, -3.60), (19.06, -4.17), (19.13, -4.75), (18.45, -5.46), (17.75, -4.75), (17.70, -4.11)]
 PL_FORT_TOP = 2.65
 PL_AFRAME_X, PL_BEAM_Y = 13.55, 0.30
 # vegetable garden: fence base (aerial, on the ground), beds (aerial boxes at the bed tops)
-GARDEN = [(16.76, 7.24), (16.78, 4.67), (24.60, 4.61), (24.51, 12.23), (16.71, 12.32), (16.75, 8.08)]
+GARDEN = [(16.76, 7.24), (16.78, 4.67), (24.22, 4.61), (24.18, 12.23), (16.71, 12.32), (16.75, 8.08)]
 GARDEN_Z = 2.50                       # the enclosure's gravel (plan.REGIONS 2.55), fence base
 BEDS = [((17.60, 8.98), (19.49, 10.85)), ((21.04, 9.00), (22.92, 10.98)), ((17.58, 5.49), (19.44, 7.39)),
         ((21.07, 5.54), (22.88, 7.49))]
@@ -159,33 +160,34 @@ def fireplace():
     L = Fr((o[0], o[1], 0.0), FP_ANG)
     hw, dp = 1.35, 1.25                                            # firebox body: half width, depth
     # hearth / seat wall along the front (site.seat_wall_fireplace: 1.9 m left, 2.3 m right of the shaft axis)
-    L.box(geo, STONE, (-2.0, -0.50, -0.3), (2.35, 0.0, 0.42), 'xXyY')
-    L.box(geo, CAP, (-2.03, -0.54, 0.42), (2.38, 0.02, 0.48))
-    # body with the arched firebox opening
-    ow, oz0, oz1, rise = 0.50, 0.48, 1.00, 0.28
+    hz = 0.52                                                      # hearth top (p22)
+    L.box(geo, STONE, (-2.0, -0.50, -0.3), (2.35, 0.0, hz - 0.06), 'xXyY')
+    L.box(geo, CAP, (-2.03, -0.54, hz - 0.06), (2.38, 0.02, hz))
+    # body, vertical to 2.45 (p22 proportions on the 4.10 m top and the 2.7 m body width), arched firebox 1.24 wide
+    zb = 2.45
+    ow, oz0, oz1, rise = 0.62, hz, 0.98, 0.32
     arch = [(-ow, 0, oz0), (ow, 0, oz0), (ow, 0, oz1)] + [
         (ow * math.cos(t), 0, oz1 + rise * math.sin(t)) for t in np.linspace(0, math.pi, 9)[1:-1]] + [(-ow, 0, oz1)]
-    L.poly(geo, STONE, [(-hw, 0, 0.48), (hw, 0, 0.48), (hw, 0, 2.2), (-hw, 0, 2.2)], holes=[arch])
-    L.box(geo, STONE, (-hw, 0, -0.3), (hw, dp, 2.2), 'xXY')
+    L.poly(geo, STONE, [(-hw, 0, hz), (hw, 0, hz), (hw, 0, zb), (-hw, 0, zb)], holes=[arch])
+    L.box(geo, STONE, (-hw, 0, -0.3), (hw, dp, zb), 'xXY')
     fd = 0.55                                                      # firebox depth
-    L.box(geo, 'yard_firebrick', (-ow, 0.0, oz0), (ow, fd, oz1 + rise), '')   # (faces drawn inward below)
     L.poly(geo, 'yard_firebrick', [(-ow, fd, oz0), (ow, fd, oz0), (ow, fd, oz1 + rise), (-ow, fd, oz1 + rise)])
     L.poly(geo, 'yard_firebrick', [(-ow, 0, oz0), (-ow, fd, oz0), (-ow, fd, oz1 + rise), (-ow, 0, oz1 + rise)])
     L.poly(geo, 'yard_firebrick', [(ow, fd, oz0), (ow, 0, oz0), (ow, 0, oz1 + rise), (ow, fd, oz1 + rise)])
     L.poly(geo, 'yard_soot', [(-ow, 0, oz1 + rise), (-ow, fd, oz1 + rise), (ow, fd, oz1 + rise), (ow, 0, oz1 + rise)][::-1])
     L.poly(geo, CAP, [(-ow, 0, oz0 + 0.001), (ow, 0, oz0 + 0.001), (ow, fd, oz0 + 0.001), (-ow, fd, oz0 + 0.001)])
-    # mantel shelf on two dark corbels, bluestone panel above it
-    L.box(geo, CAP, (-hw - 0.06, -0.28, 1.42), (hw + 0.06, 0.0, 1.50))
-    for x in (-0.95, 0.81):
-        L.box(geo, TIMBER, (x, -0.22, 1.12), (x + 0.14, 0.0, 1.42))
-    L.box(geo, CAP, (-0.40, -0.012, 1.72), (0.40, 0.0, 2.75), 'xXyzZ')
-    # shoulders, shaft, crown, flue box, flat cap
-    sw, sd = 0.66, 0.98
-    L.frustum(geo, STONE, (-hw, 0, hw, dp), 2.2, (-sw, 0, sw, sd), 3.05)
-    L.box(geo, STONE, (-sw, 0, 3.05), (sw, sd, FP_TOP - 0.40), 'xXyY')
-    L.box(geo, CAP, (-sw - 0.08, -0.07, FP_TOP - 0.40), (sw + 0.08, sd + 0.07, FP_TOP - 0.30))
-    L.box(geo, STONE, (-0.50, 0.10, FP_TOP - 0.30), (0.50, sd - 0.10, FP_TOP - 0.08), 'xXyY')
-    L.box(geo, CAP, (-sw - 0.12, -0.11, FP_TOP - 0.08), (sw + 0.12, sd + 0.11, FP_TOP))
+    # mantel shelf (2.3 m, narrower than the body) on two dark corbels, bluestone panel above it
+    L.box(geo, CAP, (-1.16, -0.28, 1.72), (1.16, 0.0, 1.80))
+    for x in (-0.88, 0.88):
+        L.box(geo, TIMBER, (x - 0.07, -0.22, 1.42), (x + 0.07, 0.0, 1.72))
+    L.box(geo, CAP, (-0.42, -0.012, 2.00), (0.42, 0.0, 3.15), 'xXyzZ')
+    # shoulders straight into the crown (no separate shaft), crown slab, flue box, flat cap
+    sw, sd, zs = 0.80, 0.98, 3.65
+    L.frustum(geo, STONE, (-hw, 0, hw, dp), zb, (-sw, 0, sw, sd), zs)
+    L.box(geo, CAP, (-sw - 0.04, -0.05, zs), (sw + 0.04, sd + 0.05, zs + 0.08))
+    L.box(geo, STONE, (-0.68, 0.08, zs + 0.08), (0.68, sd - 0.08, FP_TOP - 0.08), 'xXyY')
+    L.box(geo, 'yard_soot', (-0.22, 0.075, zs + 0.13), (0.22, 0.08, FP_TOP - 0.13), 'y')      # flue opening (front)
+    L.box(geo, CAP, (-0.78, -0.11, FP_TOP - 0.08), (0.78, sd + 0.11, FP_TOP))
     return Part('yard_fireplace', geo, group='yard')
 
 
@@ -200,13 +202,14 @@ def side_table(geo, at, deg, s=0.62, h=0.45, mat=TEAK):
             L.box(geo, mat, (sx * (s / 2 - 0.06), sy * (s / 2 - 0.06), 0), (sx * s / 2, sy * s / 2, h - 0.05), 'xXyY')
 
 
-def umbrella(geo, at, pole=2.10):                 # p21: its top 2.05 m above the deck
-    """Closed market umbrella on a square base block (cantilever type folded: modelled as a straight pole)."""
+def umbrella(geo, at, top=3.15):                  # frame 134300: top ~3.15 m, canopy ~0.6 m across, hem ~0.85 m (p22)
+    """Closed cantilever umbrella: square base block, offset mast with a short arm, the draped canopy hanging from it."""
     L = Fr(at, 45.0)
-    L.box(geo, CAP, (-0.42, -0.42, 0), (0.42, 0.42, 0.12))
-    geo.cylinder(TIMBER, L.pt(0, 0, 0.12), L.pt(0, 0, pole), 0.03, n=8)
-    F._revolve(geo, 'yard_umbrella', [(0.035, 0.38 * pole), (0.19, 0.45 * pole), (0.15, 0.70 * pole), (0.06, pole - 0.1), (0.0, pole)], n=10,
-               centre=tuple(L.pt(0, 0, 0)))
+    L.box(geo, CAP, (-0.64, -0.42, 0), (0.20, 0.42, 0.14))
+    geo.cylinder(TIMBER, L.pt(-0.22, 0, 0.14), L.pt(-0.22, 0, top), 0.04, n=8)
+    bar(geo, TIMBER, L.pt(-0.22, 0, top - 0.04), L.pt(0.0, 0, top - 0.04), 0.05, 0.06)
+    F._revolve(geo, 'yard_umbrella', [(0.03, 0.85), (0.28, 0.90), (0.31, 1.30), (0.25, 1.95), (0.19, 2.55),
+                                      (0.10, top - 0.12), (0.0, top - 0.02)], n=10, centre=tuple(L.pt(0, 0, 0)))
 
 
 def lounge():
@@ -218,7 +221,7 @@ def lounge():
     F.teak_coffee_table(geo, LOUNGE['coffee'], 45.0, length=1.45, width=1.20, height=0.36)
     side_table(geo, LOUNGE['side_wood'], 45.0)
     side_table(geo, LOUNGE['side_dark'], 45.0, mat='furn_black')
-    umbrella(geo, UMBRELLA)
+    umbrella(geo, (UMBRELLA[0] + 0.11, UMBRELLA[1] + 0.11))   # canopy axis; the mast stands on the base's centre
     # square planters at the hearth wall's ends (rear.planters_fireplace)
     for p in ((4.35, 6.95), (8.35, 3.85)):
         Fr(p, FP_ANG).box(geo, 'yard_pot_grey', (-0.28, -0.28, 0), (0.28, 0.28, 0.55), 'xXyYZ')
@@ -245,17 +248,22 @@ def stool(geo, L, x, y, back=True):
 def arbor():
     geo = Geo()
     L = Fr((AR_O[0], AR_O[1], 0.0), AR_ANG)
-    ped = 1.0
-    cols = []
+    # square white columns from the deck to the beams (p26 / p20); only the pool-side NE one stands on the bar's
+    # stone pier (rear.arbor_columns)
+    cw = 0.18
     for cx in AR_COL_X:
         for cy in AR_COL_Y:
             p = L.pt(cx, cy)
             z0 = min(gz(p[0], p[1]), 0.45)
-            cols.append((cx, cy, z0))
-            L.box(geo, STONE, (cx - 0.27, cy - 0.27, z0 - 0.2), (cx + 0.27, cy + 0.27, ped), 'xXyY')
-            L.box(geo, CAP, (cx - 0.30, cy - 0.30, ped), (cx + 0.30, cy + 0.30, ped + 0.06))
-            L.box(geo, WHITE, (cx - 0.15, cy - 0.15, ped + 0.06), (cx + 0.15, cy + 0.15, AR_BEAM_Z - 0.10), 'xXyY')
-            L.box(geo, WHITE, (cx - 0.19, cy - 0.19, AR_BEAM_Z - 0.10), (cx + 0.19, cy + 0.19, AR_BEAM_Z))
+            if cx == AR_COL_X[1] and cy == AR_COL_Y[0]:
+                L.box(geo, STONE, (cx - 0.30, cy - 0.30, z0 - 0.2), (cx + 0.30, cy + 0.30, 1.02), 'xXyY')
+                L.box(geo, CAP, (cx - 0.33, cy - 0.33, 1.02), (cx + 0.33, cy + 0.33, 1.08))
+                z0 = 1.08
+                L.box(geo, WHITE, (cx - cw - 0.03, cy - cw - 0.03, z0), (cx + cw + 0.03, cy + cw + 0.03, z0 + 0.10), 'xXyYZ')
+            else:
+                L.box(geo, WHITE, (cx - cw - 0.03, cy - cw - 0.03, z0 - 0.2), (cx + cw + 0.03, cy + cw + 0.03, z0 + 0.26), 'xXyYZ')
+            L.box(geo, WHITE, (cx - cw, cy - cw, z0), (cx + cw, cy + cw, AR_BEAM_Z - 0.10), 'xXyY')
+            L.box(geo, WHITE, (cx - cw - 0.04, cy - cw - 0.04, AR_BEAM_Z - 0.10), (cx + cw + 0.04, cy + cw + 0.04, AR_BEAM_Z))
     # double beams over each column row, rafters across with tails, three purlins on top
     for cy in AR_COL_Y:
         for dy in (-0.13, 0.13):
@@ -267,22 +275,24 @@ def arbor():
     for cy in (-0.6, -AR_D / 2, -AR_D + 0.6):
         L.box(geo, TIMBER, (-0.1, cy - 0.03, AR_TOP - 0.04), (AR_L + 0.1, cy + 0.03, AR_TOP))
     # the vine mat (climbing roses) over the rafters and its old trunk at the north pool-side column
+    # a mound 0.6-1.0 m high (p20 / p26), overhanging the rafter ends: low rounded domes (placeholder for planting)
     rng = np.random.default_rng(3)
-    ring = [(0.5, -0.5), (AR_L - 0.2, -0.2), (AR_L + 0.3, -AR_D + 0.2), (AR_L - 0.6, -AR_D - 0.2), (0.3, -AR_D + 0.3)]
-    geo.extrude('yard_vine', [L.pt(*p)[:2] for p in ring], AR_TOP, AR_TOP + 0.28, cap_bottom=False)
-    for _ in range(14):
-        x, y, r = rng.uniform(0.6, AR_L - 0.5), rng.uniform(-AR_D + 0.5, -0.6), rng.uniform(0.5, 0.9)
-        h = rng.uniform(0.15, 0.40)
-        pts = [L.pt(x + r * math.cos(t), y + r * math.sin(t))[:2] for t in np.linspace(0, 2 * math.pi, 7)[:-1]]
-        geo.extrude('yard_vine', pts, AR_TOP + 0.2, AR_TOP + 0.28 + h, cap_bottom=False)
+    domes = [(AR_L * 0.5, -AR_D * 0.5, 2.6, 0.95), (1.3, -1.3, 1.7, 0.75), (AR_L - 1.2, -1.2, 1.8, 0.85),
+             (1.4, -AR_D + 1.3, 1.7, 0.70), (AR_L - 1.3, -AR_D + 1.3, 1.8, 0.80), (AR_L * 0.5, -0.6, 1.5, 0.70),
+             (AR_L * 0.5, -AR_D + 0.7, 1.5, 0.65), (0.5, -AR_D * 0.5, 1.4, 0.65), (AR_L - 0.4, -AR_D * 0.5, 1.4, 0.70)]
+    for x, y, r, h in domes:
+        r *= rng.uniform(0.92, 1.08)
+        F._revolve(geo, 'yard_vine', [(r, -0.12), (r * 0.97, h * 0.22), (r * 0.80, h * 0.62), (r * 0.48, h * 0.90), (0.0, h)],
+                   n=9, centre=tuple(L.pt(x, y, AR_TOP - 0.08)))
     cx, cy = AR_COL_X[1], AR_COL_Y[0]
-    geo.cylinder('bark', L.pt(cx - 0.28, cy + 0.05, 0), L.pt(cx - 0.20, cy, AR_TOP), 0.06, n=6, cap=False)
-    # bar counter on the pool side between the columns, 6 stools outside it
-    bx0, bx1, by0, by1 = 1.05, 4.65, -1.55, -0.95
+    geo.cylinder('bark', L.pt(cx + 0.42, cy + 0.10, 0), L.pt(cx + 0.24, cy, AR_TOP), 0.06, n=6, cap=False)
+    # bar counter on the pool side from the NE column's pier over ~70 % of the bay (p26), 5 stools outside it: four
+    # with backs, the backless one at the SW end (rear.bar_stools)
+    bx0, bx1, by0, by1 = 1.90, AR_COL_X[1] - 0.30, -1.55, -0.95
     L.box(geo, STONE, (bx0, by0, 0), (bx1, by1, 1.02), 'xXyY')
     L.box(geo, CAP, (bx0 - 0.05, by0 - 0.05, 1.02), (bx1 + 0.05, by1 + 0.25, 1.08))
-    for i in range(6):
-        stool(geo, L, bx0 + 0.32 + i * (bx1 - bx0 - 0.64) / 5, -0.42, back=i != 2)
+    for i, x in enumerate((1.80, 2.32, 3.05, 3.78, 4.50)):
+        stool(geo, L, x, -0.42, back=i != 0)
     # BBQ counter along the back row with the grill, an L leg up the NE end to the bar
     gx0, gx1, gy0, gy1 = 0.95, 4.85, -4.75, -4.05
     L.box(geo, STONE, (gx0, gy0, 0), (gx1, gy1, 0.90), 'xXyY')
@@ -296,7 +306,7 @@ def arbor():
     # lanterns on the columns (p20: on the faces toward the kitchen; p26: toward the pool)
     for cx, cy, sgn in ((AR_COL_X[0], AR_COL_Y[0], 1), (AR_COL_X[1], AR_COL_Y[0], 1), (AR_COL_X[0], AR_COL_Y[1], -1),
                         (AR_COL_X[1], AR_COL_Y[1], -1)):
-        X.lantern(geo, L.pt(cx, cy + sgn * 0.15, 1.75), L.ex * sgn, L.ey * sgn, h=0.40, w=0.17, d=0.115)
+        X.lantern(geo, L.pt(cx, cy + sgn * 0.18, 1.80), L.ex * sgn, L.ey * sgn, h=0.40, w=0.17, d=0.115)
     return Part('yard_arbor', geo, group='yard')
 
 
@@ -343,6 +353,26 @@ def bench(geo, at, deg, length=1.8, back=False):
         L.box(geo, TEAK, (-length / 2, 0.16, 0.55), (length / 2, 0.20, 0.88))
 
 
+def adirondack(geo, at, deg):
+    """Adirondack chair, front toward local -y: sloped seat, tall raked slat back, wide flat arms."""
+    L = Fr(at, deg)
+    w = 0.56
+    for i in range(5):                                                       # seat slats, falling to the back
+        y = -0.36 + i * 0.13
+        z = 0.36 - (i + 0.5) * 0.028
+        L.box(geo, TEAK, (-w / 2, y, z - 0.02), (w / 2, y + 0.11, z))
+    e0, e1 = np.array([0.0, 0.26, 0.20]), np.array([0.0, 0.52, 0.98])        # the back's centre line
+    for i in range(5):
+        x = (i - 2) * 0.115
+        top = e1 - np.array([0, 0, 0.05 * abs(i - 2)])
+        bar(geo, TEAK, L.pt(x, e0[1], e0[2]), L.pt(x, top[1], top[2]), 0.10, 0.02)
+    for sx in (-1, 1):
+        x = sx * (w / 2 + 0.04)
+        L.box(geo, TEAK, (x - 0.07, -0.42, 0.54), (x + 0.07, 0.36, 0.565))             # arm
+        L.box(geo, TEAK, (x - 0.02, -0.40, 0), (x + 0.02, -0.30, 0.54), 'xXyY')       # front leg
+        bar(geo, TEAK, L.pt(sx * w / 2, -0.36, 0.34), L.pt(sx * w / 2, 0.50, 0.02), 0.025, 0.10)   # side rail / back leg
+
+
 def pot(geo, at, s=0.45, h=0.55, top=None):
     t = top or s
     L = Fr(at, 0.0)
@@ -371,8 +401,8 @@ def porch_furniture():
     F.lounge_chair(geo, (-11.45, -2.35, zp), 90.0, seed=1)
     F.lounge_chair(geo, (-11.45, -0.45, zp), 90.0, seed=2)
     side_table(geo, (-11.55, -1.40, zp), 0.0, s=0.5, h=0.42, mat='furn_black')
-    for y in (-4.05, 0.0):
-        pot(geo, (-9.25, y, zp), 0.36, 0.75, top=0.46)
+    for y in (-4.15, -0.25):                               # between the BG corner posts (house: y -4.7 / 0.3), clear of their bases
+        pot(geo, (-9.20, y, zp), 0.36, 0.75, top=0.46)
     # PB patio: plank table with two benches (p21 / p28 rays), tall planter at its NE column
     t = (-5.5, -13.0)
     plank_table(geo, (t[0], t[1], zp), 0.0, 2.2, 0.95)
@@ -487,7 +517,7 @@ def play():
     bar(geo, W, (sx_, sy_, gs + 1.2), (cx - h, cy + h, g + PL_DECK + 0.3), 0.05, 0.05)
     # ---- bridge south to the fort, with slat rails; three swings hang from its west beam
     bx = PL_BRIDGE_X
-    y0, y1 = cy - h, PL_FORT[0][1]
+    y0, y1 = cy - h, -3.90
     geo.box(W, (bx - 0.5, y1, g + PL_DECK - 0.08), (bx + 0.5, y0, g + PL_DECK))
     for sx in (-1, 1):
         slat_wall(geo, (bx + sx * 0.5, y0), (bx + sx * 0.5, y1), z0, z1)
@@ -505,19 +535,18 @@ def play():
         geo.box(W, (p[0] - 0.05, p[1] - 0.05, gf - 0.1), (p[0] + 0.05, p[1] + 0.05, gf + PL_FORT_TOP + 0.08))
         q = fort[(i + 1) % len(fort)]
         if i == 0:                                         # north side: the bridge's opening
-            slat_wall(geo, p, (bx - 0.5, p[1]), gf + PL_DECK, gf + PL_FORT_TOP)
-            slat_wall(geo, (bx + 0.5, p[1]), q, gf + PL_DECK, gf + PL_FORT_TOP)
-        elif i == 4:                                       # SW side: the long slide's opening (low rail only)
+            continue
+        elif i == 3:                                       # SW side: the long slide's opening (low rail only)
             slat_wall(geo, p, q, gf + PL_FORT_TOP - 0.6, gf + PL_FORT_TOP)
         else:
             slat_wall(geo, p, q, gf + PL_DECK, gf + PL_FORT_TOP)
     for z in (0.45, 0.85):
-        bar(geo, SLIDE, (fort[0][0], fort[0][1], gf + z), (fort[5][0], fort[5][1], gf + z), 0.035, 0.035)
+        bar(geo, SLIDE, (fort[1][0], fort[1][1], gf + z), (fort[2][0], fort[2][1], gf + z), 0.035, 0.035)
     # ---- slides: short wavy one east off the tower, long one SW off the fort; climbing ramp east of the tower
-    e = (cx + h + 2.2, cy + 1.0)
-    slide(geo, (cx + h, cy + 0.65, g + PL_DECK), (e[0], e[1], gz(*e)), wave=0.10)
-    m = (fort[4] + fort[5]) / 2
-    e = (m[0] - 2.1, m[1] - 1.75)
+    e = (cx + h + 1.85, cy + 0.88)                          # frame 140500: its end at (21.6, 1.25)
+    slide(geo, (cx + h, cy + 0.65, g + PL_DECK), (e[0], e[1], gz(*e)), wave=0.16)
+    m = fort[3] * 0.2 + fort[4] * 0.8
+    e = (15.25, -6.75)                                      # frame 140500: the run-out ends at (14.95, -7.0)
     slide(geo, (m[0], m[1], gf + PL_DECK), (e[0], e[1], gz(*e)), w=0.55, wave=0.08, n=10)
     rx0, rx1, ry = cx + h, cx + h + 2.3, cy - 0.72
     for dy in (-0.3, 0.3):
@@ -568,28 +597,35 @@ def fences():
     ring = plan.site_ring('site.play_area')
     for a, b in zip(ring, np.roll(ring, -1, 0)):
         bar(geo, PICKET, (a[0], a[1], gz(*a) + 0.06), (b[0], b[1], gz(*b) + 0.06), 0.10, 0.16)
-    # horizontal-board fence on the upper terrace behind the fireplace (hidden under the trees: p23's line, a guess)
+    # board fence on the upper terrace behind the fireplace: p22 shows weathered VERTICAL boards with gaps to the
+    # right (SE) of the fireplace only, so only that stretch of the survey's guessed line is built (hidden in the aerial)
     a, b = plan.ground_ring(plan.site('site.fence_upper_terrace')['polyline'])
     L = float(np.linalg.norm(b - a))
     d = (b - a) / L
+    a, b = a + d * 3.6, b - d * 0.5                        # (its SE end stops short of the gravel path)
+    L = float(np.linalg.norm(b - a))
     deg = math.degrees(math.atan2(d[1], d[0]))
     nb = int(math.ceil(L / 2.4))
     for k in range(nb + 1):
-        p = a + d * L * k / nb
-        Fr((p[0], p[1], gz(*p)), deg).box(geo, 'fence_wood', (-0.05, -0.05, -0.2), (0.05, 0.05, 1.55))
+        q = a + d * L * k / nb
+        Fr((q[0], q[1], gz(*q)), deg).box(geo, 'fence_wood', (-0.05, -0.05, -0.2), (0.05, 0.05, 1.50))
     for k in range(nb):
         p, q = a + d * L * k / nb, a + d * L * (k + 1) / nb
         zp, zq = gz(*p), gz(*q)
-        for i in range(8):
-            z = 0.12 + i * 0.17
-            bar(geo, 'fence_wood', (p[0], p[1], zp + z + 0.07), (q[0], q[1], zq + z + 0.07), 0.025, 0.14)
+        for r in (0.30, 1.20):
+            bar(geo, 'fence_wood', (p[0], p[1], zp + r), (q[0], q[1], zq + r), 0.04, 0.09)
+        n = int(np.linalg.norm(q - p) / 0.16)
+        for i in range(n):
+            t = (i + 0.5) / n
+            c = p + (q - p) * t
+            Fr((c[0], c[1], zp + (zq - zp) * t), deg).box(geo, 'fence_wood', (-0.07, 0.02, 0.05), (0.07, 0.04, 1.50), 'xXyYZ')
     return Part('yard_fences', geo, group='yard')
 
 
 # =====================================================================================================================
 # small things
 # =====================================================================================================================
-def path_light(geo, p, h=0.45):
+def path_light(geo, p, h=0.30):                 # frame 134300: cap ~0.3 m above the bed
     z = gz(*p)
     geo.cylinder('light_fixture', (p[0], p[1], z), (p[0], p[1], z + h), 0.012, n=6, cap=False)
     F._revolve(geo, 'light_fixture', [(0.0, h + 0.08), (0.09, h), (0.085, h - 0.015), (0.0, h - 0.01)], n=8,
@@ -617,13 +653,14 @@ def small():
     z = gz(x, y)
     geo.cylinder('light_fixture', (x, y, z), (x, y, z + 0.45), 0.012, n=6, cap=False)
     F._revolve(geo, 'light_glow', [(0.0, 0.45), (0.07, 0.48), (0.10, 0.55), (0.07, 0.62), (0.0, 0.65)], n=10, centre=(x, y, z))
-    for p in ((3.2, 7.3), (0.6, 7.6), (8.9, 3.4), (9.6, 0.6), (-1.8, 9.0)):
+    # frame 134300: one in the bed at the lounge's north corner; p22: one in the bed behind the umbrella's base
+    for p in ((-0.42, 8.03), (5.8, 1.9)):
         path_light(geo, p)
-    # teak bench at the synthetic lawn's west end (rear.lawn_benches, p18)
-    ring = plan.site_ring('site.lawn_synthetic')
-    wx = ring[:, 0].min()
-    ym = ring[ring[:, 0] < wx + 1.5][:, 1].mean()
-    bench(geo, (wx + 0.9, ym, gz(wx + 0.9, ym)), 90.0, length=1.6, back=True)
+    # frame 158300: a backless teak bench on the synthetic lawn's south edge near its SW corner, facing the lawn,
+    # and two Adirondack chairs at the corner
+    bench(geo, (8.5, -30.95, gz(8.5, -30.95)), 171.0, length=1.5)
+    for (x, y), deg in (((5.90, -30.96), 172.0), ((5.18, -30.94), 190.0)):
+        adirondack(geo, (x, y, gz(x, y)), deg)
     return Part('yard_small', geo, group='yard')
 
 
