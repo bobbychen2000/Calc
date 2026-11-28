@@ -27,7 +27,7 @@ export const WATER = {
   absorb: [0.30, 0.040, 0.012],          // 1 / m (pure water: red 0.3 - 0.4, green 0.04 - 0.06, blue 0.01 - 0.02)
   scatter: [0.006, 0.020, 0.026],        // albedo of the light scattered back by the water itself
   scatterK: 0.10,                        // 1 / m
-  plaster: [0.83, 0.865, 0.86],          // linear albedo of the white plaster
+  plaster: [0.46, 0.56, 0.60],            // linear albedo of the grey-blue pebble plaster (p21: the water 65 157 173)
   ripple: 1.0,                           // global ripple amplitude
   // slope layers: tile size (m), drift (m / s) x, z, rms slope per axis
   layers: [[2.9, 0.045, 0.022, 0.0060], [1.73, -0.030, 0.036, 0.0048], [8.3, 0.060, -0.018, 0.0055]],

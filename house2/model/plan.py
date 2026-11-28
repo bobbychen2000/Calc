@@ -69,7 +69,8 @@ REGIONS = {
     'site.planter_terrace': 0.50,       # lower planter behind the chevron wall (frame 133400: cap ~0.6 above the deck)
     'site.hedge_path': 1.65,            # hedge strip between the planter wall and the gravel path (points 1.6-1.8)
     'site.play_area': 2.00,             # n 6097: 1.8 (west) .. 2.2 (east) (SLOPES)
-    'site.strip_garden_play': 2.35,
+    # site.strip_garden_play has no level of its own: it is the bank between the garden (2.55, carried to its fence
+    # line and a margin: ground.PADS), the path (1.9-2.5) and the play area (1.85-2.2) -- the membrane between them
     'site.garden_enclosure': 2.55,      # n 608
     # the gravel path: level with the play area's timber edge (no cross-fall).  Its ends are not level: zone 'ground'
     # (ground.PROFILES) takes it up to ~2.45 at the garden gate and down to 0.50 at the top of the lawn steps

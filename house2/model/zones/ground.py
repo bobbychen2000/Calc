@@ -9,8 +9,8 @@ belong to zone 'pool') and the two flights of steps, which are built as solids h
 
 On the terrain: retaining walls (dry-stacked fieldstone with light caps; tops from the levels either side), the patio
 stairs (9 treads, black handrail on the north side) and the path steps down to the synthetic lawn, the raised
-planter's walls, stepping stones, the side slab, the timber step, edging, grates / lids, and the far ground + a street
-band beyond the lot (the street itself is hidden by the tree screen: its place is a guess).
+planter's walls, stepping stones, the side slab, the timber step, edging, grates / lids, and the far ground with the
+street ~50 m south of the lot and the lane that leads to it (STREET: read from p28).
 """
 from __future__ import annotations
 
@@ -87,18 +87,36 @@ PLANTER = (1657, 1142, 1800, 1214)                      # = site.planter_lawn's 
 EXTRA_WALLS = [
     ('planter_lawn_swe', [(1800, 1142), (1800, 1214), (1657, 1214), (1657, 1142)], 0.36, 0.50),
     ('planter_lawn_n', [(1657, 1142), (1800, 1142)], 0.36, ('above', 0.08)),
-    ('lawn_steps_return', [(1873, 1105), (1873, 1213)], 0.36, ('above', 0.08)),
+    ('lawn_steps_return', [(1873, 1105), (1873, 1205)], 0.36, 0.55),      # level with the lawn wall (frame 144000)
 ]
+# The street.  It is NOT along the lot's south edge: directly behind the south tree screen stands the tile-roofed
+# neighbour (its outbuilding's roof is the aerial's bottom-left "shake roof", x -35..-23, y -35..-45; the house about
+# x -20..16, y -41..-67), and the high oblique photo p28 shows the public street beyond that house: asphalt with gate
+# pillars and a parked car, its near edge ~50 m south of the lot (p28 rays on z = -1: (1, -105) .. (-29, -95); +-6 m
+# for +-2 m of unknown ground height).  The driveway leaves the aerial at its bottom-left heading south (the gate is
+# under the trees), so it must reach that street by a lane along the neighbour's west side, hidden by a row of tall
+# trees in p28: modelled as a straight lane due south from the driveway's hidden end.  line: two points of the street's
+# centre line; w, lane_w: widths; pavers: how far the driveway's pavers run beyond the lot edge (to the gate line).
+STREET = dict(line=((0.9, -102.1), (-34.7, -89.9)), w=6.5, lane_w=4.5, pavers=3.0, reach=260.0)
 LAWN_STEPS = dict(u=(1803, 1866), v_top=1154, v_bottom=1212, z_top=0.50, treads=6)   # 7 risers (frame 144000, p18)
 
 # level profiles along a centre line (aerial pixels, level at each vertex): no cross-fall, the level of the nearest
-# point of the line.  The gravel path: level beside the play area, up to the garden gate at its north end, down to the
+# point of the line.  The gravel path: level beside the play area, up to the garden's level at its gate, down to the
 # top of the lawn steps at its south end.  The driveway: the motor court level, then the fall to the gate.
 PROFILES = {
     'site.path_gravel': ([(1975, 315), (1880, 318), (1812, 365), (1797, 500), (1796, 880), (1822, 968), (1850, 1045),
-                          (1841, 1150)], [2.45, 2.30, 2.00, 1.80, 1.80, 1.37, 0.99, 0.50]),
+                          (1841, 1150)], [2.55, 2.35, 2.00, 1.80, 1.80, 1.37, 0.99, 0.50]),
     'site.driveway': ([(150, 300), (150, 1000), (150, 1750), (150, 1875)], [-0.30, -0.30, -0.95, -1.05]),
 }
+# level pads: a surveyed area whose level is carried `pad` m beyond its outline (the vegetable garden: its fence stands
+# on the outline, so the fence line and a margin outside it are on the garden's level), and whose surrounding
+# tree-belt ground -- a guessed plane, ~1 m too low beside the measured garden -- is released within `relax` m (also
+# round `also`, aerial-pixel boxes of other areas: the path's bend at the gate) and becomes a bank falling away from it
+PADS = {
+    'site.garden_enclosure': dict(pad=0.40, relax=5.0, also=[('site.path_gravel', (1770, 280, 1990, 420))]),
+}
+KERB = dict(w=0.10, up=0.08, down=0.25)     # the timber retaining edge round a pad (not across a path): top above
+                                            # the pad, foot `down` under the lowest ground within 0.6 m outside it
 WALL_R = 1.1        # each side of a wall line keeps its own level this far from the line (the level break)
 WALL_D = 0.45       # terrain vertices closer than this to a wall line read the ground this far out on their side
 
@@ -214,6 +232,7 @@ def refine_dtm(xs, ys, Zb):
     specs = _wall_specs(lambda x, y: _bil(g0, x, y))
     _G['walls'] = specs
     X, Y = np.meshgrid(xs, ys)
+    st = xs[1] - xs[0]
     Z = Zb.copy()
     fixed = np.zeros(Z.shape, bool)
     for eid in plan.REGIONS:
@@ -224,6 +243,37 @@ def refine_dtm(xs, ys, Zb):
         m = contains_xy(Polygon(plan.aerial_ring(plan.SITE[eid]['poly'], float(np.median(zs)))).buffer(0), X, Y)
         Z[m] = _profile(_at(cl, zs), zs, X[m], Y[m])
         fixed |= m
+    if PADS:
+        belt = np.zeros(Z.shape, bool)
+        other = fixed & False
+        for eid in plan.REGIONS:
+            if eid in plan.SITE and 'poly' in plan.SITE[eid]:
+                m = contains_xy(Polygon(plan.aerial_ring(plan.SITE[eid]['poly'], plan.REGIONS[eid])).buffer(0), X, Y)
+                if eid.startswith('site.trees_'):
+                    belt |= m
+                else:
+                    other |= m
+        for eid in PROFILES:
+            other |= contains_xy(Polygon(plan.aerial_ring(plan.SITE[eid]['poly'],
+                                                          float(np.median(PROFILES[eid][1])))).buffer(0), X, Y)
+        for eid, pd in PADS.items():
+            pg = pad_polygon(eid, more=1.5 * st)
+            m = contains_xy(pg, X, Y) & ~contains_xy(_pad_keep(eid), X, Y)
+            Z[m] = plan.REGIONS[eid]
+            fixed |= m
+            other |= m
+            src = [pg]
+            for oid, (u0, v0, u1, v1) in pd.get('also', ()):
+                lv = plan.REGIONS[eid]
+                src.append(Polygon(plan.aerial_ring(plan.SITE[oid]['poly'], lv)).buffer(0).intersection(
+                    Polygon(plan.aerial_ring([(u0, v0), (u1, v0), (u1, v1), (u0, v1)], lv))))
+            src = shapely.union_all(src)
+            x0, y0, x1, y1 = src.bounds
+            r = pd['relax']
+            mb = belt & ~other & (X > x0 - r) & (X < x1 + r) & (Y > y0 - r) & (Y < y1 + r)
+            near = np.zeros(Z.shape, bool)
+            near[mb] = shapely.distance(src, shapely.points(X[mb], Y[mb])) < r
+            fixed &= ~near
     # wall breaks: side of the nearest wall line for every cell near one
     st = xs[1] - xs[0]
     dmin = np.full(Z.shape, np.inf)
@@ -273,6 +323,22 @@ def refine_dtm(xs, ys, Zb):
         fixed2 |= new
         todo &= ~new
     return _membrane(Z, fixed2)
+
+
+def pad_polygon(eid, more=0.0):
+    """A PADS area with its level margin (plan polygon).  The terrain grid is levelled `more` further out than the
+    meshed pad, so the pad's outline vertices read the level and not half-way down to the neighbour."""
+    from shapely.geometry import Polygon
+    return Polygon(plan.aerial_ring(plan.SITE[eid]['poly'], plan.REGIONS[eid])).buffer(PADS[eid]['pad'] + more,
+                                                                                       join_style='mitre')
+
+
+def _pad_keep(eid):
+    """Where a pad's margin gives way: the profiled paths that arrive at it (the path keeps its own profile)."""
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    return unary_union([Polygon(plan.aerial_ring(plan.SITE[k]['poly'], plan.REGIONS[eid])).buffer(0)
+                        for k in PROFILES])
 
 
 def _grid():
@@ -445,20 +511,23 @@ def _wall(geo, line, w, tops, piece=3.0, mat='fieldstone', cap='wall_cap', level
     ~`piece` m; level=True steps the top (each piece level at its higher end, the way a dry-stacked wall climbs)."""
     line = np.asarray(line, float)
     tops = np.broadcast_to(np.asarray(tops, float), (len(line),))
-    if True:
-        for p, q, k, t0, t1, end in _wall_pieces(line, piece):
-            if np.linalg.norm(q - p) < 1e-6:
-                continue
-            z0, z1 = tops[k] + (tops[k + 1] - tops[k]) * t0, tops[k] + (tops[k + 1] - tops[k]) * t1
-            if level:
-                z0 = z1 = max(z0, z1)
-            ss = np.linspace(0, 1, 5)
-            pts = p + (q - p) * ss[:, None]
-            s = np.array([-(q - p)[1], (q - p)[0]]) / max(np.linalg.norm(q - p), 1e-9)
-            zb = min(float(gz(*(pts + s * e).T).min()) for e in (-w / 2 - 0.1, w / 2 + 0.1)) - 0.15
-            zh = max(float(gz(*(pts + s * e).T).max()) for e in (-w / 2 - 0.1, w / 2 + 0.1)) + 0.06
-            z0, z1 = max(z0, zh), max(z1, zh)               # a wall always closes the gap its footprint leaves
-            _hexa(geo, mat, p, q, w, zb, z0, z1, cap=cap, ext=w / 2 if end else 0.0)
+    for p, q, k, t0, t1, end in _wall_pieces(line, piece):
+        if np.linalg.norm(q - p) < 1e-6:
+            continue
+        z0, z1 = tops[k] + (tops[k + 1] - tops[k]) * t0, tops[k] + (tops[k + 1] - tops[k]) * t1
+        if level:
+            z0 = z1 = max(z0, z1)
+        ss = np.linspace(0, 1, 5)
+        pts = p + (q - p) * ss[:, None]
+        s = np.array([-(q - p)[1], (q - p)[0]]) / max(np.linalg.norm(q - p), 1e-9)
+        if end:                                         # the end pieces run on by half a width
+            dd = (q - p) / max(np.linalg.norm(q - p), 1e-9) * (w / 2 + 0.1)
+            pts = np.vstack([p - dd, pts, q + dd])
+        offs = (-w / 2 - 0.35, -w / 2 - 0.1, 0.0, w / 2 + 0.1, w / 2 + 0.35)
+        zb = min(float(gz(*(pts + s * e).T).min()) for e in offs) - 0.15
+        zh = max(float(gz(*(pts + s * e).T).max()) for e in offs[1:4]) + 0.06
+        z0, z1 = max(z0, zh), max(z1, zh)               # a wall always closes the gap its footprint leaves
+        _hexa(geo, mat, p, q, w, zb, z0, z1, cap=cap, ext=w / 2 if end else 0.0)
 
 
 def _above(line, w, dz, reach=0.9, zf=None):
@@ -492,7 +561,7 @@ def _terrain():
     ext = box(*plan.EXTENT)
     holes = unary_union([Polygon(_ring('site.pool_coping')).buffer(0)] + [Polygon(f['hole']) for f in _flights()]
                         + [wall_footprints()])
-    # the driveway's hidden end: carried on to the street band at the lot's south edge (a guess)
+    # the driveway's hidden end: carried on to the lot's south edge (the lane beyond it: _far)
     drv = Polygon(_ring('site.driveway')).buffer(0)
     dr = np.asarray(drv.exterior.coords)
     south = dr[dr[:, 1] < dr[:, 1].min() + 1.5]
@@ -504,6 +573,10 @@ def _terrain():
     for mat, px, lvl, before in EXTRA_SURF:
         k = [i for i, (eid, _) in enumerate(SURFACES) if eid == before][0] + 1       # + 1: the apron
         polys.insert(k, (mat, Polygon(_at(px, lvl)).buffer(0)))
+    for eid in PADS:                                     # a pad's margin takes its area's material
+        k = [i for i, (mat, pg) in enumerate(polys) if mat == dict(SURFACES)[eid]
+             and pg.contains(pad_polygon(eid).buffer(-PADS[eid]['pad'] - 0.5))][0]
+        polys.insert(k, (dict(SURFACES)[eid], pad_polygon(eid)))
     for mat, pg in polys:
         pg = pg.intersection(ext).difference(taken)
         _surface(geo, mat, pg)
@@ -522,7 +595,7 @@ def _terrain():
 
 
 def _far(geo, apron):
-    """Far ground to the horizon + a street band along the south edge."""
+    """Far ground to the horizon, the street and the lane to it."""
     x0, y0, x1, y1 = plan.EXTENT
     zm = -0.4
     edge = []
@@ -551,31 +624,73 @@ def _far(geo, apron):
                    ((X1, Y0), (X1 + F, Y1))):
         geo.poly('ground_far', [(lo[0], lo[1], zm), (hi[0], lo[1], zm), (hi[0], hi[1], zm), (lo[0], hi[1], zm)],
                  uv_u=(1, 0, 0), uv_o=(0, 0, zm))
-    # street band (asphalt) just beyond the south tree screen, 6.5 m wide, a few cm above the far ground
-    ys0, ys1 = y0 - 8.5, y0 - 2.0
+    # the street and the lane to the gate (see STREET)
     zs = zm + 0.04
-    geo.poly('asphalt', [(X0 - 200, ys0, zs), (X1 + 200, ys0, zs), (X1 + 200, ys1, zs), (X0 - 200, ys1, zs)],
-             uv_u=(1, 0, 0), uv_o=(0, 0, zs))
+    P0, P1 = np.array(STREET['line'][0], float), np.array(STREET['line'][1], float)
+    u = (P1 - P0) / np.linalg.norm(P1 - P0)
+    nrm = np.array([-u[1], u[0]]) * STREET['w'] / 2
     ax = np.asarray(apron.exterior.coords)
     ax0, ax1 = ax[ax[:, 1] < y0 + 0.01][:, 0].min(), ax[ax[:, 1] < y0 + 0.01][:, 0].max()
-    za, zb = gz(ax0, y0), gz(ax1, y0)
-    geo.poly('paver_drive', [(ax0 - 1.0, ys1, zs + 0.01), (ax1 + 1.0, ys1, zs + 0.01), (ax1, y0, zb + 0.02),
-                             (ax0, y0, za + 0.02)], uv_u=(1, 0, 0))
+    xl = (ax0 + ax1) / 2                                  # the lane: due south from the driveway's hidden end
+    J = P0 + u * (xl - P0[0]) / u[0]                      # where it meets the street's centre line
+    A, B = J - u * STREET['reach'], J + u * STREET['reach']
+    geo.poly('asphalt', [(*(A - nrm), zs), (*(B - nrm), zs), (*(B + nrm), zs), (*(A + nrm), zs)], uv_u=(u[0], u[1], 0),
+             uv_o=(0, 0, zs))
+
+    def far_z(x, y):                                      # the 40 m ring's surface (radial from the centre)
+        v = np.array([x, y]) - c
+        k_in = np.min(np.array([(x1 - x0) / 2, (y1 - y0) / 2]) / np.maximum(np.abs(v), 1e-9))
+        k_out = np.min(half / np.maximum(np.abs(v), 1e-9))
+        if k_out <= 1:
+            return zm
+        e = c + v * k_in
+        t = (1 - k_in) / (k_out - k_in)
+        return float(gz(e[0], e[1])) * (1 - t) + zm * t
+    # pavers from the lot's edge to the gate line, then the asphalt lane (5 strips across, 2 m pieces, on the ring)
+    hw = STREET['lane_w'] / 2
+    yj = J[1] + STREET['w'] / 2 * 0.9
+    ys_ = np.r_[np.arange(y0, yj, -2.0), yj]
+    xs_ = np.linspace(-1, 1, 6)
+    T = {'paver_drive': [], 'asphalt': []}
+    for ya, yb in zip(ys_[:-1], ys_[1:]):
+        ta, tb = min(1.0, (y0 - ya) / 6.0), min(1.0, (y0 - yb) / 6.0)       # the apron's width -> the lane's
+        mat = 'paver_drive' if ya > y0 - STREET['pavers'] + 1e-6 else 'asphalt'
+        for sa, sb in zip(xs_[:-1], xs_[1:]):
+            def pt(sv, yv, t):
+                xa = (ax0 + (xl - hw - ax0) * t) if sv < 0 else (ax1 + (xl + hw - ax1) * t)
+                xv = xl + (xa - xl) * abs(sv)
+                return (xv, yv, max(far_z(xv, yv), zs if yv < J[1] + STREET['w'] else -9) + 0.03)
+            q = [pt(sa, ya, ta), pt(sb, ya, ta), pt(sb, yb, tb), pt(sa, yb, tb)]
+            T[mat] += [[q[0], q[1], q[2]], [q[0], q[2], q[3]]]
+    for mat, t in T.items():
+        _tris(geo, mat, np.array(t))
 
 
 # ---- steps ----------------------------------------------------------------------------------------------------
-def _flight(geo, lo_a, lo_b, hi_a, hi_b, z_lo, z_hi, n_treads=None, landing=0.0, cheeks=(True, True),
-            rail=None, mat='bluestone'):
-    """A straight flight between the bottom edge (lo_a, lo_b) at z_lo and the top edge (hi_a, hi_b) at z_hi (plan
-    points; a / b are the two sides).  n risers = n_treads + 1; `landing`: length of the level top part (m)."""
+def _flight_frame(lo_a, lo_b, hi_a, hi_b, sides='mean', widen=(0.0, 0.0)):
+    """The rectangle of a flight: origin o on the bottom edge, run direction d (square to the bottom edge), s across,
+    the sides wa / wb (a / b) along s, run L.  The bottom and top edges are surveyed at different heights, and the
+    aerial's parallax (0.2-0.4 m per metre of height out here) shifts them sideways against each other: the flight
+    is NOT the skewed quad through the four points.  sides: 'mean' of the two edges' extents, or 'hi' / 'lo' (the
+    edge whose height the side lines were read at); widen: extra width on the a / b side (into a flanking wall)."""
     lo_a, lo_b, hi_a, hi_b = (np.asarray(p, float) for p in (lo_a, lo_b, hi_a, hi_b))
     o = (lo_a + lo_b) / 2
-    top = (hi_a + hi_b) / 2
-    d = top - o
-    L = np.linalg.norm(d)
-    d /= L
-    s = np.array([-d[1], d[0]])
-    wa, wb = (lo_a - o) @ s, (lo_b - o) @ s
+    s = (lo_b - lo_a) / np.linalg.norm(lo_b - lo_a)
+    d = np.array([s[1], -s[0]])
+    if ((hi_a + hi_b) / 2 - o) @ d < 0:                  # keep (d, s, up) right-handed: the boxes face outward
+        d, s = -d, -s
+    L = float(((hi_a + hi_b) / 2 - o) @ d)
+    la, lb, ha, hb = ((q - o) @ s for q in (lo_a, lo_b, hi_a, hi_b))
+    wa, wb = dict(mean=((la + ha) / 2, (lb + hb) / 2), hi=(ha, hb), lo=(la, lb))[sides]
+    sg = 1.0 if wb > wa else -1.0
+    return o, d, s, wa - sg * widen[0], wb + sg * widen[1], L
+
+
+def _flight(geo, lo_a, lo_b, hi_a, hi_b, z_lo, z_hi, n_treads=None, landing=0.0, cheeks=(True, True),
+            rail=None, mat='bluestone', sides='mean', widen=(0.0, 0.0)):
+    """A straight flight between the bottom edge (lo_a, lo_b) at z_lo and the top edge (hi_a, hi_b) at z_hi (plan
+    points; a / b are the two sides).  n risers = n_treads + 1; `landing`: length of the level top part (m)."""
+    o, d, s, wa, wb, L = _flight_frame(lo_a, lo_b, hi_a, hi_b, sides, widen)
     w0, w1 = min(wa, wb), max(wa, wb)
     H = z_hi - z_lo
     nr = (n_treads + 1) if n_treads else max(2, int(round(H / RISE)))
@@ -590,7 +705,7 @@ def _flight(geo, lo_a, lo_b, hi_a, hi_b, z_lo, z_hi, n_treads=None, landing=0.0,
         top = (i + 1) * rise
         if x1 - x0 < 1e-6:                                  # no landing: the top riser, its tread is the ground above
             x1, top = L + 0.30, top - 0.01
-        geo.obox(mat, org, ex, ey, ez, (x0, w0, zb if i == 0 else (i - 1) * rise), (x1, w1, top), faces='xXyYZ')
+        geo.obox(mat, org, ex, ey, ez, (x0, w0, zb), (x1, w1, top), faces='xXyYZ')      # solid to below the ground
     ct = 0.32
     for on, wy, sg in ((cheeks[0], w0, -1), (cheeks[1], w1, 1)):
         if not on:
@@ -637,7 +752,7 @@ def _flights():
     hi = _px([(x_top, yn), (x_top, ysd)], z_hi)
     land = float(np.linalg.norm(_px([(rx[-1], 690)], z_hi)[0] - _px([(x_top, 690)], z_hi)[0]))
     out.append(dict(name='patio_stairs', lo=lo, hi=hi, z_lo=z_lo, z_hi=z_hi, n_treads=len(rx) - 1, landing=land,
-                    cheeks=(True, True), rail='a'))
+                    cheeks=(True, True), rail='a', sides='mean', widen=(0.0, 0.0)))
     # lawn steps: from the path's south end down to the turf at the lawn wall's face (descending south = +v), between
     # the raised planter's east wall and the return wall; black handrail on the east side (p18)
     L = LAWN_STEPS
@@ -645,15 +760,10 @@ def _flights():
     lo = _px([(L['u'][0], L['v_bottom']), (L['u'][1], L['v_bottom'])], z_lo)
     hi = _px([(L['u'][0], L['v_top']), (L['u'][1], L['v_top'])], z_hi)
     out.append(dict(name='lawn_steps', lo=lo, hi=hi, z_lo=z_lo, z_hi=z_hi, n_treads=L['treads'], landing=0.0,
-                    cheeks=(False, False), rail='b'))
+                    cheeks=(False, False), rail='b', sides='hi', widen=(0.0, 0.16)))
     for f in out:
-        # the hole = the rectangle _flight() builds (lo / hi are placed at different heights: not quite a rectangle)
-        o, top = (f['lo'][0] + f['lo'][1]) / 2, (f['hi'][0] + f['hi'][1]) / 2
-        d = top - o
-        L = np.linalg.norm(d)
-        d = d / L
-        s = np.array([-d[1], d[0]])
-        wa, wb = (f['lo'][0] - o) @ s, (f['lo'][1] - o) @ s
+        # the hole = the rectangle _flight() builds
+        o, d, s, wa, wb, L = _flight_frame(f['lo'][0], f['lo'][1], f['hi'][0], f['hi'][1], f['sides'], f['widen'])
         f['hole'] = [o + s * wa, o + s * wb, o + d * L + s * wb, o + d * L + s * wa]
     _G['fl'] = out
     return out
@@ -664,7 +774,7 @@ def _steps():
     info = {}
     for f in _flights():
         _flight(geo, f['lo'][0], f['lo'][1], f['hi'][0], f['hi'][1], f['z_lo'], f['z_hi'], n_treads=f['n_treads'],
-                landing=f['landing'], cheeks=f['cheeks'], rail=f['rail'])
+                landing=f['landing'], cheeks=f['cheeks'], rail=f['rail'], sides=f['sides'], widen=f['widen'])
         info[f['name']] = dict(z_lo=round(f['z_lo'], 2), z_hi=round(f['z_hi'], 2), risers=f['n_treads'] + 1)
     return geo, info
 
@@ -698,6 +808,7 @@ def _slab(geo, mat, c, d, lx, ly, h, sink=0.03):
 
 
 def _details():
+    import shapely.geometry
     geo = Geo()
     # stepping stones in the side-yard mulch (11, ~0.5 x 0.7 m), across the run
     line = _px(plan.site('site.stepping_stones_side')['polyline'])
@@ -722,9 +833,39 @@ def _details():
     for a, b in zip(ring, np.roll(ring, -1, 0)):
         L = np.linalg.norm(b - a)
         if L > 0.5:
-            za, zb = gz(*a), gz(*b)
-            geo.prism('edging_dark', [(-0.02, -0.03), (0.02, -0.03), (0.02, 0.05), (-0.02, 0.05)],
-                      (a[0], a[1], za), (b[0], b[1], zb), cap=False)
+            n = max(1, int(np.ceil(L / 1.0)))               # pieces of <= 1 m: the path's profile bends
+            P = a + (b - a) * np.linspace(0, 1, n + 1)[:, None]
+            zP = gz(P[:, 0], P[:, 1])
+            for k in range(n):
+                geo.prism('edging_dark', [(-0.02, -0.10), (0.02, -0.10), (0.02, 0.05), (-0.02, 0.05)],
+                          (P[k, 0], P[k, 1], zP[k]), (P[k + 1, 0], P[k + 1, 1], zP[k + 1]), cap=False)
+    # the timber retaining edge round the garden's level pad (open where the path arrives at the gate)
+    for eid in PADS:
+        ring = np.asarray(pad_polygon(eid).exterior.coords)
+        keep = _pad_keep(eid).buffer(0.05)
+        zl = plan.REGIONS[eid]
+        for a, b in zip(ring[:-1], ring[1:]):
+            n = max(1, int(np.ceil(np.linalg.norm(b - a) / 0.5)))
+            t = (b - a) / np.linalg.norm(b - a)
+            out = np.array([t[1], -t[0]])
+            if pad_polygon(eid).contains(shapely.geometry.Point((a + b) / 2 + out * 0.05)):
+                out = -out
+            run = None
+            for i in range(n + 1):
+                p = a + (b - a) * min(i, n) / n
+                mid = a + (b - a) * (i + 0.5) / n
+                inside = i < n and not keep.contains(shapely.geometry.Point(mid))
+                if inside and run is None:
+                    run = p
+                if run is not None and (not inside or np.linalg.norm(p - run) > 2.9):
+                    q = run + (p - run) * np.linspace(0, 1, 7)[:, None]
+                    q = np.vstack([q + out * e for e in (0.1, 0.35, 0.6)])
+                    dn = zl - float(gz(q[:, 0], q[:, 1]).min()) + KERB['down']
+                    sec = [(-KERB['w'] / 2, -dn), (KERB['w'] / 2, -dn), (KERB['w'] / 2, KERB['up']),
+                           (-KERB['w'] / 2, KERB['up'])]
+                    d = t * KERB['w'] / 2
+                    geo.prism('timber', sec, (run[0] - d[0], run[1] - d[1], zl), (p[0] + d[0], p[1] + d[1], zl))
+                    run = p if inside else None
     # grates and lids (flush, 1.5 cm proud so they read)
     x0, y0, x1, y1 = plan.site('site.grate_lawn')['bbox']
     c = _px([((x0 + x1) / 2, (y0 + y1) / 2)])[0]

@@ -82,13 +82,11 @@ def _planes():
                 g = max(g.geoms, key=lambda q: q.area)
             xy = np.array(g.exterior.coords)[:-1]
             Q = np.c_[xy, a * xy[:, 0] + b * xy[:, 1] + c]
-        if p['id'] == 'ncp_n':
-            # the aerial sees only the strip outside the upper eave: the porch roof runs on up-slope to the NC north wall
-            xy = [P[0, :2], P[1, :2], P[2, :2], (P[2, 0], NC_Y_N - 0.12), (P[3, 0], NC_Y_N - 0.12)]
-            xy = np.array(xy, float)
-            Q = np.c_[xy, a * xy[:, 0] + b * xy[:, 1] + c]
-        elif p['id'] == 'ncp_e':
-            xy = np.array([P[0, :2], P[1, :2], (BG_X_WALL - 0.12, P[2, 1]), (BG_X_WALL - 0.12, P[3, 1])], float)
+        if p['id'] in ('ncp_n', 'ncp_e'):
+            # roof_3d.json runs them to the upper wall's face; here 0.12 m on into the wall
+            xy = P[:, :2].copy()
+            k, w = (1, NC_Y_N) if p['id'] == 'ncp_n' else (0, BG_X_WALL)
+            xy[np.abs(xy[:, k] - w) < 0.08, k] = w - 0.12
             Q = np.c_[xy, a * xy[:, 0] + b * xy[:, 1] + c]
         elif p['id'] in ('gb_w', 'gb_e'):
             Q = garage_gable()[p['id']]
@@ -371,6 +369,28 @@ def footprints(planes):
     return dict(f2=f2, U=_simplify(U), G=_simplify(G), patio_pb=patio_pb, patio_bg=patio_bg, diag=diag)
 
 
+def garage_sill():
+    """One slab level for the three garage doors: just above the motor court's highest point in front of them."""
+    pts = [op[2] for op in OPENINGS if op[0] == 'garage']
+    return max(float(plan.ground_z(x - 0.6, y)) for x, y in pts) + 0.03
+
+
+def garage_wainscot(geo, fp):
+    """Stone wainscot with a cream water table round the garage's south gable bay, up to the window sill (p01)."""
+    g = min(_rings(fp['G']), key=lambda q: q.bounds[0])              # the garage / north-wing ring
+    x0, y0, x1, y1 = -28.6, g.bounds[1] - 0.1, -24.4, -2.6
+    bay = g.intersection(box(x0, y0, x1, y1))
+    if bay.is_empty:
+        return
+    ztop = 1.50 - 0.07 - 0.07                                        # under the window's sill board
+    cut = box(x0 - 1, y1 - 0.02, x1 + 1, y1 + 2)                     # open toward the house side: no back face proud
+    for mat, d, za, zb in (('stone_veneer', 0.07, None, ztop), (TRIM, 0.10, ztop, ztop + 0.07)):
+        b = bay.buffer(d, join_style=2).difference(cut)
+        ring = np.array(b.exterior.coords)[:-1]
+        zg = float(np.min(plan.ground_z(ring[:, 0], ring[:, 1]))) - 0.3
+        geo.extrude(mat, ring, zg if za is None else za, zb, cap_bottom=za is not None)
+
+
 def _wall_ring(geo, ring, z0, planes, storey, outer=True, log=None):
     ring = np.asarray(ring, float)
     cw = not Polygon(ring).exterior.is_ccw
@@ -387,7 +407,7 @@ def _wall_ring(geo, ring, z0, planes, storey, outer=True, log=None):
             if st != storey:
                 continue
             if zs is None:
-                zs = float(plan.ground_z(pt[0] - 1.0, pt[1])) + 0.05
+                zs = garage_sill()
             v = np.asarray(pt, float) - a
             s, dist = float(v @ r[:2]), float(v @ n[:2])
             if abs(dist) < 0.45 and w / 2 + 0.05 < s < L - w / 2 - 0.05:
@@ -540,7 +560,9 @@ def porch_auto(geo, poly, closed, z_floor, eave_z, craft=True, rail=False, span=
 
 def front_columns():
     """The wraparound porch's columns on its street sides (p01 through the fitted camera): west run, SW corner, the
-    bend left of the entry, the two entry columns, and their mirror images about the entry's axis."""
+    bend left of the entry, the two entry columns, and their mirror images about the entry's axis; then the south and
+    east legs (aerial: the porch roof runs on round the south wing to the patio wing's south wall; column line 1 m
+    inside the eave like the front, even bays -- no photograph shows these two legs)."""
     M, t, n, half, eave = entry_frame()
     c = M[0] - M[1]
     mir = lambda q: (q[1] + c, q[0] - c)                              # noqa: E731  (reflection in the entry's axis)
@@ -548,7 +570,52 @@ def front_columns():
     west = [(xw, y) for y in np.linspace(COL_Y_N, ys, 4)[:3]]       # p01: 3 + the corner, evenly spaced
     sw, bl = (xw, ys), (-18.67, ys)                                  # bl: p01 / hero bearings onto the south line
     el, er = tuple(M - t * 1.25 + n * 0.6), tuple(M + t * 1.25 + n * 0.6)
-    return west + [sw, bl, el, er, mir(bl), mir(sw)]
+    se0 = mir(sw)
+    south = [(x, se0[1]) for x in np.linspace(se0[0], COL_X_E, 4)[1:]]
+    east = [(COL_X_E, (se0[1] + PB_ROOM[1]) / 2)]
+    return west + [sw, bl, el, er, mir(bl), se0] + south + east
+
+
+COL_X_E = -6.60                          # east leg's column line (eave -5.6)
+PORCH_END_N = (-19.2, COL_Y_N)           # the west leg's north end: the beam returns to the west wall here
+PORCH_END_E = (COL_X_E, PB_ROOM[1])      # the east leg ends on the patio wing's south wall
+FLOOR_OUT = 0.10                         # porch floor edge outside the column line
+FASCIA_H, FASCIA_T = 0.20, 0.03          # cream fascia board under the floor's nosing, over the stone skirt
+ENTRY_EDGE = 0.60 - FLOOR_OUT            # floor edge at the entry, metres inside the gable's outer eave line M
+
+
+def porch_floor_plan(fp=None):
+    """Plan of the wraparound porch floor: everything between the column line (+ FLOOR_OUT) and the ground-storey
+    walls, from the west leg's north end round the entry, the south wing and the east leg to the patio wing."""
+    cols = front_columns()
+    line = [PORCH_END_N] + cols + [PORCH_END_E]
+    # close through the house (anchors inside the ground outline G): only the part outside the walls is floor
+    inner = [(COL_X_E, -17.0), (-11.0, -17.0), (-14.5, -15.5), (-18.5, -12.0), (-18.5, COL_Y_N)]
+    P = Polygon(line + inner).buffer(0)
+    if P.geom_type != 'Polygon':
+        P = max(P.geoms, key=lambda g: g.area)
+    G = (fp or footprints(_planes()))['G']
+    # the west leg's north end and the east end stay square: buffer, then cut back at both ends
+    f = P.buffer(FLOOR_OUT, join_style=2).difference(G.buffer(-0.12, join_style=2))
+    f = f.intersection(box(-30.0, -30.0, COL_X_E + FLOOR_OUT, COL_Y_N + FLOOR_OUT))
+    parts = [g for g in _rings(f, 0.5)]
+    return parts
+
+
+def porch_floor(geo, fp):
+    """The floor slab (bluestone, a 3 cm nosing), a cream fascia board under it and the stone skirt down into the
+    ground (plan.ground_z along its edge)."""
+    zf = PORCH_FLOOR
+    for g in porch_floor_plan(fp):
+        ring = np.array(g.exterior.coords)[:-1]
+        holes = [np.array(h.coords)[:-1] for h in g.interiors]
+        zg = float(np.min(plan.ground_z(ring[:, 0], ring[:, 1])))
+        geo.extrude('stone_veneer', ring, zg - 0.35, zf - 0.05 - FASCIA_H, holes=holes, cap_top=False, cap_bottom=False)
+        gf = g.buffer(FASCIA_T, join_style=2)
+        geo.extrude(TRIM, np.array(gf.exterior.coords)[:-1], zf - 0.05 - FASCIA_H, zf - 0.05)
+        gn = g.buffer(FASCIA_T + 0.03, join_style=2)
+        geo.extrude('bluestone', np.array(gn.exterior.coords)[:-1], zf - 0.05, zf,
+                    holes=[np.array(h.coords)[:-1] for h in gn.interiors])
 
 
 def front_porch(geo, eaves):
@@ -556,29 +623,32 @@ def front_porch(geo, eaves):
     cols = front_columns()
     zf = PORCH_FLOOR
     top = COL_TOP + BEAM_H
+    corners = (3, 4, 7, 8, 11)
     for i, q in enumerate(cols):
         a, b = cols[max(i - 1, 0)], cols[min(i + 1, len(cols) - 1)]
-        ang = float(np.arctan2(b[1] - a[1], b[0] - a[0])) if i not in (3, 4, 7, 8) else 0.0
+        ang = float(np.arctan2(b[1] - a[1], b[0] - a[0])) if i not in corners else 0.0
         column_craft(geo, q[0], q[1], zf, COL_TOP, ang, ground=plan.ground_z(q[0], q[1]))
-    beam(geo, cols[0], (cols[0][0] + 1.9, cols[0][1]), COL_TOP, top, t=0.30)       # return to the wall at the north end
-    for i in range(len(cols) - 1):
-        a, b = cols[i], cols[i + 1]
+    line = [PORCH_END_N] + cols + [PORCH_END_E]                     # both ends return to a wall
+    for i in range(len(line) - 1):
+        a, b = line[i], line[i + 1]
         beam(geo, a, b, COL_TOP, top, t=0.30)
-        if i != 5:                                                  # no railing across the steps
+        if i != 6 and 0 < i < len(line) - 2:                        # no railing across the steps / at the wall returns
             railing(geo, a, b, zf, inset=0.32)
+    railing(geo, cols[-1], PORCH_END_E, zf, inset=0.32)             # east leg: railed up to the patio wing
     # entry: box beam under the pediment, 4 risers down to the front walk, a short cream post at each side of the foot
     el, er = np.array(cols[5]), np.array(cols[6])
     beam(geo, el, er, COL_TOP, top + 0.06, t=0.34)
     t3, n3 = np.array([t[0], t[1], 0.0]), np.array([n[0], n[1], 0.0])
     rise = (zf - plan.FRONT_WALK) / 4
-    edge = M + n * 0.42                                              # the porch floor's edge under the gable
+    edge = M + n * (ENTRY_EDGE - FASCIA_T - 0.03)                    # the porch floor's nosing under the gable
     hw = 1.25 - 0.30
+    zw = min(plan.FRONT_WALK, float(plan.ground_z(*(edge - n * 1.3)))) - 0.3
     for k in range(1, 4):
         o = np.array([edge[0], edge[1], 0.0]) - n3 * (0.32 * k)
-        geo.obox('bluestone', o, t3, n3, (0, 0, 1), (-hw - 0.15, 0.0, plan.FRONT_WALK - 0.3), (hw + 0.15, 0.34, zf - rise * k))
+        geo.obox('bluestone', o, t3, n3, (0, 0, 1), (-hw - 0.15, 0.0, zw), (hw + 0.15, 0.34, zf - rise * k))
     for sgn in (-1, 1):
         q = edge + t * sgn * (hw + 0.45) - n * 1.05
-        geo.obox(TRIM, (q[0], q[1], 0.0), t3, n3, (0, 0, 1), (-0.17, -0.17, plan.FRONT_WALK - 0.2), (0.17, 0.17, zf + 0.30))
+        geo.obox(TRIM, (q[0], q[1], 0.0), t3, n3, (0, 0, 1), (-0.17, -0.17, zw + 0.1), (0.17, 0.17, zf + 0.30))
         geo.obox(TRIM, (q[0], q[1], 0.0), t3, n3, (0, 0, 1), (-0.21, -0.21, zf + 0.30), (0.21, 0.21, zf + 0.38))
 
 
@@ -655,11 +725,7 @@ def build():
     eaves = ROOF['eaves']
     rear(geo, fp, planes, eaves)
     gable_trim(geo, planes)
-    closed = fp['G']
     front_porch(geo, eaves)
-    explicit = box(-25.0, -24.6, -14.9, -6.3)
-    for blk, zf, craft in (('porch_1st', PORCH_FLOOR, True),):
-        f = _footprint(planes, {blk}, 1, inset=PORCH_INSET).difference(closed.buffer(0.02))
-        for g in _rings(f):
-            porch_auto(geo, g, closed, zf, eaves[blk], craft=craft, rail=craft, skip=explicit if craft else None)
+    porch_floor(geo, fp)
+    garage_wainscot(geo, fp)
     return [Part('house', geo, group='house')]

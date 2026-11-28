@@ -41,6 +41,10 @@ PITCH_BLOCK = {'garage_wing': (18.5, 1.0), 'north_wing': (18.0, 1.0)}
 PITCH_PLANE = {'gb_w': (26.0, 1.5), 'gb_e': (26.0, 1.5), 'bg_n': (27.5, 2.0), 'bg_s': (27.5, 2.0)}
 # measured ridge heights (plane id -> (z, sigma)): the balcony gable's apex (p21: 0.2 m under the first solve; epi 7.5-8.0)
 RIDGE_Z = {'bg_n': (7.97, 0.01), 'bg_s': (7.97, 0.01)}
+# the north porch roof: the aerial sees only the 0.3-0.5 m strip outside the two-storey eave; in p28 both planes run on
+# up-slope under that eave to the upper walls (the NC north wall with the triple window beside the north chimney, the
+# NC east wall).  plane id -> (axis, wall line): the same lines as zones/house.py NC_Y_N / BG_X_WALL.
+UNDER_WALL = {'ncp_n': ('y', 5.60)}        # (ncp_e's surveyed strip already ends on the NC east wall line, x -11.0)
 GARAGE_GABLE_PITCH = 26.0        # rebuilt symmetric after the solve (garage_gable below)
 # survey corrections (p29 at 3.5x): the diagonal front-porch leg is one shed sloping SW from under the front gable FG's
 # eave to the porch eave; the small entry gable over the steps (apex ~(725,1249), ridge NE-SW) stands on it and is built
@@ -254,6 +258,7 @@ def solve(verbose=True):
                               'poly': [[round(float(a), 3), round(float(b), 3), round(float(c), 3)] for a, b, c in zip(Xi, Yi, zz)],
                               'edges': kinds})
     garage_gable(out)
+    north_porch(out)
     json.dump(out, open(os.path.join(HERE, 'survey', 'roof_3d.json'), 'w'), indent=1)
     if verbose:
         print('nodes %d, planes %d, cost %.1f, rms resid %.2f sigma' % (N, M, sol.cost, np.sqrt(np.mean(res ** 2))))
@@ -293,6 +298,28 @@ def garage_gable(out):
     d = [np.linalg.norm(P[3][:2] - np.array(v[:2])) for v in (ve, vw)]
     first, last = (ve, vw) if d[0] < d[1] else (vw, ve)
     gs['poly'] = rnd([P[0], P[1], P[2], first, apex, last])
+
+
+def north_porch(out):
+    """ncp_n / ncp_e run on up their own planes from the surveyed 'under_upper_eave' edge to the upper wall behind it
+    (UNDER_WALL); that edge becomes 'wall', the edges up to it keep their kinds ('hip' / 'chimney' / 'eave_end' run on
+    as 'under_upper_eave': hidden from above)."""
+    for q in out['planes']:
+        if q['id'] not in UNDER_WALL:
+            continue
+        ax, w = UNDER_WALL[q['id']]
+        k = 'xy'.index(ax)
+        a, b, c = q['plane']
+        i = q['edges'].index('under_upper_eave')
+        P, E, n = q['poly'], q['edges'], len(q['poly'])
+        u0, u1 = list(P[i]), list(P[(i + 1) % n])
+        for u in (u0, u1):
+            u[k] = w
+            u[2] = round(a * u[0] + b * u[1] + c, 3)
+        # ... P[i], u0, u1, P[i+1] ...
+        poly = P[:i + 1] + [u0, u1] + P[i + 1:]
+        edges = E[:i] + ['under_upper_eave', 'wall', 'under_upper_eave'] + E[i + 1:]
+        q['poly'], q['edges'] = poly, edges
 
 
 if __name__ == '__main__':

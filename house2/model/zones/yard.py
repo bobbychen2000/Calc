@@ -77,7 +77,6 @@ PL_FORT_TOP = 2.65
 PL_AFRAME_X, PL_BEAM_Y = 13.55, 0.30
 # vegetable garden: fence base (aerial, on the ground), beds (aerial boxes at the bed tops)
 GARDEN = [(16.76, 7.24), (16.78, 4.67), (24.22, 4.61), (24.18, 12.23), (16.71, 12.32), (16.75, 8.08)]
-GARDEN_Z = 2.50                       # the enclosure's gravel (plan.REGIONS 2.55), fence base
 BEDS = [((17.60, 8.98), (19.49, 10.85)), ((21.04, 9.00), (22.92, 10.98)), ((17.58, 5.49), (19.44, 7.39)),
         ((21.07, 5.54), (22.88, 7.49))]
 FENCE_H = 1.05
@@ -381,21 +380,47 @@ def pot(geo, at, s=0.45, h=0.55, top=None):
                               (t / 2 - 0.03, t / 2 - 0.03, h + 0.002), (-t / 2 + 0.03, t / 2 - 0.03, h + 0.002)])
 
 
+DINING_EAST_BACKS = -11.95      # p21 + frame 137200: the east chairs' back legs
+DINING_Y = 3.27
+
+
+def _recess_slab():
+    """The house's recess floor north of the balcony gable (read from the house zone, so the set follows it)."""
+    try:
+        from model.zones import house as H
+        return dict(x0=H.REAR_X_GROUND, x1=H.BG_X_WALL + 0.15, y0=H.BG_Y[1], y1=H.NC_Y_N, z=H.PATIO_FLOOR)
+    except Exception:
+        return dict(x0=-12.4, x1=-10.85, y0=0.35, y1=5.6, z=plan.REAR_PATIO_FLOOR)
+
+
 def porch_furniture():
     geo = Geo()
-    # north porch: 3 m teak table along the house wall, 4 chairs a side + one at each end (p21: between the BG
-    # post and the porch's NE column, in front of the 4-panel doors)
-    zf = plan.NCP_FLOOR
-    c = (-11.25, 3.15)
-    plank_table(geo, (c[0], c[1], zf), 90.0, 3.0, 1.0)
-    for i in range(4):
-        y = c[1] - 1.05 + i * 0.70
-        slat_chair(geo, (c[0] + 0.78, y, zf), -90.0)        # east side, facing the house
-        slat_chair(geo, (c[0] - 0.78, y, zf), 90.0)
-    slat_chair(geo, (c[0], c[1] - 1.85, zf), 180.0)
-    slat_chair(geo, (c[0], c[1] + 1.85, zf), 0.0)
-    Fr((c[0], c[1], zf + 0.75), 90.0).box(geo, 'furn_black', (-0.2, -0.12, 0), (0.2, 0.12, 0.3))     # lantern box
-    pot(geo, (-10.0, 5.7, 0.0), 0.5, 0.5)                                   # rear.ncp_pot
+    # dining set: it stands IN the recess under NC (the two-storey block north of the balcony gable), in front of the
+    # 4-panel doors -- not on the north porch.  Triangulated on p21 + frame 137200 (residuals <= 2 px): the east row's
+    # chair backs at x -11.95, y 1.9 .. 4.65 (5 chairs a side, 0.55 m apart, + one at each end), the floor under them
+    # at ~0.25.  The set is placed as far in as the house's recess wall allows and every piece stands on the surface
+    # under it: the recess slab (house.patio_bg at PATIO_FLOOR) or the terrain.
+    slab = _recess_slab()
+    tw, off = 0.76, 0.50                                  # table width; chair centres from the table's centre line
+    half = off + 0.25
+    cx = max(DINING_EAST_BACKS - half, slab['x0'] + half + 0.03)
+    c = (cx, DINING_Y)
+
+    def zat(x, y, r=0.25):
+        return slab['z'] if (slab['x0'] <= x - r and x + r <= slab['x1'] and slab['y0'] <= y - r and y + r <= slab['y1']) \
+            else gz(x, y)
+
+    zt = zat(c[0], c[1], 0.0)
+    plank_table(geo, (c[0], c[1], zt), 90.0, 3.0, tw)
+    for i in range(5):
+        y = c[1] - 1.10 + i * 0.55
+        slat_chair(geo, (c[0] + off, y, zat(c[0] + off, y)), -90.0)        # east side, facing the house
+        slat_chair(geo, (c[0] - off, y, zat(c[0] - off, y)), 90.0)
+    for sy, deg in ((-1, 180.0), (1, 0.0)):
+        y = c[1] + sy * 1.72
+        slat_chair(geo, (c[0], y, zat(c[0], y)), deg)
+    Fr((c[0], c[1], zt + 0.75), 90.0).box(geo, 'furn_black', (-0.2, -0.12, 0), (0.2, 0.12, 0.3))     # lantern box
+    pot(geo, (-10.0, 5.7, gz(-10.0, 5.7)), 0.5, 0.5)                                   # rear.ncp_pot
     # BG patio: two wicker armchairs with a small table between, facing the pool; pots at the posts
     zp = plan.REAR_PATIO_FLOOR
     F.lounge_chair(geo, (-11.45, -2.35, zp), 90.0, seed=1)
@@ -408,7 +433,7 @@ def porch_furniture():
     plank_table(geo, (t[0], t[1], zp), 0.0, 2.2, 0.95)
     bench(geo, (t[0], t[1] - 0.72, zp), 0.0)
     bench(geo, (t[0], t[1] + 0.72, zp), 0.0)
-    pot(geo, (-1.9, -11.4, 0.0), 0.34, 0.95, top=0.50)
+    pot(geo, (-1.9, -11.4, gz(-1.9, -11.4)), 0.34, 0.95, top=0.50)
     return Part('yard_porch_furniture', geo, group='yard')
 
 
@@ -436,13 +461,17 @@ def slide(geo, top, end, w=0.50, wave=0.0, n=8):
     run = end - top
     side = np.cross(UP, run)
     side /= np.linalg.norm(side)
+    hd = np.array([run[0], run[1], 0.0]) / np.linalg.norm(run[:2])
+    tip = end + hd * 0.45                                  # the level run-out beyond `end`
+    z_end, z_tip = gz(end[0], end[1]) + 0.09, gz(tip[0], tip[1]) + 0.05
     pts = []
     for i in range(n + 1):
         t = i / n
         p = top + run * t
-        p[2] = top[2] + (end[2] + 0.22 - top[2]) * (t ** 0.85) + wave * math.sin(2 * math.pi * t) * (1 - t)
+        p[2] = top[2] + (z_end - top[2]) * (t ** 0.85) + wave * math.sin(2 * math.pi * t) * (1 - t)
+        p[2] = max(p[2], gz(p[0], p[1]) + 0.05)
         pts.append(p)
-    pts.append(pts[-1] + np.array([run[0], run[1], 0]) / np.linalg.norm(run[:2]) * 0.45 + np.array([0, 0, -0.05]))
+    pts.append(np.array([tip[0], tip[1], z_tip]))
     for p, q in zip(pts[:-1], pts[1:]):
         geo.poly(SLIDE, [p - side * w / 2, q - side * w / 2, q + side * w / 2, p + side * w / 2])
         geo.poly(SLIDE, [p + side * w / 2, q + side * w / 2, q - side * w / 2, p - side * w / 2])
@@ -564,29 +593,33 @@ def play():
 def garden():
     geo = Geo()
     pts = GARDEN
-    zg = lambda x, y: GARDEN_Z
+    # every post / rail / picket bottom from the terrain (plan.ground_z: the ground zone carries the 2.55 level out to
+    # the fence line; short bays so the fence follows what is left of the bank)
     for a, b in zip(pts[:-1], pts[1:]):
-        picket_run(geo, a, b, z_of=zg)
+        picket_run(geo, a, b, bay=1.2)
     # the gate in the west fence where the gravel path arrives: a leaf swung open to the north-west
     a, b = np.array(pts[-1]), np.array(pts[0])
-    za = GARDEN_Z
-    Lg = Fr((a[0], a[1], za), 100.0 + 55.0)
+    Lg = Fr((a[0], a[1], 0.0), 100.0 + 55.0)
     w = float(np.linalg.norm(b - a)) - 0.08
+    zl = lambda x: gz(*Lg.pt(x, 0.0)[:2])
     for z in (0.22, 0.85):
-        Lg.box(geo, PICKET, (0.04, -0.02, z), (0.04 + w, 0.02, z + 0.09))
+        bar(geo, PICKET, Lg.pt(0.04, 0.0, zl(0.04) + z + 0.045), Lg.pt(0.04 + w, 0.0, zl(0.04 + w) + z + 0.045), 0.04, 0.09)
     for i in range(int(w / 0.14)):
         x = 0.04 + (i + 0.5) * 0.14
-        Lg.box(geo, PICKET, (x - 0.035, 0.02, 0.06), (x + 0.035, 0.04, FENCE_H), 'xXyYZ')
-    # raised beds: timber boxes ~0.35 m high with soil
+        g = zl(x)
+        Lg.box(geo, PICKET, (x - 0.035, 0.02, g + 0.06), (x + 0.035, 0.04, g + FENCE_H), 'xXyYZ')
+    # raised beds: timber boxes ~0.35 m high with soil, on the terrain under them
     for (x0, y0), (x1, y1) in BEDS:
-        g = GARDEN_Z
+        cs = ((x0, y0), (x1, y0), (x1, y1), (x0, y1))
+        zc = [gz(*q) for q in cs]
+        g = max(zc)
         t, hb = 0.06, 0.38
-        geo.extrude(PICKET, [(x0, y0), (x1, y0), (x1, y1), (x0, y1)], g - 0.1, g + hb, cap_bottom=False,
+        geo.extrude(PICKET, list(cs), min(zc) - 0.1, g + hb, cap_bottom=False,
                     holes=[[(x0 + t, y0 + t), (x1 - t, y0 + t), (x1 - t, y1 - t), (x0 + t, y1 - t)]])
         geo.poly('yard_soil', [(x0 + t, y0 + t, g + hb - 0.06), (x1 - t, y0 + t, g + hb - 0.06),
                                (x1 - t, y1 - t, g + hb - 0.06), (x0 + t, y1 - t, g + hb - 0.06)])
-        for px, py in ((x0, y0), (x1, y0), (x1, y1), (x0, y1)):
-            geo.box(PICKET, (px - 0.05, py - 0.05, g - 0.1), (px + 0.05, py + 0.05, g + hb + 0.04))
+        for (px, py), zq in zip(cs, zc):
+            geo.box(PICKET, (px - 0.05, py - 0.05, zq - 0.1), (px + 0.05, py + 0.05, g + hb + 0.04))
     return Part('yard_garden', geo, group='yard')
 
 

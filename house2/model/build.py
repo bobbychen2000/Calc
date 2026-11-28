@@ -143,7 +143,7 @@ def build(zones=None, out='house'):
         cams[k] = dict(w=c['w'], h=c['h'], f=c['f'], R=np.round(c['R'], 8).tolist(), C=np.round(c['C'], 4).tolist())
     meta = dict(glb=out + '.glb', centre=[float(v) for v in (V.min(0) + V.max(0)) / 2], sun=SUN, views=views,
                 start=next(iter(views)), cameras=cams, projectors=projectors(wc) if zones is None else [],
-                swatches={},                                   # house 2: the swatches come with the finished look
+                swatches=swatch.make(wc, parts) if zones is None else {},     # patches cut from the photographs
                 stats=dict(triangles=int(sum(p.ntri for p in parts)), bytes=n,
                            parts={p.name: p.ntri for p in parts}))
     json.dump(meta, open(os.path.join(HERE, 'out', out + '_meta.json'), 'w'))

@@ -30,7 +30,7 @@ export const MODULES = {
 
 // Calibrated base colours (LINEAR albedo multipliers of the colour maps), see the test zone's renders against the
 // listing photos: sunlit / shaded medians under the stage's default day light.
-const C = {
+export const C = {
   white: [0.86, 0.855, 0.83],
   trim: [0.88, 0.875, 0.85],
   soffit: [0.84, 0.835, 0.81],
@@ -58,9 +58,9 @@ const C = {
   cap: [0.018, 0.019, 0.022],
 };
 
-const q = (ctx, n) => (ctx.quality === 'low' ? n >> 1 : n);
-const bk = (ctx) => bank(q(ctx, 1024));
-const put = (d, o, r, g, b) => { d[o] = srgb8(r); d[o + 1] = srgb8(g); d[o + 2] = srgb8(b); d[o + 3] = 255; };
+export const q = (ctx, n) => (ctx.quality === 'low' ? n >> 1 : n);
+export const bk = (ctx) => bank(q(ctx, 1024));
+export const put = (d, o, r, g, b) => { d[o] = srgb8(r); d[o + 1] = srgb8(g); d[o + 2] = srgb8(b); d[o + 3] = 255; };
 
 // ---------------------------------------------------------------------------------------------- walls
 function sidingTex(ctx) {
@@ -91,7 +91,7 @@ function sidingTex(ctx) {
   }));
 }
 
-function grooveTex(ctx, key, vertical, pitch, gw = 0.006, depth = 0.003) {
+export function grooveTex(ctx, key, vertical, pitch, gw = 0.006, depth = 0.003) {
   return shared('groove:' + key, () => timed('grooves ' + key, () => {
     const n = q(ctx, 256), m = 8, w = vertical ? n : m, h = vertical ? m : n;
     const alb = new Uint8Array(w * h * 4), hgt = new Float32Array(w * h);
@@ -108,12 +108,12 @@ function grooveTex(ctx, key, vertical, pitch, gw = 0.006, depth = 0.003) {
   }));
 }
 
-const paint = (ctx, color, roughness, extra = {}) => surface(ctx, {
+export const paint = (ctx, color, roughness, extra = {}) => surface(ctx, {
   color, roughness, detail: { kind: 'grit', size: 0.19, albedo: 0.012, normal: 0.035, rough: 0.03 }, macro: { amount: 0.02 }, ...extra,
 });
 
 // ---------------------------------------------------------------------------------------------- roofs
-function shingleTex(ctx) {
+export function shingleTex(ctx) {
   return shared('shingle', () => timed('roof_shingle', () => {
     const w = q(ctx, 1024), h = q(ctx, 1024), n = 16, ch = h / n, W = 3.2, H = n * MODULES.shingleCourse, pxu = w / W;
     const { B, W: Wn, S, M } = bk(ctx);
@@ -193,9 +193,9 @@ const STONE = [   // linear albedo, weight: the warm grey / buff / blue-grey / g
   [[0.48, 0.36, 0.22], 0.06], [[0.62, 0.60, 0.56], 0.08],
 ];
 const tame = (c) => [0.47 + (c[0] - 0.47) * 0.6, 0.45 + (c[1] - 0.45) * 0.6, 0.41 + (c[2] - 0.41) * 0.6];
-const pick = (table, u) => { let a = 0; for (const [v, p] of table) { a += p; if (u <= a) return v; } return table[table.length - 1][0]; };
+export const pick = (table, u) => { let a = 0; for (const [v, p] of table) { a += p; if (u <= a) return v; } return table[table.length - 1][0]; };
 
-function stoneTex(ctx) {
+export function stoneTex(ctx) {
   return shared('stone', () => timed('stone_veneer', () => {
     const w = q(ctx, 1024), h = q(ctx, 512), W = 1.83, H = 0.915, bands = 6, bh = h / bands, pxm = w / W;
     const { A, B, S, M } = bk(ctx);
@@ -248,7 +248,7 @@ function stoneTex(ctx) {
 }
 
 // pieces laid in courses (bluestone, driveway pavers): shared generator
-function coursedTex(ctx, key, o) {
+export function coursedTex(ctx, key, o) {
   return shared(key, () => timed(key, () => {
     const n = q(ctx, 1024), W = o.tile, upx = n / o.units, rnd = prng(o.seed);
     const { A, B, W: Wn, S, M } = bk(ctx);
@@ -277,12 +277,12 @@ function coursedTex(ctx, key, o) {
   }));
 }
 
-const BLUESTONE = {
+export const BLUESTONE = {
   seed: 5, tile: 3.66, rows: 6, units: 12, choices: [2, 3, 4], joint: 0.007, jointColor: [0.60, 0.60, 0.57], jointDepth: 0.002,
   bevel: 0.004, bevelDepth: 0.0006, round: 1, cleft: 0.0011, lip: 0.0008, cloud: 0.085, grain: 0.05, speck: 0.03, blush: 0.035, rough: 0.8, toneVar: 0.13,
   palette: [[[0.42, 0.44, 0.455], 0.45], [[0.385, 0.415, 0.44], 0.2], [[0.45, 0.455, 0.455], 0.2], [[0.405, 0.435, 0.435], 0.1], [[0.46, 0.45, 0.43], 0.05]],
 };
-const PAVER = {
+export const PAVER = {
   seed: 9, tile: 2.7432, rows: 12, units: 36, choices: [2, 3, 4], joint: 0.004, jointColor: [0.10, 0.095, 0.085], jointDepth: 0.006,
   bevel: 0.006, bevelDepth: 0.003, round: 2, cleft: 0.0006, lip: 0.0015, cloud: 0.13, grain: 0.08, speck: 0.07, blush: 0, rough: 0.92, toneVar: 0.12,
   palette: [[[0.52, 0.505, 0.475], 0.34], [[0.445, 0.435, 0.415], 0.34], [[0.35, 0.345, 0.34], 0.2], [[0.49, 0.45, 0.395], 0.12]],
@@ -311,7 +311,7 @@ function limestoneTex(ctx, jointed) {
   }));
 }
 
-function groundTex(ctx, key, o) {      // concrete, asphalt, soil, pool plaster: mottled granular grounds
+export function groundTex(ctx, key, o) {      // concrete, asphalt, soil, pool plaster: mottled granular grounds
   return shared(key, () => timed(key, () => {
     const n = q(ctx, o.size || 512), W = o.tile;
     const { A, B, W: Wn, S, M } = bk(ctx);
@@ -419,9 +419,9 @@ function mahoganyTex(ctx) {
 }
 
 // ---------------------------------------------------------------------------------------------- planting grounds
-const css = (r, g, b) => `rgb(${srgb8(r)},${srgb8(g)},${srgb8(b)})`;
+export const css = (r, g, b) => `rgb(${srgb8(r)},${srgb8(g)},${srgb8(b)})`;
 
-function strokes(g, n, N, rnd, draw) {
+export function strokes(g, n, N, rnd, draw) {
   for (let i = 0; i < N; i++) {
     const x = rnd() * n, y = rnd() * n, s = draw(i);
     for (let oy = -n; oy <= n; oy += n) {
@@ -437,13 +437,13 @@ function strokes(g, n, N, rnd, draw) {
   }
 }
 
-function canvasNR(ctx, g, n, W, relief, rough) {
+export function canvasNR(ctx, g, n, W, relief, rough) {
   const px = g.getImageData(0, 0, n, n).data, hgt = new Float32Array(n * n);
   for (let i = 0; i < n * n; i++) hgt[i] = (px[i * 4] * 0.3 + px[i * 4 + 1] * 0.6 + px[i * 4 + 2] * 0.1) / 255 * relief;
   return texture(ctx, packNR(hgt, n, n, W, W, rough), n, n, W, W);
 }
 
-function lawnTex(ctx) {
+export function lawnTex(ctx) {
   return shared('lawn', () => timed('lawn', () => {
     const n = q(ctx, 1024), W = 3.2, N = n - 1;
     const { A, B, S, M } = bk(ctx);
@@ -477,7 +477,7 @@ function lawnTex(ctx) {
   }));
 }
 
-function mulchTex(ctx) {
+export function mulchTex(ctx) {
   return shared('mulch', () => timed('mulch', () => {
     const n = q(ctx, 512), W = 1.0;
     const { c, g } = tileCanvas(n, n);

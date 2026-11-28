@@ -18,6 +18,7 @@ import * as plants from './looks/plants.js';
 import * as fixtures from './looks/fixtures.js';
 import * as glazing from './looks/glazing.js';
 import * as furniture from './looks/furniture.js';
+import * as house2 from './looks/house2.js';      // this property's own finishes: registered last, overrides the shared ones
 
 export const FALLBACK = {
   siding_lap: { color: 0xf1f0ec, roughness: 0.72 },
@@ -86,7 +87,7 @@ export class Materials {
       onTick: (fn) => this.tickFns.push(fn),
       ctx: this.ctx,
     };
-    for (const mod of [surfaces, water, plants, fixtures, glazing, furniture]) if (mod.register) mod.register(lib);
+    for (const mod of [surfaces, water, plants, fixtures, glazing, furniture, house2]) if (mod.register) mod.register(lib);
   }
 
   // the GLB's own factors for a name the look modules do not define (zone builders add materials faster than looks)
@@ -140,6 +141,8 @@ export class Materials {
       t.anisotropy = this.ctx.anisotropy;
       m.map = t;
       m.color.setRGB(1, 1, 1);
+      // a look whose relief draws joints (flagstone, pavers, stacked stone) hands over a plain relief: the patch has its own
+      if (m.userData.swatchNR) m.normalMap = m.userData.swatchNR;
       m.needsUpdate = true;
       if (this.onChange) this.onChange();
     });
