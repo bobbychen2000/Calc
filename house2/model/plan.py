@@ -60,16 +60,19 @@ REGIONS = {
     'site.bed_patio_nw': 0.0,
     'site.bed_rear_courtyard': 0.05,
     'site.bed_upper_terrace': 0.50,     # between the low stone wall and the grey block wall (points 0.5-0.8 incl. plants)
-    # synthetic lawn: the SfM points of the lawn shot tilt from -2.2 (west) to -0.5 (east) over 20 m; p18 shows a level
-    # lawn ~1.2 m (7 risers) under the wall top, level with the mulch toward the house -> flat, the east value
-    'site.lawn_synthetic': -0.70,
-    'site.bed_lawn_south': -0.65,
-    'site.hedge_lawn_west': -0.55,
+    # synthetic lawn: the SfM points of the lawn shot tilt from -2.2 (west) to -0.5 (east) over 20 m (the lawn frames'
+    # depth is biased: leaves on the turf triangulate 0.5 m inside the wall).  p18 (round 3): the lawn steps' 8 nosings
+    # sit on the rows of 0.17 m risers rising from -0.45 (976 / 961 / 947 / 933 / 919 / 905 / 892 / 879 against the
+    # photo's 977 / 963 / 949 / 934 / 920 / 907 / 893 / 880; 0.24 m risers from -0.70 put them 13 px apart at the foot),
+    # and the wall's courses (5 + cap) give ~0.95 m under its 0.50 cap -> level at -0.45
+    'site.lawn_synthetic': -0.45,
+    'site.bed_lawn_south': -0.42,
+    'site.hedge_lawn_west': -0.42,
     'site.bed_maple_round': -0.35,
     'site.planter_lawn': 0.40,          # raised planter west of the lawn steps, wall top (0.50) level with the lawn wall
     'site.planter_terrace': 0.50,       # lower planter behind the chevron wall (frame 133400: cap ~0.6 above the deck)
     'site.hedge_path': 1.65,            # hedge strip between the planter wall and the gravel path (points 1.6-1.8)
-    'site.play_area': 2.00,             # n 6097: 1.8 (west) .. 2.2 (east) (SLOPES)
+    'site.play_area': 2.00,             # n 6097: 1.8 (west) .. 2.2 (east); p19 bundle points rise north too (SLOPES)
     # site.strip_garden_play has no level of its own: it is the bank between the garden (2.55, carried to its fence
     # line and a margin: ground.PADS), the path (1.9-2.5) and the play area (1.85-2.2) -- the membrane between them
     'site.garden_enclosure': 2.55,      # n 608
@@ -99,11 +102,16 @@ SLOPES = {
     'site.driveway': (((100, 540), -0.30), ((500, 540), -0.30), ((120, 1750), -0.95)),
     'site.lawn_side_north': (((1270, 342), -0.05), ((1060, 359), -0.05), ((1120, 177), -0.22)),
     'site.bed_maple_stairs': (((1668, 500), 0.35), ((1668, 660), 0.35), ((1775, 580), 1.70)),
-    'site.play_area': (((1830, 500), 1.85), ((1830, 880), 1.85), ((2320, 690), 2.20)),
-    # the lawn wall's cap is at 0.45-0.5 (aerial ray into frame 144000): the soil behind it just below the cap
-    'site.orchard': (((1900, 905), 1.90), ((2300, 905), 2.00), ((1950, 1200), 0.42), ((2300, 1200), 0.47)),
+    # the chips: p19's bundle (with frames 125.0 / 139.0 / 140.5 s and the aerial) puts the edging's SW corner at 1.65,
+    # the A-frame's north foot 2.08, the stand's feet 2.25 / 2.30, the slide's foot 2.39 (a plane through them within
+    # 1 cm: +0.039 / m east, +0.040 / m north); the east corners held near the garden pad (2.55) and the SfM east value
+    'site.play_area': (((1815, 896), 1.65), ((1851, 542), 2.08), ((1950, 497), 2.25), ((2006, 495), 2.30),
+                       ((2140, 546), 2.39), ((2327, 895), 2.20), ((2336, 450), 2.55)),
+    # the lawn wall's cap is at 0.50: the bank rises straight from just under the cap (p18: no shelf) at ~0.15 / m to
+    # the play area's edge; p18 puts the ground at the fruit trees (v 1105) at 1.0 (fruit_1) / 1.13 (fruit_2)
+    'site.orchard': (((1900, 905), 1.90), ((2300, 905), 2.05), ((1950, 1210), 0.47), ((2300, 1210), 0.50)),
     'site.trees_north': (((400, 60), 0.80), ((1300, 60), 1.20), ((2100, 60), 2.40), ((1300, 140), 1.20)),
-    'site.trees_east': (((2420, 500), 2.20), ((2420, 1100), 1.00), ((2420, 1500), -0.20), ((2480, 1100), 1.00)),
+    'site.trees_east': (((2420, 500), 2.45), ((2420, 1100), 1.00), ((2420, 1500), -0.20), ((2480, 1100), 1.00)),
     'site.trees_south': (((300, 1750), -1.00), ((1200, 1720), -0.60), ((2300, 1700), -0.55), ((1200, 1850), -0.70)),
 }
 GRID = 0.25

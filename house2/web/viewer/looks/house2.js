@@ -494,7 +494,9 @@ const FOL_FRAG = `
   // a gap in the near leaves shows the crown's dark inside (the far side's back faces), not the wall or sky behind it:
   // the back faces are cut at the outline only -- r2's white specks through the middle of the entry shrubs
   if ( plCov < ( gl_FrontFacing ? uPlK.x : 0.0 ) + uPlK.y * plEdge * plEdge * ( gl_FrontFacing ? 1.0 : 0.6 ) ) discard;
-  float plShade = mix( uPlK.z, 1.0, smoothstep( 0.05, 0.8, plLeafH ) ) * mix( 0.4, 1.15, plClump );
+  // (r3: the hollows a little less deep -- at 10 - 30 m the photos' crowns are mostly lit sprays with small dark gaps;
+  // r2's range read as dark camouflage blotches in the play / entry views)
+  float plShade = mix( uPlK.z, 1.0, smoothstep( 0.05, 0.8, plLeafH ) ) * mix( 0.5, 1.12, plClump );
   vec3 plHue = mix( vec3( 1.0 + uPlK.w, 1.0, 1.0 - uPlK.w ), vec3( 1.0 - uPlK.w, 1.0, 1.0 + 0.6 * uPlK.w ), plL.b );
   diffuseColor.rgb *= plShade * ( 0.72 + 0.56 * plL.g ) * plHue * ( 0.8 + 0.4 * plC.b ) * ( 0.82 + 0.36 * plCid );
   diffuseColor.rgb = mix( diffuseColor.rgb, uPlBloom.rgb * ( 0.7 + 0.3 * plClump ) * ( 0.85 + 0.3 * plL.g ), step( 1.0 - uPlBloom.a, plL.b ) * smoothstep( 0.3, 0.55, plLeafH ) );
@@ -506,7 +508,7 @@ const FOL_FRAG = `
     diffuseColor.rgb *= mix( vec3( 1.0 ), plU > 0.0 ? vec3( 1.16, 1.03, 0.78 ) : vec3( 0.80, 0.95, 1.10 ), uPlVar * abs( plU ) );
     // inside the crown the leaves shade each other: what a gap in the outer leaves shows is dark; the crown's
     // underside sees little sky
-    diffuseColor.rgb *= mix( 0.42, 1.0, smoothstep( 0.30, 0.92, plIn ) );
+    diffuseColor.rgb *= mix( 0.48, 1.0, smoothstep( 0.30, 0.92, plIn ) );
     if ( plCR > 0.0 ) diffuseColor.rgb *= mix( 0.55, 1.0, smoothstep( -0.75, 0.45, ( vPlP.y - vPlC.y ) / plCR ) );
   }
   #ifdef PL_FAR
@@ -670,7 +672,7 @@ function foliage(ctx, spec) {
     uPlNoise: { value: macroNoise(ctx) },
     uPlLeaf: { value: leafTile(ctx, spec.kind || 'broad') },
     uPlS: { value: new THREE.Vector4(1 / (spec.clump || 3.4), 1 / (spec.leaf || 0.36), bump[0], bump[1]) },
-    uPlK: { value: new THREE.Vector4(cut[0], cut[1], spec.depth ?? 0.22, spec.hue ?? 0.12) },
+    uPlK: { value: new THREE.Vector4(cut[0], cut[1], spec.depth ?? 0.3, spec.hue ?? 0.12) },
     uPlThrough: { value: new THREE.Vector3(th[0], th[1], th[2]).multiplyScalar(th[3]) },
     uPlUp: { value: spec.up ?? 0.35 },
     uPlVar: { value: spec.vary ?? (spec.far ? 0.5 : 1) },
@@ -802,9 +804,10 @@ export function register(lib) {
   const shingle = (ctx, k) => surface(ctx, { ...cedarTex(ctx), color: C.shingleSiding, roughness: 0.9, swatchFade: [14, 40],
     heightTint: { y0: 3.0, y1: 3.7, k },
     detail: { kind: 'fibre', size: 0.21, albedo: 0.1, normal: 0.15 }, macro: { s1: 4.3, s2: 15, amount: 0.05, tint: [1.06, 1.0, 0.93], tintAmount: 0.25 } });
-  // (k: hero 83 77 67 / p01 70 65 52 under the porches against the render's neutral 66 / 68 at [0.54, 0.46, 0.32]:
-  // warmer, a little lighter; p21's rear loggia reads darker in its own exposure -- the stage's meter, not the wall)
-  const TAUPE_K = [0.62, 0.50, 0.29];
+  // (k: hero 83 77 67 / p01 70 65 52 under the porches against the render's neutral 66 / 68 at [0.54, 0.46, 0.32]
+  // and an olive 69 71 60 / 71 73 62 at [0.62, 0.50, 0.29] -- the blue patch times the sky light needs R / G ~1.5 in k
+  // to read R > G > B; p21's rear loggia reads darker in its own exposure: the stage's meter, not the wall)
+  const TAUPE_K = [0.76, 0.49, 0.28];
   lib.add('siding_shingle', (ctx) => shingle(ctx, TAUPE_K));
   const trimPaint = (ctx) => surface(ctx, { color: C.trim, roughness: 0.55, detail: { kind: 'fibre', size: 0.11, albedo: 0.035, normal: 0.05, rough: 0.06 }, macro: { s1: 1.7, s2: 6.1, amount: 0.035 } });
   lib.add('trim_cream', trimPaint);

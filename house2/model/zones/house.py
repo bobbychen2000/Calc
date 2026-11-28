@@ -212,6 +212,7 @@ def swp_pieces(planes):
     w = half + 0.03
     tri = Polygon([M + t * u + n * d for u, d in ((-w, -1.5), (w, -1.5), (w, 0.0), (0.0, k * w), (-w, 0.0))])
     rest = Polygon(sp.xy).buffer(0).difference(tri)
+    rest = rest.buffer(-0.06, join_style=2).buffer(0.06, join_style=2)   # no slivers along the gable's side eaves
     out = []
     for i, g in enumerate(_rings(rest, 0.05)):
         xy = np.array(g.exterior.coords)[:-1]
@@ -760,7 +761,7 @@ COL_X_E = -6.60                          # east leg's column line (eave -5.6)
 PORCH_END_N = (-19.2, COL_Y_N)           # the west leg's north end: the beam returns to the west wall (x -19.16) here
 PORCH_END_E = (COL_X_E, PB_ROOM[1])      # the east leg ends on the patio wing's south wall
 FLOOR_OUT = 0.10                         # porch floor edge outside the column line
-FASCIA_H, FASCIA_T = 0.20, 0.03          # cream fascia board under the floor's nosing, over the stone skirt
+SLAB_EDGE = 0.08                         # the bluestone floor slab's edge over the stone skirt
 ENTRY_EDGE = 0.60 - FLOOR_OUT            # floor edge at the entry, metres inside the gable's outer eave line M
 
 
@@ -783,18 +784,17 @@ def porch_floor_plan(fp=None):
 
 
 def porch_floor(geo, fp):
-    """The floor slab (bluestone, a 3 cm nosing), a cream fascia board under it and the stone skirt down into the
-    ground (plan.ground_z along its edge)."""
+    """The floor slab (bluestone, its dark edge ~8 cm, 4 cm proud) straight on the stone skirt, which runs down into the
+    ground (plan.ground_z along its edge).  Hero / p01 (round 3): no cream fascia under the slab -- the railing's wide
+    bottom rail, a dark bluestone edge, then the ledgestone."""
     zf = PORCH_FLOOR
     for g in porch_floor_plan(fp):
         ring = np.array(g.exterior.coords)[:-1]
         holes = [np.array(h.coords)[:-1] for h in g.interiors]
         zg = float(np.min(plan.ground_z(ring[:, 0], ring[:, 1])))
-        geo.extrude('stone_veneer', ring, zg - 0.35, zf - 0.05 - FASCIA_H, holes=holes, cap_top=False, cap_bottom=False)
-        gf = g.buffer(FASCIA_T, join_style=2)
-        geo.extrude(TRIM, np.array(gf.exterior.coords)[:-1], zf - 0.05 - FASCIA_H, zf - 0.05)
-        gn = g.buffer(FASCIA_T + 0.03, join_style=2)
-        geo.extrude('bluestone', np.array(gn.exterior.coords)[:-1], zf - 0.05, zf,
+        geo.extrude('stone_veneer', ring, zg - 0.35, zf - SLAB_EDGE, holes=holes, cap_top=False, cap_bottom=False)
+        gn = g.buffer(0.04, join_style=2)
+        geo.extrude('bluestone', np.array(gn.exterior.coords)[:-1], zf - SLAB_EDGE, zf,
                     holes=[np.array(h.coords)[:-1] for h in gn.interiors])
 
 
@@ -819,7 +819,7 @@ def front_porch(geo, eaves):
     el, er = np.array(cols[5]), np.array(cols[6])
     beam(geo, el, er, COL_TOP, top, t=0.34)
     t3, n3 = np.array([t[0], t[1], 0.0]), np.array([n[0], n[1], 0.0])
-    edge = M + n * (ENTRY_EDGE - FASCIA_T - 0.03)                    # the porch floor's nosing under the gable
+    edge = M + n * (ENTRY_EDGE - 0.04)                               # the porch floor's nosing under the gable
     zfoot = float(plan.ground_z(*(edge - n * 1.30)))                 # the walk at the bottom step (ground zone)
     rise = (zf - zfoot) / 4                                          # 4 equal risers from the walk as built
     hw = 1.25 - 0.30
@@ -858,7 +858,7 @@ def porch_soffit(geo, fp, planes):
         r, n, L = _frame(a, b)
         o = n[:2] * 0.151
         a2, b2 = a + o - r[:2] * 0.15, b + o + r[:2] * 0.15
-        prof = wall_top(p1, a2, b2, top - 0.01)
+        prof = wall_top(p1, a2, b2, top - 0.01, default=top - 0.01)     # no roof over it: no frieze
         L2 = float(np.linalg.norm(b2 - a2))
         P3 = lambda s_, z_: np.array([a2[0], a2[1], 0.0]) + r * s_ + np.array([0, 0, z_])     # noqa: E731
         ring = [P3(0, top - 0.01), P3(L2, top - 0.01)] + [P3(s_, min(z_, top + 0.55)) for s_, z_ in reversed(prof)]
