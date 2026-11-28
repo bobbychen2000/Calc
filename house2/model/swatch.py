@@ -176,6 +176,69 @@ def wrap(a, ov_min, ov_max, period=None):
     return J[:, s:s + P]
 
 
+def vjoin(A, B, ov):
+    """A above B, sharing ov rows cut along their best seam."""
+    T = (1, 0, 2)
+    return np.transpose(join(np.transpose(A, T), np.transpose(B, T), ov), T)
+
+
+def _cut(e):
+    """The minimum-error top-to-bottom path through an error strip e (h, ov): a soft mask, 1 left of the path."""
+    h, ov = e.shape
+    c = e.copy()
+    for y in range(1, h):
+        p = c[y - 1]
+        c[y] += np.minimum(p, np.minimum(np.r_[p[1:], np.inf], np.r_[np.inf, p[:-1]]))
+    path = np.zeros(h, int)
+    path[-1] = int(np.argmin(c[-1]))
+    for y in range(h - 2, -1, -1):
+        x = path[y + 1]
+        lo, hi = max(0, x - 1), min(ov, x + 2)
+        path[y] = lo + int(np.argmin(c[y, lo:hi]))
+    return (np.arange(ov)[None, :] < path[:, None]).astype(float)
+
+
+def quilt(src, W, H, B, ov, seed=1, aug=False, cands=1500, best=6):
+    """Image quilting (Efros & Freeman): a W x H texture laid from B x B blocks of the source(s), each block chosen at
+    random among the `best` that continue their neighbours (overlap ov) and cut in along the minimum-error seam.  A
+    larger texture than the photo gives: the tile's period grows, so a distinct stone or leaf no longer marks a lattice.
+    src: one array or a list; aug: also the sources turned 90 / 180 / 270 deg and mirrored (patterns without a grain)."""
+    import cv2
+    rng = np.random.default_rng(seed)
+    S = list(src) if isinstance(src, (list, tuple)) else [src]
+    if aug:
+        S = [np.rot90(a, k) for a in S for k in range(4)] + [np.rot90(a[:, ::-1], k) for a in S for k in range(4)]
+    S = [np.ascontiguousarray(a, np.float32) for a in S if a.shape[0] > B and a.shape[1] > B]
+    step = B - ov
+    nx, ny = int(np.ceil((W - ov) / step)), int(np.ceil((H - ov) / step))
+    out = np.zeros((ny * step + ov, nx * step + ov, 3), np.float32)
+    for by in range(ny):
+        for bx in range(nx):
+            y0, x0 = by * step, bx * step
+            si = rng.integers(len(S), size=cands)
+            err = np.zeros(cands)
+            blocks = []
+            for j in range(cands):
+                a = S[si[j]]
+                yy, xx = rng.integers(a.shape[0] - B), rng.integers(a.shape[1] - B)
+                blk = a[yy:yy + B, xx:xx + B]
+                if bx:
+                    err[j] += ((blk[:, :ov] - out[y0:y0 + B, x0:x0 + ov]) ** 2).sum()
+                if by:
+                    err[j] += ((blk[:ov, :] - out[y0:y0 + ov, x0:x0 + B]) ** 2).sum()
+                blocks.append(blk)
+            blk = blocks[int(rng.choice(np.argsort(err)[:best]))]
+            m = np.ones((B, B))
+            if bx:
+                m[:, :ov] = np.minimum(m[:, :ov], 1 - _cut(((blk[:, :ov] - out[y0:y0 + B, x0:x0 + ov]) ** 2).sum(-1)))
+            if by:
+                m[:ov, :] = np.minimum(m[:ov, :], (1 - _cut(((blk[:ov, :] - out[y0:y0 + ov, x0:x0 + B]) ** 2).sum(-1).T)).T)
+            if bx or by:
+                m = cv2.GaussianBlur(m, (0, 0), 1.0)
+            out[y0:y0 + B, x0:x0 + B] = blk * m[..., None] + out[y0:y0 + B, x0:x0 + B] * (1 - m[..., None])
+    return out[:H, :W].astype(float)
+
+
 def diag_tile(t):
     """A square tile (period P both ways) whose pattern lies at 45 deg -> the world-aligned tile of side P sqrt(2)."""
     import cv2
@@ -218,7 +281,8 @@ def quad_rectify(src, quad, w_m, h_m, ppm):
     return cv2.warpPerspective(src, M, (W, H), flags=cv2.INTER_CUBIC).astype(float)
 
 
-PHOTOS = dict(p18='photos/p18_150f57.jpg', p29='photos/p29_ddf5dc.jpg', p28='photos/p28_7ae0dd.jpg', p21='photos/p21_160d78.jpg',
+PHOTOS = dict(p18='photos/p18_150f57.jpg', p22='photos/p22_50e8b3.jpg', p26='photos/p26_cacb52.jpg', p19='photos/p19_1e145e.jpg',
+              p23='photos/p23_e4717a.jpg', p20='photos/p20_f249da.jpg', p27='photos/p27_8c90d5.jpg', p29='photos/p29_ddf5dc.jpg', p28='photos/p28_7ae0dd.jpg', p21='photos/p21_160d78.jpg',
               p01='photos/p01_768294.jpg', hero='photos/hero_721b4a.jpg', p24='photos/p24_5e2477.jpg')
 
 # name, materials that wear it, pieces (joined side by side), texels per metre, light-gradient scale (m), contrast,
@@ -228,10 +292,14 @@ PHOTOS = dict(p18='photos/p18_150f57.jpg', p29='photos/p29_ddf5dc.jpg', p28='pho
 #        patch centre) + size (w, h metres) + rot (deg, turns u / v in the plane);  or photo + quad + size.
 # expect: the material the ray must hit (a moved wall or roof is reported, the swatch skipped).
 SWATCHES = [
-    # terrace flagstone: sunlit slabs between the pool and the camera of p21; joints at 45 deg (the pool's axes)
-    dict(name='flagstone', mats=['bluestone'], ppm=96, delight=1.6, contrast=1.6, sat=1.3, albedo=(0.5, 0.48, 0.44),
-         diag=True, expect='bluestone',
-         pieces=[dict(photo='p21', px=(700, 1300), off=(-0.45, 0.56), size=(2.6, 3.5), rot=45)]),
+    # terrace flagstone, laid square to the pool: the looks lane samples it in plan turned by worldUV 0.80 rad (45.84 deg),
+    # so the tile is cut in that frame (u' along the pool's width, v' along its length; plane pieces in metres there).
+    # Three sunlit fields of the ground photos (64-300 px/m): p21's west terrace, p22's near band, p26's pool end
+    dict(name='flagstone', mats=['bluestone'], ppm=64, delight=1.2, contrast=1.25, sat=1.25, clip=(0.55, 1.6),
+         albedo=(0.5, 0.48, 0.44), expect='bluestone',
+         cols=[[dict(photo='p21', plane=dict(z=0.0, rot=45.84, u=(-6.2, -3.75), v=(-6.2, 0.0)))],
+               [dict(photo='p22', plane=dict(z=0.0, rot=45.84, u=(-5.8, -3.5), v=(-2.5, 1.3))),
+                dict(photo='p26', plane=dict(z=0.0, rot=45.84, u=(-1.8, 0.5), v=(6.45, 8.0)))]]),
     # pool coping: the pale stones of the near pool edge in p21 (u along the edge)
     dict(name='coping', mats=['coping'], ppm=128, delight=0.8, contrast=0.8, albedo=(0.58, 0.57, 0.55),
          pieces=[dict(photo='p21', px=(700, 1300), off=(1.88, -1.227), size=(1.6, 0.26), rot=135)]),
@@ -282,9 +350,12 @@ SWATCHES = [
 ]
 
 
-def make(cams, parts=None, debug=None):
-    """Cut every swatch: returns {material: {image, size}}.  debug: a folder that also receives the raw patches."""
+def make(cams, parts=None, debug=None, prefix='swatch_', only=None):
+    """Cut every swatch: returns {material: {image, size}}.  debug: a folder that also receives the raw patches;
+    prefix: the files' name prefix in out/ (a scratch run writes its own, the shared files stay as built);
+    only: the names of the swatches to cut (all by default)."""
     from PIL import Image
+    import cv2
     scene = Scene(parts) if parts is not None else Scene.cached()
     srcs, out = {}, {}
 
@@ -294,54 +365,105 @@ def make(cams, parts=None, debug=None):
             srcs[k] = np.asarray(Image.open(p).convert('RGB')) if os.path.exists(p) else None
         return srcs[k]
 
-    for S in SWATCHES:
-        ppm, strips = S['ppm'], []
-        for pc in S['pieces']:
-            src = photo(pc['photo'])
-            if src is None:
-                break
+    def piece(S, pc, n):
+        """One rectified, evened-out piece (mean 128), or None (photo missing, the surface not where it should be)."""
+        ppm, src = S['ppm'], photo(pc['photo'])
+        if src is None:
+            return None
+        cam = cams.get(PHOTOS[pc['photo']])
+        if 'quad' in pc:
             w, h = pc['size']
-            if 'quad' in pc:
-                a = quad_rectify(src, pc['quad'], w, h, ppm)
-            else:
-                cam = cams.get(PHOTOS[pc['photo']])
-                hit = scene.cast(cam, pc['px']) if cam is not None else None
-                if hit is None or (S.get('expect') and hit['mat'] != S['expect']):
-                    print('swatch %s: the pixel %s of %s shows %s' % (S['name'], pc['px'], pc['photo'], hit and hit['mat']))
-                    break
-                o, eu, ev = rect_axes(hit, 1.0, 1.0, pc.get('rot', 0.0))
-                c = np.asarray(hit['p'], float) + pc['off'][0] * eu + pc['off'][1] * ev
-                a = rectify(src, cam, c - eu * w / 2 - ev * h / 2, eu, ev, w, h, ppm)
-            if debug:
-                Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).save(
-                    os.path.join(debug, 'raw_%s_%d.jpg' % (S['name'], len(strips))), quality=92)
-            if S.get('blur'):                      # a very dark source: its 8-bit steps and chroma noise
-                import cv2
-                a = cv2.GaussianBlur(a, (0, 0), S['blur'])
-            a = delight(a, S['delight'] * ppm)
-            strips.append(a / a.reshape(-1, 3).mean(0) * 128.0)
+            a = quad_rectify(src, pc['quad'], w, h, ppm)
+        elif 'plane' in pc:                     # a level rectangle in the frame turned by rot (deg) about +Z
+            P = pc['plane']
+            r = np.radians(P.get('rot', 0.0))
+            eu, ev = np.array([np.cos(r), np.sin(r), 0.0]), np.array([-np.sin(r), np.cos(r), 0.0])
+            (u0, u1), (v0, v1) = P['u'], P['v']
+            o = u0 * eu + v0 * ev + [0.0, 0.0, P['z']]
+            c = o + eu * (u1 - u0) / 2 + ev * (v1 - v0) / 2
+            hit = scene.ray(cam['C'], c - np.asarray(cam['C'], float)) if cam is not None else None
+            if hit is None or (S.get('expect') and hit['mat'] != S['expect']) or abs(hit['p'][2] - P['z']) > 0.15:
+                print('swatch %s: the plane piece %d of %s shows %s' % (S['name'], n, pc['photo'], hit and (hit['mat'], round(float(hit['p'][2]), 2))))
+                return None
+            a = rectify(src, cam, o, eu, ev, u1 - u0, v1 - v0, ppm)
         else:
-            a = strips[0]
-            for b in strips[1:]:
+            w, h = pc['size']
+            hit = scene.cast(cam, pc['px']) if cam is not None else None
+            if hit is None or (S.get('expect') and hit['mat'] != S['expect']):
+                print('swatch %s: the pixel %s of %s shows %s' % (S['name'], pc['px'], pc['photo'], hit and hit['mat']))
+                return None
+            o, eu, ev = rect_axes(hit, 1.0, 1.0, pc.get('rot', 0.0))
+            c = np.asarray(hit['p'], float) + pc['off'][0] * eu + pc['off'][1] * ev
+            a = rectify(src, cam, c - eu * w / 2 - ev * h / 2, eu, ev, w, h, ppm)
+        dark = (a.max(-1) < 1).mean()
+        if dark > 0.003:
+            print('swatch %s: piece %d of %s is %.1f %% outside the photograph' % (S['name'], n, pc['photo'], 100 * dark))
+        if pc.get('turn'):
+            a = np.rot90(a, pc['turn'])
+        if pc.get('flip'):
+            a = a[:, ::-1]
+        if debug:
+            Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).save(
+                os.path.join(debug, 'raw_%s_%d.jpg' % (S['name'], n)), quality=92)
+        if S.get('blur'):                      # a very dark source: its 8-bit steps and chroma noise
+            a = cv2.GaussianBlur(a, (0, 0), S['blur'])
+        a = delight(np.ascontiguousarray(a), S['delight'] * ppm)
+        return a / a.reshape(-1, 3).mean(0) * 128.0
+
+    for S in SWATCHES:
+        if only and S['name'] not in only:
+            continue
+        ppm = S['ppm']
+        cols = S.get('cols') or [[pc] for pc in S['pieces']]       # columns of pieces, each stacked top to bottom
+        n, ok, C = 0, True, []
+        for col in cols:
+            ps = []
+            for pc in col:
+                a = piece(S, pc, n)
+                n += 1
+                if a is None:
+                    ok = False
+                    break
+                ps.append(a)
+            if not ok:
+                break
+            C.append(ps)
+        if not ok:
+            continue
+        ov = max(8, int(0.1 * ppm))
+        if S.get('quilt'):                         # a larger texture laid from blocks of every piece
+            Q = S['quilt']
+            a = quilt([p for ps in C for p in ps], int(Q['size'][0] * ppm), int(Q['size'][1] * ppm), int(Q['block'] * ppm),
+                      int(Q.get('overlap', 0.25 * Q['block']) * ppm), Q.get('seed', 1), Q.get('aug', False))
+        else:
+            cc = []
+            for ps in C:
+                a = ps[0]
+                for b in ps[1:]:
+                    ww = min(a.shape[1], b.shape[1])
+                    a = vjoin(a[:, :ww], b[:, :ww], ov)
+                cc.append(a)
+            a = cc[0]
+            for b in cc[1:]:
                 hh = min(a.shape[0], b.shape[0])
-                a = join(a[:hh], b[:hh], max(8, int(0.1 * ppm)))
-            H, W = a.shape[:2]
-            fo = S.get('overlap', 0.16)
-            t = wrap(a, max(6, int(0.5 * fo * W)), max(8, int(fo * W)))
-            if S.get('diag'):                       # square: the second period forced to the first
-                P = t.shape[1]
-                if H - P < 6:
-                    print('swatch %s: too short for a square tile' % S['name'])
-                    continue
-                t = wrap(np.transpose(t[:min(H, int(P * 1.25))], (1, 0, 2)), 0, 0, period=P).transpose(1, 0, 2)
-                t = diag_tile(t)
-            else:
-                t = wrap(np.transpose(t, (1, 0, 2)), max(6, int(0.5 * fo * H)), max(8, int(fo * H))).transpose(1, 0, 2)
-            img = finish(t, S['albedo'], S.get('contrast', 1.0), S.get('sat', 1.0), S.get('clip'))
-            name = 'swatch_%s.jpg' % S['name']
-            Image.fromarray(img).save(os.path.join(HERE, 'out', name), quality=90)
-            size = [round(img.shape[1] / ppm, 4), round(img.shape[0] / ppm, 4)]
-            for m in S['mats']:
-                out[m] = dict(image=name, size=size)
-            print('swatch %-11s %4d x %4d px  %.2f x %.2f m  -> %s' % (S['name'], img.shape[1], img.shape[0], size[0], size[1], ', '.join(S['mats'])))
+                a = join(a[:hh], b[:hh], ov)
+        H, W = a.shape[:2]
+        fo = S.get('overlap', 0.16)
+        t = wrap(a, max(6, int(0.5 * fo * W)), max(8, int(fo * W)))
+        if S.get('diag'):                       # square: the second period forced to the first
+            P = t.shape[1]
+            if H - P < 6:
+                print('swatch %s: too short for a square tile' % S['name'])
+                continue
+            t = wrap(np.transpose(t[:min(H, int(P * 1.25))], (1, 0, 2)), 0, 0, period=P).transpose(1, 0, 2)
+            t = diag_tile(t)
+        else:
+            t = wrap(np.transpose(t, (1, 0, 2)), max(6, int(0.5 * fo * H)), max(8, int(fo * H))).transpose(1, 0, 2)
+        img = finish(t, S['albedo'], S.get('contrast', 1.0), S.get('sat', 1.0), S.get('clip'))
+        name = '%s%s.jpg' % (prefix, S['name'])
+        Image.fromarray(img).save(os.path.join(HERE, 'out', name), quality=90)
+        size = [round(img.shape[1] / ppm, 4), round(img.shape[0] / ppm, 4)]
+        for m in S['mats']:
+            out[m] = dict(image=name, size=size)
+        print('swatch %-11s %4d x %4d px  %.2f x %.2f m  -> %s' % (S['name'], img.shape[1], img.shape[0], size[0], size[1], ', '.join(S['mats'])))
     return out

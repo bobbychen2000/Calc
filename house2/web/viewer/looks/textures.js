@@ -286,6 +286,11 @@ export function flatNR(ctx) {
 // ------------------------------------------------------------------------------------------------ material
 const FRAG_PARS = `
 varying vec2 vSurfUv;
+#ifdef SURF_HTINT
+varying float vSurfY;
+uniform vec2 surfHT;
+uniform vec3 surfHTk;
+#endif
 #ifdef SURF_MACRO
 uniform sampler2D surfNoise;
 uniform vec4 surfMacro;      // scale 1, scale 2 (1 / m), brightness amount, tint amount
@@ -299,11 +304,12 @@ uniform float surfDetailRough;
 #ifdef SURF_SWATCH
 uniform sampler2D surfSwatch;   // a photo patch that takes over from the drawn pattern with distance
 uniform vec4 surfSwatchP;       // uv scale (1 / m) x, y; fade from .. to (m from the eye)
+uniform vec3 surfNearK;         // the drawn look's tone matched to the patch's mean (surface() swatchMatch)
 #endif
 `;
 const FRAG_ALBEDO = `
 #ifdef SURF_SWATCH
-diffuseColor.rgb = mix( diffuseColor.rgb, texture2D( surfSwatch, vSurfUv * surfSwatchP.xy ).rgb, smoothstep( surfSwatchP.z, surfSwatchP.w, length( vViewPosition ) ) );
+diffuseColor.rgb = mix( diffuseColor.rgb * surfNearK, texture2D( surfSwatch, vSurfUv * surfSwatchP.xy ).rgb, smoothstep( surfSwatchP.z, surfSwatchP.w, length( vViewPosition ) ) );
 #endif
 #ifdef SURF_MACRO
 {
@@ -317,6 +323,9 @@ diffuseColor.rgb = mix( diffuseColor.rgb, texture2D( surfSwatch, vSurfUv * surfS
 #ifdef SURF_DETAIL
 vec4 surfDt = texture2D( surfDetail, vSurfUv * surfDetailP.xy );
 diffuseColor.rgb *= 1.0 + surfDetailP.z * ( surfDt.b * 2.0 - 1.0 );
+#endif
+#ifdef SURF_HTINT
+diffuseColor.rgb *= mix( surfHTk, vec3( 1.0 ), smoothstep( surfHT.x, surfHT.y, vSurfY ) );
 #endif
 `;
 const FRAG_ROUGH = `
@@ -338,13 +347,41 @@ const FRAG_NORMAL = `
   mapN.z = sqrt( max( 1.0 - dot( mapN.xy, mapN.xy ), 0.04 ) );
   normal = normalize( tbn * mapN );
 #endif
-#ifdef SURF_WORLD_UV
+#if defined( SURF_WORLD_UV ) || defined( SURF_LEVEL )
 {      // paving laid on a faceted terrain: the stones lie level, the facets of the mesh should not show in the light
   vec3 surfUp = normalize( ( viewMatrix * vec4( 0.0, 1.0, 0.0, 0.0 ) ).xyz );
   if ( dot( nonPerturbedNormal, surfUp ) > 0.6 ) normal = normalize( normal + 0.85 * ( surfUp - nonPerturbedNormal ) );
 }
 #endif
 `;
+
+/** mean LINEAR colour of a texture's image (DataTexture bytes, a canvas or a loaded image), or null; cached per texture */
+const MEANS = new WeakMap();
+export function meanLinear(t) {
+  if (!t || !t.image) return null;
+  if (MEANS.has(t)) return MEANS.get(t);
+  let px = null;
+  const im = t.image;
+  try {
+    if (im.data) px = im.data;
+    else {
+      const n = 96, c = document.createElement('canvas');
+      c.width = c.height = n;
+      const g = c.getContext('2d', { willReadFrequently: true });
+      g.drawImage(im, 0, 0, n, n);
+      px = g.getImageData(0, 0, n, n).data;
+    }
+  } catch (e) { return null; }
+  const srgb = t.colorSpace === THREE.SRGBColorSpace;
+  const dec = (v) => { v /= 255; return srgb ? (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)) : v; };
+  const LUTD = new Float32Array(256); for (let i = 0; i < 256; i++) LUTD[i] = dec(i);
+  const s = [0, 0, 0], step = Math.max(1, Math.floor(px.length / 4 / 65536));
+  let n = 0;
+  for (let i = 0; i < px.length; i += 4 * step) { s[0] += LUTD[px[i]]; s[1] += LUTD[px[i + 1]]; s[2] += LUTD[px[i + 2]]; n++; }
+  const r = n ? s.map((v) => v / n) : null;
+  MEANS.set(t, r);
+  return r;
+}
 
 /** MeshStandardMaterial of a surface.
  *  o = { color: [r, g, b] linear | hex, roughness, metalness, map, nr (NR pack), normalScale,
@@ -377,27 +414,45 @@ export function surface(ctx, o) {
   if (o.swatchFade) {      // [from, to] metres: ../materials.js applySwatch lays the photo patch in here instead of over the map
     U.surfSwatch = { value: null };
     U.surfSwatchP = { value: new THREE.Vector4(1, 1, o.swatchFade[0], o.swatchFade[1]) };
+    U.surfNearK = { value: new THREE.Vector3(1, 1, 1) };
     m.userData.swatchFade = (t, size) => {
       U.surfSwatch.value = t; U.surfSwatchP.value.x = 1 / size[0]; U.surfSwatchP.value.y = 1 / size[1];
+      // TONE MATCH: the drawn look up close takes the patch's mean colour (o.swatchMatch = how far, 0 .. 1, in log
+      // terms), so the hand-over at the fade distance is not a step in tone whatever albedo the swatch lane sets
+      const k = o.swatchMatch ?? 1;
+      if (k > 0) {
+        const far = meanLinear(t), near = m.map ? meanLinear(m.map) : [1, 1, 1], c = [m.color.r, m.color.g, m.color.b];
+        if (far && near) {
+          const r = [0, 1, 2].map((i) => Math.min(4, Math.max(0.25, far[i] / Math.max(1e-4, near[i] * c[i]))) ** k);
+          U.surfNearK.value.set(r[0], r[1], r[2]);
+          m.userData.swatchTone = { far, near: near.map((v, i) => v * c[i]), k: r };
+        }
+      }
       m.defines.SURF_SWATCH = ''; m.needsUpdate = true;
     };
+  }
+  if (o.heightTint) {      // { y0, y1, k: [r, g, b] }: the colour x k below world height y0 (m), x 1 above y1
+    m.defines.SURF_HTINT = '';
+    U.surfHT = { value: new THREE.Vector2(o.heightTint.y0, o.heightTint.y1) };
+    U.surfHTk = { value: new THREE.Vector3(...o.heightTint.k) };
   }
   if (o.worldUV !== undefined) {      // worldUV = the pattern's turn in plan (radians, from +X toward +Y of the model)
     m.defines.SURF_WORLD_UV = '';
     U.surfWorldRot = { value: new THREE.Vector2(Math.cos(o.worldUV), Math.sin(o.worldUV)) };
   }      // metres in plan instead of the mesh's UVs (ground surfaces)
+  if (o.level) m.defines.SURF_LEVEL = '';      // the terrain's facets kept out of the light, with the mesh's own UVs
   m.userData.surf = U;
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, U);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <uv_pars_vertex>', '#include <uv_pars_vertex>\nvarying vec2 vSurfUv;\n#ifdef SURF_WORLD_UV\nuniform vec2 surfWorldRot;\n#endif')
-      .replace('#include <uv_vertex>', '#include <uv_vertex>\nvSurfUv = uv;\n#ifdef SURF_WORLD_UV\nif ( abs( normalize( mat3( modelMatrix ) * normal ).y ) > 0.6 ) { vec4 surfW = modelMatrix * vec4( position, 1.0 ); vSurfUv = vec2( surfWorldRot.x * surfW.x - surfWorldRot.y * surfW.z, - surfWorldRot.y * surfW.x - surfWorldRot.x * surfW.z );\n#ifdef USE_MAP\nvMapUv = ( mapTransform * vec3( vSurfUv, 1.0 ) ).xy;\n#endif\n#ifdef USE_NORMALMAP\nvNormalMapUv = ( normalMapTransform * vec3( vSurfUv, 1.0 ) ).xy;\n#endif\n}\n#endif');
+      .replace('#include <uv_pars_vertex>', '#include <uv_pars_vertex>\nvarying vec2 vSurfUv;\n#ifdef SURF_HTINT\nvarying float vSurfY;\n#endif\n#ifdef SURF_WORLD_UV\nuniform vec2 surfWorldRot;\n#endif')
+      .replace('#include <uv_vertex>', '#include <uv_vertex>\nvSurfUv = uv;\n#ifdef SURF_HTINT\nvSurfY = ( modelMatrix * vec4( position, 1.0 ) ).y;\n#endif\n#ifdef SURF_WORLD_UV\nif ( abs( normalize( mat3( modelMatrix ) * normal ).y ) > 0.6 ) { vec4 surfW = modelMatrix * vec4( position, 1.0 ); vSurfUv = vec2( surfWorldRot.x * surfW.x - surfWorldRot.y * surfW.z, - surfWorldRot.y * surfW.x - surfWorldRot.x * surfW.z );\n#ifdef USE_MAP\nvMapUv = ( mapTransform * vec3( vSurfUv, 1.0 ) ).xy;\n#endif\n#ifdef USE_NORMALMAP\nvNormalMapUv = ( normalMapTransform * vec3( vSurfUv, 1.0 ) ).xy;\n#endif\n}\n#endif');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <map_pars_fragment>', '#include <map_pars_fragment>\n' + FRAG_PARS)
       .replace('#include <map_fragment>', '#include <map_fragment>\n' + FRAG_ALBEDO)
       .replace('#include <roughnessmap_fragment>', FRAG_ROUGH)
       .replace('#include <normal_fragment_maps>', FRAG_NORMAL);
   };
-  m.customProgramCacheKey = () => 'surfaces-2';
+  m.customProgramCacheKey = () => 'surfaces-3';
   return m;
 }

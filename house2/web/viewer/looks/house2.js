@@ -8,13 +8,18 @@
 // PATTERN MODULES (metres, the kit's UVs):
 //   siding_shingle   cedar shingles, 0.140 exposure (butts at v = k * 0.140), shingles 0.09 - 0.22 wide; tile 1.6 x 1.12
 //   bluestone        full-range flagstone, random ashlar on a 0.305 grid (pieces up to 1.22 x 0.915), 12 mm joints; tile 3.66
-//   fieldstone       dry-stacked ledge stone, courses 0.10 - 0.20; tile 2.4 x 1.2
+//   fieldstone       the retaining walls: grey split-face block in 0.10 / 0.05 courses (p18, p23, p24); tile 2.4 x 1.2
+//   stone_veneer     piers, chimney, house base: tan / grey / brown dry-stacked ledge stone, courses 0.05 - 0.10 (p01, hero)
 //   yard_fieldstone  the fireplace's ashlar veneer, pieces 0.10 - 0.40; tile 1.6
 //   solar            156 mm cells; spa_mosaic 25 mm glass tiles; vent_louvre blades every 45 mm
 // PHOTO SWATCHES (../materials.js applySwatch): the patches are ~1 cm a pixel -- right from the drone, a blur at eye
 // level.  Looks that draw their own pieces pass `swatchFade: [from, to]` (metres from the eye): the drawn stones /
-// shingles / chips up close, the photo patch beyond.  `worldUV` lays flagstone in plan (square to the pool) whatever
-// the terrain mesh's UVs are, and keeps the mesh's facets out of its shading.  stone_veneer keeps its own look only.
+// shingles / chips up close, the photo patch beyond -- and the drawn look takes the patch's MEAN colour
+// (textures.js surface() swatchMatch), so the hand-over is never a step in tone whatever albedo model/swatch.py sets;
+// the colours below then only set the look's own variation and its tone where no patch exists (white-model builds,
+// ?swatch=0).  `worldUV` lays flagstone in plan (square to the pool) whatever the terrain mesh's UVs are, and keeps
+// the mesh's facets out of its shading.  Each stone has its own patch now (fieldstone = the grey block of p18,
+// yard_fieldstone / stone_veneer = the fireplace's stone).
 // PLANTING: the zone's crowns are flat-shaded lumpy blobs without usable UVs.  `foliage` shades them in WORLD space
 // (three-plane projection): a field of clumps bends the normal and opens dark hollows, a tile of leaves gives the
 // grain, and the faces that turn away from the eye are eaten into by the leaf pattern (the blob is drawn two-sided,
@@ -50,12 +55,12 @@ const C = {
   timber: [0.34, 0.24, 0.13],
   edging: [0.055, 0.047, 0.04],
   timberDark: [0.050, 0.036, 0.027],       // the arbor's dark stain
-  woodGrey: [0.15, 0.125, 0.105],            // weathered cedar of the play structure
-  teakGrey: [0.21, 0.21, 0.21],           // silvered teak (p24 78 80 88 in the shade)
-  picket: [0.23, 0.20, 0.165],
+  woodGrey: [0.155, 0.135, 0.115],         // weathered cedar of the play structure: silver-grey boards, darker brown-grey ones (p19, p22)
+  teakGrey: [0.29, 0.28, 0.265],          // silvered teak: as light as the cushions (p23 162 162 160 / 138 135 137, p24 130 132 141 / 140 143 154)
+  picket: [0.25, 0.215, 0.175],           // the garden's pickets: browner and newer than the play set (p28)
   slide: [0.030, 0.19, 0.095],
   umbrella: [0.10, 0.10, 0.105],
-  cushion: [0.17, 0.17, 0.175],
+  cushion: [0.30, 0.295, 0.29],           // mid-light grey canvas (p23, p24; f134 a shade darker in the video)
   rope: [0.52, 0.48, 0.38],
 };
 
@@ -71,6 +76,10 @@ function metal(ctx, color, roughness, metalness) {
 }
 const timberLook = (ctx, color, roughness = 0.85, amount = 0.3) => surface(ctx, { color, roughness,
   detail: { kind: 'fibre', size: 0.17, albedo: amount, normal: 0.4 }, macro: { s1: 1.9, s2: 7.3, amount: 0.16 } });
+// weathered outdoor wood: silver-grey boards beside browner, darker ones, streaky grain (p19's play set, p23 / p24 teak)
+const weathered = (ctx, color, roughness = 0.9) => surface(ctx, { color, roughness,
+  detail: { kind: 'fibre', size: 0.13, sizeV: 0.6, albedo: 0.55, normal: 0.5 },
+  macro: { s1: 0.38, s2: 1.45, amount: 0.32, tint: [1.18, 1.0, 0.82], tintAmount: 0.45 } });
 
 // ------------------------------------------------------------------------------------------------ cedar shingle siding
 function cedarTex(ctx) {
@@ -176,21 +185,44 @@ const FIRE = {
   bevel: 0.012, bevelDepth: 0.004, round: 2, chip: 1.0, cleft: 0.006, lip: 0.012, tilt: 0.004, cloud: 0.14, grain: 0.1, speck: 0.04, rough: 0.9, toneVar: 0.16, vein: 0.5,
   palette: [[[0.40, 0.33, 0.25], 0.30], [[0.33, 0.24, 0.17], 0.14], [[0.33, 0.32, 0.31], 0.22], [[0.47, 0.41, 0.32], 0.14], [[0.24, 0.20, 0.17], 0.10], [[0.38, 0.36, 0.33], 0.10]],
 };
-// retaining walls: dry-stacked grey-brown ledge stone in thin courses (p18, p22, p24)
+// courses of stones in units of 5 cm: rows = course heights, lengths lo .. hi units, a random start per course
+const courses = (rows, lo, hi) => (rnd) => {
+  const out = [];
+  let y = 0;
+  for (const hh of rows) {
+    let x = Math.floor(rnd() * 6);
+    const end = x + 48;
+    while (x < end) { let len = lo + Math.floor(rnd() * (hi - lo + 1)); if (end - x - len < lo) len = end - x; out.push({ x0: x, x1: x + len, y0: y, y1: y + hh }); x += len; }
+    y += hh;
+  }
+  return out;
+};
+// piers, chimney, house base: dry-stacked ledge stone in thin courses, tan / grey / brown, low contrast (p01 piers in
+// sun, the hero's in the porch shade: small muted grey-brown stones)
 const LEDGE = {
-  seed: 404, tile: 2.4, tileV: 1.2, units: 48, layout: (rnd) => {      // units of 5 cm: courses 5 - 10 cm, stones 15 - 55 cm
-    const rows = [2, 1, 2, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 1, 2], out = [];
-    let y = 0;
-    for (const hh of rows) {
-      let x = Math.floor(rnd() * 6);
-      const end = x + 48;
-      while (x < end) { let len = 3 + Math.floor(rnd() * 9); if (end - x - len < 3) len = end - x; out.push({ x0: x, x1: x + len, y0: y, y1: y + hh }); x += len; }
-      y += hh;
-    }
-    return out;
-  }, joint: 0.005, jointColor: [0.02, 0.018, 0.016], jointDepth: 0.02,
-  bevel: 0.01, bevelDepth: 0.005, round: 1.5, chip: 1.0, cleft: 0.006, lip: 0.012, tilt: 0.003, cloud: 0.12, grain: 0.1, speck: 0.04, rough: 0.92, toneVar: 0.16, vein: 0.35,
-  palette: [[[0.185, 0.165, 0.145], 0.36], [[0.215, 0.18, 0.145], 0.22], [[0.155, 0.155, 0.16], 0.20], [[0.25, 0.22, 0.185], 0.12], [[0.12, 0.105, 0.095], 0.10]],
+  seed: 404, tile: 2.4, tileV: 1.2, units: 48, layout: courses([2, 1, 2, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 1, 2], 3, 11),
+  joint: 0.005, jointColor: [0.035, 0.03, 0.026], jointDepth: 0.02,
+  bevel: 0.01, bevelDepth: 0.005, round: 1.5, chip: 1.0, cleft: 0.006, lip: 0.012, tilt: 0.003, cloud: 0.10, grain: 0.09, speck: 0.04, rough: 0.92, toneVar: 0.12, vein: 0.3,
+  palette: [[[0.25, 0.215, 0.17], 0.30], [[0.21, 0.19, 0.165], 0.24], [[0.20, 0.195, 0.19], 0.20], [[0.29, 0.24, 0.18], 0.12], [[0.16, 0.14, 0.12], 0.14]],
+};
+// retaining walls: grey split-face concrete block, 10 cm courses with a few 5 cm ones, units 20 - 60 cm, one grey with
+// a little warm / cool drift; the face is broken stone, so the relief is strong and the joints thin (p18, p23, p24)
+const BLOCK = {
+  seed: 818, tile: 2.4, tileV: 1.2, units: 48, layout: courses([2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2, 1, 2, 1], 4, 12),
+  joint: 0.004, jointColor: [0.03, 0.03, 0.028], jointDepth: 0.012,
+  bevel: 0.006, bevelDepth: 0.004, round: 1.0, chip: 1.4, cleft: 0.009, lip: 0.006, tilt: 0.002, cloud: 0.10, grain: 0.16, speck: 0.08, rough: 0.95, toneVar: 0.10, vein: 0.15,
+  palette: [[[0.20, 0.195, 0.185], 0.40], [[0.18, 0.172, 0.16], 0.28], [[0.22, 0.215, 0.205], 0.18], [[0.165, 0.165, 0.168], 0.14]],
+};
+// thermal-finish bluestone of the front steps and porch floor: even blue-grey slabs 0.61 wide (hero: the treads darker
+// and bluer than the full-range walk below them)
+const THERMAL = {
+  seed: 610, tile: 2.44, units: 8, layout: (rnd) => {      // units of 0.305 m: rows of 2, slabs 2 - 4 long
+    const out = [];
+    for (let y = 0; y < 8; y += 2) { let x = (y / 2) % 2 ? 1 : 0; x -= 2; while (x < 6) { const l = 2 + Math.floor(rnd() * 3); out.push({ x0: Math.max(0, x), x1: Math.min(8, x + l), y0: y, y1: y + 2 }); x += l; } }
+    return out.filter((r) => r.x1 > r.x0);
+  }, joint: 0.006, jointColor: [0.09, 0.09, 0.09], jointDepth: 0.003,
+  bevel: 0.004, bevelDepth: 0.0008, round: 0.5, cleft: 0.0005, lip: 0.0008, cloud: 0.08, grain: 0.1, speck: 0.05, rough: 0.85, toneVar: 0.08, vein: 0.25,
+  palette: [[[0.20, 0.215, 0.235], 0.5], [[0.18, 0.19, 0.205], 0.3], [[0.225, 0.23, 0.235], 0.2]],
 };
 const FIREBRICK = {
   seed: 5, size: 256, tile: 0.92, units: 16, rows: 12, choices: [4], joint: 0.009, jointColor: [0.20, 0.18, 0.16], jointDepth: 0.003,
@@ -548,16 +580,20 @@ export function register(lib) {
   const jointed = (m, ctx) => { m.userData.swatchNR = flatNR(ctx); return m; };      // a photo swatch brings its own joints
 
   // ---- the house
-  lib.add('siding_shingle', (ctx) => surface(ctx, { ...cedarTex(ctx), color: C.shingleSiding, roughness: 0.9, swatchFade: [14, 40],
-    detail: { kind: 'fibre', size: 0.21, albedo: 0.1, normal: 0.15 }, macro: { s1: 4.3, s2: 15, amount: 0.05, tint: [1.06, 1.0, 0.93], tintAmount: 0.25 } }));
+  // the lower storey reads a darker warm taupe in every photo (hero 67 61 48 under the porch against 89 100 116 above,
+  // p01's garage wing, p21's patio walls): the same shingle in the porches' shade and their warm bounce light, which
+  // the plain viewer does not shade (no sky occlusion until a refined still) -- carried by the material below EAVE_1
+  const shingle = (ctx, k) => surface(ctx, { ...cedarTex(ctx), color: C.shingleSiding, roughness: 0.9, swatchFade: [14, 40],
+    heightTint: { y0: 3.0, y1: 3.7, k },
+    detail: { kind: 'fibre', size: 0.21, albedo: 0.1, normal: 0.15 }, macro: { s1: 4.3, s2: 15, amount: 0.05, tint: [1.06, 1.0, 0.93], tintAmount: 0.25 } });
+  lib.add('siding_shingle', (ctx) => shingle(ctx, [0.80, 0.75, 0.66]));
   const trimPaint = (ctx) => surface(ctx, { color: C.trim, roughness: 0.55, detail: { kind: 'fibre', size: 0.11, albedo: 0.035, normal: 0.05, rough: 0.06 }, macro: { s1: 1.7, s2: 6.1, amount: 0.035 } });
   lib.add('trim_cream', trimPaint);
   lib.add('yard_column_white', trimPaint);
-  // the front lower storey (hero, p01: taupe lap siding, ~0.10 m exposure) -- for when the house zone names it
-  const lap = (ctx) => surface(ctx, { color: [0.215, 0.185, 0.14], roughness: 0.8, ...grooveTex(ctx, 'h2lap', false, 0.10, 0.006, 0.006),
-    detail: { kind: 'fibre', size: 0.19, albedo: 0.06, normal: 0.1 }, macro: { s1: 3.9, s2: 13, amount: 0.05 } });
-  lib.add('siding_lap_taupe', lap);
-  lib.add('siding_taupe', lap);
+  // the front lower storey is NOT lap siding: the hero at full size shows staggered shingles under the porch (x 0-650,
+  // y 850-1500), only darker and warmer -- a name the house zone gives those walls gets the same shingle, taupe all over
+  const taupe = (ctx) => shingle(ctx, [0.70, 0.64, 0.54]);
+  for (const n of ['siding_lap', 'siding_lap_taupe', 'siding_taupe', 'siding_shingle_taupe']) lib.add(n, taupe);
   lib.add('gutter_cream', (ctx) => paint(ctx, C.gutter, 0.4));
   lib.add('soffit_white', (ctx) => paint(ctx, [0.80, 0.785, 0.725], 0.6, grooveTex(ctx, 'soffit', false, 0.14, 0.005, 0.003)));
   lib.add('frame_bronze', (ctx) => new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(...C.bronze, THREE.LinearSRGBColorSpace), roughness: 0.38, metalness: 0.0 }));
@@ -567,9 +603,9 @@ export function register(lib) {
   lib.add('vent_louvre', (ctx) => paint(ctx, C.louvre, 0.7, grooveTex(ctx, 'louvre', false, 0.045, 0.02, 0.012)));
 
   // ---- roofs
-  lib.add('roof_shingle', (ctx) => surface(ctx, { ...shingleTex(ctx), color: C.roof, roughness: 0.96,
+  lib.add('roof_shingle', (ctx) => surface(ctx, { ...shingleTex(ctx), color: C.roof, roughness: 0.96, swatchFade: [18, 50],
     detail: { kind: 'grit', size: 0.31, albedo: 0.4, normal: 0.55 }, macro: { s1: 6.3, s2: 23, amount: 0.1 } }));
-  lib.add('ridge_cap', (ctx) => surface(ctx, { color: C.ridge, roughness: 0.96, ...grooveTex(ctx, 'ridge', true, 0.143, 0.008, 0.004),
+  lib.add('ridge_cap', (ctx) => surface(ctx, { color: C.ridge, roughness: 0.96, ...grooveTex(ctx, 'ridge', true, 0.143, 0.008, 0.004), swatchFade: [18, 50],
     detail: { kind: 'grit', size: 0.31, albedo: 0.4, normal: 0.55 }, macro: { s1: 6.3, s2: 23, amount: 0.1 } }));
   lib.add('solar', (ctx) => {
     const m = new THREE.MeshStandardMaterial({ map: solarTex(ctx), roughness: 0.16, metalness: 0.0 });
@@ -588,42 +624,53 @@ export function register(lib) {
   lib.add('bluestone', (ctx) => (surface(ctx, { ...piecesTex(ctx, 'h2flag', FLAG), color: C.flag, roughness: 1.0, swatchFade: [22, 60], worldUV: 0.80,      // laid square to the pool and the house (45.8 deg in plan)
    
     detail: { kind: 'grit', size: 0.27, albedo: 0.2, normal: 0.3, rough: 0.05 }, macro: { s1: 7.9, s2: 29, amount: 0.07, tint: [1.05, 1.0, 0.93], tintAmount: 0.3 } })));
+  // the front walks, should the ground zone give them their own name with UVs running along the walk
+  const walk = (ctx) => surface(ctx, { ...piecesTex(ctx, 'h2flag', FLAG), color: C.flag, roughness: 1.0, swatchFade: [22, 60], level: true,
+    detail: { kind: 'grit', size: 0.27, albedo: 0.2, normal: 0.3, rough: 0.05 }, macro: { s1: 7.9, s2: 29, amount: 0.07, tint: [1.05, 1.0, 0.93], tintAmount: 0.3 } });
+  for (const n of ['bluestone_walk', 'flagstone_walk', 'walk_flagstone']) lib.add(n, walk);
+  const thermal = (ctx) => surface(ctx, { ...piecesTex(ctx, 'h2thermal', THERMAL), color: [1, 1, 1], roughness: 1.0,
+    detail: { kind: 'grit', size: 0.25, albedo: 0.14, normal: 0.25, rough: 0.04 }, macro: { s1: 3.3, s2: 11, amount: 0.05 } });
+  for (const n of ['bluestone_thermal', 'stone_tread', 'porch_stone']) lib.add(n, thermal);
   lib.add('coping', (ctx) => surface(ctx, { ...groundTex(ctx, 'h2coping', { tile: 1.3, ox: 311, oy: 87, cloud: 0.06, grain: 0.05, speck: 0.03, warm: 0.02, relief: 0.0004 }),
     color: C.coping, roughness: 0.82, detail: { kind: 'grit', size: 0.24, albedo: 0.14, normal: 0.2, rough: 0.04 }, macro: { s1: 2.9, s2: 9.1, amount: 0.05 } }));
   lib.add('coping_joint', { color: 0x8d8a83, roughness: 0.95 });
   lib.add('skimmer_lid', { color: 0xc9c7c0, roughness: 0.7 });
-  lib.add('paver_drive', (ctx) => jointed(surface(ctx, { ...coursedTex(ctx, 'paver_drive', PAVER), color: SC.paver, roughness: 1.0,
-    detail: { kind: 'grit', size: 0.21, albedo: 0.32, normal: 0.45 }, macro: { s1: 6.1, s2: 21, amount: 0.08 } }), ctx));
+  // the aerial's paver patch is ~3 cm a pixel: the drawn pavers (joints, chamfers) up close, the patch's colour beyond
+  lib.add('paver_drive', (ctx) => surface(ctx, { ...coursedTex(ctx, 'paver_drive', PAVER), color: SC.paver, roughness: 1.0, swatchFade: [15, 45],
+    detail: { kind: 'grit', size: 0.21, albedo: 0.32, normal: 0.45 }, macro: { s1: 6.1, s2: 21, amount: 0.08 } }));
   const cap = (color) => (ctx) => surface(ctx, { ...groundTex(ctx, 'h2cap', { tile: 1.1, ox: 71, oy: 733, cloud: 0.1, grain: 0.07, speck: 0.04, warm: 0.02, relief: 0.0006 }),
     color, roughness: 0.85, detail: { kind: 'grit', size: 0.22, albedo: 0.2, normal: 0.3 }, macro: { s1: 2.3, s2: 7.9, amount: 0.1 } });
   lib.add('wall_cap', cap(C.wallCap));
   lib.add('yard_stone_cap', cap(C.stoneCap));
-  const own = (m) => { m.userData.swatchOwn = true; return m; };      // the patch for these is one fireplace crop shared by three stones: the drawn stone is closer
-  lib.add('fieldstone', (ctx) => surface(ctx, { ...piecesTex(ctx, 'h2ledge', LEDGE), color: [0.8, 0.8, 0.8], roughness: 1.0, swatchFade: [25, 70],
-    detail: { kind: 'grit', size: 0.23, albedo: 0.2, normal: 0.5 }, macro: { s1: 3.1, s2: 11, amount: 0.08 } }));
+  // retaining walls: the grey split-face block (its own patch from p18 sets the tone; the drawn block takes it)
+  const block = (ctx) => surface(ctx, { ...piecesTex(ctx, 'h2block', BLOCK), color: [1, 1, 1], roughness: 1.0, swatchFade: [25, 70],
+    detail: { kind: 'grit', size: 0.23, albedo: 0.18, normal: 0.55 }, macro: { s1: 3.1, s2: 11, amount: 0.07 } });
+  lib.add('fieldstone', block);
+  lib.add('wall_block', block);
   lib.add('yard_fieldstone', (ctx) => surface(ctx, { ...piecesTex(ctx, 'h2fire', FIRE), color: [0.70, 0.66, 0.62], roughness: 1.0, swatchFade: [25, 70],
     detail: { kind: 'grit', size: 0.23, albedo: 0.2, normal: 0.45 }, macro: { s1: 2.1, s2: 6.7, amount: 0.06 } }));
-  lib.add('stone_veneer', (ctx) => own(surface(ctx, { ...piecesTex(ctx, 'h2ledge', LEDGE), color: [1.0, 0.97, 0.93], roughness: 1.0,
-    detail: { kind: 'grit', size: 0.23, albedo: 0.2, normal: 0.45 }, macro: { s1: 2.1, s2: 6.7, amount: 0.06 } })));
+  // piers, chimney, the house's stone base: thin ledge courses, toned by the fireplace stone's patch (same quarry mix)
+  lib.add('stone_veneer', (ctx) => surface(ctx, { ...piecesTex(ctx, 'h2ledge', LEDGE), color: [1, 1, 1], roughness: 1.0, swatchFade: [25, 70],
+    detail: { kind: 'grit', size: 0.23, albedo: 0.2, normal: 0.45 }, macro: { s1: 2.1, s2: 6.7, amount: 0.06 } }));
   lib.add('pl_nb_stone', (ctx) => surface(ctx, { ...piecesTex(ctx, 'h2fire', FIRE), color: [1, 1, 1], roughness: 1.0 }));
   lib.add('yard_firebrick', (ctx) => surface(ctx, { ...coursedTex(ctx, 'h2firebrick', FIREBRICK), color: [1, 1, 1], roughness: 1.0,
     detail: { kind: 'grit', size: 0.2, albedo: 0.2, normal: 0.3 } }));
   lib.add('yard_soot', { color: 0x1c1a18, roughness: 1.0 });
 
-  lib.add('turf_synthetic', (ctx) => surface(ctx, { ...turfTex(ctx), color: C.turf, roughness: 0.92, normalScale: 0.6,
+  lib.add('turf_synthetic', (ctx) => surface(ctx, { ...turfTex(ctx), color: C.turf, roughness: 0.92, normalScale: 0.6, swatchFade: [12, 40],
     detail: { kind: 'blades', size: 0.3, albedo: 0.22, normal: 0.3 }, macro: { s1: 9.1, s2: 33, amount: 0.07 } }));
-  lib.add('mulch', (ctx) => surface(ctx, { ...mulchTex(ctx), color: [0.64, 0.6, 0.6], roughness: 0.95,
+  lib.add('mulch', (ctx) => surface(ctx, { ...mulchTex(ctx), color: [0.64, 0.6, 0.6], roughness: 0.95, swatchFade: [10, 35],
     detail: { kind: 'fibre', size: 0.13, albedo: 0.2, normal: 0.3 }, macro: { s1: 2.7, s2: 8.9, amount: 0.12 } }));
-  lib.add('wood_chips', (ctx) => surface(ctx, { ...flecksTex(ctx, 'h2chips', CHIPS), color: C.chips, roughness: 0.95, swatchFade: [35, 90],
+  lib.add('wood_chips', (ctx) => surface(ctx, { ...flecksTex(ctx, 'h2chips', CHIPS), color: C.chips, roughness: 0.95, swatchFade: [15, 45],
     detail: { kind: 'fibre', size: 0.13, albedo: 0.18, normal: 0.3 }, macro: { s1: 3.1, s2: 9.7, amount: 0.04 } }));
-  lib.add('leaf_litter', (ctx) => surface(ctx, { ...flecksTex(ctx, 'h2litter', LITTER), color: [1.4, 1.4, 1.4], roughness: 1.0,
+  lib.add('leaf_litter', (ctx) => surface(ctx, { ...flecksTex(ctx, 'h2litter', LITTER), color: [1.4, 1.4, 1.4], roughness: 1.0, swatchFade: [12, 40],
     detail: { kind: 'fibre', size: 0.15, albedo: 0.2, normal: 0.3 }, macro: { s1: 4.7, s2: 14, amount: 0.25, tint: [0.8, 1.05, 0.7], tintAmount: 0.35 } }));
-  lib.add('gravel_path', (ctx) => surface(ctx, { ...flecksTex(ctx, 'h2gravel', GRAVEL), color: [0.95, 0.93, 0.88], roughness: 1.0, swatchFade: [30, 80],
+  lib.add('gravel_path', (ctx) => surface(ctx, { ...flecksTex(ctx, 'h2gravel', GRAVEL), color: [0.95, 0.93, 0.88], roughness: 1.0, swatchFade: [15, 45],
     detail: { kind: 'grit', size: 0.19, albedo: 0.15, normal: 0.4 }, macro: { s1: 3.7, s2: 12, amount: 0.08 } }));
-  lib.add('crushed_stone', (ctx) => surface(ctx, { ...flecksTex(ctx, 'h2gravel', GRAVEL), color: [0.86, 0.86, 0.84], roughness: 1.0, swatchFade: [30, 80],
+  lib.add('crushed_stone', (ctx) => surface(ctx, { ...flecksTex(ctx, 'h2gravel', GRAVEL), color: [0.86, 0.86, 0.84], roughness: 1.0, swatchFade: [15, 45],
     detail: { kind: 'grit', size: 0.19, albedo: 0.15, normal: 0.4 }, macro: { s1: 3.7, s2: 12, amount: 0.08 } }));
   const soil = (key, color, ox) => (ctx) => surface(ctx, { ...groundTex(ctx, key, { tile: 1.5, ox, oy: 222, cloud: 0.2, grain: 0.18, speck: 0.14, warm: 0.04, relief: 0.004, chips: 0.03, chipTone: 1.5 }),
-    color, roughness: 1.0, detail: { kind: 'grit', size: 0.21, albedo: 0.3, normal: 0.5 }, macro: { s1: 3.7, s2: 12, amount: 0.18 } });
+    color, roughness: 1.0, swatchFade: [12, 40], detail: { kind: 'grit', size: 0.21, albedo: 0.3, normal: 0.5 }, macro: { s1: 3.7, s2: 12, amount: 0.18 } });
   lib.add('orchard_soil', soil('h2orchard', C.orchard, 411));
   lib.add('yard_soil', soil('h2bedsoil', [0.085, 0.06, 0.042], 655));
   lib.add('timber', (ctx) => timberLook(ctx, C.timber));
@@ -635,15 +682,15 @@ export function register(lib) {
   // ---- pool
   lib.add('spa_mosaic', (ctx) => { const m = surface(ctx, { ...mosaicTex(ctx, MOSAIC), color: [1, 1, 1], roughness: 1.0 }); m.envMapIntensity = envK(ctx) * 1.5; m.userData.envK = 1.5; metals.push(m); return m; });
   lib.add('pool_tile', (ctx) => { const m = surface(ctx, { ...mosaicTex(ctx, WATERLINE), color: [1, 1, 1], roughness: 1.0 }); m.envMapIntensity = envK(ctx); metals.push(m); return m; });
-  lib.add('lawn', (ctx) => surface(ctx, { ...lawnTex(ctx), color: [1.02, 1.02, 0.95], roughness: 0.9, normalScale: 0.7,
+  lib.add('lawn', (ctx) => surface(ctx, { ...lawnTex(ctx), color: [1.02, 1.02, 0.95], roughness: 0.9, normalScale: 0.7, swatchFade: [12, 40],
     detail: { kind: 'blades', size: 0.45, albedo: 0.3, normal: 0.35 }, macro: { s1: 8.3, s2: 37, amount: 0.18, tint: [1.2, 1.06, 0.8], tintAmount: 0.4 } }));
   lib.add('pool_cover_lid', (ctx) => surface(ctx, { ...groundTex(ctx, 'h2coping', { tile: 1.3, ox: 311, oy: 87, cloud: 0.06, grain: 0.05, speck: 0.03, warm: 0.02, relief: 0.0004 }),
     color: [0.55, 0.56, 0.55], roughness: 0.82, detail: { kind: 'grit', size: 0.24, albedo: 0.14, normal: 0.2 } }));
 
   // ---- yard
   lib.add('yard_timber_dark', (ctx) => timberLook(ctx, C.timberDark, 0.7, 0.25));
-  lib.add('yard_wood_grey', (ctx) => timberLook(ctx, C.woodGrey, 0.92, 0.4));
-  lib.add('yard_teak_grey', (ctx) => timberLook(ctx, C.teakGrey, 0.85, 0.35));
+  lib.add('yard_wood_grey', (ctx) => weathered(ctx, C.woodGrey, 0.92));
+  lib.add('yard_teak_grey', (ctx) => weathered(ctx, C.teakGrey, 0.85));
   lib.add('yard_picket_wood', (ctx) => timberLook(ctx, C.picket, 0.92, 0.4));
   lib.add('yard_slide_green', (ctx) => { const m = new THREE.MeshStandardMaterial({ roughness: 0.42, metalness: 0 }); m.color.setRGB(...C.slide, THREE.LinearSRGBColorSpace); m.envMapIntensity = envK(ctx); metals.push(m); return m; });
   lib.add('yard_stainless', (ctx) => metal(ctx, [0.56, 0.57, 0.58], 0.34, 0.95));
@@ -651,7 +698,8 @@ export function register(lib) {
   lib.add('yard_cushion_white', (ctx) => canvasCloth(ctx, C.cushion));
   lib.add('cushion', (ctx) => canvasCloth(ctx, C.cushion));
   lib.add('cushion_edge', (ctx) => canvasCloth(ctx, C.cushion));
-  lib.add('furniture_wood', (ctx) => timberLook(ctx, [0.30, 0.25, 0.20], 0.8, 0.35));      // weathered teak (p23)
+  lib.add('furniture_wood', (ctx) => weathered(ctx, C.teakGrey, 0.85));      // the teak sofas and chairs: silvered like the rest (p23, p24, f134)
+  lib.add('furn_wood_taupe', (ctx) => weathered(ctx, [0.25, 0.235, 0.215], 0.8));
   lib.add('yard_tire', (ctx) => paint(ctx, [0.02, 0.02, 0.021], 0.85));
   lib.add('yard_rope', (ctx) => timberLook(ctx, C.rope, 0.95, 0.45));
   lib.add('yard_pot_grey', (ctx) => paint(ctx, [0.20, 0.20, 0.21], 0.75));
