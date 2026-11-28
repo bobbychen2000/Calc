@@ -73,12 +73,6 @@ def _planes():
     for p in ROOF['planes']:
         P = np.array(p['poly'], float)
         a, b, c = p['plane']
-        if p['block'] in LOW_PITCH_K:    # heights above the block's eave scaled (affine: the plane stays a plane)
-            ze = ROOF['eaves'][p['block']]
-            P = P.copy()
-            P[:, 2] = ze + (P[:, 2] - ze) * LOW_PITCH_K[p['block']]
-            c = ze + (c - ze) * LOW_PITCH_K[p['block']]
-            a, b = a * LOW_PITCH_K[p['block']], b * LOW_PITCH_K[p['block']]
         Q = P
         if p['storey'] == 1 and any(k.startswith('under_upper') for k in p['edges']):
             # grow the plane under the upper roof only (hidden there), so it runs into the upper walls
@@ -100,34 +94,21 @@ def _planes():
             Q = garage_gable()[p['id']]
         elif p['id'] == 'g_s':
             Q = P[:3]                    # no notch: the (lower) gable runs into this plane and is buried where it is lower
-        elif p['id'] in BG_RIDGE_K:
-            Q = P.copy()
-            ze = P[:, 2].min()
-            Q[:, 2] = ze + (P[:, 2] - ze) * BG_RIDGE_K[p['id']]
         mat = 'roof_flat' if p['flat'] else 'roof_shingle'
         out.append(dict(rp=RoofPlane(p['id'], Q, mat=mat, thickness=0.22, storey=p['storey'], fascia=TRIM), src=p))
     return out
 
 
-GARAGE_GABLE_PITCH = 26.0                # the aerial's symmetric gable (ridge displaced 17 px by its height) + p01's apex
-# garage + north wing roofs: the solve's 23-27 deg (its pitch prior) stood 0.5-0.65 m above the roof's silhouette in
-# p01; at ~19 deg the garage gable's ridge (26 deg, apex 4.44) meets g_s exactly at the surveyed valley apex
-LOW_PITCH_K = {'garage_wing': 0.70, 'north_wing': 0.70}
-BG_RIDGE_K = {'bg_n': 0.886, 'bg_s': 0.886}   # balcony gable ridge 8.17 -> 7.97 (p21: apex 0.2 m lower; epi: 7.5-8.0)
-
-
 def garage_gable():
-    """The garage's south gable rebuilt symmetric about the middle of its two rake feet (the solve put its ridge
-    0.3 m off centre and 0.45 m high: 30 / 37 deg planes).  Returns both planes + apex / feet for the trim."""
+    """The garage's south gable (roof_3d.json: symmetric, its valleys on g_s).  Both planes are run on north at full
+    width to the valley apex's y, buried under g_s (no open valley seam); + apex / rake feet for the trim."""
     P = {p['id']: np.array(p['poly']) for p in ROOF['planes'] if p['id'] in ('gb_w', 'gb_e')}
-    fw, fe = P['gb_w'][2], P['gb_e'][2]                              # rake feet (fascia line)
-    yb = P['gb_w'][0][1]                                             # the old valley apex: far enough to be buried
-    xr, ze = (fw[0] + fe[0]) / 2, (fw[2] + fe[2]) / 2
-    za = ze + (fe[0] - fw[0]) / 2 * np.tan(np.radians(GARAGE_GABLE_PITCH))
-    yf = (fw[1] + fe[1]) / 2
-    return {'gb_w': np.array([(xr, yb, za), (xr, yf, za), (fw[0], yf, ze), (fw[0], yb, ze)]),
-            'gb_e': np.array([(xr, yb, za), (fe[0], yb, ze), (fe[0], yf, ze), (xr, yf, za)]),
-            'apex': np.array([xr, yf, za]), 'foot_w': np.array([fw[0], yf, ze]), 'foot_e': np.array([fe[0], yf, ze])}
+    apex, fw, fe = P['gb_w'][1], P['gb_w'][2], P['gb_e'][2]          # ridge front, rake feet
+    yb = P['gb_w'][0][1]
+    gw, ge = P['gb_w'].copy(), P['gb_e'].copy()
+    gw[3, 1] = yb
+    ge[1, 1] = yb
+    return {'gb_w': gw, 'gb_e': ge, 'apex': apex, 'foot_w': fw, 'foot_e': fe}
 
 
 def _aerial_xy(uv, z):
