@@ -93,4 +93,5 @@ photos (CPU, ~20 min).
   albedo set) into out/swatch_*.jpg (never committed) for full builds; the viewer's looks for house 2's material names
   are in `web/viewer/looks/house2.js` (unknown names fall back to the GLB's colour).  Packaging ships the whole viewer
   folder and every swatch the meta lists.  White-model-only bundle: `python3 web/package.py --white`.
-- Artifacts: the white model https://claude.ai/artifact/4XqAGij5ZB9PctWLKJ86qx (private; update it in place).
+- Artifact: https://claude.ai/artifact/4XqAGij5ZB9PctWLKJ86qx (private; v1 white model only, v2 the textured model with
+  the white-model toggle; update it in place from a clean checkout's build: python3 web/package.py --model-dir DIR).
