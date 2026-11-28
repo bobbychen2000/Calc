@@ -295,6 +295,10 @@ def quad_rectify(src, quad, w_m, h_m, ppm):
 
 # p24 (unregistered close-up of the fire terrace, open shade): the fireplace body's side face from the shoulder line
 # (2.45 m) down to ~0.27 m (TL, TR, BR, BL pixels), and the seat wall's front face under its cap down to the paving
+# the terrace flagstone's crisp fields: level rectangles in the pool's frame (rot 45.84 deg about +Z; metres)
+FLAG22 = dict(z=0.0, rot=45.84, u=(-5.75, -3.45), v=(-2.8, 1.3))
+FLAG26 = dict(z=0.0, rot=45.84, u=(-1.8, 0.5), v=(6.45, 8.0))
+CAP_TOP = [(1720, 1270), (1930, 1272), (1930, 1338), (1720, 1300)]      # the seat wall's cap top, behind its front edge
 FP_SIDE = [(1782, 420), (2235, 438), (2235, 1168), (1782, 1150)]
 SEAT = [(1361, 1239), (1974, 1386), (1974, 1611), (1361, 1367)]
 
@@ -319,16 +323,19 @@ SWATCHES = [
     # Three sunlit fields of the ground photos (64-300 px/m): p21's west terrace, p22's near band, p26's pool end.  The
     # slabs' own colours (rust, blue-grey, buff) kept: from the drone and across the terrace they are the pattern; the
     # most vivid rust slabs bent back (chroma) so they do not mark the 4 m period.  The front walks' names wear it too
-    # r3: p21's field alone, as itself and turned 180 deg: a 4.9 x 6.2 m tile of crisp slabs and light joints (the
-    # aerial's look).  The r2 tile (3.9 x 4.5 m) drew a lattice of one rust slab from the drone; p22's / p26's fields
-    # are soft at this scale (no joints), so beside p21's they drew sharp / soft bands, and a quilt of 1.1 m blocks
-    # broke the slabs into a blur.  More of the slabs' own contrast (the aerial: sd 41 against the render's 27; p26's
-    # rust and blue-grey slabs), the most vivid rust bent back (chroma)
+    # r3: the two crisp fields -- p22's near band (2.3 x 4.1 m) and p26's pool end (crisp joints, light grout) --
+    # laid as three columns (p22 | p26 over p22 turned 180 deg | p22 upside down over p26 turned), so the tile grows
+    # to ~6.7 x 4 m and the rust slabs recur in different turns: the r2 tile (3.9 x 4.5 m) drew a lattice of one
+    # rust slab from the drone.  p21's west terrace is soft at this scale (no joints): left out.  More of the slabs'
+    # own contrast (the aerial: sd 41 against the render's 27; p26's rust and blue-grey slabs), the most vivid rust
+    # bent back (chroma)
     dict(name='flagstone', mats=['bluestone', 'bluestone_walk', 'flagstone_walk', 'walk_flagstone'], ppm=64,
-         delight=1.2, contrast=1.45, sat=1.3, clip=(0.5, 1.5), chroma=0.24,
-         albedo=(0.5, 0.48, 0.44), expect='bluestone',
-         cols=[[dict(photo='p21', plane=dict(z=0.0, rot=45.84, u=(-6.2, -3.75), v=(-6.2, 0.0)))],
-               [dict(photo='p21', plane=dict(z=0.0, rot=45.84, u=(-6.2, -3.75), v=(-6.2, 0.0)), turn=2)]]),
+         delight=1.2, contrast=1.35, sat=1.25, clip=(0.5, 1.5), chroma=0.24,
+         albedo=(0.5, 0.48, 0.44), expect='bluestone', overlap=0.08,
+         cols=[[dict(photo='p22', plane=FLAG22)],
+               [dict(photo='p26', plane=FLAG26, crop=(0.2, 2.3, 0.0, 1.55)), dict(photo='p22', plane=FLAG22, turn=2)],
+               [dict(photo='p22', plane=FLAG22, turn=2, flip=True, crop=(0.0, 2.3, 0.0, 2.6)),
+                dict(photo='p26', plane=FLAG26, turn=2, crop=(0.0, 2.1, 0.0, 1.55))]]),
     # pool coping: the pale stones of the near pool edge in p21 (u along the edge); near-white and neutral there (211
     # 212 213 against the render's 192 189 187)
     dict(name='coping', mats=['coping'], ppm=128, delight=0.8, contrast=0.8, albedo=(0.66, 0.655, 0.645),
@@ -343,10 +350,12 @@ SWATCHES = [
     # cedar siding: the rear wall beside the balcony in p21 (in shade there: the shadow lines under the courses are
     # the photograph's, kept at half strength).  Its tone: the front's blue-grey (hero / p01: B / R ~1.3 in sRGB on the
     # upper storey, 88-97 102-111 121-128 in p01; p21's rear wall ~1.15).  The lower storey's names (should the house
-    # zone give the porch walls one) wear the same patch: the looks tint them taupe (house2.js heightTint / taupe)
+    # zone give the porch walls one) wear the same patch: the looks tint them taupe (house2.js heightTint / taupe).
+    # r3: the hero's upper storey reads 86-93 97-109 118-129 against the render's 96 105 124 -- the level right, red a
+    # shade high (a lavender cast beside the cream trim): red down 8 %
     dict(name='siding', mats=['siding_shingle', 'siding_lap', 'siding_taupe', 'siding_lap_taupe',
                               'siding_shingle_taupe'], ppm=110, delight=0.25, contrast=0.45, clip=(0.6, 1.5),
-         albedo=(0.195, 0.222, 0.285), expect='siding_shingle',
+         albedo=(0.18, 0.222, 0.282), expect='siding_shingle',
          pieces=[dict(photo='p21', px=(1580, 760), off=(-0.24, -0.445), size=(2.2, 1.72))]),
     # driveway pavers: the sunlit field in front of the garage (aerial), clear of the bare trees' shadows
     dict(name='pavers', mats=['paver_drive'], ppm=64, delight=1.0, contrast=1.25, albedo=(0.43, 0.36, 0.295),
@@ -366,14 +375,18 @@ SWATCHES = [
     # wood chips: the play yard in p19 at 160-330 px/m (two sunlit fields between the swing frame's legs and chains),
     # laid out larger by quilting (chips have no grain); golden tan: the spring video's top-down (frame 139.9 s, against
     # its flagstone) gives 0.52 0.35 0.25, the winter aerial a deeper orange
-    dict(name='chips', mats=['wood_chips'], ppm=64, delight=0.4, contrast=1.1, sat=1.1, clip=(0.7, 1.5),
+    # r3: the few vivid orange flecks (fallen leaves) recurred as a dotted lattice: bent back (chroma, clip)
+    dict(name='chips', mats=['wood_chips'], ppm=64, delight=0.4, contrast=1.1, sat=1.1, clip=(0.72, 1.35), chroma=0.16,
          albedo=(0.60, 0.42, 0.24), expect='wood_chips',
          quilt=dict(size=(4.0, 4.0), block=0.7, overlap=0.18, aug=True, seed=3),
          cols=[[dict(photo='p19', plane=dict(z=1.88, u=(14.95, 16.25), v=(-5.6, -2.35)))],
                [dict(photo='p19', plane=dict(z=1.88, u=(13.05, 13.7), v=(-6.5, -1.9)))]]),
     # the path round the play yard: grey crushed rock (p19: neutral grey in sun, blue only in the shade)
     # r3: p19's sunlit path 168 175 172 against the chips 228 193 147 -- 20 % lighter than r2, neutral
-    dict(name='gravel', mats=['gravel_path'], ppm=64, delight=0.5, contrast=1.2, sat=0.4, albedo=(0.32, 0.325, 0.315),
+    # (the 0.67 m wide r2 tile repeated across the path: quilted to 2 m)
+    dict(name='gravel', mats=['gravel_path'], ppm=64, delight=0.25, contrast=0.9, sat=0.4, clip=(0.8, 1.25),
+         albedo=(0.32, 0.325, 0.315),
+         quilt=dict(size=(2.0, 2.0), block=0.4, overlap=0.1, aug=True, seed=9),
          expect='gravel_path', pieces=[dict(photo='p29', px=(1810, 800), off=(-0.55, -1.0), size=(0.8, 3.4))]),
     # the vegetable garden's crushed stone: the two aisles between the beds (the whole garden lies in shade in the
     # aerial: the blue of the sky light is not the stone's colour; the fence's light streaks near its north side are
@@ -392,7 +405,7 @@ SWATCHES = [
     # quilted to a 4 m tile (the 1.7 m one drew a lattice of the same dark marks); greyer than the aerial's winter
     # tone (p18's sunlit bank 130 111 105; the spring video 132 120 109 beside its turf)
     dict(name='litter', mats=['leaf_litter', 'orchard_soil'], ppm=48, delight=0.7, contrast=1.2,
-         albedo=(0.25, 0.205, 0.14), expect='orchard_soil', clip=(0.65, 1.5),
+         albedo=(0.25, 0.205, 0.125), expect='orchard_soil', clip=(0.65, 1.5),
          quilt=dict(size=(4.0, 4.0), block=0.8, overlap=0.2, aug=True, seed=17),
          pieces=[dict(photo='p29', px=(2220, 1060), off=(-0.45, 0.5), size=(2.0, 2.0)),
                  dict(photo='p29', px=(2215, 1175), off=(0.0, 0.0), size=(1.8, 1.0))]),
@@ -407,6 +420,18 @@ SWATCHES = [
          delight=0.45, contrast=0.85, sat=0.5, clip=(0.45, 1.6), albedo=(0.155, 0.14, 0.117), overlap=0.12,
          pieces=[dict(photo='p24', quad=[(0, 748), (245, 748), (245, 875), (0, 875)], size=(1.43, 0.74)),
                  dict(photo='p24', quad=[(0, 748), (245, 748), (245, 875), (0, 875)], size=(1.43, 0.74), flip=True)]),
+    # caps: the seat wall's bluestone cap top in p24 (open shade, ~400 x 110 px/m: a smooth grey stone, faint mottle,
+    # kept faint: a quilt of so small a piece drew kaleidoscope motifs).  yard_stone_cap (the fireplace's hearth / mantel / crown and the seat walls): the
+    # cap reads like the p24 paving beside it, a darker blue-grey than the full-range terrace (the looks' 0.36-0.40
+    # drew white bands, p22 / p26 / p21 render 115-155 against the photos' 48-60 in shade).  wall_cap (the ground
+    # lane's block-wall caps and stair treads): the block's own grey (p24: block capstones, no light band; p22's
+    # stair treads dark grey) -- the looks' 0.46 drew a white stripe along every retaining wall and white stairs
+    dict(name='cap', mats=['yard_stone_cap'], ppm=128, blur=0.7, delight=0.25, contrast=0.55, sat=0.6, clip=(0.75, 1.3),
+         albedo=(0.27, 0.28, 0.29),
+         pieces=[dict(photo='p24', quad=CAP_TOP, size=(0.52, 0.42))]),
+    dict(name='wallcap', mats=['wall_cap'], ppm=128, blur=0.7, delight=0.25, contrast=0.55, sat=0.6, clip=(0.75, 1.3),
+         albedo=(0.18, 0.175, 0.165),
+         pieces=[dict(photo='p24', quad=CAP_TOP, size=(0.52, 0.42))]),
     # fieldstone: the fireplace and its seat walls in the (unregistered) close-up p24, in open shade: the body's side
     # face (near-frontal, 1.25 m deep: 360 px/m across, 335 down; the shoulder line = 2.45 m) above the flowering
     # quince and left of it, and the seat wall's front face (0.46 m under its cap; ~3 m of it, seen obliquely: its

@@ -227,8 +227,8 @@ def entry_gable(geo, planes):
     geo.poly(WALL, tri)
     corbel(geo, E(c, za - 0.01), -n3, t3, L=za - 0.01 - zbt, D=0.20, w=0.18)
     for sgn in (-1, 1):
-        q = M + t * sgn * 1.25 + n * (0.6 - 0.17)
-        corbel(geo, E(q, us(1.25) + 0.01), -n3, t3, L=us(1.25) + 0.01 - (COL_TOP - 0.30), D=0.22, w=0.20)
+        q = M + t * sgn * 1.25 + n * (0.6 - 0.19)                     # hero: 0.16 wide, down past the capital by 0.17
+        corbel(geo, E(q, us(1.25) + 0.01), -n3, t3, L=us(1.25) + 0.01 - (COL_TOP - 0.37), D=0.24, w=0.17)
         f = M + t * sgn * (1.25 + 0.10) + n * 0.6
         knee_brace(geo, E(f, COL_TOP - 0.25), t3 * sgn, n3, size=0.40, t=0.09)
 
@@ -363,6 +363,8 @@ def door(geo, o, r, n, w, h, leaves=1, kind='glass', casing=0.11, mat=None, ligh
     """Doors in a hole w x h: 'glass' = full-lite dark-framed leaves (French doors), 'wood' = the espresso entry door
     (three small top lights), 'solid' = a plain painted slab."""
     c = casing
+    if kind == 'unit':
+        return door_unit(geo, o, r, n, w, h, casing)
     cm = 'door_espresso' if kind == 'wood' else TRIM
     _bx(geo, cm, o, r, n, -c, 0, 0, h + c, -0.02, 0.035)
     _bx(geo, cm, o, r, n, w, w + c, 0, h + c, -0.02, 0.035)
@@ -389,6 +391,42 @@ def door(geo, o, r, n, w, h, leaves=1, kind='glass', casing=0.11, mat=None, ligh
                     xb = xa + (lw - 0.28) / 3 - 0.04
                     geo.poly('glass', [o + r * xa - n * 0.028 + (0, 0, h - 0.50), o + r * xb - n * 0.028 + (0, 0, h - 0.50),
                                        o + r * xb - n * 0.028 + (0, 0, h - 0.16), o + r * xa - n * 0.028 + (0, 0, h - 0.16)])
+
+
+def door_unit(geo, o, r, n, w, h, c, leaf=1.02, side=0.22, side_at=0.70):
+    """The front door unit in a hole w x h (p01 / hero): an espresso frame filling the hole, the leaf recessed in its
+    middle with three tall top lights (0.29-0.85 m under the head), a sidelight glass at +-side_at (0.25 m over the sill
+    to 0.29 m under the head), a flat espresso casing c wide round the hole (no cream casing: hero)."""
+    E = 'door_espresso'
+    _bx(geo, E, o, r, n, -c, 0, 0, h + c, -0.02, 0.025)
+    _bx(geo, E, o, r, n, w, w + c, 0, h + c, -0.02, 0.025)
+    _bx(geo, E, o, r, n, -c, w + c, h, h + c, -0.02, 0.025)
+    m = w / 2
+    x0, x1 = m - leaf / 2, m + leaf / 2
+    za, zb = 0.25, h - 0.29                                           # sidelight glass
+    for sg in (-1, 1):
+        g0, g1 = sorted((m + sg * (side_at - side / 2), m + sg * (side_at + side / 2)))
+        geo.poly('glass', [o + r * g0 - n * 0.05, o + r * g1 - n * 0.05, o + r * g1 - n * 0.05 + (0, 0, h),
+                           o + r * g0 - n * 0.05 + (0, 0, h)])
+        f0, f1 = (0.0, g0) if sg < 0 else (g1, w)                      # jamb outside the sidelight
+        m0, m1 = (g1, x0) if sg < 0 else (x1, g0)                      # mullion between it and the leaf
+        for a_, b_ in ((f0, f1), (m0, m1)):
+            _bx(geo, E, o, r, n, a_, b_, 0, h, -0.06, -0.01, 'xXY')
+        _bx(geo, E, o, r, n, g0, g1, 0, za, -0.06, -0.01, 'Y')
+        _bx(geo, E, o, r, n, g0, g1, zb, h, -0.06, -0.01, 'Y')
+    _bx(geo, E, o, r, n, x0, x1, h - 0.10, h, -0.06, -0.01, 'Y')         # head over the leaf
+    lz0, lz1 = h - 0.85, h - 0.29                                    # the leaf: a slab with three tall lights
+    _bx(geo, E, o, r, n, x0 + 0.005, x1 - 0.005, 0, lz0, -0.10, -0.04, 'xXY')
+    _bx(geo, E, o, r, n, x0 + 0.005, x1 - 0.005, lz1, h - 0.10, -0.10, -0.04, 'xXY')
+    _bx(geo, E, o, r, n, x0 + 0.005, x0 + 0.17, lz0, lz1, -0.10, -0.04, 'xXY')
+    _bx(geo, E, o, r, n, x1 - 0.17, x1 - 0.005, lz0, lz1, -0.10, -0.04, 'xXY')
+    geo.poly('glass', [o + r * x0 - n * 0.09 + (0, 0, lz0), o + r * x1 - n * 0.09 + (0, 0, lz0),
+                       o + r * x1 - n * 0.09 + (0, 0, lz1), o + r * x0 - n * 0.09 + (0, 0, lz1)])
+    lw = (leaf - 0.34) / 3
+    for k in (1, 2):                                                 # two muntins between the three lights
+        xm = x0 + 0.17 + lw * k
+        _bx(geo, E, o, r, n, xm - 0.025, xm + 0.025, lz0, lz1, -0.10, -0.06, 'xXY')
+    _bx(geo, E, o, r, n, x0 + 0.17, x1 - 0.17, lz0 - 0.05, lz0, -0.10, -0.03, 'YzZ')   # a shelf under the lights
 
 
 def garage_door(geo, o, r, n, w, h):
@@ -837,37 +875,10 @@ def rafter_tail(geo, q, inward, along, z_us, tn, run, w=0.055, d=0.13):
     geo.prism(TRIM, [(sg * r, z) for r, z in prof], a, b, up=(0, 0, 1.0))
 
 
-def front_door_casing(geo, fp):
-    """One cream casing round the front door unit (door + sidelights; p01 / hero: a flat casing outside the dark frame)."""
-    D = np.array(FRONT_DOOR)
-    best = None
-    for g in _rings(fp['G']):
-        ring = np.array(g.exterior.coords)
-        for a, b in zip(ring[:-1], ring[1:]):
-            d = LineString([a, b]).distance(Point(*D))
-            if best is None or d < best[0]:
-                best = (d, a, b)
-    _, a, b = best
-    r, n, L = _frame(a, b)
-    if Polygon(np.array(_rings(fp['G'])[0].exterior.coords)).exterior.is_ccw is False:
-        pass
-    if (D - a) @ n[:2] > 0.0 or True:
-        pass
-    s0 = float((D - a) @ r[:2])
-    o = np.array([a[0], a[1], 0.0]) + r * s0
-    if Polygon(_rings(fp['G'])[0].exterior.coords).contains(Point(*(o[:2] + n[:2] * 0.3))):
-        n = -n                                                          # face out of the house
-        r = -r
-    z0, z1 = PORCH_FLOOR + 0.05, PORCH_FLOOR + 0.05 + 2.34
-    for sg in (-1, 1):
-        _lbox(geo, TRIM, o + r * sg * 0.875, r, n, (-0.065, -0.02, z0), (0.065, 0.04, z1 + 0.08), 'xXYz')
-    _lbox(geo, TRIM, o, r, n, (-0.97, -0.02, z1 + 0.08), (0.97, 0.05, z1 + 0.22), 'xXYzZ')
-
-
 def gable_trim(geo, planes):
     """Louvred vents, king posts and brackets on the street gables: the front gable FG (hero: a king-post corbel through
     the vent, a tall corbel on the wall under each rake end, a curved bracket under each eave end), the west gable WG
-    and the garage gable (p01: knee brackets)."""
+    and the garage gable (p01: a king-post block and a tall corbel under each rake end)."""
     P = {p['id']: np.array(p['poly']) for p in ROOF['planes']}
     up = np.array([0, 0, 1.0])
 
@@ -884,6 +895,15 @@ def gable_trim(geo, planes):
         us = lambda u: ze + (hr - abs(u)) * tn - thick               # noqa: E731  rake underside at lateral u
         gable_vent(geo, mid + up * (ze + drop), rr, n, vent_w, vent_h)
         half = hr - inset - 0.02                                     # wall half-width
+        if corbels == 'garage':
+            # p01 (rays on the wall, round 3): a king-post block 0.20 wide from the apex down through the vent to its
+            # base, and a tall corbel under each rake end 0.29 m inside the wall's end, its foot ~0.59 under the eave
+            corbel(geo, mid + up * us(0.0), n, rr, L=us(0.0) - (ze + drop), D=0.14, w=0.20)
+            for sgn in (-1, 1):
+                u = half - 0.29
+                corbel(geo, mid + rr * sgn * u + up * (us(u) + 0.01), n, rr, L=us(u) + 0.01 - (ze - 0.59), D=0.26,
+                       w=0.21)
+            return
         if not corbels:
             for sgn in (-1, 1):
                 knee_brace(geo, mid + rr * sgn * (hr - 0.62) + up * (ze - brace - 0.30), n, rr * sgn, size=brace)
@@ -900,7 +920,8 @@ def gable_trim(geo, planes):
     wg = P['wg_n'], P['wg_s']
     face(wg[0][3], wg[0][0], wg[1][3], OVERHANG[2], 1.3, 0.5, 0.30, brace=0.6)    # feet N -> S: the face looks west
     gg = garage_gable()
-    face(gg['apex'], gg['foot_w'], gg['foot_e'], OVERHANG[1], 2.2, 0.6, 0.10, brace=0.5)
+    # garage gable vent (p01): frame base z ~3.57, 2.15 wide, its top under the king-post block at ~4.19
+    face(gg['apex'], gg['foot_w'], gg['foot_e'], OVERHANG[1], 2.15, 0.62, 0.16, corbels='garage')
 
 
 # openings: (kind, storey, plan point on the wall, sill z, width, height, options).  Front: p01 through the fitted
@@ -912,11 +933,9 @@ OPENINGS = [
     # ---- street side -------------------------------------------------------------------------------------------
     ('win', 'g', (-18.90, -13.71), F0 + 0.55, 2.40, 1.80, dict(units=3)),              # W2 behind the left front run
     ('win', 'g', (-21.26, -13.22), F0 + 0.55, 0.70, 1.80, {}),                          # W1 on the bay's return
-    # the front door unit (p01 rays on the entry wall, round 3): sill 0.35, head 2.67, the leaf 1.02 wide, two narrow
-    # sidelights ~0.2 m glass at +-0.70 from its middle, tight to it (one frame: the door's casing is the mullion)
-    ('door', 'g', FRONT_DOOR, PORCH_FLOOR + 0.05, 1.02, 2.34, dict(kind='wood', casing=0.06)),
-    ('win', 'g', (-16.777, -15.911), PORCH_FLOOR + 0.15, 0.22, 2.20, dict(divided=False, sill=False, casing=0.01)),
-    ('win', 'g', (-15.803, -16.889), PORCH_FLOOR + 0.15, 0.22, 2.20, dict(divided=False, sill=False, casing=0.01)),
+    # the front door unit (p01 rays on the entry wall + hero, round 3): one dark frame 1.86 x 2.34 (sill 0.33, head 2.67)
+    # set straight into the shingles (dark casing) -- the leaf 1.02 with three tall top lights, a narrow sidelight (0.22 glass) at +-0.70
+    ('door', 'g', FRONT_DOOR, PORCH_FLOOR + 0.05, 1.86, 2.34, dict(kind='unit', casing=0.06)),
     ('win', 'g', (-13.23, -19.00), F0 + 0.55, 2.30, 1.80, dict(units=3)),               # W3 right of the entry
     ('door', 'g', (-13.23, -20.85), PORCH_FLOOR + 0.05, 0.85, 2.20, dict(kind='glass', lights=0)),   # W4 (porch door)
     ('win', 'u', (-19.26, -13.71), 4.45, 2.50, 1.60, dict(units=3)),                    # triple window, upper left

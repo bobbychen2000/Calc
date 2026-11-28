@@ -37,7 +37,7 @@ const C = {
   shingleSiding: [0.21, 0.216, 0.216],     // grey cedar shingle (p21 shade 81 90 101, hero 97 110 127 against the trim)
   trim: [0.74, 0.715, 0.62],               // cream-white casings, fascia, columns, railings
   gutter: [0.72, 0.695, 0.60],
-  bronze: [0.022, 0.021, 0.022],           // window frames: near black
+  bronze: [0.050, 0.052, 0.058],           // window frames: dark bronze-grey (hero 60-75 in the shade with the sky's sheen, not black)
   espresso: [0.017, 0.012, 0.010],
   louvre: [0.20, 0.185, 0.16],
   roof: [0.28, 0.30, 0.345],             // charcoal-grey composition shingle (p28 118 119 126, the aerial)
@@ -96,7 +96,7 @@ function cedarTex(ctx) {
         const rw = rnd();
         let len = Math.round((0.085 + 0.15 * rw * rw) * pxu);      // 8.5 - 23.5 cm, mostly narrow (hero porch wall at full size)
         if (w - filled - len < 0.06 * pxu) len = w - filled;
-        const t = 0.955 + rnd() * 0.09, wm = (rnd() - 0.5) * 0.03, lf = rnd();
+        const t = 0.94 + rnd() * 0.12, wm = (rnd() - 0.5) * 0.03, lf = rnd();
         for (let i = 0; i < len; i++) {
           const o = c * w + ((x0 + filled + i) % w);
           side[o] = Math.min(i + 0.5, len - i - 0.5); tone[o] = t; warm[o] = wm; lift[o] = lf;
@@ -108,12 +108,15 @@ function cedarTex(ctx) {
     for (let c = 0; c < n; c++) {
       for (let r = 0; r < ch; r++) {            // r runs DOWN the wall: 0 under the butt of the course above
         const y = c * ch + r, fr = r / ch, butt = r >= ch - 1 ? 0.2 : 1;
-        const ao = 1 - 0.2 * Math.exp(-r / (ch * 0.04)) - 0.04 * Math.exp(-r / (ch * 0.25));
+        // the butt's shadow line under each course, ~1.5 cm, ~0.6 of the face at its darkest; the keyways thin dark lines
+        // ~0.75 (the hero at 1200 px: courses every 13 px drawn as 2 px lines, joints as 1 px ones, the shingles 8-24 cm
+        // wide) -- r2's 5 mm line at 0.8 vanished into the mip levels at the photos' distances and the wall read flat
+        const ao = (1 - 0.30 * Math.exp(-r / (ch * 0.10)) - 0.05 * Math.exp(-r / (ch * 0.3))) * (r < ch * 0.035 ? 0.8 : 1);
         for (let x = 0; x < w; x++) {
           const i = y * w + x, o = c * w + x, s = side[o];
-          const gap = smooth(0.2, 1.5, s);                                                     // the keyway between two shingles
+          const gap = smooth(0.3, 2.6, s);                                                     // the keyway between two shingles
           const grain = A[((y >> 2) & M) * S + ((x * 4 + c * 97) & M)], fine = B[(y & M) * S + ((x * 3) & M)];
-          const v = tone[o] * ao * (0.78 + 0.22 * gap) * (1 + 0.05 * grain + 0.04 * fine) * (r >= ch - 1 ? 0.93 : 1);
+          const v = tone[o] * ao * (0.6 + 0.4 * gap) * (1 + 0.05 * grain + 0.04 * fine) * (r >= ch - 1 ? 0.93 : 1);
           put(alb, i * 4, v * (1 + warm[o]), v, v * (1 - warm[o]));
           hgt[i] = (0.005 * fr + 0.001 * lift[o] * fr) * butt * (0.5 + 0.5 * gap) + 0.0003 * grain;
           rgh[i] = 0.94 + 0.06 * fine;
@@ -179,7 +182,9 @@ function piecesTex(ctx, key, o) {
 const FLAG = {
   seed: 12366, tile: 3.66, units: 12, layout: (rnd) => ashlar(12, rnd, 3, 3, 0.45), joint: 0.014, jointColor: [0.27, 0.25, 0.22], jointDepth: 0.004,
   bevel: 0.006, bevelDepth: 0.0008, round: 1.5, cleft: 0.0016, lip: 0.0015, cloud: 0.16, grain: 0.09, speck: 0.04, rough: 0.82, toneVar: 0.14, vein: 0.55,
-  palette: [[[0.55, 0.555, 0.55], 0.32], [[0.46, 0.50, 0.535], 0.24], [[0.58, 0.53, 0.45], 0.14], [[0.53, 0.43, 0.33], 0.05], [[0.50, 0.49, 0.50], 0.14], [[0.62, 0.60, 0.55], 0.11]],
+  // (r3: f134 / p22 at full size show a third of the slabs buff, tan or rust beside the blue-greys -- more of them, and
+  // more distinct, than r2's mix; the patch still sets the mean)
+  palette: [[[0.55, 0.555, 0.55], 0.24], [[0.45, 0.495, 0.535], 0.24], [[0.60, 0.53, 0.43], 0.18], [[0.55, 0.42, 0.30], 0.08], [[0.50, 0.49, 0.50], 0.13], [[0.62, 0.60, 0.55], 0.09], [[0.50, 0.44, 0.40], 0.04]],
 };
 // the fireplace and seat wall: tan / rust / grey / cream ashlar veneer (p24)
 const FIRE = {
@@ -192,18 +197,21 @@ const FIRE = {
 };
 // porch piers, the chimney, the house's stone base: the same quarry as the fireplace in a smaller ashlar -- pieces
 // 10 - 35 cm wide, 5 - 20 cm high, grey-brown and tan, dark joints (the hero's piers at full size, p01, p28's chimney)
+// r3: laid in COURSES of 10 - 20 cm with stones 15 - 40 cm long (the guillotine ashlar cut 5 cm x 20 cm slivers that
+// stacked into vertical stripes on the piers), a narrower, greyer spread (the hero's piers in shade: grey-brown, low
+// contrast; the patch's mean sets the tone)
 const PIER = {
-  seed: 404, tile: 1.6, units: 32, layout: (rnd) => ashlar(32, rnd, 7, 4, 0.5), joint: 0.007, jointColor: [0.04, 0.035, 0.03], jointDepth: 0.012,
-  bevel: 0.01, bevelDepth: 0.004, round: 1.5, chip: 1.0, cleft: 0.006, lip: 0.01, tilt: 0.004, cloud: 0.14, grain: 0.1, speck: 0.04, rough: 0.92, toneVar: 0.30, vein: 0.45,
-  palette: [[[0.30, 0.28, 0.245], 0.26], [[0.24, 0.20, 0.16], 0.18], [[0.33, 0.32, 0.31], 0.18], [[0.40, 0.34, 0.26], 0.12], [[0.15, 0.135, 0.12], 0.14], [[0.36, 0.25, 0.16], 0.12]],
+  seed: 404, tile: 1.6, units: 32, layout: (rnd) => courses([3, 2, 4, 2, 3, 3, 2, 4, 3, 2, 4], 3, 8, 32)(rnd), joint: 0.007, jointColor: [0.05, 0.045, 0.04], jointDepth: 0.012,
+  bevel: 0.01, bevelDepth: 0.004, round: 1.5, chip: 1.0, cleft: 0.006, lip: 0.01, tilt: 0.004, cloud: 0.12, grain: 0.1, speck: 0.04, rough: 0.92, toneVar: 0.18, vein: 0.3,
+  palette: [[[0.30, 0.28, 0.25], 0.30], [[0.26, 0.235, 0.20], 0.24], [[0.33, 0.32, 0.30], 0.18], [[0.36, 0.31, 0.25], 0.13], [[0.20, 0.18, 0.16], 0.15]],
 };
 // courses of stones in units of 5 cm: rows = course heights, lengths lo .. hi units, a random start per course
-const courses = (rows, lo, hi) => (rnd) => {
+const courses = (rows, lo, hi, W = 48) => (rnd) => {
   const out = [];
   let y = 0;
   for (const hh of rows) {
     let x = Math.floor(rnd() * 6);
-    const end = x + 48;
+    const end = x + W;
     while (x < end) { let len = lo + Math.floor(rnd() * (hi - lo + 1)); if (end - x - len < lo) len = end - x; out.push({ x0: x, x1: x + len, y0: y, y1: y + hh }); x += len; }
     y += hh;
   }
@@ -498,7 +506,12 @@ const FOL_FRAG = `
     float plGrove = texture2D( uPlNoise, plF / 260.0 + 0.53 ).b;
     float plOpen = smoothstep( 0.56, 0.64, plFld ) * uPlFar.x;
     diffuseColor.rgb = mix( diffuseColor.rgb, mix( vec3( 0.17, 0.18, 0.085 ), vec3( 0.25, 0.22, 0.13 ), texture2D( uPlNoise, plF / 90.0 ).r ), plOpen );
-    diffuseColor.rgb *= mix( 1.0, 0.72, smoothstep( 0.55, 0.7, plGrove ) * ( 1.0 - plOpen ) );
+    diffuseColor.rgb *= mix( 1.0, 0.62, smoothstep( 0.52, 0.7, plGrove ) * ( 1.0 - plOpen ) );
+    {      // stands of one kind of tree, ~60 m across: olive oaks, yellow-green, blue-green pines, bare grey-brown winter crowns (p28)
+      vec4 plK = texture2D( uPlNoise, plF / 140.0 + 0.41 );
+      vec3 plKind = plK.r > 0.62 ? vec3( 1.15, 1.08, 0.70 ) : plK.g > 0.64 ? vec3( 0.80, 0.92, 1.12 ) : plK.b > 0.66 ? vec3( 1.35, 1.05, 1.25 ) : vec3( 1.0 );
+      diffuseColor.rgb *= mix( vec3( 1.0 ), plKind, 1.0 - plOpen );
+    }
     vec2 plCell = floor( plF / 28.0 ), plIn2 = fract( plF / 28.0 );
     float plH = fract( sin( dot( plCell, vec2( 127.1, 311.7 ) ) ) * 43758.5453 ), plH2 = fract( plH * 17.13 );
     vec2 plRo = abs( plIn2 - 0.5 - 0.15 * ( vec2( plH2, fract( plH * 31.7 ) ) - 0.5 ) );
@@ -671,7 +684,8 @@ function foliage(ctx, spec) {
       .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n\treflectedLight.directDiffuse += plThrough * BRDF_Lambert( material.diffuseColor * uPlThrough );')
       // the far canopy fades into the haze of the valley (p28)
       .replace('#include <tonemapping_fragment>', `#ifdef PL_FAR
-      gl_FragColor.rgb = mix( gl_FragColor.rgb, vec3( 0.60, 0.67, 0.76 ) * clamp( max( plSun.r, plSun.g ) / 3.0, 0.25, 1.0 ), 1.0 - exp( - max( length( vViewPosition ) - uPlFar.z, 0.0 ) / uPlFar.w ) );
+      // (a power above 1: the canopy keeps its greens to ~1 km, the last kilometres melt into the horizon's haze)
+      gl_FragColor.rgb = mix( gl_FragColor.rgb, vec3( 0.60, 0.67, 0.76 ) * clamp( max( plSun.r, plSun.g ) / 3.0, 0.25, 1.0 ), 1.0 - exp( - pow( max( length( vViewPosition ) - uPlFar.z, 0.0 ) / uPlFar.w, 1.35 ) ) );
       #endif
       #include <tonemapping_fragment>`);
   };
@@ -685,7 +699,7 @@ function foliage(ctx, spec) {
       try { if (prepFoliage(geometry) && ctx.changed) ctx.changed(); } catch (e) { console.warn('foliage prep', e); }
     });
   };
-  m.customProgramCacheKey = () => 'h2-foliage-5' + (spec.far ? 'f' : '');
+  m.customProgramCacheKey = () => 'h2-foliage-6' + (spec.far ? 'f' : '');
   return m;
 }
 
@@ -752,17 +766,17 @@ function bark(ctx, spec) {
 const LEAVES = {
   pl_leaf: { color: [0.098, 0.150, 0.034], vary: 1.2 },
   pl_leaf_light: { color: [0.165, 0.225, 0.046], through: [0.85, 1.0, 0.2, 0.6], vary: 1.1 },
-  pl_leaf_dark: { color: [0.044, 0.066, 0.027], depth: 0.25, through: [0.7, 1.0, 0.3, 0.25], leaf: 0.3, vary: 1.2 },
+  pl_leaf_dark: { color: [0.054, 0.078, 0.030], depth: 0.25, through: [0.7, 1.0, 0.3, 0.25], leaf: 0.3, vary: 1.2 },
   pl_leaf_yellow: { color: [0.23, 0.26, 0.045], through: [0.9, 1.0, 0.15, 0.6] },
   pl_leaf_maple: { color: [0.185, 0.235, 0.040], leaf: 0.3, clump: 3.2, through: [0.9, 1.0, 0.15, 0.7], vary: 0.7 },
   pl_leaf_red: { color: [0.19, 0.05, 0.036], leaf: 0.33, clump: 3.2, hue: 0.06, vary: 0.4, through: [1.0, 0.35, 0.2, 0.6] },
   pl_leaf_conifer: { color: [0.026, 0.048, 0.027], kind: 'needle', leaf: 0.4, clump: 2.6, depth: 0.2, cut: [0.12, 0.8], through: [0.7, 1.0, 0.4, 0.2] },
   pl_blossom: { color: [0.085, 0.13, 0.036], leaf: 0.3, clump: 1.6, bump: [0.35, 0.03], hue: 0.08, vary: 0.4, bloom: [0.80, 0.78, 0.73, 0.42] },
   yard_vine: { color: [0.07, 0.12, 0.03], leaf: 0.36, clump: 2.4, bump: [0.2, 0.03], bloom: [0.78, 0.45, 0.52, 0.30] },      // climbing roses over the arbor (p20)
-  pl_far_canopy: { color: [0.075, 0.088, 0.048], clump: 23, leaf: 9, bump: [2.0, 0.4], up: 0, cut: [-1, 0], depth: 0.6, twoSided: false, far: true, land: [0.55, 0.16, 80, 620] },
-  pl_far_hill: { color: [0.10, 0.11, 0.08], clump: 310, leaf: 131, bump: [10.0, 1.5], up: 0, cut: [-1, 0], depth: 0.85, twoSided: false, far: true, land: [0.4, 0.10, 80, 560] },
+  pl_far_canopy: { color: [0.075, 0.088, 0.048], clump: 23, leaf: 9, bump: [2.0, 0.4], up: 0, cut: [-1, 0], depth: 0.6, twoSided: false, far: true, land: [0.55, 0.26, 120, 1150] },
+  pl_far_hill: { color: [0.10, 0.11, 0.08], clump: 310, leaf: 131, bump: [10.0, 1.5], up: 0, cut: [-1, 0], depth: 0.85, twoSided: false, far: true, land: [0.4, 0.10, 120, 1000] },
   foliage_dark: { color: [0.036, 0.058, 0.024], depth: 0.25 },
-  ground_far: { color: [0.12, 0.13, 0.085], clump: 70, leaf: 31, bump: [1.0, 0.2], up: 0, cut: [-1, 0], depth: 0.8, twoSided: false, far: true, land: [0.45, 0, 80, 620] },
+  ground_far: { color: [0.12, 0.13, 0.085], clump: 70, leaf: 31, bump: [1.0, 0.2], up: 0, cut: [-1, 0], depth: 0.8, twoSided: false, far: true, land: [0.45, 0, 120, 1150] },
 };
 
 // ------------------------------------------------------------------------------------------------ registry

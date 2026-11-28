@@ -301,14 +301,19 @@ const MAIN_FRAGMENT = /* glsl */`
       glzSpec = glzWorld(vGlzW, gR, gSunD, gSunC, gSky, gRA, 1.0) * gF;
     } else {
       // No room behind (uncoded panes): the pane is a dark mirror.  A low, grey-green tree line in it (tk 0.3).
-      vec3 gW = glzWorld(vGlzW, gR, gSunD, gSunC, gSky, gRA, 0.3);
+      vec3 gW = glzWorld(vGlzW, gR, gSunD, gSunC, gSky, gRA, mix(0.3, 0.5, gUp));      // upper: the tree line to ~13 deg
       float gTn = gR.y / max(length(gR.xz), 1e-4);
       float gL;
       if (gUp > 0.5) {
         // UPPER STOREY: open sky above -- the panes mirror it deep blue at ~0.55 of the sky they face (hero: upper
         // panes sRGB 75-84 122-142 175-221 under a sky of 127 168 239), the ground below the horizon only at the
         // pane's Fresnel (seen from the drone the windows stay dark, p28 / p29); a knee for the sun's glint
-        glzSpec = gW * mix(gF, 0.55, smoothstep(-0.03, 0.12, gTn));
+        // the sky in the pane is deeper than the sky beside it (polarised by the reflection): its blue pushed to the
+        // hero's (0.33, 1.04, 2.4) x luminance -- the trees and houses mirrored keep their own colours
+        float gLw = max(dot(gW, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
+        float gBlue = smoothstep(0.05, 0.35, (gW.b - gW.r) / gLw) * smoothstep(-0.02, 0.08, gTn);
+        gW = mix(gW, gLw * vec3(0.33, 1.04, 2.4), gBlue);
+        glzSpec = gW * mix(gF, mix(0.55, 0.46, gBlue), smoothstep(-0.03, 0.12, gTn));
         gL = dot(glzSpec, vec3(0.2126, 0.7152, 0.0722));
         glzSpec /= 1.0 + max(gL - 0.6, 0.0) * 1.5;
       } else {
@@ -316,12 +321,12 @@ const MAIN_FRAGMENT = /* glsl */`
         // front porch, the rear loggia, the north porch): above eye level the pane mirrors the porch ceiling in shade,
         // the sunlit garden only in a band about the horizon, the porch floor below -- the panes read near black
         // (hero: 32 31 31), the door's lites catch the garden as light glints, never a green sheet
-        vec3 gCeil = vec3(0.80, 0.78, 0.72) * gSky * 0.12;
+        vec3 gCeil = vec3(0.80, 0.78, 0.72) * gSky * 0.08;
         float gBand = smoothstep(0.10, 0.03, gTn) * smoothstep(-0.09, -0.02, gTn);
         vec3 gFloor = gW * 0.35;
-        glzSpec = mix(mix(gFloor, gCeil, smoothstep(-0.02, 0.06, gTn)), gW * 0.8, gBand);
+        glzSpec = mix(mix(gFloor, gCeil, smoothstep(-0.02, 0.06, gTn)), gW * 0.65, gBand);
         gL = dot(glzSpec, vec3(0.2126, 0.7152, 0.0722));
-        glzSpec = mix(vec3(gL), glzSpec, 0.6) * gF;                     // dimly seen: half the garden's colour
+        glzSpec = mix(vec3(gL), glzSpec, 0.4) * gF;                     // dimly seen: a grey-green, not a green
       }
     }
     totalEmissiveRadiance += gRoom.rgb * (1.0 - gF) * vec3(0.87, 0.91, 0.89);
@@ -348,7 +353,7 @@ function glassMaterial(ctx, shared) {
       // perfectly smooth pane would only add fireflies
       .replace('vec3 totalSpecular = reflectedLight.directSpecular + reflectedLight.indirectSpecular;', 'vec3 totalSpecular = glzSpec;');
   };
-  m.customProgramCacheKey = () => 'glazing-glass-7-' + ss;
+  m.customProgramCacheKey = () => 'glazing-glass-8-' + ss;
   return m;
 }
 

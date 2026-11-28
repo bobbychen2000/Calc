@@ -81,7 +81,7 @@ PL_ROOF_S = 1.96                      # roof square (aerial outline at z 4.85 ag
 PL_DECK_XY = (16.94, 18.80, -0.305, 1.255)    # deck / corner posts (p19: NW post under the roof's NW eave, NE post
                                               # under its NE corner)
 Z_DECK, Z_RAIL, Z_EAVE, Z_RIDGE = 3.65, 4.30, 4.85, 5.90      # p19: eave 4.85, ridge 5.85-5.95 (48 deg); deck / rail
-Z_BEAM = 3.94                         # swing beam centre: p19 reads the end face 0.76-0.80 px rows 764-797 (top ~4.0)
+Z_BEAM = 3.94                         # swing beam centre: p19 sees its end face over rows 764-797 (top ~4.0)
 Z_BRIDGE, Z_BRIDGE_TOP = 4.70, 5.90   # the RAISED bridge: floor under the tower's eave (p22 4.9, p19 swing tops 4.5)
 PL_BRIDGE = ((18.10, -0.45), (17.97, -3.59))   # centre line, tower end -> fort end (aerial + frame 140500 at z 4.6)
 # fort deck: a ~1.5 m hexagon turned 45 deg (frame 140500 + aerial triangulate the deck at 3.3, 1 px); edge 0-1 = the
@@ -89,7 +89,8 @@ PL_BRIDGE = ((18.10, -0.45), (17.97, -3.59))   # centre line, tower end -> fort 
 PL_FORT = [(18.24, -3.60), (19.06, -4.17), (19.13, -4.75), (18.45, -5.46), (17.75, -4.75), (17.70, -4.11)]
 Z_FORT, Z_FORT_TOP = 3.30, 4.55
 PL_AFRAME = ((13.49, 1.44), (13.59, -0.93), (14.15, 0.40))     # feet N / S, apex (p19: the beam runs on 0.42 m past it)
-PL_BEAM_Y = (0.28, 0.52)              # the two rails of the swing beam (monkey bars): aerial 0.37 / 0.62, p19 0.21
+PL_BEAM_Y = 0.40                      # the swing beam: ONE ~0.10 x 0.14 timber (p19 sees one band, no rungs under it;
+                                      # the aerial's second line is its shadow)
 PL_TIRE = (15.27, 0.30, 2.44)         # tyre centre, its top face (p19)
 # vegetable garden: fence base (aerial, on the ground), beds (aerial boxes at the bed tops)
 GARDEN = [(16.76, 7.24), (16.78, 4.67), (24.22, 4.61), (24.18, 12.23), (16.71, 12.32), (16.75, 8.08)]
@@ -712,27 +713,24 @@ def play():
         bar(geo, W, (x, ty0, Z_EAVE - 0.06), (x, ty1, Z_EAVE - 0.06), 0.05, 0.10)
     bar(geo, W, (tx1, ty1, Z_EAVE - 0.12), (tx1, ty1 + 0.95, Z_EAVE - 0.12), 0.07, 0.12)       # arm north (aerial, p19)
     h = 0.0
-    # ---- swing beam west to the A-frame: two rails with rungs (monkey bars, aerial / frame 140500), the A-frame's
-    # legs two-board ladders (p19) on a bottom rail, the tyre swing on three chains and a swivel
+    # ---- swing beam west to the A-frame (one timber, p19 / aerial), the A-frame's legs two-board ladders (p19) on a
+    # bottom rail, the tyre swing on three chains and a swivel
     (fn, fs, ap) = PL_AFRAME
     apex = np.array([ap[0], ap[1], Z_BEAM + 0.10])                # p19: the legs cross above the beam
-    for y in PL_BEAM_Y:
-        bar(geo, W, (13.73, y, Z_BEAM), (tx0, y, Z_BEAM), 0.09, 0.14)                            # end: p19
-    for x in np.arange(ap[0] + 0.35, tx0 - 0.1, 0.32):
-        bar(geo, W, (x, PL_BEAM_Y[0], Z_BEAM + 0.03), (x, PL_BEAM_Y[1], Z_BEAM + 0.03), 0.035, 0.035)
-    bar(geo, W, (ap[0], PL_BEAM_Y[0] - 0.10, Z_BEAM - 0.10), (ap[0], PL_BEAM_Y[1] + 0.10, Z_BEAM - 0.10), 0.09, 0.09)
+    yb = PL_BEAM_Y
+    bar(geo, W, (13.73, yb, Z_BEAM), (tx0, yb, Z_BEAM), 0.10, 0.14)                              # end: p19
+    bar(geo, W, (ap[0], yb - 0.22, Z_BEAM - 0.12), (ap[0], yb + 0.22, Z_BEAM - 0.12), 0.09, 0.09)     # cross tie
     for f in (fn, fs):
         foot = np.array([f[0], f[1], gz(*f) - 0.05])
         ladder(geo, foot, apex + np.sign(f[1] - ap[1]) * np.array([0, 0.12, 0]), w=0.30)
     bar(geo, W, (fn[0], fn[1], gz(*fn) + 0.07), (fs[0], fs[1], gz(*fs) + 0.07), 0.09, 0.14)      # bottom rail
-    for y in PL_BEAM_Y:                                                                        # braces to the tower
-        bar(geo, W, (tx0 - 0.75, y, Z_BEAM - 0.05), (tx0, y, Z_DECK - 0.35), 0.04, 0.12)
+    bar(geo, W, (tx0 - 0.75, yb, Z_BEAM - 0.05), (tx0, yb, Z_DECK - 0.35), 0.04, 0.12)      # brace to the tower
     tx, ty, ttop = PL_TIRE
     zt = ttop - 0.20
     F._revolve(geo, 'yard_tire', [(0.20, 0.0), (0.30, -0.06), (0.36, 0.04), (0.30, 0.14), (0.20, 0.08)], n=12,
                centre=(tx, ty, zt))
-    sw = np.array([tx, PL_BEAM_Y[0], Z_BEAM - 0.55])
-    bar(geo, 'yard_rope', sw, (tx, PL_BEAM_Y[0], Z_BEAM - 0.08), 0.015, 0.015)
+    sw = np.array([tx, yb, Z_BEAM - 0.55])
+    bar(geo, 'yard_rope', sw, (tx, yb, Z_BEAM - 0.08), 0.015, 0.015)
     for k in range(3):
         a_ = 2 * math.pi * k / 3
         bar(geo, 'yard_rope', (tx + 0.28 * math.cos(a_), ty + 0.28 * math.sin(a_), zt + 0.10), sw, 0.012, 0.012)
