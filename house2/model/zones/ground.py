@@ -309,12 +309,37 @@ def gz(x, y):
     return z if z.ndim else float(z)
 
 
+def _wall_pieces(line, piece=3.0):
+    """The straight pieces a wall is built of: (p, q, k, t0, t1, first-or-last of its segment)."""
+    line = np.asarray(line, float)
+    for k in range(len(line) - 1):
+        a, b = line[k], line[k + 1]
+        n = max(1, int(round(np.linalg.norm(b - a) / piece)))
+        for i in range(n):
+            t0, t1 = i / n, (i + 1) / n
+            yield a + (b - a) * t0, a + (b - a) * t1, k, t0, t1, i in (0, n - 1)
+
+
 def wall_footprints():
-    from shapely.geometry import LineString
+    """The plan footprint of the wall BODIES exactly as _wall() builds them (the rectangles of its pieces, each
+    segment's end pieces run on by half a width): the terrain is cut by this, so it meets the walls' faces with no
+    gap (a bevelled buffer of the wall line left slivers of open ground at the bends)."""
+    from shapely.geometry import Polygon
     from shapely.ops import unary_union
     _grid()
-    return unary_union([LineString(s['line']).buffer(s['w'] / 2, cap_style='flat', join_style='bevel')
-                        for s in _G['walls']])
+    R = []
+    for sp in _G['walls']:
+        w = sp['w']
+        for p, q, _, _, _, end in _wall_pieces(sp['line']):
+            d = q - p
+            L = np.linalg.norm(d)
+            if L < 1e-6:
+                continue
+            d = d / L
+            s = np.array([-d[1], d[0]]) * w / 2
+            e = d * (w / 2 if end else 0.0)
+            R.append(Polygon([p - e - s, q + e - s, q + e + s, p - e + s]))
+    return unary_union(R)
 
 
 # ---- helpers ------------------------------------------------------------------------------------------------
@@ -420,13 +445,10 @@ def _wall(geo, line, w, tops, piece=3.0, mat='fieldstone', cap='wall_cap', level
     ~`piece` m; level=True steps the top (each piece level at its higher end, the way a dry-stacked wall climbs)."""
     line = np.asarray(line, float)
     tops = np.broadcast_to(np.asarray(tops, float), (len(line),))
-    for k in range(len(line) - 1):
-        a, b = line[k], line[k + 1]
-        L = np.linalg.norm(b - a)
-        n = max(1, int(round(L / piece)))
-        for i in range(n):
-            t0, t1 = i / n, (i + 1) / n
-            p, q = a + (b - a) * t0, a + (b - a) * t1
+    if True:
+        for p, q, k, t0, t1, end in _wall_pieces(line, piece):
+            if np.linalg.norm(q - p) < 1e-6:
+                continue
             z0, z1 = tops[k] + (tops[k + 1] - tops[k]) * t0, tops[k] + (tops[k + 1] - tops[k]) * t1
             if level:
                 z0 = z1 = max(z0, z1)
@@ -436,7 +458,7 @@ def _wall(geo, line, w, tops, piece=3.0, mat='fieldstone', cap='wall_cap', level
             zb = min(float(gz(*(pts + s * e).T).min()) for e in (-w / 2 - 0.1, w / 2 + 0.1)) - 0.15
             zh = max(float(gz(*(pts + s * e).T).max()) for e in (-w / 2 - 0.1, w / 2 + 0.1)) + 0.06
             z0, z1 = max(z0, zh), max(z1, zh)               # a wall always closes the gap its footprint leaves
-            _hexa(geo, mat, p, q, w, zb, z0, z1, cap=cap, ext=w / 2 if (i in (0, n - 1)) else 0.0)
+            _hexa(geo, mat, p, q, w, zb, z0, z1, cap=cap, ext=w / 2 if end else 0.0)
 
 
 def _above(line, w, dz, reach=0.9, zf=None):
@@ -625,7 +647,14 @@ def _flights():
     out.append(dict(name='lawn_steps', lo=lo, hi=hi, z_lo=z_lo, z_hi=z_hi, n_treads=L['treads'], landing=0.0,
                     cheeks=(False, False), rail='b'))
     for f in out:
-        f['hole'] = [f['lo'][0], f['lo'][1], f['hi'][1], f['hi'][0]]
+        # the hole = the rectangle _flight() builds (lo / hi are placed at different heights: not quite a rectangle)
+        o, top = (f['lo'][0] + f['lo'][1]) / 2, (f['hi'][0] + f['hi'][1]) / 2
+        d = top - o
+        L = np.linalg.norm(d)
+        d = d / L
+        s = np.array([-d[1], d[0]])
+        wa, wb = (f['lo'][0] - o) @ s, (f['lo'][1] - o) @ s
+        f['hole'] = [o + s * wa, o + s * wb, o + d * L + s * wb, o + d * L + s * wa]
     _G['fl'] = out
     return out
 

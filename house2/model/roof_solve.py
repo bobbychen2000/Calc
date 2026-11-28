@@ -32,6 +32,16 @@ EAVE = {1: (3.35, 0.35), 2: (6.40, 0.15)}           # storey -> (prior m above t
 EAVE_BLOCK = {'north_porch': (3.10, 0.10), 'patio_1st': (3.60, 0.10)}   # measured
 EAVE_KINDS = ('eave', 'eave_over_lower_roof', 'eave_end')
 MERGE_PX = 4.5
+# ---- corrections from the oblique views (round 2: this file is the single source of the roofs; zones/house.py and
+# zones/roof_details.py both read survey/roof_3d.json and apply no height corrections of their own) -------------------
+# garage + north wing: the 28 deg prior stood 0.5-0.65 m above the roof's silhouette in p01 (front photo, fitted
+# camera); ~19 deg puts the garage ridge at ~4.8 and the north wing's at ~5.1.
+PITCH_BLOCK = {'garage_wing': (19.0, 1.0), 'north_wing': (19.0, 1.0)}
+# the garage's south gable: 26 deg (the aerial's ridge displacement + p01's apex); the balcony gable ~27.5 deg
+PITCH_PLANE = {'gb_w': (26.0, 1.5), 'gb_e': (26.0, 1.5), 'bg_n': (27.5, 2.0), 'bg_s': (27.5, 2.0)}
+# measured ridge heights (plane id -> (z, sigma)): the balcony gable's apex (p21: 0.2 m under the first solve; epi 7.5-8.0)
+RIDGE_Z = {'bg_n': (7.97, 0.01), 'bg_s': (7.97, 0.01)}
+GARAGE_GABLE_PITCH = 26.0        # rebuilt symmetric after the solve (garage_gable below)
 # survey corrections (p29 at 3.5x): the diagonal front-porch leg is one shed sloping SW from under the front gable FG's
 # eave to the porch eave; the small entry gable over the steps (apex ~(725,1249), ridge NE-SW) stands on it and is built
 # in model/zones/house.py.  (The survey's two gable planes put the leg's NW valley vertex on the downhill side of its
@@ -129,6 +139,20 @@ def solve(verbose=True):
     bst = {p['attrs']['block']: p['attrs']['storey'] for p in planes}
     eprior = np.array([EAVE_BLOCK.get(b, EAVE[bst[b]]) for b in blocks])
     flat = np.array([p['type'] == 'roof_flat' for p in planes])
+    pid = [p['id'].split('.', 1)[1] for p in planes]
+    pprior = [PITCH_PLANE.get(pid[i], PITCH_BLOCK.get(p['attrs']['block'], (PITCH, 6.0))) for i, p in enumerate(planes)]
+    ridge_z = []                                 # (node, z, sigma)
+    for i, p in enumerate(planes):
+        if pid[i] not in RIDGE_Z:
+            continue
+        st = p['attrs']['storey']
+        for ed in p['attrs'].get('edges', []):
+            if ed['kind'] != 'ridge':
+                continue
+            for q in (ed['a'], ed['b']):
+                for k in range(N):
+                    if node_st[k] == st and np.linalg.norm(uv[k] - q) < MERGE_PX + 1:
+                        ridge_z.append((k,) + tuple(RIDGE_Z[pid[i]]))
     down = []
     for p in planes:
         dv = p['attrs'].get('downhill_img')
@@ -149,7 +173,7 @@ def solve(verbose=True):
             P0 += [g[0], g[1], c]
     x0 = np.r_[z0, np.array(P0), eprior[:, 0]]
 
-    def resid(x):
+    def resid(x, pprior=[(PITCH, 6.0)] * M, ridge_z=()):
         z = x[:N]
         P = x[N:N + 3 * M].reshape(M, 3)
         e = x[N + 3 * M:]
@@ -162,7 +186,7 @@ def solve(verbose=True):
             if flat[i]:
                 out.append(g / 0.01)
             else:
-                out.append([(np.degrees(np.arctan(np.hypot(*g))) - PITCH) / 6.0])
+                out.append([(np.degrees(np.arctan(np.hypot(*g))) - pprior[i][0]) / pprior[i][1]])
                 if down[i] is not None:
                     gn = -g / max(np.hypot(*g), 1e-6)
                     out.append([(gn[0] * down[i][1] - gn[1] * down[i][0]) / 0.25,
@@ -171,16 +195,38 @@ def solve(verbose=True):
             out.append([(z[k] - e[bidx[b]]) / 0.04])
         for a, b in ridge_pairs:
             out.append([(z[a] - z[b]) / 0.05])
+        for k, zr, sg in ridge_z:
+            out.append([(z[k] - zr) / sg])
         out.append((e - eprior[:, 0]) / eprior[:, 1])
         return np.concatenate([np.atleast_1d(np.asarray(v, float)) for v in out])
 
+    # stage 1: the survey alone (one pitch prior).  Stage 2: the corrected blocks / planes re-solved with their own
+    # priors, everything else held (nodes they share with other planes included), so a correction stays local.
     sol = least_squares(resid, x0, loss='soft_l1', f_scale=2.0, x_scale='jac', max_nfev=4000)
-    x = sol.x
+    x = sol.x.copy()
+    aff = [i for i in range(M) if pprior[i] != (PITCH, 6.0) or pid[i] in RIDGE_Z]
+    if aff:
+        other = {k for i in range(M) if i not in aff for k in pv[i]}
+        free = np.zeros(len(x), bool)
+        for i in aff:
+            free[N + 3 * i:N + 3 * i + 3] = True
+            for k in pv[i]:
+                free[k] = k not in other
+        for b in blocks:
+            if all(i in aff for i, p in enumerate(planes) if p['attrs']['block'] == b):
+                free[N + 3 * M + bidx[b]] = True
+
+        def resid2(xf):
+            xx = x.copy()
+            xx[free] = xf
+            return resid(xx, pprior, ridge_z)
+        sol = least_squares(resid2, x[free], loss='soft_l1', f_scale=2.0, x_scale='jac', max_nfev=4000)
+        x[free] = sol.x
     z = x[:N]
     P = x[N:N + 3 * M].reshape(M, 3)
     e = x[N + 3 * M:]
     X, Y = xy(z)
-    res = resid(x)
+    res = resid(x, pprior, ridge_z)
     out = {'_note': 'generated by model/roof_solve.py from survey/roof.json + the registered aerial; metres, world frame '
                     '(Z above the pool deck). planes: id, block, storey, plane z = a X + b Y + c, poly = 3-D vertices '
                     '(each on its own plane), edges = the survey kinds per polygon edge.',
@@ -205,6 +251,7 @@ def solve(verbose=True):
                               'pitch_deg': round(float(np.degrees(np.arctan(np.hypot(a_, b_)))), 2),
                               'poly': [[round(float(a), 3), round(float(b), 3), round(float(c), 3)] for a, b, c in zip(Xi, Yi, zz)],
                               'edges': kinds})
+    garage_gable(out)
     json.dump(out, open(os.path.join(HERE, 'survey', 'roof_3d.json'), 'w'), indent=1)
     if verbose:
         print('nodes %d, planes %d, cost %.1f, rms resid %.2f sigma' % (N, M, sol.cost, np.sqrt(np.mean(res ** 2))))
@@ -216,6 +263,34 @@ def solve(verbose=True):
         big = np.argsort(-np.abs(res))[:8]
         print('largest residuals (sigma):', np.round(res[big], 1))
     return out
+
+
+def garage_gable(out):
+    """The garage's south gable rebuilt symmetric about the middle of its two rake feet at GARAGE_GABLE_PITCH (the
+    solve leaves its ridge ~0.3 m off centre: the ridge pixel is displaced by its unknown height).  gb_w / gb_e become
+    ridge - rake - eave - valley quads whose valleys lie ON g_s's plane, and g_s's notch takes the same three points."""
+    Q = {p['id']: p for p in out['planes']}
+    gw, ge, gs = Q['gb_w'], Q['gb_e'], Q['g_s']
+    fw, fe = np.array(gw['poly'][2]), np.array(ge['poly'][2])       # rake feet
+    a, b, c = gs['plane']
+    xr, ze, yf = (fw[0] + fe[0]) / 2, (fw[2] + fe[2]) / 2, (fw[1] + fe[1]) / 2
+    half = (fe[0] - fw[0]) / 2
+    t = np.tan(np.radians(GARAGE_GABLE_PITCH))
+    za = ze + half * t
+    on_gs = lambda x, z: (z - a * x - c) / b                        # noqa: E731  y where g_s is at height z
+    apex = [xr, on_gs(xr, za), za]
+    vw, ve = [fw[0], on_gs(fw[0], ze), ze], [fe[0], on_gs(fe[0], ze), ze]
+    rnd = lambda P: [[round(float(v), 3) for v in q] for q in P]    # noqa: E731
+    gw['poly'] = rnd([apex, [xr, yf, za], [fw[0], yf, ze], vw])     # edges: ridge, rake, eave, valley
+    ge['poly'] = rnd([apex, ve, [fe[0], yf, ze], [xr, yf, za]])     # edges: valley, eave, rake, ridge
+    gw['plane'] = [round(float(v), 5) for v in (t, 0.0, ze - t * fw[0])]
+    ge['plane'] = [round(float(v), 5) for v in (-t, 0.0, ze + t * fe[0])]
+    gw['pitch_deg'] = ge['pitch_deg'] = GARAGE_GABLE_PITCH
+    # g_s: ['hip', 'hip', 'eave', 'valley', 'valley', 'eave'] -> vertices 3, 4, 5 = east valley foot, apex, west valley foot
+    P = [np.array(v) for v in gs['poly']]
+    d = [np.linalg.norm(P[3][:2] - np.array(v[:2])) for v in (ve, vw)]
+    first, last = (ve, vw) if d[0] < d[1] else (vw, ve)
+    gs['poly'] = rnd([P[0], P[1], P[2], first, apex, last])
 
 
 if __name__ == '__main__':
