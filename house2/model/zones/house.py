@@ -20,7 +20,7 @@ from shapely.geometry import LineString, Point, Polygon, box
 from shapely.ops import unary_union
 
 from model.kit import Geo, Part
-from model.massing_kit import RoofPlane, roof_planes, wall
+from model.massing_kit import RoofPlane, roof_planes, wall, wall_top
 from model import plan
 
 HERE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -28,6 +28,7 @@ ROOF = json.load(open(os.path.join(HERE, 'survey', 'roof_3d.json')))
 
 OVERHANG = {1: 0.50, 2: 0.60}            # eave line -> wall face, plan metres
 UNDER = 0.85                             # a roof hidden under an upper eave runs on this far uphill (into the wall)
+Z_GROW_MAX = 5.9                         # a one-storey roof grown on under the upper eaves stops below them
 Z_BASE = -2.5                            # walls start below every ground level; the terrain covers them
 Z2 = 3.45                                # upper floor level: the upper walls start here, the ground walls stop under it
 SLAB_T = 0.25
@@ -57,10 +58,12 @@ PB_ROOM = (-9.0, -17.9, -0.6, -14.3)     # the enclosed part of the patio wing (
 PB_COL_Y = -11.5                         # column line of its covered patio
 # front colonnade (p01: the 4 west-run columns as pairs of the camera fit, rms 7 px): the column line stands ~1.15 m
 # inside the eave (deep overhang with exposed rafter tails), the box beam's underside at 3.12
-# round 3: p01 is keystone-corrected (a LEVEL camera with a shifted principal point fits its 13 roof pairs at 6 px, the
-# tilted pinhole at 14 px); through it the west-run shafts sit 0.1-0.3 m further west and the capital tops at z 3.06-3.09
-# (hero, at the entry: the beam top level with the entry gable's rake ends, ~2.6 m of column + pier over the floor)
-COL_X_W, COL_Y_S, COL_Y_N = -23.15, -15.42, -7.6
+# round 3: p01 is keystone-corrected (a LEVEL camera with a shifted principal point fits its 14 roof pairs at 5.9 px, the
+# tilted pinhole at 12.8 px).  Through it the four west-run shafts fall on one line x -23.05 at EVEN 3.0 m bays
+# (y -15.4 / -12.4 / -9.4 / -6.4; the old 2.6 m bays needed a slanted line), the corner on the front line y -15.42, the
+# capital tops at z 3.06-3.09 (hero, at the entry: the beam top level with the entry gable's rake ends)
+COL_X_W, COL_Y_S, COL_Y_N = -23.05, -15.42, -6.42
+COL_BAY_W = 3.0                          # west-run bays
 COL_X_MIRROR = -23.0                     # the south leg's column line is the mirror of the old west line (no photograph)
 COL_TOP = 3.06                           # underside of the porch box beam = top of the column capitals
 BEAM_H = 0.34                            # beam face 0.35 m deep (hero: 75 px at 213 px/m)
@@ -75,19 +78,70 @@ def _upper_outline():
     return unary_union(polys)
 
 
+def _grow_under(P, edges, plane, upper, walls):
+    """A one-storey roof's 'under_upper_eave' edges are where the aerial loses it under a two-storey eave -- displaced
+    by up to ~2 m from the true eave by the aerial's parallax (the upper roof is 3-4 m higher).  Sweep those edges
+    up-slope to the upper walls (0.25 m into them) and grow the plane under the upper roof, so no strip is left open
+    between the visible roof and the walls (round 3: holes beside the west gable and under the north wing's eave)."""
+    a, b, c = plane
+    pp = Polygon(P[:, :2])
+    up = np.array([a, b], float)
+    nu = np.hypot(*up)
+    parts = [pp.buffer(UNDER, join_style=2).intersection(upper.buffer(-0.02))]
+    if nu > 1e-6:
+        up = up / nu
+        n = len(P)
+        for k, kind in enumerate(edges):
+            if not kind.startswith('under_upper'):
+                continue
+            e0, e1 = P[k, :2], P[(k + 1) % n, :2]
+            parts.append(Polygon([e0, e1, e1 + up * 4.5, e0 + up * 4.5]).buffer(0))
+            d = e1 - e0                                  # and straight out of the edge (edges along the slope)
+            if np.hypot(*d) > 0.05:
+                nn = np.array([d[1], -d[0]]) / np.hypot(*d)
+                if pp.contains(Point(*((e0 + e1) / 2 + nn * 0.05))):
+                    nn = -nn
+                if nn @ up > -0.2:
+                    parts.append(Polygon([e0, e1, e1 + nn * 4.5, e0 + nn * 4.5]).buffer(0))
+    grow = unary_union(parts).intersection(upper.buffer(2.2, join_style=2)).difference(walls.buffer(-0.25, join_style=2))
+    # stay on this plane's side of its hips / valleys (their lines run on up to the walls): no spill over a neighbour
+    ctr = np.array(pp.representative_point().coords[0])
+    n = len(P)
+    for k, kind in enumerate(edges):
+        if kind not in ('hip', 'valley', 'ridge'):
+            continue
+        e0, e1 = P[k, :2], P[(k + 1) % n, :2]
+        d = e1 - e0
+        if np.hypot(*d) < 0.05:
+            continue
+        d = d / np.hypot(*d)
+        nn = np.array([-d[1], d[0]])
+        if (ctr - e0) @ nn < 0:
+            nn = -nn
+        hp = Polygon([e0 - d * 30, e1 + d * 30, e1 + d * 30 + nn * 30, e0 - d * 30 + nn * 30])
+        grow = grow.intersection(hp.buffer(0.02))
+    if nu > 1e-6:                                    # and below the two-storey eaves (6.4): never through them
+        zc = Z_GROW_MAX - c
+        o = up * zc / nu
+        side = np.array([-up[1], up[0]])
+        grow = grow.intersection(Polygon([o - side * 60, o + side * 60, o + side * 60 - up * 60, o - side * 60 - up * 60]))
+    g = pp.union(grow).buffer(0.01, join_style=2).buffer(-0.01, join_style=2)
+    if g.geom_type != 'Polygon':
+        g = max(g.geoms, key=lambda q: q.area if q.intersects(pp) else 0.0)
+    return g.simplify(0.01)
+
+
 def _planes():
     out = []
     upper = _upper_outline()
+    walls2 = upper.buffer(-OVERHANG[2], join_style=2)
     for p in ROOF['planes']:
         P = np.array(p['poly'], float)
         a, b, c = p['plane']
         Q = P
         if p['storey'] == 1 and any(k.startswith('under_upper') for k in p['edges']):
-            # grow the plane under the upper roof only (hidden there), so it runs into the upper walls
-            pp = Polygon(P[:, :2])
-            g = pp.union(pp.buffer(UNDER, join_style=2).intersection(upper.buffer(-0.02)))
-            if g.geom_type != 'Polygon':
-                g = max(g.geoms, key=lambda q: q.area)
+            # grow the plane under the upper roof (hidden there), so it runs into the upper walls
+            g = _grow_under(P, p['edges'], p['plane'], upper, walls2)
             xy = np.array(g.exterior.coords)[:-1]
             Q = np.c_[xy, a * xy[:, 0] + b * xy[:, 1] + c]
         if p['id'] in ('ncp_n', 'ncp_e'):
@@ -605,7 +659,7 @@ def front_columns():
     c = M[0] - M[1]
     mir = lambda q: (q[1] + c, q[0] - c)                              # noqa: E731  (reflection in the entry's axis)
     xw, ys = COL_X_W, COL_Y_S
-    west = [(xw, y) for y in np.linspace(COL_Y_N, ys, 4)[:3]]       # p01: 3 + the corner, evenly spaced
+    west = [(xw, ys + COL_BAY_W * k) for k in (3, 2, 1)]            # p01: 3 + the corner, 3.0 m bays
     sw, bl = (xw, ys), (-18.67, ys)                                  # bl: p01 / hero bearings onto the south line
     el, er = tuple(M - t * 1.25 + n * 0.6), tuple(M + t * 1.25 + n * 0.6)
     se0 = mir((COL_X_MIRROR, ys))
@@ -615,7 +669,7 @@ def front_columns():
 
 
 COL_X_E = -6.60                          # east leg's column line (eave -5.6)
-PORCH_END_N = (-19.2, COL_Y_N)           # the west leg's north end: the beam returns to the west wall here
+PORCH_END_N = (-19.2, COL_Y_N)           # the west leg's north end: the beam returns to the west wall (x -19.16) here
 PORCH_END_E = (COL_X_E, PB_ROOM[1])      # the east leg ends on the patio wing's south wall
 FLOOR_OUT = 0.10                         # porch floor edge outside the column line
 FASCIA_H, FASCIA_T = 0.20, 0.03          # cream fascia board under the floor's nosing, over the stone skirt
@@ -714,7 +768,12 @@ def porch_soffit(geo, fp, planes):
         a, b = np.asarray(line[i], float), np.asarray(line[i + 1], float)
         r, n, L = _frame(a, b)
         o = n[:2] * 0.151
-        wall(geo, TRIM, a + o - r[:2] * 0.15, b + o + r[:2] * 0.15, top - 0.01, p1)
+        a2, b2 = a + o - r[:2] * 0.15, b + o + r[:2] * 0.15
+        prof = wall_top(p1, a2, b2, top - 0.01)
+        L2 = float(np.linalg.norm(b2 - a2))
+        P3 = lambda s_, z_: np.array([a2[0], a2[1], 0.0]) + r * s_ + np.array([0, 0, z_])     # noqa: E731
+        ring = [P3(0, top - 0.01), P3(L2, top - 0.01)] + [P3(s_, min(z_, top + 0.55)) for s_, z_ in reversed(prof)]
+        geo.poly(TRIM, ring)
     # rafter tails along the porch eaves (not the diagonal entry leg: the pediment's beam is there)
     line_ls = LineString([tuple(q) for q in line])
     for p in planes:
@@ -800,7 +859,7 @@ def gable_trim(geo, planes):
     fg = P['fg_nw'], P['fg_se']
     face(fg[0][4], fg[0][0], fg[1][3], OVERHANG[2], 2.3, 0.75, 0.18, corbels=True)
     wg = P['wg_n'], P['wg_s']
-    face(wg[0][3], wg[1][3], wg[0][0], OVERHANG[2], 1.3, 0.5, 0.30, brace=0.6)
+    face(wg[0][3], wg[0][0], wg[1][3], OVERHANG[2], 1.3, 0.5, 0.30, brace=0.6)    # feet N -> S: the face looks west
     gg = garage_gable()
     face(gg['apex'], gg['foot_w'], gg['foot_e'], OVERHANG[1], 2.2, 0.6, 0.10, brace=0.5)
 

@@ -302,8 +302,9 @@ const MAIN_FRAGMENT = /* glsl */`
       // no lit room behind: the pane is a dark mirror of the sky -- blue-grey where it sees the sky (hero / p01 upper
       // windows sRGB ~ 80 100 125), darker where trees stand in it (~35-50), never a bright green; a soft knee keeps
       // sunlit things from glaring
+      glzSpec *= 2.2;                                                     // a dark room behind: the mirror image is all one sees
       float gL = dot(glzSpec, vec3(0.2126, 0.7152, 0.0722));
-      glzSpec = mix(vec3(gL), glzSpec, 0.85) * (0.16 / (gL + 0.16));
+      glzSpec *= 0.4 / (gL + 0.4);
     }
     totalEmissiveRadiance += gRoom.rgb * (1.0 - gF) * vec3(0.87, 0.91, 0.89);
     diffuseColor.rgb = vec3(0.80, 0.78, 0.73) * gRoom.a * (1.0 - gF) * 0.9;

@@ -14,9 +14,12 @@ tile by a minimum-error cut through the overlap of its two ends (the period is s
 given its material's mean albedo (ALBEDO values tuned by rendering through the source cameras under the viewer's
 light).  The terrace flagstone lies at 45 deg to the terrain's world-axis UVs: its square tile is re-sampled into the
 world-aligned tile of sqrt(2) times its side, which the same pattern fills periodically (`diag`).
-Albedos: the ground materials keep the ratios they have to the sunlit flagstone in the aerial (flagstone 0.50, which
-matches p21 under the viewer's light); the aerial itself is exposed ~1.7x brighter than the viewer's light and is not
-chased with albedos above what the materials can have.
+Albedos: measured against the viewer's light through the registered cameras -- the flagstone (0.50) matches p21 / p22 /
+p26 / the hero; the ground materials by their ratio to the flagstone in the same image (the spring video's top-down
+frames, the aerial -- exposed ~1.8x brighter than the viewer's light and in winter: its lawn and chips are not the
+spring photographs' colours, which win), the walls / siding / lawn by boxes in the front photographs.  The patches are
+~1 cm a pixel or coarser: the looks draw the near detail and take the patch's mean (house2.js swatchFade), so a patch's
+job is its tone everywhere and its pattern beyond 10-25 m.
 """
 import os
 import sys
@@ -252,10 +255,11 @@ def diag_tile(t):
     return cv2.remap(pad, (u + 0.5).astype(np.float32), (P - v + 0.5).astype(np.float32), cv2.INTER_LINEAR).astype(float)
 
 
-def finish(a, mean_linear, contrast=1.0, sat=1.0, clip=None):
+def finish(a, mean_linear, contrast=1.0, sat=1.0, clip=None, chroma=None):
     """Give the patch the wanted mean colour (linear albedo), keeping its pattern (contrast: its strength, sat: the
     strength of its colour differences alone; clip (lo, hi): the brightness relative to the mean is bent softly into
-    that range -- glints, pale lichen, deep joints); returns 8-bit sRGB."""
+    that range -- glints, pale lichen, deep joints; chroma: the colour differences (relative to the mean colour) bent
+    softly under that size, so one vivid stone does not mark the tile's period); returns 8-bit sRGB."""
     lin = (np.clip(a, 0, 255) / 255.0) ** 2.2
     m = lin.reshape(-1, 3).mean(0)
     if clip:
@@ -269,6 +273,14 @@ def finish(a, mean_linear, contrast=1.0, sat=1.0, clip=None):
         r = lin / m
         g = r.mean(-1, keepdims=True)
         lin = np.maximum(g + sat * (r - g), 0.02) * m
+    if chroma:
+        r = lin / m
+        g = r.mean(-1, keepdims=True)
+        c = r / np.maximum(g, 1e-4) - 1
+        n = np.maximum(np.sqrt((c ** 2).sum(-1, keepdims=True)), 1e-6)
+        c = c * chroma * np.tanh(n / chroma) / n
+        lin = np.maximum(g * (1 + c), 0.002) * m
+        lin = lin / lin.reshape(-1, 3).mean(0) * m
     lin = np.asarray(mean_linear, float) * (1 + contrast * (lin / m - 1))
     return (np.clip(lin, 0, 1) ** (1 / 2.2) * 255).astype(np.uint8)
 
@@ -287,64 +299,111 @@ PHOTOS = dict(p18='photos/p18_150f57.jpg', p22='photos/p22_50e8b3.jpg', p26='pho
 
 # name, materials that wear it, pieces (joined side by side), texels per metre, light-gradient scale (m), contrast,
 # mean albedo (linear; tuned under the viewer's light through the source camera).
-# blur: px, for a source in deep shade; clip (lo, hi): see finish(); sat: colour differences' strength.
+# blur: px, for a source in deep shade; vblur: px along v only (courses finer than the patch can carry); clip (lo, hi),
+# chroma: see finish(); sat: colour differences' strength; quilt: dict(size (m), block (m), overlap (m), aug, seed) lays
+# a larger texture from blocks of all the pieces (quilt()); overlap: the wrap's overlap fraction (default 0.16).
+# cols: columns of pieces (each stacked top to bottom, the columns side by side) instead of pieces in one row.
 # piece: photo + px (a pixel on the surface: its ray finds the plane) + off (metres along u, v from that point to the
-#        patch centre) + size (w, h metres) + rot (deg, turns u / v in the plane);  or photo + quad + size.
+#        patch centre) + size (w, h metres) + rot (deg, turns u / v in the plane);  or photo + quad + size;  or photo +
+#        plane=dict(z, rot, u=(u0, u1), v=(v0, v1)): a level world rectangle in the frame turned by rot about +Z;
+#        flip: mirrored left-right.
 # expect: the material the ray must hit (a moved wall or roof is reported, the swatch skipped).
 SWATCHES = [
     # terrace flagstone, laid square to the pool: the looks lane samples it in plan turned by worldUV 0.80 rad (45.84 deg),
     # so the tile is cut in that frame (u' along the pool's width, v' along its length; plane pieces in metres there).
-    # Three sunlit fields of the ground photos (64-300 px/m): p21's west terrace, p22's near band, p26's pool end
-    dict(name='flagstone', mats=['bluestone'], ppm=64, delight=1.2, contrast=1.25, sat=1.25, clip=(0.55, 1.6),
+    # Three sunlit fields of the ground photos (64-300 px/m): p21's west terrace, p22's near band, p26's pool end.  The
+    # slabs' own colours (rust, blue-grey, buff) kept: from the drone and across the terrace they are the pattern; the
+    # most vivid rust slabs bent back (chroma) so they do not mark the 4 m period.  The front walks' names wear it too
+    dict(name='flagstone', mats=['bluestone', 'bluestone_walk', 'flagstone_walk', 'walk_flagstone'], ppm=64,
+         delight=1.2, contrast=1.3, sat=1.3, clip=(0.5, 1.5), chroma=0.22,
          albedo=(0.5, 0.48, 0.44), expect='bluestone',
          cols=[[dict(photo='p21', plane=dict(z=0.0, rot=45.84, u=(-6.2, -3.75), v=(-6.2, 0.0)))],
                [dict(photo='p22', plane=dict(z=0.0, rot=45.84, u=(-5.8, -3.5), v=(-2.5, 1.3))),
                 dict(photo='p26', plane=dict(z=0.0, rot=45.84, u=(-1.8, 0.5), v=(6.45, 8.0)))]]),
-    # pool coping: the pale stones of the near pool edge in p21 (u along the edge)
-    dict(name='coping', mats=['coping'], ppm=128, delight=0.8, contrast=0.8, albedo=(0.58, 0.57, 0.55),
+    # pool coping: the pale stones of the near pool edge in p21 (u along the edge); near-white and neutral there (211
+    # 212 213 against the render's 192 189 187)
+    dict(name='coping', mats=['coping'], ppm=128, delight=0.8, contrast=0.8, albedo=(0.66, 0.655, 0.645),
          pieces=[dict(photo='p21', px=(700, 1300), off=(1.88, -1.227), size=(1.6, 0.26), rot=135)]),
     # roof: a south-facing plane of the entry wing in the aerial, between the vents.  The courses are 4 px apart in
-    # the source: their contrast is kept low (it turned into bands and combs at a distance)
-    dict(name='shingle', mats=['roof_shingle', 'ridge_cap'], ppm=80, delight=0.7, contrast=0.55, clip=(0.6, 1.5),
-         albedo=(0.21, 0.23, 0.26), expect='roof_shingle',
+    # the source and turned into bands and combs at a distance: they are blurred away along the slope (vblur), the
+    # patch keeps the weathering's mottle; the drawn shingles of the looks carry the courses up close
+    dict(name='shingle', mats=['roof_shingle', 'ridge_cap'], ppm=80, delight=0.5, contrast=0.8, clip=(0.65, 1.4),
+         vblur=4.0,
+         albedo=(0.21, 0.225, 0.245), expect='roof_shingle',
          pieces=[dict(photo='p29', px=(1240, 1160), off=(-1.25, -0.875), size=(3.0, 4.0))]),
     # cedar siding: the rear wall beside the balcony in p21 (in shade there: the shadow lines under the courses are
-    # the photograph's, kept at half strength)
-    dict(name='siding', mats=['siding_shingle'], ppm=110, delight=0.25, contrast=0.5, clip=(0.6, 1.5),
-         albedo=(0.25, 0.265, 0.29), expect='siding_shingle',
+    # the photograph's, kept at half strength).  Its tone: the front's blue-grey (hero / p01: B / R ~1.3 in sRGB on the
+    # upper storey, 88-97 102-111 121-128 in p01; p21's rear wall ~1.15).  The lower storey's names (should the house
+    # zone give the porch walls one) wear the same patch: the looks tint them taupe (house2.js heightTint / taupe)
+    dict(name='siding', mats=['siding_shingle', 'siding_lap', 'siding_taupe', 'siding_lap_taupe',
+                              'siding_shingle_taupe'], ppm=110, delight=0.25, contrast=0.45, clip=(0.6, 1.5),
+         albedo=(0.195, 0.222, 0.285), expect='siding_shingle',
          pieces=[dict(photo='p21', px=(1580, 760), off=(-0.24, -0.445), size=(2.2, 1.72))]),
     # driveway pavers: the sunlit field in front of the garage (aerial), clear of the bare trees' shadows
     dict(name='pavers', mats=['paver_drive'], ppm=64, delight=1.0, contrast=1.25, albedo=(0.43, 0.36, 0.295),
          expect='paver_drive',
          pieces=[dict(photo='p29', px=(250, 895), off=(0.0, 0.0), size=(3.2, 4.0))]),
-    # grass: the pattern from the winter aerial, the colour nearer the spring photographs (p18, hero)
-    dict(name='lawn', mats=['lawn'], ppm=48, delight=0.8, contrast=1.5, albedo=(0.15, 0.185, 0.035),
+    # grass: the pattern from the winter aerial, the colour of the spring photographs (p01's and the hero's sunlit front
+    # lawn, p18's turf: yellow-green, little blue)
+    dict(name='lawn', mats=['lawn'], ppm=48, delight=0.6, contrast=1.1, clip=(0.7, 1.35), albedo=(0.165, 0.265, 0.065),
          expect='lawn', pieces=[dict(photo='p29', px=(400, 1440), off=(1.04, 1.67), size=(4.6, 3.8))]),
-    dict(name='turf', mats=['turf_synthetic'], ppm=48, delight=0.8, contrast=1.5, albedo=(0.2, 0.235, 0.03),
+    dict(name='turf', mats=['turf_synthetic'], ppm=48, delight=0.8, contrast=1.2, albedo=(0.17, 0.205, 0.03),
          expect='turf_synthetic', pieces=[dict(photo='p29', px=(1900, 1400), off=(0.25, -1.2), size=(2.5, 4.6))]),
-    dict(name='mulch', mats=['mulch'], ppm=64, delight=0.5, contrast=1.2, albedo=(0.26, 0.105, 0.048),
+    # bark mulch: sunlit beds read (140-157, 98-108, 75-81) in the hero / p27: orange-brown, not chocolate
+    dict(name='mulch', mats=['mulch'], ppm=64, delight=0.5, contrast=1.2, albedo=(0.28, 0.13, 0.07),
          expect='mulch', pieces=[dict(photo='p29', px=(1400, 1480), off=(1.47, -1.69), size=(1.8, 2.0))]),
-    dict(name='chips', mats=['wood_chips'], ppm=48, delight=0.8, contrast=1.5, albedo=(0.66, 0.5, 0.27),
-         expect='gravel_path', pieces=[dict(photo='p29', px=(1810, 800), off=(1.48, -0.06), size=(2.3, 5.4))]),
-    dict(name='gravel', mats=['gravel_path'], ppm=64, delight=0.5, contrast=1.3, albedo=(0.36, 0.41, 0.42),
+    # wood chips: the play yard in p19 at 160-330 px/m (two sunlit fields between the swing frame's legs and chains),
+    # laid out larger by quilting (chips have no grain); golden tan: the spring video's top-down (frame 139.9 s, against
+    # its flagstone) gives 0.52 0.35 0.25, the winter aerial a deeper orange
+    dict(name='chips', mats=['wood_chips'], ppm=64, delight=0.4, contrast=1.1, sat=1.1, clip=(0.7, 1.5),
+         albedo=(0.56, 0.39, 0.225), expect='wood_chips',
+         quilt=dict(size=(4.0, 4.0), block=0.7, overlap=0.18, aug=True, seed=3),
+         cols=[[dict(photo='p19', plane=dict(z=1.88, u=(14.95, 16.25), v=(-5.6, -2.35)))],
+               [dict(photo='p19', plane=dict(z=1.88, u=(13.05, 13.7), v=(-6.5, -1.9)))]]),
+    # the path round the play yard: grey crushed rock (p19: neutral grey in sun, blue only in the shade)
+    dict(name='gravel', mats=['gravel_path'], ppm=64, delight=0.5, contrast=1.2, sat=0.4, albedo=(0.27, 0.265, 0.25),
          expect='gravel_path', pieces=[dict(photo='p29', px=(1810, 800), off=(-0.55, -1.0), size=(0.8, 3.4))]),
-    # the vegetable garden's crushed stone: the aisle between the upper beds (the whole garden lies in shade in the
-    # aerial: the blue of the sky light is not the stone's colour)
-    dict(name='crushed', mats=['crushed_stone'], ppm=64, delight=0.4, contrast=1.0, sat=0.3, clip=(0.6, 1.6),
-         albedo=(0.15, 0.17, 0.185), expect='crushed_stone',
-         pieces=[dict(photo='p29', px=(2109, 232), off=(0.0, 0.0), size=(1.45, 3.9))]),
-    # the orchard's bare soil with leaf litter (aerial, between the trees' shadows)
+    # the vegetable garden's crushed stone: the two aisles between the beds (the whole garden lies in shade in the
+    # aerial: the blue of the sky light is not the stone's colour; the fence's light streaks near its north side are
+    # left out), quilted to a 3 m tile
+    dict(name='crushed', mats=['crushed_stone'], ppm=64, delight=0.4, contrast=1.0, sat=0.25, clip=(0.6, 1.5),
+         albedo=(0.17, 0.16, 0.145), expect='crushed_stone',
+         quilt=dict(size=(3.0, 3.0), block=0.5, overlap=0.14, aug=True, seed=5),
+         pieces=[dict(photo='p29', px=(2245, 287), off=(-1.2, 0.0), size=(2.0, 1.3)),
+                 dict(photo='p29', px=(2109, 232), off=(0.0, -0.6), size=(1.2, 2.4))]),
+    # the raised beds' soil (aerial: the south-west bed, which has no plant in it)
+    dict(name='soil', mats=['yard_soil'], ppm=64, delight=0.5, contrast=1.0, sat=0.6, clip=(0.5, 1.6),
+         albedo=(0.085, 0.064, 0.047), expect='yard_soil',
+         quilt=dict(size=(2.0, 2.0), block=0.45, overlap=0.12, aug=True, seed=7),
+         pieces=[dict(photo='p29', px=(2043, 352), off=(0.0, 0.0), size=(1.5, 1.5))]),
+    # the orchard's bare soil with leaf litter (aerial, between the trees' shadows: what is left of them clipped),
+    # quilted to a 4 m tile (the 1.7 m one drew a lattice of the same dark marks); greyer than the aerial's winter
+    # tone (p18's sunlit bank 130 111 105; the spring video 132 120 109 beside its turf)
     dict(name='litter', mats=['leaf_litter', 'orchard_soil'], ppm=48, delight=0.7, contrast=1.2,
-         albedo=(0.23, 0.175, 0.10), expect='orchard_soil',
-         pieces=[dict(photo='p29', px=(2220, 1060), off=(-0.45, 0.5), size=(2.0, 2.0))]),
-    # the retaining walls' grey split-face block: the wall along the synthetic lawn in p18 (in deep shade there)
-    dict(name='wallblock', mats=['fieldstone'], ppm=96, delight=0.5, contrast=0.35, sat=0.15, blur=1.6, clip=(0.5, 1.7),
-         albedo=(0.075, 0.073, 0.068), expect='fieldstone',
-         pieces=[dict(photo='p18', px=(1950, 1020), off=(0.0, 0.05), size=(4.0, 0.72))]),
+         albedo=(0.235, 0.19, 0.14), expect='orchard_soil', clip=(0.65, 1.5),
+         quilt=dict(size=(4.0, 4.0), block=0.8, overlap=0.2, aug=True, seed=17),
+         pieces=[dict(photo='p29', px=(2220, 1060), off=(-0.45, 0.5), size=(2.0, 2.0)),
+                 dict(photo='p29', px=(2215, 1175), off=(0.0, 0.0), size=(1.8, 1.0))]),
+    # the retaining walls' grey split-face block: the wall behind the fire terrace in the (unregistered) close-up p24,
+    # in open shade, ~170 px/m (a 6 in course = 26 px); mirrored to a longer piece.  Warm grey in the sun (p22: 122
+    # 110 96), neutral in the shade (p24: 91 91 95)
+    dict(name='wallblock', mats=['fieldstone', 'wall_block'], ppm=128, delight=0.45, contrast=0.85, sat=0.5,
+         clip=(0.45, 1.6), albedo=(0.17, 0.152, 0.13), overlap=0.12,
+         pieces=[dict(photo='p24', quad=[(0, 748), (245, 748), (245, 875), (0, 875)], size=(1.43, 0.74)),
+                 dict(photo='p24', quad=[(0, 748), (245, 748), (245, 875), (0, 875)], size=(1.43, 0.74), flip=True)]),
     # fieldstone: the fireplace's side face in the (unregistered) close-up p24: two rectangles of that face, 346 px/m
-    # at its front corner, the body 1.25 m deep
-    dict(name='fieldstone', mats=['yard_fieldstone', 'stone_veneer'], ppm=160, delight=0.6,
-         contrast=0.8, clip=(0.3, 2.0), albedo=(0.235, 0.19, 0.14),
+    # at its front corner, the body 1.25 m deep, quilted to a 2 m tile.  Rust, buff and slate-blue stones in dark
+    # joints; a brown-grey mean (the p22 / p26 fireplace reads 73 64 60 in its shade: warm, not cream, and kept warm
+    # enough that the sky-lit shade does not turn it lilac)
+    dict(name='fieldstone', mats=['yard_fieldstone'], ppm=160, delight=0.6, contrast=0.85, sat=1.1, clip=(0.35, 1.7),
+         albedo=(0.215, 0.17, 0.13),
+         quilt=dict(size=(2.0, 1.5), block=0.38, overlap=0.08, aug=False, seed=11),
+         pieces=[dict(photo='p24', quad=[(1787.5, 431), (2212.5, 452.5), (2212.5, 775), (1787.5, 762.5)], size=(1.15, 0.766)),
+                 dict(photo='p24', quad=[(1787.5, 769), (2069, 777.5), (2069, 1100), (1787.5, 1099)], size=(0.76, 0.766))]),
+    # the piers, the chimneys and the house's stone base: the same quarry mix, muted and greyer (hero / p01)
+    dict(name='veneer', mats=['stone_veneer'], ppm=160, delight=0.6, contrast=0.75, sat=0.8, clip=(0.4, 1.6),
+         albedo=(0.18, 0.16, 0.135),
+         quilt=dict(size=(2.0, 1.5), block=0.38, overlap=0.08, aug=False, seed=13),
          pieces=[dict(photo='p24', quad=[(1787.5, 431), (2212.5, 452.5), (2212.5, 775), (1787.5, 762.5)], size=(1.15, 0.766)),
                  dict(photo='p24', quad=[(1787.5, 769), (2069, 777.5), (2069, 1100), (1787.5, 1099)], size=(0.76, 0.766))]),
 ]
@@ -407,6 +466,8 @@ def make(cams, parts=None, debug=None, prefix='swatch_', only=None):
                 os.path.join(debug, 'raw_%s_%d.jpg' % (S['name'], n)), quality=92)
         if S.get('blur'):                      # a very dark source: its 8-bit steps and chroma noise
             a = cv2.GaussianBlur(a, (0, 0), S['blur'])
+        if S.get('vblur'):                     # courses finer than the patch can carry: blurred along v only
+            a = cv2.GaussianBlur(a, (0, 0), sigmaX=0.01, sigmaY=S['vblur'])
         a = delight(np.ascontiguousarray(a), S['delight'] * ppm)
         return a / a.reshape(-1, 3).mean(0) * 128.0
 
@@ -459,7 +520,7 @@ def make(cams, parts=None, debug=None, prefix='swatch_', only=None):
             t = diag_tile(t)
         else:
             t = wrap(np.transpose(t, (1, 0, 2)), max(6, int(0.5 * fo * H)), max(8, int(fo * H))).transpose(1, 0, 2)
-        img = finish(t, S['albedo'], S.get('contrast', 1.0), S.get('sat', 1.0), S.get('clip'))
+        img = finish(t, S['albedo'], S.get('contrast', 1.0), S.get('sat', 1.0), S.get('clip'), S.get('chroma'))
         name = '%s%s.jpg' % (prefix, S['name'])
         Image.fromarray(img).save(os.path.join(HERE, 'out', name), quality=90)
         size = [round(img.shape[1] / ppm, 4), round(img.shape[0] / ppm, 4)]

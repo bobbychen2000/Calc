@@ -4,13 +4,17 @@
                  frames 125900 / 158300) with its hearth / seat wall, facing SW over the lounge
   lounge         2 teak loveseats facing each other over a coffee table, 2 armchairs, 2 side tables (aerial + frame
                  140500), the closed umbrella on its base block
-  arbor          dark timber pergola SE of the pool (45 deg to the lot like the pool): 4 white columns on stone
-                 pedestals, 2 double beams, close rafters with tails, a vine mat on top; bar counter + 6 stools on the
-                 pool side, L-shaped BBQ counter with the grill on the back side, lanterns
-  porch_furniture   the north porch's 10-seat teak dining set, the BG patio's two armchairs + table, the PB patio's
+  arbor          dark timber pergola SE of the pool (45.5 deg, column grid solved on p20): 4 white 0.46 m columns on
+                 plinths with stepped caps, double beams with bevelled ends 0.86 m past the columns, rafters every
+                 0.6 m with cut tails, slats on top, a flat irregular rose / vine mat on them; a two-tier bar + 6
+                 stools on the pool side, the BBQ counter (rounded-lid grill under the middle of the SE beam) with an L
+                 return + sink to the bar, lanterns on the columns' inner faces
+  porch_furniture   the NC recess's 12-seat teak dining set, the BG patio's two armchairs + table, the PB patio's
                  table with two benches, pots
-  play           the play structure in the chip yard: roofed tower (ridge N-S), bridge south to the open fort, swing
-                 beam west to an A-frame (tire swing), swings under the bridge, green slides east / south-west, ramp
+  play           the play structure in the chip yard (p19 / aerial / frame 140500; heights absolute): roofed tower
+                 (ridge N-S, 48 deg) on a base frame round a sand pit, the raised slat-walled bridge south to the
+                 two-level fort (swings under the bridge), monkey-bar swing beam west to a ladder-legged A-frame
+                 (tyre swing), the stand with its green bar NW of the tower, green slides east / south-west, ramp
   garden         picket fence + gate round the vegetable garden, 4 raised timber beds; the play area's north fence
                  and timber edging; the board fence on the upper terrace (guess: hidden under trees)
   small          outdoor shower (guess), utility boxes, path lights, lawn bench
@@ -48,7 +52,8 @@ MATERIALS = {
     'yard_soot': dict(color=(0.03, 0.028, 0.026), roughness=1.0),
     'yard_pot_grey': dict(color=(0.20, 0.20, 0.21), roughness=0.8),
     'yard_vine': dict(color=(0.07, 0.16, 0.03), roughness=0.95),
-    'yard_cushion_white': dict(color=(0.80, 0.79, 0.76), roughness=1.0),
+    'yard_cushion_white': dict(color=(0.36, 0.355, 0.34), roughness=1.0),    # mid grey in every photo (name kept)
+    'yard_sand': dict(color=(0.38, 0.32, 0.24), roughness=1.0),       # the sand pit under the play tower (p19, shade)
 }
 CUSH = 'yard_cushion_white'
 
@@ -60,19 +65,21 @@ FP_TOP = 4.10
 # lounge (aerial item centres at z 0.4; the pieces stand at 45 deg like the pool)
 LOUNGE = dict(sofa_w=(2.77, 4.32), sofa_s=(4.53, 2.62), chair_n=(4.43, 5.78), chair_e=(5.88, 4.30),
               coffee=(3.72, 3.52), side_wood=(3.62, 5.11), side_dark=(5.26, 3.37))
-UMBRELLA = (4.98, 1.46)
+UMBRELLA = (4.93, 1.43)                # the closed canopy's axis (finial: p22 + p23 + p26, three pairs within 0.1 m)
 # arbor: the column grid solved on p20 (rms 4.1 px; checked through p26 / frame 133700): origin = the pool-side SW
 # column's centre, x along the pool side toward the NE column (45.5 deg), y toward the pool (NW); BBQ row at y -4.066
 AR_O, AR_ANG = (3.125, -11.149), 45.5
 AR_COLS = ((0.0, 0.0), (4.414, 0.0), (0.0, -4.066), (4.413, -4.067))     # SWp, NEp (on the bar's pier), SWb, NEb
 AR_BX = (-0.85, 5.26)                 # beam ends: ~0.6 m past the column faces (p20, p26: 0.86 m past the centre)
-AR_RY = (0.55, -4.62)                 # rafter ends: ~0.55 m past the beams (aerial outline at z 2.85)
+AR_RY = (0.55, -4.37)                 # rafter ends: 0.55 m past the pool-side beam (aerial, p26), 0.30 past the SE one (p20)
 AR_BEAM_Z, AR_TOP = 2.26, 2.90        # beam underside: p20 2.28, p26 2.20; beam 0.28 + rafters 0.30 + slats 0.06 (p26)
 AR_SHAFT, AR_PLINTH, AR_PLINTH_H = 0.46, 0.55, 0.32    # p26 (square on) / p20: shaft 0.46-0.47, plinth 0.55 x 0.32
 # play structure (aligned with the lot axes).  Heights ABSOLUTE (p19 rms 2.9 px, p22, aerial): the chips under the tower
 # triangulate at ~2.2 (plan.ground_z there is ~1.97); feet and frames stand on plan.ground_z.
-PL_TOWER = (17.72, 0.475)             # roof eave corners NW (16.70, 1.42), SW (16.76, -0.50), NE (18.68, 1.45) (p19)
-PL_TOWER_S, PL_ROOF_S = 1.56, 1.96    # deck square, roof square
+PL_TOWER = (17.72, 0.475)             # roof centre: eave corners NW (16.70, 1.42), SW (16.76, -0.50), NE (18.68, 1.45) (p19)
+PL_ROOF_S = 1.96                      # roof square (aerial outline at z 4.85 agrees)
+PL_DECK_XY = (16.94, 18.80, -0.305, 1.255)    # deck / corner posts (p19: NW post under the roof's NW eave, NE post
+                                              # under its NE corner)
 Z_DECK, Z_RAIL, Z_EAVE, Z_RIDGE = 3.65, 4.30, 4.85, 5.90      # p19: eave 4.85, ridge 5.85-5.95 (48 deg); deck / rail
 Z_BEAM = 3.87                         # swing beam centre (its end 3.94 at the top, p19)
 Z_BRIDGE, Z_BRIDGE_TOP = 4.70, 5.90   # the RAISED bridge: floor under the tower's eave (p22 4.9, p19 swing tops 4.5)
@@ -81,7 +88,7 @@ PL_BRIDGE = ((18.10, -0.45), (17.97, -3.59))   # centre line, tower end -> fort 
 # bridge's side (an upper landing at the bridge's level), 3-4 = the long slide's
 PL_FORT = [(18.24, -3.60), (19.06, -4.17), (19.13, -4.75), (18.45, -5.46), (17.75, -4.75), (17.70, -4.11)]
 Z_FORT, Z_FORT_TOP = 3.30, 4.55
-PL_AFRAME = ((13.49, 1.44), (13.59, -0.93), (13.73, 0.40))     # feet N / S, apex (p19)
+PL_AFRAME = ((13.49, 1.44), (13.59, -0.93), (14.15, 0.40))     # feet N / S, apex (p19: the beam runs on 0.42 m past it)
 PL_BEAM_Y = (0.28, 0.52)              # the two rails of the swing beam (monkey bars): aerial 0.37 / 0.62, p19 0.21
 PL_TIRE = (15.27, 0.30, 2.44)         # tyre centre, its top face (p19)
 # vegetable garden: fence base (aerial, on the ground), beds (aerial boxes at the bed tops)
@@ -211,14 +218,16 @@ def side_table(geo, at, deg, s=0.62, h=0.45, mat=TEAK):
             L.box(geo, mat, (sx * (s / 2 - 0.06), sy * (s / 2 - 0.06), 0), (sx * s / 2, sy * s / 2, h - 0.05), 'xXyY')
 
 
-def umbrella(geo, at, top=3.15):                  # frame 134300: top ~3.15 m, canopy ~0.6 m across, hem ~0.85 m (p22)
-    """Closed cantilever umbrella: square base block, offset mast with a short arm, the draped canopy hanging from it."""
+def umbrella(geo, at, top=3.28, mast=(0.106, 0.106)):
+    """Closed cantilever umbrella: the canopy's axis at `at` (its finial triangulated on p22 / p23 / p26 at z ~3.25-3.3),
+    the dark mast 0.15 m NE of it (p26: left of the canopy) on a square base slab, a short arm to the canopy."""
     L = Fr(at, 45.0)
-    L.box(geo, CAP, (-0.64, -0.42, 0), (0.20, 0.42, 0.14))
-    geo.cylinder(TIMBER, L.pt(-0.22, 0, 0.14), L.pt(-0.22, 0, top), 0.04, n=8)
-    bar(geo, TIMBER, L.pt(-0.22, 0, top - 0.04), L.pt(0.0, 0, top - 0.04), 0.05, 0.06)
-    F._revolve(geo, 'yard_umbrella', [(0.03, 0.85), (0.28, 0.90), (0.31, 1.30), (0.25, 1.95), (0.19, 2.55),
-                                      (0.10, top - 0.12), (0.0, top - 0.02)], n=10, centre=tuple(L.pt(0, 0, 0)))
+    m = np.array(at[:2]) + np.array(mast)
+    Fr((m[0], m[1], 0.0), 45.0).box(geo, CAP, (-0.45, -0.45, 0), (0.45, 0.45, 0.20))           # p22: 0.2 m slab
+    geo.cylinder(TIMBER, (m[0], m[1], 0.20), (m[0], m[1], top + 0.05), 0.05, n=8)
+    bar(geo, TIMBER, (m[0], m[1], top), L.pt(0, 0, top), 0.06, 0.07)
+    F._revolve(geo, 'yard_umbrella', [(0.03, 0.95), (0.30, 1.00), (0.33, 1.40), (0.27, 2.05), (0.20, 2.62),
+                                      (0.10, top - 0.10), (0.0, top - 0.01)], n=10, centre=tuple(L.pt(0, 0, 0)))
 
 
 def lounge():
@@ -230,7 +239,7 @@ def lounge():
     F.teak_coffee_table(geo, LOUNGE['coffee'], 45.0, length=1.45, width=1.20, height=0.36)
     side_table(geo, LOUNGE['side_wood'], 45.0)
     side_table(geo, LOUNGE['side_dark'], 45.0, mat='furn_black')
-    umbrella(geo, (UMBRELLA[0] + 0.11, UMBRELLA[1] + 0.11))   # canopy axis; the mast stands on the base's centre
+    umbrella(geo, UMBRELLA)
     # square planters at the hearth wall's ends (rear.planters_fireplace)
     for p in ((4.35, 6.95), (8.35, 3.85)):
         Fr(p, FP_ANG).box(geo, 'yard_pot_grey', (-0.28, -0.28, 0), (0.28, 0.28, 0.55), 'xXyYZ')
@@ -254,72 +263,192 @@ def stool(geo, L, x, y, back=True):
             L.box(geo, TEAK, (x - s / 2, y + s / 2 - 0.04, z), (x + s / 2, y + s / 2 - 0.015, z + 0.07))
 
 
+def _beam_side(geo, L, mat, x0, x1, y, w, z0, h, cut0=0.15, cut1=0.15):
+    """A timber along local x from x0 to x1 (centre line at y, width w, underside z0, depth h) whose ends are cut back
+    at the bottom (the arbor's bevelled beam / rafter ends, p26)."""
+    sec = [(x0 + cut0, z0), (x1 - cut1, z0), (x1, z0 + h * 0.45), (x1, z0 + h), (x0, z0 + h), (x0, z0 + h * 0.45)]
+    a, b = L.pt(0.0, y - w / 2, 0.0), L.pt(0.0, y + w / 2, 0.0)
+    # prism(): the section's s runs along cross(d, UP) = +L.ex for d = L.ey, t along UP
+    geo.prism(mat, sec, a, b, up=UP)
+
+
+def _rafter(geo, L, mat, x, y0, y1, w, z0, h, cut=0.12):
+    """A timber along local y (rafter) from y0 > y1, bottom cut back at both ends (the rafter tails)."""
+    sec = [(y1 + cut, z0), (y0 - cut, z0), (y0, z0 + h * 0.5), (y0, z0 + h), (y1, z0 + h), (y1, z0 + h * 0.5)]
+    a, b = L.pt(x - w / 2, 0.0, 0.0), L.pt(x + w / 2, 0.0, 0.0)
+    # d = L.ex: cross(d, UP) = -L.ey
+    geo.prism(mat, [(-sy, sz) for sy, sz in sec], a, b, up=UP)
+
+
+def _in_poly(P, ring):
+    """Even-odd point-in-polygon for many points (P (n, 2), ring (m, 2))."""
+    x, y = P[:, 0], P[:, 1]
+    out = np.zeros(len(P), bool)
+    for (x1, y1), (x2, y2) in zip(ring, np.roll(ring, -1, 0)):
+        c = (y1 > y) != (y2 > y)
+        xi = x1 + (y - y1) * (x2 - x1) / np.where(abs(y2 - y1) < 1e-12, 1e-12, y2 - y1)
+        out ^= c & (x < xi)
+    return out
+
+
+def vine_mat(geo, L, poly, z0, h_of, seed=5, step=0.22, mat='yard_vine'):
+    """The rose / vine mat lying on the arbor: a flat, irregular leaf slab over a plan polygon (local x, y), its top a
+    noisy height field h_of(x, y) above z0 that rounds over at the ragged edges, a skirt hanging below the edge."""
+    rs = np.random.default_rng(seed)
+    poly = np.asarray(poly, float)
+    # ragged outline: resample the polygon every ~0.25 m and push each point in / out
+    pts = []
+    for i in range(len(poly)):
+        p, q = poly[i], poly[(i + 1) % len(poly)]
+        n = max(2, int(np.linalg.norm(q - p) / 0.25))
+        for k in range(n):
+            pts.append(p + (q - p) * k / n)
+    pts = np.array(pts)
+    c = pts.mean(0)
+    rad = pts - c
+    jit = 1.0 + 0.06 * np.sin(np.arange(len(pts)) * 1.7 + 0.5) + rs.uniform(-0.05, 0.05, len(pts))
+    ring = c + rad * jit[:, None]
+    x0, y0 = ring.min(0) - step
+    x1, y1 = ring.max(0) + step
+    xs = np.arange(x0, x1 + step, step)
+    ys = np.arange(y0, y1 + step, step)
+    X, Y = np.meshgrid(xs, ys, indexing='ij')
+    P = np.stack([X.ravel(), Y.ravel()], 1)
+    inside = _in_poly(P, ring).reshape(X.shape)
+    # distance to the outline (for the rounded edge)
+    segs = np.stack([ring, np.roll(ring, -1, 0)], 1)
+    d = np.full(len(P), 1e9)
+    for a_, b_ in segs:
+        ab = b_ - a_
+        t = np.clip(((P - a_) @ ab) / max(ab @ ab, 1e-9), 0, 1)
+        d = np.minimum(d, np.linalg.norm(P - (a_ + t[:, None] * ab), axis=1))
+    d = d.reshape(X.shape)
+    noise = sum(A * np.sin(fx * X + fy * Y + ph) for A, fx, fy, ph in
+                [(0.06, 2.1, 1.3, 0.3), (0.05, -1.7, 2.6, 1.1), (0.04, 3.9, -2.2, 2.0), (0.03, 5.3, 4.1, 0.7)])
+    bumps = np.zeros_like(X)                                       # leafy clumps (p20: rounded masses, not a sheet)
+    for _ in range(int(len(ring) * 1.6)):
+        bx, by = rs.uniform(x0, x1), rs.uniform(y0, y1)
+        br, bh = rs.uniform(0.20, 0.45), rs.uniform(-0.12, 0.12)
+        bumps += bh * np.exp(-((X - bx) ** 2 + (Y - by) ** 2) / (2 * br * br))
+    H = h_of(X, Y) + np.clip(noise + bumps, -0.25, 0.18) + rs.uniform(-0.03, 0.03, X.shape)
+    H *= np.clip(d / 0.45, 0.0, 1.0) ** 0.5 * 0.85 + 0.15
+    Z = z0 + np.where(inside, H, 0.0)
+    W = np.stack([L.pt(x, y, z) for x, y, z in zip(X.ravel(), Y.ravel(), Z.ravel())]).reshape(X.shape + (3,))
+    # top: the grid cells whose four corners are inside
+    gx, gy = np.gradient(Z, step, step)
+    Nl = np.stack([-gx, -gy, np.ones_like(Z)], -1)
+    Nl /= np.linalg.norm(Nl, axis=-1, keepdims=True)
+    Nw = Nl[..., 0:1] * L.ex + Nl[..., 1:2] * L.ey + Nl[..., 2:3] * UP
+    V, N, UVs, F = [], [], [], []
+    idx = -np.ones(X.shape, int)
+    nx, ny = X.shape
+    for i in range(nx):
+        for j in range(ny):
+            if inside[max(i - 1, 0):i + 2, max(j - 1, 0):j + 2].any():
+                idx[i, j] = len(V)
+                V.append(W[i, j]); N.append(Nw[i, j]); UVs.append((X[i, j], Y[i, j]))
+    for i in range(nx - 1):
+        for j in range(ny - 1):
+            q = [idx[i, j], idx[i + 1, j], idx[i + 1, j + 1], idx[i, j + 1]]
+            if min(q) < 0 or not inside[i:i + 2, j:j + 2].any():
+                continue
+            F.append((q[0], q[1], q[2])); F.append((q[0], q[2], q[3]))
+    geo.mesh(mat).add(V, N, UVs, F)
+    # a ragged skirt hanging below the outline (the leaves draped over the rafter ends)
+    hang = rs.uniform(0.05, 0.28, len(ring))
+    out = (ring - c) / np.linalg.norm(ring - c, axis=1, keepdims=True) * 0.06
+    for i in range(len(ring)):
+        j = (i + 1) % len(ring)
+        p, q = ring[i], ring[j]
+        geo.poly(mat, [L.pt(*(p + out[i]), z0 - hang[i]), L.pt(*(q + out[j]), z0 - hang[j]), L.pt(q[0], q[1], z0 + 0.04),
+                       L.pt(p[0], p[1], z0 + 0.04)])
+
+
 def arbor():
     geo = Geo()
     L = Fr((AR_O[0], AR_O[1], 0.0), AR_ANG)
-    # square white columns from the deck to the beams (p26 / p20); only the pool-side NE one stands on the bar's
-    # stone pier (rear.arbor_columns)
-    cw = 0.18
-    for cx in AR_COL_X:
-        for cy in AR_COL_Y:
-            p = L.pt(cx, cy)
-            # the columns stand on the deck (level 0): two of them touch a planter wall / the bed edge, where the
-            # terrain breaks -- the base is set on the deck level under it and runs down past the lowest terrain
-            b = cw + 0.03
-            zs = [gz(*L.pt(cx + sx * b, cy + sy * b)[:2]) for sx in (-1, 0, 1) for sy in (-1, 0, 1)]
-            z0, zlo = min(zs, key=abs), min(zs) - 0.2
-            if cx == AR_COL_X[1] and cy == AR_COL_Y[0]:
-                L.box(geo, STONE, (cx - 0.30, cy - 0.30, zlo), (cx + 0.30, cy + 0.30, 1.02), 'xXyY')
-                L.box(geo, CAP, (cx - 0.33, cy - 0.33, 1.02), (cx + 0.33, cy + 0.33, 1.08))
-                z0 = 1.08
-                L.box(geo, WHITE, (cx - cw - 0.03, cy - cw - 0.03, z0), (cx + cw + 0.03, cy + cw + 0.03, z0 + 0.10), 'xXyYZ')
-            else:
-                L.box(geo, WHITE, (cx - cw - 0.03, cy - cw - 0.03, zlo), (cx + cw + 0.03, cy + cw + 0.03, z0 + 0.26), 'xXyYZ')
-            L.box(geo, WHITE, (cx - cw, cy - cw, z0), (cx + cw, cy + cw, AR_BEAM_Z - 0.10), 'xXyY')
-            L.box(geo, WHITE, (cx - cw - 0.04, cy - cw - 0.04, AR_BEAM_Z - 0.10), (cx + cw + 0.04, cy + cw + 0.04, AR_BEAM_Z))
-    # double beams over each column row, rafters across with tails, three purlins on top
-    for cy in AR_COL_Y:
+    hs, hp = AR_SHAFT / 2, AR_PLINTH / 2
+    # square white columns (p20 / p26): a 0.32 m plinth, the 0.46 m shaft, a stepped cap (0.52 / 0.58) under the beams.
+    # The pool-side NE one stands on the bar's stone pier (rear.arbor_columns); NE BBQ-row one at a bed edge: its
+    # plinth is set on the deck level and runs down past the lowest terrain
+    for k, (cx, cy) in enumerate(AR_COLS):
+        zs = [gz(*L.pt(cx + sx * hp, cy + sy * hp)[:2]) for sx in (-1, 0, 1) for sy in (-1, 0, 1)]
+        z0, zlo = min(zs, key=abs), min(zs) - 0.2
+        ph = AR_PLINTH_H
+        if k == 1:
+            z0, ph = 1.08, 0.10                                    # on the bar's pier: a low base band only (p26)
+            zlo = z0 - 0.02
+        L.box(geo, WHITE, (cx - hp, cy - hp, zlo), (cx + hp, cy + hp, z0 + ph), 'xXyYZ')
+        L.box(geo, WHITE, (cx - hp - 0.012, cy - hp - 0.012, z0 + ph - 0.05),
+              (cx + hp + 0.012, cy + hp + 0.012, z0 + ph), 'xXyYZ')                              # plinth cap
+        L.box(geo, WHITE, (cx - hs, cy - hs, z0 + ph), (cx + hs, cy + hs, AR_BEAM_Z - 0.18), 'xXyY')
+        L.box(geo, WHITE, (cx - 0.26, cy - 0.26, AR_BEAM_Z - 0.18), (cx + 0.26, cy + 0.26, AR_BEAM_Z - 0.06), 'xXyYz')
+        L.box(geo, WHITE, (cx - 0.29, cy - 0.29, AR_BEAM_Z - 0.06), (cx + 0.29, cy + 0.29, AR_BEAM_Z))
+    # double beams on each column row (0.09 x 0.28 each side of the column line), bevelled ends 0.86 m past the columns
+    zb, hb = AR_BEAM_Z, 0.28
+    for cy in (0.0, -4.066):
         for dy in (-0.13, 0.13):
-            L.box(geo, TIMBER, (-0.25, cy + dy - 0.045, AR_BEAM_Z), (AR_L + 0.25, cy + dy + 0.045, AR_BEAM_Z + 0.28))
-    nr = int(round(AR_L / 0.30))
+            _beam_side(geo, L, TIMBER, AR_BX[0], AR_BX[1], cy + dy, 0.09, zb, hb, cut0=0.18, cut1=0.18)
+    # rafters across the beams every ~0.6 m (p20 / p26: tails at 0.64-0.69 m) with cut tails, slats along x on top
+    zr, hr = zb + hb, 0.30
+    nr = 10
     for i in range(nr + 1):
-        x = AR_L * i / nr
-        L.box(geo, TIMBER, (x - 0.035, -AR_D, AR_BEAM_Z + 0.28), (x + 0.035, 0.0, AR_TOP - 0.04))
-    for cy in (-0.6, -AR_D / 2, -AR_D + 0.6):
-        L.box(geo, TIMBER, (-0.1, cy - 0.03, AR_TOP - 0.04), (AR_L + 0.1, cy + 0.03, AR_TOP))
-    # the vine mat (climbing roses) over the rafters and its old trunk at the north pool-side column
-    # a mound 0.6-1.0 m high (p20 / p26), overhanging the rafter ends: low rounded domes (placeholder for planting)
-    rng = np.random.default_rng(3)
-    domes = [(AR_L * 0.5, -AR_D * 0.5, 2.6, 0.95), (1.3, -1.3, 1.7, 0.75), (AR_L - 1.2, -1.2, 1.8, 0.85),
-             (1.4, -AR_D + 1.3, 1.7, 0.70), (AR_L - 1.3, -AR_D + 1.3, 1.8, 0.80), (AR_L * 0.5, -0.6, 1.5, 0.70),
-             (AR_L * 0.5, -AR_D + 0.7, 1.5, 0.65), (0.5, -AR_D * 0.5, 1.4, 0.65), (AR_L - 0.4, -AR_D * 0.5, 1.4, 0.70)]
-    for x, y, r, h in domes:
-        r *= rng.uniform(0.92, 1.08)
-        F._revolve(geo, 'yard_vine', [(r, -0.12), (r * 0.97, h * 0.22), (r * 0.80, h * 0.62), (r * 0.48, h * 0.90), (0.0, h)],
-                   n=9, centre=tuple(L.pt(x, y, AR_TOP - 0.08)))
-    cx, cy = AR_COL_X[1], AR_COL_Y[0]
-    geo.cylinder('bark', L.pt(cx + 0.42, cy + 0.10, 0), L.pt(cx + 0.24, cy, AR_TOP), 0.06, n=6, cap=False)
-    # bar counter on the pool side from the NE column's pier over ~70 % of the bay (p26), 5 stools outside it: four
-    # with backs, the backless one at the SW end (rear.bar_stools)
-    bx0, bx1, by0, by1 = 1.90, AR_COL_X[1] - 0.30, -1.55, -0.95
-    L.box(geo, STONE, (bx0, by0, -0.45), (bx1, by1, 1.02), 'xXyY')
-    L.box(geo, CAP, (bx0 - 0.05, by0 - 0.05, 1.02), (bx1 + 0.05, by1 + 0.25, 1.08))
-    for i, x in enumerate((1.80, 2.32, 3.05, 3.78, 4.50)):
-        stool(geo, L, x, -0.42, back=i != 0)
-    # BBQ counter along the back row with the grill, an L leg up the NE end to the bar
-    gx0, gx1, gy0, gy1 = 0.95, 4.85, -4.75, -4.05
+        x = AR_BX[0] + 0.10 + (AR_BX[1] - AR_BX[0] - 0.20) * i / nr
+        _rafter(geo, L, TIMBER, x, AR_RY[0], AR_RY[1], 0.07, zr, hr, cut=0.16)
+    ns = int(round((AR_RY[0] - AR_RY[1] - 0.2) / 0.26))
+    for j in range(ns + 1):
+        y = AR_RY[0] - 0.10 - (AR_RY[0] - AR_RY[1] - 0.20) * j / ns
+        L.box(geo, TIMBER, (AR_BX[0] + 0.05, y - 0.025, zr + hr), (AR_BX[1] - 0.05, y + 0.025, AR_TOP))
+    # the rose / vine mat: a flat irregular leaf slab on the slats (aerial: it leaves the pool-side rafter tails and the
+    # SW end bare, overhangs the SE beam / NE end), lumpy, ~0.6-0.7 m above the slats along both long edges (p20's and
+    # p26's silhouettes; i.e. ~1.0 above the rafters' underside), fuller in the middle
+    mat_poly = [(-0.35, 0.05), (1.6, 0.18), (3.4, 0.35), (5.05, 0.40), (5.45, -1.2), (5.55, -3.4), (5.40, -4.90),
+                (3.0, -4.95), (0.6, -4.90), (-0.70, -4.80), (-0.75, -2.6), (-0.55, -1.0)]
+    h_of = lambda x, y: 0.58 + 0.25 * np.exp(-((y + 2.1) / 1.6) ** 2) + 0.06 * np.clip(x / 5.0, 0, 1)
+    vine_mat(geo, L, mat_poly, AR_TOP - 0.02, h_of, seed=5)
+    # the old twisted trunk(s) climbing beside the NE BBQ-row column (p20: two stems right of that column)
+    cx, cy = AR_COLS[3]
+    for dx, dy, r in ((0.42, 0.30, 0.07), (0.55, 0.12, 0.05)):
+        geo.cylinder('bark', L.pt(cx + dx, cy + dy, gz(*L.pt(cx + dx, cy + dy)[:2]) - 0.1),
+                     L.pt(cx + dx - 0.25, cy + dy + 0.15, AR_TOP), r, n=7, cap=False)
+    # bar on the pool row (p20 / p26): stone body from 1.35 m NE of the SW column (p26: its SW end) to the NE column's
+    # pier; a raised bar top (1.02-1.08) on the pool side with the stools beyond it, a lower work counter (0.90) on the
+    # kitchen side (p20: its edge at y -0.9 .. -1.07) with a dark fridge niche and open shelves under it
+    bx0, bx1 = 1.35, 4.414 + 0.32
+    L.box(geo, STONE, (bx0, -0.92, -0.45), (bx1, -0.20, 0.90), 'xXyY')
+    L.box(geo, STONE, (bx0, -0.20, -0.45), (bx1, 0.15, 1.02), 'xXyY')
+    L.box(geo, STONE, (bx0, -0.23, 0.90), (bx1, -0.20, 1.02), 'y')
+    L.box(geo, STONE, (4.414 - 0.33, -0.33, -0.45), (bx1, 0.33, 1.02), 'xXyY')                 # the column's pier
+    L.box(geo, CAP, (bx0 - 0.04, -0.96, 0.90), (bx1 + 0.04, -0.20, 0.95))                    # work counter
+    L.box(geo, CAP, (bx0 - 0.05, -0.23, 1.02), (bx1 + 0.05, 0.40, 1.08))                     # raised bar top
+    L.box(geo, 'yard_soot', (2.10, -0.925, 0.10), (2.66, -0.92, 0.84), 'y')                  # fridge niche
+    L.box(geo, 'furn_black', (2.14, -0.94, 0.12), (2.62, -0.925, 0.82), 'xXyzZ')             # its door
+    L.box(geo, 'yard_soot', (2.72, -0.925, 0.10), (3.50, -0.92, 0.84), 'y')                  # open shelves
+    for z in (0.10, 0.45, 0.80):
+        L.box(geo, CAP, (2.72, -0.92, z - 0.03), (3.50, -0.70, z))
+    for x, back in ((1.00, False), (1.50, False), (2.20, True), (2.80, True), (3.40, True), (4.00, True)):
+        stool(geo, L, x, 0.65, back=back)
+    # BBQ counter inside the back row (p20: its back face just NW of the SE columns), the grill under the middle of
+    # the SE beam (a ~1.15 m built-in grill with a rounded lid), an L return with the sink from its NE end toward the
+    # bar, inside the NE column
+    gx0, gx1, gy0, gy1 = 0.30, 3.85, -3.80, -3.15
     L.box(geo, STONE, (gx0, gy0, -0.45), (gx1, gy1, 0.90), 'xXyY')     # down into the ground at the bed edge
-    L.box(geo, CAP, (gx0 - 0.04, gy0 - 0.04, 0.90), (gx1 + 0.04, gy1 + 0.04, 0.95))
-    L.box(geo, STONE, (gx1 - 0.65, gy1, -0.45), (gx1, by0, 0.90), 'xXyY')
-    L.box(geo, CAP, (gx1 - 0.69, gy1 + 0.04, 0.90), (gx1 + 0.04, by0 + 0.04, 0.95))
-    L.box(geo, STEEL, (2.15, gy0 + 0.06, 0.95), (3.05, gy1 - 0.08, 1.02))
-    L.box(geo, STEEL, (2.17, gy0 + 0.16, 1.02), (3.03, gy1 - 0.10, 1.26))
-    L.box(geo, STEEL, (2.15, gy1 - 0.01, 0.30), (3.05, gy1 + 0.015, 0.84), 'xXYzZ')
-    L.box(geo, STEEL, (3.9, gy0 + 0.2, 0.951), (4.3, gy1 - 0.15, 0.956), 'Z')            # bar sink
-    # lanterns on the columns (p20: on the faces toward the kitchen; p26: toward the pool)
-    for cx, cy, sgn in ((AR_COL_X[0], AR_COL_Y[0], 1), (AR_COL_X[1], AR_COL_Y[0], 1), (AR_COL_X[0], AR_COL_Y[1], -1),
-                        (AR_COL_X[1], AR_COL_Y[1], -1)):
-        X.lantern(geo, L.pt(cx, cy + sgn * 0.18, 1.80), L.ex * sgn, L.ey * sgn, h=0.40, w=0.17, d=0.115)
+    L.box(geo, CAP, (gx0 - 0.03, gy0 - 0.04, 0.90), (gx1 + 0.04, gy1 + 0.04, 0.95))
+    lx0 = gx1 - 0.70
+    L.box(geo, STONE, (lx0, gy1, -0.45), (gx1, -0.96, 0.90), 'xXyY')
+    L.box(geo, CAP, (lx0 - 0.04, gy1 + 0.04, 0.90), (gx1 + 0.04, -0.96, 0.95))
+    xg, yg = 2.25, (gy0 + gy1) / 2
+    L.box(geo, STEEL, (xg - 0.58, gy0 + 0.05, 0.95), (xg + 0.58, gy1 - 0.05, 1.12))
+    a_, b_ = L.pt(xg - 0.57, yg - 0.03, 1.12), L.pt(xg + 0.57, yg - 0.03, 1.12)
+    geo.prism_smooth(STEEL, [(0.25 * math.cos(t), 0.22 * math.sin(t)) for t in np.linspace(0, math.pi, 9)] +
+                     [(-0.25, 0.0)], a_, b_)                                                   # the rounded lid
+    L.box(geo, STEEL, (xg - 0.55, gy1 - 0.01, 0.30), (xg + 0.55, gy1 + 0.015, 0.84), 'xXYzZ')   # doors
+    L.box(geo, STEEL, (lx0 + 0.15, -3.10, 0.951), (gx1 - 0.15, -2.65, 0.956), 'Z')           # sink (p20)
+    geo.cylinder(STEEL, L.pt(gx1 - 0.12, -2.88, 0.95), L.pt(gx1 - 0.12, -2.88, 1.25), 0.012, n=6)
+    # lanterns (p20 / p26): on each column's face toward the bay's middle along its row, top ~2.05
+    for k, (cx, cy) in enumerate(AR_COLS):
+        sg = 1 if cx < 2 else -1
+        X.lantern(geo, L.pt(cx + sg * hs, cy, 1.85), L.ey * sg, L.ex * sg, h=0.40, w=0.17, d=0.115)
     return Part('yard_arbor', geo, group='yard')
 
 
@@ -415,7 +544,7 @@ def porch_furniture():
     # at ~0.25.  The set is placed as far in as the house's recess wall allows and every piece stands on the surface
     # under it: the recess slab (house.patio_bg at PATIO_FLOOR) or the terrain.
     slab = _recess_slab()
-    tw, off = 0.76, 0.50                                  # table width; chair centres from the table's centre line
+    tw, off = 1.00, 0.72                                  # table width (p21 / p23 ~1.0); chair centres off its centre line
     half = off + 0.25
     cx = max(DINING_EAST_BACKS - half, slab['x0'] + half + 0.03)
     c = (cx, DINING_Y)
@@ -495,109 +624,176 @@ def slide(geo, top, end, w=0.50, wave=0.0, n=8):
             geo.poly(SLIDE, [q + e, p + e, p + e + UP * 0.14, q + e + UP * 0.14])
 
 
+def ladder(geo, a, b, w=0.30, mat=PLAYWOOD, rung=SLIDE, step=0.30, board=(0.04, 0.14)):
+    """A ladder-like leg: two boards from a to b (bottom -> top), `w` apart across, green rungs between them."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    d = b - a
+    side = np.cross(d, UP)
+    side = side / np.linalg.norm(side) if np.linalg.norm(side) > 1e-6 else np.array([1.0, 0, 0])
+    for sg in (-1, 1):
+        bar(geo, mat, a + side * sg * w / 2, b + side * sg * w / 2, board[0], board[1])
+    n = int(np.linalg.norm(d) / step)
+    for k in range(1, n):
+        p = a + d * k / n
+        bar(geo, rung, p - side * w / 2, p + side * w / 2, 0.03, 0.03)
+
+
 def play():
     geo = Geo()
     cx, cy = PL_TOWER
-    g = gz(cx, cy)
-    h = PL_TOWER_S / 2
+    tx0, tx1, ty0, ty1 = PL_DECK_XY
+    g = gz((tx0 + tx1) / 2, (ty0 + ty1) / 2)
     W = PLAYWOOD
-    # ---- roofed tower: 4 posts, deck, lower frame, slat rails, gabled board roof (ridge N-S)
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            geo.box(W, (cx + sx * h - 0.05, cy + sy * h - 0.05, g - 0.1), (cx + sx * h + 0.05, cy + sy * h + 0.05, g + PL_EAVE))
-    geo.box(W, (cx - h, cy - h, g + PL_DECK - 0.10), (cx + h, cy + h, g + PL_DECK))
-    geo.box(W, (cx - h, cy - h, g + 0.12), (cx + h, cy + h, g + 0.22), 'xXyYZ')                 # base frame
-    for z in (0.55, 0.95):                                                                     # climbing rungs
-        bar(geo, SLIDE, (cx - h, cy - h, g + z), (cx + h, cy - h, g + z), 0.035, 0.035)
-        bar(geo, SLIDE, (cx - h, cy + h, g + z), (cx + h, cy + h, g + z), 0.035, 0.035)
-    z0, z1 = g + PL_DECK, g + PL_RAIL
-    slat_wall(geo, (cx - h, cy + h), (cx + h, cy + h), z0, z1)                                 # north
-    slat_wall(geo, (cx - h, cy + h), (cx - h, cy + 0.45), z0, z1)                              # west, beam gap
-    slat_wall(geo, (cx - h, cy - 0.45), (cx - h, cy - h), z0, z1)
-    slat_wall(geo, (cx - h, cy - h), (cx - 0.25, cy - h), z0, z1)                              # south, bridge gap
-    slat_wall(geo, (cx + h, cy - 0.35), (cx + h, cy + 0.35), z0, z1)                            # east, between ramp and slide
-    ov, t = 0.22, 0.05
-    hw = h + ov
-    rise = PL_RIDGE - PL_EAVE
-    for s in (-1, 1):
-        e0 = np.array([cx + s * hw, cy - hw, g + PL_EAVE - ov * rise / h])
-        e1 = np.array([cx + s * hw, cy + hw, g + PL_EAVE - ov * rise / h])
-        r0, r1 = np.array([cx, cy - hw, g + PL_RIDGE]), np.array([cx, cy + hw, g + PL_RIDGE])
-        quad = [e0, e1, r1, r0] if s > 0 else [e1, e0, r0, r1]
+    # ---- roofed tower (p19): 4 corner posts + 2 on the north face flanking its opening, deck, slat rails, a heavy
+    # base frame (two stacked boards, 0.25 m) round a sand pit, green rungs on the north and west sides, the gabled
+    # board roof (ridge N-S, 48 deg)
+    for x in (tx0, tx1):
+        for y in (ty0, ty1):
+            geo.box(W, (x - 0.05, y - 0.05, gz(x, y) - 0.1), (x + 0.05, y + 0.05, Z_EAVE))
+    for x in (18.31, 17.62):                                                                   # north face (p19)
+        geo.box(W, (x - 0.045, ty1 - 0.045, gz(x, ty1) - 0.1), (x + 0.045, ty1 + 0.045, Z_EAVE + 0.35))
+    geo.box(W, (tx0, ty0, Z_DECK - 0.10), (tx1, ty1, Z_DECK))
+    b0x, b1x, b0y, b1y = tx0 - 0.06, tx1 + 0.06, ty0 - 0.06, ty1 + 0.06
+    for z, t in ((0.0, 0.12), (0.13, 0.12)):                                                   # base frame
+        for p, q in (((b0x, b0y), (b1x, b0y)), ((b1x, b0y), (b1x, b1y)), ((b1x, b1y), (b0x, b1y)), ((b0x, b1y), (b0x, b0y))):
+            bar(geo, W, (p[0], p[1], gz(*p) + z + t / 2), (q[0], q[1], gz(*q) + z + t / 2), 0.10, t)
+    geo.poly('yard_sand', [(b0x + 0.05, b0y + 0.05, g + 0.10), (b1x - 0.05, b0y + 0.05, g + 0.10),
+                           (b1x - 0.05, b1y - 0.05, g + 0.10), (b0x + 0.05, b1y - 0.05, g + 0.10)])
+    for z in (0.45, 0.75, 1.05, 1.35):                                                         # climbing rungs N, W
+        if g + z < Z_DECK - 0.15:
+            bar(geo, SLIDE, (tx0, ty1, g + z), (tx1, ty1, g + z), 0.035, 0.035)
+            bar(geo, SLIDE, (tx0, ty0, g + z), (tx0, ty1, g + z), 0.035, 0.035)
+    z0, z1 = Z_DECK, Z_RAIL
+    slat_wall(geo, (tx1, ty1), (17.62, ty1), z0, z1)                                           # north, opening W
+    slat_wall(geo, (tx0, ty1), (tx0, ty0), z0, z1)                                             # west
+    slat_wall(geo, (tx0, ty0), (tx1, ty0), z0, z1)                                             # south
+    slat_wall(geo, (tx1, ty0), (tx1, ty1 - 0.55), z0, z1)                                      # east, up to the slide
+    hw = PL_ROOF_S / 2
+    rise = Z_RIDGE - Z_EAVE
+    t = 0.05
+    for s_ in (-1, 1):
+        e0 = np.array([cx + s_ * hw, cy - hw, Z_EAVE])
+        e1 = np.array([cx + s_ * hw, cy + hw, Z_EAVE])
+        r0, r1 = np.array([cx, cy - hw, Z_RIDGE]), np.array([cx, cy + hw, Z_RIDGE])
+        quad = [e0, e1, r1, r0] if s_ > 0 else [e1, e0, r0, r1]
         geo.poly(W, quad)
         geo.poly(W, [q - UP * t for q in quad[::-1]])
-    for sy in (-1, 1):                                                                         # gable frames
-        y = cy + sy * h
-        bar(geo, W, (cx - h, y, g + PL_EAVE), (cx + h, y, g + PL_EAVE), 0.05, 0.10)
-        bar(geo, W, (cx - h, y, g + PL_EAVE), (cx, y, g + PL_RIDGE - 0.06), 0.05, 0.09)
-        bar(geo, W, (cx + h, y, g + PL_EAVE), (cx, y, g + PL_RIDGE - 0.06), 0.05, 0.09)
-    for sx in (-1, 1):
-        bar(geo, W, (cx + sx * h, cy - h, g + PL_EAVE), (cx + sx * h, cy + h, g + PL_EAVE), 0.05, 0.10)
-    # ---- swing beam west to the A-frame: a double beam with rungs (monkey bars), tire swing
-    ax, by = PL_AFRAME_X, PL_BEAM_Y
-    ga = gz(ax, by)
-    zb = g + PL_BEAM
-    for dy in (-0.24, 0.24):
-        bar(geo, W, (ax - 0.25, by + dy, zb), (cx - h, by + dy, zb), 0.09, 0.14)
-    for x in np.arange(ax + 0.3, cx - h - 0.1, 0.32):
-        bar(geo, W, (x, by - 0.24, zb), (x, by + 0.24, zb), 0.035, 0.035)
-    for sy in (-1, 1):
-        bar(geo, W, (ax, by + sy * 0.26, zb + 0.05), (ax - 0.1, by + sy * 1.25, ga - 0.05), 0.09, 0.09)
-    bar(geo, W, (ax - 0.05, by - 0.75, ga + 1.05), (ax - 0.05, by + 0.75, ga + 1.05), 0.04, 0.12)
-    bar(geo, W, (ax - 0.09, by - 1.15, ga + 0.25), (ax - 0.09, by + 1.15, ga + 0.25), 0.04, 0.12)
-    tx = ax + 1.45
-    gt = gz(tx, by)
-    F._revolve(geo, 'yard_tire', [(0.20, 0.42), (0.30, 0.36), (0.36, 0.46), (0.30, 0.56), (0.20, 0.50)], n=12,
-               centre=(tx, by, gt))
+        for a_, b_ in ((e0, e1), (e0, r0), (e1, r1)):                                          # board edges
+            geo.poly(W, [a_, b_, b_ - UP * t, a_ - UP * t] if s_ > 0 else [b_, a_, a_ - UP * t, b_ - UP * t])
+    zroof = lambda x: Z_RIDGE - abs(x - cx) * rise / hw                                         # under side at x
+    for y in (ty0, ty1):                                                                       # gable frames
+        bar(geo, W, (tx0, y, Z_EAVE - 0.06), (tx1, y, Z_EAVE - 0.06), 0.05, 0.10)
+        bar(geo, W, (tx0, y, zroof(tx0) - t), (cx, y, Z_RIDGE - 0.08), 0.05, 0.09)
+        bar(geo, W, (tx1, y, zroof(tx1) - t), (cx, y, Z_RIDGE - 0.08), 0.05, 0.09)
+    for x in (tx0, tx1):
+        bar(geo, W, (x, ty0, Z_EAVE - 0.06), (x, ty1, Z_EAVE - 0.06), 0.05, 0.10)
+    bar(geo, W, (tx1, ty1, Z_EAVE - 0.12), (tx1, ty1 + 0.95, Z_EAVE - 0.12), 0.07, 0.12)       # arm north (aerial, p19)
+    h = 0.0
+    # ---- swing beam west to the A-frame: two rails with rungs (monkey bars, aerial / frame 140500), the A-frame's
+    # legs two-board ladders (p19) on a bottom rail, the tyre swing on three chains and a swivel
+    (fn, fs, ap) = PL_AFRAME
+    apex = np.array([ap[0], ap[1], Z_BEAM - 0.05])
+    for y in PL_BEAM_Y:
+        bar(geo, W, (13.73, y, Z_BEAM), (tx0, y, Z_BEAM), 0.09, 0.14)                            # end: p19
+    for x in np.arange(ap[0] + 0.35, tx0 - 0.1, 0.32):
+        bar(geo, W, (x, PL_BEAM_Y[0], Z_BEAM + 0.03), (x, PL_BEAM_Y[1], Z_BEAM + 0.03), 0.035, 0.035)
+    bar(geo, W, (ap[0], PL_BEAM_Y[0] - 0.10, Z_BEAM - 0.10), (ap[0], PL_BEAM_Y[1] + 0.10, Z_BEAM - 0.10), 0.09, 0.09)
+    for f in (fn, fs):
+        foot = np.array([f[0], f[1], gz(*f) - 0.05])
+        ladder(geo, foot, apex + np.sign(f[1] - ap[1]) * np.array([0, 0.12, 0]), w=0.30)
+    bar(geo, W, (fn[0], fn[1], gz(*fn) + 0.07), (fs[0], fs[1], gz(*fs) + 0.07), 0.09, 0.14)      # bottom rail
+    for y in PL_BEAM_Y:                                                                        # braces to the tower
+        bar(geo, W, (tx0 - 0.75, y, Z_BEAM - 0.05), (tx0, y, Z_DECK - 0.35), 0.04, 0.12)
+    tx, ty, ttop = PL_TIRE
+    zt = ttop - 0.20
+    F._revolve(geo, 'yard_tire', [(0.20, 0.0), (0.30, -0.06), (0.36, 0.04), (0.30, 0.14), (0.20, 0.08)], n=12,
+               centre=(tx, ty, zt))
+    sw = np.array([tx, PL_BEAM_Y[0], Z_BEAM - 0.55])
+    bar(geo, 'yard_rope', sw, (tx, PL_BEAM_Y[0], Z_BEAM - 0.08), 0.015, 0.015)
     for k in range(3):
-        a = 2 * math.pi * k / 3
-        bar(geo, 'yard_rope', (tx + 0.28 * math.cos(a), by + 0.28 * math.sin(a), gt + 0.52), (tx, by, zb - 0.07), 0.015, 0.015)
-    # ---- a low A-frame stand NW of the tower with a rail to its corner (aerial, p28)
-    sx_, sy_ = 16.57, 2.55
-    gs = gz(sx_, sy_)
-    for dx in (-0.5, 0.5):
-        bar(geo, W, (sx_, sy_, gs + 1.2), (sx_ + dx, sy_ + 0.25, gs - 0.05), 0.07, 0.07)
-    bar(geo, W, (sx_, sy_, gs + 1.2), (cx - h, cy + h, g + PL_DECK + 0.3), 0.05, 0.05)
-    # ---- bridge south to the fort, with slat rails; three swings hang from its west beam
-    bx = PL_BRIDGE_X
-    y0, y1 = cy - h, -3.90
-    geo.box(W, (bx - 0.5, y1, g + PL_DECK - 0.08), (bx + 0.5, y0, g + PL_DECK))
-    for sx in (-1, 1):
-        slat_wall(geo, (bx + sx * 0.5, y0), (bx + sx * 0.5, y1), z0, z1)
-    swx = bx - 0.62
-    bar(geo, W, (swx, y0 + 0.1, g + PL_BEAM + 0.1), (swx, y1 - 0.1, g + PL_BEAM + 0.1), 0.09, 0.14)
-    for k, y in enumerate(np.linspace(y0 - 0.55, y1 + 0.55, 3)):
+        a_ = 2 * math.pi * k / 3
+        bar(geo, 'yard_rope', (tx + 0.28 * math.cos(a_), ty + 0.28 * math.sin(a_), zt + 0.10), sw, 0.012, 0.012)
+    # ---- the small stand NW of the tower (p19): a base board on the chips, an A-frame with a centre post leaning
+    # toward the tower, a green bar from its apex into the tower's north-west corner
+    b0, b1 = np.array([16.20, 2.66]), np.array([17.75, 2.70])
+    z0_, z1_ = gz(*b0), gz(*b1)
+    bar(geo, W, (b0[0], b0[1], z0_ + 0.06), (b1[0], b1[1], z1_ + 0.06), 0.09, 0.14)
+    m = (b0 + b1) / 2
+    gs = gz(*m)
+    ap2 = np.array([m[0], m[1] - 0.45, 3.52])                  # p19: the bar enters the tower just under its deck
+    for p_ in (b0, b1, m):
+        bar(geo, W, (p_[0], p_[1], gz(*p_) + 0.12), ap2, 0.05, 0.12)
+    bar(geo, SLIDE, ap2 + np.array([0.0, 0.0, -0.02]), (tx0 + 0.05, ty1, ap2[2] - 0.02), 0.04, 0.04)
+    # ---- the RAISED bridge south to the fort (p22: its floor at the tower's eave level, tall slat walls to the
+    # ridge level; p19: the swings hang from its underside): deck, joists, posts at both ends, three swings
+    (bx0, by0), (bx1, by1) = PL_BRIDGE
+    a2, b2 = np.array([bx0, by0]), np.array([bx1, by1])
+    dirb = (b2 - a2) / np.linalg.norm(b2 - a2)
+    nb = np.array([-dirb[1], dirb[0]])
+    hwb = 0.43
+    corners = [a2 + nb * hwb, b2 + nb * hwb, b2 - nb * hwb, a2 - nb * hwb]
+    geo.extrude(W, corners, Z_BRIDGE - 0.10, Z_BRIDGE)
+    for sg in (-1, 1):
+        slat_wall(geo, a2 + nb * sg * hwb, b2 + nb * sg * hwb, Z_BRIDGE, Z_BRIDGE_TOP)
+        bar(geo, W, (*(a2 + nb * sg * hwb), Z_BRIDGE - 0.20), (*(b2 + nb * sg * hwb), Z_BRIDGE - 0.20), 0.06, 0.20)
+        for e_ in (a2, b2):
+            q = e_ + nb * sg * hwb
+            geo.box(W, (q[0] - 0.05, q[1] - 0.05, gz(*q) - 0.1), (q[0] + 0.05, q[1] + 0.05, Z_BRIDGE_TOP + 0.05))
+    for k in range(1, 5):                                                                      # ladder up at the fort end
+        q0, q1 = b2 + nb * hwb, b2 - nb * hwb
+        zz = gz(*b2) + 0.45 * k
+        if zz < Z_BRIDGE - 0.3:
+            bar(geo, SLIDE, (q0[0], q0[1], zz), (q1[0], q1[1], zz), 0.035, 0.035)
+    swx = 17.85                                                                                # aerial: the seats
+    for y in (-1.43, -2.20, -2.95):
+        p0 = a2 + dirb * ((y - by0) / dirb[1])
+        zb_ = Z_BRIDGE - 0.30
+        gs_ = gz(swx, y)
         for dy in (-0.2, 0.2):
-            bar(geo, 'yard_rope', (swx, y + dy, g + PL_BEAM + 0.03), (swx, y + dy, g + 0.50), 0.012, 0.012)
-        geo.box(SLIDE, (swx - 0.08, y - 0.22, g + 0.46), (swx + 0.08, y + 0.22, g + (0.50 if k == 0 else 0.70)))
-    # ---- the fort: posts at its corners, deck, tall slat walls
+            bar(geo, 'yard_rope', (swx, y + dy, zb_), (swx, y + dy, gs_ + 0.55), 0.012, 0.012)
+        geo.box(SLIDE, (swx - 0.10, y - 0.21, gs_ + 0.42), (swx + 0.10, y + 0.21, gs_ + 0.58))
+    # ---- the fort: the hexagonal deck at 3.3 (slide deck) with slat walls, an upper landing at the bridge's level on
+    # its north side with tall walls
     fort = np.array(PL_FORT)
     gf = gz(*fort.mean(0))
-    geo.extrude(W, fort, gf + PL_DECK - 0.10, gf + PL_DECK)
-    for i, p in enumerate(fort):
-        geo.box(W, (p[0] - 0.05, p[1] - 0.05, gf - 0.1), (p[0] + 0.05, p[1] + 0.05, gf + PL_FORT_TOP + 0.08))
+    geo.extrude(W, fort, Z_FORT - 0.10, Z_FORT)
+    for i, p_ in enumerate(fort):
+        top = Z_BRIDGE_TOP + 0.05 if i in (0, 1, 5) else Z_FORT_TOP + 0.08
+        geo.box(W, (p_[0] - 0.05, p_[1] - 0.05, gz(*p_) - 0.1), (p_[0] + 0.05, p_[1] + 0.05, top))
         q = fort[(i + 1) % len(fort)]
-        if i == 0:                                         # north side: the bridge's opening
+        if i == 3:                                         # SW side: the long slide's opening (low rail only)
+            slat_wall(geo, p_, q, Z_FORT_TOP - 0.45, Z_FORT_TOP)
+        elif i == 0:                                       # north: under the landing
             continue
-        elif i == 3:                                       # SW side: the long slide's opening (low rail only)
-            slat_wall(geo, p, q, gf + PL_FORT_TOP - 0.6, gf + PL_FORT_TOP)
         else:
-            slat_wall(geo, p, q, gf + PL_DECK, gf + PL_FORT_TOP)
+            slat_wall(geo, p_, q, Z_FORT, Z_FORT_TOP)
+    land = [fort[5], fort[0], fort[1], fort[1] * 0.55 + fort[2] * 0.45, fort[5] * 0.55 + fort[4] * 0.45]
+    land = [np.asarray(p_) for p_ in land]
+    lc = np.array([land[3], land[4]])
+    geo.extrude(W, [tuple(p_) for p_ in land], Z_BRIDGE - 0.10, Z_BRIDGE)
+    for p_, q in ((land[4], land[0]), (land[1], land[2]), (land[2], land[3])):
+        slat_wall(geo, p_, q, Z_BRIDGE, Z_BRIDGE_TOP)
+    slat_wall(geo, lc[1], lc[0], Z_BRIDGE, Z_BRIDGE + 0.65)
     for z in (0.45, 0.85):
         bar(geo, SLIDE, (fort[1][0], fort[1][1], gf + z), (fort[2][0], fort[2][1], gf + z), 0.035, 0.035)
-    # ---- slides: short wavy one east off the tower, long one SW off the fort; climbing ramp east of the tower
-    e = (cx + h + 1.85, cy + 0.88)                          # frame 140500: its end at (21.6, 1.25)
-    slide(geo, (cx + h, cy + 0.65, g + PL_DECK), (e[0], e[1], gz(*e)), wave=0.16)
+    # ---- slides: short wavy one east off the tower deck (aerial: its tip at (21.58, 1.24)), long one SW off the fort
+    # deck (p19 its run-out end at (15.26, -7.07)); climbing ramp east of the tower (aerial: its foot at (21.08, 0.11))
+    tip = np.array([21.58, 1.24])
+    st = np.array([tx1, ty1 - 0.28])
+    e = tip - (tip - st) / np.linalg.norm(tip - st) * 0.45
+    slide(geo, (st[0], st[1], Z_DECK), (e[0], e[1], gz(*e)), wave=0.16)
     m = fort[3] * 0.2 + fort[4] * 0.8
-    e = (15.25, -6.75)                                      # frame 140500: the run-out ends at (14.95, -7.0)
-    slide(geo, (m[0], m[1], gf + PL_DECK), (e[0], e[1], gz(*e)), w=0.55, wave=0.08, n=10)
-    rx0, rx1, ry = cx + h, cx + h + 2.3, cy - 0.72
+    tip = np.array([15.26, -7.07])
+    e = tip - (tip - m) / np.linalg.norm(tip - m) * 0.45
+    slide(geo, (m[0], m[1], Z_FORT), (e[0], e[1], gz(*e)), w=0.55, wave=0.08, n=12)
+    rx0, rx1, ry = tx1, 21.08, 0.11
     for dy in (-0.3, 0.3):
-        bar(geo, W, (rx0, ry + dy, g + PL_DECK - 0.05), (rx1, ry + dy, gz(rx1, ry)), 0.04, 0.12)
+        bar(geo, W, (rx0, ry + dy, Z_DECK - 0.05), (rx1, ry + dy, gz(rx1, ry + dy)), 0.04, 0.12)
     for k in range(1, 9):
         t_ = k / 9
-        bar(geo, W, (rx0 + (rx1 - rx0) * t_, ry - 0.3, g + (PL_DECK - 0.05) * (1 - t_) + 0.03),
-            (rx0 + (rx1 - rx0) * t_, ry + 0.3, g + (PL_DECK - 0.05) * (1 - t_) + 0.03), 0.09, 0.03)
+        x = rx0 + (rx1 - rx0) * t_
+        zz = (Z_DECK - 0.05) * (1 - t_) + gz(rx1, ry) * t_ + 0.03
+        bar(geo, W, (x, ry - 0.3, zz), (x, ry + 0.3, zz), 0.09, 0.03)
     return Part('yard_play_structure', geo, group='yard')
 
 

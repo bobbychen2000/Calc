@@ -34,7 +34,7 @@ export const WATER = {
   spaRipple: 1.7,
   glintRough: 0.035,
   reflDist: 12.0,                        // m: where the mirrored things are assumed to stand when a ripple bends the ray
-  caustic: [1.9, 1.37, 0.34],            // tile A (m), tile B (m), strength
+  caustic: [1.9, 1.37, 0.21],            // tile A (m), tile B (m), strength (p21 / p22: a soft net, fading with depth)
   lightDusk: [0.72, 0.95, 1.0, 5.5],     // colour and intensity of the pool lights at dusk
   skyline: { day: [0.050, 0.070, 0.040], dusk: [0.020, 0.024, 0.022] },   // 'low' only: what stands round the yard
 };
@@ -309,7 +309,7 @@ float wCaustic( vec3 p, vec3 lr, float d ) {
   float a = texture2D( uCaustic, q * uCausticP.x + w + uWTime * vec2( 0.022, 0.012 ) ).r;
   float b = texture2D( uCaustic, vec2( q.y, - q.x ) * uCausticP.y - w * 0.8 + uWTime * vec2( - 0.016, 0.019 ) + 0.37 ).r;
   float c = min( a, b ) * uCausticP.w;
-  return 1.0 + uCausticP.z * smoothstep( 0.03, 0.8, d ) * ( c - 1.0 );
+  return 1.0 + uCausticP.z * smoothstep( 0.03, 0.6, d ) * ( 1.0 - 0.55 * smoothstep( 1.1, 2.5, d ) ) * ( c - 1.0 );      // the deep end's net blurs out
 }
 `;
 
